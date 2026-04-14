@@ -211,7 +211,6 @@ export default function RoutePlanning() {
                       <td className="px-4 py-3">
                         <StatusBadge status={p.planning_status} />
                       </td>
-                      </td>
                     </tr>
                   ))
                 )}
