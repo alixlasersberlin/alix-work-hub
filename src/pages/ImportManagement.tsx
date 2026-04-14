@@ -1057,7 +1057,7 @@ export default function ImportManagement() {
                   ) : (
                     <>
                       {/* Summary stats */}
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                         <div className="bg-secondary/50 rounded-md p-3 text-center">
                           <div className="text-2xl font-bold text-primary">{importResult.total_contacts_fetched ?? 0}</div>
                           <div className="text-xs text-muted-foreground">Kontakte abgerufen</div>
