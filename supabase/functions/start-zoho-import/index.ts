@@ -580,6 +580,8 @@ Deno.serve(async (req: Request) => {
           if (existingOrder) {
             // Check if anything changed
             if (!hasOrderChanged(existingOrder, orderPayload)) {
+              // Still sync line items even if order header unchanged
+              await syncLineItems(adminClient, existingOrder.id, orderDetail.line_items ?? []);
               skipped++;
               continue;
             }
@@ -601,14 +603,17 @@ Deno.serve(async (req: Request) => {
               failed++;
               errors.push({ type: "order", id: orderNumber, message: updateError.message });
             } else {
+              await syncLineItems(adminClient, existingOrder.id, orderDetail.line_items ?? []);
               updated++;
             }
           } else {
-            const { error: orderError } = await adminClient.from("orders").insert(orderPayload);
-            if (orderError) {
+            const { data: newOrder, error: orderError } = await adminClient
+              .from("orders").insert(orderPayload).select("id").single();
+            if (orderError || !newOrder) {
               failed++;
-              errors.push({ type: "order", id: orderNumber, message: orderError.message });
+              errors.push({ type: "order", id: orderNumber, message: orderError?.message ?? "Insert failed" });
             } else {
+              await syncLineItems(adminClient, newOrder.id, orderDetail.line_items ?? []);
               imported++;
             }
           }
