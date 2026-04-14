@@ -21,6 +21,7 @@ export default function OrderDetail() {
   const [order, setOrder] = useState<any>(null);
   const [customer, setCustomer] = useState<any>(null);
   const [notes, setNotes] = useState<any[]>([]);
+  const [items, setItems] = useState<any[]>([]);
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'notes' | 'history' | 'raw'>('overview');
