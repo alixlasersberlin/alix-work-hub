@@ -263,7 +263,8 @@ export default function ImportManagement() {
     let orderPages = 0;
     let totalContactsFetched = 0;
     let totalOrdersFetched = 0;
-
+    const importStartedAt = Date.now();
+    const limitTotal = importLimit !== 'all' ? parseInt(importLimit, 10) : undefined;
     try {
       toast({
         title: isDryRun ? `Dry Run gestartet (${entityLabel})` : `Import gestartet (${entityLabel})`,
