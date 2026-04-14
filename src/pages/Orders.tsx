@@ -125,7 +125,7 @@ export default function Orders() {
                     <th className="text-left px-4 py-3 text-muted-foreground font-medium">Quelle</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border">
+                <tbody>
                   {loading ? (
                     <tr><td colSpan={7} className="px-4 py-12 text-center">
                       <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" />
@@ -136,32 +136,65 @@ export default function Orders() {
                       <p className="text-muted-foreground">Keine Aufträge gefunden.</p>
                     </td></tr>
                   ) : (
-                    filtered.map(o => (
-                      <tr
-                        key={o.id}
-                        className="hover:bg-secondary/30 transition-colors cursor-pointer"
-                        onClick={() => navigate(`/auftraege/${o.id}`)}
-                      >
-                        <td className="px-4 py-3 font-medium text-foreground">{o.order_number}</td>
-                        <td className="px-4 py-3 text-muted-foreground">{o.customers?.company_name || o.customers?.contact_name || '—'}</td>
-                        <td className="px-4 py-3 text-muted-foreground">{o.order_date ? new Date(o.order_date).toLocaleDateString('de-DE') : '—'}</td>
-                        <td className="px-4 py-3 text-foreground">
-                          {o.total_amount != null ? Number(o.total_amount).toLocaleString('de-DE', { style: 'currency', currency: o.currency || 'EUR' }) : '—'}
-                        </td>
-                        <td className="px-4 py-3">
-                          <StatusBadge status={o.order_status || 'offen'} />
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground text-xs">
-                          {drivingTimes[o.id] ? (
-                            <span className="inline-flex items-center gap-1">
-                              <Car className="w-3 h-3" />
-                              {drivingTimes[o.id]!.duration_text} ({drivingTimes[o.id]!.distance_text})
-                            </span>
-                          ) : '—'}
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground text-xs">{o.source_system}</td>
-                      </tr>
-                    ))
+                    filtered.map(o => {
+                      const items = o.order_items || [];
+                      return (
+                        <tbody key={o.id} className="border-b border-border">
+                          <tr
+                            className="hover:bg-secondary/30 transition-colors cursor-pointer"
+                            onClick={() => navigate(`/auftraege/${o.id}`)}
+                          >
+                            <td className="px-4 py-3 font-medium text-foreground">{o.order_number}</td>
+                            <td className="px-4 py-3 text-muted-foreground">{o.customers?.company_name || o.customers?.contact_name || '—'}</td>
+                            <td className="px-4 py-3 text-muted-foreground">{o.order_date ? new Date(o.order_date).toLocaleDateString('de-DE') : '—'}</td>
+                            <td className="px-4 py-3 text-foreground">
+                              {o.total_amount != null ? Number(o.total_amount).toLocaleString('de-DE', { style: 'currency', currency: o.currency || 'EUR' }) : '—'}
+                            </td>
+                            <td className="px-4 py-3">
+                              <StatusBadge status={o.order_status || 'offen'} />
+                            </td>
+                            <td className="px-4 py-3 text-muted-foreground text-xs">
+                              {drivingTimes[o.id] ? (
+                                <span className="inline-flex items-center gap-1">
+                                  <Car className="w-3 h-3" />
+                                  {drivingTimes[o.id]!.duration_text} ({drivingTimes[o.id]!.distance_text})
+                                </span>
+                              ) : '—'}
+                            </td>
+                            <td className="px-4 py-3 text-muted-foreground text-xs">{o.source_system}</td>
+                          </tr>
+                          {items.length > 0 && (
+                            <tr
+                              className="hover:bg-secondary/30 transition-colors cursor-pointer bg-secondary/20"
+                              onClick={() => navigate(`/auftraege/${o.id}`)}
+                            >
+                              <td colSpan={7} className="px-4 py-2">
+                                <div className="flex items-start gap-2 text-xs text-muted-foreground">
+                                  <Package className="w-3.5 h-3.5 mt-0.5 shrink-0 text-primary/60" />
+                                  <div className="flex flex-wrap gap-x-4 gap-y-1">
+                                    {items.map((item: any) => (
+                                      <span key={item.id} className="inline-flex items-center gap-1">
+                                        <span className="text-foreground/80">{item.item_name || '—'}</span>
+                                        {item.quantity != null && (
+                                          <span className="text-muted-foreground">
+                                            × {Number(item.quantity).toLocaleString('de-DE')}{item.unit ? ` ${item.unit}` : ''}
+                                          </span>
+                                        )}
+                                        {item.amount != null && (
+                                          <span className="text-muted-foreground">
+                                            ({Number(item.amount).toLocaleString('de-DE', { style: 'currency', currency: o.currency || 'EUR' })})
+                                          </span>
+                                        )}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      );
+                    })
                   )}
                 </tbody>
               </table>
