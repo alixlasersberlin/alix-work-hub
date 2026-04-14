@@ -274,8 +274,11 @@ export default function Dashboard() {
                 <div className="divide-y divide-border">
                   {filtered.map(order => {
                     const name = order.customers?.company_name || order.customers?.contact_name || '—';
-                    const shipAddr = order.shipping_address || order.customers?.shipping_address;
-                    const shipCity = shipAddr ? (shipAddr.city || shipAddr.state || '') : '';
+                    const addr = order.shipping_address || order.customers?.shipping_address || order.billing_address || order.customers?.billing_address;
+                    const addrStreet = addr?.street || addr?.address || '';
+                    const addrZip = addr?.zip || addr?.postal_code || addr?.postcode || '';
+                    const addrCity = addr?.city || addr?.state || '';
+                    const addrLine = [addrStreet, addrZip, addrCity].filter(Boolean).join(', ');
                     return (
                       <div
                         key={order.id}
@@ -286,8 +289,10 @@ export default function Dashboard() {
                           <p className="text-sm font-medium text-foreground">{name}</p>
                           <p className="text-xs text-muted-foreground mt-0.5">
                             {order.order_number}
-                            {shipCity && <span className="ml-1.5">· Lieferung: {shipCity}</span>}
                           </p>
+                          {addrLine && (
+                            <p className="text-xs text-muted-foreground mt-0.5">📍 {addrLine}</p>
+                          )}
                         </div>
                         <div className="text-right flex flex-col items-end gap-1">
                           <span className="text-sm font-medium text-foreground">{formatDate(order.expected_shipment_date)}</span>
