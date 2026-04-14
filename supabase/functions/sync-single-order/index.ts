@@ -134,6 +134,8 @@ Deno.serve(async (req: Request) => {
       currency: salesOrder.currency_code ?? null,
       total_amount: salesOrder.total ?? null,
       order_date: salesOrder.date ? new Date(salesOrder.date).toISOString() : null,
+      billing_address: salesOrder.billing_address ?? null,
+      shipping_address: salesOrder.shipping_address ?? null,
       raw_data: salesOrder,
     };
 

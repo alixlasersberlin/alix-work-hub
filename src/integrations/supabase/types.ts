@@ -493,6 +493,7 @@ export type Database = {
       }
       orders: {
         Row: {
+          billing_address: Json | null
           created_at: string
           currency: string | null
           customer_id: string
@@ -502,11 +503,13 @@ export type Database = {
           order_number: string
           order_status: string | null
           raw_data: Json | null
+          shipping_address: Json | null
           source_system: string
           total_amount: number | null
           updated_at: string
         }
         Insert: {
+          billing_address?: Json | null
           created_at?: string
           currency?: string | null
           customer_id: string
@@ -516,11 +519,13 @@ export type Database = {
           order_number: string
           order_status?: string | null
           raw_data?: Json | null
+          shipping_address?: Json | null
           source_system: string
           total_amount?: number | null
           updated_at?: string
         }
         Update: {
+          billing_address?: Json | null
           created_at?: string
           currency?: string | null
           customer_id?: string
@@ -530,6 +535,7 @@ export type Database = {
           order_number?: string
           order_status?: string | null
           raw_data?: Json | null
+          shipping_address?: Json | null
           source_system?: string
           total_amount?: number | null
           updated_at?: string
