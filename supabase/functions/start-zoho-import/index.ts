@@ -19,6 +19,7 @@ type ImportPayload = {
   search_text?: string;
   sort_column?: string;
   sort_order?: "ascending" | "descending";
+  limit?: number;
 };
 
 type ZohoConfig = {
