@@ -185,6 +185,24 @@ function isValidDate(d: string): boolean {
   return /^\d{4}-\d{2}-\d{2}$/.test(d) && !isNaN(Date.parse(d));
 }
 
+function jsonEqual(a: unknown, b: unknown): boolean {
+  return JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+}
+
+function hasCustomerChanged(
+  existing: { company_name?: string | null; contact_name?: string | null; email?: string | null; phone?: string | null; billing_address?: unknown; shipping_address?: unknown },
+  incoming: { company_name?: string | null; contact_name?: string | null; email?: string | null; phone?: string | null; billing_address?: unknown; shipping_address?: unknown },
+): boolean {
+  return (
+    (existing.company_name ?? null) !== (incoming.company_name ?? null) ||
+    (existing.contact_name ?? null) !== (incoming.contact_name ?? null) ||
+    (existing.email ?? null) !== (incoming.email ?? null) ||
+    (existing.phone ?? null) !== (incoming.phone ?? null) ||
+    !jsonEqual(existing.billing_address, incoming.billing_address) ||
+    !jsonEqual(existing.shipping_address, incoming.shipping_address)
+  );
+}
+
 // ── Main handler: processes ONE page of ONE entity per call ──
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
