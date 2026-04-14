@@ -120,7 +120,7 @@ export default function InstallmentPlanDialog({ order }: Props) {
     const tableStartY = addrY + 50;
 
     // Table header
-    let y = 82;
+    let y = tableStartY;
     doc.setFontSize(9);
     doc.setTextColor(255, 255, 255);
     doc.setFillColor(30, 30, 30);
