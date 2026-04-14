@@ -1013,29 +1013,6 @@ export default function ImportManagement() {
               </CardContent>
             </Card>
 
-
-                  <SelectItem value="5">5</SelectItem>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="25">25</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                  <SelectItem value="100">100</SelectItem>
-                  <SelectItem value="200">200</SelectItem>
-                  <SelectItem value="500">500</SelectItem>
-                  <SelectItem value="1000">1.000</SelectItem>
-                </SelectContent>
-              </Select>
-              {importLimit !== 'all' && (
-                <span className="text-xs text-muted-foreground">
-                  Es werden max. {importLimit} Einträge pro Import verarbeitet
-                </span>
-              )}
-            </div>
-
-            <Card className="border-border">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <User className="w-5 h-5 text-primary" />
-                  Kundendaten importieren
                 </CardTitle>
                 <CardDescription>
                   Importiert Kontakte aus Zoho Books. Bereits vorhandene Kunden werden übersprungen.
