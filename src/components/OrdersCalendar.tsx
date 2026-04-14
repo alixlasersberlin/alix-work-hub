@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CalendarDays, ChevronLeft, ChevronRight, ClipboardList, Truck, Loader2, Inbox } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, ClipboardList, Truck, Package, Loader2, Inbox } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/StatusBadge';
 
@@ -10,6 +10,7 @@ interface OrderRow {
   id: string;
   order_number: string;
   order_date: string | null;
+  expected_shipment_date: string | null;
   order_status: string | null;
   total_amount: number | null;
   currency: string | null;
@@ -67,6 +68,7 @@ function getWeekDays(weekStart: Date): Date[] {
 interface DayCellData {
   orders: number;
   deliveries: number;
+  shipments: number;
 }
 
 export default function OrdersCalendar() {
@@ -76,7 +78,7 @@ export default function OrdersCalendar() {
   const [view, setView] = useState<ViewMode>('month');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [dataMode, setDataMode] = useState<'orders' | 'deliveries'>('orders');
+  const [dataMode, setDataMode] = useState<'orders' | 'deliveries' | 'shipments'>('orders');
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -85,7 +87,7 @@ export default function OrdersCalendar() {
     async function load() {
       setLoading(true);
       const [ordersRes, deliveriesRes] = await Promise.all([
-        supabase.from('orders').select('id, order_number, order_date, order_status, total_amount, currency').order('order_date', { ascending: true }).limit(1000),
+        supabase.from('orders').select('id, order_number, order_date, expected_shipment_date, order_status, total_amount, currency').order('order_date', { ascending: true }).limit(1000),
         supabase.from('route_plans').select('id, planned_date, planning_status, order_id, orders(order_number, order_status)').order('planned_date', { ascending: true }).limit(1000),
       ]);
       setOrders(ordersRes.data ?? []);
@@ -105,6 +107,16 @@ export default function OrdersCalendar() {
     return map;
   }, [orders]);
 
+  const shipmentsByDate = useMemo(() => {
+    const map: Record<string, OrderRow[]> = {};
+    orders.forEach(o => {
+      if (!o.expected_shipment_date) return;
+      const key = o.expected_shipment_date.slice(0, 10);
+      (map[key] ??= []).push(o);
+    });
+    return map;
+  }, [orders]);
+
   const deliveriesByDate = useMemo(() => {
     const map: Record<string, DeliveryRow[]> = {};
     deliveries.forEach(d => {
@@ -117,29 +129,31 @@ export default function OrdersCalendar() {
 
   const cellData = useMemo(() => {
     const map: Record<string, DayCellData> = {};
-    const allKeys = new Set([...Object.keys(ordersByDate), ...Object.keys(deliveriesByDate)]);
+    const allKeys = new Set([...Object.keys(ordersByDate), ...Object.keys(deliveriesByDate), ...Object.keys(shipmentsByDate)]);
     allKeys.forEach(key => {
       map[key] = {
         orders: ordersByDate[key]?.length ?? 0,
         deliveries: deliveriesByDate[key]?.length ?? 0,
+        shipments: shipmentsByDate[key]?.length ?? 0,
       };
     });
     return map;
-  }, [ordersByDate, deliveriesByDate]);
+  }, [ordersByDate, deliveriesByDate, shipmentsByDate]);
 
   // Weekly summary
   const weekSummary = useMemo(() => {
     if (view !== 'month') return [];
-    const weeks: { weekNum: number; start: Date; end: Date; orders: number; deliveries: number }[] = [];
+    const weeks: { weekNum: number; start: Date; end: Date; orders: number; deliveries: number; shipments: number }[] = [];
     const days = getMonthDays(year, month);
     for (let w = 0; w < 6; w++) {
       const wDays = days.slice(w * 7, w * 7 + 7);
       if (wDays[0].getMonth() !== month && wDays[6].getMonth() !== month) continue;
-      let oCount = 0, dCount = 0;
+      let oCount = 0, dCount = 0, sCount = 0;
       wDays.forEach(d => {
         const key = formatDateKey(d);
         oCount += cellData[key]?.orders ?? 0;
         dCount += cellData[key]?.deliveries ?? 0;
+        sCount += cellData[key]?.shipments ?? 0;
       });
       weeks.push({
         weekNum: getWeekNumber(wDays[3]),
@@ -147,6 +161,7 @@ export default function OrdersCalendar() {
         end: wDays[6],
         orders: oCount,
         deliveries: dCount,
+        shipments: sCount,
       });
     }
     return weeks;
@@ -168,6 +183,7 @@ export default function OrdersCalendar() {
 
   const selectedOrders = selectedDate ? (ordersByDate[selectedDate] ?? []) : [];
   const selectedDeliveries = selectedDate ? (deliveriesByDate[selectedDate] ?? []) : [];
+  const selectedShipments = selectedDate ? (shipmentsByDate[selectedDate] ?? []) : [];
 
   if (loading) {
     return (
@@ -206,6 +222,9 @@ export default function OrdersCalendar() {
               <SelectItem value="orders">
                 <span className="flex items-center gap-2"><ClipboardList className="w-3.5 h-3.5" /> Aufträge</span>
               </SelectItem>
+              <SelectItem value="shipments">
+                <span className="flex items-center gap-2"><Package className="w-3.5 h-3.5" /> Versanddatum</span>
+              </SelectItem>
               <SelectItem value="deliveries">
                 <span className="flex items-center gap-2"><Truck className="w-3.5 h-3.5" /> Auslieferungen</span>
               </SelectItem>
@@ -237,7 +256,7 @@ export default function OrdersCalendar() {
             const isToday = key === today;
             const isSelected = key === selectedDate;
             const isCurrentMonth = day.getMonth() === month;
-            const count = dataMode === 'orders' ? (data?.orders ?? 0) : (data?.deliveries ?? 0);
+            const count = dataMode === 'orders' ? (data?.orders ?? 0) : dataMode === 'shipments' ? (data?.shipments ?? 0) : (data?.deliveries ?? 0);
 
             return (
               <button
@@ -259,9 +278,9 @@ export default function OrdersCalendar() {
                   <div className="mt-1">
                     <span className={`
                       inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md
-                      ${dataMode === 'orders' ? 'bg-primary/15 text-primary' : 'bg-[hsl(var(--success))]/15 text-[hsl(var(--success))]'}
+                      ${dataMode === 'orders' ? 'bg-primary/15 text-primary' : dataMode === 'shipments' ? 'bg-[hsl(var(--warning))]/15 text-[hsl(var(--warning))]' : 'bg-[hsl(var(--success))]/15 text-[hsl(var(--success))]'}
                     `}>
-                      {dataMode === 'orders' ? <ClipboardList className="w-2.5 h-2.5" /> : <Truck className="w-2.5 h-2.5" />}
+                      {dataMode === 'orders' ? <ClipboardList className="w-2.5 h-2.5" /> : dataMode === 'shipments' ? <Package className="w-2.5 h-2.5" /> : <Truck className="w-2.5 h-2.5" />}
                       {count}
                     </span>
                   </div>
@@ -301,7 +320,8 @@ export default function OrdersCalendar() {
                   <th className="text-left px-4 py-2.5 text-muted-foreground font-medium">KW</th>
                   <th className="text-left px-4 py-2.5 text-muted-foreground font-medium">Zeitraum</th>
                   <th className="text-right px-4 py-2.5 text-muted-foreground font-medium">Aufträge erfasst</th>
-                  <th className="text-right px-4 py-2.5 text-muted-foreground font-medium">Auslieferungen geplant</th>
+                   <th className="text-right px-4 py-2.5 text-muted-foreground font-medium">Erw. Versand</th>
+                   <th className="text-right px-4 py-2.5 text-muted-foreground font-medium">Auslieferungen geplant</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -315,6 +335,15 @@ export default function OrdersCalendar() {
                       {w.orders > 0 ? (
                         <span className="inline-flex items-center gap-1 text-primary font-semibold">
                           <ClipboardList className="w-3.5 h-3.5" /> {w.orders}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {w.shipments > 0 ? (
+                        <span className="inline-flex items-center gap-1 text-[hsl(var(--warning))] font-semibold">
+                          <Package className="w-3.5 h-3.5" /> {w.shipments}
                         </span>
                       ) : (
                         <span className="text-muted-foreground">—</span>
@@ -386,7 +415,28 @@ export default function OrdersCalendar() {
                 </div>
               </div>
             )}
-            {selectedOrders.length === 0 && selectedDeliveries.length === 0 && (
+            {/* Shipments on this day */}
+            {selectedShipments.length > 0 && (
+              <div>
+                <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  <Package className="w-3 h-3" /> Erwarteter Versand ({selectedShipments.length})
+                </h4>
+                <div className="divide-y divide-border rounded-lg border border-border">
+                  {selectedShipments.map(o => (
+                    <div key={o.id} className="flex items-center justify-between px-3 py-2.5">
+                      <span className="text-sm font-medium text-foreground">{o.order_number}</span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs text-muted-foreground">
+                          {o.total_amount != null ? Number(o.total_amount).toLocaleString('de-DE', { style: 'currency', currency: o.currency || 'EUR' }) : ''}
+                        </span>
+                        <StatusBadge status={o.order_status || 'offen'} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {selectedOrders.length === 0 && selectedDeliveries.length === 0 && selectedShipments.length === 0 && (
               <div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
                 <Inbox className="w-6 h-6 mb-2 opacity-40" />
                 <p className="text-sm">Keine Einträge an diesem Tag.</p>
