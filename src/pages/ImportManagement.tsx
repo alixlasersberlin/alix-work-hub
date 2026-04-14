@@ -142,6 +142,7 @@ export default function ImportManagement() {
   const [zohoSortColumn, setZohoSortColumn] = useState('date');
   const [zohoSortOrder, setZohoSortOrder] = useState<'ascending' | 'descending'>('descending');
   const [importLimit, setImportLimit] = useState<string>('all');
+  const [importEntity, setImportEntity] = useState<'contacts' | 'salesorders'>('contacts');
 
   function getDateRange(): { date_from?: string; date_to?: string } {
     const today = new Date();
