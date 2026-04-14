@@ -288,6 +288,7 @@ Deno.serve(async (req: Request) => {
     // Process items
     let imported = 0;
     let skipped = 0;
+    let updated = 0;
     let failed = 0;
     const dryRunResults: { type: string; id: string; action: string; name?: string }[] = [];
     const errors: { type: string; id: string; message: string }[] = [];
@@ -298,25 +299,7 @@ Deno.serve(async (req: Request) => {
           const externalId = contact.contact_id?.toString();
           if (!externalId) { skipped++; continue; }
 
-          const { data: existing } = await adminClient
-            .from("customers").select("id")
-            .eq("external_customer_id", externalId)
-            .eq("source_system", sourceSystem)
-            .maybeSingle();
-
-          if (isDryRun) {
-            dryRunResults.push({
-              type: "customer", id: externalId,
-              action: existing ? "skip" : "create",
-              name: contact.company_name || contact.contact_name || undefined,
-            });
-            if (existing) skipped++; else imported++;
-            continue;
-          }
-
-          if (existing) { skipped++; continue; }
-
-          const { error: insertError } = await adminClient.from("customers").insert({
+          const customerPayload = {
             external_customer_id: externalId,
             source_system: sourceSystem,
             company_name: contact.company_name ?? null,
@@ -326,12 +309,51 @@ Deno.serve(async (req: Request) => {
             billing_address: contact.billing_address ?? null,
             shipping_address: contact.shipping_address ?? null,
             raw_data: contact,
-          });
-          if (insertError) {
-            failed++;
-            errors.push({ type: "customer", id: externalId, message: insertError.message });
+          };
+
+          const { data: existing } = await adminClient
+            .from("customers").select("id")
+            .eq("external_customer_id", externalId)
+            .eq("source_system", sourceSystem)
+            .maybeSingle();
+
+          if (isDryRun) {
+            dryRunResults.push({
+              type: "customer", id: externalId,
+              action: existing ? "update" : "create",
+              name: contact.company_name || contact.contact_name || undefined,
+            });
+            if (existing) updated++; else imported++;
+            continue;
+          }
+
+          if (existing) {
+            const { error: updateError } = await adminClient
+              .from("customers")
+              .update({
+                company_name: customerPayload.company_name,
+                contact_name: customerPayload.contact_name,
+                email: customerPayload.email,
+                phone: customerPayload.phone,
+                billing_address: customerPayload.billing_address,
+                shipping_address: customerPayload.shipping_address,
+                raw_data: customerPayload.raw_data,
+              })
+              .eq("id", existing.id);
+            if (updateError) {
+              failed++;
+              errors.push({ type: "customer", id: externalId, message: updateError.message });
+            } else {
+              updated++;
+            }
           } else {
-            imported++;
+            const { error: insertError } = await adminClient.from("customers").insert(customerPayload);
+            if (insertError) {
+              failed++;
+              errors.push({ type: "customer", id: externalId, message: insertError.message });
+            } else {
+              imported++;
+            }
           }
         } catch (err: any) {
           failed++;
@@ -423,6 +445,7 @@ Deno.serve(async (req: Request) => {
       has_more: limit !== null ? false : hasMore,
       items_fetched: items.length,
       imported,
+      updated,
       skipped,
       failed,
       ...(isDryRun && dryRunResults.length > 0 ? { dry_run_results: dryRunResults } : {}),
