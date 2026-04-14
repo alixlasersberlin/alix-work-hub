@@ -3,9 +3,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import {
   Cloud, RefreshCw, Play, Search, Filter, CheckCircle2, XCircle,
-  Clock, AlertTriangle, Database, ArrowUpDown, Inbox, FileText, Loader2
+  Clock, AlertTriangle, Database, ArrowUpDown, Inbox, FileText, Loader2,
+  User, Package, Zap, Eye, ArrowRight, Info
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -16,6 +17,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 
 const IMPORT_SOURCES = [
   { key: 'zoho_eu_1', label: 'Zoho Books EU 1', region: 'EU' },
@@ -46,6 +49,42 @@ interface ImportLog {
   created_at: string;
 }
 
+interface DryRunItem {
+  type: string;
+  id: string;
+  action: string;
+  name?: string;
+}
+
+interface ImportResult {
+  success?: boolean;
+  source_system?: string;
+  mode?: string;
+  is_dry_run?: boolean;
+  imported_customers?: number;
+  imported_orders?: number;
+  failed_imports?: number;
+  skipped_customers?: number;
+  skipped_orders?: number;
+  contact_pages?: number;
+  order_pages?: number;
+  total_contacts_fetched?: number;
+  total_orders_fetched?: number;
+  dry_run_results?: DryRunItem[];
+  errors?: { type: string; id: string; message: string }[];
+  error?: string;
+  message?: string;
+}
+
+interface SingleSyncResult {
+  success?: boolean;
+  error?: string;
+  message?: string;
+  customer?: any;
+  order_number?: string;
+  source_system?: string;
+}
+
 const STATUS_COLORS: Record<string, string> = {
   success: 'bg-[hsl(var(--success))]/15 text-[hsl(var(--success))] border-[hsl(var(--success))]/30',
   pending: 'bg-[hsl(var(--warning))]/15 text-[hsl(var(--warning))] border-[hsl(var(--warning))]/30',
@@ -69,6 +108,20 @@ export default function ImportManagement() {
   const [sourceFilter, setSourceFilter] = useState('all');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [triggerLoading, setTriggerLoading] = useState<string | null>(null);
+
+  // Import result state
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
+
+  // Single sync states
+  const [syncCustomerSource, setSyncCustomerSource] = useState<string>('zoho_eu_1');
+  const [syncCustomerId, setSyncCustomerId] = useState('');
+  const [syncCustomerLoading, setSyncCustomerLoading] = useState(false);
+  const [syncCustomerResult, setSyncCustomerResult] = useState<SingleSyncResult | null>(null);
+
+  const [syncOrderSource, setSyncOrderSource] = useState<string>('zoho_eu_1');
+  const [syncOrderId, setSyncOrderId] = useState('');
+  const [syncOrderLoading, setSyncOrderLoading] = useState(false);
+  const [syncOrderResult, setSyncOrderResult] = useState<SingleSyncResult | null>(null);
 
   useEffect(() => {
     if (canRead) {
@@ -116,19 +169,24 @@ export default function ImportManagement() {
     setLogsLoading(false);
   }
 
-  async function triggerImport(source: string, mode: 'full' | 'dry_run') {
+  async function triggerImport(source: string, mode: 'manual' | 'dry_run') {
     setTriggerLoading(`${source}_${mode}`);
+    setImportResult(null);
     try {
       const { data, error } = await supabase.functions.invoke('start-zoho-import', {
         body: { source_system: source, mode },
       });
       if (error) throw error;
+      setImportResult(data as ImportResult);
       toast({
-        title: mode === 'dry_run' ? 'Testlauf gestartet' : 'Import gestartet',
-        description: `${IMPORT_SOURCES.find(s => s.key === source)?.label} – ${mode === 'dry_run' ? 'Dry Run' : 'Vollimport'} wurde ausgelöst.`,
+        title: mode === 'dry_run' ? 'Dry Run abgeschlossen' : 'Import abgeschlossen',
+        description: `${IMPORT_SOURCES.find(s => s.key === source)?.label} – ${data?.imported_customers ?? 0} Kunden, ${data?.imported_orders ?? 0} Aufträge`,
       });
-      setTimeout(() => { fetchSourceStats(); fetchLogs(); }, 2000);
+      if (mode !== 'dry_run') {
+        setTimeout(() => { fetchSourceStats(); fetchLogs(); }, 2000);
+      }
     } catch (err: any) {
+      setImportResult({ error: err.message || 'Import fehlgeschlagen' });
       toast({
         title: 'Fehler',
         description: err.message || 'Import konnte nicht gestartet werden.',
@@ -136,6 +194,56 @@ export default function ImportManagement() {
       });
     } finally {
       setTriggerLoading(null);
+    }
+  }
+
+  async function syncSingleCustomer() {
+    if (!syncCustomerId.trim()) return;
+    setSyncCustomerLoading(true);
+    setSyncCustomerResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-single-customer', {
+        body: { source_system: syncCustomerSource, external_customer_id: syncCustomerId.trim() },
+      });
+      if (error) throw error;
+      setSyncCustomerResult(data as SingleSyncResult);
+      toast({
+        title: data?.success ? 'Kunde synchronisiert' : 'Fehler',
+        description: data?.success
+          ? `Kunde ${data.customer?.company_name || data.customer?.contact_name || syncCustomerId} erfolgreich synchronisiert.`
+          : (data?.message || 'Unbekannter Fehler'),
+        variant: data?.success ? 'default' : 'destructive',
+      });
+    } catch (err: any) {
+      setSyncCustomerResult({ error: err.message });
+      toast({ title: 'Fehler', description: err.message, variant: 'destructive' });
+    } finally {
+      setSyncCustomerLoading(false);
+    }
+  }
+
+  async function syncSingleOrder() {
+    if (!syncOrderId.trim()) return;
+    setSyncOrderLoading(true);
+    setSyncOrderResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-single-order', {
+        body: { source_system: syncOrderSource, external_order_id: syncOrderId.trim() },
+      });
+      if (error) throw error;
+      setSyncOrderResult(data as SingleSyncResult);
+      toast({
+        title: data?.success ? 'Auftrag synchronisiert' : 'Fehler',
+        description: data?.success
+          ? `Auftrag ${data.order_number || syncOrderId} erfolgreich synchronisiert.`
+          : (data?.message || 'Unbekannter Fehler'),
+        variant: data?.success ? 'default' : 'destructive',
+      });
+    } catch (err: any) {
+      setSyncOrderResult({ error: err.message });
+      toast({ title: 'Fehler', description: err.message, variant: 'destructive' });
+    } finally {
+      setSyncOrderLoading(false);
     }
   }
 
@@ -180,7 +288,7 @@ export default function ImportManagement() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-display font-bold gold-text">Importverwaltung</h1>
-          <p className="text-muted-foreground text-sm mt-1">Zoho Books Verbindungen & Importprotokolle</p>
+          <p className="text-muted-foreground text-sm mt-1">Zoho Books Verbindungen, Importe & Kontrollfunktionen</p>
         </div>
         <Button variant="outline" size="sm" onClick={() => { fetchSourceStats(); fetchLogs(); }}>
           <RefreshCw className="w-4 h-4 mr-2" /> Aktualisieren
@@ -192,6 +300,7 @@ export default function ImportManagement() {
           <TabsTrigger value="overview">Übersicht</TabsTrigger>
           <TabsTrigger value="logs">Import-Protokoll</TabsTrigger>
           {canWrite && <TabsTrigger value="actions">Import-Aktionen</TabsTrigger>}
+          {canWrite && <TabsTrigger value="sync">Einzel-Sync</TabsTrigger>}
         </TabsList>
 
         {/* ============ OVERVIEW TAB ============ */}
@@ -202,9 +311,7 @@ export default function ImportManagement() {
               if (loading || !stats) {
                 return (
                   <Card key={src.key} className="border-border">
-                    <CardHeader className="pb-3">
-                      <Skeleton className="h-5 w-40" />
-                    </CardHeader>
+                    <CardHeader className="pb-3"><Skeleton className="h-5 w-40" /></CardHeader>
                     <CardContent className="space-y-3">
                       <Skeleton className="h-4 w-full" />
                       <Skeleton className="h-4 w-3/4" />
@@ -222,9 +329,7 @@ export default function ImportManagement() {
                         <Cloud className="w-4 h-4 text-primary" />
                         {src.label}
                       </CardTitle>
-                      <Badge variant="outline" className="text-xs">
-                        {src.region}
-                      </Badge>
+                      <Badge variant="outline" className="text-xs">{src.region}</Badge>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-3 text-sm">
@@ -272,7 +377,6 @@ export default function ImportManagement() {
 
         {/* ============ LOGS TAB ============ */}
         <TabsContent value="logs" className="space-y-4">
-          {/* Filters */}
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative flex-1 min-w-[200px] max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -311,7 +415,6 @@ export default function ImportManagement() {
             </Button>
           </div>
 
-          {/* Table */}
           {logsLoading ? (
             <div className="space-y-2">
               {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
@@ -343,9 +446,7 @@ export default function ImportManagement() {
                     <TableRow key={log.id} className="border-border">
                       <TableCell className="text-xs whitespace-nowrap">{formatDate(log.created_at)}</TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="text-xs font-mono">
-                          {log.source_system}
-                        </Badge>
+                        <Badge variant="outline" className="text-xs font-mono">{log.source_system}</Badge>
                       </TableCell>
                       <TableCell className="font-medium">{log.order_number || '–'}</TableCell>
                       <TableCell className="text-xs font-mono text-muted-foreground">{log.external_customer_id || '–'}</TableCell>
@@ -375,9 +476,9 @@ export default function ImportManagement() {
                   <Database className="w-5 h-5 text-primary" />
                   Import starten
                 </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Importe werden über sichere serverseitige Edge Functions ausgeführt. Keine direkte API-Verbindung vom Browser.
-                </p>
+                <CardDescription>
+                  Vollimport schreibt Daten in die produktiven Tabellen. Dry Run prüft nur serverseitig ohne Änderungen.
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -393,9 +494,9 @@ export default function ImportManagement() {
                             size="sm"
                             className="flex-1"
                             disabled={triggerLoading !== null}
-                            onClick={() => triggerImport(src.key, 'full')}
+                            onClick={() => triggerImport(src.key, 'manual')}
                           >
-                            {triggerLoading === `${src.key}_full` ? (
+                            {triggerLoading === `${src.key}_manual` ? (
                               <Loader2 className="w-4 h-4 animate-spin mr-1" />
                             ) : (
                               <Play className="w-4 h-4 mr-1" />
@@ -412,7 +513,7 @@ export default function ImportManagement() {
                             {triggerLoading === `${src.key}_dry_run` ? (
                               <Loader2 className="w-4 h-4 animate-spin mr-1" />
                             ) : (
-                              <Clock className="w-4 h-4 mr-1" />
+                              <Eye className="w-4 h-4 mr-1" />
                             )}
                             Dry Run
                           </Button>
@@ -424,6 +525,142 @@ export default function ImportManagement() {
               </CardContent>
             </Card>
 
+            {/* ============ IMPORT RESULT PANEL ============ */}
+            {importResult && (
+              <Card className={`border-border ${importResult.error ? 'border-destructive/50' : importResult.is_dry_run ? 'border-primary/50' : 'border-[hsl(var(--success))]/50'}`}>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    {importResult.error ? (
+                      <><XCircle className="w-5 h-5 text-destructive" /> Fehler</>
+                    ) : importResult.is_dry_run ? (
+                      <><Eye className="w-5 h-5 text-primary" /> Dry Run Ergebnis</>
+                    ) : (
+                      <><CheckCircle2 className="w-5 h-5 text-[hsl(var(--success))]" /> Import abgeschlossen</>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {importResult.error && !importResult.success ? (
+                    <div className="p-3 bg-destructive/10 rounded-md text-sm text-destructive">
+                      {importResult.error}{importResult.message && `: ${importResult.message}`}
+                    </div>
+                  ) : (
+                    <>
+                      {/* Summary stats */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div className="bg-secondary/50 rounded-md p-3 text-center">
+                          <div className="text-2xl font-bold text-primary">{importResult.total_contacts_fetched ?? 0}</div>
+                          <div className="text-xs text-muted-foreground">Kontakte abgerufen</div>
+                        </div>
+                        <div className="bg-secondary/50 rounded-md p-3 text-center">
+                          <div className="text-2xl font-bold text-primary">{importResult.total_orders_fetched ?? 0}</div>
+                          <div className="text-xs text-muted-foreground">Aufträge abgerufen</div>
+                        </div>
+                        <div className="bg-secondary/50 rounded-md p-3 text-center">
+                          <div className="text-2xl font-bold text-[hsl(var(--success))]">{(importResult.imported_customers ?? 0) + (importResult.imported_orders ?? 0)}</div>
+                          <div className="text-xs text-muted-foreground">{importResult.is_dry_run ? 'Vorgesehen' : 'Importiert'}</div>
+                        </div>
+                        <div className="bg-secondary/50 rounded-md p-3 text-center">
+                          <div className="text-2xl font-bold text-destructive">{importResult.failed_imports ?? 0}</div>
+                          <div className="text-xs text-muted-foreground">Fehler</div>
+                        </div>
+                      </div>
+
+                      {/* Meta info */}
+                      <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Info className="w-3 h-3" /> Quelle: <span className="font-mono text-foreground">{importResult.source_system}</span>
+                        </span>
+                        {importResult.contact_pages != null && (
+                          <span>Kontakt-Seiten: {importResult.contact_pages}</span>
+                        )}
+                        {importResult.order_pages != null && (
+                          <span>Auftrags-Seiten: {importResult.order_pages}</span>
+                        )}
+                        {importResult.is_dry_run && (
+                          <Badge variant="outline" className="text-xs border-primary/30 text-primary">Dry Run – keine Daten geschrieben</Badge>
+                        )}
+                      </div>
+
+                      {/* Dry run detail table */}
+                      {importResult.is_dry_run && importResult.dry_run_results && importResult.dry_run_results.length > 0 && (
+                        <div className="space-y-2">
+                          <h4 className="text-sm font-semibold">Vorschau der Änderungen</h4>
+                          <div className="max-h-[300px] overflow-y-auto rounded-md border border-border">
+                            <Table>
+                              <TableHeader>
+                                <TableRow className="border-border">
+                                  <TableHead className="text-xs">Typ</TableHead>
+                                  <TableHead className="text-xs">ID</TableHead>
+                                  <TableHead className="text-xs">Aktion</TableHead>
+                                  <TableHead className="text-xs">Name</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {importResult.dry_run_results.map((item, idx) => (
+                                  <TableRow key={idx} className="border-border">
+                                    <TableCell>
+                                      <Badge variant="outline" className="text-xs">
+                                        {item.type === 'customer' ? <User className="w-3 h-3 mr-1" /> : <Package className="w-3 h-3 mr-1" />}
+                                        {item.type === 'customer' ? 'Kunde' : 'Auftrag'}
+                                      </Badge>
+                                    </TableCell>
+                                    <TableCell className="font-mono text-xs">{item.id}</TableCell>
+                                    <TableCell>
+                                      <Badge variant="outline" className={item.action === 'create' ? 'border-[hsl(var(--success))]/30 text-[hsl(var(--success))]' : 'border-primary/30 text-primary'}>
+                                        {item.action === 'create' ? 'Neu' : 'Update'}
+                                      </Badge>
+                                    </TableCell>
+                                    <TableCell className="text-xs text-muted-foreground">{item.name || '–'}</TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Errors detail */}
+                      {importResult.errors && importResult.errors.length > 0 && (
+                        <div className="space-y-2">
+                          <h4 className="text-sm font-semibold text-destructive flex items-center gap-1">
+                            <AlertTriangle className="w-4 h-4" /> Fehlerprotokoll
+                          </h4>
+                          <div className="max-h-[200px] overflow-y-auto rounded-md border border-destructive/20">
+                            <Table>
+                              <TableHeader>
+                                <TableRow className="border-border">
+                                  <TableHead className="text-xs">Typ</TableHead>
+                                  <TableHead className="text-xs">ID</TableHead>
+                                  <TableHead className="text-xs">Fehler</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {importResult.errors.map((err, idx) => (
+                                  <TableRow key={idx} className="border-border">
+                                    <TableCell className="text-xs">{err.type === 'customer' ? 'Kunde' : 'Auftrag'}</TableCell>
+                                    <TableCell className="font-mono text-xs">{err.id}</TableCell>
+                                    <TableCell className="text-xs text-destructive">{err.message}</TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  <div className="flex justify-end">
+                    <Button variant="ghost" size="sm" onClick={() => setImportResult(null)}>
+                      Schließen
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Import rules */}
             <Card className="border-border">
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -439,16 +676,174 @@ export default function ImportManagement() {
                   <li>Original-Auftragsnummern bleiben erhalten</li>
                   <li>Dubletten werden anhand der externen IDs vermieden</li>
                   <li>Importe sind <span className="text-foreground font-medium">idempotent</span> – wiederholte Ausführung erzeugt keine Duplikate</li>
+                  <li><span className="text-foreground font-medium">Dry Run</span> prüft die Daten, schreibt aber nicht in die Datenbank</li>
                   <li>Alle Aktionen werden im <span className="text-foreground font-medium">Audit-Log</span> protokolliert</li>
                 </ul>
               </CardContent>
             </Card>
+          </TabsContent>
+        )}
 
+        {/* ============ SINGLE SYNC TAB ============ */}
+        {canWrite && (
+          <TabsContent value="sync" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Single Customer Sync */}
+              <Card className="border-border">
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <User className="w-5 h-5 text-primary" />
+                    Einzelnen Kunden synchronisieren
+                  </CardTitle>
+                  <CardDescription>
+                    Lädt einen einzelnen Kontakt aus Zoho Books nach und erstellt oder aktualisiert den Kunden.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">Quellsystem</Label>
+                    <Select value={syncCustomerSource} onValueChange={setSyncCustomerSource}>
+                      <SelectTrigger className="bg-secondary border-border">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {IMPORT_SOURCES.map(s => (
+                          <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">Externe Kunden-ID (Zoho contact_id)</Label>
+                    <Input
+                      placeholder="z.B. 4600000012345"
+                      value={syncCustomerId}
+                      onChange={e => setSyncCustomerId(e.target.value)}
+                      className="bg-secondary border-border font-mono"
+                    />
+                  </div>
+                  <Button
+                    className="w-full"
+                    disabled={syncCustomerLoading || !syncCustomerId.trim()}
+                    onClick={syncSingleCustomer}
+                  >
+                    {syncCustomerLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : (
+                      <Zap className="w-4 h-4 mr-2" />
+                    )}
+                    Kunden synchronisieren
+                  </Button>
+
+                  {syncCustomerResult && (
+                    <div className={`p-3 rounded-md text-sm ${syncCustomerResult.success ? 'bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]' : 'bg-destructive/10 text-destructive'}`}>
+                      {syncCustomerResult.success ? (
+                        <div className="flex items-start gap-2">
+                          <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />
+                          <div>
+                            <p className="font-medium">Erfolgreich synchronisiert</p>
+                            {syncCustomerResult.customer && (
+                              <p className="text-xs mt-1 opacity-80">
+                                {syncCustomerResult.customer.company_name || syncCustomerResult.customer.contact_name || 'Ohne Name'}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-start gap-2">
+                          <XCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                          <div>
+                            <p className="font-medium">{syncCustomerResult.error || 'Fehler'}</p>
+                            {syncCustomerResult.message && <p className="text-xs mt-1 opacity-80">{syncCustomerResult.message}</p>}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Single Order Sync */}
+              <Card className="border-border">
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Package className="w-5 h-5 text-primary" />
+                    Einzelnen Auftrag synchronisieren
+                  </CardTitle>
+                  <CardDescription>
+                    Lädt einen einzelnen Auftrag aus Zoho Books nach. Der verknüpfte Kunde muss bereits synchronisiert sein.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">Quellsystem</Label>
+                    <Select value={syncOrderSource} onValueChange={setSyncOrderSource}>
+                      <SelectTrigger className="bg-secondary border-border">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {IMPORT_SOURCES.map(s => (
+                          <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">Externe Auftrags-ID (Zoho salesorder_id)</Label>
+                    <Input
+                      placeholder="z.B. 4600000067890"
+                      value={syncOrderId}
+                      onChange={e => setSyncOrderId(e.target.value)}
+                      className="bg-secondary border-border font-mono"
+                    />
+                  </div>
+                  <Button
+                    className="w-full"
+                    disabled={syncOrderLoading || !syncOrderId.trim()}
+                    onClick={syncSingleOrder}
+                  >
+                    {syncOrderLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : (
+                      <Zap className="w-4 h-4 mr-2" />
+                    )}
+                    Auftrag synchronisieren
+                  </Button>
+
+                  {syncOrderResult && (
+                    <div className={`p-3 rounded-md text-sm ${syncOrderResult.success ? 'bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]' : 'bg-destructive/10 text-destructive'}`}>
+                      {syncOrderResult.success ? (
+                        <div className="flex items-start gap-2">
+                          <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />
+                          <div>
+                            <p className="font-medium">Erfolgreich synchronisiert</p>
+                            {syncOrderResult.order_number && (
+                              <p className="text-xs mt-1 opacity-80">Auftragsnr. {syncOrderResult.order_number}</p>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-start gap-2">
+                          <XCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                          <div>
+                            <p className="font-medium">{syncOrderResult.error || 'Fehler'}</p>
+                            {syncOrderResult.message && <p className="text-xs mt-1 opacity-80">{syncOrderResult.message}</p>}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Security note */}
             <Card className="border-border bg-secondary/30">
               <CardContent className="p-4">
                 <p className="text-xs text-muted-foreground flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 text-[hsl(var(--warning))]" />
-                  Edge Functions <span className="font-mono text-foreground">start-zoho-import</span>, <span className="font-mono text-foreground">sync-single-customer</span> und <span className="font-mono text-foreground">sync-single-order</span> müssen serverseitig konfiguriert werden, bevor Importe möglich sind.
+                  Alle Sync-Operationen laufen ausschließlich über sichere Edge Functions. Keine Zoho-API-Zugriffe im Frontend.
+                  Zoho-Secrets müssen serverseitig konfiguriert sein.
                 </p>
               </CardContent>
             </Card>
