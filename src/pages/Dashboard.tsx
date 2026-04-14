@@ -31,6 +31,7 @@ interface ShipmentOrder {
   expected_shipment_date: string | null;
   order_status: string | null;
   billing_address: any;
+  shipping_address: any;
   customers: { company_name: string | null; contact_name: string | null; shipping_address: any } | null;
 }
 
@@ -141,7 +142,7 @@ export default function Dashboard() {
           : [{ count: 0 }, { count: 0 }, { data: [] }];
 
         const shipmentOrdersRes = canSeeOrders
-          ? await supabase.from('orders').select('id, order_number, expected_shipment_date, order_status, billing_address, customers(company_name, contact_name, shipping_address)').not('expected_shipment_date', 'is', null).order('expected_shipment_date', { ascending: true }).limit(10)
+          ? await supabase.from('orders').select('id, order_number, expected_shipment_date, order_status, shipping_address, billing_address, customers(company_name, contact_name, shipping_address)').not('expected_shipment_date', 'is', null).order('expected_shipment_date', { ascending: true }).limit(10)
           : { data: [] };
 
         const [routesRes, routePlansRes] = canSeeRoutes
@@ -243,19 +244,16 @@ export default function Dashboard() {
             ) : (
               <div className="divide-y divide-border">
                 {shipmentOrders.map(order => {
-                  const addr = order.customers?.shipping_address;
-                  const city = addr ? (addr.city || addr.state || '') : '';
                   const name = order.customers?.company_name || order.customers?.contact_name || '—';
-                  const billAddr = order.billing_address;
-                  const billCity = billAddr ? (billAddr.city || billAddr.state || '') : '';
+                  const shipAddr = order.shipping_address || order.customers?.shipping_address;
+                  const shipCity = shipAddr ? (shipAddr.city || shipAddr.state || '') : '';
                   return (
                     <div key={order.id} className="flex items-center justify-between p-4 hover:bg-secondary/30 transition-colors">
                       <div>
                         <p className="text-sm font-medium text-foreground">{name}</p>
                         <p className="text-xs text-muted-foreground mt-0.5">
                           {order.order_number}
-                          {city && <span className="ml-1.5">· {city}</span>}
-                          {billCity && <span className="ml-1.5">· Rechnung: {billCity}</span>}
+                          {shipCity && <span className="ml-1.5">· Lieferung: {shipCity}</span>}
                         </p>
                       </div>
                       <div className="text-right flex flex-col items-end gap-1">
