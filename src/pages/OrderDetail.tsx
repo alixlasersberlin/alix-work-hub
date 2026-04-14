@@ -195,6 +195,67 @@ export default function OrderDetail() {
         </div>
       )}
 
+      {/* Items Tab */}
+      {activeTab === 'items' && (
+        <div className="rounded-xl border border-border bg-card card-glow overflow-hidden">
+          <h2 className="text-base font-display font-bold text-foreground flex items-center gap-2 p-6 pb-4">
+            <Package className="w-4 h-4 text-primary" /> Artikelpositionen
+          </h2>
+          {items.length === 0 ? (
+            <div className="p-8 text-center">
+              <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
+              <p className="text-muted-foreground">Keine Artikel vorhanden.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-t border-border bg-secondary/50">
+                    <th className="text-left px-4 py-3 text-muted-foreground font-medium">Pos.</th>
+                    <th className="text-left px-4 py-3 text-muted-foreground font-medium">Artikel</th>
+                    <th className="text-left px-4 py-3 text-muted-foreground font-medium">SKU</th>
+                    <th className="text-right px-4 py-3 text-muted-foreground font-medium">Menge</th>
+                    <th className="text-left px-4 py-3 text-muted-foreground font-medium">Einheit</th>
+                    <th className="text-right px-4 py-3 text-muted-foreground font-medium">Einzelpreis</th>
+                    <th className="text-right px-4 py-3 text-muted-foreground font-medium">Rabatt</th>
+                    <th className="text-right px-4 py-3 text-muted-foreground font-medium">Steuer</th>
+                    <th className="text-right px-4 py-3 text-muted-foreground font-medium">Betrag</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((item, idx) => (
+                    <tr key={item.id} className="border-t border-border hover:bg-secondary/30 transition-colors">
+                      <td className="px-4 py-3 text-muted-foreground">{item.item_order ?? idx + 1}</td>
+                      <td className="px-4 py-3 text-foreground font-medium">
+                        {item.item_name || '—'}
+                        {item.description && (
+                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{item.description}</p>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">{item.sku || '—'}</td>
+                      <td className="px-4 py-3 text-foreground text-right">{item.quantity != null ? Number(item.quantity).toLocaleString('de-DE') : '—'}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{item.unit || '—'}</td>
+                      <td className="px-4 py-3 text-foreground text-right">{item.rate != null ? Number(item.rate).toLocaleString('de-DE', { style: 'currency', currency: order.currency || 'EUR' }) : '—'}</td>
+                      <td className="px-4 py-3 text-foreground text-right">{item.discount ? Number(item.discount).toLocaleString('de-DE', { style: 'currency', currency: order.currency || 'EUR' }) : '—'}</td>
+                      <td className="px-4 py-3 text-foreground text-right">{item.tax_amount ? Number(item.tax_amount).toLocaleString('de-DE', { style: 'currency', currency: order.currency || 'EUR' }) : '—'}</td>
+                      <td className="px-4 py-3 text-foreground font-medium text-right">{item.amount != null ? Number(item.amount).toLocaleString('de-DE', { style: 'currency', currency: order.currency || 'EUR' }) : '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t-2 border-border bg-secondary/30">
+                    <td colSpan={8} className="px-4 py-3 text-right text-muted-foreground font-medium">Gesamt</td>
+                    <td className="px-4 py-3 text-right text-foreground font-bold">
+                      {order.total_amount != null ? Number(order.total_amount).toLocaleString('de-DE', { style: 'currency', currency: order.currency || 'EUR' }) : '—'}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Notes Tab */}
       {activeTab === 'notes' && (
         <div className="space-y-4">
