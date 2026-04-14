@@ -39,9 +39,10 @@ function drawWatermark(doc: jsPDF) {
   const pageH = doc.internal.pageSize.getHeight();
   doc.saveGraphicsState();
   // @ts-ignore — setGState exists on jsPDF
-  doc.setGState(new (doc as any).GState({ opacity: 0.08 }));
+  // @ts-ignore
+  doc.setGState(new (doc as any).GState({ opacity: 0.15 }));
   doc.setFontSize(54);
-  doc.setTextColor(120, 120, 120);
+  doc.setTextColor(80, 80, 80);
   // draw diagonal watermark text across the page center
   const cx = pageW / 2;
   const cy = pageH / 2;
@@ -87,18 +88,39 @@ export default function InstallmentPlanDialog({ order }: Props) {
     doc.setTextColor(40, 40, 40);
     doc.text('Ratenplan', 14, 22);
 
+    // Customer address
+    const addr = order.shipping_address || order.billing_address;
+    let addrY = 32;
     doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+    if (addr && typeof addr === 'object') {
+      const a = addr as Record<string, any>;
+      const lines = [
+        a.attention || a.name || '',
+        a.street || a.address || a.line1 || '',
+        [a.zip || a.postal_code || '', a.city || ''].filter(Boolean).join(' '),
+        a.state || '',
+        a.country || '',
+      ].filter(Boolean);
+      for (const line of lines) {
+        doc.text(line, 14, addrY);
+        addrY += 5;
+      }
+      addrY += 3;
+    }
+
     doc.setTextColor(100, 100, 100);
-    doc.text(`Auftrag: ${order.order_number}`, 14, 32);
-    doc.text(`Erstellt am: ${fmtDate(new Date())}`, 14, 38);
-    doc.text(`Kaufpreis: ${fmtCurrency(parseFloat(price) || 0)}`, 14, 46);
-    doc.text(`Anzahlung: ${fmtCurrency(parseFloat(downPayment) || 0)}`, 14, 52);
-    doc.text(`Basiswert: ${fmtCurrency(baseAmount)}`, 14, 58);
-    doc.text(`Laufzeit: ${term} Monate`, 14, 64);
-    doc.text(`Monatliche Rate: ${fmtCurrency(monthlyRate)}`, 14, 70);
+    doc.text(`Auftrag: ${order.order_number}`, 14, addrY);
+    doc.text(`Erstellt am: ${fmtDate(new Date())}`, 14, addrY + 6);
+    doc.text(`Kaufpreis: ${fmtCurrency(parseFloat(price) || 0)}`, 14, addrY + 14);
+    doc.text(`Anzahlung: ${fmtCurrency(parseFloat(downPayment) || 0)}`, 14, addrY + 20);
+    doc.text(`Basiswert: ${fmtCurrency(baseAmount)}`, 14, addrY + 26);
+    doc.text(`Laufzeit: ${term} Monate`, 14, addrY + 32);
+    doc.text(`Monatliche Rate: ${fmtCurrency(monthlyRate)}`, 14, addrY + 38);
+    const tableStartY = addrY + 50;
 
     // Table header
-    let y = 82;
+    let y = tableStartY;
     doc.setFontSize(9);
     doc.setTextColor(255, 255, 255);
     doc.setFillColor(30, 30, 30);
