@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import Login from "./pages/Login";
+import SetPassword from "./pages/SetPassword";
 import AccountBlocked from "./pages/AccountBlocked";
 import AccessDenied from "./pages/AccessDenied";
 import AppLayout from "./components/AppLayout";
@@ -23,7 +24,7 @@ import UserManagement from "./pages/UserManagement";
 import ImportManagement from "./pages/ImportManagement";
 import SystemMonitoring from "./pages/SystemMonitoring";
 import NotFound from "./pages/NotFound";
-import { Loader2 } from "lucide-react";
+import { Loader2, ShieldCheck } from "lucide-react";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,25 @@ const FINANCE_ROLES = ['Admin', 'Super Admin', 'Finance'];
 const ADMIN_ROLES = ['Admin', 'Super Admin'];
 const IMPORT_ROLES = ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Read Only Audit'];
 const SYSTEM_ROLES = ['Admin', 'Super Admin', 'Read Only Audit'];
+
+function OtpGate({ children }: { children: React.ReactNode }) {
+  const { isOtpVerified, otpState } = useAuth();
+
+  if (isOtpVerified) return <>{children}</>;
+
+  // Show a waiting screen if OTP is not yet verified but user is logged in
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <div className="text-center animate-fade-in">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-6">
+          <ShieldCheck className="w-8 h-8 text-primary" />
+        </div>
+        <h1 className="text-xl font-display font-bold text-foreground mb-2">OTP-Verifikation erforderlich</h1>
+        <p className="text-sm text-muted-foreground">Bitte schließen Sie die Zwei-Faktor-Authentifizierung ab.</p>
+      </div>
+    </div>
+  );
+}
 
 function ProtectedRoute({ children, requiredRoles }: { children: React.ReactNode; requiredRoles?: string[] }) {
   const { user, roles, loading, blockReason } = useAuth();
@@ -66,7 +86,8 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
-      <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+      <Route path="/passwort-setzen" element={<SetPassword />} />
+      <Route element={<ProtectedRoute><OtpGate><AppLayout /></OtpGate></ProtectedRoute>}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/kunden" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Customers /></ProtectedRoute>} />
         <Route path="/kunden/:id" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><CustomerDetail /></ProtectedRoute>} />
