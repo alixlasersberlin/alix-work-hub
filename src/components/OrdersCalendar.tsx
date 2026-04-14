@@ -349,6 +349,7 @@ export default function OrdersCalendar() {
                         <span className="text-muted-foreground">—</span>
                       )}
                     </td>
+                    <td className="px-4 py-3 text-right">
                       {w.deliveries > 0 ? (
                         <span className="inline-flex items-center gap-1 text-[hsl(var(--success))] font-semibold">
                           <Truck className="w-3.5 h-3.5" /> {w.deliveries}
