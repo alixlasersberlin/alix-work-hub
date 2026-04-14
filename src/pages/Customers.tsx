@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/ui/input';
@@ -6,18 +6,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Search, Building2, ArrowUpDown, Loader2, Inbox } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 
 type SortField = 'company_name' | 'contact_name' | 'created_at';
 type SortDir = 'asc' | 'desc';
+
+const ALPHABET = '#ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+const PAGE_SIZES = [20, 50, 100, 0] as const; // 0 = alle
 
 export default function Customers() {
   const [customers, setCustomers] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [sourceFilter, setSourceFilter] = useState('all');
-  const [sortField, setSortField] = useState<SortField>('created_at');
-  const [sortDir, setSortDir] = useState<SortDir>('desc');
+  const [sortField, setSortField] = useState<SortField>('company_name');
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [letterFilter, setLetterFilter] = useState<string | null>(null);
+  const [pageSize, setPageSize] = useState<number>(50);
+  const [page, setPage] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -28,7 +35,7 @@ export default function Customers() {
         .from('customers')
         .select('*')
         .order(sortField, { ascending: sortDir === 'asc' })
-        .limit(500);
+        .limit(1000);
       if (err) { setError(err.message); }
       setCustomers(data ?? []);
       setLoading(false);
@@ -38,16 +45,50 @@ export default function Customers() {
 
   const sources = [...new Set(customers.map(c => c.source_system).filter(Boolean))];
 
-  const filtered = customers.filter(c => {
-    const q = search.toLowerCase();
-    const matchSearch = !search ||
-      c.company_name?.toLowerCase().includes(q) ||
-      c.contact_name?.toLowerCase().includes(q) ||
-      c.email?.toLowerCase().includes(q) ||
-      c.phone?.includes(q);
-    const matchSource = sourceFilter === 'all' || c.source_system === sourceFilter;
-    return matchSearch && matchSource;
-  });
+  const filtered = useMemo(() => {
+    return customers.filter(c => {
+      const q = search.toLowerCase();
+      const matchSearch = !search ||
+        c.company_name?.toLowerCase().includes(q) ||
+        c.contact_name?.toLowerCase().includes(q) ||
+        c.email?.toLowerCase().includes(q) ||
+        c.phone?.includes(q);
+      const matchSource = sourceFilter === 'all' || c.source_system === sourceFilter;
+
+      let matchLetter = true;
+      if (letterFilter) {
+        const name = (c.company_name || c.contact_name || '').trim();
+        if (letterFilter === '#') {
+          matchLetter = !name || !/^[a-zA-Z]/.test(name);
+        } else {
+          matchLetter = name.toUpperCase().startsWith(letterFilter);
+        }
+      }
+
+      return matchSearch && matchSource && matchLetter;
+    });
+  }, [customers, search, sourceFilter, letterFilter]);
+
+  // Available letters for highlighting
+  const availableLetters = useMemo(() => {
+    const set = new Set<string>();
+    customers.forEach(c => {
+      const name = (c.company_name || c.contact_name || '').trim();
+      if (!name || !/^[a-zA-Z]/.test(name)) {
+        set.add('#');
+      } else {
+        set.add(name[0].toUpperCase());
+      }
+    });
+    return set;
+  }, [customers]);
+
+  // Reset page when filters change
+  useEffect(() => { setPage(0); }, [search, sourceFilter, letterFilter, pageSize]);
+
+  const totalFiltered = filtered.length;
+  const paginated = pageSize === 0 ? filtered : filtered.slice(page * pageSize, (page + 1) * pageSize);
+  const totalPages = pageSize === 0 ? 1 : Math.ceil(totalFiltered / pageSize);
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
@@ -73,9 +114,10 @@ export default function Customers() {
           <Building2 className="w-6 h-6 text-primary" />
           Kunden
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">{filtered.length} Kunden</p>
+        <p className="text-sm text-muted-foreground mt-1">{totalFiltered} Kunden</p>
       </div>
 
+      {/* Filters row */}
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -90,6 +132,47 @@ export default function Customers() {
             {sources.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
           </SelectContent>
         </Select>
+        <Select value={String(pageSize)} onValueChange={v => setPageSize(Number(v))}>
+          <SelectTrigger className="w-36 bg-secondary border-border">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {PAGE_SIZES.map(s => (
+              <SelectItem key={s} value={String(s)}>{s === 0 ? 'Alle' : `${s} pro Seite`}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Alphabet bar */}
+      <div className="flex flex-wrap gap-1 mb-4">
+        <Button
+          variant={letterFilter === null ? 'default' : 'ghost'}
+          size="sm"
+          className={cn("h-7 w-7 p-0 text-xs font-medium", letterFilter === null && "gold-gradient text-primary-foreground")}
+          onClick={() => setLetterFilter(null)}
+        >
+          Alle
+        </Button>
+        {ALPHABET.map(letter => {
+          const hasEntries = availableLetters.has(letter);
+          return (
+            <Button
+              key={letter}
+              variant={letterFilter === letter ? 'default' : 'ghost'}
+              size="sm"
+              className={cn(
+                "h-7 w-7 p-0 text-xs font-medium",
+                letterFilter === letter && "gold-gradient text-primary-foreground",
+                !hasEntries && "text-muted-foreground/30 cursor-default"
+              )}
+              onClick={() => hasEntries && setLetterFilter(letter === letterFilter ? null : letter)}
+              disabled={!hasEntries}
+            >
+              {letter}
+            </Button>
+          );
+        })}
       </div>
 
       {error && (
@@ -114,13 +197,13 @@ export default function Customers() {
                 <tr><td colSpan={6} className="px-4 py-12 text-center">
                   <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" />
                 </td></tr>
-              ) : filtered.length === 0 ? (
+              ) : paginated.length === 0 ? (
                 <tr><td colSpan={6} className="px-4 py-12 text-center">
                   <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
                   <p className="text-muted-foreground">Keine Kunden gefunden.</p>
                 </td></tr>
               ) : (
-                filtered.map(c => (
+                paginated.map(c => (
                   <tr
                     key={c.id}
                     className="hover:bg-secondary/30 transition-colors cursor-pointer"
@@ -138,6 +221,23 @@ export default function Customers() {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-secondary/30">
+            <p className="text-xs text-muted-foreground">
+              {page * pageSize + 1}–{Math.min((page + 1) * pageSize, totalFiltered)} von {totalFiltered}
+            </p>
+            <div className="flex gap-1">
+              <Button variant="ghost" size="sm" disabled={page === 0} onClick={() => setPage(p => p - 1)} className="h-7 text-xs">
+                Zurück
+              </Button>
+              <Button variant="ghost" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)} className="h-7 text-xs">
+                Weiter
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
