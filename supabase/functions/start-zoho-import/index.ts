@@ -321,16 +321,22 @@ Deno.serve(async (req: Request) => {
           let contactDetail = contact;
           try {
             const detailUrl = `${zohoConfig.booksApiBaseUrl}/contacts/${externalId}?organization_id=${zohoConfig.organizationId}`;
+            console.log(`Fetching contact detail: ${detailUrl}`);
             const detailRes = await fetch(detailUrl, {
               headers: { Authorization: `Zoho-oauthtoken ${accessToken}` },
             });
+            console.log(`Detail response status: ${detailRes.status}`);
             if (detailRes.ok) {
               const detailJson = await detailRes.json();
               if (detailJson.contact) {
                 contactDetail = detailJson.contact;
+                console.log(`Contact ${externalId} has billing_address: ${JSON.stringify(contactDetail.billing_address ?? null)}`);
+              } else {
+                console.warn(`Detail response for ${externalId} has no contact key. Keys: ${Object.keys(detailJson).join(", ")}`);
               }
             } else {
-              await detailRes.text(); // consume body
+              const errText = await detailRes.text();
+              console.warn(`Detail fetch failed for ${externalId}: ${detailRes.status} - ${errText.substring(0, 200)}`);
             }
           } catch (detailErr: any) {
             console.warn(`Could not fetch detail for contact ${externalId}: ${detailErr?.message}`);
