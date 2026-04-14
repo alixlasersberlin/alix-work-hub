@@ -110,6 +110,7 @@ export default function ImportManagement() {
   const [sourceFilter, setSourceFilter] = useState('all');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [triggerLoading, setTriggerLoading] = useState<string | null>(null);
+  const [importProgress, setImportProgress] = useState<{ page: number; fetched: number; entity: string } | null>(null);
 
   // Date filter state
   type DatePreset = 'this_week' | 'this_month' | 'this_year' | 'custom' | 'all';
@@ -219,6 +220,7 @@ export default function ImportManagement() {
   async function triggerImport(source: string, mode: 'manual' | 'dry_run', entity: 'contacts' | 'salesorders') {
     setTriggerLoading(`${source}_${mode}_${entity}`);
     setImportResult(null);
+    setImportProgress(null);
     const dateRange = getDateRange();
     const filters: Record<string, string> = { ...dateRange };
     if (zohoStatus !== 'all') filters.status_filter = zohoStatus;
@@ -258,6 +260,7 @@ export default function ImportManagement() {
         if (error) throw error;
         if (!data?.success) throw new Error(data?.error || `${entityLabel} konnten nicht geladen werden`);
 
+        const currentFetched = entity === 'contacts' ? totalContactsFetched + (data.items_fetched ?? 0) : totalOrdersFetched + (data.items_fetched ?? 0);
         if (entity === 'contacts') {
           totalContactsFetched += data.items_fetched ?? 0;
           totalImportedCustomers += data.imported ?? 0;
@@ -269,6 +272,7 @@ export default function ImportManagement() {
           totalSkippedOrders += data.skipped ?? 0;
           orderPages = page;
         }
+        setImportProgress({ page, fetched: entity === 'contacts' ? totalContactsFetched : totalOrdersFetched, entity: entityLabel });
         totalFailed += data.failed ?? 0;
         if (data.dry_run_results) allDryRunResults.push(...data.dry_run_results);
         if (data.errors) allErrors.push(...data.errors);
@@ -316,6 +320,7 @@ export default function ImportManagement() {
       });
     } finally {
       setTriggerLoading(null);
+      setImportProgress(null);
     }
   }
 
@@ -905,7 +910,30 @@ export default function ImportManagement() {
               </CardContent>
             </Card>
 
-            {/* ============ IMPORT RESULT PANEL ============ */}
+            {/* ============ IMPORT PROGRESS ============ */}
+            {importProgress && triggerLoading && (
+              <Card className="border-primary/50 bg-primary/5">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <Loader2 className="w-5 h-5 animate-spin text-primary flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-sm font-medium">
+                          {importProgress.entity} werden verarbeitet…
+                        </span>
+                        <span className="text-sm text-muted-foreground tabular-nums">
+                          Seite {importProgress.page} · {importProgress.fetched.toLocaleString('de-DE')} Einträge
+                        </span>
+                      </div>
+                      <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
+                        <div className="bg-primary h-full rounded-full animate-pulse" style={{ width: '100%' }} />
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {importResult && (
               <Card className={`border-border ${importResult.error ? 'border-destructive/50' : importResult.is_dry_run ? 'border-primary/50' : 'border-[hsl(var(--success))]/50'}`}>
                 <CardHeader className="pb-3">
