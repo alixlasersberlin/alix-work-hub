@@ -151,6 +151,7 @@ export default function OrderDetail() {
                 ['Währung', order.currency],
                 ['Bestelldatum', order.order_date ? new Date(order.order_date).toLocaleDateString('de-DE') : '—'],
                 ['Erw. Versanddatum', order.expected_shipment_date ? new Date(order.expected_shipment_date).toLocaleDateString('de-DE') : '—'],
+                ['Vertriebsmitarbeiter', order.salesperson_name],
                 ['Quelle', order.source_system],
                 ['Ext. Auftrags-ID', order.external_order_id],
                 ['Erstellt', new Date(order.created_at).toLocaleString('de-DE')],
