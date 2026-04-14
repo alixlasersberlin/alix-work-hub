@@ -78,6 +78,17 @@ export default function OrderDetail() {
   if (loading) return <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   if (!order) return <div className="p-8 text-center text-muted-foreground">Auftrag nicht gefunden.</div>;
 
+  const formatAddr = (a: any) => {
+    if (!a) return '—';
+    if (typeof a === 'string') return a;
+    const street = a.address || a.street || '';
+    const zip = a.zip || '';
+    const city = a.city || '';
+    const country = a.country || '';
+    const parts = [street, `${zip} ${city}`.trim(), country].filter(Boolean);
+    return parts.length > 0 ? parts.join(', ') : '—';
+  };
+
 
   const tabs = [
     { key: 'overview', label: 'Übersicht', icon: ClipboardList },
