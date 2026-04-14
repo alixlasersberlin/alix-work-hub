@@ -33,7 +33,7 @@ interface ShipmentOrder {
   order_status: string | null;
   billing_address: any;
   shipping_address: any;
-  customers: { company_name: string | null; contact_name: string | null; shipping_address: any } | null;
+  customers: { company_name: string | null; contact_name: string | null; shipping_address: any; billing_address: any } | null;
 }
 
 interface RoutePlan {
