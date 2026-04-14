@@ -78,6 +78,17 @@ export default function OrderDetail() {
   if (loading) return <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   if (!order) return <div className="p-8 text-center text-muted-foreground">Auftrag nicht gefunden.</div>;
 
+  const formatAddr = (a: any) => {
+    if (!a) return '—';
+    if (typeof a === 'string') return a;
+    const street = a.address || a.street || '';
+    const zip = a.zip || '';
+    const city = a.city || '';
+    const country = a.country || '';
+    const parts = [street, `${zip} ${city}`.trim(), country].filter(Boolean);
+    return parts.length > 0 ? parts.join(', ') : '—';
+  };
+
 
   const tabs = [
     { key: 'overview', label: 'Übersicht', icon: ClipboardList },
@@ -152,26 +163,28 @@ export default function OrderDetail() {
               <Building2 className="w-4 h-4 text-primary" /> Kundendaten
             </h2>
             {customer ? (
-              <dl className="space-y-3 text-sm">
-                {[
-                  ['Firma', customer.company_name],
-                  ['Kontakt', customer.contact_name],
-                  ['E-Mail', customer.email],
-                  ['Telefon', customer.phone],
-                ].map(([l, v]) => (
-                  <div key={l as string} className="flex justify-between">
-                    <dt className="text-muted-foreground">{l}</dt>
-                    <dd className="text-foreground font-medium">{(v as string) || '—'}</dd>
-                  </div>
-                ))}
-              </dl>
+              <>
+                <dl className="space-y-3 text-sm">
+                  {[
+                    ['Firma', customer.company_name],
+                    ['Kontakt', customer.contact_name],
+                    ['E-Mail', customer.email],
+                    ['Telefon', customer.phone],
+                    ['Rechnungsadresse', formatAddr(customer.billing_address)],
+                    ['Lieferadresse', formatAddr(customer.shipping_address)],
+                  ].map(([l, v]) => (
+                    <div key={l as string} className="flex justify-between">
+                      <dt className="text-muted-foreground">{l}</dt>
+                      <dd className="text-foreground font-medium text-right max-w-[60%]">{(v as string) || '—'}</dd>
+                    </div>
+                  ))}
+                </dl>
+                <Button variant="ghost" className="mt-4 text-primary text-sm" onClick={() => navigate(`/kunden/${customer.id}`)}>
+                  Kunde anzeigen →
+                </Button>
+              </>
             ) : (
               <p className="text-muted-foreground text-sm">Keine Kundendaten verfügbar.</p>
-            )}
-            {customer && (
-              <Button variant="ghost" className="mt-4 text-primary text-sm" onClick={() => navigate(`/kunden/${customer.id}`)}>
-                Kunde anzeigen →
-              </Button>
             )}
           </div>
         </div>
