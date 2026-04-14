@@ -496,10 +496,10 @@ Deno.serve(async (req: Request) => {
     // Log to audit_logs on first page only
     if (page === 1 && body.job_id) {
       await adminClient.from("audit_logs").insert({
-        user_id: user.id,
+        user_id: isScheduledCall ? null : userId,
         action: isDryRun ? "dry_run_zoho_import" : "start_zoho_import",
         module: "import_management",
-        details: { source_system: sourceSystem, mode, entity, job_id: body.job_id },
+        details: { source_system: sourceSystem, mode, entity, job_id: body.job_id, scheduled: isScheduledCall },
       });
     }
 
