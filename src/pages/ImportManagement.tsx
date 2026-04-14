@@ -910,7 +910,30 @@ export default function ImportManagement() {
               </CardContent>
             </Card>
 
-            {/* ============ IMPORT RESULT PANEL ============ */}
+            {/* ============ IMPORT PROGRESS ============ */}
+            {importProgress && triggerLoading && (
+              <Card className="border-primary/50 bg-primary/5">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <Loader2 className="w-5 h-5 animate-spin text-primary flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-sm font-medium">
+                          {importProgress.entity} werden verarbeitet…
+                        </span>
+                        <span className="text-sm text-muted-foreground tabular-nums">
+                          Seite {importProgress.page} · {importProgress.fetched.toLocaleString('de-DE')} Einträge
+                        </span>
+                      </div>
+                      <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
+                        <div className="bg-primary h-full rounded-full animate-pulse" style={{ width: '100%' }} />
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {importResult && (
               <Card className={`border-border ${importResult.error ? 'border-destructive/50' : importResult.is_dry_run ? 'border-primary/50' : 'border-[hsl(var(--success))]/50'}`}>
                 <CardHeader className="pb-3">
