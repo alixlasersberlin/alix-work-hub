@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
 import InstallmentPlanDialog from '@/components/InstallmentPlanDialog';
+import SepaMandatButton from '@/components/SepaMandatButton';
 
 export default function OrderDetail() {
   const { id } = useParams<{ id: string }>();
@@ -114,6 +115,7 @@ export default function OrderDetail() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <SepaMandatButton order={order} />
           <InstallmentPlanDialog order={order} />
           <StatusBadge status={order.order_status || 'offen'} />
         </div>
