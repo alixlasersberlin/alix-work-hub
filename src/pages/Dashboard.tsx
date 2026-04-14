@@ -246,6 +246,8 @@ export default function Dashboard() {
                   const addr = order.customers?.shipping_address;
                   const city = addr ? (addr.city || addr.state || '') : '';
                   const name = order.customers?.company_name || order.customers?.contact_name || '—';
+                  const billAddr = order.billing_address;
+                  const billCity = billAddr ? (billAddr.city || billAddr.state || '') : '';
                   return (
                     <div key={order.id} className="flex items-center justify-between p-4 hover:bg-secondary/30 transition-colors">
                       <div>
@@ -253,6 +255,7 @@ export default function Dashboard() {
                         <p className="text-xs text-muted-foreground mt-0.5">
                           {order.order_number}
                           {city && <span className="ml-1.5">· {city}</span>}
+                          {billCity && <span className="ml-1.5">· Rechnung: {billCity}</span>}
                         </p>
                       </div>
                       <div className="text-right flex flex-col items-end gap-1">
