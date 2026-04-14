@@ -3,7 +3,7 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
 type ImportPayload = {
   source_system: "zoho_eu_1" | "zoho_eu_2" | "zoho_us_1";
-  mode?: "manual" | "scheduled";
+  mode?: "manual" | "scheduled" | "dry_run";
 };
 
 type ZohoConfig = {
@@ -23,40 +23,21 @@ function jsonResponse(body: Record<string, unknown>, status = 200) {
 }
 
 function getZohoConfig(sourceSystem: string): ZohoConfig | null {
-  if (sourceSystem === "zoho_eu_1") {
-    return {
-      clientId: Deno.env.get("ZOHO_EU_1_CLIENT_ID") ?? "",
-      clientSecret: Deno.env.get("ZOHO_EU_1_CLIENT_SECRET") ?? "",
-      refreshToken: Deno.env.get("ZOHO_EU_1_REFRESH_TOKEN") ?? "",
-      organizationId: Deno.env.get("ZOHO_EU_1_ORGANIZATION_ID") ?? "",
-      accountsBaseUrl: "https://accounts.zoho.eu",
-      booksApiBaseUrl: "https://www.zohoapis.eu/books/v3",
-    };
-  }
-
-  if (sourceSystem === "zoho_eu_2") {
-    return {
-      clientId: Deno.env.get("ZOHO_EU_2_CLIENT_ID") ?? "",
-      clientSecret: Deno.env.get("ZOHO_EU_2_CLIENT_SECRET") ?? "",
-      refreshToken: Deno.env.get("ZOHO_EU_2_REFRESH_TOKEN") ?? "",
-      organizationId: Deno.env.get("ZOHO_EU_2_ORGANIZATION_ID") ?? "",
-      accountsBaseUrl: "https://accounts.zoho.eu",
-      booksApiBaseUrl: "https://www.zohoapis.eu/books/v3",
-    };
-  }
-
-  if (sourceSystem === "zoho_us_1") {
-    return {
-      clientId: Deno.env.get("ZOHO_US_1_CLIENT_ID") ?? "",
-      clientSecret: Deno.env.get("ZOHO_US_1_CLIENT_SECRET") ?? "",
-      refreshToken: Deno.env.get("ZOHO_US_1_REFRESH_TOKEN") ?? "",
-      organizationId: Deno.env.get("ZOHO_US_1_ORGANIZATION_ID") ?? "",
-      accountsBaseUrl: "https://accounts.zoho.com",
-      booksApiBaseUrl: "https://www.zohoapis.com/books/v3",
-    };
-  }
-
-  return null;
+  const configs: Record<string, { prefix: string; accountsBase: string; apiBase: string }> = {
+    zoho_eu_1: { prefix: "ZOHO_EU_1", accountsBase: "https://accounts.zoho.eu", apiBase: "https://www.zohoapis.eu/books/v3" },
+    zoho_eu_2: { prefix: "ZOHO_EU_2", accountsBase: "https://accounts.zoho.eu", apiBase: "https://www.zohoapis.eu/books/v3" },
+    zoho_us_1: { prefix: "ZOHO_US_1", accountsBase: "https://accounts.zoho.com", apiBase: "https://www.zohoapis.com/books/v3" },
+  };
+  const cfg = configs[sourceSystem];
+  if (!cfg) return null;
+  return {
+    clientId: Deno.env.get(`${cfg.prefix}_CLIENT_ID`) ?? "",
+    clientSecret: Deno.env.get(`${cfg.prefix}_CLIENT_SECRET`) ?? "",
+    refreshToken: Deno.env.get(`${cfg.prefix}_REFRESH_TOKEN`) ?? "",
+    organizationId: Deno.env.get(`${cfg.prefix}_ORGANIZATION_ID`) ?? "",
+    accountsBaseUrl: cfg.accountsBase,
+    booksApiBaseUrl: cfg.apiBase,
+  };
 }
 
 async function getZohoAccessToken(config: ZohoConfig): Promise<string> {
@@ -70,54 +51,33 @@ async function getZohoAccessToken(config: ZohoConfig): Promise<string> {
       grant_type: "refresh_token",
     }),
   });
-
   if (!response.ok) {
     const text = await response.text();
     throw new Error(`Failed to refresh Zoho token: ${text}`);
   }
-
   const data = await response.json();
-  if (!data.access_token) {
-    throw new Error("Zoho access token missing");
-  }
-
+  if (!data.access_token) throw new Error("Zoho access token missing");
   return data.access_token;
 }
 
-async function fetchZohoContacts(config: ZohoConfig, accessToken: string) {
-  const response = await fetch(
-    `${config.booksApiBaseUrl}/contacts?organization_id=${config.organizationId}`,
-    {
-      headers: {
-        Authorization: `Zoho-oauthtoken ${accessToken}`,
-      },
+async function fetchAllPages(baseUrl: string, accessToken: string, key: string) {
+  const allItems: any[] = [];
+  let page = 1;
+  let hasMore = true;
+  while (hasMore) {
+    const url = `${baseUrl}&page=${page}&per_page=200`;
+    const res = await fetch(url, { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Zoho API error (${key} page ${page}): ${text}`);
     }
-  );
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`Failed to fetch Zoho contacts: ${text}`);
+    const json = await res.json();
+    const items = json[key] ?? [];
+    allItems.push(...items);
+    hasMore = json.page_context?.has_more_page === true;
+    page++;
   }
-
-  return await response.json();
-}
-
-async function fetchZohoSalesOrders(config: ZohoConfig, accessToken: string) {
-  const response = await fetch(
-    `${config.booksApiBaseUrl}/salesorders?organization_id=${config.organizationId}`,
-    {
-      headers: {
-        Authorization: `Zoho-oauthtoken ${accessToken}`,
-      },
-    }
-  );
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`Failed to fetch Zoho sales orders: ${text}`);
-  }
-
-  return await response.json();
+  return { items: allItems, pages: page - 1 };
 }
 
 Deno.serve(async (req: Request) => {
@@ -138,7 +98,6 @@ Deno.serve(async (req: Request) => {
     if (!supabaseUrl || !anonKey || !serviceRoleKey) {
       return jsonResponse({ error: "Missing server configuration" }, 500);
     }
-
     if (!authHeader) {
       return jsonResponse({ error: "Missing authorization header" }, 401);
     }
@@ -147,42 +106,25 @@ Deno.serve(async (req: Request) => {
       global: { headers: { Authorization: authHeader } },
       auth: { autoRefreshToken: false, persistSession: false },
     });
-
     const adminClient = createClient(supabaseUrl, serviceRoleKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    const {
-      data: { user },
-      error: userError,
-    } = await userClient.auth.getUser();
-
-    if (userError || !user) {
-      return jsonResponse({ error: "Unauthorized" }, 401);
-    }
+    const { data: { user }, error: userError } = await userClient.auth.getUser();
+    if (userError || !user) return jsonResponse({ error: "Unauthorized" }, 401);
 
     const { data: callerRoles, error: callerRolesError } = await adminClient
-      .from("user_roles")
-      .select("roles!inner(name)")
-      .eq("user_id", user.id);
+      .from("user_roles").select("roles!inner(name)").eq("user_id", user.id);
+    if (callerRolesError) return jsonResponse({ error: "Failed to verify caller roles" }, 500);
 
-    if (callerRolesError) {
-      return jsonResponse({ error: "Failed to verify caller roles" }, 500);
-    }
-
-    const roleNames = (callerRoles ?? [])
-      .map((row: any) => row.roles?.name)
-      .filter(Boolean);
-
+    const roleNames = (callerRoles ?? []).map((row: any) => row.roles?.name).filter(Boolean);
     const isAdmin = roleNames.includes("Admin") || roleNames.includes("Super Admin");
-
-    if (!isAdmin) {
-      return jsonResponse({ error: "Forbidden" }, 403);
-    }
+    if (!isAdmin) return jsonResponse({ error: "Forbidden" }, 403);
 
     const body = (await req.json()) as ImportPayload;
     const sourceSystem = body.source_system;
     const mode = body.mode ?? "manual";
+    const isDryRun = mode === "dry_run";
 
     const allowedSources = ["zoho_eu_1", "zoho_eu_2", "zoho_us_1"];
     if (!allowedSources.includes(sourceSystem)) {
@@ -190,28 +132,54 @@ Deno.serve(async (req: Request) => {
     }
 
     const zohoConfig = getZohoConfig(sourceSystem);
-    if (!zohoConfig) {
-      return jsonResponse({ error: "Zoho configuration not found" }, 500);
-    }
+    if (!zohoConfig) return jsonResponse({ error: "Zoho configuration not found" }, 500);
 
     const accessToken = await getZohoAccessToken(zohoConfig);
 
-    const contactsResponse = await fetchZohoContacts(zohoConfig, accessToken);
-    const ordersResponse = await fetchZohoSalesOrders(zohoConfig, accessToken);
+    const contactsResult = await fetchAllPages(
+      `${zohoConfig.booksApiBaseUrl}/contacts?organization_id=${zohoConfig.organizationId}`,
+      accessToken, "contacts"
+    );
+    const ordersResult = await fetchAllPages(
+      `${zohoConfig.booksApiBaseUrl}/salesorders?organization_id=${zohoConfig.organizationId}`,
+      accessToken, "salesorders"
+    );
 
-    const contacts = contactsResponse.contacts ?? [];
-    const salesOrders = ordersResponse.salesorders ?? [];
+    const contacts = contactsResult.items;
+    const salesOrders = ordersResult.items;
 
     let importedCustomers = 0;
     let importedOrders = 0;
     let failedImports = 0;
+    let skippedCustomers = 0;
+    let skippedOrders = 0;
+    const dryRunResults: { type: string; id: string; action: string; name?: string }[] = [];
+    const errors: { type: string; id: string; message: string }[] = [];
 
     const customerMap = new Map<string, string>();
 
     for (const contact of contacts) {
       try {
         const externalCustomerId = contact.contact_id?.toString();
-        if (!externalCustomerId) continue;
+        if (!externalCustomerId) { skippedCustomers++; continue; }
+
+        if (isDryRun) {
+          // Check if customer exists
+          const { data: existing } = await adminClient
+            .from("customers")
+            .select("id")
+            .eq("external_customer_id", externalCustomerId)
+            .eq("source_system", sourceSystem)
+            .maybeSingle();
+          dryRunResults.push({
+            type: "customer",
+            id: externalCustomerId,
+            action: existing ? "update" : "create",
+            name: contact.company_name || contact.contact_name || undefined,
+          });
+          importedCustomers++;
+          continue;
+        }
 
         const customerPayload = {
           external_customer_id: externalCustomerId,
@@ -227,14 +195,13 @@ Deno.serve(async (req: Request) => {
 
         const { data: upsertedCustomer, error: customerError } = await adminClient
           .from("customers")
-          .upsert(customerPayload, {
-            onConflict: "external_customer_id,source_system",
-          })
+          .upsert(customerPayload, { onConflict: "external_customer_id,source_system" })
           .select("id, external_customer_id")
           .single();
 
         if (customerError || !upsertedCustomer) {
           failedImports++;
+          errors.push({ type: "customer", id: externalCustomerId, message: customerError?.message ?? "Upsert failed" });
           await adminClient.from("order_import_logs").insert({
             source_system: sourceSystem,
             external_customer_id: externalCustomerId,
@@ -247,8 +214,9 @@ Deno.serve(async (req: Request) => {
 
         customerMap.set(externalCustomerId, upsertedCustomer.id);
         importedCustomers++;
-      } catch (err) {
+      } catch (err: any) {
         failedImports++;
+        errors.push({ type: "customer", id: contact.contact_id?.toString() ?? "unknown", message: err?.message ?? "Unknown error" });
       }
     }
 
@@ -260,13 +228,31 @@ Deno.serve(async (req: Request) => {
 
         if (!externalOrderId || !orderNumber || !externalCustomerId) {
           failedImports++;
+          skippedOrders++;
+          continue;
+        }
+
+        if (isDryRun) {
+          const { data: existing } = await adminClient
+            .from("orders")
+            .select("id")
+            .eq("order_number", orderNumber)
+            .eq("source_system", sourceSystem)
+            .maybeSingle();
+          dryRunResults.push({
+            type: "order",
+            id: orderNumber,
+            action: existing ? "update" : "create",
+            name: salesOrder.customer_name || undefined,
+          });
+          importedOrders++;
           continue;
         }
 
         const linkedCustomerId = customerMap.get(externalCustomerId);
-
         if (!linkedCustomerId) {
           failedImports++;
+          errors.push({ type: "order", id: orderNumber, message: "Customer missing" });
           await adminClient.from("order_import_logs").insert({
             source_system: sourceSystem,
             external_customer_id: externalCustomerId,
@@ -293,12 +279,11 @@ Deno.serve(async (req: Request) => {
 
         const { error: orderError } = await adminClient
           .from("orders")
-          .upsert(orderPayload, {
-            onConflict: "order_number,source_system",
-          });
+          .upsert(orderPayload, { onConflict: "order_number,source_system" });
 
         if (orderError) {
           failedImports++;
+          errors.push({ type: "order", id: orderNumber, message: orderError.message });
           await adminClient.from("order_import_logs").insert({
             source_system: sourceSystem,
             external_customer_id: externalCustomerId,
@@ -323,19 +308,23 @@ Deno.serve(async (req: Request) => {
         });
       } catch (err: any) {
         failedImports++;
+        errors.push({ type: "order", id: salesOrder.salesorder_number?.toString() ?? "unknown", message: err?.message ?? "Unknown error" });
       }
     }
 
     await adminClient.from("audit_logs").insert({
       user_id: user.id,
-      action: "start_zoho_import",
+      action: isDryRun ? "dry_run_zoho_import" : "start_zoho_import",
       module: "import_management",
       details: {
         source_system: sourceSystem,
         mode,
+        is_dry_run: isDryRun,
         imported_customers: importedCustomers,
         imported_orders: importedOrders,
         failed_imports: failedImports,
+        contact_pages: contactsResult.pages,
+        order_pages: ordersResult.pages,
       },
     });
 
@@ -343,18 +332,21 @@ Deno.serve(async (req: Request) => {
       success: true,
       source_system: sourceSystem,
       mode,
+      is_dry_run: isDryRun,
       imported_customers: importedCustomers,
       imported_orders: importedOrders,
       failed_imports: failedImports,
+      skipped_customers: skippedCustomers,
+      skipped_orders: skippedOrders,
+      contact_pages: contactsResult.pages,
+      order_pages: ordersResult.pages,
+      total_contacts_fetched: contacts.length,
+      total_orders_fetched: salesOrders.length,
+      ...(isDryRun ? { dry_run_results: dryRunResults } : {}),
+      ...(errors.length > 0 ? { errors } : {}),
     });
   } catch (error: any) {
     console.error("start-zoho-import error:", error);
-    return jsonResponse(
-      {
-        error: "Internal server error",
-        message: error?.message ?? null,
-      },
-      500
-    );
+    return jsonResponse({ error: "Internal server error", message: error?.message ?? null }, 500);
   }
 });
