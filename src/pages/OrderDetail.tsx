@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
-  ArrowLeft, ClipboardList, Building2, FileText, History, Loader2, Inbox, Send, Pencil, X, Check, Shield
+  ArrowLeft, ClipboardList, Building2, FileText, History, Loader2, Inbox, Send, Pencil, X, Check, Shield, Package
 } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
 import InstallmentPlanDialog from '@/components/InstallmentPlanDialog';
@@ -23,9 +24,10 @@ export default function OrderDetail() {
   const [order, setOrder] = useState<any>(null);
   const [customer, setCustomer] = useState<any>(null);
   const [notes, setNotes] = useState<any[]>([]);
+  const [items, setItems] = useState<any[]>([]);
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'notes' | 'history' | 'raw'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'items' | 'notes' | 'history' | 'raw'>('overview');
 
   // Note form
   const [newNote, setNewNote] = useState('');
@@ -41,14 +43,16 @@ export default function OrderDetail() {
 
   async function loadAll() {
     setLoading(true);
-    const [oRes, nRes, hRes] = await Promise.all([
+    const [oRes, nRes, hRes, iRes] = await Promise.all([
       supabase.from('orders').select('*, customers(*)').eq('id', id!).maybeSingle(),
       supabase.from('order_notes').select('*').eq('order_id', id!).order('created_at', { ascending: false }),
       supabase.from('order_status_history').select('*').eq('order_id', id!).order('created_at', { ascending: false }),
+      supabase.from('order_items').select('*').eq('order_id', id!).order('item_order', { ascending: true }),
     ]);
     setOrder(oRes.data);
     setCustomer(oRes.data?.customers);
     setNotes(nRes.data ?? []);
+    setItems(iRes.data ?? []);
     setHistory(hRes.data ?? []);
     setLoading(false);
   }
@@ -94,6 +98,7 @@ export default function OrderDetail() {
 
   const tabs = [
     { key: 'overview', label: 'Übersicht', icon: ClipboardList },
+    { key: 'items', label: `Artikel (${items.length})`, icon: Package },
     { key: 'notes', label: `Notizen (${notes.length})`, icon: FileText },
     { key: 'history', label: `Historie (${history.length})`, icon: History },
     ...(isAdmin ? [{ key: 'raw', label: 'Rohdaten', icon: Shield }] : []),
@@ -197,7 +202,62 @@ export default function OrderDetail() {
         </div>
       )}
 
-      {/* Notes Tab */}
+      {/* Items Tab */}
+      {activeTab === 'items' && (
+        <div className="rounded-xl border border-border bg-card p-6 card-glow">
+          <h2 className="text-base font-display font-bold text-foreground flex items-center gap-2 mb-4">
+            <Package className="w-4 h-4 text-primary" /> Artikelpositionen
+          </h2>
+          {items.length === 0 ? (
+            <div className="text-center py-8">
+              <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
+              <p className="text-muted-foreground">Keine Artikel vorhanden.</p>
+            </div>
+          ) : (
+            <div className="overflow-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12">#</TableHead>
+                    <TableHead>Artikel</TableHead>
+                    <TableHead>SKU</TableHead>
+                    <TableHead className="text-right">Menge</TableHead>
+                    <TableHead>Einheit</TableHead>
+                    <TableHead className="text-right">Einzelpreis</TableHead>
+                    <TableHead className="text-right">Rabatt</TableHead>
+                    <TableHead className="text-right">Steuer</TableHead>
+                    <TableHead className="text-right">Betrag</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {items.map((item, idx) => (
+                    <TableRow key={item.id}>
+                      <TableCell className="text-muted-foreground">{idx + 1}</TableCell>
+                      <TableCell>
+                        <div className="font-medium text-foreground">{item.item_name || '—'}</div>
+                        {item.description && <div className="text-xs text-muted-foreground mt-0.5 max-w-xs truncate">{item.description}</div>}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{item.sku || '—'}</TableCell>
+                      <TableCell className="text-right">{item.quantity != null ? Number(item.quantity).toLocaleString('de-DE') : '—'}</TableCell>
+                      <TableCell className="text-muted-foreground">{item.unit || '—'}</TableCell>
+                      <TableCell className="text-right">{item.rate != null ? Number(item.rate).toLocaleString('de-DE', { style: 'currency', currency: order.currency || 'EUR' }) : '—'}</TableCell>
+                      <TableCell className="text-right">{item.discount != null && Number(item.discount) > 0 ? Number(item.discount).toLocaleString('de-DE', { style: 'currency', currency: order.currency || 'EUR' }) : '—'}</TableCell>
+                      <TableCell className="text-right">{item.tax_amount != null && Number(item.tax_amount) > 0 ? Number(item.tax_amount).toLocaleString('de-DE', { style: 'currency', currency: order.currency || 'EUR' }) : '—'}</TableCell>
+                      <TableCell className="text-right font-medium">{item.amount != null ? Number(item.amount).toLocaleString('de-DE', { style: 'currency', currency: order.currency || 'EUR' }) : '—'}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <div className="flex justify-end mt-4 pt-3 border-t border-border">
+                <div className="text-sm font-medium text-foreground">
+                  Gesamt: {items.reduce((s, i) => s + (Number(i.amount) || 0), 0).toLocaleString('de-DE', { style: 'currency', currency: order.currency || 'EUR' })}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {activeTab === 'notes' && (
         <div className="space-y-4">
           {canWrite && (
