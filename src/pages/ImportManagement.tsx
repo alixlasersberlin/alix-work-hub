@@ -69,6 +69,8 @@ interface ImportResult {
   failed_imports?: number;
   skipped_customers?: number;
   skipped_orders?: number;
+  updated_customers?: number;
+  updated_orders?: number;
   contact_pages?: number;
   order_pages?: number;
   total_contacts_fetched?: number;
@@ -243,6 +245,8 @@ export default function ImportManagement() {
     let totalSkippedCustomers = 0;
     let totalImportedOrders = 0;
     let totalSkippedOrders = 0;
+    let totalUpdatedCustomers = 0;
+    let totalUpdatedOrders = 0;
     let totalFailed = 0;
     let contactPages = 0;
     let orderPages = 0;
@@ -304,11 +308,13 @@ export default function ImportManagement() {
           totalContactsFetched += data.items_fetched ?? 0;
           totalImportedCustomers += data.imported ?? 0;
           totalSkippedCustomers += data.skipped ?? 0;
+          totalUpdatedCustomers += data.updated ?? 0;
           contactPages = page;
         } else {
           totalOrdersFetched += data.items_fetched ?? 0;
           totalImportedOrders += data.imported ?? 0;
           totalSkippedOrders += data.skipped ?? 0;
+          totalUpdatedOrders += data.updated ?? 0;
           orderPages = page;
         }
         setImportProgress({ page, fetched: entity === 'contacts' ? totalContactsFetched : totalOrdersFetched, entity: entityLabel });
@@ -331,6 +337,8 @@ export default function ImportManagement() {
         failed_imports: totalFailed,
         skipped_customers: totalSkippedCustomers,
         skipped_orders: totalSkippedOrders,
+        updated_customers: totalUpdatedCustomers,
+        updated_orders: totalUpdatedOrders,
         contact_pages: contactPages,
         order_pages: orderPages,
         total_contacts_fetched: totalContactsFetched,
@@ -341,8 +349,8 @@ export default function ImportManagement() {
 
       setImportResult(result);
       const countLabel = entity === 'contacts'
-        ? `${totalImportedCustomers} Kunden`
-        : `${totalImportedOrders} Aufträge`;
+        ? `${totalImportedCustomers} neu, ${totalUpdatedCustomers} aktualisiert`
+        : `${totalImportedOrders} neu, ${totalUpdatedOrders} aktualisiert`;
       toast({
         title: isDryRun ? 'Dry Run abgeschlossen' : 'Import abgeschlossen',
         description: `${IMPORT_SOURCES.find(s => s.key === source)?.label} – ${countLabel}`,
@@ -1049,7 +1057,7 @@ export default function ImportManagement() {
                   ) : (
                     <>
                       {/* Summary stats */}
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                         <div className="bg-secondary/50 rounded-md p-3 text-center">
                           <div className="text-2xl font-bold text-primary">{importResult.total_contacts_fetched ?? 0}</div>
                           <div className="text-xs text-muted-foreground">Kontakte abgerufen</div>
@@ -1060,7 +1068,11 @@ export default function ImportManagement() {
                         </div>
                         <div className="bg-secondary/50 rounded-md p-3 text-center">
                           <div className="text-2xl font-bold text-[hsl(var(--success))]">{(importResult.imported_customers ?? 0) + (importResult.imported_orders ?? 0)}</div>
-                          <div className="text-xs text-muted-foreground">{importResult.is_dry_run ? 'Vorgesehen' : 'Importiert'}</div>
+                          <div className="text-xs text-muted-foreground">Neu erstellt</div>
+                        </div>
+                        <div className="bg-secondary/50 rounded-md p-3 text-center">
+                          <div className="text-2xl font-bold text-primary">{(importResult.updated_customers ?? 0) + (importResult.updated_orders ?? 0)}</div>
+                          <div className="text-xs text-muted-foreground">Aktualisiert</div>
                         </div>
                         <div className="bg-secondary/50 rounded-md p-3 text-center">
                           <div className="text-2xl font-bold text-destructive">{importResult.failed_imports ?? 0}</div>
