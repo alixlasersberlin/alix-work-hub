@@ -78,7 +78,7 @@ export default function OrdersCalendar() {
   const [view, setView] = useState<ViewMode>('month');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [dataMode, setDataMode] = useState<'orders' | 'deliveries' | 'shipments'>('orders');
+  const [dataMode, setDataMode] = useState<'orders' | 'deliveries' | 'shipments'>('shipments');
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
