@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import {
-  LayoutDashboard, ClipboardList, MapPin, Banknote, Users, LogOut, Shield, Menu, X, ChevronRight
+  LayoutDashboard, ClipboardList, MapPin, Banknote, Users, LogOut, Shield, Menu, X, ChevronRight, Building2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
