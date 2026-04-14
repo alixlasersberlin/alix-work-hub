@@ -900,9 +900,118 @@ export default function ImportManagement() {
               </CardContent>
             </Card>
 
-            {/* Import Limit */}
-            <div className="flex items-center gap-3">
-              <Label className="text-sm text-muted-foreground whitespace-nowrap">Max. Einträge:</Label>
+            {/* Import-Typ & Limit */}
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Label className="text-sm text-muted-foreground whitespace-nowrap">Import-Typ:</Label>
+                <Select value={importEntity} onValueChange={(v) => setImportEntity(v as 'contacts' | 'salesorders')}>
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="contacts">
+                      <span className="flex items-center gap-2">
+                        <User className="w-3.5 h-3.5" /> Kundendaten
+                      </span>
+                    </SelectItem>
+                    <SelectItem value="salesorders">
+                      <span className="flex items-center gap-2">
+                        <Package className="w-3.5 h-3.5" /> Aufträge
+                      </span>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Label className="text-sm text-muted-foreground whitespace-nowrap">Max. Einträge:</Label>
+                <Select value={importLimit} onValueChange={setImportLimit}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Alle</SelectItem>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                    <SelectItem value="200">200</SelectItem>
+                    <SelectItem value="500">500</SelectItem>
+                    <SelectItem value="1000">1.000</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {importLimit !== 'all' && (
+                <span className="text-xs text-muted-foreground">
+                  Es werden max. {importLimit} Einträge pro Import verarbeitet
+                </span>
+              )}
+            </div>
+
+            {/* Unified Import Card */}
+            <Card className="border-border">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  {importEntity === 'contacts' ? (
+                    <User className="w-5 h-5 text-primary" />
+                  ) : (
+                    <Package className="w-5 h-5 text-primary" />
+                  )}
+                  {importEntity === 'contacts' ? 'Kundendaten importieren' : 'Aufträge importieren'}
+                </CardTitle>
+                <CardDescription>
+                  {importEntity === 'contacts'
+                    ? 'Importiert Kontakte aus Zoho Books. Bereits vorhandene Kunden werden aktualisiert oder übersprungen.'
+                    : 'Importiert Verkaufsaufträge aus Zoho Books. Der verknüpfte Kunde muss bereits importiert sein. Dry Run prüft ohne Änderungen.'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {IMPORT_SOURCES.map(src => (
+                    <Card key={src.key} className="border-border bg-secondary/50">
+                      <CardContent className="p-4 space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Cloud className="w-4 h-4 text-primary" />
+                          <span className="font-semibold text-sm">{src.label}</span>
+                          <Badge variant="outline" className="text-[10px] ml-auto">{src.region}</Badge>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            className="flex-1"
+                            disabled={triggerLoading !== null}
+                            onClick={() => triggerImport(src.key, 'manual', importEntity)}
+                          >
+                            {triggerLoading === `${src.key}_manual_${importEntity}` ? (
+                              <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                            ) : (
+                              <Play className="w-4 h-4 mr-1" />
+                            )}
+                            Import
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1"
+                            disabled={triggerLoading !== null}
+                            onClick={() => triggerImport(src.key, 'dry_run', importEntity)}
+                          >
+                            {triggerLoading === `${src.key}_dry_run_${importEntity}` ? (
+                              <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                            ) : (
+                              <Eye className="w-4 h-4 mr-1" />
+                            )}
+                            Dry Run
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
               <Select value={importLimit} onValueChange={setImportLimit}>
                 <SelectTrigger className="w-[140px]">
                   <SelectValue />
