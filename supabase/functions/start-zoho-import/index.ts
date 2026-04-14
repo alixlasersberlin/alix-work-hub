@@ -31,6 +31,13 @@ type ZohoConfig = {
   booksApiBaseUrl: string;
 };
 
+type ManagedImportError = Error & {
+  code?: string;
+  fallback?: boolean;
+  retryAfterSeconds?: number;
+  retryable?: boolean;
+};
+
 function jsonResponse(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -59,6 +66,67 @@ function getZohoConfig(sourceSystem: string): ZohoConfig | null {
 // Simple in-memory token cache (per isolate lifetime)
 const tokenCache: Record<string, { token: string; expiresAt: number }> = {};
 
+const TOKEN_RETRY_DELAYS_MS = [1500, 4000];
+
+function createManagedError(
+  message: string,
+  code: string,
+  options: { fallback?: boolean; retryAfterSeconds?: number; retryable?: boolean } = {},
+): ManagedImportError {
+  const error = new Error(message) as ManagedImportError;
+  error.code = code;
+  error.fallback = options.fallback;
+  error.retryAfterSeconds = options.retryAfterSeconds;
+  error.retryable = options.retryable;
+  return error;
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function parseJsonResponse(text: string): Record<string, unknown> {
+  try {
+    return JSON.parse(text) as Record<string, unknown>;
+  } catch {
+    return { raw: text };
+  }
+}
+
+function isZohoRateLimitPayload(payload: Record<string, unknown>): boolean {
+  const description = String(payload.error_description ?? "").toLowerCase();
+  const error = String(payload.error ?? "").toLowerCase();
+  return (
+    description.includes("too many requests") ||
+    description.includes("try again after some time") ||
+    (error.includes("access denied") && description.length > 0)
+  );
+}
+
+function buildGracefulErrorResponse(error: unknown): Response | null {
+  const managedError = error as ManagedImportError;
+  const message = managedError?.message ?? "Import temporarily unavailable";
+  const normalizedMessage = message.toLowerCase();
+  const isRetryable =
+    managedError?.retryable === true ||
+    managedError?.fallback === true ||
+    managedError?.code === "ZOHO_RATE_LIMIT" ||
+    normalizedMessage.includes("too many requests") ||
+    normalizedMessage.includes("rate limit");
+
+  if (!isRetryable) return null;
+
+  return jsonResponse({
+    success: false,
+    fallback: true,
+    retryable: true,
+    error: "Zoho API-Limit erreicht",
+    message,
+    error_code: managedError?.code ?? "ZOHO_RATE_LIMIT",
+    retry_after_seconds: managedError?.retryAfterSeconds ?? 90,
+  });
+}
+
 async function getZohoAccessToken(config: ZohoConfig): Promise<string> {
   const cacheKey = `${config.clientId}_${config.organizationId}`;
   const cached = tokenCache[cacheKey];
@@ -66,27 +134,51 @@ async function getZohoAccessToken(config: ZohoConfig): Promise<string> {
     return cached.token;
   }
 
-  const response = await fetch(`${config.accountsBaseUrl}/oauth/v2/token`, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      refresh_token: config.refreshToken,
-      client_id: config.clientId,
-      client_secret: config.clientSecret,
-      grant_type: "refresh_token",
-    }),
-  });
-  const data = await response.json();
-  if (!data.access_token) {
-    if (data.error === "invalid_code") {
-      throw new Error("Zoho refresh token is invalid or revoked.");
+  for (let attempt = 0; attempt <= TOKEN_RETRY_DELAYS_MS.length; attempt++) {
+    const response = await fetch(`${config.accountsBaseUrl}/oauth/v2/token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        refresh_token: config.refreshToken,
+        client_id: config.clientId,
+        client_secret: config.clientSecret,
+        grant_type: "refresh_token",
+      }),
+    });
+
+    const responseText = await response.text();
+    const data = parseJsonResponse(responseText);
+
+    if (typeof data.access_token === "string" && data.access_token.length > 0) {
+      tokenCache[cacheKey] = { token: data.access_token, expiresAt: Date.now() + 50 * 60 * 1000 };
+      return data.access_token;
     }
+
+    if (isZohoRateLimitPayload(data)) {
+      if (attempt < TOKEN_RETRY_DELAYS_MS.length) {
+        await sleep(TOKEN_RETRY_DELAYS_MS[attempt]);
+        continue;
+      }
+
+      throw createManagedError(
+        "Zoho blockiert gerade neue Token-Anfragen. Bitte in 1–2 Minuten erneut versuchen.",
+        "ZOHO_RATE_LIMIT",
+        { fallback: true, retryable: true, retryAfterSeconds: 90 },
+      );
+    }
+
+    if (data.error === "invalid_code") {
+      throw createManagedError("Zoho refresh token is invalid or revoked.", "ZOHO_REFRESH_TOKEN_INVALID");
+    }
+
     throw new Error(`Zoho access token missing: ${JSON.stringify(data)}`);
   }
 
-  // Cache for 50 minutes (Zoho tokens last 60 min)
-  tokenCache[cacheKey] = { token: data.access_token, expiresAt: Date.now() + 50 * 60 * 1000 };
-  return data.access_token;
+  throw createManagedError(
+    "Zoho blockiert gerade neue Token-Anfragen. Bitte in 1–2 Minuten erneut versuchen.",
+    "ZOHO_RATE_LIMIT",
+    { fallback: true, retryable: true, retryAfterSeconds: 90 },
+  );
 }
 
 function isValidDate(d: string): boolean {
@@ -339,6 +431,10 @@ Deno.serve(async (req: Request) => {
 
   } catch (error: any) {
     console.error("start-zoho-import error:", error);
+    const gracefulResponse = buildGracefulErrorResponse(error);
+    if (gracefulResponse) {
+      return gracefulResponse;
+    }
     return jsonResponse({ error: error?.message ?? "Internal server error" }, 500);
   }
 });

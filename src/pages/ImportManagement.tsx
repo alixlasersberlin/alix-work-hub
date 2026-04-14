@@ -60,6 +60,7 @@ interface DryRunItem {
 
 interface ImportResult {
   success?: boolean;
+  fallback?: boolean;
   source_system?: string;
   mode?: string;
   is_dry_run?: boolean;
@@ -74,8 +75,11 @@ interface ImportResult {
   total_orders_fetched?: number;
   dry_run_results?: DryRunItem[];
   errors?: { type: string; id: string; message: string }[];
+  error_code?: string;
   error?: string;
   message?: string;
+  retry_after_seconds?: number;
+  retryable?: boolean;
 }
 
 interface SingleSyncResult {
@@ -233,24 +237,23 @@ export default function ImportManagement() {
     const isDryRun = mode === 'dry_run';
     const jobId = `job_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     const entityLabel = entity === 'contacts' ? 'Kundendaten' : 'Aufträge';
+    const allDryRunResults: DryRunItem[] = [];
+    const allErrors: { type: string; id: string; message: string }[] = [];
+    let totalImportedCustomers = 0;
+    let totalSkippedCustomers = 0;
+    let totalImportedOrders = 0;
+    let totalSkippedOrders = 0;
+    let totalFailed = 0;
+    let contactPages = 0;
+    let orderPages = 0;
+    let totalContactsFetched = 0;
+    let totalOrdersFetched = 0;
 
     try {
       toast({
         title: isDryRun ? `Dry Run gestartet (${entityLabel})` : `Import gestartet (${entityLabel})`,
         description: 'Daten werden seitenweise verarbeitet...',
       });
-
-      const allDryRunResults: DryRunItem[] = [];
-      const allErrors: { type: string; id: string; message: string }[] = [];
-      let totalImportedCustomers = 0;
-      let totalSkippedCustomers = 0;
-      let totalImportedOrders = 0;
-      let totalSkippedOrders = 0;
-      let totalFailed = 0;
-      let contactPages = 0;
-      let orderPages = 0;
-      let totalContactsFetched = 0;
-      let totalOrdersFetched = 0;
 
       let page = 1;
       let hasMore = true;
@@ -260,9 +263,43 @@ export default function ImportManagement() {
           body: { source_system: source, mode, entity, page, job_id: jobId, ...(limitNum ? { limit: limitNum } : {}), ...filters },
         });
         if (error) throw error;
+
+        if (data?.fallback || data?.retryable) {
+          const partialResult: ImportResult = {
+            success: false,
+            fallback: data.fallback === true,
+            retryable: data.retryable === true,
+            retry_after_seconds: data.retry_after_seconds,
+            error_code: data.error_code,
+            source_system: source,
+            mode,
+            is_dry_run: isDryRun,
+            imported_customers: totalImportedCustomers,
+            imported_orders: totalImportedOrders,
+            failed_imports: totalFailed,
+            skipped_customers: totalSkippedCustomers,
+            skipped_orders: totalSkippedOrders,
+            contact_pages: contactPages,
+            order_pages: orderPages,
+            total_contacts_fetched: totalContactsFetched,
+            total_orders_fetched: totalOrdersFetched,
+            error: data.error || 'Import vorübergehend nicht verfügbar',
+            message: data.message,
+            ...(isDryRun && allDryRunResults.length > 0 ? { dry_run_results: allDryRunResults } : {}),
+            ...(allErrors.length > 0 ? { errors: allErrors } : {}),
+          };
+
+          setImportResult(partialResult);
+          toast({
+            title: 'Zoho momentan blockiert',
+            description: data.message || 'Bitte in 1–2 Minuten erneut versuchen.',
+            variant: 'destructive',
+          });
+          return;
+        }
+
         if (!data?.success) throw new Error(data?.error || `${entityLabel} konnten nicht geladen werden`);
 
-        const currentFetched = entity === 'contacts' ? totalContactsFetched + (data.items_fetched ?? 0) : totalOrdersFetched + (data.items_fetched ?? 0);
         if (entity === 'contacts') {
           totalContactsFetched += data.items_fetched ?? 0;
           totalImportedCustomers += data.imported ?? 0;
@@ -314,10 +351,37 @@ export default function ImportManagement() {
         setTimeout(() => { fetchSourceStats(); fetchLogs(); }, 2000);
       }
     } catch (err: any) {
-      setImportResult({ error: err.message || 'Import fehlgeschlagen' });
+      const rawMessage = err?.message || 'Import fehlgeschlagen';
+      const isRateLimited = /too many requests|rate limit|access denied/i.test(rawMessage);
+      const errorTitle = isRateLimited ? 'Zoho API-Limit erreicht' : rawMessage;
+      const errorMessage = isRateLimited
+        ? 'Zoho blockiert gerade neue Anfragen. Bitte in 1–2 Minuten erneut versuchen.'
+        : undefined;
+
+      setImportResult({
+        success: false,
+        retryable: isRateLimited,
+        source_system: source,
+        mode,
+        is_dry_run: isDryRun,
+        imported_customers: totalImportedCustomers,
+        imported_orders: totalImportedOrders,
+        failed_imports: totalFailed,
+        skipped_customers: totalSkippedCustomers,
+        skipped_orders: totalSkippedOrders,
+        contact_pages: contactPages,
+        order_pages: orderPages,
+        total_contacts_fetched: totalContactsFetched,
+        total_orders_fetched: totalOrdersFetched,
+        error: errorTitle,
+        message: errorMessage,
+        ...(isDryRun && allDryRunResults.length > 0 ? { dry_run_results: allDryRunResults } : {}),
+        ...(allErrors.length > 0 ? { errors: allErrors } : {}),
+      });
+
       toast({
-        title: 'Fehler',
-        description: err.message || 'Import konnte nicht gestartet werden.',
+        title: isRateLimited ? 'Zoho momentan blockiert' : 'Fehler',
+        description: errorMessage || rawMessage || 'Import konnte nicht gestartet werden.',
         variant: 'destructive',
       });
     } finally {
@@ -960,10 +1024,12 @@ export default function ImportManagement() {
             )}
 
             {importResult && (
-              <Card className={`border-border ${importResult.error ? 'border-destructive/50' : importResult.is_dry_run ? 'border-primary/50' : 'border-[hsl(var(--success))]/50'}`}>
+              <Card className={`border-border ${importResult.retryable ? 'border-[hsl(var(--warning))]/50' : importResult.error ? 'border-destructive/50' : importResult.is_dry_run ? 'border-primary/50' : 'border-[hsl(var(--success))]/50'}`}>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base flex items-center gap-2">
-                    {importResult.error ? (
+                    {importResult.retryable ? (
+                      <><AlertTriangle className="w-5 h-5 text-[hsl(var(--warning))]" /> Vorübergehend blockiert</>
+                    ) : importResult.error ? (
                       <><XCircle className="w-5 h-5 text-destructive" /> Fehler</>
                     ) : importResult.is_dry_run ? (
                       <><Eye className="w-5 h-5 text-primary" /> Dry Run Ergebnis</>
@@ -974,8 +1040,11 @@ export default function ImportManagement() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {importResult.error && !importResult.success ? (
-                    <div className="p-3 bg-destructive/10 rounded-md text-sm text-destructive">
-                      {importResult.error}{importResult.message && `: ${importResult.message}`}
+                    <div className={`p-3 rounded-md text-sm ${importResult.retryable ? 'bg-[hsl(var(--warning))]/10 text-[hsl(var(--warning))]' : 'bg-destructive/10 text-destructive'}`}>
+                      <div>{importResult.error}{importResult.message && `: ${importResult.message}`}</div>
+                      {importResult.retryable && importResult.retry_after_seconds ? (
+                        <div className="mt-1 text-xs opacity-80">Erneut versuchen in ca. {importResult.retry_after_seconds} Sekunden.</div>
+                      ) : null}
                     </div>
                   ) : (
                     <>
