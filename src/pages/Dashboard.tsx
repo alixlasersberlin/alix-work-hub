@@ -265,6 +265,44 @@ export default function Dashboard() {
           </div>
         )}
 
+        {/* Shipment Dates */}
+        {canSeeOrders && (
+          <div className="rounded-xl border border-border bg-card card-glow">
+            <div className="flex items-center gap-2 p-5 border-b border-border">
+              <Package className="w-4 h-4 text-[hsl(var(--warning))]" />
+              <h2 className="font-display font-semibold text-foreground">Lieferdatum</h2>
+            </div>
+            {loading ? (
+              <TableSkeleton />
+            ) : shipmentOrders.length === 0 ? (
+              <EmptyState icon={Package} message="Keine Versanddaten vorhanden." />
+            ) : (
+              <div className="divide-y divide-border">
+                {shipmentOrders.map(order => {
+                  const addr = order.customers?.shipping_address;
+                  const city = addr ? (addr.city || addr.state || '') : '';
+                  const name = order.customers?.company_name || order.customers?.contact_name || '—';
+                  return (
+                    <div key={order.id} className="flex items-center justify-between p-4 hover:bg-secondary/30 transition-colors">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">{name}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {order.order_number}
+                          {city && <span className="ml-1.5">· {city}</span>}
+                        </p>
+                      </div>
+                      <div className="text-right flex flex-col items-end gap-1">
+                        <span className="text-sm font-medium text-foreground">{formatDate(order.expected_shipment_date)}</span>
+                        <StatusBadge status={order.order_status || 'offen'} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Route Plans */}
         {canSeeRoutes && (
           <div className="rounded-xl border border-border bg-card card-glow">
