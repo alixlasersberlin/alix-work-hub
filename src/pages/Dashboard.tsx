@@ -30,6 +30,7 @@ interface ShipmentOrder {
   order_number: string;
   expected_shipment_date: string | null;
   order_status: string | null;
+  billing_address: any;
   customers: { company_name: string | null; contact_name: string | null; shipping_address: any } | null;
 }
 
