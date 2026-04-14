@@ -4,14 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Banknote, ClipboardList, Building2, Loader2, Pencil } from 'lucide-react';
+import { StatusBadge } from '@/components/StatusBadge';
 import { cn } from '@/lib/utils';
-
-const PAYMENT_COLORS: Record<string, string> = {
-  offen: 'bg-primary/10 text-primary',
-  teilweise: 'bg-amber-500/10 text-amber-400',
-  bezahlt: 'bg-emerald-500/10 text-emerald-400',
-  überfällig: 'bg-destructive/10 text-destructive',
-};
 
 export default function FinanceDetail() {
   const { id } = useParams<{ id: string }>();
@@ -55,9 +49,7 @@ export default function FinanceDetail() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <span className={`inline-flex px-3 py-1 rounded-full text-sm font-semibold ${PAYMENT_COLORS[record.payment_status] || 'bg-primary/10 text-primary'}`}>
-            {record.payment_status || 'offen'}
-          </span>
+          <StatusBadge status={record.payment_status || 'offen'} />
           {canWrite && (
             <Button onClick={() => navigate(`/finance/${id}/bearbeiten`)} variant="outline" className="border-border">
               <Pencil className="w-4 h-4 mr-2" /> Bearbeiten

@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   ArrowLeft, ClipboardList, Building2, FileText, History, Loader2, Inbox, Send, Pencil, X, Check, Shield
 } from 'lucide-react';
+import { StatusBadge } from '@/components/StatusBadge';
 
 export default function OrderDetail() {
   const { id } = useParams<{ id: string }>();
@@ -77,18 +78,12 @@ export default function OrderDetail() {
   if (loading) return <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   if (!order) return <div className="p-8 text-center text-muted-foreground">Auftrag nicht gefunden.</div>;
 
-  const statusColor = (s: string) => {
-    if (['abgeschlossen', 'geliefert', 'bezahlt'].includes(s)) return 'bg-emerald-500/10 text-emerald-400';
-    if (['storniert', 'abgelehnt'].includes(s)) return 'bg-destructive/10 text-destructive';
-    if (['in Bearbeitung', 'in_progress'].includes(s)) return 'bg-amber-500/10 text-amber-400';
-    return 'bg-primary/10 text-primary';
-  };
 
   const tabs = [
     { key: 'overview', label: 'Übersicht', icon: ClipboardList },
     { key: 'notes', label: `Notizen (${notes.length})`, icon: FileText },
     { key: 'history', label: `Historie (${history.length})`, icon: History },
-    ...(isAdmin ? [{ key: 'raw', label: 'Raw Data', icon: Shield }] : []),
+    ...(isAdmin ? [{ key: 'raw', label: 'Rohdaten', icon: Shield }] : []),
   ] as const;
 
   return (
@@ -106,9 +101,7 @@ export default function OrderDetail() {
             {' · '}{order.source_system}
           </p>
         </div>
-        <span className={`inline-flex px-3 py-1 rounded-full text-sm font-semibold ${statusColor(order.order_status || 'offen')}`}>
-          {order.order_status || 'offen'}
-        </span>
+        <StatusBadge status={order.order_status || 'offen'} />
       </div>
 
       {/* Tabs */}
@@ -277,7 +270,7 @@ export default function OrderDetail() {
                           <span className="text-muted-foreground">→</span>
                         </>
                       )}
-                      <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${statusColor(h.new_status)}`}>{h.new_status}</span>
+                      <StatusBadge status={h.new_status} />
                     </div>
                     {h.change_note && <p className="text-sm text-muted-foreground mt-1">{h.change_note}</p>}
                     <p className="text-xs text-muted-foreground mt-1">{new Date(h.created_at).toLocaleString('de-DE')}</p>
@@ -293,7 +286,7 @@ export default function OrderDetail() {
       {activeTab === 'raw' && isAdmin && (
         <div className="rounded-xl border border-border bg-card p-6 card-glow">
           <h2 className="text-base font-display font-bold text-foreground flex items-center gap-2 mb-4">
-            <Shield className="w-4 h-4 text-primary" /> Raw Data
+            <Shield className="w-4 h-4 text-primary" /> Rohdaten
           </h2>
           <pre className="text-xs text-muted-foreground bg-secondary rounded-lg p-4 overflow-auto max-h-96 whitespace-pre-wrap">
             {order.raw_data ? JSON.stringify(order.raw_data, null, 2) : 'Keine Rohdaten vorhanden.'}

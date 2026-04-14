@@ -4,15 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, MapPin, ClipboardList, Building2, Loader2, Pencil } from 'lucide-react';
-import { cn } from '@/lib/utils';
-
-const STATUS_COLORS: Record<string, string> = {
-  offen: 'bg-primary/10 text-primary',
-  geplant: 'bg-blue-500/10 text-blue-400',
-  bestätigt: 'bg-amber-500/10 text-amber-400',
-  abgeschlossen: 'bg-emerald-500/10 text-emerald-400',
-  storniert: 'bg-destructive/10 text-destructive',
-};
+import { StatusBadge } from '@/components/StatusBadge';
 
 export default function RoutePlanDetail() {
   const { id } = useParams<{ id: string }>();
@@ -63,7 +55,7 @@ export default function RoutePlanDetail() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <span className={`inline-flex px-3 py-1 rounded-full text-sm font-semibold ${STATUS_COLORS[plan.planning_status] || 'bg-primary/10 text-primary'}`}>{plan.planning_status}</span>
+          <StatusBadge status={plan.planning_status} />
           {canWrite && (
             <Button onClick={() => navigate(`/tourenplanung/${id}/bearbeiten`)} variant="outline" className="border-border">
               <Pencil className="w-4 h-4 mr-2" /> Bearbeiten
