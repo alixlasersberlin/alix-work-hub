@@ -10,6 +10,7 @@ import {
   ArrowLeft, ClipboardList, Building2, FileText, History, Loader2, Inbox, Send, Pencil, X, Check, Shield, Package
 } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
+import InstallmentPlanDialog from '@/components/InstallmentPlanDialog';
 
 export default function OrderDetail() {
   const { id } = useParams<{ id: string }>();
@@ -116,7 +117,10 @@ export default function OrderDetail() {
             {' · '}{order.source_system}
           </p>
         </div>
-        <StatusBadge status={order.order_status || 'offen'} />
+        <div className="flex items-center gap-3">
+          <StatusBadge status={order.order_status || 'offen'} />
+          {user && <InstallmentPlanDialog order={order} customer={customer} userId={user.id} />}
+        </div>
       </div>
 
       {/* Tabs */}
