@@ -274,7 +274,12 @@ export default function Dashboard() {
                 <div className="divide-y divide-border">
                   {filtered.map(order => {
                     const name = order.customers?.company_name || order.customers?.contact_name || '—';
-                    const addr = order.shipping_address || order.customers?.shipping_address || order.billing_address || order.customers?.billing_address;
+                    // Helper: check if address object has meaningful data
+                    const hasAddr = (a: any) => a && (a.address || a.street || a.city || a.zip || a.postal_code);
+                    const addr = (hasAddr(order.shipping_address) ? order.shipping_address : null)
+                      || (hasAddr(order.customers?.shipping_address) ? order.customers?.shipping_address : null)
+                      || (hasAddr(order.billing_address) ? order.billing_address : null)
+                      || (hasAddr(order.customers?.billing_address) ? order.customers?.billing_address : null);
                     const addrStreet = addr?.street || addr?.address || '';
                     const addrZip = addr?.zip || addr?.postal_code || addr?.postcode || '';
                     const addrCity = addr?.city || addr?.state || '';
