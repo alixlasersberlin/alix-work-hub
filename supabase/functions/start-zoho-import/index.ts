@@ -317,16 +317,35 @@ Deno.serve(async (req: Request) => {
           const externalId = contact.contact_id?.toString();
           if (!externalId) { skipped++; continue; }
 
+          // Fetch contact detail to get billing/shipping addresses
+          let contactDetail = contact;
+          try {
+            const detailUrl = `${zohoConfig.booksApiBaseUrl}/contacts/${externalId}?organization_id=${zohoConfig.organizationId}`;
+            const detailRes = await fetch(detailUrl, {
+              headers: { Authorization: `Zoho-oauthtoken ${accessToken}` },
+            });
+            if (detailRes.ok) {
+              const detailJson = await detailRes.json();
+              if (detailJson.contact) {
+                contactDetail = detailJson.contact;
+              }
+            } else {
+              await detailRes.text(); // consume body
+            }
+          } catch (detailErr: any) {
+            console.warn(`Could not fetch detail for contact ${externalId}: ${detailErr?.message}`);
+          }
+
           const customerPayload = {
             external_customer_id: externalId,
             source_system: sourceSystem,
-            company_name: contact.company_name ?? null,
-            contact_name: contact.contact_name ?? null,
-            email: contact.email ?? null,
-            phone: contact.phone ?? null,
-            billing_address: contact.billing_address ?? null,
-            shipping_address: contact.shipping_address ?? null,
-            raw_data: contact,
+            company_name: contactDetail.company_name ?? null,
+            contact_name: contactDetail.contact_name ?? null,
+            email: contactDetail.email ?? null,
+            phone: contactDetail.phone ?? null,
+            billing_address: contactDetail.billing_address ?? null,
+            shipping_address: contactDetail.shipping_address ?? null,
+            raw_data: contactDetail,
           };
 
           const { data: existing } = await adminClient
