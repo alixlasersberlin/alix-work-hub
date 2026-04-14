@@ -791,15 +791,15 @@ export default function ImportManagement() {
               </CardContent>
             </Card>
 
-            {/* Import Sources */}
+            {/* Import Kundendaten */}
             <Card className="border-border">
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <Database className="w-5 h-5 text-primary" />
-                  Import starten
+                  <User className="w-5 h-5 text-primary" />
+                  Kundendaten importieren
                 </CardTitle>
                 <CardDescription>
-                  Vollimport schreibt nur neue Daten. Bereits vorhandene Aufträge und Kunden werden übersprungen. Dry Run prüft ohne Änderungen.
+                  Importiert Kontakte aus Zoho Books. Bereits vorhandene Kunden werden übersprungen.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -816,9 +816,9 @@ export default function ImportManagement() {
                             size="sm"
                             className="flex-1"
                             disabled={triggerLoading !== null}
-                            onClick={() => triggerImport(src.key, 'manual')}
+                            onClick={() => triggerImport(src.key, 'manual', 'contacts')}
                           >
-                            {triggerLoading === `${src.key}_manual` ? (
+                            {triggerLoading === `${src.key}_manual_contacts` ? (
                               <Loader2 className="w-4 h-4 animate-spin mr-1" />
                             ) : (
                               <Play className="w-4 h-4 mr-1" />
@@ -830,9 +830,65 @@ export default function ImportManagement() {
                             variant="outline"
                             className="flex-1"
                             disabled={triggerLoading !== null}
-                            onClick={() => triggerImport(src.key, 'dry_run')}
+                            onClick={() => triggerImport(src.key, 'dry_run', 'contacts')}
                           >
-                            {triggerLoading === `${src.key}_dry_run` ? (
+                            {triggerLoading === `${src.key}_dry_run_contacts` ? (
+                              <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                            ) : (
+                              <Eye className="w-4 h-4 mr-1" />
+                            )}
+                            Dry Run
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Import Aufträge */}
+            <Card className="border-border">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Package className="w-5 h-5 text-primary" />
+                  Aufträge importieren
+                </CardTitle>
+                <CardDescription>
+                  Importiert Verkaufsaufträge aus Zoho Books. Der verknüpfte Kunde muss bereits importiert sein. Dry Run prüft ohne Änderungen.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {IMPORT_SOURCES.map(src => (
+                    <Card key={src.key} className="border-border bg-secondary/50">
+                      <CardContent className="p-4 space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Cloud className="w-4 h-4 text-primary" />
+                          <span className="font-semibold text-sm">{src.label}</span>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            className="flex-1"
+                            disabled={triggerLoading !== null}
+                            onClick={() => triggerImport(src.key, 'manual', 'salesorders')}
+                          >
+                            {triggerLoading === `${src.key}_manual_salesorders` ? (
+                              <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                            ) : (
+                              <Play className="w-4 h-4 mr-1" />
+                            )}
+                            Import
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1"
+                            disabled={triggerLoading !== null}
+                            onClick={() => triggerImport(src.key, 'dry_run', 'salesorders')}
+                          >
+                            {triggerLoading === `${src.key}_dry_run_salesorders` ? (
                               <Loader2 className="w-4 h-4 animate-spin mr-1" />
                             ) : (
                               <Eye className="w-4 h-4 mr-1" />
