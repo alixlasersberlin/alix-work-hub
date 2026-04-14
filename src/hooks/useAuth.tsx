@@ -7,8 +7,14 @@ interface UserProfile {
   full_name: string | null;
   email: string | null;
   account_status: string;
+  invitation_status: string;
   is_active: boolean;
+  password_reset_required: boolean;
+  phone_number: string | null;
+  otp_channel: string;
 }
+
+export type AccountBlockReason = 'inactive' | 'not_accepted' | 'password_reset' | null;
 
 interface AuthContextType {
   user: User | null;
@@ -16,13 +22,23 @@ interface AuthContextType {
   profile: UserProfile | null;
   roles: string[];
   loading: boolean;
+  blockReason: AccountBlockReason;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   hasRole: (role: string) => boolean;
+  hasAnyRole: (roles: string[]) => boolean;
   isAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+function getBlockReason(profile: UserProfile | null): AccountBlockReason {
+  if (!profile) return null;
+  if (profile.account_status !== 'active' || !profile.is_active) return 'inactive';
+  if (profile.invitation_status !== 'accepted') return 'not_accepted';
+  if (profile.password_reset_required) return 'password_reset';
+  return null;
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -65,9 +81,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function fetchProfile(userId: string) {
     const { data } = await supabase
       .from('user_profiles')
-      .select('id, full_name, email, account_status, is_active')
+      .select('id, full_name, email, account_status, invitation_status, is_active, password_reset_required, phone_number, otp_channel')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
     setProfile(data);
   }
 
@@ -98,10 +114,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const hasRole = (role: string) => roles.includes(role);
+  const hasAnyRole = (checkRoles: string[]) => checkRoles.some(r => roles.includes(r));
   const isAdmin = hasRole('Super Admin') || hasRole('Admin');
+  const blockReason = getBlockReason(profile);
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, roles, loading, signIn, signOut, hasRole, isAdmin }}>
+    <AuthContext.Provider value={{ user, session, profile, roles, loading, blockReason, signIn, signOut, hasRole, hasAnyRole, isAdmin }}>
       {children}
     </AuthContext.Provider>
   );
