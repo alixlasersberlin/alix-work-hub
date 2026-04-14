@@ -33,7 +33,7 @@ interface ShipmentOrder {
   order_status: string | null;
   billing_address: any;
   shipping_address: any;
-  customers: { company_name: string | null; contact_name: string | null; shipping_address: any } | null;
+  customers: { company_name: string | null; contact_name: string | null; shipping_address: any; billing_address: any } | null;
 }
 
 interface RoutePlan {
@@ -145,7 +145,7 @@ export default function Dashboard() {
           : [{ count: 0 }, { count: 0 }, { data: [] }];
 
         const shipmentOrdersRes = canSeeOrders
-          ? await supabase.from('orders').select('id, order_number, expected_shipment_date, order_status, shipping_address, billing_address, customers(company_name, contact_name, shipping_address)').not('expected_shipment_date', 'is', null).order('expected_shipment_date', { ascending: true }).limit(100)
+          ? await supabase.from('orders').select('id, order_number, expected_shipment_date, order_status, shipping_address, billing_address, customers(company_name, contact_name, shipping_address, billing_address)').not('expected_shipment_date', 'is', null).order('expected_shipment_date', { ascending: true }).limit(100)
           : { data: [] };
 
         const [routesRes, routePlansRes] = canSeeRoutes
@@ -274,8 +274,11 @@ export default function Dashboard() {
                 <div className="divide-y divide-border">
                   {filtered.map(order => {
                     const name = order.customers?.company_name || order.customers?.contact_name || '—';
-                    const shipAddr = order.shipping_address || order.customers?.shipping_address;
-                    const shipCity = shipAddr ? (shipAddr.city || shipAddr.state || '') : '';
+                    const addr = order.shipping_address || order.customers?.shipping_address || order.billing_address || order.customers?.billing_address;
+                    const addrStreet = addr?.street || addr?.address || '';
+                    const addrZip = addr?.zip || addr?.postal_code || addr?.postcode || '';
+                    const addrCity = addr?.city || addr?.state || '';
+                    const addrLine = [addrStreet, addrZip, addrCity].filter(Boolean).join(', ');
                     return (
                       <div
                         key={order.id}
@@ -286,8 +289,10 @@ export default function Dashboard() {
                           <p className="text-sm font-medium text-foreground">{name}</p>
                           <p className="text-xs text-muted-foreground mt-0.5">
                             {order.order_number}
-                            {shipCity && <span className="ml-1.5">· Lieferung: {shipCity}</span>}
                           </p>
+                          {addrLine && (
+                            <p className="text-xs text-muted-foreground mt-0.5">📍 {addrLine}</p>
+                          )}
                         </div>
                         <div className="text-right flex flex-col items-end gap-1">
                           <span className="text-sm font-medium text-foreground">{formatDate(order.expected_shipment_date)}</span>
