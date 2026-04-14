@@ -24,7 +24,7 @@ import { Separator } from '@/components/ui/separator';
 
 const IMPORT_SOURCES = [
   { key: 'zoho_eu_1', label: 'Alix Deutschland', region: 'EU' },
-  { key: 'zoho_eu_2', label: 'Zoho Books EU 2', region: 'EU' },
+  { key: 'zoho_eu_2', label: 'Alix Austria', region: 'EU' },
   { key: 'zoho_us_1', label: 'Zoho Books USA 1', region: 'US' },
 ] as const;
 
