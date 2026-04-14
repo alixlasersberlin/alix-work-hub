@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ListOrdered, Search, Loader2, Inbox, ArrowUpDown, Package } from 'lucide-react';
+import { ListOrdered, Search, Loader2, Inbox, ArrowUpDown, Package, Car } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
+import { useDrivingTimes } from '@/hooks/useDrivingTimes';
 
 type SortField = 'expected_shipment_date' | 'order_number' | 'total_amount';
 type SortDir = 'asc' | 'desc';
@@ -79,6 +80,7 @@ export default function PriorityList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { drivingTimes, fetchDrivingTimes } = useDrivingTimes();
 
   useEffect(() => {
     async function load() {
@@ -91,11 +93,13 @@ export default function PriorityList() {
         .order(sortField, { ascending: sortDir === 'asc' })
         .limit(500);
       if (err) setError(err.message);
-      setOrders(data ?? []);
+      const loaded = data ?? [];
+      setOrders(loaded);
       setLoading(false);
+      if (loaded.length > 0) fetchDrivingTimes(loaded);
     }
     load();
-  }, [sortField, sortDir]);
+  }, [sortField, sortDir, fetchDrivingTimes]);
 
   const statuses = [...new Set(orders.map(o => o.order_status).filter(Boolean))];
 
@@ -176,16 +180,19 @@ export default function PriorityList() {
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Kunde</th>
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Ort</th>
                 <SortHeader field="total_amount" label="Betrag" />
+                <th className="text-left px-4 py-3 text-muted-foreground font-medium">
+                  <span className="inline-flex items-center gap-1"><Car className="w-3.5 h-3.5" /> Fahrzeit</span>
+                </th>
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {loading ? (
-                <tr><td colSpan={8} className="px-4 py-12 text-center">
+                <tr><td colSpan={10} className="px-4 py-12 text-center">
                   <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" />
                 </td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={8} className="px-4 py-12 text-center">
+                <tr><td colSpan={10} className="px-4 py-12 text-center">
                   <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
                   <p className="text-muted-foreground">Keine Aufträge gefunden.</p>
                 </td></tr>
