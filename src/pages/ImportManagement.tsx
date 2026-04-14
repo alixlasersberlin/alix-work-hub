@@ -255,8 +255,9 @@ export default function ImportManagement() {
       let page = 1;
       let hasMore = true;
       while (hasMore) {
+        const limitNum = importLimit !== 'all' ? parseInt(importLimit, 10) : undefined;
         const { data, error } = await supabase.functions.invoke('start-zoho-import', {
-          body: { source_system: source, mode, entity, page, job_id: jobId, ...filters },
+          body: { source_system: source, mode, entity, page, job_id: jobId, ...(limitNum ? { limit: limitNum } : {}), ...filters },
         });
         if (error) throw error;
         if (!data?.success) throw new Error(data?.error || `${entityLabel} konnten nicht geladen werden`);
