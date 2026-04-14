@@ -140,6 +140,7 @@ Deno.serve(async (req: Request) => {
     const isDryRun = mode === "dry_run";
     const entity = body.entity ?? "contacts"; // "contacts" or "salesorders"
     const page = body.page ?? 1;
+    const limit = body.limit && body.limit > 0 ? body.limit : null; // null = no limit
 
     // Validate
     const allowedSources = ["zoho_eu_1", "zoho_eu_2", "zoho_us_1"];
@@ -184,8 +185,13 @@ Deno.serve(async (req: Request) => {
       throw new Error(`Zoho API error (${apiKey} page ${page}): ${text}`);
     }
     const json = await res.json();
-    const items = json[apiKey] ?? [];
+    let items = json[apiKey] ?? [];
     const hasMore = json.page_context?.has_more_page === true;
+
+    // Apply limit: truncate items if limit is set
+    if (limit !== null && items.length > limit) {
+      items = items.slice(0, limit);
+    }
 
     // Process items
     let imported = 0;
