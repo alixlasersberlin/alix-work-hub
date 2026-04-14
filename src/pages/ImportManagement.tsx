@@ -1014,8 +1014,6 @@ export default function ImportManagement() {
             </Card>
 
 
-                <SelectContent>
-                  <SelectItem value="all">Alle</SelectItem>
                   <SelectItem value="5">5</SelectItem>
                   <SelectItem value="10">10</SelectItem>
                   <SelectItem value="25">25</SelectItem>
