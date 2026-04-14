@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Banknote, ClipboardList, Building2, Loader2, Pencil } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
+import { cn } from '@/lib/utils';
 
 export default function FinanceDetail() {
   const { id } = useParams<{ id: string }>();
