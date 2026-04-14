@@ -125,7 +125,7 @@ Deno.serve(async (req) => {
       await sendSmsTwilio(destination, otp);
     } else {
       // Email channel - log for now (can integrate email service later)
-      console.log(`[OTP-EMAIL] User ${user.id} | OTP: ${otp} | Challenge: ${challenge.id}`);
+      console.log(`[OTP-EMAIL] User ${user.id} | Challenge: ${challenge.id} | Email OTP issued`);
     }
 
     console.log(`[OTP] User ${user.id} | Channel: ${channel} | Challenge: ${challenge.id} | Sent to: ${channel === "sms" ? "***" + destination.slice(-4) : destination.slice(0, 3) + "***"}`);
