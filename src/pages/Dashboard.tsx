@@ -118,6 +118,7 @@ export default function Dashboard() {
   const [shipmentOrders, setShipmentOrders] = useState<ShipmentOrder[]>([]);
   const [routePlans, setRoutePlans] = useState<RoutePlan[]>([]);
   const [financeRecords, setFinanceRecords] = useState<FinanceRecord[]>([]);
+  const [shipmentFilter, setShipmentFilter] = useState<number | null>(14);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
