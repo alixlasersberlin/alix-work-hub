@@ -180,7 +180,10 @@ Deno.serve(async (req: Request) => {
     if (customerName) ordersUrl += `&customer_name=${encodeURIComponent(customerName)}`;
     if (searchText) ordersUrl += `&search_text=${encodeURIComponent(searchText)}`;
     if (sortColumn) ordersUrl += `&sort_column=${encodeURIComponent(sortColumn)}`;
-    if (sortOrder) ordersUrl += `&sort_order=${encodeURIComponent(sortOrder)}`;
+    if (sortOrder) {
+      const zohoSortOrder = sortOrder === "ascending" ? "A" : "D";
+      ordersUrl += `&sort_order=${zohoSortOrder}`;
+    }
 
     const contactsResult = await fetchAllPages(
       `${zohoConfig.booksApiBaseUrl}/contacts?organization_id=${zohoConfig.organizationId}`,
