@@ -220,6 +220,7 @@ export default function ImportManagement() {
   async function triggerImport(source: string, mode: 'manual' | 'dry_run', entity: 'contacts' | 'salesorders') {
     setTriggerLoading(`${source}_${mode}_${entity}`);
     setImportResult(null);
+    setImportProgress(null);
     const dateRange = getDateRange();
     const filters: Record<string, string> = { ...dateRange };
     if (zohoStatus !== 'all') filters.status_filter = zohoStatus;
@@ -259,6 +260,7 @@ export default function ImportManagement() {
         if (error) throw error;
         if (!data?.success) throw new Error(data?.error || `${entityLabel} konnten nicht geladen werden`);
 
+        const currentFetched = entity === 'contacts' ? totalContactsFetched + (data.items_fetched ?? 0) : totalOrdersFetched + (data.items_fetched ?? 0);
         if (entity === 'contacts') {
           totalContactsFetched += data.items_fetched ?? 0;
           totalImportedCustomers += data.imported ?? 0;
@@ -270,6 +272,7 @@ export default function ImportManagement() {
           totalSkippedOrders += data.skipped ?? 0;
           orderPages = page;
         }
+        setImportProgress({ page, fetched: entity === 'contacts' ? totalContactsFetched : totalOrdersFetched, entity: entityLabel });
         totalFailed += data.failed ?? 0;
         if (data.dry_run_results) allDryRunResults.push(...data.dry_run_results);
         if (data.errors) allErrors.push(...data.errors);
@@ -317,6 +320,7 @@ export default function ImportManagement() {
       });
     } finally {
       setTriggerLoading(null);
+      setImportProgress(null);
     }
   }
 
