@@ -43,6 +43,60 @@ async function getAccessToken(config: any): Promise<string> {
   return data.access_token;
 }
 
+async function syncLineItems(adminClient: any, orderId: string, lineItems: any[]) {
+  if (!lineItems || lineItems.length === 0) return;
+
+  for (let i = 0; i < lineItems.length; i++) {
+    const li = lineItems[i];
+    const externalItemId = li.line_item_id?.toString() || li.item_id?.toString() || null;
+
+    const itemPayload = {
+      order_id: orderId,
+      external_item_id: externalItemId,
+      item_name: li.name ?? li.item_name ?? null,
+      description: li.description ?? null,
+      sku: li.sku ?? li.item_code ?? null,
+      quantity: li.quantity ?? 1,
+      rate: li.rate ?? null,
+      amount: li.item_total ?? li.amount ?? null,
+      discount: li.discount_amount ?? li.discount ?? 0,
+      tax_amount: li.tax_amount ?? 0,
+      unit: li.unit ?? null,
+      item_order: li.item_order ?? i,
+      raw_data: li,
+    };
+
+    if (externalItemId) {
+      const { data: existing } = await adminClient
+        .from("order_items")
+        .select("id")
+        .eq("order_id", orderId)
+        .eq("external_item_id", externalItemId)
+        .maybeSingle();
+
+      if (existing) {
+        await adminClient.from("order_items").update(itemPayload).eq("id", existing.id);
+      } else {
+        await adminClient.from("order_items").insert(itemPayload);
+      }
+    } else {
+      await adminClient.from("order_items").insert(itemPayload);
+    }
+  }
+
+  const externalIds = lineItems
+    .map((li: any) => li.line_item_id?.toString() || li.item_id?.toString())
+    .filter(Boolean);
+
+  if (externalIds.length > 0) {
+    await adminClient
+      .from("order_items")
+      .delete()
+      .eq("order_id", orderId)
+      .not("external_item_id", "in", `(${externalIds.join(",")})`);
+  }
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
