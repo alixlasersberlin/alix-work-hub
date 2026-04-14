@@ -226,23 +226,31 @@ Deno.serve(async (req: Request) => {
       return jsonResponse({ error: "Missing authorization header" }, 401);
     }
 
-    // Auth check
-    const userClient = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
+    // Auth check – scheduled calls use service role key directly
     const adminClient = createClient(supabaseUrl, serviceRoleKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    const { data: { user }, error: userError } = await userClient.auth.getUser();
-    if (userError || !user) return jsonResponse({ error: "Unauthorized" }, 401);
+    const isScheduledCall = authHeader === `Bearer ${serviceRoleKey}`;
+    let userId: string | null = null;
 
-    const { data: callerRoles } = await adminClient
-      .from("user_roles").select("roles!inner(name)").eq("user_id", user.id);
-    const roleNames = (callerRoles ?? []).map((row: any) => row.roles?.name).filter(Boolean);
-    const isAdmin = roleNames.includes("Admin") || roleNames.includes("Super Admin");
-    if (!isAdmin) return jsonResponse({ error: "Forbidden" }, 403);
+    if (isScheduledCall) {
+      userId = "system-scheduled";
+    } else {
+      const userClient = createClient(supabaseUrl, anonKey, {
+        global: { headers: { Authorization: authHeader } },
+        auth: { autoRefreshToken: false, persistSession: false },
+      });
+      const { data: { user }, error: userError } = await userClient.auth.getUser();
+      if (userError || !user) return jsonResponse({ error: "Unauthorized" }, 401);
+
+      const { data: callerRoles } = await adminClient
+        .from("user_roles").select("roles!inner(name)").eq("user_id", user.id);
+      const roleNames = (callerRoles ?? []).map((row: any) => row.roles?.name).filter(Boolean);
+      const isAdmin = roleNames.includes("Admin") || roleNames.includes("Super Admin");
+      if (!isAdmin) return jsonResponse({ error: "Forbidden" }, 403);
+      userId = user.id;
+    }
 
     const body = (await req.json()) as ImportPayload;
     const sourceSystem = body.source_system;
