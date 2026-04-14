@@ -55,7 +55,16 @@ function getZohoConfig(sourceSystem: string): ZohoConfig | null {
   };
 }
 
+// Simple in-memory token cache (per isolate lifetime)
+const tokenCache: Record<string, { token: string; expiresAt: number }> = {};
+
 async function getZohoAccessToken(config: ZohoConfig): Promise<string> {
+  const cacheKey = `${config.clientId}_${config.organizationId}`;
+  const cached = tokenCache[cacheKey];
+  if (cached && Date.now() < cached.expiresAt) {
+    return cached.token;
+  }
+
   const response = await fetch(`${config.accountsBaseUrl}/oauth/v2/token`, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -73,6 +82,9 @@ async function getZohoAccessToken(config: ZohoConfig): Promise<string> {
     }
     throw new Error(`Zoho access token missing: ${JSON.stringify(data)}`);
   }
+
+  // Cache for 50 minutes (Zoho tokens last 60 min)
+  tokenCache[cacheKey] = { token: data.access_token, expiresAt: Date.now() + 50 * 60 * 1000 };
   return data.access_token;
 }
 
