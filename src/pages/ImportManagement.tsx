@@ -212,9 +212,10 @@ export default function ImportManagement() {
   async function triggerImport(source: string, mode: 'manual' | 'dry_run') {
     setTriggerLoading(`${source}_${mode}`);
     setImportResult(null);
+    const dateRange = getDateRange();
     try {
       const { data, error } = await supabase.functions.invoke('start-zoho-import', {
-        body: { source_system: source, mode },
+        body: { source_system: source, mode, ...dateRange },
       });
       if (error) throw error;
       setImportResult(data as ImportResult);
