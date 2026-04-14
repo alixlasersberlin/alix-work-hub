@@ -231,6 +231,58 @@ export default function ImportManagement() {
         body: { source_system: source, mode, ...filters },
       });
       if (error) throw error;
+
+      // Background job pattern: poll for result
+      if (data?.status === 'processing' && data?.job_id) {
+        toast({
+          title: 'Import gestartet',
+          description: 'Der Import läuft im Hintergrund. Ergebnis wird automatisch geladen...',
+        });
+
+        const jobId = data.job_id;
+        const pollForResult = async (attempts = 0): Promise<void> => {
+          if (attempts > 60) {
+            setImportResult({ error: 'Zeitüberschreitung – prüfen Sie die Import-Logs.' });
+            setTriggerLoading(null);
+            return;
+          }
+          await new Promise(r => setTimeout(r, 3000));
+          const { data: logs } = await supabase
+            .from('order_import_logs')
+            .select('*')
+            .eq('order_number', jobId)
+            .in('import_status', ['completed', 'failed'])
+            .limit(1);
+
+          if (logs && logs.length > 0) {
+            const log = logs[0];
+            if (log.import_status === 'completed' && log.message) {
+              try {
+                const result = JSON.parse(log.message);
+                setImportResult(result as ImportResult);
+                toast({
+                  title: mode === 'dry_run' ? 'Dry Run abgeschlossen' : 'Import abgeschlossen',
+                  description: `${IMPORT_SOURCES.find(s => s.key === source)?.label} – ${result?.imported_customers ?? 0} Kunden, ${result?.imported_orders ?? 0} Aufträge`,
+                });
+              } catch { setImportResult({ success: true }); }
+            } else {
+              setImportResult({ error: log.message || 'Import fehlgeschlagen' });
+              toast({ title: 'Fehler', description: log.message || 'Import fehlgeschlagen', variant: 'destructive' });
+            }
+            if (mode !== 'dry_run') {
+              setTimeout(() => { fetchSourceStats(); fetchLogs(); }, 2000);
+            }
+            setTriggerLoading(null);
+            return;
+          }
+          return pollForResult(attempts + 1);
+        };
+
+        pollForResult();
+        return;
+      }
+
+      // Fallback for synchronous response
       setImportResult(data as ImportResult);
       toast({
         title: mode === 'dry_run' ? 'Dry Run abgeschlossen' : 'Import abgeschlossen',
