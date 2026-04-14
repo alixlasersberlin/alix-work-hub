@@ -233,9 +233,7 @@ export default function Dashboard() {
                       <p className="text-xs text-muted-foreground mt-0.5">{formatDate(order.order_date)}</p>
                     </div>
                     <div className="text-right flex flex-col items-end gap-1">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusClass(order.order_status)}`}>
-                        {order.order_status || 'offen'}
-                      </span>
+                      <StatusBadge status={order.order_status || 'offen'} />
                       <p className="text-xs text-muted-foreground">
                         {formatCurrency(order.total_amount, order.currency)}
                       </p>
@@ -270,13 +268,9 @@ export default function Dashboard() {
                     </div>
                     <div className="flex items-center gap-2">
                       {route.priority && route.priority !== 'normal' && (
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusClass(route.priority)}`}>
-                          {route.priority}
-                        </span>
+                        <StatusBadge status={route.priority} />
                       )}
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusClass(route.planning_status)}`}>
-                        {route.planning_status}
-                      </span>
+                      <StatusBadge status={route.planning_status} />
                     </div>
                   </div>
                 ))}
@@ -312,14 +306,10 @@ export default function Dashboard() {
                     {financeRecords.map(rec => (
                       <tr key={rec.id} className="hover:bg-secondary/30 transition-colors">
                         <td className="p-4">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusClass(rec.payment_status)}`}>
-                            {rec.payment_status || '—'}
-                          </span>
+                          <StatusBadge status={rec.payment_status || '—'} />
                         </td>
                         <td className="p-4">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusClass(rec.invoice_status)}`}>
-                            {rec.invoice_status || '—'}
-                          </span>
+                          <StatusBadge status={rec.invoice_status || '—'} />
                         </td>
                         <td className="p-4 text-muted-foreground">{formatDate(rec.due_date)}</td>
                         <td className="p-4 text-right text-foreground font-medium">
