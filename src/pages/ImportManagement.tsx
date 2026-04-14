@@ -220,9 +220,15 @@ export default function ImportManagement() {
     setTriggerLoading(`${source}_${mode}`);
     setImportResult(null);
     const dateRange = getDateRange();
+    const filters: Record<string, string> = { ...dateRange };
+    if (zohoStatus !== 'all') filters.status_filter = zohoStatus;
+    if (zohoCustomerName.trim()) filters.customer_name = zohoCustomerName.trim();
+    if (zohoSearchText.trim()) filters.search_text = zohoSearchText.trim();
+    filters.sort_column = zohoSortColumn;
+    filters.sort_order = zohoSortOrder;
     try {
       const { data, error } = await supabase.functions.invoke('start-zoho-import', {
-        body: { source_system: source, mode, ...dateRange },
+        body: { source_system: source, mode, ...filters },
       });
       if (error) throw error;
       setImportResult(data as ImportResult);
