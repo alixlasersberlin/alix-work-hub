@@ -117,6 +117,13 @@ export default function ImportManagement() {
   const [customDateFrom, setCustomDateFrom] = useState<Date | undefined>(undefined);
   const [customDateTo, setCustomDateTo] = useState<Date | undefined>(undefined);
 
+  // Additional Zoho filter state
+  const [zohoStatus, setZohoStatus] = useState('all');
+  const [zohoCustomerName, setZohoCustomerName] = useState('');
+  const [zohoSearchText, setZohoSearchText] = useState('');
+  const [zohoSortColumn, setZohoSortColumn] = useState('date');
+  const [zohoSortOrder, setZohoSortOrder] = useState<'ascending' | 'descending'>('descending');
+
   function getDateRange(): { date_from?: string; date_to?: string } {
     const today = new Date();
     const fmt = (d: Date) => d.toISOString().slice(0, 10);
