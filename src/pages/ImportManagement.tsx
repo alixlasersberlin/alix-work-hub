@@ -110,6 +110,7 @@ export default function ImportManagement() {
   const [sourceFilter, setSourceFilter] = useState('all');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [triggerLoading, setTriggerLoading] = useState<string | null>(null);
+  const [importProgress, setImportProgress] = useState<{ page: number; fetched: number; entity: string } | null>(null);
 
   // Date filter state
   type DatePreset = 'this_week' | 'this_month' | 'this_year' | 'custom' | 'all';
