@@ -13,25 +13,11 @@ import { de } from 'date-fns/locale';
 import {
   Search, Banknote, ArrowUpDown, Loader2, Inbox, Plus, CalendarIcon, AlertTriangle
 } from 'lucide-react';
+import { StatusBadge } from '@/components/StatusBadge';
 
 type SortField = 'due_date' | 'amount_due';
 type SortDir = 'asc' | 'desc';
 
-const PAYMENT_COLORS: Record<string, string> = {
-  offen: 'bg-primary/10 text-primary',
-  teilweise: 'bg-amber-500/10 text-amber-400',
-  bezahlt: 'bg-emerald-500/10 text-emerald-400',
-  überfällig: 'bg-destructive/10 text-destructive',
-  storniert: 'bg-muted text-muted-foreground',
-};
-
-const INVOICE_COLORS: Record<string, string> = {
-  erstellt: 'bg-blue-500/10 text-blue-400',
-  versendet: 'bg-amber-500/10 text-amber-400',
-  bezahlt: 'bg-emerald-500/10 text-emerald-400',
-  storniert: 'bg-destructive/10 text-destructive',
-  offen: 'bg-primary/10 text-primary',
-};
 
 export default function Finance() {
   const { isAdmin, hasRole } = useAuth();
@@ -217,14 +203,10 @@ export default function Finance() {
                       <td className="px-4 py-3 text-right text-foreground">{fmt(r.amount_due, r.currency)}</td>
                       <td className="px-4 py-3 text-right text-foreground">{fmt(r.amount_paid, r.currency)}</td>
                       <td className="px-4 py-3">
-                        <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${PAYMENT_COLORS[r.payment_status] || 'bg-primary/10 text-primary'}`}>
-                          {r.payment_status || 'offen'}
-                        </span>
+                        <StatusBadge status={r.payment_status || 'offen'} />
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${INVOICE_COLORS[r.invoice_status] || 'bg-muted text-muted-foreground'}`}>
-                          {r.invoice_status || '—'}
-                        </span>
+                        <StatusBadge status={r.invoice_status || '—'} />
                       </td>
                     </tr>
                   );
