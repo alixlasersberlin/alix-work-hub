@@ -329,7 +329,22 @@ export default function ImportManagement() {
           totalUpdatedOrders += data.updated ?? 0;
           orderPages = page;
         }
-        setImportProgress({ page, fetched: entity === 'contacts' ? totalContactsFetched : totalOrdersFetched, entity: entityLabel });
+        const currentFetched = entity === 'contacts' ? totalContactsFetched : totalOrdersFetched;
+        const currentImported = entity === 'contacts' ? totalImportedCustomers : totalImportedOrders;
+        const currentUpdated = entity === 'contacts' ? totalUpdatedCustomers : totalUpdatedOrders;
+        const currentSkipped = entity === 'contacts' ? totalSkippedCustomers : totalSkippedOrders;
+        setImportProgress({
+          page,
+          fetched: currentFetched,
+          entity: entityLabel,
+          startedAt: importStartedAt,
+          limitTotal,
+          hasMore: data.has_more === true,
+          imported: currentImported,
+          updated: currentUpdated,
+          skipped: currentSkipped,
+          failed: totalFailed + (data.failed ?? 0),
+        });
         totalFailed += data.failed ?? 0;
         if (data.dry_run_results) allDryRunResults.push(...data.dry_run_results);
         if (data.errors) allErrors.push(...data.errors);
