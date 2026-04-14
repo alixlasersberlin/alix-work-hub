@@ -124,6 +124,7 @@ export default function ImportManagement() {
   const [zohoSearchText, setZohoSearchText] = useState('');
   const [zohoSortColumn, setZohoSortColumn] = useState('date');
   const [zohoSortOrder, setZohoSortOrder] = useState<'ascending' | 'descending'>('descending');
+  const [importLimit, setImportLimit] = useState<string>('all');
 
   function getDateRange(): { date_from?: string; date_to?: string } {
     const today = new Date();
@@ -254,8 +255,9 @@ export default function ImportManagement() {
       let page = 1;
       let hasMore = true;
       while (hasMore) {
+        const limitNum = importLimit !== 'all' ? parseInt(importLimit, 10) : undefined;
         const { data, error } = await supabase.functions.invoke('start-zoho-import', {
-          body: { source_system: source, mode, entity, page, job_id: jobId, ...filters },
+          body: { source_system: source, mode, entity, page, job_id: jobId, ...(limitNum ? { limit: limitNum } : {}), ...filters },
         });
         if (error) throw error;
         if (!data?.success) throw new Error(data?.error || `${entityLabel} konnten nicht geladen werden`);
@@ -798,7 +800,30 @@ export default function ImportManagement() {
               </CardContent>
             </Card>
 
-            {/* Import Kundendaten */}
+            {/* Import Limit */}
+            <div className="flex items-center gap-3">
+              <Label className="text-sm text-muted-foreground whitespace-nowrap">Max. Einträge:</Label>
+              <Select value={importLimit} onValueChange={setImportLimit}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Alle</SelectItem>
+                  <SelectItem value="2">2</SelectItem>
+                  <SelectItem value="5">5</SelectItem>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+              {importLimit !== 'all' && (
+                <span className="text-xs text-muted-foreground">
+                  Es werden max. {importLimit} Einträge pro Import verarbeitet
+                </span>
+              )}
+            </div>
+
             <Card className="border-border">
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
