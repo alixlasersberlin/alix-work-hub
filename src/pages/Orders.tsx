@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, ClipboardList, ArrowUpDown, Loader2, Inbox } from 'lucide-react';
+import { StatusBadge } from '@/components/StatusBadge';
 
 type SortField = 'order_number' | 'order_date' | 'total_amount' | 'created_at';
 type SortDir = 'asc' | 'desc';
@@ -51,12 +52,6 @@ export default function Orders() {
     else { setSortField(field); setSortDir('asc'); }
   };
 
-  const statusColor = (s: string) => {
-    if (['abgeschlossen', 'geliefert', 'bezahlt'].includes(s)) return 'bg-emerald-500/10 text-emerald-400';
-    if (['storniert', 'abgelehnt'].includes(s)) return 'bg-destructive/10 text-destructive';
-    if (['in Bearbeitung', 'in_progress'].includes(s)) return 'bg-amber-500/10 text-amber-400';
-    return 'bg-primary/10 text-primary';
-  };
 
   const SortHeader = ({ field, label }: { field: SortField; label: string }) => (
     <th
@@ -135,9 +130,7 @@ export default function Orders() {
                       {o.total_amount != null ? Number(o.total_amount).toLocaleString('de-DE', { style: 'currency', currency: o.currency || 'EUR' }) : '—'}
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColor(o.order_status || 'offen')}`}>
-                        {o.order_status || 'offen'}
-                      </span>
+                      <StatusBadge status={o.order_status || 'offen'} />
                     </td>
                     <td className="px-4 py-3 text-muted-foreground text-xs">{o.source_system}</td>
                   </tr>

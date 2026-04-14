@@ -11,30 +11,18 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import {
-  Search, MapPin, ArrowUpDown, Loader2, Inbox, Plus, CalendarIcon, List, LayoutGrid, CalendarDays
+  Search, MapPin, ArrowUpDown, Loader2, Inbox, Plus, CalendarIcon, List, CalendarDays
 } from 'lucide-react';
+import { StatusBadge } from '@/components/StatusBadge';
 
 type SortField = 'planned_date' | 'priority';
 type SortDir = 'asc' | 'desc';
 
-const STATUS_COLORS: Record<string, string> = {
-  offen: 'bg-primary/10 text-primary',
-  geplant: 'bg-blue-500/10 text-blue-400',
-  bestätigt: 'bg-amber-500/10 text-amber-400',
-  'in Bearbeitung': 'bg-amber-500/10 text-amber-400',
-  abgeschlossen: 'bg-emerald-500/10 text-emerald-400',
-  storniert: 'bg-destructive/10 text-destructive',
-};
-
 const PRIORITY_COLORS: Record<string, string> = {
   hoch: 'text-destructive',
   normal: 'text-muted-foreground',
-  niedrig: 'text-blue-400',
+  niedrig: 'text-info',
 };
-
-function statusColor(s: string) {
-  return STATUS_COLORS[s] || 'bg-primary/10 text-primary';
-}
 
 export default function RoutePlanning() {
   const { isAdmin, hasRole } = useAuth();
@@ -221,7 +209,7 @@ export default function RoutePlanning() {
                         <span className={cn("text-sm capitalize", PRIORITY_COLORS[p.priority] || 'text-muted-foreground')}>{p.priority || 'normal'}</span>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColor(p.planning_status)}`}>{p.planning_status}</span>
+                        <StatusBadge status={p.planning_status} />
                       </td>
                     </tr>
                   ))
@@ -270,7 +258,7 @@ export default function RoutePlanning() {
                         <p className="text-xs text-muted-foreground">{p.assigned_employee || 'Kein Mitarbeiter'} {p.assigned_team ? `· ${p.assigned_team}` : ''} {p.vehicle_info ? `· ${p.vehicle_info}` : ''}</p>
                       </div>
                       <span className={cn("text-xs capitalize", PRIORITY_COLORS[p.priority] || 'text-muted-foreground')}>{p.priority}</span>
-                      <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColor(p.planning_status)}`}>{p.planning_status}</span>
+                      <StatusBadge status={p.planning_status} />
                     </div>
                   ))}
                 </div>

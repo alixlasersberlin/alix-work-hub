@@ -42,23 +42,7 @@ interface FinanceRecord {
   currency: string | null;
 }
 
-const statusColors: Record<string, string> = {
-  offen: 'bg-warning/15 text-warning',
-  'in Bearbeitung': 'bg-info/15 text-info',
-  abgeschlossen: 'bg-success/15 text-success',
-  storniert: 'bg-destructive/15 text-destructive',
-  geplant: 'bg-primary/15 text-primary',
-  bezahlt: 'bg-success/15 text-success',
-  überfällig: 'bg-destructive/15 text-destructive',
-  normal: 'bg-muted-foreground/15 text-muted-foreground',
-  hoch: 'bg-warning/15 text-warning',
-  dringend: 'bg-destructive/15 text-destructive',
-};
-
-function getStatusClass(status: string | null) {
-  if (!status) return 'bg-muted text-muted-foreground';
-  return statusColors[status.toLowerCase()] || 'bg-primary/15 text-primary';
-}
+import { StatusBadge } from '@/components/StatusBadge';
 
 function formatCurrency(amount: number | null, currency: string | null) {
   if (amount == null) return '—';
@@ -213,7 +197,7 @@ export default function Dashboard() {
       )}
 
       {/* KPI Cards */}
-      <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-${Math.min(kpiCards.length, 5)} gap-4`}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {loading
           ? Array.from({ length: 5 }).map((_, i) => <CardSkeleton key={i} />)
           : kpiCards.map((card, i) => (
@@ -249,9 +233,7 @@ export default function Dashboard() {
                       <p className="text-xs text-muted-foreground mt-0.5">{formatDate(order.order_date)}</p>
                     </div>
                     <div className="text-right flex flex-col items-end gap-1">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusClass(order.order_status)}`}>
-                        {order.order_status || 'offen'}
-                      </span>
+                      <StatusBadge status={order.order_status || 'offen'} />
                       <p className="text-xs text-muted-foreground">
                         {formatCurrency(order.total_amount, order.currency)}
                       </p>
@@ -286,13 +268,9 @@ export default function Dashboard() {
                     </div>
                     <div className="flex items-center gap-2">
                       {route.priority && route.priority !== 'normal' && (
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusClass(route.priority)}`}>
-                          {route.priority}
-                        </span>
+                        <StatusBadge status={route.priority} />
                       )}
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusClass(route.planning_status)}`}>
-                        {route.planning_status}
-                      </span>
+                      <StatusBadge status={route.planning_status} />
                     </div>
                   </div>
                 ))}
@@ -328,14 +306,10 @@ export default function Dashboard() {
                     {financeRecords.map(rec => (
                       <tr key={rec.id} className="hover:bg-secondary/30 transition-colors">
                         <td className="p-4">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusClass(rec.payment_status)}`}>
-                            {rec.payment_status || '—'}
-                          </span>
+                          <StatusBadge status={rec.payment_status || '—'} />
                         </td>
                         <td className="p-4">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusClass(rec.invoice_status)}`}>
-                            {rec.invoice_status || '—'}
-                          </span>
+                          <StatusBadge status={rec.invoice_status || '—'} />
                         </td>
                         <td className="p-4 text-muted-foreground">{formatDate(rec.due_date)}</td>
                         <td className="p-4 text-right text-foreground font-medium">
