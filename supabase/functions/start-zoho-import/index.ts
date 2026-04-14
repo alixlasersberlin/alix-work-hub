@@ -312,39 +312,53 @@ Deno.serve(async (req: Request) => {
           };
 
           const { data: existing } = await adminClient
-            .from("customers").select("id")
+            .from("customers").select("id, company_name, contact_name, email, phone, billing_address, shipping_address")
             .eq("external_customer_id", externalId)
             .eq("source_system", sourceSystem)
             .maybeSingle();
 
           if (isDryRun) {
-            dryRunResults.push({
-              type: "customer", id: externalId,
-              action: existing ? "update" : "create",
-              name: contact.company_name || contact.contact_name || undefined,
-            });
-            if (existing) updated++; else imported++;
+            if (existing) {
+              const changed = hasCustomerChanged(existing, customerPayload);
+              dryRunResults.push({
+                type: "customer", id: externalId,
+                action: changed ? "update" : "skip",
+                name: contact.company_name || contact.contact_name || undefined,
+              });
+              if (changed) updated++; else skipped++;
+            } else {
+              dryRunResults.push({
+                type: "customer", id: externalId,
+                action: "create",
+                name: contact.company_name || contact.contact_name || undefined,
+              });
+              imported++;
+            }
             continue;
           }
 
           if (existing) {
-            const { error: updateError } = await adminClient
-              .from("customers")
-              .update({
-                company_name: customerPayload.company_name,
-                contact_name: customerPayload.contact_name,
-                email: customerPayload.email,
-                phone: customerPayload.phone,
-                billing_address: customerPayload.billing_address,
-                shipping_address: customerPayload.shipping_address,
-                raw_data: customerPayload.raw_data,
-              })
-              .eq("id", existing.id);
-            if (updateError) {
-              failed++;
-              errors.push({ type: "customer", id: externalId, message: updateError.message });
+            if (!hasCustomerChanged(existing, customerPayload)) {
+              skipped++;
             } else {
-              updated++;
+              const { error: updateError } = await adminClient
+                .from("customers")
+                .update({
+                  company_name: customerPayload.company_name,
+                  contact_name: customerPayload.contact_name,
+                  email: customerPayload.email,
+                  phone: customerPayload.phone,
+                  billing_address: customerPayload.billing_address,
+                  shipping_address: customerPayload.shipping_address,
+                  raw_data: customerPayload.raw_data,
+                })
+                .eq("id", existing.id);
+              if (updateError) {
+                failed++;
+                errors.push({ type: "customer", id: externalId, message: updateError.message });
+              } else {
+                updated++;
+              }
             }
           } else {
             const { error: insertError } = await adminClient.from("customers").insert(customerPayload);
