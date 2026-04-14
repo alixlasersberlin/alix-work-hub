@@ -443,6 +443,21 @@ Deno.serve(async (req: Request) => {
             .eq("source_system", sourceSystem)
             .maybeSingle();
 
+          // Fetch order detail for billing/shipping addresses
+          let orderDetail = order;
+          try {
+            const detailRes = await fetch(
+              `${zohoConfig.booksApiBaseUrl}/salesorders/${externalOrderId}?organization_id=${zohoConfig.organizationId}`,
+              { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } },
+            );
+            if (detailRes.ok) {
+              const detailJson = await detailRes.json();
+              if (detailJson.salesorder) orderDetail = detailJson.salesorder;
+            }
+          } catch (e: any) {
+            console.warn(`Detail fetch failed for order ${externalOrderId}: ${e?.message}`);
+          }
+
           if (isDryRun) {
             dryRunResults.push({
               type: "order", id: orderNumber,
@@ -473,11 +488,13 @@ Deno.serve(async (req: Request) => {
             external_order_id: externalOrderId,
             order_number: orderNumber,
             source_system: sourceSystem,
-            order_status: order.status ?? "offen",
-            currency: order.currency_code ?? null,
-            total_amount: order.total ?? null,
-            order_date: order.date ? new Date(order.date).toISOString() : null,
-            raw_data: order,
+            order_status: orderDetail.status ?? "offen",
+            currency: orderDetail.currency_code ?? null,
+            total_amount: orderDetail.total ?? null,
+            order_date: orderDetail.date ? new Date(orderDetail.date).toISOString() : null,
+            billing_address: orderDetail.billing_address ?? null,
+            shipping_address: orderDetail.shipping_address ?? null,
+            raw_data: orderDetail,
           });
 
           if (orderError) {
