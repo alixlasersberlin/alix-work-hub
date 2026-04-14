@@ -1012,10 +1012,8 @@ export default function ImportManagement() {
                 </div>
               </CardContent>
             </Card>
-              <Select value={importLimit} onValueChange={setImportLimit}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue />
-                </SelectTrigger>
+
+
                 <SelectContent>
                   <SelectItem value="all">Alle</SelectItem>
                   <SelectItem value="5">5</SelectItem>
