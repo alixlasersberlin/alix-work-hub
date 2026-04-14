@@ -32,7 +32,12 @@ export default function CustomerDetail() {
   const addr = (a: any) => {
     if (!a) return '—';
     if (typeof a === 'string') return a;
-    return [a.street, a.zip, a.city, a.country].filter(Boolean).join(', ') || JSON.stringify(a);
+    const street = a.address || a.street || '';
+    const zip = a.zip || '';
+    const city = a.city || '';
+    const country = a.country || '';
+    const parts = [street, `${zip} ${city}`.trim(), country].filter(Boolean);
+    return parts.length > 0 ? parts.join(', ') : '—';
   };
 
   return (
