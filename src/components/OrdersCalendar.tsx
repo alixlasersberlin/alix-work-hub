@@ -183,6 +183,7 @@ export default function OrdersCalendar() {
 
   const selectedOrders = selectedDate ? (ordersByDate[selectedDate] ?? []) : [];
   const selectedDeliveries = selectedDate ? (deliveriesByDate[selectedDate] ?? []) : [];
+  const selectedShipments = selectedDate ? (shipmentsByDate[selectedDate] ?? []) : [];
 
   if (loading) {
     return (
@@ -221,6 +222,9 @@ export default function OrdersCalendar() {
               <SelectItem value="orders">
                 <span className="flex items-center gap-2"><ClipboardList className="w-3.5 h-3.5" /> Aufträge</span>
               </SelectItem>
+              <SelectItem value="shipments">
+                <span className="flex items-center gap-2"><Package className="w-3.5 h-3.5" /> Versanddatum</span>
+              </SelectItem>
               <SelectItem value="deliveries">
                 <span className="flex items-center gap-2"><Truck className="w-3.5 h-3.5" /> Auslieferungen</span>
               </SelectItem>
@@ -252,7 +256,7 @@ export default function OrdersCalendar() {
             const isToday = key === today;
             const isSelected = key === selectedDate;
             const isCurrentMonth = day.getMonth() === month;
-            const count = dataMode === 'orders' ? (data?.orders ?? 0) : (data?.deliveries ?? 0);
+            const count = dataMode === 'orders' ? (data?.orders ?? 0) : dataMode === 'shipments' ? (data?.shipments ?? 0) : (data?.deliveries ?? 0);
 
             return (
               <button
@@ -274,9 +278,9 @@ export default function OrdersCalendar() {
                   <div className="mt-1">
                     <span className={`
                       inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md
-                      ${dataMode === 'orders' ? 'bg-primary/15 text-primary' : 'bg-[hsl(var(--success))]/15 text-[hsl(var(--success))]'}
+                      ${dataMode === 'orders' ? 'bg-primary/15 text-primary' : dataMode === 'shipments' ? 'bg-[hsl(var(--warning))]/15 text-[hsl(var(--warning))]' : 'bg-[hsl(var(--success))]/15 text-[hsl(var(--success))]'}
                     `}>
-                      {dataMode === 'orders' ? <ClipboardList className="w-2.5 h-2.5" /> : <Truck className="w-2.5 h-2.5" />}
+                      {dataMode === 'orders' ? <ClipboardList className="w-2.5 h-2.5" /> : dataMode === 'shipments' ? <Package className="w-2.5 h-2.5" /> : <Truck className="w-2.5 h-2.5" />}
                       {count}
                     </span>
                   </div>
@@ -316,7 +320,8 @@ export default function OrdersCalendar() {
                   <th className="text-left px-4 py-2.5 text-muted-foreground font-medium">KW</th>
                   <th className="text-left px-4 py-2.5 text-muted-foreground font-medium">Zeitraum</th>
                   <th className="text-right px-4 py-2.5 text-muted-foreground font-medium">Aufträge erfasst</th>
-                  <th className="text-right px-4 py-2.5 text-muted-foreground font-medium">Auslieferungen geplant</th>
+                   <th className="text-right px-4 py-2.5 text-muted-foreground font-medium">Erw. Versand</th>
+                   <th className="text-right px-4 py-2.5 text-muted-foreground font-medium">Auslieferungen geplant</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -336,6 +341,14 @@ export default function OrdersCalendar() {
                       )}
                     </td>
                     <td className="px-4 py-3 text-right">
+                      {w.shipments > 0 ? (
+                        <span className="inline-flex items-center gap-1 text-[hsl(var(--warning))] font-semibold">
+                          <Package className="w-3.5 h-3.5" /> {w.shipments}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </td>
                       {w.deliveries > 0 ? (
                         <span className="inline-flex items-center gap-1 text-[hsl(var(--success))] font-semibold">
                           <Truck className="w-3.5 h-3.5" /> {w.deliveries}
@@ -401,7 +414,28 @@ export default function OrdersCalendar() {
                 </div>
               </div>
             )}
-            {selectedOrders.length === 0 && selectedDeliveries.length === 0 && (
+            {/* Shipments on this day */}
+            {selectedShipments.length > 0 && (
+              <div>
+                <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  <Package className="w-3 h-3" /> Erwarteter Versand ({selectedShipments.length})
+                </h4>
+                <div className="divide-y divide-border rounded-lg border border-border">
+                  {selectedShipments.map(o => (
+                    <div key={o.id} className="flex items-center justify-between px-3 py-2.5">
+                      <span className="text-sm font-medium text-foreground">{o.order_number}</span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs text-muted-foreground">
+                          {o.total_amount != null ? Number(o.total_amount).toLocaleString('de-DE', { style: 'currency', currency: o.currency || 'EUR' }) : ''}
+                        </span>
+                        <StatusBadge status={o.order_status || 'offen'} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {selectedOrders.length === 0 && selectedDeliveries.length === 0 && selectedShipments.length === 0 && (
               <div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
                 <Inbox className="w-6 h-6 mb-2 opacity-40" />
                 <p className="text-sm">Keine Einträge an diesem Tag.</p>
