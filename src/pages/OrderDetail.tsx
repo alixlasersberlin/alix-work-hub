@@ -10,6 +10,7 @@ import {
   ArrowLeft, ClipboardList, Building2, FileText, History, Loader2, Inbox, Send, Pencil, X, Check, Shield
 } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
+import InstallmentPlanDialog from '@/components/InstallmentPlanDialog';
 
 export default function OrderDetail() {
   const { id } = useParams<{ id: string }>();
