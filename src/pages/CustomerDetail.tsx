@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Building2, ClipboardList, Loader2, Inbox } from 'lucide-react';
+import { StatusBadge } from '@/components/StatusBadge';
 
 export default function CustomerDetail() {
   const { id } = useParams<{ id: string }>();
@@ -89,7 +90,7 @@ export default function CustomerDetail() {
                     <p className="text-xs text-muted-foreground">{o.order_date ? new Date(o.order_date).toLocaleDateString('de-DE') : '—'}</p>
                   </div>
                   <div className="text-right">
-                    <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">{o.order_status || 'offen'}</span>
+                    <StatusBadge status={o.order_status || 'offen'} />
                     <p className="text-xs text-muted-foreground mt-1">
                       {o.total_amount != null ? Number(o.total_amount).toLocaleString('de-DE', { style: 'currency', currency: o.currency || 'EUR' }) : '—'}
                     </p>
