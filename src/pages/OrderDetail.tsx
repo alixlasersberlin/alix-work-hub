@@ -40,10 +40,11 @@ export default function OrderDetail() {
 
   async function loadAll() {
     setLoading(true);
-    const [oRes, nRes, hRes] = await Promise.all([
+    const [oRes, nRes, hRes, iRes] = await Promise.all([
       supabase.from('orders').select('*, customers(*)').eq('id', id!).maybeSingle(),
       supabase.from('order_notes').select('*').eq('order_id', id!).order('created_at', { ascending: false }),
       supabase.from('order_status_history').select('*').eq('order_id', id!).order('created_at', { ascending: false }),
+      supabase.from('order_items').select('*').eq('order_id', id!).order('item_order', { ascending: true }),
     ]);
     setOrder(oRes.data);
     setCustomer(oRes.data?.customers);
