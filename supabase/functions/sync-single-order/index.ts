@@ -125,6 +125,16 @@ Deno.serve(async (req: Request) => {
       }, 404);
     }
 
+    const orderDateIso = salesOrder.date ? new Date(salesOrder.date).toISOString() : null;
+    let expectedShipmentDate: string | null = null;
+    if (salesOrder.shipment_date) {
+      expectedShipmentDate = new Date(salesOrder.shipment_date).toISOString();
+    } else if (orderDateIso) {
+      const fallback = new Date(orderDateIso);
+      fallback.setDate(fallback.getDate() + 56);
+      expectedShipmentDate = fallback.toISOString();
+    }
+
     const orderPayload = {
       customer_id: customer.id,
       external_order_id: salesOrder.salesorder_id?.toString(),
@@ -133,7 +143,8 @@ Deno.serve(async (req: Request) => {
       order_status: salesOrder.status ?? "offen",
       currency: salesOrder.currency_code ?? null,
       total_amount: salesOrder.total ?? null,
-      order_date: salesOrder.date ? new Date(salesOrder.date).toISOString() : null,
+      order_date: orderDateIso,
+      expected_shipment_date: expectedShipmentDate,
       billing_address: salesOrder.billing_address ?? null,
       shipping_address: salesOrder.shipping_address ?? null,
       raw_data: salesOrder,

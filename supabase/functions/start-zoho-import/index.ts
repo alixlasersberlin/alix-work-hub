@@ -483,6 +483,16 @@ Deno.serve(async (req: Request) => {
             continue;
           }
 
+          const orderDateIso = orderDetail.date ? new Date(orderDetail.date).toISOString() : null;
+          let expectedShipmentDate: string | null = null;
+          if (orderDetail.shipment_date) {
+            expectedShipmentDate = new Date(orderDetail.shipment_date).toISOString();
+          } else if (orderDateIso) {
+            const fallback = new Date(orderDateIso);
+            fallback.setDate(fallback.getDate() + 56);
+            expectedShipmentDate = fallback.toISOString();
+          }
+
           const { error: orderError } = await adminClient.from("orders").insert({
             customer_id: dbCustomer.id,
             external_order_id: externalOrderId,
@@ -491,7 +501,8 @@ Deno.serve(async (req: Request) => {
             order_status: orderDetail.status ?? "offen",
             currency: orderDetail.currency_code ?? null,
             total_amount: orderDetail.total ?? null,
-            order_date: orderDetail.date ? new Date(orderDetail.date).toISOString() : null,
+            order_date: orderDateIso,
+            expected_shipment_date: expectedShipmentDate,
             billing_address: orderDetail.billing_address ?? null,
             shipping_address: orderDetail.shipping_address ?? null,
             raw_data: orderDetail,
