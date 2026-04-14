@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import {
   ClipboardList, Users, MapPin, Banknote, AlertCircle,
-  Clock, TrendingUp, FileText, CalendarDays, CircleDot, Inbox
+  Clock, TrendingUp, FileText, CalendarDays, CircleDot, Inbox, Package
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -23,6 +23,14 @@ interface RecentOrder {
   currency: string | null;
   order_date: string | null;
   expected_shipment_date: string | null;
+}
+
+interface ShipmentOrder {
+  id: string;
+  order_number: string;
+  expected_shipment_date: string | null;
+  order_status: string | null;
+  customers: { company_name: string | null; contact_name: string | null; shipping_address: any } | null;
 }
 
 interface RoutePlan {
@@ -103,6 +111,7 @@ export default function Dashboard() {
   const { profile, roles, hasRole, hasAnyRole, isAdmin } = useAuth();
   const [stats, setStats] = useState<Stats>({ customers: 0, orders: 0, openOrders: 0, routes: 0, openFinance: 0 });
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
+  const [shipmentOrders, setShipmentOrders] = useState<ShipmentOrder[]>([]);
   const [routePlans, setRoutePlans] = useState<RoutePlan[]>([]);
   const [financeRecords, setFinanceRecords] = useState<FinanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -130,6 +139,10 @@ export default function Dashboard() {
             ])
           : [{ count: 0 }, { count: 0 }, { data: [] }];
 
+        const shipmentOrdersRes = canSeeOrders
+          ? await supabase.from('orders').select('id, order_number, expected_shipment_date, order_status, customers(company_name, contact_name, shipping_address)').not('expected_shipment_date', 'is', null).order('expected_shipment_date', { ascending: true }).limit(10)
+          : { data: [] };
+
         const [routesRes, routePlansRes] = canSeeRoutes
           ? await Promise.all([
               supabase.from('route_plans').select('id', { count: 'exact', head: true }),
@@ -152,6 +165,7 @@ export default function Dashboard() {
           openFinance: openFinanceRes.count ?? 0,
         });
         setRecentOrders(recentOrdersRes.data ?? []);
+        setShipmentOrders(shipmentOrdersRes.data ?? []);
         setRoutePlans(routePlansRes.data ?? []);
         setFinanceRecords(financeRes.data ?? []);
       } catch (e: any) {
