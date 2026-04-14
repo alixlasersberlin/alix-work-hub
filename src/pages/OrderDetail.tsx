@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-  ArrowLeft, ClipboardList, Building2, FileText, History, Loader2, Inbox, Send, Pencil, X, Check, Shield
+  ArrowLeft, ClipboardList, Building2, FileText, History, Loader2, Inbox, Send, Pencil, X, Check, Shield, Package
 } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
 
@@ -21,9 +21,10 @@ export default function OrderDetail() {
   const [order, setOrder] = useState<any>(null);
   const [customer, setCustomer] = useState<any>(null);
   const [notes, setNotes] = useState<any[]>([]);
+  const [items, setItems] = useState<any[]>([]);
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'notes' | 'history' | 'raw'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'items' | 'notes' | 'history' | 'raw'>('overview');
 
   // Note form
   const [newNote, setNewNote] = useState('');
@@ -39,14 +40,16 @@ export default function OrderDetail() {
 
   async function loadAll() {
     setLoading(true);
-    const [oRes, nRes, hRes] = await Promise.all([
+    const [oRes, nRes, hRes, iRes] = await Promise.all([
       supabase.from('orders').select('*, customers(*)').eq('id', id!).maybeSingle(),
       supabase.from('order_notes').select('*').eq('order_id', id!).order('created_at', { ascending: false }),
       supabase.from('order_status_history').select('*').eq('order_id', id!).order('created_at', { ascending: false }),
+      supabase.from('order_items').select('*').eq('order_id', id!).order('item_order', { ascending: true }),
     ]);
     setOrder(oRes.data);
     setCustomer(oRes.data?.customers);
     setNotes(nRes.data ?? []);
+    setItems(iRes.data ?? []);
     setHistory(hRes.data ?? []);
     setLoading(false);
   }
@@ -92,6 +95,7 @@ export default function OrderDetail() {
 
   const tabs = [
     { key: 'overview', label: 'Übersicht', icon: ClipboardList },
+    { key: 'items', label: `Artikel (${items.length})`, icon: Package },
     { key: 'notes', label: `Notizen (${notes.length})`, icon: FileText },
     { key: 'history', label: `Historie (${history.length})`, icon: History },
     ...(isAdmin ? [{ key: 'raw', label: 'Rohdaten', icon: Shield }] : []),
@@ -188,6 +192,67 @@ export default function OrderDetail() {
               <p className="text-muted-foreground text-sm">Keine Kundendaten verfügbar.</p>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Items Tab */}
+      {activeTab === 'items' && (
+        <div className="rounded-xl border border-border bg-card card-glow overflow-hidden">
+          <h2 className="text-base font-display font-bold text-foreground flex items-center gap-2 p-6 pb-4">
+            <Package className="w-4 h-4 text-primary" /> Artikelpositionen
+          </h2>
+          {items.length === 0 ? (
+            <div className="p-8 text-center">
+              <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
+              <p className="text-muted-foreground">Keine Artikel vorhanden.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-t border-border bg-secondary/50">
+                    <th className="text-left px-4 py-3 text-muted-foreground font-medium">Pos.</th>
+                    <th className="text-left px-4 py-3 text-muted-foreground font-medium">Artikel</th>
+                    <th className="text-left px-4 py-3 text-muted-foreground font-medium">SKU</th>
+                    <th className="text-right px-4 py-3 text-muted-foreground font-medium">Menge</th>
+                    <th className="text-left px-4 py-3 text-muted-foreground font-medium">Einheit</th>
+                    <th className="text-right px-4 py-3 text-muted-foreground font-medium">Einzelpreis</th>
+                    <th className="text-right px-4 py-3 text-muted-foreground font-medium">Rabatt</th>
+                    <th className="text-right px-4 py-3 text-muted-foreground font-medium">Steuer</th>
+                    <th className="text-right px-4 py-3 text-muted-foreground font-medium">Betrag</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((item, idx) => (
+                    <tr key={item.id} className="border-t border-border hover:bg-secondary/30 transition-colors">
+                      <td className="px-4 py-3 text-muted-foreground">{item.item_order ?? idx + 1}</td>
+                      <td className="px-4 py-3 text-foreground font-medium">
+                        {item.item_name || '—'}
+                        {item.description && (
+                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{item.description}</p>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">{item.sku || '—'}</td>
+                      <td className="px-4 py-3 text-foreground text-right">{item.quantity != null ? Number(item.quantity).toLocaleString('de-DE') : '—'}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{item.unit || '—'}</td>
+                      <td className="px-4 py-3 text-foreground text-right">{item.rate != null ? Number(item.rate).toLocaleString('de-DE', { style: 'currency', currency: order.currency || 'EUR' }) : '—'}</td>
+                      <td className="px-4 py-3 text-foreground text-right">{item.discount ? Number(item.discount).toLocaleString('de-DE', { style: 'currency', currency: order.currency || 'EUR' }) : '—'}</td>
+                      <td className="px-4 py-3 text-foreground text-right">{item.tax_amount ? Number(item.tax_amount).toLocaleString('de-DE', { style: 'currency', currency: order.currency || 'EUR' }) : '—'}</td>
+                      <td className="px-4 py-3 text-foreground font-medium text-right">{item.amount != null ? Number(item.amount).toLocaleString('de-DE', { style: 'currency', currency: order.currency || 'EUR' }) : '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t-2 border-border bg-secondary/30">
+                    <td colSpan={8} className="px-4 py-3 text-right text-muted-foreground font-medium">Gesamt</td>
+                    <td className="px-4 py-3 text-right text-foreground font-bold">
+                      {order.total_amount != null ? Number(order.total_amount).toLocaleString('de-DE', { style: 'currency', currency: order.currency || 'EUR' }) : '—'}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          )}
         </div>
       )}
 
