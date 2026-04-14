@@ -4,8 +4,13 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 type ImportPayload = {
   source_system: "zoho_eu_1" | "zoho_eu_2" | "zoho_us_1";
   mode?: "manual" | "scheduled" | "dry_run";
-  date_from?: string; // ISO date string YYYY-MM-DD
-  date_to?: string;   // ISO date string YYYY-MM-DD
+  date_from?: string;        // ISO date string YYYY-MM-DD
+  date_to?: string;          // ISO date string YYYY-MM-DD
+  status_filter?: string;    // Zoho status: draft, open, closed, void, overdue
+  customer_name?: string;    // Filter by customer name
+  search_text?: string;      // Full-text search in Zoho
+  sort_column?: string;      // e.g. date, salesorder_number, customer_name, total
+  sort_order?: "ascending" | "descending";
 };
 
 type ZohoConfig = {
@@ -134,6 +139,11 @@ Deno.serve(async (req: Request) => {
     const isDryRun = mode === "dry_run";
     const dateFrom = body.date_from;
     const dateTo = body.date_to;
+    const statusFilter = body.status_filter;
+    const customerName = body.customer_name;
+    const searchText = body.search_text;
+    const sortColumn = body.sort_column;
+    const sortOrder = body.sort_order;
 
     // Validate dates if provided
     if (dateFrom && !isValidDate(dateFrom)) {
@@ -153,14 +163,15 @@ Deno.serve(async (req: Request) => {
 
     const accessToken = await getZohoAccessToken(zohoConfig);
 
-    // Build Zoho API query params with optional date filter
+    // Build Zoho API query params with optional filters
     let ordersUrl = `${zohoConfig.booksApiBaseUrl}/salesorders?organization_id=${zohoConfig.organizationId}`;
-    if (dateFrom) {
-      ordersUrl += `&date_start=${dateFrom}`;
-    }
-    if (dateTo) {
-      ordersUrl += `&date_end=${dateTo}`;
-    }
+    if (dateFrom) ordersUrl += `&date_start=${dateFrom}`;
+    if (dateTo) ordersUrl += `&date_end=${dateTo}`;
+    if (statusFilter) ordersUrl += `&status=${encodeURIComponent(statusFilter)}`;
+    if (customerName) ordersUrl += `&customer_name=${encodeURIComponent(customerName)}`;
+    if (searchText) ordersUrl += `&search_text=${encodeURIComponent(searchText)}`;
+    if (sortColumn) ordersUrl += `&sort_column=${encodeURIComponent(sortColumn)}`;
+    if (sortOrder) ordersUrl += `&sort_order=${encodeURIComponent(sortOrder)}`;
 
     const contactsResult = await fetchAllPages(
       `${zohoConfig.booksApiBaseUrl}/contacts?organization_id=${zohoConfig.organizationId}`,
@@ -397,6 +408,9 @@ Deno.serve(async (req: Request) => {
         is_dry_run: isDryRun,
         date_from: dateFrom ?? null,
         date_to: dateTo ?? null,
+        status_filter: statusFilter ?? null,
+        customer_name: customerName ?? null,
+        search_text: searchText ?? null,
         imported_customers: importedCustomers,
         imported_orders: importedOrders,
         skipped_customers: skippedCustomers,
