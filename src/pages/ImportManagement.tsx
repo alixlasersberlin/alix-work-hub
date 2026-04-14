@@ -216,8 +216,8 @@ export default function ImportManagement() {
     setLogsLoading(false);
   }
 
-  async function triggerImport(source: string, mode: 'manual' | 'dry_run') {
-    setTriggerLoading(`${source}_${mode}`);
+  async function triggerImport(source: string, mode: 'manual' | 'dry_run', entity: 'contacts' | 'salesorders') {
+    setTriggerLoading(`${source}_${mode}_${entity}`);
     setImportResult(null);
     const dateRange = getDateRange();
     const filters: Record<string, string> = { ...dateRange };
@@ -229,10 +229,11 @@ export default function ImportManagement() {
 
     const isDryRun = mode === 'dry_run';
     const jobId = `job_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const entityLabel = entity === 'contacts' ? 'Kundendaten' : 'Aufträge';
 
     try {
       toast({
-        title: isDryRun ? 'Dry Run gestartet' : 'Import gestartet',
+        title: isDryRun ? `Dry Run gestartet (${entityLabel})` : `Import gestartet (${entityLabel})`,
         description: 'Daten werden seitenweise verarbeitet...',
       });
 
@@ -248,45 +249,30 @@ export default function ImportManagement() {
       let totalContactsFetched = 0;
       let totalOrdersFetched = 0;
 
-      // Phase 1: Process contacts page by page
       let page = 1;
       let hasMore = true;
       while (hasMore) {
         const { data, error } = await supabase.functions.invoke('start-zoho-import', {
-          body: { source_system: source, mode, entity: 'contacts', page, job_id: jobId, ...filters },
+          body: { source_system: source, mode, entity, page, job_id: jobId, ...filters },
         });
         if (error) throw error;
-        if (!data?.success) throw new Error(data?.error || 'Kontakte konnten nicht geladen werden');
+        if (!data?.success) throw new Error(data?.error || `${entityLabel} konnten nicht geladen werden`);
 
-        totalContactsFetched += data.items_fetched ?? 0;
-        totalImportedCustomers += data.imported ?? 0;
-        totalSkippedCustomers += data.skipped ?? 0;
+        if (entity === 'contacts') {
+          totalContactsFetched += data.items_fetched ?? 0;
+          totalImportedCustomers += data.imported ?? 0;
+          totalSkippedCustomers += data.skipped ?? 0;
+          contactPages = page;
+        } else {
+          totalOrdersFetched += data.items_fetched ?? 0;
+          totalImportedOrders += data.imported ?? 0;
+          totalSkippedOrders += data.skipped ?? 0;
+          orderPages = page;
+        }
         totalFailed += data.failed ?? 0;
         if (data.dry_run_results) allDryRunResults.push(...data.dry_run_results);
         if (data.errors) allErrors.push(...data.errors);
         hasMore = data.has_more === true;
-        contactPages = page;
-        page++;
-      }
-
-      // Phase 2: Process orders page by page
-      page = 1;
-      hasMore = true;
-      while (hasMore) {
-        const { data, error } = await supabase.functions.invoke('start-zoho-import', {
-          body: { source_system: source, mode, entity: 'salesorders', page, job_id: jobId, ...filters },
-        });
-        if (error) throw error;
-        if (!data?.success) throw new Error(data?.error || 'Aufträge konnten nicht geladen werden');
-
-        totalOrdersFetched += data.items_fetched ?? 0;
-        totalImportedOrders += data.imported ?? 0;
-        totalSkippedOrders += data.skipped ?? 0;
-        totalFailed += data.failed ?? 0;
-        if (data.dry_run_results) allDryRunResults.push(...data.dry_run_results);
-        if (data.errors) allErrors.push(...data.errors);
-        hasMore = data.has_more === true;
-        orderPages = page;
         page++;
       }
 
@@ -309,9 +295,12 @@ export default function ImportManagement() {
       };
 
       setImportResult(result);
+      const countLabel = entity === 'contacts'
+        ? `${totalImportedCustomers} Kunden`
+        : `${totalImportedOrders} Aufträge`;
       toast({
         title: isDryRun ? 'Dry Run abgeschlossen' : 'Import abgeschlossen',
-        description: `${IMPORT_SOURCES.find(s => s.key === source)?.label} – ${totalImportedCustomers} Kunden, ${totalImportedOrders} Aufträge`,
+        description: `${IMPORT_SOURCES.find(s => s.key === source)?.label} – ${countLabel}`,
       });
       if (!isDryRun) {
         setTimeout(() => { fetchSourceStats(); fetchLogs(); }, 2000);
