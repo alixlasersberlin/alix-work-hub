@@ -279,7 +279,7 @@ export default function Dashboard() {
                     return (
                       <div
                         key={order.id}
-                        onClick={() => navigate(`/orders/${order.id}`)}
+                        onClick={() => navigate(`/auftraege/${order.id}`)}
                         className="flex items-center justify-between p-4 hover:bg-secondary/30 transition-colors cursor-pointer"
                       >
                         <div>
