@@ -58,6 +58,62 @@ export type Database = {
           },
         ]
       }
+      backups_metadata: {
+        Row: {
+          backup_scope: string
+          backup_size_bytes: number | null
+          backup_status: string
+          backup_type: string
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          integrity_status: string | null
+          message: string | null
+          started_at: string | null
+          storage_location: string | null
+          updated_at: string
+        }
+        Insert: {
+          backup_scope: string
+          backup_size_bytes?: number | null
+          backup_status: string
+          backup_type: string
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          integrity_status?: string | null
+          message?: string | null
+          started_at?: string | null
+          storage_location?: string | null
+          updated_at?: string
+        }
+        Update: {
+          backup_scope?: string
+          backup_size_bytes?: number | null
+          backup_status?: string
+          backup_type?: string
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          integrity_status?: string | null
+          message?: string | null
+          started_at?: string | null
+          storage_location?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backups_metadata_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           billing_address: Json | null
