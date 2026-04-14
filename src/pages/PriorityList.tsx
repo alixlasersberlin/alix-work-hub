@@ -86,7 +86,7 @@ export default function PriorityList() {
       setError(null);
       const { data, error: err } = await supabase
         .from('orders')
-        .select('id, order_number, order_status, order_date, expected_shipment_date, total_amount, currency, source_system, customers(company_name, contact_name, shipping_address)')
+        .select('id, order_number, order_status, order_date, expected_shipment_date, total_amount, currency, source_system, shipping_address, billing_address, customers(company_name, contact_name, shipping_address, billing_address)')
         .not('expected_shipment_date', 'is', null)
         .order(sortField, { ascending: sortDir === 'asc' })
         .limit(500);
