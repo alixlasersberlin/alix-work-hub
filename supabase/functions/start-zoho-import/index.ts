@@ -204,8 +204,8 @@ function hasCustomerChanged(
 }
 
 function hasOrderChanged(
-  existing: { order_status?: string | null; currency?: string | null; total_amount?: number | null; order_date?: string | null; expected_shipment_date?: string | null; billing_address?: unknown; shipping_address?: unknown },
-  incoming: { order_status?: string | null; currency?: string | null; total_amount?: number | null; order_date?: string | null; expected_shipment_date?: string | null; billing_address?: unknown; shipping_address?: unknown },
+  existing: { order_status?: string | null; currency?: string | null; total_amount?: number | null; order_date?: string | null; expected_shipment_date?: string | null; billing_address?: unknown; shipping_address?: unknown; salesperson_name?: string | null },
+  incoming: { order_status?: string | null; currency?: string | null; total_amount?: number | null; order_date?: string | null; expected_shipment_date?: string | null; billing_address?: unknown; shipping_address?: unknown; salesperson_name?: string | null },
 ): boolean {
   return (
     (existing.order_status ?? null) !== (incoming.order_status ?? null) ||
@@ -214,7 +214,8 @@ function hasOrderChanged(
     (existing.order_date ?? null) !== (incoming.order_date ?? null) ||
     (existing.expected_shipment_date ?? null) !== (incoming.expected_shipment_date ?? null) ||
     !jsonEqual(existing.billing_address, incoming.billing_address) ||
-    !jsonEqual(existing.shipping_address, incoming.shipping_address)
+    !jsonEqual(existing.shipping_address, incoming.shipping_address) ||
+    (existing.salesperson_name ?? null) !== (incoming.salesperson_name ?? null)
   );
 }
 
@@ -509,7 +510,7 @@ Deno.serve(async (req: Request) => {
           }
 
           const { data: existingOrder } = await adminClient
-            .from("orders").select("id, order_status, currency, total_amount, order_date, expected_shipment_date, billing_address, shipping_address")
+            .from("orders").select("id, order_status, currency, total_amount, order_date, expected_shipment_date, billing_address, shipping_address, salesperson_name")
             .eq("order_number", orderNumber)
             .eq("source_system", sourceSystem)
             .maybeSingle();
@@ -574,6 +575,7 @@ Deno.serve(async (req: Request) => {
             expected_shipment_date: expectedShipmentDate,
             billing_address: orderDetail.billing_address ?? null,
             shipping_address: orderDetail.shipping_address ?? null,
+            salesperson_name: orderDetail.salesperson_name ?? null,
             raw_data: orderDetail,
           };
 
@@ -595,6 +597,7 @@ Deno.serve(async (req: Request) => {
                 expected_shipment_date: orderPayload.expected_shipment_date,
                 billing_address: orderPayload.billing_address,
                 shipping_address: orderPayload.shipping_address,
+                salesperson_name: orderPayload.salesperson_name,
                 raw_data: orderPayload.raw_data,
                 customer_id: orderPayload.customer_id,
               })
