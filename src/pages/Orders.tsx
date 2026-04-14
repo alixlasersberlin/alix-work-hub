@@ -198,7 +198,7 @@ export default function Orders() {
                       </tbody>
                     );
                   })
-                )
+                )}
               </table>
             </div>
           </div>
