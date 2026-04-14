@@ -3,11 +3,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { Loader2, FileText, Download } from 'lucide-react';
+import { Loader2, FileText, Download, CalendarIcon } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
+import { de } from 'date-fns/locale';
 import jsPDF from 'jspdf';
+import alixLogo from '@/assets/alix-lasers-logo.png';
 
 interface Props {
   order: any;
@@ -22,8 +27,7 @@ function addMonths(date: Date, months: number): Date {
 }
 
 function startOfNextMonth(date: Date): Date {
-  const d = new Date(date.getFullYear(), date.getMonth() + 1, 1);
-  return d;
+  return new Date(date.getFullYear(), date.getMonth() + 1, 1);
 }
 
 function fmtDate(d: Date) {
@@ -38,16 +42,34 @@ function drawWatermark(doc: jsPDF) {
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   doc.saveGraphicsState();
-  // @ts-ignore — setGState exists on jsPDF
   // @ts-ignore
   doc.setGState(new (doc as any).GState({ opacity: 0.15 }));
   doc.setFontSize(54);
   doc.setTextColor(80, 80, 80);
-  // draw diagonal watermark text across the page center
-  const cx = pageW / 2;
-  const cy = pageH / 2;
-  doc.text('Alix Lasers ®', cx, cy, { align: 'center', angle: 35 });
+  doc.text('Alix Lasers ®', pageW / 2, pageH / 2, { align: 'center', angle: 35 });
   doc.restoreGraphicsState();
+}
+
+function getCustomerName(order: any): string {
+  const c = order.customers || order.customer;
+  if (!c) return '';
+  return c.company_name || c.contact_name || '';
+}
+
+function loadImageAsBase64(src: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      canvas.getContext('2d')!.drawImage(img, 0, 0);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.onerror = reject;
+    img.src = src;
+  });
 }
 
 export default function InstallmentPlanDialog({ order }: Props) {
@@ -59,38 +81,59 @@ export default function InstallmentPlanDialog({ order }: Props) {
   const [saving, setSaving] = useState(false);
 
   const deliveryDate = order.expected_shipment_date ? new Date(order.expected_shipment_date) : new Date();
+  const defaultStart = startOfNextMonth(deliveryDate);
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+
+  const effectiveStart = startDate || defaultStart;
 
   const baseAmount = Math.max(0, (parseFloat(price) || 0) - (parseFloat(downPayment) || 0));
   const monthlyRate = term > 0 ? Math.round((baseAmount / term) * 100) / 100 : 0;
 
   const schedule = useMemo(() => {
     if (baseAmount <= 0 || monthlyRate <= 0) return [];
-    const start = startOfNextMonth(deliveryDate);
     const rows: { nr: number; dueDate: Date; amount: number; remaining: number }[] = [];
     let remaining = baseAmount;
     for (let i = 1; i <= term; i++) {
       const amount = i === term ? Math.round(remaining * 100) / 100 : monthlyRate;
       remaining = Math.round((remaining - amount) * 100) / 100;
-      rows.push({ nr: i, dueDate: addMonths(start, i - 1), amount, remaining: Math.max(0, remaining) });
+      rows.push({ nr: i, dueDate: addMonths(effectiveStart, i - 1), amount, remaining: Math.max(0, remaining) });
     }
     return rows;
-  }, [baseAmount, monthlyRate, term, deliveryDate]);
+  }, [baseAmount, monthlyRate, term, effectiveStart]);
 
-  function generatePDF() {
+  async function generatePDF() {
     const doc = new jsPDF();
     const pw = doc.internal.pageSize.getWidth();
 
-    // Watermark on first page
     drawWatermark(doc);
 
-    // Header
+    // Logo top-right
+    try {
+      const logoData = await loadImageAsBase64(alixLogo);
+      doc.addImage(logoData, 'PNG', pw - 60, 8, 46, 20);
+    } catch {
+      // logo load failed, skip
+    }
+
+    // Title
     doc.setFontSize(18);
     doc.setTextColor(40, 40, 40);
     doc.text('Ratenplan', 14, 22);
 
+    // Customer name
+    const customerName = getCustomerName(order);
+    let addrY = 32;
+    if (customerName) {
+      doc.setFontSize(12);
+      doc.setTextColor(30, 30, 30);
+      doc.setFont(undefined!, 'bold');
+      doc.text(customerName, 14, addrY);
+      doc.setFont(undefined!, 'normal');
+      addrY += 7;
+    }
+
     // Customer address
     const addr = order.shipping_address || order.billing_address;
-    let addrY = 32;
     doc.setFontSize(10);
     doc.setTextColor(60, 60, 60);
     if (addr && typeof addr === 'object') {
@@ -138,7 +181,6 @@ export default function InstallmentPlanDialog({ order }: Props) {
         doc.addPage();
         drawWatermark(doc);
         y = 20;
-        // repeat header
         doc.setTextColor(255, 255, 255);
         doc.setFillColor(30, 30, 30);
         doc.rect(14, y - 5, pw - 28, 8, 'F');
@@ -193,7 +235,7 @@ export default function InstallmentPlanDialog({ order }: Props) {
       const { error } = await supabase.from('finance_records').insert(records);
       if (error) throw error;
 
-      generatePDF();
+      await generatePDF();
       toast({ title: 'Ratenplan erstellt', description: `${term} Raten wurden in Finance angelegt und als PDF exportiert.` });
       setOpen(false);
     } catch (e: any) {
@@ -237,6 +279,25 @@ export default function InstallmentPlanDialog({ order }: Props) {
               </SelectContent>
             </Select>
           </div>
+          <div>
+            <label className="text-sm text-muted-foreground">Erste Rate am</label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className={cn("w-full justify-start text-left bg-secondary border-border", !startDate && "text-muted-foreground")}>
+                  <CalendarIcon className="w-4 h-4 mr-2" />
+                  {startDate ? fmtDate(startDate) : fmtDate(defaultStart) + ' (automatisch)'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar mode="single" selected={startDate || defaultStart} onSelect={setStartDate} locale={de} className="p-3 pointer-events-auto" />
+              </PopoverContent>
+            </Popover>
+            {startDate && (
+              <Button variant="ghost" size="sm" className="text-xs text-muted-foreground mt-1 h-6 px-1" onClick={() => setStartDate(undefined)}>
+                Auf automatisch zurücksetzen
+              </Button>
+            )}
+          </div>
 
           {baseAmount > 0 && (
             <div className="rounded-lg bg-secondary/50 border border-border p-3 text-sm space-y-1">
@@ -247,7 +308,7 @@ export default function InstallmentPlanDialog({ order }: Props) {
           )}
 
           <div className="flex gap-3">
-            <Button onClick={() => { generatePDF(); toast({ title: 'PDF exportiert', description: 'Ratenplan wurde als PDF heruntergeladen.' }); }} disabled={schedule.length === 0} variant="outline" className="flex-1 border-primary/30 text-primary hover:bg-primary/10">
+            <Button onClick={async () => { await generatePDF(); toast({ title: 'PDF exportiert', description: 'Ratenplan wurde als PDF heruntergeladen.' }); }} disabled={schedule.length === 0} variant="outline" className="flex-1 border-primary/30 text-primary hover:bg-primary/10">
               <Download className="w-4 h-4 mr-2" /> Nur PDF
             </Button>
             <Button onClick={createAndExport} disabled={schedule.length === 0 || saving} className="flex-1 gold-gradient text-primary-foreground">
