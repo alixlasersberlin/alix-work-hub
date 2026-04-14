@@ -17,6 +17,7 @@ import Customers from "./pages/Customers";
 import CustomerDetail from "./pages/CustomerDetail";
 import Orders from "./pages/Orders";
 import OrderDetail from "./pages/OrderDetail";
+import PriorityList from "./pages/PriorityList";
 import RoutePlanning from "./pages/RoutePlanning";
 import RoutePlanDetail from "./pages/RoutePlanDetail";
 import RoutePlanForm from "./pages/RoutePlanForm";
@@ -188,6 +189,7 @@ function AppRoutes() {
         <Route path="/kunden/:id" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><CustomerDetail /></ProtectedRoute>} />
         <Route path="/auftraege" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Orders /></ProtectedRoute>} />
         <Route path="/auftraege/:id" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><OrderDetail /></ProtectedRoute>} />
+        <Route path="/prio-liste" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><PriorityList /></ProtectedRoute>} />
         <Route path="/tourenplanung" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><RoutePlanning /></ProtectedRoute>} />
         <Route path="/tourenplanung/neu" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Tourenplanung']}><RoutePlanForm /></ProtectedRoute>} />
         <Route path="/tourenplanung/:id" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><RoutePlanDetail /></ProtectedRoute>} />
