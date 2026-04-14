@@ -274,6 +274,8 @@ export default function ImportManagement() {
         if (data.errors) allErrors.push(...data.errors);
         hasMore = data.has_more === true;
         page++;
+        // Delay between pages to avoid Zoho rate limiting
+        if (hasMore) await new Promise(r => setTimeout(r, 1500));
       }
 
       const result: ImportResult = {
