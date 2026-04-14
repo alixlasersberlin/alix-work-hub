@@ -246,10 +246,15 @@ export default function InstallmentPlanDialog({ order }: Props) {
             </div>
           )}
 
-          <Button onClick={createAndExport} disabled={schedule.length === 0 || saving} className="w-full gold-gradient text-primary-foreground">
-            {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
-            {saving ? 'Erstelle...' : 'Ratenplan erstellen & PDF exportieren'}
-          </Button>
+          <div className="flex gap-3">
+            <Button onClick={() => { generatePDF(); toast({ title: 'PDF exportiert', description: 'Ratenplan wurde als PDF heruntergeladen.' }); }} disabled={schedule.length === 0} variant="outline" className="flex-1 border-primary/30 text-primary hover:bg-primary/10">
+              <Download className="w-4 h-4 mr-2" /> Nur PDF
+            </Button>
+            <Button onClick={createAndExport} disabled={schedule.length === 0 || saving} className="flex-1 gold-gradient text-primary-foreground">
+              {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
+              {saving ? 'Erstelle...' : 'PDF & Finance'}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
