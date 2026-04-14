@@ -2,14 +2,15 @@ import { useState } from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import {
-  LayoutDashboard, ClipboardList, MapPin, Banknote, Users, LogOut, Shield, Menu, X, ChevronRight
+  LayoutDashboard, ClipboardList, MapPin, Banknote, Users, LogOut, Shield, Menu, X, ChevronRight, Building2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard, roles: null },
-  { path: '/auftraege', label: 'Auftragsverwaltung', icon: ClipboardList, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance'] },
+  { path: '/kunden', label: 'Kunden', icon: Building2, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance'] },
+  { path: '/auftraege', label: 'Aufträge', icon: ClipboardList, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance'] },
   { path: '/tourenplanung', label: 'Tourenplanung', icon: MapPin, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung'] },
   { path: '/finance', label: 'Finance', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'] },
   { path: '/benutzer', label: 'Benutzerverwaltung', icon: Users, roles: ['Admin', 'Super Admin'] },
