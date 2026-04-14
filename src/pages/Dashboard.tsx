@@ -31,6 +31,7 @@ interface ShipmentOrder {
   expected_shipment_date: string | null;
   order_status: string | null;
   billing_address: any;
+  shipping_address: any;
   customers: { company_name: string | null; contact_name: string | null; shipping_address: any } | null;
 }
 
@@ -141,7 +142,7 @@ export default function Dashboard() {
           : [{ count: 0 }, { count: 0 }, { data: [] }];
 
         const shipmentOrdersRes = canSeeOrders
-          ? await supabase.from('orders').select('id, order_number, expected_shipment_date, order_status, billing_address, customers(company_name, contact_name, shipping_address)').not('expected_shipment_date', 'is', null).order('expected_shipment_date', { ascending: true }).limit(10)
+          ? await supabase.from('orders').select('id, order_number, expected_shipment_date, order_status, shipping_address, billing_address, customers(company_name, contact_name, shipping_address)').not('expected_shipment_date', 'is', null).order('expected_shipment_date', { ascending: true }).limit(10)
           : { data: [] };
 
         const [routesRes, routePlansRes] = canSeeRoutes
