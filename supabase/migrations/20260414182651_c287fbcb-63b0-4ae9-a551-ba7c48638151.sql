@@ -1,0 +1,1 @@
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS expected_shipment_date timestamp with time zone DEFAULT NULL;
