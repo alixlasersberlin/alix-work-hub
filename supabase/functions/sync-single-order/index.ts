@@ -129,8 +129,8 @@ Deno.serve(async (req: Request) => {
     let expectedShipmentDate: string | null = null;
     if (salesOrder.shipment_date) {
       expectedShipmentDate = new Date(salesOrder.shipment_date).toISOString();
-    } else if (orderDateIso) {
-      const fallback = new Date(orderDateIso);
+    } else {
+      const fallback = new Date();
       fallback.setDate(fallback.getDate() + 56);
       expectedShipmentDate = fallback.toISOString();
     }

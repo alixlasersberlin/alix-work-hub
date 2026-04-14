@@ -203,6 +203,21 @@ function hasCustomerChanged(
   );
 }
 
+function hasOrderChanged(
+  existing: { order_status?: string | null; currency?: string | null; total_amount?: number | null; order_date?: string | null; expected_shipment_date?: string | null; billing_address?: unknown; shipping_address?: unknown },
+  incoming: { order_status?: string | null; currency?: string | null; total_amount?: number | null; order_date?: string | null; expected_shipment_date?: string | null; billing_address?: unknown; shipping_address?: unknown },
+): boolean {
+  return (
+    (existing.order_status ?? null) !== (incoming.order_status ?? null) ||
+    (existing.currency ?? null) !== (incoming.currency ?? null) ||
+    Number(existing.total_amount ?? 0) !== Number(incoming.total_amount ?? 0) ||
+    (existing.order_date ?? null) !== (incoming.order_date ?? null) ||
+    (existing.expected_shipment_date ?? null) !== (incoming.expected_shipment_date ?? null) ||
+    !jsonEqual(existing.billing_address, incoming.billing_address) ||
+    !jsonEqual(existing.shipping_address, incoming.shipping_address)
+  );
+}
+
 // ── Main handler: processes ONE page of ONE entity per call ──
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -438,7 +453,7 @@ Deno.serve(async (req: Request) => {
           }
 
           const { data: existingOrder } = await adminClient
-            .from("orders").select("id")
+            .from("orders").select("id, order_status, currency, total_amount, order_date, expected_shipment_date, billing_address, shipping_address")
             .eq("order_number", orderNumber)
             .eq("source_system", sourceSystem)
             .maybeSingle();
@@ -461,14 +476,12 @@ Deno.serve(async (req: Request) => {
           if (isDryRun) {
             dryRunResults.push({
               type: "order", id: orderNumber,
-              action: existingOrder ? "skip" : "create",
+              action: existingOrder ? "update" : "create",
               name: order.customer_name || undefined,
             });
             if (existingOrder) skipped++; else imported++;
             continue;
           }
-
-          if (existingOrder) { skipped++; continue; }
 
           // Find customer
           const { data: dbCustomer } = await adminClient
@@ -487,13 +500,13 @@ Deno.serve(async (req: Request) => {
           let expectedShipmentDate: string | null = null;
           if (orderDetail.shipment_date) {
             expectedShipmentDate = new Date(orderDetail.shipment_date).toISOString();
-          } else if (orderDateIso) {
-            const fallback = new Date(orderDateIso);
+          } else {
+            const fallback = new Date();
             fallback.setDate(fallback.getDate() + 56);
             expectedShipmentDate = fallback.toISOString();
           }
 
-          const { error: orderError } = await adminClient.from("orders").insert({
+          const orderPayload = {
             customer_id: dbCustomer.id,
             external_order_id: externalOrderId,
             order_number: orderNumber,
@@ -506,13 +519,42 @@ Deno.serve(async (req: Request) => {
             billing_address: orderDetail.billing_address ?? null,
             shipping_address: orderDetail.shipping_address ?? null,
             raw_data: orderDetail,
-          });
+          };
 
-          if (orderError) {
-            failed++;
-            errors.push({ type: "order", id: orderNumber, message: orderError.message });
+          if (existingOrder) {
+            // Check if anything changed
+            if (!hasOrderChanged(existingOrder, orderPayload)) {
+              skipped++;
+              continue;
+            }
+            const { error: updateError } = await adminClient
+              .from("orders")
+              .update({
+                order_status: orderPayload.order_status,
+                currency: orderPayload.currency,
+                total_amount: orderPayload.total_amount,
+                order_date: orderPayload.order_date,
+                expected_shipment_date: orderPayload.expected_shipment_date,
+                billing_address: orderPayload.billing_address,
+                shipping_address: orderPayload.shipping_address,
+                raw_data: orderPayload.raw_data,
+                customer_id: orderPayload.customer_id,
+              })
+              .eq("id", existingOrder.id);
+            if (updateError) {
+              failed++;
+              errors.push({ type: "order", id: orderNumber, message: updateError.message });
+            } else {
+              updated++;
+            }
           } else {
-            imported++;
+            const { error: orderError } = await adminClient.from("orders").insert(orderPayload);
+            if (orderError) {
+              failed++;
+              errors.push({ type: "order", id: orderNumber, message: orderError.message });
+            } else {
+              imported++;
+            }
           }
         } catch (err: any) {
           failed++;
