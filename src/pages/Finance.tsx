@@ -11,13 +11,22 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import {
-  Search, Banknote, ArrowUpDown, Loader2, Inbox, Plus, CalendarIcon, AlertTriangle
+  Search, Banknote, ArrowUpDown, Loader2, Inbox, Plus, CalendarIcon, AlertTriangle, ChevronDown, ChevronRight
 } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
 
 type SortField = 'due_date' | 'amount_due';
 type SortDir = 'asc' | 'desc';
 
+interface OrderGroup {
+  orderId: string;
+  orderNumber: string;
+  customerName: string;
+  records: any[];
+  totalDue: number;
+  totalPaid: number;
+  hasOverdue: boolean;
+}
 
 export default function Finance() {
   const { isAdmin, hasRole } = useAuth();
@@ -33,6 +42,7 @@ export default function Finance() {
   const [dueDateFilter, setDueDateFilter] = useState<Date | undefined>();
   const [sortField, setSortField] = useState<SortField>('due_date');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
+  const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadRecords();
@@ -66,6 +76,33 @@ export default function Finance() {
     return matchSearch && matchPayment && matchInvoice && matchDate;
   }), [records, search, paymentFilter, invoiceFilter, dueDateFilter]);
 
+  // Group by order
+  const grouped = useMemo(() => {
+    const map = new Map<string, OrderGroup>();
+    for (const r of filtered) {
+      const key = r.order_id;
+      if (!map.has(key)) {
+        map.set(key, {
+          orderId: key,
+          orderNumber: r.orders?.order_number || '—',
+          customerName: r.orders?.customers?.company_name || r.orders?.customers?.contact_name || '—',
+          records: [],
+          totalDue: 0,
+          totalPaid: 0,
+          hasOverdue: false,
+        });
+      }
+      const g = map.get(key)!;
+      g.records.push(r);
+      g.totalDue += Number(r.amount_due) || 0;
+      g.totalPaid += Number(r.amount_paid) || 0;
+      if (r.due_date && new Date(r.due_date) < new Date() && r.payment_status !== 'bezahlt') {
+        g.hasOverdue = true;
+      }
+    }
+    return Array.from(map.values());
+  }, [filtered]);
+
   // KPI summaries
   const totalDue = filtered.reduce((s, r) => s + (Number(r.amount_due) || 0), 0);
   const totalPaid = filtered.reduce((s, r) => s + (Number(r.amount_paid) || 0), 0);
@@ -74,6 +111,15 @@ export default function Finance() {
   const toggleSort = (field: SortField) => {
     if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
     else { setSortField(field); setSortDir('asc'); }
+  };
+
+  const toggleExpand = (orderId: string) => {
+    setExpandedOrders(prev => {
+      const next = new Set(prev);
+      if (next.has(orderId)) next.delete(orderId);
+      else next.add(orderId);
+      return next;
+    });
   };
 
   const SortHeader = ({ field, label, align }: { field: SortField; label: string; align?: string }) => (
@@ -88,7 +134,7 @@ export default function Finance() {
     </th>
   );
 
-  const fmt = (amount: number | null, currency: string | null) =>
+  const fmt = (amount: number | null, currency?: string | null) =>
     amount != null ? Number(amount).toLocaleString('de-DE', { style: 'currency', currency: currency || 'EUR' }) : '—';
 
   return (
@@ -99,7 +145,7 @@ export default function Finance() {
           <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
             <Banknote className="w-6 h-6 text-primary" /> Finance
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">{filtered.length} Einträge</p>
+          <p className="text-sm text-muted-foreground mt-1">{grouped.length} Aufträge · {filtered.length} Positionen</p>
         </div>
         {canWrite && (
           <Button onClick={() => navigate('/finance/neu')} className="gold-gradient text-primary-foreground">
@@ -165,50 +211,96 @@ export default function Finance() {
 
       {error && <div className="mb-4 p-4 rounded-lg bg-destructive/10 text-destructive text-sm">{error}</div>}
 
-      {/* Table */}
+      {/* Table grouped by order */}
       <div className="rounded-xl border border-border bg-card card-glow overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-secondary/50">
+                <th className="w-10 px-3 py-3" />
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Auftrag</th>
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Kunde</th>
-                <SortHeader field="due_date" label="Fällig" />
-                <SortHeader field="amount_due" label="Betrag fällig" align="right" />
-                <th className="text-right px-4 py-3 text-muted-foreground font-medium">Bezahlt</th>
-                <th className="text-left px-4 py-3 text-muted-foreground font-medium">Zahlung</th>
-                <th className="text-left px-4 py-3 text-muted-foreground font-medium">Rechnung</th>
+                <th className="text-center px-4 py-3 text-muted-foreground font-medium">Raten</th>
+                <th className="text-right px-4 py-3 text-muted-foreground font-medium">Gesamt fällig</th>
+                <th className="text-right px-4 py-3 text-muted-foreground font-medium">Gesamt bezahlt</th>
+                <th className="text-left px-4 py-3 text-muted-foreground font-medium">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {loading ? (
                 <tr><td colSpan={7} className="px-4 py-12 text-center"><Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" /></td></tr>
-              ) : filtered.length === 0 ? (
+              ) : grouped.length === 0 ? (
                 <tr><td colSpan={7} className="px-4 py-12 text-center">
                   <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
                   <p className="text-muted-foreground">Keine Finance-Einträge gefunden.</p>
                 </td></tr>
               ) : (
-                filtered.map(r => {
-                  const isOverdue = r.due_date && new Date(r.due_date) < new Date() && r.payment_status !== 'bezahlt';
+                grouped.map(g => {
+                  const expanded = expandedOrders.has(g.orderId);
+                  const paidCount = g.records.filter(r => r.payment_status === 'bezahlt').length;
                   return (
-                    <tr key={r.id} className={cn("hover:bg-secondary/30 transition-colors cursor-pointer", isOverdue && "bg-destructive/5")} onClick={() => navigate(`/finance/${r.id}`)}>
-                      <td className="px-4 py-3 font-medium text-foreground">{r.orders?.order_number || '—'}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{r.orders?.customers?.company_name || '—'}</td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        <span className={cn(isOverdue && "text-destructive font-medium")}>
-                          {r.due_date ? new Date(r.due_date + 'T00:00:00').toLocaleDateString('de-DE') : '—'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right text-foreground">{fmt(r.amount_due, r.currency)}</td>
-                      <td className="px-4 py-3 text-right text-foreground">{fmt(r.amount_paid, r.currency)}</td>
-                      <td className="px-4 py-3">
-                        <StatusBadge status={r.payment_status || 'offen'} />
-                      </td>
-                      <td className="px-4 py-3">
-                        <StatusBadge status={r.invoice_status || '—'} />
-                      </td>
-                    </tr>
+                    <React.Fragment key={g.orderId}>
+                      {/* Order group header row */}
+                      <tr
+                        className={cn(
+                          "hover:bg-secondary/30 transition-colors cursor-pointer",
+                          g.hasOverdue && "bg-destructive/5"
+                        )}
+                        onClick={() => toggleExpand(g.orderId)}
+                      >
+                        <td className="px-3 py-3 text-muted-foreground">
+                          {expanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                        </td>
+                        <td className="px-4 py-3 font-medium text-foreground">{g.orderNumber}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{g.customerName}</td>
+                        <td className="px-4 py-3 text-center text-muted-foreground">
+                          <span className="text-foreground font-medium">{paidCount}</span>/{g.records.length}
+                        </td>
+                        <td className="px-4 py-3 text-right text-foreground font-medium">{fmt(g.totalDue)}</td>
+                        <td className="px-4 py-3 text-right text-success font-medium">{fmt(g.totalPaid)}</td>
+                        <td className="px-4 py-3">
+                          {g.hasOverdue ? (
+                            <span className="inline-flex items-center gap-1 text-destructive text-xs font-medium">
+                              <AlertTriangle className="w-3.5 h-3.5" /> Überfällig
+                            </span>
+                          ) : paidCount === g.records.length ? (
+                            <StatusBadge status="bezahlt" />
+                          ) : (
+                            <StatusBadge status="offen" />
+                          )}
+                        </td>
+                      </tr>
+                      {/* Expanded individual installments */}
+                      {expanded && g.records.map((r, idx) => {
+                        const isOverdue = r.due_date && new Date(r.due_date) < new Date() && r.payment_status !== 'bezahlt';
+                        return (
+                          <tr
+                            key={r.id}
+                            className={cn(
+                              "bg-secondary/20 hover:bg-secondary/40 transition-colors cursor-pointer border-t border-border/50",
+                              isOverdue && "bg-destructive/5"
+                            )}
+                            onClick={(e) => { e.stopPropagation(); navigate(`/finance/${r.id}`); }}
+                          >
+                            <td className="px-3 py-2" />
+                            <td className="px-4 py-2 text-muted-foreground text-xs pl-8">
+                              {r.finance_note || `Rate ${idx + 1}`}
+                            </td>
+                            <td className="px-4 py-2 text-muted-foreground text-xs">
+                              <span className={cn(isOverdue && "text-destructive font-medium")}>
+                                {r.due_date ? new Date(r.due_date + 'T00:00:00').toLocaleDateString('de-DE') : '—'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-2" />
+                            <td className="px-4 py-2 text-right text-foreground text-xs">{fmt(r.amount_due, r.currency)}</td>
+                            <td className="px-4 py-2 text-right text-foreground text-xs">{fmt(r.amount_paid, r.currency)}</td>
+                            <td className="px-4 py-2">
+                              <StatusBadge status={r.payment_status || 'offen'} />
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </React.Fragment>
                   );
                 })
               )}
