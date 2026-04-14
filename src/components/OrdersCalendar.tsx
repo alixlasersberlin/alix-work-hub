@@ -143,7 +143,7 @@ export default function OrdersCalendar() {
   // Weekly summary
   const weekSummary = useMemo(() => {
     if (view !== 'month') return [];
-    const weeks: { weekNum: number; start: Date; end: Date; orders: number; deliveries: number }[] = [];
+    const weeks: { weekNum: number; start: Date; end: Date; orders: number; deliveries: number; shipments: number }[] = [];
     const days = getMonthDays(year, month);
     for (let w = 0; w < 6; w++) {
       const wDays = days.slice(w * 7, w * 7 + 7);
