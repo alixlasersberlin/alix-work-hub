@@ -105,7 +105,7 @@ export default function PriorityList() {
       o.order_number?.toLowerCase().includes(q) ||
       o.customers?.company_name?.toLowerCase().includes(q) ||
       o.customers?.contact_name?.toLowerCase().includes(q) ||
-      getCity(o.customers?.shipping_address)?.toLowerCase().includes(q);
+      resolveCity(o)?.toLowerCase().includes(q);
     const matchStatus = statusFilter === 'all' || o.order_status === statusFilter;
     return matchSearch && matchStatus;
   });
@@ -192,7 +192,7 @@ export default function PriorityList() {
               ) : (
                 filtered.map((o, idx) => {
                   const days = getDaysUntil(o.expected_shipment_date);
-                  const city = getCity(o.customers?.shipping_address);
+                  const city = resolveCity(o);
                   const name = o.customers?.company_name || o.customers?.contact_name || '—';
                   return (
                     <tr
