@@ -17,6 +17,8 @@ import RoutePlanning from "./pages/RoutePlanning";
 import RoutePlanDetail from "./pages/RoutePlanDetail";
 import RoutePlanForm from "./pages/RoutePlanForm";
 import Finance from "./pages/Finance";
+import FinanceDetail from "./pages/FinanceDetail";
+import FinanceForm from "./pages/FinanceForm";
 import UserManagement from "./pages/UserManagement";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
@@ -71,6 +73,9 @@ function AppRoutes() {
         <Route path="/tourenplanung/:id" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><RoutePlanDetail /></ProtectedRoute>} />
         <Route path="/tourenplanung/:id/bearbeiten" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Tourenplanung']}><RoutePlanForm /></ProtectedRoute>} />
         <Route path="/finance" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Finance /></ProtectedRoute>} />
+        <Route path="/finance/neu" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Finance']}><FinanceForm /></ProtectedRoute>} />
+        <Route path="/finance/:id" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceDetail /></ProtectedRoute>} />
+        <Route path="/finance/:id/bearbeiten" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Finance']}><FinanceForm /></ProtectedRoute>} />
         <Route path="/benutzer" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><UserManagement /></ProtectedRoute>} />
       </Route>
       <Route path="*" element={<NotFound />} />
