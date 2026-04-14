@@ -473,31 +473,6 @@ Deno.serve(async (req: Request) => {
             console.warn(`Detail fetch failed for order ${externalOrderId}: ${e?.message}`);
           }
 
-          const orderDateIso = orderDetail.date ? new Date(orderDetail.date).toISOString() : null;
-          let expectedShipmentDate: string | null = null;
-          if (orderDetail.shipment_date) {
-            expectedShipmentDate = new Date(orderDetail.shipment_date).toISOString();
-          } else {
-            const fallback = new Date();
-            fallback.setDate(fallback.getDate() + 56);
-            expectedShipmentDate = fallback.toISOString();
-          }
-
-          const orderPayload = {
-            customer_id: dbCustomer?.id,
-            external_order_id: externalOrderId,
-            order_number: orderNumber,
-            source_system: sourceSystem,
-            order_status: orderDetail.status ?? "offen",
-            currency: orderDetail.currency_code ?? null,
-            total_amount: orderDetail.total ?? null,
-            order_date: orderDateIso,
-            expected_shipment_date: expectedShipmentDate,
-            billing_address: orderDetail.billing_address ?? null,
-            shipping_address: orderDetail.shipping_address ?? null,
-            raw_data: orderDetail,
-          };
-
           if (isDryRun) {
             dryRunResults.push({
               type: "order", id: orderNumber,
@@ -521,7 +496,30 @@ Deno.serve(async (req: Request) => {
             continue;
           }
 
-          orderPayload.customer_id = dbCustomer.id;
+          const orderDateIso = orderDetail.date ? new Date(orderDetail.date).toISOString() : null;
+          let expectedShipmentDate: string | null = null;
+          if (orderDetail.shipment_date) {
+            expectedShipmentDate = new Date(orderDetail.shipment_date).toISOString();
+          } else {
+            const fallback = new Date();
+            fallback.setDate(fallback.getDate() + 56);
+            expectedShipmentDate = fallback.toISOString();
+          }
+
+          const orderPayload = {
+            customer_id: dbCustomer.id,
+            external_order_id: externalOrderId,
+            order_number: orderNumber,
+            source_system: sourceSystem,
+            order_status: orderDetail.status ?? "offen",
+            currency: orderDetail.currency_code ?? null,
+            total_amount: orderDetail.total ?? null,
+            order_date: orderDateIso,
+            expected_shipment_date: expectedShipmentDate,
+            billing_address: orderDetail.billing_address ?? null,
+            shipping_address: orderDetail.shipping_address ?? null,
+            raw_data: orderDetail,
+          };
 
           if (existingOrder) {
             // Check if anything changed
