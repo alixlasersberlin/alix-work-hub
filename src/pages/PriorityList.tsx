@@ -18,10 +18,13 @@ interface PrioOrder {
   total_amount: number | null;
   currency: string | null;
   source_system: string;
+  shipping_address: any;
+  billing_address: any;
   customers: {
     company_name: string | null;
     contact_name: string | null;
     shipping_address: any;
+    billing_address: any;
   } | null;
 }
 
@@ -39,7 +42,13 @@ function getDaysUntil(date: string | null): number | null {
   return Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-function getCity(addr: any): string {
+function resolveCity(order: PrioOrder): string {
+  const hasAddr = (a: any) => a && (a.city || a.address || a.street);
+  const addr =
+    (hasAddr(order.shipping_address) ? order.shipping_address : null) ||
+    (hasAddr(order.customers?.shipping_address) ? order.customers?.shipping_address : null) ||
+    (hasAddr(order.billing_address) ? order.billing_address : null) ||
+    (hasAddr(order.customers?.billing_address) ? order.customers?.billing_address : null);
   if (!addr) return '';
   if (typeof addr === 'string') return addr;
   return addr.city || addr.state || '';
@@ -77,7 +86,7 @@ export default function PriorityList() {
       setError(null);
       const { data, error: err } = await supabase
         .from('orders')
-        .select('id, order_number, order_status, order_date, expected_shipment_date, total_amount, currency, source_system, customers(company_name, contact_name, shipping_address)')
+        .select('id, order_number, order_status, order_date, expected_shipment_date, total_amount, currency, source_system, shipping_address, billing_address, customers(company_name, contact_name, shipping_address, billing_address)')
         .not('expected_shipment_date', 'is', null)
         .order(sortField, { ascending: sortDir === 'asc' })
         .limit(500);
@@ -96,7 +105,7 @@ export default function PriorityList() {
       o.order_number?.toLowerCase().includes(q) ||
       o.customers?.company_name?.toLowerCase().includes(q) ||
       o.customers?.contact_name?.toLowerCase().includes(q) ||
-      getCity(o.customers?.shipping_address)?.toLowerCase().includes(q);
+      resolveCity(o)?.toLowerCase().includes(q);
     const matchStatus = statusFilter === 'all' || o.order_status === statusFilter;
     return matchSearch && matchStatus;
   });
@@ -183,7 +192,7 @@ export default function PriorityList() {
               ) : (
                 filtered.map((o, idx) => {
                   const days = getDaysUntil(o.expected_shipment_date);
-                  const city = getCity(o.customers?.shipping_address);
+                  const city = resolveCity(o);
                   const name = o.customers?.company_name || o.customers?.contact_name || '—';
                   return (
                     <tr
