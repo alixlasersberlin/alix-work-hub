@@ -116,7 +116,7 @@ export default function Finance() {
         </div>
         <div className="rounded-xl border border-border bg-card p-4 card-glow">
           <p className="text-xs text-muted-foreground mb-1">Bezahlt gesamt</p>
-          <p className="text-xl font-display font-bold text-emerald-400">{totalPaid.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</p>
+          <p className="text-xl font-display font-bold text-success">{totalPaid.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</p>
         </div>
         <div className="rounded-xl border border-border bg-card p-4 card-glow">
           <p className="text-xs text-muted-foreground mb-1">Überfällig</p>
