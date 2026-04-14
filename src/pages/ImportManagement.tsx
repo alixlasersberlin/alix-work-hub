@@ -745,8 +745,8 @@ export default function ImportManagement() {
                                     </TableCell>
                                     <TableCell className="font-mono text-xs">{item.id}</TableCell>
                                     <TableCell>
-                                      <Badge variant="outline" className={item.action === 'create' ? 'border-[hsl(var(--success))]/30 text-[hsl(var(--success))]' : 'border-primary/30 text-primary'}>
-                                        {item.action === 'create' ? 'Neu' : 'Update'}
+                                      <Badge variant="outline" className={item.action === 'create' ? 'border-[hsl(var(--success))]/30 text-[hsl(var(--success))]' : item.action === 'skip' ? 'border-muted-foreground/30 text-muted-foreground' : 'border-primary/30 text-primary'}>
+                                        {item.action === 'create' ? 'Neu' : item.action === 'skip' ? 'Übersprungen' : 'Update'}
                                       </Badge>
                                     </TableCell>
                                     <TableCell className="text-xs text-muted-foreground">{item.name || '–'}</TableCell>
