@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, ClipboardList, ArrowUpDown, Loader2, Inbox } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Search, ClipboardList, ArrowUpDown, Loader2, Inbox, CalendarDays, List } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
+import OrdersCalendar from '@/components/OrdersCalendar';
 
 type SortField = 'order_number' | 'order_date' | 'total_amount' | 'created_at';
 type SortDir = 'asc' | 'desc';
@@ -52,7 +54,6 @@ export default function Orders() {
     else { setSortField(field); setSortDir('asc'); }
   };
 
-
   const SortHeader = ({ field, label }: { field: SortField; label: string }) => (
     <th
       className="text-left px-4 py-3 text-muted-foreground font-medium cursor-pointer select-none hover:text-foreground transition-colors"
@@ -75,71 +76,88 @@ export default function Orders() {
         <p className="text-sm text-muted-foreground mt-1">{filtered.length} Aufträge</p>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 mb-4">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input placeholder="Suche nach Auftrag, Kunde..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10 bg-secondary border-border" />
-        </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-48 bg-secondary border-border">
-            <SelectValue placeholder="Status filtern" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alle Status</SelectItem>
-            {statuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
+      <Tabs defaultValue="list" className="space-y-4">
+        <TabsList className="bg-secondary">
+          <TabsTrigger value="list" className="gap-1.5">
+            <List className="w-3.5 h-3.5" /> Liste
+          </TabsTrigger>
+          <TabsTrigger value="calendar" className="gap-1.5">
+            <CalendarDays className="w-3.5 h-3.5" /> Kalender
+          </TabsTrigger>
+        </TabsList>
 
-      {error && <div className="mb-4 p-4 rounded-lg bg-destructive/10 text-destructive text-sm">{error}</div>}
+        <TabsContent value="list" className="space-y-4">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input placeholder="Suche nach Auftrag, Kunde..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10 bg-secondary border-border" />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-48 bg-secondary border-border">
+                <SelectValue placeholder="Status filtern" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Status</SelectItem>
+                {statuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
 
-      <div className="rounded-xl border border-border bg-card card-glow overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border bg-secondary/50">
-                <SortHeader field="order_number" label="Auftrag Nr." />
-                <th className="text-left px-4 py-3 text-muted-foreground font-medium">Kunde</th>
-                <SortHeader field="order_date" label="Datum" />
-                <SortHeader field="total_amount" label="Betrag" />
-                <th className="text-left px-4 py-3 text-muted-foreground font-medium">Status</th>
-                <th className="text-left px-4 py-3 text-muted-foreground font-medium">Quelle</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {loading ? (
-                <tr><td colSpan={6} className="px-4 py-12 text-center">
-                  <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" />
-                </td></tr>
-              ) : filtered.length === 0 ? (
-                <tr><td colSpan={6} className="px-4 py-12 text-center">
-                  <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
-                  <p className="text-muted-foreground">Keine Aufträge gefunden.</p>
-                </td></tr>
-              ) : (
-                filtered.map(o => (
-                  <tr
-                    key={o.id}
-                    className="hover:bg-secondary/30 transition-colors cursor-pointer"
-                    onClick={() => navigate(`/auftraege/${o.id}`)}
-                  >
-                    <td className="px-4 py-3 font-medium text-foreground">{o.order_number}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{o.customers?.company_name || o.customers?.contact_name || '—'}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{o.order_date ? new Date(o.order_date).toLocaleDateString('de-DE') : '—'}</td>
-                    <td className="px-4 py-3 text-foreground">
-                      {o.total_amount != null ? Number(o.total_amount).toLocaleString('de-DE', { style: 'currency', currency: o.currency || 'EUR' }) : '—'}
-                    </td>
-                    <td className="px-4 py-3">
-                      <StatusBadge status={o.order_status || 'offen'} />
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground text-xs">{o.source_system}</td>
+          {error && <div className="p-4 rounded-lg bg-destructive/10 text-destructive text-sm">{error}</div>}
+
+          <div className="rounded-xl border border-border bg-card card-glow overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-secondary/50">
+                    <SortHeader field="order_number" label="Auftrag Nr." />
+                    <th className="text-left px-4 py-3 text-muted-foreground font-medium">Kunde</th>
+                    <SortHeader field="order_date" label="Datum" />
+                    <SortHeader field="total_amount" label="Betrag" />
+                    <th className="text-left px-4 py-3 text-muted-foreground font-medium">Status</th>
+                    <th className="text-left px-4 py-3 text-muted-foreground font-medium">Quelle</th>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {loading ? (
+                    <tr><td colSpan={6} className="px-4 py-12 text-center">
+                      <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" />
+                    </td></tr>
+                  ) : filtered.length === 0 ? (
+                    <tr><td colSpan={6} className="px-4 py-12 text-center">
+                      <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
+                      <p className="text-muted-foreground">Keine Aufträge gefunden.</p>
+                    </td></tr>
+                  ) : (
+                    filtered.map(o => (
+                      <tr
+                        key={o.id}
+                        className="hover:bg-secondary/30 transition-colors cursor-pointer"
+                        onClick={() => navigate(`/auftraege/${o.id}`)}
+                      >
+                        <td className="px-4 py-3 font-medium text-foreground">{o.order_number}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{o.customers?.company_name || o.customers?.contact_name || '—'}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{o.order_date ? new Date(o.order_date).toLocaleDateString('de-DE') : '—'}</td>
+                        <td className="px-4 py-3 text-foreground">
+                          {o.total_amount != null ? Number(o.total_amount).toLocaleString('de-DE', { style: 'currency', currency: o.currency || 'EUR' }) : '—'}
+                        </td>
+                        <td className="px-4 py-3">
+                          <StatusBadge status={o.order_status || 'offen'} />
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground text-xs">{o.source_system}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="calendar">
+          <OrdersCalendar />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
