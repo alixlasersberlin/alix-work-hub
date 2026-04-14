@@ -569,6 +569,7 @@ export type Database = {
           order_number: string
           order_status: string | null
           raw_data: Json | null
+          salesperson_name: string | null
           shipping_address: Json | null
           source_system: string
           total_amount: number | null
@@ -586,6 +587,7 @@ export type Database = {
           order_number: string
           order_status?: string | null
           raw_data?: Json | null
+          salesperson_name?: string | null
           shipping_address?: Json | null
           source_system: string
           total_amount?: number | null
@@ -603,6 +605,7 @@ export type Database = {
           order_number?: string
           order_status?: string | null
           raw_data?: Json | null
+          salesperson_name?: string | null
           shipping_address?: Json | null
           source_system?: string
           total_amount?: number | null
