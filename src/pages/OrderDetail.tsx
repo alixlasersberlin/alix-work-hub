@@ -49,6 +49,7 @@ export default function OrderDetail() {
     setOrder(oRes.data);
     setCustomer(oRes.data?.customers);
     setNotes(nRes.data ?? []);
+    setItems(iRes.data ?? []);
     setHistory(hRes.data ?? []);
     setLoading(false);
   }
