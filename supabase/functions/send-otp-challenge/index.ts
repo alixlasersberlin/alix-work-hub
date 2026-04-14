@@ -6,6 +6,9 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+const TWILIO_GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
+const TWILIO_FROM_NUMBER = "+19542313571";
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -23,7 +26,6 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Verify the user with their JWT
     const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -37,7 +39,6 @@ Deno.serve(async (req) => {
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
-    // Get user profile for OTP channel
     const { data: profile } = await adminClient
       .from("user_profiles")
       .select("otp_channel, phone_number, email")
@@ -51,7 +52,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const channel = profile.otp_channel || "email";
+    const channel = profile.otp_channel || "sms";
     const destination = channel === "sms" ? profile.phone_number : profile.email;
 
     if (!destination) {
@@ -61,7 +62,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Check for existing active/blocked challenges
+    // Check for existing blocked challenges
     const { data: existingBlocked } = await adminClient
       .from("otp_challenges")
       .select("id, blocked_at")
@@ -83,10 +84,8 @@ Deno.serve(async (req) => {
     // Generate 6-digit OTP
     const otp = String(Math.floor(100000 + Math.random() * 900000));
     const otpHash = await hashOtp(otp);
-
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
 
-    // Body may contain session_id and reason
     let sessionId: string | null = null;
     let challengeReason = "login";
     try {
@@ -121,9 +120,15 @@ Deno.serve(async (req) => {
       });
     }
 
-    // In production, send OTP via SMS/Email service here.
-    // For now, log OTP for testing (remove in production)
-    console.log(`[OTP] User ${user.id} | Channel: ${channel} | OTP: ${otp} | Challenge: ${challenge.id}`);
+    // Send OTP via appropriate channel
+    if (channel === "sms") {
+      await sendSmsTwilio(destination, otp);
+    } else {
+      // Email channel - log for now (can integrate email service later)
+      console.log(`[OTP-EMAIL] User ${user.id} | OTP: ${otp} | Challenge: ${challenge.id}`);
+    }
+
+    console.log(`[OTP] User ${user.id} | Channel: ${channel} | Challenge: ${challenge.id} | Sent to: ${channel === "sms" ? "***" + destination.slice(-4) : destination.slice(0, 3) + "***"}`);
 
     return new Response(JSON.stringify({
       success: true,
@@ -145,6 +150,36 @@ Deno.serve(async (req) => {
     });
   }
 });
+
+async function sendSmsTwilio(to: string, otp: string): Promise<void> {
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+
+  const TWILIO_API_KEY = Deno.env.get("TWILIO_API_KEY");
+  if (!TWILIO_API_KEY) throw new Error("TWILIO_API_KEY is not configured");
+
+  const response = await fetch(`${TWILIO_GATEWAY_URL}/Messages.json`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+      "X-Connection-Api-Key": TWILIO_API_KEY,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams({
+      To: to,
+      From: TWILIO_FROM_NUMBER,
+      Body: `Ihr Alix Work Sicherheitscode: ${otp}\n\nDieser Code ist 5 Minuten gültig. Teilen Sie ihn niemals mit anderen.`,
+    }),
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    console.error("Twilio SMS error:", JSON.stringify(data));
+    throw new Error(`Twilio API error [${response.status}]: ${data.message || JSON.stringify(data)}`);
+  }
+
+  console.log(`[TWILIO] SMS sent successfully. SID: ${data.sid}`);
+}
 
 async function hashOtp(otp: string): Promise<string> {
   const encoder = new TextEncoder();
