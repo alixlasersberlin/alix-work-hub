@@ -18,10 +18,13 @@ interface PrioOrder {
   total_amount: number | null;
   currency: string | null;
   source_system: string;
+  shipping_address: any;
+  billing_address: any;
   customers: {
     company_name: string | null;
     contact_name: string | null;
     shipping_address: any;
+    billing_address: any;
   } | null;
 }
 
