@@ -42,23 +42,7 @@ interface FinanceRecord {
   currency: string | null;
 }
 
-const statusColors: Record<string, string> = {
-  offen: 'bg-warning/15 text-warning',
-  'in Bearbeitung': 'bg-info/15 text-info',
-  abgeschlossen: 'bg-success/15 text-success',
-  storniert: 'bg-destructive/15 text-destructive',
-  geplant: 'bg-primary/15 text-primary',
-  bezahlt: 'bg-success/15 text-success',
-  überfällig: 'bg-destructive/15 text-destructive',
-  normal: 'bg-muted-foreground/15 text-muted-foreground',
-  hoch: 'bg-warning/15 text-warning',
-  dringend: 'bg-destructive/15 text-destructive',
-};
-
-function getStatusClass(status: string | null) {
-  if (!status) return 'bg-muted text-muted-foreground';
-  return statusColors[status.toLowerCase()] || 'bg-primary/15 text-primary';
-}
+import { StatusBadge } from '@/components/StatusBadge';
 
 function formatCurrency(amount: number | null, currency: string | null) {
   if (amount == null) return '—';
@@ -213,7 +197,7 @@ export default function Dashboard() {
       )}
 
       {/* KPI Cards */}
-      <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-${Math.min(kpiCards.length, 5)} gap-4`}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {loading
           ? Array.from({ length: 5 }).map((_, i) => <CardSkeleton key={i} />)
           : kpiCards.map((card, i) => (
