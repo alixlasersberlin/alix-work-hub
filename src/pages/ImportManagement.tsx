@@ -528,93 +528,198 @@ export default function ImportManagement() {
             <Card className="border-border">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <CalendarDays className="w-4 h-4 text-primary" />
-                  Zeitraum für Import
+                  <Filter className="w-4 h-4 text-primary" />
+                  Importfilter
                 </CardTitle>
                 <CardDescription>
-                  Wählen Sie den Zeitraum der zu importierenden Aufträge. Bereits vorhandene Aufträge werden übersprungen.
+                  Definieren Sie die Filter für den Zoho Books Import. Bereits vorhandene Aufträge werden übersprungen.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex flex-wrap gap-2">
-                  {([
-                    { key: 'all' as DatePreset, label: 'Alle' },
-                    { key: 'this_week' as DatePreset, label: 'Diese Woche' },
-                    { key: 'this_month' as DatePreset, label: 'Dieser Monat' },
-                    { key: 'this_year' as DatePreset, label: 'Dieses Jahr' },
-                    { key: 'custom' as DatePreset, label: 'Benutzerdefiniert' },
-                  ]).map(p => (
-                    <Button
-                      key={p.key}
-                      size="sm"
-                      variant={datePreset === p.key ? 'default' : 'outline'}
-                      onClick={() => setDatePreset(p.key)}
-                    >
-                      {p.label}
-                    </Button>
-                  ))}
+              <CardContent className="space-y-5">
+                {/* Date range */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Zeitraum</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {([
+                      { key: 'all' as DatePreset, label: 'Alle' },
+                      { key: 'this_week' as DatePreset, label: 'Diese Woche' },
+                      { key: 'this_month' as DatePreset, label: 'Dieser Monat' },
+                      { key: 'this_year' as DatePreset, label: 'Dieses Jahr' },
+                      { key: 'custom' as DatePreset, label: 'Benutzerdefiniert' },
+                    ]).map(p => (
+                      <Button
+                        key={p.key}
+                        size="sm"
+                        variant={datePreset === p.key ? 'default' : 'outline'}
+                        onClick={() => setDatePreset(p.key)}
+                      >
+                        {p.label}
+                      </Button>
+                    ))}
+                  </div>
+
+                  {datePreset === 'custom' && (
+                    <div className="flex flex-wrap items-end gap-4 pt-1">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs text-muted-foreground">Von</Label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button variant="outline" size="sm" className="w-[160px] justify-start text-left font-normal">
+                              <CalendarDays className="w-3.5 h-3.5 mr-2" />
+                              {customDateFrom ? format(customDateFrom, 'dd.MM.yyyy') : 'Startdatum'}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={customDateFrom}
+                              onSelect={setCustomDateFrom}
+                              className="p-3 pointer-events-auto"
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs text-muted-foreground">Bis</Label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button variant="outline" size="sm" className="w-[160px] justify-start text-left font-normal">
+                              <CalendarDays className="w-3.5 h-3.5 mr-2" />
+                              {customDateTo ? format(customDateTo, 'dd.MM.yyyy') : 'Enddatum'}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={customDateTo}
+                              onSelect={setCustomDateTo}
+                              className="p-3 pointer-events-auto"
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {datePreset === 'custom' && (
-                  <div className="flex flex-wrap items-end gap-4">
-                    <div className="space-y-1.5">
-                      <Label className="text-xs text-muted-foreground">Von</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" size="sm" className="w-[160px] justify-start text-left font-normal">
-                            <CalendarDays className="w-3.5 h-3.5 mr-2" />
-                            {customDateFrom ? format(customDateFrom, 'dd.MM.yyyy') : 'Startdatum'}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={customDateFrom}
-                            onSelect={setCustomDateFrom}
-                            className="p-3 pointer-events-auto"
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs text-muted-foreground">Bis</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" size="sm" className="w-[160px] justify-start text-left font-normal">
-                            <CalendarDays className="w-3.5 h-3.5 mr-2" />
-                            {customDateTo ? format(customDateTo, 'dd.MM.yyyy') : 'Enddatum'}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={customDateTo}
-                            onSelect={setCustomDateTo}
-                            className="p-3 pointer-events-auto"
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
+                <Separator />
+
+                {/* Status filter */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-medium">Auftragsstatus (Zoho)</Label>
+                    <Select value={zohoStatus} onValueChange={setZohoStatus}>
+                      <SelectTrigger className="bg-secondary border-border">
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Alle Status</SelectItem>
+                        <SelectItem value="draft">Entwurf (Draft)</SelectItem>
+                        <SelectItem value="open">Offen (Open)</SelectItem>
+                        <SelectItem value="closed">Geschlossen (Closed)</SelectItem>
+                        <SelectItem value="void">Storniert (Void)</SelectItem>
+                        <SelectItem value="overdue">Überfällig (Overdue)</SelectItem>
+                        <SelectItem value="confirmed">Bestätigt (Confirmed)</SelectItem>
+                        <SelectItem value="fulfilled">Erfüllt (Fulfilled)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Customer name */}
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-medium">Kundenname</Label>
+                    <Input
+                      placeholder="z.B. Mustermann GmbH"
+                      value={zohoCustomerName}
+                      onChange={e => setZohoCustomerName(e.target.value)}
+                      className="bg-secondary border-border"
+                    />
+                  </div>
+
+                  {/* Search text */}
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-medium">Volltextsuche</Label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Suchbegriff in Zoho…"
+                        value={zohoSearchText}
+                        onChange={e => setZohoSearchText(e.target.value)}
+                        className="pl-9 bg-secondary border-border"
+                      />
                     </div>
                   </div>
-                )}
 
-                {datePreset !== 'all' && (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground bg-secondary/50 rounded-lg px-3 py-2">
+                  {/* Sort */}
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-medium">Sortierung</Label>
+                    <div className="flex gap-2">
+                      <Select value={zohoSortColumn} onValueChange={setZohoSortColumn}>
+                        <SelectTrigger className="bg-secondary border-border flex-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="date">Datum</SelectItem>
+                          <SelectItem value="salesorder_number">Auftragsnr.</SelectItem>
+                          <SelectItem value="customer_name">Kunde</SelectItem>
+                          <SelectItem value="total">Betrag</SelectItem>
+                          <SelectItem value="created_time">Erstellzeit</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setZohoSortOrder(o => o === 'descending' ? 'ascending' : 'descending')}
+                        title={zohoSortOrder === 'descending' ? 'Absteigend' : 'Aufsteigend'}
+                      >
+                        <ArrowUpDown className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Active filter summary */}
+                {(datePreset !== 'all' || zohoStatus !== 'all' || zohoCustomerName || zohoSearchText) && (
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground bg-secondary/50 rounded-lg px-3 py-2">
                     <Info className="w-3.5 h-3.5 flex-shrink-0" />
-                    {datePreset === 'custom' ? (
-                      <span>
-                        Importzeitraum: {customDateFrom ? format(customDateFrom, 'dd.MM.yyyy') : '–'} bis {customDateTo ? format(customDateTo, 'dd.MM.yyyy') : '–'}
-                      </span>
-                    ) : (
-                      <span>
-                        Importzeitraum: {(() => {
-                          const range = getDateRange();
-                          return `${range.date_from ? new Date(range.date_from).toLocaleDateString('de-DE') : '–'} bis ${range.date_to ? new Date(range.date_to).toLocaleDateString('de-DE') : '–'}`;
-                        })()}
-                      </span>
+                    <span>Aktive Filter:</span>
+                    {datePreset !== 'all' && (
+                      <Badge variant="outline" className="text-xs">
+                        {datePreset === 'custom'
+                          ? `${customDateFrom ? format(customDateFrom, 'dd.MM.yyyy') : '–'} – ${customDateTo ? format(customDateTo, 'dd.MM.yyyy') : '–'}`
+                          : datePreset === 'this_week' ? 'Diese Woche'
+                          : datePreset === 'this_month' ? 'Dieser Monat'
+                          : 'Dieses Jahr'}
+                      </Badge>
                     )}
+                    {zohoStatus !== 'all' && (
+                      <Badge variant="outline" className="text-xs">Status: {zohoStatus}</Badge>
+                    )}
+                    {zohoCustomerName && (
+                      <Badge variant="outline" className="text-xs">Kunde: {zohoCustomerName}</Badge>
+                    )}
+                    {zohoSearchText && (
+                      <Badge variant="outline" className="text-xs">Suche: {zohoSearchText}</Badge>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-5 px-1.5 text-xs"
+                      onClick={() => {
+                        setDatePreset('all');
+                        setCustomDateFrom(undefined);
+                        setCustomDateTo(undefined);
+                        setZohoStatus('all');
+                        setZohoCustomerName('');
+                        setZohoSearchText('');
+                        setZohoSortColumn('date');
+                        setZohoSortOrder('descending');
+                      }}
+                    >
+                      Alle zurücksetzen
+                    </Button>
                   </div>
                 )}
               </CardContent>
