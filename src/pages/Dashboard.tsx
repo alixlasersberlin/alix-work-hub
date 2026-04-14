@@ -132,66 +132,32 @@ export default function Dashboard() {
     async function load() {
       try {
         setError(null);
-        const promises: Promise<any>[] = [];
+        // Fetch all data in parallel based on role access
+        const customersRes = canSeeCustomers
+          ? await supabase.from('customers').select('id', { count: 'exact', head: true })
+          : { count: 0 };
 
-        // KPI counts - based on role access
-        if (canSeeCustomers) {
-          promises.push(supabase.from('customers').select('id', { count: 'exact', head: true }));
-        } else {
-          promises.push(Promise.resolve({ count: null }));
-        }
+        const [ordersRes, openOrdersRes, recentOrdersRes] = canSeeOrders
+          ? await Promise.all([
+              supabase.from('orders').select('id', { count: 'exact', head: true }),
+              supabase.from('orders').select('id', { count: 'exact', head: true }).eq('order_status', 'offen'),
+              supabase.from('orders').select('id, order_number, order_status, total_amount, currency, order_date').order('created_at', { ascending: false }).limit(7),
+            ])
+          : [{ count: 0 }, { count: 0 }, { data: [] }];
 
-        if (canSeeOrders) {
-          promises.push(supabase.from('orders').select('id', { count: 'exact', head: true }));
-          promises.push(supabase.from('orders').select('id', { count: 'exact', head: true }).eq('order_status', 'offen'));
-          promises.push(
-            supabase
-              .from('orders')
-              .select('id, order_number, order_status, total_amount, currency, order_date')
-              .order('created_at', { ascending: false })
-              .limit(7)
-          );
-        } else {
-          promises.push(Promise.resolve({ count: null }));
-          promises.push(Promise.resolve({ count: null }));
-          promises.push(Promise.resolve({ data: [] }));
-        }
+        const [routesRes, routePlansRes] = canSeeRoutes
+          ? await Promise.all([
+              supabase.from('route_plans').select('id', { count: 'exact', head: true }),
+              supabase.from('route_plans').select('id, planned_date, planning_status, assigned_employee, priority').or('planning_status.eq.offen,planning_status.eq.geplant,planning_status.eq.in Bearbeitung').order('planned_date', { ascending: true }).limit(7),
+            ])
+          : [{ count: 0 }, { data: [] }];
 
-        if (canSeeRoutes) {
-          promises.push(supabase.from('route_plans').select('id', { count: 'exact', head: true }));
-          promises.push(
-            supabase
-              .from('route_plans')
-              .select('id, planned_date, planning_status, assigned_employee, priority')
-              .in('planning_status', ['offen', 'geplant', 'in Bearbeitung'])
-              .order('planned_date', { ascending: true })
-              .limit(7)
-          );
-        } else {
-          promises.push(Promise.resolve({ count: null }));
-          promises.push(Promise.resolve({ data: [] }));
-        }
-
-        if (canSeeFinance) {
-          promises.push(supabase.from('finance_records').select('id', { count: 'exact', head: true }).eq('payment_status', 'offen'));
-          promises.push(
-            supabase
-              .from('finance_records')
-              .select('id, payment_status, invoice_status, due_date, amount_due, amount_paid, currency')
-              .in('payment_status', ['offen', 'teilweise bezahlt', 'überfällig'])
-              .order('due_date', { ascending: true })
-              .limit(7)
-          );
-        } else {
-          promises.push(Promise.resolve({ count: null }));
-          promises.push(Promise.resolve({ data: [] }));
-        }
-
-        const [
-          customersRes, ordersRes, openOrdersRes, recentOrdersRes,
-          routesRes, routePlansRes,
-          openFinanceRes, financeRes,
-        ] = await Promise.all(promises);
+        const [openFinanceRes, financeRes] = canSeeFinance
+          ? await Promise.all([
+              supabase.from('finance_records').select('id', { count: 'exact', head: true }).eq('payment_status', 'offen'),
+              supabase.from('finance_records').select('id, payment_status, invoice_status, due_date, amount_due, amount_paid, currency').or('payment_status.eq.offen,payment_status.eq.teilweise bezahlt,payment_status.eq.überfällig').order('due_date', { ascending: true }).limit(7),
+            ])
+          : [{ count: 0 }, { data: [] }];
 
         setStats({
           customers: customersRes.count ?? 0,
