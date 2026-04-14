@@ -9,7 +9,10 @@ import AccountBlocked from "./pages/AccountBlocked";
 import AccessDenied from "./pages/AccessDenied";
 import AppLayout from "./components/AppLayout";
 import Dashboard from "./pages/Dashboard";
+import Customers from "./pages/Customers";
+import CustomerDetail from "./pages/CustomerDetail";
 import Orders from "./pages/Orders";
+import OrderDetail from "./pages/OrderDetail";
 import RoutePlanning from "./pages/RoutePlanning";
 import Finance from "./pages/Finance";
 import UserManagement from "./pages/UserManagement";
@@ -17,6 +20,11 @@ import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
+
+const ORDER_ROLES = ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance'];
+const PLANNING_ROLES = ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung'];
+const FINANCE_ROLES = ['Admin', 'Super Admin', 'Finance'];
+const ADMIN_ROLES = ['Admin', 'Super Admin'];
 
 function ProtectedRoute({ children, requiredRoles }: { children: React.ReactNode; requiredRoles?: string[] }) {
   const { user, roles, loading, blockReason } = useAuth();
@@ -30,12 +38,8 @@ function ProtectedRoute({ children, requiredRoles }: { children: React.ReactNode
   }
 
   if (!user) return <Navigate to="/login" replace />;
-
   if (blockReason) return <AccountBlocked />;
-
-  if (requiredRoles && !requiredRoles.some(r => roles.includes(r))) {
-    return <AccessDenied />;
-  }
+  if (requiredRoles && !requiredRoles.some(r => roles.includes(r))) return <AccessDenied />;
 
   return <>{children}</>;
 }
@@ -56,26 +60,13 @@ function AppRoutes() {
       <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
       <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
         <Route path="/" element={<Dashboard />} />
-        <Route path="/auftraege" element={
-          <ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance']}>
-            <Orders />
-          </ProtectedRoute>
-        } />
-        <Route path="/tourenplanung" element={
-          <ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung']}>
-            <RoutePlanning />
-          </ProtectedRoute>
-        } />
-        <Route path="/finance" element={
-          <ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Finance']}>
-            <Finance />
-          </ProtectedRoute>
-        } />
-        <Route path="/benutzer" element={
-          <ProtectedRoute requiredRoles={['Admin', 'Super Admin']}>
-            <UserManagement />
-          </ProtectedRoute>
-        } />
+        <Route path="/kunden" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Customers /></ProtectedRoute>} />
+        <Route path="/kunden/:id" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><CustomerDetail /></ProtectedRoute>} />
+        <Route path="/auftraege" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Orders /></ProtectedRoute>} />
+        <Route path="/auftraege/:id" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><OrderDetail /></ProtectedRoute>} />
+        <Route path="/tourenplanung" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><RoutePlanning /></ProtectedRoute>} />
+        <Route path="/finance" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Finance /></ProtectedRoute>} />
+        <Route path="/benutzer" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><UserManagement /></ProtectedRoute>} />
       </Route>
       <Route path="*" element={<NotFound />} />
     </Routes>

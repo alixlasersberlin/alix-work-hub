@@ -1,75 +1,133 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
-import { Search, ClipboardList } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Search, ClipboardList, ArrowUpDown, Loader2, Inbox } from 'lucide-react';
+
+type SortField = 'order_number' | 'order_date' | 'total_amount' | 'created_at';
+type SortDir = 'asc' | 'desc';
 
 export default function Orders() {
   const [orders, setOrders] = useState<any[]>([]);
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [sortField, setSortField] = useState<SortField>('created_at');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     async function load() {
-      const { data } = await supabase
+      setLoading(true);
+      setError(null);
+      const { data, error: err } = await supabase
         .from('orders')
         .select('*, customers(company_name, contact_name)')
-        .order('created_at', { ascending: false })
-        .limit(100);
+        .order(sortField, { ascending: sortDir === 'asc' })
+        .limit(500);
+      if (err) setError(err.message);
       setOrders(data ?? []);
       setLoading(false);
     }
     load();
-  }, []);
+  }, [sortField, sortDir]);
 
-  const filtered = orders.filter(o =>
-    o.order_number?.toLowerCase().includes(search.toLowerCase()) ||
-    o.customers?.company_name?.toLowerCase().includes(search.toLowerCase()) ||
-    o.order_status?.toLowerCase().includes(search.toLowerCase())
+  const statuses = [...new Set(orders.map(o => o.order_status).filter(Boolean))];
+
+  const filtered = orders.filter(o => {
+    const q = search.toLowerCase();
+    const matchSearch = !search ||
+      o.order_number?.toLowerCase().includes(q) ||
+      o.customers?.company_name?.toLowerCase().includes(q) ||
+      o.customers?.contact_name?.toLowerCase().includes(q);
+    const matchStatus = statusFilter === 'all' || o.order_status === statusFilter;
+    return matchSearch && matchStatus;
+  });
+
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortField(field); setSortDir('asc'); }
+  };
+
+  const statusColor = (s: string) => {
+    if (['abgeschlossen', 'geliefert', 'bezahlt'].includes(s)) return 'bg-emerald-500/10 text-emerald-400';
+    if (['storniert', 'abgelehnt'].includes(s)) return 'bg-destructive/10 text-destructive';
+    if (['in Bearbeitung', 'in_progress'].includes(s)) return 'bg-amber-500/10 text-amber-400';
+    return 'bg-primary/10 text-primary';
+  };
+
+  const SortHeader = ({ field, label }: { field: SortField; label: string }) => (
+    <th
+      className="text-left px-4 py-3 text-muted-foreground font-medium cursor-pointer select-none hover:text-foreground transition-colors"
+      onClick={() => toggleSort(field)}
+    >
+      <span className="inline-flex items-center gap-1">
+        {label}
+        {sortField === field && <ArrowUpDown className="w-3 h-3 text-primary" />}
+      </span>
+    </th>
   );
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
-            <ClipboardList className="w-6 h-6 text-primary" />
-            Auftragsverwaltung
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">{filtered.length} Aufträge</p>
-        </div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
+          <ClipboardList className="w-6 h-6 text-primary" />
+          Aufträge
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1">{filtered.length} Aufträge</p>
       </div>
 
-      <div className="relative mb-4 max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          placeholder="Suche nach Auftrag, Kunde, Status..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="pl-10 bg-secondary border-border"
-        />
+      <div className="flex flex-col sm:flex-row gap-3 mb-4">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input placeholder="Suche nach Auftrag, Kunde..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10 bg-secondary border-border" />
+        </div>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-48 bg-secondary border-border">
+            <SelectValue placeholder="Status filtern" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Alle Status</SelectItem>
+            {statuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+          </SelectContent>
+        </Select>
       </div>
+
+      {error && <div className="mb-4 p-4 rounded-lg bg-destructive/10 text-destructive text-sm">{error}</div>}
 
       <div className="rounded-xl border border-border bg-card card-glow overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-secondary/50">
-                <th className="text-left px-4 py-3 text-muted-foreground font-medium">Auftrag Nr.</th>
+                <SortHeader field="order_number" label="Auftrag Nr." />
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Kunde</th>
-                <th className="text-left px-4 py-3 text-muted-foreground font-medium">Datum</th>
-                <th className="text-left px-4 py-3 text-muted-foreground font-medium">Betrag</th>
+                <SortHeader field="order_date" label="Datum" />
+                <SortHeader field="total_amount" label="Betrag" />
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Status</th>
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Quelle</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {loading ? (
-                <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Laden...</td></tr>
+                <tr><td colSpan={6} className="px-4 py-12 text-center">
+                  <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" />
+                </td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Keine Aufträge gefunden.</td></tr>
+                <tr><td colSpan={6} className="px-4 py-12 text-center">
+                  <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
+                  <p className="text-muted-foreground">Keine Aufträge gefunden.</p>
+                </td></tr>
               ) : (
                 filtered.map(o => (
-                  <tr key={o.id} className="hover:bg-secondary/30 transition-colors">
+                  <tr
+                    key={o.id}
+                    className="hover:bg-secondary/30 transition-colors cursor-pointer"
+                    onClick={() => navigate(`/auftraege/${o.id}`)}
+                  >
                     <td className="px-4 py-3 font-medium text-foreground">{o.order_number}</td>
                     <td className="px-4 py-3 text-muted-foreground">{o.customers?.company_name || o.customers?.contact_name || '—'}</td>
                     <td className="px-4 py-3 text-muted-foreground">{o.order_date ? new Date(o.order_date).toLocaleDateString('de-DE') : '—'}</td>
@@ -77,7 +135,7 @@ export default function Orders() {
                       {o.total_amount != null ? Number(o.total_amount).toLocaleString('de-DE', { style: 'currency', currency: o.currency || 'EUR' }) : '—'}
                     </td>
                     <td className="px-4 py-3">
-                      <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                      <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColor(o.order_status || 'offen')}`}>
                         {o.order_status || 'offen'}
                       </span>
                     </td>
