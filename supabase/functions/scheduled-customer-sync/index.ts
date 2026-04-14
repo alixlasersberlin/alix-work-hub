@@ -104,7 +104,6 @@ Deno.serve(async (req: Request) => {
     // Auth: service role key, or authenticated admin user
     const authHeader = req.headers.get("Authorization") ?? "";
     const apiKeyHeader = req.headers.get("apikey") ?? "";
-    console.log("[scheduled-sync] Headers:", { authHeader: authHeader.substring(0, 20) + "...", apiKeyHeader: apiKeyHeader.substring(0, 20) + "...", isServiceCall: authHeader === `Bearer ${serviceRoleKey}` || apiKeyHeader === serviceRoleKey });
     const isServiceCall = authHeader === `Bearer ${serviceRoleKey}` || apiKeyHeader === serviceRoleKey;
 
     if (!isServiceCall) {
