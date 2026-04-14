@@ -204,13 +204,18 @@ Deno.serve(async (req: Request) => {
       raw_data: salesOrder,
     };
 
-    const { error: upsertError } = await adminClient
+    const { data: upsertedOrder, error: upsertError } = await adminClient
       .from("orders")
-      .upsert(orderPayload, { onConflict: "order_number,source_system" });
+      .upsert(orderPayload, { onConflict: "order_number,source_system" })
+      .select("id")
+      .single();
 
-    if (upsertError) {
-      return jsonResponse({ error: "Order upsert failed", message: upsertError.message }, 500);
+    if (upsertError || !upsertedOrder) {
+      return jsonResponse({ error: "Order upsert failed", message: upsertError?.message ?? "Unknown" }, 500);
     }
+
+    // Sync line items
+    await syncLineItems(adminClient, upsertedOrder.id, salesOrder.line_items ?? []);
 
     await adminClient.from("order_import_logs").insert({
       source_system,
