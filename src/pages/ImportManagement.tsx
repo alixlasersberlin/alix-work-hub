@@ -111,6 +111,44 @@ export default function ImportManagement() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [triggerLoading, setTriggerLoading] = useState<string | null>(null);
 
+  // Date filter state
+  type DatePreset = 'this_week' | 'this_month' | 'this_year' | 'custom' | 'all';
+  const [datePreset, setDatePreset] = useState<DatePreset>('all');
+  const [customDateFrom, setCustomDateFrom] = useState<Date | undefined>(undefined);
+  const [customDateTo, setCustomDateTo] = useState<Date | undefined>(undefined);
+
+  function getDateRange(): { date_from?: string; date_to?: string } {
+    const today = new Date();
+    const fmt = (d: Date) => d.toISOString().slice(0, 10);
+    switch (datePreset) {
+      case 'this_week': {
+        const day = today.getDay();
+        const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+        const start = new Date(today.getFullYear(), today.getMonth(), diff);
+        const end = new Date(start);
+        end.setDate(end.getDate() + 6);
+        return { date_from: fmt(start), date_to: fmt(end) };
+      }
+      case 'this_month':
+        return {
+          date_from: fmt(new Date(today.getFullYear(), today.getMonth(), 1)),
+          date_to: fmt(new Date(today.getFullYear(), today.getMonth() + 1, 0)),
+        };
+      case 'this_year':
+        return {
+          date_from: fmt(new Date(today.getFullYear(), 0, 1)),
+          date_to: fmt(new Date(today.getFullYear(), 11, 31)),
+        };
+      case 'custom':
+        return {
+          ...(customDateFrom ? { date_from: fmt(customDateFrom) } : {}),
+          ...(customDateTo ? { date_to: fmt(customDateTo) } : {}),
+        };
+      default:
+        return {};
+    }
+  }
+
   // Import result state
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
 
