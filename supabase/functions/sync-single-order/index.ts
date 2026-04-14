@@ -201,6 +201,7 @@ Deno.serve(async (req: Request) => {
       expected_shipment_date: expectedShipmentDate,
       billing_address: salesOrder.billing_address ?? null,
       shipping_address: salesOrder.shipping_address ?? null,
+      salesperson_name: salesOrder.salesperson_name ?? null,
       raw_data: salesOrder,
     };
 
