@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import {
@@ -110,12 +111,14 @@ function TableSkeleton({ rows = 3 }: { rows?: number }) {
 }
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const { profile, roles, hasRole, hasAnyRole, isAdmin } = useAuth();
   const [stats, setStats] = useState<Stats>({ customers: 0, orders: 0, openOrders: 0, routes: 0, openFinance: 0 });
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [shipmentOrders, setShipmentOrders] = useState<ShipmentOrder[]>([]);
   const [routePlans, setRoutePlans] = useState<RoutePlan[]>([]);
   const [financeRecords, setFinanceRecords] = useState<FinanceRecord[]>([]);
+  const [shipmentFilter, setShipmentFilter] = useState<number | null>(14);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -142,7 +145,7 @@ export default function Dashboard() {
           : [{ count: 0 }, { count: 0 }, { data: [] }];
 
         const shipmentOrdersRes = canSeeOrders
-          ? await supabase.from('orders').select('id, order_number, expected_shipment_date, order_status, shipping_address, billing_address, customers(company_name, contact_name, shipping_address)').not('expected_shipment_date', 'is', null).order('expected_shipment_date', { ascending: true }).limit(10)
+          ? await supabase.from('orders').select('id, order_number, expected_shipment_date, order_status, shipping_address, billing_address, customers(company_name, contact_name, shipping_address)').not('expected_shipment_date', 'is', null).order('expected_shipment_date', { ascending: true }).limit(100)
           : { data: [] };
 
         const [routesRes, routePlansRes] = canSeeRoutes
@@ -233,38 +236,69 @@ export default function Dashboard() {
         {/* Shipment Dates */}
         {canSeeOrders && (
           <div className="rounded-xl border border-border bg-card card-glow">
-            <div className="flex items-center gap-2 p-5 border-b border-border">
-              <Package className="w-4 h-4 text-[hsl(var(--warning))]" />
-              <h2 className="font-display font-semibold text-foreground">Lieferdatum</h2>
+            <div className="flex items-center justify-between p-5 border-b border-border">
+              <div className="flex items-center gap-2">
+                <Package className="w-4 h-4 text-[hsl(var(--warning))]" />
+                <h2 className="font-display font-semibold text-foreground">Lieferdatum</h2>
+              </div>
+              <div className="flex gap-1">
+                {[{ label: '7T', value: 7 }, { label: '14T', value: 14 }, { label: '30T', value: 30 }, { label: 'Alle', value: null }].map(opt => (
+                  <button
+                    key={opt.label}
+                    onClick={() => setShipmentFilter(opt.value)}
+                    className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
+                      shipmentFilter === opt.value
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-secondary text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             </div>
             {loading ? (
               <TableSkeleton />
-            ) : shipmentOrders.length === 0 ? (
-              <EmptyState icon={Package} message="Keine Versanddaten vorhanden." />
-            ) : (
-              <div className="divide-y divide-border">
-                {shipmentOrders.map(order => {
-                  const name = order.customers?.company_name || order.customers?.contact_name || '—';
-                  const shipAddr = order.shipping_address || order.customers?.shipping_address;
-                  const shipCity = shipAddr ? (shipAddr.city || shipAddr.state || '') : '';
-                  return (
-                    <div key={order.id} className="flex items-center justify-between p-4 hover:bg-secondary/30 transition-colors">
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{name}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {order.order_number}
-                          {shipCity && <span className="ml-1.5">· Lieferung: {shipCity}</span>}
-                        </p>
+            ) : (() => {
+              const now = new Date();
+              const filtered = shipmentFilter === null
+                ? shipmentOrders
+                : shipmentOrders.filter(o => {
+                    if (!o.expected_shipment_date) return false;
+                    const diff = (new Date(o.expected_shipment_date).getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+                    return diff <= shipmentFilter;
+                  });
+              return filtered.length === 0 ? (
+                <EmptyState icon={Package} message="Keine Versanddaten im gewählten Zeitraum." />
+              ) : (
+                <div className="divide-y divide-border">
+                  {filtered.map(order => {
+                    const name = order.customers?.company_name || order.customers?.contact_name || '—';
+                    const shipAddr = order.shipping_address || order.customers?.shipping_address;
+                    const shipCity = shipAddr ? (shipAddr.city || shipAddr.state || '') : '';
+                    return (
+                      <div
+                        key={order.id}
+                        onClick={() => navigate(`/orders/${order.id}`)}
+                        className="flex items-center justify-between p-4 hover:bg-secondary/30 transition-colors cursor-pointer"
+                      >
+                        <div>
+                          <p className="text-sm font-medium text-foreground">{name}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {order.order_number}
+                            {shipCity && <span className="ml-1.5">· Lieferung: {shipCity}</span>}
+                          </p>
+                        </div>
+                        <div className="text-right flex flex-col items-end gap-1">
+                          <span className="text-sm font-medium text-foreground">{formatDate(order.expected_shipment_date)}</span>
+                          <StatusBadge status={order.order_status || 'offen'} />
+                        </div>
                       </div>
-                      <div className="text-right flex flex-col items-end gap-1">
-                        <span className="text-sm font-medium text-foreground">{formatDate(order.expected_shipment_date)}</span>
-                        <StatusBadge status={order.order_status || 'offen'} />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </div>
         )}
 
