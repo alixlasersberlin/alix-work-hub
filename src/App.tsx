@@ -5,6 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import Login from "./pages/Login";
+import AccountBlocked from "./pages/AccountBlocked";
+import AccessDenied from "./pages/AccessDenied";
 import AppLayout from "./components/AppLayout";
 import Dashboard from "./pages/Dashboard";
 import Orders from "./pages/Orders";
@@ -17,7 +19,7 @@ import { Loader2 } from "lucide-react";
 const queryClient = new QueryClient();
 
 function ProtectedRoute({ children, requiredRoles }: { children: React.ReactNode; requiredRoles?: string[] }) {
-  const { user, roles, loading } = useAuth();
+  const { user, roles, loading, blockReason } = useAuth();
 
   if (loading) {
     return (
@@ -29,8 +31,10 @@ function ProtectedRoute({ children, requiredRoles }: { children: React.ReactNode
 
   if (!user) return <Navigate to="/login" replace />;
 
+  if (blockReason) return <AccountBlocked />;
+
   if (requiredRoles && !requiredRoles.some(r => roles.includes(r))) {
-    return <Navigate to="/" replace />;
+    return <AccessDenied />;
   }
 
   return <>{children}</>;
