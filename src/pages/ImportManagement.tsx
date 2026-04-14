@@ -1034,17 +1034,22 @@ export default function ImportManagement() {
             {importResult && (
               <Card className={`border-border ${importResult.retryable ? 'border-[hsl(var(--warning))]/50' : importResult.error ? 'border-destructive/50' : importResult.is_dry_run ? 'border-primary/50' : 'border-[hsl(var(--success))]/50'}`}>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    {importResult.retryable ? (
-                      <><AlertTriangle className="w-5 h-5 text-[hsl(var(--warning))]" /> Vorübergehend blockiert</>
-                    ) : importResult.error ? (
-                      <><XCircle className="w-5 h-5 text-destructive" /> Fehler</>
-                    ) : importResult.is_dry_run ? (
-                      <><Eye className="w-5 h-5 text-primary" /> Dry Run Ergebnis</>
-                    ) : (
-                      <><CheckCircle2 className="w-5 h-5 text-[hsl(var(--success))]" /> Import abgeschlossen</>
-                    )}
-                  </CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      {importResult.retryable ? (
+                        <><AlertTriangle className="w-5 h-5 text-[hsl(var(--warning))]" /> Vorübergehend blockiert</>
+                      ) : importResult.error ? (
+                        <><XCircle className="w-5 h-5 text-destructive" /> Fehler</>
+                      ) : importResult.is_dry_run ? (
+                        <><Eye className="w-5 h-5 text-primary" /> Dry Run Ergebnis</>
+                      ) : (
+                        <><CheckCircle2 className="w-5 h-5 text-[hsl(var(--success))]" /> Import abgeschlossen</>
+                      )}
+                    </CardTitle>
+                    <Button variant="ghost" size="sm" onClick={() => setImportResult(null)} className="text-muted-foreground hover:text-foreground">
+                      <XCircle className="w-4 h-4 mr-1" /> Zurücksetzen
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {importResult.error && !importResult.success ? (
