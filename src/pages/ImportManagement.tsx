@@ -1037,28 +1037,96 @@ export default function ImportManagement() {
             </Card>
 
             {/* ============ IMPORT PROGRESS ============ */}
-            {importProgress && triggerLoading && (
-              <Card className="border-primary/50 bg-primary/5">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <Loader2 className="w-5 h-5 animate-spin text-primary flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-sm font-medium">
-                          {importProgress.entity} werden verarbeitet…
-                        </span>
-                        <span className="text-sm text-muted-foreground tabular-nums">
-                          Seite {importProgress.page} · {importProgress.fetched.toLocaleString('de-DE')} Einträge
-                        </span>
-                      </div>
-                      <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
-                        <div className="bg-primary h-full rounded-full animate-pulse" style={{ width: '100%' }} />
+            {importProgress && triggerLoading && (() => {
+              const elapsed = (Date.now() - importProgress.startedAt) / 1000;
+              const perPage = importProgress.page > 0 ? elapsed / importProgress.page : 0;
+              const progressPercent = importProgress.limitTotal
+                ? Math.min(100, Math.round((importProgress.fetched / importProgress.limitTotal) * 100))
+                : null;
+              const etaSeconds = importProgress.hasMore && perPage > 0
+                ? (importProgress.limitTotal
+                    ? Math.max(0, ((importProgress.limitTotal - importProgress.fetched) / 200) * perPage)
+                    : perPage * 2)
+                : 0;
+              const formatTime = (s: number) => {
+                if (s < 60) return `~${Math.ceil(s)}s`;
+                const m = Math.floor(s / 60);
+                const sec = Math.ceil(s % 60);
+                return `~${m}m ${sec}s`;
+              };
+              const formatElapsed = (s: number) => {
+                if (s < 60) return `${Math.floor(s)}s`;
+                const m = Math.floor(s / 60);
+                const sec = Math.floor(s % 60);
+                return `${m}m ${sec}s`;
+              };
+              return (
+                <Card className="border-primary/50 bg-primary/5">
+                  <CardContent className="p-4 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <Loader2 className="w-5 h-5 animate-spin text-primary flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-sm font-medium">
+                            {importProgress.entity} werden verarbeitet…
+                          </span>
+                          <span className="text-sm text-muted-foreground tabular-nums">
+                            Seite {importProgress.page} · {importProgress.fetched.toLocaleString('de-DE')} Einträge
+                            {progressPercent !== null && ` · ${progressPercent}%`}
+                          </span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                          {progressPercent !== null ? (
+                            <div
+                              className="bg-primary h-full rounded-full transition-all duration-500"
+                              style={{ width: `${progressPercent}%` }}
+                            />
+                          ) : (
+                            <div className="bg-primary h-full rounded-full animate-pulse" style={{ width: '100%' }} />
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+
+                    {/* Stats row */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                      <div className="bg-background/50 rounded-md px-2.5 py-1.5 border border-border/50">
+                        <span className="text-muted-foreground">Neu:</span>{' '}
+                        <span className="font-medium text-[hsl(var(--success))] tabular-nums">{importProgress.imported.toLocaleString('de-DE')}</span>
+                      </div>
+                      <div className="bg-background/50 rounded-md px-2.5 py-1.5 border border-border/50">
+                        <span className="text-muted-foreground">Aktualisiert:</span>{' '}
+                        <span className="font-medium text-primary tabular-nums">{importProgress.updated.toLocaleString('de-DE')}</span>
+                      </div>
+                      <div className="bg-background/50 rounded-md px-2.5 py-1.5 border border-border/50">
+                        <span className="text-muted-foreground">Übersprungen:</span>{' '}
+                        <span className="font-medium text-muted-foreground tabular-nums">{importProgress.skipped.toLocaleString('de-DE')}</span>
+                      </div>
+                      <div className="bg-background/50 rounded-md px-2.5 py-1.5 border border-border/50">
+                        <span className="text-muted-foreground">Fehler:</span>{' '}
+                        <span className={`font-medium tabular-nums ${importProgress.failed > 0 ? 'text-destructive' : 'text-muted-foreground'}`}>{importProgress.failed.toLocaleString('de-DE')}</span>
+                      </div>
+                    </div>
+
+                    {/* Time row */}
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5" />
+                        Vergangen: <span className="tabular-nums font-medium">{formatElapsed(elapsed)}</span>
+                      </span>
+                      {importProgress.hasMore && etaSeconds > 0 && (
+                        <span>
+                          Geschätzte Restzeit: <span className="tabular-nums font-medium">{formatTime(etaSeconds)}</span>
+                        </span>
+                      )}
+                      {!importProgress.hasMore && (
+                        <span className="text-[hsl(var(--success))]">Wird abgeschlossen…</span>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })()}
 
             {importResult && (
               <Card className={`border-border ${importResult.retryable ? 'border-[hsl(var(--warning))]/50' : importResult.error ? 'border-destructive/50' : importResult.is_dry_run ? 'border-primary/50' : 'border-[hsl(var(--success))]/50'}`}>
