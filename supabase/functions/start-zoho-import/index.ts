@@ -328,7 +328,7 @@ Deno.serve(async (req: Request) => {
       success: true,
       entity,
       page,
-      has_more: hasMore,
+      has_more: limit !== null ? false : hasMore,
       items_fetched: items.length,
       imported,
       skipped,
