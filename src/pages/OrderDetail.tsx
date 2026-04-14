@@ -117,7 +117,10 @@ export default function OrderDetail() {
             {' · '}{order.source_system}
           </p>
         </div>
-        <StatusBadge status={order.order_status || 'offen'} />
+        <div className="flex items-center gap-3">
+          <StatusBadge status={order.order_status || 'offen'} />
+          {user && <InstallmentPlanDialog order={order} customer={customer} userId={user.id} />}
+        </div>
       </div>
 
       {/* Tabs */}
