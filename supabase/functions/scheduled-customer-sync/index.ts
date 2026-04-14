@@ -111,7 +111,10 @@ Deno.serve(async (req: Request) => {
         global: { headers: { Authorization: authHeader } },
         auth: { autoRefreshToken: false, persistSession: false },
       });
-      const { data: { user }, error } = await userClient.auth.getUser();
+      const token = authHeader.replace("Bearer ", "");
+      const { data, error } = await userClient.auth.getUser(token);
+      const user = data?.user;
+      console.log("[scheduled-sync] Auth check:", { hasToken: !!token, userId: user?.id, error: error?.message });
       if (error || !user) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
           status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
