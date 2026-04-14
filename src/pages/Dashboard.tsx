@@ -22,6 +22,7 @@ interface RecentOrder {
   total_amount: number | null;
   currency: string | null;
   order_date: string | null;
+  expected_shipment_date: string | null;
 }
 
 interface RoutePlan {
@@ -125,7 +126,7 @@ export default function Dashboard() {
           ? await Promise.all([
               supabase.from('orders').select('id', { count: 'exact', head: true }),
               supabase.from('orders').select('id', { count: 'exact', head: true }).eq('order_status', 'offen'),
-              supabase.from('orders').select('id, order_number, order_status, total_amount, currency, order_date').order('created_at', { ascending: false }).limit(7),
+              supabase.from('orders').select('id, order_number, order_status, total_amount, currency, order_date, expected_shipment_date').order('created_at', { ascending: false }).limit(7),
             ])
           : [{ count: 0 }, { count: 0 }, { data: [] }];
 
@@ -230,7 +231,12 @@ export default function Dashboard() {
                   <div key={order.id} className="flex items-center justify-between p-4 hover:bg-secondary/30 transition-colors">
                     <div>
                       <p className="text-sm font-medium text-foreground">{order.order_number}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{formatDate(order.order_date)}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Bestellt: {formatDate(order.order_date)}
+                        {order.expected_shipment_date && (
+                          <span className="ml-2">· Lieferung: {formatDate(order.expected_shipment_date)}</span>
+                        )}
+                      </p>
                     </div>
                     <div className="text-right flex flex-col items-end gap-1">
                       <StatusBadge status={order.order_status || 'offen'} />
