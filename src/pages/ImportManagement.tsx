@@ -226,69 +226,94 @@ export default function ImportManagement() {
     if (zohoSearchText.trim()) filters.search_text = zohoSearchText.trim();
     filters.sort_column = zohoSortColumn;
     filters.sort_order = zohoSortOrder;
+
+    const isDryRun = mode === 'dry_run';
+    const jobId = `job_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
     try {
-      const { data, error } = await supabase.functions.invoke('start-zoho-import', {
-        body: { source_system: source, mode, ...filters },
+      toast({
+        title: isDryRun ? 'Dry Run gestartet' : 'Import gestartet',
+        description: 'Daten werden seitenweise verarbeitet...',
       });
-      if (error) throw error;
 
-      // Background job pattern: poll for result
-      if (data?.status === 'processing' && data?.job_id) {
-        toast({
-          title: 'Import gestartet',
-          description: 'Der Import läuft im Hintergrund. Ergebnis wird automatisch geladen...',
+      const allDryRunResults: DryRunItem[] = [];
+      const allErrors: { type: string; id: string; message: string }[] = [];
+      let totalImportedCustomers = 0;
+      let totalSkippedCustomers = 0;
+      let totalImportedOrders = 0;
+      let totalSkippedOrders = 0;
+      let totalFailed = 0;
+      let contactPages = 0;
+      let orderPages = 0;
+      let totalContactsFetched = 0;
+      let totalOrdersFetched = 0;
+
+      // Phase 1: Process contacts page by page
+      let page = 1;
+      let hasMore = true;
+      while (hasMore) {
+        const { data, error } = await supabase.functions.invoke('start-zoho-import', {
+          body: { source_system: source, mode, entity: 'contacts', page, job_id: jobId, ...filters },
         });
+        if (error) throw error;
+        if (!data?.success) throw new Error(data?.error || 'Kontakte konnten nicht geladen werden');
 
-        const jobId = data.job_id;
-        const pollForResult = async (attempts = 0): Promise<void> => {
-          if (attempts > 60) {
-            setImportResult({ error: 'Zeitüberschreitung – prüfen Sie die Import-Logs.' });
-            setTriggerLoading(null);
-            return;
-          }
-          await new Promise(r => setTimeout(r, 3000));
-          const { data: logs } = await supabase
-            .from('order_import_logs')
-            .select('*')
-            .eq('order_number', jobId)
-            .in('import_status', ['completed', 'failed'])
-            .limit(1);
-
-          if (logs && logs.length > 0) {
-            const log = logs[0];
-            if (log.import_status === 'completed' && log.message) {
-              try {
-                const result = JSON.parse(log.message);
-                setImportResult(result as ImportResult);
-                toast({
-                  title: mode === 'dry_run' ? 'Dry Run abgeschlossen' : 'Import abgeschlossen',
-                  description: `${IMPORT_SOURCES.find(s => s.key === source)?.label} – ${result?.imported_customers ?? 0} Kunden, ${result?.imported_orders ?? 0} Aufträge`,
-                });
-              } catch { setImportResult({ success: true }); }
-            } else {
-              setImportResult({ error: log.message || 'Import fehlgeschlagen' });
-              toast({ title: 'Fehler', description: log.message || 'Import fehlgeschlagen', variant: 'destructive' });
-            }
-            if (mode !== 'dry_run') {
-              setTimeout(() => { fetchSourceStats(); fetchLogs(); }, 2000);
-            }
-            setTriggerLoading(null);
-            return;
-          }
-          return pollForResult(attempts + 1);
-        };
-
-        pollForResult();
-        return;
+        totalContactsFetched += data.items_fetched ?? 0;
+        totalImportedCustomers += data.imported ?? 0;
+        totalSkippedCustomers += data.skipped ?? 0;
+        totalFailed += data.failed ?? 0;
+        if (data.dry_run_results) allDryRunResults.push(...data.dry_run_results);
+        if (data.errors) allErrors.push(...data.errors);
+        hasMore = data.has_more === true;
+        contactPages = page;
+        page++;
       }
 
-      // Fallback for synchronous response
-      setImportResult(data as ImportResult);
+      // Phase 2: Process orders page by page
+      page = 1;
+      hasMore = true;
+      while (hasMore) {
+        const { data, error } = await supabase.functions.invoke('start-zoho-import', {
+          body: { source_system: source, mode, entity: 'salesorders', page, job_id: jobId, ...filters },
+        });
+        if (error) throw error;
+        if (!data?.success) throw new Error(data?.error || 'Aufträge konnten nicht geladen werden');
+
+        totalOrdersFetched += data.items_fetched ?? 0;
+        totalImportedOrders += data.imported ?? 0;
+        totalSkippedOrders += data.skipped ?? 0;
+        totalFailed += data.failed ?? 0;
+        if (data.dry_run_results) allDryRunResults.push(...data.dry_run_results);
+        if (data.errors) allErrors.push(...data.errors);
+        hasMore = data.has_more === true;
+        orderPages = page;
+        page++;
+      }
+
+      const result: ImportResult = {
+        success: true,
+        source_system: source,
+        mode,
+        is_dry_run: isDryRun,
+        imported_customers: totalImportedCustomers,
+        imported_orders: totalImportedOrders,
+        failed_imports: totalFailed,
+        skipped_customers: totalSkippedCustomers,
+        skipped_orders: totalSkippedOrders,
+        contact_pages: contactPages,
+        order_pages: orderPages,
+        total_contacts_fetched: totalContactsFetched,
+        total_orders_fetched: totalOrdersFetched,
+        ...(isDryRun && allDryRunResults.length > 0 ? { dry_run_results: allDryRunResults } : {}),
+        ...(allErrors.length > 0 ? { errors: allErrors } : {}),
+      };
+
+      setImportResult(result);
       toast({
-        title: mode === 'dry_run' ? 'Dry Run abgeschlossen' : 'Import abgeschlossen',
-        description: `${IMPORT_SOURCES.find(s => s.key === source)?.label} – ${data?.imported_customers ?? 0} Kunden, ${data?.imported_orders ?? 0} Aufträge`,
+        title: isDryRun ? 'Dry Run abgeschlossen' : 'Import abgeschlossen',
+        description: `${IMPORT_SOURCES.find(s => s.key === source)?.label} – ${totalImportedCustomers} Kunden, ${totalImportedOrders} Aufträge`,
       });
-      if (mode !== 'dry_run') {
+      if (!isDryRun) {
         setTimeout(() => { fetchSourceStats(); fetchLogs(); }, 2000);
       }
     } catch (err: any) {
