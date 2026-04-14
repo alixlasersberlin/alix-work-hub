@@ -228,43 +228,6 @@ export default function Dashboard() {
 
       {/* Data sections */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        {/* Recent Orders */}
-        {canSeeOrders && (
-          <div className="rounded-xl border border-border bg-card card-glow">
-            <div className="flex items-center gap-2 p-5 border-b border-border">
-              <Clock className="w-4 h-4 text-primary" />
-              <h2 className="font-display font-semibold text-foreground">Letzte Aufträge</h2>
-            </div>
-            {loading ? (
-              <TableSkeleton />
-            ) : recentOrders.length === 0 ? (
-              <EmptyState icon={Inbox} message="Keine Aufträge vorhanden." />
-            ) : (
-              <div className="divide-y divide-border">
-                {recentOrders.map(order => (
-                  <div key={order.id} className="flex items-center justify-between p-4 hover:bg-secondary/30 transition-colors">
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{order.order_number}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        Bestellt: {formatDate(order.order_date)}
-                        {order.expected_shipment_date && (
-                          <span className="ml-2">· Lieferung: {formatDate(order.expected_shipment_date)}</span>
-                        )}
-                      </p>
-                    </div>
-                    <div className="text-right flex flex-col items-end gap-1">
-                      <StatusBadge status={order.order_status || 'offen'} />
-                      <p className="text-xs text-muted-foreground">
-                        {formatCurrency(order.total_amount, order.currency)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Shipment Dates */}
         {canSeeOrders && (
           <div className="rounded-xl border border-border bg-card card-glow">
@@ -298,6 +261,43 @@ export default function Dashboard() {
                     </div>
                   );
                 })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Recent Orders */}
+        {canSeeOrders && (
+          <div className="rounded-xl border border-border bg-card card-glow">
+            <div className="flex items-center gap-2 p-5 border-b border-border">
+              <Clock className="w-4 h-4 text-primary" />
+              <h2 className="font-display font-semibold text-foreground">Letzte Aufträge</h2>
+            </div>
+            {loading ? (
+              <TableSkeleton />
+            ) : recentOrders.length === 0 ? (
+              <EmptyState icon={Inbox} message="Keine Aufträge vorhanden." />
+            ) : (
+              <div className="divide-y divide-border">
+                {recentOrders.map(order => (
+                  <div key={order.id} className="flex items-center justify-between p-4 hover:bg-secondary/30 transition-colors">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{order.order_number}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Bestellt: {formatDate(order.order_date)}
+                        {order.expected_shipment_date && (
+                          <span className="ml-2">· Lieferung: {formatDate(order.expected_shipment_date)}</span>
+                        )}
+                      </p>
+                    </div>
+                    <div className="text-right flex flex-col items-end gap-1">
+                      <StatusBadge status={order.order_status || 'offen'} />
+                      <p className="text-xs text-muted-foreground">
+                        {formatCurrency(order.total_amount, order.currency)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
