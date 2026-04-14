@@ -4,12 +4,12 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 type ImportPayload = {
   source_system: "zoho_eu_1" | "zoho_eu_2" | "zoho_us_1";
   mode?: "manual" | "scheduled" | "dry_run";
-  date_from?: string;        // ISO date string YYYY-MM-DD
-  date_to?: string;          // ISO date string YYYY-MM-DD
-  status_filter?: string;    // Zoho status: draft, open, closed, void, overdue
-  customer_name?: string;    // Filter by customer name
-  search_text?: string;      // Full-text search in Zoho
-  sort_column?: string;      // e.g. date, salesorder_number, customer_name, total
+  date_from?: string;
+  date_to?: string;
+  status_filter?: string;
+  customer_name?: string;
+  search_text?: string;
+  sort_column?: string;
   sort_order?: "ascending" | "descending";
 };
 
@@ -69,38 +69,282 @@ async function getZohoAccessToken(config: ZohoConfig): Promise<string> {
     if (data.error === "invalid_code") {
       throw new Error("Zoho refresh token is invalid or revoked for this data center. Please update ZOHO_EU_1_REFRESH_TOKEN with a newly generated EU refresh token.");
     }
-
     throw new Error(`Zoho access token missing. Response: ${JSON.stringify(data)}`);
   }
 
   return data.access_token;
 }
 
-async function fetchAllPages(baseUrl: string, accessToken: string, key: string) {
-  const allItems: any[] = [];
-  let page = 1;
-  let hasMore = true;
-  while (hasMore) {
-    const url = `${baseUrl}&page=${page}&per_page=200`;
-    const res = await fetch(url, { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } });
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`Zoho API error (${key} page ${page}): ${text}`);
-    }
-    const json = await res.json();
-    const items = json[key] ?? [];
-    allItems.push(...items);
-    hasMore = json.page_context?.has_more_page === true;
-    page++;
+async function fetchPage(baseUrl: string, accessToken: string, key: string, page: number) {
+  const url = `${baseUrl}&page=${page}&per_page=200`;
+  const res = await fetch(url, { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Zoho API error (${key} page ${page}): ${text}`);
   }
-  return { items: allItems, pages: page - 1 };
+  const json = await res.json();
+  const items = json[key] ?? [];
+  const hasMore = json.page_context?.has_more_page === true;
+  return { items, hasMore };
 }
 
-// Validate date string format YYYY-MM-DD
 function isValidDate(d: string): boolean {
   return /^\d{4}-\d{2}-\d{2}$/.test(d) && !isNaN(Date.parse(d));
 }
 
+// ── Background processing function ──
+async function processImport(
+  supabaseUrl: string,
+  serviceRoleKey: string,
+  userId: string,
+  jobId: string,
+  body: ImportPayload,
+) {
+  const adminClient = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+
+  const sourceSystem = body.source_system;
+  const mode = body.mode ?? "manual";
+  const isDryRun = mode === "dry_run";
+
+  try {
+    // Update job status to processing
+    await adminClient.from("order_import_logs").insert({
+      source_system: sourceSystem,
+      import_status: "processing",
+      message: `Import-Job ${jobId} gestartet (${mode})`,
+      imported_by: userId,
+    });
+
+    const zohoConfig = getZohoConfig(sourceSystem);
+    if (!zohoConfig) throw new Error("Zoho configuration not found");
+
+    const accessToken = await getZohoAccessToken(zohoConfig);
+
+    // Build Zoho API query params
+    let ordersUrl = `${zohoConfig.booksApiBaseUrl}/salesorders?organization_id=${zohoConfig.organizationId}`;
+    if (body.date_from) ordersUrl += `&date_start=${body.date_from}`;
+    if (body.date_to) ordersUrl += `&date_end=${body.date_to}`;
+    if (body.status_filter) ordersUrl += `&status=${encodeURIComponent(body.status_filter)}`;
+    if (body.customer_name) ordersUrl += `&customer_name=${encodeURIComponent(body.customer_name)}`;
+    if (body.search_text) ordersUrl += `&search_text=${encodeURIComponent(body.search_text)}`;
+    if (body.sort_column) ordersUrl += `&sort_column=${encodeURIComponent(body.sort_column)}`;
+    if (body.sort_order) {
+      const zohoSortOrder = body.sort_order === "ascending" ? "A" : "D";
+      ordersUrl += `&sort_order=${zohoSortOrder}`;
+    }
+
+    // Fetch contacts page by page
+    const contacts: any[] = [];
+    let page = 1;
+    let hasMore = true;
+    const contactsUrl = `${zohoConfig.booksApiBaseUrl}/contacts?organization_id=${zohoConfig.organizationId}`;
+    while (hasMore) {
+      const result = await fetchPage(contactsUrl, accessToken, "contacts", page);
+      contacts.push(...result.items);
+      hasMore = result.hasMore;
+      page++;
+    }
+    const contactPages = page - 1;
+
+    // Fetch orders page by page
+    const salesOrders: any[] = [];
+    page = 1;
+    hasMore = true;
+    while (hasMore) {
+      const result = await fetchPage(ordersUrl, accessToken, "salesorders", page);
+      salesOrders.push(...result.items);
+      hasMore = result.hasMore;
+      page++;
+    }
+    const orderPages = page - 1;
+
+    let importedCustomers = 0;
+    let importedOrders = 0;
+    let failedImports = 0;
+    let skippedCustomers = 0;
+    let skippedOrders = 0;
+    const dryRunResults: { type: string; id: string; action: string; name?: string }[] = [];
+    const errors: { type: string; id: string; message: string }[] = [];
+    const customerMap = new Map<string, string>();
+
+    // Process contacts
+    for (const contact of contacts) {
+      try {
+        const externalCustomerId = contact.contact_id?.toString();
+        if (!externalCustomerId) { skippedCustomers++; continue; }
+
+        const { data: existingCustomer } = await adminClient
+          .from("customers").select("id")
+          .eq("external_customer_id", externalCustomerId)
+          .eq("source_system", sourceSystem)
+          .maybeSingle();
+
+        if (isDryRun) {
+          dryRunResults.push({
+            type: "customer", id: externalCustomerId,
+            action: existingCustomer ? "skip" : "create",
+            name: contact.company_name || contact.contact_name || undefined,
+          });
+          if (existingCustomer) skippedCustomers++; else importedCustomers++;
+          continue;
+        }
+
+        if (existingCustomer) {
+          customerMap.set(externalCustomerId, existingCustomer.id);
+          skippedCustomers++;
+          continue;
+        }
+
+        const { data: insertedCustomer, error: customerError } = await adminClient
+          .from("customers").insert({
+            external_customer_id: externalCustomerId,
+            source_system: sourceSystem,
+            company_name: contact.company_name ?? null,
+            contact_name: contact.contact_name ?? null,
+            email: contact.email ?? null,
+            phone: contact.phone ?? null,
+            billing_address: contact.billing_address ?? null,
+            shipping_address: contact.shipping_address ?? null,
+            raw_data: contact,
+          }).select("id, external_customer_id").single();
+
+        if (customerError || !insertedCustomer) {
+          failedImports++;
+          errors.push({ type: "customer", id: externalCustomerId, message: customerError?.message ?? "Insert failed" });
+          continue;
+        }
+
+        customerMap.set(externalCustomerId, insertedCustomer.id);
+        importedCustomers++;
+      } catch (err: any) {
+        failedImports++;
+        errors.push({ type: "customer", id: contact.contact_id?.toString() ?? "unknown", message: err?.message ?? "Unknown error" });
+      }
+    }
+
+    // Process orders
+    for (const salesOrder of salesOrders) {
+      try {
+        const externalOrderId = salesOrder.salesorder_id?.toString();
+        const orderNumber = salesOrder.salesorder_number?.toString();
+        const externalCustomerId = salesOrder.customer_id?.toString();
+
+        if (!externalOrderId || !orderNumber || !externalCustomerId) {
+          failedImports++; skippedOrders++; continue;
+        }
+
+        const { data: existingOrder } = await adminClient
+          .from("orders").select("id")
+          .eq("order_number", orderNumber)
+          .eq("source_system", sourceSystem)
+          .maybeSingle();
+
+        if (isDryRun) {
+          dryRunResults.push({
+            type: "order", id: orderNumber,
+            action: existingOrder ? "skip" : "create",
+            name: salesOrder.customer_name || undefined,
+          });
+          if (existingOrder) skippedOrders++; else importedOrders++;
+          continue;
+        }
+
+        if (existingOrder) { skippedOrders++; continue; }
+
+        let linkedCustomerId = customerMap.get(externalCustomerId);
+        if (!linkedCustomerId) {
+          const { data: dbCustomer } = await adminClient
+            .from("customers").select("id")
+            .eq("external_customer_id", externalCustomerId)
+            .eq("source_system", sourceSystem)
+            .maybeSingle();
+          if (dbCustomer) {
+            linkedCustomerId = dbCustomer.id;
+            customerMap.set(externalCustomerId, dbCustomer.id);
+          }
+        }
+
+        if (!linkedCustomerId) {
+          failedImports++;
+          errors.push({ type: "order", id: orderNumber, message: "Kunde nicht gefunden" });
+          continue;
+        }
+
+        const { error: orderError } = await adminClient.from("orders").insert({
+          customer_id: linkedCustomerId,
+          external_order_id: externalOrderId,
+          order_number: orderNumber,
+          source_system: sourceSystem,
+          order_status: salesOrder.status ?? "offen",
+          currency: salesOrder.currency_code ?? null,
+          total_amount: salesOrder.total ?? null,
+          order_date: salesOrder.date ? new Date(salesOrder.date).toISOString() : null,
+          raw_data: salesOrder,
+        });
+
+        if (orderError) {
+          failedImports++;
+          errors.push({ type: "order", id: orderNumber, message: orderError.message });
+          continue;
+        }
+        importedOrders++;
+      } catch (err: any) {
+        failedImports++;
+        errors.push({ type: "order", id: salesOrder.salesorder_number?.toString() ?? "unknown", message: err?.message ?? "Unknown error" });
+      }
+    }
+
+    // Write final result as audit log
+    const result = {
+      success: true,
+      source_system: sourceSystem,
+      mode,
+      is_dry_run: isDryRun,
+      imported_customers: importedCustomers,
+      imported_orders: importedOrders,
+      failed_imports: failedImports,
+      skipped_customers: skippedCustomers,
+      skipped_orders: skippedOrders,
+      contact_pages: contactPages,
+      order_pages: orderPages,
+      total_contacts_fetched: contacts.length,
+      total_orders_fetched: salesOrders.length,
+      ...(isDryRun ? { dry_run_results: dryRunResults } : {}),
+      ...(errors.length > 0 ? { errors } : {}),
+    };
+
+    await adminClient.from("audit_logs").insert({
+      user_id: userId,
+      action: isDryRun ? "dry_run_zoho_import" : "start_zoho_import",
+      module: "import_management",
+      details: result,
+    });
+
+    // Store result for polling
+    await adminClient.from("order_import_logs").insert({
+      source_system: sourceSystem,
+      import_status: "completed",
+      message: JSON.stringify(result),
+      imported_by: userId,
+      order_number: jobId,
+    });
+
+    console.log(`Import job ${jobId} completed successfully.`);
+  } catch (error: any) {
+    console.error(`Import job ${jobId} failed:`, error);
+    await adminClient.from("order_import_logs").insert({
+      source_system: body.source_system,
+      import_status: "failed",
+      message: error?.message ?? "Unknown error",
+      imported_by: userId,
+      order_number: jobId,
+    });
+  }
+}
+
+// ── Main handler ──
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -145,20 +389,12 @@ Deno.serve(async (req: Request) => {
     const body = (await req.json()) as ImportPayload;
     const sourceSystem = body.source_system;
     const mode = body.mode ?? "manual";
-    const isDryRun = mode === "dry_run";
-    const dateFrom = body.date_from;
-    const dateTo = body.date_to;
-    const statusFilter = body.status_filter;
-    const customerName = body.customer_name;
-    const searchText = body.search_text;
-    const sortColumn = body.sort_column;
-    const sortOrder = body.sort_order;
 
-    // Validate dates if provided
-    if (dateFrom && !isValidDate(dateFrom)) {
+    // Validate
+    if (body.date_from && !isValidDate(body.date_from)) {
       return jsonResponse({ error: "Ungültiges Startdatum (Format: YYYY-MM-DD)" }, 400);
     }
-    if (dateTo && !isValidDate(dateTo)) {
+    if (body.date_to && !isValidDate(body.date_to)) {
       return jsonResponse({ error: "Ungültiges Enddatum (Format: YYYY-MM-DD)" }, 400);
     }
 
@@ -167,291 +403,34 @@ Deno.serve(async (req: Request) => {
       return jsonResponse({ error: "Invalid source_system" }, 400);
     }
 
+    // Validate Zoho credentials upfront (fast, before background)
     const zohoConfig = getZohoConfig(sourceSystem);
     if (!zohoConfig) return jsonResponse({ error: "Zoho configuration not found" }, 500);
 
+    // Test token before going async
     const accessToken = await getZohoAccessToken(zohoConfig);
-
-    // Build Zoho API query params with optional filters
-    let ordersUrl = `${zohoConfig.booksApiBaseUrl}/salesorders?organization_id=${zohoConfig.organizationId}`;
-    if (dateFrom) ordersUrl += `&date_start=${dateFrom}`;
-    if (dateTo) ordersUrl += `&date_end=${dateTo}`;
-    if (statusFilter) ordersUrl += `&status=${encodeURIComponent(statusFilter)}`;
-    if (customerName) ordersUrl += `&customer_name=${encodeURIComponent(customerName)}`;
-    if (searchText) ordersUrl += `&search_text=${encodeURIComponent(searchText)}`;
-    if (sortColumn) ordersUrl += `&sort_column=${encodeURIComponent(sortColumn)}`;
-    if (sortOrder) {
-      const zohoSortOrder = sortOrder === "ascending" ? "A" : "D";
-      ordersUrl += `&sort_order=${zohoSortOrder}`;
+    if (!accessToken) {
+      return jsonResponse({ error: "Zoho authorization failed" }, 400);
     }
 
-    const contactsResult = await fetchAllPages(
-      `${zohoConfig.booksApiBaseUrl}/contacts?organization_id=${zohoConfig.organizationId}`,
-      accessToken, "contacts"
+    // Generate job ID
+    const jobId = `job_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+    // Start background processing
+    EdgeRuntime.waitUntil(
+      processImport(supabaseUrl, serviceRoleKey, user.id, jobId, body)
     );
-    const ordersResult = await fetchAllPages(ordersUrl, accessToken, "salesorders");
 
-    const contacts = contactsResult.items;
-    const salesOrders = ordersResult.items;
-
-    let importedCustomers = 0;
-    let importedOrders = 0;
-    let failedImports = 0;
-    let skippedCustomers = 0;
-    let skippedOrders = 0;
-    const dryRunResults: { type: string; id: string; action: string; name?: string }[] = [];
-    const errors: { type: string; id: string; message: string }[] = [];
-
-    const customerMap = new Map<string, string>();
-
-    for (const contact of contacts) {
-      try {
-        const externalCustomerId = contact.contact_id?.toString();
-        if (!externalCustomerId) { skippedCustomers++; continue; }
-
-        if (isDryRun) {
-          const { data: existing } = await adminClient
-            .from("customers")
-            .select("id")
-            .eq("external_customer_id", externalCustomerId)
-            .eq("source_system", sourceSystem)
-            .maybeSingle();
-          dryRunResults.push({
-            type: "customer",
-            id: externalCustomerId,
-            action: existing ? "skip" : "create",
-            name: contact.company_name || contact.contact_name || undefined,
-          });
-          if (existing) { skippedCustomers++; } else { importedCustomers++; }
-          continue;
-        }
-
-        // Check if customer already exists — skip if so
-        const { data: existingCustomer } = await adminClient
-          .from("customers")
-          .select("id")
-          .eq("external_customer_id", externalCustomerId)
-          .eq("source_system", sourceSystem)
-          .maybeSingle();
-
-        if (existingCustomer) {
-          customerMap.set(externalCustomerId, existingCustomer.id);
-          skippedCustomers++;
-          await adminClient.from("order_import_logs").insert({
-            source_system: sourceSystem,
-            external_customer_id: externalCustomerId,
-            import_status: "skipped",
-            message: "Kunde existiert bereits – übersprungen",
-            imported_by: user.id,
-          });
-          continue;
-        }
-
-        const customerPayload = {
-          external_customer_id: externalCustomerId,
-          source_system: sourceSystem,
-          company_name: contact.company_name ?? null,
-          contact_name: contact.contact_name ?? null,
-          email: contact.email ?? null,
-          phone: contact.phone ?? null,
-          billing_address: contact.billing_address ?? null,
-          shipping_address: contact.shipping_address ?? null,
-          raw_data: contact,
-        };
-
-        const { data: insertedCustomer, error: customerError } = await adminClient
-          .from("customers")
-          .insert(customerPayload)
-          .select("id, external_customer_id")
-          .single();
-
-        if (customerError || !insertedCustomer) {
-          failedImports++;
-          errors.push({ type: "customer", id: externalCustomerId, message: customerError?.message ?? "Insert failed" });
-          await adminClient.from("order_import_logs").insert({
-            source_system: sourceSystem,
-            external_customer_id: externalCustomerId,
-            import_status: "failed",
-            message: customerError?.message ?? "Customer insert failed",
-            imported_by: user.id,
-          });
-          continue;
-        }
-
-        customerMap.set(externalCustomerId, insertedCustomer.id);
-        importedCustomers++;
-      } catch (err: any) {
-        failedImports++;
-        errors.push({ type: "customer", id: contact.contact_id?.toString() ?? "unknown", message: err?.message ?? "Unknown error" });
-      }
-    }
-
-    for (const salesOrder of salesOrders) {
-      try {
-        const externalOrderId = salesOrder.salesorder_id?.toString();
-        const orderNumber = salesOrder.salesorder_number?.toString();
-        const externalCustomerId = salesOrder.customer_id?.toString();
-
-        if (!externalOrderId || !orderNumber || !externalCustomerId) {
-          failedImports++;
-          skippedOrders++;
-          continue;
-        }
-
-        // Check if order already exists
-        const { data: existingOrder } = await adminClient
-          .from("orders")
-          .select("id")
-          .eq("order_number", orderNumber)
-          .eq("source_system", sourceSystem)
-          .maybeSingle();
-
-        if (isDryRun) {
-          dryRunResults.push({
-            type: "order",
-            id: orderNumber,
-            action: existingOrder ? "skip" : "create",
-            name: salesOrder.customer_name || undefined,
-          });
-          if (existingOrder) { skippedOrders++; } else { importedOrders++; }
-          continue;
-        }
-
-        // Skip existing orders — never overwrite
-        if (existingOrder) {
-          skippedOrders++;
-          await adminClient.from("order_import_logs").insert({
-            source_system: sourceSystem,
-            external_customer_id: externalCustomerId,
-            external_order_id: externalOrderId,
-            order_number: orderNumber,
-            import_status: "skipped",
-            message: "Auftrag existiert bereits – übersprungen",
-            imported_by: user.id,
-          });
-          continue;
-        }
-
-        // Resolve customer ID
-        let linkedCustomerId = customerMap.get(externalCustomerId);
-        if (!linkedCustomerId) {
-          // Try to find customer in DB
-          const { data: dbCustomer } = await adminClient
-            .from("customers")
-            .select("id")
-            .eq("external_customer_id", externalCustomerId)
-            .eq("source_system", sourceSystem)
-            .maybeSingle();
-          if (dbCustomer) {
-            linkedCustomerId = dbCustomer.id;
-            customerMap.set(externalCustomerId, dbCustomer.id);
-          }
-        }
-
-        if (!linkedCustomerId) {
-          failedImports++;
-          errors.push({ type: "order", id: orderNumber, message: "Kunde nicht gefunden" });
-          await adminClient.from("order_import_logs").insert({
-            source_system: sourceSystem,
-            external_customer_id: externalCustomerId,
-            external_order_id: externalOrderId,
-            order_number: orderNumber,
-            import_status: "failed",
-            message: "Kunde nicht gefunden für Auftragsimport",
-            imported_by: user.id,
-          });
-          continue;
-        }
-
-        const orderPayload = {
-          customer_id: linkedCustomerId,
-          external_order_id: externalOrderId,
-          order_number: orderNumber,
-          source_system: sourceSystem,
-          order_status: salesOrder.status ?? "offen",
-          currency: salesOrder.currency_code ?? null,
-          total_amount: salesOrder.total ?? null,
-          order_date: salesOrder.date ? new Date(salesOrder.date).toISOString() : null,
-          raw_data: salesOrder,
-        };
-
-        const { error: orderError } = await adminClient
-          .from("orders")
-          .insert(orderPayload);
-
-        if (orderError) {
-          failedImports++;
-          errors.push({ type: "order", id: orderNumber, message: orderError.message });
-          await adminClient.from("order_import_logs").insert({
-            source_system: sourceSystem,
-            external_customer_id: externalCustomerId,
-            external_order_id: externalOrderId,
-            order_number: orderNumber,
-            import_status: "failed",
-            message: orderError.message,
-            imported_by: user.id,
-          });
-          continue;
-        }
-
-        importedOrders++;
-        await adminClient.from("order_import_logs").insert({
-          source_system: sourceSystem,
-          external_customer_id: externalCustomerId,
-          external_order_id: externalOrderId,
-          order_number: orderNumber,
-          import_status: "success",
-          message: "Import erfolgreich",
-          imported_by: user.id,
-        });
-      } catch (err: any) {
-        failedImports++;
-        errors.push({ type: "order", id: salesOrder.salesorder_number?.toString() ?? "unknown", message: err?.message ?? "Unknown error" });
-      }
-    }
-
-    await adminClient.from("audit_logs").insert({
-      user_id: user.id,
-      action: isDryRun ? "dry_run_zoho_import" : "start_zoho_import",
-      module: "import_management",
-      details: {
-        source_system: sourceSystem,
-        mode,
-        is_dry_run: isDryRun,
-        date_from: dateFrom ?? null,
-        date_to: dateTo ?? null,
-        status_filter: statusFilter ?? null,
-        customer_name: customerName ?? null,
-        search_text: searchText ?? null,
-        imported_customers: importedCustomers,
-        imported_orders: importedOrders,
-        skipped_customers: skippedCustomers,
-        skipped_orders: skippedOrders,
-        failed_imports: failedImports,
-        contact_pages: contactsResult.pages,
-        order_pages: ordersResult.pages,
-      },
-    });
-
+    // Return immediately
     return jsonResponse({
       success: true,
+      job_id: jobId,
       source_system: sourceSystem,
       mode,
-      is_dry_run: isDryRun,
-      date_from: dateFrom ?? null,
-      date_to: dateTo ?? null,
-      imported_customers: importedCustomers,
-      imported_orders: importedOrders,
-      failed_imports: failedImports,
-      skipped_customers: skippedCustomers,
-      skipped_orders: skippedOrders,
-      contact_pages: contactsResult.pages,
-      order_pages: ordersResult.pages,
-      total_contacts_fetched: contacts.length,
-      total_orders_fetched: salesOrders.length,
-      ...(isDryRun ? { dry_run_results: dryRunResults } : {}),
-      ...(errors.length > 0 ? { errors } : {}),
+      status: "processing",
+      message: "Import wurde gestartet und läuft im Hintergrund.",
     });
+
   } catch (error: any) {
     console.error("start-zoho-import error:", error);
     const message = error?.message ?? null;
