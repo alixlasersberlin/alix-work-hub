@@ -398,6 +398,71 @@ export type Database = {
           },
         ]
       }
+      order_items: {
+        Row: {
+          amount: number | null
+          created_at: string
+          description: string | null
+          discount: number | null
+          external_item_id: string | null
+          id: string
+          item_name: string | null
+          item_order: number | null
+          order_id: string
+          quantity: number | null
+          rate: number | null
+          raw_data: Json | null
+          sku: string | null
+          tax_amount: number | null
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          description?: string | null
+          discount?: number | null
+          external_item_id?: string | null
+          id?: string
+          item_name?: string | null
+          item_order?: number | null
+          order_id: string
+          quantity?: number | null
+          rate?: number | null
+          raw_data?: Json | null
+          sku?: string | null
+          tax_amount?: number | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          description?: string | null
+          discount?: number | null
+          external_item_id?: string | null
+          id?: string
+          item_name?: string | null
+          item_order?: number | null
+          order_id?: string
+          quantity?: number | null
+          rate?: number | null
+          raw_data?: Json | null
+          sku?: string | null
+          tax_amount?: number | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_notes: {
         Row: {
           created_at: string
