@@ -58,13 +58,21 @@ async function getZohoAccessToken(config: ZohoConfig): Promise<string> {
       grant_type: "refresh_token",
     }),
   });
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`Failed to refresh Zoho token: ${text}`);
-  }
+
   const data = await response.json();
-  console.log("Zoho token response:", JSON.stringify(data));
-  if (!data.access_token) throw new Error(`Zoho access token missing. Response: ${JSON.stringify(data)}`);
+
+  if (!response.ok) {
+    throw new Error(`Failed to refresh Zoho token: ${JSON.stringify(data)}`);
+  }
+
+  if (!data.access_token) {
+    if (data.error === "invalid_code") {
+      throw new Error("Zoho refresh token is invalid or revoked for this data center. Please update ZOHO_EU_1_REFRESH_TOKEN with a newly generated EU refresh token.");
+    }
+
+    throw new Error(`Zoho access token missing. Response: ${JSON.stringify(data)}`);
+  }
+
   return data.access_token;
 }
 
@@ -443,6 +451,8 @@ Deno.serve(async (req: Request) => {
     });
   } catch (error: any) {
     console.error("start-zoho-import error:", error);
-    return jsonResponse({ error: "Internal server error", message: error?.message ?? null }, 500);
+    const message = error?.message ?? null;
+    const status = typeof message === "string" && message.includes("Zoho refresh token is invalid or revoked") ? 400 : 500;
+    return jsonResponse({ error: status === 400 ? "Zoho authorization invalid" : "Internal server error", message }, status);
   }
 });
