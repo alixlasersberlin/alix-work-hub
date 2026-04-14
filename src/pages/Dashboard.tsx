@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import {
@@ -110,6 +111,7 @@ function TableSkeleton({ rows = 3 }: { rows?: number }) {
 }
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const { profile, roles, hasRole, hasAnyRole, isAdmin } = useAuth();
   const [stats, setStats] = useState<Stats>({ customers: 0, orders: 0, openOrders: 0, routes: 0, openFinance: 0 });
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
