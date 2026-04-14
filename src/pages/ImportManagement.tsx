@@ -216,8 +216,8 @@ export default function ImportManagement() {
     setLogsLoading(false);
   }
 
-  async function triggerImport(source: string, mode: 'manual' | 'dry_run') {
-    setTriggerLoading(`${source}_${mode}`);
+  async function triggerImport(source: string, mode: 'manual' | 'dry_run', entity: 'contacts' | 'salesorders') {
+    setTriggerLoading(`${source}_${mode}_${entity}`);
     setImportResult(null);
     const dateRange = getDateRange();
     const filters: Record<string, string> = { ...dateRange };
@@ -229,10 +229,11 @@ export default function ImportManagement() {
 
     const isDryRun = mode === 'dry_run';
     const jobId = `job_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const entityLabel = entity === 'contacts' ? 'Kundendaten' : 'Aufträge';
 
     try {
       toast({
-        title: isDryRun ? 'Dry Run gestartet' : 'Import gestartet',
+        title: isDryRun ? `Dry Run gestartet (${entityLabel})` : `Import gestartet (${entityLabel})`,
         description: 'Daten werden seitenweise verarbeitet...',
       });
 
@@ -248,45 +249,30 @@ export default function ImportManagement() {
       let totalContactsFetched = 0;
       let totalOrdersFetched = 0;
 
-      // Phase 1: Process contacts page by page
       let page = 1;
       let hasMore = true;
       while (hasMore) {
         const { data, error } = await supabase.functions.invoke('start-zoho-import', {
-          body: { source_system: source, mode, entity: 'contacts', page, job_id: jobId, ...filters },
+          body: { source_system: source, mode, entity, page, job_id: jobId, ...filters },
         });
         if (error) throw error;
-        if (!data?.success) throw new Error(data?.error || 'Kontakte konnten nicht geladen werden');
+        if (!data?.success) throw new Error(data?.error || `${entityLabel} konnten nicht geladen werden`);
 
-        totalContactsFetched += data.items_fetched ?? 0;
-        totalImportedCustomers += data.imported ?? 0;
-        totalSkippedCustomers += data.skipped ?? 0;
+        if (entity === 'contacts') {
+          totalContactsFetched += data.items_fetched ?? 0;
+          totalImportedCustomers += data.imported ?? 0;
+          totalSkippedCustomers += data.skipped ?? 0;
+          contactPages = page;
+        } else {
+          totalOrdersFetched += data.items_fetched ?? 0;
+          totalImportedOrders += data.imported ?? 0;
+          totalSkippedOrders += data.skipped ?? 0;
+          orderPages = page;
+        }
         totalFailed += data.failed ?? 0;
         if (data.dry_run_results) allDryRunResults.push(...data.dry_run_results);
         if (data.errors) allErrors.push(...data.errors);
         hasMore = data.has_more === true;
-        contactPages = page;
-        page++;
-      }
-
-      // Phase 2: Process orders page by page
-      page = 1;
-      hasMore = true;
-      while (hasMore) {
-        const { data, error } = await supabase.functions.invoke('start-zoho-import', {
-          body: { source_system: source, mode, entity: 'salesorders', page, job_id: jobId, ...filters },
-        });
-        if (error) throw error;
-        if (!data?.success) throw new Error(data?.error || 'Aufträge konnten nicht geladen werden');
-
-        totalOrdersFetched += data.items_fetched ?? 0;
-        totalImportedOrders += data.imported ?? 0;
-        totalSkippedOrders += data.skipped ?? 0;
-        totalFailed += data.failed ?? 0;
-        if (data.dry_run_results) allDryRunResults.push(...data.dry_run_results);
-        if (data.errors) allErrors.push(...data.errors);
-        hasMore = data.has_more === true;
-        orderPages = page;
         page++;
       }
 
@@ -309,9 +295,12 @@ export default function ImportManagement() {
       };
 
       setImportResult(result);
+      const countLabel = entity === 'contacts'
+        ? `${totalImportedCustomers} Kunden`
+        : `${totalImportedOrders} Aufträge`;
       toast({
         title: isDryRun ? 'Dry Run abgeschlossen' : 'Import abgeschlossen',
-        description: `${IMPORT_SOURCES.find(s => s.key === source)?.label} – ${totalImportedCustomers} Kunden, ${totalImportedOrders} Aufträge`,
+        description: `${IMPORT_SOURCES.find(s => s.key === source)?.label} – ${countLabel}`,
       });
       if (!isDryRun) {
         setTimeout(() => { fetchSourceStats(); fetchLogs(); }, 2000);
@@ -802,15 +791,15 @@ export default function ImportManagement() {
               </CardContent>
             </Card>
 
-            {/* Import Sources */}
+            {/* Import Kundendaten */}
             <Card className="border-border">
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <Database className="w-5 h-5 text-primary" />
-                  Import starten
+                  <User className="w-5 h-5 text-primary" />
+                  Kundendaten importieren
                 </CardTitle>
                 <CardDescription>
-                  Vollimport schreibt nur neue Daten. Bereits vorhandene Aufträge und Kunden werden übersprungen. Dry Run prüft ohne Änderungen.
+                  Importiert Kontakte aus Zoho Books. Bereits vorhandene Kunden werden übersprungen.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -827,9 +816,9 @@ export default function ImportManagement() {
                             size="sm"
                             className="flex-1"
                             disabled={triggerLoading !== null}
-                            onClick={() => triggerImport(src.key, 'manual')}
+                            onClick={() => triggerImport(src.key, 'manual', 'contacts')}
                           >
-                            {triggerLoading === `${src.key}_manual` ? (
+                            {triggerLoading === `${src.key}_manual_contacts` ? (
                               <Loader2 className="w-4 h-4 animate-spin mr-1" />
                             ) : (
                               <Play className="w-4 h-4 mr-1" />
@@ -841,9 +830,65 @@ export default function ImportManagement() {
                             variant="outline"
                             className="flex-1"
                             disabled={triggerLoading !== null}
-                            onClick={() => triggerImport(src.key, 'dry_run')}
+                            onClick={() => triggerImport(src.key, 'dry_run', 'contacts')}
                           >
-                            {triggerLoading === `${src.key}_dry_run` ? (
+                            {triggerLoading === `${src.key}_dry_run_contacts` ? (
+                              <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                            ) : (
+                              <Eye className="w-4 h-4 mr-1" />
+                            )}
+                            Dry Run
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Import Aufträge */}
+            <Card className="border-border">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Package className="w-5 h-5 text-primary" />
+                  Aufträge importieren
+                </CardTitle>
+                <CardDescription>
+                  Importiert Verkaufsaufträge aus Zoho Books. Der verknüpfte Kunde muss bereits importiert sein. Dry Run prüft ohne Änderungen.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {IMPORT_SOURCES.map(src => (
+                    <Card key={src.key} className="border-border bg-secondary/50">
+                      <CardContent className="p-4 space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Cloud className="w-4 h-4 text-primary" />
+                          <span className="font-semibold text-sm">{src.label}</span>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            className="flex-1"
+                            disabled={triggerLoading !== null}
+                            onClick={() => triggerImport(src.key, 'manual', 'salesorders')}
+                          >
+                            {triggerLoading === `${src.key}_manual_salesorders` ? (
+                              <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                            ) : (
+                              <Play className="w-4 h-4 mr-1" />
+                            )}
+                            Import
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1"
+                            disabled={triggerLoading !== null}
+                            onClick={() => triggerImport(src.key, 'dry_run', 'salesorders')}
+                          >
+                            {triggerLoading === `${src.key}_dry_run_salesorders` ? (
                               <Loader2 className="w-4 h-4 animate-spin mr-1" />
                             ) : (
                               <Eye className="w-4 h-4 mr-1" />
