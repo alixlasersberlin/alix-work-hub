@@ -42,7 +42,13 @@ function getDaysUntil(date: string | null): number | null {
   return Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-function getCity(addr: any): string {
+function resolveCity(order: PrioOrder): string {
+  const hasAddr = (a: any) => a && (a.city || a.address || a.street);
+  const addr =
+    (hasAddr(order.shipping_address) ? order.shipping_address : null) ||
+    (hasAddr(order.customers?.shipping_address) ? order.customers?.shipping_address : null) ||
+    (hasAddr(order.billing_address) ? order.billing_address : null) ||
+    (hasAddr(order.customers?.billing_address) ? order.customers?.billing_address : null);
   if (!addr) return '';
   if (typeof addr === 'string') return addr;
   return addr.city || addr.state || '';
