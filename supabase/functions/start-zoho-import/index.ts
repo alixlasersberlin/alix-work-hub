@@ -63,7 +63,8 @@ async function getZohoAccessToken(config: ZohoConfig): Promise<string> {
     throw new Error(`Failed to refresh Zoho token: ${text}`);
   }
   const data = await response.json();
-  if (!data.access_token) throw new Error("Zoho access token missing");
+  console.log("Zoho token response:", JSON.stringify(data));
+  if (!data.access_token) throw new Error(`Zoho access token missing. Response: ${JSON.stringify(data)}`);
   return data.access_token;
 }
 
