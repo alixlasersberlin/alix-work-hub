@@ -4,8 +4,10 @@ import { useAuth } from '@/hooks/useAuth';
 import {
   Cloud, RefreshCw, Play, Search, Filter, CheckCircle2, XCircle,
   Clock, AlertTriangle, Database, ArrowUpDown, Inbox, FileText, Loader2,
-  User, Package, Zap, Eye, ArrowRight, Info
+  User, Package, Zap, Eye, ArrowRight, Info, CalendarDays
 } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
