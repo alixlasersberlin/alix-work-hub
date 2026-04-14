@@ -99,28 +99,36 @@
     border-color: hsl(var(--gold) / 0.3);
   }
 
-  .surface-1 {
-    background-color: hsl(var(--surface-1));
-  }
-
-  .surface-2 {
-    background-color: hsl(var(--surface-2));
-  }
-
-  .surface-3 {
-    background-color: hsl(var(--surface-3));
-  }
+  .surface-1 { background-color: hsl(var(--surface-1)); }
+  .surface-2 { background-color: hsl(var(--surface-2)); }
+  .surface-3 { background-color: hsl(var(--surface-3)); }
 
   .card-glow {
-    box-shadow: 0 0 0 1px hsl(var(--gold) / 0.08), var(--shadow-card);
+    box-shadow: 0 0 0 1px hsl(var(--gold) / 0.06), 0 1px 3px 0 hsl(0 0% 0% / 0.3), 0 1px 2px -1px hsl(0 0% 0% / 0.3);
   }
 
   .animate-fade-in {
-    animation: fadeIn 0.3s ease-out;
+    animation: fadeIn 0.25s ease-out;
   }
 
   @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(8px); }
+    from { opacity: 0; transform: translateY(6px); }
     to { opacity: 1; transform: translateY(0); }
   }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.3);
 }
