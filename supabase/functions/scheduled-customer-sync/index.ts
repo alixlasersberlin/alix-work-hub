@@ -101,9 +101,10 @@ Deno.serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Auth: only service role key or admin user
+    // Auth: service role key, or authenticated admin user
     const authHeader = req.headers.get("Authorization") ?? "";
-    const isServiceCall = authHeader === `Bearer ${serviceRoleKey}`;
+    const apiKeyHeader = req.headers.get("apikey") ?? "";
+    const isServiceCall = authHeader === `Bearer ${serviceRoleKey}` || apiKeyHeader === serviceRoleKey;
 
     if (!isServiceCall) {
       const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
