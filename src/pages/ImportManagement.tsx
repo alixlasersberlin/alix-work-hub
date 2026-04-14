@@ -511,6 +511,103 @@ export default function ImportManagement() {
         {/* ============ ACTIONS TAB ============ */}
         {canWrite && (
           <TabsContent value="actions" className="space-y-6">
+            {/* Date Filter */}
+            <Card className="border-border">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <CalendarDays className="w-4 h-4 text-primary" />
+                  Zeitraum für Import
+                </CardTitle>
+                <CardDescription>
+                  Wählen Sie den Zeitraum der zu importierenden Aufträge. Bereits vorhandene Aufträge werden übersprungen.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  {([
+                    { key: 'all' as DatePreset, label: 'Alle' },
+                    { key: 'this_week' as DatePreset, label: 'Diese Woche' },
+                    { key: 'this_month' as DatePreset, label: 'Dieser Monat' },
+                    { key: 'this_year' as DatePreset, label: 'Dieses Jahr' },
+                    { key: 'custom' as DatePreset, label: 'Benutzerdefiniert' },
+                  ]).map(p => (
+                    <Button
+                      key={p.key}
+                      size="sm"
+                      variant={datePreset === p.key ? 'default' : 'outline'}
+                      onClick={() => setDatePreset(p.key)}
+                    >
+                      {p.label}
+                    </Button>
+                  ))}
+                </div>
+
+                {datePreset === 'custom' && (
+                  <div className="flex flex-wrap items-end gap-4">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-muted-foreground">Von</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" size="sm" className="w-[160px] justify-start text-left font-normal">
+                            <CalendarDays className="w-3.5 h-3.5 mr-2" />
+                            {customDateFrom ? format(customDateFrom, 'dd.MM.yyyy') : 'Startdatum'}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={customDateFrom}
+                            onSelect={setCustomDateFrom}
+                            className="p-3 pointer-events-auto"
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-muted-foreground">Bis</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" size="sm" className="w-[160px] justify-start text-left font-normal">
+                            <CalendarDays className="w-3.5 h-3.5 mr-2" />
+                            {customDateTo ? format(customDateTo, 'dd.MM.yyyy') : 'Enddatum'}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={customDateTo}
+                            onSelect={setCustomDateTo}
+                            className="p-3 pointer-events-auto"
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </div>
+                )}
+
+                {datePreset !== 'all' && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground bg-secondary/50 rounded-lg px-3 py-2">
+                    <Info className="w-3.5 h-3.5 flex-shrink-0" />
+                    {datePreset === 'custom' ? (
+                      <span>
+                        Importzeitraum: {customDateFrom ? format(customDateFrom, 'dd.MM.yyyy') : '–'} bis {customDateTo ? format(customDateTo, 'dd.MM.yyyy') : '–'}
+                      </span>
+                    ) : (
+                      <span>
+                        Importzeitraum: {(() => {
+                          const range = getDateRange();
+                          return `${range.date_from ? new Date(range.date_from).toLocaleDateString('de-DE') : '–'} bis ${range.date_to ? new Date(range.date_to).toLocaleDateString('de-DE') : '–'}`;
+                        })()}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Import Sources */}
             <Card className="border-border">
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -518,7 +615,7 @@ export default function ImportManagement() {
                   Import starten
                 </CardTitle>
                 <CardDescription>
-                  Vollimport schreibt Daten in die produktiven Tabellen. Dry Run prüft nur serverseitig ohne Änderungen.
+                  Vollimport schreibt nur neue Daten. Bereits vorhandene Aufträge und Kunden werden übersprungen. Dry Run prüft ohne Änderungen.
                 </CardDescription>
               </CardHeader>
               <CardContent>
