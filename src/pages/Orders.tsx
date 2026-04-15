@@ -52,7 +52,10 @@ export default function Orders() {
 
   useEffect(() => { load(); }, [sortField, sortDir, fetchDrivingTimes]);
 
-  const statuses = [...new Set(orders.map(o => o.order_status).filter(Boolean))];
+  const EXCLUDED_STATUSES = ['geliefert', 'teilgeliefert', 'anwalt'];
+
+  const statuses = [...new Set(orders.map(o => o.order_status).filter(Boolean))]
+    .filter(s => !EXCLUDED_STATUSES.includes(s.toLowerCase()));
 
   const filtered = orders.filter(o => {
     const q = search.toLowerCase();
@@ -61,7 +64,8 @@ export default function Orders() {
       o.customers?.company_name?.toLowerCase().includes(q) ||
       o.customers?.contact_name?.toLowerCase().includes(q);
     const matchStatus = statusFilter === 'all' || o.order_status === statusFilter;
-    return matchSearch && matchStatus;
+    const notExcluded = !EXCLUDED_STATUSES.includes((o.order_status || '').toLowerCase());
+    return matchSearch && matchStatus && notExcluded;
   });
 
   const totalPages = pageSize === 'all' ? 1 : Math.ceil(filtered.length / pageSize);
