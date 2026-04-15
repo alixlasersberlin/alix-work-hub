@@ -3,10 +3,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Building2, ArrowUpDown, Loader2, Inbox } from 'lucide-react';
+import { Search, Building2, ArrowUpDown, Loader2, Inbox, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import CustomerEditDialog from '@/components/CustomerEditDialog';
+import CustomerDeleteDialog from '@/components/CustomerDeleteDialog';
 
 type SortField = 'company_name' | 'contact_name' | 'created_at';
 type SortDir = 'asc' | 'desc';
@@ -26,21 +28,25 @@ export default function Customers() {
   const [pageSize, setPageSize] = useState<number>(20);
   const [page, setPage] = useState(0);
   const navigate = useNavigate();
+  const { isAdmin } = useAuth();
+  const [editCustomer, setEditCustomer] = useState<any>(null);
+  const [deleteCustomer, setDeleteCustomer] = useState<any>(null);
+
+  async function loadAll() {
+    setLoading(true);
+    setError(null);
+    const { data, error: err } = await supabase
+      .from('customers')
+      .select('*')
+      .order(sortField, { ascending: sortDir === 'asc' })
+      .limit(1000);
+    if (err) { setError(err.message); }
+    setCustomers(data ?? []);
+    setLoading(false);
+  }
 
   useEffect(() => {
-    async function load() {
-      setLoading(true);
-      setError(null);
-      const { data, error: err } = await supabase
-        .from('customers')
-        .select('*')
-        .order(sortField, { ascending: sortDir === 'asc' })
-        .limit(1000);
-      if (err) { setError(err.message); }
-      setCustomers(data ?? []);
-      setLoading(false);
-    }
-    load();
+    loadAll();
   }, [sortField, sortDir]);
 
   const sources = [...new Set(customers.map(c => c.source_system).filter(Boolean))];
@@ -190,15 +196,16 @@ export default function Customers() {
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Telefon</th>
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Quelle</th>
                 <SortHeader field="created_at" label="Erstellt" />
+                {isAdmin && <th className="text-right px-4 py-3 text-muted-foreground font-medium">Aktionen</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {loading ? (
-                <tr><td colSpan={6} className="px-4 py-12 text-center">
+                <tr><td colSpan={isAdmin ? 7 : 6} className="px-4 py-12 text-center">
                   <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" />
                 </td></tr>
               ) : paginated.length === 0 ? (
-                <tr><td colSpan={6} className="px-4 py-12 text-center">
+                <tr><td colSpan={isAdmin ? 7 : 6} className="px-4 py-12 text-center">
                   <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
                   <p className="text-muted-foreground">Keine Kunden gefunden.</p>
                 </td></tr>
@@ -215,6 +222,28 @@ export default function Customers() {
                     <td className="px-4 py-3 text-muted-foreground">{c.phone || '—'}</td>
                     <td className="px-4 py-3"><span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-accent/10 text-accent-foreground">{c.source_system}</span></td>
                     <td className="px-4 py-3 text-muted-foreground text-xs">{new Date(c.created_at).toLocaleDateString('de-DE')}</td>
+                    {isAdmin && (
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                            onClick={e => { e.stopPropagation(); setEditCustomer(c); }}
+                          >
+                            <Pencil className="w-3 h-3 mr-1" /> Ändern
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive"
+                            onClick={e => { e.stopPropagation(); setDeleteCustomer(c); }}
+                          >
+                            <Trash2 className="w-3 h-3 mr-1" /> Löschen
+                          </Button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))
               )}
@@ -239,6 +268,24 @@ export default function Customers() {
           </div>
         )}
       </div>
+
+      {/* Dialogs */}
+      {editCustomer && (
+        <CustomerEditDialog
+          customer={editCustomer}
+          open={!!editCustomer}
+          onClose={() => setEditCustomer(null)}
+          onSaved={() => { setEditCustomer(null); loadAll(); }}
+        />
+      )}
+      {deleteCustomer && (
+        <CustomerDeleteDialog
+          customer={deleteCustomer}
+          open={!!deleteCustomer}
+          onClose={() => setDeleteCustomer(null)}
+          onDeleted={() => { setDeleteCustomer(null); loadAll(); }}
+        />
+      )}
     </div>
   );
 }
