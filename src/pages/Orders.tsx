@@ -107,7 +107,7 @@ export default function Orders() {
         </TabsList>
 
         <TabsContent value="list" className="space-y-4">
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input placeholder="Suche nach Auftrag, Kunde..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10 bg-secondary border-border" />
@@ -119,6 +119,17 @@ export default function Orders() {
               <SelectContent>
                 <SelectItem value="all">Alle Status</SelectItem>
                 {statuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={String(pageSize)} onValueChange={v => setPageSize(v === 'all' ? 'all' : Number(v) as 20 | 30 | 50)}>
+              <SelectTrigger className="w-36 bg-secondary border-border">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="20">20 pro Seite</SelectItem>
+                <SelectItem value="30">30 pro Seite</SelectItem>
+                <SelectItem value="50">50 pro Seite</SelectItem>
+                <SelectItem value="all">Alle</SelectItem>
               </SelectContent>
             </Select>
           </div>
