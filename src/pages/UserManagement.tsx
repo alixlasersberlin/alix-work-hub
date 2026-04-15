@@ -264,7 +264,7 @@ export default function UserManagement() {
         );
       }
       // Update department
-      await supabase.from('user_profiles').update({ department_id: editDeptId || null }).eq('id', selectedUser.id);
+      await supabase.from('user_profiles').update({ department_id: editDeptId && editDeptId !== 'none' ? editDeptId : null }).eq('id', selectedUser.id);
 
       toast.success('Rollen und Abteilung gespeichert');
       setShowEditRoles(false);
@@ -691,7 +691,7 @@ export default function UserManagement() {
               <Select value={editDeptId} onValueChange={setEditDeptId}>
                 <SelectTrigger><SelectValue placeholder="Keine Abteilung" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Keine Abteilung</SelectItem>
+                  <SelectItem value="none">Keine Abteilung</SelectItem>
                   {departments.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
                 </SelectContent>
               </Select>
