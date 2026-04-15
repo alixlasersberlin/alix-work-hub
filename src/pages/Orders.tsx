@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -15,6 +15,7 @@ import { useDrivingTimes } from '@/hooks/useDrivingTimes';
 
 type SortField = 'order_number' | 'order_date' | 'total_amount' | 'created_at';
 type SortDir = 'asc' | 'desc';
+type PageSize = 20 | 30 | 50 | 'all';
 
 export default function Orders() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -24,6 +25,8 @@ export default function Orders() {
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pageSize, setPageSize] = useState<PageSize>(20);
+  const [currentPage, setCurrentPage] = useState(1);
   const [editOrder, setEditOrder] = useState<any>(null);
   const [deferOrder, setDeferOrder] = useState<any>(null);
   const navigate = useNavigate();
@@ -60,6 +63,11 @@ export default function Orders() {
     const matchStatus = statusFilter === 'all' || o.order_status === statusFilter;
     return matchSearch && matchStatus;
   });
+
+  const totalPages = pageSize === 'all' ? 1 : Math.ceil(filtered.length / pageSize);
+  const paged = pageSize === 'all' ? filtered : filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  useEffect(() => { setCurrentPage(1); }, [search, statusFilter, pageSize]);
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
@@ -99,7 +107,7 @@ export default function Orders() {
         </TabsList>
 
         <TabsContent value="list" className="space-y-4">
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input placeholder="Suche nach Auftrag, Kunde..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10 bg-secondary border-border" />
@@ -111,6 +119,17 @@ export default function Orders() {
               <SelectContent>
                 <SelectItem value="all">Alle Status</SelectItem>
                 {statuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={String(pageSize)} onValueChange={v => setPageSize(v === 'all' ? 'all' : Number(v) as 20 | 30 | 50)}>
+              <SelectTrigger className="w-36 bg-secondary border-border">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="20">20 pro Seite</SelectItem>
+                <SelectItem value="30">30 pro Seite</SelectItem>
+                <SelectItem value="50">50 pro Seite</SelectItem>
+                <SelectItem value="all">Alle</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -148,7 +167,7 @@ export default function Orders() {
                     </td></tr>
                   </tbody>
                 ) : (
-                  filtered.map(o => (
+                  paged.map(o => (
                     <tbody key={o.id} className="border-b border-border">
                       <tr
                         className="hover:bg-secondary/30 transition-colors cursor-pointer"
@@ -201,6 +220,35 @@ export default function Orders() {
               </table>
             </div>
           </div>
+
+          {/* Pagination */}
+          {pageSize !== 'all' && totalPages > 1 && (
+            <div className="flex items-center justify-between pt-2">
+              <p className="text-xs text-muted-foreground">
+                Seite {currentPage} von {totalPages} · {filtered.length} Ergebnisse
+              </p>
+              <div className="flex items-center gap-1">
+                <Button variant="outline" size="sm" className="h-7 px-2 text-xs" disabled={currentPage <= 1} onClick={() => setCurrentPage(p => p - 1)}>
+                  Zurück
+                </Button>
+                {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+                  let page: number;
+                  if (totalPages <= 7) page = i + 1;
+                  else if (currentPage <= 4) page = i + 1;
+                  else if (currentPage >= totalPages - 3) page = totalPages - 6 + i;
+                  else page = currentPage - 3 + i;
+                  return (
+                    <Button key={page} variant={page === currentPage ? 'default' : 'outline'} size="sm" className="h-7 w-7 px-0 text-xs" onClick={() => setCurrentPage(page)}>
+                      {page}
+                    </Button>
+                  );
+                })}
+                <Button variant="outline" size="sm" className="h-7 px-2 text-xs" disabled={currentPage >= totalPages} onClick={() => setCurrentPage(p => p + 1)}>
+                  Weiter
+                </Button>
+              </div>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="calendar">
