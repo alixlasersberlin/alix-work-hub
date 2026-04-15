@@ -290,12 +290,15 @@ export default function MietkaufDialog({ order }: Props) {
     doc.text(fmtCurrency(kaufpreisEndeNum), col3 - 3, y + 5, { align: 'right' });
     y += rowH;
 
-    drawFinRow(y);
-    doc.setFont('Inter', 'bold');
-    doc.text('bei Vertragsende', ml + 3, y + 5);
-    doc.setFont('Inter', 'normal');
-    doc.text('Zzgl. Umsatzsteuer', col2 - 2, y + 5);
-    doc.text(fmtCurrency(kaufpreisEndeVat), col3 - 3, y + 5, { align: 'right' });
+    if (mitMwst) {
+      drawFinRow(y);
+      doc.setFont('Inter', 'bold');
+      doc.text('bei Vertragsende', ml + 3, y + 5);
+      doc.setFont('Inter', 'normal');
+      doc.text('Zzgl. Umsatzsteuer', col2 - 2, y + 5);
+      doc.text(fmtCurrency(kaufpreisEndeVat), col3 - 3, y + 5, { align: 'right' });
+      y += rowH;
+    }
     y += rowH + 8;
 
     // ── Nutzungsort ──
