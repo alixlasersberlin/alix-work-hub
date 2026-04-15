@@ -46,6 +46,12 @@ function getCustomerAddr(order: any) {
   return parts.join(', ');
 }
 
+function getCustomerBank(order: any) {
+  const c = order.customers || order.customer;
+  if (!c) return { iban: '', bic: '', bank: '' };
+  return { iban: c.iban || '', bic: c.bic || '', bank: c.bank_name || '' };
+}
+
 function getDeviceModel(order: any): string {
   // Try to get from first item
   if (order.items && order.items.length > 0) return order.items[0].item_name || '';
@@ -153,7 +159,18 @@ export default function MietkaufDialog({ order }: Props) {
     doc.setFont('Inter', 'bold');
     doc.text('- Kunde', pw - mr, y, { align: 'right' });
     doc.setFont('Inter', 'normal');
-    y += 14;
+    y += 8;
+
+    // Bank details
+    const bankInfo = getCustomerBank(order);
+    if (bankInfo.iban || bankInfo.bic || bankInfo.bank) {
+      doc.setFontSize(8);
+      if (bankInfo.iban) { doc.text(`IBAN: ${bankInfo.iban}`, ml, y); y += 4; }
+      if (bankInfo.bic) { doc.text(`BIC: ${bankInfo.bic}`, ml, y); y += 4; }
+      if (bankInfo.bank) { doc.text(`Bank: ${bankInfo.bank}`, ml, y); y += 4; }
+      doc.setFontSize(10);
+    }
+    y += 6;
 
     // ── Device/Order table ──
     const drawRow = (ry: number, h: number) => {
