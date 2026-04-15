@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { FileText } from 'lucide-react';
-import jsPDF from 'jspdf';
+import { createPDF } from '@/lib/pdf-utils';
 import alixLogo from '@/assets/alix-lasers-logo.png';
 
 interface Props {
@@ -48,7 +48,7 @@ export default function SepaMandatButton({ order }: Props) {
   const customer = order.customers;
 
   async function generateSepaMandat() {
-    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const doc = createPDF({ unit: 'mm', format: 'a4' });
     const pw = doc.internal.pageSize.getWidth();
     const today = new Date().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
@@ -60,22 +60,22 @@ export default function SepaMandatButton({ order }: Props) {
 
     // Title
     doc.setFontSize(16);
-    doc.setFont(undefined!, 'bold');
+    doc.setFont('Inter', 'bold');
     doc.text('SEPA-Lastschriftmandat', 14, 22);
 
     doc.setFontSize(9);
-    doc.setFont(undefined!, 'normal');
+    doc.setFont('Inter', 'normal');
     doc.text(`Mandatsreferenz: ${order.order_number}`, 14, 30);
     doc.text(`Datum: ${today}`, 14, 35);
 
     // Gläubiger (Alix)
     let y = 46;
     doc.setFontSize(11);
-    doc.setFont(undefined!, 'bold');
+    doc.setFont('Inter', 'bold');
     doc.text('Zahlungsempfänger (Gläubiger)', 14, y);
     y += 7;
     doc.setFontSize(9);
-    doc.setFont(undefined!, 'normal');
+    doc.setFont('Inter', 'normal');
     const glaeubigerLines = [
       `Name: ${ALIX.name}`,
       `Anschrift: ${ALIX.street}, ${ALIX.city}`,
@@ -88,11 +88,11 @@ export default function SepaMandatButton({ order }: Props) {
     // Zahlungspflichtiger (Kunde)
     y += 5;
     doc.setFontSize(11);
-    doc.setFont(undefined!, 'bold');
+    doc.setFont('Inter', 'bold');
     doc.text('Zahlungspflichtiger (Kontoinhaber)', 14, y);
     y += 7;
     doc.setFontSize(9);
-    doc.setFont(undefined!, 'normal');
+    doc.setFont('Inter', 'normal');
 
     const customerName = customer?.company_name || customer?.contact_name || '___________________________';
     const addr = formatAddr(customer?.billing_address || customer?.shipping_address);
@@ -112,11 +112,11 @@ export default function SepaMandatButton({ order }: Props) {
     // Mandatstext
     y += 8;
     doc.setFontSize(10);
-    doc.setFont(undefined!, 'bold');
+    doc.setFont('Inter', 'bold');
     doc.text('Ermächtigung', 14, y);
     y += 6;
     doc.setFontSize(9);
-    doc.setFont(undefined!, 'normal');
+    doc.setFont('Inter', 'normal');
 
     const mandatText = [
       `Ich ermächtige / Wir ermächtigen ${ALIX.name}, Zahlungen von meinem / unserem Konto`,
@@ -131,9 +131,9 @@ export default function SepaMandatButton({ order }: Props) {
 
     // Zahlungsart
     y += 6;
-    doc.setFont(undefined!, 'bold');
+    doc.setFont('Inter', 'bold');
     doc.text('Art der Zahlung:', 14, y);
-    doc.setFont(undefined!, 'normal');
+    doc.setFont('Inter', 'normal');
     y += 6;
     doc.text('☐  Einmalige Zahlung', 20, y);
     y += 5;
