@@ -139,6 +139,7 @@ export default function OrderDetail() {
             </>
           )}
           <SepaMandatButton order={order} />
+          <MietkaufDialog order={order} />
           <InstallmentPlanDialog order={order} />
           <StatusBadge status={order.order_status || 'offen'} />
         </div>
