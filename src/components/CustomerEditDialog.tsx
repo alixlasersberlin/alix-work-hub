@@ -28,8 +28,48 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
     shipping_zip: customer?.shipping_address?.zip || '',
     shipping_city: customer?.shipping_address?.city || '',
     shipping_country: customer?.shipping_address?.country || '',
+    iban: customer?.iban || '',
+    bic: customer?.bic || '',
+    bank_name: customer?.bank_name || '',
   });
   const [saving, setSaving] = useState(false);
+
+  // Auto-detect bank from IBAN
+  function handleIbanChange(val: string) {
+    set('iban', val);
+    const clean = val.replace(/\s/g, '').toUpperCase();
+    if (clean.length >= 8) {
+      const bankCode = clean.substring(4, 12);
+      const knownBanks: Record<string, string> = {
+        '10010010': 'Postbank',
+        '10020500': 'Bank für Sozialwirtschaft',
+        '10050000': 'Landesbank Berlin',
+        '10070000': 'Deutsche Bank Berlin',
+        '10070024': 'Deutsche Bank',
+        '10090000': 'Berliner Volksbank',
+        '20010020': 'Postbank Hamburg',
+        '25050000': 'Nord/LB',
+        '30010111': 'SEB AG',
+        '37010050': 'Postbank Köln',
+        '37040044': 'Commerzbank',
+        '43060967': 'GLS Bank',
+        '50010060': 'Postbank Frankfurt',
+        '50010517': 'ING-DiBa',
+        '50020200': 'HBCE Bank',
+        '50040000': 'Commerzbank',
+        '50070010': 'Deutsche Bank',
+        '50070024': 'Deutsche Bank',
+        '50090500': 'Sparda-Bank Hessen',
+        '60020290': 'UniCredit HypoVereinsbank',
+        '70010080': 'Postbank München',
+        '70020270': 'UniCredit HypoVereinsbank',
+        '76010085': 'Postbank Nürnberg',
+        'COBADEFF': 'Commerzbank',
+      };
+      const found = knownBanks[bankCode];
+      if (found) set('bank_name', found);
+    }
+  }
 
   const set = (key: string, val: string) => setForm(f => ({ ...f, [key]: val }));
 
@@ -52,6 +92,9 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
         city: form.shipping_city,
         country: form.shipping_country,
       },
+      iban: form.iban || null,
+      bic: form.bic || null,
+      bank_name: form.bank_name || null,
     }).eq('id', customer.id);
     setSaving(false);
     if (error) { toast.error('Fehler beim Speichern: ' + error.message); return; }
@@ -91,6 +134,21 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
             <Field label="PLZ" field="billing_zip" />
             <Field label="Stadt" field="billing_city" />
             <Field label="Land" field="billing_country" />
+          </div>
+
+          <h3 className="text-sm font-medium text-foreground pt-2">Bankdaten</h3>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2">
+              <Label className="text-xs text-muted-foreground">IBAN</Label>
+              <Input
+                value={form.iban}
+                onChange={e => handleIbanChange(e.target.value)}
+                className="bg-secondary border-border mt-1"
+                placeholder="DE89 3704 0044 0532 0130 00"
+              />
+            </div>
+            <Field label="BIC" field="bic" />
+            <Field label="Bank" field="bank_name" />
           </div>
 
           <h3 className="text-sm font-medium text-foreground pt-2">Lieferadresse</h3>

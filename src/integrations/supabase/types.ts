@@ -148,12 +148,15 @@ export type Database = {
       }
       customers: {
         Row: {
+          bank_name: string | null
+          bic: string | null
           billing_address: Json | null
           company_name: string | null
           contact_name: string | null
           created_at: string
           email: string | null
           external_customer_id: string | null
+          iban: string | null
           id: string
           phone: string | null
           raw_data: Json | null
@@ -162,12 +165,15 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          bank_name?: string | null
+          bic?: string | null
           billing_address?: Json | null
           company_name?: string | null
           contact_name?: string | null
           created_at?: string
           email?: string | null
           external_customer_id?: string | null
+          iban?: string | null
           id?: string
           phone?: string | null
           raw_data?: Json | null
@@ -176,12 +182,15 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          bank_name?: string | null
+          bic?: string | null
           billing_address?: Json | null
           company_name?: string | null
           contact_name?: string | null
           created_at?: string
           email?: string | null
           external_customer_id?: string | null
+          iban?: string | null
           id?: string
           phone?: string | null
           raw_data?: Json | null
