@@ -1,14 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 import {
-  LayoutDashboard, ClipboardList, MapPin, Banknote, Users, LogOut, Shield, Menu, X, ChevronLeft, Building2, Cloud, Server, ListOrdered, Sun, Moon, Plus
+  LayoutDashboard, ClipboardList, MapPin, Banknote, Users, LogOut, Shield, Menu, X, ChevronLeft, Building2, Cloud, Server, ListOrdered, Sun, Moon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+
+const APP_VERSION = '3.0';
 
 const navItems = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard, roles: null },
@@ -23,24 +23,10 @@ const navItems = [
 ];
 
 export default function AppLayout() {
-  const { profile, roles, signOut, isAdmin } = useAuth();
+  const { profile, roles, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
-  const [versionMinor, setVersionMinor] = useState<number | null>(null);
-
-  useEffect(() => {
-    supabase.from('app_settings').select('value').eq('key', 'app_version_minor').maybeSingle()
-      .then(({ data }) => { if (data) setVersionMinor(Number(data.value)); });
-  }, []);
-
-  async function incrementVersion() {
-    const next = (versionMinor ?? 0) + 1;
-    const { error } = await supabase.from('app_settings').update({ value: String(next), updated_by: profile?.id }).eq('key', 'app_version_minor');
-    if (error) { toast.error('Fehler beim Aktualisieren der Version'); return; }
-    setVersionMinor(next);
-    toast.success(`Version auf 3.${next} aktualisiert`);
-  }
 
   const visibleItems = navItems.filter(item => {
     if (!item.roles) return true;
@@ -137,12 +123,7 @@ export default function AppLayout() {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 text-sm">
               <span className="font-display font-bold gold-text">AlixWork</span>
-              <span className="text-muted-foreground font-mono text-xs">v3.{versionMinor ?? 0}</span>
-              {isAdmin && (
-                <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-primary" onClick={incrementVersion} title="Version erhöhen">
-                  <Plus className="w-3 h-3" />
-                </Button>
-              )}
+              <span className="text-muted-foreground font-mono text-xs">v{APP_VERSION}</span>
             </div>
             <Button
               variant="ghost"
