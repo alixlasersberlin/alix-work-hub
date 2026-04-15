@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useTheme } from '@/hooks/useTheme';
 import {
-  LayoutDashboard, ClipboardList, MapPin, Banknote, Users, LogOut, Shield, Menu, X, ChevronLeft, Building2, Cloud, Server, ListOrdered
+  LayoutDashboard, ClipboardList, MapPin, Banknote, Users, LogOut, Shield, Menu, X, ChevronLeft, Building2, Cloud, Server, ListOrdered, Sun, Moon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -21,6 +22,7 @@ const navItems = [
 
 export default function AppLayout() {
   const { profile, roles, signOut } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
 
@@ -112,9 +114,23 @@ export default function AppLayout() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto">
-        <Outlet />
-      </main>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Top Bar with Theme Toggle */}
+        <header className="h-14 border-b border-border bg-card flex items-center justify-end px-4 flex-shrink-0">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+            onClick={toggleTheme}
+            title={theme === 'dark' ? 'Helles Design' : 'Dunkles Design'}
+          >
+            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </Button>
+        </header>
+        <main className="flex-1 overflow-auto">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }
