@@ -216,7 +216,7 @@ export default function MietkaufDialog({ order }: Props) {
       doc.text(opt.label, cx + 5, y);
       cx += 28;
     }
-    doc.text('jeweils ab Übergabe', cx + 2, y);
+    
     y += 12;
 
     // ── Financial table ──
