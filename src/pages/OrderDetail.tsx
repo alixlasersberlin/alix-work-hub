@@ -160,7 +160,6 @@ export default function OrderDetail() {
                 ['Betrag', order.total_amount != null ? Number(order.total_amount).toLocaleString('de-DE', { style: 'currency', currency: order.currency || 'EUR' }) : '—'],
                 ['Währung', order.currency],
                 ['Bestelldatum', order.order_date ? new Date(order.order_date).toLocaleDateString('de-DE') : '—'],
-                ['Erw. Versanddatum', order.expected_shipment_date ? new Date(order.expected_shipment_date).toLocaleDateString('de-DE') : '—'],
                 ['Quelle', order.source_system],
                 ['Ext. Auftrags-ID', order.external_order_id],
                 ['Erstellt', new Date(order.created_at).toLocaleString('de-DE')],
@@ -170,6 +169,49 @@ export default function OrderDetail() {
                   <dd className="text-foreground font-medium">{(v as string) || '—'}</dd>
                 </div>
               ))}
+              {/* Editable Expected Shipment Date */}
+              <div className="flex justify-between items-center">
+                <dt className="text-muted-foreground">Erw. Versanddatum</dt>
+                <dd className="flex items-center gap-2">
+                  {editingShipDate ? (
+                    <>
+                      <Input
+                        type="date"
+                        value={shipDateValue}
+                        onChange={e => setShipDateValue(e.target.value)}
+                        className="h-7 w-40 text-sm bg-secondary border-border"
+                      />
+                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={async () => {
+                        const val = shipDateValue || null;
+                        const { error } = await supabase.from('orders').update({ expected_shipment_date: val }).eq('id', id!);
+                        if (error) { toast.error('Fehler beim Speichern'); return; }
+                        setOrder({ ...order, expected_shipment_date: val });
+                        setEditingShipDate(false);
+                        toast.success('Versanddatum aktualisiert');
+                      }}>
+                        <Check className="w-3.5 h-3.5 text-primary" />
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditingShipDate(false)}>
+                        <X className="w-3.5 h-3.5" />
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-foreground font-medium">
+                        {order.expected_shipment_date ? new Date(order.expected_shipment_date).toLocaleDateString('de-DE') : '—'}
+                      </span>
+                      {canWrite && (
+                        <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => {
+                          setShipDateValue(order.expected_shipment_date ? new Date(order.expected_shipment_date).toISOString().split('T')[0] : '');
+                          setEditingShipDate(true);
+                        }}>
+                          <Pencil className="w-3 h-3" />
+                        </Button>
+                      )}
+                    </>
+                  )}
+                </dd>
+              </div>
             </dl>
           </div>
 
