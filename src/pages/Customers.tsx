@@ -32,20 +32,21 @@ export default function Customers() {
   const [editCustomer, setEditCustomer] = useState<any>(null);
   const [deleteCustomer, setDeleteCustomer] = useState<any>(null);
 
+  async function loadAll() {
+    setLoading(true);
+    setError(null);
+    const { data, error: err } = await supabase
+      .from('customers')
+      .select('*')
+      .order(sortField, { ascending: sortDir === 'asc' })
+      .limit(1000);
+    if (err) { setError(err.message); }
+    setCustomers(data ?? []);
+    setLoading(false);
+  }
+
   useEffect(() => {
-    async function load() {
-      setLoading(true);
-      setError(null);
-      const { data, error: err } = await supabase
-        .from('customers')
-        .select('*')
-        .order(sortField, { ascending: sortDir === 'asc' })
-        .limit(1000);
-      if (err) { setError(err.message); }
-      setCustomers(data ?? []);
-      setLoading(false);
-    }
-    load();
+    loadAll();
   }, [sortField, sortDir]);
 
   const sources = [...new Set(customers.map(c => c.source_system).filter(Boolean))];
