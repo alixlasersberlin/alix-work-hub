@@ -6,9 +6,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-const TWILIO_GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
-const TWILIO_FROM_NUMBER = "+19542313571";
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -52,7 +49,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const channel = profile.otp_channel || "sms";
+    const channel = profile.otp_channel || "email";
     const destination = channel === "sms" ? profile.phone_number : profile.email;
 
     if (!destination) {
@@ -124,11 +121,11 @@ Deno.serve(async (req) => {
     if (channel === "sms") {
       await sendSmsTwilio(destination, otp);
     } else {
-      // Email channel - log for now (can integrate email service later)
-      console.log(`[OTP-EMAIL] User ${user.id} | Challenge: ${challenge.id} | Email OTP issued`);
+      // Send OTP via transactional email
+      await sendOtpEmail(adminClient, destination, otp);
     }
 
-    console.log(`[OTP] User ${user.id} | Channel: ${channel} | Challenge: ${challenge.id} | Sent to: ${channel === "sms" ? "***" + destination.slice(-4) : destination.slice(0, 3) + "***"}`);
+    console.log(`[OTP] User ${user.id} | Channel: ${channel} | Challenge: ${challenge.id} | Sent to: ${channel === "sms" ? "***" + destination.slice(-4) : destination.slice(0, 3) + "***@" + destination.split("@")[1]}`);
 
     return new Response(JSON.stringify({
       success: true,
@@ -151,7 +148,27 @@ Deno.serve(async (req) => {
   }
 });
 
+async function sendOtpEmail(adminClient: any, to: string, otp: string): Promise<void> {
+  const { error } = await adminClient.functions.invoke('send-transactional-email', {
+    body: {
+      templateName: 'otp-code',
+      recipientEmail: to,
+      idempotencyKey: `otp-${to}-${Date.now()}`,
+      templateData: { otp },
+    },
+  });
+
+  if (error) {
+    console.error("Failed to send OTP email:", error);
+    throw new Error(`Email send failed: ${error.message}`);
+  }
+
+  console.log(`[OTP-EMAIL] Email OTP sent to ${to.slice(0, 3)}***@${to.split("@")[1]}`);
+}
+
 async function sendSmsTwilio(to: string, otp: string): Promise<void> {
+  const TWILIO_GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
+  const TWILIO_FROM_NUMBER = "+19542313571";
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
