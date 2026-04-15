@@ -31,7 +31,23 @@ interface AuthContextType {
   refreshProfile: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const defaultAuthContext: AuthContextType = {
+  user: null,
+  session: null,
+  profile: null,
+  roles: [],
+  loading: false,
+  blockReason: null,
+  signIn: async () => ({ error: new Error('AuthProvider ist nicht initialisiert') }),
+  signOut: async () => {},
+  hasRole: () => false,
+  hasAnyRole: () => false,
+  isAdmin: false,
+  isOtpVerified: true,
+  refreshProfile: async () => {},
+};
+
+const AuthContext = createContext<AuthContextType>(defaultAuthContext);
 
 function getBlockReason(profile: UserProfile | null): AccountBlockReason {
   if (!profile) return null;
@@ -142,7 +158,5 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within AuthProvider');
-  return context;
+  return useContext(AuthContext);
 }
