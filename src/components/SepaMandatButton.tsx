@@ -8,10 +8,10 @@ interface Props {
 
 const ALIX = {
   name: 'Alix Lasers GmbH',
-  street: 'Musterstraße 1',
-  city: '12345 Berlin',
+  street: 'Buchsbaumweg 53',
+  city: '12357 Berlin',
   country: 'Deutschland',
-  glaeubigerId: 'DE98ZZZ09999999999',
+  glaeubigerId: 'DE02ZZZ00002605062',
 };
 
 function formatAddr(a: any) {
