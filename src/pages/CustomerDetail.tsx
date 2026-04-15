@@ -129,6 +129,24 @@ export default function CustomerDetail() {
           )}
         </div>
       </div>
+
+      {/* Dialogs */}
+      {editOpen && customer && (
+        <CustomerEditDialog
+          customer={customer}
+          open={editOpen}
+          onClose={() => setEditOpen(false)}
+          onSaved={() => { setEditOpen(false); loadCustomer(); }}
+        />
+      )}
+      {deleteOpen && customer && (
+        <CustomerDeleteDialog
+          customer={customer}
+          open={deleteOpen}
+          onClose={() => setDeleteOpen(false)}
+          onDeleted={() => { setDeleteOpen(false); navigate('/kunden'); }}
+        />
+      )}
     </div>
   );
 }
