@@ -390,6 +390,10 @@ export default function MietkaufDialog({ order }: Props) {
             <label className="text-sm text-muted-foreground">Kaufpreis bei Vertragsende netto (€)</label>
             <Input type="number" min={0} step="0.01" value={kaufpreisEnde} onChange={e => setKaufpreisEnde(e.target.value)} placeholder="0,00" className="bg-secondary border-border" />
           </div>
+          <div className="flex items-center justify-between rounded-lg bg-secondary/50 border border-border p-3">
+            <Label htmlFor="mwst-toggle" className="text-sm text-muted-foreground cursor-pointer">19% MwSt. ausweisen</Label>
+            <Switch id="mwst-toggle" checked={mitMwst} onCheckedChange={setMitMwst} />
+          </div>
           <div>
             <label className="text-sm text-muted-foreground">Zusätzliche Serviceleistungen</label>
             <Input value={zusatzService} onChange={e => setZusatzService(e.target.value)} placeholder="Optional" className="bg-secondary border-border" />
