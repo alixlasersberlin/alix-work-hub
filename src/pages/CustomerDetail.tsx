@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Building2, ClipboardList, Loader2, Inbox } from 'lucide-react';
+import { ArrowLeft, Building2, ClipboardList, Loader2, Inbox, Pencil, Trash2 } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
+import CustomerEditDialog from '@/components/CustomerEditDialog';
+import CustomerDeleteDialog from '@/components/CustomerDeleteDialog';
 
 export default function CustomerDetail() {
   const { id } = useParams<{ id: string }>();
@@ -11,20 +14,25 @@ export default function CustomerDetail() {
   const [customer, setCustomer] = useState<any>(null);
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { isAdmin } = useAuth();
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   useEffect(() => {
     if (!id) return;
-    async function load() {
-      const [cRes, oRes] = await Promise.all([
-        supabase.from('customers').select('*').eq('id', id).maybeSingle(),
-        supabase.from('orders').select('*').eq('customer_id', id).order('created_at', { ascending: false }),
-      ]);
-      setCustomer(cRes.data);
-      setOrders(oRes.data ?? []);
-      setLoading(false);
-    }
-    load();
+    loadCustomer();
   }, [id]);
+
+  async function loadCustomer() {
+    setLoading(true);
+    const [cRes, oRes] = await Promise.all([
+      supabase.from('customers').select('*').eq('id', id!).maybeSingle(),
+      supabase.from('orders').select('*').eq('customer_id', id!).order('created_at', { ascending: false }),
+    ]);
+    setCustomer(cRes.data);
+    setOrders(oRes.data ?? []);
+    setLoading(false);
+  }
 
   if (loading) return <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   if (!customer) return <div className="p-8 text-center text-muted-foreground">Kunde nicht gefunden.</div>;
@@ -45,6 +53,21 @@ export default function CustomerDetail() {
       <Button variant="ghost" className="mb-4 text-muted-foreground hover:text-foreground" onClick={() => navigate('/kunden')}>
         <ArrowLeft className="w-4 h-4 mr-2" /> Zurück zur Kundenliste
       </Button>
+
+      {/* Header with actions */}
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-display font-bold text-foreground">{customer?.company_name || customer?.contact_name || 'Kunde'}</h1>
+        {isAdmin && customer && (
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+              <Pencil className="w-3.5 h-3.5 mr-1.5" /> Ändern
+            </Button>
+            <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDeleteOpen(true)}>
+              <Trash2 className="w-3.5 h-3.5 mr-1.5" /> Löschen
+            </Button>
+          </div>
+        )}
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Customer Info */}
