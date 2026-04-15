@@ -30,6 +30,7 @@ import ImportManagement from "./pages/ImportManagement";
 import SystemMonitoring from "./pages/SystemMonitoring";
 import LawyerList from "./pages/LawyerList";
 import NotFound from "./pages/NotFound";
+import Unsubscribe from "./pages/Unsubscribe";
 import { Loader2, ShieldCheck } from "lucide-react";
 
 const queryClient = new QueryClient();
@@ -205,6 +206,7 @@ function AppRoutes() {
         <Route path="/import" element={<ProtectedRoute requiredRoles={IMPORT_ROLES}><ImportManagement /></ProtectedRoute>} />
         <Route path="/system" element={<ProtectedRoute requiredRoles={SYSTEM_ROLES}><SystemMonitoring /></ProtectedRoute>} />
       </Route>
+      <Route path="/unsubscribe" element={<Unsubscribe />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
