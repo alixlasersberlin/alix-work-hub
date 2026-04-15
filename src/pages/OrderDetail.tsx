@@ -130,6 +130,16 @@ export default function OrderDetail() {
         <div className="flex items-center gap-3 flex-wrap">
           {canWrite && (
             <>
+              {order.order_status !== 'geliefert' && (
+                <Button variant="outline" size="sm" className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10" onClick={async () => {
+                  const { error } = await supabase.from('orders').update({ order_status: 'geliefert' }).eq('id', order.id);
+                  if (error) { toast.error('Fehler: ' + error.message); return; }
+                  toast.success('Auftrag als geliefert markiert');
+                  loadAll();
+                }}>
+                  <Truck className="w-3.5 h-3.5 mr-1.5" /> Als geliefert markieren
+                </Button>
+              )}
               <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
                 <Pencil className="w-3.5 h-3.5 mr-1.5" /> Ändern
               </Button>
