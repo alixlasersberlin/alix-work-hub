@@ -40,6 +40,8 @@ export default function OrderDetail() {
   const [editNoteText, setEditNoteText] = useState('');
   const [editingShipDate, setEditingShipDate] = useState(false);
   const [shipDateValue, setShipDateValue] = useState('');
+  const [editOpen, setEditOpen] = useState(false);
+  const [deferOpen, setDeferOpen] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -124,7 +126,17 @@ export default function OrderDetail() {
             {' · '}{order.source_system}
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          {canWrite && (
+            <>
+              <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+                <Pencil className="w-3.5 h-3.5 mr-1.5" /> Ändern
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setDeferOpen(true)}>
+                <CalendarClock className="w-3.5 h-3.5 mr-1.5" /> Zurückstellen
+              </Button>
+            </>
+          )}
           <SepaMandatButton order={order} />
           <InstallmentPlanDialog order={order} />
           <StatusBadge status={order.order_status || 'offen'} />
