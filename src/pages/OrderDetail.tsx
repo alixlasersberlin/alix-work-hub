@@ -243,6 +243,9 @@ export default function OrderDetail() {
                     ['Kontakt', customer.contact_name],
                     ['E-Mail', customer.email],
                     ['Telefon', customer.phone],
+                    ['IBAN', customer.iban],
+                    ['BIC', customer.bic],
+                    ['Bank', customer.bank_name],
                     ['Rechnungsadresse', formatAddr(customer.billing_address)],
                     ['Lieferadresse', formatAddr(customer.shipping_address)],
                   ].map(([l, v]) => (
