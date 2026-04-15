@@ -11,20 +11,9 @@ interface UserProfile {
   is_active: boolean;
   password_reset_required: boolean;
   phone_number: string | null;
-  otp_channel: string;
-  last_otp_verified_at: string | null;
 }
 
 export type AccountBlockReason = 'inactive' | 'not_accepted' | 'password_reset' | null;
-
-export type OtpState = 'none' | 'sending' | 'pending' | 'verified' | 'blocked' | 'error';
-
-interface OtpChallenge {
-  challenge_id: string;
-  channel: string;
-  destination_hint: string;
-  expires_at: string;
-}
 
 interface AuthContextType {
   user: User | null;
@@ -33,13 +22,8 @@ interface AuthContextType {
   roles: string[];
   loading: boolean;
   blockReason: AccountBlockReason;
-  otpState: OtpState;
-  otpChallenge: OtpChallenge | null;
-  otpError: string | null;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
-  sendOtp: (reason?: string) => Promise<void>;
-  verifyOtp: (code: string) => Promise<boolean>;
   hasRole: (role: string) => boolean;
   hasAnyRole: (roles: string[]) => boolean;
   isAdmin: boolean;
@@ -57,27 +41,17 @@ function getBlockReason(profile: UserProfile | null): AccountBlockReason {
   return null;
 }
 
-function isOtpRecent(profile: UserProfile | null): boolean {
-  if (!profile?.last_otp_verified_at) return false;
-  const verifiedAt = new Date(profile.last_otp_verified_at).getTime();
-  const twelveHoursAgo = Date.now() - 12 * 60 * 60 * 1000;
-  return verifiedAt > twelveHoursAgo;
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [roles, setRoles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const [otpState, setOtpState] = useState<OtpState>('none');
-  const [otpChallenge, setOtpChallenge] = useState<OtpChallenge | null>(null);
-  const [otpError, setOtpError] = useState<string | null>(null);
 
   async function fetchProfile(userId: string) {
     const { data } = await supabase
       .from('user_profiles')
-      .select('id, full_name, email, account_status, invitation_status, is_active, password_reset_required, phone_number, otp_channel, last_otp_verified_at')
+      .select('id, full_name, email, account_status, invitation_status, is_active, password_reset_required, phone_number')
       .eq('id', userId)
       .maybeSingle();
     setProfile(data);
@@ -103,19 +77,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (session?.user) {
         setTimeout(async () => {
-          const p = await fetchProfile(session.user.id);
+          await fetchProfile(session.user.id);
           await fetchRoles(session.user.id);
-          // Check if OTP is already recent
-          if (p && isOtpRecent(p)) {
-            setOtpState('verified');
-          }
         }, 0);
       } else {
         setProfile(null);
         setRoles([]);
-        setOtpState('none');
-        setOtpChallenge(null);
-        setOtpError(null);
       }
     });
 
@@ -123,11 +90,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchProfile(session.user.id).then((p) => {
+        fetchProfile(session.user.id).then(() => {
           fetchRoles(session.user.id).then(() => {
-            if (p && isOtpRecent(p)) {
-              setOtpState('verified');
-            }
             setLoading(false);
           });
         });
@@ -150,66 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
     setProfile(null);
     setRoles([]);
-    setOtpState('none');
-    setOtpChallenge(null);
-    setOtpError(null);
   };
-
-  const sendOtp = useCallback(async (reason = 'login') => {
-    setOtpState('sending');
-    setOtpError(null);
-    try {
-      const { data, error } = await supabase.functions.invoke('send-otp-challenge', {
-        body: { reason },
-      });
-      if (error) throw error;
-      if (data?.error) {
-        if (data.blocked) {
-          setOtpState('blocked');
-          setOtpError(data.error);
-          return;
-        }
-        throw new Error(data.error);
-      }
-      setOtpChallenge({
-        challenge_id: data.challenge_id,
-        channel: data.channel,
-        destination_hint: data.destination_hint,
-        expires_at: data.expires_at,
-      });
-      setOtpState('pending');
-    } catch (err: any) {
-      setOtpState('error');
-      setOtpError(err?.message || 'OTP konnte nicht gesendet werden');
-    }
-  }, []);
-
-  const verifyOtp = useCallback(async (code: string): Promise<boolean> => {
-    if (!otpChallenge) return false;
-    setOtpError(null);
-    try {
-      const { data, error } = await supabase.functions.invoke('verify-otp-challenge', {
-        body: { challenge_id: otpChallenge.challenge_id, otp: code },
-      });
-      if (error) throw error;
-      if (data?.error) {
-        if (data.blocked) {
-          setOtpState('blocked');
-          setOtpError(data.error);
-          return false;
-        }
-        setOtpError(data.error);
-        return false;
-      }
-      setOtpState('verified');
-      // Refresh profile to get updated last_otp_verified_at
-      if (user) await fetchProfile(user.id);
-      return true;
-    } catch (err: any) {
-      setOtpError(err?.message || 'OTP-Verifikation fehlgeschlagen');
-      return false;
-    }
-  }, [otpChallenge, user]);
 
   const refreshProfile = useCallback(async () => {
     if (user) {
@@ -222,13 +127,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const hasAnyRole = (checkRoles: string[]) => checkRoles.some(r => roles.includes(r));
   const isAdmin = hasRole('Super Admin') || hasRole('Admin');
   const blockReason = getBlockReason(profile);
-  const isOtpVerified = otpState === 'verified';
+  // 2FA is disabled — always verified
+  const isOtpVerified = true;
 
   return (
     <AuthContext.Provider value={{
       user, session, profile, roles, loading, blockReason,
-      otpState, otpChallenge, otpError,
-      signIn, signOut, sendOtp, verifyOtp,
+      signIn, signOut,
       hasRole, hasAnyRole, isAdmin, isOtpVerified, refreshProfile,
     }}>
       {children}
