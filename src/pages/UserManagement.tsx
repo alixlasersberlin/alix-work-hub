@@ -264,7 +264,7 @@ export default function UserManagement() {
         );
       }
       // Update department
-      await supabase.from('user_profiles').update({ department_id: editDeptId || null }).eq('id', selectedUser.id);
+      await supabase.from('user_profiles').update({ department_id: editDeptId && editDeptId !== 'none' ? editDeptId : null }).eq('id', selectedUser.id);
 
       toast.success('Rollen und Abteilung gespeichert');
       setShowEditRoles(false);
