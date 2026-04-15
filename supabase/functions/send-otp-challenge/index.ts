@@ -122,7 +122,7 @@ Deno.serve(async (req) => {
       await sendSmsTwilio(destination, otp);
     } else {
       // Send OTP via transactional email
-      await sendOtpEmail(adminClient, destination, otp);
+      await sendOtpEmail(destination, otp);
     }
 
     console.log(`[OTP] User ${user.id} | Channel: ${channel} | Challenge: ${challenge.id} | Sent to: ${channel === "sms" ? "***" + destination.slice(-4) : destination.slice(0, 3) + "***@" + destination.split("@")[1]}`);
@@ -148,19 +148,29 @@ Deno.serve(async (req) => {
   }
 });
 
-async function sendOtpEmail(adminClient: any, to: string, otp: string): Promise<void> {
-  const { error } = await adminClient.functions.invoke('send-transactional-email', {
-    body: {
+async function sendOtpEmail(to: string, otp: string): Promise<void> {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+  const response = await fetch(`${supabaseUrl}/functions/v1/send-transactional-email`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${serviceRoleKey}`,
+      "apikey": Deno.env.get("SUPABASE_ANON_KEY")!,
+    },
+    body: JSON.stringify({
       templateName: 'otp-code',
       recipientEmail: to,
       idempotencyKey: `otp-${to}-${Date.now()}`,
       templateData: { otp },
-    },
+    }),
   });
 
-  if (error) {
-    console.error("Failed to send OTP email:", error);
-    throw new Error(`Email send failed: ${error.message}`);
+  const data = await response.json();
+  if (!response.ok) {
+    console.error("Failed to send OTP email:", JSON.stringify(data));
+    throw new Error(`Email send failed: ${JSON.stringify(data)}`);
   }
 
   console.log(`[OTP-EMAIL] Email OTP sent to ${to.slice(0, 3)}***@${to.split("@")[1]}`);
