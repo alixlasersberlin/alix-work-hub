@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 
 const STATUS_OPTIONS = [
-  'offen', 'bestätigt', 'in Bearbeitung', 'versendet', 'geliefert',
+  'offen', 'bestätigt', 'in Bearbeitung', 'versendet', 'teilgeliefert', 'geliefert',
   'abgeschlossen', 'storniert', 'zurückgestellt', 'Anwalt',
 ];
 
