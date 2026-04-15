@@ -4,7 +4,7 @@ import { interRegular, interBold } from './pdf-fonts';
 /**
  * Creates a jsPDF instance with embedded Inter font for proper German umlaut support.
  */
-export function createPDF(options?: ConstructorParameters<typeof jsPDF>[0]): jsPDF {
+export function createPDF(options?: any): jsPDF {
   const doc = new jsPDF(options);
 
   // Add Inter font (supports ä, ö, ü, ß, Ä, Ö, Ü)
