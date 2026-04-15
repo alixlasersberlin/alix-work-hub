@@ -427,7 +427,7 @@ Deno.serve(async (req: Request) => {
             company_name: contactDetail.company_name ?? null,
             contact_name: contactDetail.contact_name ?? null,
             email: contactDetail.email ?? null,
-            phone: contactDetail.phone ?? null,
+            phone: contactDetail.mobile || contactDetail.phone || null,
             billing_address: contactDetail.billing_address ?? null,
             shipping_address: contactDetail.shipping_address ?? null,
             raw_data: contactDetail,
