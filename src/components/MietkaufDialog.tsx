@@ -3,6 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { FileText, Download } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { createPDF } from '@/lib/pdf-utils';
@@ -74,6 +76,7 @@ export default function MietkaufDialog({ order }: Props) {
   const [geraetModell, setGeraetModell] = useState('');
   const [zusatzService, setZusatzService] = useState('');
   const [kaufpreisEnde, setKaufpreisEnde] = useState('');
+  const [mitMwst, setMitMwst] = useState(true);
 
   const kaufpreisNum = parseFloat(kaufpreis) || 0;
   const anzahlungNum = parseFloat(anzahlung) || 0;
@@ -81,12 +84,13 @@ export default function MietkaufDialog({ order }: Props) {
   const monatlicheRate = term > 0 ? Math.round((restBetrag / term) * 100) / 100 : 0;
 
   // VAT calculations
-  const anzahlungVat = Math.round(anzahlungNum * VAT_RATE * 100) / 100;
+  const vatRate = mitMwst ? VAT_RATE : 0;
+  const anzahlungVat = Math.round(anzahlungNum * vatRate * 100) / 100;
   const anzahlungBrutto = Math.round((anzahlungNum + anzahlungVat) * 100) / 100;
-  const rateVat = Math.round(monatlicheRate * VAT_RATE * 100) / 100;
+  const rateVat = Math.round(monatlicheRate * vatRate * 100) / 100;
   const rateBrutto = Math.round((monatlicheRate + rateVat) * 100) / 100;
   const kaufpreisEndeNum = parseFloat(kaufpreisEnde) || 0;
-  const kaufpreisEndeVat = Math.round(kaufpreisEndeNum * VAT_RATE * 100) / 100;
+  const kaufpreisEndeVat = Math.round(kaufpreisEndeNum * vatRate * 100) / 100;
 
   const isValid = kaufpreisNum > 0 && anzahlungNum >= 0 && restBetrag > 0;
 
@@ -238,19 +242,21 @@ export default function MietkaufDialog({ order }: Props) {
     doc.text(fmtCurrency(anzahlungNum), col3 - 3, y + 5, { align: 'right' });
     y += rowH;
 
-    // zzgl. Umsatzsteuer
-    drawFinRow(y);
-    doc.text('zzgl. Umsatzsteuer', col2 - 2, y + 5);
-    doc.text(fmtCurrency(anzahlungVat), col3 - 3, y + 5, { align: 'right' });
-    y += rowH;
+    if (mitMwst) {
+      // zzgl. Umsatzsteuer
+      drawFinRow(y);
+      doc.text('zzgl. Umsatzsteuer', col2 - 2, y + 5);
+      doc.text(fmtCurrency(anzahlungVat), col3 - 3, y + 5, { align: 'right' });
+      y += rowH;
 
-    // zu zahlender Betrag
-    drawFinRow(y);
-    doc.setFont('Inter', 'bold');
-    doc.text('zu zahlender Betrag', col2 - 2, y + 5);
-    doc.text(fmtCurrency(anzahlungBrutto), col3 - 3, y + 5, { align: 'right' });
-    doc.setFont('Inter', 'normal');
-    y += rowH;
+      // zu zahlender Betrag
+      drawFinRow(y);
+      doc.setFont('Inter', 'bold');
+      doc.text('zu zahlender Betrag', col2 - 2, y + 5);
+      doc.text(fmtCurrency(anzahlungBrutto), col3 - 3, y + 5, { align: 'right' });
+      doc.setFont('Inter', 'normal');
+      y += rowH;
+    }
 
     // Monatl. Raten
     drawFinRow(y);
@@ -260,19 +266,21 @@ export default function MietkaufDialog({ order }: Props) {
     doc.text(fmtCurrency(monatlicheRate), col3 - 3, y + 5, { align: 'right' });
     y += rowH;
 
-    // zzgl. Umsatzsteuer
-    drawFinRow(y);
-    doc.text('zzgl. Umsatzsteuer', col2 - 2, y + 5);
-    doc.text(fmtCurrency(rateVat), col3 - 3, y + 5, { align: 'right' });
-    y += rowH;
+    if (mitMwst) {
+      // zzgl. Umsatzsteuer
+      drawFinRow(y);
+      doc.text('zzgl. Umsatzsteuer', col2 - 2, y + 5);
+      doc.text(fmtCurrency(rateVat), col3 - 3, y + 5, { align: 'right' });
+      y += rowH;
 
-    // Monatlich zu zahlende Rate
-    drawFinRow(y);
-    doc.setFont('Inter', 'bold');
-    doc.text('Monatlich zu zahlende Rate', col2 - 2, y + 5);
-    doc.text(fmtCurrency(rateBrutto), col3 - 3, y + 5, { align: 'right' });
-    doc.setFont('Inter', 'normal');
-    y += rowH;
+      // Monatlich zu zahlende Rate
+      drawFinRow(y);
+      doc.setFont('Inter', 'bold');
+      doc.text('Monatlich zu zahlende Rate', col2 - 2, y + 5);
+      doc.text(fmtCurrency(rateBrutto), col3 - 3, y + 5, { align: 'right' });
+      doc.setFont('Inter', 'normal');
+      y += rowH;
+    }
 
     // Kaufpreis bei Vertragsende
     drawFinRow(y);
@@ -282,12 +290,15 @@ export default function MietkaufDialog({ order }: Props) {
     doc.text(fmtCurrency(kaufpreisEndeNum), col3 - 3, y + 5, { align: 'right' });
     y += rowH;
 
-    drawFinRow(y);
-    doc.setFont('Inter', 'bold');
-    doc.text('bei Vertragsende', ml + 3, y + 5);
-    doc.setFont('Inter', 'normal');
-    doc.text('Zzgl. Umsatzsteuer', col2 - 2, y + 5);
-    doc.text(fmtCurrency(kaufpreisEndeVat), col3 - 3, y + 5, { align: 'right' });
+    if (mitMwst) {
+      drawFinRow(y);
+      doc.setFont('Inter', 'bold');
+      doc.text('bei Vertragsende', ml + 3, y + 5);
+      doc.setFont('Inter', 'normal');
+      doc.text('Zzgl. Umsatzsteuer', col2 - 2, y + 5);
+      doc.text(fmtCurrency(kaufpreisEndeVat), col3 - 3, y + 5, { align: 'right' });
+      y += rowH;
+    }
     y += rowH + 8;
 
     // ── Nutzungsort ──
@@ -385,6 +396,10 @@ export default function MietkaufDialog({ order }: Props) {
           <div>
             <label className="text-sm text-muted-foreground">Kaufpreis bei Vertragsende netto (€)</label>
             <Input type="number" min={0} step="0.01" value={kaufpreisEnde} onChange={e => setKaufpreisEnde(e.target.value)} placeholder="0,00" className="bg-secondary border-border" />
+          </div>
+          <div className="flex items-center justify-between rounded-lg bg-secondary/50 border border-border p-3">
+            <Label htmlFor="mwst-toggle" className="text-sm text-muted-foreground cursor-pointer">19% MwSt. ausweisen</Label>
+            <Switch id="mwst-toggle" checked={mitMwst} onCheckedChange={setMitMwst} />
           </div>
           <div>
             <label className="text-sm text-muted-foreground">Zusätzliche Serviceleistungen</label>
