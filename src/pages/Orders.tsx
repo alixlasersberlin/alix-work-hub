@@ -15,6 +15,7 @@ import { useDrivingTimes } from '@/hooks/useDrivingTimes';
 
 type SortField = 'order_number' | 'order_date' | 'total_amount' | 'created_at';
 type SortDir = 'asc' | 'desc';
+type PageSize = 20 | 30 | 50 | 'all';
 
 export default function Orders() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -24,6 +25,8 @@ export default function Orders() {
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pageSize, setPageSize] = useState<PageSize>(20);
+  const [currentPage, setCurrentPage] = useState(1);
   const [editOrder, setEditOrder] = useState<any>(null);
   const [deferOrder, setDeferOrder] = useState<any>(null);
   const navigate = useNavigate();
