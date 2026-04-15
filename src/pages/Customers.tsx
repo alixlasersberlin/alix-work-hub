@@ -267,6 +267,24 @@ export default function Customers() {
           </div>
         )}
       </div>
+
+      {/* Dialogs */}
+      {editCustomer && (
+        <CustomerEditDialog
+          customer={editCustomer}
+          open={!!editCustomer}
+          onClose={() => setEditCustomer(null)}
+          onSaved={() => { setEditCustomer(null); loadAll(); }}
+        />
+      )}
+      {deleteCustomer && (
+        <CustomerDeleteDialog
+          customer={deleteCustomer}
+          open={!!deleteCustomer}
+          onClose={() => setDeleteCustomer(null)}
+          onDeleted={() => { setDeleteCustomer(null); loadAll(); }}
+        />
+      )}
     </div>
   );
 }
