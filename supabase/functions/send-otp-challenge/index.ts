@@ -122,7 +122,7 @@ Deno.serve(async (req) => {
       await sendSmsTwilio(destination, otp);
     } else {
       // Send OTP via transactional email
-      await sendOtpEmail(adminClient, destination, otp);
+      await sendOtpEmail(destination, otp);
     }
 
     console.log(`[OTP] User ${user.id} | Channel: ${channel} | Challenge: ${challenge.id} | Sent to: ${channel === "sms" ? "***" + destination.slice(-4) : destination.slice(0, 3) + "***@" + destination.split("@")[1]}`);
