@@ -29,6 +29,8 @@ const STATUS_VARIANTS: Record<string, string> = {
   blocked: 'bg-destructive/10 text-destructive border-destructive/20',
   disabled: 'bg-muted text-muted-foreground border-border',
   locked: 'bg-destructive/10 text-destructive border-destructive/20',
+  // Legal
+  anwalt: 'bg-violet-500/10 text-violet-400 border-violet-500/20',
   // Priority
   hoch: 'bg-destructive/10 text-destructive border-destructive/20',
   dringend: 'bg-destructive/10 text-destructive border-destructive/20',
