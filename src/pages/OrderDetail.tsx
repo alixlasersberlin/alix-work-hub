@@ -36,6 +36,8 @@ export default function OrderDetail() {
   const [submitting, setSubmitting] = useState(false);
   const [editNoteId, setEditNoteId] = useState<string | null>(null);
   const [editNoteText, setEditNoteText] = useState('');
+  const [editingShipDate, setEditingShipDate] = useState(false);
+  const [shipDateValue, setShipDateValue] = useState('');
 
   useEffect(() => {
     if (!id) return;
