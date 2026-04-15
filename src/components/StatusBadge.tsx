@@ -7,6 +7,7 @@ const STATUS_VARIANTS: Record<string, string> = {
   active: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
   abgeschlossen: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
   geliefert: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+  teilgeliefert: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
   bezahlt: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
   verified: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
   accepted: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
