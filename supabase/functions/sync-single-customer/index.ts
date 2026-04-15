@@ -109,7 +109,7 @@ Deno.serve(async (req: Request) => {
       company_name: contact.company_name ?? null,
       contact_name: contact.contact_name ?? null,
       email: contact.email ?? null,
-      phone: contact.phone ?? null,
+      phone: contact.mobile || contact.phone || null,
       billing_address: contact.billing_address ?? null,
       shipping_address: contact.shipping_address ?? null,
       raw_data: contact,
