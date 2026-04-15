@@ -23,7 +23,7 @@ export default function Customers() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [letterFilter, setLetterFilter] = useState<string | null>(null);
-  const [pageSize, setPageSize] = useState<number>(50);
+  const [pageSize, setPageSize] = useState<number>(20);
   const [page, setPage] = useState(0);
   const navigate = useNavigate();
 
