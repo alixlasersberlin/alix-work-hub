@@ -432,6 +432,13 @@ export default function OrderDetail() {
           </pre>
         </div>
       )}
+
+      {editOpen && order && (
+        <OrderEditDialog order={order} open onClose={() => setEditOpen(false)} onSaved={loadAll} />
+      )}
+      {deferOpen && order && (
+        <OrderDeferDialog order={order} open onClose={() => setDeferOpen(false)} onSaved={loadAll} />
+      )}
     </div>
   );
 }
