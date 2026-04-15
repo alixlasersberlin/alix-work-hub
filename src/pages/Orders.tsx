@@ -167,7 +167,7 @@ export default function Orders() {
                     </td></tr>
                   </tbody>
                 ) : (
-                  filtered.map(o => (
+                  paged.map(o => (
                     <tbody key={o.id} className="border-b border-border">
                       <tr
                         className="hover:bg-secondary/30 transition-colors cursor-pointer"
@@ -220,6 +220,35 @@ export default function Orders() {
               </table>
             </div>
           </div>
+
+          {/* Pagination */}
+          {pageSize !== 'all' && totalPages > 1 && (
+            <div className="flex items-center justify-between pt-2">
+              <p className="text-xs text-muted-foreground">
+                Seite {currentPage} von {totalPages} · {filtered.length} Ergebnisse
+              </p>
+              <div className="flex items-center gap-1">
+                <Button variant="outline" size="sm" className="h-7 px-2 text-xs" disabled={currentPage <= 1} onClick={() => setCurrentPage(p => p - 1)}>
+                  Zurück
+                </Button>
+                {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+                  let page: number;
+                  if (totalPages <= 7) page = i + 1;
+                  else if (currentPage <= 4) page = i + 1;
+                  else if (currentPage >= totalPages - 3) page = totalPages - 6 + i;
+                  else page = currentPage - 3 + i;
+                  return (
+                    <Button key={page} variant={page === currentPage ? 'default' : 'outline'} size="sm" className="h-7 w-7 px-0 text-xs" onClick={() => setCurrentPage(page)}>
+                      {page}
+                    </Button>
+                  );
+                })}
+                <Button variant="outline" size="sm" className="h-7 px-2 text-xs" disabled={currentPage >= totalPages} onClick={() => setCurrentPage(p => p + 1)}>
+                  Weiter
+                </Button>
+              </div>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="calendar">
