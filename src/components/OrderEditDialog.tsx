@@ -10,7 +10,7 @@ import { Loader2 } from 'lucide-react';
 
 const STATUS_OPTIONS = [
   'offen', 'bestätigt', 'in Bearbeitung', 'versendet', 'geliefert',
-  'abgeschlossen', 'storniert', 'zurückgestellt',
+  'abgeschlossen', 'storniert', 'zurückgestellt', 'Anwalt',
 ];
 
 interface Props {
