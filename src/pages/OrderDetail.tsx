@@ -9,11 +9,13 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
-  ArrowLeft, ClipboardList, Building2, FileText, History, Loader2, Inbox, Send, Pencil, X, Check, Shield, Package, CalendarIcon
+  ArrowLeft, ClipboardList, Building2, FileText, History, Loader2, Inbox, Send, Pencil, X, Check, Shield, Package, CalendarIcon, CalendarClock
 } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
 import InstallmentPlanDialog from '@/components/InstallmentPlanDialog';
 import SepaMandatButton from '@/components/SepaMandatButton';
+import OrderEditDialog from '@/components/OrderEditDialog';
+import OrderDeferDialog from '@/components/OrderDeferDialog';
 
 export default function OrderDetail() {
   const { id } = useParams<{ id: string }>();
@@ -38,6 +40,8 @@ export default function OrderDetail() {
   const [editNoteText, setEditNoteText] = useState('');
   const [editingShipDate, setEditingShipDate] = useState(false);
   const [shipDateValue, setShipDateValue] = useState('');
+  const [editOpen, setEditOpen] = useState(false);
+  const [deferOpen, setDeferOpen] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -122,7 +126,17 @@ export default function OrderDetail() {
             {' · '}{order.source_system}
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          {canWrite && (
+            <>
+              <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+                <Pencil className="w-3.5 h-3.5 mr-1.5" /> Ändern
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setDeferOpen(true)}>
+                <CalendarClock className="w-3.5 h-3.5 mr-1.5" /> Zurückstellen
+              </Button>
+            </>
+          )}
           <SepaMandatButton order={order} />
           <InstallmentPlanDialog order={order} />
           <StatusBadge status={order.order_status || 'offen'} />
@@ -417,6 +431,13 @@ export default function OrderDetail() {
             {order.raw_data ? JSON.stringify(order.raw_data, null, 2) : 'Keine Rohdaten vorhanden.'}
           </pre>
         </div>
+      )}
+
+      {editOpen && order && (
+        <OrderEditDialog order={order} open onClose={() => setEditOpen(false)} onSaved={loadAll} />
+      )}
+      {deferOpen && order && (
+        <OrderDeferDialog order={order} open onClose={() => setDeferOpen(false)} onSaved={loadAll} />
       )}
     </div>
   );

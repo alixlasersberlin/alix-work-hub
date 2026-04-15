@@ -1,12 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Search, ClipboardList, ArrowUpDown, Loader2, Inbox, CalendarDays, List, Car } from 'lucide-react';
+import { Search, ClipboardList, ArrowUpDown, Loader2, Inbox, CalendarDays, List, Car, Pencil, CalendarClock } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
 import OrdersCalendar from '@/components/OrdersCalendar';
+import OrderEditDialog from '@/components/OrderEditDialog';
+import OrderDeferDialog from '@/components/OrderDeferDialog';
 import { useDrivingTimes } from '@/hooks/useDrivingTimes';
 
 type SortField = 'order_number' | 'order_date' | 'total_amount' | 'created_at';
@@ -20,26 +24,30 @@ export default function Orders() {
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editOrder, setEditOrder] = useState<any>(null);
+  const [deferOrder, setDeferOrder] = useState<any>(null);
   const navigate = useNavigate();
+  const { isAdmin, hasRole } = useAuth();
   const { drivingTimes, fetchDrivingTimes } = useDrivingTimes();
 
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
-      setError(null);
-      const { data, error: err } = await supabase
-        .from('orders')
-        .select('*, customers(company_name, contact_name, shipping_address, billing_address), order_items(id, item_name, quantity, unit, rate, amount)')
-        .order(sortField, { ascending: sortDir === 'asc' })
-        .limit(500);
-      if (err) setError(err.message);
-      const loaded = data ?? [];
-      setOrders(loaded);
-      setLoading(false);
-      if (loaded.length > 0) fetchDrivingTimes(loaded);
-    }
-    load();
-  }, [sortField, sortDir, fetchDrivingTimes]);
+  const canWrite = isAdmin || hasRole('Auftragsverwaltung');
+
+  async function load() {
+    setLoading(true);
+    setError(null);
+    const { data, error: err } = await supabase
+      .from('orders')
+      .select('*, customers(company_name, contact_name, shipping_address, billing_address), order_items(id, item_name, quantity, unit, rate, amount)')
+      .order(sortField, { ascending: sortDir === 'asc' })
+      .limit(500);
+    if (err) setError(err.message);
+    const loaded = data ?? [];
+    setOrders(loaded);
+    setLoading(false);
+    if (loaded.length > 0) fetchDrivingTimes(loaded);
+  }
+
+  useEffect(() => { load(); }, [sortField, sortDir, fetchDrivingTimes]);
 
   const statuses = [...new Set(orders.map(o => o.order_status).filter(Boolean))];
 
@@ -123,17 +131,18 @@ export default function Orders() {
                       <span className="inline-flex items-center gap-1"><Car className="w-3.5 h-3.5" /> Fahrzeit</span>
                     </th>
                     <th className="text-left px-4 py-3 text-muted-foreground font-medium">Quelle</th>
+                    {canWrite && <th className="text-right px-4 py-3 text-muted-foreground font-medium">Aktionen</th>}
                   </tr>
                 </thead>
                 {loading ? (
                   <tbody>
-                    <tr><td colSpan={7} className="px-4 py-12 text-center">
+                    <tr><td colSpan={canWrite ? 8 : 7} className="px-4 py-12 text-center">
                       <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" />
                     </td></tr>
                   </tbody>
                 ) : filtered.length === 0 ? (
                   <tbody>
-                    <tr><td colSpan={7} className="px-4 py-12 text-center">
+                    <tr><td colSpan={canWrite ? 8 : 7} className="px-4 py-12 text-center">
                       <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
                       <p className="text-muted-foreground">Keine Aufträge gefunden.</p>
                     </td></tr>
@@ -163,6 +172,28 @@ export default function Orders() {
                           ) : '—'}
                         </td>
                         <td className="px-4 py-3 text-muted-foreground text-xs">{o.source_system}</td>
+                        {canWrite && (
+                          <td className="px-4 py-3 text-right" onClick={e => e.stopPropagation()}>
+                            <div className="flex items-center justify-end gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                                onClick={() => setEditOrder(o)}
+                              >
+                                <Pencil className="w-3 h-3 mr-1" /> Ändern
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                                onClick={() => setDeferOrder(o)}
+                              >
+                                <CalendarClock className="w-3 h-3 mr-1" /> Zurückstellen
+                              </Button>
+                            </div>
+                          </td>
+                        )}
                       </tr>
                     </tbody>
                   ))
@@ -176,6 +207,13 @@ export default function Orders() {
           <OrdersCalendar />
         </TabsContent>
       </Tabs>
+
+      {editOrder && (
+        <OrderEditDialog order={editOrder} open onClose={() => setEditOrder(null)} onSaved={load} />
+      )}
+      {deferOrder && (
+        <OrderDeferDialog order={deferOrder} open onClose={() => setDeferOrder(null)} onSaved={load} />
+      )}
     </div>
   );
 }
