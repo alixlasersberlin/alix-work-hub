@@ -266,19 +266,21 @@ export default function MietkaufDialog({ order }: Props) {
     doc.text(fmtCurrency(monatlicheRate), col3 - 3, y + 5, { align: 'right' });
     y += rowH;
 
-    // zzgl. Umsatzsteuer
-    drawFinRow(y);
-    doc.text('zzgl. Umsatzsteuer', col2 - 2, y + 5);
-    doc.text(fmtCurrency(rateVat), col3 - 3, y + 5, { align: 'right' });
-    y += rowH;
+    if (mitMwst) {
+      // zzgl. Umsatzsteuer
+      drawFinRow(y);
+      doc.text('zzgl. Umsatzsteuer', col2 - 2, y + 5);
+      doc.text(fmtCurrency(rateVat), col3 - 3, y + 5, { align: 'right' });
+      y += rowH;
 
-    // Monatlich zu zahlende Rate
-    drawFinRow(y);
-    doc.setFont('Inter', 'bold');
-    doc.text('Monatlich zu zahlende Rate', col2 - 2, y + 5);
-    doc.text(fmtCurrency(rateBrutto), col3 - 3, y + 5, { align: 'right' });
-    doc.setFont('Inter', 'normal');
-    y += rowH;
+      // Monatlich zu zahlende Rate
+      drawFinRow(y);
+      doc.setFont('Inter', 'bold');
+      doc.text('Monatlich zu zahlende Rate', col2 - 2, y + 5);
+      doc.text(fmtCurrency(rateBrutto), col3 - 3, y + 5, { align: 'right' });
+      doc.setFont('Inter', 'normal');
+      y += rowH;
+    }
 
     // Kaufpreis bei Vertragsende
     drawFinRow(y);
