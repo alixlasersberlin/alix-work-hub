@@ -11,7 +11,7 @@ import { Loader2, FileText, Download, CalendarIcon } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { de } from 'date-fns/locale';
-import jsPDF from 'jspdf';
+import { createPDF } from '@/lib/pdf-utils';
 import alixLogo from '@/assets/alix-lasers-logo.png';
 
 interface Props {
@@ -38,7 +38,7 @@ function fmtCurrency(v: number) {
   return v.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
 }
 
-function drawWatermark(doc: jsPDF) {
+function drawWatermark(doc: any) {
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   doc.saveGraphicsState();
@@ -46,7 +46,7 @@ function drawWatermark(doc: jsPDF) {
   doc.setGState(new (doc as any).GState({ opacity: 0.15 }));
   doc.setFontSize(54);
   doc.setTextColor(80, 80, 80);
-  doc.text('Alix Lasers ®', pageW / 2, pageH / 2, { align: 'center', angle: 35 });
+  doc.text('Alix Lasers', pageW / 2, pageH / 2, { align: 'center', angle: 35 });
   doc.restoreGraphicsState();
 }
 
@@ -102,7 +102,7 @@ export default function InstallmentPlanDialog({ order }: Props) {
   }, [baseAmount, monthlyRate, term, effectiveStart]);
 
   async function generatePDF() {
-    const doc = new jsPDF();
+    const doc = createPDF();
     const pw = doc.internal.pageSize.getWidth();
 
     drawWatermark(doc);
@@ -126,9 +126,9 @@ export default function InstallmentPlanDialog({ order }: Props) {
     if (customerName) {
       doc.setFontSize(12);
       doc.setTextColor(30, 30, 30);
-      doc.setFont(undefined!, 'bold');
+      doc.setFont('Inter', 'bold');
       doc.text(customerName, 14, addrY);
-      doc.setFont(undefined!, 'normal');
+      doc.setFont('Inter', 'normal');
       addrY += 7;
     }
 
@@ -209,7 +209,7 @@ export default function InstallmentPlanDialog({ order }: Props) {
     doc.setDrawColor(30, 30, 30);
     doc.line(14, y - 3, pw - 14, y - 3);
     doc.setFontSize(10);
-    doc.setFont(undefined!, 'bold');
+    doc.setFont('Inter', 'bold');
     doc.text('Gesamtbetrag:', 14, y + 2);
     doc.text(fmtCurrency(baseAmount), pw - 18, y + 2, { align: 'right' });
 
