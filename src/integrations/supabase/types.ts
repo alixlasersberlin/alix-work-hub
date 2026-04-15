@@ -191,6 +191,41 @@ export type Database = {
         }
         Relationships: []
       }
+      deleted_customers: {
+        Row: {
+          company_name: string | null
+          deleted_at: string
+          deleted_by: string | null
+          external_customer_id: string
+          id: string
+          source_system: string
+        }
+        Insert: {
+          company_name?: string | null
+          deleted_at?: string
+          deleted_by?: string | null
+          external_customer_id: string
+          id?: string
+          source_system: string
+        }
+        Update: {
+          company_name?: string | null
+          deleted_at?: string
+          deleted_by?: string | null
+          external_customer_id?: string
+          id?: string
+          source_system?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deleted_customers_deleted_by_fkey"
+            columns: ["deleted_by"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       departments: {
         Row: {
           created_at: string
