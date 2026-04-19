@@ -89,8 +89,35 @@ Deno.serve(async (req: Request) => {
 
     const accessToken = await getAccessToken(zohoConfig);
 
+    // Resolve contact_id: accept either Zoho contact_id (numeric) OR customer number (e.g. "CUS-25967")
+    const rawInput = String(external_customer_id).trim();
+    let resolvedContactId = rawInput;
+    const isNumericId = /^\d+$/.test(rawInput);
+
+    if (!isNumericId) {
+      // Lookup by contact_number (customer number like CUS-25967)
+      const lookupUrl = `${zohoConfig.booksApiBaseUrl}/contacts?organization_id=${zohoConfig.organizationId}&contact_number=${encodeURIComponent(rawInput)}`;
+      const lookupRes = await fetch(lookupUrl, {
+        headers: { Authorization: `Zoho-oauthtoken ${accessToken}` },
+      });
+      if (!lookupRes.ok) {
+        const text = await lookupRes.text();
+        return jsonResponse({ error: "Zoho lookup failed", message: text }, 502);
+      }
+      const lookupJson = await lookupRes.json();
+      const matches = Array.isArray(lookupJson.contacts) ? lookupJson.contacts : [];
+      if (matches.length === 0) {
+        return jsonResponse({
+          error: "Customer not found in Zoho",
+          message: `No contact with customer number "${rawInput}" found in ${source_system}.`,
+        }, 404);
+      }
+      resolvedContactId = String(matches[0].contact_id);
+      console.log(`[sync-single-customer] Resolved ${rawInput} -> contact_id ${resolvedContactId}`);
+    }
+
     const contactRes = await fetch(
-      `${zohoConfig.booksApiBaseUrl}/contacts/${external_customer_id}?organization_id=${zohoConfig.organizationId}`,
+      `${zohoConfig.booksApiBaseUrl}/contacts/${resolvedContactId}?organization_id=${zohoConfig.organizationId}`,
       { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } }
     );
 
