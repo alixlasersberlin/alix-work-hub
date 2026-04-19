@@ -190,8 +190,8 @@ Deno.serve(async (req: Request) => {
       return jsonResponse({ error: "Incomplete sales order data from Zoho" }, 422);
     }
 
-    // Find linked customer
-    const { data: customer } = await adminClient
+    // Find linked customer - auto-sync from Zoho if missing
+    let { data: customer } = await adminClient
       .from("customers")
       .select("id")
       .eq("external_customer_id", externalCustomerId)
@@ -199,10 +199,50 @@ Deno.serve(async (req: Request) => {
       .maybeSingle();
 
     if (!customer) {
-      return jsonResponse({
-        error: "Customer not found",
-        message: `Customer ${externalCustomerId} must be synced first.`,
-      }, 404);
+      console.log(`[sync-single-order] Customer ${externalCustomerId} not found locally, fetching from Zoho...`);
+      const contactRes = await fetch(
+        `${zohoConfig.booksApiBaseUrl}/contacts/${externalCustomerId}?organization_id=${zohoConfig.organizationId}`,
+        { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } }
+      );
+      if (!contactRes.ok) {
+        const text = await contactRes.text();
+        return jsonResponse({
+          error: "Customer auto-sync failed",
+          message: `Could not fetch customer ${externalCustomerId} from Zoho: ${text}`,
+        }, 502);
+      }
+      const contactJson = await contactRes.json();
+      const contact = contactJson.contact;
+      if (!contact) {
+        return jsonResponse({ error: "Customer not found in Zoho", message: `Contact ${externalCustomerId} missing in Zoho response.` }, 404);
+      }
+
+      const customerPayload = {
+        external_customer_id: contact.contact_id?.toString(),
+        source_system,
+        company_name: contact.company_name ?? null,
+        contact_name: contact.contact_name ?? null,
+        email: contact.email ?? null,
+        phone: contact.mobile || contact.phone || null,
+        billing_address: contact.billing_address ?? null,
+        shipping_address: contact.shipping_address ?? null,
+        raw_data: contact,
+      };
+
+      const { data: upsertedCustomer, error: customerUpsertError } = await adminClient
+        .from("customers")
+        .upsert(customerPayload, { onConflict: "external_customer_id,source_system" })
+        .select("id")
+        .single();
+
+      if (customerUpsertError || !upsertedCustomer) {
+        return jsonResponse({
+          error: "Customer auto-create failed",
+          message: customerUpsertError?.message ?? "Unknown",
+        }, 500);
+      }
+      customer = upsertedCustomer;
+      console.log(`[sync-single-order] Auto-created customer ${externalCustomerId} -> ${customer.id}`);
     }
 
     const orderDateIso = salesOrder.date ? new Date(salesOrder.date).toISOString() : null;
