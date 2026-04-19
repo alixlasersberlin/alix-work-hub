@@ -143,8 +143,34 @@ Deno.serve(async (req: Request) => {
 
     const accessToken = await getAccessToken(zohoConfig);
 
+    // Resolve salesorder_id: accept either numeric Zoho ID OR order number (e.g. "SO-4190")
+    const rawOrderInput = String(external_order_id).trim();
+    let resolvedSalesOrderId = rawOrderInput;
+    const isNumericOrderId = /^\d+$/.test(rawOrderInput);
+
+    if (!isNumericOrderId) {
+      const lookupUrl = `${zohoConfig.booksApiBaseUrl}/salesorders?organization_id=${zohoConfig.organizationId}&salesorder_number=${encodeURIComponent(rawOrderInput)}`;
+      const lookupRes = await fetch(lookupUrl, {
+        headers: { Authorization: `Zoho-oauthtoken ${accessToken}` },
+      });
+      if (!lookupRes.ok) {
+        const text = await lookupRes.text();
+        return jsonResponse({ error: "Zoho lookup failed", message: text }, 502);
+      }
+      const lookupJson = await lookupRes.json();
+      const matches = Array.isArray(lookupJson.salesorders) ? lookupJson.salesorders : [];
+      if (matches.length === 0) {
+        return jsonResponse({
+          error: "Order not found in Zoho",
+          message: `No sales order with number "${rawOrderInput}" found in ${source_system}.`,
+        }, 404);
+      }
+      resolvedSalesOrderId = String(matches[0].salesorder_id);
+      console.log(`[sync-single-order] Resolved ${rawOrderInput} -> salesorder_id ${resolvedSalesOrderId}`);
+    }
+
     const orderRes = await fetch(
-      `${zohoConfig.booksApiBaseUrl}/salesorders/${external_order_id}?organization_id=${zohoConfig.organizationId}`,
+      `${zohoConfig.booksApiBaseUrl}/salesorders/${resolvedSalesOrderId}?organization_id=${zohoConfig.organizationId}`,
       { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } }
     );
 
