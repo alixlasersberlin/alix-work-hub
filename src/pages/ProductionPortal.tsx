@@ -270,6 +270,59 @@ export default function ProductionPortal() {
           ))}
         </div>
       )}
+
+      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Auftrag bearbeiten {editing && `– ${editing.order_number}`}</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-2">
+            <div className="space-y-1.5">
+              <Label>Modell</Label>
+              <Input value={editForm.modellname ?? ''} onChange={e => setEditForm(f => ({ ...f, modellname: e.target.value }))} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Farbe</Label>
+              <Input value={editForm.farbe ?? ''} onChange={e => setEditForm(f => ({ ...f, farbe: e.target.value }))} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Power-Handstück</Label>
+              <Input value={editForm.power_handstueck ?? ''} onChange={e => setEditForm(f => ({ ...f, power_handstueck: e.target.value }))} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Bearbeiter</Label>
+              <Input value={editForm.bearbeiter ?? ''} onChange={e => setEditForm(f => ({ ...f, bearbeiter: e.target.value }))} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Seriennummer</Label>
+              <Input value={editForm.seriennummer ?? ''} onChange={e => setEditForm(f => ({ ...f, seriennummer: e.target.value }))} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Status</Label>
+              <Select value={editForm.status ?? 'offen'} onValueChange={v => setEditForm(f => ({ ...f, status: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5 md:col-span-2">
+              <Label>Sonderwünsche</Label>
+              <Textarea rows={2} value={editForm.sonderwuensche ?? ''} onChange={e => setEditForm(f => ({ ...f, sonderwuensche: e.target.value }))} />
+            </div>
+            <div className="space-y-1.5 md:col-span-2">
+              <Label>Anmerkungen</Label>
+              <Textarea rows={3} value={editForm.anmerkungen ?? ''} onChange={e => setEditForm(f => ({ ...f, anmerkungen: e.target.value }))} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditing(null)} disabled={saving}>Abbrechen</Button>
+            <Button onClick={saveEdit} disabled={saving}>
+              {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Speichern
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
