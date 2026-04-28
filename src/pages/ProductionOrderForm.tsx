@@ -215,7 +215,7 @@ export default function ProductionOrderForm() {
   const onSaveAndDownload = async () => {
     const poId = await persist();
     if (!poId) return;
-    const pdf = buildPdf();
+    const pdf = await buildPdf();
     if (pdf) {
       const url = URL.createObjectURL(pdf.blob);
       const a = document.createElement('a');
