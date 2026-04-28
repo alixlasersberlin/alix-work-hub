@@ -49,8 +49,6 @@ const navItems: NavItem[] = [
   { path: '/finance', label: 'Finance', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'] },
   { path: '/benutzer', label: 'Benutzer', icon: Users, roles: ['Admin', 'Super Admin'] },
 ];
-  { path: '/benutzer', label: 'Benutzer', icon: Users, roles: ['Admin', 'Super Admin'] },
-];
 
 export default function AppLayout() {
   const { profile, roles, signOut } = useAuth();
