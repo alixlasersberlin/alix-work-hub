@@ -263,14 +263,14 @@ export default function ProductionPortal() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-display font-bold gold-text flex items-center gap-2">
-            <Factory className="w-6 h-6" /> PRODUCTION
+            <Factory className="w-6 h-6" /> {t.title}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Arbeitsliste {supplierName ? `– ${supplierName}` : ''}
+            {t.worklist} {supplierName ? `– ${supplierName}` : ''}
           </p>
         </div>
         <div className="text-right text-xs text-muted-foreground">
-          Angemeldet als <span className="text-foreground font-medium">{profile?.full_name || profile?.email}</span>
+          {t.loggedInAs} <span className="text-foreground font-medium">{profile?.full_name || profile?.email}</span>
         </div>
       </div>
 
@@ -280,25 +280,46 @@ export default function ProductionPortal() {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Suche: Auftragsnr., Modell, Farbe, Seriennr., Bearbeiter…"
+            placeholder={t.searchPh}
             className="pl-9"
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Status" />
+            <SelectValue placeholder={t.status} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Alle Status</SelectItem>
+            <SelectItem value="all">{t.allStatus}</SelectItem>
             {STATUS_OPTIONS.map(s => (
-              <SelectItem key={s} value={s}>{s}</SelectItem>
+              <SelectItem key={s} value={s}>{tStatus(s)}</SelectItem>
             ))}
           </SelectContent>
         </Select>
         <Button variant="outline" onClick={load} disabled={loading}>
-          {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Aktualisieren
+          {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} {t.refresh}
         </Button>
       </Card>
+
+      {/* Language switcher */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs text-muted-foreground mr-1">{t.language}:</span>
+        {LANGS.map(l => (
+          <button
+            key={l.code}
+            type="button"
+            onClick={() => setLang(l.code)}
+            className={cn(
+              "flex items-center gap-2 px-3 py-1.5 rounded-md border text-xs font-medium transition-colors",
+              lang === l.code
+                ? "bg-primary/10 text-primary border-primary/40 shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.2)]"
+                : "border-border text-muted-foreground hover:text-foreground hover:bg-muted/40"
+            )}
+          >
+            <span className="text-base leading-none">{l.flag}</span>
+            <span>{l.label}</span>
+          </button>
+        ))}
+      </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
