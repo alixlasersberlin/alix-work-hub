@@ -1,6 +1,35 @@
 import { createPDF } from './pdf-utils';
 import { ensureCJKFont } from './pdf-cjk-font';
 import { format } from 'date-fns';
+import alixLogo from '@/assets/alix-lasers-logo.png';
+
+const COMPANY_ADDRESS = [
+  'Alix Lasers GmbH',
+  'Buchsbaumweg 53',
+  '12357 Berlin',
+  'Deutschland',
+];
+
+let logoDataUrlPromise: Promise<string | null> | null = null;
+async function loadLogoDataUrl(): Promise<string | null> {
+  if (logoDataUrlPromise) return logoDataUrlPromise;
+  logoDataUrlPromise = (async () => {
+    try {
+      const res = await fetch(alixLogo);
+      const blob = await res.blob();
+      return await new Promise<string>((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result as string);
+        r.onerror = reject;
+        r.readAsDataURL(blob);
+      });
+    } catch (e) {
+      console.warn('Logo konnte nicht geladen werden', e);
+      return null;
+    }
+  })();
+  return logoDataUrlPromise;
+}
 
 export interface ProductionOrderPdfData {
   order_number: string;
@@ -75,7 +104,27 @@ export async function generateProductionOrderPdf(
   const pageWidth = 210;
   let y = 20;
 
-  // Header
+  // Logo + Absenderadresse rechts oben
+  const logoData = await loadLogoDataUrl();
+  const logoW = 32;
+  const logoH = 12;
+  const rightX = pageWidth - 20;
+  let rightY = y;
+  if (logoData) {
+    try {
+      doc.addImage(logoData, 'PNG', rightX - logoW, rightY - 4, logoW, logoH);
+      rightY += logoH;
+    } catch (e) {
+      console.warn('Logo Embed fehlgeschlagen', e);
+    }
+  }
+  doc.setFontSize(8);
+  COMPANY_ADDRESS.forEach((line) => {
+    drawText(line, rightX, rightY, 'normal', { align: 'right' });
+    rightY += 3.5;
+  });
+
+  // Titel links oben
   doc.setFontSize(16);
   if (lang === 'en') {
     drawText(L.title[1], 20, y, 'bold');
@@ -85,10 +134,12 @@ export async function generateProductionOrderPdf(
     drawText(L.title[1], 20, y + 6, 'bold');
   }
 
+  // Bestellnr / Datum unter Header (nach Logo+Adresse-Block)
+  y = Math.max(y + 18, rightY + 4);
   doc.setFontSize(10);
-  drawText(`${bi('orderNo')}: ${data.order_number}`, pageWidth - 20, y, 'normal', { align: 'right' });
-  drawText(`${bi('date')}: ${format(new Date(), 'dd.MM.yyyy')}`, pageWidth - 20, y + 6, 'normal', { align: 'right' });
-  y += 18;
+  drawText(`${bi('orderNo')}: ${data.order_number}`, rightX, y, 'normal', { align: 'right' });
+  drawText(`${bi('date')}: ${format(new Date(), 'dd.MM.yyyy')}`, rightX, y + 5, 'normal', { align: 'right' });
+  y += 12;
 
   // Empfänger
   doc.setFontSize(11);
