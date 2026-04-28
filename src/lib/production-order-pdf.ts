@@ -55,8 +55,8 @@ export async function generateProductionOrderPdf(
   // sonst Inter (für saubere deutsche Umlaute & Bold-Variante).
   const hasCJK = (s: string) => /[\u3000-\u9fff\uff00-\uffef]/.test(s);
   const setFontFor = (text: string, weight: 'normal' | 'bold' = 'normal') => {
-    if (cjkOk && (lang === 'zh' || hasCJK(text))) {
-      doc.setFont('NotoSC', 'normal'); // NotoSC hat nur einen Schnitt
+    if (cjkOk && hasCJK(text)) {
+      doc.setFont('NotoSC', 'normal');
     } else {
       doc.setFont('Inter', weight);
     }
