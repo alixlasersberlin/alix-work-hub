@@ -823,6 +823,9 @@ export type Database = {
           order_id: string
           order_number: string
           pdf_path: string | null
+          photo_front_path: string | null
+          photo_left_path: string | null
+          photo_right_path: string | null
           power_handstueck: string
           sent_at: string | null
           seriennummer: string | null
@@ -844,6 +847,9 @@ export type Database = {
           order_id: string
           order_number: string
           pdf_path?: string | null
+          photo_front_path?: string | null
+          photo_left_path?: string | null
+          photo_right_path?: string | null
           power_handstueck: string
           sent_at?: string | null
           seriennummer?: string | null
@@ -865,6 +871,9 @@ export type Database = {
           order_id?: string
           order_number?: string
           pdf_path?: string | null
+          photo_front_path?: string | null
+          photo_left_path?: string | null
+          photo_right_path?: string | null
           power_handstueck?: string
           sent_at?: string | null
           seriennummer?: string | null
