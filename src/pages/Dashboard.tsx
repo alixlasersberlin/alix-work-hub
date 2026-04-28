@@ -34,6 +34,7 @@ interface ShipmentOrder {
   billing_address: any;
   shipping_address: any;
   customers: { company_name: string | null; contact_name: string | null; shipping_address: any; billing_address: any } | null;
+  order_items?: { item_name: string | null; sku: string | null; description: string | null }[] | null;
 }
 
 interface RoutePlan {
