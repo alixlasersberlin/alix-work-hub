@@ -125,6 +125,10 @@ export default function ProductionPortal() {
   const [saving, setSaving] = useState(false);
   const [photoPreviews, setPhotoPreviews] = useState<Record<PhotoSide, string | null>>({ front: null, right: null, left: null });
   const [uploadingSide, setUploadingSide] = useState<PhotoSide | null>(null);
+  const [lang, setLang] = useState<Lang>(() => (localStorage.getItem('production_lang') as Lang) || 'de');
+  const t = T[lang];
+  const tStatus = (s: string) => t[statusKey(s)] ?? s;
+  useEffect(() => { localStorage.setItem('production_lang', lang); }, [lang]);
 
   const load = async () => {
     setLoading(true);
