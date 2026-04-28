@@ -40,11 +40,14 @@ const L = {
   anmerk:       ['Anmerkungen',              '备注'],
 };
 
-const bi = (key: keyof typeof L) => `${L[key][0]} / ${L[key][1]}`;
+export type PdfLang = 'bilingual' | 'zh';
 
 export async function generateProductionOrderPdf(
-  data: ProductionOrderPdfData
+  data: ProductionOrderPdfData,
+  lang: PdfLang = 'bilingual'
 ): Promise<{ blob: Blob; filename: string }> {
+  const bi = (key: keyof typeof L) =>
+    lang === 'zh' ? L[key][1] : `${L[key][0]} / ${L[key][1]}`;
   const doc = createPDF({ unit: 'mm', format: 'a4' });
   const cjkOk = await ensureCJKFont(doc);
 
@@ -74,9 +77,13 @@ export async function generateProductionOrderPdf(
 
   // Header
   doc.setFontSize(16);
-  drawText(L.title[0], 20, y, 'bold');
-  doc.setFontSize(12);
-  drawText(L.title[1], 20, y + 6, 'bold');
+  if (lang === 'zh') {
+    drawText(L.title[1], 20, y, 'bold');
+  } else {
+    drawText(L.title[0], 20, y, 'bold');
+    doc.setFontSize(12);
+    drawText(L.title[1], 20, y + 6, 'bold');
+  }
 
   doc.setFontSize(10);
   drawText(`${bi('orderNo')}: ${data.order_number}`, pageWidth - 20, y, 'normal', { align: 'right' });
@@ -158,6 +165,7 @@ export async function generateProductionOrderPdf(
   }
 
   const blob = doc.output('blob');
-  const filename = `Bestellung_${data.order_number}_${format(new Date(), 'yyyyMMdd')}.pdf`;
+  const suffix = lang === 'zh' ? '_ZH' : '';
+  const filename = `Bestellung_${data.order_number}_${format(new Date(), 'yyyyMMdd')}${suffix}.pdf`;
   return { blob, filename };
 }

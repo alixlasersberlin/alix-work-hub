@@ -27,7 +27,7 @@ export default function ProductionOrderDetail() {
     })();
   }, [id]);
 
-  const downloadPdf = async () => {
+  const downloadPdf = async (lang: 'bilingual' | 'zh' = 'bilingual') => {
     if (!data) return;
     const pdf = await generateProductionOrderPdf({
       order_number: data.order_number,
@@ -41,7 +41,7 @@ export default function ProductionOrderDetail() {
       anmerkungen: data.anmerkungen,
       supplier: data.supplier,
       items,
-    });
+    }, lang);
     const url = URL.createObjectURL(pdf.blob);
     const a = document.createElement('a');
     a.href = url; a.download = pdf.filename; a.click();
@@ -60,7 +60,8 @@ export default function ProductionOrderDetail() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-display font-bold gold-text">Bestellung {data.order_number}</h1>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={downloadPdf}><Download className="w-4 h-4 mr-2" /> PDF</Button>
+          <Button variant="outline" onClick={() => downloadPdf('bilingual')}><Download className="w-4 h-4 mr-2" /> PDF</Button>
+          <Button variant="outline" onClick={() => downloadPdf('zh')}><Download className="w-4 h-4 mr-2" /> PDF (中文)</Button>
           <Button asChild><Link to={`/order/${data.id}/bearbeiten`}><Pencil className="w-4 h-4 mr-2" /> Bearbeiten</Link></Button>
         </div>
       </div>

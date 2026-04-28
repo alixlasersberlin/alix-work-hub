@@ -196,7 +196,7 @@ export default function ProductionOrderForm() {
     return poId || null;
   };
 
-  const buildPdf = () => {
+  const buildPdf = (lang: 'bilingual' | 'zh' = 'bilingual') => {
     const supplier = suppliers.find(s => s.id === form.supplier_id);
     if (!supplier || !selectedOrder) return null;
     return generateProductionOrderPdf({
@@ -204,7 +204,7 @@ export default function ProductionOrderForm() {
       ...form,
       supplier,
       items: selectedItems,
-    });
+    }, lang);
   };
 
   const onSave = async () => {
@@ -212,10 +212,10 @@ export default function ProductionOrderForm() {
     if (poId) { toast.success('Gespeichert'); navigate('/order'); }
   };
 
-  const onSaveAndDownload = async () => {
+  const downloadPdfWith = async (lang: 'bilingual' | 'zh') => {
     const poId = await persist();
     if (!poId) return;
-    const pdf = await buildPdf();
+    const pdf = await buildPdf(lang);
     if (pdf) {
       const url = URL.createObjectURL(pdf.blob);
       const a = document.createElement('a');
@@ -224,6 +224,8 @@ export default function ProductionOrderForm() {
       toast.success('PDF heruntergeladen');
     }
   };
+  const onSaveAndDownload = () => downloadPdfWith('bilingual');
+  const onSaveAndDownloadZh = () => downloadPdfWith('zh');
 
   const onSaveAndSend = async () => {
     const poId = await persist();
@@ -362,6 +364,7 @@ export default function ProductionOrderForm() {
         <Button variant="outline" onClick={() => navigate('/order')} disabled={saving}>Abbrechen</Button>
         <Button variant="outline" onClick={onSave} disabled={saving}><Save className="w-4 h-4 mr-2" /> Speichern</Button>
         <Button variant="outline" onClick={onSaveAndDownload} disabled={saving}><Download className="w-4 h-4 mr-2" /> Speichern + PDF</Button>
+        <Button variant="outline" onClick={onSaveAndDownloadZh} disabled={saving}><Download className="w-4 h-4 mr-2" /> PDF (中文)</Button>
         <Button onClick={onSaveAndSend} disabled={saving}>
           {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
           Speichern + an Zulieferer senden
