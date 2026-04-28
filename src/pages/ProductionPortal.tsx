@@ -328,7 +328,7 @@ export default function ProductionPortal() {
       ) : filtered.length === 0 ? (
         <Card className="p-12 text-center text-muted-foreground">
           <Factory className="w-12 h-12 mx-auto mb-3 opacity-30" />
-          <p>Keine Bestellungen gefunden.</p>
+          <p>{t.noOrders}</p>
         </Card>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -338,18 +338,18 @@ export default function ProductionPortal() {
                 <div>
                   <p className="font-display font-semibold text-foreground">{row.order_number}</p>
                   <p className="text-xs text-muted-foreground">
-                    Liefertermin: <span className="text-foreground font-medium">
+                    {t.deliveryDate}: <span className="text-foreground font-medium">
                       {row.liefertermin ? format(new Date(row.liefertermin), 'dd.MM.yyyy') : '—'}
                     </span>
                   </p>
                 </div>
                 <div className="flex gap-2">
                   <Button size="sm" variant="outline" onClick={() => openEdit(row)}>
-                    <Pencil className="w-4 h-4 mr-1" /> Bearbeiten
+                    <Pencil className="w-4 h-4 mr-1" /> {t.edit}
                   </Button>
                   {row.pdf_path && (
                     <Button size="sm" variant="outline" onClick={() => downloadPdf(row.pdf_path, row.order_number)}>
-                      <Download className="w-4 h-4 mr-1" /> PDF
+                      <Download className="w-4 h-4 mr-1" /> {t.pdf}
                     </Button>
                   )}
                 </div>
@@ -357,43 +357,43 @@ export default function ProductionPortal() {
 
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div>
-                  <span className="text-muted-foreground">Modell:</span>{' '}
+                  <span className="text-muted-foreground">{t.model}:</span>{' '}
                   <span className="text-foreground">{row.modellname || '—'}</span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Farbe:</span>{' '}
+                  <span className="text-muted-foreground">{t.color}:</span>{' '}
                   <span className="text-foreground">{row.farbe || '—'}</span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Power-Handstück:</span>{' '}
+                  <span className="text-muted-foreground">{t.powerHs}:</span>{' '}
                   <span className="text-foreground">{row.power_handstueck || '—'}</span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Bearbeiter:</span>{' '}
+                  <span className="text-muted-foreground">{t.operator}:</span>{' '}
                   <span className="text-foreground">{row.bearbeiter || '—'}</span>
                 </div>
                 {row.seriennummer && (
                   <div className="col-span-2">
-                    <span className="text-muted-foreground">Seriennummer:</span>{' '}
+                    <span className="text-muted-foreground">{t.serial}:</span>{' '}
                     <span className="text-foreground">{row.seriennummer}</span>
                   </div>
                 )}
                 {row.sonderwuensche && (
                   <div className="col-span-2">
-                    <span className="text-muted-foreground">Sonderwünsche:</span>{' '}
+                    <span className="text-muted-foreground">{t.wishes}:</span>{' '}
                     <span className="text-foreground">{row.sonderwuensche}</span>
                   </div>
                 )}
                 {row.anmerkungen && (
                   <div className="col-span-2">
-                    <span className="text-muted-foreground">Anmerkungen:</span>{' '}
+                    <span className="text-muted-foreground">{t.notes}:</span>{' '}
                     <span className="text-foreground">{row.anmerkungen}</span>
                   </div>
                 )}
               </div>
 
               <div className="flex items-center gap-2 pt-2 border-t border-border">
-                <span className="text-xs text-muted-foreground">Status:</span>
+                <span className="text-xs text-muted-foreground">{t.status}:</span>
                 <Select
                   value={row.status}
                   onValueChange={(v) => updateStatus(row.id, v)}
@@ -404,7 +404,7 @@ export default function ProductionPortal() {
                   </SelectTrigger>
                   <SelectContent>
                     {STATUS_OPTIONS.map(s => (
-                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                      <SelectItem key={s} value={s}>{tStatus(s)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
