@@ -1094,6 +1094,7 @@ export type Database = {
           otp_channel: string
           password_reset_required: boolean
           phone_number: string | null
+          supplier_id: string | null
           updated_at: string
         }
         Insert: {
@@ -1109,6 +1110,7 @@ export type Database = {
           otp_channel?: string
           password_reset_required?: boolean
           phone_number?: string | null
+          supplier_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -1124,6 +1126,7 @@ export type Database = {
           otp_channel?: string
           password_reset_required?: boolean
           phone_number?: string | null
+          supplier_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1132,6 +1135,13 @@ export type Database = {
             columns: ["department_id"]
             isOneToOne: false
             referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_profiles_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
         ]
@@ -1183,8 +1193,10 @@ export type Database = {
       can_access_planning: { Args: never; Returns: boolean }
       can_manage_orders: { Args: never; Returns: boolean }
       can_manage_planning: { Args: never; Returns: boolean }
+      current_supplier_id: { Args: never; Returns: string }
       has_role: { Args: { check_role: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
+      is_supplier: { Args: never; Returns: boolean }
       requires_reauth: { Args: never; Returns: boolean }
       session_requires_reauth: { Args: never; Returns: boolean }
     }

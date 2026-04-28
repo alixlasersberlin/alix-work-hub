@@ -109,6 +109,8 @@ export default function UserManagement() {
   // Edit roles
   const [editRoleIds, setEditRoleIds] = useState<string[]>([]);
   const [editDeptId, setEditDeptId] = useState('');
+  const [editSupplierId, setEditSupplierId] = useState<string>('none');
+  const [suppliers, setSuppliers] = useState<{ id: string; name: string }[]>([]);
   const [savingRoles, setSavingRoles] = useState(false);
 
   // Action loading
@@ -117,14 +119,16 @@ export default function UserManagement() {
   /* ─── Data loading ─── */
   const loadData = useCallback(async () => {
     setLoading(true);
-    const [profilesRes, rolesRes, deptsRes] = await Promise.all([
+    const [profilesRes, rolesRes, deptsRes, suppliersRes] = await Promise.all([
       supabase.from('user_profiles').select('*, departments(name)').order('created_at', { ascending: false }),
       supabase.from('roles').select('*').order('name'),
       supabase.from('departments').select('*').order('name'),
+      supabase.from('suppliers').select('id, name').eq('is_active', true).order('name'),
     ]);
 
     setRoles(rolesRes.data ?? []);
     setDepartments(deptsRes.data ?? []);
+    setSuppliers(suppliersRes.data ?? []);
 
     if (profilesRes.data) {
       const enriched = await Promise.all(
@@ -263,10 +267,15 @@ export default function UserManagement() {
           editRoleIds.map(role_id => ({ user_id: selectedUser.id, role_id }))
         );
       }
-      // Update department
-      await supabase.from('user_profiles').update({ department_id: editDeptId && editDeptId !== 'none' ? editDeptId : null }).eq('id', selectedUser.id);
+      // Update department + supplier
+      const lieferantRoleId = roles.find(r => r.name === 'Lieferant')?.id;
+      const isLieferant = lieferantRoleId ? editRoleIds.includes(lieferantRoleId) : false;
+      await supabase.from('user_profiles').update({
+        department_id: editDeptId && editDeptId !== 'none' ? editDeptId : null,
+        supplier_id: isLieferant && editSupplierId !== 'none' ? editSupplierId : null,
+      }).eq('id', selectedUser.id);
 
-      toast.success('Rollen und Abteilung gespeichert');
+      toast.success('Rollen, Abteilung und Lieferant gespeichert');
       setShowEditRoles(false);
       loadData();
     } catch (e: any) {
@@ -278,6 +287,7 @@ export default function UserManagement() {
   const openEditRoles = (user: EnrichedUser) => {
     setEditRoleIds([...user.roleIds]);
     setEditDeptId(user.department_id || '');
+    setEditSupplierId((user as any).supplier_id || 'none');
     setSelectedUser(user);
     setShowEditRoles(true);
   };
@@ -713,6 +723,26 @@ export default function UserManagement() {
                 ))}
               </div>
             </div>
+            {(() => {
+              const lieferantRoleId = roles.find(r => r.name === 'Lieferant')?.id;
+              const isLieferant = lieferantRoleId ? editRoleIds.includes(lieferantRoleId) : false;
+              if (!isLieferant) return null;
+              return (
+                <div>
+                  <Label className="mb-2 block">Lieferant zuordnen <span className="text-destructive">*</span></Label>
+                  <Select value={editSupplierId} onValueChange={setEditSupplierId}>
+                    <SelectTrigger><SelectValue placeholder="Lieferant wählen" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">— Kein Lieferant —</SelectItem>
+                      {suppliers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Der Benutzer sieht nur Production Orders dieses Lieferanten.
+                  </p>
+                </div>
+              );
+            })()}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowEditRoles(false)}>Abbrechen</Button>

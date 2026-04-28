@@ -34,6 +34,7 @@ import Unsubscribe from "./pages/Unsubscribe";
 import ProductionOrders from "./pages/ProductionOrders";
 import ProductionOrderForm from "./pages/ProductionOrderForm";
 import ProductionOrderDetail from "./pages/ProductionOrderDetail";
+import ProductionPortal from "./pages/ProductionPortal";
 import Suppliers from "./pages/Suppliers";
 import { Loader2 } from "lucide-react";
 
@@ -45,6 +46,11 @@ const FINANCE_ROLES = ['Admin', 'Super Admin', 'Finance'];
 const ADMIN_ROLES = ['Admin', 'Super Admin'];
 const IMPORT_ROLES = ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Read Only Audit'];
 const SYSTEM_ROLES = ['Admin', 'Super Admin', 'Read Only Audit'];
+const PRODUCTION_ROLES = ['Admin', 'Super Admin', 'Lieferant'];
+
+function isSupplierOnly(roles: string[]) {
+  return roles.includes('Lieferant') && !roles.some(r => ['Admin', 'Super Admin'].includes(r));
+}
 
 function ProtectedRoute({ children, requiredRoles }: { children: React.ReactNode; requiredRoles?: string[] }) {
   const { user, roles, loading, blockReason } = useAuth();
@@ -59,9 +65,23 @@ function ProtectedRoute({ children, requiredRoles }: { children: React.ReactNode
 
   if (!user) return <Navigate to="/login" replace />;
   if (blockReason) return <AccountBlocked />;
+
+  // Lieferanten dürfen ausschließlich /production aufrufen
+  if (isSupplierOnly(roles)) {
+    if (requiredRoles && !requiredRoles.includes('Lieferant')) {
+      return <Navigate to="/production" replace />;
+    }
+  }
+
   if (requiredRoles && !requiredRoles.some(r => roles.includes(r))) return <AccessDenied />;
 
   return <>{children}</>;
+}
+
+function HomeRoute() {
+  const { roles } = useAuth();
+  if (isSupplierOnly(roles)) return <Navigate to="/production" replace />;
+  return <Dashboard />;
 }
 
 function AppRoutes() {
@@ -80,7 +100,7 @@ function AppRoutes() {
       <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
       <Route path="/passwort-setzen" element={<SetPassword />} />
       <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-        <Route path="/" element={<Dashboard />} />
+        <Route path="/" element={<HomeRoute />} />
         <Route path="/kunden" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Customers /></ProtectedRoute>} />
         <Route path="/kunden/:id" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><CustomerDetail /></ProtectedRoute>} />
         <Route path="/auftraege" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Orders /></ProtectedRoute>} />
@@ -106,6 +126,7 @@ function AppRoutes() {
         <Route path="/order/neu" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><ProductionOrderForm /></ProtectedRoute>} />
         <Route path="/order/:id" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><ProductionOrderDetail /></ProtectedRoute>} />
         <Route path="/order/:id/bearbeiten" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><ProductionOrderForm /></ProtectedRoute>} />
+        <Route path="/production" element={<ProtectedRoute requiredRoles={PRODUCTION_ROLES}><ProductionPortal /></ProtectedRoute>} />
       </Route>
       <Route path="/unsubscribe" element={<Unsubscribe />} />
       <Route path="*" element={<NotFound />} />
