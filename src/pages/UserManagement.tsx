@@ -119,14 +119,16 @@ export default function UserManagement() {
   /* ─── Data loading ─── */
   const loadData = useCallback(async () => {
     setLoading(true);
-    const [profilesRes, rolesRes, deptsRes] = await Promise.all([
+    const [profilesRes, rolesRes, deptsRes, suppliersRes] = await Promise.all([
       supabase.from('user_profiles').select('*, departments(name)').order('created_at', { ascending: false }),
       supabase.from('roles').select('*').order('name'),
       supabase.from('departments').select('*').order('name'),
+      supabase.from('suppliers').select('id, name').eq('is_active', true).order('name'),
     ]);
 
     setRoles(rolesRes.data ?? []);
     setDepartments(deptsRes.data ?? []);
+    setSuppliers(suppliersRes.data ?? []);
 
     if (profilesRes.data) {
       const enriched = await Promise.all(
