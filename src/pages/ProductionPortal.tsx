@@ -12,6 +12,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
+type PhotoSide = 'front' | 'right' | 'left';
+
 interface ProductionOrderRow {
   id: string;
   order_number: string;
@@ -25,6 +27,10 @@ interface ProductionOrderRow {
   anmerkungen: string | null;
   seriennummer: string | null;
   pdf_path: string | null;
+  photo_front_path: string | null;
+  photo_right_path: string | null;
+  photo_left_path: string | null;
+  supplier_id: string;
   created_at: string;
   sent_at: string | null;
   supplier?: { name: string | null } | null;
