@@ -46,6 +46,11 @@ const FINANCE_ROLES = ['Admin', 'Super Admin', 'Finance'];
 const ADMIN_ROLES = ['Admin', 'Super Admin'];
 const IMPORT_ROLES = ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Read Only Audit'];
 const SYSTEM_ROLES = ['Admin', 'Super Admin', 'Read Only Audit'];
+const PRODUCTION_ROLES = ['Admin', 'Super Admin', 'Lieferant'];
+
+function isSupplierOnly(roles: string[]) {
+  return roles.includes('Lieferant') && !roles.some(r => ['Admin', 'Super Admin'].includes(r));
+}
 
 function ProtectedRoute({ children, requiredRoles }: { children: React.ReactNode; requiredRoles?: string[] }) {
   const { user, roles, loading, blockReason } = useAuth();
@@ -60,6 +65,14 @@ function ProtectedRoute({ children, requiredRoles }: { children: React.ReactNode
 
   if (!user) return <Navigate to="/login" replace />;
   if (blockReason) return <AccountBlocked />;
+
+  // Lieferanten dürfen ausschließlich /production aufrufen
+  if (isSupplierOnly(roles)) {
+    if (requiredRoles && !requiredRoles.includes('Lieferant')) {
+      return <Navigate to="/production" replace />;
+    }
+  }
+
   if (requiredRoles && !requiredRoles.some(r => roles.includes(r))) return <AccessDenied />;
 
   return <>{children}</>;
