@@ -723,6 +723,26 @@ export default function UserManagement() {
                 ))}
               </div>
             </div>
+            {(() => {
+              const lieferantRoleId = roles.find(r => r.name === 'Lieferant')?.id;
+              const isLieferant = lieferantRoleId ? editRoleIds.includes(lieferantRoleId) : false;
+              if (!isLieferant) return null;
+              return (
+                <div>
+                  <Label className="mb-2 block">Lieferant zuordnen <span className="text-destructive">*</span></Label>
+                  <Select value={editSupplierId} onValueChange={setEditSupplierId}>
+                    <SelectTrigger><SelectValue placeholder="Lieferant wählen" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">— Kein Lieferant —</SelectItem>
+                      {suppliers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Der Benutzer sieht nur Production Orders dieses Lieferanten.
+                  </p>
+                </div>
+              );
+            })()}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowEditRoles(false)}>Abbrechen</Button>
