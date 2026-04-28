@@ -81,6 +81,59 @@ export default function AppLayout() {
         <nav className="flex-1 py-2 px-2 space-y-0.5 overflow-y-auto">
           {visibleItems.map(item => {
             const active = isActive(item.path);
+            const hasChildren = item.children && item.children.length > 0;
+            const childActive = hasChildren && item.children!.some(c => isActive(c.path));
+            const isOpen = openGroups[item.path] ?? childActive;
+
+            if (hasChildren) {
+              return (
+                <div key={item.path}>
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(item.path)}
+                    title={collapsed ? item.label : undefined}
+                    className={cn(
+                      "w-full flex items-center gap-2.5 rounded-lg text-[13px] font-medium transition-all duration-150",
+                      collapsed ? "px-0 py-2 justify-center" : "px-3 py-2",
+                      childActive
+                        ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
+                        : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent"
+                    )}
+                  >
+                    <item.icon className={cn("w-[18px] h-[18px] flex-shrink-0", childActive && "text-primary")} />
+                    {!collapsed && (
+                      <>
+                        <span className="truncate flex-1 text-left">{item.label}</span>
+                        <ChevronDown className={cn("w-4 h-4 transition-transform", isOpen && "rotate-180")} />
+                      </>
+                    )}
+                  </button>
+                  {!collapsed && isOpen && (
+                    <div className="mt-0.5 ml-3 pl-3 border-l border-border space-y-0.5">
+                      {item.children!.map(child => {
+                        const cActive = isActive(child.path);
+                        return (
+                          <Link
+                            key={child.path}
+                            to={child.path}
+                            className={cn(
+                              "flex items-center gap-2.5 rounded-lg text-[13px] font-medium transition-all duration-150 px-3 py-2",
+                              cActive
+                                ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
+                                : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent"
+                            )}
+                          >
+                            <child.icon className={cn("w-[18px] h-[18px] flex-shrink-0", cActive && "text-primary")} />
+                            <span className="truncate">{child.label}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
             return (
               <Link
                 key={item.path}
