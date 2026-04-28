@@ -109,6 +109,8 @@ export default function UserManagement() {
   // Edit roles
   const [editRoleIds, setEditRoleIds] = useState<string[]>([]);
   const [editDeptId, setEditDeptId] = useState('');
+  const [editSupplierId, setEditSupplierId] = useState<string>('none');
+  const [suppliers, setSuppliers] = useState<{ id: string; name: string }[]>([]);
   const [savingRoles, setSavingRoles] = useState(false);
 
   // Action loading
