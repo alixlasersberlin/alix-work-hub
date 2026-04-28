@@ -4,13 +4,16 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Factory, Download, Search, Pencil } from 'lucide-react';
+import { Loader2, Factory, Download, Search, Pencil, Camera } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+
+type PhotoSide = 'front' | 'right' | 'left';
 
 interface ProductionOrderRow {
   id: string;
@@ -25,6 +28,10 @@ interface ProductionOrderRow {
   anmerkungen: string | null;
   seriennummer: string | null;
   pdf_path: string | null;
+  photo_front_path: string | null;
+  photo_right_path: string | null;
+  photo_left_path: string | null;
+  supplier_id: string;
   created_at: string;
   sent_at: string | null;
   supplier?: { name: string | null } | null;
@@ -47,6 +54,8 @@ export default function ProductionPortal() {
   const [editing, setEditing] = useState<ProductionOrderRow | null>(null);
   const [editForm, setEditForm] = useState<Partial<ProductionOrderRow>>({});
   const [saving, setSaving] = useState(false);
+  const [photoPreviews, setPhotoPreviews] = useState<Record<PhotoSide, string | null>>({ front: null, right: null, left: null });
+  const [uploadingSide, setUploadingSide] = useState<PhotoSide | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -73,7 +82,13 @@ export default function ProductionPortal() {
     setRows(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r));
   };
 
-  const openEdit = (row: ProductionOrderRow) => {
+  const signedPhotoUrl = async (path: string | null) => {
+    if (!path) return null;
+    const { data } = await supabase.storage.from('production-photos').createSignedUrl(path, 3600);
+    return data?.signedUrl ?? null;
+  };
+
+  const openEdit = async (row: ProductionOrderRow) => {
     setEditing(row);
     setEditForm({
       modellname: row.modellname,
@@ -84,11 +99,43 @@ export default function ProductionPortal() {
       sonderwuensche: row.sonderwuensche,
       anmerkungen: row.anmerkungen,
       status: row.status,
+      photo_front_path: row.photo_front_path,
+      photo_right_path: row.photo_right_path,
+      photo_left_path: row.photo_left_path,
     });
+    setPhotoPreviews({ front: null, right: null, left: null });
+    const [front, right, left] = await Promise.all([
+      signedPhotoUrl(row.photo_front_path),
+      signedPhotoUrl(row.photo_right_path),
+      signedPhotoUrl(row.photo_left_path),
+    ]);
+    setPhotoPreviews({ front, right, left });
+  };
+
+  const handlePhotoUpload = async (side: PhotoSide, file: File) => {
+    if (!editing) return;
+    setUploadingSide(side);
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    const path = `${editing.supplier_id}/${editing.id}/${side}-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage
+      .from('production-photos')
+      .upload(path, file, { upsert: true, contentType: file.type || 'image/jpeg' });
+    if (error) {
+      setUploadingSide(null);
+      return toast.error(error.message);
+    }
+    const key = `photo_${side}_path` as 'photo_front_path' | 'photo_right_path' | 'photo_left_path';
+    setEditForm(f => ({ ...f, [key]: path }));
+    const url = await signedPhotoUrl(path);
+    setPhotoPreviews(p => ({ ...p, [side]: url }));
+    setUploadingSide(null);
   };
 
   const saveEdit = async () => {
     if (!editing) return;
+    if (!editForm.photo_front_path || !editForm.photo_right_path || !editForm.photo_left_path) {
+      return toast.error('Bitte alle 3 Fotos (Vorne, Rechts, Links) hochladen.');
+    }
     setSaving(true);
     const payload = {
       modellname: editForm.modellname ?? null,
@@ -99,6 +146,9 @@ export default function ProductionPortal() {
       sonderwuensche: editForm.sonderwuensche ?? null,
       anmerkungen: editForm.anmerkungen ?? null,
       status: editForm.status ?? editing.status,
+      photo_front_path: editForm.photo_front_path,
+      photo_right_path: editForm.photo_right_path,
+      photo_left_path: editForm.photo_left_path,
     };
     const { error } = await supabase
       .from('production_orders')
@@ -305,6 +355,56 @@ export default function ProductionPortal() {
                   {STATUS_OPTIONS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="md:col-span-2 space-y-2">
+              <Label>Fotos <span className="text-destructive">*</span> <span className="text-xs text-muted-foreground font-normal">(alle 3 erforderlich)</span></Label>
+              <div className="grid grid-cols-3 gap-3">
+                {(['front','right','left'] as PhotoSide[]).map(side => {
+                  const labels: Record<PhotoSide,string> = { front: 'Vorne', right: 'Rechts', left: 'Links' };
+                  const key = `photo_${side}_path` as 'photo_front_path' | 'photo_right_path' | 'photo_left_path';
+                  const hasPhoto = !!editForm[key];
+                  const preview = photoPreviews[side];
+                  const inputId = `photo-${side}`;
+                  return (
+                    <div key={side} className="space-y-1.5">
+                      <div className="text-xs font-medium text-muted-foreground text-center">{labels[side]}</div>
+                      <label
+                        htmlFor={inputId}
+                        className={cn(
+                          "relative aspect-square w-full rounded-lg border-2 border-dashed flex items-center justify-center cursor-pointer overflow-hidden bg-muted/20 hover:bg-muted/40 transition-colors",
+                          hasPhoto ? "border-primary/40" : "border-border"
+                        )}
+                      >
+                        {preview ? (
+                          <img src={preview} alt={labels[side]} className="absolute inset-0 w-full h-full object-cover" />
+                        ) : (
+                          <div className="flex flex-col items-center text-muted-foreground text-[11px] gap-1 p-2 text-center">
+                            <Camera className="w-5 h-5" />
+                            <span>Foto wählen<br/>oder Kamera</span>
+                          </div>
+                        )}
+                        {uploadingSide === side && (
+                          <div className="absolute inset-0 bg-background/70 flex items-center justify-center">
+                            <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                          </div>
+                        )}
+                      </label>
+                      <input
+                        id={inputId}
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        className="hidden"
+                        onChange={e => {
+                          const file = e.target.files?.[0];
+                          if (file) handlePhotoUpload(side, file);
+                          e.target.value = '';
+                        }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
             </div>
             <div className="space-y-1.5 md:col-span-2">
               <Label>Sonderwünsche</Label>
