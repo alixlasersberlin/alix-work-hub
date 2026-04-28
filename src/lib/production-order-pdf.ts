@@ -16,7 +16,7 @@ export interface ProductionOrderPdfData {
   items: Array<{ item_name?: string | null; description?: string | null; sku?: string | null; quantity?: number | null; unit?: string | null }>;
 }
 
-// Zweisprachige Labels: Deutsch / 中文
+// Zweisprachige Labels: Deutsch / English
 const L = {
   title:        ['Bestellung an Produktion', 'Production Order'],
   orderNo:      ['Bestellnummer',            'Order No.'],
