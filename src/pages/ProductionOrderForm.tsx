@@ -196,7 +196,7 @@ export default function ProductionOrderForm() {
     return poId || null;
   };
 
-  const buildPdf = (lang: 'bilingual' | 'zh' = 'bilingual') => {
+  const buildPdf = (lang: 'bilingual' | 'en' = 'bilingual') => {
     const supplier = suppliers.find(s => s.id === form.supplier_id);
     if (!supplier || !selectedOrder) return null;
     return generateProductionOrderPdf({
@@ -212,7 +212,7 @@ export default function ProductionOrderForm() {
     if (poId) { toast.success('Gespeichert'); navigate('/order'); }
   };
 
-  const downloadPdfWith = async (lang: 'bilingual' | 'zh') => {
+  const downloadPdfWith = async (lang: 'bilingual' | 'en') => {
     const poId = await persist();
     if (!poId) return;
     const pdf = await buildPdf(lang);
@@ -225,7 +225,7 @@ export default function ProductionOrderForm() {
     }
   };
   const onSaveAndDownload = () => downloadPdfWith('bilingual');
-  const onSaveAndDownloadZh = () => downloadPdfWith('zh');
+  const onSaveAndDownloadEn = () => downloadPdfWith('en');
 
   const onSaveAndSend = async () => {
     const poId = await persist();
