@@ -53,6 +53,8 @@ export default function ProductionPortal() {
   const [editing, setEditing] = useState<ProductionOrderRow | null>(null);
   const [editForm, setEditForm] = useState<Partial<ProductionOrderRow>>({});
   const [saving, setSaving] = useState(false);
+  const [photoPreviews, setPhotoPreviews] = useState<Record<PhotoSide, string | null>>({ front: null, right: null, left: null });
+  const [uploadingSide, setUploadingSide] = useState<PhotoSide | null>(null);
 
   const load = async () => {
     setLoading(true);
