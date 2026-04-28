@@ -27,9 +27,9 @@ export default function ProductionOrderDetail() {
     })();
   }, [id]);
 
-  const downloadPdf = () => {
+  const downloadPdf = async () => {
     if (!data) return;
-    const pdf = generateProductionOrderPdf({
+    const pdf = await generateProductionOrderPdf({
       order_number: data.order_number,
       modellname: data.modellname,
       farbe: data.farbe,
