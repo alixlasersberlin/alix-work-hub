@@ -239,38 +239,74 @@ export default function Dashboard() {
         {/* Shipment Dates */}
         {canSeeOrders && (
           <div className="rounded-xl border border-border bg-card card-glow">
-            <div className="flex items-center justify-between p-5 border-b border-border">
-              <div className="flex items-center gap-2">
-                <Package className="w-4 h-4 text-[hsl(var(--warning))]" />
-                <h2 className="font-display font-semibold text-foreground">Lieferdatum</h2>
+            <div className="p-5 border-b border-border space-y-3">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <Package className="w-4 h-4 text-[hsl(var(--warning))]" />
+                  <h2 className="font-display font-semibold text-foreground">Lieferdatum</h2>
+                </div>
+                <div className="flex gap-1 flex-wrap">
+                  {[{ label: '7T', value: 7 }, { label: '14T', value: 14 }, { label: '30T', value: 30 }, { label: 'Alle', value: null }].map(opt => (
+                    <button
+                      key={opt.label}
+                      onClick={() => setShipmentFilter(opt.value)}
+                      className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
+                        shipmentFilter === opt.value
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-secondary text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="flex gap-1">
-                {[{ label: '7T', value: 7 }, { label: '14T', value: 14 }, { label: '30T', value: 30 }, { label: 'Alle', value: null }].map(opt => (
-                  <button
-                    key={opt.label}
-                    onClick={() => setShipmentFilter(opt.value)}
-                    className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
-                      shipmentFilter === opt.value
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-secondary text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
+              <div className="flex items-center gap-2 flex-wrap">
+                <input
+                  type="text"
+                  value={shipmentSearch}
+                  onChange={(e) => setShipmentSearch(e.target.value)}
+                  placeholder="Suche: Modell, Auftragsnr., Stadt, Name…"
+                  className="flex-1 min-w-[200px] h-8 px-3 text-xs rounded-md bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+                <div className="flex gap-1">
+                  {[{ label: '20', value: 20 }, { label: '30', value: 30 }, { label: '50', value: 50 }, { label: 'Alle', value: null }].map(opt => (
+                    <button
+                      key={opt.label}
+                      onClick={() => setShipmentLimit(opt.value)}
+                      className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
+                        shipmentLimit === opt.value
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-secondary text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
             {loading ? (
               <TableSkeleton />
             ) : (() => {
               const now = new Date();
-              const filtered = shipmentFilter === null
+              const dateFiltered = shipmentFilter === null
                 ? shipmentOrders
                 : shipmentOrders.filter(o => {
                     if (!o.expected_shipment_date) return false;
                     const diff = (new Date(o.expected_shipment_date).getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
                     return diff <= shipmentFilter;
                   });
+              const q = shipmentSearch.trim().toLowerCase();
+              const searched = !q ? dateFiltered : dateFiltered.filter(o => {
+                const name = (o.customers?.company_name || '') + ' ' + (o.customers?.contact_name || '');
+                const addr = o.shipping_address || o.customers?.shipping_address || o.billing_address || o.customers?.billing_address || {};
+                const city = (addr.city || addr.state || '').toString();
+                const items = (o.order_items || []).map(i => `${i.item_name || ''} ${i.sku || ''} ${i.description || ''}`).join(' ');
+                const hay = `${o.order_number || ''} ${name} ${city} ${items}`.toLowerCase();
+                return hay.includes(q);
+              });
+              const filtered = shipmentLimit === null ? searched : searched.slice(0, shipmentLimit);
               return filtered.length === 0 ? (
                 <EmptyState icon={Package} message="Keine Versanddaten im gewählten Zeitraum." />
               ) : (
