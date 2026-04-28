@@ -77,7 +77,7 @@ export async function generateProductionOrderPdf(
 
   // Header
   doc.setFontSize(16);
-  if (lang === 'zh') {
+  if (lang === 'en') {
     drawText(L.title[1], 20, y, 'bold');
   } else {
     drawText(L.title[0], 20, y, 'bold');
