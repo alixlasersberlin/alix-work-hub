@@ -151,7 +151,7 @@ export default function ProductionPortal() {
       .eq('id', id);
     setUpdatingId(null);
     if (error) return toast.error(error.message);
-    toast.success('Status aktualisiert');
+    toast.success(t.statusUpdated);
     setRows(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r));
   };
 
@@ -207,7 +207,7 @@ export default function ProductionPortal() {
   const saveEdit = async () => {
     if (!editing) return;
     if (!editForm.photo_front_path || !editForm.photo_right_path || !editForm.photo_left_path) {
-      return toast.error('Bitte alle 3 Fotos (Vorne, Rechts, Links) hochladen.');
+      return toast.error(t.photosRequired);
     }
     setSaving(true);
     const payload = {
@@ -229,15 +229,15 @@ export default function ProductionPortal() {
       .eq('id', editing.id);
     setSaving(false);
     if (error) return toast.error(error.message);
-    toast.success('Auftrag gespeichert');
+    toast.success(t.saved);
     setRows(prev => prev.map(r => r.id === editing.id ? { ...r, ...payload } as ProductionOrderRow : r));
     setEditing(null);
   };
 
   const downloadPdf = async (path: string | null, orderNumber: string) => {
-    if (!path) return toast.error('Kein PDF verfügbar');
+    if (!path) return toast.error(t.noPdf);
     const { data, error } = await supabase.storage.from('production-orders').download(path);
-    if (error || !data) return toast.error(error?.message || 'Download fehlgeschlagen');
+    if (error || !data) return toast.error(error?.message || t.downloadFailed);
     const url = URL.createObjectURL(data);
     const a = document.createElement('a');
     a.href = url;
