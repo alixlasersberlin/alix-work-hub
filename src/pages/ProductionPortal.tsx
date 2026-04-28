@@ -90,7 +90,7 @@ export default function ProductionPortal() {
   const saveEdit = async () => {
     if (!editing) return;
     setSaving(true);
-    const payload: Record<string, unknown> = {
+    const payload = {
       modellname: editForm.modellname ?? null,
       farbe: editForm.farbe ?? '',
       power_handstueck: editForm.power_handstueck ?? '',
