@@ -763,6 +763,127 @@ export type Database = {
           },
         ]
       }
+      production_order_items: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          item_name: string | null
+          item_order: number | null
+          production_order_id: string
+          quantity: number | null
+          sku: string | null
+          source_order_item_id: string | null
+          unit: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          item_name?: string | null
+          item_order?: number | null
+          production_order_id: string
+          quantity?: number | null
+          sku?: string | null
+          source_order_item_id?: string | null
+          unit?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          item_name?: string | null
+          item_order?: number | null
+          production_order_id?: string
+          quantity?: number | null
+          sku?: string | null
+          source_order_item_id?: string | null
+          unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_order_items_production_order_id_fkey"
+            columns: ["production_order_id"]
+            isOneToOne: false
+            referencedRelation: "production_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      production_orders: {
+        Row: {
+          anmerkungen: string | null
+          bearbeiter: string
+          created_at: string
+          created_by: string | null
+          farbe: string
+          id: string
+          liefertermin: string
+          modellname: string | null
+          order_id: string
+          order_number: string
+          pdf_path: string | null
+          power_handstueck: string
+          sent_at: string | null
+          seriennummer: string | null
+          sonderwuensche: string | null
+          status: string
+          supplier_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          anmerkungen?: string | null
+          bearbeiter: string
+          created_at?: string
+          created_by?: string | null
+          farbe: string
+          id?: string
+          liefertermin: string
+          modellname?: string | null
+          order_id: string
+          order_number: string
+          pdf_path?: string | null
+          power_handstueck: string
+          sent_at?: string | null
+          seriennummer?: string | null
+          sonderwuensche?: string | null
+          status?: string
+          supplier_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          anmerkungen?: string | null
+          bearbeiter?: string
+          created_at?: string
+          created_by?: string | null
+          farbe?: string
+          id?: string
+          liefertermin?: string
+          modellname?: string | null
+          order_id?: string
+          order_number?: string
+          pdf_path?: string | null
+          power_handstueck?: string
+          sent_at?: string | null
+          seriennummer?: string | null
+          sonderwuensche?: string | null
+          status?: string
+          supplier_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_orders_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       roles: {
         Row: {
           created_at: string
@@ -862,6 +983,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      suppliers: {
+        Row: {
+          address: string | null
+          created_at: string
+          created_by: string | null
+          email: string
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          phone: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          created_by?: string | null
+          email: string
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
       }
       user_invitations: {
         Row: {
