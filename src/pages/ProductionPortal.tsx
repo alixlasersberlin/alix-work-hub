@@ -44,6 +44,75 @@ const STATUS_OPTIONS = [
   'versendet',
 ];
 
+type Lang = 'de' | 'en' | 'zh';
+
+const LANGS: { code: Lang; label: string; flag: string }[] = [
+  { code: 'de', label: 'Deutsch', flag: '🇩🇪' },
+  { code: 'en', label: 'English', flag: '🇬🇧' },
+  { code: 'zh', label: '中文', flag: '🇨🇳' },
+];
+
+const T: Record<Lang, Record<string, string>> = {
+  de: {
+    title: 'PRODUCTION', worklist: 'Arbeitsliste', loggedInAs: 'Angemeldet als',
+    searchPh: 'Suche: Auftragsnr., Modell, Farbe, Seriennr., Bearbeiter…',
+    allStatus: 'Alle Status', refresh: 'Aktualisieren', noOrders: 'Keine Bestellungen gefunden.',
+    deliveryDate: 'Liefertermin', edit: 'Bearbeiten', pdf: 'PDF',
+    model: 'Modell', color: 'Farbe', powerHs: 'Power-Handstück', operator: 'Bearbeiter',
+    serial: 'Seriennummer', wishes: 'Sonderwünsche', notes: 'Anmerkungen', status: 'Status',
+    editTitle: 'Auftrag bearbeiten', photos: 'Fotos', allRequired: '(alle 3 erforderlich)',
+    front: 'Vorne', right: 'Rechts', left: 'Links',
+    pickPhoto: 'Foto wählen', orCamera: 'oder Kamera',
+    cancel: 'Abbrechen', save: 'Speichern', language: 'Sprache',
+    photosRequired: 'Bitte alle 3 Fotos (Vorne, Rechts, Links) hochladen.',
+    saved: 'Auftrag gespeichert', statusUpdated: 'Status aktualisiert',
+    noPdf: 'Kein PDF verfügbar', downloadFailed: 'Download fehlgeschlagen',
+    s_offen: 'offen', s_inBearbeitung: 'in Bearbeitung', s_fertig: 'fertig', s_versendet: 'versendet',
+  },
+  en: {
+    title: 'PRODUCTION', worklist: 'Worklist', loggedInAs: 'Signed in as',
+    searchPh: 'Search: order no., model, color, serial, operator…',
+    allStatus: 'All statuses', refresh: 'Refresh', noOrders: 'No orders found.',
+    deliveryDate: 'Delivery date', edit: 'Edit', pdf: 'PDF',
+    model: 'Model', color: 'Color', powerHs: 'Power handpiece', operator: 'Operator',
+    serial: 'Serial number', wishes: 'Special requests', notes: 'Notes', status: 'Status',
+    editTitle: 'Edit order', photos: 'Photos', allRequired: '(all 3 required)',
+    front: 'Front', right: 'Right', left: 'Left',
+    pickPhoto: 'Choose photo', orCamera: 'or camera',
+    cancel: 'Cancel', save: 'Save', language: 'Language',
+    photosRequired: 'Please upload all 3 photos (Front, Right, Left).',
+    saved: 'Order saved', statusUpdated: 'Status updated',
+    noPdf: 'No PDF available', downloadFailed: 'Download failed',
+    s_offen: 'open', s_inBearbeitung: 'in progress', s_fertig: 'done', s_versendet: 'shipped',
+  },
+  zh: {
+    title: '生产', worklist: '工作清单', loggedInAs: '登录身份',
+    searchPh: '搜索：订单号、型号、颜色、序列号、操作员…',
+    allStatus: '所有状态', refresh: '刷新', noOrders: '未找到订单。',
+    deliveryDate: '交货日期', edit: '编辑', pdf: 'PDF',
+    model: '型号', color: '颜色', powerHs: '动力手柄', operator: '操作员',
+    serial: '序列号', wishes: '特殊要求', notes: '备注', status: '状态',
+    editTitle: '编辑订单', photos: '照片', allRequired: '（需全部 3 张）',
+    front: '正面', right: '右侧', left: '左侧',
+    pickPhoto: '选择照片', orCamera: '或使用相机',
+    cancel: '取消', save: '保存', language: '语言',
+    photosRequired: '请上传全部 3 张照片（正面、右侧、左侧）。',
+    saved: '订单已保存', statusUpdated: '状态已更新',
+    noPdf: '无可用 PDF', downloadFailed: '下载失败',
+    s_offen: '待处理', s_inBearbeitung: '处理中', s_fertig: '完成', s_versendet: '已发货',
+  },
+};
+
+const statusKey = (s: string) => {
+  switch (s) {
+    case 'offen': return 's_offen';
+    case 'in Bearbeitung': return 's_inBearbeitung';
+    case 'fertig': return 's_fertig';
+    case 'versendet': return 's_versendet';
+    default: return s;
+  }
+};
+
 export default function ProductionPortal() {
   const { profile } = useAuth();
   const [rows, setRows] = useState<ProductionOrderRow[]>([]);
@@ -56,6 +125,10 @@ export default function ProductionPortal() {
   const [saving, setSaving] = useState(false);
   const [photoPreviews, setPhotoPreviews] = useState<Record<PhotoSide, string | null>>({ front: null, right: null, left: null });
   const [uploadingSide, setUploadingSide] = useState<PhotoSide | null>(null);
+  const [lang, setLang] = useState<Lang>(() => (localStorage.getItem('production_lang') as Lang) || 'de');
+  const t = T[lang];
+  const tStatus = (s: string) => t[statusKey(s)] ?? s;
+  useEffect(() => { localStorage.setItem('production_lang', lang); }, [lang]);
 
   const load = async () => {
     setLoading(true);
@@ -78,7 +151,7 @@ export default function ProductionPortal() {
       .eq('id', id);
     setUpdatingId(null);
     if (error) return toast.error(error.message);
-    toast.success('Status aktualisiert');
+    toast.success(t.statusUpdated);
     setRows(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r));
   };
 
@@ -134,7 +207,7 @@ export default function ProductionPortal() {
   const saveEdit = async () => {
     if (!editing) return;
     if (!editForm.photo_front_path || !editForm.photo_right_path || !editForm.photo_left_path) {
-      return toast.error('Bitte alle 3 Fotos (Vorne, Rechts, Links) hochladen.');
+      return toast.error(t.photosRequired);
     }
     setSaving(true);
     const payload = {
@@ -156,15 +229,15 @@ export default function ProductionPortal() {
       .eq('id', editing.id);
     setSaving(false);
     if (error) return toast.error(error.message);
-    toast.success('Auftrag gespeichert');
+    toast.success(t.saved);
     setRows(prev => prev.map(r => r.id === editing.id ? { ...r, ...payload } as ProductionOrderRow : r));
     setEditing(null);
   };
 
   const downloadPdf = async (path: string | null, orderNumber: string) => {
-    if (!path) return toast.error('Kein PDF verfügbar');
+    if (!path) return toast.error(t.noPdf);
     const { data, error } = await supabase.storage.from('production-orders').download(path);
-    if (error || !data) return toast.error(error?.message || 'Download fehlgeschlagen');
+    if (error || !data) return toast.error(error?.message || t.downloadFailed);
     const url = URL.createObjectURL(data);
     const a = document.createElement('a');
     a.href = url;
@@ -190,14 +263,14 @@ export default function ProductionPortal() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-display font-bold gold-text flex items-center gap-2">
-            <Factory className="w-6 h-6" /> PRODUCTION
+            <Factory className="w-6 h-6" /> {t.title}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Arbeitsliste {supplierName ? `– ${supplierName}` : ''}
+            {t.worklist} {supplierName ? `– ${supplierName}` : ''}
           </p>
         </div>
         <div className="text-right text-xs text-muted-foreground">
-          Angemeldet als <span className="text-foreground font-medium">{profile?.full_name || profile?.email}</span>
+          {t.loggedInAs} <span className="text-foreground font-medium">{profile?.full_name || profile?.email}</span>
         </div>
       </div>
 
@@ -207,25 +280,46 @@ export default function ProductionPortal() {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Suche: Auftragsnr., Modell, Farbe, Seriennr., Bearbeiter…"
+            placeholder={t.searchPh}
             className="pl-9"
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Status" />
+            <SelectValue placeholder={t.status} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Alle Status</SelectItem>
+            <SelectItem value="all">{t.allStatus}</SelectItem>
             {STATUS_OPTIONS.map(s => (
-              <SelectItem key={s} value={s}>{s}</SelectItem>
+              <SelectItem key={s} value={s}>{tStatus(s)}</SelectItem>
             ))}
           </SelectContent>
         </Select>
         <Button variant="outline" onClick={load} disabled={loading}>
-          {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Aktualisieren
+          {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} {t.refresh}
         </Button>
       </Card>
+
+      {/* Language switcher */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs text-muted-foreground mr-1">{t.language}:</span>
+        {LANGS.map(l => (
+          <button
+            key={l.code}
+            type="button"
+            onClick={() => setLang(l.code)}
+            className={cn(
+              "flex items-center gap-2 px-3 py-1.5 rounded-md border text-xs font-medium transition-colors",
+              lang === l.code
+                ? "bg-primary/10 text-primary border-primary/40 shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.2)]"
+                : "border-border text-muted-foreground hover:text-foreground hover:bg-muted/40"
+            )}
+          >
+            <span className="text-base leading-none">{l.flag}</span>
+            <span>{l.label}</span>
+          </button>
+        ))}
+      </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
@@ -234,7 +328,7 @@ export default function ProductionPortal() {
       ) : filtered.length === 0 ? (
         <Card className="p-12 text-center text-muted-foreground">
           <Factory className="w-12 h-12 mx-auto mb-3 opacity-30" />
-          <p>Keine Bestellungen gefunden.</p>
+          <p>{t.noOrders}</p>
         </Card>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -244,18 +338,18 @@ export default function ProductionPortal() {
                 <div>
                   <p className="font-display font-semibold text-foreground">{row.order_number}</p>
                   <p className="text-xs text-muted-foreground">
-                    Liefertermin: <span className="text-foreground font-medium">
+                    {t.deliveryDate}: <span className="text-foreground font-medium">
                       {row.liefertermin ? format(new Date(row.liefertermin), 'dd.MM.yyyy') : '—'}
                     </span>
                   </p>
                 </div>
                 <div className="flex gap-2">
                   <Button size="sm" variant="outline" onClick={() => openEdit(row)}>
-                    <Pencil className="w-4 h-4 mr-1" /> Bearbeiten
+                    <Pencil className="w-4 h-4 mr-1" /> {t.edit}
                   </Button>
                   {row.pdf_path && (
                     <Button size="sm" variant="outline" onClick={() => downloadPdf(row.pdf_path, row.order_number)}>
-                      <Download className="w-4 h-4 mr-1" /> PDF
+                      <Download className="w-4 h-4 mr-1" /> {t.pdf}
                     </Button>
                   )}
                 </div>
@@ -263,43 +357,43 @@ export default function ProductionPortal() {
 
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div>
-                  <span className="text-muted-foreground">Modell:</span>{' '}
+                  <span className="text-muted-foreground">{t.model}:</span>{' '}
                   <span className="text-foreground">{row.modellname || '—'}</span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Farbe:</span>{' '}
+                  <span className="text-muted-foreground">{t.color}:</span>{' '}
                   <span className="text-foreground">{row.farbe || '—'}</span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Power-Handstück:</span>{' '}
+                  <span className="text-muted-foreground">{t.powerHs}:</span>{' '}
                   <span className="text-foreground">{row.power_handstueck || '—'}</span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Bearbeiter:</span>{' '}
+                  <span className="text-muted-foreground">{t.operator}:</span>{' '}
                   <span className="text-foreground">{row.bearbeiter || '—'}</span>
                 </div>
                 {row.seriennummer && (
                   <div className="col-span-2">
-                    <span className="text-muted-foreground">Seriennummer:</span>{' '}
+                    <span className="text-muted-foreground">{t.serial}:</span>{' '}
                     <span className="text-foreground">{row.seriennummer}</span>
                   </div>
                 )}
                 {row.sonderwuensche && (
                   <div className="col-span-2">
-                    <span className="text-muted-foreground">Sonderwünsche:</span>{' '}
+                    <span className="text-muted-foreground">{t.wishes}:</span>{' '}
                     <span className="text-foreground">{row.sonderwuensche}</span>
                   </div>
                 )}
                 {row.anmerkungen && (
                   <div className="col-span-2">
-                    <span className="text-muted-foreground">Anmerkungen:</span>{' '}
+                    <span className="text-muted-foreground">{t.notes}:</span>{' '}
                     <span className="text-foreground">{row.anmerkungen}</span>
                   </div>
                 )}
               </div>
 
               <div className="flex items-center gap-2 pt-2 border-t border-border">
-                <span className="text-xs text-muted-foreground">Status:</span>
+                <span className="text-xs text-muted-foreground">{t.status}:</span>
                 <Select
                   value={row.status}
                   onValueChange={(v) => updateStatus(row.id, v)}
@@ -310,7 +404,7 @@ export default function ProductionPortal() {
                   </SelectTrigger>
                   <SelectContent>
                     {STATUS_OPTIONS.map(s => (
-                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                      <SelectItem key={s} value={s}>{tStatus(s)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -324,43 +418,43 @@ export default function ProductionPortal() {
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Auftrag bearbeiten {editing && `– ${editing.order_number}`}</DialogTitle>
+            <DialogTitle>{t.editTitle} {editing && `– ${editing.order_number}`}</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-2">
             <div className="space-y-1.5">
-              <Label>Modell</Label>
+              <Label>{t.model}</Label>
               <Input value={editForm.modellname ?? ''} onChange={e => setEditForm(f => ({ ...f, modellname: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
-              <Label>Farbe</Label>
+              <Label>{t.color}</Label>
               <Input value={editForm.farbe ?? ''} onChange={e => setEditForm(f => ({ ...f, farbe: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
-              <Label>Power-Handstück</Label>
+              <Label>{t.powerHs}</Label>
               <Input value={editForm.power_handstueck ?? ''} onChange={e => setEditForm(f => ({ ...f, power_handstueck: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
-              <Label>Bearbeiter</Label>
+              <Label>{t.operator}</Label>
               <Input value={editForm.bearbeiter ?? ''} onChange={e => setEditForm(f => ({ ...f, bearbeiter: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
-              <Label>Seriennummer</Label>
+              <Label>{t.serial}</Label>
               <Input value={editForm.seriennummer ?? ''} onChange={e => setEditForm(f => ({ ...f, seriennummer: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
-              <Label>Status</Label>
+              <Label>{t.status}</Label>
               <Select value={editForm.status ?? 'offen'} onValueChange={v => setEditForm(f => ({ ...f, status: v }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {STATUS_OPTIONS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  {STATUS_OPTIONS.map(s => <SelectItem key={s} value={s}>{tStatus(s)}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="md:col-span-2 space-y-2">
-              <Label>Fotos <span className="text-destructive">*</span> <span className="text-xs text-muted-foreground font-normal">(alle 3 erforderlich)</span></Label>
+              <Label>{t.photos} <span className="text-destructive">*</span> <span className="text-xs text-muted-foreground font-normal">{t.allRequired}</span></Label>
               <div className="grid grid-cols-3 gap-3">
                 {(['front','right','left'] as PhotoSide[]).map(side => {
-                  const labels: Record<PhotoSide,string> = { front: 'Vorne', right: 'Rechts', left: 'Links' };
+                  const labels: Record<PhotoSide,string> = { front: t.front, right: t.right, left: t.left };
                   const key = `photo_${side}_path` as 'photo_front_path' | 'photo_right_path' | 'photo_left_path';
                   const hasPhoto = !!editForm[key];
                   const preview = photoPreviews[side];
@@ -380,7 +474,7 @@ export default function ProductionPortal() {
                         ) : (
                           <div className="flex flex-col items-center text-muted-foreground text-[11px] gap-1 p-2 text-center">
                             <Camera className="w-5 h-5" />
-                            <span>Foto wählen<br/>oder Kamera</span>
+                            <span>{t.pickPhoto}<br/>{t.orCamera}</span>
                           </div>
                         )}
                         {uploadingSide === side && (
@@ -407,18 +501,18 @@ export default function ProductionPortal() {
               </div>
             </div>
             <div className="space-y-1.5 md:col-span-2">
-              <Label>Sonderwünsche</Label>
+              <Label>{t.wishes}</Label>
               <Textarea rows={2} value={editForm.sonderwuensche ?? ''} onChange={e => setEditForm(f => ({ ...f, sonderwuensche: e.target.value }))} />
             </div>
             <div className="space-y-1.5 md:col-span-2">
-              <Label>Anmerkungen</Label>
+              <Label>{t.notes}</Label>
               <Textarea rows={3} value={editForm.anmerkungen ?? ''} onChange={e => setEditForm(f => ({ ...f, anmerkungen: e.target.value }))} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditing(null)} disabled={saving}>Abbrechen</Button>
+            <Button variant="outline" onClick={() => setEditing(null)} disabled={saving}>{t.cancel}</Button>
             <Button onClick={saveEdit} disabled={saving}>
-              {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Speichern
+              {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} {t.save}
             </Button>
           </DialogFooter>
         </DialogContent>
