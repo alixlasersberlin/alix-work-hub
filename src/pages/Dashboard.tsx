@@ -120,7 +120,7 @@ export default function Dashboard() {
   const [routePlans, setRoutePlans] = useState<RoutePlan[]>([]);
   const [financeRecords, setFinanceRecords] = useState<FinanceRecord[]>([]);
   const [shipmentFilter, setShipmentFilter] = useState<number | null>(14);
-  const [shipmentLimit, setShipmentLimit] = useState<number | null>(20);
+  const [shipmentLimit, setShipmentLimit] = useState<number | null>(10);
   const [shipmentSearch, setShipmentSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -270,7 +270,7 @@ export default function Dashboard() {
                   className="flex-1 min-w-[200px] h-8 px-3 text-xs rounded-md bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                 />
                 <div className="flex gap-1">
-                  {[{ label: '20', value: 20 }, { label: '30', value: 30 }, { label: '50', value: 50 }, { label: 'Alle', value: null }].map(opt => (
+                  {[{ label: '10', value: 10 }, { label: '20', value: 20 }, { label: '30', value: 30 }, { label: '50', value: 50 }, { label: 'Alle', value: null }].map(opt => (
                     <button
                       key={opt.label}
                       onClick={() => setShipmentLimit(opt.value)}
