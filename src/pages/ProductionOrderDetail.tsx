@@ -27,7 +27,7 @@ export default function ProductionOrderDetail() {
     })();
   }, [id]);
 
-  const downloadPdf = async (lang: 'bilingual' | 'zh' = 'bilingual') => {
+  const downloadPdf = async (lang: 'bilingual' | 'en' = 'bilingual') => {
     if (!data) return;
     const pdf = await generateProductionOrderPdf({
       order_number: data.order_number,
