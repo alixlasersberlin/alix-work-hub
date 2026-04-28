@@ -81,17 +81,45 @@ export default function ProductionOrderForm() {
   }, [id, isEdit]);
 
   const searchOrders = async () => {
-    if (!orderSearch.trim()) return;
+    const q = orderSearch.trim();
+    if (!q) return;
     setSearchingOrder(true);
-    const { data, error } = await supabase
+    const like = `%${q}%`;
+
+    // 1) Direkt nach Auftragsnummer suchen
+    const { data: byNumber, error: e1 } = await supabase
       .from('orders')
       .select('id, order_number, customer_id, customer:customers(company_name, contact_name)')
-      .ilike('order_number', `%${orderSearch.trim()}%`)
+      .ilike('order_number', like)
       .limit(20);
+    if (e1) { setSearchingOrder(false); return toast.error(e1.message); }
+
+    // 2) Kunden über Name finden, dann deren Aufträge
+    const { data: matchedCustomers } = await supabase
+      .from('customers')
+      .select('id')
+      .or(`company_name.ilike.${like},contact_name.ilike.${like}`)
+      .limit(50);
+
+    let byCustomer: any[] = [];
+    const custIds = (matchedCustomers || []).map((c: any) => c.id);
+    if (custIds.length) {
+      const { data } = await supabase
+        .from('orders')
+        .select('id, order_number, customer_id, customer:customers(company_name, contact_name)')
+        .in('customer_id', custIds)
+        .limit(50);
+      byCustomer = data || [];
+    }
+
+    // Merge + dedupe
+    const map = new Map<string, any>();
+    [...(byNumber || []), ...byCustomer].forEach(o => map.set(o.id, o));
+    const merged = Array.from(map.values());
+
     setSearchingOrder(false);
-    if (error) return toast.error(error.message);
-    setOrderResults(data || []);
-    if (!data?.length) toast.info('Keine Aufträge gefunden');
+    setOrderResults(merged);
+    if (!merged.length) toast.info('Keine Aufträge gefunden');
   };
 
   const pickOrder = async (o: any) => {
@@ -258,7 +286,7 @@ export default function ProductionOrderForm() {
         ) : (
           <div className="space-y-2">
             <div className="flex gap-2">
-              <Input placeholder="Auftragsnummer (z.B. SO-4190)" value={orderSearch}
+              <Input placeholder="Auftragsnummer oder Kundenname" value={orderSearch}
                 onChange={e => setOrderSearch(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && searchOrders()} />
               <Button onClick={searchOrders} disabled={searchingOrder}>
