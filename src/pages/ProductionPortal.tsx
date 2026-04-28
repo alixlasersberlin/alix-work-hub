@@ -200,6 +200,9 @@ export default function ProductionPortal() {
                   </p>
                 </div>
                 <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => openEdit(row)}>
+                    <Pencil className="w-4 h-4 mr-1" /> Bearbeiten
+                  </Button>
                   {row.pdf_path && (
                     <Button size="sm" variant="outline" onClick={() => downloadPdf(row.pdf_path, row.order_number)}>
                       <Download className="w-4 h-4 mr-1" /> PDF
