@@ -689,6 +689,21 @@ Deno.serve(async (req: Request) => {
 
   } catch (error: any) {
     console.error("start-zoho-import error:", error);
+    // Best-effort: log fatal error to order_import_logs
+    try {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL");
+      const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      if (supabaseUrl && serviceRoleKey) {
+        const adminClient = createClient(supabaseUrl, serviceRoleKey, {
+          auth: { autoRefreshToken: false, persistSession: false },
+        });
+        await adminClient.from("order_import_logs").insert({
+          source_system: "unknown",
+          import_status: "failed",
+          message: `Fataler Fehler: ${(error?.message ?? "Unbekannter Fehler").toString().slice(0, 1000)}`,
+        });
+      }
+    } catch (_) { /* ignore */ }
     const gracefulResponse = buildGracefulErrorResponse(error);
     if (gracefulResponse) {
       return gracefulResponse;
