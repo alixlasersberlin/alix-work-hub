@@ -165,7 +165,7 @@ export async function generateProductionOrderPdf(
   }
 
   const blob = doc.output('blob');
-  const suffix = lang === 'zh' ? '_ZH' : '';
+  const suffix = lang === 'en' ? '_EN' : '';
   const filename = `Bestellung_${data.order_number}_${format(new Date(), 'yyyyMMdd')}${suffix}.pdf`;
   return { blob, filename };
 }
