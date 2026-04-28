@@ -44,6 +44,75 @@ const STATUS_OPTIONS = [
   'versendet',
 ];
 
+type Lang = 'de' | 'en' | 'zh';
+
+const LANGS: { code: Lang; label: string; flag: string }[] = [
+  { code: 'de', label: 'Deutsch', flag: '🇩🇪' },
+  { code: 'en', label: 'English', flag: '🇬🇧' },
+  { code: 'zh', label: '中文', flag: '🇨🇳' },
+];
+
+const T: Record<Lang, Record<string, string>> = {
+  de: {
+    title: 'PRODUCTION', worklist: 'Arbeitsliste', loggedInAs: 'Angemeldet als',
+    searchPh: 'Suche: Auftragsnr., Modell, Farbe, Seriennr., Bearbeiter…',
+    allStatus: 'Alle Status', refresh: 'Aktualisieren', noOrders: 'Keine Bestellungen gefunden.',
+    deliveryDate: 'Liefertermin', edit: 'Bearbeiten', pdf: 'PDF',
+    model: 'Modell', color: 'Farbe', powerHs: 'Power-Handstück', operator: 'Bearbeiter',
+    serial: 'Seriennummer', wishes: 'Sonderwünsche', notes: 'Anmerkungen', status: 'Status',
+    editTitle: 'Auftrag bearbeiten', photos: 'Fotos', allRequired: '(alle 3 erforderlich)',
+    front: 'Vorne', right: 'Rechts', left: 'Links',
+    pickPhoto: 'Foto wählen', orCamera: 'oder Kamera',
+    cancel: 'Abbrechen', save: 'Speichern', language: 'Sprache',
+    photosRequired: 'Bitte alle 3 Fotos (Vorne, Rechts, Links) hochladen.',
+    saved: 'Auftrag gespeichert', statusUpdated: 'Status aktualisiert',
+    noPdf: 'Kein PDF verfügbar', downloadFailed: 'Download fehlgeschlagen',
+    s_offen: 'offen', s_inBearbeitung: 'in Bearbeitung', s_fertig: 'fertig', s_versendet: 'versendet',
+  },
+  en: {
+    title: 'PRODUCTION', worklist: 'Worklist', loggedInAs: 'Signed in as',
+    searchPh: 'Search: order no., model, color, serial, operator…',
+    allStatus: 'All statuses', refresh: 'Refresh', noOrders: 'No orders found.',
+    deliveryDate: 'Delivery date', edit: 'Edit', pdf: 'PDF',
+    model: 'Model', color: 'Color', powerHs: 'Power handpiece', operator: 'Operator',
+    serial: 'Serial number', wishes: 'Special requests', notes: 'Notes', status: 'Status',
+    editTitle: 'Edit order', photos: 'Photos', allRequired: '(all 3 required)',
+    front: 'Front', right: 'Right', left: 'Left',
+    pickPhoto: 'Choose photo', orCamera: 'or camera',
+    cancel: 'Cancel', save: 'Save', language: 'Language',
+    photosRequired: 'Please upload all 3 photos (Front, Right, Left).',
+    saved: 'Order saved', statusUpdated: 'Status updated',
+    noPdf: 'No PDF available', downloadFailed: 'Download failed',
+    s_offen: 'open', s_inBearbeitung: 'in progress', s_fertig: 'done', s_versendet: 'shipped',
+  },
+  zh: {
+    title: '生产', worklist: '工作清单', loggedInAs: '登录身份',
+    searchPh: '搜索：订单号、型号、颜色、序列号、操作员…',
+    allStatus: '所有状态', refresh: '刷新', noOrders: '未找到订单。',
+    deliveryDate: '交货日期', edit: '编辑', pdf: 'PDF',
+    model: '型号', color: '颜色', powerHs: '动力手柄', operator: '操作员',
+    serial: '序列号', wishes: '特殊要求', notes: '备注', status: '状态',
+    editTitle: '编辑订单', photos: '照片', allRequired: '（需全部 3 张）',
+    front: '正面', right: '右侧', left: '左侧',
+    pickPhoto: '选择照片', orCamera: '或使用相机',
+    cancel: '取消', save: '保存', language: '语言',
+    photosRequired: '请上传全部 3 张照片（正面、右侧、左侧）。',
+    saved: '订单已保存', statusUpdated: '状态已更新',
+    noPdf: '无可用 PDF', downloadFailed: '下载失败',
+    s_offen: '待处理', s_inBearbeitung: '处理中', s_fertig: '完成', s_versendet: '已发货',
+  },
+};
+
+const statusKey = (s: string) => {
+  switch (s) {
+    case 'offen': return 's_offen';
+    case 'in Bearbeitung': return 's_inBearbeitung';
+    case 'fertig': return 's_fertig';
+    case 'versendet': return 's_versendet';
+    default: return s;
+  }
+};
+
 export default function ProductionPortal() {
   const { profile } = useAuth();
   const [rows, setRows] = useState<ProductionOrderRow[]>([]);
