@@ -355,6 +355,56 @@ export default function ProductionPortal() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="md:col-span-2 space-y-2">
+              <Label>Fotos <span className="text-destructive">*</span> <span className="text-xs text-muted-foreground font-normal">(alle 3 erforderlich)</span></Label>
+              <div className="grid grid-cols-3 gap-3">
+                {(['front','right','left'] as PhotoSide[]).map(side => {
+                  const labels: Record<PhotoSide,string> = { front: 'Vorne', right: 'Rechts', left: 'Links' };
+                  const key = `photo_${side}_path` as 'photo_front_path' | 'photo_right_path' | 'photo_left_path';
+                  const hasPhoto = !!editForm[key];
+                  const preview = photoPreviews[side];
+                  const inputId = `photo-${side}`;
+                  return (
+                    <div key={side} className="space-y-1.5">
+                      <div className="text-xs font-medium text-muted-foreground text-center">{labels[side]}</div>
+                      <label
+                        htmlFor={inputId}
+                        className={cn(
+                          "relative aspect-square w-full rounded-lg border-2 border-dashed flex items-center justify-center cursor-pointer overflow-hidden bg-muted/20 hover:bg-muted/40 transition-colors",
+                          hasPhoto ? "border-primary/40" : "border-border"
+                        )}
+                      >
+                        {preview ? (
+                          <img src={preview} alt={labels[side]} className="absolute inset-0 w-full h-full object-cover" />
+                        ) : (
+                          <div className="flex flex-col items-center text-muted-foreground text-[11px] gap-1 p-2 text-center">
+                            <Camera className="w-5 h-5" />
+                            <span>Foto wählen<br/>oder Kamera</span>
+                          </div>
+                        )}
+                        {uploadingSide === side && (
+                          <div className="absolute inset-0 bg-background/70 flex items-center justify-center">
+                            <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                          </div>
+                        )}
+                      </label>
+                      <input
+                        id={inputId}
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        className="hidden"
+                        onChange={e => {
+                          const file = e.target.files?.[0];
+                          if (file) handlePhotoUpload(side, file);
+                          e.target.value = '';
+                        }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
             <div className="space-y-1.5 md:col-span-2">
               <Label>Sonderwünsche</Label>
               <Textarea rows={2} value={editForm.sonderwuensche ?? ''} onChange={e => setEditForm(f => ({ ...f, sonderwuensche: e.target.value }))} />
