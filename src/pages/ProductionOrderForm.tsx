@@ -286,7 +286,7 @@ export default function ProductionOrderForm() {
         ) : (
           <div className="space-y-2">
             <div className="flex gap-2">
-              <Input placeholder="Auftragsnummer (z.B. SO-4190)" value={orderSearch}
+              <Input placeholder="Auftragsnummer oder Kundenname" value={orderSearch}
                 onChange={e => setOrderSearch(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && searchOrders()} />
               <Button onClick={searchOrders} disabled={searchingOrder}>
