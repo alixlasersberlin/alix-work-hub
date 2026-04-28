@@ -267,10 +267,15 @@ export default function UserManagement() {
           editRoleIds.map(role_id => ({ user_id: selectedUser.id, role_id }))
         );
       }
-      // Update department
-      await supabase.from('user_profiles').update({ department_id: editDeptId && editDeptId !== 'none' ? editDeptId : null }).eq('id', selectedUser.id);
+      // Update department + supplier
+      const lieferantRoleId = roles.find(r => r.name === 'Lieferant')?.id;
+      const isLieferant = lieferantRoleId ? editRoleIds.includes(lieferantRoleId) : false;
+      await supabase.from('user_profiles').update({
+        department_id: editDeptId && editDeptId !== 'none' ? editDeptId : null,
+        supplier_id: isLieferant && editSupplierId !== 'none' ? editSupplierId : null,
+      }).eq('id', selectedUser.id);
 
-      toast.success('Rollen und Abteilung gespeichert');
+      toast.success('Rollen, Abteilung und Lieferant gespeichert');
       setShowEditRoles(false);
       loadData();
     } catch (e: any) {
@@ -282,6 +287,7 @@ export default function UserManagement() {
   const openEditRoles = (user: EnrichedUser) => {
     setEditRoleIds([...user.roleIds]);
     setEditDeptId(user.department_id || '');
+    setEditSupplierId((user as any).supplier_id || 'none');
     setSelectedUser(user);
     setShowEditRoles(true);
   };
