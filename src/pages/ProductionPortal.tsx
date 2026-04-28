@@ -4,10 +4,13 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Factory, FileText, Download, Search } from 'lucide-react';
+import { Loader2, Factory, Download, Search, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface ProductionOrderRow {
   id: string;
@@ -41,6 +44,9 @@ export default function ProductionPortal() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [editing, setEditing] = useState<ProductionOrderRow | null>(null);
+  const [editForm, setEditForm] = useState<Partial<ProductionOrderRow>>({});
+  const [saving, setSaving] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -65,6 +71,44 @@ export default function ProductionPortal() {
     if (error) return toast.error(error.message);
     toast.success('Status aktualisiert');
     setRows(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r));
+  };
+
+  const openEdit = (row: ProductionOrderRow) => {
+    setEditing(row);
+    setEditForm({
+      modellname: row.modellname,
+      farbe: row.farbe,
+      power_handstueck: row.power_handstueck,
+      bearbeiter: row.bearbeiter,
+      seriennummer: row.seriennummer,
+      sonderwuensche: row.sonderwuensche,
+      anmerkungen: row.anmerkungen,
+      status: row.status,
+    });
+  };
+
+  const saveEdit = async () => {
+    if (!editing) return;
+    setSaving(true);
+    const payload = {
+      modellname: editForm.modellname ?? null,
+      farbe: editForm.farbe ?? '',
+      power_handstueck: editForm.power_handstueck ?? '',
+      bearbeiter: editForm.bearbeiter ?? '',
+      seriennummer: editForm.seriennummer ?? null,
+      sonderwuensche: editForm.sonderwuensche ?? null,
+      anmerkungen: editForm.anmerkungen ?? null,
+      status: editForm.status ?? editing.status,
+    };
+    const { error } = await supabase
+      .from('production_orders')
+      .update(payload)
+      .eq('id', editing.id);
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success('Auftrag gespeichert');
+    setRows(prev => prev.map(r => r.id === editing.id ? { ...r, ...payload } as ProductionOrderRow : r));
+    setEditing(null);
   };
 
   const downloadPdf = async (path: string | null, orderNumber: string) => {
@@ -156,6 +200,9 @@ export default function ProductionPortal() {
                   </p>
                 </div>
                 <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => openEdit(row)}>
+                    <Pencil className="w-4 h-4 mr-1" /> Bearbeiten
+                  </Button>
                   {row.pdf_path && (
                     <Button size="sm" variant="outline" onClick={() => downloadPdf(row.pdf_path, row.order_number)}>
                       <Download className="w-4 h-4 mr-1" /> PDF
@@ -223,6 +270,59 @@ export default function ProductionPortal() {
           ))}
         </div>
       )}
+
+      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Auftrag bearbeiten {editing && `– ${editing.order_number}`}</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-2">
+            <div className="space-y-1.5">
+              <Label>Modell</Label>
+              <Input value={editForm.modellname ?? ''} onChange={e => setEditForm(f => ({ ...f, modellname: e.target.value }))} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Farbe</Label>
+              <Input value={editForm.farbe ?? ''} onChange={e => setEditForm(f => ({ ...f, farbe: e.target.value }))} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Power-Handstück</Label>
+              <Input value={editForm.power_handstueck ?? ''} onChange={e => setEditForm(f => ({ ...f, power_handstueck: e.target.value }))} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Bearbeiter</Label>
+              <Input value={editForm.bearbeiter ?? ''} onChange={e => setEditForm(f => ({ ...f, bearbeiter: e.target.value }))} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Seriennummer</Label>
+              <Input value={editForm.seriennummer ?? ''} onChange={e => setEditForm(f => ({ ...f, seriennummer: e.target.value }))} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Status</Label>
+              <Select value={editForm.status ?? 'offen'} onValueChange={v => setEditForm(f => ({ ...f, status: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5 md:col-span-2">
+              <Label>Sonderwünsche</Label>
+              <Textarea rows={2} value={editForm.sonderwuensche ?? ''} onChange={e => setEditForm(f => ({ ...f, sonderwuensche: e.target.value }))} />
+            </div>
+            <div className="space-y-1.5 md:col-span-2">
+              <Label>Anmerkungen</Label>
+              <Textarea rows={3} value={editForm.anmerkungen ?? ''} onChange={e => setEditForm(f => ({ ...f, anmerkungen: e.target.value }))} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditing(null)} disabled={saving}>Abbrechen</Button>
+            <Button onClick={saveEdit} disabled={saving}>
+              {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Speichern
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
