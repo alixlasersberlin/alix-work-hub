@@ -104,7 +104,27 @@ export async function generateProductionOrderPdf(
   const pageWidth = 210;
   let y = 20;
 
-  // Header
+  // Logo + Absenderadresse rechts oben
+  const logoData = await loadLogoDataUrl();
+  const logoW = 32;
+  const logoH = 12;
+  const rightX = pageWidth - 20;
+  let rightY = y;
+  if (logoData) {
+    try {
+      doc.addImage(logoData, 'PNG', rightX - logoW, rightY - 4, logoW, logoH);
+      rightY += logoH;
+    } catch (e) {
+      console.warn('Logo Embed fehlgeschlagen', e);
+    }
+  }
+  doc.setFontSize(8);
+  COMPANY_ADDRESS.forEach((line) => {
+    drawText(line, rightX, rightY, 'normal', { align: 'right' });
+    rightY += 3.5;
+  });
+
+  // Titel links oben
   doc.setFontSize(16);
   if (lang === 'en') {
     drawText(L.title[1], 20, y, 'bold');
@@ -114,10 +134,12 @@ export async function generateProductionOrderPdf(
     drawText(L.title[1], 20, y + 6, 'bold');
   }
 
+  // Bestellnr / Datum unter Header (nach Logo+Adresse-Block)
+  y = Math.max(y + 18, rightY + 4);
   doc.setFontSize(10);
-  drawText(`${bi('orderNo')}: ${data.order_number}`, pageWidth - 20, y, 'normal', { align: 'right' });
-  drawText(`${bi('date')}: ${format(new Date(), 'dd.MM.yyyy')}`, pageWidth - 20, y + 6, 'normal', { align: 'right' });
-  y += 18;
+  drawText(`${bi('orderNo')}: ${data.order_number}`, rightX, y, 'normal', { align: 'right' });
+  drawText(`${bi('date')}: ${format(new Date(), 'dd.MM.yyyy')}`, rightX, y + 5, 'normal', { align: 'right' });
+  y += 12;
 
   // Empfänger
   doc.setFontSize(11);
