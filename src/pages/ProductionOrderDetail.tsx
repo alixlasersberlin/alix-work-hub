@@ -27,7 +27,7 @@ export default function ProductionOrderDetail() {
     })();
   }, [id]);
 
-  const downloadPdf = async () => {
+  const downloadPdf = async (lang: 'bilingual' | 'zh' = 'bilingual') => {
     if (!data) return;
     const pdf = await generateProductionOrderPdf({
       order_number: data.order_number,
@@ -41,7 +41,7 @@ export default function ProductionOrderDetail() {
       anmerkungen: data.anmerkungen,
       supplier: data.supplier,
       items,
-    });
+    }, lang);
     const url = URL.createObjectURL(pdf.blob);
     const a = document.createElement('a');
     a.href = url; a.download = pdf.filename; a.click();
