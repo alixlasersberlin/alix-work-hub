@@ -81,7 +81,13 @@ export default function ProductionPortal() {
     setRows(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r));
   };
 
-  const openEdit = (row: ProductionOrderRow) => {
+  const signedPhotoUrl = async (path: string | null) => {
+    if (!path) return null;
+    const { data } = await supabase.storage.from('production-photos').createSignedUrl(path, 3600);
+    return data?.signedUrl ?? null;
+  };
+
+  const openEdit = async (row: ProductionOrderRow) => {
     setEditing(row);
     setEditForm({
       modellname: row.modellname,
@@ -92,11 +98,43 @@ export default function ProductionPortal() {
       sonderwuensche: row.sonderwuensche,
       anmerkungen: row.anmerkungen,
       status: row.status,
+      photo_front_path: row.photo_front_path,
+      photo_right_path: row.photo_right_path,
+      photo_left_path: row.photo_left_path,
     });
+    setPhotoPreviews({ front: null, right: null, left: null });
+    const [front, right, left] = await Promise.all([
+      signedPhotoUrl(row.photo_front_path),
+      signedPhotoUrl(row.photo_right_path),
+      signedPhotoUrl(row.photo_left_path),
+    ]);
+    setPhotoPreviews({ front, right, left });
+  };
+
+  const handlePhotoUpload = async (side: PhotoSide, file: File) => {
+    if (!editing) return;
+    setUploadingSide(side);
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    const path = `${editing.supplier_id}/${editing.id}/${side}-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage
+      .from('production-photos')
+      .upload(path, file, { upsert: true, contentType: file.type || 'image/jpeg' });
+    if (error) {
+      setUploadingSide(null);
+      return toast.error(error.message);
+    }
+    const key = `photo_${side}_path` as 'photo_front_path' | 'photo_right_path' | 'photo_left_path';
+    setEditForm(f => ({ ...f, [key]: path }));
+    const url = await signedPhotoUrl(path);
+    setPhotoPreviews(p => ({ ...p, [side]: url }));
+    setUploadingSide(null);
   };
 
   const saveEdit = async () => {
     if (!editing) return;
+    if (!editForm.photo_front_path || !editForm.photo_right_path || !editForm.photo_left_path) {
+      return toast.error('Bitte alle 3 Fotos (Vorne, Rechts, Links) hochladen.');
+    }
     setSaving(true);
     const payload = {
       modellname: editForm.modellname ?? null,
@@ -107,6 +145,9 @@ export default function ProductionPortal() {
       sonderwuensche: editForm.sonderwuensche ?? null,
       anmerkungen: editForm.anmerkungen ?? null,
       status: editForm.status ?? editing.status,
+      photo_front_path: editForm.photo_front_path,
+      photo_right_path: editForm.photo_right_path,
+      photo_left_path: editForm.photo_left_path,
     };
     const { error } = await supabase
       .from('production_orders')
