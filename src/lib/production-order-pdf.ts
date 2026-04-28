@@ -1,6 +1,35 @@
 import { createPDF } from './pdf-utils';
 import { ensureCJKFont } from './pdf-cjk-font';
 import { format } from 'date-fns';
+import alixLogo from '@/assets/alix-lasers-logo.png';
+
+const COMPANY_ADDRESS = [
+  'Alix Lasers GmbH',
+  'Buchsbaumweg 53',
+  '12357 Berlin',
+  'Deutschland',
+];
+
+let logoDataUrlPromise: Promise<string | null> | null = null;
+async function loadLogoDataUrl(): Promise<string | null> {
+  if (logoDataUrlPromise) return logoDataUrlPromise;
+  logoDataUrlPromise = (async () => {
+    try {
+      const res = await fetch(alixLogo);
+      const blob = await res.blob();
+      return await new Promise<string>((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result as string);
+        r.onerror = reject;
+        r.readAsDataURL(blob);
+      });
+    } catch (e) {
+      console.warn('Logo konnte nicht geladen werden', e);
+      return null;
+    }
+  })();
+  return logoDataUrlPromise;
+}
 
 export interface ProductionOrderPdfData {
   order_number: string;
