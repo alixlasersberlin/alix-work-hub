@@ -418,43 +418,43 @@ export default function ProductionPortal() {
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Auftrag bearbeiten {editing && `– ${editing.order_number}`}</DialogTitle>
+            <DialogTitle>{t.editTitle} {editing && `– ${editing.order_number}`}</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-2">
             <div className="space-y-1.5">
-              <Label>Modell</Label>
+              <Label>{t.model}</Label>
               <Input value={editForm.modellname ?? ''} onChange={e => setEditForm(f => ({ ...f, modellname: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
-              <Label>Farbe</Label>
+              <Label>{t.color}</Label>
               <Input value={editForm.farbe ?? ''} onChange={e => setEditForm(f => ({ ...f, farbe: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
-              <Label>Power-Handstück</Label>
+              <Label>{t.powerHs}</Label>
               <Input value={editForm.power_handstueck ?? ''} onChange={e => setEditForm(f => ({ ...f, power_handstueck: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
-              <Label>Bearbeiter</Label>
+              <Label>{t.operator}</Label>
               <Input value={editForm.bearbeiter ?? ''} onChange={e => setEditForm(f => ({ ...f, bearbeiter: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
-              <Label>Seriennummer</Label>
+              <Label>{t.serial}</Label>
               <Input value={editForm.seriennummer ?? ''} onChange={e => setEditForm(f => ({ ...f, seriennummer: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
-              <Label>Status</Label>
+              <Label>{t.status}</Label>
               <Select value={editForm.status ?? 'offen'} onValueChange={v => setEditForm(f => ({ ...f, status: v }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {STATUS_OPTIONS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  {STATUS_OPTIONS.map(s => <SelectItem key={s} value={s}>{tStatus(s)}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="md:col-span-2 space-y-2">
-              <Label>Fotos <span className="text-destructive">*</span> <span className="text-xs text-muted-foreground font-normal">(alle 3 erforderlich)</span></Label>
+              <Label>{t.photos} <span className="text-destructive">*</span> <span className="text-xs text-muted-foreground font-normal">{t.allRequired}</span></Label>
               <div className="grid grid-cols-3 gap-3">
                 {(['front','right','left'] as PhotoSide[]).map(side => {
-                  const labels: Record<PhotoSide,string> = { front: 'Vorne', right: 'Rechts', left: 'Links' };
+                  const labels: Record<PhotoSide,string> = { front: t.front, right: t.right, left: t.left };
                   const key = `photo_${side}_path` as 'photo_front_path' | 'photo_right_path' | 'photo_left_path';
                   const hasPhoto = !!editForm[key];
                   const preview = photoPreviews[side];
@@ -474,7 +474,7 @@ export default function ProductionPortal() {
                         ) : (
                           <div className="flex flex-col items-center text-muted-foreground text-[11px] gap-1 p-2 text-center">
                             <Camera className="w-5 h-5" />
-                            <span>Foto wählen<br/>oder Kamera</span>
+                            <span>{t.pickPhoto}<br/>{t.orCamera}</span>
                           </div>
                         )}
                         {uploadingSide === side && (
@@ -501,18 +501,18 @@ export default function ProductionPortal() {
               </div>
             </div>
             <div className="space-y-1.5 md:col-span-2">
-              <Label>Sonderwünsche</Label>
+              <Label>{t.wishes}</Label>
               <Textarea rows={2} value={editForm.sonderwuensche ?? ''} onChange={e => setEditForm(f => ({ ...f, sonderwuensche: e.target.value }))} />
             </div>
             <div className="space-y-1.5 md:col-span-2">
-              <Label>Anmerkungen</Label>
+              <Label>{t.notes}</Label>
               <Textarea rows={3} value={editForm.anmerkungen ?? ''} onChange={e => setEditForm(f => ({ ...f, anmerkungen: e.target.value }))} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditing(null)} disabled={saving}>Abbrechen</Button>
+            <Button variant="outline" onClick={() => setEditing(null)} disabled={saving}>{t.cancel}</Button>
             <Button onClick={saveEdit} disabled={saving}>
-              {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Speichern
+              {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} {t.save}
             </Button>
           </DialogFooter>
         </DialogContent>
