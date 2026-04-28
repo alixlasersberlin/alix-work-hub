@@ -78,6 +78,12 @@ function ProtectedRoute({ children, requiredRoles }: { children: React.ReactNode
   return <>{children}</>;
 }
 
+function HomeRoute() {
+  const { roles } = useAuth();
+  if (isSupplierOnly(roles)) return <Navigate to="/production" replace />;
+  return <Dashboard />;
+}
+
 function AppRoutes() {
   const { user, loading } = useAuth();
 
