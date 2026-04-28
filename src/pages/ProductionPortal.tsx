@@ -73,6 +73,44 @@ export default function ProductionPortal() {
     setRows(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r));
   };
 
+  const openEdit = (row: ProductionOrderRow) => {
+    setEditing(row);
+    setEditForm({
+      modellname: row.modellname,
+      farbe: row.farbe,
+      power_handstueck: row.power_handstueck,
+      bearbeiter: row.bearbeiter,
+      seriennummer: row.seriennummer,
+      sonderwuensche: row.sonderwuensche,
+      anmerkungen: row.anmerkungen,
+      status: row.status,
+    });
+  };
+
+  const saveEdit = async () => {
+    if (!editing) return;
+    setSaving(true);
+    const payload: Record<string, unknown> = {
+      modellname: editForm.modellname ?? null,
+      farbe: editForm.farbe ?? '',
+      power_handstueck: editForm.power_handstueck ?? '',
+      bearbeiter: editForm.bearbeiter ?? '',
+      seriennummer: editForm.seriennummer ?? null,
+      sonderwuensche: editForm.sonderwuensche ?? null,
+      anmerkungen: editForm.anmerkungen ?? null,
+      status: editForm.status ?? editing.status,
+    };
+    const { error } = await supabase
+      .from('production_orders')
+      .update(payload)
+      .eq('id', editing.id);
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success('Auftrag gespeichert');
+    setRows(prev => prev.map(r => r.id === editing.id ? { ...r, ...payload } as ProductionOrderRow : r));
+    setEditing(null);
+  };
+
   const downloadPdf = async (path: string | null, orderNumber: string) => {
     if (!path) return toast.error('Kein PDF verfügbar');
     const { data, error } = await supabase.storage.from('production-orders').download(path);
