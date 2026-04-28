@@ -120,7 +120,7 @@ export default function Dashboard() {
   const [routePlans, setRoutePlans] = useState<RoutePlan[]>([]);
   const [financeRecords, setFinanceRecords] = useState<FinanceRecord[]>([]);
   const [shipmentFilter, setShipmentFilter] = useState<number | null>(14);
-  const [shipmentLimit, setShipmentLimit] = useState<number | null>(20);
+  const [shipmentLimit, setShipmentLimit] = useState<number | null>(10);
   const [shipmentSearch, setShipmentSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
