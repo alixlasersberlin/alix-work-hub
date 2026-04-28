@@ -290,9 +290,14 @@ export default function Dashboard() {
               <TableSkeleton />
             ) : (() => {
               const now = new Date();
+              const EXCLUDED_STATUSES = ['geliefert', 'anwalt', 'teilgeliefert'];
+              const statusFiltered = shipmentOrders.filter(o => {
+                const s = (o.order_status || '').toLowerCase().trim();
+                return !EXCLUDED_STATUSES.includes(s);
+              });
               const dateFiltered = shipmentFilter === null
-                ? shipmentOrders
-                : shipmentOrders.filter(o => {
+                ? statusFiltered
+                : statusFiltered.filter(o => {
                     if (!o.expected_shipment_date) return false;
                     const diff = (new Date(o.expected_shipment_date).getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
                     return diff <= shipmentFilter;
