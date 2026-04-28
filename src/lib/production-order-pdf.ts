@@ -77,9 +77,13 @@ export async function generateProductionOrderPdf(
 
   // Header
   doc.setFontSize(16);
-  drawText(L.title[0], 20, y, 'bold');
-  doc.setFontSize(12);
-  drawText(L.title[1], 20, y + 6, 'bold');
+  if (lang === 'zh') {
+    drawText(L.title[1], 20, y, 'bold');
+  } else {
+    drawText(L.title[0], 20, y, 'bold');
+    doc.setFontSize(12);
+    drawText(L.title[1], 20, y + 6, 'bold');
+  }
 
   doc.setFontSize(10);
   drawText(`${bi('orderNo')}: ${data.order_number}`, pageWidth - 20, y, 'normal', { align: 'right' });
