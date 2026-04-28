@@ -634,6 +634,45 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    // Log import summary to order_import_logs (one entry per page/call)
+    try {
+      const importedByUser = isScheduledCall ? null : (userId && userId !== "system-scheduled" ? userId : null);
+      const summaryParts = [
+        `${entity === "contacts" ? "Kunden" : "Aufträge"} Seite ${page}`,
+        `${items.length} geladen`,
+        `${imported} neu`,
+        `${updated} aktualisiert`,
+        `${skipped} übersprungen`,
+        `${failed} Fehler`,
+      ];
+      if (isDryRun) summaryParts.unshift("DRY-RUN");
+      if (isScheduledCall) summaryParts.unshift("Scheduled");
+      if (body.job_id) summaryParts.push(`Job ${body.job_id}`);
+
+      await adminClient.from("order_import_logs").insert({
+        source_system: sourceSystem,
+        import_status: failed > 0 ? (imported + updated > 0 ? "partial" : "failed") : "success",
+        message: summaryParts.join(" · "),
+        imported_by: importedByUser,
+      });
+
+      // Per-error detail entries (cap to avoid log spam)
+      const maxErrorLogs = 25;
+      for (const e of errors.slice(0, maxErrorLogs)) {
+        await adminClient.from("order_import_logs").insert({
+          source_system: sourceSystem,
+          import_status: "failed",
+          order_number: e.type === "order" ? e.id : null,
+          external_order_id: e.type === "order" ? e.id : null,
+          external_customer_id: e.type === "customer" ? e.id : null,
+          message: `${e.type}: ${e.message}`.slice(0, 1000),
+          imported_by: importedByUser,
+        });
+      }
+    } catch (logErr: any) {
+      console.warn("Failed to write order_import_logs:", logErr?.message);
+    }
+
     return jsonResponse({
       success: true,
       entity,
@@ -650,6 +689,21 @@ Deno.serve(async (req: Request) => {
 
   } catch (error: any) {
     console.error("start-zoho-import error:", error);
+    // Best-effort: log fatal error to order_import_logs
+    try {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL");
+      const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      if (supabaseUrl && serviceRoleKey) {
+        const adminClient = createClient(supabaseUrl, serviceRoleKey, {
+          auth: { autoRefreshToken: false, persistSession: false },
+        });
+        await adminClient.from("order_import_logs").insert({
+          source_system: "unknown",
+          import_status: "failed",
+          message: `Fataler Fehler: ${(error?.message ?? "Unbekannter Fehler").toString().slice(0, 1000)}`,
+        });
+      }
+    } catch (_) { /* ignore */ }
     const gracefulResponse = buildGracefulErrorResponse(error);
     if (gracefulResponse) {
       return gracefulResponse;
