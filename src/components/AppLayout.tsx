@@ -32,12 +32,12 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    path: '/einkauf', label: 'EINKAUF', icon: ShoppingCart, roles: ['Admin', 'Super Admin', 'Lieferant'],
+    path: '/einkauf', label: 'EINKAUF', icon: ShoppingCart, roles: ['Admin', 'Super Admin'],
     children: [
       { path: '/order', label: 'Order', icon: Factory, roles: ['Admin', 'Super Admin'] },
-      { path: '/production', label: 'PRODUCTION', icon: Factory, roles: ['Admin', 'Super Admin', 'Lieferant'] },
     ],
   },
+  { path: '/production', label: 'PRODUCTION', icon: Factory, roles: ['Admin', 'Super Admin', 'Lieferant'] },
   {
     path: '/workflow', label: 'WORKFLOW', icon: Workflow, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Read Only Audit'],
     children: [
