@@ -364,6 +364,7 @@ export default function ProductionOrderForm() {
         <Button variant="outline" onClick={() => navigate('/order')} disabled={saving}>Abbrechen</Button>
         <Button variant="outline" onClick={onSave} disabled={saving}><Save className="w-4 h-4 mr-2" /> Speichern</Button>
         <Button variant="outline" onClick={onSaveAndDownload} disabled={saving}><Download className="w-4 h-4 mr-2" /> Speichern + PDF</Button>
+        <Button variant="outline" onClick={onSaveAndDownloadZh} disabled={saving}><Download className="w-4 h-4 mr-2" /> PDF (中文)</Button>
         <Button onClick={onSaveAndSend} disabled={saving}>
           {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
           Speichern + an Zulieferer senden
