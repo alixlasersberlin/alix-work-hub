@@ -40,16 +40,24 @@ export default function AppLayout() {
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
-  const visibleItems = navItems.filter(item => {
+  const filterByRoles = (item: { roles: string[] | null }) => {
     if (!item.roles) return true;
     return item.roles.some(r => roles.includes(r));
-  });
+  };
+
+  const visibleItems = navItems.filter(filterByRoles).map(item => ({
+    ...item,
+    children: item.children?.filter(filterByRoles),
+  }));
 
   const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/';
     return location.pathname.startsWith(path);
   };
+
+  const toggleGroup = (path: string) => setOpenGroups(s => ({ ...s, [path]: !s[path] }));
 
   return (
     <div className="min-h-screen flex bg-background">
