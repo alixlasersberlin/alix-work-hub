@@ -27,7 +27,7 @@ export default function ProductionOrderDetail() {
     })();
   }, [id]);
 
-  const downloadPdf = async (lang: 'bilingual' | 'zh' = 'bilingual') => {
+  const downloadPdf = async (lang: 'bilingual' | 'en' = 'bilingual') => {
     if (!data) return;
     const pdf = await generateProductionOrderPdf({
       order_number: data.order_number,
@@ -61,7 +61,7 @@ export default function ProductionOrderDetail() {
         <h1 className="text-2xl font-display font-bold gold-text">Bestellung {data.order_number}</h1>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => downloadPdf('bilingual')}><Download className="w-4 h-4 mr-2" /> PDF</Button>
-          <Button variant="outline" onClick={() => downloadPdf('zh')}><Download className="w-4 h-4 mr-2" /> PDF (中文)</Button>
+          <Button variant="outline" onClick={() => downloadPdf('en')}><Download className="w-4 h-4 mr-2" /> PDF (EN)</Button>
           <Button asChild><Link to={`/order/${data.id}/bearbeiten`}><Pencil className="w-4 h-4 mr-2" /> Bearbeiten</Link></Button>
         </div>
       </div>

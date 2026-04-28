@@ -16,38 +16,38 @@ export interface ProductionOrderPdfData {
   items: Array<{ item_name?: string | null; description?: string | null; sku?: string | null; quantity?: number | null; unit?: string | null }>;
 }
 
-// Zweisprachige Labels: Deutsch / 中文
+// Zweisprachige Labels: Deutsch / English
 const L = {
-  title:        ['Bestellung an Produktion', '生产订单'],
-  orderNo:      ['Bestellnummer',            '订单编号'],
-  date:         ['Datum',                    '日期'],
-  recipient:    ['Empfänger',                '收件人'],
-  email:        ['E-Mail',                   '电子邮件'],
-  phone:        ['Telefon',                  '电话'],
-  details:      ['Bestelldetails',           '订单详情'],
-  modellname:   ['Modellname',               '型号名称'],
-  farbe:        ['Farbe',                    '颜色'],
-  power:        ['Power Handstück',          '动力手柄'],
-  bearbeiter:   ['Bearbeiter',               '负责人'],
-  liefertermin: ['Liefertermin',             '交货日期'],
-  seriennummer: ['Seriennummer',             '序列号'],
-  sonder:       ['Sonderwünsche',            '特殊要求'],
-  positions:    ['Positionen',               '产品项目'],
-  pos:          ['Pos',                      '序号'],
-  artikel:      ['Artikel',                  '产品'],
-  beschreibung: ['Beschreibung',             '描述'],
-  menge:        ['Menge',                    '数量'],
-  anmerk:       ['Anmerkungen',              '备注'],
+  title:        ['Bestellung an Produktion', 'Production Order'],
+  orderNo:      ['Bestellnummer',            'Order No.'],
+  date:         ['Datum',                    'Date'],
+  recipient:    ['Empfänger',                'Recipient'],
+  email:        ['E-Mail',                   'Email'],
+  phone:        ['Telefon',                  'Phone'],
+  details:      ['Bestelldetails',           'Order Details'],
+  modellname:   ['Modellname',               'Model Name'],
+  farbe:        ['Farbe',                    'Color'],
+  power:        ['Power Handstück',          'Power Handpiece'],
+  bearbeiter:   ['Bearbeiter',               'Processor'],
+  liefertermin: ['Liefertermin',             'Delivery Date'],
+  seriennummer: ['Seriennummer',             'Serial Number'],
+  sonder:       ['Sonderwünsche',            'Special Requests'],
+  positions:    ['Positionen',               'Items'],
+  pos:          ['Pos',                      'No.'],
+  artikel:      ['Artikel',                  'Article'],
+  beschreibung: ['Beschreibung',             'Description'],
+  menge:        ['Menge',                    'Quantity'],
+  anmerk:       ['Anmerkungen',              'Notes'],
 };
 
-export type PdfLang = 'bilingual' | 'zh';
+export type PdfLang = 'bilingual' | 'en';
 
 export async function generateProductionOrderPdf(
   data: ProductionOrderPdfData,
   lang: PdfLang = 'bilingual'
 ): Promise<{ blob: Blob; filename: string }> {
   const bi = (key: keyof typeof L) =>
-    lang === 'zh' ? L[key][1] : `${L[key][0]} / ${L[key][1]}`;
+    lang === 'en' ? L[key][1] : `${L[key][0]} / ${L[key][1]}`;
   const doc = createPDF({ unit: 'mm', format: 'a4' });
   const cjkOk = await ensureCJKFont(doc);
 
@@ -55,8 +55,8 @@ export async function generateProductionOrderPdf(
   // sonst Inter (für saubere deutsche Umlaute & Bold-Variante).
   const hasCJK = (s: string) => /[\u3000-\u9fff\uff00-\uffef]/.test(s);
   const setFontFor = (text: string, weight: 'normal' | 'bold' = 'normal') => {
-    if (cjkOk && (lang === 'zh' || hasCJK(text))) {
-      doc.setFont('NotoSC', 'normal'); // NotoSC hat nur einen Schnitt
+    if (cjkOk && hasCJK(text)) {
+      doc.setFont('NotoSC', 'normal');
     } else {
       doc.setFont('Inter', weight);
     }
@@ -77,7 +77,7 @@ export async function generateProductionOrderPdf(
 
   // Header
   doc.setFontSize(16);
-  if (lang === 'zh') {
+  if (lang === 'en') {
     drawText(L.title[1], 20, y, 'bold');
   } else {
     drawText(L.title[0], 20, y, 'bold');
@@ -165,7 +165,7 @@ export async function generateProductionOrderPdf(
   }
 
   const blob = doc.output('blob');
-  const suffix = lang === 'zh' ? '_ZH' : '';
+  const suffix = lang === 'en' ? '_EN' : '';
   const filename = `Bestellung_${data.order_number}_${format(new Date(), 'yyyyMMdd')}${suffix}.pdf`;
   return { blob, filename };
 }
