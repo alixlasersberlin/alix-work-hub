@@ -44,6 +44,9 @@ export default function ProductionPortal() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [editing, setEditing] = useState<ProductionOrderRow | null>(null);
+  const [editForm, setEditForm] = useState<Partial<ProductionOrderRow>>({});
+  const [saving, setSaving] = useState(false);
 
   const load = async () => {
     setLoading(true);
