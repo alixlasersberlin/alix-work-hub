@@ -40,14 +40,14 @@ const L = {
   anmerk:       ['Anmerkungen',              'Notes'],
 };
 
-export type PdfLang = 'bilingual' | 'zh';
+export type PdfLang = 'bilingual' | 'en';
 
 export async function generateProductionOrderPdf(
   data: ProductionOrderPdfData,
   lang: PdfLang = 'bilingual'
 ): Promise<{ blob: Blob; filename: string }> {
   const bi = (key: keyof typeof L) =>
-    lang === 'zh' ? L[key][1] : `${L[key][0]} / ${L[key][1]}`;
+    lang === 'en' ? L[key][1] : `${L[key][0]} / ${L[key][1]}`;
   const doc = createPDF({ unit: 'mm', format: 'a4' });
   const cjkOk = await ensureCJKFont(doc);
 
