@@ -39,6 +39,7 @@ export default function ProductionOrderForm() {
     sonderwuensche: '',
     seriennummer: '',
     anmerkungen: '',
+    payment_status: 'Nein',
   });
 
   // Load suppliers
@@ -65,6 +66,7 @@ export default function ProductionOrderForm() {
         sonderwuensche: po.sonderwuensche || '',
         seriennummer: po.seriennummer || '',
         anmerkungen: po.anmerkungen || '',
+        payment_status: (po as any).payment_status || 'Nein',
       });
       // Load source order
       const { data: order } = await supabase.from('orders').select('*').eq('id', po.order_id).single();
@@ -168,6 +170,7 @@ export default function ProductionOrderForm() {
       sonderwuensche: form.sonderwuensche.trim() || null,
       seriennummer: form.seriennummer.trim() || null,
       anmerkungen: form.anmerkungen.trim() || null,
+      payment_status: form.payment_status,
     };
     let poId = id;
     if (isEdit && id) {
@@ -355,6 +358,17 @@ export default function ProductionOrderForm() {
           <div><Label>Bearbeiter *</Label><Input value={form.bearbeiter} onChange={e => setForm({ ...form, bearbeiter: e.target.value })} /></div>
           <div><Label>Liefertermin *</Label><Input type="date" value={form.liefertermin} onChange={e => setForm({ ...form, liefertermin: e.target.value })} /></div>
           <div><Label>Seriennummer</Label><Input value={form.seriennummer} onChange={e => setForm({ ...form, seriennummer: e.target.value })} /></div>
+          <div>
+            <Label>Payment Status *</Label>
+            <Select value={form.payment_status} onValueChange={v => setForm({ ...form, payment_status: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Ja">Ja</SelectItem>
+                <SelectItem value="Nein">Nein</SelectItem>
+                <SelectItem value="Teilweise">Teilweise</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         <div>
           <Label>Interne Nummer</Label>
