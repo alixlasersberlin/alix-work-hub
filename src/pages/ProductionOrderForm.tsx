@@ -230,14 +230,8 @@ export default function ProductionOrderForm() {
       supplier,
       items: selectedItems,
     }, lang);
-  };
-    return generateProductionOrderPdf({
-      order_number: displayNumber,
-      ...form,
-      supplier,
-      items: selectedItems,
-    }, lang);
-  };
+
+
 
   const onSave = async () => {
     const poId = await persist();
