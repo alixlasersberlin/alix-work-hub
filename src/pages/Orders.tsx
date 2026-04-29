@@ -85,6 +85,7 @@ export default function Orders() {
     const q = search.toLowerCase();
     const matchSearch = !search ||
       o.order_number?.toLowerCase().includes(q) ||
+      o._displayNumber?.toLowerCase().includes(q) ||
       o.customers?.company_name?.toLowerCase().includes(q) ||
       o.customers?.contact_name?.toLowerCase().includes(q);
     const matchStatus = statusFilter === 'all' || o.order_status === statusFilter;
