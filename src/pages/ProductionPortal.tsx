@@ -75,7 +75,7 @@ const T: Record<Lang, Record<string, string>> = {
     allStatus: 'All statuses', refresh: 'Refresh', noOrders: 'No orders found.',
     deliveryDate: 'Delivery date', edit: 'Edit', pdf: 'PDF',
     model: 'Model', color: 'Color', powerHs: 'Power handpiece', operator: 'Operator',
-    serial: 'Serial number', wishes: 'Special requests', notes: 'Notes', status: 'Status',
+    serial: 'Serial number', wishes: 'Internal number', notes: 'Notes', status: 'Status',
     editTitle: 'Edit order', photos: 'Photos', allRequired: '(all 3 required)',
     front: 'Front', right: 'Right', left: 'Left',
     pickPhoto: 'Choose photo', orCamera: 'or camera',
