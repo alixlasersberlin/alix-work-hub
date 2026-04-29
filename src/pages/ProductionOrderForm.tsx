@@ -155,7 +155,7 @@ export default function ProductionOrderForm() {
     return true;
   };
 
-  const persist = async (): Promise<string | null> => {
+  const persist = async (): Promise<{ poId: string; orderNumber: string } | null> => {
     if (!validate() || !selectedOrder) return null;
     setSaving(true);
 
