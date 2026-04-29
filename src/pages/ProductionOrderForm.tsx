@@ -84,6 +84,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
         seriennummer: po.seriennummer || '',
         anmerkungen: po.anmerkungen || '',
         payment_status: (po as any).payment_status || 'Nein',
+        reclamation_reason: (po as any).reclamation_reason || '',
       });
       // Load source order
       const { data: order } = await supabase.from('orders').select('*').eq('id', po.order_id).single();
