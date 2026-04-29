@@ -163,7 +163,7 @@ export default function ProductionOrderForm() {
     setSaving(true);
     const payload = {
       order_id: selectedOrder.id,
-      order_number: selectedOrder.order_number,
+      order_number: form.order_number.trim(),
       supplier_id: form.supplier_id,
       modellname: form.modellname.trim() || null,
       farbe: form.farbe.trim(),
