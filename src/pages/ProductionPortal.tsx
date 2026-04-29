@@ -27,6 +27,7 @@ interface ProductionOrderRow {
   sonderwuensche: string | null;
   anmerkungen: string | null;
   seriennummer: string | null;
+  payment_status: string | null;
   pdf_path: string | null;
   photo_front_path: string | null;
   photo_right_path: string | null;
@@ -59,7 +60,7 @@ const T: Record<Lang, Record<string, string>> = {
     allStatus: 'Alle Status', refresh: 'Aktualisieren', noOrders: 'Keine Bestellungen gefunden.',
     deliveryDate: 'Liefertermin', edit: 'Bearbeiten', pdf: 'PDF',
     model: 'Modell', color: 'Farbe', powerHs: 'Power-Handstück', operator: 'Bearbeiter',
-    serial: 'Seriennummer', wishes: 'Interne Nummer', notes: 'Anmerkungen', status: 'Status',
+    serial: 'Seriennummer', wishes: 'Interne Nummer', notes: 'Anmerkungen', status: 'Status', payment: 'Payment Status',
     editTitle: 'Auftrag bearbeiten', photos: 'Fotos', allRequired: '(alle 3 erforderlich)',
     front: 'Vorne', right: 'Rechts', left: 'Links',
     pickPhoto: 'Foto wählen', orCamera: 'oder Kamera',
@@ -75,7 +76,7 @@ const T: Record<Lang, Record<string, string>> = {
     allStatus: 'All statuses', refresh: 'Refresh', noOrders: 'No orders found.',
     deliveryDate: 'Delivery date', edit: 'Edit', pdf: 'PDF',
     model: 'Model', color: 'Color', powerHs: 'Power handpiece', operator: 'Operator',
-    serial: 'Serial number', wishes: 'Internal number', notes: 'Notes', status: 'Status',
+    serial: 'Serial number', wishes: 'Internal number', notes: 'Notes', status: 'Status', payment: 'Payment status',
     editTitle: 'Edit order', photos: 'Photos', allRequired: '(all 3 required)',
     front: 'Front', right: 'Right', left: 'Left',
     pickPhoto: 'Choose photo', orCamera: 'or camera',
@@ -91,7 +92,7 @@ const T: Record<Lang, Record<string, string>> = {
     allStatus: '所有状态', refresh: '刷新', noOrders: '未找到订单。',
     deliveryDate: '交货日期', edit: '编辑', pdf: 'PDF',
     model: '型号', color: '颜色', powerHs: '动力手柄', operator: '操作员',
-    serial: '序列号', wishes: '内部编号', notes: '备注', status: '状态',
+    serial: '序列号', wishes: '内部编号', notes: '备注', status: '状态', payment: '付款状态',
     editTitle: '编辑订单', photos: '照片', allRequired: '（需全部 3 张）',
     front: '正面', right: '右侧', left: '左侧',
     pickPhoto: '选择照片', orCamera: '或使用相机',
@@ -390,6 +391,18 @@ export default function ProductionPortal() {
                     <span className="text-foreground">{row.anmerkungen}</span>
                   </div>
                 )}
+                <div className="col-span-2 flex items-center gap-2">
+                  <span className="text-muted-foreground">{t.payment}:</span>
+                  {(() => {
+                    const ps = row.payment_status || 'Nein';
+                    const cls = ps === 'Ja'
+                      ? 'bg-green-500/15 text-green-500'
+                      : ps === 'Teilweise'
+                        ? 'bg-yellow-500/15 text-yellow-500'
+                        : 'bg-destructive/15 text-destructive';
+                    return <span className={`px-2 py-0.5 rounded text-xs font-medium ${cls}`}>{ps}</span>;
+                  })()}
+                </div>
               </div>
 
               <div className="flex items-center gap-2 pt-2 border-t border-border">
