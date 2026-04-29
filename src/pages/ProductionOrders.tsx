@@ -68,6 +68,7 @@ export default function ProductionOrders() {
                 <th className="p-3">Modell</th>
                 <th className="p-3">Bearbeiter</th>
                 <th className="p-3">Liefertermin</th>
+                <th className="p-3">Payment</th>
                 <th className="p-3">Status</th>
                 <th className="p-3 text-right">Aktionen</th>
               </tr>
@@ -81,6 +82,17 @@ export default function ProductionOrders() {
                   <td className="p-3">{r.modellname || '—'}</td>
                   <td className="p-3">{r.bearbeiter}</td>
                   <td className="p-3">{r.liefertermin ? format(new Date(r.liefertermin), 'dd.MM.yyyy') : '—'}</td>
+                  <td className="p-3">
+                    {(() => {
+                      const ps = r.payment_status || 'Nein';
+                      const cls = ps === 'Ja'
+                        ? 'bg-green-500/15 text-green-500'
+                        : ps === 'Teilweise'
+                          ? 'bg-yellow-500/15 text-yellow-500'
+                          : 'bg-destructive/15 text-destructive';
+                      return <span className={`px-2 py-0.5 rounded text-xs ${cls}`}>{ps}</span>;
+                    })()}
+                  </td>
                   <td className="p-3">
                     <span className="px-2 py-0.5 rounded text-xs bg-primary/10 text-primary">{r.status}</span>
                   </td>

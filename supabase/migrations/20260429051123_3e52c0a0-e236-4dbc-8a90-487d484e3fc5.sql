@@ -1,0 +1,1 @@
+ALTER TABLE public.production_orders ADD COLUMN IF NOT EXISTS payment_status text NOT NULL DEFAULT 'Nein' CHECK (payment_status IN ('Ja','Nein','Teilweise'));
