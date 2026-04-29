@@ -18,6 +18,7 @@ type PhotoSide = 'front' | 'right' | 'left';
 interface ProductionOrderRow {
   id: string;
   order_number: string;
+  production_order_number: string | null;
   status: string;
   liefertermin: string;
   modellname: string | null;
@@ -262,7 +263,7 @@ export default function ProductionPortal() {
   const filtered = rows.filter(r => {
     if (statusFilter !== 'all' && r.status !== statusFilter) return false;
     if (!q) return true;
-    const hay = `${r.order_number} ${r.modellname || ''} ${r.farbe || ''} ${r.bearbeiter || ''} ${r.seriennummer || ''}`.toLowerCase();
+    const hay = `${r.production_order_number || ''} ${r.order_number} ${r.modellname || ''} ${r.farbe || ''} ${r.bearbeiter || ''} ${r.seriennummer || ''}`.toLowerCase();
     return hay.includes(q);
   });
 
@@ -346,7 +347,7 @@ export default function ProductionPortal() {
             <Card key={row.id} className="p-5 space-y-3 card-glow">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="font-display font-semibold text-foreground">{row.order_number}</p>
+                  <p className="font-display font-semibold text-foreground font-mono">{row.production_order_number || row.order_number}</p>
                   <p className="text-xs text-muted-foreground">
                     {t.deliveryDate}: <span className="text-foreground font-medium">
                       {row.liefertermin ? format(new Date(row.liefertermin), 'dd.MM.yyyy') : '—'}
@@ -358,7 +359,7 @@ export default function ProductionPortal() {
                     <Pencil className="w-4 h-4 mr-1" /> {t.edit}
                   </Button>
                   {row.pdf_path && (
-                    <Button size="sm" variant="outline" onClick={() => downloadPdf(row.pdf_path, row.order_number)}>
+                    <Button size="sm" variant="outline" onClick={() => downloadPdf(row.pdf_path, row.production_order_number || row.order_number)}>
                       <Download className="w-4 h-4 mr-1" /> {t.pdf}
                     </Button>
                   )}
@@ -440,7 +441,7 @@ export default function ProductionPortal() {
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{t.editTitle} {editing && `– ${editing.order_number}`}</DialogTitle>
+            <DialogTitle>{t.editTitle} {editing && `– ${editing.production_order_number || editing.order_number}`}</DialogTitle>
             <DialogDescription className="sr-only">{t.editTitle}</DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-2">
