@@ -11,7 +11,9 @@ import {
   ChevronRight,
   CheckCircle2,
   Clock,
+  PieChart as PieChartIcon,
 } from 'lucide-react';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 type SortField = 'item_name' | 'order_count' | 'total_quantity' | 'sold_quantity' | 'open_quantity';
 type SortDir = 'asc' | 'desc';
