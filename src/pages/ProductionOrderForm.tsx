@@ -52,6 +52,13 @@ export default function ProductionOrderForm() {
       .then(({ data }) => setSuppliers(data || []));
   }, []);
 
+  // Prefill bearbeiter with logged-in user's name (only for new orders)
+  useEffect(() => {
+    if (isEdit) return;
+    const name = profile?.full_name || user?.email || '';
+    if (name) setForm(f => (f.bearbeiter ? f : { ...f, bearbeiter: name }));
+  }, [isEdit, profile?.full_name, user?.email]);
+
   // Load existing order if editing
   useEffect(() => {
     if (!isEdit || !id) return;
