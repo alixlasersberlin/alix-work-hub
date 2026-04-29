@@ -406,7 +406,7 @@ export default function ProductionPortal() {
                       : ps === 'Teilweise'
                         ? 'bg-yellow-500/15 text-yellow-500'
                         : 'bg-destructive/15 text-destructive';
-                    return <span className={`px-2 py-0.5 rounded text-xs font-medium ${cls}`}>{ps}</span>;
+                    return <span className={`px-2 py-0.5 rounded text-xs font-medium ${cls}`}>{tPayment(ps)}</span>;
                   })()}
                 </div>
               </div>
