@@ -11,7 +11,9 @@ import {
   ChevronRight,
   CheckCircle2,
   Clock,
+  PieChart as PieChartIcon,
 } from 'lucide-react';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 type SortField = 'item_name' | 'order_count' | 'total_quantity' | 'sold_quantity' | 'open_quantity';
 type SortDir = 'asc' | 'desc';
@@ -27,9 +29,13 @@ const OPEN_STATUSES = new Set([
   'teilgeliefert',
   'zurückgestellt',
 ]);
-// Excluded entirely: void, Anwalt
+// Items excluded from all statistics (case-insensitive substring match)
+const EXCLUDED_PATTERNS = ['alix lieferumfang', 'alix academy', 'schulungswochenende', 'schulungswochende'];
 
-const EXCLUDED_ITEM = 'alix lieferumfang';
+function isExcludedItem(name: string): boolean {
+  const n = name.toLowerCase();
+  return EXCLUDED_PATTERNS.some(p => n.includes(p));
+}
 
 interface DeviceStat {
   item_name: string;
@@ -100,7 +106,7 @@ export default function DeviceStatistics() {
       for (const item of all) {
         const name = (item.item_name || '').trim();
         if (!name) continue;
-        if (name.toLowerCase() === EXCLUDED_ITEM) continue;
+        if (isExcludedItem(name)) continue;
 
         const status = item.orders?.order_status || 'unbekannt';
         // Skip excluded statuses entirely
@@ -187,6 +193,31 @@ export default function DeviceStatistics() {
 
   const maxQty = Math.max(...filtered.map(s => s.total_quantity), 1);
 
+  // Pie chart data: top 8 devices by total quantity, rest grouped as "Sonstige"
+  const pieData = useMemo(() => {
+    const sorted = [...filtered].sort((a, b) => b.total_quantity - a.total_quantity);
+    const TOP = 8;
+    const top = sorted.slice(0, TOP).map(s => ({ name: s.item_name, value: s.total_quantity }));
+    const rest = sorted.slice(TOP);
+    if (rest.length > 0) {
+      const restSum = rest.reduce((sum, s) => sum + s.total_quantity, 0);
+      if (restSum > 0) top.push({ name: `Sonstige (${rest.length})`, value: restSum });
+    }
+    return top.filter(d => d.value > 0);
+  }, [filtered]);
+
+  const PIE_COLORS = [
+    'hsl(45 95% 55%)',   // gold
+    'hsl(160 70% 45%)',  // emerald
+    'hsl(210 80% 60%)',  // blue
+    'hsl(280 65% 60%)',  // purple
+    'hsl(20 85% 60%)',   // orange
+    'hsl(340 75% 60%)',  // pink
+    'hsl(190 70% 50%)',  // cyan
+    'hsl(100 55% 50%)',  // green
+    'hsl(0 0% 50%)',     // grey for "Sonstige"
+  ];
+
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -216,6 +247,58 @@ export default function DeviceStatistics() {
       </div>
 
       {error && <div className="mb-4 p-4 rounded-lg bg-destructive/10 text-destructive text-sm">{error}</div>}
+
+      {/* Pie chart: device distribution */}
+      {!loading && pieData.length > 0 && (
+        <div className="rounded-xl border border-border bg-card card-glow p-4 mb-6">
+          <h2 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
+            <PieChartIcon className="w-4 h-4 text-primary" />
+            Geräteverteilung (Stückzahl)
+          </h2>
+          <div style={{ width: '100%', height: 320 }}>
+            <ResponsiveContainer>
+              <PieChart>
+                <Pie
+                  data={pieData}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={110}
+                  innerRadius={55}
+                  paddingAngle={2}
+                  label={(entry: any) => {
+                    const pct = totals.items > 0 ? (entry.value / totals.items) * 100 : 0;
+                    return pct >= 4 ? `${pct.toFixed(1)}%` : '';
+                  }}
+                  labelLine={false}
+                >
+                  {pieData.map((_, i) => (
+                    <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} stroke="hsl(var(--card))" strokeWidth={2} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{
+                    background: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: 8,
+                    color: 'hsl(var(--foreground))',
+                  }}
+                  formatter={(value: any, name: any) => {
+                    const pct = totals.items > 0 ? ((value as number) / totals.items) * 100 : 0;
+                    return [`${(value as number).toLocaleString('de-DE')} Stück (${pct.toFixed(1)}%)`, name];
+                  }}
+                />
+                <Legend
+                  verticalAlign="bottom"
+                  height={36}
+                  wrapperStyle={{ fontSize: 12, color: 'hsl(var(--muted-foreground))' }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
 
       <div className="rounded-xl border border-border bg-card card-glow overflow-hidden">
         <div className="overflow-x-auto">
