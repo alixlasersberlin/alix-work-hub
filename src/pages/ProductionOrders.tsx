@@ -63,6 +63,7 @@ export default function ProductionOrders() {
             <thead className="bg-muted/50 border-b border-border">
               <tr className="text-left">
                 <th className="p-3">Bestell-/Auftragsnr.</th>
+                <th className="p-3">Interne Nummer</th>
                 <th className="p-3">Zulieferer</th>
                 <th className="p-3">Modell</th>
                 <th className="p-3">Bearbeiter</th>
