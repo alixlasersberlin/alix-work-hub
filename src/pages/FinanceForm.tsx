@@ -125,7 +125,7 @@ export default function FinanceForm() {
               <Select value={paymentStatus} onValueChange={setPaymentStatus}>
                 <SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {['offen', 'teilweise', 'bezahlt', 'überfällig', 'storniert'].map(s => (
+                  {['offen', 'teilweise', 'bezahlt', 'überfällig', 'storniert', 'Reklamation'].map(s => (
                     <SelectItem key={s} value={s}>{s}</SelectItem>
                   ))}
                 </SelectContent>
