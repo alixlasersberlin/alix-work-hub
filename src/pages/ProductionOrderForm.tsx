@@ -12,11 +12,13 @@ import { ArrowLeft, Loader2, Search, Save, Send, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateProductionOrderPdf } from '@/lib/production-order-pdf';
 import { ALIX_MODEL_GROUPS } from '@/lib/alix-models';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function ProductionOrderForm() {
   const { id } = useParams();
   const isEdit = Boolean(id);
   const navigate = useNavigate();
+  const { profile, user } = useAuth();
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -49,6 +51,13 @@ export default function ProductionOrderForm() {
     supabase.from('suppliers').select('*').eq('is_active', true).order('name')
       .then(({ data }) => setSuppliers(data || []));
   }, []);
+
+  // Prefill bearbeiter with logged-in user's name (only for new orders)
+  useEffect(() => {
+    if (isEdit) return;
+    const name = profile?.full_name || user?.email || '';
+    if (name) setForm(f => (f.bearbeiter ? f : { ...f, bearbeiter: name }));
+  }, [isEdit, profile?.full_name, user?.email]);
 
   // Load existing order if editing
   useEffect(() => {
