@@ -256,8 +256,8 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
                         <span className="px-2 py-0.5 rounded text-xs bg-primary/10 text-primary">{r.status}</span>
                       </td>
                       <td className="p-3 text-right whitespace-nowrap">
-                        <Button asChild size="sm" variant="ghost"><Link to={`/order/${r.id}`}><FileText className="w-4 h-4" /></Link></Button>
-                        <Button asChild size="sm" variant="ghost"><Link to={`/order/${r.id}/bearbeiten`}><Pencil className="w-4 h-4" /></Link></Button>
+                        <Button asChild size="sm" variant="ghost"><Link to={`${basePath}/${r.id}`}><FileText className="w-4 h-4" /></Link></Button>
+                        <Button asChild size="sm" variant="ghost"><Link to={`${basePath}/${r.id}/bearbeiten`}><Pencil className="w-4 h-4" /></Link></Button>
                         <Button size="sm" variant="ghost" onClick={() => remove(r.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                       </td>
                     </tr>
