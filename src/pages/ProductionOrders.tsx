@@ -63,6 +63,7 @@ export default function ProductionOrders() {
             <thead className="bg-muted/50 border-b border-border">
               <tr className="text-left">
                 <th className="p-3">Bestell-/Auftragsnr.</th>
+                <th className="p-3">Interne Nummer</th>
                 <th className="p-3">Zulieferer</th>
                 <th className="p-3">Modell</th>
                 <th className="p-3">Bearbeiter</th>
@@ -75,6 +76,7 @@ export default function ProductionOrders() {
               {rows.map(r => (
                 <tr key={r.id} className="border-b border-border hover:bg-muted/30">
                   <td className="p-3 font-mono">{r.order_number}</td>
+                  <td className="p-3 font-mono uppercase">{r.sonderwuensche || '—'}</td>
                   <td className="p-3">{r.supplier?.name || '—'}</td>
                   <td className="p-3">{r.modellname || '—'}</td>
                   <td className="p-3">{r.bearbeiter}</td>
