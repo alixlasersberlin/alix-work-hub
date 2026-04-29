@@ -171,6 +171,32 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
     [orderItems, selectedItemIds]
   );
 
+  const cleanManualItems = useMemo(
+    () => manualItems.filter(m => m.item_name.trim() || m.description.trim() || m.sku.trim()),
+    [manualItems]
+  );
+
+  const allItemsForPdf = useMemo(
+    () => [
+      ...selectedItems,
+      ...cleanManualItems.map(m => ({
+        item_name: m.item_name.trim() || null,
+        description: m.description.trim() || null,
+        sku: m.sku.trim() || null,
+        quantity: m.quantity ? Number(m.quantity) : null,
+        unit: m.unit.trim() || null,
+      })),
+    ],
+    [selectedItems, cleanManualItems]
+  );
+
+  const addManualItem = () =>
+    setManualItems(arr => [...arr, { item_name: '', description: '', sku: '', quantity: '1', unit: '' }]);
+  const updateManualItem = (idx: number, patch: Partial<typeof manualItems[number]>) =>
+    setManualItems(arr => arr.map((m, i) => (i === idx ? { ...m, ...patch } : m)));
+  const removeManualItem = (idx: number) =>
+    setManualItems(arr => arr.filter((_, i) => i !== idx));
+
   const validate = () => {
     if (!selectedOrder) { toast.error('Bitte einen Auftrag auswählen'); return false; }
     if (!form.supplier_id) { toast.error('Bitte einen Zulieferer wählen'); return false; }
@@ -179,7 +205,12 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
     if (!form.bearbeiter.trim()) { toast.error('Bearbeiter ist Pflichtfeld'); return false; }
     if (!form.liefertermin) { toast.error('Liefertermin ist Pflichtfeld'); return false; }
     if (isReclamation && !form.reclamation_reason.trim()) { toast.error('Reklamationsgrund ist Pflichtfeld'); return false; }
-    if (selectedItems.length === 0) { toast.error('Mindestens eine Position auswählen'); return false; }
+    if (selectedItems.length === 0 && cleanManualItems.length === 0) {
+      toast.error('Mindestens eine Position auswählen oder manuell hinzufügen'); return false;
+    }
+    for (const m of cleanManualItems) {
+      if (!m.item_name.trim()) { toast.error('Manuelle Position: Bezeichnung ist Pflichtfeld'); return false; }
+    }
     return true;
   };
 
@@ -213,7 +244,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
       poId = data.id;
     }
     if (poId) {
-      const itemRows = selectedItems.map((it, idx) => ({
+      const fromOrder = selectedItems.map((it, idx) => ({
         production_order_id: poId,
         source_order_item_id: it.id,
         item_name: it.item_name,
@@ -223,6 +254,17 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
         unit: it.unit,
         item_order: idx,
       }));
+      const fromManual = cleanManualItems.map((m, idx) => ({
+        production_order_id: poId,
+        source_order_item_id: null,
+        item_name: m.item_name.trim(),
+        description: m.description.trim() || null,
+        sku: m.sku.trim() || null,
+        quantity: m.quantity ? Number(m.quantity) : null,
+        unit: m.unit.trim() || null,
+        item_order: fromOrder.length + idx,
+      }));
+      const itemRows = [...fromOrder, ...fromManual];
       if (itemRows.length) await supabase.from('production_order_items').insert(itemRows);
     }
     setSaving(false);
