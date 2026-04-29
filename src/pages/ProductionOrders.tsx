@@ -187,7 +187,9 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
                   ? 'bg-green-500/15 text-green-500'
                   : ps === 'Teilweise'
                     ? 'bg-yellow-500/15 text-yellow-500'
-                    : 'bg-destructive/15 text-destructive';
+                    : ps === 'Garantie'
+                      ? 'bg-blue-500/15 text-blue-500'
+                      : 'bg-destructive/15 text-destructive';
                 return (
                   <div key={r.id} className="p-4 space-y-2">
                     <div className="flex items-start justify-between gap-2">
