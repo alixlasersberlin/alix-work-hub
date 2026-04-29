@@ -78,10 +78,9 @@ export default function OrderDetail() {
     setLoading(false);
   }
 
-  // Anzeige-Auftragsnummer(n): immer mind. -1, bei mehreren PO mehrere Suffixe; interne Nummer voranstellen
-  const internalPart = order?.internal_number ? ` / ${order.internal_number}` : '';
+  // Anzeige-Auftragsnummer(n): immer mind. -1, bei mehreren PO mehrere Suffixe
   const displayOrderNumbers = order?.order_number
-    ? Array.from({ length: Math.max(1, poCount) }, (_, i) => `${order.order_number}${internalPart} -${i + 1}`)
+    ? Array.from({ length: Math.max(1, poCount) }, (_, i) => `${order.order_number}-${i + 1}`)
     : [];
   const primaryDisplayNumber = displayOrderNumbers[0] || order?.order_number || '';
 
