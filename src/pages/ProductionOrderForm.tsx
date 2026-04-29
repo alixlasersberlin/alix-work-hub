@@ -91,12 +91,20 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
       const { data: order } = await supabase.from('orders').select('*').eq('id', po.order_id).single();
       setSelectedOrder(order);
       // Load items from this PO
-      const { data: poItems } = await supabase.from('production_order_items').select('*').eq('production_order_id', id);
+      const { data: poItems } = await supabase.from('production_order_items').select('*').eq('production_order_id', id).order('item_order');
       // Load all source order items
       const { data: srcItems } = await supabase.from('order_items').select('*').eq('order_id', po.order_id).order('item_order');
       setOrderItems(srcItems || []);
       const ids = new Set<string>((poItems || []).map(i => i.source_order_item_id).filter(Boolean));
       setSelectedItemIds(ids);
+      const manual = (poItems || []).filter(i => !i.source_order_item_id).map(i => ({
+        item_name: i.item_name || '',
+        description: i.description || '',
+        sku: i.sku || '',
+        quantity: i.quantity != null ? String(i.quantity) : '1',
+        unit: i.unit || '',
+      }));
+      setManualItems(manual);
       setLoading(false);
     })();
   }, [id, isEdit]);
