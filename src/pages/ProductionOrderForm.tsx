@@ -158,9 +158,40 @@ export default function ProductionOrderForm() {
   const persist = async (): Promise<string | null> => {
     if (!validate() || !selectedOrder) return null;
     setSaving(true);
+
+    // Determine order_number with -N suffix for multi-orders.
+    // Group by base order_number (strip any existing -N).
+    const baseNumber = (selectedOrder.order_number as string).replace(/-\d+$/, '');
+    let orderNumberToUse = baseNumber;
+
+    if (!isEdit) {
+      // Find all existing production_orders sharing this base number
+      const { data: existing } = await supabase
+        .from('production_orders')
+        .select('id, order_number, created_at')
+        .or(`order_number.eq.${baseNumber},order_number.ilike.${baseNumber}-%`)
+        .order('created_at', { ascending: true });
+      const siblings = existing ?? [];
+      if (siblings.length === 0) {
+        orderNumberToUse = baseNumber;
+      } else {
+        // If there's exactly one sibling without suffix, rename it to -1
+        const unsuffixed = siblings.find(s => s.order_number === baseNumber);
+        if (unsuffixed && siblings.length === 1) {
+          await supabase
+            .from('production_orders')
+            .update({ order_number: `${baseNumber}-1` })
+            .eq('id', unsuffixed.id);
+        }
+        // Next index = current count + 1 (works whether the rename above happened or not)
+        const nextIdx = siblings.length + 1;
+        orderNumberToUse = `${baseNumber}-${nextIdx}`;
+      }
+    }
+
     const payload = {
       order_id: selectedOrder.id,
-      order_number: selectedOrder.order_number,
+      order_number: isEdit ? undefined : orderNumberToUse,
       supplier_id: form.supplier_id,
       modellname: form.modellname.trim() || null,
       farbe: form.farbe.trim(),
@@ -174,7 +205,9 @@ export default function ProductionOrderForm() {
     };
     let poId = id;
     if (isEdit && id) {
-      const { error } = await supabase.from('production_orders').update(payload).eq('id', id);
+      // Don't overwrite order_number on edit
+      const { order_number: _on, ...editPayload } = payload;
+      const { error } = await supabase.from('production_orders').update(editPayload).eq('id', id);
       if (error) { toast.error(error.message); setSaving(false); return null; }
       await supabase.from('production_order_items').delete().eq('production_order_id', id);
     } else {
