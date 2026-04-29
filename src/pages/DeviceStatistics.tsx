@@ -106,7 +106,7 @@ export default function DeviceStatistics() {
       for (const item of all) {
         const name = (item.item_name || '').trim();
         if (!name) continue;
-        if (name.toLowerCase() === EXCLUDED_ITEM) continue;
+        if (isExcludedItem(name)) continue;
 
         const status = item.orders?.order_status || 'unbekannt';
         // Skip excluded statuses entirely
