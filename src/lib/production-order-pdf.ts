@@ -60,7 +60,7 @@ const L = {
   bearbeiter:   ['Bearbeiter',               'Processor'],
   liefertermin: ['Liefertermin',             'Delivery Date'],
   seriennummer: ['Seriennummer',             'Serial Number'],
-  sonder:       ['Sonderwünsche',            'Special Requests'],
+  sonder:       ['Interne Nummer',           'Internal Number'],
   positions:    ['Positionen',               'Items'],
   pos:          ['Pos',                      'No.'],
   artikel:      ['Artikel',                  'Article'],

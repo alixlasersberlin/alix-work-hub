@@ -356,7 +356,16 @@ export default function ProductionOrderForm() {
           <div><Label>Liefertermin *</Label><Input type="date" value={form.liefertermin} onChange={e => setForm({ ...form, liefertermin: e.target.value })} /></div>
           <div><Label>Seriennummer</Label><Input value={form.seriennummer} onChange={e => setForm({ ...form, seriennummer: e.target.value })} /></div>
         </div>
-        <div><Label>Sonderwünsche</Label><Textarea value={form.sonderwuensche} onChange={e => setForm({ ...form, sonderwuensche: e.target.value })} rows={2} /></div>
+        <div>
+          <Label>Interne Nummer</Label>
+          <Input
+            value={form.sonderwuensche}
+            onChange={e => setForm({ ...form, sonderwuensche: e.target.value.replace(/[^A-Za-z0-9]/g, '').slice(0, 10) })}
+            maxLength={10}
+            placeholder="Max. 10 Zeichen (A-Z, 0-9)"
+            className="font-mono uppercase"
+          />
+        </div>
         <div><Label>Anmerkungen (frei)</Label><Textarea value={form.anmerkungen} onChange={e => setForm({ ...form, anmerkungen: e.target.value })} rows={3} /></div>
       </Card>
 

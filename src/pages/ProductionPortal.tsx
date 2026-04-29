@@ -59,7 +59,7 @@ const T: Record<Lang, Record<string, string>> = {
     allStatus: 'Alle Status', refresh: 'Aktualisieren', noOrders: 'Keine Bestellungen gefunden.',
     deliveryDate: 'Liefertermin', edit: 'Bearbeiten', pdf: 'PDF',
     model: 'Modell', color: 'Farbe', powerHs: 'Power-Handstück', operator: 'Bearbeiter',
-    serial: 'Seriennummer', wishes: 'Sonderwünsche', notes: 'Anmerkungen', status: 'Status',
+    serial: 'Seriennummer', wishes: 'Interne Nummer', notes: 'Anmerkungen', status: 'Status',
     editTitle: 'Auftrag bearbeiten', photos: 'Fotos', allRequired: '(alle 3 erforderlich)',
     front: 'Vorne', right: 'Rechts', left: 'Links',
     pickPhoto: 'Foto wählen', orCamera: 'oder Kamera',
@@ -75,7 +75,7 @@ const T: Record<Lang, Record<string, string>> = {
     allStatus: 'All statuses', refresh: 'Refresh', noOrders: 'No orders found.',
     deliveryDate: 'Delivery date', edit: 'Edit', pdf: 'PDF',
     model: 'Model', color: 'Color', powerHs: 'Power handpiece', operator: 'Operator',
-    serial: 'Serial number', wishes: 'Special requests', notes: 'Notes', status: 'Status',
+    serial: 'Serial number', wishes: 'Internal number', notes: 'Notes', status: 'Status',
     editTitle: 'Edit order', photos: 'Photos', allRequired: '(all 3 required)',
     front: 'Front', right: 'Right', left: 'Left',
     pickPhoto: 'Choose photo', orCamera: 'or camera',
@@ -91,7 +91,7 @@ const T: Record<Lang, Record<string, string>> = {
     allStatus: '所有状态', refresh: '刷新', noOrders: '未找到订单。',
     deliveryDate: '交货日期', edit: '编辑', pdf: 'PDF',
     model: '型号', color: '颜色', powerHs: '动力手柄', operator: '操作员',
-    serial: '序列号', wishes: '特殊要求', notes: '备注', status: '状态',
+    serial: '序列号', wishes: '内部编号', notes: '备注', status: '状态',
     editTitle: '编辑订单', photos: '照片', allRequired: '（需全部 3 张）',
     front: '正面', right: '右侧', left: '左侧',
     pickPhoto: '选择照片', orCamera: '或使用相机',
@@ -503,7 +503,13 @@ export default function ProductionPortal() {
             </div>
             <div className="space-y-1.5 md:col-span-2">
               <Label>{t.wishes}</Label>
-              <Textarea rows={2} value={editForm.sonderwuensche ?? ''} onChange={e => setEditForm(f => ({ ...f, sonderwuensche: e.target.value }))} />
+              <Input
+                value={editForm.sonderwuensche ?? ''}
+                onChange={e => setEditForm(f => ({ ...f, sonderwuensche: e.target.value.replace(/[^A-Za-z0-9]/g, '').slice(0, 10) }))}
+                maxLength={10}
+                placeholder="Max. 10 (A-Z, 0-9)"
+                className="font-mono uppercase"
+              />
             </div>
             <div className="space-y-1.5 md:col-span-2">
               <Label>{t.notes}</Label>
