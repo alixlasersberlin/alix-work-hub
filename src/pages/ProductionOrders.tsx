@@ -102,23 +102,9 @@ export default function ProductionOrders() {
     if (error) toast.error(error.message);
     else {
       const list = data || [];
-
-      // Fortlaufende Nummer pro Auftragsnummer (älteste = -1)
-      const byOrder: Record<string, any[]> = {};
-      [...list]
-        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-        .forEach(r => {
-          const key = r.order_number || '';
-          (byOrder[key] = byOrder[key] || []).push(r);
-        });
-      const seqMap: Record<string, number> = {};
-      Object.values(byOrder).forEach(group => {
-        group.forEach((r, idx) => { seqMap[r.id] = idx + 1; });
-      });
-
       const enriched = list.map(r => ({
         ...r,
-        display_order_number: `${r.order_number} -${seqMap[r.id] || 1}`,
+        display_order_number: r.order_number,
       }));
       setRows(enriched);
     }
