@@ -173,6 +173,7 @@ export default function ProductionPortal() {
       sonderwuensche: row.sonderwuensche,
       anmerkungen: row.anmerkungen,
       status: row.status,
+      payment_status: row.payment_status || 'Nein',
       photo_front_path: row.photo_front_path,
       photo_right_path: row.photo_right_path,
       photo_left_path: row.photo_left_path,
@@ -220,6 +221,7 @@ export default function ProductionPortal() {
       sonderwuensche: editForm.sonderwuensche ?? null,
       anmerkungen: editForm.anmerkungen ?? null,
       status: editForm.status ?? editing.status,
+      payment_status: editForm.payment_status ?? 'Nein',
       photo_front_path: editForm.photo_front_path,
       photo_right_path: editForm.photo_right_path,
       photo_left_path: editForm.photo_left_path,
@@ -461,6 +463,17 @@ export default function ProductionPortal() {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {STATUS_OPTIONS.map(s => <SelectItem key={s} value={s}>{tStatus(s)}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>{t.payment} <span className="text-destructive">*</span></Label>
+              <Select value={editForm.payment_status ?? 'Nein'} onValueChange={v => setEditForm(f => ({ ...f, payment_status: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Ja">Ja</SelectItem>
+                  <SelectItem value="Nein">Nein</SelectItem>
+                  <SelectItem value="Teilweise">Teilweise</SelectItem>
                 </SelectContent>
               </Select>
             </div>
