@@ -197,12 +197,12 @@ export default function Orders() {
                   </tbody>
                 ) : (
                   paged.map(o => (
-                    <tbody key={o.id} className="border-b border-border">
+                    <tbody key={`${o.id}-${o._seq}`} className="border-b border-border">
                       <tr
                         className="hover:bg-secondary/30 transition-colors cursor-pointer"
                         onClick={() => navigate(`/auftraege/${o.id}`)}
                       >
-                        <td className="px-4 py-3 font-medium text-foreground">{o.order_number}</td>
+                        <td className="px-4 py-3 font-medium text-foreground">{o._displayNumber || o.order_number}</td>
                         <td className="px-4 py-3 text-muted-foreground">{o.customers?.company_name || o.customers?.contact_name || '—'}</td>
                         <td className="px-4 py-3 text-muted-foreground">{o.order_date ? new Date(o.order_date).toLocaleDateString('de-DE') : '—'}</td>
                         <td className="px-4 py-3 text-foreground">
