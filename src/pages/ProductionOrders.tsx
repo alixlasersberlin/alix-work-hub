@@ -102,39 +102,7 @@ export default function ProductionOrders() {
     if (error) toast.error(error.message);
     else {
       const list = data || [];
-
-      // Interne Nummern der zugeh\u00f6rigen Auftr\u00e4ge laden
-      const orderNumbers = Array.from(new Set(list.map(r => r.order_number).filter(Boolean)));
-      const internalMap: Record<string, string | null> = {};
-      if (orderNumbers.length > 0) {
-        const { data: orders } = await supabase
-          .from('orders')
-          .select('order_number, internal_number')
-          .in('order_number', orderNumbers);
-        (orders || []).forEach(o => { internalMap[o.order_number] = o.internal_number; });
-      }
-
-      // Fortlaufende Nummer pro Auftragsnummer berechnen (\u00e4lteste = -1)
-      const byOrder: Record<string, any[]> = {};
-      [...list]
-        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-        .forEach(r => {
-          const key = r.order_number || '';
-          (byOrder[key] = byOrder[key] || []).push(r);
-        });
-      const seqMap: Record<string, number> = {};
-      Object.values(byOrder).forEach(group => {
-        group.forEach((r, idx) => { seqMap[r.id] = idx + 1; });
-      });
-
-      const enriched = list.map(r => {
-        const internal = internalMap[r.order_number];
-        const internalPart = internal ? ` / ${internal}` : '';
-        return {
-          ...r,
-          display_order_number: `${r.order_number}${internalPart} -${seqMap[r.id] || 1}`,
-        };
-      });
+      const enriched = list.map(r => ({ ...r, display_order_number: r.order_number }));
       setRows(enriched);
     }
     setLoading(false);
