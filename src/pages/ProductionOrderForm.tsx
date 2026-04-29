@@ -402,7 +402,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
                     <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                       {group.label}
                     </div>
-                    {group.models.map(m => (
+                    {[...group.models].sort((a, b) => a.localeCompare(b, 'de')).map(m => (
                       <SelectItem key={m} value={m}>{m}</SelectItem>
                     ))}
                   </div>
