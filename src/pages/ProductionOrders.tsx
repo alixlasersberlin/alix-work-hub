@@ -38,7 +38,7 @@ const T: Record<Lang, Record<string, string>> = {
     status: 'Status',
     actions: 'Aktionen',
     intern: 'Intern',
-    p_Ja: 'Ja', p_Nein: 'Nein', p_Teilweise: 'Teilweise',
+    p_Ja: 'Ja', p_Nein: 'Nein', p_Teilweise: 'Teilweise', p_Garantie: 'Garantie',
   },
   en: {
     title: 'ORDER – Production Orders',
@@ -59,7 +59,7 @@ const T: Record<Lang, Record<string, string>> = {
     status: 'Status',
     actions: 'Actions',
     intern: 'Internal',
-    p_Ja: 'Yes', p_Nein: 'No', p_Teilweise: 'Partial',
+    p_Ja: 'Yes', p_Nein: 'No', p_Teilweise: 'Partial', p_Garantie: 'Warranty',
   },
   zh: {
     title: 'ORDER – 生产订单',
@@ -80,7 +80,7 @@ const T: Record<Lang, Record<string, string>> = {
     status: '状态',
     actions: '操作',
     intern: '内部',
-    p_Ja: '是', p_Nein: '否', p_Teilweise: '部分',
+    p_Ja: '是', p_Nein: '否', p_Teilweise: '部分', p_Garantie: '保修',
   },
 };
 
@@ -187,7 +187,9 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
                   ? 'bg-green-500/15 text-green-500'
                   : ps === 'Teilweise'
                     ? 'bg-yellow-500/15 text-yellow-500'
-                    : 'bg-destructive/15 text-destructive';
+                    : ps === 'Garantie'
+                      ? 'bg-blue-500/15 text-blue-500'
+                      : 'bg-destructive/15 text-destructive';
                 return (
                   <div key={r.id} className="p-4 space-y-2">
                     <div className="flex items-start justify-between gap-2">
@@ -248,7 +250,9 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
                             ? 'bg-green-500/15 text-green-500'
                             : ps === 'Teilweise'
                               ? 'bg-yellow-500/15 text-yellow-500'
-                              : 'bg-destructive/15 text-destructive';
+                              : ps === 'Garantie'
+                                ? 'bg-blue-500/15 text-blue-500'
+                                : 'bg-destructive/15 text-destructive';
                           return <span className={`px-2 py-0.5 rounded text-xs ${cls}`}>{tPayment(ps)}</span>;
                         })()}
                       </td>

@@ -562,6 +562,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
             <Select value={form.payment_status} onValueChange={v => setForm({ ...form, payment_status: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
+                <SelectItem value="Garantie">Garantie</SelectItem>
                 <SelectItem value="Ja">Ja</SelectItem>
                 <SelectItem value="Nein">Nein</SelectItem>
                 <SelectItem value="Teilweise">Teilweise</SelectItem>
