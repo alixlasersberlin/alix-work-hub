@@ -24,27 +24,8 @@ export default function ProductionOrderDetail() {
         .select('*, supplier:suppliers(*)')
         .eq('id', id).single();
       const { data: its } = await supabase.from('production_order_items').select('*').eq('production_order_id', id).order('item_order');
-      // Sequenz innerhalb der Auftragsnummer + interne Nummer berechnen
-      let display = po?.order_number || '';
-      if (po?.order_number) {
-        const [{ data: siblings }, { data: orderRow }] = await Promise.all([
-          supabase
-            .from('production_orders')
-            .select('id, created_at')
-            .eq('order_number', po.order_number)
-            .order('created_at', { ascending: true }),
-          supabase
-            .from('orders')
-            .select('internal_number')
-            .eq('order_number', po.order_number)
-            .maybeSingle(),
-        ]);
-        const idx = (siblings || []).findIndex(s => s.id === po.id);
-        const seq = idx >= 0 ? idx + 1 : 1;
-        const internalPart = orderRow?.internal_number ? ` / ${orderRow.internal_number}` : '';
-        display = `${po.order_number}${internalPart} -${seq}`;
-      }
-      setDisplayOrderNumber(display);
+      // Nur originale Zoho-Auftragsnummer anzeigen
+      setDisplayOrderNumber(po?.order_number || '');
       setData(po); setItems(its || []); setLoading(false);
     })();
   }, [id]);
