@@ -128,6 +128,7 @@ export default function ProductionOrderForm() {
     setSelectedOrder(o);
     setOrderResults([]);
     setOrderSearch('');
+    setForm(f => ({ ...f, order_number: (o.order_number || '').slice(0, 10) }));
     const { data } = await supabase.from('order_items').select('*').eq('order_id', o.id).order('item_order');
     setOrderItems(data || []);
     setSelectedItemIds(new Set());
