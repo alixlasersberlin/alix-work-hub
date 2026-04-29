@@ -14,11 +14,15 @@ import { generateProductionOrderPdf } from '@/lib/production-order-pdf';
 import { ALIX_MODEL_GROUPS } from '@/lib/alix-models';
 import { useAuth } from '@/hooks/useAuth';
 
-export default function ProductionOrderForm() {
+type Mode = 'order' | 'reclamation';
+
+export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } = {}) {
   const { id } = useParams();
   const isEdit = Boolean(id);
   const navigate = useNavigate();
   const { profile, user } = useAuth();
+  const isReclamation = mode === 'reclamation';
+  const basePath = isReclamation ? '/order/reklamation' : '/order';
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -44,6 +48,7 @@ export default function ProductionOrderForm() {
     seriennummer: '',
     anmerkungen: '',
     payment_status: 'Nein',
+    reclamation_reason: '',
   });
 
   // Load suppliers
@@ -79,6 +84,7 @@ export default function ProductionOrderForm() {
         seriennummer: po.seriennummer || '',
         anmerkungen: po.anmerkungen || '',
         payment_status: (po as any).payment_status || 'Nein',
+        reclamation_reason: (po as any).reclamation_reason || '',
       });
       // Load source order
       const { data: order } = await supabase.from('orders').select('*').eq('id', po.order_id).single();
@@ -163,6 +169,7 @@ export default function ProductionOrderForm() {
     if (!form.power_handstueck.trim()) { toast.error('Power Handstück ist Pflichtfeld'); return false; }
     if (!form.bearbeiter.trim()) { toast.error('Bearbeiter ist Pflichtfeld'); return false; }
     if (!form.liefertermin) { toast.error('Liefertermin ist Pflichtfeld'); return false; }
+    if (isReclamation && !form.reclamation_reason.trim()) { toast.error('Reklamationsgrund ist Pflichtfeld'); return false; }
     if (selectedItems.length === 0) { toast.error('Mindestens eine Position auswählen'); return false; }
     return true;
   };
@@ -183,6 +190,8 @@ export default function ProductionOrderForm() {
       seriennummer: form.seriennummer.trim() || null,
       anmerkungen: form.anmerkungen.trim() || null,
       payment_status: form.payment_status,
+      is_reclamation: isReclamation,
+      reclamation_reason: isReclamation ? (form.reclamation_reason.trim() || null) : null,
     };
     let poId = id;
     if (isEdit && id) {
@@ -235,7 +244,7 @@ export default function ProductionOrderForm() {
 
   const onSave = async () => {
     const poId = await persist();
-    if (poId) { toast.success('Gespeichert'); navigate('/order'); }
+    if (poId) { toast.success('Gespeichert'); navigate(basePath); }
   };
 
   const downloadPdfWith = async (lang: 'bilingual' | 'en') => {
@@ -282,7 +291,7 @@ export default function ProductionOrderForm() {
     );
     window.location.href = `mailto:${supplier.email}?subject=${subject}&body=${body}`;
     toast.success('PDF heruntergeladen – E-Mail wird geöffnet');
-    setTimeout(() => navigate('/order'), 1500);
+    setTimeout(() => navigate(basePath), 1500);
   };
 
   if (loading) return <div className="p-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
@@ -290,11 +299,13 @@ export default function ProductionOrderForm() {
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div>
-        <Button variant="ghost" size="sm" onClick={() => navigate('/order')} className="mb-2">
+        <Button variant="ghost" size="sm" onClick={() => navigate(basePath)} className="mb-2">
           <ArrowLeft className="w-4 h-4 mr-1" /> Zurück
         </Button>
         <h1 className="text-2xl font-display font-bold gold-text">
-          {isEdit ? 'Bestellung bearbeiten' : 'Neue Produktionsbestellung'}
+          {isReclamation
+            ? (isEdit ? 'Reklamation bearbeiten' : 'Neue Reklamation')
+            : (isEdit ? 'Bestellung bearbeiten' : 'Neue Produktionsbestellung')}
         </h1>
       </div>
 
@@ -465,10 +476,21 @@ export default function ProductionOrderForm() {
           />
         </div>
         <div><Label>Anmerkungen</Label><Textarea value={form.anmerkungen} onChange={e => setForm({ ...form, anmerkungen: e.target.value })} rows={3} /></div>
+        {isReclamation && (
+          <div>
+            <Label>Reklamationsgrund *</Label>
+            <Textarea
+              value={form.reclamation_reason}
+              onChange={e => setForm({ ...form, reclamation_reason: e.target.value })}
+              rows={3}
+              placeholder="Bitte den Grund der Reklamation beschreiben…"
+            />
+          </div>
+        )}
       </Card>
 
       <div className="flex flex-wrap justify-end gap-2 sticky bottom-0 bg-background py-3 border-t border-border">
-        <Button variant="outline" onClick={() => navigate('/order')} disabled={saving}>Abbrechen</Button>
+        <Button variant="outline" onClick={() => navigate(basePath)} disabled={saving}>Abbrechen</Button>
         <Button variant="outline" onClick={onSave} disabled={saving}><Save className="w-4 h-4 mr-2" /> Speichern</Button>
         <Button variant="outline" onClick={onSaveAndDownload} disabled={saving}><Download className="w-4 h-4 mr-2" /> Speichern + PDF</Button>
         <Button variant="outline" onClick={onSaveAndDownloadEn} disabled={saving}><Download className="w-4 h-4 mr-2" /> PDF (EN)</Button>

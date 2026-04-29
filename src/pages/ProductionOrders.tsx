@@ -3,10 +3,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus, Loader2, Factory, Users as UsersIcon, FileText, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Loader2, Factory, Users as UsersIcon, FileText, Pencil, Trash2, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+
+type Mode = 'order' | 'reclamation';
 
 type Lang = 'de' | 'en' | 'zh';
 
@@ -82,12 +84,14 @@ const T: Record<Lang, Record<string, string>> = {
   },
 };
 
-export default function ProductionOrders() {
+export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {}) {
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [lang, setLang] = useState<Lang>(() => (localStorage.getItem('production_lang') as Lang) || 'de');
   const t = T[lang];
   const navigate = useNavigate();
+  const isReclamation = mode === 'reclamation';
+  const basePath = isReclamation ? '/order/reklamation' : '/order';
 
   useEffect(() => { localStorage.setItem('production_lang', lang); }, [lang]);
 
@@ -98,6 +102,7 @@ export default function ProductionOrders() {
     const { data, error } = await supabase
       .from('production_orders')
       .select('*, supplier:suppliers(name, email)')
+      .eq('is_reclamation', isReclamation)
       .order('created_at', { ascending: false });
     if (error) toast.error(error.message);
     else {
@@ -111,7 +116,7 @@ export default function ProductionOrders() {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [isReclamation]);
 
   const remove = async (id: string) => {
     if (!confirm(t.confirmDelete)) return;
@@ -126,16 +131,22 @@ export default function ProductionOrders() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
           <h1 className="text-xl md:text-2xl font-display font-bold gold-text flex items-center gap-2">
-            <Factory className="w-5 h-5 md:w-6 md:h-6" /> {t.title}
+            {isReclamation
+              ? <><AlertTriangle className="w-5 h-5 md:w-6 md:h-6" /> Reklamation – Bestellungen</>
+              : <><Factory className="w-5 h-5 md:w-6 md:h-6" /> {t.title}</>}
           </h1>
-          <p className="text-xs md:text-sm text-muted-foreground">{t.subtitle}</p>
+          <p className="text-xs md:text-sm text-muted-foreground">
+            {isReclamation ? 'Reklamationsbestellungen verwalten und versenden' : t.subtitle}
+          </p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" size="sm" className="md:size-default" onClick={() => navigate('/order/zulieferer')}>
-            <UsersIcon className="w-4 h-4 mr-2" /> {t.suppliers}
-          </Button>
-          <Button size="sm" className="md:size-default" onClick={() => navigate('/order/neu')}>
-            <Plus className="w-4 h-4 mr-2" /> {t.newOrder}
+          {!isReclamation && (
+            <Button variant="outline" size="sm" className="md:size-default" onClick={() => navigate('/order/zulieferer')}>
+              <UsersIcon className="w-4 h-4 mr-2" /> {t.suppliers}
+            </Button>
+          )}
+          <Button size="sm" className="md:size-default" onClick={() => navigate(`${basePath}/neu`)}>
+            <Plus className="w-4 h-4 mr-2" /> {isReclamation ? 'Neue Reklamation' : t.newOrder}
           </Button>
         </div>
       </div>
@@ -196,8 +207,8 @@ export default function ProductionOrders() {
                       <div><span className="text-muted-foreground">{t.delivery}:</span> {r.liefertermin ? format(new Date(r.liefertermin), 'dd.MM.yyyy') : '—'}</div>
                     </div>
                     <div className="flex justify-end gap-1 pt-1 border-t border-border/50">
-                      <Button asChild size="sm" variant="ghost"><Link to={`/order/${r.id}`}><FileText className="w-4 h-4" /></Link></Button>
-                      <Button asChild size="sm" variant="ghost"><Link to={`/order/${r.id}/bearbeiten`}><Pencil className="w-4 h-4" /></Link></Button>
+                      <Button asChild size="sm" variant="ghost"><Link to={`${basePath}/${r.id}`}><FileText className="w-4 h-4" /></Link></Button>
+                      <Button asChild size="sm" variant="ghost"><Link to={`${basePath}/${r.id}/bearbeiten`}><Pencil className="w-4 h-4" /></Link></Button>
                       <Button size="sm" variant="ghost" onClick={() => remove(r.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                     </div>
                   </div>
@@ -245,8 +256,8 @@ export default function ProductionOrders() {
                         <span className="px-2 py-0.5 rounded text-xs bg-primary/10 text-primary">{r.status}</span>
                       </td>
                       <td className="p-3 text-right whitespace-nowrap">
-                        <Button asChild size="sm" variant="ghost"><Link to={`/order/${r.id}`}><FileText className="w-4 h-4" /></Link></Button>
-                        <Button asChild size="sm" variant="ghost"><Link to={`/order/${r.id}/bearbeiten`}><Pencil className="w-4 h-4" /></Link></Button>
+                        <Button asChild size="sm" variant="ghost"><Link to={`${basePath}/${r.id}`}><FileText className="w-4 h-4" /></Link></Button>
+                        <Button asChild size="sm" variant="ghost"><Link to={`${basePath}/${r.id}/bearbeiten`}><Pencil className="w-4 h-4" /></Link></Button>
                         <Button size="sm" variant="ghost" onClick={() => remove(r.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                       </td>
                     </tr>
