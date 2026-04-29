@@ -100,7 +100,27 @@ export default function ProductionOrders() {
       .select('*, supplier:suppliers(name, email)')
       .order('created_at', { ascending: false });
     if (error) toast.error(error.message);
-    else setRows(data || []);
+    else {
+      // Fortlaufende Nummer pro Auftragsnummer berechnen (älteste = -1)
+      const list = data || [];
+      const byOrder: Record<string, any[]> = {};
+      // Älteste zuerst gruppieren
+      [...list]
+        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+        .forEach(r => {
+          const key = r.order_number || '';
+          (byOrder[key] = byOrder[key] || []).push(r);
+        });
+      const seqMap: Record<string, number> = {};
+      Object.values(byOrder).forEach(group => {
+        group.forEach((r, idx) => { seqMap[r.id] = idx + 1; });
+      });
+      const enriched = list.map(r => ({
+        ...r,
+        display_order_number: `${r.order_number} -${seqMap[r.id] || 1}`,
+      }));
+      setRows(enriched);
+    }
     setLoading(false);
   };
 
