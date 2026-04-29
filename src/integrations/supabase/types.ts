@@ -641,6 +641,7 @@ export type Database = {
           expected_shipment_date: string | null
           external_order_id: string | null
           id: string
+          internal_number: string | null
           order_date: string | null
           order_number: string
           order_status: string | null
@@ -659,6 +660,7 @@ export type Database = {
           expected_shipment_date?: string | null
           external_order_id?: string | null
           id?: string
+          internal_number?: string | null
           order_date?: string | null
           order_number: string
           order_status?: string | null
@@ -677,6 +679,7 @@ export type Database = {
           expected_shipment_date?: string | null
           external_order_id?: string | null
           id?: string
+          internal_number?: string | null
           order_date?: string | null
           order_number?: string
           order_status?: string | null

@@ -1,0 +1,2 @@
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS internal_number text;
+ALTER TABLE public.orders ADD CONSTRAINT orders_internal_number_format CHECK (internal_number IS NULL OR internal_number ~ '^[A-Za-z0-9]{1,10}$');

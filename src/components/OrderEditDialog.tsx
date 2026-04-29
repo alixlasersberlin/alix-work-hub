@@ -29,6 +29,7 @@ export default function OrderEditDialog({ order, open, onClose, onSaved }: Props
     expected_shipment_date: order?.expected_shipment_date
       ? new Date(order.expected_shipment_date).toISOString().split('T')[0]
       : '',
+    internal_number: order?.internal_number || '',
   });
   const [saving, setSaving] = useState(false);
 
