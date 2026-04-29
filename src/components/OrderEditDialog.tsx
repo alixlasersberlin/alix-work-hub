@@ -36,6 +36,11 @@ export default function OrderEditDialog({ order, open, onClose, onSaved }: Props
   const set = (key: string, val: string) => setForm(f => ({ ...f, [key]: val }));
 
   async function handleSave() {
+    const intNum = form.internal_number.trim();
+    if (intNum && !/^[A-Za-z0-9]{1,10}$/.test(intNum)) {
+      toast.error('Intern Nummer: max. 10 Zeichen, nur Buchstaben und Zahlen');
+      return;
+    }
     setSaving(true);
     const { error } = await supabase.from('orders').update({
       order_status: form.order_status,
@@ -43,6 +48,7 @@ export default function OrderEditDialog({ order, open, onClose, onSaved }: Props
       currency: form.currency || null,
       salesperson_name: form.salesperson_name || null,
       expected_shipment_date: form.expected_shipment_date || null,
+      internal_number: intNum || null,
     }).eq('id', order.id);
     setSaving(false);
     if (error) { toast.error('Fehler beim Speichern: ' + error.message); return; }
