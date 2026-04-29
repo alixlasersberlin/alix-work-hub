@@ -288,7 +288,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
       order_number: displayNumber,
       ...form,
       supplier,
-      items: selectedItems,
+      items: allItemsForPdf,
     }, lang);
   };
 
