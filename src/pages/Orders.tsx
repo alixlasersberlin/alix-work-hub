@@ -60,15 +60,8 @@ export default function Orders() {
       });
     }
 
-    // Pro Auftrag mindestens 1 Zeile (-1), bei mehreren PO entsprechend mehrere
-    const expanded: any[] = [];
-    loaded.forEach(o => {
-      const count = Math.max(1, poCountMap[o.order_number] || 0);
-      const internalPart = o.internal_number ? ` / ${o.internal_number}` : '';
-      for (let i = 1; i <= count; i++) {
-        expanded.push({ ...o, _seq: i, _displayNumber: `${o.order_number}${internalPart} -${i}` });
-      }
-    });
+    // Anzeige: nur originale Zoho-Auftragsnummer, kein Suffix, keine interne Nummer
+    const expanded = loaded.map(o => ({ ...o, _seq: 1, _displayNumber: o.order_number }));
 
     setOrders(expanded);
     setLoading(false);
