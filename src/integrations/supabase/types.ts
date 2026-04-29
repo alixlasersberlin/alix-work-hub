@@ -1206,6 +1206,17 @@ export type Database = {
       has_role: { Args: { check_role: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
       is_supplier: { Args: never; Returns: boolean }
+      log_audit_event: {
+        Args: {
+          _action: string
+          _details?: Json
+          _ip_address?: string
+          _module: string
+          _record_id?: string
+          _user_agent?: string
+        }
+        Returns: string
+      }
       requires_reauth: { Args: never; Returns: boolean }
       session_requires_reauth: { Args: never; Returns: boolean }
     }
