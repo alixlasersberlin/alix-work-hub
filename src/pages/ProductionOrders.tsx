@@ -80,7 +80,7 @@ const T: Record<Lang, Record<string, string>> = {
     status: '状态',
     actions: '操作',
     intern: '内部',
-    p_Ja: '是', p_Nein: '否', p_Teilweise: '部分',
+    p_Ja: '是', p_Nein: '否', p_Teilweise: '部分', p_Garantie: '保修',
   },
 };
 
