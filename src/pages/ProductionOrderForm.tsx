@@ -422,6 +422,59 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
               ))}
             </div>
           )}
+
+          {/* Manuelle Positionen */}
+          <div className="pt-4 border-t border-border space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-medium text-sm">Manuelle Positionen</h3>
+                <p className="text-xs text-muted-foreground">Positionen, die nicht im Auftrag enthalten sind</p>
+              </div>
+              <Button type="button" variant="outline" size="sm" onClick={addManualItem}>
+                <Plus className="w-4 h-4 mr-1" /> Hinzufügen
+              </Button>
+            </div>
+            {manualItems.length === 0 ? (
+              <p className="text-xs text-muted-foreground italic">Noch keine manuellen Positionen.</p>
+            ) : (
+              <div className="space-y-3">
+                {manualItems.map((m, idx) => (
+                  <div key={idx} className="p-3 rounded border border-border bg-muted/20 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="text-xs font-medium text-muted-foreground">Position {idx + 1}</span>
+                      <Button type="button" variant="ghost" size="sm" onClick={() => removeManualItem(idx)}>
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <div className="md:col-span-2">
+                        <Label className="text-xs">Bezeichnung *</Label>
+                        <Input value={m.item_name} onChange={e => updateManualItem(idx, { item_name: e.target.value })} placeholder="z. B. Ersatz-Handstück" />
+                      </div>
+                      <div className="md:col-span-2">
+                        <Label className="text-xs">Beschreibung</Label>
+                        <Textarea rows={2} value={m.description} onChange={e => updateManualItem(idx, { description: e.target.value })} />
+                      </div>
+                      <div>
+                        <Label className="text-xs">SKU</Label>
+                        <Input value={m.sku} onChange={e => updateManualItem(idx, { sku: e.target.value })} />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <Label className="text-xs">Menge</Label>
+                          <Input type="number" min="0" step="any" value={m.quantity} onChange={e => updateManualItem(idx, { quantity: e.target.value })} />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Einheit</Label>
+                          <Input value={m.unit} onChange={e => updateManualItem(idx, { unit: e.target.value })} placeholder="Stk" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </Card>
       )}
 
