@@ -387,26 +387,6 @@ export default function ProductionPortal() {
         </div>
       </Card>
 
-      {/* Language switcher */}
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs text-muted-foreground mr-1">{t.language}:</span>
-        {LANGS.map(l => (
-          <button
-            key={l.code}
-            type="button"
-            onClick={() => setLang(l.code)}
-            className={cn(
-              "flex items-center gap-2 px-3 py-1.5 rounded-md border text-xs font-medium transition-colors",
-              lang === l.code
-                ? "bg-primary/10 text-primary border-primary/40 shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.2)]"
-                : "border-border text-muted-foreground hover:text-foreground hover:bg-muted/40"
-            )}
-          >
-            <span className="text-base leading-none">{l.flag}</span>
-            <span>{l.label}</span>
-          </button>
-        ))}
-      </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
