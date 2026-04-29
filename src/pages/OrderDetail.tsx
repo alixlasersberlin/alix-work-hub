@@ -17,6 +17,7 @@ import SepaMandatButton from '@/components/SepaMandatButton';
 import OrderEditDialog from '@/components/OrderEditDialog';
 import OrderDeferDialog from '@/components/OrderDeferDialog';
 import MietkaufDialog from '@/components/MietkaufDialog';
+import { displayOrderNumber } from '@/lib/order-number';
 
 export default function OrderDetail() {
   const { id } = useParams<{ id: string }>();
