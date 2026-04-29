@@ -54,19 +54,31 @@ export default function ProductionOrderDetail() {
   if (loading) return <div className="p-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
   if (!data) return <div className="p-6">Bestellung nicht gefunden.</div>;
 
+  const isReclamation = !!data.is_reclamation;
+  const basePath = isReclamation ? '/order/reklamation' : '/order';
+
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-4">
-      <Button variant="ghost" size="sm" onClick={() => navigate('/order')}>
+      <Button variant="ghost" size="sm" onClick={() => navigate(basePath)}>
         <ArrowLeft className="w-4 h-4 mr-1" /> Zurück
       </Button>
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-display font-bold gold-text">Bestellung {displayOrderNumber || data.order_number}</h1>
+        <h1 className="text-2xl font-display font-bold gold-text">
+          {isReclamation ? 'Reklamation ' : 'Bestellung '}{displayOrderNumber || data.order_number}
+        </h1>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => downloadPdf('bilingual')}><Download className="w-4 h-4 mr-2" /> PDF</Button>
           <Button variant="outline" onClick={() => downloadPdf('en')}><Download className="w-4 h-4 mr-2" /> PDF (EN)</Button>
-          <Button asChild><Link to={`/order/${data.id}/bearbeiten`}><Pencil className="w-4 h-4 mr-2" /> Bearbeiten</Link></Button>
+          <Button asChild><Link to={`${basePath}/${data.id}/bearbeiten`}><Pencil className="w-4 h-4 mr-2" /> Bearbeiten</Link></Button>
         </div>
       </div>
+
+      {isReclamation && data.reclamation_reason && (
+        <Card className="p-4 space-y-1 border-destructive/40 bg-destructive/5">
+          <h2 className="font-semibold text-destructive">Reklamationsgrund</h2>
+          <p className="text-sm whitespace-pre-line">{data.reclamation_reason}</p>
+        </Card>
+      )}
 
       <Card className="p-4 space-y-2">
         <h2 className="font-semibold">Zulieferer</h2>
