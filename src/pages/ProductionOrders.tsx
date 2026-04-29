@@ -100,7 +100,27 @@ export default function ProductionOrders() {
       .select('*, supplier:suppliers(name, email)')
       .order('created_at', { ascending: false });
     if (error) toast.error(error.message);
-    else setRows(data || []);
+    else {
+      // Fortlaufende Nummer pro Auftragsnummer berechnen (älteste = -1)
+      const list = data || [];
+      const byOrder: Record<string, any[]> = {};
+      // Älteste zuerst gruppieren
+      [...list]
+        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+        .forEach(r => {
+          const key = r.order_number || '';
+          (byOrder[key] = byOrder[key] || []).push(r);
+        });
+      const seqMap: Record<string, number> = {};
+      Object.values(byOrder).forEach(group => {
+        group.forEach((r, idx) => { seqMap[r.id] = idx + 1; });
+      });
+      const enriched = list.map(r => ({
+        ...r,
+        display_order_number: `${r.order_number} -${seqMap[r.id] || 1}`,
+      }));
+      setRows(enriched);
+    }
     setLoading(false);
   };
 
@@ -174,7 +194,7 @@ export default function ProductionOrders() {
                   <div key={r.id} className="p-4 space-y-2">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <div className="font-mono font-semibold text-foreground">{r.order_number}</div>
+                        <div className="font-mono font-semibold text-foreground">{r.display_order_number || r.order_number}</div>
                         <div className="text-xs text-muted-foreground truncate">{r.supplier?.name || '—'}</div>
                       </div>
                       <div className="flex flex-wrap gap-1 justify-end">
@@ -217,7 +237,7 @@ export default function ProductionOrders() {
                 <tbody>
                   {rows.map(r => (
                     <tr key={r.id} className="border-b border-border hover:bg-muted/30">
-                      <td className="p-3 font-mono">{r.order_number}</td>
+                      <td className="p-3 font-mono">{r.display_order_number || r.order_number}</td>
                       <td className="p-3 font-mono uppercase">{r.sonderwuensche || '—'}</td>
                       <td className="p-3">{r.supplier?.name || '—'}</td>
                       <td className="p-3">{r.modellname || '—'}</td>
