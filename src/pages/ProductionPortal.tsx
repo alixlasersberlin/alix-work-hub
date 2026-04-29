@@ -431,7 +431,7 @@ export default function ProductionPortal() {
       )}
 
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{t.editTitle} {editing && `– ${editing.order_number}`}</DialogTitle>
             <DialogDescription className="sr-only">{t.editTitle}</DialogDescription>
