@@ -3,10 +3,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus, Loader2, Factory, Users as UsersIcon, FileText, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Loader2, Factory, Users as UsersIcon, FileText, Pencil, Trash2, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+
+type Mode = 'order' | 'reclamation';
 
 type Lang = 'de' | 'en' | 'zh';
 
