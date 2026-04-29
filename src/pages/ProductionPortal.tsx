@@ -475,9 +475,9 @@ export default function ProductionPortal() {
               <Select value={editForm.payment_status ?? 'Nein'} onValueChange={v => setEditForm(f => ({ ...f, payment_status: v }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Ja">Ja</SelectItem>
-                  <SelectItem value="Nein">Nein</SelectItem>
-                  <SelectItem value="Teilweise">Teilweise</SelectItem>
+                  <SelectItem value="Ja">{tPayment('Ja')}</SelectItem>
+                  <SelectItem value="Nein">{tPayment('Nein')}</SelectItem>
+                  <SelectItem value="Teilweise">{tPayment('Teilweise')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
