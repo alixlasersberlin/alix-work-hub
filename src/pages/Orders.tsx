@@ -58,9 +58,13 @@ export default function Orders() {
   const statuses = [...new Set(orders.map(o => o.order_status).filter(Boolean))]
     .filter(s => !EXCLUDED_STATUSES.includes(s.toLowerCase()));
 
+  const numberMap = useMemo(() => buildOrderNumberMap(orders), [orders]);
+
   const filtered = orders.filter(o => {
     const q = search.toLowerCase();
+    const display = (numberMap[o.id] || o.order_number || '').toLowerCase();
     const matchSearch = !search ||
+      display.includes(q) ||
       o.order_number?.toLowerCase().includes(q) ||
       o.customers?.company_name?.toLowerCase().includes(q) ||
       o.customers?.contact_name?.toLowerCase().includes(q);
