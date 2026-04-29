@@ -31,7 +31,6 @@ export default function ProductionOrderForm() {
 
   const [form, setForm] = useState({
     supplier_id: '',
-    order_number: '',
     modellname: '',
     farbe: '',
     power_handstueck: '',
@@ -58,7 +57,6 @@ export default function ProductionOrderForm() {
       if (error || !po) { toast.error('Bestellung nicht gefunden'); setLoading(false); return; }
       setForm({
         supplier_id: po.supplier_id,
-        order_number: po.order_number || '',
         modellname: po.modellname || '',
         farbe: po.farbe,
         power_handstueck: po.power_handstueck,
@@ -128,7 +126,6 @@ export default function ProductionOrderForm() {
     setSelectedOrder(o);
     setOrderResults([]);
     setOrderSearch('');
-    setForm(f => ({ ...f, order_number: (o.order_number || '').slice(0, 10) }));
     const { data } = await supabase.from('order_items').select('*').eq('order_id', o.id).order('item_order');
     setOrderItems(data || []);
     setSelectedItemIds(new Set());
@@ -148,8 +145,6 @@ export default function ProductionOrderForm() {
   const validate = () => {
     if (!selectedOrder) { toast.error('Bitte einen Auftrag auswählen'); return false; }
     if (!form.supplier_id) { toast.error('Bitte einen Zulieferer wählen'); return false; }
-    if (!form.order_number.trim()) { toast.error('Order Nummer ist Pflichtfeld'); return false; }
-    if (!/^[A-Za-z0-9]{1,10}$/.test(form.order_number.trim())) { toast.error('Order Nummer: max. 10 Zeichen, nur Buchstaben und Zahlen'); return false; }
     if (!form.farbe.trim()) { toast.error('Farbe ist Pflichtfeld'); return false; }
     if (!form.power_handstueck.trim()) { toast.error('Power Handstück ist Pflichtfeld'); return false; }
     if (!form.bearbeiter.trim()) { toast.error('Bearbeiter ist Pflichtfeld'); return false; }
@@ -163,7 +158,7 @@ export default function ProductionOrderForm() {
     setSaving(true);
     const payload = {
       order_id: selectedOrder.id,
-      order_number: form.order_number.trim(),
+      order_number: selectedOrder.order_number,
       supplier_id: form.supplier_id,
       modellname: form.modellname.trim() || null,
       farbe: form.farbe.trim(),
@@ -205,7 +200,7 @@ export default function ProductionOrderForm() {
     const supplier = suppliers.find(s => s.id === form.supplier_id);
     if (!supplier || !selectedOrder) return null;
     return generateProductionOrderPdf({
-      order_number: form.order_number.trim() || selectedOrder.order_number,
+      order_number: selectedOrder.order_number,
       ...form,
       supplier,
       items: selectedItems,
@@ -354,19 +349,6 @@ export default function ProductionOrderForm() {
           )}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div>
-            <Label>Order Nummer *</Label>
-            <Input
-              value={form.order_number}
-              onChange={e => {
-                const v = e.target.value.replace(/[^A-Za-z0-9]/g, '').slice(0, 10);
-                setForm({ ...form, order_number: v });
-              }}
-              maxLength={10}
-              placeholder="z.B. AB12345"
-            />
-            <p className="text-xs text-muted-foreground mt-1">Max. 10 Zeichen, nur Buchstaben und Zahlen</p>
-          </div>
           <div><Label>Modellname</Label><Input value={form.modellname} onChange={e => setForm({ ...form, modellname: e.target.value })} /></div>
           <div><Label>Farbe *</Label><Input value={form.farbe} onChange={e => setForm({ ...form, farbe: e.target.value })} /></div>
           <div><Label>Power Handstück *</Label><Input value={form.power_handstueck} onChange={e => setForm({ ...form, power_handstueck: e.target.value })} /></div>
