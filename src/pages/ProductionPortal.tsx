@@ -70,6 +70,7 @@ const T: Record<Lang, Record<string, string>> = {
     noPdf: 'Kein PDF verfügbar', downloadFailed: 'Download fehlgeschlagen',
     s_offen: 'offen', s_inBearbeitung: 'in Bearbeitung', s_fertig: 'fertig', s_versendet: 'versendet',
     p_Ja: 'Ja', p_Nein: 'Nein', p_Teilweise: 'Teilweise',
+    wishesPh: 'Max. 10 (A-Z, 0-9)',
   },
   en: {
     title: 'PRODUCTION', worklist: 'Worklist', loggedInAs: 'Signed in as',
@@ -87,6 +88,7 @@ const T: Record<Lang, Record<string, string>> = {
     noPdf: 'No PDF available', downloadFailed: 'Download failed',
     s_offen: 'open', s_inBearbeitung: 'in progress', s_fertig: 'done', s_versendet: 'shipped',
     p_Ja: 'Yes', p_Nein: 'No', p_Teilweise: 'Partial',
+    wishesPh: 'Max. 10 (A-Z, 0-9)',
   },
   zh: {
     title: '生产', worklist: '工作清单', loggedInAs: '登录身份',
@@ -104,6 +106,7 @@ const T: Record<Lang, Record<string, string>> = {
     noPdf: '无可用 PDF', downloadFailed: '下载失败',
     s_offen: '待处理', s_inBearbeitung: '处理中', s_fertig: '完成', s_versendet: '已发货',
     p_Ja: '是', p_Nein: '否', p_Teilweise: '部分',
+    wishesPh: '最多 10 个字符（A-Z，0-9）',
   },
 };
 
@@ -537,7 +540,7 @@ export default function ProductionPortal() {
                 value={editForm.sonderwuensche ?? ''}
                 onChange={e => setEditForm(f => ({ ...f, sonderwuensche: e.target.value.replace(/[^A-Za-z0-9]/g, '').slice(0, 10) }))}
                 maxLength={10}
-                placeholder="Max. 10 (A-Z, 0-9)"
+                placeholder={t.wishesPh}
                 className="font-mono uppercase"
               />
             </div>
