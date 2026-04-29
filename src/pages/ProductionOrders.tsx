@@ -38,7 +38,7 @@ const T: Record<Lang, Record<string, string>> = {
     status: 'Status',
     actions: 'Aktionen',
     intern: 'Intern',
-    p_Ja: 'Ja', p_Nein: 'Nein', p_Teilweise: 'Teilweise',
+    p_Ja: 'Ja', p_Nein: 'Nein', p_Teilweise: 'Teilweise', p_Garantie: 'Garantie',
   },
   en: {
     title: 'ORDER – Production Orders',
