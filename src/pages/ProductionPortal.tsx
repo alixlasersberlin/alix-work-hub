@@ -503,7 +503,13 @@ export default function ProductionPortal() {
             </div>
             <div className="space-y-1.5 md:col-span-2">
               <Label>{t.wishes}</Label>
-              <Textarea rows={2} value={editForm.sonderwuensche ?? ''} onChange={e => setEditForm(f => ({ ...f, sonderwuensche: e.target.value }))} />
+              <Input
+                value={editForm.sonderwuensche ?? ''}
+                onChange={e => setEditForm(f => ({ ...f, sonderwuensche: e.target.value.replace(/[^A-Za-z0-9]/g, '').slice(0, 10) }))}
+                maxLength={10}
+                placeholder="Max. 10 (A-Z, 0-9)"
+                className="font-mono uppercase"
+              />
             </div>
             <div className="space-y-1.5 md:col-span-2">
               <Label>{t.notes}</Label>
