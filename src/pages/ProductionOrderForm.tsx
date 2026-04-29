@@ -205,7 +205,7 @@ export default function ProductionOrderForm() {
     const supplier = suppliers.find(s => s.id === form.supplier_id);
     if (!supplier || !selectedOrder) return null;
     return generateProductionOrderPdf({
-      order_number: selectedOrder.order_number,
+      order_number: form.order_number.trim() || selectedOrder.order_number,
       ...form,
       supplier,
       items: selectedItems,
