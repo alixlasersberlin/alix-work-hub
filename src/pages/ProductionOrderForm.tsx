@@ -14,11 +14,15 @@ import { generateProductionOrderPdf } from '@/lib/production-order-pdf';
 import { ALIX_MODEL_GROUPS } from '@/lib/alix-models';
 import { useAuth } from '@/hooks/useAuth';
 
-export default function ProductionOrderForm() {
+type Mode = 'order' | 'reclamation';
+
+export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } = {}) {
   const { id } = useParams();
   const isEdit = Boolean(id);
   const navigate = useNavigate();
   const { profile, user } = useAuth();
+  const isReclamation = mode === 'reclamation';
+  const basePath = isReclamation ? '/order/reklamation' : '/order';
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -44,6 +48,7 @@ export default function ProductionOrderForm() {
     seriennummer: '',
     anmerkungen: '',
     payment_status: 'Nein',
+    reclamation_reason: '',
   });
 
   // Load suppliers
