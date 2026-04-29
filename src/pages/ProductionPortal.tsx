@@ -71,7 +71,10 @@ const T: Record<Lang, Record<string, string>> = {
     saved: 'Auftrag gespeichert', statusUpdated: 'Status aktualisiert',
     noPdf: 'Kein PDF verfügbar', downloadFailed: 'Download fehlgeschlagen',
     s_offen: 'offen', s_inBearbeitung: 'in Bearbeitung', s_fertig: 'fertig', s_versendet: 'versendet',
-    p_Ja: 'Ja', p_Nein: 'Nein', p_Teilweise: 'Teilweise',
+    p_Ja: 'Ja', p_Nein: 'Nein', p_Teilweise: 'Teilweise', p_Garantie: 'Garantie',
+    sort: 'Sortierung', s_liefertermin_asc: 'Liefertermin ↑', s_liefertermin_desc: 'Liefertermin ↓', s_created_desc: 'Neueste',
+    overdue: 'überfällig', dueToday: 'heute fällig', dueIn: 'in', days: 'T.', total: 'Aufträge',
+    photos_status: 'Fotos',
     wishesPh: 'Max. 10 (A-Z, 0-9)',
   },
   en: {
