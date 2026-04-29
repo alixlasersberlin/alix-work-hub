@@ -199,11 +199,21 @@ export default function ProductionOrderForm() {
     return poId || null;
   };
 
-  const buildPdf = async (lang: 'bilingual' | 'en' = 'bilingual', _poId?: string | null) => {
+  const buildPdf = async (lang: 'bilingual' | 'en' = 'bilingual', poId?: string | null) => {
     const supplier = suppliers.find(s => s.id === form.supplier_id);
     if (!supplier || !selectedOrder) return null;
+    let displayNumber = selectedOrder.order_number;
+    const targetId = poId || id;
+    if (targetId) {
+      const { data: poRow } = await supabase
+        .from('production_orders')
+        .select('production_order_number')
+        .eq('id', targetId)
+        .maybeSingle();
+      if (poRow?.production_order_number) displayNumber = poRow.production_order_number;
+    }
     return generateProductionOrderPdf({
-      order_number: selectedOrder.order_number,
+      order_number: displayNumber,
       ...form,
       supplier,
       items: selectedItems,
