@@ -133,13 +133,32 @@
     @apply border-border;
   }
 
+  html, body, #root {
+    height: 100%;
+  }
+
+  html {
+    /* Verhindert iOS-Auto-Zoom bei Inputs <16px */
+    -webkit-text-size-adjust: 100%;
+  }
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', system-ui, sans-serif;
+    /* Vermeidet horizontales Scrollen auf Mobile */
+    overflow-x: hidden;
+    overscroll-behavior-y: none;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  }
+
+  /* iOS: Inputs mind. 16px, sonst zoomt Safari beim Fokus */
+  @media (max-width: 768px) {
+    input, select, textarea {
+      font-size: 16px;
+    }
   }
 }
 
@@ -175,6 +194,28 @@
     from { opacity: 0; transform: translateY(6px); }
     to { opacity: 1; transform: translateY(0); }
   }
+
+  /* Volle dynamische Viewport-Höhe (iOS Safari berücksichtigt URL-Bar) */
+  .min-h-screen-dvh {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+  .h-screen-dvh {
+    height: 100vh;
+    height: 100dvh;
+  }
+
+  /* Smooth Scrolling auf iOS */
+  .scroll-touch {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  /* Safe-Area-Padding für Notch-Geräte */
+  .pt-safe { padding-top: env(safe-area-inset-top); }
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+  .pl-safe { padding-left: env(safe-area-inset-left); }
+  .pr-safe { padding-right: env(safe-area-inset-right); }
 }
 
 /* Scrollbar styling */
