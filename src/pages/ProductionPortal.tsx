@@ -396,7 +396,7 @@ export default function ProductionPortal() {
                 <span className="text-xs text-muted-foreground">{t.status}:</span>
                 <Select
                   value={row.status}
-                  onValueChange={(v) => updateStatus(row.id, v)}
+                  onValueChange={(v) => setTimeout(() => updateStatus(row.id, v), 0)}
                   disabled={updatingId === row.id}
                 >
                   <SelectTrigger className="h-8 w-[180px] text-xs">
