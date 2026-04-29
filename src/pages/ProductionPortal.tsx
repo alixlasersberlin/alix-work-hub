@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Factory, Download, Search, Pencil, Camera } from 'lucide-react';
+import { Loader2, Factory, Download, Search, Pencil, Camera, Calendar, User, Palette, Zap, Hash, ImageIcon, ArrowUpDown } from 'lucide-react';
+import { differenceInCalendarDays, isValid } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -70,7 +71,10 @@ const T: Record<Lang, Record<string, string>> = {
     saved: 'Auftrag gespeichert', statusUpdated: 'Status aktualisiert',
     noPdf: 'Kein PDF verfügbar', downloadFailed: 'Download fehlgeschlagen',
     s_offen: 'offen', s_inBearbeitung: 'in Bearbeitung', s_fertig: 'fertig', s_versendet: 'versendet',
-    p_Ja: 'Ja', p_Nein: 'Nein', p_Teilweise: 'Teilweise',
+    p_Ja: 'Ja', p_Nein: 'Nein', p_Teilweise: 'Teilweise', p_Garantie: 'Garantie',
+    sort: 'Sortierung', s_liefertermin_asc: 'Liefertermin ↑', s_liefertermin_desc: 'Liefertermin ↓', s_created_desc: 'Neueste',
+    overdue: 'überfällig', dueToday: 'heute fällig', dueIn: 'in', days: 'T.', total: 'Aufträge',
+    photos_status: 'Fotos',
     wishesPh: 'Max. 10 (A-Z, 0-9)',
   },
   en: {
@@ -88,7 +92,10 @@ const T: Record<Lang, Record<string, string>> = {
     saved: 'Order saved', statusUpdated: 'Status updated',
     noPdf: 'No PDF available', downloadFailed: 'Download failed',
     s_offen: 'open', s_inBearbeitung: 'in progress', s_fertig: 'done', s_versendet: 'shipped',
-    p_Ja: 'Yes', p_Nein: 'No', p_Teilweise: 'Partial',
+    p_Ja: 'Yes', p_Nein: 'No', p_Teilweise: 'Partial', p_Garantie: 'Warranty',
+    sort: 'Sort', s_liefertermin_asc: 'Delivery ↑', s_liefertermin_desc: 'Delivery ↓', s_created_desc: 'Newest',
+    overdue: 'overdue', dueToday: 'due today', dueIn: 'in', days: 'd', total: 'orders',
+    photos_status: 'Photos',
     wishesPh: 'Max. 10 (A-Z, 0-9)',
   },
   zh: {
@@ -106,7 +113,10 @@ const T: Record<Lang, Record<string, string>> = {
     saved: '订单已保存', statusUpdated: '状态已更新',
     noPdf: '无可用 PDF', downloadFailed: '下载失败',
     s_offen: '待处理', s_inBearbeitung: '处理中', s_fertig: '完成', s_versendet: '已发货',
-    p_Ja: '是', p_Nein: '否', p_Teilweise: '部分',
+    p_Ja: '是', p_Nein: '否', p_Teilweise: '部分', p_Garantie: '保修',
+    sort: '排序', s_liefertermin_asc: '交期 ↑', s_liefertermin_desc: '交期 ↓', s_created_desc: '最新',
+    overdue: '逾期', dueToday: '今日到期', dueIn: '剩', days: '天', total: '订单',
+    photos_status: '照片',
     wishesPh: '最多 10 个字符（A-Z，0-9）',
   },
 };
@@ -127,6 +137,7 @@ export default function ProductionPortal() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [sort, setSort] = useState<'liefertermin_asc' | 'liefertermin_desc' | 'created_desc'>('liefertermin_asc');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [editing, setEditing] = useState<ProductionOrderRow | null>(null);
   const [editForm, setEditForm] = useState<Partial<ProductionOrderRow>>({});
@@ -259,13 +270,45 @@ export default function ProductionPortal() {
     URL.revokeObjectURL(url);
   };
 
-  const q = search.trim().toLowerCase();
-  const filtered = rows.filter(r => {
-    if (statusFilter !== 'all' && r.status !== statusFilter) return false;
-    if (!q) return true;
-    const hay = `${r.production_order_number || ''} ${r.order_number} ${r.modellname || ''} ${r.farbe || ''} ${r.bearbeiter || ''} ${r.seriennummer || ''}`.toLowerCase();
-    return hay.includes(q);
-  });
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    let out = rows.filter(r => {
+      if (statusFilter !== 'all' && r.status !== statusFilter) return false;
+      if (!q) return true;
+      const hay = `${r.production_order_number || ''} ${r.order_number} ${r.modellname || ''} ${r.farbe || ''} ${r.bearbeiter || ''} ${r.seriennummer || ''} ${r.sonderwuensche || ''}`.toLowerCase();
+      return hay.includes(q);
+    });
+    out = [...out].sort((a, b) => {
+      if (sort === 'liefertermin_asc') return (a.liefertermin || '').localeCompare(b.liefertermin || '');
+      if (sort === 'liefertermin_desc') return (b.liefertermin || '').localeCompare(a.liefertermin || '');
+      return (b.created_at || '').localeCompare(a.created_at || '');
+    });
+    return out;
+  }, [rows, search, statusFilter, sort]);
+
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const dueLabel = (date: string | null) => {
+    if (!date) return null;
+    const d = new Date(date); if (!isValid(d)) return null;
+    const diff = differenceInCalendarDays(d, today);
+    if (diff < 0) return { label: `${Math.abs(diff)} ${t.days} ${t.overdue}`, cls: 'bg-destructive/15 text-destructive border-destructive/30' };
+    if (diff === 0) return { label: t.dueToday, cls: 'bg-yellow-500/15 text-yellow-500 border-yellow-500/30' };
+    if (diff <= 7) return { label: `${t.dueIn} ${diff} ${t.days}`, cls: 'bg-yellow-500/15 text-yellow-500 border-yellow-500/30' };
+    return { label: `${t.dueIn} ${diff} ${t.days}`, cls: 'bg-green-500/15 text-green-500 border-green-500/30' };
+  };
+
+  const statusBadgeCls = (s: string) => {
+    if (s === 'versendet') return 'bg-blue-500/15 text-blue-500 border-blue-500/30';
+    if (s === 'in Bearbeitung') return 'bg-yellow-500/15 text-yellow-500 border-yellow-500/30';
+    if (s === 'fertig') return 'bg-green-500/15 text-green-500 border-green-500/30';
+    return 'bg-muted text-muted-foreground border-border';
+  };
+  const paymentBadgeCls = (ps: string) => {
+    if (ps === 'Ja') return 'bg-green-500/15 text-green-500 border-green-500/30';
+    if (ps === 'Teilweise') return 'bg-yellow-500/15 text-yellow-500 border-yellow-500/30';
+    if (ps === 'Garantie') return 'bg-blue-500/15 text-blue-500 border-blue-500/30';
+    return 'bg-destructive/15 text-destructive border-destructive/30';
+  };
 
   const supplierName = rows[0]?.supplier?.name;
 
@@ -285,52 +328,65 @@ export default function ProductionPortal() {
         </div>
       </div>
 
-      <Card className="p-4 flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-[220px]">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t.searchPh}
-            className="pl-9"
-          />
+      <Card className="p-3 md:p-4 space-y-3">
+        <div className="flex flex-col lg:flex-row gap-2 lg:items-center">
+          <div className="relative flex-1 min-w-0">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t.searchPh}
+              className="pl-9 h-9"
+            />
+          </div>
+          <div className="grid grid-cols-2 lg:flex gap-2">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="h-9 w-full lg:w-[180px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t.allStatus}</SelectItem>
+                {STATUS_OPTIONS.map(s => (
+                  <SelectItem key={s} value={s}>{tStatus(s)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={sort} onValueChange={(v: any) => setSort(v)}>
+              <SelectTrigger className="h-9 w-full lg:w-[180px]">
+                <ArrowUpDown className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="liefertermin_asc">{t.s_liefertermin_asc}</SelectItem>
+                <SelectItem value="liefertermin_desc">{t.s_liefertermin_desc}</SelectItem>
+                <SelectItem value="created_desc">{t.s_created_desc}</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="sm" className="h-9 col-span-2 lg:col-auto" onClick={load} disabled={loading}>
+              {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} {t.refresh}
+            </Button>
+          </div>
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder={t.status} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t.allStatus}</SelectItem>
-            {STATUS_OPTIONS.map(s => (
-              <SelectItem key={s} value={s}>{tStatus(s)}</SelectItem>
+        <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1">
+            {LANGS.map(l => (
+              <button
+                key={l.code}
+                type="button"
+                onClick={() => setLang(l.code)}
+                className={cn(
+                  "flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[11px] font-medium transition-colors",
+                  lang === l.code
+                    ? "bg-primary/10 text-primary border-primary/40"
+                    : "border-border text-muted-foreground hover:text-foreground hover:bg-muted/40"
+                )}
+              >
+                <span>{l.flag}</span><span>{l.label.slice(0,2).toUpperCase()}</span>
+              </button>
             ))}
-          </SelectContent>
-        </Select>
-        <Button variant="outline" onClick={load} disabled={loading}>
-          {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} {t.refresh}
-        </Button>
+          </div>
+          <span>{filtered.length} / {rows.length} {t.total}</span>
+        </div>
       </Card>
 
-      {/* Language switcher */}
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs text-muted-foreground mr-1">{t.language}:</span>
-        {LANGS.map(l => (
-          <button
-            key={l.code}
-            type="button"
-            onClick={() => setLang(l.code)}
-            className={cn(
-              "flex items-center gap-2 px-3 py-1.5 rounded-md border text-xs font-medium transition-colors",
-              lang === l.code
-                ? "bg-primary/10 text-primary border-primary/40 shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.2)]"
-                : "border-border text-muted-foreground hover:text-foreground hover:bg-muted/40"
-            )}
-          >
-            <span className="text-base leading-none">{l.flag}</span>
-            <span>{l.label}</span>
-          </button>
-        ))}
-      </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
@@ -343,77 +399,94 @@ export default function ProductionPortal() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {filtered.map(row => (
-            <Card key={row.id} className="p-5 space-y-3 card-glow">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="font-display font-semibold text-foreground font-mono">{row.production_order_number || row.order_number}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {t.deliveryDate}: <span className="text-foreground font-medium">
-                      {row.liefertermin ? format(new Date(row.liefertermin), 'dd.MM.yyyy') : '—'}
-                    </span>
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => openEdit(row)}>
-                    <Pencil className="w-4 h-4 mr-1" /> {t.edit}
-                  </Button>
-                  {row.pdf_path && (
-                    <Button size="sm" variant="outline" onClick={() => downloadPdf(row.pdf_path, row.production_order_number || row.order_number)}>
-                      <Download className="w-4 h-4 mr-1" /> {t.pdf}
+          {filtered.map(row => {
+            const ps = row.payment_status || 'Nein';
+            const due = dueLabel(row.liefertermin);
+            const photoCount = [row.photo_front_path, row.photo_right_path, row.photo_left_path].filter(Boolean).length;
+            return (
+              <Card key={row.id} className="p-4 md:p-5 space-y-3 hover:border-primary/40 transition-colors">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mb-0.5">
+                      <Hash className="w-3 h-3" />
+                      <span className="font-mono truncate">{row.order_number}</span>
+                    </div>
+                    <p className="font-display font-semibold text-foreground font-mono truncate">
+                      {row.production_order_number || row.order_number}
+                    </p>
+                    <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                      <span className={cn('px-2 py-0.5 rounded text-[10px] font-medium border', statusBadgeCls(row.status))}>
+                        {tStatus(row.status)}
+                      </span>
+                      <span className={cn('px-2 py-0.5 rounded text-[10px] font-medium border', paymentBadgeCls(ps))}>
+                        {tPayment(ps)}
+                      </span>
+                      {due && (
+                        <span className={cn('px-2 py-0.5 rounded text-[10px] font-medium border', due.cls)}>
+                          {due.label}
+                        </span>
+                      )}
+                      <span className={cn(
+                        'px-2 py-0.5 rounded text-[10px] font-medium border inline-flex items-center gap-1',
+                        photoCount === 3
+                          ? 'bg-green-500/15 text-green-500 border-green-500/30'
+                          : 'bg-muted text-muted-foreground border-border'
+                      )}>
+                        <ImageIcon className="w-3 h-3" /> {photoCount}/3
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <Button size="sm" variant="outline" onClick={() => openEdit(row)}>
+                      <Pencil className="w-4 h-4 mr-1" /> {t.edit}
                     </Button>
+                    {row.pdf_path && (
+                      <Button size="sm" variant="outline" onClick={() => downloadPdf(row.pdf_path, row.production_order_number || row.order_number)}>
+                        <Download className="w-4 h-4 mr-1" /> {t.pdf}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs pt-2 border-t border-border/50">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <Calendar className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                    <span className="truncate">{row.liefertermin ? format(new Date(row.liefertermin), 'dd.MM.yyyy') : '—'}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <Factory className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                    <span className="truncate">{row.modellname || '—'}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <Palette className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                    <span className="truncate">{row.farbe || '—'}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <Zap className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                    <span className="truncate">{row.power_handstueck || '—'}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 min-w-0 col-span-2">
+                    <User className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                    <span className="truncate">{row.bearbeiter || '—'}</span>
+                  </div>
+                  {row.seriennummer && (
+                    <div className="col-span-2">
+                      <span className="text-muted-foreground">{t.serial}:</span>{' '}
+                      <span className="text-foreground font-mono">{row.seriennummer}</span>
+                    </div>
+                  )}
+                  {row.sonderwuensche && (
+                    <div className="col-span-2">
+                      <span className="text-muted-foreground">{t.wishes}:</span>{' '}
+                      <span className="text-foreground font-mono uppercase">{row.sonderwuensche}</span>
+                    </div>
+                  )}
+                  {row.anmerkungen && (
+                    <div className="col-span-2 text-muted-foreground">
+                      <span>{t.notes}:</span> <span className="text-foreground">{row.anmerkungen}</span>
+                    </div>
                   )}
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div>
-                  <span className="text-muted-foreground">{t.model}:</span>{' '}
-                  <span className="text-foreground">{row.modellname || '—'}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">{t.color}:</span>{' '}
-                  <span className="text-foreground">{row.farbe || '—'}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">{t.powerHs}:</span>{' '}
-                  <span className="text-foreground">{row.power_handstueck || '—'}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">{t.operator}:</span>{' '}
-                  <span className="text-foreground">{row.bearbeiter || '—'}</span>
-                </div>
-                {row.seriennummer && (
-                  <div className="col-span-2">
-                    <span className="text-muted-foreground">{t.serial}:</span>{' '}
-                    <span className="text-foreground">{row.seriennummer}</span>
-                  </div>
-                )}
-                {row.sonderwuensche && (
-                  <div className="col-span-2">
-                    <span className="text-muted-foreground">{t.wishes}:</span>{' '}
-                    <span className="text-foreground">{row.sonderwuensche}</span>
-                  </div>
-                )}
-                {row.anmerkungen && (
-                  <div className="col-span-2">
-                    <span className="text-muted-foreground">{t.notes}:</span>{' '}
-                    <span className="text-foreground">{row.anmerkungen}</span>
-                  </div>
-                )}
-                <div className="col-span-2 flex items-center gap-2">
-                  <span className="text-muted-foreground">{t.payment}:</span>
-                  {(() => {
-                    const ps = row.payment_status || 'Nein';
-                    const cls = ps === 'Ja'
-                      ? 'bg-green-500/15 text-green-500'
-                      : ps === 'Teilweise'
-                        ? 'bg-yellow-500/15 text-yellow-500'
-                        : 'bg-destructive/15 text-destructive';
-                    return <span className={`px-2 py-0.5 rounded text-xs font-medium ${cls}`}>{tPayment(ps)}</span>;
-                  })()}
-                </div>
-              </div>
 
               <div className="flex items-center gap-2 pt-2 border-t border-border">
                 <span className="text-xs text-muted-foreground">{t.status}:</span>
