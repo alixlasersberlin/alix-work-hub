@@ -35,6 +35,7 @@ const navItems: NavItem[] = [
     path: '/einkauf', label: 'BESTELLUNGEN', icon: ShoppingCart, roles: ['Admin', 'Super Admin'],
     children: [
       { path: '/order', label: 'Order', icon: Factory, roles: ['Admin', 'Super Admin'] },
+      { path: '/order/reklamation', label: 'Reklamation', icon: AlertTriangle, roles: ['Admin', 'Super Admin'] },
     ],
   },
   { path: '/production', label: 'PRODUCTION', icon: Factory, roles: ['Admin', 'Super Admin', 'Lieferant'] },
