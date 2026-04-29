@@ -359,7 +359,7 @@ export default function ProductionPortal() {
                     <Pencil className="w-4 h-4 mr-1" /> {t.edit}
                   </Button>
                   {row.pdf_path && (
-                    <Button size="sm" variant="outline" onClick={() => downloadPdf(row.pdf_path, row.order_number)}>
+                    <Button size="sm" variant="outline" onClick={() => downloadPdf(row.pdf_path, row.production_order_number || row.order_number)}>
                       <Download className="w-4 h-4 mr-1" /> {t.pdf}
                     </Button>
                   )}
