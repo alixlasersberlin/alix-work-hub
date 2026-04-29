@@ -455,7 +455,7 @@ export default function ProductionOrderForm() {
             className="font-mono uppercase"
           />
         </div>
-        <div><Label>Anmerkungen (frei)</Label><Textarea value={form.anmerkungen} onChange={e => setForm({ ...form, anmerkungen: e.target.value })} rows={3} /></div>
+        <div><Label>Anmerkungen</Label><Textarea value={form.anmerkungen} onChange={e => setForm({ ...form, anmerkungen: e.target.value })} rows={3} /></div>
       </Card>
 
       <div className="flex flex-wrap justify-end gap-2 sticky bottom-0 bg-background py-3 border-t border-border">
