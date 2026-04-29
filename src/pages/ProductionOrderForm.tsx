@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowLeft, Loader2, Search, Save, Send, Download } from 'lucide-react';
+import { ArrowLeft, Loader2, Search, Save, Send, Download, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateProductionOrderPdf } from '@/lib/production-order-pdf';
 import { ALIX_MODEL_GROUPS } from '@/lib/alix-models';
@@ -36,6 +36,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [orderItems, setOrderItems] = useState<any[]>([]);
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
+  const [manualItems, setManualItems] = useState<Array<{ item_name: string; description: string; sku: string; quantity: string; unit: string }>>([]);
 
   const [form, setForm] = useState({
     supplier_id: '',
@@ -90,12 +91,20 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
       const { data: order } = await supabase.from('orders').select('*').eq('id', po.order_id).single();
       setSelectedOrder(order);
       // Load items from this PO
-      const { data: poItems } = await supabase.from('production_order_items').select('*').eq('production_order_id', id);
+      const { data: poItems } = await supabase.from('production_order_items').select('*').eq('production_order_id', id).order('item_order');
       // Load all source order items
       const { data: srcItems } = await supabase.from('order_items').select('*').eq('order_id', po.order_id).order('item_order');
       setOrderItems(srcItems || []);
       const ids = new Set<string>((poItems || []).map(i => i.source_order_item_id).filter(Boolean));
       setSelectedItemIds(ids);
+      const manual = (poItems || []).filter(i => !i.source_order_item_id).map(i => ({
+        item_name: i.item_name || '',
+        description: i.description || '',
+        sku: i.sku || '',
+        quantity: i.quantity != null ? String(i.quantity) : '1',
+        unit: i.unit || '',
+      }));
+      setManualItems(manual);
       setLoading(false);
     })();
   }, [id, isEdit]);
@@ -162,6 +171,32 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
     [orderItems, selectedItemIds]
   );
 
+  const cleanManualItems = useMemo(
+    () => manualItems.filter(m => m.item_name.trim() || m.description.trim() || m.sku.trim()),
+    [manualItems]
+  );
+
+  const allItemsForPdf = useMemo(
+    () => [
+      ...selectedItems,
+      ...cleanManualItems.map(m => ({
+        item_name: m.item_name.trim() || null,
+        description: m.description.trim() || null,
+        sku: m.sku.trim() || null,
+        quantity: m.quantity ? Number(m.quantity) : null,
+        unit: m.unit.trim() || null,
+      })),
+    ],
+    [selectedItems, cleanManualItems]
+  );
+
+  const addManualItem = () =>
+    setManualItems(arr => [...arr, { item_name: '', description: '', sku: '', quantity: '1', unit: '' }]);
+  const updateManualItem = (idx: number, patch: Partial<typeof manualItems[number]>) =>
+    setManualItems(arr => arr.map((m, i) => (i === idx ? { ...m, ...patch } : m)));
+  const removeManualItem = (idx: number) =>
+    setManualItems(arr => arr.filter((_, i) => i !== idx));
+
   const validate = () => {
     if (!selectedOrder) { toast.error('Bitte einen Auftrag auswählen'); return false; }
     if (!form.supplier_id) { toast.error('Bitte einen Zulieferer wählen'); return false; }
@@ -170,7 +205,12 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
     if (!form.bearbeiter.trim()) { toast.error('Bearbeiter ist Pflichtfeld'); return false; }
     if (!form.liefertermin) { toast.error('Liefertermin ist Pflichtfeld'); return false; }
     if (isReclamation && !form.reclamation_reason.trim()) { toast.error('Reklamationsgrund ist Pflichtfeld'); return false; }
-    if (selectedItems.length === 0) { toast.error('Mindestens eine Position auswählen'); return false; }
+    if (selectedItems.length === 0 && cleanManualItems.length === 0) {
+      toast.error('Mindestens eine Position auswählen oder manuell hinzufügen'); return false;
+    }
+    for (const m of cleanManualItems) {
+      if (!m.item_name.trim()) { toast.error('Manuelle Position: Bezeichnung ist Pflichtfeld'); return false; }
+    }
     return true;
   };
 
@@ -204,7 +244,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
       poId = data.id;
     }
     if (poId) {
-      const itemRows = selectedItems.map((it, idx) => ({
+      const fromOrder = selectedItems.map((it, idx) => ({
         production_order_id: poId,
         source_order_item_id: it.id,
         item_name: it.item_name,
@@ -214,6 +254,17 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
         unit: it.unit,
         item_order: idx,
       }));
+      const fromManual = cleanManualItems.map((m, idx) => ({
+        production_order_id: poId,
+        source_order_item_id: null,
+        item_name: m.item_name.trim(),
+        description: m.description.trim() || null,
+        sku: m.sku.trim() || null,
+        quantity: m.quantity ? Number(m.quantity) : null,
+        unit: m.unit.trim() || null,
+        item_order: fromOrder.length + idx,
+      }));
+      const itemRows = [...fromOrder, ...fromManual];
       if (itemRows.length) await supabase.from('production_order_items').insert(itemRows);
     }
     setSaving(false);
@@ -237,7 +288,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
       order_number: displayNumber,
       ...form,
       supplier,
-      items: selectedItems,
+      items: allItemsForPdf,
     }, lang);
   };
 
@@ -371,6 +422,59 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
               ))}
             </div>
           )}
+
+          {/* Manuelle Positionen */}
+          <div className="pt-4 border-t border-border space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-medium text-sm">Manuelle Positionen</h3>
+                <p className="text-xs text-muted-foreground">Positionen, die nicht im Auftrag enthalten sind</p>
+              </div>
+              <Button type="button" variant="outline" size="sm" onClick={addManualItem}>
+                <Plus className="w-4 h-4 mr-1" /> Hinzufügen
+              </Button>
+            </div>
+            {manualItems.length === 0 ? (
+              <p className="text-xs text-muted-foreground italic">Noch keine manuellen Positionen.</p>
+            ) : (
+              <div className="space-y-3">
+                {manualItems.map((m, idx) => (
+                  <div key={idx} className="p-3 rounded border border-border bg-muted/20 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="text-xs font-medium text-muted-foreground">Position {idx + 1}</span>
+                      <Button type="button" variant="ghost" size="sm" onClick={() => removeManualItem(idx)}>
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <div className="md:col-span-2">
+                        <Label className="text-xs">Bezeichnung *</Label>
+                        <Input value={m.item_name} onChange={e => updateManualItem(idx, { item_name: e.target.value })} placeholder="z. B. Ersatz-Handstück" />
+                      </div>
+                      <div className="md:col-span-2">
+                        <Label className="text-xs">Beschreibung</Label>
+                        <Textarea rows={2} value={m.description} onChange={e => updateManualItem(idx, { description: e.target.value })} />
+                      </div>
+                      <div>
+                        <Label className="text-xs">SKU</Label>
+                        <Input value={m.sku} onChange={e => updateManualItem(idx, { sku: e.target.value })} />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <Label className="text-xs">Menge</Label>
+                          <Input type="number" min="0" step="any" value={m.quantity} onChange={e => updateManualItem(idx, { quantity: e.target.value })} />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Einheit</Label>
+                          <Input value={m.unit} onChange={e => updateManualItem(idx, { unit: e.target.value })} placeholder="Stk" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </Card>
       )}
 
