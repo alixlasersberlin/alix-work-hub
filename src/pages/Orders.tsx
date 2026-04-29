@@ -45,7 +45,31 @@ export default function Orders() {
       .limit(500);
     if (err) setError(err.message);
     const loaded = data ?? [];
-    setOrders(loaded);
+
+    // Anzahl Produktionsbestellungen pro order_number ermitteln
+    const orderNumbers = Array.from(new Set(loaded.map(o => o.order_number).filter(Boolean)));
+    const poCountMap: Record<string, number> = {};
+    if (orderNumbers.length > 0) {
+      const { data: pos } = await supabase
+        .from('production_orders')
+        .select('order_number')
+        .in('order_number', orderNumbers);
+      (pos || []).forEach(p => {
+        if (!p.order_number) return;
+        poCountMap[p.order_number] = (poCountMap[p.order_number] || 0) + 1;
+      });
+    }
+
+    // Pro Auftrag mindestens 1 Zeile (-1), bei mehreren PO entsprechend mehrere
+    const expanded: any[] = [];
+    loaded.forEach(o => {
+      const count = Math.max(1, poCountMap[o.order_number] || 0);
+      for (let i = 1; i <= count; i++) {
+        expanded.push({ ...o, _seq: i, _displayNumber: `${o.order_number} -${i}` });
+      }
+    });
+
+    setOrders(expanded);
     setLoading(false);
     if (loaded.length > 0) fetchDrivingTimes(loaded);
   }
