@@ -390,7 +390,35 @@ export default function ProductionOrderForm() {
               </SelectContent>
             </Select>
           </div>
-          <div><Label>Farbe *</Label><Input value={form.farbe} onChange={e => setForm({ ...form, farbe: e.target.value })} /></div>
+          <div>
+            <Label>Farbe *</Label>
+            {(() => {
+              const FARBEN = ['Blau - Gold','Weiss - Gold','Schwarz - Gold','Pink - Gold','Rot - Gold','Weiss','Schwarz','Blau'];
+              const isPreset = FARBEN.includes(form.farbe);
+              const selectValue = form.farbe === '' ? '' : (isPreset ? form.farbe : '__free__');
+              return (
+                <div className="space-y-2">
+                  <Select
+                    value={selectValue}
+                    onValueChange={v => setForm({ ...form, farbe: v === '__free__' ? '' : v })}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Farbe wählen…" /></SelectTrigger>
+                    <SelectContent>
+                      {FARBEN.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+                      <SelectItem value="__free__">Freie Farbe</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {selectValue === '__free__' && (
+                    <Input
+                      value={form.farbe}
+                      onChange={e => setForm({ ...form, farbe: e.target.value })}
+                      placeholder="Farbe eingeben…"
+                    />
+                  )}
+                </div>
+              );
+            })()}
+          </div>
           <div><Label>Power Handstück *</Label><Input value={form.power_handstueck} onChange={e => setForm({ ...form, power_handstueck: e.target.value })} /></div>
           <div><Label>Bearbeiter *</Label><Input value={form.bearbeiter} onChange={e => setForm({ ...form, bearbeiter: e.target.value })} /></div>
           <div><Label>Liefertermin *</Label><Input type="date" value={form.liefertermin} onChange={e => setForm({ ...form, liefertermin: e.target.value })} /></div>
