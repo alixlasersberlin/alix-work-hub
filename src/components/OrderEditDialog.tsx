@@ -29,12 +29,18 @@ export default function OrderEditDialog({ order, open, onClose, onSaved }: Props
     expected_shipment_date: order?.expected_shipment_date
       ? new Date(order.expected_shipment_date).toISOString().split('T')[0]
       : '',
+    internal_number: order?.internal_number || '',
   });
   const [saving, setSaving] = useState(false);
 
   const set = (key: string, val: string) => setForm(f => ({ ...f, [key]: val }));
 
   async function handleSave() {
+    const intNum = form.internal_number.trim();
+    if (intNum && !/^[A-Za-z0-9]{1,10}$/.test(intNum)) {
+      toast.error('Intern Nummer: max. 10 Zeichen, nur Buchstaben und Zahlen');
+      return;
+    }
     setSaving(true);
     const { error } = await supabase.from('orders').update({
       order_status: form.order_status,
@@ -42,6 +48,7 @@ export default function OrderEditDialog({ order, open, onClose, onSaved }: Props
       currency: form.currency || null,
       salesperson_name: form.salesperson_name || null,
       expected_shipment_date: form.expected_shipment_date || null,
+      internal_number: intNum || null,
     }).eq('id', order.id);
     setSaving(false);
     if (error) { toast.error('Fehler beim Speichern: ' + error.message); return; }
@@ -85,6 +92,16 @@ export default function OrderEditDialog({ order, open, onClose, onSaved }: Props
           <div>
             <Label className="text-xs text-muted-foreground">Erw. Versanddatum</Label>
             <Input type="date" value={form.expected_shipment_date} onChange={e => set('expected_shipment_date', e.target.value)} className="bg-secondary border-border mt-1" />
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground">Intern Nummer</Label>
+            <Input
+              value={form.internal_number}
+              onChange={e => set('internal_number', e.target.value.replace(/[^A-Za-z0-9]/g, '').slice(0, 10))}
+              maxLength={10}
+              placeholder="Max. 10 Zeichen (A-Z, 0-9)"
+              className="bg-secondary border-border mt-1 font-mono uppercase"
+            />
           </div>
           <div className="flex justify-end gap-2 pt-4">
             <Button variant="ghost" onClick={onClose}>Abbrechen</Button>
