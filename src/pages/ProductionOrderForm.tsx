@@ -58,6 +58,7 @@ export default function ProductionOrderForm() {
       if (error || !po) { toast.error('Bestellung nicht gefunden'); setLoading(false); return; }
       setForm({
         supplier_id: po.supplier_id,
+        order_number: po.order_number || '',
         modellname: po.modellname || '',
         farbe: po.farbe,
         power_handstueck: po.power_handstueck,
