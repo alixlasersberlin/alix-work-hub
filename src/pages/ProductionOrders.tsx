@@ -207,8 +207,8 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
                       <div><span className="text-muted-foreground">{t.delivery}:</span> {r.liefertermin ? format(new Date(r.liefertermin), 'dd.MM.yyyy') : '—'}</div>
                     </div>
                     <div className="flex justify-end gap-1 pt-1 border-t border-border/50">
-                      <Button asChild size="sm" variant="ghost"><Link to={`/order/${r.id}`}><FileText className="w-4 h-4" /></Link></Button>
-                      <Button asChild size="sm" variant="ghost"><Link to={`/order/${r.id}/bearbeiten`}><Pencil className="w-4 h-4" /></Link></Button>
+                      <Button asChild size="sm" variant="ghost"><Link to={`${basePath}/${r.id}`}><FileText className="w-4 h-4" /></Link></Button>
+                      <Button asChild size="sm" variant="ghost"><Link to={`${basePath}/${r.id}/bearbeiten`}><Pencil className="w-4 h-4" /></Link></Button>
                       <Button size="sm" variant="ghost" onClick={() => remove(r.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                     </div>
                   </div>
