@@ -20,6 +20,7 @@ export default function ProductionOrderForm() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [suppliers, setSuppliers] = useState<any[]>([]);
+  const [productionOrderNumber, setProductionOrderNumber] = useState<string>('');
 
   // Auftrag suchen
   const [orderSearch, setOrderSearch] = useState('');
@@ -56,6 +57,7 @@ export default function ProductionOrderForm() {
       const { data: po, error } = await supabase
         .from('production_orders').select('*').eq('id', id).single();
       if (error || !po) { toast.error('Bestellung nicht gefunden'); setLoading(false); return; }
+      setProductionOrderNumber((po as any).production_order_number || '');
       setForm({
         supplier_id: po.supplier_id,
         modellname: po.modellname || '',
@@ -288,12 +290,18 @@ export default function ProductionOrderForm() {
 
       {/* Auftrag */}
       <Card className="p-4 space-y-3">
-        <h2 className="font-semibold">1. Auftrag auswählen</h2>
+        <h2 className="font-semibold">1. Haupt Auftrag auswählen</h2>
         {selectedOrder ? (
           <div className="flex items-center justify-between bg-muted/40 p-3 rounded">
             <div>
+              {isEdit && productionOrderNumber && (
+                <div className="text-xs text-muted-foreground mb-1">
+                  Bestellnummer: <span className="font-mono font-semibold text-foreground">{productionOrderNumber}</span>
+                </div>
+              )}
+              <div className="text-xs text-muted-foreground">Original Auftragsnummer (Zoho):</div>
               <div className="font-mono font-semibold">{selectedOrder.order_number}</div>
-              <div className="text-xs text-muted-foreground">
+              <div className="text-xs text-muted-foreground mt-1">
                 {selectedOrder.customer?.company_name || selectedOrder.customer?.contact_name || ''}
               </div>
             </div>
