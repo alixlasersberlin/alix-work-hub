@@ -27,6 +27,7 @@ export default function OrderDetail() {
   const canWrite = isAdmin || hasRole('Auftragsverwaltung');
 
   const [order, setOrder] = useState<any>(null);
+  const [siblings, setSiblings] = useState<any[]>([]);
   const [customer, setCustomer] = useState<any>(null);
   const [notes, setNotes] = useState<any[]>([]);
   const [items, setItems] = useState<any[]>([]);
