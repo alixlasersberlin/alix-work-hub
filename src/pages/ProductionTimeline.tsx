@@ -52,12 +52,27 @@ export default function ProductionTimeline() {
   useEffect(() => { load(); }, []);
 
   const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
     return rows.filter(r => {
-      if (filter === 'order') return !r.is_reclamation;
-      if (filter === 'reclamation') return r.is_reclamation;
-      return true;
+      if (filter === 'order' && r.is_reclamation) return false;
+      if (filter === 'reclamation' && !r.is_reclamation) return false;
+      if (!q) return true;
+      const haystack = [
+        r.bearbeiter,
+        r.display_order_number,
+        r.order_number,
+        r.production_order_number,
+        r.modellname,
+        r.supplier?.name,
+      ].filter(Boolean).join(' ').toLowerCase();
+      return haystack.includes(q);
     });
-  }, [rows, filter]);
+  }, [rows, filter, search]);
+
+  const visible = useMemo(() => {
+    if (pageSize === 'all') return filtered;
+    return filtered.slice(0, parseInt(pageSize, 10));
+  }, [filtered, pageSize]);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
