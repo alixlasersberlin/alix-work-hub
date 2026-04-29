@@ -190,6 +190,8 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
       seriennummer: form.seriennummer.trim() || null,
       anmerkungen: form.anmerkungen.trim() || null,
       payment_status: form.payment_status,
+      is_reclamation: isReclamation,
+      reclamation_reason: isReclamation ? (form.reclamation_reason.trim() || null) : null,
     };
     let poId = id;
     if (isEdit && id) {
