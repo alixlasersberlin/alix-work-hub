@@ -270,13 +270,45 @@ export default function ProductionPortal() {
     URL.revokeObjectURL(url);
   };
 
-  const q = search.trim().toLowerCase();
-  const filtered = rows.filter(r => {
-    if (statusFilter !== 'all' && r.status !== statusFilter) return false;
-    if (!q) return true;
-    const hay = `${r.production_order_number || ''} ${r.order_number} ${r.modellname || ''} ${r.farbe || ''} ${r.bearbeiter || ''} ${r.seriennummer || ''}`.toLowerCase();
-    return hay.includes(q);
-  });
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    let out = rows.filter(r => {
+      if (statusFilter !== 'all' && r.status !== statusFilter) return false;
+      if (!q) return true;
+      const hay = `${r.production_order_number || ''} ${r.order_number} ${r.modellname || ''} ${r.farbe || ''} ${r.bearbeiter || ''} ${r.seriennummer || ''} ${r.sonderwuensche || ''}`.toLowerCase();
+      return hay.includes(q);
+    });
+    out = [...out].sort((a, b) => {
+      if (sort === 'liefertermin_asc') return (a.liefertermin || '').localeCompare(b.liefertermin || '');
+      if (sort === 'liefertermin_desc') return (b.liefertermin || '').localeCompare(a.liefertermin || '');
+      return (b.created_at || '').localeCompare(a.created_at || '');
+    });
+    return out;
+  }, [rows, search, statusFilter, sort]);
+
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const dueLabel = (date: string | null) => {
+    if (!date) return null;
+    const d = new Date(date); if (!isValid(d)) return null;
+    const diff = differenceInCalendarDays(d, today);
+    if (diff < 0) return { label: `${Math.abs(diff)} ${t.days} ${t.overdue}`, cls: 'bg-destructive/15 text-destructive border-destructive/30' };
+    if (diff === 0) return { label: t.dueToday, cls: 'bg-yellow-500/15 text-yellow-500 border-yellow-500/30' };
+    if (diff <= 7) return { label: `${t.dueIn} ${diff} ${t.days}`, cls: 'bg-yellow-500/15 text-yellow-500 border-yellow-500/30' };
+    return { label: `${t.dueIn} ${diff} ${t.days}`, cls: 'bg-green-500/15 text-green-500 border-green-500/30' };
+  };
+
+  const statusBadgeCls = (s: string) => {
+    if (s === 'versendet') return 'bg-blue-500/15 text-blue-500 border-blue-500/30';
+    if (s === 'in Bearbeitung') return 'bg-yellow-500/15 text-yellow-500 border-yellow-500/30';
+    if (s === 'fertig') return 'bg-green-500/15 text-green-500 border-green-500/30';
+    return 'bg-muted text-muted-foreground border-border';
+  };
+  const paymentBadgeCls = (ps: string) => {
+    if (ps === 'Ja') return 'bg-green-500/15 text-green-500 border-green-500/30';
+    if (ps === 'Teilweise') return 'bg-yellow-500/15 text-yellow-500 border-yellow-500/30';
+    if (ps === 'Garantie') return 'bg-blue-500/15 text-blue-500 border-blue-500/30';
+    return 'bg-destructive/15 text-destructive border-destructive/30';
+  };
 
   const supplierName = rows[0]?.supplier?.name;
 
