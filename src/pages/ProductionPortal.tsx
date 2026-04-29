@@ -399,77 +399,94 @@ export default function ProductionPortal() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {filtered.map(row => (
-            <Card key={row.id} className="p-5 space-y-3 card-glow">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="font-display font-semibold text-foreground font-mono">{row.production_order_number || row.order_number}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {t.deliveryDate}: <span className="text-foreground font-medium">
-                      {row.liefertermin ? format(new Date(row.liefertermin), 'dd.MM.yyyy') : '—'}
-                    </span>
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => openEdit(row)}>
-                    <Pencil className="w-4 h-4 mr-1" /> {t.edit}
-                  </Button>
-                  {row.pdf_path && (
-                    <Button size="sm" variant="outline" onClick={() => downloadPdf(row.pdf_path, row.production_order_number || row.order_number)}>
-                      <Download className="w-4 h-4 mr-1" /> {t.pdf}
+          {filtered.map(row => {
+            const ps = row.payment_status || 'Nein';
+            const due = dueLabel(row.liefertermin);
+            const photoCount = [row.photo_front_path, row.photo_right_path, row.photo_left_path].filter(Boolean).length;
+            return (
+              <Card key={row.id} className="p-4 md:p-5 space-y-3 hover:border-primary/40 transition-colors">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mb-0.5">
+                      <Hash className="w-3 h-3" />
+                      <span className="font-mono truncate">{row.order_number}</span>
+                    </div>
+                    <p className="font-display font-semibold text-foreground font-mono truncate">
+                      {row.production_order_number || row.order_number}
+                    </p>
+                    <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                      <span className={cn('px-2 py-0.5 rounded text-[10px] font-medium border', statusBadgeCls(row.status))}>
+                        {tStatus(row.status)}
+                      </span>
+                      <span className={cn('px-2 py-0.5 rounded text-[10px] font-medium border', paymentBadgeCls(ps))}>
+                        {tPayment(ps)}
+                      </span>
+                      {due && (
+                        <span className={cn('px-2 py-0.5 rounded text-[10px] font-medium border', due.cls)}>
+                          {due.label}
+                        </span>
+                      )}
+                      <span className={cn(
+                        'px-2 py-0.5 rounded text-[10px] font-medium border inline-flex items-center gap-1',
+                        photoCount === 3
+                          ? 'bg-green-500/15 text-green-500 border-green-500/30'
+                          : 'bg-muted text-muted-foreground border-border'
+                      )}>
+                        <ImageIcon className="w-3 h-3" /> {photoCount}/3
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <Button size="sm" variant="outline" onClick={() => openEdit(row)}>
+                      <Pencil className="w-4 h-4 mr-1" /> {t.edit}
                     </Button>
+                    {row.pdf_path && (
+                      <Button size="sm" variant="outline" onClick={() => downloadPdf(row.pdf_path, row.production_order_number || row.order_number)}>
+                        <Download className="w-4 h-4 mr-1" /> {t.pdf}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs pt-2 border-t border-border/50">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <Calendar className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                    <span className="truncate">{row.liefertermin ? format(new Date(row.liefertermin), 'dd.MM.yyyy') : '—'}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <Factory className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                    <span className="truncate">{row.modellname || '—'}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <Palette className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                    <span className="truncate">{row.farbe || '—'}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <Zap className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                    <span className="truncate">{row.power_handstueck || '—'}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 min-w-0 col-span-2">
+                    <User className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                    <span className="truncate">{row.bearbeiter || '—'}</span>
+                  </div>
+                  {row.seriennummer && (
+                    <div className="col-span-2">
+                      <span className="text-muted-foreground">{t.serial}:</span>{' '}
+                      <span className="text-foreground font-mono">{row.seriennummer}</span>
+                    </div>
+                  )}
+                  {row.sonderwuensche && (
+                    <div className="col-span-2">
+                      <span className="text-muted-foreground">{t.wishes}:</span>{' '}
+                      <span className="text-foreground font-mono uppercase">{row.sonderwuensche}</span>
+                    </div>
+                  )}
+                  {row.anmerkungen && (
+                    <div className="col-span-2 text-muted-foreground">
+                      <span>{t.notes}:</span> <span className="text-foreground">{row.anmerkungen}</span>
+                    </div>
                   )}
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div>
-                  <span className="text-muted-foreground">{t.model}:</span>{' '}
-                  <span className="text-foreground">{row.modellname || '—'}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">{t.color}:</span>{' '}
-                  <span className="text-foreground">{row.farbe || '—'}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">{t.powerHs}:</span>{' '}
-                  <span className="text-foreground">{row.power_handstueck || '—'}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">{t.operator}:</span>{' '}
-                  <span className="text-foreground">{row.bearbeiter || '—'}</span>
-                </div>
-                {row.seriennummer && (
-                  <div className="col-span-2">
-                    <span className="text-muted-foreground">{t.serial}:</span>{' '}
-                    <span className="text-foreground">{row.seriennummer}</span>
-                  </div>
-                )}
-                {row.sonderwuensche && (
-                  <div className="col-span-2">
-                    <span className="text-muted-foreground">{t.wishes}:</span>{' '}
-                    <span className="text-foreground">{row.sonderwuensche}</span>
-                  </div>
-                )}
-                {row.anmerkungen && (
-                  <div className="col-span-2">
-                    <span className="text-muted-foreground">{t.notes}:</span>{' '}
-                    <span className="text-foreground">{row.anmerkungen}</span>
-                  </div>
-                )}
-                <div className="col-span-2 flex items-center gap-2">
-                  <span className="text-muted-foreground">{t.payment}:</span>
-                  {(() => {
-                    const ps = row.payment_status || 'Nein';
-                    const cls = ps === 'Ja'
-                      ? 'bg-green-500/15 text-green-500'
-                      : ps === 'Teilweise'
-                        ? 'bg-yellow-500/15 text-yellow-500'
-                        : 'bg-destructive/15 text-destructive';
-                    return <span className={`px-2 py-0.5 rounded text-xs font-medium ${cls}`}>{tPayment(ps)}</span>;
-                  })()}
-                </div>
-              </div>
 
               <div className="flex items-center gap-2 pt-2 border-t border-border">
                 <span className="text-xs text-muted-foreground">{t.status}:</span>
