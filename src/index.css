@@ -133,13 +133,32 @@
     @apply border-border;
   }
 
+  html, body, #root {
+    height: 100%;
+  }
+
+  html {
+    /* Verhindert iOS-Auto-Zoom bei Inputs <16px */
+    -webkit-text-size-adjust: 100%;
+  }
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', system-ui, sans-serif;
+    /* Vermeidet horizontales Scrollen auf Mobile */
+    overflow-x: hidden;
+    overscroll-behavior-y: none;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  }
+
+  /* iOS: Inputs mind. 16px, sonst zoomt Safari beim Fokus */
+  @media (max-width: 768px) {
+    input, select, textarea {
+      font-size: 16px;
+    }
   }
 }
 
