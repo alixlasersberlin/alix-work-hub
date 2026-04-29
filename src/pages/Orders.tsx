@@ -12,7 +12,6 @@ import OrdersCalendar from '@/components/OrdersCalendar';
 import OrderEditDialog from '@/components/OrderEditDialog';
 import OrderDeferDialog from '@/components/OrderDeferDialog';
 import { useDrivingTimes } from '@/hooks/useDrivingTimes';
-import { buildOrderNumberMap } from '@/lib/order-number';
 
 type SortField = 'order_number' | 'order_date' | 'total_amount' | 'created_at';
 type SortDir = 'asc' | 'desc';
@@ -58,13 +57,9 @@ export default function Orders() {
   const statuses = [...new Set(orders.map(o => o.order_status).filter(Boolean))]
     .filter(s => !EXCLUDED_STATUSES.includes(s.toLowerCase()));
 
-  const numberMap = useMemo(() => buildOrderNumberMap(orders), [orders]);
-
   const filtered = orders.filter(o => {
     const q = search.toLowerCase();
-    const display = (numberMap[o.id] || o.order_number || '').toLowerCase();
     const matchSearch = !search ||
-      display.includes(q) ||
       o.order_number?.toLowerCase().includes(q) ||
       o.customers?.company_name?.toLowerCase().includes(q) ||
       o.customers?.contact_name?.toLowerCase().includes(q);
@@ -182,7 +177,7 @@ export default function Orders() {
                         className="hover:bg-secondary/30 transition-colors cursor-pointer"
                         onClick={() => navigate(`/auftraege/${o.id}`)}
                       >
-                        <td className="px-4 py-3 font-medium text-foreground">{numberMap[o.id] || o.order_number}</td>
+                        <td className="px-4 py-3 font-medium text-foreground">{o.order_number}</td>
                         <td className="px-4 py-3 text-muted-foreground">{o.customers?.company_name || o.customers?.contact_name || '—'}</td>
                         <td className="px-4 py-3 text-muted-foreground">{o.order_date ? new Date(o.order_date).toLocaleDateString('de-DE') : '—'}</td>
                         <td className="px-4 py-3 text-foreground">

@@ -17,7 +17,6 @@ import SepaMandatButton from '@/components/SepaMandatButton';
 import OrderEditDialog from '@/components/OrderEditDialog';
 import OrderDeferDialog from '@/components/OrderDeferDialog';
 import MietkaufDialog from '@/components/MietkaufDialog';
-import { displayOrderNumber } from '@/lib/order-number';
 
 export default function OrderDetail() {
   const { id } = useParams<{ id: string }>();
@@ -27,7 +26,6 @@ export default function OrderDetail() {
   const canWrite = isAdmin || hasRole('Auftragsverwaltung');
 
   const [order, setOrder] = useState<any>(null);
-  const [siblings, setSiblings] = useState<any[]>([]);
   const [customer, setCustomer] = useState<any>(null);
   const [notes, setNotes] = useState<any[]>([]);
   const [items, setItems] = useState<any[]>([]);
@@ -64,16 +62,6 @@ export default function OrderDetail() {
     setNotes(nRes.data ?? []);
     setItems(iRes.data ?? []);
     setHistory(hRes.data ?? []);
-    // Load siblings sharing the same order_number for "-N" suffix display
-    if (oRes.data?.order_number) {
-      const { data: sib } = await supabase
-        .from('orders')
-        .select('id, order_number, order_date, created_at')
-        .eq('order_number', oRes.data.order_number);
-      setSiblings(sib ?? []);
-    } else {
-      setSiblings([]);
-    }
     setLoading(false);
   }
 
@@ -104,8 +92,6 @@ export default function OrderDetail() {
   if (loading) return <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   if (!order) return <div className="p-8 text-center text-muted-foreground">Auftrag nicht gefunden.</div>;
 
-  const displayNumber = displayOrderNumber(order, siblings);
-
   const formatAddr = (a: any) => {
     if (!a) return '—';
     if (typeof a === 'string') return a;
@@ -135,7 +121,7 @@ export default function OrderDetail() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">{displayNumber}</h1>
+          <h1 className="text-2xl font-display font-bold text-foreground">{order.order_number}</h1>
           <p className="text-sm text-muted-foreground mt-1">
             {order.order_date ? new Date(order.order_date).toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' }) : '—'}
             {' · '}{order.source_system}
@@ -195,8 +181,8 @@ export default function OrderDetail() {
             </h2>
             <dl className="space-y-3 text-sm">
               {[
-                ['Auftragsnummer', displayNumber],
-                ['Rechnungsnummer', displayNumber],
+                ['Auftragsnummer', order.order_number],
+                ['Rechnungsnummer', order.order_number],
                 ['Status', order.order_status || 'offen'],
                 ['Betrag', order.total_amount != null ? Number(order.total_amount).toLocaleString('de-DE', { style: 'currency', currency: order.currency || 'EUR' }) : '—'],
                 ['Währung', order.currency],
