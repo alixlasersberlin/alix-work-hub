@@ -202,22 +202,8 @@ export default function ProductionOrderForm() {
   const buildPdf = async (lang: 'bilingual' | 'en' = 'bilingual', poId?: string | null) => {
     const supplier = suppliers.find(s => s.id === form.supplier_id);
     if (!supplier || !selectedOrder) return null;
-    // Zoho-Auftragsnummer + Sequenz-Suffix (-1, -2, ...)
-    let displayNumber = selectedOrder.order_number;
-    const targetId = poId || id;
-    if (selectedOrder.order_number) {
-      const { data: siblings } = await supabase
-        .from('production_orders')
-        .select('id, created_at')
-        .eq('order_number', selectedOrder.order_number)
-        .order('created_at', { ascending: true });
-      const list = siblings || [];
-      const idx = targetId ? list.findIndex(s => s.id === targetId) : -1;
-      const seq = idx >= 0 ? idx + 1 : (list.length || 1);
-      displayNumber = `${selectedOrder.order_number} -${seq}`;
-    }
     return generateProductionOrderPdf({
-      order_number: displayNumber,
+      order_number: selectedOrder.order_number,
       ...form,
       supplier,
       items: selectedItems,
