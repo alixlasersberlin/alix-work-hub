@@ -12,6 +12,7 @@ import OrdersCalendar from '@/components/OrdersCalendar';
 import OrderEditDialog from '@/components/OrderEditDialog';
 import OrderDeferDialog from '@/components/OrderDeferDialog';
 import { useDrivingTimes } from '@/hooks/useDrivingTimes';
+import { buildOrderNumberMap } from '@/lib/order-number';
 
 type SortField = 'order_number' | 'order_date' | 'total_amount' | 'created_at';
 type SortDir = 'asc' | 'desc';
