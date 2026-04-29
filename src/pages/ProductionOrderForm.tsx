@@ -148,6 +148,8 @@ export default function ProductionOrderForm() {
   const validate = () => {
     if (!selectedOrder) { toast.error('Bitte einen Auftrag auswählen'); return false; }
     if (!form.supplier_id) { toast.error('Bitte einen Zulieferer wählen'); return false; }
+    if (!form.order_number.trim()) { toast.error('Order Nummer ist Pflichtfeld'); return false; }
+    if (!/^[A-Za-z0-9]{1,10}$/.test(form.order_number.trim())) { toast.error('Order Nummer: max. 10 Zeichen, nur Buchstaben und Zahlen'); return false; }
     if (!form.farbe.trim()) { toast.error('Farbe ist Pflichtfeld'); return false; }
     if (!form.power_handstueck.trim()) { toast.error('Power Handstück ist Pflichtfeld'); return false; }
     if (!form.bearbeiter.trim()) { toast.error('Bearbeiter ist Pflichtfeld'); return false; }
