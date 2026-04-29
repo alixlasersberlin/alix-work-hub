@@ -113,7 +113,10 @@ const T: Record<Lang, Record<string, string>> = {
     saved: '订单已保存', statusUpdated: '状态已更新',
     noPdf: '无可用 PDF', downloadFailed: '下载失败',
     s_offen: '待处理', s_inBearbeitung: '处理中', s_fertig: '完成', s_versendet: '已发货',
-    p_Ja: '是', p_Nein: '否', p_Teilweise: '部分',
+    p_Ja: '是', p_Nein: '否', p_Teilweise: '部分', p_Garantie: '保修',
+    sort: '排序', s_liefertermin_asc: '交期 ↑', s_liefertermin_desc: '交期 ↓', s_created_desc: '最新',
+    overdue: '逾期', dueToday: '今日到期', dueIn: '剩', days: '天', total: '订单',
+    photos_status: '照片',
     wishesPh: '最多 10 个字符（A-Z，0-9）',
   },
 };
