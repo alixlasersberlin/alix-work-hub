@@ -1,16 +1,56 @@
 import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
-import { Search, BarChart3, Loader2, Inbox, ArrowUpDown } from 'lucide-react';
+import {
+  Search,
+  BarChart3,
+  Loader2,
+  Inbox,
+  ArrowUpDown,
+  ChevronDown,
+  ChevronRight,
+  CheckCircle2,
+  Clock,
+} from 'lucide-react';
 
-type SortField = 'item_name' | 'order_count' | 'total_quantity';
+type SortField = 'item_name' | 'order_count' | 'total_quantity' | 'sold_quantity' | 'open_quantity';
 type SortDir = 'asc' | 'desc';
+
+// Status buckets
+const SOLD_STATUSES = new Set(['geliefert', 'invoiced']);
+const OPEN_STATUSES = new Set([
+  'open',
+  'offen',
+  'draft',
+  'approved',
+  'overdue',
+  'teilgeliefert',
+  'zurückgestellt',
+]);
+// Excluded entirely: void, Anwalt
+
+const EXCLUDED_ITEM = 'alix lieferumfang';
 
 interface DeviceStat {
   item_name: string;
   order_count: number;
   total_quantity: number;
+  sold_quantity: number;
+  open_quantity: number;
+  by_status: Record<string, number>;
 }
+
+const STATUS_LABELS: Record<string, string> = {
+  open: 'Offen',
+  offen: 'Offen',
+  draft: 'Entwurf',
+  approved: 'Genehmigt',
+  overdue: 'Überfällig',
+  teilgeliefert: 'Teilgeliefert',
+  zurückgestellt: 'Zurückgestellt',
+  geliefert: 'Geliefert',
+  invoiced: 'Berechnet',
+};
 
 export default function DeviceStatistics() {
   const [stats, setStats] = useState<DeviceStat[]>([]);
@@ -19,29 +59,66 @@ export default function DeviceStatistics() {
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     async function load() {
       setLoading(true);
       setError(null);
-      const { data, error: err } = await supabase
-        .from('order_items')
-        .select('item_name, quantity, order_id');
 
-      if (err) {
-        setError(err.message);
-        setLoading(false);
-        return;
+      // Fetch order_items joined with orders.order_status (paged to avoid 1000-row cap)
+      const PAGE = 1000;
+      let from = 0;
+      const all: { item_name: string | null; quantity: number | null; order_id: string; orders: { order_status: string | null } | null }[] = [];
+
+      while (true) {
+        const { data, error: err } = await supabase
+          .from('order_items')
+          .select('item_name, quantity, order_id, orders:order_id(order_status)')
+          .range(from, from + PAGE - 1);
+
+        if (err) {
+          setError(err.message);
+          setLoading(false);
+          return;
+        }
+        if (!data || data.length === 0) break;
+        all.push(...(data as any));
+        if (data.length < PAGE) break;
+        from += PAGE;
       }
 
       // Aggregate by item_name
-      const map = new Map<string, { order_ids: Set<string>; qty: number }>();
-      for (const item of data ?? []) {
+      const map = new Map<string, {
+        order_ids: Set<string>;
+        qty: number;
+        sold: number;
+        open: number;
+        by_status: Record<string, number>;
+      }>();
+
+      for (const item of all) {
         const name = (item.item_name || '').trim();
         if (!name) continue;
-        const entry = map.get(name) || { order_ids: new Set(), qty: 0 };
+        if (name.toLowerCase() === EXCLUDED_ITEM) continue;
+
+        const status = item.orders?.order_status || 'unbekannt';
+        // Skip excluded statuses entirely
+        if (status === 'void' || status === 'Anwalt') continue;
+
+        const qty = Number(item.quantity) || 0;
+        const entry = map.get(name) || {
+          order_ids: new Set<string>(),
+          qty: 0,
+          sold: 0,
+          open: 0,
+          by_status: {},
+        };
         entry.order_ids.add(item.order_id);
-        entry.qty += Number(item.quantity) || 0;
+        entry.qty += qty;
+        if (SOLD_STATUSES.has(status)) entry.sold += qty;
+        else if (OPEN_STATUSES.has(status)) entry.open += qty;
+        entry.by_status[status] = (entry.by_status[status] || 0) + qty;
         map.set(name, entry);
       }
 
@@ -49,6 +126,9 @@ export default function DeviceStatistics() {
         item_name: name,
         order_count: v.order_ids.size,
         total_quantity: v.qty,
+        sold_quantity: v.sold,
+        open_quantity: v.open,
+        by_status: v.by_status,
       }));
 
       setStats(aggregated);
@@ -74,11 +154,23 @@ export default function DeviceStatistics() {
     return result;
   }, [stats, search, sortField, sortDir]);
 
-  const totalItems = filtered.reduce((sum, s) => sum + s.total_quantity, 0);
+  const totals = useMemo(() => ({
+    items: filtered.reduce((s, x) => s + x.total_quantity, 0),
+    sold: filtered.reduce((s, x) => s + x.sold_quantity, 0),
+    open: filtered.reduce((s, x) => s + x.open_quantity, 0),
+  }), [filtered]);
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
     else { setSortField(field); setSortDir(field === 'item_name' ? 'asc' : 'desc'); }
+  };
+
+  const toggleExpand = (name: string) => {
+    setExpanded(prev => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name); else next.add(name);
+      return next;
+    });
   };
 
   const SortHeader = ({ field, label, className }: { field: SortField; label: string; className?: string }) => (
@@ -93,7 +185,6 @@ export default function DeviceStatistics() {
     </th>
   );
 
-  // Find max quantity for bar visualization
   const maxQty = Math.max(...filtered.map(s => s.total_quantity), 1);
 
   return (
@@ -105,7 +196,9 @@ export default function DeviceStatistics() {
             Gerätetypen
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {filtered.length} Modelle · {totalItems.toLocaleString('de-DE')} Stück gesamt
+            {filtered.length} Modelle · {totals.items.toLocaleString('de-DE')} Stück gesamt ·{' '}
+            <span className="text-emerald-500 font-medium">{totals.sold.toLocaleString('de-DE')} verkauft</span> ·{' '}
+            <span className="text-amber-500 font-medium">{totals.open.toLocaleString('de-DE')} offen</span>
           </p>
         </div>
       </div>
@@ -129,49 +222,111 @@ export default function DeviceStatistics() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-secondary/50">
+                <th className="w-10 px-2"></th>
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium w-10">#</th>
                 <SortHeader field="item_name" label="Modell / Artikel" />
-                <SortHeader field="order_count" label="Aufträge" className="w-32" />
-                <SortHeader field="total_quantity" label="Stückzahl" className="w-32" />
+                <SortHeader field="order_count" label="Aufträge" className="w-28" />
+                <SortHeader field="sold_quantity" label="Verkauft" className="w-28" />
+                <SortHeader field="open_quantity" label="Offen" className="w-28" />
+                <SortHeader field="total_quantity" label="Gesamt" className="w-28" />
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Verteilung</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-12 text-center">
+                  <td colSpan={8} className="px-4 py-12 text-center">
                     <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" />
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-12 text-center">
+                  <td colSpan={8} className="px-4 py-12 text-center">
                     <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
                     <p className="text-muted-foreground">Keine Gerätetypen gefunden.</p>
                   </td>
                 </tr>
               ) : (
-                filtered.map((s, idx) => (
-                  <tr key={s.item_name} className="hover:bg-secondary/30 transition-colors">
-                    <td className="px-4 py-3 text-muted-foreground tabular-nums">{idx + 1}</td>
-                    <td className="px-4 py-3 font-medium text-foreground">{s.item_name}</td>
-                    <td className="px-4 py-3 text-muted-foreground tabular-nums">{s.order_count.toLocaleString('de-DE')}</td>
-                    <td className="px-4 py-3 font-semibold text-foreground tabular-nums">{s.total_quantity.toLocaleString('de-DE')}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 h-2 rounded-full bg-secondary overflow-hidden">
-                          <div
-                            className="h-full rounded-full bg-primary/70 transition-all"
-                            style={{ width: `${(s.total_quantity / maxQty) * 100}%` }}
-                          />
-                        </div>
-                        <span className="text-xs text-muted-foreground w-10 text-right tabular-nums">
-                          {((s.total_quantity / totalItems) * 100).toFixed(1)}%
-                        </span>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                filtered.map((s, idx) => {
+                  const isOpen = expanded.has(s.item_name);
+                  const soldPct = s.total_quantity > 0 ? (s.sold_quantity / s.total_quantity) * 100 : 0;
+                  const openPct = s.total_quantity > 0 ? (s.open_quantity / s.total_quantity) * 100 : 0;
+                  return (
+                    <>
+                      <tr
+                        key={s.item_name}
+                        className="hover:bg-secondary/30 transition-colors cursor-pointer"
+                        onClick={() => toggleExpand(s.item_name)}
+                      >
+                        <td className="px-2 py-3 text-muted-foreground">
+                          {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground tabular-nums">{idx + 1}</td>
+                        <td className="px-4 py-3 font-medium text-foreground">{s.item_name}</td>
+                        <td className="px-4 py-3 text-muted-foreground tabular-nums">{s.order_count.toLocaleString('de-DE')}</td>
+                        <td className="px-4 py-3 font-semibold text-emerald-500 tabular-nums">{s.sold_quantity.toLocaleString('de-DE')}</td>
+                        <td className="px-4 py-3 font-semibold text-amber-500 tabular-nums">{s.open_quantity.toLocaleString('de-DE')}</td>
+                        <td className="px-4 py-3 font-semibold text-foreground tabular-nums">{s.total_quantity.toLocaleString('de-DE')}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 h-2 rounded-full bg-secondary overflow-hidden flex">
+                              <div className="h-full bg-emerald-500/80" style={{ width: `${soldPct}%` }} />
+                              <div className="h-full bg-amber-500/80" style={{ width: `${openPct}%` }} />
+                            </div>
+                            <span className="text-xs text-muted-foreground w-12 text-right tabular-nums">
+                              {totals.items > 0 ? ((s.total_quantity / totals.items) * 100).toFixed(1) : '0.0'}%
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                      {isOpen && (
+                        <tr key={s.item_name + '-detail'} className="bg-secondary/20">
+                          <td></td>
+                          <td colSpan={7} className="px-4 py-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <h4 className="text-xs font-semibold text-emerald-500 uppercase tracking-wide flex items-center gap-1 mb-2">
+                                  <CheckCircle2 className="w-3.5 h-3.5" /> Verkauft
+                                </h4>
+                                <div className="space-y-1">
+                                  {Object.entries(s.by_status)
+                                    .filter(([st]) => SOLD_STATUSES.has(st))
+                                    .map(([st, qty]) => (
+                                      <div key={st} className="flex items-center justify-between text-sm py-1 px-2 rounded bg-card border border-border">
+                                        <span className="text-foreground">{STATUS_LABELS[st] || st}</span>
+                                        <span className="font-semibold text-emerald-500 tabular-nums">{qty.toLocaleString('de-DE')}</span>
+                                      </div>
+                                    ))}
+                                  {s.sold_quantity === 0 && (
+                                    <p className="text-xs text-muted-foreground italic">Keine verkauften Geräte</p>
+                                  )}
+                                </div>
+                              </div>
+                              <div>
+                                <h4 className="text-xs font-semibold text-amber-500 uppercase tracking-wide flex items-center gap-1 mb-2">
+                                  <Clock className="w-3.5 h-3.5" /> Offen
+                                </h4>
+                                <div className="space-y-1">
+                                  {Object.entries(s.by_status)
+                                    .filter(([st]) => OPEN_STATUSES.has(st))
+                                    .map(([st, qty]) => (
+                                      <div key={st} className="flex items-center justify-between text-sm py-1 px-2 rounded bg-card border border-border">
+                                        <span className="text-foreground">{STATUS_LABELS[st] || st}</span>
+                                        <span className="font-semibold text-amber-500 tabular-nums">{qty.toLocaleString('de-DE')}</span>
+                                      </div>
+                                    ))}
+                                  {s.open_quantity === 0 && (
+                                    <p className="text-xs text-muted-foreground italic">Keine offenen Geräte</p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </>
+                  );
+                })
               )}
             </tbody>
           </table>
