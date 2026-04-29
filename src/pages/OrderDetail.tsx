@@ -104,6 +104,8 @@ export default function OrderDetail() {
   if (loading) return <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   if (!order) return <div className="p-8 text-center text-muted-foreground">Auftrag nicht gefunden.</div>;
 
+  const displayNumber = displayOrderNumber(order, siblings);
+
   const formatAddr = (a: any) => {
     if (!a) return '—';
     if (typeof a === 'string') return a;
