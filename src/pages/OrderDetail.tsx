@@ -140,7 +140,7 @@ export default function OrderDetail() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">{order.order_number}</h1>
+          <h1 className="text-2xl font-display font-bold text-foreground">{primaryDisplayNumber}</h1>
           <p className="text-sm text-muted-foreground mt-1">
             {order.order_date ? new Date(order.order_date).toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' }) : '—'}
             {' · '}{order.source_system}
@@ -200,8 +200,8 @@ export default function OrderDetail() {
             </h2>
             <dl className="space-y-3 text-sm">
               {[
-                ['Auftragsnummer', order.order_number],
-                ['Rechnungsnummer', order.order_number],
+                ['Auftragsnummer', displayOrderNumbers.join(', ')],
+                ['Rechnungsnummer', displayOrderNumbers.join(', ')],
                 ['Status', order.order_status || 'offen'],
                 ['Betrag', order.total_amount != null ? Number(order.total_amount).toLocaleString('de-DE', { style: 'currency', currency: order.currency || 'EUR' }) : '—'],
                 ['Währung', order.currency],
