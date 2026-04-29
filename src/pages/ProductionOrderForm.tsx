@@ -169,6 +169,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
     if (!form.power_handstueck.trim()) { toast.error('Power Handstück ist Pflichtfeld'); return false; }
     if (!form.bearbeiter.trim()) { toast.error('Bearbeiter ist Pflichtfeld'); return false; }
     if (!form.liefertermin) { toast.error('Liefertermin ist Pflichtfeld'); return false; }
+    if (isReclamation && !form.reclamation_reason.trim()) { toast.error('Reklamationsgrund ist Pflichtfeld'); return false; }
     if (selectedItems.length === 0) { toast.error('Mindestens eine Position auswählen'); return false; }
     return true;
   };
