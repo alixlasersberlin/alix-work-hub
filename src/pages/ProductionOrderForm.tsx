@@ -230,7 +230,7 @@ export default function ProductionOrderForm() {
       supplier,
       items: selectedItems,
     }, lang);
-
+  };
 
 
   const onSave = async () => {
