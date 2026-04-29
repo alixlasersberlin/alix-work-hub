@@ -24,7 +24,7 @@ export default function ProductionOrderDetail() {
         .select('*, supplier:suppliers(*)')
         .eq('id', id).single();
       const { data: its } = await supabase.from('production_order_items').select('*').eq('production_order_id', id).order('item_order');
-      setDisplayOrderNumber(po?.order_number || '');
+      setDisplayOrderNumber(po?.production_order_number || po?.order_number || '');
       setData(po); setItems(its || []); setLoading(false);
     })();
   }, [id]);
