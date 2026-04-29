@@ -30,6 +30,7 @@ export default function OrderDetail() {
   const [notes, setNotes] = useState<any[]>([]);
   const [items, setItems] = useState<any[]>([]);
   const [history, setHistory] = useState<any[]>([]);
+  const [poCount, setPoCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'items' | 'notes' | 'history' | 'raw'>('overview');
 
