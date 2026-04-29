@@ -303,7 +303,9 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
           <ArrowLeft className="w-4 h-4 mr-1" /> Zurück
         </Button>
         <h1 className="text-2xl font-display font-bold gold-text">
-          {isEdit ? 'Bestellung bearbeiten' : 'Neue Produktionsbestellung'}
+          {isReclamation
+            ? (isEdit ? 'Reklamation bearbeiten' : 'Neue Reklamation')
+            : (isEdit ? 'Bestellung bearbeiten' : 'Neue Produktionsbestellung')}
         </h1>
       </div>
 
