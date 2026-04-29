@@ -117,10 +117,37 @@ export default function ProductionTimeline() {
         </div>
       </div>
 
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Suche nach Name, Auftragsnummer, Modell oder Zulieferer..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">Anzeige:</span>
+          <Select value={pageSize} onValueChange={(v: any) => setPageSize(v)}>
+            <SelectTrigger className="w-[110px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="10">10</SelectItem>
+              <SelectItem value="20">20</SelectItem>
+              <SelectItem value="30">30</SelectItem>
+              <SelectItem value="all">Alle</SelectItem>
+            </SelectContent>
+          </Select>
+          <span className="text-xs text-muted-foreground whitespace-nowrap">
+            {visible.length} / {filtered.length}
+          </span>
+        </div>
+      </div>
+
       <Card className="p-0 overflow-hidden">
         {loading ? (
           <div className="p-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
-        ) : filtered.length === 0 ? (
+        ) : visible.length === 0 ? (
           <div className="p-12 text-center text-muted-foreground">Keine Einträge vorhanden.</div>
         ) : (
           <div className="divide-y divide-border">
