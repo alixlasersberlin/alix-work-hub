@@ -354,6 +354,19 @@ export default function ProductionOrderForm() {
           )}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <Label>Order Nummer *</Label>
+            <Input
+              value={form.order_number}
+              onChange={e => {
+                const v = e.target.value.replace(/[^A-Za-z0-9]/g, '').slice(0, 10);
+                setForm({ ...form, order_number: v });
+              }}
+              maxLength={10}
+              placeholder="z.B. AB12345"
+            />
+            <p className="text-xs text-muted-foreground mt-1">Max. 10 Zeichen, nur Buchstaben und Zahlen</p>
+          </div>
           <div><Label>Modellname</Label><Input value={form.modellname} onChange={e => setForm({ ...form, modellname: e.target.value })} /></div>
           <div><Label>Farbe *</Label><Input value={form.farbe} onChange={e => setForm({ ...form, farbe: e.target.value })} /></div>
           <div><Label>Power Handstück *</Label><Input value={form.power_handstueck} onChange={e => setForm({ ...form, power_handstueck: e.target.value })} /></div>
