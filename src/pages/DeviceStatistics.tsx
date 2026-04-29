@@ -29,9 +29,13 @@ const OPEN_STATUSES = new Set([
   'teilgeliefert',
   'zurückgestellt',
 ]);
-// Excluded entirely: void, Anwalt
+// Items excluded from all statistics (case-insensitive substring match)
+const EXCLUDED_PATTERNS = ['alix lieferumfang', 'alix academy', 'schulungswochenende', 'schulungswochende'];
 
-const EXCLUDED_ITEM = 'alix lieferumfang';
+function isExcludedItem(name: string): boolean {
+  const n = name.toLowerCase();
+  return EXCLUDED_PATTERNS.some(p => n.includes(p));
+}
 
 interface DeviceStat {
   item_name: string;
