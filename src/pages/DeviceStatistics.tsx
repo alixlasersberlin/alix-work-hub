@@ -193,6 +193,31 @@ export default function DeviceStatistics() {
 
   const maxQty = Math.max(...filtered.map(s => s.total_quantity), 1);
 
+  // Pie chart data: top 8 devices by total quantity, rest grouped as "Sonstige"
+  const pieData = useMemo(() => {
+    const sorted = [...filtered].sort((a, b) => b.total_quantity - a.total_quantity);
+    const TOP = 8;
+    const top = sorted.slice(0, TOP).map(s => ({ name: s.item_name, value: s.total_quantity }));
+    const rest = sorted.slice(TOP);
+    if (rest.length > 0) {
+      const restSum = rest.reduce((sum, s) => sum + s.total_quantity, 0);
+      if (restSum > 0) top.push({ name: `Sonstige (${rest.length})`, value: restSum });
+    }
+    return top.filter(d => d.value > 0);
+  }, [filtered]);
+
+  const PIE_COLORS = [
+    'hsl(45 95% 55%)',   // gold
+    'hsl(160 70% 45%)',  // emerald
+    'hsl(210 80% 60%)',  // blue
+    'hsl(280 65% 60%)',  // purple
+    'hsl(20 85% 60%)',   // orange
+    'hsl(340 75% 60%)',  // pink
+    'hsl(190 70% 50%)',  // cyan
+    'hsl(100 55% 50%)',  // green
+    'hsl(0 0% 50%)',     // grey for "Sonstige"
+  ];
+
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
