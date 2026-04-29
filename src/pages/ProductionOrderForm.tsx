@@ -202,19 +202,27 @@ export default function ProductionOrderForm() {
   const buildPdf = async (lang: 'bilingual' | 'en' = 'bilingual', poId?: string | null) => {
     const supplier = suppliers.find(s => s.id === form.supplier_id);
     if (!supplier || !selectedOrder) return null;
-    // Sequenz-Suffix berechnen
+    // Sequenz-Suffix + interne Nummer berechnen
     let displayNumber = selectedOrder.order_number;
     const targetId = poId || id;
     if (selectedOrder.order_number) {
-      const { data: siblings } = await supabase
-        .from('production_orders')
-        .select('id, created_at')
-        .eq('order_number', selectedOrder.order_number)
-        .order('created_at', { ascending: true });
+      const [{ data: siblings }, { data: orderRow }] = await Promise.all([
+        supabase
+          .from('production_orders')
+          .select('id, created_at')
+          .eq('order_number', selectedOrder.order_number)
+          .order('created_at', { ascending: true }),
+        supabase
+          .from('orders')
+          .select('internal_number')
+          .eq('order_number', selectedOrder.order_number)
+          .maybeSingle(),
+      ]);
       const list = siblings || [];
       const idx = targetId ? list.findIndex(s => s.id === targetId) : -1;
       const seq = idx >= 0 ? idx + 1 : (list.length || 1);
-      displayNumber = `${selectedOrder.order_number}-${seq}`;
+      const internalPart = orderRow?.internal_number ? ` / ${orderRow.internal_number}` : '';
+      displayNumber = `${selectedOrder.order_number}${internalPart} -${seq}`;
     }
     return generateProductionOrderPdf({
       order_number: displayNumber,

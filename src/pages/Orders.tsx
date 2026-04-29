@@ -64,8 +64,9 @@ export default function Orders() {
     const expanded: any[] = [];
     loaded.forEach(o => {
       const count = Math.max(1, poCountMap[o.order_number] || 0);
+      const internalPart = o.internal_number ? ` / ${o.internal_number}` : '';
       for (let i = 1; i <= count; i++) {
-        expanded.push({ ...o, _seq: i, _displayNumber: `${o.order_number}-${i}` });
+        expanded.push({ ...o, _seq: i, _displayNumber: `${o.order_number}${internalPart} -${i}` });
       }
     });
 
