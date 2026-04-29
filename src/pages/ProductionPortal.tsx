@@ -419,6 +419,7 @@ export default function ProductionPortal() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>{t.editTitle} {editing && `– ${editing.order_number}`}</DialogTitle>
+            <DialogDescription className="sr-only">{t.editTitle}</DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-2">
             <div className="space-y-1.5">
