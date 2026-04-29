@@ -93,6 +93,16 @@ export default function OrderEditDialog({ order, open, onClose, onSaved }: Props
             <Label className="text-xs text-muted-foreground">Erw. Versanddatum</Label>
             <Input type="date" value={form.expected_shipment_date} onChange={e => set('expected_shipment_date', e.target.value)} className="bg-secondary border-border mt-1" />
           </div>
+          <div>
+            <Label className="text-xs text-muted-foreground">Intern Nummer</Label>
+            <Input
+              value={form.internal_number}
+              onChange={e => set('internal_number', e.target.value.replace(/[^A-Za-z0-9]/g, '').slice(0, 10))}
+              maxLength={10}
+              placeholder="Max. 10 Zeichen (A-Z, 0-9)"
+              className="bg-secondary border-border mt-1 font-mono uppercase"
+            />
+          </div>
           <div className="flex justify-end gap-2 pt-4">
             <Button variant="ghost" onClick={onClose}>Abbrechen</Button>
             <Button onClick={handleSave} disabled={saving} className="gold-gradient text-primary-foreground">
