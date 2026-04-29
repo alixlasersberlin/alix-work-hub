@@ -178,8 +178,8 @@ export default function AccountBlocked() {
     return <PasswordResetForm />;
   }
 
-  const info = blockReason && blockReason !== 'password_reset'
-    ? blockInfo[blockReason]
+  const info = blockReason && blockReason in blockInfo
+    ? blockInfo[blockReason as keyof typeof blockInfo]
     : blockInfo.inactive;
 
   return (
