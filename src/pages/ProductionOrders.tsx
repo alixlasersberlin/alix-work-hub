@@ -35,19 +35,19 @@ export default function ProductionOrders() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-4 md:space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-display font-bold gold-text flex items-center gap-2">
-            <Factory className="w-6 h-6" /> ORDER – Produktionsbestellungen
+          <h1 className="text-xl md:text-2xl font-display font-bold gold-text flex items-center gap-2">
+            <Factory className="w-5 h-5 md:w-6 md:h-6" /> ORDER – Produktionsbestellungen
           </h1>
-          <p className="text-sm text-muted-foreground">Bestellungen an die Produktion verwalten und versenden</p>
+          <p className="text-xs md:text-sm text-muted-foreground">Bestellungen an die Produktion verwalten und versenden</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => navigate('/order/zulieferer')}>
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" size="sm" className="md:size-default" onClick={() => navigate('/order/zulieferer')}>
             <UsersIcon className="w-4 h-4 mr-2" /> Zulieferer
           </Button>
-          <Button onClick={() => navigate('/order/neu')}>
+          <Button size="sm" className="md:size-default" onClick={() => navigate('/order/neu')}>
             <Plus className="w-4 h-4 mr-2" /> Neue Bestellung
           </Button>
         </div>
