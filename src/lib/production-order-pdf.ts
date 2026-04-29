@@ -153,7 +153,7 @@ export async function generateProductionOrderPdf(
   if (data.supplier.phone) { drawText(`${bi('phone')}: ${data.supplier.phone}`, 20, y); y += 5; }
   y += 5;
 
-  // Kopfdaten
+  // Kopfdaten – zweispaltiges Label/Wert-Layout mit großzügiger Label-Spalte
   drawText(bi('details'), 20, y, 'bold'); y += 6;
   const rows: Array<[string, string]> = [
     [bi('modellname'),   data.modellname || '—'],
@@ -163,10 +163,12 @@ export async function generateProductionOrderPdf(
     [bi('liefertermin'), format(new Date(data.liefertermin), 'dd.MM.yyyy')],
     [bi('seriennummer'), data.seriennummer || '—'],
   ];
+  const labelX = 20;
+  const valueX = 95; // mehr Platz für lange bilinguale Labels
   rows.forEach(([k, v]) => {
-    drawText(`${k}:`, 20, y, 'bold');
-    drawText(v, 80, y);
-    y += 5;
+    drawText(`${k}:`, labelX, y, 'bold');
+    drawText(v, valueX, y);
+    y += 5.5;
   });
   y += 5;
 
@@ -177,30 +179,48 @@ export async function generateProductionOrderPdf(
     doc.text(lines, 20, y); y += lines.length * 5 + 3;
   }
 
-  // Positionen
+  // Positionen – klar getrennte Spalten: Pos | Artikel | Beschreibung | Menge
   if (data.items.length > 0) {
     if (y > 230) { doc.addPage(); y = 20; }
     drawText(bi('positions'), 20, y, 'bold'); y += 6;
     doc.setFontSize(9);
+
+    // Spalten-Geometrie
+    const colPosX   = 22;   // Pos-Nr
+    const colArtX   = 32;   // Artikelname (Start)
+    const colDescX  = 95;   // Beschreibung (Start)
+    const colQtyX   = pageWidth - 22; // Menge rechtsbündig
+    const artWidth  = colDescX - colArtX - 3;       // ~60 mm
+    const descWidth = colQtyX - colDescX - 14;      // ~79 mm
+
+    // Header-Zeile
     doc.setFillColor(240, 240, 240);
     doc.rect(20, y - 4, pageWidth - 40, 6, 'F');
-    drawText(bi('pos'),          22, y, 'bold');
-    drawText(bi('artikel'),      35, y, 'bold');
-    drawText(bi('beschreibung'), 95, y, 'bold');
-    drawText(bi('menge'),        pageWidth - 22, y, 'bold', { align: 'right' });
-    y += 4;
+    drawText(bi('pos'),          colPosX,  y, 'bold');
+    drawText(bi('artikel'),      colArtX,  y, 'bold');
+    drawText(bi('beschreibung'), colDescX, y, 'bold');
+    drawText(bi('menge'),        colQtyX,  y, 'bold', { align: 'right' });
+    y += 5;
 
     data.items.forEach((it, idx) => {
-      if (y > 270) { doc.addPage(); y = 20; }
       const name = it.item_name || '—';
       const desc = it.description || '—';
-      drawText(String(idx + 1), 22, y);
       setFontFor(name);
-      doc.text(doc.splitTextToSize(name, 55), 35, y);
+      const nameLines = doc.splitTextToSize(name, artWidth);
       setFontFor(desc);
-      doc.text(doc.splitTextToSize(desc, 70), 95, y);
-      drawText(`${it.quantity ?? ''} ${it.unit ?? ''}`.trim(), pageWidth - 22, y, 'normal', { align: 'right' });
-      y += 6;
+      const descLines = doc.splitTextToSize(desc, descWidth);
+      const rowH = Math.max(nameLines.length, descLines.length) * 4.5 + 2;
+
+      if (y + rowH > 275) { doc.addPage(); y = 20; }
+
+      drawText(String(idx + 1), colPosX, y);
+      setFontFor(name);
+      doc.text(nameLines, colArtX, y);
+      setFontFor(desc);
+      doc.text(descLines, colDescX, y);
+      drawText(`${it.quantity ?? ''} ${it.unit ?? ''}`.trim(), colQtyX, y, 'normal', { align: 'right' });
+
+      y += rowH;
     });
     y += 4;
     doc.setFontSize(10);
