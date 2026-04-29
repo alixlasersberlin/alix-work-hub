@@ -153,7 +153,7 @@ export async function generateProductionOrderPdf(
   if (data.supplier.phone) { drawText(`${bi('phone')}: ${data.supplier.phone}`, 20, y); y += 5; }
   y += 5;
 
-  // Kopfdaten
+  // Kopfdaten – zweispaltiges Label/Wert-Layout mit großzügiger Label-Spalte
   drawText(bi('details'), 20, y, 'bold'); y += 6;
   const rows: Array<[string, string]> = [
     [bi('modellname'),   data.modellname || '—'],
@@ -163,10 +163,12 @@ export async function generateProductionOrderPdf(
     [bi('liefertermin'), format(new Date(data.liefertermin), 'dd.MM.yyyy')],
     [bi('seriennummer'), data.seriennummer || '—'],
   ];
+  const labelX = 20;
+  const valueX = 95; // mehr Platz für lange bilinguale Labels
   rows.forEach(([k, v]) => {
-    drawText(`${k}:`, 20, y, 'bold');
-    drawText(v, 80, y);
-    y += 5;
+    drawText(`${k}:`, labelX, y, 'bold');
+    drawText(v, valueX, y);
+    y += 5.5;
   });
   y += 5;
 
