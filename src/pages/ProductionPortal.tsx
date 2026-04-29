@@ -18,6 +18,7 @@ type PhotoSide = 'front' | 'right' | 'left';
 interface ProductionOrderRow {
   id: string;
   order_number: string;
+  production_order_number: string | null;
   status: string;
   liefertermin: string;
   modellname: string | null;
