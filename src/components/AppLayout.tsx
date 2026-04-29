@@ -209,7 +209,16 @@ export default function AppLayout() {
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Bar with Theme Toggle */}
         <header className="h-14 border-b border-border bg-card flex items-center justify-between px-4 flex-shrink-0">
-          <div />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+            onClick={() => setCollapsed(!collapsed)}
+            title={collapsed ? "Menü erweitern" : "Menü einklappen"}
+            aria-label={collapsed ? "Menü erweitern" : "Menü einklappen"}
+          >
+            {collapsed ? <Menu className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          </Button>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 text-sm">
               <span className="font-display font-bold gold-text">AlixWork</span>
