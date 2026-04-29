@@ -64,6 +64,16 @@ export default function OrderDetail() {
     setNotes(nRes.data ?? []);
     setItems(iRes.data ?? []);
     setHistory(hRes.data ?? []);
+    // Load siblings sharing the same order_number for "-N" suffix display
+    if (oRes.data?.order_number) {
+      const { data: sib } = await supabase
+        .from('orders')
+        .select('id, order_number, order_date, created_at')
+        .eq('order_number', oRes.data.order_number);
+      setSiblings(sib ?? []);
+    } else {
+      setSiblings([]);
+    }
     setLoading(false);
   }
 
