@@ -29,6 +29,8 @@ export default function ProductionTimeline() {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'order' | 'reclamation'>('all');
+  const [search, setSearch] = useState('');
+  const [pageSize, setPageSize] = useState<'10' | '20' | '30' | 'all'>('20');
 
   const load = async () => {
     setLoading(true);
