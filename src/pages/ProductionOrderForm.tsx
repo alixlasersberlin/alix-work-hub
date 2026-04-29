@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowLeft, Loader2, Search, Save, Send, Download } from 'lucide-react';
+import { ArrowLeft, Loader2, Search, Save, Send, Download, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateProductionOrderPdf } from '@/lib/production-order-pdf';
 import { ALIX_MODEL_GROUPS } from '@/lib/alix-models';
