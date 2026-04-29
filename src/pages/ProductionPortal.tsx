@@ -69,6 +69,7 @@ const T: Record<Lang, Record<string, string>> = {
     saved: 'Auftrag gespeichert', statusUpdated: 'Status aktualisiert',
     noPdf: 'Kein PDF verfügbar', downloadFailed: 'Download fehlgeschlagen',
     s_offen: 'offen', s_inBearbeitung: 'in Bearbeitung', s_fertig: 'fertig', s_versendet: 'versendet',
+    p_Ja: 'Ja', p_Nein: 'Nein', p_Teilweise: 'Teilweise',
   },
   en: {
     title: 'PRODUCTION', worklist: 'Worklist', loggedInAs: 'Signed in as',
@@ -85,6 +86,7 @@ const T: Record<Lang, Record<string, string>> = {
     saved: 'Order saved', statusUpdated: 'Status updated',
     noPdf: 'No PDF available', downloadFailed: 'Download failed',
     s_offen: 'open', s_inBearbeitung: 'in progress', s_fertig: 'done', s_versendet: 'shipped',
+    p_Ja: 'Yes', p_Nein: 'No', p_Teilweise: 'Partial',
   },
   zh: {
     title: '生产', worklist: '工作清单', loggedInAs: '登录身份',
@@ -101,6 +103,7 @@ const T: Record<Lang, Record<string, string>> = {
     saved: '订单已保存', statusUpdated: '状态已更新',
     noPdf: '无可用 PDF', downloadFailed: '下载失败',
     s_offen: '待处理', s_inBearbeitung: '处理中', s_fertig: '完成', s_versendet: '已发货',
+    p_Ja: '是', p_Nein: '否', p_Teilweise: '部分',
   },
 };
 
@@ -129,6 +132,7 @@ export default function ProductionPortal() {
   const [lang, setLang] = useState<Lang>(() => (localStorage.getItem('production_lang') as Lang) || 'de');
   const t = T[lang];
   const tStatus = (s: string) => t[statusKey(s)] ?? s;
+  const tPayment = (p: string) => t[`p_${p}`] ?? p;
   useEffect(() => { localStorage.setItem('production_lang', lang); }, [lang]);
 
   const load = async () => {
@@ -402,7 +406,7 @@ export default function ProductionPortal() {
                       : ps === 'Teilweise'
                         ? 'bg-yellow-500/15 text-yellow-500'
                         : 'bg-destructive/15 text-destructive';
-                    return <span className={`px-2 py-0.5 rounded text-xs font-medium ${cls}`}>{ps}</span>;
+                    return <span className={`px-2 py-0.5 rounded text-xs font-medium ${cls}`}>{tPayment(ps)}</span>;
                   })()}
                 </div>
               </div>
@@ -471,9 +475,9 @@ export default function ProductionPortal() {
               <Select value={editForm.payment_status ?? 'Nein'} onValueChange={v => setEditForm(f => ({ ...f, payment_status: v }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Ja">Ja</SelectItem>
-                  <SelectItem value="Nein">Nein</SelectItem>
-                  <SelectItem value="Teilweise">Teilweise</SelectItem>
+                  <SelectItem value="Ja">{tPayment('Ja')}</SelectItem>
+                  <SelectItem value="Nein">{tPayment('Nein')}</SelectItem>
+                  <SelectItem value="Teilweise">{tPayment('Teilweise')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
