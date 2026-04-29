@@ -59,7 +59,7 @@ const T: Record<Lang, Record<string, string>> = {
     allStatus: 'Alle Status', refresh: 'Aktualisieren', noOrders: 'Keine Bestellungen gefunden.',
     deliveryDate: 'Liefertermin', edit: 'Bearbeiten', pdf: 'PDF',
     model: 'Modell', color: 'Farbe', powerHs: 'Power-Handstück', operator: 'Bearbeiter',
-    serial: 'Seriennummer', wishes: 'Sonderwünsche', notes: 'Anmerkungen', status: 'Status',
+    serial: 'Seriennummer', wishes: 'Interne Nummer', notes: 'Anmerkungen', status: 'Status',
     editTitle: 'Auftrag bearbeiten', photos: 'Fotos', allRequired: '(alle 3 erforderlich)',
     front: 'Vorne', right: 'Rechts', left: 'Links',
     pickPhoto: 'Foto wählen', orCamera: 'oder Kamera',
