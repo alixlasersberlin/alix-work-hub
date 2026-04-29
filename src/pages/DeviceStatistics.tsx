@@ -30,7 +30,17 @@ const OPEN_STATUSES = new Set([
   'zurückgestellt',
 ]);
 // Items excluded from all statistics (case-insensitive substring match)
-const EXCLUDED_PATTERNS = ['alix lieferumfang', 'alix academy', 'schulungswochenende', 'schulungswochende'];
+const EXCLUDED_PATTERNS = [
+  'alix lieferumfang',
+  'alix academy',
+  'schulungswochenende',
+  'schulungswochende',
+  'düsensatz microneedle',
+  'nisv fachkunde',
+  'm8 microneedle 24 pin',
+  'm8 microneedle 40 pin',
+  'mediapaket 3',
+];
 
 function isExcludedItem(name: string): boolean {
   const n = name.toLowerCase();
