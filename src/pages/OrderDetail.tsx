@@ -78,11 +78,9 @@ export default function OrderDetail() {
     setLoading(false);
   }
 
-  // Anzeige-Auftragsnummer(n): mind. -1, bei mehreren PO entsprechend mehrere Suffixe
-  const displayOrderNumbers = order?.order_number
-    ? Array.from({ length: Math.max(1, poCount) }, (_, i) => `${order.order_number} -${i + 1}`)
-    : [];
-  const primaryDisplayNumber = displayOrderNumbers[0] || order?.order_number || '';
+  // Nur die originale Zoho-Auftragsnummer anzeigen
+  const primaryDisplayNumber = order?.order_number || '';
+  const displayOrderNumbers = order?.order_number ? [order.order_number] : [];
 
   async function submitNote() {
     if (!newNote.trim() || !id || !user) return;
