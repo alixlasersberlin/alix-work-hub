@@ -92,7 +92,10 @@ const T: Record<Lang, Record<string, string>> = {
     saved: 'Order saved', statusUpdated: 'Status updated',
     noPdf: 'No PDF available', downloadFailed: 'Download failed',
     s_offen: 'open', s_inBearbeitung: 'in progress', s_fertig: 'done', s_versendet: 'shipped',
-    p_Ja: 'Yes', p_Nein: 'No', p_Teilweise: 'Partial',
+    p_Ja: 'Yes', p_Nein: 'No', p_Teilweise: 'Partial', p_Garantie: 'Warranty',
+    sort: 'Sort', s_liefertermin_asc: 'Delivery ↑', s_liefertermin_desc: 'Delivery ↓', s_created_desc: 'Newest',
+    overdue: 'overdue', dueToday: 'due today', dueIn: 'in', days: 'd', total: 'orders',
+    photos_status: 'Photos',
     wishesPh: 'Max. 10 (A-Z, 0-9)',
   },
   zh: {
