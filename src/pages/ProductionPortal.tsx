@@ -328,30 +328,63 @@ export default function ProductionPortal() {
         </div>
       </div>
 
-      <Card className="p-4 flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-[220px]">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t.searchPh}
-            className="pl-9"
-          />
+      <Card className="p-3 md:p-4 space-y-3">
+        <div className="flex flex-col lg:flex-row gap-2 lg:items-center">
+          <div className="relative flex-1 min-w-0">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t.searchPh}
+              className="pl-9 h-9"
+            />
+          </div>
+          <div className="grid grid-cols-2 lg:flex gap-2">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="h-9 w-full lg:w-[180px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t.allStatus}</SelectItem>
+                {STATUS_OPTIONS.map(s => (
+                  <SelectItem key={s} value={s}>{tStatus(s)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={sort} onValueChange={(v: any) => setSort(v)}>
+              <SelectTrigger className="h-9 w-full lg:w-[180px]">
+                <ArrowUpDown className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="liefertermin_asc">{t.s_liefertermin_asc}</SelectItem>
+                <SelectItem value="liefertermin_desc">{t.s_liefertermin_desc}</SelectItem>
+                <SelectItem value="created_desc">{t.s_created_desc}</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="sm" className="h-9 col-span-2 lg:col-auto" onClick={load} disabled={loading}>
+              {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} {t.refresh}
+            </Button>
+          </div>
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder={t.status} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t.allStatus}</SelectItem>
-            {STATUS_OPTIONS.map(s => (
-              <SelectItem key={s} value={s}>{tStatus(s)}</SelectItem>
+        <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1">
+            {LANGS.map(l => (
+              <button
+                key={l.code}
+                type="button"
+                onClick={() => setLang(l.code)}
+                className={cn(
+                  "flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[11px] font-medium transition-colors",
+                  lang === l.code
+                    ? "bg-primary/10 text-primary border-primary/40"
+                    : "border-border text-muted-foreground hover:text-foreground hover:bg-muted/40"
+                )}
+              >
+                <span>{l.flag}</span><span>{l.label.slice(0,2).toUpperCase()}</span>
+              </button>
             ))}
-          </SelectContent>
-        </Select>
-        <Button variant="outline" onClick={load} disabled={loading}>
-          {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} {t.refresh}
-        </Button>
+          </div>
+          <span>{filtered.length} / {rows.length} {t.total}</span>
+        </div>
       </Card>
 
       {/* Language switcher */}
