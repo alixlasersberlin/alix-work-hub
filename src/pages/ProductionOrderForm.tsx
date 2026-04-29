@@ -12,6 +12,7 @@ import { ArrowLeft, Loader2, Search, Save, Send, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateProductionOrderPdf } from '@/lib/production-order-pdf';
 import { ALIX_MODEL_GROUPS } from '@/lib/alix-models';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function ProductionOrderForm() {
   const { id } = useParams();
