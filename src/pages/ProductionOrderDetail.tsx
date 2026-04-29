@@ -24,8 +24,19 @@ export default function ProductionOrderDetail() {
         .select('*, supplier:suppliers(*)')
         .eq('id', id).single();
       const { data: its } = await supabase.from('production_order_items').select('*').eq('production_order_id', id).order('item_order');
-      // Nur originale Zoho-Auftragsnummer anzeigen
-      setDisplayOrderNumber(po?.order_number || '');
+      // Zoho-Auftragsnummer + Sequenz-Suffix (-1, -2, ...)
+      let display = po?.order_number || '';
+      if (po?.order_number) {
+        const { data: siblings } = await supabase
+          .from('production_orders')
+          .select('id, created_at')
+          .eq('order_number', po.order_number)
+          .order('created_at', { ascending: true });
+        const idx = (siblings || []).findIndex(s => s.id === po.id);
+        const seq = idx >= 0 ? idx + 1 : 1;
+        display = `${po.order_number} -${seq}`;
+      }
+      setDisplayOrderNumber(display);
       setData(po); setItems(its || []); setLoading(false);
     })();
   }, [id]);
