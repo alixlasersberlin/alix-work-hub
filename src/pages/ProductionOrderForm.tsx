@@ -31,6 +31,7 @@ export default function ProductionOrderForm() {
 
   const [form, setForm] = useState({
     supplier_id: '',
+    order_number: '',
     modellname: '',
     farbe: '',
     power_handstueck: '',
