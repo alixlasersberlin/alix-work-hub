@@ -34,6 +34,7 @@ import Unsubscribe from "./pages/Unsubscribe";
 import ProductionOrders from "./pages/ProductionOrders";
 import ProductionOrderForm from "./pages/ProductionOrderForm";
 import ProductionOrderDetail from "./pages/ProductionOrderDetail";
+import ProductionTimeline from "./pages/ProductionTimeline";
 import ProductionPortal from "./pages/ProductionPortal";
 import Suppliers from "./pages/Suppliers";
 import { Loader2 } from "lucide-react";
