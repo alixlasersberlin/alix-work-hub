@@ -151,7 +151,7 @@ export default function ProductionTimeline() {
           <div className="p-12 text-center text-muted-foreground">Keine Einträge vorhanden.</div>
         ) : (
           <div className="divide-y divide-border">
-            {filtered.map(r => {
+            {visible.map(r => {
               const ds = getDeliveryStatus(r.liefertermin);
               const basePath = r.is_reclamation ? '/order/reklamation' : '/order';
               return (
