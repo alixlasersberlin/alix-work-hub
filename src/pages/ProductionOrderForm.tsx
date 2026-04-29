@@ -232,7 +232,7 @@ export default function ProductionOrderForm() {
   const downloadPdfWith = async (lang: 'bilingual' | 'en') => {
     const poId = await persist();
     if (!poId) return;
-    const pdf = await buildPdf(lang);
+    const pdf = await buildPdf(lang, poId);
     if (pdf) {
       const url = URL.createObjectURL(pdf.blob);
       const a = document.createElement('a');
@@ -247,7 +247,7 @@ export default function ProductionOrderForm() {
   const onSaveAndSend = async () => {
     const poId = await persist();
     if (!poId) return;
-    const pdf = await buildPdf();
+    const pdf = await buildPdf('bilingual', poId);
     const supplier = suppliers.find(s => s.id === form.supplier_id);
     if (!pdf || !supplier || !selectedOrder) return;
 
