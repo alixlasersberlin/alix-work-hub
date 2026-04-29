@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
-import { Calendar, Loader2, Factory, AlertTriangle, FileText } from 'lucide-react';
+import { Calendar, Loader2, Factory, AlertTriangle, FileText, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { format, differenceInCalendarDays, isValid } from 'date-fns';
@@ -27,6 +29,8 @@ export default function ProductionTimeline() {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'order' | 'reclamation'>('all');
+  const [search, setSearch] = useState('');
+  const [pageSize, setPageSize] = useState<'10' | '20' | '30' | 'all'>('20');
 
   const load = async () => {
     setLoading(true);
@@ -48,12 +52,27 @@ export default function ProductionTimeline() {
   useEffect(() => { load(); }, []);
 
   const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
     return rows.filter(r => {
-      if (filter === 'order') return !r.is_reclamation;
-      if (filter === 'reclamation') return r.is_reclamation;
-      return true;
+      if (filter === 'order' && r.is_reclamation) return false;
+      if (filter === 'reclamation' && !r.is_reclamation) return false;
+      if (!q) return true;
+      const haystack = [
+        r.bearbeiter,
+        r.display_order_number,
+        r.order_number,
+        r.production_order_number,
+        r.modellname,
+        r.supplier?.name,
+      ].filter(Boolean).join(' ').toLowerCase();
+      return haystack.includes(q);
     });
-  }, [rows, filter]);
+  }, [rows, filter, search]);
+
+  const visible = useMemo(() => {
+    if (pageSize === 'all') return filtered;
+    return filtered.slice(0, parseInt(pageSize, 10));
+  }, [filtered, pageSize]);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -98,14 +117,41 @@ export default function ProductionTimeline() {
         </div>
       </div>
 
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Suche nach Name, Auftragsnummer, Modell oder Zulieferer..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">Anzeige:</span>
+          <Select value={pageSize} onValueChange={(v: any) => setPageSize(v)}>
+            <SelectTrigger className="w-[110px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="10">10</SelectItem>
+              <SelectItem value="20">20</SelectItem>
+              <SelectItem value="30">30</SelectItem>
+              <SelectItem value="all">Alle</SelectItem>
+            </SelectContent>
+          </Select>
+          <span className="text-xs text-muted-foreground whitespace-nowrap">
+            {visible.length} / {filtered.length}
+          </span>
+        </div>
+      </div>
+
       <Card className="p-0 overflow-hidden">
         {loading ? (
           <div className="p-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
-        ) : filtered.length === 0 ? (
+        ) : visible.length === 0 ? (
           <div className="p-12 text-center text-muted-foreground">Keine Einträge vorhanden.</div>
         ) : (
           <div className="divide-y divide-border">
-            {filtered.map(r => {
+            {visible.map(r => {
               const ds = getDeliveryStatus(r.liefertermin);
               const basePath = r.is_reclamation ? '/order/reklamation' : '/order';
               return (
