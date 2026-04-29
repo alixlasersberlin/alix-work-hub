@@ -91,7 +91,7 @@ const T: Record<Lang, Record<string, string>> = {
     allStatus: '所有状态', refresh: '刷新', noOrders: '未找到订单。',
     deliveryDate: '交货日期', edit: '编辑', pdf: 'PDF',
     model: '型号', color: '颜色', powerHs: '动力手柄', operator: '操作员',
-    serial: '序列号', wishes: '特殊要求', notes: '备注', status: '状态',
+    serial: '序列号', wishes: '内部编号', notes: '备注', status: '状态',
     editTitle: '编辑订单', photos: '照片', allRequired: '（需全部 3 张）',
     front: '正面', right: '右侧', left: '左侧',
     pickPhoto: '选择照片', orCamera: '或使用相机',
