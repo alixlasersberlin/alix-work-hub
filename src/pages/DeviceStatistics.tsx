@@ -248,6 +248,58 @@ export default function DeviceStatistics() {
 
       {error && <div className="mb-4 p-4 rounded-lg bg-destructive/10 text-destructive text-sm">{error}</div>}
 
+      {/* Pie chart: device distribution */}
+      {!loading && pieData.length > 0 && (
+        <div className="rounded-xl border border-border bg-card card-glow p-4 mb-6">
+          <h2 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
+            <PieChartIcon className="w-4 h-4 text-primary" />
+            Geräteverteilung (Stückzahl)
+          </h2>
+          <div style={{ width: '100%', height: 320 }}>
+            <ResponsiveContainer>
+              <PieChart>
+                <Pie
+                  data={pieData}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={110}
+                  innerRadius={55}
+                  paddingAngle={2}
+                  label={(entry: any) => {
+                    const pct = totals.items > 0 ? (entry.value / totals.items) * 100 : 0;
+                    return pct >= 4 ? `${pct.toFixed(1)}%` : '';
+                  }}
+                  labelLine={false}
+                >
+                  {pieData.map((_, i) => (
+                    <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} stroke="hsl(var(--card))" strokeWidth={2} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{
+                    background: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: 8,
+                    color: 'hsl(var(--foreground))',
+                  }}
+                  formatter={(value: any, name: any) => {
+                    const pct = totals.items > 0 ? ((value as number) / totals.items) * 100 : 0;
+                    return [`${(value as number).toLocaleString('de-DE')} Stück (${pct.toFixed(1)}%)`, name];
+                  }}
+                />
+                <Legend
+                  verticalAlign="bottom"
+                  height={36}
+                  wrapperStyle={{ fontSize: 12, color: 'hsl(var(--muted-foreground))' }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
       <div className="rounded-xl border border-border bg-card card-glow overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
