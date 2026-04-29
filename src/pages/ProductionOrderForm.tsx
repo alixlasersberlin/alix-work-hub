@@ -11,6 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, Loader2, Search, Save, Send, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateProductionOrderPdf } from '@/lib/production-order-pdf';
+import { ALIX_MODEL_GROUPS } from '@/lib/alix-models';
 
 export default function ProductionOrderForm() {
   const { id } = useParams();
@@ -371,7 +372,24 @@ export default function ProductionOrderForm() {
           )}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div><Label>Modellname</Label><Input value={form.modellname} onChange={e => setForm({ ...form, modellname: e.target.value })} /></div>
+          <div>
+            <Label>Modellname</Label>
+            <Select value={form.modellname} onValueChange={v => setForm({ ...form, modellname: v })}>
+              <SelectTrigger><SelectValue placeholder="Modell wählen…" /></SelectTrigger>
+              <SelectContent className="max-h-80">
+                {ALIX_MODEL_GROUPS.map(group => (
+                  <div key={group.label}>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                      {group.label}
+                    </div>
+                    {group.models.map(m => (
+                      <SelectItem key={m} value={m}>{m}</SelectItem>
+                    ))}
+                  </div>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div><Label>Farbe *</Label><Input value={form.farbe} onChange={e => setForm({ ...form, farbe: e.target.value })} /></div>
           <div><Label>Power Handstück *</Label><Input value={form.power_handstueck} onChange={e => setForm({ ...form, power_handstueck: e.target.value })} /></div>
           <div><Label>Bearbeiter *</Label><Input value={form.bearbeiter} onChange={e => setForm({ ...form, bearbeiter: e.target.value })} /></div>
