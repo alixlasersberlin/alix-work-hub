@@ -347,7 +347,7 @@ export default function ProductionPortal() {
             <Card key={row.id} className="p-5 space-y-3 card-glow">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="font-display font-semibold text-foreground">{row.order_number}</p>
+                  <p className="font-display font-semibold text-foreground font-mono">{row.production_order_number || row.order_number}</p>
                   <p className="text-xs text-muted-foreground">
                     {t.deliveryDate}: <span className="text-foreground font-medium">
                       {row.liefertermin ? format(new Date(row.liefertermin), 'dd.MM.yyyy') : '—'}
