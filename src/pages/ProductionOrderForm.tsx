@@ -155,12 +155,43 @@ export default function ProductionOrderForm() {
     return true;
   };
 
-  const persist = async (): Promise<string | null> => {
+  const persist = async (): Promise<{ poId: string; orderNumber: string } | null> => {
     if (!validate() || !selectedOrder) return null;
     setSaving(true);
+
+    // Determine order_number with -N suffix for multi-orders.
+    // Group by base order_number (strip any existing -N).
+    const baseNumber = (selectedOrder.order_number as string).replace(/-\d+$/, '');
+    let orderNumberToUse = baseNumber;
+
+    if (!isEdit) {
+      // Find all existing production_orders sharing this base number
+      const { data: existing } = await supabase
+        .from('production_orders')
+        .select('id, order_number, created_at')
+        .or(`order_number.eq.${baseNumber},order_number.ilike.${baseNumber}-%`)
+        .order('created_at', { ascending: true });
+      const siblings = existing ?? [];
+      if (siblings.length === 0) {
+        orderNumberToUse = baseNumber;
+      } else {
+        // If there's exactly one sibling without suffix, rename it to -1
+        const unsuffixed = siblings.find(s => s.order_number === baseNumber);
+        if (unsuffixed && siblings.length === 1) {
+          await supabase
+            .from('production_orders')
+            .update({ order_number: `${baseNumber}-1` })
+            .eq('id', unsuffixed.id);
+        }
+        // Next index = current count + 1 (works whether the rename above happened or not)
+        const nextIdx = siblings.length + 1;
+        orderNumberToUse = `${baseNumber}-${nextIdx}`;
+      }
+    }
+
     const payload = {
       order_id: selectedOrder.id,
-      order_number: selectedOrder.order_number,
+      order_number: isEdit ? undefined : orderNumberToUse,
       supplier_id: form.supplier_id,
       modellname: form.modellname.trim() || null,
       farbe: form.farbe.trim(),
@@ -174,7 +205,9 @@ export default function ProductionOrderForm() {
     };
     let poId = id;
     if (isEdit && id) {
-      const { error } = await supabase.from('production_orders').update(payload).eq('id', id);
+      // Don't overwrite order_number on edit
+      const { order_number: _on, ...editPayload } = payload;
+      const { error } = await supabase.from('production_orders').update(editPayload).eq('id', id);
       if (error) { toast.error(error.message); setSaving(false); return null; }
       await supabase.from('production_order_items').delete().eq('production_order_id', id);
     } else {
@@ -196,14 +229,22 @@ export default function ProductionOrderForm() {
       if (itemRows.length) await supabase.from('production_order_items').insert(itemRows);
     }
     setSaving(false);
-    return poId || null;
+    if (!poId) return null;
+    // Determine final order_number (after potential suffix update for "edit" reads from DB)
+    let finalNumber = orderNumberToUse;
+    if (isEdit) {
+      const { data: cur } = await supabase
+        .from('production_orders').select('order_number').eq('id', poId).maybeSingle();
+      finalNumber = cur?.order_number || selectedOrder.order_number;
+    }
+    return { poId, orderNumber: finalNumber };
   };
 
-  const buildPdf = (lang: 'bilingual' | 'en' = 'bilingual') => {
+  const buildPdf = (lang: 'bilingual' | 'en' = 'bilingual', orderNumber?: string) => {
     const supplier = suppliers.find(s => s.id === form.supplier_id);
     if (!supplier || !selectedOrder) return null;
     return generateProductionOrderPdf({
-      order_number: selectedOrder.order_number,
+      order_number: orderNumber || selectedOrder.order_number,
       ...form,
       supplier,
       items: selectedItems,
@@ -211,14 +252,14 @@ export default function ProductionOrderForm() {
   };
 
   const onSave = async () => {
-    const poId = await persist();
-    if (poId) { toast.success('Gespeichert'); navigate('/order'); }
+    const res = await persist();
+    if (res) { toast.success('Gespeichert'); navigate('/order'); }
   };
 
   const downloadPdfWith = async (lang: 'bilingual' | 'en') => {
-    const poId = await persist();
-    if (!poId) return;
-    const pdf = await buildPdf(lang);
+    const res = await persist();
+    if (!res) return;
+    const pdf = await buildPdf(lang, res.orderNumber);
     if (pdf) {
       const url = URL.createObjectURL(pdf.blob);
       const a = document.createElement('a');
@@ -231,9 +272,10 @@ export default function ProductionOrderForm() {
   const onSaveAndDownloadEn = () => downloadPdfWith('en');
 
   const onSaveAndSend = async () => {
-    const poId = await persist();
-    if (!poId) return;
-    const pdf = await buildPdf();
+    const res = await persist();
+    if (!res) return;
+    const { poId, orderNumber } = res;
+    const pdf = await buildPdf('bilingual', orderNumber);
     const supplier = suppliers.find(s => s.id === form.supplier_id);
     if (!pdf || !supplier || !selectedOrder) return;
 
@@ -249,9 +291,9 @@ export default function ProductionOrderForm() {
     await supabase.from('production_orders').update({ pdf_path: path, sent_at: new Date().toISOString(), status: 'gesendet' }).eq('id', poId);
 
     // Open mailto
-    const subject = encodeURIComponent(`Bestellung ${selectedOrder.order_number}`);
+    const subject = encodeURIComponent(`Bestellung ${orderNumber}`);
     const body = encodeURIComponent(
-      `Sehr geehrte Damen und Herren,\n\nanbei unsere Bestellung ${selectedOrder.order_number}.\n\n` +
+      `Sehr geehrte Damen und Herren,\n\nanbei unsere Bestellung ${orderNumber}.\n\n` +
       `Modell: ${form.modellname || '—'}\nFarbe: ${form.farbe}\nPower Handstück: ${form.power_handstueck}\n` +
       `Liefertermin: ${form.liefertermin}\nBearbeiter: ${form.bearbeiter}\n\n` +
       (form.anmerkungen ? `Anmerkungen:\n${form.anmerkungen}\n\n` : '') +
