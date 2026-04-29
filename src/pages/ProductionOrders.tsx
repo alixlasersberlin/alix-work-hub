@@ -102,10 +102,9 @@ export default function ProductionOrders() {
     if (error) toast.error(error.message);
     else {
       const list = data || [];
-
       const enriched = list.map(r => ({
         ...r,
-        display_order_number: r.order_number,
+        display_order_number: r.production_order_number || r.order_number,
       }));
       setRows(enriched);
     }

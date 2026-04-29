@@ -831,6 +831,7 @@ export type Database = {
           photo_left_path: string | null
           photo_right_path: string | null
           power_handstueck: string
+          production_order_number: string | null
           sent_at: string | null
           seriennummer: string | null
           sonderwuensche: string | null
@@ -856,6 +857,7 @@ export type Database = {
           photo_left_path?: string | null
           photo_right_path?: string | null
           power_handstueck: string
+          production_order_number?: string | null
           sent_at?: string | null
           seriennummer?: string | null
           sonderwuensche?: string | null
@@ -881,6 +883,7 @@ export type Database = {
           photo_left_path?: string | null
           photo_right_path?: string | null
           power_handstueck?: string
+          production_order_number?: string | null
           sent_at?: string | null
           seriennummer?: string | null
           sonderwuensche?: string | null
