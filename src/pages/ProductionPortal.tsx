@@ -11,7 +11,7 @@ import { format } from 'date-fns';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 type PhotoSide = 'front' | 'right' | 'left';
 
@@ -396,7 +396,7 @@ export default function ProductionPortal() {
                 <span className="text-xs text-muted-foreground">{t.status}:</span>
                 <Select
                   value={row.status}
-                  onValueChange={(v) => updateStatus(row.id, v)}
+                  onValueChange={(v) => setTimeout(() => updateStatus(row.id, v), 0)}
                   disabled={updatingId === row.id}
                 >
                   <SelectTrigger className="h-8 w-[180px] text-xs">
@@ -419,6 +419,7 @@ export default function ProductionPortal() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>{t.editTitle} {editing && `– ${editing.order_number}`}</DialogTitle>
+            <DialogDescription className="sr-only">{t.editTitle}</DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-2">
             <div className="space-y-1.5">
