@@ -419,7 +419,17 @@ export default function ProductionOrderForm() {
               );
             })()}
           </div>
-          <div><Label>Power Handstück *</Label><Input value={form.power_handstueck} onChange={e => setForm({ ...form, power_handstueck: e.target.value })} /></div>
+          <div>
+            <Label>Power Handstück *</Label>
+            <Select value={form.power_handstueck} onValueChange={v => setForm({ ...form, power_handstueck: v })}>
+              <SelectTrigger><SelectValue placeholder="Power wählen…" /></SelectTrigger>
+              <SelectContent>
+                {['800W','1200W','1600W','2000W','2400W','3000W','5000W'].map(p => (
+                  <SelectItem key={p} value={p}>{p}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div><Label>Bearbeiter *</Label><Input value={form.bearbeiter} onChange={e => setForm({ ...form, bearbeiter: e.target.value })} /></div>
           <div><Label>Liefertermin *</Label><Input type="date" value={form.liefertermin} onChange={e => setForm({ ...form, liefertermin: e.target.value })} /></div>
           <div><Label>Seriennummer</Label><Input value={form.seriennummer} onChange={e => setForm({ ...form, seriennummer: e.target.value })} /></div>
