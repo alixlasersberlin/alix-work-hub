@@ -825,6 +825,7 @@ export type Database = {
           modellname: string | null
           order_id: string
           order_number: string
+          payment_status: string
           pdf_path: string | null
           photo_front_path: string | null
           photo_left_path: string | null
@@ -849,6 +850,7 @@ export type Database = {
           modellname?: string | null
           order_id: string
           order_number: string
+          payment_status?: string
           pdf_path?: string | null
           photo_front_path?: string | null
           photo_left_path?: string | null
@@ -873,6 +875,7 @@ export type Database = {
           modellname?: string | null
           order_id?: string
           order_number?: string
+          payment_status?: string
           pdf_path?: string | null
           photo_front_path?: string | null
           photo_left_path?: string | null
