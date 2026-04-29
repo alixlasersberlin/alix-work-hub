@@ -476,6 +476,17 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
           />
         </div>
         <div><Label>Anmerkungen</Label><Textarea value={form.anmerkungen} onChange={e => setForm({ ...form, anmerkungen: e.target.value })} rows={3} /></div>
+        {isReclamation && (
+          <div>
+            <Label>Reklamationsgrund *</Label>
+            <Textarea
+              value={form.reclamation_reason}
+              onChange={e => setForm({ ...form, reclamation_reason: e.target.value })}
+              rows={3}
+              placeholder="Bitte den Grund der Reklamation beschreiben…"
+            />
+          </div>
+        )}
       </Card>
 
       <div className="flex flex-wrap justify-end gap-2 sticky bottom-0 bg-background py-3 border-t border-border">
