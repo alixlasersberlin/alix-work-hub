@@ -88,6 +88,10 @@ export default function AppLayout() {
 
   const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/';
+    if (path === '/order') {
+      return location.pathname === '/order'
+        || (location.pathname.startsWith('/order/') && !location.pathname.startsWith('/order/reklamation') && !location.pathname.startsWith('/order/zulieferer'));
+    }
     return location.pathname.startsWith(path);
   };
 
