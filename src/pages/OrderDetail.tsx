@@ -188,6 +188,7 @@ export default function OrderDetail() {
                 ['Bestelldatum', order.order_date ? new Date(order.order_date).toLocaleDateString('de-DE') : '—'],
                 ['Quelle', order.source_system],
                 ['Ext. Auftrags-ID', order.external_order_id],
+                ['Intern Nummer', order.internal_number],
                 ['Erstellt', new Date(order.created_at).toLocaleString('de-DE')],
               ].map(([l, v]) => (
                 <div key={l as string} className="flex justify-between">
