@@ -40,6 +40,7 @@ const EXCLUDED_PATTERNS = [
   'm8 microneedle 24 pin',
   'm8 microneedle 40 pin',
   'mediapaket 3',
+  'sonstig',
 ];
 
 function isExcludedItem(name: string): boolean {
