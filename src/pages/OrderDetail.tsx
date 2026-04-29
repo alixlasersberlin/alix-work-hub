@@ -63,8 +63,26 @@ export default function OrderDetail() {
     setNotes(nRes.data ?? []);
     setItems(iRes.data ?? []);
     setHistory(hRes.data ?? []);
+
+    // Anzahl Produktionsbestellungen f\u00fcr diese order_number
+    if (oRes.data?.order_number) {
+      const { count } = await supabase
+        .from('production_orders')
+        .select('id', { count: 'exact', head: true })
+        .eq('order_number', oRes.data.order_number);
+      setPoCount(count || 0);
+    } else {
+      setPoCount(0);
+    }
+
     setLoading(false);
   }
+
+  // Anzeige-Auftragsnummer(n): immer mind. -1, bei mehreren PO mehrere Suffixe
+  const displayOrderNumbers = order?.order_number
+    ? Array.from({ length: Math.max(1, poCount) }, (_, i) => `${order.order_number} -${i + 1}`)
+    : [];
+  const primaryDisplayNumber = displayOrderNumbers[0] || order?.order_number || '';
 
   async function submitNote() {
     if (!newNote.trim() || !id || !user) return;
