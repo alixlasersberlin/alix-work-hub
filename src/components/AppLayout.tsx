@@ -32,7 +32,7 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    path: '/einkauf', label: 'EINKAUF', icon: ShoppingCart, roles: ['Admin', 'Super Admin'],
+    path: '/einkauf', label: 'BESTELLUNGEN', icon: ShoppingCart, roles: ['Admin', 'Super Admin'],
     children: [
       { path: '/order', label: 'Order', icon: Factory, roles: ['Admin', 'Super Admin'] },
     ],
