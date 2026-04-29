@@ -250,7 +250,9 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
                             ? 'bg-green-500/15 text-green-500'
                             : ps === 'Teilweise'
                               ? 'bg-yellow-500/15 text-yellow-500'
-                              : 'bg-destructive/15 text-destructive';
+                              : ps === 'Garantie'
+                                ? 'bg-blue-500/15 text-blue-500'
+                                : 'bg-destructive/15 text-destructive';
                           return <span className={`px-2 py-0.5 rounded text-xs ${cls}`}>{tPayment(ps)}</span>;
                         })()}
                       </td>
