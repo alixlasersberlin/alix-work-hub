@@ -182,6 +182,7 @@ export default function OrderDetail() {
             <dl className="space-y-3 text-sm">
               {[
                 ['Auftragsnummer', order.order_number],
+                ['Rechnungsnummer', order.order_number],
                 ['Status', order.order_status || 'offen'],
                 ['Betrag', order.total_amount != null ? Number(order.total_amount).toLocaleString('de-DE', { style: 'currency', currency: order.currency || 'EUR' }) : '—'],
                 ['Währung', order.currency],
