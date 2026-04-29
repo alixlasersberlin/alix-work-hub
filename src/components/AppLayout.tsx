@@ -91,7 +91,7 @@ export default function AppLayout() {
     if (path === '/') return location.pathname === '/';
     if (path === '/order') {
       return location.pathname === '/order'
-        || (location.pathname.startsWith('/order/') && !location.pathname.startsWith('/order/reklamation') && !location.pathname.startsWith('/order/zulieferer'));
+        || (location.pathname.startsWith('/order/') && !location.pathname.startsWith('/order/reklamation') && !location.pathname.startsWith('/order/zulieferer') && !location.pathname.startsWith('/order/timeline'));
     }
     return location.pathname.startsWith(path);
   };
