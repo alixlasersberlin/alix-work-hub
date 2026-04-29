@@ -84,12 +84,14 @@ const T: Record<Lang, Record<string, string>> = {
   },
 };
 
-export default function ProductionOrders() {
+export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {}) {
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [lang, setLang] = useState<Lang>(() => (localStorage.getItem('production_lang') as Lang) || 'de');
   const t = T[lang];
   const navigate = useNavigate();
+  const isReclamation = mode === 'reclamation';
+  const basePath = isReclamation ? '/order/reklamation' : '/order';
 
   useEffect(() => { localStorage.setItem('production_lang', lang); }, [lang]);
 
@@ -100,6 +102,7 @@ export default function ProductionOrders() {
     const { data, error } = await supabase
       .from('production_orders')
       .select('*, supplier:suppliers(name, email)')
+      .eq('is_reclamation', isReclamation)
       .order('created_at', { ascending: false });
     if (error) toast.error(error.message);
     else {
@@ -113,7 +116,7 @@ export default function ProductionOrders() {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [isReclamation]);
 
   const remove = async (id: string) => {
     if (!confirm(t.confirmDelete)) return;
