@@ -85,7 +85,7 @@ export default function ProductionOrderDetail() {
         <div><span className="text-muted-foreground">Seriennummer:</span> {data.seriennummer || '—'}</div>
         <div><span className="text-muted-foreground">Status:</span> {data.status}</div>
         <div><span className="text-muted-foreground">Gesendet am:</span> {data.sent_at ? format(new Date(data.sent_at), 'dd.MM.yyyy HH:mm') : '—'}</div>
-        {data.sonderwuensche && <div className="col-span-2"><span className="text-muted-foreground">Sonderwünsche:</span><br/>{data.sonderwuensche}</div>}
+        {data.sonderwuensche && <div className="col-span-2"><span className="text-muted-foreground">Interne Nummer:</span><br/>{data.sonderwuensche}</div>}
         {data.anmerkungen && <div className="col-span-2"><span className="text-muted-foreground">Anmerkungen:</span><br/>{data.anmerkungen}</div>}
       </Card>
 
