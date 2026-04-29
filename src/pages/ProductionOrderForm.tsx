@@ -244,7 +244,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
 
   const onSave = async () => {
     const poId = await persist();
-    if (poId) { toast.success('Gespeichert'); navigate('/order'); }
+    if (poId) { toast.success('Gespeichert'); navigate(basePath); }
   };
 
   const downloadPdfWith = async (lang: 'bilingual' | 'en') => {
@@ -291,7 +291,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
     );
     window.location.href = `mailto:${supplier.email}?subject=${subject}&body=${body}`;
     toast.success('PDF heruntergeladen – E-Mail wird geöffnet');
-    setTimeout(() => navigate('/order'), 1500);
+    setTimeout(() => navigate(basePath), 1500);
   };
 
   if (loading) return <div className="p-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
@@ -299,7 +299,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div>
-        <Button variant="ghost" size="sm" onClick={() => navigate('/order')} className="mb-2">
+        <Button variant="ghost" size="sm" onClick={() => navigate(basePath)} className="mb-2">
           <ArrowLeft className="w-4 h-4 mr-1" /> Zurück
         </Button>
         <h1 className="text-2xl font-display font-bold gold-text">
@@ -477,7 +477,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
       </Card>
 
       <div className="flex flex-wrap justify-end gap-2 sticky bottom-0 bg-background py-3 border-t border-border">
-        <Button variant="outline" onClick={() => navigate('/order')} disabled={saving}>Abbrechen</Button>
+        <Button variant="outline" onClick={() => navigate(basePath)} disabled={saving}>Abbrechen</Button>
         <Button variant="outline" onClick={onSave} disabled={saving}><Save className="w-4 h-4 mr-2" /> Speichern</Button>
         <Button variant="outline" onClick={onSaveAndDownload} disabled={saving}><Download className="w-4 h-4 mr-2" /> Speichern + PDF</Button>
         <Button variant="outline" onClick={onSaveAndDownloadEn} disabled={saving}><Download className="w-4 h-4 mr-2" /> PDF (EN)</Button>
