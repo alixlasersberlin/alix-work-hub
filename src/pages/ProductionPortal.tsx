@@ -506,8 +506,9 @@ export default function ProductionPortal() {
                 </Select>
                 {updatingId === row.id && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
               </div>
-            </Card>
-          ))}
+              </Card>
+            );
+          })}
         </div>
       )}
 
