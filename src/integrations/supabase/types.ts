@@ -821,6 +821,7 @@ export type Database = {
           created_by: string | null
           farbe: string
           id: string
+          is_reclamation: boolean
           liefertermin: string
           modellname: string | null
           order_id: string
@@ -832,6 +833,7 @@ export type Database = {
           photo_right_path: string | null
           power_handstueck: string
           production_order_number: string | null
+          reclamation_reason: string | null
           sent_at: string | null
           seriennummer: string | null
           sonderwuensche: string | null
@@ -847,6 +849,7 @@ export type Database = {
           created_by?: string | null
           farbe: string
           id?: string
+          is_reclamation?: boolean
           liefertermin: string
           modellname?: string | null
           order_id: string
@@ -858,6 +861,7 @@ export type Database = {
           photo_right_path?: string | null
           power_handstueck: string
           production_order_number?: string | null
+          reclamation_reason?: string | null
           sent_at?: string | null
           seriennummer?: string | null
           sonderwuensche?: string | null
@@ -873,6 +877,7 @@ export type Database = {
           created_by?: string | null
           farbe?: string
           id?: string
+          is_reclamation?: boolean
           liefertermin?: string
           modellname?: string | null
           order_id?: string
@@ -884,6 +889,7 @@ export type Database = {
           photo_right_path?: string | null
           power_handstueck?: string
           production_order_number?: string | null
+          reclamation_reason?: string | null
           sent_at?: string | null
           seriennummer?: string | null
           sonderwuensche?: string | null
