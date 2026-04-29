@@ -44,7 +44,7 @@ export default function ProductionOrderDetail() {
   const downloadPdf = async (lang: 'bilingual' | 'en' = 'bilingual') => {
     if (!data) return;
     const pdf = await generateProductionOrderPdf({
-      order_number: data.order_number,
+      order_number: displayOrderNumber || data.order_number,
       modellname: data.modellname,
       farbe: data.farbe,
       power_handstueck: data.power_handstueck,
@@ -72,7 +72,7 @@ export default function ProductionOrderDetail() {
         <ArrowLeft className="w-4 h-4 mr-1" /> Zurück
       </Button>
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-display font-bold gold-text">Bestellung {data.order_number}</h1>
+        <h1 className="text-2xl font-display font-bold gold-text">Bestellung {displayOrderNumber || data.order_number}</h1>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => downloadPdf('bilingual')}><Download className="w-4 h-4 mr-2" /> PDF</Button>
           <Button variant="outline" onClick={() => downloadPdf('en')}><Download className="w-4 h-4 mr-2" /> PDF (EN)</Button>
