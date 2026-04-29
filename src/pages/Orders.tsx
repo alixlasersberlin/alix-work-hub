@@ -45,7 +45,31 @@ export default function Orders() {
       .limit(500);
     if (err) setError(err.message);
     const loaded = data ?? [];
-    setOrders(loaded);
+
+    // Anzahl Produktionsbestellungen pro order_number ermitteln
+    const orderNumbers = Array.from(new Set(loaded.map(o => o.order_number).filter(Boolean)));
+    const poCountMap: Record<string, number> = {};
+    if (orderNumbers.length > 0) {
+      const { data: pos } = await supabase
+        .from('production_orders')
+        .select('order_number')
+        .in('order_number', orderNumbers);
+      (pos || []).forEach(p => {
+        if (!p.order_number) return;
+        poCountMap[p.order_number] = (poCountMap[p.order_number] || 0) + 1;
+      });
+    }
+
+    // Pro Auftrag mindestens 1 Zeile (-1), bei mehreren PO entsprechend mehrere
+    const expanded: any[] = [];
+    loaded.forEach(o => {
+      const count = Math.max(1, poCountMap[o.order_number] || 0);
+      for (let i = 1; i <= count; i++) {
+        expanded.push({ ...o, _seq: i, _displayNumber: `${o.order_number} -${i}` });
+      }
+    });
+
+    setOrders(expanded);
     setLoading(false);
     if (loaded.length > 0) fetchDrivingTimes(loaded);
   }
@@ -61,6 +85,7 @@ export default function Orders() {
     const q = search.toLowerCase();
     const matchSearch = !search ||
       o.order_number?.toLowerCase().includes(q) ||
+      o._displayNumber?.toLowerCase().includes(q) ||
       o.customers?.company_name?.toLowerCase().includes(q) ||
       o.customers?.contact_name?.toLowerCase().includes(q);
     const matchStatus = statusFilter === 'all' || o.order_status === statusFilter;
@@ -172,12 +197,12 @@ export default function Orders() {
                   </tbody>
                 ) : (
                   paged.map(o => (
-                    <tbody key={o.id} className="border-b border-border">
+                    <tbody key={`${o.id}-${o._seq}`} className="border-b border-border">
                       <tr
                         className="hover:bg-secondary/30 transition-colors cursor-pointer"
                         onClick={() => navigate(`/auftraege/${o.id}`)}
                       >
-                        <td className="px-4 py-3 font-medium text-foreground">{o.order_number}</td>
+                        <td className="px-4 py-3 font-medium text-foreground">{o._displayNumber || o.order_number}</td>
                         <td className="px-4 py-3 text-muted-foreground">{o.customers?.company_name || o.customers?.contact_name || '—'}</td>
                         <td className="px-4 py-3 text-muted-foreground">{o.order_date ? new Date(o.order_date).toLocaleDateString('de-DE') : '—'}</td>
                         <td className="px-4 py-3 text-foreground">

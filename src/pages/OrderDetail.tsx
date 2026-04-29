@@ -30,6 +30,7 @@ export default function OrderDetail() {
   const [notes, setNotes] = useState<any[]>([]);
   const [items, setItems] = useState<any[]>([]);
   const [history, setHistory] = useState<any[]>([]);
+  const [poCount, setPoCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'items' | 'notes' | 'history' | 'raw'>('overview');
 
@@ -62,8 +63,26 @@ export default function OrderDetail() {
     setNotes(nRes.data ?? []);
     setItems(iRes.data ?? []);
     setHistory(hRes.data ?? []);
+
+    // Anzahl Produktionsbestellungen f\u00fcr diese order_number
+    if (oRes.data?.order_number) {
+      const { count } = await supabase
+        .from('production_orders')
+        .select('id', { count: 'exact', head: true })
+        .eq('order_number', oRes.data.order_number);
+      setPoCount(count || 0);
+    } else {
+      setPoCount(0);
+    }
+
     setLoading(false);
   }
+
+  // Anzeige-Auftragsnummer(n): immer mind. -1, bei mehreren PO mehrere Suffixe
+  const displayOrderNumbers = order?.order_number
+    ? Array.from({ length: Math.max(1, poCount) }, (_, i) => `${order.order_number} -${i + 1}`)
+    : [];
+  const primaryDisplayNumber = displayOrderNumbers[0] || order?.order_number || '';
 
   async function submitNote() {
     if (!newNote.trim() || !id || !user) return;
@@ -121,7 +140,7 @@ export default function OrderDetail() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">{order.order_number}</h1>
+          <h1 className="text-2xl font-display font-bold text-foreground">{primaryDisplayNumber}</h1>
           <p className="text-sm text-muted-foreground mt-1">
             {order.order_date ? new Date(order.order_date).toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' }) : '—'}
             {' · '}{order.source_system}
@@ -181,8 +200,8 @@ export default function OrderDetail() {
             </h2>
             <dl className="space-y-3 text-sm">
               {[
-                ['Auftragsnummer', order.order_number],
-                ['Rechnungsnummer', order.order_number],
+                ['Auftragsnummer', displayOrderNumbers.join(', ')],
+                ['Rechnungsnummer', displayOrderNumbers.join(', ')],
                 ['Status', order.order_status || 'offen'],
                 ['Betrag', order.total_amount != null ? Number(order.total_amount).toLocaleString('de-DE', { style: 'currency', currency: order.currency || 'EUR' }) : '—'],
                 ['Währung', order.currency],
