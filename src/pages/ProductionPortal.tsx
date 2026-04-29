@@ -441,7 +441,7 @@ export default function ProductionPortal() {
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{t.editTitle} {editing && `– ${editing.order_number}`}</DialogTitle>
+            <DialogTitle>{t.editTitle} {editing && `– ${editing.production_order_number || editing.order_number}`}</DialogTitle>
             <DialogDescription className="sr-only">{t.editTitle}</DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-2">
