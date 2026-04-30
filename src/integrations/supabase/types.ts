@@ -822,6 +822,7 @@ export type Database = {
           created_by: string | null
           farbe: string
           id: string
+          invoice_pdf_path: string | null
           is_reclamation: boolean
           liefertermin: string
           modellname: string | null
@@ -851,6 +852,7 @@ export type Database = {
           created_by?: string | null
           farbe: string
           id?: string
+          invoice_pdf_path?: string | null
           is_reclamation?: boolean
           liefertermin: string
           modellname?: string | null
@@ -880,6 +882,7 @@ export type Database = {
           created_by?: string | null
           farbe?: string
           id?: string
+          invoice_pdf_path?: string | null
           is_reclamation?: boolean
           liefertermin?: string
           modellname?: string | null
