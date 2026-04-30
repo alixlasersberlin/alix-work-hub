@@ -30,6 +30,8 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
   const [productionOrderNumber, setProductionOrderNumber] = useState<string>('');
   const [attachmentPath, setAttachmentPath] = useState<string | null>(null);
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
+  const [invoicePath, setInvoicePath] = useState<string | null>(null);
+  const [uploadingInvoice, setUploadingInvoice] = useState(false);
 
   // Auftrag suchen
   const [orderSearch, setOrderSearch] = useState('');
@@ -77,6 +79,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
       if (error || !po) { toast.error('Bestellung nicht gefunden'); setLoading(false); return; }
       setProductionOrderNumber((po as any).production_order_number || '');
       setAttachmentPath((po as any).attachment_pdf_path || null);
+      setInvoicePath((po as any).invoice_pdf_path || null);
       setForm({
         supplier_id: po.supplier_id,
         modellname: po.modellname || '',
@@ -240,6 +243,46 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
     toast.success('PDF entfernt');
   };
 
+  const handleInvoiceUpload = async (file: File) => {
+    if (!file) return;
+    if (file.type !== 'application/pdf') { toast.error('Nur PDF-Dateien erlaubt'); return; }
+    if (file.size > 20 * 1024 * 1024) { toast.error('Max. 20 MB'); return; }
+    setUploadingInvoice(true);
+    const folder = id || `tmp-${user?.id || 'new'}-${Date.now()}`;
+    const safeName = file.name.replace(/[^A-Za-z0-9._-]/g, '_');
+    const path = `${folder}/invoice-${Date.now()}-${safeName}`;
+    const { error } = await supabase.storage
+      .from('production-orders')
+      .upload(path, file, { upsert: true, contentType: 'application/pdf' });
+    setUploadingInvoice(false);
+    if (error) { toast.error(error.message); return; }
+    if (invoicePath && invoicePath !== path) {
+      await supabase.storage.from('production-orders').remove([invoicePath]);
+    }
+    setInvoicePath(path);
+    if (isEdit && id) {
+      await supabase.from('production_orders').update({ invoice_pdf_path: path }).eq('id', id);
+    }
+    toast.success('Rechnung hochgeladen');
+  };
+
+  const downloadInvoice = async () => {
+    if (!invoicePath) return;
+    const { data, error } = await supabase.storage.from('production-orders').createSignedUrl(invoicePath, 60);
+    if (error || !data) { toast.error(error?.message || 'Fehler'); return; }
+    window.open(data.signedUrl, '_blank');
+  };
+
+  const removeInvoice = async () => {
+    if (!invoicePath) return;
+    await supabase.storage.from('production-orders').remove([invoicePath]);
+    if (isEdit && id) {
+      await supabase.from('production_orders').update({ invoice_pdf_path: null }).eq('id', id);
+    }
+    setInvoicePath(null);
+    toast.success('Rechnung entfernt');
+  };
+
   const validate = () => {
     if (!selectedOrder) { toast.error('Bitte einen Auftrag auswählen'); return false; }
     if (!form.supplier_id) { toast.error('Bitte einen Zulieferer wählen'); return false; }
@@ -276,6 +319,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
       is_reclamation: isReclamation,
       reclamation_reason: isReclamation ? (form.reclamation_reason.trim() || null) : null,
       attachment_pdf_path: attachmentPath,
+      invoice_pdf_path: invoicePath,
     };
     let poId = id;
     if (isEdit && id) {
@@ -645,6 +689,44 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
                   onChange={e => {
                     const f = e.target.files?.[0];
                     if (f) handleAttachmentUpload(f);
+                    e.target.value = '';
+                  }}
+                />
+              </label>
+            )}
+          </div>
+          <div>
+            <Label>Rechnung</Label>
+            {invoicePath ? (
+              <div className="flex items-center gap-2 h-10 px-3 rounded-md border border-input bg-background">
+                <FileText className="w-4 h-4 text-primary shrink-0" />
+                <button
+                  type="button"
+                  onClick={downloadInvoice}
+                  className="flex-1 text-sm truncate text-left text-foreground hover:text-primary"
+                  title={invoicePath.split('/').pop() || 'Rechnung anzeigen'}
+                >
+                  {invoicePath.split('/').pop()?.replace(/^invoice-\d+-/, '') || 'Rechnung anzeigen'}
+                </button>
+                <Button type="button" variant="ghost" size="sm" onClick={removeInvoice} className="h-7 w-7 p-0">
+                  <X className="w-4 h-4 text-destructive" />
+                </Button>
+              </div>
+            ) : (
+              <label className="flex items-center justify-center gap-2 h-10 px-3 rounded-md border border-dashed border-input bg-background hover:bg-muted/30 cursor-pointer text-sm text-muted-foreground">
+                {uploadingInvoice ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Lädt hoch…</>
+                ) : (
+                  <><Upload className="w-4 h-4" /> Rechnung hochladen</>
+                )}
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  className="hidden"
+                  disabled={uploadingInvoice}
+                  onChange={e => {
+                    const f = e.target.files?.[0];
+                    if (f) handleInvoiceUpload(f);
                     e.target.value = '';
                   }}
                 />
