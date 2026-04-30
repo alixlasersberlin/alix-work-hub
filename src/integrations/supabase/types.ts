@@ -816,6 +816,7 @@ export type Database = {
       production_orders: {
         Row: {
           anmerkungen: string | null
+          attachment_pdf_path: string | null
           bearbeiter: string
           created_at: string
           created_by: string | null
@@ -844,6 +845,7 @@ export type Database = {
         }
         Insert: {
           anmerkungen?: string | null
+          attachment_pdf_path?: string | null
           bearbeiter: string
           created_at?: string
           created_by?: string | null
@@ -872,6 +874,7 @@ export type Database = {
         }
         Update: {
           anmerkungen?: string | null
+          attachment_pdf_path?: string | null
           bearbeiter?: string
           created_at?: string
           created_by?: string | null
