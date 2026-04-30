@@ -695,6 +695,44 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
               </label>
             )}
           </div>
+          <div>
+            <Label>Rechnung</Label>
+            {invoicePath ? (
+              <div className="flex items-center gap-2 h-10 px-3 rounded-md border border-input bg-background">
+                <FileText className="w-4 h-4 text-primary shrink-0" />
+                <button
+                  type="button"
+                  onClick={downloadInvoice}
+                  className="flex-1 text-sm truncate text-left text-foreground hover:text-primary"
+                  title={invoicePath.split('/').pop() || 'Rechnung anzeigen'}
+                >
+                  {invoicePath.split('/').pop()?.replace(/^invoice-\d+-/, '') || 'Rechnung anzeigen'}
+                </button>
+                <Button type="button" variant="ghost" size="sm" onClick={removeInvoice} className="h-7 w-7 p-0">
+                  <X className="w-4 h-4 text-destructive" />
+                </Button>
+              </div>
+            ) : (
+              <label className="flex items-center justify-center gap-2 h-10 px-3 rounded-md border border-dashed border-input bg-background hover:bg-muted/30 cursor-pointer text-sm text-muted-foreground">
+                {uploadingInvoice ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Lädt hoch…</>
+                ) : (
+                  <><Upload className="w-4 h-4" /> Rechnung hochladen</>
+                )}
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  className="hidden"
+                  disabled={uploadingInvoice}
+                  onChange={e => {
+                    const f = e.target.files?.[0];
+                    if (f) handleInvoiceUpload(f);
+                    e.target.value = '';
+                  }}
+                />
+              </label>
+            )}
+          </div>
         </div>
         <div>
           <Label>Interne Nummer</Label>
