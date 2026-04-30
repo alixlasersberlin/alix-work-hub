@@ -319,6 +319,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
       is_reclamation: isReclamation,
       reclamation_reason: isReclamation ? (form.reclamation_reason.trim() || null) : null,
       attachment_pdf_path: attachmentPath,
+      invoice_pdf_path: invoicePath,
     };
     let poId = id;
     if (isEdit && id) {
