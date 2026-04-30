@@ -28,6 +28,8 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
   const [saving, setSaving] = useState(false);
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [productionOrderNumber, setProductionOrderNumber] = useState<string>('');
+  const [attachmentPath, setAttachmentPath] = useState<string | null>(null);
+  const [uploadingAttachment, setUploadingAttachment] = useState(false);
 
   // Auftrag suchen
   const [orderSearch, setOrderSearch] = useState('');
