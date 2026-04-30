@@ -200,6 +200,46 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
   const removeManualItem = (idx: number) =>
     setManualItems(arr => arr.filter((_, i) => i !== idx));
 
+  const handleAttachmentUpload = async (file: File) => {
+    if (!file) return;
+    if (file.type !== 'application/pdf') { toast.error('Nur PDF-Dateien erlaubt'); return; }
+    if (file.size > 20 * 1024 * 1024) { toast.error('Max. 20 MB'); return; }
+    setUploadingAttachment(true);
+    const folder = id || `tmp-${user?.id || 'new'}-${Date.now()}`;
+    const safeName = file.name.replace(/[^A-Za-z0-9._-]/g, '_');
+    const path = `${folder}/attachment-${Date.now()}-${safeName}`;
+    const { error } = await supabase.storage
+      .from('production-orders')
+      .upload(path, file, { upsert: true, contentType: 'application/pdf' });
+    setUploadingAttachment(false);
+    if (error) { toast.error(error.message); return; }
+    if (attachmentPath && attachmentPath !== path) {
+      await supabase.storage.from('production-orders').remove([attachmentPath]);
+    }
+    setAttachmentPath(path);
+    if (isEdit && id) {
+      await supabase.from('production_orders').update({ attachment_pdf_path: path }).eq('id', id);
+    }
+    toast.success('PDF hochgeladen');
+  };
+
+  const downloadAttachment = async () => {
+    if (!attachmentPath) return;
+    const { data, error } = await supabase.storage.from('production-orders').createSignedUrl(attachmentPath, 60);
+    if (error || !data) { toast.error(error?.message || 'Fehler'); return; }
+    window.open(data.signedUrl, '_blank');
+  };
+
+  const removeAttachment = async () => {
+    if (!attachmentPath) return;
+    await supabase.storage.from('production-orders').remove([attachmentPath]);
+    if (isEdit && id) {
+      await supabase.from('production_orders').update({ attachment_pdf_path: null }).eq('id', id);
+    }
+    setAttachmentPath(null);
+    toast.success('PDF entfernt');
+  };
+
   const validate = () => {
     if (!selectedOrder) { toast.error('Bitte einen Auftrag auswählen'); return false; }
     if (!form.supplier_id) { toast.error('Bitte einen Zulieferer wählen'); return false; }
