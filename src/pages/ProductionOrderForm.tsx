@@ -613,6 +613,44 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
               </SelectContent>
             </Select>
           </div>
+          <div>
+            <Label>PDF-Anhang</Label>
+            {attachmentPath ? (
+              <div className="flex items-center gap-2 h-10 px-3 rounded-md border border-input bg-background">
+                <FileText className="w-4 h-4 text-primary shrink-0" />
+                <button
+                  type="button"
+                  onClick={downloadAttachment}
+                  className="flex-1 text-sm truncate text-left text-foreground hover:text-primary"
+                  title={attachmentPath.split('/').pop() || 'PDF anzeigen'}
+                >
+                  {attachmentPath.split('/').pop()?.replace(/^attachment-\d+-/, '') || 'PDF anzeigen'}
+                </button>
+                <Button type="button" variant="ghost" size="sm" onClick={removeAttachment} className="h-7 w-7 p-0">
+                  <X className="w-4 h-4 text-destructive" />
+                </Button>
+              </div>
+            ) : (
+              <label className="flex items-center justify-center gap-2 h-10 px-3 rounded-md border border-dashed border-input bg-background hover:bg-muted/30 cursor-pointer text-sm text-muted-foreground">
+                {uploadingAttachment ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Lädt hoch…</>
+                ) : (
+                  <><Upload className="w-4 h-4" /> PDF hochladen</>
+                )}
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  className="hidden"
+                  disabled={uploadingAttachment}
+                  onChange={e => {
+                    const f = e.target.files?.[0];
+                    if (f) handleAttachmentUpload(f);
+                    e.target.value = '';
+                  }}
+                />
+              </label>
+            )}
+          </div>
         </div>
         <div>
           <Label>Interne Nummer</Label>
