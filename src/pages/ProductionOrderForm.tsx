@@ -76,6 +76,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
         .from('production_orders').select('*').eq('id', id).single();
       if (error || !po) { toast.error('Bestellung nicht gefunden'); setLoading(false); return; }
       setProductionOrderNumber((po as any).production_order_number || '');
+      setAttachmentPath((po as any).attachment_pdf_path || null);
       setForm({
         supplier_id: po.supplier_id,
         modellname: po.modellname || '',
