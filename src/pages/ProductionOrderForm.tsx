@@ -283,6 +283,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
     toast.success('Rechnung entfernt');
   };
 
+  const validate = () => {
     if (!selectedOrder) { toast.error('Bitte einen Auftrag auswählen'); return false; }
     if (!form.supplier_id) { toast.error('Bitte einen Zulieferer wählen'); return false; }
     if (!form.farbe.trim()) { toast.error('Farbe ist Pflichtfeld'); return false; }
