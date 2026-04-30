@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowLeft, Loader2, Search, Save, Send, Download, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Search, Save, Send, Download, Plus, Trash2, Upload, FileText, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateProductionOrderPdf } from '@/lib/production-order-pdf';
 import { ALIX_MODEL_GROUPS } from '@/lib/alix-models';
@@ -28,6 +28,8 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
   const [saving, setSaving] = useState(false);
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [productionOrderNumber, setProductionOrderNumber] = useState<string>('');
+  const [attachmentPath, setAttachmentPath] = useState<string | null>(null);
+  const [uploadingAttachment, setUploadingAttachment] = useState(false);
 
   // Auftrag suchen
   const [orderSearch, setOrderSearch] = useState('');
@@ -74,6 +76,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
         .from('production_orders').select('*').eq('id', id).single();
       if (error || !po) { toast.error('Bestellung nicht gefunden'); setLoading(false); return; }
       setProductionOrderNumber((po as any).production_order_number || '');
+      setAttachmentPath((po as any).attachment_pdf_path || null);
       setForm({
         supplier_id: po.supplier_id,
         modellname: po.modellname || '',
@@ -197,6 +200,46 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
   const removeManualItem = (idx: number) =>
     setManualItems(arr => arr.filter((_, i) => i !== idx));
 
+  const handleAttachmentUpload = async (file: File) => {
+    if (!file) return;
+    if (file.type !== 'application/pdf') { toast.error('Nur PDF-Dateien erlaubt'); return; }
+    if (file.size > 20 * 1024 * 1024) { toast.error('Max. 20 MB'); return; }
+    setUploadingAttachment(true);
+    const folder = id || `tmp-${user?.id || 'new'}-${Date.now()}`;
+    const safeName = file.name.replace(/[^A-Za-z0-9._-]/g, '_');
+    const path = `${folder}/attachment-${Date.now()}-${safeName}`;
+    const { error } = await supabase.storage
+      .from('production-orders')
+      .upload(path, file, { upsert: true, contentType: 'application/pdf' });
+    setUploadingAttachment(false);
+    if (error) { toast.error(error.message); return; }
+    if (attachmentPath && attachmentPath !== path) {
+      await supabase.storage.from('production-orders').remove([attachmentPath]);
+    }
+    setAttachmentPath(path);
+    if (isEdit && id) {
+      await supabase.from('production_orders').update({ attachment_pdf_path: path }).eq('id', id);
+    }
+    toast.success('PDF hochgeladen');
+  };
+
+  const downloadAttachment = async () => {
+    if (!attachmentPath) return;
+    const { data, error } = await supabase.storage.from('production-orders').createSignedUrl(attachmentPath, 60);
+    if (error || !data) { toast.error(error?.message || 'Fehler'); return; }
+    window.open(data.signedUrl, '_blank');
+  };
+
+  const removeAttachment = async () => {
+    if (!attachmentPath) return;
+    await supabase.storage.from('production-orders').remove([attachmentPath]);
+    if (isEdit && id) {
+      await supabase.from('production_orders').update({ attachment_pdf_path: null }).eq('id', id);
+    }
+    setAttachmentPath(null);
+    toast.success('PDF entfernt');
+  };
+
   const validate = () => {
     if (!selectedOrder) { toast.error('Bitte einen Auftrag auswählen'); return false; }
     if (!form.supplier_id) { toast.error('Bitte einen Zulieferer wählen'); return false; }
@@ -232,6 +275,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
       payment_status: form.payment_status,
       is_reclamation: isReclamation,
       reclamation_reason: isReclamation ? (form.reclamation_reason.trim() || null) : null,
+      attachment_pdf_path: attachmentPath,
     };
     let poId = id;
     if (isEdit && id) {
@@ -568,6 +612,44 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
                 <SelectItem value="Teilweise">Teilweise</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div>
+            <Label>PDF-Anhang</Label>
+            {attachmentPath ? (
+              <div className="flex items-center gap-2 h-10 px-3 rounded-md border border-input bg-background">
+                <FileText className="w-4 h-4 text-primary shrink-0" />
+                <button
+                  type="button"
+                  onClick={downloadAttachment}
+                  className="flex-1 text-sm truncate text-left text-foreground hover:text-primary"
+                  title={attachmentPath.split('/').pop() || 'PDF anzeigen'}
+                >
+                  {attachmentPath.split('/').pop()?.replace(/^attachment-\d+-/, '') || 'PDF anzeigen'}
+                </button>
+                <Button type="button" variant="ghost" size="sm" onClick={removeAttachment} className="h-7 w-7 p-0">
+                  <X className="w-4 h-4 text-destructive" />
+                </Button>
+              </div>
+            ) : (
+              <label className="flex items-center justify-center gap-2 h-10 px-3 rounded-md border border-dashed border-input bg-background hover:bg-muted/30 cursor-pointer text-sm text-muted-foreground">
+                {uploadingAttachment ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Lädt hoch…</>
+                ) : (
+                  <><Upload className="w-4 h-4" /> PDF hochladen</>
+                )}
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  className="hidden"
+                  disabled={uploadingAttachment}
+                  onChange={e => {
+                    const f = e.target.files?.[0];
+                    if (f) handleAttachmentUpload(f);
+                    e.target.value = '';
+                  }}
+                />
+              </label>
+            )}
           </div>
         </div>
         <div>

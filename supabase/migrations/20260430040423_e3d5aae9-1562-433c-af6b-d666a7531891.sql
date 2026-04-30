@@ -1,0 +1,1 @@
+ALTER TABLE public.production_orders ADD COLUMN IF NOT EXISTS attachment_pdf_path text;
