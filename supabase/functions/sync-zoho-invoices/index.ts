@@ -202,7 +202,12 @@ Deno.serve(async (req) => {
       for (const inv of invoices) {
         processed++;
         const recurringId = inv.recurring_invoice_id ? String(inv.recurring_invoice_id) : null;
-        if (recurringId && excludedIds.has(recurringId)) { skippedSepa++; continue; }
+        // Exclude all periodic (recurring-generated) invoices
+        if (recurringId) {
+          if (excludedIds.has(recurringId)) skippedSepa++;
+          else skippedRecurring++;
+          continue;
+        }
 
         try {
           const invId = String(inv.invoice_id);
