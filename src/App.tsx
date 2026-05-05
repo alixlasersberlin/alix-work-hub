@@ -20,6 +20,7 @@ import RoutePlanning from "./pages/RoutePlanning";
 import RoutePlanDetail from "./pages/RoutePlanDetail";
 import RoutePlanForm from "./pages/RoutePlanForm";
 import Finance from "./pages/Finance";
+import Ratenzahler from "./pages/Ratenzahler";
 import FinanceDetail from "./pages/FinanceDetail";
 import FinanceForm from "./pages/FinanceForm";
 import UserManagement from "./pages/UserManagement";
@@ -116,6 +117,7 @@ function AppRoutes() {
         <Route path="/tourenplanung/:id" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><RoutePlanDetail /></ProtectedRoute>} />
         <Route path="/tourenplanung/:id/bearbeiten" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Tourenplanung']}><RoutePlanForm /></ProtectedRoute>} />
         <Route path="/finance" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Finance /></ProtectedRoute>} />
+        <Route path="/finance/ratenzahler" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Ratenzahler /></ProtectedRoute>} />
         <Route path="/finance/neu" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Finance']}><FinanceForm /></ProtectedRoute>} />
         <Route path="/finance/:id" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceDetail /></ProtectedRoute>} />
         <Route path="/finance/:id/bearbeiten" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Finance']}><FinanceForm /></ProtectedRoute>} />
