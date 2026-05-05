@@ -9,6 +9,7 @@ const corsHeaders = {
 type Payload = {
   source_system?: "zoho_eu_1" | "zoho_eu_2" | "zoho_us_1";
   date_from?: string;
+  date_to?: string;
   page?: number;
   per_page?: number;
   max_pages?: number;
@@ -158,6 +159,7 @@ Deno.serve(async (req) => {
     const body = (await req.json().catch(() => ({}))) as Payload;
     const sourceSystem = body.source_system ?? "zoho_eu_1";
     const dateFrom = body.date_from ?? "2025-01-01";
+    const dateTo = body.date_to;
     const perPage = Math.min(Math.max(body.per_page ?? 100, 1), 200);
     const startPage = body.page ?? 1;
     const maxPages = Math.min(Math.max(body.max_pages ?? 1, 1), 5);
@@ -189,7 +191,9 @@ Deno.serve(async (req) => {
     while (hasMore && page <= startPage + maxPages - 1) {
       if (Date.now() - startedAt > SOFT_DEADLINE_MS) break;
       const url = `${cfg.booksApiBaseUrl}/invoices?organization_id=${cfg.organizationId}` +
-        `&page=${page}&per_page=${perPage}&date_after=${dateFrom}&filter_by=Status.All&sort_column=date&sort_order=A`;
+        `&page=${page}&per_page=${perPage}&date_after=${dateFrom}` +
+        (dateTo ? `&date_before=${dateTo}` : "") +
+        `&filter_by=Status.All&sort_column=date&sort_order=A`;
       const r = await fetch(url, { headers: authH });
       if (!r.ok) {
         const t = await r.text();

@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { FileText, Loader2, RefreshCw } from 'lucide-react';
+import { CalendarIcon, FileText, Loader2, RefreshCw } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format, differenceInCalendarDays, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { PageHeader } from '@/components/PageShell';
@@ -81,6 +83,8 @@ export default function OffenePosten() {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [search, setSearch] = useState('');
+  const [dateFrom, setDateFrom] = useState<Date>(new Date(new Date().getFullYear(), 0, 1));
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -120,12 +124,15 @@ export default function OffenePosten() {
     let totalImported = 0;
     let totalUpdated = 0;
     let page = 1;
+    const fromStr = format(dateFrom, 'yyyy-MM-dd');
+    const toStr = dateTo ? format(dateTo, 'yyyy-MM-dd') : undefined;
     try {
       for (let i = 0; i < 20; i++) {
         const { data, error } = await supabase.functions.invoke('sync-zoho-invoices', {
           body: {
             source_system: 'zoho_eu_1',
-            date_from: '2026-01-01',
+            date_from: fromStr,
+            date_to: toStr,
             page,
             per_page: 200,
             max_pages: 5,
@@ -145,7 +152,7 @@ export default function OffenePosten() {
     } finally {
       setSyncing(false);
     }
-  }, [load]);
+  }, [load, dateFrom, dateTo]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -173,10 +180,65 @@ export default function OffenePosten() {
           title="Offene Posten"
           subtitle="Alle fälligen Rechnungen, farblich nach Fälligkeit"
         />
-        <Button onClick={handleSync} disabled={syncing} className="gap-2">
-          {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-          Aus Zoho importieren (ab 01.01.2026)
-        </Button>
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-muted-foreground">Von</label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-[160px] justify-start text-left font-normal gap-2">
+                  <CalendarIcon className="w-4 h-4" />
+                  {format(dateFrom, 'dd.MM.yyyy', { locale: de })}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dateFrom}
+                  onSelect={(d) => d && setDateFrom(d)}
+                  initialFocus
+                  className={cn('p-3 pointer-events-auto')}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-muted-foreground">Bis (optional)</label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    'w-[160px] justify-start text-left font-normal gap-2',
+                    !dateTo && 'text-muted-foreground',
+                  )}
+                >
+                  <CalendarIcon className="w-4 h-4" />
+                  {dateTo ? format(dateTo, 'dd.MM.yyyy', { locale: de }) : 'heute'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dateTo}
+                  onSelect={setDateTo}
+                  initialFocus
+                  className={cn('p-3 pointer-events-auto')}
+                />
+                {dateTo && (
+                  <div className="p-2 border-t border-border">
+                    <Button variant="ghost" size="sm" className="w-full" onClick={() => setDateTo(undefined)}>
+                      Zurücksetzen
+                    </Button>
+                  </div>
+                )}
+              </PopoverContent>
+            </Popover>
+          </div>
+          <Button onClick={handleSync} disabled={syncing} className="gap-2">
+            {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+            Abgleichen & Importieren
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
