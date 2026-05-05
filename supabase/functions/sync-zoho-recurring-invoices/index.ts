@@ -44,6 +44,21 @@ function getZohoConfig(source: string) {
 // Module-level token cache: survives across warm invocations, dramatically
 // reducing calls to Zoho's heavily rate-limited /oauth/v2/token endpoint.
 const tokenCache = new Map<string, { token: string; expiresAt: number }>();
+const tokenRequestCache = new Map<string, Promise<string>>();
+
+class ZohoRateLimitError extends Error {
+  retryAfterSeconds: number;
+
+  constructor(message: string, retryAfterSeconds = 90) {
+    super(message);
+    this.name = "ZohoRateLimitError";
+    this.retryAfterSeconds = retryAfterSeconds;
+  }
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 async function getAccessToken(cfg: ReturnType<typeof getZohoConfig>) {
   if (!cfg) throw new Error("Zoho config missing");
@@ -56,43 +71,75 @@ async function getAccessToken(cfg: ReturnType<typeof getZohoConfig>) {
     return cached.token;
   }
 
-  // Retry with backoff on rate-limit
-  let data: any = null;
-  for (let attempt = 0; attempt < 4; attempt++) {
-    const res = await fetch(`${cfg.accountsBaseUrl}/oauth/v2/token`, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        refresh_token: cfg.refreshToken,
-        client_id: cfg.clientId,
-        client_secret: cfg.clientSecret,
-        grant_type: "refresh_token",
-      }),
-    });
-    data = await res.json();
-    const errDesc = (data?.error_description ?? "").toString().toLowerCase();
-    if (data?.access_token) break;
-    if (errDesc.includes("too many requests") || data?.error === "Access Denied") {
-      await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
-      continue;
-    }
-    break;
-  }
+  const inFlight = tokenRequestCache.get(cacheKey);
+  if (inFlight) return await inFlight;
 
-  if (data?.error === "invalid_code") {
-    throw new Response(JSON.stringify({
-      error: "Zoho refresh token invalid or revoked",
-      code: "ZOHO_REFRESH_TOKEN_INVALID",
-      hint: "Please generate a fresh long-lived refresh token for the same Zoho region and OAuth client, then update the project secret.",
-    }), {
-      status: 502,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+  const requestPromise = (async () => {
+    let data: any = null;
+
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const res = await fetch(`${cfg.accountsBaseUrl}/oauth/v2/token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          refresh_token: cfg.refreshToken,
+          client_id: cfg.clientId,
+          client_secret: cfg.clientSecret,
+          grant_type: "refresh_token",
+        }),
+      });
+
+      data = await res.json();
+      const errDesc = (data?.error_description ?? "").toString().toLowerCase();
+      const isRateLimited = errDesc.includes("too many requests") || errDesc.includes("try again after some time");
+
+      if (data?.access_token) {
+        const ttlMs = ((data.expires_in ?? 3600) as number) * 1000;
+        tokenCache.set(cacheKey, { token: data.access_token, expiresAt: Date.now() + ttlMs });
+        return data.access_token as string;
+      }
+
+      if (data?.error === "invalid_code") {
+        throw new Response(JSON.stringify({
+          error: "Zoho refresh token invalid or revoked",
+          code: "ZOHO_REFRESH_TOKEN_INVALID",
+          hint: "Please generate a fresh long-lived refresh token for the same Zoho region and OAuth client, then update the project secret.",
+        }), {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (isRateLimited) {
+        if (cached && cached.expiresAt > Date.now() + 5_000) {
+          return cached.token;
+        }
+
+        if (attempt < 3) {
+          await sleep(3_000 * (attempt + 1));
+          continue;
+        }
+
+        throw new ZohoRateLimitError("Zoho blockiert aktuell Token-Anfragen", 90);
+      }
+
+      break;
+    }
+
+    if (cached && cached.expiresAt > Date.now() + 5_000) {
+      return cached.token;
+    }
+
+    throw new Error(`Zoho token error: ${JSON.stringify(data)}`);
+  })();
+
+  tokenRequestCache.set(cacheKey, requestPromise);
+
+  try {
+    return await requestPromise;
+  } finally {
+    tokenRequestCache.delete(cacheKey);
   }
-  if (!data?.access_token) throw new Error(`Zoho token error: ${JSON.stringify(data)}`);
-  const ttlMs = ((data.expires_in ?? 3600) as number) * 1000;
-  tokenCache.set(cacheKey, { token: data.access_token, expiresAt: Date.now() + ttlMs });
-  return data.access_token as string;
 }
 
 function payStatusFromInvoice(inv: any): string {
@@ -143,7 +190,30 @@ Deno.serve(async (req) => {
 
     const cfg = getZohoConfig(sourceSystem);
     if (!cfg) return json({ error: "Invalid source_system" }, 400);
-    const token = await getAccessToken(cfg);
+
+    let token: string;
+    try {
+      token = await getAccessToken(cfg);
+    } catch (e) {
+      if (e instanceof ZohoRateLimitError) {
+        return json({
+          success: false,
+          retryable: true,
+          error: "Zoho API-Limit erreicht",
+          message: "Zoho blockiert gerade neue Token-Anfragen. Bitte nach kurzer Wartezeit erneut versuchen.",
+          retry_after_seconds: e.retryAfterSeconds,
+          imported: 0,
+          updated: 0,
+          failed: 0,
+          profiles_processed: 0,
+          last_profile_page: Math.max(0, profilesPage - 1),
+          profiles_have_more: true,
+        }, 200);
+      }
+
+      throw e;
+    }
+
     const authH = { Authorization: `Zoho-oauthtoken ${token}` };
 
     let imported = 0, updated = 0, failed = 0;
