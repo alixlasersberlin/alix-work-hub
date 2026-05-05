@@ -75,12 +75,18 @@ export default function Invoices() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter((r) =>
-      [r.customer_name, r.city, r.reference_number, r.invoice_number]
-        .some((v) => (v ?? '').toLowerCase().includes(q))
-    );
-  }, [rows, search]);
+    let res = rows;
+    if (statusFilter !== 'all') {
+      res = res.filter((r) => (r.payment_status ?? '').toLowerCase() === statusFilter.toLowerCase());
+    }
+    if (q) {
+      res = res.filter((r) =>
+        [r.customer_name, r.city, r.reference_number, r.invoice_number]
+          .some((v) => (v ?? '').toLowerCase().includes(q))
+      );
+    }
+    return res;
+  }, [rows, search, statusFilter]);
 
   const visible = useMemo(() => pageSize === 'all' ? filtered : filtered.slice(0, pageSize), [filtered, pageSize]);
 
