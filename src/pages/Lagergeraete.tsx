@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Plus, Warehouse } from 'lucide-react';
+import { Loader2, Pencil, Plus, Warehouse } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { z } from 'zod';
@@ -62,6 +62,7 @@ export default function Lagergeraete() {
   const [saving, setSaving] = useState(false);
 
   const today = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [serial, setSerial] = useState('');
   const [modelName, setModelName] = useState<string>('');
   const [entryDate, setEntryDate] = useState(today);
@@ -86,10 +87,20 @@ export default function Lagergeraete() {
   }, []);
 
   const resetForm = () => {
+    setEditingId(null);
     setSerial('');
     setModelName('');
     setEntryDate(today);
     setNotes('');
+  };
+
+  const openEdit = (d: LagerDevice) => {
+    setEditingId(d.id);
+    setSerial(d.serial_number);
+    setModelName(d.model_name);
+    setEntryDate(d.entry_date);
+    setNotes(d.notes ?? '');
+    setOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -107,24 +118,25 @@ export default function Lagergeraete() {
 
     setSaving(true);
     const { data: userData } = await supabase.auth.getUser();
-    const { error } = await supabase.from('lager_devices').insert([
-      {
-        serial_number: parsed.data.serial_number,
-        model_name: parsed.data.model_name,
-        airtable_record_id: null,
-        entry_date: parsed.data.entry_date,
-        notes: parsed.data.notes ?? null,
-        created_by: userData.user?.id,
-        updated_by: userData.user?.id,
-      },
-    ]);
+    const payload = {
+      serial_number: parsed.data.serial_number,
+      model_name: parsed.data.model_name,
+      entry_date: parsed.data.entry_date,
+      notes: parsed.data.notes ?? null,
+      updated_by: userData.user?.id,
+    };
+    const { error } = editingId
+      ? await supabase.from('lager_devices').update(payload).eq('id', editingId)
+      : await supabase.from('lager_devices').insert([
+          { ...payload, airtable_record_id: null, created_by: userData.user?.id },
+        ]);
     setSaving(false);
 
     if (error) {
       toast.error('Speichern fehlgeschlagen: ' + error.message);
       return;
     }
-    toast.success('Lagergerät erfasst');
+    toast.success(editingId ? 'Lagergerät aktualisiert' : 'Lagergerät erfasst');
     resetForm();
     setOpen(false);
     loadDevices();
@@ -146,7 +158,7 @@ export default function Lagergeraete() {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Lagergerät erfassen</DialogTitle>
+              <DialogTitle>{editingId ? 'Lagergerät bearbeiten' : 'Lagergerät erfassen'}</DialogTitle>
               <DialogDescription>
                 Bitte alle Pflichtfelder ausfüllen.
               </DialogDescription>
@@ -234,6 +246,7 @@ export default function Lagergeraete() {
                 <TableHead>Modell</TableHead>
                 <TableHead>Eingangsdatum</TableHead>
                 <TableHead>Notizen</TableHead>
+                <TableHead className="w-24 text-right">Aktionen</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -246,6 +259,11 @@ export default function Lagergeraete() {
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {d.notes ?? '—'}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="sm" onClick={() => openEdit(d)} className="gap-1">
+                      <Pencil className="w-4 h-4" /> Bearbeiten
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
