@@ -44,6 +44,32 @@ export default function OrderDetail() {
   const [shipDateValue, setShipDateValue] = useState('');
   const [editOpen, setEditOpen] = useState(false);
   const [deferOpen, setDeferOpen] = useState(false);
+  const [reconciling, setReconciling] = useState(false);
+
+  async function reconcilePackages() {
+    if (!order?.id) return;
+    if (!confirm('Pakete mit Artikeln abgleichen? Geliefertes wird verbucht, offene Artikel werden in einem neuen Auftrag (-1) angelegt.')) return;
+    setReconciling(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('reconcile-order-packages', {
+        body: { order_id: order.id },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).message || (data as any).error);
+      const d: any = data;
+      if (d?.new_order_id) {
+        toast.success(`Restauftrag ${d.new_order_number} angelegt (${d.remaining_items_count} offene Artikel).`);
+        setTimeout(() => navigate(`/auftraege/${d.new_order_id}`), 1500);
+      } else {
+        toast.success('Alle Artikel als geliefert verbucht. Kein Restauftrag nötig.');
+        await loadAll();
+      }
+    } catch (e: any) {
+      toast.error('Abgleich fehlgeschlagen: ' + (e?.message ?? e));
+    } finally {
+      setReconciling(false);
+    }
+  }
 
   useEffect(() => {
     if (!id) return;
@@ -357,9 +383,22 @@ export default function OrderDetail() {
       {/* Packages Tab */}
       {activeTab === 'packages' && (
         <div className="rounded-xl border border-border bg-card p-6 card-glow">
-          <h2 className="text-base font-display font-bold text-foreground flex items-center gap-2 mb-4">
-            <Truck className="w-4 h-4 text-primary" /> Pakete & Sendungen
-          </h2>
+          <div className="flex items-center justify-between mb-4 gap-3">
+            <h2 className="text-base font-display font-bold text-foreground flex items-center gap-2">
+              <Truck className="w-4 h-4 text-primary" /> Pakete & Sendungen
+            </h2>
+            {canWrite && packages.length > 0 && (
+              <Button
+                size="sm"
+                onClick={reconcilePackages}
+                disabled={reconciling}
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                {reconciling ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Check className="w-4 h-4 mr-2" />}
+                Pakete abgleichen & Restauftrag anlegen
+              </Button>
+            )}
+          </div>
           {packages.length === 0 ? (
             <div className="text-center py-8">
               <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
