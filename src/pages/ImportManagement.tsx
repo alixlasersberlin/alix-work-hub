@@ -1467,10 +1467,32 @@ export default function ImportManagement() {
                       <><Play className="w-4 h-4 mr-2" /> Import starten</>
                     )}
                   </Button>
+                  <Button
+                    onClick={handlePackagesImport}
+                    disabled={packagesImporting}
+                    variant="outline"
+                  >
+                    {packagesImporting ? (
+                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Pakete importieren...</>
+                    ) : (
+                      <><Package className="w-4 h-4 mr-2" /> Pakete importieren</>
+                    )}
+                  </Button>
                   <span className="text-xs text-muted-foreground">
                     Zeitraum ab: <strong>{getInvoiceDateFrom()}</strong>
                   </span>
                 </div>
+
+                {packagesResult && (
+                  <div className="rounded-lg border border-border bg-secondary/40 p-4 space-y-1 text-sm">
+                    <div>Pakete aus Zoho: <strong>{packagesResult.packages_fetched}</strong></div>
+                    <div>Aufträge mit Paketen: <strong>{packagesResult.salesorders_with_packages}</strong></div>
+                    <div>Aufträge aktualisiert: <strong className="text-[hsl(var(--success))]">{packagesResult.orders_updated}</strong></div>
+                    {packagesResult.orders_missing_in_db > 0 && (
+                      <div>Ohne DB-Treffer: <strong className="text-destructive">{packagesResult.orders_missing_in_db}</strong></div>
+                    )}
+                  </div>
+                )}
 
                 {invoiceProgress && (
                   <div className="rounded-lg border border-border bg-secondary/40 p-4 space-y-1 text-sm">
