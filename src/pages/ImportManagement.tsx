@@ -1341,6 +1341,107 @@ export default function ImportManagement() {
           </TabsContent>
         )}
 
+        {/* ============ INVOICE IMPORT TAB ============ */}
+        {canWrite && (
+          <TabsContent value="invoices" className="space-y-6">
+            <Card className="border-border">
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-primary" />
+                  Rechnung Import (Ratenzahler)
+                </CardTitle>
+                <CardDescription>
+                  Importiert Rechnungen aus wiederkehrenden Zoho-Profilen. Zusätzlich läuft täglich um 23:45 ein automatischer Import.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label>Quelle</Label>
+                    <Select value={invoiceSource} onValueChange={(v) => setInvoiceSource(v as SourceKey)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {IMPORT_SOURCES.map(s => (
+                          <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Zeitraum</Label>
+                    <Select value={invoicePreset} onValueChange={(v) => setInvoicePreset(v as InvoicePreset)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="this_month">Dieser Monat</SelectItem>
+                        <SelectItem value="last_month">Letzter Monat</SelectItem>
+                        <SelectItem value="this_quarter">Dieses Quartal</SelectItem>
+                        <SelectItem value="this_year">Dieses Jahr</SelectItem>
+                        <SelectItem value="last_year">Letztes Jahr</SelectItem>
+                        <SelectItem value="all">Alle (seit 2020)</SelectItem>
+                        <SelectItem value="custom">Benutzerdefiniert</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {invoicePreset === 'custom' && (
+                    <div className="space-y-2">
+                      <Label>Datum von</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" className="w-full justify-start text-left font-normal">
+                            <CalendarDays className="mr-2 h-4 w-4" />
+                            {invoiceCustomFrom ? format(invoiceCustomFrom, 'PPP', { locale: de }) : 'Datum wählen'}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={invoiceCustomFrom}
+                            onSelect={setInvoiceCustomFrom}
+                            initialFocus
+                            className="p-3 pointer-events-auto"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-3 pt-2">
+                  <Button
+                    onClick={handleInvoiceImport}
+                    disabled={invoiceImporting}
+                    className="gold-gradient text-primary-foreground"
+                  >
+                    {invoiceImporting ? (
+                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Importiere...</>
+                    ) : (
+                      <><Play className="w-4 h-4 mr-2" /> Import starten</>
+                    )}
+                  </Button>
+                  <span className="text-xs text-muted-foreground">
+                    Zeitraum ab: <strong>{getInvoiceDateFrom()}</strong>
+                  </span>
+                </div>
+
+                {invoiceProgress && (
+                  <div className="rounded-lg border border-border bg-secondary/40 p-4 space-y-1 text-sm">
+                    <div>Seite: <strong>{invoiceProgress.page}</strong></div>
+                    <div>Profile verarbeitet: <strong>{invoiceProgress.profiles}</strong></div>
+                    <div>Neu: <strong className="text-[hsl(var(--success))]">{invoiceProgress.imported}</strong></div>
+                    <div>Aktualisiert: <strong>{invoiceProgress.updated}</strong></div>
+                    <div>Fehlgeschlagen: <strong className="text-destructive">{invoiceProgress.failed}</strong></div>
+                  </div>
+                )}
+
+                <div className="flex items-start gap-2 text-xs text-muted-foreground pt-2 border-t border-border">
+                  <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <p>Der automatische Import läuft täglich um 23:45 Uhr (UTC) und erfasst alle Rechnungen seit dem 01.01.2025.</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
+
         {/* ============ SINGLE SYNC TAB ============ */}
         {canWrite && (
           <TabsContent value="sync" className="space-y-6">
