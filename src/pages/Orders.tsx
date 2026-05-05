@@ -40,7 +40,7 @@ export default function Orders() {
     setError(null);
     const { data, error: err } = await supabase
       .from('orders')
-      .select('*, customers(company_name, contact_name, shipping_address, billing_address), order_items(id, item_name, quantity, unit, rate, amount)')
+      .select('*, customers(company_name, contact_name, shipping_address, billing_address), order_items(id, item_name, description, sku, quantity, unit, rate, amount)')
       .order(sortField, { ascending: sortDir === 'asc' })
       .limit(500);
     if (err) setError(err.message);
