@@ -54,23 +54,27 @@ Deno.serve(async (req) => {
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) return json({ error: "Missing authorization header" }, 401);
+    const cronHeader = req.headers.get("x-cron-secret");
+    const isCron = !!cronHeader && cronHeader === Deno.env.get("CRON_SECRET");
 
-    const userClient = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
     const admin = createClient(supabaseUrl, serviceKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    const { data: { user }, error: uErr } = await userClient.auth.getUser();
-    if (uErr || !user) return json({ error: "Unauthorized" }, 401);
+    if (!isCron) {
+      if (!authHeader) return json({ error: "Missing authorization header" }, 401);
+      const userClient = createClient(supabaseUrl, anonKey, {
+        global: { headers: { Authorization: authHeader } },
+        auth: { autoRefreshToken: false, persistSession: false },
+      });
+      const { data: { user }, error: uErr } = await userClient.auth.getUser();
+      if (uErr || !user) return json({ error: "Unauthorized" }, 401);
 
-    const { data: roles } = await admin.from("user_roles").select("roles!inner(name)").eq("user_id", user.id);
-    const roleNames = (roles ?? []).map((r: any) => r.roles?.name).filter(Boolean);
-    if (!roleNames.includes("Admin") && !roleNames.includes("Super Admin")) {
-      return json({ error: "Forbidden" }, 403);
+      const { data: roles } = await admin.from("user_roles").select("roles!inner(name)").eq("user_id", user.id);
+      const roleNames = (roles ?? []).map((r: any) => r.roles?.name).filter(Boolean);
+      if (!roleNames.includes("Admin") && !roleNames.includes("Super Admin")) {
+        return json({ error: "Forbidden" }, 403);
+      }
     }
 
     const body = await req.json().catch(() => ({}));
