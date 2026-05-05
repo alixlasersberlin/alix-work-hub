@@ -130,7 +130,11 @@ export default function Lagergeraete() {
     const { data: userData } = await supabase.auth.getUser();
     const { error } = await supabase.from('lager_devices').insert([
       {
-        ...parsed.data,
+        serial_number: parsed.data.serial_number,
+        model_name: parsed.data.model_name,
+        airtable_record_id: parsed.data.airtable_record_id,
+        entry_date: parsed.data.entry_date,
+        notes: parsed.data.notes ?? null,
         created_by: userData.user?.id,
         updated_by: userData.user?.id,
       },
