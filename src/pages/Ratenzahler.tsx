@@ -62,6 +62,7 @@ export default function Ratenzahler() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [pageSize, setPageSize] = useState<PageSize>(30);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [importing, setImporting] = useState(false);
 
   const fetchRows = async () => {
