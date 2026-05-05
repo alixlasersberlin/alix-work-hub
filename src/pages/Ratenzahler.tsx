@@ -102,13 +102,24 @@ export default function Ratenzahler() {
   const handleImport = async () => {
     setImporting(true);
     try {
-      const { data, error } = await supabase.functions.invoke('sync-zoho-recurring-invoices', {
-        body: { source_system: 'zoho_eu_1', date_from: '2025-01-01', fetch_details: true, max_pages: 20 },
-      });
-      if (error) throw error;
+      let page = 1;
+      let totalImported = 0, totalUpdated = 0, totalFailed = 0;
+      // Iterate until Zoho reports no more recurring profiles. Each call processes
+      // a small batch to stay within the edge function's resource limits.
+      for (let i = 0; i < 50; i++) {
+        const { data, error } = await supabase.functions.invoke('sync-zoho-recurring-invoices', {
+          body: { source_system: 'zoho_eu_1', date_from: '2025-01-01', page, max_pages: 1, per_page: 50 },
+        });
+        if (error) throw error;
+        totalImported += data?.imported ?? 0;
+        totalUpdated += data?.updated ?? 0;
+        totalFailed += data?.failed ?? 0;
+        if (!data?.profiles_have_more) break;
+        page = (data?.last_profile_page ?? page) + 1;
+      }
       toast({
         title: 'Import abgeschlossen',
-        description: `Neu: ${data?.imported ?? 0} • Aktualisiert: ${data?.updated ?? 0} • Fehler: ${data?.failed ?? 0}`,
+        description: `Neu: ${totalImported} • Aktualisiert: ${totalUpdated} • Fehler: ${totalFailed}`,
       });
       await fetchRows();
     } catch (e: any) {

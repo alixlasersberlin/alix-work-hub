@@ -113,9 +113,9 @@ Deno.serve(async (req) => {
     const body = (await req.json().catch(() => ({}))) as Payload;
     const sourceSystem = body.source_system ?? "zoho_eu_1";
     const dateFrom = body.date_from ?? "2025-01-01";
-    const perPage = Math.min(Math.max(body.per_page ?? 200, 1), 200);
+    const perPage = Math.min(Math.max(body.per_page ?? 50, 1), 100);
     const profilesPage = body.page ?? 1;
-    const maxProfilePages = Math.min(Math.max(body.max_pages ?? 5, 1), 20);
+    const maxProfilePages = Math.min(Math.max(body.max_pages ?? 1, 1), 5);
 
     const cfg = getZohoConfig(sourceSystem);
     if (!cfg) return json({ error: "Invalid source_system" }, 400);
@@ -127,7 +127,7 @@ Deno.serve(async (req) => {
     let pPage = profilesPage;
     let profilesHaveMore = true;
     const startedAt = Date.now();
-    const SOFT_DEADLINE_MS = 120_000; // leave headroom under 150s edge timeout
+    const SOFT_DEADLINE_MS = 60_000; // be conservative to avoid worker resource limits
 
     while (profilesHaveMore && pPage <= profilesPage + maxProfilePages - 1) {
       if (Date.now() - startedAt > SOFT_DEADLINE_MS) break;
