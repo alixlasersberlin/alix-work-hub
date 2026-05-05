@@ -62,6 +62,7 @@ export default function Lagergeraete() {
   const [saving, setSaving] = useState(false);
 
   const today = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [serial, setSerial] = useState('');
   const [modelName, setModelName] = useState<string>('');
   const [entryDate, setEntryDate] = useState(today);
