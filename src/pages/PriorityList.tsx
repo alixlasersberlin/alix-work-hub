@@ -90,7 +90,7 @@ export default function PriorityList() {
         .from('orders')
         .select('id, order_number, order_status, order_date, expected_shipment_date, total_amount, currency, source_system, shipping_address, billing_address, customers(company_name, contact_name, shipping_address, billing_address)')
         .not('expected_shipment_date', 'is', null)
-        .neq('order_status', 'Anwalt')
+        .in('order_status', ['overdue', 'Overdue', 'invoiced', 'Invoiced', 'open', 'Open', 'offen', 'Offen', 'approved', 'Approved'])
         .order(sortField, { ascending: sortDir === 'asc' })
         .limit(500);
       if (err) setError(err.message);
