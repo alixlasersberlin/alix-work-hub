@@ -329,6 +329,45 @@ export type Database = {
           },
         ]
       }
+      lager_devices: {
+        Row: {
+          airtable_record_id: string | null
+          created_at: string
+          created_by: string | null
+          entry_date: string
+          id: string
+          model_name: string
+          notes: string | null
+          serial_number: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          airtable_record_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          entry_date?: string
+          id?: string
+          model_name: string
+          notes?: string | null
+          serial_number: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          airtable_record_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          entry_date?: string
+          id?: string
+          model_name?: string
+          notes?: string | null
+          serial_number?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       login_sessions: {
         Row: {
           created_at: string
