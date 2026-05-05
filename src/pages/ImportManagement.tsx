@@ -197,6 +197,30 @@ export default function ImportManagement() {
   const [invoiceCustomTo, setInvoiceCustomTo] = useState<Date | undefined>(undefined);
   const [invoiceSource, setInvoiceSource] = useState<SourceKey>('zoho_eu_1');
   const [invoiceImporting, setInvoiceImporting] = useState(false);
+  const [packagesImporting, setPackagesImporting] = useState(false);
+  const [packagesResult, setPackagesResult] = useState<{ packages_fetched: number; salesorders_with_packages: number; orders_updated: number; orders_missing_in_db: number } | null>(null);
+
+  async function handlePackagesImport() {
+    setPackagesImporting(true);
+    setPackagesResult(null);
+    try {
+      toast({ title: 'Paket-Import gestartet', description: `Quelle: ${invoiceSource}` });
+      const { data, error } = await supabase.functions.invoke('sync-zoho-packages', {
+        body: { source_system: invoiceSource, per_page: 200, max_pages: 100 },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.message ?? data.error);
+      setPackagesResult(data);
+      toast({
+        title: 'Paket-Import abgeschlossen',
+        description: `${data.packages_fetched} Pakete • ${data.orders_updated} Aufträge aktualisiert${data.orders_missing_in_db ? ` • ${data.orders_missing_in_db} ohne DB-Treffer` : ''}`,
+      });
+    } catch (e: any) {
+      toast({ title: 'Paket-Import fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
+    } finally {
+      setPackagesImporting(false);
+    }
+  }
   const [invoiceProgress, setInvoiceProgress] = useState<{ page: number; imported: number; updated: number; failed: number; profiles: number } | null>(null);
   const [invoiceImportError, setInvoiceImportError] = useState<{ title: string; message?: string; retryable?: boolean; retryAfterSeconds?: number } | null>(null);
 
