@@ -186,6 +186,23 @@ export default function Ratenzahler() {
             />
           </div>
           <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">Status:</span>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle</SelectItem>
+                <SelectItem value="Bezahlt">Bezahlt</SelectItem>
+                <SelectItem value="Offen">Unbezahlt / Offen</SelectItem>
+                <SelectItem value="Überfällig">Überfällig</SelectItem>
+                <SelectItem value="Teilweise bezahlt">Teilweise bezahlt</SelectItem>
+                <SelectItem value="sent">Gesendet</SelectItem>
+                <SelectItem value="pending">Ausstehend</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground whitespace-nowrap">Anzeige:</span>
             <Select value={String(pageSize)} onValueChange={(v) => setPageSize(v === 'all' ? 'all' : (Number(v) as PageSize))}>
               <SelectTrigger className="w-[110px]">
