@@ -118,24 +118,25 @@ export default function Lagergeraete() {
 
     setSaving(true);
     const { data: userData } = await supabase.auth.getUser();
-    const { error } = await supabase.from('lager_devices').insert([
-      {
-        serial_number: parsed.data.serial_number,
-        model_name: parsed.data.model_name,
-        airtable_record_id: null,
-        entry_date: parsed.data.entry_date,
-        notes: parsed.data.notes ?? null,
-        created_by: userData.user?.id,
-        updated_by: userData.user?.id,
-      },
-    ]);
+    const payload = {
+      serial_number: parsed.data.serial_number,
+      model_name: parsed.data.model_name,
+      entry_date: parsed.data.entry_date,
+      notes: parsed.data.notes ?? null,
+      updated_by: userData.user?.id,
+    };
+    const { error } = editingId
+      ? await supabase.from('lager_devices').update(payload).eq('id', editingId)
+      : await supabase.from('lager_devices').insert([
+          { ...payload, airtable_record_id: null, created_by: userData.user?.id },
+        ]);
     setSaving(false);
 
     if (error) {
       toast.error('Speichern fehlgeschlagen: ' + error.message);
       return;
     }
-    toast.success('Lagergerät erfasst');
+    toast.success(editingId ? 'Lagergerät aktualisiert' : 'Lagergerät erfasst');
     resetForm();
     setOpen(false);
     loadDevices();
