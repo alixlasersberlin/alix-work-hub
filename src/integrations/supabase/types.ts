@@ -1212,6 +1212,84 @@ export type Database = {
           },
         ]
       }
+      zoho_recurring_invoices: {
+        Row: {
+          balance: number | null
+          billing_address: Json | null
+          city: string | null
+          created_at: string
+          currency: string | null
+          customer_id: string | null
+          customer_name: string | null
+          device_name: string | null
+          due_date: string | null
+          id: string
+          invoice_date: string | null
+          invoice_number: string | null
+          last_payment_date: string | null
+          payment_status: string | null
+          raw_data: Json | null
+          reference_number: string | null
+          source_system: string
+          status: string | null
+          synced_at: string
+          total: number | null
+          updated_at: string
+          zoho_invoice_id: string
+          zoho_recurring_invoice_id: string | null
+        }
+        Insert: {
+          balance?: number | null
+          billing_address?: Json | null
+          city?: string | null
+          created_at?: string
+          currency?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          device_name?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_date?: string | null
+          invoice_number?: string | null
+          last_payment_date?: string | null
+          payment_status?: string | null
+          raw_data?: Json | null
+          reference_number?: string | null
+          source_system: string
+          status?: string | null
+          synced_at?: string
+          total?: number | null
+          updated_at?: string
+          zoho_invoice_id: string
+          zoho_recurring_invoice_id?: string | null
+        }
+        Update: {
+          balance?: number | null
+          billing_address?: Json | null
+          city?: string | null
+          created_at?: string
+          currency?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          device_name?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_date?: string | null
+          invoice_number?: string | null
+          last_payment_date?: string | null
+          payment_status?: string | null
+          raw_data?: Json | null
+          reference_number?: string | null
+          source_system?: string
+          status?: string | null
+          synced_at?: string
+          total?: number | null
+          updated_at?: string
+          zoho_invoice_id?: string
+          zoho_recurring_invoice_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
