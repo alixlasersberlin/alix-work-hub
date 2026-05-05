@@ -190,6 +190,67 @@ export default function ImportManagement() {
   const [syncOrderLoading, setSyncOrderLoading] = useState(false);
   const [syncOrderResult, setSyncOrderResult] = useState<SingleSyncResult | null>(null);
 
+  // Recurring invoice import state
+  type InvoicePreset = 'this_month' | 'last_month' | 'this_quarter' | 'this_year' | 'last_year' | 'all' | 'custom';
+  const [invoicePreset, setInvoicePreset] = useState<InvoicePreset>('this_year');
+  const [invoiceCustomFrom, setInvoiceCustomFrom] = useState<Date | undefined>(undefined);
+  const [invoiceCustomTo, setInvoiceCustomTo] = useState<Date | undefined>(undefined);
+  const [invoiceSource, setInvoiceSource] = useState<SourceKey>('zoho_eu_1');
+  const [invoiceImporting, setInvoiceImporting] = useState(false);
+  const [invoiceProgress, setInvoiceProgress] = useState<{ page: number; imported: number; updated: number; failed: number; profiles: number } | null>(null);
+
+  function getInvoiceDateFrom(): string {
+    const today = new Date();
+    const fmt = (d: Date) => d.toISOString().slice(0, 10);
+    switch (invoicePreset) {
+      case 'this_month': return fmt(new Date(today.getFullYear(), today.getMonth(), 1));
+      case 'last_month': return fmt(new Date(today.getFullYear(), today.getMonth() - 1, 1));
+      case 'this_quarter': {
+        const q = Math.floor(today.getMonth() / 3) * 3;
+        return fmt(new Date(today.getFullYear(), q, 1));
+      }
+      case 'this_year': return fmt(new Date(today.getFullYear(), 0, 1));
+      case 'last_year': return fmt(new Date(today.getFullYear() - 1, 0, 1));
+      case 'custom': return invoiceCustomFrom ? fmt(invoiceCustomFrom) : '2020-01-01';
+      case 'all':
+      default: return '2020-01-01';
+    }
+  }
+
+  async function handleInvoiceImport() {
+    setInvoiceImporting(true);
+    setInvoiceProgress(null);
+    const dateFrom = getInvoiceDateFrom();
+    let page = 1;
+    let totalImported = 0, totalUpdated = 0, totalFailed = 0, totalProfiles = 0;
+    try {
+      toast({ title: 'Rechnung-Import gestartet', description: `Ab ${dateFrom}` });
+      for (let i = 0; i < 100; i++) {
+        const { data, error } = await supabase.functions.invoke('sync-zoho-recurring-invoices', {
+          body: { source_system: invoiceSource, date_from: dateFrom, page, max_pages: 1, per_page: 50 },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        totalImported += data?.imported ?? 0;
+        totalUpdated += data?.updated ?? 0;
+        totalFailed += data?.failed ?? 0;
+        totalProfiles += data?.profiles_processed ?? 0;
+        setInvoiceProgress({ page, imported: totalImported, updated: totalUpdated, failed: totalFailed, profiles: totalProfiles });
+        if (!data?.profiles_have_more) break;
+        page = (data?.last_profile_page ?? page) + 1;
+        await new Promise(r => setTimeout(r, 800));
+      }
+      toast({
+        title: 'Rechnung-Import abgeschlossen',
+        description: `${totalImported} neu, ${totalUpdated} aktualisiert, ${totalFailed} fehlgeschlagen (${totalProfiles} Profile)`,
+      });
+    } catch (e: any) {
+      toast({ title: 'Fehler', description: e?.message ?? 'Import fehlgeschlagen', variant: 'destructive' });
+    } finally {
+      setInvoiceImporting(false);
+    }
+  }
+
   useEffect(() => {
     if (canRead) {
       fetchSourceStats();
