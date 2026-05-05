@@ -33,8 +33,49 @@ export default function OrderEditDialog({ order, open, onClose, onSaved }: Props
     internal_number: order?.internal_number || '',
   });
   const [saving, setSaving] = useState(false);
+  const { isAdmin } = useAuth();
+  const [invoices, setInvoices] = useState<{ name: string; path: string }[]>([]);
+  const [uploading, setUploading] = useState(false);
 
   const set = (key: string, val: string) => setForm(f => ({ ...f, [key]: val }));
+
+  async function loadInvoices() {
+    if (!isAdmin) return;
+    const { data } = await supabase.storage.from('order-invoices').list(order.id, { limit: 100, sortBy: { column: 'created_at', order: 'desc' } });
+    setInvoices((data || []).filter(f => f.name).map(f => ({ name: f.name, path: `${order.id}/${f.name}` })));
+  }
+
+  useEffect(() => { loadInvoices(); /* eslint-disable-next-line */ }, [order.id, isAdmin]);
+
+  async function handleUploadInvoice(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (file.type !== 'application/pdf') { toast.error('Nur PDF-Dateien erlaubt'); return; }
+    if (file.size > 20 * 1024 * 1024) { toast.error('Max. 20 MB'); return; }
+    setUploading(true);
+    const path = `${order.id}/Invoice-${Date.now()}-${file.name.replace(/[^A-Za-z0-9._-]/g, '_')}`;
+    const { error } = await supabase.storage.from('order-invoices').upload(path, file, { contentType: 'application/pdf' });
+    setUploading(false);
+    if (error) { toast.error('Upload fehlgeschlagen: ' + error.message); return; }
+    toast.success('Invoice hochgeladen');
+    loadInvoices();
+  }
+
+  async function downloadInvoice(path: string, name: string) {
+    const { data, error } = await supabase.storage.from('order-invoices').createSignedUrl(path, 60);
+    if (error || !data) { toast.error('Download fehlgeschlagen'); return; }
+    const a = document.createElement('a');
+    a.href = data.signedUrl; a.download = name; a.target = '_blank'; a.click();
+  }
+
+  async function deleteInvoice(path: string) {
+    if (!confirm('Diese Rechnung löschen?')) return;
+    const { error } = await supabase.storage.from('order-invoices').remove([path]);
+    if (error) { toast.error('Löschen fehlgeschlagen: ' + error.message); return; }
+    toast.success('Gelöscht');
+    loadInvoices();
+  }
 
   async function handleSave() {
     const intNum = form.internal_number.trim();
