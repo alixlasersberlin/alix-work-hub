@@ -124,12 +124,15 @@ export default function OffenePosten() {
     let totalImported = 0;
     let totalUpdated = 0;
     let page = 1;
+    const fromStr = format(dateFrom, 'yyyy-MM-dd');
+    const toStr = dateTo ? format(dateTo, 'yyyy-MM-dd') : undefined;
     try {
       for (let i = 0; i < 20; i++) {
         const { data, error } = await supabase.functions.invoke('sync-zoho-invoices', {
           body: {
             source_system: 'zoho_eu_1',
-            date_from: '2026-01-01',
+            date_from: fromStr,
+            date_to: toStr,
             page,
             per_page: 200,
             max_pages: 5,
@@ -149,7 +152,7 @@ export default function OffenePosten() {
     } finally {
       setSyncing(false);
     }
-  }, [load]);
+  }, [load, dateFrom, dateTo]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
