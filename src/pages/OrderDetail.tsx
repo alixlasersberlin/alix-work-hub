@@ -121,9 +121,12 @@ export default function OrderDetail() {
   };
 
 
+  const packages: any[] = Array.isArray(order?.raw_data?.packages) ? order.raw_data.packages : [];
+
   const tabs = [
     { key: 'overview', label: 'Übersicht', icon: ClipboardList },
     { key: 'items', label: `Artikel (${items.length})`, icon: Package },
+    { key: 'packages', label: `Pakete (${packages.length})`, icon: Truck },
     { key: 'notes', label: `Notizen (${notes.length})`, icon: FileText },
     { key: 'history', label: `Historie (${history.length})`, icon: History },
     ...(isAdmin ? [{ key: 'raw', label: 'Rohdaten', icon: Shield }] : []),
