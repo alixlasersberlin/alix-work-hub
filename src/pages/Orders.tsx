@@ -40,7 +40,7 @@ export default function Orders() {
     setError(null);
     const { data, error: err } = await supabase
       .from('orders')
-      .select('*, customers(company_name, contact_name, shipping_address, billing_address), order_items(id, item_name, quantity, unit, rate, amount)')
+      .select('*, customers(company_name, contact_name, shipping_address, billing_address), order_items(id, item_name, description, sku, quantity, unit, rate, amount)')
       .order(sortField, { ascending: sortDir === 'asc' })
       .limit(500);
     if (err) setError(err.message);
@@ -75,13 +75,32 @@ export default function Orders() {
   const statuses = [...new Set(orders.map(o => o.order_status).filter(Boolean))]
     .filter(s => !EXCLUDED_STATUSES.includes(s.toLowerCase()));
 
+  const resolveCity = (order: any): string => {
+    const hasAddr = (a: any) => a && (a.city || a.address || a.street);
+    const addr =
+      (hasAddr(order.shipping_address) ? order.shipping_address : null) ||
+      (hasAddr(order.customers?.shipping_address) ? order.customers?.shipping_address : null) ||
+      (hasAddr(order.billing_address) ? order.billing_address : null) ||
+      (hasAddr(order.customers?.billing_address) ? order.customers?.billing_address : null);
+    if (!addr) return '';
+    if (typeof addr === 'string') return addr;
+    return addr.city || addr.state || '';
+  };
+
   const filtered = orders.filter(o => {
     const q = search.toLowerCase();
+    const modelMatch = o.order_items?.some((it: any) =>
+      it.item_name?.toLowerCase().includes(q) ||
+      it.description?.toLowerCase().includes(q) ||
+      it.sku?.toLowerCase().includes(q)
+    );
     const matchSearch = !search ||
       o.order_number?.toLowerCase().includes(q) ||
       o._displayNumber?.toLowerCase().includes(q) ||
       o.customers?.company_name?.toLowerCase().includes(q) ||
-      o.customers?.contact_name?.toLowerCase().includes(q);
+      o.customers?.contact_name?.toLowerCase().includes(q) ||
+      resolveCity(o)?.toLowerCase().includes(q) ||
+      modelMatch;
     const matchStatus = statusFilter === 'all' || o.order_status === statusFilter;
     const notExcluded = !EXCLUDED_STATUSES.includes((o.order_status || '').toLowerCase());
     return matchSearch && matchStatus && notExcluded;
@@ -133,7 +152,7 @@ export default function Orders() {
           <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input placeholder="Suche nach Auftrag, Kunde..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10 bg-secondary border-border" />
+              <Input placeholder="Suche nach Auftrag, Kunde, Ort, Modell, SKU..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10 bg-secondary border-border" />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-48 bg-secondary border-border">
