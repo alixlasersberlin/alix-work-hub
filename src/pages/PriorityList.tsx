@@ -27,6 +27,7 @@ interface PrioOrder {
     shipping_address: any;
     billing_address: any;
   } | null;
+  order_items: { item_name: string | null; description: string | null; sku: string | null }[] | null;
 }
 
 function formatDate(date: string | null) {
@@ -88,13 +89,13 @@ export default function PriorityList() {
       setError(null);
       const { data, error: err } = await supabase
         .from('orders')
-        .select('id, order_number, order_status, order_date, expected_shipment_date, total_amount, currency, source_system, shipping_address, billing_address, customers(company_name, contact_name, shipping_address, billing_address)')
+        .select('id, order_number, order_status, order_date, expected_shipment_date, total_amount, currency, source_system, shipping_address, billing_address, customers(company_name, contact_name, shipping_address, billing_address), order_items(item_name, description, sku)')
         .not('expected_shipment_date', 'is', null)
         .in('order_status', ['overdue', 'Overdue', 'invoiced', 'Invoiced', 'open', 'Open', 'offen', 'Offen', 'approved', 'Approved'])
         .order(sortField, { ascending: sortDir === 'asc' })
         .limit(500);
       if (err) setError(err.message);
-      const loaded = data ?? [];
+      const loaded = (data ?? []) as any as PrioOrder[];
       setOrders(loaded);
       setLoading(false);
       if (loaded.length > 0) fetchDrivingTimes(loaded);
@@ -106,11 +107,17 @@ export default function PriorityList() {
 
   const filtered = orders.filter(o => {
     const q = search.toLowerCase();
+    const modelMatch = o.order_items?.some(it =>
+      it.item_name?.toLowerCase().includes(q) ||
+      it.description?.toLowerCase().includes(q) ||
+      it.sku?.toLowerCase().includes(q)
+    );
     const matchSearch = !search ||
       o.order_number?.toLowerCase().includes(q) ||
       o.customers?.company_name?.toLowerCase().includes(q) ||
       o.customers?.contact_name?.toLowerCase().includes(q) ||
-      resolveCity(o)?.toLowerCase().includes(q);
+      resolveCity(o)?.toLowerCase().includes(q) ||
+      modelMatch;
     const matchStatus = statusFilter === 'all' || o.order_status === statusFilter;
     return matchSearch && matchStatus;
   });
