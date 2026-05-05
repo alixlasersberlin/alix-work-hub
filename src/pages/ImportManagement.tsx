@@ -225,6 +225,7 @@ export default function ImportManagement() {
     const dateFrom = getInvoiceDateFrom();
     let page = 1;
     let totalImported = 0, totalUpdated = 0, totalFailed = 0, totalProfiles = 0;
+    let stoppedByRetryableError = false;
     try {
       toast({ title: 'Rechnung-Import gestartet', description: `Ab ${dateFrom}` });
       for (let i = 0; i < 100; i++) {
@@ -241,6 +242,7 @@ export default function ImportManagement() {
           setInvoiceImportError({ title, message, retryable, retryAfterSeconds });
 
           if (retryable) {
+            stoppedByRetryableError = true;
             toast({
               title,
               description: message ?? `Bitte in ca. ${retryAfterSeconds ?? 90} Sekunden erneut versuchen.`,
@@ -261,7 +263,7 @@ export default function ImportManagement() {
         page = (data?.last_profile_page ?? page) + 1;
         await new Promise(r => setTimeout(r, 2500));
       }
-      if (!invoiceImportError) {
+      if (!stoppedByRetryableError) {
         toast({
           title: 'Rechnung-Import abgeschlossen',
           description: `${totalImported} neu, ${totalUpdated} aktualisiert, ${totalFailed} fehlgeschlagen (${totalProfiles} Profile)`,
@@ -1453,6 +1455,16 @@ export default function ImportManagement() {
                     <div>Neu: <strong className="text-[hsl(var(--success))]">{invoiceProgress.imported}</strong></div>
                     <div>Aktualisiert: <strong>{invoiceProgress.updated}</strong></div>
                     <div>Fehlgeschlagen: <strong className="text-destructive">{invoiceProgress.failed}</strong></div>
+                  </div>
+                )}
+
+                {invoiceImportError && (
+                  <div className={`rounded-lg border p-4 text-sm ${invoiceImportError.retryable ? 'border-[hsl(var(--warning))]/40 bg-[hsl(var(--warning))]/10 text-[hsl(var(--warning))]' : 'border-destructive/40 bg-destructive/10 text-destructive'}`}>
+                    <div className="font-medium">{invoiceImportError.title}</div>
+                    {invoiceImportError.message && <div className="mt-1">{invoiceImportError.message}</div>}
+                    {invoiceImportError.retryable && invoiceImportError.retryAfterSeconds ? (
+                      <div className="mt-1 text-xs opacity-80">Erneut versuchen in ca. {invoiceImportError.retryAfterSeconds} Sekunden.</div>
+                    ) : null}
                   </div>
                 )}
 
