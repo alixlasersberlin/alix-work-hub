@@ -1440,6 +1440,51 @@ export type Database = {
         }
         Relationships: []
       }
+      zoho_unpaid_invoices: {
+        Row: {
+          balance: number | null
+          currency_code: string | null
+          customer_name: string | null
+          due_date: string | null
+          id: string
+          invoice_date: string | null
+          invoice_id: string | null
+          invoice_number: string | null
+          raw: Json | null
+          status: string | null
+          synced_at: string | null
+          total: number | null
+        }
+        Insert: {
+          balance?: number | null
+          currency_code?: string | null
+          customer_name?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_date?: string | null
+          invoice_id?: string | null
+          invoice_number?: string | null
+          raw?: Json | null
+          status?: string | null
+          synced_at?: string | null
+          total?: number | null
+        }
+        Update: {
+          balance?: number | null
+          currency_code?: string | null
+          customer_name?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_date?: string | null
+          invoice_id?: string | null
+          invoice_number?: string | null
+          raw?: Json | null
+          status?: string | null
+          synced_at?: string | null
+          total?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
