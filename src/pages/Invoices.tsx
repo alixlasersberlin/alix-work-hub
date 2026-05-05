@@ -83,7 +83,28 @@ export default function Invoices() {
 
   const visible = useMemo(() => pageSize === 'all' ? filtered : filtered.slice(0, pageSize), [filtered, pageSize]);
 
-  const handleImport = async () => {
+  const handleMove = async (r: Row) => {
+    if (!isAdmin) return;
+    if (!confirm(`Rechnung ${r.invoice_number ?? ''} nach Ratenzahler verschieben?`)) return;
+    try {
+      const { data: full, error: fetchErr } = await supabase
+        .from('zoho_invoices').select('*').eq('id', r.id).maybeSingle();
+      if (fetchErr || !full) throw fetchErr ?? new Error('Datensatz nicht gefunden');
+      const { id, created_at, updated_at, synced_at, ...rest } = full as any;
+      const { error: insErr } = await supabase.from('zoho_recurring_invoices').upsert(
+        { ...rest, synced_at: new Date().toISOString() },
+        { onConflict: 'source_system,zoho_invoice_id' },
+      );
+      if (insErr) throw insErr;
+      const { error: delErr } = await supabase.from('zoho_invoices').delete().eq('id', r.id);
+      if (delErr) throw delErr;
+      toast({ title: 'Verschoben', description: `Rechnung nach Ratenzahler verschoben.` });
+      setRows((prev) => prev.filter((x) => x.id !== r.id));
+    } catch (e: any) {
+      toast({ title: 'Verschieben fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
+    }
+  };
+
     setImporting(true);
     setProgress('Starte Import…');
     try {
