@@ -13,7 +13,8 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { toast } from "sonner";
-import { Loader2, RefreshCw, AlertCircle, CalendarIcon, X } from "lucide-react";
+import { Loader2, RefreshCw, AlertCircle, CalendarIcon, X, ChevronRight, ChevronDown } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { PageHeader } from "@/components/PageShell";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
@@ -61,6 +62,8 @@ export default function ZohoUnpaidInvoices() {
   const [dateField, setDateField] = useState<"invoice_date" | "due_date">("due_date");
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
+  const [groupByCustomer, setGroupByCustomer] = useState(false);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   const load = async () => {
     setLoading(true);
@@ -139,7 +142,34 @@ export default function ZohoUnpaidInvoices() {
   const totalOpen = filtered.reduce((sum, r) => sum + Number(r.balance ?? 0), 0);
   const totalSum = filtered.reduce((sum, r) => sum + Number(r.total ?? 0), 0);
 
+  const grouped = useMemo(() => {
+    const map = new Map<string, { name: string; rows: Row[]; total: number; open: number; oldest: number | null }>();
+    for (const r of filtered) {
+      const key = r.customer_name ?? "—";
+      const g = map.get(key) ?? { name: key, rows: [], total: 0, open: 0, oldest: null };
+      g.rows.push(r);
+      g.total += Number(r.total ?? 0);
+      g.open += Number(r.balance ?? 0);
+      const a = ageDays(r.invoice_date);
+      if (a != null && (g.oldest == null || a > g.oldest)) g.oldest = a;
+      map.set(key, g);
+    }
+    let arr = Array.from(map.values());
+    const dir = sortDir === "asc" ? 1 : -1;
+    arr.sort((a, b) => {
+      if (sortKey === "customer") return a.name.localeCompare(b.name, "de") * dir;
+      if (sortKey === "total") return (a.total - b.total) * dir;
+      return ((a.oldest ?? -1) - (b.oldest ?? -1)) * dir;
+    });
+    return arr;
+  }, [filtered, sortKey, sortDir]);
+
   const clearDates = () => { setDateFrom(undefined); setDateTo(undefined); };
+  const toggleAll = (open: boolean) => {
+    const next: Record<string, boolean> = {};
+    grouped.forEach((g) => { next[g.name] = open; });
+    setExpanded(next);
+  };
 
   return (
     <div className="container mx-auto p-6">
@@ -250,6 +280,20 @@ export default function ZohoUnpaidInvoices() {
                 <X className="h-4 w-4 mr-1" /> Filter zurücksetzen
               </Button>
             )}
+
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-muted-foreground">Anzeige</label>
+              <div className="flex items-center gap-2 h-10">
+                <Switch id="grp" checked={groupByCustomer} onCheckedChange={setGroupByCustomer} />
+                <label htmlFor="grp" className="text-sm cursor-pointer">Nach Kunde gruppieren</label>
+              </div>
+            </div>
+            {groupByCustomer && (
+              <div className="flex gap-1">
+                <Button variant="outline" size="sm" onClick={() => toggleAll(true)}>Alle auf</Button>
+                <Button variant="outline" size="sm" onClick={() => toggleAll(false)}>Alle zu</Button>
+              </div>
+            )}
           </div>
         </CardHeader>
         <CardContent>
@@ -283,6 +327,43 @@ export default function ZohoUnpaidInvoices() {
                   <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                     Keine Daten. Klicke „Jetzt synchronisieren" um Daten aus Zoho zu laden.
                   </TableCell></TableRow>
+                ) : groupByCustomer ? (
+                  grouped.flatMap((g) => {
+                    const isOpen = expanded[g.name] ?? true;
+                    const header = (
+                      <TableRow key={`g-${g.name}`} className="bg-muted/50 cursor-pointer" onClick={() => setExpanded((e) => ({ ...e, [g.name]: !isOpen }))}>
+                        <TableCell colSpan={4} className="font-semibold">
+                          <span className="inline-flex items-center gap-2">
+                            {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                            {g.name} <Badge variant="secondary">{g.rows.length}</Badge>
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">{g.oldest ?? "—"}</TableCell>
+                        <TableCell className="text-right">{fmtMoney(g.total)}</TableCell>
+                        <TableCell className="text-right font-bold">{fmtMoney(g.open)}</TableCell>
+                        <TableCell />
+                      </TableRow>
+                    );
+                    if (!isOpen) return [header];
+                    return [
+                      header,
+                      ...g.rows.map((r) => {
+                        const age = ageDays(r.invoice_date);
+                        return (
+                          <TableRow key={r.id}>
+                            <TableCell className="font-medium pl-8">{r.invoice_number ?? "—"}</TableCell>
+                            <TableCell className="text-muted-foreground text-xs">↳</TableCell>
+                            <TableCell>{fmtDate(r.invoice_date)}</TableCell>
+                            <TableCell>{fmtDate(r.due_date)}</TableCell>
+                            <TableCell className="text-right">{age == null ? "—" : age}</TableCell>
+                            <TableCell className="text-right">{fmtMoney(r.total, r.currency_code)}</TableCell>
+                            <TableCell className="text-right font-semibold">{fmtMoney(r.balance, r.currency_code)}</TableCell>
+                            <TableCell><Badge variant="outline">{r.status ?? "—"}</Badge></TableCell>
+                          </TableRow>
+                        );
+                      }),
+                    ];
+                  })
                 ) : (
                   filtered.map((r) => {
                     const age = ageDays(r.invoice_date);
