@@ -62,6 +62,8 @@ export default function ZohoUnpaidInvoices() {
   const [dateField, setDateField] = useState<"invoice_date" | "due_date">("due_date");
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
+  const [groupByCustomer, setGroupByCustomer] = useState(false);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   const load = async () => {
     setLoading(true);
