@@ -40,7 +40,13 @@ const navItems: NavItem[] = [
     ],
   },
   { path: '/production', label: 'PRODUCTION', icon: Factory, roles: ['Admin', 'Super Admin', 'Lieferant'] },
-  { path: '/lager', label: 'LAGER', icon: Warehouse, roles: ['Admin', 'Super Admin'] },
+  {
+    path: '/lager', label: 'LAGER', icon: Warehouse, roles: ['Admin', 'Super Admin'],
+    children: [
+      { path: '/lager/lagergeraete', label: 'Lagergeräte', icon: Warehouse, roles: ['Admin', 'Super Admin'] },
+      { path: '/lager/leihgeraete', label: 'Leihgeräte', icon: PackageCheck, roles: ['Admin', 'Super Admin'] },
+    ],
+  },
   {
     path: '/workflow', label: 'WORKFLOW', icon: Workflow, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Read Only Audit'],
     children: [
