@@ -14,17 +14,66 @@ Deno.serve(async (req) => {
     const TABLE = Deno.env.get("AIRTABLE_MODELS_TABLE");
     const FIELD = Deno.env.get("AIRTABLE_MODELS_FIELD") ?? "Name";
 
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
-    if (!AIRTABLE_API_KEY) throw new Error("AIRTABLE_API_KEY is not configured");
+    const jsonResp = (status: number, body: Record<string, unknown>) =>
+      new Response(JSON.stringify(body), {
+        status,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+
+    if (!LOVABLE_API_KEY) {
+      return jsonResp(500, { error: "LOVABLE_API_KEY ist nicht konfiguriert.", models: [] });
+    }
+    if (!AIRTABLE_API_KEY) {
+      return jsonResp(500, {
+        error:
+          "AIRTABLE_API_KEY ist nicht konfiguriert. Bitte den Airtable-Connector verbinden.",
+        models: [],
+      });
+    }
     if (!BASE_ID || !TABLE) {
-      return new Response(
-        JSON.stringify({
-          error:
-            "AIRTABLE_MODELS_BASE_ID und AIRTABLE_MODELS_TABLE sind nicht konfiguriert. Bitte als Secrets hinterlegen.",
-          models: [],
-        }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      return jsonResp(200, {
+        error:
+          "AIRTABLE_MODELS_BASE_ID und AIRTABLE_MODELS_TABLE sind nicht konfiguriert. Bitte als Secrets hinterlegen.",
+        models: [],
+      });
+    }
+
+    // Validate Base-ID format (Airtable Base-IDs always start with "app" + 14 chars)
+    const baseIdTrim = BASE_ID.trim();
+    if (!/^app[A-Za-z0-9]{14}$/.test(baseIdTrim)) {
+      return jsonResp(400, {
+        error: `AIRTABLE_MODELS_BASE_ID hat ein ungültiges Format ("${baseIdTrim}"). Erwartet wird ein Wert wie "appXXXXXXXXXXXXXX" (17 Zeichen, beginnend mit "app"). Prüfe die URL deiner Base in Airtable.`,
+        models: [],
+      });
+    }
+
+    // Validate table name/id (must be non-empty; if it looks like an ID it must match tbl + 14 chars)
+    const tableTrim = TABLE.trim();
+    if (tableTrim.length === 0) {
+      return jsonResp(400, {
+        error: "AIRTABLE_MODELS_TABLE ist leer. Bitte den exakten Tabellennamen oder die Table-ID (tbl…) hinterlegen.",
+        models: [],
+      });
+    }
+    if (tableTrim.startsWith("tbl") && !/^tbl[A-Za-z0-9]{14}$/.test(tableTrim)) {
+      return jsonResp(400, {
+        error: `AIRTABLE_MODELS_TABLE sieht aus wie eine Table-ID ("${tableTrim}"), hat aber nicht das erwartete Format "tblXXXXXXXXXXXXXX".`,
+        models: [],
+      });
+    }
+    if (tableTrim.length > 255) {
+      return jsonResp(400, {
+        error: "AIRTABLE_MODELS_TABLE ist zu lang (max. 255 Zeichen).",
+        models: [],
+      });
+    }
+
+    const fieldTrim = FIELD.trim();
+    if (fieldTrim.length === 0 || fieldTrim.length > 255) {
+      return jsonResp(400, {
+        error: "AIRTABLE_MODELS_FIELD ist ungültig. Bitte den exakten Feldnamen aus Airtable hinterlegen.",
+        models: [],
+      });
     }
 
     const models: { id: string; name: string }[] = [];
