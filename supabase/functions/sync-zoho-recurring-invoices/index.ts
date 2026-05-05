@@ -114,107 +114,129 @@ Deno.serve(async (req) => {
     const sourceSystem = body.source_system ?? "zoho_eu_1";
     const dateFrom = body.date_from ?? "2025-01-01";
     const perPage = Math.min(Math.max(body.per_page ?? 200, 1), 200);
-    const maxPages = Math.min(Math.max(body.max_pages ?? 20, 1), 50);
-    const fetchDetails = body.fetch_details !== false;
+    const profilesPage = body.page ?? 1;
+    const maxProfilePages = Math.min(Math.max(body.max_pages ?? 5, 1), 20);
 
     const cfg = getZohoConfig(sourceSystem);
     if (!cfg) return json({ error: "Invalid source_system" }, 400);
     const token = await getAccessToken(cfg);
+    const authH = { Authorization: `Zoho-oauthtoken ${token}` };
 
     let imported = 0, updated = 0, failed = 0;
-    let page = body.page ?? 1;
-    let hasMore = true;
+    let profilesProcessed = 0;
+    let pPage = profilesPage;
+    let profilesHaveMore = true;
+    const startedAt = Date.now();
+    const SOFT_DEADLINE_MS = 120_000; // leave headroom under 150s edge timeout
 
-    while (hasMore && page <= (body.page ?? 1) + maxPages - 1) {
-      const url = `${cfg.booksApiBaseUrl}/invoices?organization_id=${cfg.organizationId}` +
-        `&page=${page}&per_page=${perPage}` +
-        `&date_after=${dateFrom}` +
-        `&filter_by=Status.All`;
+    while (profilesHaveMore && pPage <= profilesPage + maxProfilePages - 1) {
+      if (Date.now() - startedAt > SOFT_DEADLINE_MS) break;
 
-      const res = await fetch(url, { headers: { Authorization: `Zoho-oauthtoken ${token}` } });
-      if (!res.ok) {
-        const t = await res.text();
-        return json({ error: `Zoho list error page ${page}: ${t.substring(0, 400)}`, hint: "Code 57 = OAuth-Scope fehlt. Refresh-Token braucht ZohoBooks.invoices.READ." }, 502);
+      const profUrl = `${cfg.booksApiBaseUrl}/recurringinvoices?organization_id=${cfg.organizationId}` +
+        `&page=${pPage}&per_page=${perPage}`;
+      const pRes = await fetch(profUrl, { headers: authH });
+      if (!pRes.ok) {
+        const t = await pRes.text();
+        return json({ error: `Zoho recurring profiles error page ${pPage}: ${t.substring(0, 400)}` }, 502);
       }
-      const data = await res.json();
-      const allInvoices: any[] = data.invoices ?? [];
-      hasMore = data.page_context?.has_more_page === true;
+      const pData = await pRes.json();
+      const profiles: any[] = pData.recurring_invoices ?? [];
+      profilesHaveMore = pData.page_context?.has_more_page === true;
 
-      // The /invoices list endpoint does NOT include recurring_invoice_id in Zoho Books.
-      // We must fetch each invoice's detail to determine if it originated from a recurring profile.
-      for (const inv of allInvoices) {
-        try {
-          const invId = String(inv.invoice_id);
-          let detail: any = inv;
-          const dRes = await fetch(
-            `${cfg.booksApiBaseUrl}/invoices/${invId}?organization_id=${cfg.organizationId}`,
-            { headers: { Authorization: `Zoho-oauthtoken ${token}` } },
-          );
-          if (dRes.ok) {
-            const dJson = await dRes.json();
-            if (dJson.invoice) detail = { ...inv, ...dJson.invoice };
-          } else {
-            await dRes.text();
+      for (const profile of profiles) {
+        if (Date.now() - startedAt > SOFT_DEADLINE_MS) { profilesHaveMore = true; break; }
+        profilesProcessed++;
+        const recurringId = String(profile.recurring_invoice_id);
+
+        // Derive device_name from profile (single source of truth, no per-invoice detail call)
+        const profLineItems: any[] = profile.line_items ?? [];
+        const profileDeviceName = profLineItems.length > 0
+          ? profLineItems.map((li) => li.name ?? li.description).filter(Boolean).join(", ").substring(0, 500)
+          : (profile.entity_name ?? null);
+
+        // List invoices generated from this recurring profile
+        let iPage = 1;
+        let iHasMore = true;
+        while (iHasMore) {
+          if (Date.now() - startedAt > SOFT_DEADLINE_MS) { profilesHaveMore = true; break; }
+          const invUrl = `${cfg.booksApiBaseUrl}/invoices?organization_id=${cfg.organizationId}` +
+            `&page=${iPage}&per_page=${perPage}` +
+            `&date_after=${dateFrom}` +
+            `&filter_by=Status.All` +
+            `&recurring_invoice_id=${recurringId}`;
+          const iRes = await fetch(invUrl, { headers: authH });
+          if (!iRes.ok) { await iRes.text(); break; }
+          const iData = await iRes.json();
+          const invoices: any[] = iData.invoices ?? [];
+          iHasMore = iData.page_context?.has_more_page === true;
+
+          for (const inv of invoices) {
+            try {
+              const invId = String(inv.invoice_id);
+              const billing = inv.billing_address ?? null;
+              const city = billing?.city ?? inv.billing_city ?? null;
+
+              const payload = {
+                source_system: sourceSystem,
+                zoho_invoice_id: invId,
+                zoho_recurring_invoice_id: recurringId,
+                invoice_number: inv.invoice_number ?? null,
+                reference_number: inv.reference_number ?? null,
+                customer_name: inv.customer_name ?? profile.customer_name ?? null,
+                customer_id: (inv.customer_id ?? profile.customer_id)?.toString() ?? null,
+                device_name: profileDeviceName,
+                city,
+                billing_address: billing,
+                invoice_date: inv.date ?? null,
+                due_date: inv.due_date ?? null,
+                currency: inv.currency_code ?? null,
+                total: Number(inv.total ?? 0),
+                balance: Number(inv.balance ?? 0),
+                status: inv.status ?? null,
+                payment_status: payStatusFromInvoice(inv),
+                last_payment_date: inv.last_payment_date ?? null,
+                raw_data: inv,
+                synced_at: new Date().toISOString(),
+              };
+
+              const { data: existing } = await admin
+                .from("zoho_recurring_invoices")
+                .select("id")
+                .eq("source_system", sourceSystem)
+                .eq("zoho_invoice_id", invId)
+                .maybeSingle();
+
+              if (existing) {
+                const { error } = await admin.from("zoho_recurring_invoices").update(payload).eq("id", existing.id);
+                if (error) throw error;
+                updated++;
+              } else {
+                const { error } = await admin.from("zoho_recurring_invoices").insert(payload);
+                if (error) throw error;
+                imported++;
+              }
+            } catch (e: any) {
+              console.error("Recurring invoice sync failed:", e?.message);
+              failed++;
+            }
           }
-
-          // Skip non-recurring invoices
-          if (!detail.recurring_invoice_id) continue;
-
-          const lineItems: any[] = detail.line_items ?? [];
-          const deviceName = lineItems.length > 0
-            ? lineItems.map((li) => li.name ?? li.description).filter(Boolean).join(", ").substring(0, 500)
-            : null;
-
-          const billing = detail.billing_address ?? null;
-          const city = billing?.city ?? detail.city ?? null;
-
-          const payload = {
-            source_system: sourceSystem,
-            zoho_invoice_id: invId,
-            zoho_recurring_invoice_id: detail.recurring_invoice_id?.toString() ?? null,
-            invoice_number: detail.invoice_number ?? null,
-            reference_number: detail.reference_number ?? null,
-            customer_name: detail.customer_name ?? null,
-            customer_id: detail.customer_id?.toString() ?? null,
-            device_name: deviceName,
-            city,
-            billing_address: billing,
-            invoice_date: detail.date ?? null,
-            due_date: detail.due_date ?? null,
-            currency: detail.currency_code ?? null,
-            total: Number(detail.total ?? 0),
-            balance: Number(detail.balance ?? 0),
-            status: detail.status ?? null,
-            payment_status: payStatusFromInvoice(detail),
-            last_payment_date: detail.last_payment_date ?? null,
-            raw_data: detail,
-            synced_at: new Date().toISOString(),
-          };
-
-          const { data: existing } = await admin
-            .from("zoho_recurring_invoices")
-            .select("id")
-            .eq("source_system", sourceSystem)
-            .eq("zoho_invoice_id", invId)
-            .maybeSingle();
-
-          if (existing) {
-            const { error } = await admin.from("zoho_recurring_invoices").update(payload).eq("id", existing.id);
-            if (error) throw error;
-            updated++;
-          } else {
-            const { error } = await admin.from("zoho_recurring_invoices").insert(payload);
-            if (error) throw error;
-            imported++;
-          }
-        } catch (e: any) {
-          console.error("Recurring invoice sync failed:", e?.message);
-          failed++;
+          iPage++;
         }
       }
 
-      page++;
+      pPage++;
     }
+
+    return json({
+      success: true,
+      imported,
+      updated,
+      failed,
+      profiles_processed: profilesProcessed,
+      last_profile_page: pPage - 1,
+      profiles_have_more: profilesHaveMore,
+      hint: profilesHaveMore ? "Mehr Profile vorhanden — erneut mit page=" + pPage + " starten." : undefined,
+    });
 
     return json({ success: true, imported, updated, failed, last_page: page - 1, has_more: hasMore });
   } catch (e: any) {
