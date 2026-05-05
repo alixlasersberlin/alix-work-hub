@@ -159,6 +159,7 @@ Deno.serve(async (req) => {
     const body = (await req.json().catch(() => ({}))) as Payload;
     const sourceSystem = body.source_system ?? "zoho_eu_1";
     const dateFrom = body.date_from ?? "2025-01-01";
+    const dateTo = body.date_to;
     const perPage = Math.min(Math.max(body.per_page ?? 100, 1), 200);
     const startPage = body.page ?? 1;
     const maxPages = Math.min(Math.max(body.max_pages ?? 1, 1), 5);
