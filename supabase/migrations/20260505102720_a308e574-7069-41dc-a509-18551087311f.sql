@@ -1,0 +1,1 @@
+UPDATE public.orders SET order_status = 'teilgeliefert', updated_at = now() WHERE id = '20e759ae-f608-43f7-b3a6-47c5607c3ce4';
