@@ -2,8 +2,11 @@ import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
-import { PackageCheck, Search, Loader2, Inbox, ArrowUpDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { PackageCheck, Search, Loader2, Inbox, ArrowUpDown, Pencil } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
+import { useAuth } from '@/hooks/useAuth';
+import OrderItemsEditDialog from '@/components/OrderItemsEditDialog';
 
 type SortField = 'order_number' | 'expected_shipment_date' | 'total_amount';
 type SortDir = 'asc' | 'desc';
@@ -21,6 +24,9 @@ export default function PartialDeliveryList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { isAdmin } = useAuth();
+  const [editOrder, setEditOrder] = useState<{ id: string; order_number: string | null } | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     async function load() {
@@ -37,7 +43,7 @@ export default function PartialDeliveryList() {
       setLoading(false);
     }
     load();
-  }, [sortField, sortDir]);
+  }, [sortField, sortDir, reloadKey]);
 
   const filtered = useMemo(() => orders.filter(o => {
     if (!search) return true;
@@ -99,13 +105,14 @@ export default function PartialDeliveryList() {
                 <SortHeader field="expected_shipment_date" label="Lieferdatum" />
                 <SortHeader field="total_amount" label="Betrag" />
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Status</th>
+                {isAdmin && <th className="text-right px-4 py-3 text-muted-foreground font-medium">Aktion</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {loading ? (
-                <tr><td colSpan={7} className="px-4 py-12 text-center"><Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" /></td></tr>
+                <tr><td colSpan={isAdmin ? 8 : 7} className="px-4 py-12 text-center"><Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" /></td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={7} className="px-4 py-12 text-center">
+                <tr><td colSpan={isAdmin ? 8 : 7} className="px-4 py-12 text-center">
                   <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
                   <p className="text-muted-foreground">Keine Aufträge mit Status „teilgeliefert" gefunden.</p>
                 </td></tr>
@@ -121,6 +128,18 @@ export default function PartialDeliveryList() {
                       {o.total_amount != null ? `${o.total_amount.toLocaleString('de-DE', { minimumFractionDigits: 2 })} ${o.currency || '€'}` : '—'}
                     </td>
                     <td className="px-4 py-3"><StatusBadge status={o.order_status} /></td>
+                    {isAdmin && (
+                      <td className="px-4 py-3 text-right" onClick={e => e.stopPropagation()}>
+                        <Button
+                          size="sm"
+                          className="gold-gradient text-primary-foreground"
+                          onClick={() => setEditOrder({ id: o.id, order_number: o.order_number })}
+                        >
+                          <Pencil className="w-3.5 h-3.5 mr-1" />
+                          ÄNDERUNG
+                        </Button>
+                      </td>
+                    )}
                   </tr>
                 ))
               )}
@@ -128,6 +147,16 @@ export default function PartialDeliveryList() {
           </table>
         </div>
       </div>
+
+      {editOrder && (
+        <OrderItemsEditDialog
+          orderId={editOrder.id}
+          orderNumber={editOrder.order_number}
+          open={!!editOrder}
+          onClose={() => setEditOrder(null)}
+          onSaved={() => setReloadKey(k => k + 1)}
+        />
+      )}
     </div>
   );
 }
