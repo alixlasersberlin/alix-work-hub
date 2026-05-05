@@ -20,7 +20,9 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
@@ -34,6 +36,7 @@ import {
 } from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { ALIX_MODEL_GROUPS } from '@/lib/alix-models';
 
 type LagerDevice = {
   id: string;
@@ -45,12 +48,9 @@ type LagerDevice = {
   created_at: string;
 };
 
-type AirtableModel = { id: string; name: string };
-
 const formSchema = z.object({
   serial_number: z.string().trim().min(1, 'Seriennummer erforderlich').max(100),
   model_name: z.string().trim().min(1, 'Modell erforderlich').max(200),
-  airtable_record_id: z.string().nullable(),
   entry_date: z.string().min(1, 'Eingangsdatum erforderlich'),
   notes: z.string().max(1000).optional().nullable(),
 });
@@ -58,15 +58,12 @@ const formSchema = z.object({
 export default function Lagergeraete() {
   const [devices, setDevices] = useState<LagerDevice[]>([]);
   const [loading, setLoading] = useState(true);
-  const [models, setModels] = useState<AirtableModel[]>([]);
-  const [modelsLoading, setModelsLoading] = useState(false);
-  const [modelsError, setModelsError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const today = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
   const [serial, setSerial] = useState('');
-  const [modelId, setModelId] = useState<string>('');
+  const [modelName, setModelName] = useState<string>('');
   const [entryDate, setEntryDate] = useState(today);
   const [notes, setNotes] = useState('');
 
@@ -84,40 +81,22 @@ export default function Lagergeraete() {
     setLoading(false);
   };
 
-  const loadModels = async () => {
-    setModelsLoading(true);
-    setModelsError(null);
-    const { data, error } = await supabase.functions.invoke('list-airtable-models');
-    if (error) {
-      setModelsError(error.message);
-    } else if (data?.error) {
-      setModelsError(data.error);
-      setModels(data.models ?? []);
-    } else {
-      setModels(data?.models ?? []);
-    }
-    setModelsLoading(false);
-  };
-
   useEffect(() => {
     loadDevices();
-    loadModels();
   }, []);
 
   const resetForm = () => {
     setSerial('');
-    setModelId('');
+    setModelName('');
     setEntryDate(today);
     setNotes('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const selected = models.find((m) => m.id === modelId);
     const parsed = formSchema.safeParse({
       serial_number: serial,
-      model_name: selected?.name ?? '',
-      airtable_record_id: selected?.id ?? null,
+      model_name: modelName,
       entry_date: entryDate,
       notes: notes || null,
     });
@@ -132,7 +111,7 @@ export default function Lagergeraete() {
       {
         serial_number: parsed.data.serial_number,
         model_name: parsed.data.model_name,
-        airtable_record_id: parsed.data.airtable_record_id,
+        airtable_record_id: null,
         entry_date: parsed.data.entry_date,
         notes: parsed.data.notes ?? null,
         created_by: userData.user?.id,
@@ -186,31 +165,23 @@ export default function Lagergeraete() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="model">Modell *</Label>
-                <Select value={modelId} onValueChange={setModelId} disabled={modelsLoading}>
+                <Select value={modelName} onValueChange={setModelName}>
                   <SelectTrigger id="model">
-                    <SelectValue
-                      placeholder={
-                        modelsLoading
-                          ? 'Modelle werden geladen…'
-                          : models.length === 0
-                          ? 'Keine Modelle verfügbar'
-                          : 'Modell auswählen'
-                      }
-                    />
+                    <SelectValue placeholder="Modell auswählen" />
                   </SelectTrigger>
-                  <SelectContent>
-                    {models.map((m) => (
-                      <SelectItem key={m.id} value={m.id}>
-                        {m.name}
-                      </SelectItem>
+                  <SelectContent className="max-h-80">
+                    {ALIX_MODEL_GROUPS.map((group) => (
+                      <SelectGroup key={group.label}>
+                        <SelectLabel>{group.label}</SelectLabel>
+                        {group.models.map((m) => (
+                          <SelectItem key={m} value={m}>
+                            {m}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
                     ))}
                   </SelectContent>
                 </Select>
-                {modelsError && (
-                  <p className="text-xs text-destructive">
-                    Airtable-Fehler: {modelsError}
-                  </p>
-                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="entry-date">Eingangsdatum *</Label>
