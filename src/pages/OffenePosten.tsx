@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
-import { FileText, Loader2 } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { FileText, Loader2, RefreshCw } from 'lucide-react';
 import { format, differenceInCalendarDays, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { PageHeader } from '@/components/PageShell';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   Table,
@@ -78,39 +79,73 @@ const formatCurrency = (n: number | null, currency: string | null) =>
 export default function OffenePosten() {
   const [items, setItems] = useState<OpenItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
   const [search, setSearch] = useState('');
 
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      const [{ data: invoices, error: e1 }, { data: recurring, error: e2 }] =
-        await Promise.all([
-          supabase
-            .from('zoho_invoices')
-            .select('id, invoice_number, customer_name, due_date, total, balance, currency, status')
-            .gt('balance', 0)
-            .order('due_date', { ascending: true })
-            .limit(1000),
-          supabase
-            .from('zoho_recurring_invoices')
-            .select('id, invoice_number, customer_name, due_date, total, balance, currency, status')
-            .gt('balance', 0)
-            .order('due_date', { ascending: true })
-            .limit(1000),
-        ]);
-      if (e1 || e2) {
-        toast.error('Fehler beim Laden: ' + (e1?.message || e2?.message));
-      }
-      const merged: OpenItem[] = [
-        ...((invoices ?? []).map((i: any) => ({ ...i, source: 'invoice' as const }))),
-        ...((recurring ?? []).map((i: any) => ({ ...i, source: 'recurring' as const }))),
-      ];
-      merged.sort((a, b) => (a.due_date ?? '').localeCompare(b.due_date ?? ''));
-      setItems(merged);
-      setLoading(false);
-    };
-    load();
+  const load = useCallback(async () => {
+    setLoading(true);
+    const [{ data: invoices, error: e1 }, { data: recurring, error: e2 }] =
+      await Promise.all([
+        supabase
+          .from('zoho_invoices')
+          .select('id, invoice_number, customer_name, due_date, total, balance, currency, status')
+          .gt('balance', 0)
+          .order('due_date', { ascending: true })
+          .limit(1000),
+        supabase
+          .from('zoho_recurring_invoices')
+          .select('id, invoice_number, customer_name, due_date, total, balance, currency, status')
+          .gt('balance', 0)
+          .order('due_date', { ascending: true })
+          .limit(1000),
+      ]);
+    if (e1 || e2) {
+      toast.error('Fehler beim Laden: ' + (e1?.message || e2?.message));
+    }
+    const merged: OpenItem[] = [
+      ...((invoices ?? []).map((i: any) => ({ ...i, source: 'invoice' as const }))),
+      ...((recurring ?? []).map((i: any) => ({ ...i, source: 'recurring' as const }))),
+    ];
+    merged.sort((a, b) => (a.due_date ?? '').localeCompare(b.due_date ?? ''));
+    setItems(merged);
+    setLoading(false);
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const handleSync = useCallback(async () => {
+    setSyncing(true);
+    let totalImported = 0;
+    let totalUpdated = 0;
+    let page = 1;
+    try {
+      for (let i = 0; i < 20; i++) {
+        const { data, error } = await supabase.functions.invoke('sync-zoho-invoices', {
+          body: {
+            source_system: 'zoho_eu_1',
+            date_from: '2026-01-01',
+            page,
+            per_page: 200,
+            max_pages: 5,
+          },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        totalImported += data?.imported ?? 0;
+        totalUpdated += data?.updated ?? 0;
+        if (!data?.has_more) break;
+        page = (data.last_page ?? page) + 1;
+      }
+      toast.success(`Sync fertig: ${totalImported} neu, ${totalUpdated} aktualisiert`);
+      await load();
+    } catch (e: any) {
+      toast.error('Sync fehlgeschlagen: ' + (e?.message ?? 'Unbekannt'));
+    } finally {
+      setSyncing(false);
+    }
+  }, [load]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -132,11 +167,17 @@ export default function OffenePosten() {
 
   return (
     <div className="p-4 sm:p-6 space-y-6">
-      <PageHeader
-        icon={<FileText className="w-5 h-5" />}
-        title="Offene Posten"
-        subtitle="Alle fälligen Rechnungen, farblich nach Fälligkeit"
-      />
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <PageHeader
+          icon={<FileText className="w-5 h-5" />}
+          title="Offene Posten"
+          subtitle="Alle fälligen Rechnungen, farblich nach Fälligkeit"
+        />
+        <Button onClick={handleSync} disabled={syncing} className="gap-2">
+          {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+          Aus Zoho importieren (ab 01.01.2026)
+        </Button>
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-lg border border-border bg-card p-4">
