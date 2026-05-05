@@ -13,7 +13,8 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { toast } from "sonner";
-import { Loader2, RefreshCw, AlertCircle, CalendarIcon, X } from "lucide-react";
+import { Loader2, RefreshCw, AlertCircle, CalendarIcon, X, ChevronRight, ChevronDown } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { PageHeader } from "@/components/PageShell";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
