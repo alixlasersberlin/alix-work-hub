@@ -327,6 +327,43 @@ export default function ZohoUnpaidInvoices() {
                   <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                     Keine Daten. Klicke „Jetzt synchronisieren" um Daten aus Zoho zu laden.
                   </TableCell></TableRow>
+                ) : groupByCustomer ? (
+                  grouped.flatMap((g) => {
+                    const isOpen = expanded[g.name] ?? true;
+                    const header = (
+                      <TableRow key={`g-${g.name}`} className="bg-muted/50 cursor-pointer" onClick={() => setExpanded((e) => ({ ...e, [g.name]: !isOpen }))}>
+                        <TableCell colSpan={4} className="font-semibold">
+                          <span className="inline-flex items-center gap-2">
+                            {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                            {g.name} <Badge variant="secondary">{g.rows.length}</Badge>
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">{g.oldest ?? "—"}</TableCell>
+                        <TableCell className="text-right">{fmtMoney(g.total)}</TableCell>
+                        <TableCell className="text-right font-bold">{fmtMoney(g.open)}</TableCell>
+                        <TableCell />
+                      </TableRow>
+                    );
+                    if (!isOpen) return [header];
+                    return [
+                      header,
+                      ...g.rows.map((r) => {
+                        const age = ageDays(r.invoice_date);
+                        return (
+                          <TableRow key={r.id}>
+                            <TableCell className="font-medium pl-8">{r.invoice_number ?? "—"}</TableCell>
+                            <TableCell className="text-muted-foreground text-xs">↳</TableCell>
+                            <TableCell>{fmtDate(r.invoice_date)}</TableCell>
+                            <TableCell>{fmtDate(r.due_date)}</TableCell>
+                            <TableCell className="text-right">{age == null ? "—" : age}</TableCell>
+                            <TableCell className="text-right">{fmtMoney(r.total, r.currency_code)}</TableCell>
+                            <TableCell className="text-right font-semibold">{fmtMoney(r.balance, r.currency_code)}</TableCell>
+                            <TableCell><Badge variant="outline">{r.status ?? "—"}</Badge></TableCell>
+                          </TableRow>
+                        );
+                      }),
+                    ];
+                  })
                 ) : (
                   filtered.map((r) => {
                     const age = ageDays(r.invoice_date);
