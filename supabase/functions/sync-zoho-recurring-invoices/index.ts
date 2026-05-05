@@ -137,24 +137,28 @@ Deno.serve(async (req) => {
         return json({ error: `Zoho list error page ${page}: ${t.substring(0, 400)}`, hint: "Code 57 = OAuth-Scope fehlt. Refresh-Token braucht ZohoBooks.invoices.READ." }, 502);
       }
       const data = await res.json();
-      // Only keep invoices generated from a recurring profile
-      const invoices: any[] = (data.invoices ?? []).filter((inv: any) => !!inv.recurring_invoice_id);
+      const allInvoices: any[] = data.invoices ?? [];
       hasMore = data.page_context?.has_more_page === true;
 
-      for (const inv of invoices) {
+      // The /invoices list endpoint does NOT include recurring_invoice_id in Zoho Books.
+      // We must fetch each invoice's detail to determine if it originated from a recurring profile.
+      for (const inv of allInvoices) {
         try {
           const invId = String(inv.invoice_id);
-          let detail = inv;
-          if (fetchDetails) {
-            const dRes = await fetch(
-              `${cfg.booksApiBaseUrl}/invoices/${invId}?organization_id=${cfg.organizationId}`,
-              { headers: { Authorization: `Zoho-oauthtoken ${token}` } },
-            );
-            if (dRes.ok) {
-              const dJson = await dRes.json();
-              if (dJson.invoice) detail = { ...inv, ...dJson.invoice };
-            }
+          let detail: any = inv;
+          const dRes = await fetch(
+            `${cfg.booksApiBaseUrl}/invoices/${invId}?organization_id=${cfg.organizationId}`,
+            { headers: { Authorization: `Zoho-oauthtoken ${token}` } },
+          );
+          if (dRes.ok) {
+            const dJson = await dRes.json();
+            if (dJson.invoice) detail = { ...inv, ...dJson.invoice };
+          } else {
+            await dRes.text();
           }
+
+          // Skip non-recurring invoices
+          if (!detail.recurring_invoice_id) continue;
 
           const lineItems: any[] = detail.line_items ?? [];
           const deviceName = lineItems.length > 0
