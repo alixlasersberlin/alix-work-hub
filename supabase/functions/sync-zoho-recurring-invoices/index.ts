@@ -30,11 +30,12 @@ function getZohoConfig(source: string) {
   };
   const c = map[source];
   if (!c) return null;
+  const getEnv = (key: string) => (Deno.env.get(key) ?? "").trim();
   return {
-    clientId: Deno.env.get(`${c.prefix}_CLIENT_ID`) ?? "",
-    clientSecret: Deno.env.get(`${c.prefix}_CLIENT_SECRET`) ?? "",
-    refreshToken: Deno.env.get(`${c.prefix}_REFRESH_TOKEN`) ?? "",
-    organizationId: Deno.env.get(`${c.prefix}_ORGANIZATION_ID`) ?? "",
+    clientId: getEnv(`${c.prefix}_CLIENT_ID`),
+    clientSecret: getEnv(`${c.prefix}_CLIENT_SECRET`),
+    refreshToken: getEnv(`${c.prefix}_REFRESH_TOKEN`),
+    organizationId: getEnv(`${c.prefix}_ORGANIZATION_ID`),
     accountsBaseUrl: c.accountsBase,
     booksApiBaseUrl: c.apiBase,
   };
@@ -42,6 +43,9 @@ function getZohoConfig(source: string) {
 
 async function getAccessToken(cfg: ReturnType<typeof getZohoConfig>) {
   if (!cfg) throw new Error("Zoho config missing");
+  if (!cfg.clientId || !cfg.clientSecret || !cfg.refreshToken || !cfg.organizationId) {
+    throw new Error("Zoho config incomplete for selected source system");
+  }
   const res = await fetch(`${cfg.accountsBaseUrl}/oauth/v2/token`, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -53,6 +57,16 @@ async function getAccessToken(cfg: ReturnType<typeof getZohoConfig>) {
     }),
   });
   const data = await res.json();
+  if (data?.error === "invalid_code") {
+    throw new Response(JSON.stringify({
+      error: "Zoho refresh token invalid or revoked",
+      code: "ZOHO_REFRESH_TOKEN_INVALID",
+      hint: "Please generate a fresh long-lived refresh token for the same Zoho region and OAuth client, then update the project secret.",
+    }), {
+      status: 502,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
   if (!data.access_token) throw new Error(`Zoho token error: ${JSON.stringify(data)}`);
   return data.access_token as string;
 }
@@ -200,6 +214,7 @@ Deno.serve(async (req) => {
 
     return json({ success: true, imported, updated, failed, last_page: page - 1, has_more: hasMore });
   } catch (e: any) {
+    if (e instanceof Response) return e;
     console.error(e);
     return json({ error: e?.message ?? "Unknown error" }, 500);
   }
