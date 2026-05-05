@@ -117,7 +117,7 @@ Deno.serve(async (req) => {
       }
 
       for (const r of data.records ?? []) {
-        const name = r.fields?.[FIELD];
+        const name = r.fields?.[fieldTrim];
         if (typeof name === "string" && name.trim()) {
           models.push({ id: r.id, name: name.trim() });
         }
