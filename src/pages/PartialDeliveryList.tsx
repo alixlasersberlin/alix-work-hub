@@ -2,8 +2,11 @@ import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
-import { PackageCheck, Search, Loader2, Inbox, ArrowUpDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { PackageCheck, Search, Loader2, Inbox, ArrowUpDown, Pencil } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
+import { useAuth } from '@/hooks/useAuth';
+import OrderItemsEditDialog from '@/components/OrderItemsEditDialog';
 
 type SortField = 'order_number' | 'expected_shipment_date' | 'total_amount';
 type SortDir = 'asc' | 'desc';
