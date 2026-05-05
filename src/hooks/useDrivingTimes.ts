@@ -12,10 +12,10 @@ type DrivingTimeMap = Record<string, DrivingResult | null>;
 function resolveAddress(order: any): string | null {
   const hasAddr = (a: any) => a && (a.city || a.address || a.street || a.zip || a.postal_code);
   const addr =
-    (hasAddr(order.shipping_address) ? order.shipping_address : null) ||
     (hasAddr(order.customers?.shipping_address) ? order.customers?.shipping_address : null) ||
-    (hasAddr(order.billing_address) ? order.billing_address : null) ||
-    (hasAddr(order.customers?.billing_address) ? order.customers?.billing_address : null);
+    (hasAddr(order.customers?.billing_address) ? order.customers?.billing_address : null) ||
+    (hasAddr(order.shipping_address) ? order.shipping_address : null) ||
+    (hasAddr(order.billing_address) ? order.billing_address : null);
 
   if (!addr) return null;
   if (typeof addr === 'string') return addr;
