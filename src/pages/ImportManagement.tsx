@@ -529,6 +529,7 @@ export default function ImportManagement() {
           <TabsTrigger value="overview">Übersicht</TabsTrigger>
           <TabsTrigger value="logs">Import-Protokoll</TabsTrigger>
           {canWrite && <TabsTrigger value="actions">Import-Aktionen</TabsTrigger>}
+          {canWrite && <TabsTrigger value="invoices">Rechnung Import</TabsTrigger>}
           {canWrite && <TabsTrigger value="sync">Einzel-Sync</TabsTrigger>}
         </TabsList>
 
