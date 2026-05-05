@@ -43,7 +43,7 @@ export default function PartialDeliveryList() {
       setLoading(false);
     }
     load();
-  }, [sortField, sortDir]);
+  }, [sortField, sortDir, reloadKey]);
 
   const filtered = useMemo(() => orders.filter(o => {
     if (!search) return true;
