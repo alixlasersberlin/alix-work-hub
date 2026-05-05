@@ -40,6 +40,7 @@ import ProductionOrderDetail from "./pages/ProductionOrderDetail";
 import ProductionTimeline from "./pages/ProductionTimeline";
 import ProductionPortal from "./pages/ProductionPortal";
 import Suppliers from "./pages/Suppliers";
+import Lager from "./pages/Lager";
 import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
@@ -139,6 +140,7 @@ function AppRoutes() {
         <Route path="/order/:id" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><ProductionOrderDetail /></ProtectedRoute>} />
         <Route path="/order/:id/bearbeiten" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><ProductionOrderForm /></ProtectedRoute>} />
         <Route path="/production" element={<ProtectedRoute requiredRoles={PRODUCTION_ROLES}><ProductionPortal /></ProtectedRoute>} />
+        <Route path="/lager" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Lager /></ProtectedRoute>} />
       </Route>
       <Route path="/unsubscribe" element={<Unsubscribe />} />
       <Route path="*" element={<NotFound />} />
