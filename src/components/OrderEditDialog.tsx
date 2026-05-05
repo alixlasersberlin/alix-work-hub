@@ -103,35 +103,6 @@ export default function OrderEditDialog({ order, open, onClose, onSaved }: Props
               className="bg-secondary border-border mt-1 font-mono uppercase"
             />
           </div>
-          <div className="border-t border-border pt-3 space-y-2">
-            <Label className="text-xs text-muted-foreground">Invoice (PDF)</Label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <Button type="button" variant="outline" size="sm" disabled={uploading} asChild>
-                <span>
-                  {uploading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
-                  PDF hochladen
-                </span>
-              </Button>
-              <input type="file" accept="application/pdf" className="hidden" onChange={handleUploadInvoice} />
-            </label>
-            {isAdmin && invoices.length > 0 && (
-              <div className="space-y-1">
-                {invoices.map(inv => (
-                  <div key={inv.path} className="flex items-center gap-2 text-xs bg-secondary/40 rounded px-2 py-1">
-                    <FileText className="w-3 h-3 text-muted-foreground" />
-                    <span className="flex-1 truncate">{inv.name}</span>
-                    <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => downloadInvoice(inv.path, inv.name)}>
-                      <Download className="w-3 h-3" />
-                    </Button>
-                    <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => deleteInvoice(inv.path)}>
-                      <Trash2 className="w-3 h-3" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-            {!isAdmin && <p className="text-xs text-muted-foreground">Hochgeladene Rechnungen sind nur für Admins sichtbar.</p>}
-          </div>
           <div className="flex justify-end gap-2 pt-4">
             <Button variant="ghost" onClick={onClose}>Abbrechen</Button>
             <Button onClick={handleSave} disabled={saving} className="gold-gradient text-primary-foreground">
