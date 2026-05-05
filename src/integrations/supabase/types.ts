@@ -329,6 +329,45 @@ export type Database = {
           },
         ]
       }
+      invoice_workflow_states: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          invoice_key: string
+          invoice_number: string | null
+          note: string | null
+          source: string
+          updated_at: string
+          updated_by: string | null
+          workflow_status: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invoice_key: string
+          invoice_number?: string | null
+          note?: string | null
+          source: string
+          updated_at?: string
+          updated_by?: string | null
+          workflow_status?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invoice_key?: string
+          invoice_number?: string | null
+          note?: string | null
+          source?: string
+          updated_at?: string
+          updated_by?: string | null
+          workflow_status?: string
+        }
+        Relationships: []
+      }
       lager_devices: {
         Row: {
           airtable_record_id: string | null
