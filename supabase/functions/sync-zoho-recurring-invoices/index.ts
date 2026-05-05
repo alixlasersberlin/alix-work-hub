@@ -41,22 +41,44 @@ function getZohoConfig(source: string) {
   };
 }
 
+// Module-level token cache: survives across warm invocations, dramatically
+// reducing calls to Zoho's heavily rate-limited /oauth/v2/token endpoint.
+const tokenCache = new Map<string, { token: string; expiresAt: number }>();
+
 async function getAccessToken(cfg: ReturnType<typeof getZohoConfig>) {
   if (!cfg) throw new Error("Zoho config missing");
   if (!cfg.clientId || !cfg.clientSecret || !cfg.refreshToken || !cfg.organizationId) {
     throw new Error("Zoho config incomplete for selected source system");
   }
-  const res = await fetch(`${cfg.accountsBaseUrl}/oauth/v2/token`, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      refresh_token: cfg.refreshToken,
-      client_id: cfg.clientId,
-      client_secret: cfg.clientSecret,
-      grant_type: "refresh_token",
-    }),
-  });
-  const data = await res.json();
+  const cacheKey = `${cfg.accountsBaseUrl}|${cfg.clientId}|${cfg.refreshToken}`;
+  const cached = tokenCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now() + 60_000) {
+    return cached.token;
+  }
+
+  // Retry with backoff on rate-limit
+  let data: any = null;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const res = await fetch(`${cfg.accountsBaseUrl}/oauth/v2/token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        refresh_token: cfg.refreshToken,
+        client_id: cfg.clientId,
+        client_secret: cfg.clientSecret,
+        grant_type: "refresh_token",
+      }),
+    });
+    data = await res.json();
+    const errDesc = (data?.error_description ?? "").toString().toLowerCase();
+    if (data?.access_token) break;
+    if (errDesc.includes("too many requests") || data?.error === "Access Denied") {
+      await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
+      continue;
+    }
+    break;
+  }
+
   if (data?.error === "invalid_code") {
     throw new Response(JSON.stringify({
       error: "Zoho refresh token invalid or revoked",
