@@ -27,6 +27,7 @@ interface PrioOrder {
     shipping_address: any;
     billing_address: any;
   } | null;
+  order_items: { item_name: string | null; description: string | null; sku: string | null }[] | null;
 }
 
 function formatDate(date: string | null) {
