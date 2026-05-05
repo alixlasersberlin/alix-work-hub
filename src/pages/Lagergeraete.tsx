@@ -128,11 +128,13 @@ export default function Lagergeraete() {
 
     setSaving(true);
     const { data: userData } = await supabase.auth.getUser();
-    const { error } = await supabase.from('lager_devices').insert({
-      ...parsed.data,
-      created_by: userData.user?.id,
-      updated_by: userData.user?.id,
-    });
+    const { error } = await supabase.from('lager_devices').insert([
+      {
+        ...parsed.data,
+        created_by: userData.user?.id,
+        updated_by: userData.user?.id,
+      },
+    ]);
     setSaving(false);
 
     if (error) {
