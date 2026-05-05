@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { PageHeader, PageLoading, PageError, DataCard } from '@/components/PageShell';
-import { FileText, RefreshCw, Search } from 'lucide-react';
+import { FileText, RefreshCw, Search, ArrowRightLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -82,6 +82,28 @@ export default function Invoices() {
   }, [rows, search]);
 
   const visible = useMemo(() => pageSize === 'all' ? filtered : filtered.slice(0, pageSize), [filtered, pageSize]);
+
+  const handleMove = async (r: Row) => {
+    if (!isAdmin) return;
+    if (!confirm(`Rechnung ${r.invoice_number ?? ''} nach Ratenzahler verschieben?`)) return;
+    try {
+      const { data: full, error: fetchErr } = await supabase
+        .from('zoho_invoices').select('*').eq('id', r.id).maybeSingle();
+      if (fetchErr || !full) throw fetchErr ?? new Error('Datensatz nicht gefunden');
+      const { id, created_at, updated_at, synced_at, ...rest } = full as any;
+      const { error: insErr } = await supabase.from('zoho_recurring_invoices').upsert(
+        { ...rest, synced_at: new Date().toISOString() },
+        { onConflict: 'source_system,zoho_invoice_id' },
+      );
+      if (insErr) throw insErr;
+      const { error: delErr } = await supabase.from('zoho_invoices').delete().eq('id', r.id);
+      if (delErr) throw delErr;
+      toast({ title: 'Verschoben', description: `Rechnung nach Ratenzahler verschoben.` });
+      setRows((prev) => prev.filter((x) => x.id !== r.id));
+    } catch (e: any) {
+      toast({ title: 'Verschieben fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
+    }
+  };
 
   const handleImport = async () => {
     setImporting(true);
@@ -179,11 +201,12 @@ export default function Invoices() {
                   <th className="text-right px-4 py-3 font-medium">Betrag</th>
                   <th className="text-right px-4 py-3 font-medium">Saldo</th>
                   <th className="text-left px-4 py-3 font-medium">Zahlungsstatus</th>
+                  {isAdmin && <th className="text-right px-4 py-3 font-medium">Aktion</th>}
                 </tr>
               </thead>
               <tbody>
                 {visible.length === 0 ? (
-                  <tr><td colSpan={9} className="px-4 py-12 text-center text-muted-foreground">
+                  <tr><td colSpan={isAdmin ? 10 : 9} className="px-4 py-12 text-center text-muted-foreground">
                     Keine Daten. Klicken Sie auf „Aus Zoho importieren", um zu starten.
                   </td></tr>
                 ) : visible.map((r) => (
@@ -201,6 +224,13 @@ export default function Invoices() {
                         {r.payment_status ?? '–'}
                       </Badge>
                     </td>
+                    {isAdmin && (
+                      <td className="px-4 py-3 text-right">
+                        <Button size="sm" variant="outline" onClick={() => handleMove(r)}>
+                          <ArrowRightLeft className="w-3.5 h-3.5 mr-1" /> VERSCHIEBE
+                        </Button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
