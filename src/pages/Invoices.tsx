@@ -105,6 +105,7 @@ export default function Invoices() {
     }
   };
 
+  const handleImport = async () => {
     setImporting(true);
     setProgress('Starte Import…');
     try {
