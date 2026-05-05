@@ -112,19 +112,19 @@ Deno.serve(async (req) => {
     let hasMore = true;
 
     while (hasMore && page <= (body.page ?? 1) + maxPages - 1) {
-      // Filter invoices that came from a recurring profile, since dateFrom
       const url = `${cfg.booksApiBaseUrl}/invoices?organization_id=${cfg.organizationId}` +
         `&page=${page}&per_page=${perPage}` +
         `&date_after=${dateFrom}` +
-        `&filter_by=Status.All&is_recurring=true`;
+        `&filter_by=Status.All`;
 
       const res = await fetch(url, { headers: { Authorization: `Zoho-oauthtoken ${token}` } });
       if (!res.ok) {
         const t = await res.text();
-        return json({ error: `Zoho list error page ${page}: ${t.substring(0, 400)}` }, 502);
+        return json({ error: `Zoho list error page ${page}: ${t.substring(0, 400)}`, hint: "Code 57 = OAuth-Scope fehlt. Refresh-Token braucht ZohoBooks.invoices.READ." }, 502);
       }
       const data = await res.json();
-      const invoices: any[] = data.invoices ?? [];
+      // Only keep invoices generated from a recurring profile
+      const invoices: any[] = (data.invoices ?? []).filter((inv: any) => !!inv.recurring_invoice_id);
       hasMore = data.page_context?.has_more_page === true;
 
       for (const inv of invoices) {
