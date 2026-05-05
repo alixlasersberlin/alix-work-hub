@@ -142,7 +142,34 @@ export default function ZohoUnpaidInvoices() {
   const totalOpen = filtered.reduce((sum, r) => sum + Number(r.balance ?? 0), 0);
   const totalSum = filtered.reduce((sum, r) => sum + Number(r.total ?? 0), 0);
 
+  const grouped = useMemo(() => {
+    const map = new Map<string, { name: string; rows: Row[]; total: number; open: number; oldest: number | null }>();
+    for (const r of filtered) {
+      const key = r.customer_name ?? "—";
+      const g = map.get(key) ?? { name: key, rows: [], total: 0, open: 0, oldest: null };
+      g.rows.push(r);
+      g.total += Number(r.total ?? 0);
+      g.open += Number(r.balance ?? 0);
+      const a = ageDays(r.invoice_date);
+      if (a != null && (g.oldest == null || a > g.oldest)) g.oldest = a;
+      map.set(key, g);
+    }
+    let arr = Array.from(map.values());
+    const dir = sortDir === "asc" ? 1 : -1;
+    arr.sort((a, b) => {
+      if (sortKey === "customer") return a.name.localeCompare(b.name, "de") * dir;
+      if (sortKey === "total") return (a.total - b.total) * dir;
+      return ((a.oldest ?? -1) - (b.oldest ?? -1)) * dir;
+    });
+    return arr;
+  }, [filtered, sortKey, sortDir]);
+
   const clearDates = () => { setDateFrom(undefined); setDateTo(undefined); };
+  const toggleAll = (open: boolean) => {
+    const next: Record<string, boolean> = {};
+    grouped.forEach((g) => { next[g.name] = open; });
+    setExpanded(next);
+  };
 
   return (
     <div className="container mx-auto p-6">
