@@ -87,10 +87,20 @@ export default function Lagergeraete() {
   }, []);
 
   const resetForm = () => {
+    setEditingId(null);
     setSerial('');
     setModelName('');
     setEntryDate(today);
     setNotes('');
+  };
+
+  const openEdit = (d: LagerDevice) => {
+    setEditingId(d.id);
+    setSerial(d.serial_number);
+    setModelName(d.model_name);
+    setEntryDate(d.entry_date);
+    setNotes(d.notes ?? '');
+    setOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
