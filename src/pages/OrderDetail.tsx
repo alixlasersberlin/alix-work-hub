@@ -32,7 +32,7 @@ export default function OrderDetail() {
   const [history, setHistory] = useState<any[]>([]);
   const [poCount, setPoCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'items' | 'notes' | 'history' | 'raw'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'items' | 'packages' | 'notes' | 'history' | 'raw'>('overview');
 
   // Note form
   const [newNote, setNewNote] = useState('');
@@ -121,9 +121,12 @@ export default function OrderDetail() {
   };
 
 
+  const packages: any[] = Array.isArray(order?.raw_data?.packages) ? order.raw_data.packages : [];
+
   const tabs = [
     { key: 'overview', label: 'Übersicht', icon: ClipboardList },
     { key: 'items', label: `Artikel (${items.length})`, icon: Package },
+    { key: 'packages', label: `Pakete (${packages.length})`, icon: Truck },
     { key: 'notes', label: `Notizen (${notes.length})`, icon: FileText },
     { key: 'history', label: `Historie (${history.length})`, icon: History },
     ...(isAdmin ? [{ key: 'raw', label: 'Rohdaten', icon: Shield }] : []),
@@ -346,6 +349,73 @@ export default function OrderDetail() {
                   Gesamt: {items.reduce((s, i) => s + (Number(i.amount) || 0), 0).toLocaleString('de-DE', { style: 'currency', currency: order.currency || 'EUR' })}
                 </div>
               </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Packages Tab */}
+      {activeTab === 'packages' && (
+        <div className="rounded-xl border border-border bg-card p-6 card-glow">
+          <h2 className="text-base font-display font-bold text-foreground flex items-center gap-2 mb-4">
+            <Truck className="w-4 h-4 text-primary" /> Pakete & Sendungen
+          </h2>
+          {packages.length === 0 ? (
+            <div className="text-center py-8">
+              <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
+              <p className="text-muted-foreground">Keine Pakete vorhanden.</p>
+              <p className="text-xs text-muted-foreground mt-1">Pakete werden täglich um 23:32 aus Zoho Books synchronisiert.</p>
+            </div>
+          ) : (
+            <div className="overflow-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Paket-Nr.</TableHead>
+                    <TableHead>Sendung</TableHead>
+                    <TableHead>Menge</TableHead>
+                    <TableHead>Datum</TableHead>
+                    <TableHead>Versand</TableHead>
+                    <TableHead>Lieferung</TableHead>
+                    <TableHead>Carrier</TableHead>
+                    <TableHead>Tracking</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {packages.map((p: any) => {
+                    const so = p.shipment_order || {};
+                    const tracking = p.tracking_number || so.tracking_number;
+                    const trackingUrl = so.tracking_url;
+                    const status = (p.shipment_status || p.status || '').toString();
+                    return (
+                      <TableRow key={p.package_id}>
+                        <TableCell className="font-medium text-foreground">{p.package_number || '—'}</TableCell>
+                        <TableCell className="text-muted-foreground">{p.shipment_number || '—'}</TableCell>
+                        <TableCell className="text-right">{p.quantity != null ? Number(p.quantity).toLocaleString('de-DE') : '—'}</TableCell>
+                        <TableCell className="text-muted-foreground">{p.date ? new Date(p.date).toLocaleDateString('de-DE') : '—'}</TableCell>
+                        <TableCell className="text-muted-foreground">{p.shipment_date ? new Date(p.shipment_date).toLocaleDateString('de-DE') : '—'}</TableCell>
+                        <TableCell className="text-muted-foreground">{so.delivery_date_with_time || so.delivery_date || '—'}</TableCell>
+                        <TableCell className="text-muted-foreground">{p.carrier || p.delivery_method || '—'}</TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {tracking ? (
+                            trackingUrl ? <a href={trackingUrl} target="_blank" rel="noreferrer" className="text-primary hover:underline">{tracking}</a> : tracking
+                          ) : '—'}
+                        </TableCell>
+                        <TableCell>
+                          <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium capitalize ${
+                            status === 'delivered' ? 'bg-emerald-500/10 text-emerald-400' :
+                            status === 'shipped' ? 'bg-blue-500/10 text-blue-400' :
+                            'bg-muted text-muted-foreground'
+                          }`}>
+                            {status === 'delivered' ? 'Geliefert' : status === 'shipped' ? 'Versendet' : (status || '—')}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
             </div>
           )}
         </div>
