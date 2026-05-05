@@ -89,7 +89,9 @@ async function getAccessToken(cfg: ReturnType<typeof getZohoConfig>) {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
-  if (!data.access_token) throw new Error(`Zoho token error: ${JSON.stringify(data)}`);
+  if (!data?.access_token) throw new Error(`Zoho token error: ${JSON.stringify(data)}`);
+  const ttlMs = ((data.expires_in ?? 3600) as number) * 1000;
+  tokenCache.set(cacheKey, { token: data.access_token, expiresAt: Date.now() + ttlMs });
   return data.access_token as string;
 }
 
