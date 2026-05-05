@@ -646,7 +646,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
           <div><Label>Liefertermin *</Label><Input type="date" value={form.liefertermin} onChange={e => setForm({ ...form, liefertermin: e.target.value })} /></div>
           <div><Label>Seriennummer</Label><Input value={form.seriennummer} onChange={e => setForm({ ...form, seriennummer: e.target.value })} /></div>
           <div>
-            <Label>Payment Status *</Label>
+            <Label>Hersteller Payment erhalten *</Label>
             <Select value={form.payment_status} onValueChange={v => setForm({ ...form, payment_status: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
