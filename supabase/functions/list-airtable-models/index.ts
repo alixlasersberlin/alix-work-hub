@@ -81,10 +81,10 @@ Deno.serve(async (req) => {
 
     do {
       const url = new URL(
-        `${GATEWAY_URL}/v0/${BASE_ID}/${encodeURIComponent(TABLE)}`,
+        `${GATEWAY_URL}/v0/${baseIdTrim}/${encodeURIComponent(tableTrim)}`,
       );
       url.searchParams.set("pageSize", "100");
-      url.searchParams.set("fields[]", FIELD);
+      url.searchParams.set("fields[]", fieldTrim);
       if (offset) url.searchParams.set("offset", offset);
 
       const res = await fetch(url.toString(), {
@@ -95,7 +95,25 @@ Deno.serve(async (req) => {
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(`Airtable error [${res.status}]: ${JSON.stringify(data)}`);
+        const upstream = data?.error;
+        const upstreamType = typeof upstream === "object" ? upstream?.type : undefined;
+        const upstreamMsg = typeof upstream === "object" ? upstream?.message : upstream;
+
+        let hint = "";
+        if (res.status === 401) {
+          hint = "Token ungültig oder abgelaufen. Bitte den Airtable-Connector neu verbinden.";
+        } else if (res.status === 403 || upstreamType === "INVALID_PERMISSIONS_OR_MODEL_NOT_FOUND") {
+          hint = `Airtable verweigert den Zugriff. Bitte prüfen: (1) Base-ID "${baseIdTrim}" ist korrekt, (2) Tabelle "${tableTrim}" existiert exakt so, (3) der Airtable-Connector hat Zugriff auf diese Base (ggf. neu verbinden und Base auswählen).`;
+        } else if (res.status === 404) {
+          hint = `Tabelle "${tableTrim}" oder Base "${baseIdTrim}" nicht gefunden.`;
+        } else if (res.status === 422 && /UNKNOWN_FIELD_NAME/i.test(JSON.stringify(data))) {
+          hint = `Feld "${fieldTrim}" existiert nicht in Tabelle "${tableTrim}". AIRTABLE_MODELS_FIELD prüfen.`;
+        }
+
+        return jsonResp(res.status, {
+          error: hint || `Airtable error [${res.status}]: ${upstreamMsg ?? JSON.stringify(data)}`,
+          models: [],
+        });
       }
 
       for (const r of data.records ?? []) {
