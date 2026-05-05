@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2, RefreshCw, AlertCircle } from "lucide-react";
-import PageShell from "@/components/PageShell";
+import { PageHeader } from "@/components/PageShell";
 
 type Row = {
   id: string;
@@ -83,7 +83,8 @@ export default function ZohoUnpaidInvoices() {
   const totalOpen = filtered.reduce((sum, r) => sum + Number(r.balance ?? 0), 0);
 
   return (
-    <PageShell title="Unbezahlte Rechnungen (Zoho)" description="Direkter Abgleich aus Zoho Books – Status: unpaid">
+    <div className="container mx-auto p-6">
+      <PageHeader title="Unbezahlte Rechnungen (Zoho)" subtitle="Direkter Abgleich aus Zoho Books – Status: unpaid" />
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4 flex-wrap">
           <div>
@@ -153,6 +154,6 @@ export default function ZohoUnpaidInvoices() {
           </div>
         </CardContent>
       </Card>
-    </PageShell>
+    </div>
   );
 }
