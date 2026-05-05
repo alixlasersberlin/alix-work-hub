@@ -54,6 +54,7 @@ export default function Invoices() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [pageSize, setPageSize] = useState<PageSize>(30);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [importing, setImporting] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
 
@@ -74,12 +75,18 @@ export default function Invoices() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter((r) =>
-      [r.customer_name, r.city, r.reference_number, r.invoice_number]
-        .some((v) => (v ?? '').toLowerCase().includes(q))
-    );
-  }, [rows, search]);
+    let res = rows;
+    if (statusFilter !== 'all') {
+      res = res.filter((r) => (r.payment_status ?? '').toLowerCase() === statusFilter.toLowerCase());
+    }
+    if (q) {
+      res = res.filter((r) =>
+        [r.customer_name, r.city, r.reference_number, r.invoice_number]
+          .some((v) => (v ?? '').toLowerCase().includes(q))
+      );
+    }
+    return res;
+  }, [rows, search, statusFilter]);
 
   const visible = useMemo(() => pageSize === 'all' ? filtered : filtered.slice(0, pageSize), [filtered, pageSize]);
 
@@ -164,6 +171,21 @@ export default function Invoices() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input value={search} onChange={(e) => setSearch(e.target.value)}
               placeholder="Suche: Name, Ort, Rechnungs-/Referenznr.…" className="pl-9" />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">Status:</span>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle</SelectItem>
+                <SelectItem value="Bezahlt">Bezahlt</SelectItem>
+                <SelectItem value="Offen">Unbezahlt / Offen</SelectItem>
+                <SelectItem value="Überfällig">Überfällig</SelectItem>
+                <SelectItem value="Teilweise bezahlt">Teilweise bezahlt</SelectItem>
+                <SelectItem value="sent">Gesendet</SelectItem>
+                <SelectItem value="pending">Ausstehend</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground whitespace-nowrap">Anzeige:</span>
