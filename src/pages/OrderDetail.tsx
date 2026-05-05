@@ -44,6 +44,32 @@ export default function OrderDetail() {
   const [shipDateValue, setShipDateValue] = useState('');
   const [editOpen, setEditOpen] = useState(false);
   const [deferOpen, setDeferOpen] = useState(false);
+  const [reconciling, setReconciling] = useState(false);
+
+  async function reconcilePackages() {
+    if (!order?.id) return;
+    if (!confirm('Pakete mit Artikeln abgleichen? Geliefertes wird verbucht, offene Artikel werden in einem neuen Auftrag (-1) angelegt.')) return;
+    setReconciling(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('reconcile-order-packages', {
+        body: { order_id: order.id },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).message || (data as any).error);
+      const d: any = data;
+      if (d?.new_order_id) {
+        toast.success(`Restauftrag ${d.new_order_number} angelegt (${d.remaining_items_count} offene Artikel).`);
+        setTimeout(() => navigate(`/auftraege/${d.new_order_id}`), 1500);
+      } else {
+        toast.success('Alle Artikel als geliefert verbucht. Kein Restauftrag nötig.');
+        await loadAll();
+      }
+    } catch (e: any) {
+      toast.error('Abgleich fehlgeschlagen: ' + (e?.message ?? e));
+    } finally {
+      setReconciling(false);
+    }
+  }
 
   useEffect(() => {
     if (!id) return;
