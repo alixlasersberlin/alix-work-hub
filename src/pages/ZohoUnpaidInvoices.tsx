@@ -280,6 +280,20 @@ export default function ZohoUnpaidInvoices() {
                 <X className="h-4 w-4 mr-1" /> Filter zurücksetzen
               </Button>
             )}
+
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-muted-foreground">Anzeige</label>
+              <div className="flex items-center gap-2 h-10">
+                <Switch id="grp" checked={groupByCustomer} onCheckedChange={setGroupByCustomer} />
+                <label htmlFor="grp" className="text-sm cursor-pointer">Nach Kunde gruppieren</label>
+              </div>
+            </div>
+            {groupByCustomer && (
+              <div className="flex gap-1">
+                <Button variant="outline" size="sm" onClick={() => toggleAll(true)}>Alle auf</Button>
+                <Button variant="outline" size="sm" onClick={() => toggleAll(false)}>Alle zu</Button>
+              </div>
+            )}
           </div>
         </CardHeader>
         <CardContent>
