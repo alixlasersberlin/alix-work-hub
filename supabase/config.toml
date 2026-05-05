@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.handle-email-suppression]
 verify_jwt = false
+
+[functions.scheduled-recurring-invoice-sync]
+verify_jwt = false
