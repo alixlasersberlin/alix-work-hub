@@ -23,6 +23,7 @@ import Finance from "./pages/Finance";
 import Ratenzahler from "./pages/Ratenzahler";
 import Invoices from "./pages/Invoices";
 import OffenePosten from "./pages/OffenePosten";
+import ZohoUnpaidInvoices from "./pages/ZohoUnpaidInvoices";
 import FinanceDetail from "./pages/FinanceDetail";
 import FinanceForm from "./pages/FinanceForm";
 import UserManagement from "./pages/UserManagement";
@@ -125,6 +126,7 @@ function AppRoutes() {
         <Route path="/finance/ratenzahler" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Ratenzahler /></ProtectedRoute>} />
         <Route path="/finance/rechnungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Invoices /></ProtectedRoute>} />
         <Route path="/finance/offene-posten" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><OffenePosten /></ProtectedRoute>} />
+        <Route path="/finance/unpaid-zoho" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><ZohoUnpaidInvoices /></ProtectedRoute>} />
         <Route path="/finance/neu" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Finance']}><FinanceForm /></ProtectedRoute>} />
         <Route path="/finance/:id" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceDetail /></ProtectedRoute>} />
         <Route path="/finance/:id/bearbeiten" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Finance']}><FinanceForm /></ProtectedRoute>} />
