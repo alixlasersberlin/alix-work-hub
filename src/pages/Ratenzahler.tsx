@@ -218,12 +218,13 @@ export default function Ratenzahler() {
                   <th className="text-right px-4 py-3 font-medium">Betrag</th>
                   <th className="text-right px-4 py-3 font-medium">Saldo</th>
                   <th className="text-left px-4 py-3 font-medium">Zahlungsstatus</th>
+                  {isAdmin && <th className="text-right px-4 py-3 font-medium">Aktion</th>}
                 </tr>
               </thead>
               <tbody>
                 {visible.length === 0 ? (
                   <tr>
-                    <td colSpan={10} className="px-4 py-12 text-center text-muted-foreground">
+                    <td colSpan={isAdmin ? 11 : 10} className="px-4 py-12 text-center text-muted-foreground">
                       Keine Daten. Klicken Sie auf „Aus Zoho importieren", um zu starten.
                     </td>
                   </tr>
@@ -244,6 +245,13 @@ export default function Ratenzahler() {
                           {r.payment_status ?? '–'}
                         </Badge>
                       </td>
+                      {isAdmin && (
+                        <td className="px-4 py-3 text-right">
+                          <Button size="sm" variant="outline" onClick={() => handleMove(r)}>
+                            <ArrowRightLeft className="w-3.5 h-3.5 mr-1" /> VERSCHIEBE
+                          </Button>
+                        </td>
+                      )}
                     </tr>
                   ))
                 )}
