@@ -167,11 +167,17 @@ export default function OffenePosten() {
 
   return (
     <div className="p-4 sm:p-6 space-y-6">
-      <PageHeader
-        icon={<FileText className="w-5 h-5" />}
-        title="Offene Posten"
-        subtitle="Alle fälligen Rechnungen, farblich nach Fälligkeit"
-      />
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <PageHeader
+          icon={<FileText className="w-5 h-5" />}
+          title="Offene Posten"
+          subtitle="Alle fälligen Rechnungen, farblich nach Fälligkeit"
+        />
+        <Button onClick={handleSync} disabled={syncing} className="gap-2">
+          {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+          Aus Zoho importieren (ab 01.01.2026)
+        </Button>
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-lg border border-border bg-card p-4">
