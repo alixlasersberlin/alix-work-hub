@@ -246,6 +246,7 @@ export default function Lagergeraete() {
                 <TableHead>Modell</TableHead>
                 <TableHead>Eingangsdatum</TableHead>
                 <TableHead>Notizen</TableHead>
+                <TableHead className="w-24 text-right">Aktionen</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -258,6 +259,11 @@ export default function Lagergeraete() {
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {d.notes ?? '—'}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="sm" onClick={() => openEdit(d)} className="gap-1">
+                      <Pencil className="w-4 h-4" /> Bearbeiten
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
