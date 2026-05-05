@@ -9,6 +9,7 @@ const corsHeaders = {
 type Payload = {
   source_system?: "zoho_eu_1" | "zoho_eu_2" | "zoho_us_1";
   date_from?: string;
+  date_to?: string;
   page?: number;
   per_page?: number;
   max_pages?: number;
