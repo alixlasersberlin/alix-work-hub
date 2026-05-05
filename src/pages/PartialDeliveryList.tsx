@@ -24,6 +24,9 @@ export default function PartialDeliveryList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { isAdmin } = useAuth();
+  const [editOrder, setEditOrder] = useState<{ id: string; order_number: string | null } | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     async function load() {
