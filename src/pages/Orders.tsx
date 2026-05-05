@@ -75,13 +75,32 @@ export default function Orders() {
   const statuses = [...new Set(orders.map(o => o.order_status).filter(Boolean))]
     .filter(s => !EXCLUDED_STATUSES.includes(s.toLowerCase()));
 
+  const resolveCity = (order: any): string => {
+    const hasAddr = (a: any) => a && (a.city || a.address || a.street);
+    const addr =
+      (hasAddr(order.shipping_address) ? order.shipping_address : null) ||
+      (hasAddr(order.customers?.shipping_address) ? order.customers?.shipping_address : null) ||
+      (hasAddr(order.billing_address) ? order.billing_address : null) ||
+      (hasAddr(order.customers?.billing_address) ? order.customers?.billing_address : null);
+    if (!addr) return '';
+    if (typeof addr === 'string') return addr;
+    return addr.city || addr.state || '';
+  };
+
   const filtered = orders.filter(o => {
     const q = search.toLowerCase();
+    const modelMatch = o.order_items?.some((it: any) =>
+      it.item_name?.toLowerCase().includes(q) ||
+      it.description?.toLowerCase().includes(q) ||
+      it.sku?.toLowerCase().includes(q)
+    );
     const matchSearch = !search ||
       o.order_number?.toLowerCase().includes(q) ||
       o._displayNumber?.toLowerCase().includes(q) ||
       o.customers?.company_name?.toLowerCase().includes(q) ||
-      o.customers?.contact_name?.toLowerCase().includes(q);
+      o.customers?.contact_name?.toLowerCase().includes(q) ||
+      resolveCity(o)?.toLowerCase().includes(q) ||
+      modelMatch;
     const matchStatus = statusFilter === 'all' || o.order_status === statusFilter;
     const notExcluded = !EXCLUDED_STATUSES.includes((o.order_status || '').toLowerCase());
     return matchSearch && matchStatus && notExcluded;
