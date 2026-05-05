@@ -191,7 +191,9 @@ Deno.serve(async (req) => {
     while (hasMore && page <= startPage + maxPages - 1) {
       if (Date.now() - startedAt > SOFT_DEADLINE_MS) break;
       const url = `${cfg.booksApiBaseUrl}/invoices?organization_id=${cfg.organizationId}` +
-        `&page=${page}&per_page=${perPage}&date_after=${dateFrom}&filter_by=Status.All&sort_column=date&sort_order=A`;
+        `&page=${page}&per_page=${perPage}&date_after=${dateFrom}` +
+        (dateTo ? `&date_before=${dateTo}` : "") +
+        `&filter_by=Status.All&sort_column=date&sort_order=A`;
       const r = await fetch(url, { headers: authH });
       if (!r.ok) {
         const t = await r.text();
