@@ -51,7 +51,7 @@ type LagerDevice = {
   created_at: string;
   reserved_order_id: string | null;
   reservation_week: string | null;
-  orders?: { id: string; order_number: string } | null;
+  orders?: { id: string; order_number: string; customer_name?: string | null } | null;
 };
 
 function formatWeek(w: string | null | undefined): string {
@@ -233,13 +233,19 @@ export default function Lagergeraete() {
     }
     const rows = (data ?? []) as any[];
     const orderIds = Array.from(new Set(rows.map((r) => r.reserved_order_id).filter(Boolean)));
-    let orderMap: Record<string, { id: string; order_number: string }> = {};
+    let orderMap: Record<string, { id: string; order_number: string; customer_name?: string | null }> = {};
     if (orderIds.length > 0) {
       const { data: ords } = await supabase
         .from('orders')
-        .select('id, order_number')
+        .select('id, order_number, customers(company_name, contact_name)')
         .in('id', orderIds);
-      (ords ?? []).forEach((o: any) => { orderMap[o.id] = o; });
+      (ords ?? []).forEach((o: any) => {
+        orderMap[o.id] = {
+          id: o.id,
+          order_number: o.order_number,
+          customer_name: o.customers?.company_name || o.customers?.contact_name || null,
+        };
+      });
     }
     setDevices(rows.map((r) => ({ ...r, orders: r.reserved_order_id ? orderMap[r.reserved_order_id] ?? null : null })) as LagerDevice[]);
     setLoading(false);
@@ -674,9 +680,16 @@ export default function Lagergeraete() {
                   </TableCell>
                   <TableCell>
                     {d.orders?.order_number ? (
-                      <Badge className="font-mono bg-yellow-500/20 text-yellow-600 dark:text-yellow-300 border border-yellow-500/40 hover:bg-yellow-500/25">
-                        {d.orders.order_number}
-                      </Badge>
+                      <div className="space-y-1">
+                        <Badge className="font-mono bg-yellow-500/20 text-yellow-600 dark:text-yellow-300 border border-yellow-500/40 hover:bg-yellow-500/25">
+                          {d.orders.order_number}
+                        </Badge>
+                        {d.orders.customer_name && (
+                          <div className="text-xs text-muted-foreground truncate max-w-[220px]">
+                            {d.orders.customer_name}
+                          </div>
+                        )}
+                      </div>
                     ) : (
                       <span className="text-muted-foreground">—</span>
                     )}
