@@ -50,8 +50,15 @@ type LagerDevice = {
   notes: string | null;
   created_at: string;
   reserved_order_id: string | null;
+  reservation_week: string | null;
   orders?: { id: string; order_number: string } | null;
 };
+
+function formatWeek(w: string | null | undefined): string {
+  if (!w) return '—';
+  const m = /^(\d{4})-W(\d{2})$/.exec(w);
+  return m ? `KW ${m[2]} / ${m[1]}` : w;
+}
 
 const formSchema = z.object({
   serial_number: z.string().trim().min(1, 'Seriennummer erforderlich').max(100),
