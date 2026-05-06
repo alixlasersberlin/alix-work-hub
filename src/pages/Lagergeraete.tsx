@@ -189,7 +189,19 @@ export default function Lagergeraete() {
     setReservedOrderId(null);
     setReservedOrderNumber(null);
     setOriginalReservedOrderId(null);
+    setReservationWeek('');
   };
+
+  const openEdit = (d: LagerDevice) => {
+    setEditingId(d.id);
+    setSerial(d.serial_number);
+    setModelName(d.model_name);
+    setEntryDate(d.entry_date);
+    setNotes(d.notes ?? '');
+    setReservedOrderId(d.reserved_order_id);
+    setReservedOrderNumber(d.orders?.order_number ?? null);
+    setOriginalReservedOrderId(d.reserved_order_id);
+    setReservationWeek(d.reservation_week ?? '');
 
   const openEdit = (d: LagerDevice) => {
     setEditingId(d.id);
