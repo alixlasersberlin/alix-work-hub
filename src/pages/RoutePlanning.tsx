@@ -193,7 +193,7 @@ export default function RoutePlanning() {
                   <th className="text-left px-4 py-3 text-muted-foreground font-medium">Auftrag</th>
                   <th className="text-left px-4 py-3 text-muted-foreground font-medium">Kunde</th>
                   <SortHeader field="planned_date" label="Datum" />
-                  <th className="text-left px-4 py-3 text-muted-foreground font-medium">Zeitfenster</th>
+                  <th className="text-left px-4 py-3 text-muted-foreground font-medium">Stadt</th>
                   <th className="text-left px-4 py-3 text-muted-foreground font-medium">Mitarbeiter</th>
                   <th className="text-left px-4 py-3 text-muted-foreground font-medium">Fahrzeug</th>
                   <th className="text-left px-4 py-3 text-muted-foreground font-medium">Reserviertes Gerät</th>
