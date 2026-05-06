@@ -13,6 +13,7 @@ export default function RoutePlanDetail() {
   const canWrite = isAdmin || hasRole('Tourenplanung');
 
   const [plan, setPlan] = useState<any>(null);
+  const [reservedDevices, setReservedDevices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -24,6 +25,13 @@ export default function RoutePlanDetail() {
         .eq('id', id)
         .maybeSingle();
       setPlan(data);
+      if (data?.order_id) {
+        const { data: devs } = await supabase
+          .from('lager_devices')
+          .select('id, model_name, serial_number')
+          .eq('reserved_order_id', data.order_id);
+        setReservedDevices(devs ?? []);
+      }
       setLoading(false);
     }
     load();
