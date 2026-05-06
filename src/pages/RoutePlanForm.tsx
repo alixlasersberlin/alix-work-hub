@@ -49,8 +49,25 @@ export default function RoutePlanForm() {
   const [note, setNote] = useState('');
 
   useEffect(() => {
-    supabase.from('orders').select('id, order_number, shipping_address, billing_address, customers(company_name, shipping_address, billing_address)').order('created_at', { ascending: false }).limit(500)
-      .then(({ data }) => { setOrders(data ?? []); setOrdersLoading(false); });
+    (async () => {
+      const { data: devs } = await supabase
+        .from('lager_devices')
+        .select('reserved_order_id')
+        .not('reserved_order_id', 'is', null);
+      const reservedIds = Array.from(new Set((devs ?? []).map((d: any) => d.reserved_order_id)));
+      if (reservedIds.length === 0) {
+        setOrders([]);
+        setOrdersLoading(false);
+        return;
+      }
+      const { data } = await supabase
+        .from('orders')
+        .select('id, order_number, shipping_address, billing_address, customers(company_name, shipping_address, billing_address)')
+        .in('id', reservedIds)
+        .order('created_at', { ascending: false });
+      setOrders(data ?? []);
+      setOrdersLoading(false);
+    })();
 
     if (isEdit) {
       supabase.from('route_plans').select('*').eq('id', id).maybeSingle().then(({ data }) => {
