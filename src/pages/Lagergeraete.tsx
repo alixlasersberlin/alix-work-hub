@@ -82,13 +82,24 @@ export default function Lagergeraete() {
     setLoading(true);
     const { data, error } = await supabase
       .from('lager_devices')
-      .select('*, orders:reserved_order_id (id, order_number)')
+      .select('*')
       .order('created_at', { ascending: false });
     if (error) {
       toast.error('Fehler beim Laden: ' + error.message);
-    } else {
-      setDevices((data ?? []) as LagerDevice[]);
+      setLoading(false);
+      return;
     }
+    const rows = (data ?? []) as any[];
+    const orderIds = Array.from(new Set(rows.map((r) => r.reserved_order_id).filter(Boolean)));
+    let orderMap: Record<string, { id: string; order_number: string }> = {};
+    if (orderIds.length > 0) {
+      const { data: ords } = await supabase
+        .from('orders')
+        .select('id, order_number')
+        .in('id', orderIds);
+      (ords ?? []).forEach((o: any) => { orderMap[o.id] = o; });
+    }
+    setDevices(rows.map((r) => ({ ...r, orders: r.reserved_order_id ? orderMap[r.reserved_order_id] ?? null : null })) as LagerDevice[]);
     setLoading(false);
   };
 
