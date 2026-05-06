@@ -190,6 +190,26 @@ export default function Lagergeraete() {
       }
     }
 
+    // If reservation was removed: delete the auto-created route_plan(s) for that order
+    // — only if no other lager device is still reserved for it and the plan has no date yet.
+    if (originalReservedOrderId && finalReservedOrderId !== originalReservedOrderId) {
+      const { data: stillReserved } = await supabase
+        .from('lager_devices')
+        .select('id')
+        .eq('reserved_order_id', originalReservedOrderId)
+        .limit(1);
+      if (!stillReserved || stillReserved.length === 0) {
+        const { error: delErr } = await supabase
+          .from('route_plans')
+          .delete()
+          .eq('order_id', originalReservedOrderId)
+          .is('planned_date', null);
+        if (delErr) {
+          toast.warning('Tourenplan konnte nicht entfernt werden: ' + delErr.message);
+        }
+      }
+    }
+
     setSaving(false);
     toast.success(editingId ? 'Lagergerät aktualisiert' : 'Lagergerät erfasst');
     resetForm();
