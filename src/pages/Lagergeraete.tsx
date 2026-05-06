@@ -299,7 +299,8 @@ export default function Lagergeraete() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="notes">Notizen</Label>
+                <Label htmlFor="notes">Notizen (intern)</Label>
+                <p className="text-xs text-muted-foreground">Nur intern sichtbar – wird nirgendwo sonst angezeigt.</p>
                 <Textarea
                   id="notes"
                   value={notes}
@@ -348,7 +349,7 @@ export default function Lagergeraete() {
                 <TableHead>Modell</TableHead>
                 <TableHead>Eingangsdatum</TableHead>
                 <TableHead>Reservierter Auftrag</TableHead>
-                <TableHead>Notizen</TableHead>
+                <TableHead>Notizen (intern)</TableHead>
                 <TableHead className="w-24 text-right">Aktionen</TableHead>
               </TableRow>
             </TableHeader>
