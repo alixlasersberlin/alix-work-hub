@@ -552,6 +552,39 @@ export default function Lagergeraete() {
         }}
       />
 
+      {/* Statistik-Übersicht */}
+      {!loading && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="rounded-lg border border-blue-500/30 bg-blue-500/10 p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-md bg-blue-500/20 flex items-center justify-center">
+              <Warehouse className="w-5 h-5 text-blue-500" />
+            </div>
+            <div>
+              <div className="text-xs uppercase tracking-wide text-blue-500/80 font-medium">Geräte im Lager</div>
+              <div className="text-2xl font-display font-bold text-blue-500">{devices.length}</div>
+            </div>
+          </div>
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-md bg-amber-500/20 flex items-center justify-center">
+              <Link2 className="w-5 h-5 text-amber-500" />
+            </div>
+            <div>
+              <div className="text-xs uppercase tracking-wide text-amber-500/80 font-medium">Reserviert</div>
+              <div className="text-2xl font-display font-bold text-amber-500">{devices.filter(d => d.reserved_order_id).length}</div>
+            </div>
+          </div>
+          <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-md bg-emerald-500/20 flex items-center justify-center">
+              <Package className="w-5 h-5 text-emerald-500" />
+            </div>
+            <div>
+              <div className="text-xs uppercase tracking-wide text-emerald-500/80 font-medium">Verfügbar</div>
+              <div className="text-2xl font-display font-bold text-emerald-500">{devices.filter(d => !d.reserved_order_id).length}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Suchleiste */}
       <div className="space-y-3">
         <div className="relative">
