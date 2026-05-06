@@ -19,6 +19,7 @@ import PriorityList from "./pages/PriorityList";
 import RoutePlanning from "./pages/RoutePlanning";
 import RoutePlanDetail from "./pages/RoutePlanDetail";
 import RoutePlanForm from "./pages/RoutePlanForm";
+import RoutePlanningSettings from "./pages/RoutePlanningSettings";
 import Finance from "./pages/Finance";
 import Ratenzahler from "./pages/Ratenzahler";
 import Invoices from "./pages/Invoices";
@@ -119,6 +120,7 @@ function AppRoutes() {
         <Route path="/teilgeliefert" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><PartialDeliveryList /></ProtectedRoute>} />
         <Route path="/geraetetypen" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><DeviceStatistics /></ProtectedRoute>} />
         <Route path="/tourenplanung" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><RoutePlanning /></ProtectedRoute>} />
+        <Route path="/tourenplanung/einstellungen" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Tourenplanung']}><RoutePlanningSettings /></ProtectedRoute>} />
         <Route path="/tourenplanung/neu" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Tourenplanung']}><RoutePlanForm /></ProtectedRoute>} />
         <Route path="/tourenplanung/:id" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><RoutePlanDetail /></ProtectedRoute>} />
         <Route path="/tourenplanung/:id/bearbeiten" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Tourenplanung']}><RoutePlanForm /></ProtectedRoute>} />
