@@ -196,6 +196,7 @@ export default function RoutePlanning() {
                   <th className="text-left px-4 py-3 text-muted-foreground font-medium">Zeitfenster</th>
                   <th className="text-left px-4 py-3 text-muted-foreground font-medium">Mitarbeiter</th>
                   <th className="text-left px-4 py-3 text-muted-foreground font-medium">Fahrzeug</th>
+                  <th className="text-left px-4 py-3 text-muted-foreground font-medium">Reserviertes Gerät</th>
                   <SortHeader field="priority" label="Priorität" />
                   <th className="text-left px-4 py-3 text-muted-foreground font-medium">Status</th>
                 </tr>
