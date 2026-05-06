@@ -84,6 +84,7 @@ export default function Lagergeraete() {
   const [reservedOrderId, setReservedOrderId] = useState<string | null>(null);
   const [reservedOrderNumber, setReservedOrderNumber] = useState<string | null>(null);
   const [originalReservedOrderId, setOriginalReservedOrderId] = useState<string | null>(null);
+  const [reservationWeek, setReservationWeek] = useState<string>('');
 
   type Suggestion = {
     id: string;
