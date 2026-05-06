@@ -154,6 +154,21 @@ export default function RoutePlanForm() {
               ))}
             </SelectContent>
           </Select>
+          {reservedDevices.length > 0 && (
+            <div className="rounded-lg border border-yellow-500/40 bg-yellow-500/10 p-3">
+              <p className="text-xs font-medium text-yellow-600 dark:text-yellow-300 mb-2">
+                Reservierte Lagergeräte für diesen Auftrag
+              </p>
+              <ul className="space-y-1 text-sm">
+                {reservedDevices.map(d => (
+                  <li key={d.id} className="text-foreground">
+                    <span className="font-medium">{d.model_name}</span>
+                    <span className="text-muted-foreground"> · SN: {d.serial_number}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
 
         {/* Date & Time */}
