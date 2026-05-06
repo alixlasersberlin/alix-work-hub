@@ -54,20 +54,25 @@ export default function RoutePlanning() {
       .limit(500);
     if (err) setError(err.message);
     const plansData = data ?? [];
-    // Fetch reserved devices for these orders
+    // Fetch reserved devices and order items for these orders
     const orderIds = [...new Set(plansData.map((p: any) => p.order_id).filter(Boolean))];
     let devicesByOrder: Record<string, any[]> = {};
+    let itemsByOrder: Record<string, any[]> = {};
     if (orderIds.length > 0) {
-      const { data: devs } = await supabase
-        .from('lager_devices')
-        .select('id, model_name, serial_number, reserved_order_id')
-        .in('reserved_order_id', orderIds);
+      const [{ data: devs }, { data: items }] = await Promise.all([
+        supabase.from('lager_devices').select('id, model_name, serial_number, reserved_order_id').in('reserved_order_id', orderIds),
+        supabase.from('order_items').select('id, order_id, item_name, quantity, item_order').in('order_id', orderIds).order('item_order', { ascending: true }),
+      ]);
       (devs ?? []).forEach((d: any) => {
         if (!devicesByOrder[d.reserved_order_id]) devicesByOrder[d.reserved_order_id] = [];
         devicesByOrder[d.reserved_order_id].push(d);
       });
+      (items ?? []).forEach((it: any) => {
+        if (!itemsByOrder[it.order_id]) itemsByOrder[it.order_id] = [];
+        itemsByOrder[it.order_id].push(it);
+      });
     }
-    setPlans(plansData.map((p: any) => ({ ...p, reserved_devices: devicesByOrder[p.order_id] || [] })));
+    setPlans(plansData.map((p: any) => ({ ...p, reserved_devices: devicesByOrder[p.order_id] || [], order_items: itemsByOrder[p.order_id] || [] })));
     setLoading(false);
   }
 
@@ -195,7 +200,7 @@ export default function RoutePlanning() {
                   <SortHeader field="planned_date" label="Datum" />
                   <th className="text-left px-4 py-3 text-muted-foreground font-medium">Stadt</th>
                   <th className="text-left px-4 py-3 text-muted-foreground font-medium">PLZ</th>
-                  <th className="text-left px-4 py-3 text-muted-foreground font-medium">Fahrzeug</th>
+                  <th className="text-left px-4 py-3 text-muted-foreground font-medium">Positionen</th>
                   <th className="text-left px-4 py-3 text-muted-foreground font-medium">Reserviertes Gerät</th>
                   <SortHeader field="priority" label="Priorität" />
                   <th className="text-left px-4 py-3 text-muted-foreground font-medium">Status</th>
@@ -245,7 +250,18 @@ export default function RoutePlanning() {
                           return '—';
                         })()}
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground text-xs">{p.vehicle_info || '—'}</td>
+                      <td className="px-4 py-3 text-muted-foreground text-xs">
+                        {p.order_items && p.order_items.length > 0 ? (
+                          <div className="space-y-0.5">
+                            {p.order_items.map((it: any) => (
+                              <div key={it.id}>
+                                {it.quantity ? <span className="text-foreground">{Number(it.quantity)}× </span> : null}
+                                {it.item_name || '—'}
+                              </div>
+                            ))}
+                          </div>
+                        ) : '—'}
+                      </td>
                       <td className="px-4 py-3 text-xs">
                         {p.reserved_devices && p.reserved_devices.length > 0 ? (
                           <div className="space-y-0.5">
