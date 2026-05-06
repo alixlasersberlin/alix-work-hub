@@ -127,6 +127,24 @@ export default function RoutePlanDetail() {
 
           <div className="rounded-xl border border-border bg-card p-6 card-glow">
             <h2 className="text-base font-display font-bold text-foreground flex items-center gap-2 mb-4">
+              <ClipboardList className="w-4 h-4 text-primary" /> Reservierte Lagergeräte
+            </h2>
+            {reservedDevices.length === 0 ? (
+              <p className="text-muted-foreground text-sm">Keine Geräte reserviert.</p>
+            ) : (
+              <ul className="space-y-2 text-sm">
+                {reservedDevices.map(d => (
+                  <li key={d.id} className="flex justify-between rounded-lg border border-yellow-500/40 bg-yellow-500/10 px-3 py-2">
+                    <span className="font-medium text-foreground">{d.model_name}</span>
+                    <span className="text-yellow-600 dark:text-yellow-300">SN: {d.serial_number}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div className="rounded-xl border border-border bg-card p-6 card-glow">
+            <h2 className="text-base font-display font-bold text-foreground flex items-center gap-2 mb-4">
               <Building2 className="w-4 h-4 text-primary" /> Kunde
             </h2>
             {plan.orders?.customers ? (
