@@ -194,7 +194,7 @@ export default function RoutePlanning() {
                   <th className="text-left px-4 py-3 text-muted-foreground font-medium">Kunde</th>
                   <SortHeader field="planned_date" label="Datum" />
                   <th className="text-left px-4 py-3 text-muted-foreground font-medium">Stadt</th>
-                  <th className="text-left px-4 py-3 text-muted-foreground font-medium">Mitarbeiter</th>
+                  <th className="text-left px-4 py-3 text-muted-foreground font-medium">PLZ</th>
                   <th className="text-left px-4 py-3 text-muted-foreground font-medium">Fahrzeug</th>
                   <th className="text-left px-4 py-3 text-muted-foreground font-medium">Reserviertes Gerät</th>
                   <SortHeader field="priority" label="Priorität" />
@@ -230,7 +230,21 @@ export default function RoutePlanning() {
                           return '—';
                         })()}
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">{p.assigned_employee || '—'}</td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {(() => {
+                          const sources = [
+                            p.orders?.shipping_address,
+                            p.orders?.billing_address,
+                            p.orders?.customers?.shipping_address,
+                            p.orders?.customers?.billing_address,
+                          ];
+                          for (const a of sources) {
+                            const z = a?.zip || a?.zipcode || a?.postal_code || a?.PLZ || a?.plz;
+                            if (z && String(z).trim()) return z;
+                          }
+                          return '—';
+                        })()}
+                      </td>
                       <td className="px-4 py-3 text-muted-foreground text-xs">{p.vehicle_info || '—'}</td>
                       <td className="px-4 py-3 text-xs">
                         {p.reserved_devices && p.reserved_devices.length > 0 ? (
