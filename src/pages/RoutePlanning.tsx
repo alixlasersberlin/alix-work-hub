@@ -49,7 +49,7 @@ export default function RoutePlanning() {
     setError(null);
     const { data, error: err } = await supabase
       .from('route_plans')
-      .select('*, orders(order_number, order_status, customers(company_name, contact_name))')
+      .select('*, orders(order_number, order_status, shipping_address, billing_address, customers(company_name, contact_name, shipping_address, billing_address))')
       .order(sortField === 'priority' ? 'priority' : 'planned_date', { ascending: sortDir === 'asc' })
       .limit(500);
     if (err) setError(err.message);
