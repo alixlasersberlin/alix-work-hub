@@ -216,7 +216,10 @@ export default function RoutePlanning() {
                       <td className="px-4 py-3 text-muted-foreground">{p.orders?.customers?.company_name || p.orders?.customers?.contact_name || '—'}</td>
                       <td className="px-4 py-3 text-muted-foreground">{p.planned_date ? new Date(p.planned_date + 'T00:00:00').toLocaleDateString('de-DE') : '—'}</td>
                       <td className="px-4 py-3 text-muted-foreground">
-                        {p.time_window_start && p.time_window_end ? `${p.time_window_start.slice(0, 5)} – ${p.time_window_end.slice(0, 5)}` : '—'}
+                        {(() => {
+                          const addr = p.orders?.shipping_address || p.orders?.billing_address || p.orders?.customers?.shipping_address || p.orders?.customers?.billing_address;
+                          return addr?.city || addr?.Stadt || '—';
+                        })()}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">{p.assigned_employee || '—'}</td>
                       <td className="px-4 py-3 text-muted-foreground text-xs">{p.vehicle_info || '—'}</td>
