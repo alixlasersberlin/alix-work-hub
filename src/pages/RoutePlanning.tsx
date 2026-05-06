@@ -53,7 +53,21 @@ export default function RoutePlanning() {
       .order(sortField === 'priority' ? 'priority' : 'planned_date', { ascending: sortDir === 'asc' })
       .limit(500);
     if (err) setError(err.message);
-    setPlans(data ?? []);
+    const plansData = data ?? [];
+    // Fetch reserved devices for these orders
+    const orderIds = [...new Set(plansData.map((p: any) => p.order_id).filter(Boolean))];
+    let devicesByOrder: Record<string, any[]> = {};
+    if (orderIds.length > 0) {
+      const { data: devs } = await supabase
+        .from('lager_devices')
+        .select('id, model_name, serial_number, reserved_order_id')
+        .in('reserved_order_id', orderIds);
+      (devs ?? []).forEach((d: any) => {
+        if (!devicesByOrder[d.reserved_order_id]) devicesByOrder[d.reserved_order_id] = [];
+        devicesByOrder[d.reserved_order_id].push(d);
+      });
+    }
+    setPlans(plansData.map((p: any) => ({ ...p, reserved_devices: devicesByOrder[p.order_id] || [] })));
     setLoading(false);
   }
 
@@ -182,15 +196,16 @@ export default function RoutePlanning() {
                   <th className="text-left px-4 py-3 text-muted-foreground font-medium">Zeitfenster</th>
                   <th className="text-left px-4 py-3 text-muted-foreground font-medium">Mitarbeiter</th>
                   <th className="text-left px-4 py-3 text-muted-foreground font-medium">Fahrzeug</th>
+                  <th className="text-left px-4 py-3 text-muted-foreground font-medium">Reserviertes Gerät</th>
                   <SortHeader field="priority" label="Priorität" />
                   <th className="text-left px-4 py-3 text-muted-foreground font-medium">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {loading ? (
-                  <tr><td colSpan={8} className="px-4 py-12 text-center"><Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" /></td></tr>
+                  <tr><td colSpan={9} className="px-4 py-12 text-center"><Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" /></td></tr>
                 ) : filtered.length === 0 ? (
-                  <tr><td colSpan={8} className="px-4 py-12 text-center">
+                  <tr><td colSpan={9} className="px-4 py-12 text-center">
                     <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
                     <p className="text-muted-foreground">Keine Touren gefunden.</p>
                   </td></tr>
@@ -205,6 +220,17 @@ export default function RoutePlanning() {
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">{p.assigned_employee || '—'}</td>
                       <td className="px-4 py-3 text-muted-foreground text-xs">{p.vehicle_info || '—'}</td>
+                      <td className="px-4 py-3 text-xs">
+                        {p.reserved_devices && p.reserved_devices.length > 0 ? (
+                          <div className="space-y-0.5">
+                            {p.reserved_devices.map((d: any) => (
+                              <div key={d.id} className="text-yellow-600 dark:text-yellow-300">
+                                {d.model_name} <span className="text-muted-foreground">· {d.serial_number}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : <span className="text-muted-foreground">—</span>}
+                      </td>
                       <td className="px-4 py-3">
                         <span className={cn("text-sm capitalize", PRIORITY_COLORS[p.priority] || 'text-muted-foreground')}>{p.priority || 'normal'}</span>
                       </td>
