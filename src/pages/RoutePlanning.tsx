@@ -250,7 +250,18 @@ export default function RoutePlanning() {
                           return '—';
                         })()}
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground text-xs">{p.vehicle_info || '—'}</td>
+                      <td className="px-4 py-3 text-muted-foreground text-xs">
+                        {p.order_items && p.order_items.length > 0 ? (
+                          <div className="space-y-0.5">
+                            {p.order_items.map((it: any) => (
+                              <div key={it.id}>
+                                {it.quantity ? <span className="text-foreground">{Number(it.quantity)}× </span> : null}
+                                {it.item_name || '—'}
+                              </div>
+                            ))}
+                          </div>
+                        ) : '—'}
+                      </td>
                       <td className="px-4 py-3 text-xs">
                         {p.reserved_devices && p.reserved_devices.length > 0 ? (
                           <div className="space-y-0.5">
