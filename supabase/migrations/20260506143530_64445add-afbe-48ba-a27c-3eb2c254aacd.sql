@@ -1,0 +1,1 @@
+DELETE FROM public.route_plans rp WHERE NOT EXISTS (SELECT 1 FROM public.lager_devices ld WHERE ld.reserved_order_id = rp.order_id);
