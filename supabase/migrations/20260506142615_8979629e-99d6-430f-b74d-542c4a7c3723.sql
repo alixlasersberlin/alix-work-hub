@@ -1,0 +1,1 @@
+ALTER TABLE public.lager_devices ADD COLUMN IF NOT EXISTS reservation_week text;

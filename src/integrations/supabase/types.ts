@@ -377,6 +377,7 @@ export type Database = {
           id: string
           model_name: string
           notes: string | null
+          reservation_week: string | null
           reserved_order_id: string | null
           serial_number: string
           updated_at: string
@@ -390,6 +391,7 @@ export type Database = {
           id?: string
           model_name: string
           notes?: string | null
+          reservation_week?: string | null
           reserved_order_id?: string | null
           serial_number: string
           updated_at?: string
@@ -403,6 +405,7 @@ export type Database = {
           id?: string
           model_name?: string
           notes?: string | null
+          reservation_week?: string | null
           reserved_order_id?: string | null
           serial_number?: string
           updated_at?: string

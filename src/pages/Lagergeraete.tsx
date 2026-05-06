@@ -50,8 +50,15 @@ type LagerDevice = {
   notes: string | null;
   created_at: string;
   reserved_order_id: string | null;
+  reservation_week: string | null;
   orders?: { id: string; order_number: string } | null;
 };
+
+function formatWeek(w: string | null | undefined): string {
+  if (!w) return '—';
+  const m = /^(\d{4})-W(\d{2})$/.exec(w);
+  return m ? `KW ${m[2]} / ${m[1]}` : w;
+}
 
 const formSchema = z.object({
   serial_number: z.string().trim().min(1, 'Seriennummer erforderlich').max(100),
@@ -77,6 +84,7 @@ export default function Lagergeraete() {
   const [reservedOrderId, setReservedOrderId] = useState<string | null>(null);
   const [reservedOrderNumber, setReservedOrderNumber] = useState<string | null>(null);
   const [originalReservedOrderId, setOriginalReservedOrderId] = useState<string | null>(null);
+  const [reservationWeek, setReservationWeek] = useState<string>('');
 
   type Suggestion = {
     id: string;
@@ -181,6 +189,7 @@ export default function Lagergeraete() {
     setReservedOrderId(null);
     setReservedOrderNumber(null);
     setOriginalReservedOrderId(null);
+    setReservationWeek('');
   };
 
   const openEdit = (d: LagerDevice) => {
@@ -192,6 +201,7 @@ export default function Lagergeraete() {
     setReservedOrderId(d.reserved_order_id);
     setReservedOrderNumber(d.orders?.order_number ?? null);
     setOriginalReservedOrderId(d.reserved_order_id);
+    setReservationWeek(d.reservation_week ?? '');
     setOpen(true);
   };
 
@@ -218,6 +228,7 @@ export default function Lagergeraete() {
       entry_date: parsed.data.entry_date,
       notes: parsed.data.notes ?? null,
       reserved_order_id: finalReservedOrderId,
+      reservation_week: finalReservedOrderId ? (reservationWeek || null) : null,
       updated_by: userData.user?.id,
     };
     const { error } = editingId
@@ -370,6 +381,17 @@ export default function Lagergeraete() {
                       <Link2 className="w-4 h-4" /> Auftrag auswählen
                     </Button>
                   )}
+                  {reservedOrderId && (
+                    <div className="space-y-1 pt-2">
+                      <Label htmlFor="reservation-week" className="text-xs">Kalenderwoche der Reservierung</Label>
+                      <Input
+                        id="reservation-week"
+                        type="week"
+                        value={reservationWeek}
+                        onChange={(e) => setReservationWeek(e.target.value)}
+                      />
+                    </div>
+                  )}
                   <p className="text-xs text-muted-foreground">
                     Bei Zuweisung wird das Gerät bis zur Auslieferung reserviert und der Auftrag erscheint in der Tourenplanung (ohne Termin).
                   </p>
@@ -478,6 +500,7 @@ export default function Lagergeraete() {
                 <TableHead>Modell</TableHead>
                 <TableHead>Eingangsdatum</TableHead>
                 <TableHead>Reservierter Auftrag</TableHead>
+                <TableHead>KW Reservierung</TableHead>
                 <TableHead>Notizen (intern)</TableHead>
                 <TableHead className="w-24 text-right">Aktionen</TableHead>
               </TableRow>
@@ -497,6 +520,30 @@ export default function Lagergeraete() {
                       </Badge>
                     ) : (
                       <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {d.reserved_order_id && isAdmin ? (
+                      <Input
+                        type="week"
+                        defaultValue={d.reservation_week ?? ''}
+                        className="h-8 w-[160px]"
+                        onBlur={async (e) => {
+                          const val = e.target.value || null;
+                          if (val === (d.reservation_week ?? null)) return;
+                          const { error } = await supabase
+                            .from('lager_devices')
+                            .update({ reservation_week: val })
+                            .eq('id', d.id);
+                          if (error) toast.error('Fehler: ' + error.message);
+                          else {
+                            toast.success('KW aktualisiert');
+                            setDevices((prev) => prev.map((x) => x.id === d.id ? { ...x, reservation_week: val } : x));
+                          }
+                        }}
+                      />
+                    ) : (
+                      <span className="text-muted-foreground">{formatWeek(d.reservation_week)}</span>
                     )}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
