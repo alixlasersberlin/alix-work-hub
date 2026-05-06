@@ -145,10 +145,7 @@ export default function Lagergeraete() {
 
     setSaving(true);
     const { data: userData } = await supabase.auth.getUser();
-    // Reserved order is locked once set: keep original on edit unless not set yet
-    const finalReservedOrderId = editingId
-      ? (originalReservedOrderId ?? reservedOrderId)
-      : reservedOrderId;
+    const finalReservedOrderId = reservedOrderId;
 
     const payload = {
       serial_number: parsed.data.serial_number,
