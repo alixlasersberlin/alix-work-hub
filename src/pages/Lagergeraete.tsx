@@ -349,7 +349,7 @@ export default function Lagergeraete() {
                 <TableHead>Modell</TableHead>
                 <TableHead>Eingangsdatum</TableHead>
                 <TableHead>Reservierter Auftrag</TableHead>
-                <TableHead>Notizen</TableHead>
+                <TableHead>Notizen (intern)</TableHead>
                 <TableHead className="w-24 text-right">Aktionen</TableHead>
               </TableRow>
             </TableHeader>
