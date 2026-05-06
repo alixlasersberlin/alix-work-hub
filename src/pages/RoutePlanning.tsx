@@ -49,7 +49,7 @@ export default function RoutePlanning() {
     setError(null);
     const { data, error: err } = await supabase
       .from('route_plans')
-      .select('*, orders(order_number, order_status, customers(company_name, contact_name))')
+      .select('*, orders(order_number, order_status, shipping_address, billing_address, customers(company_name, contact_name, shipping_address, billing_address))')
       .order(sortField === 'priority' ? 'priority' : 'planned_date', { ascending: sortDir === 'asc' })
       .limit(500);
     if (err) setError(err.message);
@@ -193,7 +193,7 @@ export default function RoutePlanning() {
                   <th className="text-left px-4 py-3 text-muted-foreground font-medium">Auftrag</th>
                   <th className="text-left px-4 py-3 text-muted-foreground font-medium">Kunde</th>
                   <SortHeader field="planned_date" label="Datum" />
-                  <th className="text-left px-4 py-3 text-muted-foreground font-medium">Zeitfenster</th>
+                  <th className="text-left px-4 py-3 text-muted-foreground font-medium">Stadt</th>
                   <th className="text-left px-4 py-3 text-muted-foreground font-medium">Mitarbeiter</th>
                   <th className="text-left px-4 py-3 text-muted-foreground font-medium">Fahrzeug</th>
                   <th className="text-left px-4 py-3 text-muted-foreground font-medium">Reserviertes Gerät</th>
@@ -216,7 +216,10 @@ export default function RoutePlanning() {
                       <td className="px-4 py-3 text-muted-foreground">{p.orders?.customers?.company_name || p.orders?.customers?.contact_name || '—'}</td>
                       <td className="px-4 py-3 text-muted-foreground">{p.planned_date ? new Date(p.planned_date + 'T00:00:00').toLocaleDateString('de-DE') : '—'}</td>
                       <td className="px-4 py-3 text-muted-foreground">
-                        {p.time_window_start && p.time_window_end ? `${p.time_window_start.slice(0, 5)} – ${p.time_window_end.slice(0, 5)}` : '—'}
+                        {(() => {
+                          const addr = p.orders?.shipping_address || p.orders?.billing_address || p.orders?.customers?.shipping_address || p.orders?.customers?.billing_address;
+                          return addr?.city || addr?.Stadt || '—';
+                        })()}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">{p.assigned_employee || '—'}</td>
                       <td className="px-4 py-3 text-muted-foreground text-xs">{p.vehicle_info || '—'}</td>
