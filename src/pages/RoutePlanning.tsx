@@ -54,20 +54,25 @@ export default function RoutePlanning() {
       .limit(500);
     if (err) setError(err.message);
     const plansData = data ?? [];
-    // Fetch reserved devices for these orders
+    // Fetch reserved devices and order items for these orders
     const orderIds = [...new Set(plansData.map((p: any) => p.order_id).filter(Boolean))];
     let devicesByOrder: Record<string, any[]> = {};
+    let itemsByOrder: Record<string, any[]> = {};
     if (orderIds.length > 0) {
-      const { data: devs } = await supabase
-        .from('lager_devices')
-        .select('id, model_name, serial_number, reserved_order_id')
-        .in('reserved_order_id', orderIds);
+      const [{ data: devs }, { data: items }] = await Promise.all([
+        supabase.from('lager_devices').select('id, model_name, serial_number, reserved_order_id').in('reserved_order_id', orderIds),
+        supabase.from('order_items').select('id, order_id, item_name, quantity, item_order').in('order_id', orderIds).order('item_order', { ascending: true }),
+      ]);
       (devs ?? []).forEach((d: any) => {
         if (!devicesByOrder[d.reserved_order_id]) devicesByOrder[d.reserved_order_id] = [];
         devicesByOrder[d.reserved_order_id].push(d);
       });
+      (items ?? []).forEach((it: any) => {
+        if (!itemsByOrder[it.order_id]) itemsByOrder[it.order_id] = [];
+        itemsByOrder[it.order_id].push(it);
+      });
     }
-    setPlans(plansData.map((p: any) => ({ ...p, reserved_devices: devicesByOrder[p.order_id] || [] })));
+    setPlans(plansData.map((p: any) => ({ ...p, reserved_devices: devicesByOrder[p.order_id] || [], order_items: itemsByOrder[p.order_id] || [] })));
     setLoading(false);
   }
 
