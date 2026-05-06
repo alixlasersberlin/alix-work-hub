@@ -49,11 +49,9 @@ export default function RoutePlanForm() {
   const [note, setNote] = useState('');
 
   useEffect(() => {
-    // Load available orders
-    supabase.from('orders').select('id, order_number, customers(company_name)').order('created_at', { ascending: false }).limit(500)
+    supabase.from('orders').select('id, order_number, shipping_address, billing_address, customers(company_name, shipping_address, billing_address)').order('created_at', { ascending: false }).limit(500)
       .then(({ data }) => { setOrders(data ?? []); setOrdersLoading(false); });
 
-    // Load existing plan if editing
     if (isEdit) {
       supabase.from('route_plans').select('*').eq('id', id).maybeSingle().then(({ data }) => {
         if (data) {
@@ -64,7 +62,7 @@ export default function RoutePlanForm() {
           setEmployee(data.assigned_employee || '');
           setTeam(data.assigned_team || '');
           setVehicle(data.vehicle_info || '');
-          setAddress(typeof data.location_address === 'string' ? data.location_address : data.location_address ? JSON.stringify(data.location_address) : '');
+          setAddress(typeof data.location_address === 'string' ? data.location_address : data.location_address ? ((data.location_address as any).raw || formatAddress(data.location_address)) : '');
           setStatus(data.planning_status || 'offen');
           setPriority(data.priority || 'normal');
           setNote(data.planning_note || '');
@@ -73,6 +71,22 @@ export default function RoutePlanForm() {
       });
     }
   }, [id, isEdit]);
+
+  useEffect(() => {
+    if (!orderId) { setReservedDevices([]); return; }
+    const o = orders.find(x => x.id === orderId);
+    if (o && !address) {
+      const addr =
+        formatAddress(o.shipping_address) ||
+        formatAddress(o.billing_address) ||
+        formatAddress(o.customers?.shipping_address) ||
+        formatAddress(o.customers?.billing_address);
+      if (addr) setAddress(addr);
+    }
+    supabase.from('lager_devices').select('id, model_name, serial_number').eq('reserved_order_id', orderId)
+      .then(({ data }) => setReservedDevices(data ?? []));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderId, orders]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
