@@ -115,6 +115,62 @@ export default function Lagergeraete() {
     [devices],
   );
 
+  const filteredDevices = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return devices;
+    return devices.filter((d) => {
+      const hay = `${d.serial_number ?? ''} ${d.model_name ?? ''} ${d.notes ?? ''} ${d.orders?.order_number ?? ''} ${d.reservation_week ?? ''}`.toLowerCase();
+      return hay.includes(q);
+    });
+  }, [devices, searchQuery]);
+
+  // Search free (unreserved) open orders matching the query
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (q.length < 2) {
+      setFreeOrders([]);
+      return;
+    }
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      setLoadingFreeOrders(true);
+      const { data, error } = await supabase
+        .from('orders')
+        .select('id, order_number, order_status, expected_shipment_date, customers(company_name, contact_name), order_items(item_name, description, sku)')
+        .in('order_status', ['overdue', 'Overdue', 'invoiced', 'Invoiced', 'open', 'Open', 'offen', 'Offen', 'approved', 'Approved'])
+        .limit(500);
+      if (cancelled) return;
+      if (error) { setLoadingFreeOrders(false); return; }
+      const norm = q.toLowerCase();
+      const matched: FreeOrder[] = [];
+      for (const o of (data ?? []) as any[]) {
+        if (reservedOrderIdsSet.has(o.id)) continue;
+        const customer = o.customers?.company_name || o.customers?.contact_name || '—';
+        const matchedItem = (o.order_items ?? []).find((it: any) =>
+          `${it.item_name ?? ''} ${it.description ?? ''} ${it.sku ?? ''}`.toLowerCase().includes(norm),
+        );
+        const inHeader = `${o.order_number ?? ''} ${customer}`.toLowerCase().includes(norm);
+        if (!matchedItem && !inHeader) continue;
+        matched.push({
+          id: o.id,
+          order_number: o.order_number,
+          order_status: o.order_status,
+          expected_shipment_date: o.expected_shipment_date,
+          customer,
+          matched_item: matchedItem?.item_name || matchedItem?.description || matchedItem?.sku,
+        });
+      }
+      matched.sort((a, b) => {
+        const da = a.expected_shipment_date ? new Date(a.expected_shipment_date).getTime() : Infinity;
+        const db = b.expected_shipment_date ? new Date(b.expected_shipment_date).getTime() : Infinity;
+        return da - db;
+      });
+      setFreeOrders(matched.slice(0, 30));
+      setLoadingFreeOrders(false);
+    }, 300);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [searchQuery, reservedOrderIdsSet]);
+
   useEffect(() => {
     if (!open || !modelName || reservedOrderId) {
       setSuggestions([]);
