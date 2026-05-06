@@ -1,0 +1,101 @@
+import { useEffect, useMemo, useState } from 'react';
+import { Loader2, Search } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { supabase } from '@/integrations/supabase/client';
+
+type Order = {
+  id: string;
+  order_number: string;
+  order_status: string | null;
+  customers?: { company_name: string | null; contact_name: string | null } | null;
+};
+
+type Props = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSelect: (order: Order) => void;
+};
+
+export default function OrderPickerDialog({ open, onOpenChange, onSelect }: Props) {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    if (!open) return;
+    setLoading(true);
+    supabase
+      .from('orders')
+      .select('id, order_number, order_status, customers(company_name, contact_name)')
+      .order('created_at', { ascending: false })
+      .limit(500)
+      .then(({ data }) => {
+        setOrders((data ?? []) as any);
+        setLoading(false);
+      });
+  }, [open]);
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    if (!q) return orders;
+    return orders.filter(
+      (o) =>
+        o.order_number?.toLowerCase().includes(q) ||
+        o.customers?.company_name?.toLowerCase().includes(q) ||
+        o.customers?.contact_name?.toLowerCase().includes(q),
+    );
+  }, [orders, search]);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Auftrag auswählen</DialogTitle>
+          <DialogDescription>Suche und wähle einen Auftrag aus dem Verkauf.</DialogDescription>
+        </DialogHeader>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            autoFocus
+            placeholder="Auftragsnummer oder Kunde…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <div className="max-h-96 overflow-y-auto rounded-md border border-border divide-y divide-border">
+          {loading ? (
+            <div className="p-6 flex items-center justify-center text-muted-foreground">
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Lade…
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="p-6 text-center text-muted-foreground text-sm">Keine Aufträge gefunden.</div>
+          ) : (
+            filtered.map((o) => (
+              <button
+                key={o.id}
+                type="button"
+                onClick={() => {
+                  onSelect(o);
+                  onOpenChange(false);
+                }}
+                className="w-full text-left px-4 py-3 hover:bg-secondary/50 transition-colors"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="font-medium text-foreground">{o.order_number}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {o.customers?.company_name || o.customers?.contact_name || '—'}
+                    </p>
+                  </div>
+                  <span className="text-xs text-muted-foreground capitalize">{o.order_status || '—'}</span>
+                </div>
+              </button>
+            ))
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}

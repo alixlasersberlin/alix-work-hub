@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Pencil, Plus, Warehouse } from 'lucide-react';
+import { Loader2, Pencil, Plus, Warehouse, Link2, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { z } from 'zod';
@@ -34,9 +34,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ALIX_MODEL_GROUPS } from '@/lib/alix-models';
+import OrderPickerDialog from '@/components/OrderPickerDialog';
+import { useAuth } from '@/hooks/useAuth';
 
 type LagerDevice = {
   id: string;
@@ -46,6 +49,8 @@ type LagerDevice = {
   entry_date: string;
   notes: string | null;
   created_at: string;
+  reserved_order_id: string | null;
+  orders?: { id: string; order_number: string } | null;
 };
 
 const formSchema = z.object({
@@ -56,10 +61,12 @@ const formSchema = z.object({
 });
 
 export default function Lagergeraete() {
+  const { isAdmin } = useAuth();
   const [devices, setDevices] = useState<LagerDevice[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const today = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -67,6 +74,9 @@ export default function Lagergeraete() {
   const [modelName, setModelName] = useState<string>('');
   const [entryDate, setEntryDate] = useState(today);
   const [notes, setNotes] = useState('');
+  const [reservedOrderId, setReservedOrderId] = useState<string | null>(null);
+  const [reservedOrderNumber, setReservedOrderNumber] = useState<string | null>(null);
+  const [originalReservedOrderId, setOriginalReservedOrderId] = useState<string | null>(null);
 
   const loadDevices = async () => {
     setLoading(true);
@@ -76,9 +86,20 @@ export default function Lagergeraete() {
       .order('created_at', { ascending: false });
     if (error) {
       toast.error('Fehler beim Laden: ' + error.message);
-    } else {
-      setDevices((data ?? []) as LagerDevice[]);
+      setLoading(false);
+      return;
     }
+    const rows = (data ?? []) as any[];
+    const orderIds = Array.from(new Set(rows.map((r) => r.reserved_order_id).filter(Boolean)));
+    let orderMap: Record<string, { id: string; order_number: string }> = {};
+    if (orderIds.length > 0) {
+      const { data: ords } = await supabase
+        .from('orders')
+        .select('id, order_number')
+        .in('id', orderIds);
+      (ords ?? []).forEach((o: any) => { orderMap[o.id] = o; });
+    }
+    setDevices(rows.map((r) => ({ ...r, orders: r.reserved_order_id ? orderMap[r.reserved_order_id] ?? null : null })) as LagerDevice[]);
     setLoading(false);
   };
 
@@ -92,6 +113,9 @@ export default function Lagergeraete() {
     setModelName('');
     setEntryDate(today);
     setNotes('');
+    setReservedOrderId(null);
+    setReservedOrderNumber(null);
+    setOriginalReservedOrderId(null);
   };
 
   const openEdit = (d: LagerDevice) => {
@@ -100,6 +124,9 @@ export default function Lagergeraete() {
     setModelName(d.model_name);
     setEntryDate(d.entry_date);
     setNotes(d.notes ?? '');
+    setReservedOrderId(d.reserved_order_id);
+    setReservedOrderNumber(d.orders?.order_number ?? null);
+    setOriginalReservedOrderId(d.reserved_order_id);
     setOpen(true);
   };
 
@@ -118,11 +145,17 @@ export default function Lagergeraete() {
 
     setSaving(true);
     const { data: userData } = await supabase.auth.getUser();
+    // Reserved order is locked once set: keep original on edit unless not set yet
+    const finalReservedOrderId = editingId
+      ? (originalReservedOrderId ?? reservedOrderId)
+      : reservedOrderId;
+
     const payload = {
       serial_number: parsed.data.serial_number,
       model_name: parsed.data.model_name,
       entry_date: parsed.data.entry_date,
       notes: parsed.data.notes ?? null,
+      reserved_order_id: finalReservedOrderId,
       updated_by: userData.user?.id,
     };
     const { error } = editingId
@@ -130,17 +163,44 @@ export default function Lagergeraete() {
       : await supabase.from('lager_devices').insert([
           { ...payload, airtable_record_id: null, created_by: userData.user?.id },
         ]);
-    setSaving(false);
 
     if (error) {
+      setSaving(false);
       toast.error('Speichern fehlgeschlagen: ' + error.message);
       return;
     }
+
+    // If new reservation: ensure a route_plans entry exists (without date)
+    if (finalReservedOrderId && finalReservedOrderId !== originalReservedOrderId) {
+      const { data: existing } = await supabase
+        .from('route_plans')
+        .select('id')
+        .eq('order_id', finalReservedOrderId)
+        .limit(1);
+      if (!existing || existing.length === 0) {
+        const { error: rpErr } = await supabase.from('route_plans').insert([
+          {
+            order_id: finalReservedOrderId,
+            planning_status: 'offen',
+            priority: 'normal',
+            planning_note: 'Automatisch erstellt: Lagergerät reserviert',
+            created_by: userData.user?.id,
+          },
+        ]);
+        if (rpErr) {
+          toast.warning('Tourenplan konnte nicht angelegt werden: ' + rpErr.message);
+        }
+      }
+    }
+
+    setSaving(false);
     toast.success(editingId ? 'Lagergerät aktualisiert' : 'Lagergerät erfasst');
     resetForm();
     setOpen(false);
     loadDevices();
   };
+
+  const reservationLocked = !!editingId && !!originalReservedOrderId;
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
@@ -205,6 +265,39 @@ export default function Lagergeraete() {
                   required
                 />
               </div>
+
+              {isAdmin && (
+                <div className="space-y-2">
+                  <Label>Auftragszuweisung</Label>
+                  {reservedOrderNumber ? (
+                    <div className="flex items-center gap-2 rounded-md border border-border bg-secondary/40 px-3 py-2">
+                      <Link2 className="w-4 h-4 text-primary" />
+                      <span className="text-sm font-medium">{reservedOrderNumber}</span>
+                      {reservationLocked ? (
+                        <Badge variant="secondary" className="ml-auto text-xs">Reserviert · gesperrt</Badge>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="ml-auto h-7"
+                          onClick={() => { setReservedOrderId(null); setReservedOrderNumber(null); }}
+                        >
+                          <X className="w-3 h-3 mr-1" /> Entfernen
+                        </Button>
+                      )}
+                    </div>
+                  ) : (
+                    <Button type="button" variant="outline" onClick={() => setPickerOpen(true)} className="gap-2">
+                      <Link2 className="w-4 h-4" /> Auftrag auswählen
+                    </Button>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Bei Zuweisung wird das Gerät bis zur Auslieferung reserviert und der Auftrag erscheint in der Tourenplanung (ohne Termin).
+                  </p>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="notes">Notizen</Label>
                 <Textarea
@@ -229,6 +322,15 @@ export default function Lagergeraete() {
         </Dialog>
       </div>
 
+      <OrderPickerDialog
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        onSelect={(o) => {
+          setReservedOrderId(o.id);
+          setReservedOrderNumber(o.order_number);
+        }}
+      />
+
       <div className="rounded-lg border border-border bg-card">
         {loading ? (
           <div className="p-8 flex items-center justify-center text-muted-foreground">
@@ -245,6 +347,7 @@ export default function Lagergeraete() {
                 <TableHead>Seriennummer</TableHead>
                 <TableHead>Modell</TableHead>
                 <TableHead>Eingangsdatum</TableHead>
+                <TableHead>Reservierter Auftrag</TableHead>
                 <TableHead>Notizen</TableHead>
                 <TableHead className="w-24 text-right">Aktionen</TableHead>
               </TableRow>
@@ -256,6 +359,15 @@ export default function Lagergeraete() {
                   <TableCell>{d.model_name}</TableCell>
                   <TableCell>
                     {format(new Date(d.entry_date), 'dd.MM.yyyy', { locale: de })}
+                  </TableCell>
+                  <TableCell>
+                    {d.orders?.order_number ? (
+                      <Badge variant="secondary" className="font-mono">
+                        {d.orders.order_number}
+                      </Badge>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {d.notes ?? '—'}
