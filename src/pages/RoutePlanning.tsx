@@ -53,7 +53,21 @@ export default function RoutePlanning() {
       .order(sortField === 'priority' ? 'priority' : 'planned_date', { ascending: sortDir === 'asc' })
       .limit(500);
     if (err) setError(err.message);
-    setPlans(data ?? []);
+    const plansData = data ?? [];
+    // Fetch reserved devices for these orders
+    const orderIds = [...new Set(plansData.map((p: any) => p.order_id).filter(Boolean))];
+    let devicesByOrder: Record<string, any[]> = {};
+    if (orderIds.length > 0) {
+      const { data: devs } = await supabase
+        .from('lager_devices')
+        .select('id, model_name, serial_number, reserved_order_id')
+        .in('reserved_order_id', orderIds);
+      (devs ?? []).forEach((d: any) => {
+        if (!devicesByOrder[d.reserved_order_id]) devicesByOrder[d.reserved_order_id] = [];
+        devicesByOrder[d.reserved_order_id].push(d);
+      });
+    }
+    setPlans(plansData.map((p: any) => ({ ...p, reserved_devices: devicesByOrder[p.order_id] || [] })));
     setLoading(false);
   }
 
