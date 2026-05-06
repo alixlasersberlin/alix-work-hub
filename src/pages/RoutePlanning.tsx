@@ -213,7 +213,7 @@ export default function RoutePlanning() {
                   filtered.map(p => (
                     <tr key={p.id} className="hover:bg-secondary/30 transition-colors cursor-pointer" onClick={() => navigate(`/tourenplanung/${p.id}`)}>
                       <td className="px-4 py-3 font-medium text-foreground">{p.orders?.order_number || '—'}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{p.orders?.customers?.company_name || '—'}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{p.orders?.customers?.company_name || p.orders?.customers?.contact_name || '—'}</td>
                       <td className="px-4 py-3 text-muted-foreground">{p.planned_date ? new Date(p.planned_date + 'T00:00:00').toLocaleDateString('de-DE') : '—'}</td>
                       <td className="px-4 py-3 text-muted-foreground">
                         {p.time_window_start && p.time_window_end ? `${p.time_window_start.slice(0, 5)} – ${p.time_window_end.slice(0, 5)}` : '—'}
@@ -280,7 +280,7 @@ export default function RoutePlanning() {
                         {p.time_window_end && <p className="text-xs text-muted-foreground">bis {p.time_window_end.slice(0, 5)}</p>}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-foreground text-sm">{p.orders?.order_number || '—'} · {p.orders?.customers?.company_name || '—'}</p>
+                        <p className="font-medium text-foreground text-sm">{p.orders?.order_number || '—'} · {p.orders?.customers?.company_name || p.orders?.customers?.contact_name || '—'}</p>
                         <p className="text-xs text-muted-foreground">{p.assigned_employee || 'Kein Mitarbeiter'} {p.assigned_team ? `· ${p.assigned_team}` : ''} {p.vehicle_info ? `· ${p.vehicle_info}` : ''}</p>
                       </div>
                       <span className={cn("text-xs capitalize", PRIORITY_COLORS[p.priority] || 'text-muted-foreground')}>{p.priority}</span>
