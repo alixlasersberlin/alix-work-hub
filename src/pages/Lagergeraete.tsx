@@ -78,6 +78,71 @@ export default function Lagergeraete() {
   const [reservedOrderNumber, setReservedOrderNumber] = useState<string | null>(null);
   const [originalReservedOrderId, setOriginalReservedOrderId] = useState<string | null>(null);
 
+  type Suggestion = {
+    id: string;
+    order_number: string;
+    expected_shipment_date: string | null;
+    order_status: string | null;
+    customer: string;
+    matched_item: string;
+  };
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+
+  const reservedOrderIdsSet = useMemo(
+    () => new Set(devices.map((d) => d.reserved_order_id).filter(Boolean) as string[]),
+    [devices],
+  );
+
+  useEffect(() => {
+    if (!open || !modelName || reservedOrderId) {
+      setSuggestions([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      setLoadingSuggestions(true);
+      const norm = modelName.toLowerCase().trim();
+      // Search for orders with items matching the selected model
+      const { data, error } = await supabase
+        .from('orders')
+        .select('id, order_number, order_status, expected_shipment_date, customers(company_name, contact_name), order_items(item_name, description, sku)')
+        .in('order_status', ['overdue', 'Overdue', 'invoiced', 'Invoiced', 'open', 'Open', 'offen', 'Offen', 'approved', 'Approved'])
+        .limit(500);
+      if (cancelled) return;
+      if (error) {
+        setLoadingSuggestions(false);
+        return;
+      }
+      const matched: Suggestion[] = [];
+      for (const o of (data ?? []) as any[]) {
+        if (reservedOrderIdsSet.has(o.id)) continue;
+        const item = (o.order_items ?? []).find((it: any) => {
+          const hay = `${it.item_name ?? ''} ${it.description ?? ''} ${it.sku ?? ''}`.toLowerCase();
+          return hay.includes(norm);
+        });
+        if (!item) continue;
+        matched.push({
+          id: o.id,
+          order_number: o.order_number,
+          order_status: o.order_status,
+          expected_shipment_date: o.expected_shipment_date,
+          customer: o.customers?.company_name || o.customers?.contact_name || '—',
+          matched_item: item.item_name || item.description || item.sku || '—',
+        });
+      }
+      // Sort: overdue first, then earliest shipment date, then nulls last
+      matched.sort((a, b) => {
+        const da = a.expected_shipment_date ? new Date(a.expected_shipment_date).getTime() : Infinity;
+        const db = b.expected_shipment_date ? new Date(b.expected_shipment_date).getTime() : Infinity;
+        return da - db;
+      });
+      setSuggestions(matched.slice(0, 20));
+      setLoadingSuggestions(false);
+    })();
+    return () => { cancelled = true; };
+  }, [open, modelName, reservedOrderId, reservedOrderIdsSet]);
+
   const loadDevices = async () => {
     setLoading(true);
     const { data, error } = await supabase
