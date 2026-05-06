@@ -14,6 +14,7 @@ export default function RoutePlanDetail() {
 
   const [plan, setPlan] = useState<any>(null);
   const [reservedDevices, setReservedDevices] = useState<any[]>([]);
+  const [orderItems, setOrderItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,11 +27,12 @@ export default function RoutePlanDetail() {
         .maybeSingle();
       setPlan(data);
       if (data?.order_id) {
-        const { data: devs } = await supabase
-          .from('lager_devices')
-          .select('id, model_name, serial_number')
-          .eq('reserved_order_id', data.order_id);
+        const [{ data: devs }, { data: items }] = await Promise.all([
+          supabase.from('lager_devices').select('id, model_name, serial_number').eq('reserved_order_id', data.order_id),
+          supabase.from('order_items').select('id, item_name, description, sku, quantity, unit, rate, amount, item_order').eq('order_id', data.order_id).order('item_order', { ascending: true }),
+        ]);
         setReservedDevices(devs ?? []);
+        setOrderItems(items ?? []);
       }
       setLoading(false);
     }
@@ -123,6 +125,43 @@ export default function RoutePlanDetail() {
                 ))}
               </dl>
             ) : <p className="text-muted-foreground text-sm">Kein Auftrag verknüpft.</p>}
+          </div>
+
+          <div className="rounded-xl border border-border bg-card p-6 card-glow">
+            <h2 className="text-base font-display font-bold text-foreground flex items-center gap-2 mb-4">
+              <ClipboardList className="w-4 h-4 text-primary" /> Positionen
+              {orderItems.length > 0 && <span className="text-xs font-normal text-muted-foreground ml-1">({orderItems.length})</span>}
+            </h2>
+            {orderItems.length === 0 ? (
+              <p className="text-muted-foreground text-sm">Keine Positionen vorhanden.</p>
+            ) : (
+              <div className="overflow-x-auto -mx-2">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-xs text-muted-foreground border-b border-border">
+                      <th className="px-2 py-2 font-medium">Position</th>
+                      <th className="px-2 py-2 font-medium text-right">Menge</th>
+                      <th className="px-2 py-2 font-medium text-right">Preis</th>
+                      <th className="px-2 py-2 font-medium text-right">Summe</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {orderItems.map(it => (
+                      <tr key={it.id}>
+                        <td className="px-2 py-2">
+                          <div className="text-foreground font-medium">{it.item_name || '—'}</div>
+                          {it.sku && <div className="text-xs text-muted-foreground">SKU: {it.sku}</div>}
+                          {it.description && <div className="text-xs text-muted-foreground whitespace-pre-wrap">{it.description}</div>}
+                        </td>
+                        <td className="px-2 py-2 text-right text-foreground">{it.quantity != null ? Number(it.quantity) : '—'}{it.unit ? ` ${it.unit}` : ''}</td>
+                        <td className="px-2 py-2 text-right text-muted-foreground">{it.rate != null ? Number(it.rate).toLocaleString('de-DE', { style: 'currency', currency: plan.orders?.currency || 'EUR' }) : '—'}</td>
+                        <td className="px-2 py-2 text-right text-foreground font-medium">{it.amount != null ? Number(it.amount).toLocaleString('de-DE', { style: 'currency', currency: plan.orders?.currency || 'EUR' }) : '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
 
           <div className="rounded-xl border border-border bg-card p-6 card-glow">
