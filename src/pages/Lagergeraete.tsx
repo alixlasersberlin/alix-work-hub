@@ -348,7 +348,7 @@ export default function Lagergeraete() {
             </TableHeader>
             <TableBody>
               {devices.map((d) => (
-                <TableRow key={d.id}>
+                <TableRow key={d.id} className={d.reserved_order_id ? 'bg-yellow-500/10 hover:bg-yellow-500/15' : ''}>
                   <TableCell className="font-mono">{d.serial_number}</TableCell>
                   <TableCell>{d.model_name}</TableCell>
                   <TableCell>
@@ -356,7 +356,7 @@ export default function Lagergeraete() {
                   </TableCell>
                   <TableCell>
                     {d.orders?.order_number ? (
-                      <Badge variant="secondary" className="font-mono">
+                      <Badge className="font-mono bg-yellow-500/20 text-yellow-600 dark:text-yellow-300 border border-yellow-500/40 hover:bg-yellow-500/25">
                         {d.orders.order_number}
                       </Badge>
                     ) : (
