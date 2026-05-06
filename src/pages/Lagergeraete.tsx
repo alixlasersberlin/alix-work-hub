@@ -381,6 +381,17 @@ export default function Lagergeraete() {
                       <Link2 className="w-4 h-4" /> Auftrag auswählen
                     </Button>
                   )}
+                  {reservedOrderId && (
+                    <div className="space-y-1 pt-2">
+                      <Label htmlFor="reservation-week" className="text-xs">Kalenderwoche der Reservierung</Label>
+                      <Input
+                        id="reservation-week"
+                        type="week"
+                        value={reservationWeek}
+                        onChange={(e) => setReservationWeek(e.target.value)}
+                      />
+                    </div>
+                  )}
                   <p className="text-xs text-muted-foreground">
                     Bei Zuweisung wird das Gerät bis zur Auslieferung reserviert und der Auftrag erscheint in der Tourenplanung (ohne Termin).
                   </p>
