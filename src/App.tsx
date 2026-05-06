@@ -19,6 +19,7 @@ import PriorityList from "./pages/PriorityList";
 import RoutePlanning from "./pages/RoutePlanning";
 import RoutePlanDetail from "./pages/RoutePlanDetail";
 import RoutePlanForm from "./pages/RoutePlanForm";
+import RoutePlanningSettings from "./pages/RoutePlanningSettings";
 import Finance from "./pages/Finance";
 import Ratenzahler from "./pages/Ratenzahler";
 import Invoices from "./pages/Invoices";
