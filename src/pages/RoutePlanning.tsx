@@ -280,7 +280,7 @@ export default function RoutePlanning() {
                         {p.time_window_end && <p className="text-xs text-muted-foreground">bis {p.time_window_end.slice(0, 5)}</p>}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-foreground text-sm">{p.orders?.order_number || '—'} · {p.orders?.customers?.company_name || '—'}</p>
+                        <p className="font-medium text-foreground text-sm">{p.orders?.order_number || '—'} · {p.orders?.customers?.company_name || p.orders?.customers?.contact_name || '—'}</p>
                         <p className="text-xs text-muted-foreground">{p.assigned_employee || 'Kein Mitarbeiter'} {p.assigned_team ? `· ${p.assigned_team}` : ''} {p.vehicle_info ? `· ${p.vehicle_info}` : ''}</p>
                       </div>
                       <span className={cn("text-xs capitalize", PRIORITY_COLORS[p.priority] || 'text-muted-foreground')}>{p.priority}</span>
