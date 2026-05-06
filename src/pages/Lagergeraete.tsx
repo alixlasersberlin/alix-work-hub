@@ -145,10 +145,7 @@ export default function Lagergeraete() {
 
     setSaving(true);
     const { data: userData } = await supabase.auth.getUser();
-    // Reserved order is locked once set: keep original on edit unless not set yet
-    const finalReservedOrderId = editingId
-      ? (originalReservedOrderId ?? reservedOrderId)
-      : reservedOrderId;
+    const finalReservedOrderId = reservedOrderId;
 
     const payload = {
       serial_number: parsed.data.serial_number,
@@ -200,7 +197,7 @@ export default function Lagergeraete() {
     loadDevices();
   };
 
-  const reservationLocked = !!editingId && !!originalReservedOrderId;
+  
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
@@ -273,19 +270,15 @@ export default function Lagergeraete() {
                     <div className="flex items-center gap-2 rounded-md border border-border bg-secondary/40 px-3 py-2">
                       <Link2 className="w-4 h-4 text-primary" />
                       <span className="text-sm font-medium">{reservedOrderNumber}</span>
-                      {reservationLocked ? (
-                        <Badge variant="secondary" className="ml-auto text-xs">Reserviert · gesperrt</Badge>
-                      ) : (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="ml-auto h-7"
-                          onClick={() => { setReservedOrderId(null); setReservedOrderNumber(null); }}
-                        >
-                          <X className="w-3 h-3 mr-1" /> Entfernen
-                        </Button>
-                      )}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="ml-auto h-7"
+                        onClick={() => { setReservedOrderId(null); setReservedOrderNumber(null); setOriginalReservedOrderId(null); }}
+                      >
+                        <X className="w-3 h-3 mr-1" /> Reservierung freigeben
+                      </Button>
                     </div>
                   ) : (
                     <Button type="button" variant="outline" onClick={() => setPickerOpen(true)} className="gap-2">
