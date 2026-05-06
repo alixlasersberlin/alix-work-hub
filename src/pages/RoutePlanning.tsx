@@ -200,7 +200,7 @@ export default function RoutePlanning() {
                   <SortHeader field="planned_date" label="Datum" />
                   <th className="text-left px-4 py-3 text-muted-foreground font-medium">Stadt</th>
                   <th className="text-left px-4 py-3 text-muted-foreground font-medium">PLZ</th>
-                  <th className="text-left px-4 py-3 text-muted-foreground font-medium">Fahrzeug</th>
+                  <th className="text-left px-4 py-3 text-muted-foreground font-medium">Positionen</th>
                   <th className="text-left px-4 py-3 text-muted-foreground font-medium">Reserviertes Gerät</th>
                   <SortHeader field="priority" label="Priorität" />
                   <th className="text-left px-4 py-3 text-muted-foreground font-medium">Status</th>
