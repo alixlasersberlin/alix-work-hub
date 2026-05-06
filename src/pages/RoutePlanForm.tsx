@@ -24,6 +24,16 @@ export default function RoutePlanForm() {
   const [saving, setSaving] = useState(false);
   const [orders, setOrders] = useState<any[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
+  const [reservedDevices, setReservedDevices] = useState<any[]>([]);
+
+  function formatAddress(a: any): string {
+    if (!a) return '';
+    if (typeof a === 'string') return a;
+    return [a.street, a.address, a.street2, a.zip, a.zip_code, a.city, a.state, a.country]
+      .filter(Boolean)
+      .filter((v, i, arr) => arr.indexOf(v) === i)
+      .join(', ');
+  }
 
   // Form state
   const [orderId, setOrderId] = useState('');
