@@ -86,6 +86,19 @@ export default function Lagergeraete() {
   const [originalReservedOrderId, setOriginalReservedOrderId] = useState<string | null>(null);
   const [reservationWeek, setReservationWeek] = useState<string>('');
 
+  // Global search across devices and available (unreserved) open orders
+  const [searchQuery, setSearchQuery] = useState('');
+  type FreeOrder = {
+    id: string;
+    order_number: string;
+    order_status: string | null;
+    expected_shipment_date: string | null;
+    customer: string;
+    matched_item?: string;
+  };
+  const [freeOrders, setFreeOrders] = useState<FreeOrder[]>([]);
+  const [loadingFreeOrders, setLoadingFreeOrders] = useState(false);
+
   type Suggestion = {
     id: string;
     order_number: string;
