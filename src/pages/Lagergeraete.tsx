@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Pencil, Plus, Warehouse, Link2, X } from 'lucide-react';
+import { Loader2, Pencil, Plus, Warehouse, Link2, X, Sparkles, Package } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { z } from 'zod';
