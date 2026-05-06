@@ -217,8 +217,17 @@ export default function RoutePlanning() {
                       <td className="px-4 py-3 text-muted-foreground">{p.planned_date ? new Date(p.planned_date + 'T00:00:00').toLocaleDateString('de-DE') : '—'}</td>
                       <td className="px-4 py-3 text-muted-foreground">
                         {(() => {
-                          const addr = p.orders?.shipping_address || p.orders?.billing_address || p.orders?.customers?.shipping_address || p.orders?.customers?.billing_address;
-                          return addr?.city || addr?.Stadt || '—';
+                          const sources = [
+                            p.orders?.shipping_address,
+                            p.orders?.billing_address,
+                            p.orders?.customers?.shipping_address,
+                            p.orders?.customers?.billing_address,
+                          ];
+                          for (const a of sources) {
+                            const c = a?.city || a?.Stadt;
+                            if (c && String(c).trim()) return c;
+                          }
+                          return '—';
                         })()}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">{p.assigned_employee || '—'}</td>
