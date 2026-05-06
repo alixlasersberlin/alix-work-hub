@@ -228,6 +228,7 @@ export default function Lagergeraete() {
       entry_date: parsed.data.entry_date,
       notes: parsed.data.notes ?? null,
       reserved_order_id: finalReservedOrderId,
+      reservation_week: finalReservedOrderId ? (reservationWeek || null) : null,
       updated_by: userData.user?.id,
     };
     const { error } = editingId
