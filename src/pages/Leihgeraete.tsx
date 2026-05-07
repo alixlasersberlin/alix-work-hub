@@ -50,6 +50,7 @@ export default function Leihgeraete() {
   const [entryDate, setEntryDate] = useState(today);
   const [customerSince, setCustomerSince] = useState('');
   const [condition, setCondition] = useState('');
+  const [shotCount, setShotCount] = useState('');
   const [notes, setNotes] = useState('');
   const [reservedOrderId, setReservedOrderId] = useState<string | null>(null);
   const [reservedOrderNumber, setReservedOrderNumber] = useState<string | null>(null);
