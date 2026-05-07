@@ -50,6 +50,7 @@ export default function Leihgeraete() {
   const [entryDate, setEntryDate] = useState(today);
   const [customerSince, setCustomerSince] = useState('');
   const [condition, setCondition] = useState('');
+  const [shotCount, setShotCount] = useState('');
   const [notes, setNotes] = useState('');
   const [reservedOrderId, setReservedOrderId] = useState<string | null>(null);
   const [reservedOrderNumber, setReservedOrderNumber] = useState<string | null>(null);
@@ -115,6 +116,7 @@ export default function Leihgeraete() {
     setEntryDate(today);
     setCustomerSince('');
     setCondition('');
+    setShotCount('');
     setNotes('');
     setReservedOrderId(null);
     setReservedOrderNumber(null);
@@ -138,7 +140,8 @@ export default function Leihgeraete() {
     const { data: userData } = await supabase.auth.getUser();
     const customerSinceTag = customerSince ? ` [Bei Kunden seit: ${customerSince}]` : '';
     const conditionTag = condition.trim() ? ` [Zustand: ${condition.trim()}]` : '';
-    const noteWithTag = `[Leihgerät]${customerSinceTag}${conditionTag} ${parsed.data.notes ?? ''}`.trim();
+    const shotTag = shotCount.trim() ? ` [Schusszahl: ${shotCount.trim()}]` : '';
+    const noteWithTag = `[Leihgerät]${customerSinceTag}${conditionTag}${shotTag} ${parsed.data.notes ?? ''}`.trim();
 
     const { error } = await supabase.from('lager_devices').insert([{
       serial_number: parsed.data.serial_number,
@@ -241,6 +244,16 @@ export default function Leihgeraete() {
                   placeholder="z. B. neuwertig, leichte Gebrauchsspuren, Display gerissen ..."
                   maxLength={1000}
                   rows={2}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="shot-count">Schusszahl</Label>
+                <Input
+                  id="shot-count"
+                  value={shotCount}
+                  onChange={(e) => setShotCount(e.target.value)}
+                  placeholder="z. B. 12.345"
+                  maxLength={50}
                 />
               </div>
 
