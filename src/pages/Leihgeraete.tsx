@@ -366,18 +366,26 @@ export default function Leihgeraete() {
                       )}
                     </div>
                   )}
-                </div>
+                </section>
               )}
 
-              <div className="space-y-2">
-                <Label htmlFor="notes">Notizen (intern)</Label>
-                <p className="text-xs text-muted-foreground">Nur intern sichtbar.</p>
-                <Textarea
-                  id="notes"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  maxLength={1000}
-                  rows={3}
+              <section className="space-y-3">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground border-b border-border pb-1">
+                  Notizen
+                </h3>
+                <div className="space-y-2">
+                  <Label htmlFor="notes" className="sr-only">Notizen (intern)</Label>
+                  <Textarea
+                    id="notes"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Interne Notizen ..."
+                    maxLength={1000}
+                    rows={3}
+                  />
+                  <p className="text-xs text-muted-foreground">Nur intern sichtbar.</p>
+                </div>
+              </section>
                 />
               </div>
               <DialogFooter>
