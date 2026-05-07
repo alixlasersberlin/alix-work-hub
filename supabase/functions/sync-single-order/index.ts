@@ -161,9 +161,10 @@ Deno.serve(async (req: Request) => {
       const matches = Array.isArray(lookupJson.salesorders) ? lookupJson.salesorders : [];
       if (matches.length === 0) {
         return jsonResponse({
+          success: false,
           error: "Order not found in Zoho",
-          message: `No sales order with number "${rawOrderInput}" found in ${source_system}.`,
-        }, 404);
+          message: `Kein Auftrag mit Nummer "${rawOrderInput}" in ${source_system} gefunden.`,
+        }, 200);
       }
       resolvedSalesOrderId = String(matches[0].salesorder_id);
       console.log(`[sync-single-order] Resolved ${rawOrderInput} -> salesorder_id ${resolvedSalesOrderId}`);
