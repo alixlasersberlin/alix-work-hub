@@ -615,7 +615,7 @@ export default function Lagergeraete({
             </div>
             <div>
               <div className="text-xs uppercase tracking-wide text-blue-500/80 font-medium">Geräte im Lager</div>
-              <div className="text-2xl font-display font-bold text-blue-500">{devices.length}</div>
+              <div className="text-2xl font-display font-bold text-blue-500">{typeFilteredDevices.length}</div>
             </div>
           </div>
           <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 flex items-center gap-3">
