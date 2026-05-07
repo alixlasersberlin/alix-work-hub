@@ -273,6 +273,7 @@ export default function Lagergeraete() {
     setEditingId(d.id);
     setSerial(d.serial_number);
     setModelName(d.model_name);
+    setDeviceType((d.notes ?? '').includes('[Typ: Leihgerät]') ? 'Leihgerät' : 'Neugerät');
     setEntryDate(d.entry_date);
     setNotes(d.notes ?? '');
     setReservedOrderId(d.reserved_order_id);
