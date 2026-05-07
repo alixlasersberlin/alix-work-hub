@@ -235,12 +235,32 @@ export default function Artikel() {
         </div>
       </Card>
 
-      <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
+      <Dialog open={!!selected} onOpenChange={(o) => { if (!o) { setSelected(null); setEditing(false); } }}>
         <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="gold-text">{selected?.name}</DialogTitle>
+            <div className="flex items-center justify-between gap-2 pr-8">
+              <DialogTitle className="gold-text">
+                {editing ? (draft.name ?? '') : selected?.name}
+              </DialogTitle>
+              {selected && !editing && (
+                <Button variant="outline" size="sm" onClick={startEdit}>
+                  <Pencil className="w-4 h-4 mr-2" /> Bearbeiten
+                </Button>
+              )}
+              {selected && editing && (
+                <div className="flex gap-2">
+                  <Button variant="ghost" size="sm" onClick={() => setEditing(false)} disabled={saving}>
+                    <X className="w-4 h-4 mr-2" /> Abbrechen
+                  </Button>
+                  <Button size="sm" onClick={saveEdit} disabled={saving} className="gold-gradient text-primary-foreground">
+                    {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                    Speichern
+                  </Button>
+                </div>
+              )}
+            </div>
           </DialogHeader>
-          {selected && (
+          {selected && !editing && (
             <div className="space-y-4 text-sm">
               <div className="grid grid-cols-2 gap-3">
                 <Field label="SKU" value={selected.sku} />
@@ -272,8 +292,51 @@ export default function Artikel() {
               </div>
             </div>
           )}
+          {selected && editing && (
+            <div className="space-y-3 text-sm">
+              <div className="grid grid-cols-2 gap-3">
+                <EditField label="Name" value={draft.name} onChange={(v) => setDraft({ ...draft, name: v })} />
+                <EditField label="SKU" value={draft.sku} onChange={(v) => setDraft({ ...draft, sku: v })} />
+                <EditField label="Status" value={draft.status} onChange={(v) => setDraft({ ...draft, status: v })} />
+                <EditField label="Kategorie" value={draft.category_name} onChange={(v) => setDraft({ ...draft, category_name: v })} />
+                <EditField label="Marke" value={draft.brand} onChange={(v) => setDraft({ ...draft, brand: v })} />
+                <EditField label="Hersteller" value={draft.manufacturer} onChange={(v) => setDraft({ ...draft, manufacturer: v })} />
+                <EditField label="Einheit" value={draft.unit} onChange={(v) => setDraft({ ...draft, unit: v })} />
+                <EditField label="Verkaufspreis" type="number" value={draft.rate?.toString() ?? ''} onChange={(v) => setDraft({ ...draft, rate: v === '' ? null : Number(v) })} />
+                <EditField label="Einkaufspreis" type="number" value={draft.purchase_rate?.toString() ?? ''} onChange={(v) => setDraft({ ...draft, purchase_rate: v === '' ? null : Number(v) })} />
+                <EditField label="Steuer-Name" value={draft.tax_name} onChange={(v) => setDraft({ ...draft, tax_name: v })} />
+                <EditField label="Steuer-%" type="number" value={draft.tax_percentage?.toString() ?? ''} onChange={(v) => setDraft({ ...draft, tax_percentage: v === '' ? null : Number(v) })} />
+                <EditField label="Produkttyp" value={draft.product_type} onChange={(v) => setDraft({ ...draft, product_type: v })} />
+                <EditField label="Item-Typ" value={draft.item_type} onChange={(v) => setDraft({ ...draft, item_type: v })} />
+                <EditField label="Bestand" type="number" value={draft.stock_on_hand?.toString() ?? ''} onChange={(v) => setDraft({ ...draft, stock_on_hand: v === '' ? null : Number(v) })} />
+                <EditField label="Verfügbar" type="number" value={draft.available_stock?.toString() ?? ''} onChange={(v) => setDraft({ ...draft, available_stock: v === '' ? null : Number(v) })} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs uppercase text-muted-foreground">Beschreibung</Label>
+                <Textarea
+                  value={draft.description ?? ''}
+                  onChange={(e) => setDraft({ ...draft, description: e.target.value })}
+                  rows={4}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Hinweis: Änderungen werden lokal gespeichert und beim nächsten Zoho-Sync ggf. überschrieben.
+              </p>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+function EditField({
+  label, value, onChange, type = 'text',
+}: { label: string; value: string | null | undefined; onChange: (v: string) => void; type?: string }) {
+  return (
+    <div className="space-y-1">
+      <Label className="text-xs uppercase text-muted-foreground">{label}</Label>
+      <Input type={type} value={value ?? ''} onChange={(e) => onChange(e.target.value)} />
     </div>
   );
 }
