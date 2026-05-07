@@ -112,6 +112,7 @@ export default function Leihgeraete() {
     setSerial('');
     setModelName('');
     setEntryDate(today);
+    setCustomerSince('');
     setNotes('');
     setReservedOrderId(null);
     setReservedOrderNumber(null);
