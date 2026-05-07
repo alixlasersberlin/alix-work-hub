@@ -697,9 +697,9 @@ export default function Lagergeraete({
           <div className="p-8 flex items-center justify-center text-muted-foreground">
             <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Lade…
           </div>
-        ) : devices.length === 0 ? (
+        ) : typeFilteredDevices.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground">
-            Noch keine Lagergeräte erfasst.
+            {emptyLabel}
           </div>
         ) : filteredDevices.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground">
