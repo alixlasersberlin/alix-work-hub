@@ -386,8 +386,7 @@ export default function Leihgeraete() {
                   <p className="text-xs text-muted-foreground">Nur intern sichtbar.</p>
                 </div>
               </section>
-                />
-              </div>
+
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setOpen(false)}>Abbrechen</Button>
                 <Button type="submit" disabled={saving}>
