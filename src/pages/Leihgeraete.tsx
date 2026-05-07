@@ -220,6 +220,15 @@ export default function Leihgeraete() {
                   required
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="customer-since">Bei Kunden seit</Label>
+                <Input
+                  id="customer-since"
+                  type="date"
+                  value={customerSince}
+                  onChange={(e) => setCustomerSince(e.target.value)}
+                />
+              </div>
 
               {isAdmin && (
                 <div className="space-y-2">
