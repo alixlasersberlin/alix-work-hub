@@ -191,6 +191,26 @@ Deno.serve(async (req: Request) => {
       return jsonResponse({ error: "Incomplete sales order data from Zoho" }, 422);
     }
 
+    // Pre-check: skip if order already exists locally
+    const externalOrderIdStr = salesOrder.salesorder_id?.toString();
+    const { data: existingOrder } = await adminClient
+      .from("orders")
+      .select("id, order_number")
+      .eq("source_system", source_system)
+      .or(`external_order_id.eq.${externalOrderIdStr},order_number.eq.${orderNumber}`)
+      .maybeSingle();
+
+    if (existingOrder) {
+      console.log(`[sync-single-order] Order ${orderNumber} already exists, skipping import.`);
+      return jsonResponse({
+        success: false,
+        already_exists: true,
+        order_number: orderNumber,
+        source_system,
+        message: `Auftrag "${orderNumber}" ist bereits im System vorhanden und wurde nicht erneut importiert.`,
+      }, 200);
+    }
+
     // Find linked customer - auto-sync from Zoho if missing
     let { data: customer } = await adminClient
       .from("customers")
