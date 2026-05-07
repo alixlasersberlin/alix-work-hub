@@ -137,7 +137,8 @@ export default function Leihgeraete() {
     setSaving(true);
     const { data: userData } = await supabase.auth.getUser();
     const customerSinceTag = customerSince ? ` [Bei Kunden seit: ${customerSince}]` : '';
-    const noteWithTag = `[Leihgerät]${customerSinceTag} ${parsed.data.notes ?? ''}`.trim();
+    const conditionTag = condition.trim() ? ` [Zustand: ${condition.trim()}]` : '';
+    const noteWithTag = `[Leihgerät]${customerSinceTag}${conditionTag} ${parsed.data.notes ?? ''}`.trim();
 
     const { error } = await supabase.from('lager_devices').insert([{
       serial_number: parsed.data.serial_number,
