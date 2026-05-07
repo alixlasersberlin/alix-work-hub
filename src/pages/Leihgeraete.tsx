@@ -268,7 +268,7 @@ export default function Leihgeraete() {
                     </div>
                   )}
                   <p className="text-xs text-muted-foreground">
-                    Bei Zuweisung wird das Leihgerät bis zur Auslieferung reserviert.
+                    Bei Zuweisung wird das Leihgerät dem Auftrag zugebucht und mit Lieferung wieder zurückgeholt.
                   </p>
 
                   {!reservedOrderId && modelName && (
