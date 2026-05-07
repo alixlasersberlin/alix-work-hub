@@ -143,13 +143,17 @@ export default function Lagergeraete({
   );
 
   const filteredDevices = useMemo(() => {
+    let list = devices;
+    if (filterType) {
+      list = list.filter((d) => getDeviceTypeFromNotes(d.notes) === filterType);
+    }
     const q = searchQuery.toLowerCase().trim();
-    if (!q) return devices;
-    return devices.filter((d) => {
+    if (!q) return list;
+    return list.filter((d) => {
       const hay = `${d.serial_number ?? ''} ${d.model_name ?? ''} ${d.notes ?? ''} ${d.orders?.order_number ?? ''} ${d.reservation_week ?? ''}`.toLowerCase();
       return hay.includes(q);
     });
-  }, [devices, searchQuery]);
+  }, [devices, searchQuery, filterType]);
 
   // Search free (unreserved) open orders matching the query
   useEffect(() => {
