@@ -371,6 +371,55 @@ export default function Orders() {
       {deferOrder && (
         <OrderDeferDialog order={deferOrder} open onClose={() => setDeferOrder(null)} onSaved={load} />
       )}
+      <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Status für {selectedIds.size} Auftrag/Aufträge ändern</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">Wähle den neuen Status für die markierten Aufträge.</p>
+            <Select value={bulkStatus} onValueChange={setBulkStatus}>
+              <SelectTrigger className="bg-secondary border-border">
+                <SelectValue placeholder="Status wählen..." />
+              </SelectTrigger>
+              <SelectContent>
+                {statuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                <SelectItem value="offen">offen</SelectItem>
+                <SelectItem value="in Bearbeitung">in Bearbeitung</SelectItem>
+                <SelectItem value="geliefert">geliefert</SelectItem>
+                <SelectItem value="teilgeliefert">teilgeliefert</SelectItem>
+                <SelectItem value="anwalt">anwalt</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkOpen(false)} disabled={bulkSaving}>Abbrechen</Button>
+            <Button
+              disabled={!bulkStatus || bulkSaving}
+              onClick={async () => {
+                setBulkSaving(true);
+                const ids = Array.from(selectedIds);
+                const { error: err } = await supabase
+                  .from('orders')
+                  .update({ order_status: bulkStatus })
+                  .in('id', ids);
+                setBulkSaving(false);
+                if (err) {
+                  toast.error('Fehler: ' + err.message);
+                  return;
+                }
+                toast.success(`${ids.length} Auftrag/Aufträge auf "${bulkStatus}" gesetzt.`);
+                setBulkOpen(false);
+                setSelectedIds(new Set());
+                setSelectionMode(false);
+                load();
+              }}
+            >
+              {bulkSaving ? 'Speichern...' : 'Verschieben'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
