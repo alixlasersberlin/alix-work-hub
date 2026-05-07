@@ -633,7 +633,7 @@ export default function Lagergeraete({
             </div>
             <div>
               <div className="text-xs uppercase tracking-wide text-emerald-500/80 font-medium">Verfügbar</div>
-              <div className="text-2xl font-display font-bold text-emerald-500">{devices.filter(d => !d.reserved_order_id).length}</div>
+              <div className="text-2xl font-display font-bold text-emerald-500">{typeFilteredDevices.filter(d => !d.reserved_order_id).length}</div>
             </div>
           </div>
         </div>
