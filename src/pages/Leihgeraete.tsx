@@ -233,6 +233,10 @@ export default function Leihgeraete() {
               {isAdmin && (
                 <div className="space-y-2">
                   <Label>Auftragszuweisung</Label>
+                  <div className="rounded-md border border-border bg-secondary/30 p-2 text-xs text-muted-foreground space-y-1">
+                    <p>• Dieses Leihgerät ist dem Auftrag zugebucht.</p>
+                    <p>• Dieses Leihgerät wird mit Lieferung des Auftrages zurückgeholt.</p>
+                  </div>
                   {reservedOrderNumber ? (
                     <div className="flex items-center gap-2 rounded-md border border-border bg-secondary/40 px-3 py-2">
                       <Link2 className="w-4 h-4 text-primary" />
@@ -264,7 +268,7 @@ export default function Leihgeraete() {
                     </div>
                   )}
                   <p className="text-xs text-muted-foreground">
-                    Bei Zuweisung wird das Leihgerät bis zur Auslieferung reserviert.
+                    Bei Zuweisung wird das Leihgerät dem Auftrag zugebucht und mit Lieferung wieder zurückgeholt.
                   </p>
 
                   {!reservedOrderId && modelName && (
