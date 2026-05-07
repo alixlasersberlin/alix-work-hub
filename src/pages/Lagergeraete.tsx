@@ -429,6 +429,19 @@ export default function Lagergeraete() {
                 </Select>
               </div>
               <div className="space-y-2">
+              <div className="space-y-2">
+                <Label htmlFor="device-type">Gerätetyp *</Label>
+                <Select value={deviceType} onValueChange={(v) => setDeviceType(v as 'Neugerät' | 'Leihgerät')}>
+                  <SelectTrigger id="device-type">
+                    <SelectValue placeholder="Typ auswählen" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Neugerät">Neugerät</SelectItem>
+                    <SelectItem value="Leihgerät">Leihgerät</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="entry-date">Eingangsdatum *</Label>
                 <Input
                   id="entry-date"
