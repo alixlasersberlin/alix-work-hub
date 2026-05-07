@@ -300,11 +300,13 @@ export default function Lagergeraete() {
     const { data: userData } = await supabase.auth.getUser();
     const finalReservedOrderId = reservedOrderId;
 
+    const cleanedNotes = (parsed.data.notes ?? '').replace(/\s*\[Typ:\s*(Neugerät|Leihgerät)\]\s*/g, ' ').trim();
+    const notesWithType = `[Typ: ${deviceType}]${cleanedNotes ? ' ' + cleanedNotes : ''}`;
     const payload = {
       serial_number: parsed.data.serial_number,
       model_name: parsed.data.model_name,
       entry_date: parsed.data.entry_date,
-      notes: parsed.data.notes ?? null,
+      notes: notesWithType,
       reserved_order_id: finalReservedOrderId,
       reservation_week: finalReservedOrderId ? (reservationWeek || null) : null,
       updated_by: userData.user?.id,
