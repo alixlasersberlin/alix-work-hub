@@ -67,7 +67,33 @@ const formSchema = z.object({
   notes: z.string().max(1000).optional().nullable(),
 });
 
-export default function Lagergeraete() {
+type DeviceTypeFilter = 'Neugerät' | 'Leihgerät';
+
+interface LagerDevicesPageProps {
+  filterType?: DeviceTypeFilter;
+  pageTitle?: string;
+  pageSubtitle?: string;
+  addLabel?: string;
+  dialogTitle?: string;
+  emptyLabel?: string;
+  pageIcon?: React.ReactNode;
+}
+
+function getDeviceTypeFromNotes(notes: string | null | undefined): DeviceTypeFilter {
+  return (notes ?? '').includes('[Typ: Leihgerät]') || (notes ?? '').includes('[Leihgerät]')
+    ? 'Leihgerät'
+    : 'Neugerät';
+}
+
+export default function Lagergeraete({
+  filterType,
+  pageTitle = 'Lagergeräte',
+  pageSubtitle = 'Erfassung und Übersicht aller Lagergeräte',
+  addLabel = 'Neues Lagergerät',
+  dialogTitle = 'Lagergerät',
+  emptyLabel = 'Noch keine Lagergeräte erfasst.',
+  pageIcon,
+}: LagerDevicesPageProps = {}) {
   const { isAdmin } = useAuth();
   const [devices, setDevices] = useState<LagerDevice[]>([]);
   const [loading, setLoading] = useState(true);
