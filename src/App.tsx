@@ -45,6 +45,7 @@ import Suppliers from "./pages/Suppliers";
 import Lager from "./pages/Lager";
 import Lagergeraete from "./pages/Lagergeraete";
 import Leihgeraete from "./pages/Leihgeraete";
+import Artikel from "./pages/Artikel";
 import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
