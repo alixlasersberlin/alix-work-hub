@@ -49,6 +49,7 @@ export default function Leihgeraete() {
   const [modelName, setModelName] = useState<string>('');
   const [entryDate, setEntryDate] = useState(today);
   const [customerSince, setCustomerSince] = useState('');
+  const [condition, setCondition] = useState('');
   const [notes, setNotes] = useState('');
   const [reservedOrderId, setReservedOrderId] = useState<string | null>(null);
   const [reservedOrderNumber, setReservedOrderNumber] = useState<string | null>(null);
@@ -113,6 +114,7 @@ export default function Leihgeraete() {
     setModelName('');
     setEntryDate(today);
     setCustomerSince('');
+    setCondition('');
     setNotes('');
     setReservedOrderId(null);
     setReservedOrderNumber(null);
@@ -135,7 +137,8 @@ export default function Leihgeraete() {
     setSaving(true);
     const { data: userData } = await supabase.auth.getUser();
     const customerSinceTag = customerSince ? ` [Bei Kunden seit: ${customerSince}]` : '';
-    const noteWithTag = `[Leihgerät]${customerSinceTag} ${parsed.data.notes ?? ''}`.trim();
+    const conditionTag = condition.trim() ? ` [Zustand: ${condition.trim()}]` : '';
+    const noteWithTag = `[Leihgerät]${customerSinceTag}${conditionTag} ${parsed.data.notes ?? ''}`.trim();
 
     const { error } = await supabase.from('lager_devices').insert([{
       serial_number: parsed.data.serial_number,
@@ -227,6 +230,17 @@ export default function Leihgeraete() {
                   type="date"
                   value={customerSince}
                   onChange={(e) => setCustomerSince(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="condition">Zustand</Label>
+                <Textarea
+                  id="condition"
+                  value={condition}
+                  onChange={(e) => setCondition(e.target.value)}
+                  placeholder="z. B. neuwertig, leichte Gebrauchsspuren, Display gerissen ..."
+                  maxLength={1000}
+                  rows={2}
                 />
               </div>
 
