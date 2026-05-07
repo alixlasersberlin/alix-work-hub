@@ -416,7 +416,7 @@ export default function Lagergeraete({
         <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
           <DialogTrigger asChild>
             <Button className="gap-2">
-              <Plus className="w-4 h-4" /> Neues Lagergerät
+              <Plus className="w-4 h-4" /> {addLabel}
             </Button>
           </DialogTrigger>
           <DialogContent>
