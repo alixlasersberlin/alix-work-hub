@@ -181,85 +181,103 @@ export default function Leihgeraete() {
               <Plus className="w-4 h-4" /> Leihgerät erfassen
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Leihgerät erfassen</DialogTitle>
               <DialogDescription>Bitte alle Pflichtfelder ausfüllen.</DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="serial">Seriennummer *</Label>
-                <Input
-                  id="serial"
-                  value={serial}
-                  onChange={(e) => setSerial(e.target.value)}
-                  placeholder="z. B. SN-123456"
-                  maxLength={100}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="model">Modell *</Label>
-                <Select value={modelName} onValueChange={setModelName}>
-                  <SelectTrigger id="model">
-                    <SelectValue placeholder="Modell auswählen" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-80">
-                    {ALIX_MODEL_GROUPS.map((group) => (
-                      <SelectGroup key={group.label}>
-                        <SelectLabel>{group.label}</SelectLabel>
-                        {group.models.map((m) => (
-                          <SelectItem key={m} value={m}>{m}</SelectItem>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Section: Gerätedaten */}
+              <section className="space-y-3">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground border-b border-border pb-1">
+                  Gerätedaten
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="serial">Seriennummer *</Label>
+                    <Input
+                      id="serial"
+                      value={serial}
+                      onChange={(e) => setSerial(e.target.value)}
+                      placeholder="z. B. SN-123456"
+                      maxLength={100}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="model">Modell *</Label>
+                    <Select value={modelName} onValueChange={setModelName}>
+                      <SelectTrigger id="model">
+                        <SelectValue placeholder="Modell auswählen" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-80">
+                        {ALIX_MODEL_GROUPS.map((group) => (
+                          <SelectGroup key={group.label}>
+                            <SelectLabel>{group.label}</SelectLabel>
+                            {group.models.map((m) => (
+                              <SelectItem key={m} value={m}>{m}</SelectItem>
+                            ))}
+                          </SelectGroup>
                         ))}
-                      </SelectGroup>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="entry-date">Eingangsdatum *</Label>
-                <Input
-                  id="entry-date"
-                  type="date"
-                  value={entryDate}
-                  onChange={(e) => setEntryDate(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="customer-since">Bei Kunden seit</Label>
-                <Input
-                  id="customer-since"
-                  type="date"
-                  value={customerSince}
-                  onChange={(e) => setCustomerSince(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="condition">Zustand</Label>
-                <Textarea
-                  id="condition"
-                  value={condition}
-                  onChange={(e) => setCondition(e.target.value)}
-                  placeholder="z. B. neuwertig, leichte Gebrauchsspuren, Display gerissen ..."
-                  maxLength={1000}
-                  rows={2}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="shot-count">Schusszahl</Label>
-                <Input
-                  id="shot-count"
-                  value={shotCount}
-                  onChange={(e) => setShotCount(e.target.value)}
-                  placeholder="z. B. 12.345"
-                  maxLength={50}
-                />
-              </div>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="shot-count">Schusszahl</Label>
+                    <Input
+                      id="shot-count"
+                      value={shotCount}
+                      onChange={(e) => setShotCount(e.target.value)}
+                      placeholder="z. B. 12.345"
+                      maxLength={50}
+                    />
+                  </div>
+                  <div className="space-y-2 sm:col-span-1">
+                    <Label htmlFor="condition">Zustand</Label>
+                    <Input
+                      id="condition"
+                      value={condition}
+                      onChange={(e) => setCondition(e.target.value)}
+                      placeholder="z. B. neuwertig, leichte Spuren ..."
+                      maxLength={1000}
+                    />
+                  </div>
+                </div>
+              </section>
+
+              {/* Section: Zeitraum */}
+              <section className="space-y-3">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground border-b border-border pb-1">
+                  Zeitraum
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="entry-date">Eingangsdatum *</Label>
+                    <Input
+                      id="entry-date"
+                      type="date"
+                      value={entryDate}
+                      onChange={(e) => setEntryDate(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="customer-since">Bei Kunden seit</Label>
+                    <Input
+                      id="customer-since"
+                      type="date"
+                      value={customerSince}
+                      onChange={(e) => setCustomerSince(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </section>
 
               {isAdmin && (
-                <div className="space-y-2">
-                  <Label>Auftragszuweisung</Label>
+                <section className="space-y-3">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground border-b border-border pb-1">
+                    Auftragszuweisung
+                  </h3>
                   <div className="rounded-md border border-border bg-secondary/30 p-2 text-xs text-muted-foreground space-y-1">
                     <p>• Dieses Leihgerät ist dem Auftrag zugebucht.</p>
                     <p>• Dieses Leihgerät wird mit Lieferung des Auftrages zurückgeholt.</p>
