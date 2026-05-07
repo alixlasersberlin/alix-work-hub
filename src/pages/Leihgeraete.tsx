@@ -116,6 +116,7 @@ export default function Leihgeraete() {
     setEntryDate(today);
     setCustomerSince('');
     setCondition('');
+    setShotCount('');
     setNotes('');
     setReservedOrderId(null);
     setReservedOrderNumber(null);
