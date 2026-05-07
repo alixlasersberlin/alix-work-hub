@@ -6,8 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Search, ClipboardList, ArrowUpDown, Loader2, Inbox, CalendarDays, List, Car, Pencil, CalendarClock } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Search, ClipboardList, ArrowUpDown, Loader2, Inbox, CalendarDays, List, Car, Pencil, CalendarClock, MoveRight } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
+import { toast } from 'sonner';
 import OrdersCalendar from '@/components/OrdersCalendar';
 import OrderEditDialog from '@/components/OrderEditDialog';
 import OrderDeferDialog from '@/components/OrderDeferDialog';
@@ -29,6 +32,11 @@ export default function Orders() {
   const [currentPage, setCurrentPage] = useState(1);
   const [editOrder, setEditOrder] = useState<any>(null);
   const [deferOrder, setDeferOrder] = useState<any>(null);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkStatus, setBulkStatus] = useState<string>('');
+  const [bulkSaving, setBulkSaving] = useState(false);
   const navigate = useNavigate();
   const { isAdmin, hasRole } = useAuth();
   const { drivingTimes, fetchDrivingTimes } = useDrivingTimes();
@@ -174,6 +182,32 @@ export default function Orders() {
                 <SelectItem value="all">Alle</SelectItem>
               </SelectContent>
             </Select>
+            {canWrite && (
+              <div className="flex items-center gap-2 ml-auto">
+                <Button
+                  variant={selectionMode ? 'default' : 'outline'}
+                  size="sm"
+                  className="h-9"
+                  onClick={() => {
+                    setSelectionMode(s => !s);
+                    setSelectedIds(new Set());
+                  }}
+                >
+                  {selectionMode ? 'Markierung beenden' : 'Markieren'}
+                </Button>
+                {selectionMode && (
+                  <Button
+                    size="sm"
+                    className="h-9 gap-1.5"
+                    disabled={selectedIds.size === 0}
+                    onClick={() => { setBulkStatus(''); setBulkOpen(true); }}
+                  >
+                    <MoveRight className="w-3.5 h-3.5" />
+                    Verschieben ({selectedIds.size})
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
 
           {error && <div className="p-4 rounded-lg bg-destructive/10 text-destructive text-sm">{error}</div>}
@@ -183,6 +217,19 @@ export default function Orders() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border bg-secondary/50">
+                    {selectionMode && (
+                      <th className="w-10 px-3 py-3">
+                        <Checkbox
+                          checked={paged.length > 0 && paged.every(o => selectedIds.has(o.id))}
+                          onCheckedChange={(v) => {
+                            const next = new Set(selectedIds);
+                            if (v) paged.forEach(o => next.add(o.id));
+                            else paged.forEach(o => next.delete(o.id));
+                            setSelectedIds(next);
+                          }}
+                        />
+                      </th>
+                    )}
                     <SortHeader field="order_number" label="Auftrag Nr." />
                     <th className="text-left px-4 py-3 text-muted-foreground font-medium">Kunde</th>
                     <SortHeader field="order_date" label="Datum" />
@@ -197,13 +244,13 @@ export default function Orders() {
                 </thead>
                 {loading ? (
                   <tbody>
-                    <tr><td colSpan={canWrite ? 8 : 7} className="px-4 py-12 text-center">
+                    <tr><td colSpan={(canWrite ? 8 : 7) + (selectionMode ? 1 : 0)} className="px-4 py-12 text-center">
                       <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" />
                     </td></tr>
                   </tbody>
                 ) : filtered.length === 0 ? (
                   <tbody>
-                    <tr><td colSpan={canWrite ? 8 : 7} className="px-4 py-12 text-center">
+                    <tr><td colSpan={(canWrite ? 8 : 7) + (selectionMode ? 1 : 0)} className="px-4 py-12 text-center">
                       <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
                       <p className="text-muted-foreground">Keine Aufträge gefunden.</p>
                     </td></tr>
@@ -213,8 +260,28 @@ export default function Orders() {
                     <tbody key={`${o.id}-${o._seq}`} className="border-b border-border">
                       <tr
                         className="hover:bg-secondary/30 transition-colors cursor-pointer"
-                        onClick={() => navigate(`/auftraege/${o.id}`)}
+                        onClick={() => {
+                          if (selectionMode) {
+                            const next = new Set(selectedIds);
+                            if (next.has(o.id)) next.delete(o.id); else next.add(o.id);
+                            setSelectedIds(next);
+                          } else {
+                            navigate(`/auftraege/${o.id}`);
+                          }
+                        }}
                       >
+                        {selectionMode && (
+                          <td className="w-10 px-3 py-3" onClick={e => e.stopPropagation()}>
+                            <Checkbox
+                              checked={selectedIds.has(o.id)}
+                              onCheckedChange={(v) => {
+                                const next = new Set(selectedIds);
+                                if (v) next.add(o.id); else next.delete(o.id);
+                                setSelectedIds(next);
+                              }}
+                            />
+                          </td>
+                        )}
                         <td className="px-4 py-3 font-medium text-foreground">{o._displayNumber || o.order_number}</td>
                         <td className="px-4 py-3 text-muted-foreground">{o.customers?.company_name || o.customers?.contact_name || '—'}</td>
                         <td className="px-4 py-3 text-muted-foreground">{o.order_date ? new Date(o.order_date).toLocaleDateString('de-DE') : '—'}</td>
@@ -304,6 +371,55 @@ export default function Orders() {
       {deferOrder && (
         <OrderDeferDialog order={deferOrder} open onClose={() => setDeferOrder(null)} onSaved={load} />
       )}
+      <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Status für {selectedIds.size} Auftrag/Aufträge ändern</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">Wähle den neuen Status für die markierten Aufträge.</p>
+            <Select value={bulkStatus} onValueChange={setBulkStatus}>
+              <SelectTrigger className="bg-secondary border-border">
+                <SelectValue placeholder="Status wählen..." />
+              </SelectTrigger>
+              <SelectContent>
+                {statuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                <SelectItem value="offen">offen</SelectItem>
+                <SelectItem value="in Bearbeitung">in Bearbeitung</SelectItem>
+                <SelectItem value="geliefert">geliefert</SelectItem>
+                <SelectItem value="teilgeliefert">teilgeliefert</SelectItem>
+                <SelectItem value="anwalt">anwalt</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkOpen(false)} disabled={bulkSaving}>Abbrechen</Button>
+            <Button
+              disabled={!bulkStatus || bulkSaving}
+              onClick={async () => {
+                setBulkSaving(true);
+                const ids = Array.from(selectedIds);
+                const { error: err } = await supabase
+                  .from('orders')
+                  .update({ order_status: bulkStatus })
+                  .in('id', ids);
+                setBulkSaving(false);
+                if (err) {
+                  toast.error('Fehler: ' + err.message);
+                  return;
+                }
+                toast.success(`${ids.length} Auftrag/Aufträge auf "${bulkStatus}" gesetzt.`);
+                setBulkOpen(false);
+                setSelectedIds(new Set());
+                setSelectionMode(false);
+                load();
+              }}
+            >
+              {bulkSaving ? 'Speichern...' : 'Verschieben'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
