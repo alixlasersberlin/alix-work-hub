@@ -182,6 +182,32 @@ export default function Orders() {
                 <SelectItem value="all">Alle</SelectItem>
               </SelectContent>
             </Select>
+            {canWrite && (
+              <div className="flex items-center gap-2 ml-auto">
+                <Button
+                  variant={selectionMode ? 'default' : 'outline'}
+                  size="sm"
+                  className="h-9"
+                  onClick={() => {
+                    setSelectionMode(s => !s);
+                    setSelectedIds(new Set());
+                  }}
+                >
+                  {selectionMode ? 'Markierung beenden' : 'Markieren'}
+                </Button>
+                {selectionMode && (
+                  <Button
+                    size="sm"
+                    className="h-9 gap-1.5"
+                    disabled={selectedIds.size === 0}
+                    onClick={() => { setBulkStatus(''); setBulkOpen(true); }}
+                  >
+                    <MoveRight className="w-3.5 h-3.5" />
+                    Verschieben ({selectedIds.size})
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
 
           {error && <div className="p-4 rounded-lg bg-destructive/10 text-destructive text-sm">{error}</div>}
