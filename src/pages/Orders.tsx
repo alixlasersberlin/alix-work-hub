@@ -260,8 +260,28 @@ export default function Orders() {
                     <tbody key={`${o.id}-${o._seq}`} className="border-b border-border">
                       <tr
                         className="hover:bg-secondary/30 transition-colors cursor-pointer"
-                        onClick={() => navigate(`/auftraege/${o.id}`)}
+                        onClick={() => {
+                          if (selectionMode) {
+                            const next = new Set(selectedIds);
+                            if (next.has(o.id)) next.delete(o.id); else next.add(o.id);
+                            setSelectedIds(next);
+                          } else {
+                            navigate(`/auftraege/${o.id}`);
+                          }
+                        }}
                       >
+                        {selectionMode && (
+                          <td className="w-10 px-3 py-3" onClick={e => e.stopPropagation()}>
+                            <Checkbox
+                              checked={selectedIds.has(o.id)}
+                              onCheckedChange={(v) => {
+                                const next = new Set(selectedIds);
+                                if (v) next.add(o.id); else next.delete(o.id);
+                                setSelectedIds(next);
+                              }}
+                            />
+                          </td>
+                        )}
                         <td className="px-4 py-3 font-medium text-foreground">{o._displayNumber || o.order_number}</td>
                         <td className="px-4 py-3 text-muted-foreground">{o.customers?.company_name || o.customers?.contact_name || '—'}</td>
                         <td className="px-4 py-3 text-muted-foreground">{o.order_date ? new Date(o.order_date).toLocaleDateString('de-DE') : '—'}</td>
