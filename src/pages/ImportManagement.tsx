@@ -571,12 +571,15 @@ export default function ImportManagement() {
       });
       if (error) throw error;
       setSyncOrderResult(data as SingleSyncResult);
+      const alreadyExists = (data as any)?.already_exists === true;
       toast({
-        title: data?.success ? 'Auftrag synchronisiert' : 'Fehler',
+        title: data?.success
+          ? 'Auftrag synchronisiert'
+          : alreadyExists ? 'Bereits vorhanden' : 'Fehler',
         description: data?.success
           ? `Auftrag ${data.order_number || syncOrderId} erfolgreich synchronisiert.`
           : (data?.message || 'Unbekannter Fehler'),
-        variant: data?.success ? 'default' : 'destructive',
+        variant: data?.success || alreadyExists ? 'default' : 'destructive',
       });
     } catch (err: any) {
       setSyncOrderResult({ error: err.message });
