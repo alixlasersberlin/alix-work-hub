@@ -6,7 +6,9 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, RefreshCw, Search, Package, Eye } from 'lucide-react';
+import { Loader2, RefreshCw, Search, Package, Eye, Pencil, Save, X } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 type ZohoItem = {
   id: string;
