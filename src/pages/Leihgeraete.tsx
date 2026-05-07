@@ -246,6 +246,16 @@ export default function Leihgeraete() {
                   rows={2}
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="shot-count">Schusszahl</Label>
+                <Input
+                  id="shot-count"
+                  value={shotCount}
+                  onChange={(e) => setShotCount(e.target.value)}
+                  placeholder="z. B. 12.345"
+                  maxLength={50}
+                />
+              </div>
 
               {isAdmin && (
                 <div className="space-y-2">
