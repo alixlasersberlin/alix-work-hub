@@ -67,7 +67,33 @@ const formSchema = z.object({
   notes: z.string().max(1000).optional().nullable(),
 });
 
-export default function Lagergeraete() {
+type DeviceTypeFilter = 'Neugerät' | 'Leihgerät';
+
+interface LagerDevicesPageProps {
+  filterType?: DeviceTypeFilter;
+  pageTitle?: string;
+  pageSubtitle?: string;
+  addLabel?: string;
+  dialogTitle?: string;
+  emptyLabel?: string;
+  pageIcon?: React.ReactNode;
+}
+
+function getDeviceTypeFromNotes(notes: string | null | undefined): DeviceTypeFilter {
+  return (notes ?? '').includes('[Typ: Leihgerät]') || (notes ?? '').includes('[Leihgerät]')
+    ? 'Leihgerät'
+    : 'Neugerät';
+}
+
+export default function Lagergeraete({
+  filterType,
+  pageTitle = 'Lagergeräte',
+  pageSubtitle = 'Erfassung und Übersicht aller Lagergeräte',
+  addLabel = 'Neues Lagergerät',
+  dialogTitle = 'Lagergerät',
+  emptyLabel = 'Noch keine Lagergeräte erfasst.',
+  pageIcon,
+}: LagerDevicesPageProps = {}) {
   const { isAdmin } = useAuth();
   const [devices, setDevices] = useState<LagerDevice[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,7 +105,7 @@ export default function Lagergeraete() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [serial, setSerial] = useState('');
   const [modelName, setModelName] = useState<string>('');
-  const [deviceType, setDeviceType] = useState<'Neugerät' | 'Leihgerät'>('Neugerät');
+  const [deviceType, setDeviceType] = useState<'Neugerät' | 'Leihgerät'>(filterType ?? 'Neugerät');
   const [entryDate, setEntryDate] = useState(today);
   const [notes, setNotes] = useState('');
   const [reservedOrderId, setReservedOrderId] = useState<string | null>(null);
@@ -116,14 +142,19 @@ export default function Lagergeraete() {
     [devices],
   );
 
+  const typeFilteredDevices = useMemo(() => {
+    if (!filterType) return devices;
+    return devices.filter((d) => getDeviceTypeFromNotes(d.notes) === filterType);
+  }, [devices, filterType]);
+
   const filteredDevices = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
-    if (!q) return devices;
-    return devices.filter((d) => {
+    if (!q) return typeFilteredDevices;
+    return typeFilteredDevices.filter((d) => {
       const hay = `${d.serial_number ?? ''} ${d.model_name ?? ''} ${d.notes ?? ''} ${d.orders?.order_number ?? ''} ${d.reservation_week ?? ''}`.toLowerCase();
       return hay.includes(q);
     });
-  }, [devices, searchQuery]);
+  }, [typeFilteredDevices, searchQuery]);
 
   // Search free (unreserved) open orders matching the query
   useEffect(() => {
@@ -260,7 +291,7 @@ export default function Lagergeraete() {
     setEditingId(null);
     setSerial('');
     setModelName('');
-    setDeviceType('Neugerät');
+    setDeviceType(filterType ?? 'Neugerät');
     setEntryDate(today);
     setNotes('');
     setReservedOrderId(null);
@@ -273,7 +304,7 @@ export default function Lagergeraete() {
     setEditingId(d.id);
     setSerial(d.serial_number);
     setModelName(d.model_name);
-    setDeviceType((d.notes ?? '').includes('[Typ: Leihgerät]') ? 'Leihgerät' : 'Neugerät');
+    setDeviceType(getDeviceTypeFromNotes(d.notes));
     setEntryDate(d.entry_date);
     setNotes(d.notes ?? '');
     setReservedOrderId(d.reserved_order_id);
@@ -379,19 +410,19 @@ export default function Lagergeraete() {
     <div className="container mx-auto px-4 py-8 space-y-6">
       <div className="flex items-start justify-between gap-4">
         <PageHeader
-          icon={<Warehouse className="w-6 h-6 text-primary" />}
-          title="Lagergeräte"
-          subtitle="Erfassung und Übersicht aller Lagergeräte"
+          icon={pageIcon ?? <Warehouse className="w-6 h-6 text-primary" />}
+          title={pageTitle}
+          subtitle={pageSubtitle}
         />
         <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
           <DialogTrigger asChild>
             <Button className="gap-2">
-              <Plus className="w-4 h-4" /> Neues Lagergerät
+              <Plus className="w-4 h-4" /> {addLabel}
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{editingId ? 'Lagergerät bearbeiten' : 'Lagergerät erfassen'}</DialogTitle>
+              <DialogTitle>{editingId ? `${dialogTitle} bearbeiten` : `${dialogTitle} erfassen`}</DialogTitle>
               <DialogDescription>
                 Bitte alle Pflichtfelder ausfüllen.
               </DialogDescription>
@@ -584,7 +615,7 @@ export default function Lagergeraete() {
             </div>
             <div>
               <div className="text-xs uppercase tracking-wide text-blue-500/80 font-medium">Geräte im Lager</div>
-              <div className="text-2xl font-display font-bold text-blue-500">{devices.length}</div>
+              <div className="text-2xl font-display font-bold text-blue-500">{typeFilteredDevices.length}</div>
             </div>
           </div>
           <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 flex items-center gap-3">
@@ -593,7 +624,7 @@ export default function Lagergeraete() {
             </div>
             <div>
               <div className="text-xs uppercase tracking-wide text-amber-500/80 font-medium">Reserviert</div>
-              <div className="text-2xl font-display font-bold text-amber-500">{devices.filter(d => d.reserved_order_id).length}</div>
+              <div className="text-2xl font-display font-bold text-amber-500">{typeFilteredDevices.filter(d => d.reserved_order_id).length}</div>
             </div>
           </div>
           <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4 flex items-center gap-3">
@@ -602,7 +633,7 @@ export default function Lagergeraete() {
             </div>
             <div>
               <div className="text-xs uppercase tracking-wide text-emerald-500/80 font-medium">Verfügbar</div>
-              <div className="text-2xl font-display font-bold text-emerald-500">{devices.filter(d => !d.reserved_order_id).length}</div>
+              <div className="text-2xl font-display font-bold text-emerald-500">{typeFilteredDevices.filter(d => !d.reserved_order_id).length}</div>
             </div>
           </div>
         </div>
@@ -666,9 +697,9 @@ export default function Lagergeraete() {
           <div className="p-8 flex items-center justify-center text-muted-foreground">
             <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Lade…
           </div>
-        ) : devices.length === 0 ? (
+        ) : typeFilteredDevices.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground">
-            Noch keine Lagergeräte erfasst.
+            {emptyLabel}
           </div>
         ) : filteredDevices.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground">
