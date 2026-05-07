@@ -217,6 +217,19 @@ export default function Orders() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border bg-secondary/50">
+                    {selectionMode && (
+                      <th className="w-10 px-3 py-3">
+                        <Checkbox
+                          checked={paged.length > 0 && paged.every(o => selectedIds.has(o.id))}
+                          onCheckedChange={(v) => {
+                            const next = new Set(selectedIds);
+                            if (v) paged.forEach(o => next.add(o.id));
+                            else paged.forEach(o => next.delete(o.id));
+                            setSelectedIds(next);
+                          }}
+                        />
+                      </th>
+                    )}
                     <SortHeader field="order_number" label="Auftrag Nr." />
                     <th className="text-left px-4 py-3 text-muted-foreground font-medium">Kunde</th>
                     <SortHeader field="order_date" label="Datum" />
