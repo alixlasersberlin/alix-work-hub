@@ -260,6 +260,7 @@ export default function Lagergeraete() {
     setEditingId(null);
     setSerial('');
     setModelName('');
+    setDeviceType('Neugerät');
     setEntryDate(today);
     setNotes('');
     setReservedOrderId(null);
