@@ -421,7 +421,7 @@ export default function Lagergeraete({
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{editingId ? 'Lagergerät bearbeiten' : 'Lagergerät erfassen'}</DialogTitle>
+              <DialogTitle>{editingId ? `${dialogTitle} bearbeiten` : `${dialogTitle} erfassen`}</DialogTitle>
               <DialogDescription>
                 Bitte alle Pflichtfelder ausfüllen.
               </DialogDescription>
