@@ -232,6 +232,17 @@ export default function Leihgeraete() {
                   onChange={(e) => setCustomerSince(e.target.value)}
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="condition">Zustand</Label>
+                <Textarea
+                  id="condition"
+                  value={condition}
+                  onChange={(e) => setCondition(e.target.value)}
+                  placeholder="z. B. neuwertig, leichte Gebrauchsspuren, Display gerissen ..."
+                  maxLength={1000}
+                  rows={2}
+                />
+              </div>
 
               {isAdmin && (
                 <div className="space-y-2">
