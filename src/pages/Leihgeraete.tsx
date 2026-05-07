@@ -48,6 +48,7 @@ export default function Leihgeraete() {
   const [serial, setSerial] = useState('');
   const [modelName, setModelName] = useState<string>('');
   const [entryDate, setEntryDate] = useState(today);
+  const [customerSince, setCustomerSince] = useState('');
   const [notes, setNotes] = useState('');
   const [reservedOrderId, setReservedOrderId] = useState<string | null>(null);
   const [reservedOrderNumber, setReservedOrderNumber] = useState<string | null>(null);
@@ -111,6 +112,7 @@ export default function Leihgeraete() {
     setSerial('');
     setModelName('');
     setEntryDate(today);
+    setCustomerSince('');
     setNotes('');
     setReservedOrderId(null);
     setReservedOrderNumber(null);
@@ -132,7 +134,8 @@ export default function Leihgeraete() {
 
     setSaving(true);
     const { data: userData } = await supabase.auth.getUser();
-    const noteWithTag = `[Leihgerät] ${parsed.data.notes ?? ''}`.trim();
+    const customerSinceTag = customerSince ? ` [Bei Kunden seit: ${customerSince}]` : '';
+    const noteWithTag = `[Leihgerät]${customerSinceTag} ${parsed.data.notes ?? ''}`.trim();
 
     const { error } = await supabase.from('lager_devices').insert([{
       serial_number: parsed.data.serial_number,
@@ -215,6 +218,15 @@ export default function Leihgeraete() {
                   value={entryDate}
                   onChange={(e) => setEntryDate(e.target.value)}
                   required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="customer-since">Bei Kunden seit</Label>
+                <Input
+                  id="customer-since"
+                  type="date"
+                  value={customerSince}
+                  onChange={(e) => setCustomerSince(e.target.value)}
                 />
               </div>
 
