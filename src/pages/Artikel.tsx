@@ -44,6 +44,54 @@ export default function Artikel() {
   const [syncing, setSyncing] = useState(false);
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<ZohoItem | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<Partial<ZohoItem>>({});
+  const [saving, setSaving] = useState(false);
+
+  function startEdit() {
+    if (!selected) return;
+    setDraft({
+      name: selected.name,
+      sku: selected.sku,
+      description: selected.description,
+      unit: selected.unit,
+      rate: selected.rate,
+      purchase_rate: selected.purchase_rate,
+      status: selected.status,
+      category_name: selected.category_name,
+      brand: selected.brand,
+      manufacturer: selected.manufacturer,
+      tax_name: selected.tax_name,
+      tax_percentage: selected.tax_percentage,
+      stock_on_hand: selected.stock_on_hand,
+      available_stock: selected.available_stock,
+      product_type: selected.product_type,
+      item_type: selected.item_type,
+    });
+    setEditing(true);
+  }
+
+  async function saveEdit() {
+    if (!selected) return;
+    setSaving(true);
+    const payload = { ...draft, updated_at: new Date().toISOString() };
+    const { data, error } = await supabase
+      .from('zoho_items')
+      .update(payload)
+      .eq('id', selected.id)
+      .select()
+      .single();
+    setSaving(false);
+    if (error) {
+      toast({ title: 'Speichern fehlgeschlagen', description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: 'Gespeichert', description: 'Artikel aktualisiert.' });
+    const updated = data as ZohoItem;
+    setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+    setSelected(updated);
+    setEditing(false);
+  }
 
   async function load() {
     setLoading(true);
