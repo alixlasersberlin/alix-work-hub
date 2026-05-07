@@ -1368,6 +1368,105 @@ export type Database = {
         }
         Relationships: []
       }
+      zoho_items: {
+        Row: {
+          actual_available_stock: number | null
+          available_stock: number | null
+          brand: string | null
+          category_name: string | null
+          created_at: string
+          currency_code: string | null
+          description: string | null
+          id: string
+          image_name: string | null
+          image_type: string | null
+          item_type: string | null
+          manufacturer: string | null
+          name: string | null
+          product_type: string | null
+          purchase_rate: number | null
+          rate: number | null
+          raw_data: Json | null
+          sku: string | null
+          source_system: string
+          status: string | null
+          stock_on_hand: number | null
+          synced_at: string
+          tax_id: string | null
+          tax_name: string | null
+          tax_percentage: number | null
+          unit: string | null
+          updated_at: string
+          zoho_created_time: string | null
+          zoho_item_id: string
+          zoho_last_modified_time: string | null
+        }
+        Insert: {
+          actual_available_stock?: number | null
+          available_stock?: number | null
+          brand?: string | null
+          category_name?: string | null
+          created_at?: string
+          currency_code?: string | null
+          description?: string | null
+          id?: string
+          image_name?: string | null
+          image_type?: string | null
+          item_type?: string | null
+          manufacturer?: string | null
+          name?: string | null
+          product_type?: string | null
+          purchase_rate?: number | null
+          rate?: number | null
+          raw_data?: Json | null
+          sku?: string | null
+          source_system?: string
+          status?: string | null
+          stock_on_hand?: number | null
+          synced_at?: string
+          tax_id?: string | null
+          tax_name?: string | null
+          tax_percentage?: number | null
+          unit?: string | null
+          updated_at?: string
+          zoho_created_time?: string | null
+          zoho_item_id: string
+          zoho_last_modified_time?: string | null
+        }
+        Update: {
+          actual_available_stock?: number | null
+          available_stock?: number | null
+          brand?: string | null
+          category_name?: string | null
+          created_at?: string
+          currency_code?: string | null
+          description?: string | null
+          id?: string
+          image_name?: string | null
+          image_type?: string | null
+          item_type?: string | null
+          manufacturer?: string | null
+          name?: string | null
+          product_type?: string | null
+          purchase_rate?: number | null
+          rate?: number | null
+          raw_data?: Json | null
+          sku?: string | null
+          source_system?: string
+          status?: string | null
+          stock_on_hand?: number | null
+          synced_at?: string
+          tax_id?: string | null
+          tax_name?: string | null
+          tax_percentage?: number | null
+          unit?: string | null
+          updated_at?: string
+          zoho_created_time?: string | null
+          zoho_item_id?: string
+          zoho_last_modified_time?: string | null
+        }
+        Relationships: []
+      }
       zoho_recurring_invoices: {
         Row: {
           balance: number | null
