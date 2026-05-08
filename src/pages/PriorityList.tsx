@@ -101,10 +101,9 @@ export default function PriorityList() {
       const loaded = (data ?? []) as any as PrioOrder[];
       setOrders(loaded);
       setLoading(false);
-      if (loaded.length > 0) fetchDrivingTimes(loaded);
     }
     load();
-  }, [sortField, sortDir, fetchDrivingTimes]);
+  }, [sortField, sortDir]);
 
   const statuses = [...new Set(orders.map(o => o.order_status).filter(Boolean))];
 
