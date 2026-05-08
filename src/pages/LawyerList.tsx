@@ -2,9 +2,12 @@ import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
-import { Gavel, Search, Loader2, Inbox, ArrowUpDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Gavel, Search, Loader2, Inbox, ArrowUpDown, Pencil } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
 import OrderStatsBar from '@/components/OrderStatsBar';
+import OrderEditDialog from '@/components/OrderEditDialog';
+import { useAuth } from '@/hooks/useAuth';
 
 type SortField = 'order_number' | 'expected_shipment_date' | 'total_amount';
 type SortDir = 'asc' | 'desc';
@@ -21,7 +24,11 @@ export default function LawyerList() {
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editOrder, setEditOrder] = useState<any | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const navigate = useNavigate();
+  const { hasRole } = useAuth();
+  const canEdit = hasRole('Admin') || hasRole('Super Admin') || hasRole('Auftragsverwaltung');
 
   useEffect(() => {
     async function load() {
@@ -29,7 +36,7 @@ export default function LawyerList() {
       setError(null);
       const { data, error: err } = await supabase
         .from('orders')
-        .select('id, order_number, order_status, order_date, expected_shipment_date, total_amount, currency, source_system, customers(company_name, contact_name)')
+        .select('id, order_number, order_status, order_date, expected_shipment_date, total_amount, currency, source_system, lawyer_reason, salesperson_name, internal_number, customers(company_name, contact_name)')
         .eq('order_status', 'Anwalt')
         .order(sortField, { ascending: sortDir === 'asc' })
         .limit(500);
@@ -38,7 +45,7 @@ export default function LawyerList() {
       setLoading(false);
     }
     load();
-  }, [sortField, sortDir]);
+  }, [sortField, sortDir, reloadKey]);
 
   const filtered = useMemo(() => orders.filter(o => {
     if (!search) return true;
@@ -102,20 +109,22 @@ export default function LawyerList() {
                 <SortHeader field="expected_shipment_date" label="Lieferdatum" />
                 <SortHeader field="total_amount" label="Betrag" />
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Status</th>
+                <th className="text-left px-4 py-3 text-muted-foreground font-medium">Grund</th>
+                <th className="text-right px-4 py-3 text-muted-foreground font-medium">Aktionen</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {loading ? (
-                <tr><td colSpan={7} className="px-4 py-12 text-center"><Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" /></td></tr>
+                <tr><td colSpan={9} className="px-4 py-12 text-center"><Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" /></td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={7} className="px-4 py-12 text-center">
+                <tr><td colSpan={9} className="px-4 py-12 text-center">
                   <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
                   <p className="text-muted-foreground">Keine Fälle mit Status „Anwalt" gefunden.</p>
                 </td></tr>
               ) : (
                 filtered.map(o => (
-                  <tr key={o.id} className="hover:bg-secondary/30 transition-colors cursor-pointer" onClick={() => navigate(`/auftraege/${o.id}`)}>
-                    <td className="px-4 py-3 font-medium text-foreground">{o.order_number}</td>
+                  <tr key={o.id} className="hover:bg-secondary/30 transition-colors">
+                    <td className="px-4 py-3 font-medium text-foreground cursor-pointer" onClick={() => navigate(`/auftraege/${o.id}`)}>{o.order_number}</td>
                     <td className="px-4 py-3 text-muted-foreground">{o.customers?.company_name || '—'}</td>
                     <td className="px-4 py-3 text-muted-foreground">{o.customers?.contact_name || '—'}</td>
                     <td className="px-4 py-3 text-muted-foreground">{formatDate(o.order_date)}</td>
@@ -124,6 +133,14 @@ export default function LawyerList() {
                       {o.total_amount != null ? `${o.total_amount.toLocaleString('de-DE', { minimumFractionDigits: 2 })} ${o.currency || '€'}` : '—'}
                     </td>
                     <td className="px-4 py-3"><StatusBadge status={o.order_status} /></td>
+                    <td className="px-4 py-3 text-muted-foreground">{o.lawyer_reason || '—'}</td>
+                    <td className="px-4 py-3 text-right">
+                      {canEdit && (
+                        <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setEditOrder(o); }}>
+                          <Pencil className="w-3 h-3 mr-1" /> Bearbeiten
+                        </Button>
+                      )}
+                    </td>
                   </tr>
                 ))
               )}
@@ -131,6 +148,15 @@ export default function LawyerList() {
           </table>
         </div>
       </div>
+
+      {editOrder && (
+        <OrderEditDialog
+          order={editOrder}
+          open={!!editOrder}
+          onClose={() => setEditOrder(null)}
+          onSaved={() => setReloadKey(k => k + 1)}
+        />
+      )}
     </div>
   );
 }

@@ -726,6 +726,7 @@ export type Database = {
           external_order_id: string | null
           id: string
           internal_number: string | null
+          lawyer_reason: string | null
           order_date: string | null
           order_number: string
           order_status: string | null
@@ -745,6 +746,7 @@ export type Database = {
           external_order_id?: string | null
           id?: string
           internal_number?: string | null
+          lawyer_reason?: string | null
           order_date?: string | null
           order_number: string
           order_status?: string | null
@@ -764,6 +766,7 @@ export type Database = {
           external_order_id?: string | null
           id?: string
           internal_number?: string | null
+          lawyer_reason?: string | null
           order_date?: string | null
           order_number?: string
           order_status?: string | null

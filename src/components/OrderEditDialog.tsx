@@ -13,6 +13,8 @@ const STATUS_OPTIONS = [
   'abgeschlossen', 'storniert', 'zurückgestellt', 'Anwalt',
 ];
 
+const LAWYER_REASONS = ['Zahlungsverzug', 'Auftragserfüllung', 'Stornierung', 'Keine Anzahlung'];
+
 interface Props {
   order: any;
   open: boolean;
@@ -30,6 +32,7 @@ export default function OrderEditDialog({ order, open, onClose, onSaved }: Props
       ? new Date(order.expected_shipment_date).toISOString().split('T')[0]
       : '',
     internal_number: order?.internal_number || '',
+    lawyer_reason: order?.lawyer_reason || '',
   });
   const [saving, setSaving] = useState(false);
 
@@ -49,6 +52,7 @@ export default function OrderEditDialog({ order, open, onClose, onSaved }: Props
       salesperson_name: form.salesperson_name || null,
       expected_shipment_date: form.expected_shipment_date || null,
       internal_number: intNum || null,
+      lawyer_reason: form.order_status === 'Anwalt' ? (form.lawyer_reason || null) : null,
     }).eq('id', order.id);
     setSaving(false);
     if (error) { toast.error('Fehler beim Speichern: ' + error.message); return; }
@@ -75,6 +79,19 @@ export default function OrderEditDialog({ order, open, onClose, onSaved }: Props
               </SelectContent>
             </Select>
           </div>
+          {form.order_status === 'Anwalt' && (
+            <div>
+              <Label className="text-xs text-muted-foreground">Anwalt-Grund</Label>
+              <Select value={form.lawyer_reason} onValueChange={v => set('lawyer_reason', v)}>
+                <SelectTrigger className="bg-secondary border-border mt-1">
+                  <SelectValue placeholder="Grund auswählen..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {LAWYER_REASONS.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs text-muted-foreground">Betrag</Label>
