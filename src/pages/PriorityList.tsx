@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ListOrdered, Search, Loader2, Inbox, ArrowUpDown, Package, Car } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
 import { useDrivingTimes } from '@/hooks/useDrivingTimes';
+import { DrivingTimeCell } from '@/components/DrivingTimeCell';
 import OrderStatsBar from '@/components/OrderStatsBar';
 import { PageSizeSelector, usePagination, PaginationControls } from '@/components/PageSizeSelector';
 

@@ -16,6 +16,7 @@ import OrderEditDialog from '@/components/OrderEditDialog';
 import OrderDeferDialog from '@/components/OrderDeferDialog';
 import OrderStatsBar from '@/components/OrderStatsBar';
 import { useDrivingTimes } from '@/hooks/useDrivingTimes';
+import { DrivingTimeCell } from '@/components/DrivingTimeCell';
 
 type SortField = 'order_number' | 'order_date' | 'total_amount' | 'created_at';
 type SortDir = 'asc' | 'desc';
