@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ListOrdered, Search, Loader2, Inbox, ArrowUpDown, Package, Car } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
 import { useDrivingTimes } from '@/hooks/useDrivingTimes';
+import OrderStatsBar from '@/components/OrderStatsBar';
 
 type SortField = 'expected_shipment_date' | 'order_number' | 'total_amount';
 type SortDir = 'asc' | 'desc';
