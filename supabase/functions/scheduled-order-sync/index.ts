@@ -237,10 +237,18 @@ Deno.serve(async (req: Request) => {
 
           const { data: existing } = await adminClient
             .from("orders")
-            .select("id")
+            .select("id, raw_data")
             .eq("external_order_id", externalOrderId)
             .eq("source_system", sourceSystem)
             .maybeSingle();
+
+          // Skip if Zoho last_modified_time has not advanced since last import
+          const incomingModified = (detail as any).last_modified_time ?? (so as any).last_modified_time ?? null;
+          const existingModified = (existing?.raw_data as any)?.last_modified_time ?? null;
+          if (existing && incomingModified && existingModified && incomingModified <= existingModified) {
+            totalSkipped++;
+            continue;
+          }
 
           let orderId: string | null = null;
           if (existing) {
