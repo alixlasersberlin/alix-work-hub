@@ -120,7 +120,7 @@ export default function Suppliers() {
               </tr>
             </thead>
             <tbody>
-              {rows.map(s => (
+              {paged.map(s => (
                 <tr key={s.id} className="border-b border-border hover:bg-muted/30">
                   <td className="p-3 font-medium">{s.name}</td>
                   <td className="p-3">{s.email}</td>
