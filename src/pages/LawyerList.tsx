@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Gavel, Search, Loader2, Inbox, ArrowUpDown } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
+import OrderStatsBar from '@/components/OrderStatsBar';
 
 type SortField = 'order_number' | 'expected_shipment_date' | 'total_amount';
 type SortDir = 'asc' | 'desc';
@@ -84,6 +85,8 @@ export default function LawyerList() {
           <Input placeholder="Suche nach Auftrag, Kunde..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10 bg-secondary border-border" />
         </div>
       </div>
+
+      <OrderStatsBar orders={orders} filteredCount={filtered.length} label="Anwaltsfälle" />
 
       {error && <div className="mb-4 p-4 rounded-lg bg-destructive/10 text-destructive text-sm">{error}</div>}
 

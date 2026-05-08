@@ -7,6 +7,7 @@ import { PackageCheck, Search, Loader2, Inbox, ArrowUpDown, Pencil } from 'lucid
 import { StatusBadge } from '@/components/StatusBadge';
 import { useAuth } from '@/hooks/useAuth';
 import OrderItemsEditDialog from '@/components/OrderItemsEditDialog';
+import OrderStatsBar from '@/components/OrderStatsBar';
 
 type SortField = 'order_number' | 'expected_shipment_date' | 'total_amount';
 type SortDir = 'asc' | 'desc';
@@ -90,6 +91,8 @@ export default function PartialDeliveryList() {
           <Input placeholder="Suche nach Auftrag, Kunde..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10 bg-secondary border-border" />
         </div>
       </div>
+
+      <OrderStatsBar orders={orders} filteredCount={filtered.length} label="Aufträge teilgeliefert" />
 
       {error && <div className="mb-4 p-4 rounded-lg bg-destructive/10 text-destructive text-sm">{error}</div>}
 

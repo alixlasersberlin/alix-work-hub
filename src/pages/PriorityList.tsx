@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ListOrdered, Search, Loader2, Inbox, ArrowUpDown, Package, Car } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
 import { useDrivingTimes } from '@/hooks/useDrivingTimes';
+import OrderStatsBar from '@/components/OrderStatsBar';
 
 type SortField = 'expected_shipment_date' | 'order_number' | 'total_amount';
 type SortDir = 'asc' | 'desc';
@@ -172,6 +173,8 @@ export default function PriorityList() {
           </SelectContent>
         </Select>
       </div>
+
+      <OrderStatsBar orders={orders} filteredCount={filtered.length} label="Prio-Liste Aufträge" />
 
       {error && <div className="p-4 rounded-lg bg-destructive/10 text-destructive text-sm mb-4">{error}</div>}
 
