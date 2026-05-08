@@ -239,7 +239,7 @@ export default function Finance() {
                   <p className="text-muted-foreground">Keine Finance-Einträge gefunden.</p>
                 </td></tr>
               ) : (
-                grouped.map(g => {
+                paged.map(g => {
                   const expanded = expandedOrders.has(g.orderId);
                   const paidCount = g.records.filter(r => r.payment_status === 'bezahlt').length;
                   return (
