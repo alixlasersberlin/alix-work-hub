@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Gavel, Search, Loader2, Inbox, ArrowUpDown } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
+import OrderStatsBar from '@/components/OrderStatsBar';
 
 type SortField = 'order_number' | 'expected_shipment_date' | 'total_amount';
 type SortDir = 'asc' | 'desc';
