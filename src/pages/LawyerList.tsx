@@ -103,13 +103,13 @@ export default function LawyerList() {
             <thead>
               <tr className="border-b border-border bg-secondary/50">
                 <SortHeader field="order_number" label="Auftragsnr." />
+                <th className="text-left px-4 py-3 text-muted-foreground font-medium">Grund</th>
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Kunde</th>
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Kontakt</th>
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Auftragsdatum</th>
                 <SortHeader field="expected_shipment_date" label="Lieferdatum" />
                 <SortHeader field="total_amount" label="Betrag" />
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Status</th>
-                <th className="text-left px-4 py-3 text-muted-foreground font-medium">Grund</th>
                 <th className="text-right px-4 py-3 text-muted-foreground font-medium">Aktionen</th>
               </tr>
             </thead>
