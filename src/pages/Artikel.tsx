@@ -147,6 +147,8 @@ export default function Artikel() {
     );
   }, [items, query]);
 
+  const { pageSize, setPageSize, page, setPage, totalPages, paged, total } = usePagination(filtered, 20);
+
   const lastSync = items.length > 0
     ? new Date(items.reduce((m, i) => (i.synced_at > m ? i.synced_at : m), items[0].synced_at)).toLocaleString('de-DE')
     : null;
