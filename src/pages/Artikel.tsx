@@ -212,7 +212,7 @@ export default function Artikel() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((it) => (
+                {paged.map((it) => (
                   <tr key={it.id} className="border-t border-border hover:bg-muted/20">
                     <td className="px-3 py-2 font-medium">{it.name ?? '–'}</td>
                     <td className="px-3 py-2 font-mono text-xs">{it.sku ?? '–'}</td>
