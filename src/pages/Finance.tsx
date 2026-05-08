@@ -14,6 +14,7 @@ import {
   Search, Banknote, ArrowUpDown, Loader2, Inbox, Plus, CalendarIcon, AlertTriangle, ChevronDown, ChevronRight
 } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
+import { PageSizeSelector, usePagination, PaginationControls } from '@/components/PageSizeSelector';
 
 type SortField = 'due_date' | 'amount_due';
 type SortDir = 'asc' | 'desc';
