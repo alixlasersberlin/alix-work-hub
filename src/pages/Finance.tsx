@@ -210,6 +210,7 @@ export default function Finance() {
         {dueDateFilter && (
           <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => setDueDateFilter(undefined)}>Filter zurücksetzen</Button>
         )}
+        <PageSizeSelector value={pageSize} onChange={setPageSize} />
       </div>
 
       {error && <div className="mb-4 p-4 rounded-lg bg-destructive/10 text-destructive text-sm">{error}</div>}
