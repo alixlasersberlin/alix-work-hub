@@ -7,6 +7,7 @@ import { ListOrdered, Search, Loader2, Inbox, ArrowUpDown, Package, Car } from '
 import { StatusBadge } from '@/components/StatusBadge';
 import { useDrivingTimes } from '@/hooks/useDrivingTimes';
 import OrderStatsBar from '@/components/OrderStatsBar';
+import { PageSizeSelector, usePagination, PaginationControls } from '@/components/PageSizeSelector';
 
 type SortField = 'expected_shipment_date' | 'order_number' | 'total_amount';
 type SortDir = 'asc' | 'desc';
