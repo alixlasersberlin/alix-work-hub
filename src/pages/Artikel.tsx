@@ -240,6 +240,7 @@ export default function Artikel() {
           {filtered.length} von {items.length} Artikel
         </div>
       </Card>
+      <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} total={total} />
 
       <Dialog open={!!selected} onOpenChange={(o) => { if (!o) { setSelected(null); setEditing(false); } }}>
         <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
