@@ -92,6 +92,8 @@ export default function PartialDeliveryList() {
         </div>
       </div>
 
+      <OrderStatsBar orders={orders} filteredCount={filtered.length} label="Aufträge teilgeliefert" />
+
       {error && <div className="mb-4 p-4 rounded-lg bg-destructive/10 text-destructive text-sm">{error}</div>}
 
       <div className="rounded-xl border border-border bg-card card-glow overflow-hidden">
