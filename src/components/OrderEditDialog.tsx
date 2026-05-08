@@ -13,6 +13,8 @@ const STATUS_OPTIONS = [
   'abgeschlossen', 'storniert', 'zurückgestellt', 'Anwalt',
 ];
 
+const LAWYER_REASONS = ['Zahlungsverzug', 'Auftragserfüllung', 'Stornierung', 'Keine Anzahlung'];
+
 interface Props {
   order: any;
   open: boolean;
