@@ -7,6 +7,7 @@ import { ListOrdered, Search, Loader2, Inbox, ArrowUpDown, Package, Car } from '
 import { StatusBadge } from '@/components/StatusBadge';
 import { useDrivingTimes } from '@/hooks/useDrivingTimes';
 import OrderStatsBar from '@/components/OrderStatsBar';
+import { PageSizeSelector, usePagination, PaginationControls } from '@/components/PageSizeSelector';
 
 type SortField = 'expected_shipment_date' | 'order_number' | 'total_amount';
 type SortDir = 'asc' | 'desc';
@@ -123,6 +124,8 @@ export default function PriorityList() {
     return matchSearch && matchStatus;
   });
 
+  const { pageSize, setPageSize, page, setPage, totalPages, paged, total } = usePagination(filtered, 20);
+
   const toggleSort = (field: SortField) => {
     if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
     else { setSortField(field); setSortDir('asc'); }
@@ -172,6 +175,7 @@ export default function PriorityList() {
             {statuses.map(s => <SelectItem key={s} value={s!}>{s}</SelectItem>)}
           </SelectContent>
         </Select>
+        <PageSizeSelector value={pageSize} onChange={setPageSize} />
       </div>
 
       <OrderStatsBar orders={orders} filteredCount={filtered.length} label="Prio-Liste Aufträge" />
@@ -208,7 +212,7 @@ export default function PriorityList() {
                   <p className="text-muted-foreground">Keine Aufträge gefunden.</p>
                 </td></tr>
               ) : (
-                filtered.map((o, idx) => {
+                paged.map((o, idx) => {
                   const days = getDaysUntil(o.expected_shipment_date);
                   const city = resolveCity(o);
                   const name = o.customers?.company_name || o.customers?.contact_name || '—';
@@ -253,6 +257,7 @@ export default function PriorityList() {
           </table>
         </div>
       </div>
+      <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} total={total} />
     </div>
   );
 }

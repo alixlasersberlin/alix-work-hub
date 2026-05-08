@@ -8,6 +8,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { useAuth } from '@/hooks/useAuth';
 import OrderItemsEditDialog from '@/components/OrderItemsEditDialog';
 import OrderStatsBar from '@/components/OrderStatsBar';
+import { PageSizeSelector, usePagination, PaginationControls } from '@/components/PageSizeSelector';
 
 type SortField = 'order_number' | 'expected_shipment_date' | 'total_amount';
 type SortDir = 'asc' | 'desc';
@@ -56,6 +57,8 @@ export default function PartialDeliveryList() {
     );
   }), [orders, search]);
 
+  const { pageSize, setPageSize, page, setPage, totalPages, paged, total } = usePagination(filtered, 20);
+
   const toggleSort = (field: SortField) => {
     if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
     else { setSortField(field); setSortDir('asc'); }
@@ -90,6 +93,7 @@ export default function PartialDeliveryList() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input placeholder="Suche nach Auftrag, Kunde..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10 bg-secondary border-border" />
         </div>
+        <PageSizeSelector value={pageSize} onChange={setPageSize} />
       </div>
 
       <OrderStatsBar orders={orders} filteredCount={filtered.length} label="Aufträge teilgeliefert" />
@@ -120,7 +124,7 @@ export default function PartialDeliveryList() {
                   <p className="text-muted-foreground">Keine Aufträge mit Status „teilgeliefert" gefunden.</p>
                 </td></tr>
               ) : (
-                filtered.map(o => (
+                paged.map(o => (
                   <tr key={o.id} className="hover:bg-secondary/30 transition-colors cursor-pointer" onClick={() => navigate(`/auftraege/${o.id}`)}>
                     <td className="px-4 py-3 font-medium text-foreground">{o.order_number}</td>
                     <td className="px-4 py-3 text-muted-foreground">{o.customers?.company_name || '—'}</td>
@@ -150,6 +154,7 @@ export default function PartialDeliveryList() {
           </table>
         </div>
       </div>
+      <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} total={total} />
 
       {editOrder && (
         <OrderItemsEditDialog

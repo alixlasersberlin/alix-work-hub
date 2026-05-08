@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { format, differenceInCalendarDays, isValid } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { PageSizeSelector, usePagination, PaginationControls } from '@/components/PageSizeSelector';
 
 type Mode = 'order' | 'reclamation';
 type Lang = 'de' | 'en' | 'zh';
@@ -173,6 +174,8 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
     return out;
   }, [rows, search, statusFilter, paymentFilter, sort]);
 
+  const { pageSize, setPageSize, page, setPage, totalPages, paged, total } = usePagination(filtered, 20);
+
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const dueLabel = (date: string | null) => {
     if (!date) return null;
@@ -270,9 +273,12 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
               </button>
             ))}
           </div>
-          <span className="text-xs text-muted-foreground">
-            {filtered.length} / {rows.length} {t.total}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">
+              {filtered.length} / {rows.length} {t.total}
+            </span>
+            <PageSizeSelector value={pageSize} onChange={setPageSize} />
+          </div>
         </div>
       </Card>
 
@@ -287,7 +293,7 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
         <>
           {/* Mobile / Tablet: Karten */}
           <div className="lg:hidden space-y-2.5">
-            {filtered.map(r => {
+            {paged.map(r => {
               const ps = r.payment_status || 'Nein';
               const due = dueLabel(r.liefertermin);
               return (
@@ -363,7 +369,7 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map(r => {
+                  {paged.map(r => {
                     const ps = r.payment_status || 'Nein';
                     const due = dueLabel(r.liefertermin);
                     return (
@@ -394,6 +400,7 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
               </table>
             </div>
           </Card>
+          <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} total={total} />
         </>
       )}
     </div>

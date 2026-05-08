@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Plus, Loader2, Pencil, Trash2, ArrowLeft, Users } from 'lucide-react';
 import { toast } from 'sonner';
+import { PageSizeSelector, usePagination, PaginationControls } from '@/components/PageSizeSelector';
 
 interface Supplier {
   id: string;
@@ -26,6 +27,7 @@ export default function Suppliers() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Supplier | null>(null);
   const [form, setForm] = useState({ name: '', address: '', phone: '', email: '', notes: '' });
+  const { pageSize, setPageSize, page, setPage, totalPages, paged, total } = usePagination(rows, 20);
 
   const load = async () => {
     setLoading(true);
@@ -97,6 +99,10 @@ export default function Suppliers() {
         <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" /> Zulieferer anlegen</Button>
       </div>
 
+      <div className="flex justify-end">
+        <PageSizeSelector value={pageSize} onChange={setPageSize} />
+      </div>
+
       <Card className="p-0 overflow-hidden">
         {loading ? (
           <div className="p-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
@@ -114,7 +120,7 @@ export default function Suppliers() {
               </tr>
             </thead>
             <tbody>
-              {rows.map(s => (
+              {paged.map(s => (
                 <tr key={s.id} className="border-b border-border hover:bg-muted/30">
                   <td className="p-3 font-medium">{s.name}</td>
                   <td className="p-3">{s.email}</td>
@@ -130,6 +136,7 @@ export default function Suppliers() {
           </table>
         )}
       </Card>
+      <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} total={total} />
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>

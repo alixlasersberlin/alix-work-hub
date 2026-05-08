@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
+import { PageSizeSelector, usePagination, PaginationControls } from '@/components/PageSizeSelector';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
@@ -146,6 +147,8 @@ export default function Artikel() {
     );
   }, [items, query]);
 
+  const { pageSize, setPageSize, page, setPage, totalPages, paged, total } = usePagination(filtered, 20);
+
   const lastSync = items.length > 0
     ? new Date(items.reduce((m, i) => (i.synced_at > m ? i.synced_at : m), items[0].synced_at)).toLocaleString('de-DE')
     : null;
@@ -168,14 +171,17 @@ export default function Artikel() {
       </div>
 
       <Card className="p-3">
-        <div className="relative">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Suche nach Name, SKU, Beschreibung, Kategorie, Marke..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="pl-9"
-          />
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Suche nach Name, SKU, Beschreibung, Kategorie, Marke..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <PageSizeSelector value={pageSize} onChange={setPageSize} />
         </div>
       </Card>
 
@@ -206,7 +212,7 @@ export default function Artikel() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((it) => (
+                {paged.map((it) => (
                   <tr key={it.id} className="border-t border-border hover:bg-muted/20">
                     <td className="px-3 py-2 font-medium">{it.name ?? '–'}</td>
                     <td className="px-3 py-2 font-mono text-xs">{it.sku ?? '–'}</td>
@@ -234,6 +240,7 @@ export default function Artikel() {
           {filtered.length} von {items.length} Artikel
         </div>
       </Card>
+      <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} total={total} />
 
       <Dialog open={!!selected} onOpenChange={(o) => { if (!o) { setSelected(null); setEditing(false); } }}>
         <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">

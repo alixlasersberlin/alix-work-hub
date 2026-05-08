@@ -14,6 +14,7 @@ import {
   Search, Banknote, ArrowUpDown, Loader2, Inbox, Plus, CalendarIcon, AlertTriangle, ChevronDown, ChevronRight
 } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
+import { PageSizeSelector, usePagination, PaginationControls } from '@/components/PageSizeSelector';
 
 type SortField = 'due_date' | 'amount_due';
 type SortDir = 'asc' | 'desc';
@@ -102,6 +103,8 @@ export default function Finance() {
     }
     return Array.from(map.values());
   }, [filtered]);
+
+  const { pageSize, setPageSize, page, setPage, totalPages, paged, total } = usePagination(grouped, 20);
 
   // KPI summaries
   const totalDue = filtered.reduce((s, r) => s + (Number(r.amount_due) || 0), 0);
@@ -207,6 +210,7 @@ export default function Finance() {
         {dueDateFilter && (
           <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => setDueDateFilter(undefined)}>Filter zurücksetzen</Button>
         )}
+        <PageSizeSelector value={pageSize} onChange={setPageSize} />
       </div>
 
       {error && <div className="mb-4 p-4 rounded-lg bg-destructive/10 text-destructive text-sm">{error}</div>}
@@ -235,7 +239,7 @@ export default function Finance() {
                   <p className="text-muted-foreground">Keine Finance-Einträge gefunden.</p>
                 </td></tr>
               ) : (
-                grouped.map(g => {
+                paged.map(g => {
                   const expanded = expandedOrders.has(g.orderId);
                   const paidCount = g.records.filter(r => r.payment_status === 'bezahlt').length;
                   return (
@@ -308,6 +312,7 @@ export default function Finance() {
           </table>
         </div>
       </div>
+      <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} total={total} />
     </div>
   );
 }
