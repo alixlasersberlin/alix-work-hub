@@ -183,6 +183,23 @@ export default function PriorityList() {
           </SelectContent>
         </Select>
         <PageSizeSelector value={pageSize} onChange={setPageSize} />
+        {(() => {
+          const failed = paged.filter((o: any) => drivingTimes[o.id] === null);
+          if (failed.length === 0) return null;
+          return (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 gap-1.5"
+              disabled={drivingLoading}
+              onClick={() => retryFailed(failed)}
+              title="Fehlgeschlagene Fahrzeiten erneut berechnen"
+            >
+              {drivingLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Car className="w-3.5 h-3.5" />}
+              Fahrzeiten erneut ({failed.length})
+            </Button>
+          );
+        })()}
       </div>
 
       <OrderStatsBar orders={orders} filteredCount={filtered.length} label="Prio-Liste Aufträge" />
