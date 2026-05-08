@@ -154,6 +154,7 @@ export default function PartialDeliveryList() {
           </table>
         </div>
       </div>
+      <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} total={total} />
 
       {editOrder && (
         <OrderItemsEditDialog
