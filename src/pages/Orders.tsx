@@ -79,7 +79,7 @@ export default function Orders() {
 
   useEffect(() => { load(); }, [sortField, sortDir]);
 
-  const EXCLUDED_STATUSES = ['geliefert', 'teilgeliefert', 'anwalt'];
+  const EXCLUDED_STATUSES = ['geliefert', 'teilgeliefert', 'anwalt', 'zurückgestellt'];
 
   const statuses = [...new Set(orders.map(o => o.order_status).filter(Boolean))]
     .filter(s => !EXCLUDED_STATUSES.includes(s.toLowerCase()));
