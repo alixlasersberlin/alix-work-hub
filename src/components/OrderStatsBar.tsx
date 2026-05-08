@@ -26,6 +26,8 @@ export default function OrderStatsBar({ orders, filteredCount, label = 'Aufträg
 
   const statusEntries = Object.entries(stats.byStatus).sort((a, b) => b[1] - a[1]);
 
+  if (!hasRole('Super Admin')) return null;
+
   return (
     <div className="rounded-xl border border-border bg-card/60 card-glow px-4 py-3 mb-4">
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
