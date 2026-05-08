@@ -1,0 +1,388 @@
+import { useEffect, useMemo, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { FilePlus, Plus, Trash2, Search, Loader2, FileDown } from 'lucide-react';
+import { toast } from 'sonner';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+
+type LineItem = {
+  id: string;
+  item_id?: string;
+  name: string;
+  description: string;
+  sku: string;
+  quantity: number;
+  rate: number;
+  tax_percentage: number;
+};
+
+const newLine = (): LineItem => ({
+  id: crypto.randomUUID(),
+  name: '',
+  description: '',
+  sku: '',
+  quantity: 1,
+  rate: 0,
+  tax_percentage: 19,
+});
+
+export default function AngebotErstellen() {
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [items, setItems] = useState<any[]>([]);
+  const [customerId, setCustomerId] = useState<string>('');
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [itemSearch, setItemSearch] = useState('');
+  const [offerNumber, setOfferNumber] = useState(`ANG-${new Date().getFullYear()}-${String(Date.now()).slice(-5)}`);
+  const [offerDate, setOfferDate] = useState(new Date().toISOString().slice(0, 10));
+  const [validUntil, setValidUntil] = useState('');
+  const [notes, setNotes] = useState('');
+  const [lines, setLines] = useState<LineItem[]>([newLine()]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      setLoading(true);
+      const [{ data: c }, { data: i }] = await Promise.all([
+        supabase.from('customers').select('id, company_name, contact_name, email, billing_address').order('company_name').limit(1000),
+        supabase.from('zoho_items').select('id, name, sku, description, rate, tax_percentage, unit').eq('status', 'active').order('name').limit(2000),
+      ]);
+      setCustomers(c ?? []);
+      setItems(i ?? []);
+      setLoading(false);
+    }
+    load();
+  }, []);
+
+  const filteredCustomers = useMemo(() => {
+    const q = customerSearch.toLowerCase();
+    if (!q) return customers.slice(0, 50);
+    return customers.filter(c =>
+      c.company_name?.toLowerCase().includes(q) ||
+      c.contact_name?.toLowerCase().includes(q) ||
+      c.email?.toLowerCase().includes(q)
+    ).slice(0, 50);
+  }, [customers, customerSearch]);
+
+  const filteredItems = useMemo(() => {
+    const q = itemSearch.toLowerCase();
+    if (!q) return items.slice(0, 30);
+    return items.filter(i =>
+      i.name?.toLowerCase().includes(q) ||
+      i.sku?.toLowerCase().includes(q)
+    ).slice(0, 30);
+  }, [items, itemSearch]);
+
+  const selectedCustomer = customers.find(c => c.id === customerId);
+
+  const addItem = (it: any) => {
+    setLines(prev => [
+      ...prev.filter(l => l.name || l.sku || l.rate),
+      {
+        id: crypto.randomUUID(),
+        item_id: it.id,
+        name: it.name || '',
+        description: it.description || '',
+        sku: it.sku || '',
+        quantity: 1,
+        rate: Number(it.rate || 0),
+        tax_percentage: Number(it.tax_percentage || 19),
+      },
+    ]);
+    setItemSearch('');
+  };
+
+  const updateLine = (id: string, patch: Partial<LineItem>) => {
+    setLines(prev => prev.map(l => (l.id === id ? { ...l, ...patch } : l)));
+  };
+
+  const removeLine = (id: string) => {
+    setLines(prev => (prev.length === 1 ? [newLine()] : prev.filter(l => l.id !== id)));
+  };
+
+  const totals = useMemo(() => {
+    let net = 0;
+    let tax = 0;
+    for (const l of lines) {
+      const lineNet = (Number(l.quantity) || 0) * (Number(l.rate) || 0);
+      net += lineNet;
+      tax += lineNet * ((Number(l.tax_percentage) || 0) / 100);
+    }
+    return { net, tax, gross: net + tax };
+  }, [lines]);
+
+  const fmtMoney = (n: number) => n.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
+
+  const generatePDF = () => {
+    if (!selectedCustomer) {
+      toast.error('Bitte zuerst einen Kunden auswählen.');
+      return;
+    }
+    const validLines = lines.filter(l => l.name && l.quantity > 0);
+    if (validLines.length === 0) {
+      toast.error('Bitte mindestens eine Position erfassen.');
+      return;
+    }
+
+    const doc = new jsPDF();
+    doc.setFontSize(20);
+    doc.text('Angebot', 14, 20);
+    doc.setFontSize(10);
+    doc.text(`Angebotsnummer: ${offerNumber}`, 14, 30);
+    doc.text(`Datum: ${new Date(offerDate).toLocaleDateString('de-DE')}`, 14, 36);
+    if (validUntil) doc.text(`Gültig bis: ${new Date(validUntil).toLocaleDateString('de-DE')}`, 14, 42);
+
+    doc.setFontSize(11);
+    doc.text('Kunde:', 14, 56);
+    doc.setFontSize(10);
+    doc.text(selectedCustomer.company_name || selectedCustomer.contact_name || '—', 14, 62);
+    if (selectedCustomer.contact_name && selectedCustomer.company_name) {
+      doc.text(selectedCustomer.contact_name, 14, 68);
+    }
+
+    autoTable(doc, {
+      startY: 80,
+      head: [['Pos', 'Artikel', 'Menge', 'Einzelpreis', 'MwSt', 'Summe']],
+      body: validLines.map((l, idx) => [
+        idx + 1,
+        `${l.name}${l.sku ? ` (${l.sku})` : ''}${l.description ? `\n${l.description}` : ''}`,
+        l.quantity,
+        fmtMoney(l.rate),
+        `${l.tax_percentage}%`,
+        fmtMoney(l.quantity * l.rate),
+      ]),
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [30, 30, 30] },
+    });
+
+    const finalY = (doc as any).lastAutoTable.finalY + 10;
+    doc.setFontSize(10);
+    doc.text(`Netto: ${fmtMoney(totals.net)}`, 140, finalY);
+    doc.text(`MwSt: ${fmtMoney(totals.tax)}`, 140, finalY + 6);
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'bold');
+    doc.text(`Gesamt: ${fmtMoney(totals.gross)}`, 140, finalY + 14);
+
+    if (notes) {
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'normal');
+      doc.text('Anmerkungen:', 14, finalY + 28);
+      doc.text(doc.splitTextToSize(notes, 180), 14, finalY + 34);
+    }
+
+    doc.save(`${offerNumber}.pdf`);
+    toast.success('Angebot als PDF erstellt.');
+  };
+
+  if (loading) {
+    return (
+      <div className="p-8 flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 lg:p-8 animate-fade-in space-y-6 max-w-6xl">
+      <div>
+        <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
+          <FilePlus className="w-6 h-6 text-primary" />
+          Angebot erstellen
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1">Erstellen Sie ein neues Angebot für einen Kunden.</p>
+      </div>
+
+      {/* Header */}
+      <div className="rounded-xl border border-border bg-card card-glow p-6 grid gap-4 md:grid-cols-3">
+        <div>
+          <Label>Angebotsnummer</Label>
+          <Input value={offerNumber} onChange={e => setOfferNumber(e.target.value)} className="bg-secondary border-border mt-1.5" />
+        </div>
+        <div>
+          <Label>Angebotsdatum</Label>
+          <Input type="date" value={offerDate} onChange={e => setOfferDate(e.target.value)} className="bg-secondary border-border mt-1.5" />
+        </div>
+        <div>
+          <Label>Gültig bis</Label>
+          <Input type="date" value={validUntil} onChange={e => setValidUntil(e.target.value)} className="bg-secondary border-border mt-1.5" />
+        </div>
+      </div>
+
+      {/* Customer */}
+      <div className="rounded-xl border border-border bg-card card-glow p-6 space-y-4">
+        <h2 className="font-semibold text-foreground">Kunde</h2>
+        {selectedCustomer ? (
+          <div className="flex items-center justify-between p-3 rounded-lg bg-secondary border border-border">
+            <div>
+              <p className="font-medium text-foreground">{selectedCustomer.company_name || selectedCustomer.contact_name}</p>
+              <p className="text-xs text-muted-foreground">{selectedCustomer.email}</p>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => setCustomerId('')}>Ändern</Button>
+          </div>
+        ) : (
+          <>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Kunde suchen (Name, E-Mail)..."
+                value={customerSearch}
+                onChange={e => setCustomerSearch(e.target.value)}
+                className="pl-10 bg-secondary border-border"
+              />
+            </div>
+            <div className="max-h-64 overflow-auto border border-border rounded-lg divide-y divide-border">
+              {filteredCustomers.length === 0 ? (
+                <p className="p-4 text-sm text-muted-foreground text-center">Keine Kunden gefunden.</p>
+              ) : filteredCustomers.map(c => (
+                <button
+                  key={c.id}
+                  onClick={() => setCustomerId(c.id)}
+                  className="w-full text-left p-3 hover:bg-secondary/50 transition-colors text-sm"
+                >
+                  <p className="font-medium text-foreground">{c.company_name || c.contact_name}</p>
+                  <p className="text-xs text-muted-foreground">{c.contact_name} · {c.email}</p>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Items */}
+      <div className="rounded-xl border border-border bg-card card-glow p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="font-semibold text-foreground">Positionen</h2>
+          <Button variant="outline" size="sm" onClick={() => setLines(prev => [...prev, newLine()])}>
+            <Plus className="w-4 h-4 mr-1" /> Leere Zeile
+          </Button>
+        </div>
+
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Artikel aus Katalog hinzufügen (Name, SKU)..."
+            value={itemSearch}
+            onChange={e => setItemSearch(e.target.value)}
+            className="pl-10 bg-secondary border-border"
+          />
+          {itemSearch && (
+            <div className="absolute z-10 mt-1 w-full max-h-64 overflow-auto border border-border rounded-lg bg-card shadow-lg divide-y divide-border">
+              {filteredItems.length === 0 ? (
+                <p className="p-3 text-sm text-muted-foreground text-center">Keine Artikel gefunden.</p>
+              ) : filteredItems.map(i => (
+                <button
+                  key={i.id}
+                  onClick={() => addItem(i)}
+                  className="w-full text-left p-3 hover:bg-secondary/50 transition-colors text-sm"
+                >
+                  <p className="font-medium text-foreground">{i.name}</p>
+                  <p className="text-xs text-muted-foreground">{i.sku} · {fmtMoney(Number(i.rate || 0))}</p>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border bg-secondary/40 text-muted-foreground">
+                <th className="text-left p-2 font-medium">Artikel</th>
+                <th className="text-left p-2 font-medium w-24">Menge</th>
+                <th className="text-left p-2 font-medium w-32">Einzelpreis</th>
+                <th className="text-left p-2 font-medium w-20">MwSt %</th>
+                <th className="text-right p-2 font-medium w-32">Summe</th>
+                <th className="w-10"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {lines.map(l => (
+                <tr key={l.id} className="border-b border-border align-top">
+                  <td className="p-2">
+                    <Input
+                      value={l.name}
+                      placeholder="Artikelname"
+                      onChange={e => updateLine(l.id, { name: e.target.value })}
+                      className="bg-secondary border-border h-8"
+                    />
+                    <Input
+                      value={l.description}
+                      placeholder="Beschreibung (optional)"
+                      onChange={e => updateLine(l.id, { description: e.target.value })}
+                      className="bg-secondary border-border h-8 mt-1 text-xs"
+                    />
+                  </td>
+                  <td className="p-2">
+                    <Input
+                      type="number"
+                      min={0}
+                      value={l.quantity}
+                      onChange={e => updateLine(l.id, { quantity: Number(e.target.value) })}
+                      className="bg-secondary border-border h-8"
+                    />
+                  </td>
+                  <td className="p-2">
+                    <Input
+                      type="number"
+                      min={0}
+                      step={0.01}
+                      value={l.rate}
+                      onChange={e => updateLine(l.id, { rate: Number(e.target.value) })}
+                      className="bg-secondary border-border h-8"
+                    />
+                  </td>
+                  <td className="p-2">
+                    <Input
+                      type="number"
+                      min={0}
+                      value={l.tax_percentage}
+                      onChange={e => updateLine(l.id, { tax_percentage: Number(e.target.value) })}
+                      className="bg-secondary border-border h-8"
+                    />
+                  </td>
+                  <td className="p-2 text-right font-medium text-foreground">
+                    {fmtMoney((l.quantity || 0) * (l.rate || 0))}
+                  </td>
+                  <td className="p-2">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => removeLine(l.id)}>
+                      <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="flex flex-col items-end gap-1 pt-3 border-t border-border text-sm">
+          <div className="flex gap-8"><span className="text-muted-foreground">Netto:</span><span className="font-medium text-foreground w-32 text-right">{fmtMoney(totals.net)}</span></div>
+          <div className="flex gap-8"><span className="text-muted-foreground">MwSt:</span><span className="font-medium text-foreground w-32 text-right">{fmtMoney(totals.tax)}</span></div>
+          <div className="flex gap-8 text-base"><span className="font-semibold text-foreground">Gesamt:</span><span className="font-bold text-primary w-32 text-right">{fmtMoney(totals.gross)}</span></div>
+        </div>
+      </div>
+
+      {/* Notes */}
+      <div className="rounded-xl border border-border bg-card card-glow p-6 space-y-3">
+        <Label>Anmerkungen / Bedingungen</Label>
+        <Textarea
+          value={notes}
+          onChange={e => setNotes(e.target.value)}
+          placeholder="z. B. Lieferzeit, Zahlungsbedingungen..."
+          rows={4}
+          className="bg-secondary border-border"
+        />
+      </div>
+
+      <div className="flex justify-end gap-3">
+        <Button onClick={generatePDF} className="gold-gradient text-primary-foreground gap-2">
+          <FileDown className="w-4 h-4" />
+          Angebot als PDF erstellen
+        </Button>
+      </div>
+    </div>
+  );
+}

@@ -46,6 +46,7 @@ import Lager from "./pages/Lager";
 import Lagergeraete from "./pages/Lagergeraete";
 import Leihgeraete from "./pages/Leihgeraete";
 import Artikel from "./pages/Artikel";
+import AngebotErstellen from "./pages/AngebotErstellen";
 import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
@@ -116,6 +117,7 @@ function AppRoutes() {
         <Route path="/auftraege" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Orders /></ProtectedRoute>} />
         <Route path="/auftraege/:id" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><OrderDetail /></ProtectedRoute>} />
         <Route path="/verkauf/artikel" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Artikel /></ProtectedRoute>} />
+        <Route path="/verkauf/angebot/neu" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Auftragsverwaltung']}><AngebotErstellen /></ProtectedRoute>} />
         <Route path="/prio-liste" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><PriorityList /></ProtectedRoute>} />
         <Route path="/anwaltsliste" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><LawyerList /></ProtectedRoute>} />
         <Route path="/geliefert" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><DeliveredList /></ProtectedRoute>} />
