@@ -238,6 +238,7 @@ export default function Orders() {
                     )}
                     <SortHeader field="order_number" label="Auftrag Nr." />
                     <th className="text-left px-4 py-3 text-muted-foreground font-medium">Kunde</th>
+                    <th className="text-left px-4 py-3 text-muted-foreground font-medium">Verkäufer</th>
                     <SortHeader field="order_date" label="Datum" />
                     <SortHeader field="total_amount" label="Betrag" />
                     <th className="text-left px-4 py-3 text-muted-foreground font-medium">Status</th>
