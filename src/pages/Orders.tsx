@@ -158,6 +158,11 @@ export default function Orders() {
         </TabsList>
 
         <TabsContent value="list" className="space-y-4">
+          <OrderStatsBar
+            orders={orders.filter(o => !EXCLUDED_STATUSES.includes((o.order_status || '').toLowerCase()))}
+            filteredCount={filtered.length}
+            label="Aufträge"
+          />
           <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
