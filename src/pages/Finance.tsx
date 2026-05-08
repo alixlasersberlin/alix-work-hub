@@ -104,6 +104,8 @@ export default function Finance() {
     return Array.from(map.values());
   }, [filtered]);
 
+  const { pageSize, setPageSize, page, setPage, totalPages, paged, total } = usePagination(grouped, 20);
+
   // KPI summaries
   const totalDue = filtered.reduce((s, r) => s + (Number(r.amount_due) || 0), 0);
   const totalPaid = filtered.reduce((s, r) => s + (Number(r.amount_paid) || 0), 0);
