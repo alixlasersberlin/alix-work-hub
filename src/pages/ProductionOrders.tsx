@@ -293,7 +293,7 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
         <>
           {/* Mobile / Tablet: Karten */}
           <div className="lg:hidden space-y-2.5">
-            {filtered.map(r => {
+            {paged.map(r => {
               const ps = r.payment_status || 'Nein';
               const due = dueLabel(r.liefertermin);
               return (
@@ -369,7 +369,7 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map(r => {
+                  {paged.map(r => {
                     const ps = r.payment_status || 'Nein';
                     const due = dueLabel(r.liefertermin);
                     return (
