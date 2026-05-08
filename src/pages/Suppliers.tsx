@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Plus, Loader2, Pencil, Trash2, ArrowLeft, Users } from 'lucide-react';
 import { toast } from 'sonner';
+import { PageSizeSelector, usePagination, PaginationControls } from '@/components/PageSizeSelector';
 
 interface Supplier {
   id: string;
