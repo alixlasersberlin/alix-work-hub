@@ -25,27 +25,32 @@ function formatDistance(meters: number): string {
   return `${(meters / 1000).toFixed(1)} km`;
 }
 
+// In-memory geocode cache (per function instance)
+const geoCache = new Map<string, [number, number] | null>();
+
 async function geocode(_apiKey: string, address: string): Promise<[number, number] | null> {
-  // Use OpenStreetMap Nominatim (free, no key). ORS free plan no longer includes geocoding.
-  const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(address)}`;
+  const key = address.trim().toLowerCase();
+  if (geoCache.has(key)) return geoCache.get(key)!;
+
+  // Use Photon (Komoot, OSM-based, no rate limits, no key required)
+  const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(address)}&limit=1&lang=de`;
   try {
     const r = await fetch(url, {
-      headers: {
-        // Nominatim requires a descriptive User-Agent
-        "User-Agent": "AlixWork/1.0 (route-planning; contact: ops@alix.local)",
-        "Accept-Language": "de",
-      },
+      headers: { "User-Agent": "AlixWork/1.0 route-planning" },
     });
     if (!r.ok) {
-      console.error("Geocode failed", address, r.status, await r.text());
+      console.error("Geocode failed", address, r.status);
+      geoCache.set(key, null);
       return null;
     }
     const j = await r.json();
-    if (Array.isArray(j) && j.length > 0) {
-      const lon = parseFloat(j[0].lon);
-      const lat = parseFloat(j[0].lat);
-      if (Number.isFinite(lon) && Number.isFinite(lat)) return [lon, lat];
+    const coords = j?.features?.[0]?.geometry?.coordinates;
+    if (Array.isArray(coords) && coords.length >= 2) {
+      const result: [number, number] = [coords[0], coords[1]];
+      geoCache.set(key, result);
+      return result;
     }
+    geoCache.set(key, null);
     return null;
   } catch (e) {
     console.error("Geocode exception", address, e);
