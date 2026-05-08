@@ -24,7 +24,11 @@ export default function LawyerList() {
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editOrder, setEditOrder] = useState<any | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const navigate = useNavigate();
+  const { hasRole } = useAuth();
+  const canEdit = hasRole('Admin') || hasRole('Super Admin') || hasRole('Auftragsverwaltung');
 
   useEffect(() => {
     async function load() {
@@ -32,7 +36,7 @@ export default function LawyerList() {
       setError(null);
       const { data, error: err } = await supabase
         .from('orders')
-        .select('id, order_number, order_status, order_date, expected_shipment_date, total_amount, currency, source_system, customers(company_name, contact_name)')
+        .select('id, order_number, order_status, order_date, expected_shipment_date, total_amount, currency, source_system, lawyer_reason, salesperson_name, internal_number, customers(company_name, contact_name)')
         .eq('order_status', 'Anwalt')
         .order(sortField, { ascending: sortDir === 'asc' })
         .limit(500);
@@ -41,7 +45,7 @@ export default function LawyerList() {
       setLoading(false);
     }
     load();
-  }, [sortField, sortDir]);
+  }, [sortField, sortDir, reloadKey]);
 
   const filtered = useMemo(() => orders.filter(o => {
     if (!search) return true;
