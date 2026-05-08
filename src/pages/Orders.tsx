@@ -194,6 +194,23 @@ export default function Orders() {
                 <SelectItem value="all">Alle</SelectItem>
               </SelectContent>
             </Select>
+            {(() => {
+              const failed = paged.filter((o: any) => drivingTimes[o.id] === null);
+              if (failed.length === 0) return null;
+              return (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 gap-1.5"
+                  disabled={drivingLoading}
+                  onClick={() => retryFailed(failed)}
+                  title="Fehlgeschlagene Fahrzeiten erneut berechnen"
+                >
+                  {drivingLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Car className="w-3.5 h-3.5" />}
+                  Fahrzeiten erneut ({failed.length})
+                </Button>
+              );
+            })()}
             {canWrite && (
               <div className="flex items-center gap-2 ml-auto">
                 <Button
