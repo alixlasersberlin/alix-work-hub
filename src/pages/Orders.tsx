@@ -289,7 +289,14 @@ export default function Orders() {
                           </td>
                         )}
                         <td className="px-4 py-3 font-medium text-foreground">{o._displayNumber || o.order_number}</td>
-                        <td className="px-4 py-3 text-muted-foreground">{o.customers?.company_name || o.customers?.contact_name || '—'}</td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          <div className="flex flex-col">
+                            <span className="text-foreground">{o.customers?.company_name || o.customers?.contact_name || '—'}</span>
+                            {o.customers?.company_name && o.customers?.contact_name && (
+                              <span className="text-xs text-muted-foreground">{o.customers.contact_name}</span>
+                            )}
+                          </div>
+                        </td>
                         <td className="px-4 py-3 text-muted-foreground">{o.order_date ? new Date(o.order_date).toLocaleDateString('de-DE') : '—'}</td>
                         <td className="px-4 py-3 text-foreground">
                           {o.total_amount != null ? Number(o.total_amount).toLocaleString('de-DE', { style: 'currency', currency: o.currency || 'EUR' }) : '—'}
