@@ -75,10 +75,9 @@ export default function Orders() {
 
     setOrders(expanded);
     setLoading(false);
-    if (loaded.length > 0) fetchDrivingTimes(loaded);
   }
 
-  useEffect(() => { load(); }, [sortField, sortDir, fetchDrivingTimes]);
+  useEffect(() => { load(); }, [sortField, sortDir]);
 
   const EXCLUDED_STATUSES = ['geliefert', 'teilgeliefert', 'anwalt'];
 
