@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import OrdersCalendar from '@/components/OrdersCalendar';
 import OrderEditDialog from '@/components/OrderEditDialog';
 import OrderDeferDialog from '@/components/OrderDeferDialog';
+import OrderStatsBar from '@/components/OrderStatsBar';
 import { useDrivingTimes } from '@/hooks/useDrivingTimes';
 
 type SortField = 'order_number' | 'order_date' | 'total_amount' | 'created_at';
