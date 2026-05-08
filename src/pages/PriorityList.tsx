@@ -126,6 +126,12 @@ export default function PriorityList() {
 
   const { pageSize, setPageSize, page, setPage, totalPages, paged, total } = usePagination(filtered, 20);
 
+  // Only fetch driving times for currently visible (paged) orders to avoid edge function timeout
+  useEffect(() => {
+    if (paged.length > 0) fetchDrivingTimes(paged);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, pageSize, filtered.length]);
+
   const toggleSort = (field: SortField) => {
     if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
     else { setSortField(field); setSortDir('asc'); }
