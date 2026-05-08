@@ -69,6 +69,23 @@ export function useDrivingTimes() {
     }
   }, []);
 
-  return { drivingTimes, loading, requestedIds, fetchDrivingTimes };
+  const retryFailed = useCallback(async (orders: any[]) => {
+    const failed = orders.filter(o => drivingTimes[o.id] === null);
+    if (failed.length === 0) return;
+    // Clear failed entries so UI shows pending again
+    setDrivingTimes(prev => {
+      const next = { ...prev };
+      failed.forEach(o => { delete next[o.id]; });
+      return next;
+    });
+    setRequestedIds(prev => {
+      const next = new Set(prev);
+      failed.forEach(o => next.delete(o.id));
+      return next;
+    });
+    await fetchDrivingTimes(failed);
+  }, [drivingTimes, fetchDrivingTimes]);
+
+  return { drivingTimes, loading, requestedIds, fetchDrivingTimes, retryFailed };
 }
 
