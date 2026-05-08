@@ -117,7 +117,7 @@ export default function DeliveredList() {
                   <p className="text-muted-foreground">Keine Aufträge mit Status „geliefert" gefunden.</p>
                 </td></tr>
               ) : (
-                filtered.map(o => (
+                paged.map(o => (
                   <tr key={o.id} className="hover:bg-secondary/30 transition-colors cursor-pointer" onClick={() => navigate(`/auftraege/${o.id}`)}>
                     <td className="px-4 py-3 font-medium text-foreground">{o.order_number}</td>
                     <td className="px-4 py-3 text-muted-foreground">{o.customers?.company_name || '—'}</td>
@@ -135,6 +135,7 @@ export default function DeliveredList() {
           </table>
         </div>
       </div>
+      <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} total={total} />
     </div>
   );
 }
