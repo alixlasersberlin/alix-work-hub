@@ -136,6 +136,7 @@ export default function Suppliers() {
           </table>
         )}
       </Card>
+      <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} total={total} />
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
