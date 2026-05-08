@@ -83,7 +83,7 @@ export default function PriorityList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
-  const { drivingTimes, fetchDrivingTimes } = useDrivingTimes();
+  const { drivingTimes, loading: drivingLoading, requestedIds, fetchDrivingTimes } = useDrivingTimes();
 
   useEffect(() => {
     async function load() {
@@ -238,13 +238,12 @@ export default function PriorityList() {
                       <td className="px-4 py-3 text-foreground">
                         {o.total_amount != null ? Number(o.total_amount).toLocaleString('de-DE', { style: 'currency', currency: o.currency || 'EUR' }) : '—'}
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground text-xs">
-                        {drivingTimes[o.id] ? (
-                          <span className="inline-flex items-center gap-1">
-                            <Car className="w-3 h-3" />
-                            {drivingTimes[o.id]!.duration_text} ({drivingTimes[o.id]!.distance_text})
-                          </span>
-                        ) : '—'}
+                      <td className="px-4 py-3 text-xs">
+                        <DrivingTimeCell
+                          value={drivingTimes[o.id]}
+                          requested={requestedIds.has(o.id)}
+                          loading={drivingLoading}
+                        />
                       </td>
                       <td className="px-4 py-3">
                         <StatusBadge status={o.order_status || 'offen'} />

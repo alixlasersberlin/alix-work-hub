@@ -40,7 +40,7 @@ export default function Orders() {
   const [bulkSaving, setBulkSaving] = useState(false);
   const navigate = useNavigate();
   const { isAdmin, hasRole } = useAuth();
-  const { drivingTimes, fetchDrivingTimes } = useDrivingTimes();
+  const { drivingTimes, loading: drivingLoading, requestedIds, fetchDrivingTimes } = useDrivingTimes();
 
   const canWrite = isAdmin || hasRole('Auftragsverwaltung');
 
@@ -304,13 +304,12 @@ export default function Orders() {
                         <td className="px-4 py-3">
                           <StatusBadge status={o.order_status || 'offen'} />
                         </td>
-                        <td className="px-4 py-3 text-muted-foreground text-xs">
-                          {drivingTimes[o.id] ? (
-                            <span className="inline-flex items-center gap-1">
-                              <Car className="w-3 h-3" />
-                              {drivingTimes[o.id]!.duration_text} ({drivingTimes[o.id]!.distance_text})
-                            </span>
-                          ) : '—'}
+                        <td className="px-4 py-3 text-xs">
+                          <DrivingTimeCell
+                            value={drivingTimes[o.id]}
+                            requested={requestedIds.has(o.id)}
+                            loading={drivingLoading}
+                          />
                         </td>
                         <td className="px-4 py-3 text-muted-foreground text-xs">{o.source_system}</td>
                         {canWrite && (
