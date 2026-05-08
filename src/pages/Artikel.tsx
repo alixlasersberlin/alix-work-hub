@@ -171,14 +171,17 @@ export default function Artikel() {
       </div>
 
       <Card className="p-3">
-        <div className="relative">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Suche nach Name, SKU, Beschreibung, Kategorie, Marke..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="pl-9"
-          />
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Suche nach Name, SKU, Beschreibung, Kategorie, Marke..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <PageSizeSelector value={pageSize} onChange={setPageSize} />
         </div>
       </Card>
 
