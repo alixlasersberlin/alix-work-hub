@@ -41,7 +41,7 @@ export default function Orders() {
   const [bulkSaving, setBulkSaving] = useState(false);
   const navigate = useNavigate();
   const { isAdmin, hasRole } = useAuth();
-  const { drivingTimes, loading: drivingLoading, requestedIds, fetchDrivingTimes } = useDrivingTimes();
+  const { drivingTimes, loading: drivingLoading, requestedIds, fetchDrivingTimes, retryFailed } = useDrivingTimes();
 
   const canWrite = isAdmin || hasRole('Auftragsverwaltung');
 
