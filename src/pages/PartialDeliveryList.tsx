@@ -7,6 +7,7 @@ import { PackageCheck, Search, Loader2, Inbox, ArrowUpDown, Pencil } from 'lucid
 import { StatusBadge } from '@/components/StatusBadge';
 import { useAuth } from '@/hooks/useAuth';
 import OrderItemsEditDialog from '@/components/OrderItemsEditDialog';
+import OrderStatsBar from '@/components/OrderStatsBar';
 
 type SortField = 'order_number' | 'expected_shipment_date' | 'total_amount';
 type SortDir = 'asc' | 'desc';
