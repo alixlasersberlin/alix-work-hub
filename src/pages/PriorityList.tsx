@@ -175,6 +175,7 @@ export default function PriorityList() {
             {statuses.map(s => <SelectItem key={s} value={s!}>{s}</SelectItem>)}
           </SelectContent>
         </Select>
+        <PageSizeSelector value={pageSize} onChange={setPageSize} />
       </div>
 
       <OrderStatsBar orders={orders} filteredCount={filtered.length} label="Prio-Liste Aufträge" />
