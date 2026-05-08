@@ -273,9 +273,12 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
               </button>
             ))}
           </div>
-          <span className="text-xs text-muted-foreground">
-            {filtered.length} / {rows.length} {t.total}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">
+              {filtered.length} / {rows.length} {t.total}
+            </span>
+            <PageSizeSelector value={pageSize} onChange={setPageSize} />
+          </div>
         </div>
       </Card>
 
