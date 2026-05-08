@@ -233,3 +233,13 @@
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground) / 0.3);
 }
+
+/* Globaler gelber Hover-Balken für Tabellenzeilen (bessere Sicht beim Scrollen) */
+table tbody tr {
+  position: relative;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+table tbody tr:hover {
+  background-color: hsl(var(--primary) / 0.08) !important;
+  box-shadow: inset 4px 0 0 0 hsl(var(--primary));
+}
