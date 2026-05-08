@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Truck, Search, Loader2, Inbox, ArrowUpDown } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
 import OrderStatsBar from '@/components/OrderStatsBar';
+import { PageSizeSelector, usePagination, PaginationControls } from '@/components/PageSizeSelector';
 
 type SortField = 'order_number' | 'expected_shipment_date' | 'total_amount';
 type SortDir = 'asc' | 'desc';
