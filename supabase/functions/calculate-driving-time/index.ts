@@ -28,34 +28,67 @@ function formatDistance(meters: number): string {
 // In-memory geocode cache (per function instance)
 const geoCache = new Map<string, [number, number] | null>();
 
-async function geocode(_apiKey: string, address: string): Promise<[number, number] | null> {
-  const key = address.trim().toLowerCase();
-  if (geoCache.has(key)) return geoCache.get(key)!;
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-  // Use Photon (Komoot, OSM-based, no rate limits, no key required)
+async function geocodeOnce(address: string): Promise<[number, number] | null | "retry"> {
   const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(address)}&limit=1&lang=de`;
   try {
     const r = await fetch(url, {
       headers: { "User-Agent": "AlixWork/1.0 route-planning" },
     });
     if (!r.ok) {
+      // 5xx → retry, 4xx → permanent fail
+      if (r.status >= 500) return "retry";
       console.error("Geocode failed", address, r.status);
-      geoCache.set(key, null);
       return null;
     }
     const j = await r.json();
     const coords = j?.features?.[0]?.geometry?.coordinates;
     if (Array.isArray(coords) && coords.length >= 2) {
-      const result: [number, number] = [coords[0], coords[1]];
-      geoCache.set(key, result);
-      return result;
+      return [coords[0], coords[1]];
     }
-    geoCache.set(key, null);
     return null;
   } catch (e) {
-    console.error("Geocode exception", address, e);
-    return null;
+    console.warn("Geocode exception (will retry)", address, (e as Error).message);
+    return "retry";
   }
+}
+
+async function geocode(_apiKey: string, address: string): Promise<[number, number] | null> {
+  const key = address.trim().toLowerCase();
+  if (geoCache.has(key)) return geoCache.get(key)!;
+
+  // Up to 3 attempts with backoff for transient errors
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const res = await geocodeOnce(address);
+    if (res !== "retry") {
+      geoCache.set(key, res);
+      return res;
+    }
+    await sleep(500 * (attempt + 1));
+  }
+  console.error("Geocode failed after retries", address);
+  geoCache.set(key, null);
+  return null;
+}
+
+// Limit concurrency for Photon to avoid connection-reset errors
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<R>
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let i = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (true) {
+      const idx = i++;
+      if (idx >= items.length) return;
+      results[idx] = await fn(items[idx]);
+    }
+  });
+  await Promise.all(workers);
+  return results;
 }
 
 serve(async (req) => {
@@ -112,12 +145,11 @@ serve(async (req) => {
     for (let i = 0; i < destinations.length; i += batchSize) {
       const batch = destinations.slice(i, i + batchSize);
 
-      // 1) Geocode all addresses in this batch in parallel
-      const coordPairs = await Promise.all(
-        batch.map(async (d: { id: string; address: string }) => ({
-          id: d.id,
-          coords: await geocode(ORS_API_KEY, d.address),
-        }))
+      // 1) Geocode addresses with limited concurrency (Photon drops connections under load)
+      const coordPairs = await mapWithConcurrency(
+        batch as { id: string; address: string }[],
+        4,
+        async (d) => ({ id: d.id, coords: await geocode(ORS_API_KEY, d.address) })
       );
 
       // Mark failed geocodes
