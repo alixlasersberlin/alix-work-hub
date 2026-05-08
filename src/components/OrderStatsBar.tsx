@@ -9,6 +9,7 @@ interface OrderStatsBarProps {
 }
 
 export default function OrderStatsBar({ orders, filteredCount, label = 'Aufträge in dieser Abteilung' }: OrderStatsBarProps) {
+  const { hasRole } = useAuth();
   const stats = useMemo(() => {
     const total = orders.length;
     const byStatus: Record<string, number> = {};
