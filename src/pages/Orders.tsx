@@ -238,6 +238,7 @@ export default function Orders() {
                     )}
                     <SortHeader field="order_number" label="Auftrag Nr." />
                     <th className="text-left px-4 py-3 text-muted-foreground font-medium">Kunde</th>
+                    <th className="text-left px-4 py-3 text-muted-foreground font-medium">Verkäufer</th>
                     <SortHeader field="order_date" label="Datum" />
                     <SortHeader field="total_amount" label="Betrag" />
                     <th className="text-left px-4 py-3 text-muted-foreground font-medium">Status</th>
@@ -250,13 +251,13 @@ export default function Orders() {
                 </thead>
                 {loading ? (
                   <tbody>
-                    <tr><td colSpan={(canWrite ? 8 : 7) + (selectionMode ? 1 : 0)} className="px-4 py-12 text-center">
+                    <tr><td colSpan={(canWrite ? 9 : 8) + (selectionMode ? 1 : 0)} className="px-4 py-12 text-center">
                       <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" />
                     </td></tr>
                   </tbody>
                 ) : filtered.length === 0 ? (
                   <tbody>
-                    <tr><td colSpan={(canWrite ? 8 : 7) + (selectionMode ? 1 : 0)} className="px-4 py-12 text-center">
+                    <tr><td colSpan={(canWrite ? 9 : 8) + (selectionMode ? 1 : 0)} className="px-4 py-12 text-center">
                       <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
                       <p className="text-muted-foreground">Keine Aufträge gefunden.</p>
                     </td></tr>
@@ -289,14 +290,8 @@ export default function Orders() {
                           </td>
                         )}
                         <td className="px-4 py-3 font-medium text-foreground">{o._displayNumber || o.order_number}</td>
-                        <td className="px-4 py-3 text-muted-foreground">
-                          <div className="flex flex-col">
-                            <span className="text-foreground">{o.customers?.company_name || o.customers?.contact_name || '—'}</span>
-                            {o.customers?.company_name && o.customers?.contact_name && (
-                              <span className="text-xs text-muted-foreground">{o.customers.contact_name}</span>
-                            )}
-                          </div>
-                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">{o.customers?.company_name || o.customers?.contact_name || '—'}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{o.salesperson_name || '—'}</td>
                         <td className="px-4 py-3 text-muted-foreground">{o.order_date ? new Date(o.order_date).toLocaleDateString('de-DE') : '—'}</td>
                         <td className="px-4 py-3 text-foreground">
                           {o.total_amount != null ? Number(o.total_amount).toLocaleString('de-DE', { style: 'currency', currency: o.currency || 'EUR' }) : '—'}
