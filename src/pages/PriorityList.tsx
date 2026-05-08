@@ -101,10 +101,9 @@ export default function PriorityList() {
       const loaded = (data ?? []) as any as PrioOrder[];
       setOrders(loaded);
       setLoading(false);
-      if (loaded.length > 0) fetchDrivingTimes(loaded);
     }
     load();
-  }, [sortField, sortDir, fetchDrivingTimes]);
+  }, [sortField, sortDir]);
 
   const statuses = [...new Set(orders.map(o => o.order_status).filter(Boolean))];
 
@@ -126,6 +125,12 @@ export default function PriorityList() {
   });
 
   const { pageSize, setPageSize, page, setPage, totalPages, paged, total } = usePagination(filtered, 20);
+
+  // Only fetch driving times for currently visible (paged) orders to avoid edge function timeout
+  useEffect(() => {
+    if (paged.length > 0) fetchDrivingTimes(paged);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, pageSize, filtered.length]);
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');

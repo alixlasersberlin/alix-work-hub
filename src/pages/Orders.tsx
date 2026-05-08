@@ -75,10 +75,9 @@ export default function Orders() {
 
     setOrders(expanded);
     setLoading(false);
-    if (loaded.length > 0) fetchDrivingTimes(loaded);
   }
 
-  useEffect(() => { load(); }, [sortField, sortDir, fetchDrivingTimes]);
+  useEffect(() => { load(); }, [sortField, sortDir]);
 
   const EXCLUDED_STATUSES = ['geliefert', 'teilgeliefert', 'anwalt'];
 
@@ -120,6 +119,12 @@ export default function Orders() {
   const paged = pageSize === 'all' ? filtered : filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   useEffect(() => { setCurrentPage(1); }, [search, statusFilter, pageSize]);
+
+  // Only fetch driving times for currently visible (paged) orders to avoid edge function timeout
+  useEffect(() => {
+    if (paged.length > 0) fetchDrivingTimes(paged);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, pageSize, filtered.length]);
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
