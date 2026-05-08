@@ -37,7 +37,7 @@ export default function LawyerList() {
       const { data, error: err } = await supabase
         .from('orders')
         .select('id, order_number, order_status, order_date, expected_shipment_date, total_amount, currency, source_system, lawyer_reason, salesperson_name, internal_number, customers(company_name, contact_name)')
-        .eq('order_status', 'Anwalt')
+        .ilike('order_status', 'anwalt')
         .order(sortField, { ascending: sortDir === 'asc' })
         .limit(500);
       if (err) setError(err.message);
