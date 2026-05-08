@@ -251,13 +251,13 @@ export default function Orders() {
                 </thead>
                 {loading ? (
                   <tbody>
-                    <tr><td colSpan={(canWrite ? 8 : 7) + (selectionMode ? 1 : 0)} className="px-4 py-12 text-center">
+                    <tr><td colSpan={(canWrite ? 9 : 8) + (selectionMode ? 1 : 0)} className="px-4 py-12 text-center">
                       <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" />
                     </td></tr>
                   </tbody>
                 ) : filtered.length === 0 ? (
                   <tbody>
-                    <tr><td colSpan={(canWrite ? 8 : 7) + (selectionMode ? 1 : 0)} className="px-4 py-12 text-center">
+                    <tr><td colSpan={(canWrite ? 9 : 8) + (selectionMode ? 1 : 0)} className="px-4 py-12 text-center">
                       <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
                       <p className="text-muted-foreground">Keine Aufträge gefunden.</p>
                     </td></tr>
