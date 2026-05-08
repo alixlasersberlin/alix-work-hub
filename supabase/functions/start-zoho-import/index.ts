@@ -509,10 +509,18 @@ Deno.serve(async (req: Request) => {
           }
 
           const { data: existingOrder } = await adminClient
-            .from("orders").select("id, order_status, currency, total_amount, order_date, expected_shipment_date, billing_address, shipping_address")
+            .from("orders").select("id, order_status, currency, total_amount, order_date, expected_shipment_date, billing_address, shipping_address, raw_data")
             .eq("order_number", orderNumber)
             .eq("source_system", sourceSystem)
             .maybeSingle();
+
+          // Skip early if Zoho record was not modified since last sync
+          const incomingModified = order.last_modified_time ?? null;
+          const existingModified = (existingOrder?.raw_data as any)?.last_modified_time ?? null;
+          if (existingOrder && incomingModified && existingModified && incomingModified <= existingModified) {
+            skipped++;
+            continue;
+          }
 
           // Fetch order detail for billing/shipping addresses
           let orderDetail = order;
