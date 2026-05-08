@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { BarChart3 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 interface OrderStatsBarProps {
   orders: Array<{ order_status?: string | null; total_amount?: number | null; currency?: string | null }>;
