@@ -400,6 +400,7 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
               </table>
             </div>
           </Card>
+          <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} total={total} />
         </>
       )}
     </div>
