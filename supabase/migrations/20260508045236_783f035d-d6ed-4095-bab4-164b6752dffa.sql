@@ -1,0 +1,1 @@
+UPDATE public.orders SET order_status = 'Anwalt' WHERE order_status = 'anwalt';
