@@ -79,6 +79,19 @@ export default function OrderEditDialog({ order, open, onClose, onSaved }: Props
               </SelectContent>
             </Select>
           </div>
+          {form.order_status === 'Anwalt' && (
+            <div>
+              <Label className="text-xs text-muted-foreground">Anwalt-Grund</Label>
+              <Select value={form.lawyer_reason} onValueChange={v => set('lawyer_reason', v)}>
+                <SelectTrigger className="bg-secondary border-border mt-1">
+                  <SelectValue placeholder="Grund auswählen..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {LAWYER_REASONS.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs text-muted-foreground">Betrag</Label>
