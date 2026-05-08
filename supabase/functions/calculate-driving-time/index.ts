@@ -25,17 +25,32 @@ function formatDistance(meters: number): string {
   return `${(meters / 1000).toFixed(1)} km`;
 }
 
-async function geocode(apiKey: string, address: string): Promise<[number, number] | null> {
-  const url = `${ORS_BASE}/geocode/search?api_key=${apiKey}&text=${encodeURIComponent(address)}&boundary.country=DE&size=1`;
-  const r = await fetch(url);
-  if (!r.ok) {
-    console.error("Geocode failed", address, r.status, await r.text());
+async function geocode(_apiKey: string, address: string): Promise<[number, number] | null> {
+  // Use OpenStreetMap Nominatim (free, no key). ORS free plan no longer includes geocoding.
+  const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(address)}`;
+  try {
+    const r = await fetch(url, {
+      headers: {
+        // Nominatim requires a descriptive User-Agent
+        "User-Agent": "AlixWork/1.0 (route-planning; contact: ops@alix.local)",
+        "Accept-Language": "de",
+      },
+    });
+    if (!r.ok) {
+      console.error("Geocode failed", address, r.status, await r.text());
+      return null;
+    }
+    const j = await r.json();
+    if (Array.isArray(j) && j.length > 0) {
+      const lon = parseFloat(j[0].lon);
+      const lat = parseFloat(j[0].lat);
+      if (Number.isFinite(lon) && Number.isFinite(lat)) return [lon, lat];
+    }
+    return null;
+  } catch (e) {
+    console.error("Geocode exception", address, e);
     return null;
   }
-  const j = await r.json();
-  const coords = j?.features?.[0]?.geometry?.coordinates;
-  if (Array.isArray(coords) && coords.length >= 2) return [coords[0], coords[1]];
-  return null;
 }
 
 serve(async (req) => {
