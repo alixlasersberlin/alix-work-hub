@@ -24,7 +24,7 @@ type Row = {
   payment_status: string | null;
 };
 
-type PageSize = 10 | 30 | 100 | 'all';
+type PageSize = 10 | 20 | 50 | 'all';
 
 function statusVariant(s: string | null) {
   const v = (s ?? '').toLowerCase();
@@ -53,7 +53,7 @@ export default function Invoices() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [pageSize, setPageSize] = useState<PageSize>(30);
+  const [pageSize, setPageSize] = useState<PageSize>(20);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [importing, setImporting] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
@@ -193,8 +193,8 @@ export default function Invoices() {
               <SelectTrigger className="w-[110px]"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="10">10</SelectItem>
-                <SelectItem value="30">30</SelectItem>
-                <SelectItem value="100">100</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
                 <SelectItem value="all">Alle</SelectItem>
               </SelectContent>
             </Select>
