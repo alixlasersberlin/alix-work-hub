@@ -174,6 +174,8 @@ export default function PriorityList() {
         </Select>
       </div>
 
+      <OrderStatsBar orders={orders} filteredCount={filtered.length} label="Prio-Liste Aufträge" />
+
       {error && <div className="p-4 rounded-lg bg-destructive/10 text-destructive text-sm mb-4">{error}</div>}
 
       {/* Table */}
