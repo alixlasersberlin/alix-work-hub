@@ -125,6 +125,7 @@ export default function LawyerList() {
                 filtered.map(o => (
                   <tr key={o.id} className="hover:bg-secondary/30 transition-colors">
                     <td className="px-4 py-3 font-medium text-foreground cursor-pointer" onClick={() => navigate(`/auftraege/${o.id}`)}>{o.order_number}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{o.lawyer_reason || '—'}</td>
                     <td className="px-4 py-3 text-muted-foreground">{o.customers?.company_name || '—'}</td>
                     <td className="px-4 py-3 text-muted-foreground">{o.customers?.contact_name || '—'}</td>
                     <td className="px-4 py-3 text-muted-foreground">{formatDate(o.order_date)}</td>
@@ -133,7 +134,6 @@ export default function LawyerList() {
                       {o.total_amount != null ? `${o.total_amount.toLocaleString('de-DE', { minimumFractionDigits: 2 })} ${o.currency || '€'}` : '—'}
                     </td>
                     <td className="px-4 py-3"><StatusBadge status={o.order_status} /></td>
-                    <td className="px-4 py-3 text-muted-foreground">{o.lawyer_reason || '—'}</td>
                     <td className="px-4 py-3 text-right">
                       {canEdit && (
                         <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setEditOrder(o); }}>
