@@ -33,6 +33,7 @@ function resolveAddress(order: any): string | null {
 export function useDrivingTimes() {
   const [drivingTimes, setDrivingTimes] = useState<DrivingTimeMap>({});
   const [loading, setLoading] = useState(false);
+  const [requestedIds, setRequestedIds] = useState<Set<string>>(new Set());
 
   const fetchDrivingTimes = useCallback(async (orders: any[]) => {
     const destinations = orders
@@ -41,6 +42,14 @@ export function useDrivingTimes() {
         return address ? { id: o.id, address } : null;
       })
       .filter(Boolean) as { id: string; address: string }[];
+
+    // Track which order IDs were attempted (incl. those with no address)
+    const attemptedIds = new Set(orders.map(o => o.id));
+    setRequestedIds(prev => {
+      const next = new Set(prev);
+      attemptedIds.forEach(id => next.add(id));
+      return next;
+    });
 
     if (destinations.length === 0) return;
 
@@ -51,7 +60,7 @@ export function useDrivingTimes() {
       });
 
       if (!error && data?.results) {
-        setDrivingTimes(data.results);
+        setDrivingTimes(prev => ({ ...prev, ...data.results }));
       }
     } catch (e) {
       console.error('Driving time fetch failed:', e);
@@ -60,5 +69,6 @@ export function useDrivingTimes() {
     }
   }, []);
 
-  return { drivingTimes, loading: loading, fetchDrivingTimes };
+  return { drivingTimes, loading, requestedIds, fetchDrivingTimes };
 }
+
