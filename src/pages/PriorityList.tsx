@@ -257,6 +257,7 @@ export default function PriorityList() {
           </table>
         </div>
       </div>
+      <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} total={total} />
     </div>
   );
 }
