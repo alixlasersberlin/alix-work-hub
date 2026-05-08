@@ -52,6 +52,7 @@ export default function OrderEditDialog({ order, open, onClose, onSaved }: Props
       salesperson_name: form.salesperson_name || null,
       expected_shipment_date: form.expected_shipment_date || null,
       internal_number: intNum || null,
+      lawyer_reason: form.order_status === 'Anwalt' ? (form.lawyer_reason || null) : null,
     }).eq('id', order.id);
     setSaving(false);
     if (error) { toast.error('Fehler beim Speichern: ' + error.message); return; }
