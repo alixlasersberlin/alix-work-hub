@@ -99,6 +99,10 @@ export default function Suppliers() {
         <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" /> Zulieferer anlegen</Button>
       </div>
 
+      <div className="flex justify-end">
+        <PageSizeSelector value={pageSize} onChange={setPageSize} />
+      </div>
+
       <Card className="p-0 overflow-hidden">
         {loading ? (
           <div className="p-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
