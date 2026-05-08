@@ -174,6 +174,8 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
     return out;
   }, [rows, search, statusFilter, paymentFilter, sort]);
 
+  const { pageSize, setPageSize, page, setPage, totalPages, paged, total } = usePagination(filtered, 20);
+
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const dueLabel = (date: string | null) => {
     if (!date) return null;
