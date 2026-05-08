@@ -145,12 +145,11 @@ serve(async (req) => {
     for (let i = 0; i < destinations.length; i += batchSize) {
       const batch = destinations.slice(i, i + batchSize);
 
-      // 1) Geocode all addresses in this batch in parallel
-      const coordPairs = await Promise.all(
-        batch.map(async (d: { id: string; address: string }) => ({
-          id: d.id,
-          coords: await geocode(ORS_API_KEY, d.address),
-        }))
+      // 1) Geocode addresses with limited concurrency (Photon drops connections under load)
+      const coordPairs = await mapWithConcurrency(
+        batch as { id: string; address: string }[],
+        4,
+        async (d) => ({ id: d.id, coords: await geocode(ORS_API_KEY, d.address) })
       );
 
       // Mark failed geocodes
