@@ -32,6 +32,7 @@ export default function OrderEditDialog({ order, open, onClose, onSaved }: Props
       ? new Date(order.expected_shipment_date).toISOString().split('T')[0]
       : '',
     internal_number: order?.internal_number || '',
+    lawyer_reason: order?.lawyer_reason || '',
   });
   const [saving, setSaving] = useState(false);
 
