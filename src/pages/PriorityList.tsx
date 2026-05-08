@@ -212,7 +212,7 @@ export default function PriorityList() {
                   <p className="text-muted-foreground">Keine Aufträge gefunden.</p>
                 </td></tr>
               ) : (
-                filtered.map((o, idx) => {
+                paged.map((o, idx) => {
                   const days = getDaysUntil(o.expected_shipment_date);
                   const city = resolveCity(o);
                   const name = o.customers?.company_name || o.customers?.contact_name || '—';
