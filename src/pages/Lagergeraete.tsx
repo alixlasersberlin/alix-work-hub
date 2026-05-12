@@ -44,6 +44,8 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { Select as BulkSelect, SelectContent as BulkSelectContent, SelectItem as BulkSelectItem, SelectTrigger as BulkSelectTrigger, SelectValue as BulkSelectValue } from '@/components/ui/select';
+import { useViewMode } from '@/hooks/useViewMode';
+import { ViewToggle } from '@/components/ViewToggle';
 
 type LagerDevice = {
   id: string;
