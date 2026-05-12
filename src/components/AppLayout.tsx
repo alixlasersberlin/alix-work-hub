@@ -127,12 +127,11 @@ export default function AppLayout() {
       setLagerCounts({
         '/lager': leih + lager + transfer + produktion + hold,
         '/lager/leihgeraete': leih,
-        '/lager/warehouse': lager,
         '/lager/lagergeraete': lager,
         '/lager/equipment-area/unterwegs': transfer,
         '/lager/equipment-area/produktion': produktion,
         '/lager/equipment-area/hold': hold,
-        '/lager/equipment-area': transfer + produktion + hold,
+        '/lager/equipment-area': lager + transfer + produktion + hold,
       });
     };
     load();
