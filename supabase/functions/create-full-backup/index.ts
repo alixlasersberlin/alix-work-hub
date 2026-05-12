@@ -278,7 +278,7 @@ Deno.serve(async (req) => {
       .update({
         backup_status: "failed",
         completed_at: new Date().toISOString(),
-        integrity_status: "error",
+        integrity_status: "invalid",
         message: `Backup fehlgeschlagen: ${errorMsg}`,
       })
       .eq("id", backupId);
