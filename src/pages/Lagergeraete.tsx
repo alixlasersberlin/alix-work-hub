@@ -42,6 +42,7 @@ import OrderPickerDialog from '@/components/OrderPickerDialog';
 import { useAuth } from '@/hooks/useAuth';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 import { Select as BulkSelect, SelectContent as BulkSelectContent, SelectItem as BulkSelectItem, SelectTrigger as BulkSelectTrigger, SelectValue as BulkSelectValue } from '@/components/ui/select';
 
 type LagerDevice = {
@@ -126,6 +127,7 @@ export default function Lagergeraete({
   const [originalReservedOrderId, setOriginalReservedOrderId] = useState<string | null>(null);
   const [reservationWeek, setReservationWeek] = useState<string>('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [selectionMode, setSelectionMode] = useState(false);
   const [bulkStatus, setBulkStatus] = useState<DeviceStatus>('Bestand');
   const [bulkApplying, setBulkApplying] = useState(false);
 
@@ -728,7 +730,28 @@ export default function Lagergeraete({
         )}
       </div>
 
-      {selectedIds.size > 0 && isAdmin && (
+      {isAdmin && (
+        <div className="flex items-center gap-3 px-1">
+          <Switch
+            id="selection-mode"
+            checked={selectionMode}
+            onCheckedChange={(v) => {
+              setSelectionMode(v);
+              if (!v) setSelectedIds(new Set());
+            }}
+          />
+          <label htmlFor="selection-mode" className="text-sm font-medium cursor-pointer select-none">
+            Markierung aktivieren
+          </label>
+          {selectionMode && (
+            <span className="text-xs text-muted-foreground">
+              Mehrfachauswahl ist aktiv – wähle Geräte über die Checkboxen.
+            </span>
+          )}
+        </div>
+      )}
+
+      {selectionMode && selectedIds.size > 0 && isAdmin && (
         <div className="rounded-lg border border-primary/40 bg-primary/5 p-3 flex items-center gap-3 flex-wrap">
           <span className="text-sm font-medium">{selectedIds.size} ausgewählt</span>
           <BulkSelect value={bulkStatus} onValueChange={(v) => setBulkStatus(v as DeviceStatus)}>
@@ -797,16 +820,18 @@ export default function Lagergeraete({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-10">
-                  <Checkbox
-                    checked={filteredDevices.length > 0 && filteredDevices.every((d) => selectedIds.has(d.id))}
-                    onCheckedChange={(v) => {
-                      if (v) setSelectedIds(new Set(filteredDevices.map((d) => d.id)));
-                      else setSelectedIds(new Set());
-                    }}
-                    aria-label="Alle auswählen"
-                  />
-                </TableHead>
+                {selectionMode && (
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={filteredDevices.length > 0 && filteredDevices.every((d) => selectedIds.has(d.id))}
+                      onCheckedChange={(v) => {
+                        if (v) setSelectedIds(new Set(filteredDevices.map((d) => d.id)));
+                        else setSelectedIds(new Set());
+                      }}
+                      aria-label="Alle auswählen"
+                    />
+                  </TableHead>
+                )}
                 <TableHead>Seriennummer</TableHead>
                 <TableHead>Modell</TableHead>
                 <TableHead>Eingangsdatum</TableHead>
@@ -819,19 +844,21 @@ export default function Lagergeraete({
             <TableBody>
               {filteredDevices.map((d) => (
                 <TableRow key={d.id} className={d.reserved_order_id ? 'bg-yellow-500/10 hover:bg-yellow-500/15' : ''}>
-                  <TableCell>
-                    <Checkbox
-                      checked={selectedIds.has(d.id)}
-                      onCheckedChange={(v) => {
-                        setSelectedIds((prev) => {
-                          const next = new Set(prev);
-                          if (v) next.add(d.id); else next.delete(d.id);
-                          return next;
-                        });
-                      }}
-                      aria-label={`Auswählen ${d.serial_number}`}
-                    />
-                  </TableCell>
+                  {selectionMode && (
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedIds.has(d.id)}
+                        onCheckedChange={(v) => {
+                          setSelectedIds((prev) => {
+                            const next = new Set(prev);
+                            if (v) next.add(d.id); else next.delete(d.id);
+                            return next;
+                          });
+                        }}
+                        aria-label={`Auswählen ${d.serial_number}`}
+                      />
+                    </TableCell>
+                  )}
                   <TableCell className="font-mono">{d.serial_number}</TableCell>
                   <TableCell>{d.model_name}</TableCell>
                   <TableCell>
