@@ -20,7 +20,7 @@ type NavItem = NavChild & { children?: NavChild[] };
 const navItems: NavItem[] = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance', 'Read Only Audit'] },
   {
-    path: '/artikel-gruppe', label: 'ARTIKEL', icon: Package, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance'],
+    path: '/verkauf/artikel-uebersicht', label: 'ARTIKEL', icon: Package, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance'],
     children: [
       { path: '/verkauf/artikel', label: 'Alle Artikel', icon: Package, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance'] },
       { path: '/verkauf/artikel/katalog', label: 'Katalog', icon: BookOpen, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance'] },
@@ -286,7 +286,7 @@ export default function AppLayout() {
             const isCollapsedView = collapsed && !mobileOpen;
 
             if (hasChildren) {
-              const isNavigableParent = item.path === '/lager';
+              const isNavigableParent = item.path === '/lager' || item.path === '/verkauf/artikel-uebersicht';
               const rowEl = (
                 <div
                   className={cn(
