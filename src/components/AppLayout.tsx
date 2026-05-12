@@ -51,6 +51,8 @@ const navItems: NavItem[] = [
         path: '/lager/equipment-area', label: 'Equipment Area', icon: Package, roles: ['Admin', 'Super Admin'],
         children: [
           { path: '/lager/lagergeraete', label: 'Lagergeräte', icon: Warehouse, roles: ['Admin', 'Super Admin'] },
+          { path: '/lager/equipment-area/unterwegs', label: 'Unterwegs', icon: Truck, roles: ['Admin', 'Super Admin'] },
+          { path: '/lager/equipment-area/produktion', label: 'Produktion', icon: Factory, roles: ['Admin', 'Super Admin'] },
         ],
       },
     ],
