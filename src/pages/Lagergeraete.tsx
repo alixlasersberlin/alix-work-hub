@@ -730,7 +730,28 @@ export default function Lagergeraete({
         )}
       </div>
 
-      {selectedIds.size > 0 && isAdmin && (
+      {isAdmin && (
+        <div className="flex items-center gap-3 px-1">
+          <Switch
+            id="selection-mode"
+            checked={selectionMode}
+            onCheckedChange={(v) => {
+              setSelectionMode(v);
+              if (!v) setSelectedIds(new Set());
+            }}
+          />
+          <label htmlFor="selection-mode" className="text-sm font-medium cursor-pointer select-none">
+            Markierung aktivieren
+          </label>
+          {selectionMode && (
+            <span className="text-xs text-muted-foreground">
+              Mehrfachauswahl ist aktiv – wähle Geräte über die Checkboxen.
+            </span>
+          )}
+        </div>
+      )}
+
+      {selectionMode && selectedIds.size > 0 && isAdmin && (
         <div className="rounded-lg border border-primary/40 bg-primary/5 p-3 flex items-center gap-3 flex-wrap">
           <span className="text-sm font-medium">{selectedIds.size} ausgewählt</span>
           <BulkSelect value={bulkStatus} onValueChange={(v) => setBulkStatus(v as DeviceStatus)}>
