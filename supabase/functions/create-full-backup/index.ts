@@ -105,7 +105,7 @@ Deno.serve(async (req) => {
     id: backupId,
     backup_type: source === "cron" ? "automated" : "manual",
     backup_scope: scope,
-    backup_status: "in_progress",
+    backup_status: "running",
     started_at: startedAt,
     storage_location: "supabase_storage:backups",
     storage_path: manifestPath,
