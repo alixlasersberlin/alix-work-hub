@@ -743,6 +743,16 @@ export default function Lagergeraete({
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={filteredDevices.length > 0 && filteredDevices.every((d) => selectedIds.has(d.id))}
+                    onCheckedChange={(v) => {
+                      if (v) setSelectedIds(new Set(filteredDevices.map((d) => d.id)));
+                      else setSelectedIds(new Set());
+                    }}
+                    aria-label="Alle auswählen"
+                  />
+                </TableHead>
                 <TableHead>Seriennummer</TableHead>
                 <TableHead>Modell</TableHead>
                 <TableHead>Eingangsdatum</TableHead>
@@ -755,6 +765,19 @@ export default function Lagergeraete({
             <TableBody>
               {filteredDevices.map((d) => (
                 <TableRow key={d.id} className={d.reserved_order_id ? 'bg-yellow-500/10 hover:bg-yellow-500/15' : ''}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedIds.has(d.id)}
+                      onCheckedChange={(v) => {
+                        setSelectedIds((prev) => {
+                          const next = new Set(prev);
+                          if (v) next.add(d.id); else next.delete(d.id);
+                          return next;
+                        });
+                      }}
+                      aria-label={`Auswählen ${d.serial_number}`}
+                    />
+                  </TableCell>
                   <TableCell className="font-mono">{d.serial_number}</TableCell>
                   <TableCell>{d.model_name}</TableCell>
                   <TableCell>
