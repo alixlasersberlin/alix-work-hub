@@ -61,6 +61,7 @@ import Angebote from "./pages/Angebote";
 import Anzahlungsrechnung from "./pages/Anzahlungsrechnung";
 import Gutschriften from "./pages/Gutschriften";
 import Freigabe from "./pages/Freigabe";
+import VerkaufUebersicht from "./pages/VerkaufUebersicht";
 import Operation from "./pages/Operation";
 import { Loader2 } from "lucide-react";
 
