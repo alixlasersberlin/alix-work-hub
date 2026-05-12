@@ -84,6 +84,7 @@ const navItems: NavItem[] = [
       { path: '/tourenplanung/einstellungen', label: 'Einstellungen', icon: Settings, roles: ['Admin', 'Super Admin', 'Tourenplanung'] },
     ],
   },
+  { path: '/papiere', label: 'PAPIERE', icon: FileText, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Finance'] },
   {
     path: '/finance', label: 'BUCHHALTUNG', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'],
     children: [
