@@ -268,7 +268,7 @@ export default function AppLayout() {
                                 )}
                               >
                                 <child.icon className={cn("w-[18px] h-[18px] flex-shrink-0", (cActive || cGroupActive) && "text-primary")} />
-                                <span className="truncate flex-1 text-left">{child.label}</span>
+                                <span className="truncate flex-1 text-left">{labelWithCount(child.path, child.label)}</span>
                                 <ChevronDown className={cn("w-4 h-4 transition-transform", cIsOpen && "rotate-180")} />
                               </button>
                               {cIsOpen && (
