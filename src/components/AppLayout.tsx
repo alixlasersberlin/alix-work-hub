@@ -304,18 +304,23 @@ export default function AppLayout() {
                                 <div className="mt-0.5 ml-3 pl-3 border-l border-border space-y-0.5">
                                   {child.children!.map(grand => {
                                     const gActive = isActive(grand.path);
+                                    const isHold = grand.path === '/lager/equipment-area/hold';
                                     return (
                                       <Link
                                         key={grand.path}
                                         to={grand.path}
                                         className={cn(
                                           "flex items-center gap-2.5 rounded-lg text-[13px] font-medium transition-all duration-150 px-3 py-2.5 md:py-2",
-                                          gActive
-                                            ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
-                                            : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent"
+                                          isHold
+                                            ? gActive
+                                              ? "bg-red-500/15 text-red-500 shadow-[inset_0_0_0_1px_hsl(0_84%_60%/0.4)]"
+                                              : "text-red-500 hover:text-red-500 hover:bg-red-500/10"
+                                            : gActive
+                                              ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
+                                              : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent"
                                         )}
                                       >
-                                        <grand.icon className={cn("w-[18px] h-[18px] flex-shrink-0", gActive && "text-primary")} />
+                                        <grand.icon className={cn("w-[18px] h-[18px] flex-shrink-0", isHold ? "text-red-500" : gActive && "text-primary")} />
                                         <span className="truncate">{labelWithCount(grand.path, grand.label)}</span>
                                       </Link>
                                     );
