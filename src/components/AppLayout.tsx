@@ -9,6 +9,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import WelcomeDialog from '@/components/WelcomeDialog';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 
 const APP_VERSION = '3.0';
 
@@ -231,52 +232,67 @@ export default function AppLayout() {
 
             if (hasChildren) {
               const isNavigableParent = item.path === '/lager';
+              const rowEl = (
+                <div
+                  className={cn(
+                    "w-full flex items-center gap-2.5 rounded-lg text-[13px] font-medium transition-all duration-150",
+                    isCollapsedView ? "md:px-0 md:py-2 md:justify-center px-3 py-2.5" : "px-3 py-2.5 md:py-2",
+                    childActive
+                      ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
+                      : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent"
+                  )}
+                >
+                  {isNavigableParent ? (
+                    <Link
+                      to={item.path}
+                      title={isCollapsedView ? item.label : undefined}
+                      className="flex items-center gap-2.5 flex-1 min-w-0"
+                    >
+                      <item.icon className={cn("w-[18px] h-[18px] flex-shrink-0", childActive && "text-primary")} />
+                      {!isCollapsedView && (
+                        <span className="truncate flex-1 text-left">{labelWithCount(item.path, item.label)}</span>
+                      )}
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => toggleGroup(item.path)}
+                      title={isCollapsedView ? item.label : undefined}
+                      className="flex items-center gap-2.5 flex-1 min-w-0"
+                    >
+                      <item.icon className={cn("w-[18px] h-[18px] flex-shrink-0", childActive && "text-primary")} />
+                      {!isCollapsedView && (
+                        <span className="truncate flex-1 text-left">{labelWithCount(item.path, item.label)}</span>
+                      )}
+                    </button>
+                  )}
+                  {!isCollapsedView && (
+                    <button
+                      type="button"
+                      onClick={() => toggleGroup(item.path)}
+                      aria-label="Untermenü umschalten"
+                      className="p-1 -mr-1 rounded hover:bg-sidebar-accent/60"
+                    >
+                      <ChevronDown className={cn("w-4 h-4 transition-transform", isOpen && "rotate-180")} />
+                    </button>
+                  )}
+                </div>
+              );
               return (
                 <div key={item.path}>
-                  <div
-                    className={cn(
-                      "w-full flex items-center gap-2.5 rounded-lg text-[13px] font-medium transition-all duration-150",
-                      isCollapsedView ? "md:px-0 md:py-2 md:justify-center px-3 py-2.5" : "px-3 py-2.5 md:py-2",
-                      childActive
-                        ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
-                        : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent"
-                    )}
-                  >
-                    {isNavigableParent ? (
-                      <Link
-                        to={item.path}
-                        title={isCollapsedView ? item.label : undefined}
-                        className="flex items-center gap-2.5 flex-1 min-w-0"
-                      >
-                        <item.icon className={cn("w-[18px] h-[18px] flex-shrink-0", childActive && "text-primary")} />
-                        {!isCollapsedView && (
-                          <span className="truncate flex-1 text-left">{labelWithCount(item.path, item.label)}</span>
-                        )}
-                      </Link>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => toggleGroup(item.path)}
-                        title={isCollapsedView ? item.label : undefined}
-                        className="flex items-center gap-2.5 flex-1 min-w-0"
-                      >
-                        <item.icon className={cn("w-[18px] h-[18px] flex-shrink-0", childActive && "text-primary")} />
-                        {!isCollapsedView && (
-                          <span className="truncate flex-1 text-left">{labelWithCount(item.path, item.label)}</span>
-                        )}
-                      </button>
-                    )}
-                    {!isCollapsedView && (
-                      <button
-                        type="button"
-                        onClick={() => toggleGroup(item.path)}
-                        aria-label="Untermenü umschalten"
-                        className="p-1 -mr-1 rounded hover:bg-sidebar-accent/60"
-                      >
-                        <ChevronDown className={cn("w-4 h-4 transition-transform", isOpen && "rotate-180")} />
-                      </button>
-                    )}
-                  </div>
+                  {item.path === '/lager' ? (
+                    <HoverCard openDelay={150} closeDelay={100}>
+                      <HoverCardTrigger asChild>{rowEl}</HoverCardTrigger>
+                      <HoverCardContent side="right" align="start" className="w-72">
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium leading-relaxed">
+                            Danke, dass du heute die Kunden zufrieden stellst und deinen Chef auch.
+                          </p>
+                          <p className="text-2xl">😊</p>
+                        </div>
+                      </HoverCardContent>
+                    </HoverCard>
+                  ) : rowEl}
                   {!isCollapsedView && isOpen && (
                     <div className="mt-0.5 ml-3 pl-3 border-l border-border space-y-0.5">
                       {item.children!.map(child => {
