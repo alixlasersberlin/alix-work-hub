@@ -283,12 +283,49 @@ export default function AppLayout() {
                   {item.path === '/lager' ? (
                     <HoverCard openDelay={150} closeDelay={100}>
                       <HoverCardTrigger asChild>{rowEl}</HoverCardTrigger>
-                      <HoverCardContent side="right" align="start" className="w-72">
-                        <div className="space-y-2">
+                      <HoverCardContent side="right" align="start" className="w-80">
+                        <div className="space-y-3">
                           <p className="text-sm font-medium leading-relaxed">
-                            Danke, dass du heute die Kunden zufrieden stellst und deinen Chef auch.
+                            Danke, dass du heute die Kunden zufrieden stellst und deinen Chef auch. <span className="text-lg">😊</span>
                           </p>
-                          <p className="text-2xl">😊</p>
+                          {(() => {
+                            const total = lagerCounts['/lager'] ?? 0;
+                            const rows: Array<{ label: string; value: number; warn?: boolean; critical?: boolean }> = [
+                              { label: 'Lagergeräte', value: lagerCounts['/lager/lagergeraete'] ?? 0, critical: (lagerCounts['/lager/lagergeraete'] ?? 0) < 3, warn: (lagerCounts['/lager/lagergeraete'] ?? 0) < 6 },
+                              { label: 'Leihgeräte', value: lagerCounts['/lager/leihgeraete'] ?? 0, warn: (lagerCounts['/lager/leihgeraete'] ?? 0) < 3 },
+                              { label: 'Unterwegs', value: lagerCounts['/lager/equipment-area/unterwegs'] ?? 0 },
+                              { label: 'Produktion', value: lagerCounts['/lager/equipment-area/produktion'] ?? 0 },
+                              { label: 'Hold', value: lagerCounts['/lager/equipment-area/hold'] ?? 0, warn: (lagerCounts['/lager/equipment-area/hold'] ?? 0) > 0 },
+                            ];
+                            return (
+                              <div className="rounded-md border border-border bg-muted/40 p-2">
+                                <div className="flex items-center justify-between text-xs font-semibold mb-1.5">
+                                  <span>Aktuelle Verfügbarkeit</span>
+                                  <span className="text-muted-foreground">Gesamt: {total}</span>
+                                </div>
+                                <ul className="space-y-1">
+                                  {rows.map(r => (
+                                    <li key={r.label} className="flex items-center justify-between text-xs">
+                                      <span className="text-muted-foreground">{r.label}</span>
+                                      <span className={
+                                        r.critical ? 'font-semibold text-destructive' :
+                                        r.warn ? 'font-semibold text-yellow-500' :
+                                        'font-medium text-foreground'
+                                      }>
+                                        {r.value}
+                                        {r.critical ? ' ⚠️' : r.warn ? ' ⚡' : ''}
+                                      </span>
+                                    </li>
+                                  ))}
+                                </ul>
+                                {(lagerCounts['/lager/lagergeraete'] ?? 0) < 3 && (
+                                  <p className="mt-2 text-[11px] text-destructive font-medium">
+                                    ⚠️ Achtung: Lagerbestand kritisch niedrig!
+                                  </p>
+                                )}
+                              </div>
+                            );
+                          })()}
                         </div>
                       </HoverCardContent>
                     </HoverCard>
