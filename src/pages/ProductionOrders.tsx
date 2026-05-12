@@ -14,6 +14,8 @@ import { format, differenceInCalendarDays, isValid } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { PageSizeSelector, usePagination, PaginationControls } from '@/components/PageSizeSelector';
+import { useViewMode } from '@/hooks/useViewMode';
+import { ViewToggle } from '@/components/ViewToggle';
 
 type Mode = 'order' | 'reclamation';
 type Lang = 'de' | 'en' | 'zh';
