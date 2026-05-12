@@ -124,6 +124,13 @@ export default function Dashboard() {
   const [shipmentSearch, setShipmentSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({
+    shipment: true,
+    recent: true,
+    routes: true,
+    finance: true,
+  });
+  const toggle = (k: string) => setCollapsed(p => ({ ...p, [k]: !p[k] }));
 
   const canSeeOrders = isAdmin || hasAnyRole(['Auftragsverwaltung', 'Tourenplanung', 'Finance']);
   const canSeeRoutes = isAdmin || hasAnyRole(['Tourenplanung', 'Auftragsverwaltung']);
