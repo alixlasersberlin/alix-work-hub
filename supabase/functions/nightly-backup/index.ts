@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
     id: backupId,
     backup_type: "automated",
     backup_scope: "full",
-    backup_status: "in_progress",
+    backup_status: "running",
     started_at: startedAt,
     message: "Tägliches automatisches Backup gestartet",
   });
