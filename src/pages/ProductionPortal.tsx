@@ -140,6 +140,7 @@ export default function ProductionPortal() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sort, setSort] = useState<'liefertermin_asc' | 'liefertermin_desc' | 'created_desc'>('liefertermin_asc');
+  const [viewMode, setViewMode] = useViewMode();
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [editing, setEditing] = useState<ProductionOrderRow | null>(null);
   const [editForm, setEditForm] = useState<Partial<ProductionOrderRow>>({});
