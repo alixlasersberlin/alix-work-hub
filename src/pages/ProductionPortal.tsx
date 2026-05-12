@@ -13,6 +13,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useViewMode } from '@/hooks/useViewMode';
+import { ViewToggle } from '@/components/ViewToggle';
 
 type PhotoSide = 'front' | 'right' | 'left';
 
@@ -138,6 +140,7 @@ export default function ProductionPortal() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sort, setSort] = useState<'liefertermin_asc' | 'liefertermin_desc' | 'created_desc'>('liefertermin_asc');
+  const [viewMode, setViewMode] = useViewMode();
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [editing, setEditing] = useState<ProductionOrderRow | null>(null);
   const [editForm, setEditForm] = useState<Partial<ProductionOrderRow>>({});
@@ -383,7 +386,10 @@ export default function ProductionPortal() {
               </button>
             ))}
           </div>
-          <span>{filtered.length} / {rows.length} {t.total}</span>
+          <div className="flex items-center gap-2">
+            <span>{filtered.length} / {rows.length} {t.total}</span>
+            <ViewToggle value={viewMode} onChange={setViewMode} />
+          </div>
         </div>
       </Card>
 
@@ -398,7 +404,7 @@ export default function ProductionPortal() {
           <p>{t.noOrders}</p>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className={cn(viewMode === 'cards' ? 'grid grid-cols-1 lg:grid-cols-2 gap-4' : 'flex flex-col gap-2')}>
           {filtered.map(row => {
             const ps = row.payment_status || 'Nein';
             const due = dueLabel(row.liefertermin);
