@@ -310,23 +310,43 @@ export default function AppLayout() {
                                 <div className="mt-0.5 ml-3 pl-3 border-l border-border space-y-0.5">
                                   {child.children!.map(grand => {
                                     const gActive = isActive(grand.path);
-                                    const isHold = grand.path === '/lager/equipment-area/hold';
+                                    const colorMap: Record<string, { active: string; inactive: string; icon: string }> = {
+                                      '/lager/equipment-area/hold': {
+                                        active: 'bg-red-500/15 text-red-500 shadow-[inset_0_0_0_1px_hsl(0_84%_60%/0.4)]',
+                                        inactive: 'text-red-500 hover:text-red-500 hover:bg-red-500/10',
+                                        icon: 'text-red-500',
+                                      },
+                                      '/lager/lagergeraete': {
+                                        active: 'bg-green-500/15 text-green-500 shadow-[inset_0_0_0_1px_hsl(142_71%_45%/0.4)]',
+                                        inactive: 'text-green-500 hover:text-green-500 hover:bg-green-500/10',
+                                        icon: 'text-green-500',
+                                      },
+                                      '/lager/equipment-area/unterwegs': {
+                                        active: 'bg-yellow-500/15 text-yellow-500 shadow-[inset_0_0_0_1px_hsl(48_96%_53%/0.4)]',
+                                        inactive: 'text-yellow-500 hover:text-yellow-500 hover:bg-yellow-500/10',
+                                        icon: 'text-yellow-500',
+                                      },
+                                      '/lager/equipment-area/produktion': {
+                                        active: 'bg-blue-500/15 text-blue-500 shadow-[inset_0_0_0_1px_hsl(217_91%_60%/0.4)]',
+                                        inactive: 'text-blue-500 hover:text-blue-500 hover:bg-blue-500/10',
+                                        icon: 'text-blue-500',
+                                      },
+                                    };
+                                    const colored = colorMap[grand.path];
                                     return (
                                       <Link
                                         key={grand.path}
                                         to={grand.path}
                                         className={cn(
                                           "flex items-center gap-2.5 rounded-lg text-[13px] font-medium transition-all duration-150 px-3 py-2.5 md:py-2",
-                                          isHold
-                                            ? gActive
-                                              ? "bg-red-500/15 text-red-500 shadow-[inset_0_0_0_1px_hsl(0_84%_60%/0.4)]"
-                                              : "text-red-500 hover:text-red-500 hover:bg-red-500/10"
+                                          colored
+                                            ? gActive ? colored.active : colored.inactive
                                             : gActive
                                               ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
                                               : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent"
                                         )}
                                       >
-                                        <grand.icon className={cn("w-[18px] h-[18px] flex-shrink-0", isHold ? "text-red-500" : gActive && "text-primary")} />
+                                        <grand.icon className={cn("w-[18px] h-[18px] flex-shrink-0", colored ? colored.icon : gActive && "text-primary")} />
                                         <span className="truncate">{labelWithCount(grand.path, grand.label)}</span>
                                       </Link>
                                     );
