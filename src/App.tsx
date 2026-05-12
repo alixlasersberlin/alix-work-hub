@@ -56,6 +56,9 @@ import Katalog from "./pages/Katalog";
 import Wareneingang from "./pages/Wareneingang";
 import ArtikelUebersicht from "./pages/ArtikelUebersicht";
 import AngebotErstellen from "./pages/AngebotErstellen";
+import Angebote from "./pages/Angebote";
+import Anzahlungsrechnung from "./pages/Anzahlungsrechnung";
+import Gutschriften from "./pages/Gutschriften";
 import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
