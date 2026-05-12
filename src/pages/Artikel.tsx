@@ -225,9 +225,29 @@ export default function Artikel() {
                         {it.status ?? '–'}
                       </Badge>
                     </td>
-                    <td className="px-3 py-2 text-right">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelected(it)}>
+                    <td className="px-3 py-2 text-right whitespace-nowrap">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelected(it)} title="Details ansehen">
                         <Eye className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        title="Bearbeiten"
+                        onClick={() => {
+                          setSelected(it);
+                          setDraft({
+                            name: it.name, sku: it.sku, description: it.description, unit: it.unit,
+                            rate: it.rate, purchase_rate: it.purchase_rate, status: it.status,
+                            category_name: it.category_name, brand: it.brand, manufacturer: it.manufacturer,
+                            tax_name: it.tax_name, tax_percentage: it.tax_percentage,
+                            stock_on_hand: it.stock_on_hand, available_stock: it.available_stock,
+                            product_type: it.product_type, item_type: it.item_type,
+                          });
+                          setEditing(true);
+                        }}
+                      >
+                        <Pencil className="w-4 h-4" />
                       </Button>
                     </td>
                   </tr>
