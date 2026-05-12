@@ -193,7 +193,7 @@ export default function RoutePlanning() {
       {error && <div className="mb-4 p-4 rounded-lg bg-destructive/10 text-destructive text-sm">{error}</div>}
 
       {/* List View */}
-      {view === 'list' && (
+      {view === 'list' && viewMode === 'rows' && (
         <div className="rounded-xl border border-border bg-card card-glow overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
