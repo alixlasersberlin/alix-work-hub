@@ -309,7 +309,7 @@ export default function AppLayout() {
                             )}
                           >
                             <child.icon className={cn("w-[18px] h-[18px] flex-shrink-0", cActive && "text-primary")} />
-                            <span className="truncate">{child.label}</span>
+                            <span className="truncate">{labelWithCount(child.path, child.label)}</span>
                           </Link>
                         );
                       })}
