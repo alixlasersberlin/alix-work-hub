@@ -64,6 +64,8 @@ import Freigabe from "./pages/Freigabe";
 import VerkaufUebersicht from "./pages/VerkaufUebersicht";
 import Operation from "./pages/Operation";
 import Papiere from "./pages/Papiere";
+import VersandPlaceholder from "./pages/VersandPlaceholder";
+import { Truck as TruckIcon, Banknote as BanknoteIcon, FileSignature, CreditCard } from "lucide-react";
 import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
