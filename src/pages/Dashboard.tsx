@@ -464,16 +464,24 @@ export default function Dashboard() {
         {/* Finance Overview */}
         {canSeeFinance && (
           <div className="rounded-xl border border-border bg-card card-glow xl:col-span-2">
-            <div className="flex items-center gap-2 p-5 border-b border-border">
-              <FileText className="w-4 h-4 text-[hsl(var(--warning))]" />
-              <h2 className="font-display font-semibold text-foreground">Offene Finance-Vorgänge</h2>
-            </div>
-            {loading ? (
+            <button
+              type="button"
+              onClick={() => toggle('finance')}
+              className="w-full flex items-center justify-between gap-2 p-5 hover:bg-secondary/30 transition-colors"
+              aria-expanded={!collapsed.finance}
+            >
+              <div className="flex items-center gap-2">
+                <FileText className="w-4 h-4 text-[hsl(var(--warning))]" />
+                <h2 className="font-display font-semibold text-foreground">Offene Finance-Vorgänge</h2>
+              </div>
+              <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${collapsed.finance ? '' : 'rotate-180'}`} />
+            </button>
+            {!collapsed.finance && (loading ? (
               <TableSkeleton rows={4} />
             ) : financeRecords.length === 0 ? (
               <EmptyState icon={Banknote} message="Keine offenen Finance-Vorgänge." />
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto border-t border-border">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border text-muted-foreground">
@@ -505,7 +513,7 @@ export default function Dashboard() {
                   </tbody>
                 </table>
               </div>
-            )}
+            ))}
           </div>
         )}
       </div>
