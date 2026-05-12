@@ -116,20 +116,22 @@ export default function AppLayout() {
       };
       const isLeih = (n: string | null | undefined) =>
         (n ?? '').includes('[Typ: Leihgerät]') || (n ?? '').includes('[Leihgerät]');
-      let leih = 0, lager = 0, transfer = 0, produktion = 0;
+      let leih = 0, lager = 0, transfer = 0, produktion = 0, hold = 0;
       for (const d of data as { notes: string | null }[]) {
         const s = getStatus(d.notes);
         if (s === 'Transfer') { transfer++; continue; }
         if (s === 'Produktion') { produktion++; continue; }
+        if (s === 'Hold') { hold++; continue; }
         if (isLeih(d.notes)) leih++; else lager++;
       }
       setLagerCounts({
-        '/lager': leih + lager + transfer + produktion,
+        '/lager': leih + lager + transfer + produktion + hold,
         '/lager/leihgeraete': leih,
         '/lager/lagergeraete': lager,
         '/lager/equipment-area/unterwegs': transfer,
         '/lager/equipment-area/produktion': produktion,
-        '/lager/equipment-area': lager + transfer + produktion,
+        '/lager/equipment-area/hold': hold,
+        '/lager/equipment-area': lager + transfer + produktion + hold,
       });
     };
     load();
