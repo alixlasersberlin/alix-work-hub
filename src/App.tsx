@@ -52,6 +52,7 @@ import EquipmentWarehouse from "./pages/EquipmentWarehouse";
 import EquipmentProduktion from "./pages/EquipmentProduktion";
 import EquipmentHold from "./pages/EquipmentHold";
 import Artikel from "./pages/Artikel";
+import Katalog from "./pages/Katalog";
 import AngebotErstellen from "./pages/AngebotErstellen";
 import { Loader2 } from "lucide-react";
 
@@ -124,6 +125,7 @@ function AppRoutes() {
         <Route path="/auftraege/in-klaerung" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><OrdersInClarification /></ProtectedRoute>} />
         <Route path="/auftraege/:id" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><OrderDetail /></ProtectedRoute>} />
         <Route path="/verkauf/artikel" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Artikel /></ProtectedRoute>} />
+        <Route path="/verkauf/artikel/katalog" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Katalog /></ProtectedRoute>} />
         <Route path="/verkauf/angebot/neu" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Auftragsverwaltung']}><AngebotErstellen /></ProtectedRoute>} />
         <Route path="/prio-liste" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><PriorityList /></ProtectedRoute>} />
         <Route path="/anwaltsliste" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><LawyerList /></ProtectedRoute>} />
