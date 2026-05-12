@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import WelcomeDialog from '@/components/WelcomeDialog';
 
 const APP_VERSION = '3.0';
 
@@ -477,6 +478,7 @@ export default function AppLayout() {
           <Outlet />
         </main>
       </div>
+      <WelcomeDialog />
     </div>
   );
 }
