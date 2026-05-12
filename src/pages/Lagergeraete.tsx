@@ -82,6 +82,7 @@ interface LagerDevicesPageProps {
   dialogTitle?: string;
   emptyLabel?: string;
   pageIcon?: React.ReactNode;
+  rowAccentClass?: string;
 }
 
 function getDeviceTypeFromNotes(notes: string | null | undefined): DeviceTypeFilter {
@@ -108,6 +109,7 @@ export default function Lagergeraete({
   dialogTitle = 'Lagergerät',
   emptyLabel = 'Noch keine Lagergeräte erfasst.',
   pageIcon,
+  rowAccentClass,
 }: LagerDevicesPageProps = {}) {
   const { isAdmin } = useAuth();
   const [devices, setDevices] = useState<LagerDevice[]>([]);
@@ -845,7 +847,7 @@ export default function Lagergeraete({
             </TableHeader>
             <TableBody>
               {filteredDevices.map((d) => (
-                <TableRow key={d.id} className={d.reserved_order_id ? 'bg-yellow-500/10 hover:bg-yellow-500/15' : ''}>
+                <TableRow key={d.id} className={d.reserved_order_id ? 'bg-yellow-500/10 hover:bg-yellow-500/15' : (rowAccentClass ?? '')}>
                   {selectionMode && (
                     <TableCell>
                       <Checkbox

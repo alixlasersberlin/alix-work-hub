@@ -9,6 +9,7 @@ export default function EquipmentUnterwegs() {
       pageSubtitle={'Lagergeräte mit Status „Transfer"'}
       emptyLabel="Keine Geräte aktuell unterwegs."
       pageIcon={<Truck className="w-6 h-6 text-yellow-500" />}
+      rowAccentClass="bg-yellow-500/10 hover:bg-yellow-500/15"
     />
   );
 }
