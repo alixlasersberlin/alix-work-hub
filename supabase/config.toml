@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.weekly-sync]
 verify_jwt = false
+
+[functions.create-full-backup]
+verify_jwt = false

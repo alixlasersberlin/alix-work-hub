@@ -99,11 +99,14 @@ export type Database = {
           completed_at: string | null
           created_at: string
           created_by: string | null
+          file_count: number | null
           id: string
           integrity_status: string | null
           message: string | null
+          notify_email: string | null
           started_at: string | null
           storage_location: string | null
+          storage_path: string | null
           updated_at: string
         }
         Insert: {
@@ -114,11 +117,14 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
+          file_count?: number | null
           id?: string
           integrity_status?: string | null
           message?: string | null
+          notify_email?: string | null
           started_at?: string | null
           storage_location?: string | null
+          storage_path?: string | null
           updated_at?: string
         }
         Update: {
@@ -129,11 +135,14 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
+          file_count?: number | null
           id?: string
           integrity_status?: string | null
           message?: string | null
+          notify_email?: string | null
           started_at?: string | null
           storage_location?: string | null
+          storage_path?: string | null
           updated_at?: string
         }
         Relationships: [
