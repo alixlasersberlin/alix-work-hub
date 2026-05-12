@@ -31,6 +31,7 @@ import FinanceForm from "./pages/FinanceForm";
 import UserManagement from "./pages/UserManagement";
 import ImportManagement from "./pages/ImportManagement";
 import Backups from "./pages/Backups";
+import Rollen from "./pages/Rollen";
 import SystemMonitoring from "./pages/SystemMonitoring";
 import LawyerList from "./pages/LawyerList";
 import DeliveredList from "./pages/DeliveredList";
@@ -174,6 +175,7 @@ function AppRoutes() {
         <Route path="/benutzer" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><UserManagement /></ProtectedRoute>} />
         <Route path="/import" element={<ProtectedRoute requiredRoles={IMPORT_ROLES}><ImportManagement /></ProtectedRoute>} />
         <Route path="/datensicherung" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Backups /></ProtectedRoute>} />
+        <Route path="/rollen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Rollen /></ProtectedRoute>} />
         <Route path="/system" element={<ProtectedRoute requiredRoles={SYSTEM_ROLES}><SystemMonitoring /></ProtectedRoute>} />
         <Route path="/order" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><ProductionOrders /></ProtectedRoute>} />
         <Route path="/order/timeline" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><ProductionTimeline /></ProtectedRoute>} />
