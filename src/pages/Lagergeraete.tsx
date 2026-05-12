@@ -109,6 +109,7 @@ export default function Lagergeraete({
   dialogTitle = 'Lagergerät',
   emptyLabel = 'Noch keine Lagergeräte erfasst.',
   pageIcon,
+  rowAccentClass,
 }: LagerDevicesPageProps = {}) {
   const { isAdmin } = useAuth();
   const [devices, setDevices] = useState<LagerDevice[]>([]);
