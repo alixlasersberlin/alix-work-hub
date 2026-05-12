@@ -726,6 +726,58 @@ export default function Lagergeraete({
         )}
       </div>
 
+      {selectedIds.size > 0 && isAdmin && (
+        <div className="rounded-lg border border-primary/40 bg-primary/5 p-3 flex items-center gap-3 flex-wrap">
+          <span className="text-sm font-medium">{selectedIds.size} ausgewählt</span>
+          <BulkSelect value={bulkStatus} onValueChange={(v) => setBulkStatus(v as DeviceStatus)}>
+            <BulkSelectTrigger className="w-[200px] h-9">
+              <BulkSelectValue placeholder="Status wählen" />
+            </BulkSelectTrigger>
+            <BulkSelectContent>
+              {DEVICE_STATUS_OPTIONS.map((s) => (
+                <BulkSelectItem key={s} value={s}>{s}</BulkSelectItem>
+              ))}
+            </BulkSelectContent>
+          </BulkSelect>
+          <Button
+            size="sm"
+            disabled={bulkApplying}
+            onClick={async () => {
+              setBulkApplying(true);
+              const ids = Array.from(selectedIds);
+              const targets = devices.filter((d) => ids.includes(d.id));
+              let ok = 0; let fail = 0;
+              for (const d of targets) {
+                const cleaned = (d.notes ?? '').replace(/\s*\[Status:\s*[^\]]+\]\s*/g, ' ').trim();
+                const typMatch = (d.notes ?? '').match(/\[Typ:\s*(Neugerät|Leihgerät)\]/);
+                const typPart = typMatch ? `[Typ: ${typMatch[1]}] ` : '';
+                const rest = cleaned.replace(/\[Typ:\s*(Neugerät|Leihgerät)\]\s*/g, '').trim();
+                const newNotes = `${typPart}[Status: ${bulkStatus}]${rest ? ' ' + rest : ''}`;
+                const { error } = await supabase
+                  .from('lager_devices')
+                  .update({ notes: newNotes })
+                  .eq('id', d.id);
+                if (error) fail++;
+                else {
+                  ok++;
+                  setDevices((prev) => prev.map((x) => x.id === d.id ? { ...x, notes: newNotes } : x));
+                }
+              }
+              setBulkApplying(false);
+              setSelectedIds(new Set());
+              if (fail === 0) toast.success(`${ok} Status aktualisiert`);
+              else toast.warning(`${ok} aktualisiert, ${fail} Fehler`);
+            }}
+          >
+            {bulkApplying ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+            Status anwenden
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>
+            Auswahl aufheben
+          </Button>
+        </div>
+      )}
+
       <div className="rounded-lg border border-border bg-card">
         {loading ? (
           <div className="p-8 flex items-center justify-center text-muted-foreground">
