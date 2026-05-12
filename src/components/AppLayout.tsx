@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 
 const APP_VERSION = '3.0';
 
-type NavChild = { path: string; label: string; icon: typeof LayoutDashboard; roles: string[] | null };
+type NavChild = { path: string; label: string; icon: typeof LayoutDashboard; roles: string[] | null; children?: NavChild[] };
 type NavItem = NavChild & { children?: NavChild[] };
 
 const navItems: NavItem[] = [
