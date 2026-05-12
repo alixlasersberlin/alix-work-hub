@@ -155,10 +155,11 @@ Deno.serve(async (req: Request) => {
 
     const accessToken = await getAccessToken(zohoConfig);
 
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    yesterday.setHours(0, 0, 0, 0);
-    const lastModifiedAfter = yesterday.toISOString().split("T")[0];
+    const daysBack = Math.max(1, Math.min(365, Number(body.days_back ?? 1) || 1));
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - daysBack);
+    cutoff.setHours(0, 0, 0, 0);
+    const lastModifiedAfter = cutoff.toISOString().split("T")[0];
 
     console.log(`[scheduled-order-sync] Start ${sourceSystem}, modified since ${lastModifiedAfter}`);
 

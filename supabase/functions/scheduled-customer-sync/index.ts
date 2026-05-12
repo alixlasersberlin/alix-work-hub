@@ -149,12 +149,13 @@ Deno.serve(async (req: Request) => {
 
     const accessToken = await getZohoAccessToken(zohoConfig);
 
-    // Calculate yesterday's date for last_modified_time filter
+    // Calculate cutoff date for last_modified_time filter (default 1 day, configurable)
+    const daysBack = Math.max(1, Math.min(365, Number(body.days_back ?? 1) || 1));
     const now = new Date();
-    const yesterday = new Date(now);
-    yesterday.setDate(yesterday.getDate() - 1);
-    yesterday.setHours(0, 0, 0, 0);
-    const lastModifiedAfter = yesterday.toISOString().split("T")[0]; // YYYY-MM-DD
+    const cutoff = new Date(now);
+    cutoff.setDate(cutoff.getDate() - daysBack);
+    cutoff.setHours(0, 0, 0, 0);
+    const lastModifiedAfter = cutoff.toISOString().split("T")[0]; // YYYY-MM-DD
 
     console.log(`[scheduled-sync] Starting sync for ${sourceSystem}, modified since ${lastModifiedAfter}`);
 

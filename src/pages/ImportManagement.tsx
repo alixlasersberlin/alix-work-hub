@@ -190,6 +190,37 @@ export default function ImportManagement() {
   const [syncOrderLoading, setSyncOrderLoading] = useState(false);
   const [syncOrderResult, setSyncOrderResult] = useState<SingleSyncResult | null>(null);
 
+  // Weekly job
+  const [weeklySource, setWeeklySource] = useState<string>('zoho_eu_1');
+  const [weeklyLoading, setWeeklyLoading] = useState(false);
+  const [weeklyResult, setWeeklyResult] = useState<any>(null);
+
+  async function runWeeklyImport() {
+    setWeeklyLoading(true);
+    setWeeklyResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('weekly-sync', {
+        body: { source_system: weeklySource, days_back: 7 },
+      });
+      if (error) throw error;
+      setWeeklyResult(data);
+      const c = data?.customers; const o = data?.orders;
+      toast({
+        title: data?.success ? 'WEEKLY-Import abgeschlossen' : 'WEEKLY-Import fehlgeschlagen',
+        description: data?.success
+          ? `Kunden: ${c?.imported ?? 0} neu, ${c?.updated ?? 0} aktualisiert, ${c?.skipped ?? 0} übersprungen · Aufträge: ${o?.imported ?? 0} neu, ${o?.updated ?? 0} aktualisiert, ${o?.skipped ?? 0} übersprungen`
+          : (data?.error || 'Unbekannter Fehler'),
+        variant: data?.success ? 'default' : 'destructive',
+      });
+      fetchSourceStats();
+      fetchLogs();
+    } catch (err: any) {
+      toast({ title: 'Fehler', description: err.message, variant: 'destructive' });
+    } finally {
+      setWeeklyLoading(false);
+    }
+  }
+
   // Recurring invoice import state
   type InvoicePreset = 'this_month' | 'last_month' | 'this_quarter' | 'this_year' | 'last_year' | 'all' | 'custom';
   const [invoicePreset, setInvoicePreset] = useState<InvoicePreset>('this_year');
@@ -813,6 +844,66 @@ export default function ImportManagement() {
         {/* ============ ACTIONS TAB ============ */}
         {canWrite && (
           <TabsContent value="actions" className="space-y-6">
+            {/* WEEKLY Job */}
+            <Card className="border-primary/40">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <RefreshCw className="w-4 h-4 text-primary" />
+                  WEEKLY – Import der letzten 7 Tage
+                </CardTitle>
+                <CardDescription>
+                  Importiert zuerst neue/geänderte Kunden, anschließend Aufträge der letzten 7 Tage.
+                  Bestehende Datensätze werden anhand der externen ID erkannt und nur bei Änderungen aktualisiert.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex flex-wrap items-end gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-sm">Quelle</Label>
+                    <Select value={weeklySource} onValueChange={setWeeklySource}>
+                      <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {IMPORT_SOURCES.map(s => (
+                          <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button
+                    onClick={runWeeklyImport}
+                    disabled={weeklyLoading}
+                    className="bg-primary text-primary-foreground hover:bg-primary/90"
+                  >
+                    {weeklyLoading ? (
+                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Läuft …</>
+                    ) : (
+                      <><RefreshCw className="w-4 h-4 mr-2" /> WEEKLY starten</>
+                    )}
+                  </Button>
+                </div>
+
+                {weeklyResult && (
+                  <div className="rounded-md border border-border bg-secondary/30 p-4 text-sm space-y-2">
+                    <div className="font-medium text-foreground">
+                      Ergebnis ({weeklyResult.duration_ms ? `${Math.round(weeklyResult.duration_ms / 1000)}s` : '–'})
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <div className="text-xs uppercase text-muted-foreground">Kunden</div>
+                        <div>Geladen: <span className="font-medium">{weeklyResult.customers?.fetched ?? 0}</span></div>
+                        <div>Neu: <span className="font-medium text-[hsl(var(--success))]">{weeklyResult.customers?.imported ?? 0}</span> · Aktualisiert: <span className="font-medium">{weeklyResult.customers?.updated ?? 0}</span> · Übersprungen: <span className="font-medium text-muted-foreground">{weeklyResult.customers?.skipped ?? 0}</span></div>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="text-xs uppercase text-muted-foreground">Aufträge</div>
+                        <div>Geladen: <span className="font-medium">{weeklyResult.orders?.fetched ?? 0}</span></div>
+                        <div>Neu: <span className="font-medium text-[hsl(var(--success))]">{weeklyResult.orders?.imported ?? 0}</span> · Aktualisiert: <span className="font-medium">{weeklyResult.orders?.updated ?? 0}</span> · Übersprungen: <span className="font-medium text-muted-foreground">{weeklyResult.orders?.skipped ?? 0}</span></div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Date Filter */}
             <Card className="border-border">
               <CardHeader className="pb-3">
