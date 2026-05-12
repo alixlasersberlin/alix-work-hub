@@ -15,7 +15,7 @@ export default function Papiere() {
   return (
     <div className="p-6 space-y-6">
       <header className="space-y-1">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">PAPIERE</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">VERSAND</h1>
         <p className="text-muted-foreground">Übersicht aller Geschäftsdokumente</p>
       </header>
 
