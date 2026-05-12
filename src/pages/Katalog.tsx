@@ -96,7 +96,7 @@ export default function Katalog() {
     );
   }, [items, query]);
 
-  const { pageSize, setPageSize, page, setPage, totalPages, paged, total } = usePagination(filtered, 25);
+  const { pageSize, setPageSize, page, setPage, totalPages, paged, total } = usePagination(filtered, 20);
 
   const toggleId = (id: string) =>
     setSelectedIds((s) => {
