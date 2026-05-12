@@ -106,13 +106,21 @@ export default function AppLayout() {
   }, [location.pathname]);
 
   // Geräte-Anzahlen für Lagerbestand-Untermenüs laden
+  // - initial + bei Routenwechsel
+  // - Auto-Refresh alle 30 Minuten
+  // - Realtime-Update bei Änderungen an lager_devices
+  // - Refresh bei Tab-Fokus, falls Daten älter als 30 Min sind
   useEffect(() => {
     let cancelled = false;
+    let lastLoadedAt = 0;
+    const REFRESH_MS = 30 * 60 * 1000; // 30 Minuten
+
     const load = async () => {
       const { data, error } = await supabase
         .from('lager_devices')
         .select('notes');
       if (cancelled || error || !data) return;
+      lastLoadedAt = Date.now();
       const getStatus = (n: string | null | undefined) => {
         const m = /\[Status:\s*([^\]]+)\]/.exec(n ?? '');
         return (m?.[1] ?? '').trim();
@@ -137,8 +145,44 @@ export default function AppLayout() {
         '/lager/equipment-area': lager + transfer + produktion + hold,
       });
     };
+
     load();
-  }, [location.pathname]);
+
+    // Periodischer Refresh alle 30 Minuten
+    const intervalId = window.setInterval(load, REFRESH_MS);
+
+    // Realtime: sofortige Aktualisierung bei jeder Änderung an lager_devices
+    // (debounced, um Burst-Events zu bündeln)
+    let debounceId: number | undefined;
+    const scheduleReload = () => {
+      if (debounceId) window.clearTimeout(debounceId);
+      debounceId = window.setTimeout(load, 400);
+    };
+    const channel = supabase
+      .channel('lager_devices_counts')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'lager_devices' },
+        scheduleReload,
+      )
+      .subscribe();
+
+    // Bei Tab-Fokus: nur neu laden, wenn Daten älter als REFRESH_MS sind
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible' && Date.now() - lastLoadedAt > REFRESH_MS) {
+        load();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+      if (debounceId) window.clearTimeout(debounceId);
+      document.removeEventListener('visibilitychange', onVisibility);
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const labelWithCount = (path: string, label: string) => {
     const c = lagerCounts[path];
