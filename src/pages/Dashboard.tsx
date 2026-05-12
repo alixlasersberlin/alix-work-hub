@@ -254,13 +254,18 @@ export default function Dashboard() {
         {loading
           ? Array.from({ length: 5 }).map((_, i) => <CardSkeleton key={i} />)
           : kpiCards.map((card, i) => (
-              <div key={card.label} className="rounded-xl border border-border bg-card p-5 card-glow group hover:border-primary/20 transition-colors">
+              <button
+                key={card.label}
+                type="button"
+                onClick={card.onClick}
+                className="text-left rounded-xl border border-border bg-card p-5 card-glow group hover:border-primary/30 hover:bg-secondary/20 transition-colors"
+              >
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-sm text-muted-foreground">{card.label}</span>
                   <card.icon className={`w-5 h-5 ${kpiColors[i] || 'text-primary'}`} />
                 </div>
                 <p className="text-3xl font-display font-bold text-foreground">{card.value}</p>
-              </div>
+              </button>
             ))}
       </div>
 
