@@ -135,6 +135,7 @@ export default function RoutePlanning() {
           <p className="text-sm text-muted-foreground mt-1">{filtered.length} Touren</p>
         </div>
         <div className="flex items-center gap-2">
+          {view === 'list' && <ViewToggle value={viewMode} onChange={setViewMode} />}
           <div className="flex rounded-lg border border-border overflow-hidden">
             <button
               className={cn("px-3 py-2 text-sm transition-colors", view === 'list' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground')}
