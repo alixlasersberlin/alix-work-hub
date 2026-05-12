@@ -61,9 +61,10 @@ export default function EquipmentHold() {
         setLoading(false);
         return;
       }
-      const prodDevices = (data as LagerDevice[]).filter(
-        (d) => getStatusFromNotes(d.notes) === 'Hold',
-      );
+      const prodDevices = (data as LagerDevice[]).filter((d) => {
+        const s = getStatusFromNotes(d.notes).toLowerCase();
+        return s === 'hold' || s === 'sperre boss';
+      });
       const orderIds = Array.from(
         new Set(prodDevices.map((d) => d.reserved_order_id).filter(Boolean) as string[]),
       );
