@@ -119,7 +119,7 @@ export default function Backups() {
   };
 
   const statusBadge = (s: string) => {
-    if (s === 'completed') return <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/30"><CheckCircle2 className="w-3 h-3 mr-1" />Erfolgreich</Badge>;
+    if (s === 'success' || s === 'completed') return <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/30"><CheckCircle2 className="w-3 h-3 mr-1" />Erfolgreich</Badge>;
     if (s === 'failed') return <Badge className="bg-destructive/10 text-destructive border-destructive/30"><AlertTriangle className="w-3 h-3 mr-1" />Fehlgeschlagen</Badge>;
     return <Badge variant="secondary"><Loader2 className="w-3 h-3 mr-1 animate-spin" />{s}</Badge>;
   };
