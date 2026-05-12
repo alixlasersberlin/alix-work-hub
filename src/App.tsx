@@ -48,6 +48,7 @@ import Lagergeraete from "./pages/Lagergeraete";
 import Leihgeraete from "./pages/Leihgeraete";
 import EquipmentArea from "./pages/EquipmentArea";
 import EquipmentUnterwegs from "./pages/EquipmentUnterwegs";
+import EquipmentWarehouse from "./pages/EquipmentWarehouse";
 import EquipmentProduktion from "./pages/EquipmentProduktion";
 import EquipmentHold from "./pages/EquipmentHold";
 import Artikel from "./pages/Artikel";
