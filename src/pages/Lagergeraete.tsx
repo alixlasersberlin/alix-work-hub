@@ -159,8 +159,10 @@ export default function Lagergeraete({
   );
 
   const typeFilteredDevices = useMemo(() => {
-    if (!filterType) return devices;
-    return devices.filter((d) => getDeviceTypeFromNotes(d.notes) === filterType);
+    // Geräte mit Status "Transfer" werden im Untermenü "Unterwegs" angezeigt
+    const base = devices.filter((d) => getStatusFromNotes(d.notes) !== 'Transfer');
+    if (!filterType) return base;
+    return base.filter((d) => getDeviceTypeFromNotes(d.notes) === filterType);
   }, [devices, filterType]);
 
   const filteredDevices = useMemo(() => {
