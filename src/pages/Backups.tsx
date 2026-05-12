@@ -231,7 +231,7 @@ export default function Backups() {
                     {b.message && <div className="text-xs text-muted-foreground mt-1 truncate">{b.message}</div>}
                   </div>
                   <div className="flex items-center gap-2">
-                    {b.storage_path && b.backup_status === 'completed' && (
+                    {b.storage_path && (b.backup_status === 'success' || b.backup_status === 'completed') && (
                       <Button size="sm" variant="outline" onClick={() => downloadBackup(b)} disabled={downloadingId === b.id}>
                         {downloadingId === b.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
                       </Button>
