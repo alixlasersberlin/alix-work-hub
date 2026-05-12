@@ -110,6 +110,37 @@ export default function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const [lagerCounts, setLagerCounts] = useState<Record<string, number>>({});
+  // Desktop: flexible Sidebar-Breite (px), per Drag anpassbar, in localStorage gespeichert
+  const SIDEBAR_MIN = 180;
+  const SIDEBAR_MAX = 480;
+  const [sidebarWidth, setSidebarWidth] = useState<number>(() => {
+    if (typeof window === 'undefined') return 240;
+    const v = Number(localStorage.getItem('sidebar_width'));
+    return v >= SIDEBAR_MIN && v <= SIDEBAR_MAX ? v : 240;
+  });
+  const [resizing, setResizing] = useState(false);
+
+  useEffect(() => {
+    if (!resizing) return;
+    const onMove = (e: MouseEvent) => {
+      const w = Math.min(SIDEBAR_MAX, Math.max(SIDEBAR_MIN, e.clientX));
+      setSidebarWidth(w);
+    };
+    const onUp = () => {
+      setResizing(false);
+      try { localStorage.setItem('sidebar_width', String(sidebarWidth)); } catch {}
+    };
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [resizing, sidebarWidth]);
 
   // Drawer schließen, wenn die Route wechselt
   useEffect(() => {
