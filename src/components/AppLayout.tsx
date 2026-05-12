@@ -287,7 +287,7 @@ export default function AppLayout() {
                                         )}
                                       >
                                         <grand.icon className={cn("w-[18px] h-[18px] flex-shrink-0", gActive && "text-primary")} />
-                                        <span className="truncate">{grand.label}</span>
+                                        <span className="truncate">{labelWithCount(grand.path, grand.label)}</span>
                                       </Link>
                                     );
                                   })}
