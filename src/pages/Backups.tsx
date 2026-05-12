@@ -119,7 +119,7 @@ export default function Backups() {
   };
 
   const statusBadge = (s: string) => {
-    if (s === 'completed') return <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/30"><CheckCircle2 className="w-3 h-3 mr-1" />Erfolgreich</Badge>;
+    if (s === 'success' || s === 'completed') return <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/30"><CheckCircle2 className="w-3 h-3 mr-1" />Erfolgreich</Badge>;
     if (s === 'failed') return <Badge className="bg-destructive/10 text-destructive border-destructive/30"><AlertTriangle className="w-3 h-3 mr-1" />Fehlgeschlagen</Badge>;
     return <Badge variant="secondary"><Loader2 className="w-3 h-3 mr-1 animate-spin" />{s}</Badge>;
   };
@@ -231,7 +231,7 @@ export default function Backups() {
                     {b.message && <div className="text-xs text-muted-foreground mt-1 truncate">{b.message}</div>}
                   </div>
                   <div className="flex items-center gap-2">
-                    {b.storage_path && b.backup_status === 'completed' && (
+                    {b.storage_path && (b.backup_status === 'success' || b.backup_status === 'completed') && (
                       <Button size="sm" variant="outline" onClick={() => downloadBackup(b)} disabled={downloadingId === b.id}>
                         {downloadingId === b.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
                       </Button>

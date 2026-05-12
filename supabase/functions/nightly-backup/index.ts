@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
     id: backupId,
     backup_type: "automated",
     backup_scope: "full",
-    backup_status: "in_progress",
+    backup_status: "running",
     started_at: startedAt,
     message: "Tägliches automatisches Backup gestartet",
   });
@@ -61,10 +61,10 @@ Deno.serve(async (req) => {
     await supabase
       .from("backups_metadata")
       .update({
-        backup_status: "completed",
+        backup_status: "success",
         completed_at: completedAt,
         backup_size_bytes: totalSize,
-        integrity_status: "verified",
+        integrity_status: "valid",
         storage_location: "supabase_internal",
         message: `Backup erfolgreich. Tabellen: ${Object.entries(results)
           .map(([t, c]) => `${t}(${c})`)
@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
       .update({
         backup_status: "failed",
         completed_at: new Date().toISOString(),
-        integrity_status: "error",
+        integrity_status: "invalid",
         message: `Backup fehlgeschlagen: ${errorMsg}`,
       })
       .eq("id", backupId);

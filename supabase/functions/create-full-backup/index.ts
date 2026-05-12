@@ -101,11 +101,11 @@ Deno.serve(async (req) => {
   const folderPath = `${dateStr.slice(0, 10)}/backup-${dateStr}-${backupId.slice(0, 8)}`;
   const manifestPath = `${folderPath}/manifest.json`;
 
-  await adminClient.from("backups_metadata").insert({
+  const { error: insErr } = await adminClient.from("backups_metadata").insert({
     id: backupId,
     backup_type: source === "cron" ? "automated" : "manual",
     backup_scope: scope,
-    backup_status: "in_progress",
+    backup_status: "running",
     started_at: startedAt,
     storage_location: "supabase_storage:backups",
     storage_path: manifestPath,
@@ -115,6 +115,10 @@ Deno.serve(async (req) => {
       ? "Automatisches wöchentliches Backup gestartet"
       : "Manuelles Backup gestartet",
   });
+  if (insErr) {
+    console.error("backups_metadata insert failed:", insErr);
+    return json({ success: false, error: `Metadata-Insert: ${insErr.message}` }, 500);
+  }
 
   try {
     const counts: Record<string, number> = {};
@@ -216,11 +220,11 @@ Deno.serve(async (req) => {
     await adminClient
       .from("backups_metadata")
       .update({
-        backup_status: "completed",
+        backup_status: "success",
         completed_at: completedAt,
         backup_size_bytes: sizeBytes,
         file_count: storageFileCount,
-        integrity_status: "verified",
+        integrity_status: "valid",
         message: `Backup erfolgreich. ${BACKUP_TABLES.length} Tabellen (NDJSON), ${storageFileCount} Storage-Dateien indexiert.`,
       })
       .eq("id", backupId);
@@ -278,7 +282,7 @@ Deno.serve(async (req) => {
       .update({
         backup_status: "failed",
         completed_at: new Date().toISOString(),
-        integrity_status: "error",
+        integrity_status: "invalid",
         message: `Backup fehlgeschlagen: ${errorMsg}`,
       })
       .eq("id", backupId);
