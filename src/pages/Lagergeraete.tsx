@@ -487,6 +487,19 @@ export default function Lagergeraete({
                 </Select>
               </div>
               <div className="space-y-2">
+                <Label htmlFor="device-status">Status *</Label>
+                <Select value={deviceStatus} onValueChange={(v) => setDeviceStatus(v as DeviceStatus)}>
+                  <SelectTrigger id="device-status">
+                    <SelectValue placeholder="Status auswählen" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DEVICE_STATUS_OPTIONS.map((s) => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="entry-date">Eingangsdatum *</Label>
                 <Input
                   id="entry-date"
