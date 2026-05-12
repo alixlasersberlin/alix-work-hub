@@ -101,6 +101,7 @@ function getStatusFromNotes(notes: string | null | undefined): DeviceStatus {
 
 export default function Lagergeraete({
   filterType,
+  filterStatuses,
   pageTitle = 'Lagergeräte',
   pageSubtitle = 'Erfassung und Übersicht aller Lagergeräte',
   addLabel = 'Neues Lagergerät',
