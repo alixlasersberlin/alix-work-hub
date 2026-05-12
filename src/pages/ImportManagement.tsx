@@ -190,6 +190,37 @@ export default function ImportManagement() {
   const [syncOrderLoading, setSyncOrderLoading] = useState(false);
   const [syncOrderResult, setSyncOrderResult] = useState<SingleSyncResult | null>(null);
 
+  // Weekly job
+  const [weeklySource, setWeeklySource] = useState<string>('zoho_eu_1');
+  const [weeklyLoading, setWeeklyLoading] = useState(false);
+  const [weeklyResult, setWeeklyResult] = useState<any>(null);
+
+  async function runWeeklyImport() {
+    setWeeklyLoading(true);
+    setWeeklyResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('weekly-sync', {
+        body: { source_system: weeklySource, days_back: 7 },
+      });
+      if (error) throw error;
+      setWeeklyResult(data);
+      const c = data?.customers; const o = data?.orders;
+      toast({
+        title: data?.success ? 'WEEKLY-Import abgeschlossen' : 'WEEKLY-Import fehlgeschlagen',
+        description: data?.success
+          ? `Kunden: ${c?.imported ?? 0} neu, ${c?.updated ?? 0} aktualisiert, ${c?.skipped ?? 0} übersprungen · Aufträge: ${o?.imported ?? 0} neu, ${o?.updated ?? 0} aktualisiert, ${o?.skipped ?? 0} übersprungen`
+          : (data?.error || 'Unbekannter Fehler'),
+        variant: data?.success ? 'default' : 'destructive',
+      });
+      fetchSourceStats();
+      fetchLogs();
+    } catch (err: any) {
+      toast({ title: 'Fehler', description: err.message, variant: 'destructive' });
+    } finally {
+      setWeeklyLoading(false);
+    }
+  }
+
   // Recurring invoice import state
   type InvoicePreset = 'this_month' | 'last_month' | 'this_quarter' | 'this_year' | 'last_year' | 'all' | 'custom';
   const [invoicePreset, setInvoicePreset] = useState<InvoicePreset>('this_year');
