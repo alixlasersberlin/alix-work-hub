@@ -142,18 +142,40 @@ export default function Dashboard() {
     async function load() {
       try {
         setError(null);
-        // Fetch all data in parallel based on role access
-        const customersRes = canSeeCustomers
-          ? await supabase.from('customers').select('id', { count: 'exact', head: true })
-          : { count: 0 };
 
-        const [ordersRes, openOrdersRes, recentOrdersRes] = canSeeOrders
+        // Lager-Geräte für die KPI-Karten (Freie Pool-Geräte + Leihgeräte gesamt)
+        const lagerRes = isAdmin
+          ? await supabase.from('lager_devices').select('notes, reserved_order_id')
+          : { data: [] as { notes: string | null; reserved_order_id: string | null }[] };
+
+        const getStatus = (n: string | null | undefined) => {
+          const m = /\[Status:\s*([^\]]+)\]/.exec(n ?? '');
+          return (m?.[1] ?? '').trim();
+        };
+        const isLeih = (n: string | null | undefined) =>
+          (n ?? '').includes('[Typ: Leihgerät]') || (n ?? '').includes('[Leihgerät]');
+
+        let freePoolDevices = 0;
+        let leihgeraete = 0;
+        for (const d of (lagerRes.data ?? []) as { notes: string | null; reserved_order_id: string | null }[]) {
+          if (isLeih(d.notes)) {
+            leihgeraete++;
+            continue;
+          }
+          // Pool = alle Nicht-Leihgeräte (Bestand, Transfer, Produktion, Hold, Warehouse).
+          // Frei = nicht reserviert und nicht im Status "Hold".
+          const status = getStatus(d.notes);
+          if (d.reserved_order_id == null && status !== 'Hold') {
+            freePoolDevices++;
+          }
+        }
+
+        const [openOrdersRes, recentOrdersRes] = canSeeOrders
           ? await Promise.all([
-              supabase.from('orders').select('id', { count: 'exact', head: true }),
               supabase.from('orders').select('id', { count: 'exact', head: true }).eq('order_status', 'offen'),
               supabase.from('orders').select('id, order_number, order_status, total_amount, currency, order_date, expected_shipment_date').order('created_at', { ascending: false }).limit(7),
             ])
-          : [{ count: 0 }, { count: 0 }, { data: [] }];
+          : [{ count: 0 }, { data: [] }];
 
         const shipmentOrdersRes = canSeeOrders
           ? await supabase.from('orders').select('id, order_number, expected_shipment_date, order_status, shipping_address, billing_address, customers(company_name, contact_name, shipping_address, billing_address), order_items(item_name, sku, description)').not('expected_shipment_date', 'is', null).order('expected_shipment_date', { ascending: true }).limit(500)
@@ -174,8 +196,8 @@ export default function Dashboard() {
           : [{ count: 0 }, { data: [] }];
 
         setStats({
-          customers: customersRes.count ?? 0,
-          orders: ordersRes.count ?? 0,
+          freePoolDevices,
+          leihgeraete,
           openOrders: openOrdersRes.count ?? 0,
           routes: routesRes.count ?? 0,
           openFinance: openFinanceRes.count ?? 0,
@@ -191,14 +213,14 @@ export default function Dashboard() {
       }
     }
     load();
-  }, [canSeeOrders, canSeeRoutes, canSeeFinance, canSeeCustomers]);
+  }, [canSeeOrders, canSeeRoutes, canSeeFinance, isAdmin]);
 
   const kpiCards = [
-    { label: 'Kunden', value: stats.customers, icon: Users, visible: canSeeCustomers },
-    { label: 'Aufträge gesamt', value: stats.orders, icon: ClipboardList, visible: canSeeOrders },
-    { label: 'Offene Aufträge', value: stats.openOrders, icon: AlertCircle, visible: canSeeOrders },
-    { label: 'Geplante Touren', value: stats.routes, icon: MapPin, visible: canSeeRoutes },
-    { label: 'Offene Zahlungen', value: stats.openFinance, icon: Banknote, visible: canSeeFinance },
+    { label: 'Freie Geräte (Pool)', value: stats.freePoolDevices, icon: PackageCheck, visible: isAdmin, onClick: () => navigate('/lager/equipment-area') },
+    { label: 'Leihgeräte', value: stats.leihgeraete, icon: Warehouse, visible: isAdmin, onClick: () => navigate('/lager/leihgeraete') },
+    { label: 'Offene Aufträge', value: stats.openOrders, icon: AlertCircle, visible: canSeeOrders, onClick: () => navigate('/auftraege') },
+    { label: 'Geplante Touren', value: stats.routes, icon: MapPin, visible: canSeeRoutes, onClick: () => navigate('/tourenplanung') },
+    { label: 'Offene Zahlungen', value: stats.openFinance, icon: Banknote, visible: canSeeFinance, onClick: () => navigate('/finance') },
   ].filter(c => c.visible);
 
   const kpiColors = [
