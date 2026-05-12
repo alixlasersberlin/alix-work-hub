@@ -85,6 +85,15 @@ function getDeviceTypeFromNotes(notes: string | null | undefined): DeviceTypeFil
     : 'Neugerät';
 }
 
+const DEVICE_STATUS_OPTIONS = ['Bestand', 'Produktion', 'Shell Warehouse', 'Sperre BOSS'] as const;
+type DeviceStatus = typeof DEVICE_STATUS_OPTIONS[number];
+
+function getStatusFromNotes(notes: string | null | undefined): DeviceStatus {
+  const m = /\[Status:\s*([^\]]+)\]/.exec(notes ?? '');
+  const v = m?.[1]?.trim();
+  return (DEVICE_STATUS_OPTIONS as readonly string[]).includes(v ?? '') ? (v as DeviceStatus) : 'Bestand';
+}
+
 export default function Lagergeraete({
   filterType,
   pageTitle = 'Lagergeräte',
@@ -106,6 +115,7 @@ export default function Lagergeraete({
   const [serial, setSerial] = useState('');
   const [modelName, setModelName] = useState<string>('');
   const [deviceType, setDeviceType] = useState<'Neugerät' | 'Leihgerät'>(filterType ?? 'Neugerät');
+  const [deviceStatus, setDeviceStatus] = useState<DeviceStatus>('Bestand');
   const [entryDate, setEntryDate] = useState(today);
   const [notes, setNotes] = useState('');
   const [reservedOrderId, setReservedOrderId] = useState<string | null>(null);
@@ -292,6 +302,7 @@ export default function Lagergeraete({
     setSerial('');
     setModelName('');
     setDeviceType(filterType ?? 'Neugerät');
+    setDeviceStatus('Bestand');
     setEntryDate(today);
     setNotes('');
     setReservedOrderId(null);
@@ -305,6 +316,7 @@ export default function Lagergeraete({
     setSerial(d.serial_number);
     setModelName(d.model_name);
     setDeviceType(getDeviceTypeFromNotes(d.notes));
+    setDeviceStatus(getStatusFromNotes(d.notes));
     setEntryDate(d.entry_date);
     setNotes(d.notes ?? '');
     setReservedOrderId(d.reserved_order_id);
@@ -331,8 +343,11 @@ export default function Lagergeraete({
     const { data: userData } = await supabase.auth.getUser();
     const finalReservedOrderId = reservedOrderId;
 
-    const cleanedNotes = (parsed.data.notes ?? '').replace(/\s*\[Typ:\s*(Neugerät|Leihgerät)\]\s*/g, ' ').trim();
-    const notesWithType = `[Typ: ${deviceType}]${cleanedNotes ? ' ' + cleanedNotes : ''}`;
+    const cleanedNotes = (parsed.data.notes ?? '')
+      .replace(/\s*\[Typ:\s*(Neugerät|Leihgerät)\]\s*/g, ' ')
+      .replace(/\s*\[Status:\s*[^\]]+\]\s*/g, ' ')
+      .trim();
+    const notesWithType = `[Typ: ${deviceType}] [Status: ${deviceStatus}]${cleanedNotes ? ' ' + cleanedNotes : ''}`;
     const payload = {
       serial_number: parsed.data.serial_number,
       model_name: parsed.data.model_name,
@@ -468,6 +483,19 @@ export default function Lagergeraete({
                   <SelectContent>
                     <SelectItem value="Neugerät">Neugerät</SelectItem>
                     <SelectItem value="Leihgerät">Leihgerät</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="device-status">Status *</Label>
+                <Select value={deviceStatus} onValueChange={(v) => setDeviceStatus(v as DeviceStatus)}>
+                  <SelectTrigger id="device-status">
+                    <SelectValue placeholder="Status auswählen" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DEVICE_STATUS_OPTIONS.map((s) => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
