@@ -148,6 +148,10 @@ function AppRoutes() {
         <Route path="/verkauf/freigabe" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Freigabe /></ProtectedRoute>} />
         <Route path="/operation" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Operation /></ProtectedRoute>} />
         <Route path="/papiere" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Papiere /></ProtectedRoute>} />
+        <Route path="/versand/lieferscheine" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><VersandPlaceholder title="Lieferscheine" description="Versand & Lieferdokumente" icon={TruckIcon} /></ProtectedRoute>} />
+        <Route path="/versand/ratenplan" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><VersandPlaceholder title="Ratenplan" description="Übersicht aller Ratenpläne" icon={BanknoteIcon} /></ProtectedRoute>} />
+        <Route path="/versand/mietkauf" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><VersandPlaceholder title="Mietkauf" description="Mietkauf-Verträge" icon={FileSignature} /></ProtectedRoute>} />
+        <Route path="/versand/sepa-mandat" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><VersandPlaceholder title="SEPA Mandat" description="SEPA-Lastschriftmandate" icon={CreditCard} /></ProtectedRoute>} />
         <Route path="/prio-liste" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><PriorityList /></ProtectedRoute>} />
         <Route path="/anwaltsliste" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><LawyerList /></ProtectedRoute>} />
         <Route path="/geliefert" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><DeliveredList /></ProtectedRoute>} />
