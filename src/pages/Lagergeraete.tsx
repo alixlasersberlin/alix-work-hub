@@ -41,6 +41,8 @@ import { ALIX_MODEL_GROUPS } from '@/lib/alix-models';
 import OrderPickerDialog from '@/components/OrderPickerDialog';
 import { useAuth } from '@/hooks/useAuth';
 import { StatusBadge } from '@/components/StatusBadge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Select as BulkSelect, SelectContent as BulkSelectContent, SelectItem as BulkSelectItem, SelectTrigger as BulkSelectTrigger, SelectValue as BulkSelectValue } from '@/components/ui/select';
 
 type LagerDevice = {
   id: string;
@@ -123,6 +125,9 @@ export default function Lagergeraete({
   const [reservedOrderNumber, setReservedOrderNumber] = useState<string | null>(null);
   const [originalReservedOrderId, setOriginalReservedOrderId] = useState<string | null>(null);
   const [reservationWeek, setReservationWeek] = useState<string>('');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkStatus, setBulkStatus] = useState<DeviceStatus>('Bestand');
+  const [bulkApplying, setBulkApplying] = useState(false);
 
   // Global search across devices and available (unreserved) open orders
   const [searchQuery, setSearchQuery] = useState('');
