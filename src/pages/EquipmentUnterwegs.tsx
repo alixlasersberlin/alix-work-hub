@@ -55,11 +55,36 @@ export default function EquipmentUnterwegs() {
       setLoading(true);
       const { data, error } = await supabase
         .from('lager_devices')
-        .select('id, serial_number, model_name, entry_date, notes, reservation_week, reserved_order_id, orders:reserved_order_id(order_number)')
+        .select('id, serial_number, model_name, entry_date, notes, reservation_week, reserved_order_id')
         .order('updated_at', { ascending: false });
-      if (!error && data) {
-        setDevices((data as unknown as LagerDevice[]).filter((d) => getStatusFromNotes(d.notes) === 'Transfer'));
+      if (error || !data) {
+        setLoading(false);
+        return;
       }
+      const transferDevices = (data as LagerDevice[]).filter(
+        (d) => getStatusFromNotes(d.notes) === 'Transfer',
+      );
+      const orderIds = Array.from(
+        new Set(transferDevices.map((d) => d.reserved_order_id).filter(Boolean) as string[]),
+      );
+      let orderMap: Record<string, string> = {};
+      if (orderIds.length > 0) {
+        const { data: orders } = await supabase
+          .from('orders')
+          .select('id, order_number')
+          .in('id', orderIds);
+        for (const o of (orders ?? []) as { id: string; order_number: string | null }[]) {
+          if (o.order_number) orderMap[o.id] = o.order_number;
+        }
+      }
+      setDevices(
+        transferDevices.map((d) => ({
+          ...d,
+          orders: d.reserved_order_id && orderMap[d.reserved_order_id]
+            ? { order_number: orderMap[d.reserved_order_id] }
+            : null,
+        })),
+      );
       setLoading(false);
     })();
   }, []);
