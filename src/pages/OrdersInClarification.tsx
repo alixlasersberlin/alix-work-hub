@@ -244,6 +244,7 @@ export default function OrdersInClarification() {
           </table>
         </div>
       </div>
+      )}
 
       {editOrder && (
         <OrderEditDialog order={editOrder} open onClose={() => setEditOrder(null)} onSaved={load} />
