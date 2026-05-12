@@ -216,11 +216,11 @@ Deno.serve(async (req) => {
     await adminClient
       .from("backups_metadata")
       .update({
-        backup_status: "completed",
+        backup_status: "success",
         completed_at: completedAt,
         backup_size_bytes: sizeBytes,
         file_count: storageFileCount,
-        integrity_status: "verified",
+        integrity_status: "valid",
         message: `Backup erfolgreich. ${BACKUP_TABLES.length} Tabellen (NDJSON), ${storageFileCount} Storage-Dateien indexiert.`,
       })
       .eq("id", backupId);
