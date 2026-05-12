@@ -820,16 +820,18 @@ export default function Lagergeraete({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-10">
-                  <Checkbox
-                    checked={filteredDevices.length > 0 && filteredDevices.every((d) => selectedIds.has(d.id))}
-                    onCheckedChange={(v) => {
-                      if (v) setSelectedIds(new Set(filteredDevices.map((d) => d.id)));
-                      else setSelectedIds(new Set());
-                    }}
-                    aria-label="Alle auswählen"
-                  />
-                </TableHead>
+                {selectionMode && (
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={filteredDevices.length > 0 && filteredDevices.every((d) => selectedIds.has(d.id))}
+                      onCheckedChange={(v) => {
+                        if (v) setSelectedIds(new Set(filteredDevices.map((d) => d.id)));
+                        else setSelectedIds(new Set());
+                      }}
+                      aria-label="Alle auswählen"
+                    />
+                  </TableHead>
+                )}
                 <TableHead>Seriennummer</TableHead>
                 <TableHead>Modell</TableHead>
                 <TableHead>Eingangsdatum</TableHead>
