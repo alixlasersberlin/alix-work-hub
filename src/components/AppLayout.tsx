@@ -230,6 +230,36 @@ export default function AppLayout() {
     };
   }, []);
 
+  // Anzahl bevorstehender Touren (planned_date >= heute)
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const today = new Date().toISOString().slice(0, 10);
+      const { count } = await supabase
+        .from('route_plans')
+        .select('*', { count: 'exact', head: true })
+        .gte('planned_date', today);
+      if (cancelled) return;
+      setLagerCounts((prev) => ({ ...prev, '/tourenplanung': count ?? 0 }));
+    };
+    load();
+    const intervalId = window.setInterval(load, 5 * 60 * 1000);
+    let debounceId: number | undefined;
+    const channel = supabase
+      .channel('route_plans_counts')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'route_plans' }, () => {
+        if (debounceId) window.clearTimeout(debounceId);
+        debounceId = window.setTimeout(load, 400);
+      })
+      .subscribe();
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+      if (debounceId) window.clearTimeout(debounceId);
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const labelWithCount = (path: string, label: string) => {
     const c = lagerCounts[path];
     return c === undefined ? label : `${label} (${c})`;
