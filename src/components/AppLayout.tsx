@@ -59,7 +59,13 @@ const navItems: NavItem[] = [
       { path: '/order/reklamation', label: 'Reklamation', icon: AlertTriangle, roles: ['Admin', 'Super Admin'] },
     ],
   },
-  { path: '/production', label: 'PRODUCTION', icon: Factory, roles: ['Admin', 'Super Admin', 'Lieferant'] },
+  {
+    path: '/production', label: 'PRODUCTION', icon: Factory, roles: ['Admin', 'Super Admin', 'Lieferant'],
+    children: [
+      { path: '/production', label: 'Liste', icon: ListOrdered, roles: ['Admin', 'Super Admin', 'Lieferant'] },
+      { path: '/production/fertig', label: 'Fertig', icon: CheckCircle2, roles: ['Admin', 'Super Admin', 'Lieferant'] },
+    ],
+  },
   {
     path: '/lager', label: 'LAGERBESTAND', icon: Warehouse, roles: ['Admin', 'Super Admin'],
     children: [
