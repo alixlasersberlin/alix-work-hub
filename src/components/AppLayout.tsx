@@ -274,14 +274,16 @@ export default function AppLayout() {
       )}
 
       {/* Sidebar */}
-      <aside className={cn(
-        "flex flex-col border-r border-border bg-sidebar transition-transform duration-200 flex-shrink-0",
-        // Mobile: fixed Drawer, slide-in/out
-        "fixed inset-y-0 left-0 z-50 w-[260px] pt-safe pb-safe pl-safe md:static md:translate-x-0 md:z-auto",
-        mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
-        // Desktop: collapsible width
-        collapsed ? "md:w-[60px]" : "md:w-60"
-      )}>
+      <aside
+        style={!collapsed ? { ['--sb-w' as any]: `${sidebarWidth}px` } : undefined}
+        className={cn(
+          "relative flex flex-col border-r border-border bg-sidebar transition-transform duration-200 flex-shrink-0",
+          // Mobile: fixed Drawer, slide-in/out
+          "fixed inset-y-0 left-0 z-50 w-[260px] pt-safe pb-safe pl-safe md:static md:translate-x-0 md:z-auto",
+          mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
+          // Desktop: collapsible Breite (eingeklappt fix, sonst per CSS-Var/Drag)
+          collapsed ? "md:w-[60px]" : "md:w-[var(--sb-w)]"
+        )}>
         {/* Brand */}
         <div className={cn(
           "flex items-center gap-2.5 border-b border-border h-16 flex-shrink-0",
