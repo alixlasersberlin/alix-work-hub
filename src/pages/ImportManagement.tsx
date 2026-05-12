@@ -844,6 +844,66 @@ export default function ImportManagement() {
         {/* ============ ACTIONS TAB ============ */}
         {canWrite && (
           <TabsContent value="actions" className="space-y-6">
+            {/* WEEKLY Job */}
+            <Card className="border-primary/40">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <RefreshCw className="w-4 h-4 text-primary" />
+                  WEEKLY – Import der letzten 7 Tage
+                </CardTitle>
+                <CardDescription>
+                  Importiert zuerst neue/geänderte Kunden, anschließend Aufträge der letzten 7 Tage.
+                  Bestehende Datensätze werden anhand der externen ID erkannt und nur bei Änderungen aktualisiert.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex flex-wrap items-end gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-sm">Quelle</Label>
+                    <Select value={weeklySource} onValueChange={setWeeklySource}>
+                      <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {IMPORT_SOURCES.map(s => (
+                          <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button
+                    onClick={runWeeklyImport}
+                    disabled={weeklyLoading}
+                    className="bg-primary text-primary-foreground hover:bg-primary/90"
+                  >
+                    {weeklyLoading ? (
+                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Läuft …</>
+                    ) : (
+                      <><RefreshCw className="w-4 h-4 mr-2" /> WEEKLY starten</>
+                    )}
+                  </Button>
+                </div>
+
+                {weeklyResult && (
+                  <div className="rounded-md border border-border bg-secondary/30 p-4 text-sm space-y-2">
+                    <div className="font-medium text-foreground">
+                      Ergebnis ({weeklyResult.duration_ms ? `${Math.round(weeklyResult.duration_ms / 1000)}s` : '–'})
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <div className="text-xs uppercase text-muted-foreground">Kunden</div>
+                        <div>Geladen: <span className="font-medium">{weeklyResult.customers?.fetched ?? 0}</span></div>
+                        <div>Neu: <span className="font-medium text-[hsl(var(--success))]">{weeklyResult.customers?.imported ?? 0}</span> · Aktualisiert: <span className="font-medium">{weeklyResult.customers?.updated ?? 0}</span> · Übersprungen: <span className="font-medium text-muted-foreground">{weeklyResult.customers?.skipped ?? 0}</span></div>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="text-xs uppercase text-muted-foreground">Aufträge</div>
+                        <div>Geladen: <span className="font-medium">{weeklyResult.orders?.fetched ?? 0}</span></div>
+                        <div>Neu: <span className="font-medium text-[hsl(var(--success))]">{weeklyResult.orders?.imported ?? 0}</span> · Aktualisiert: <span className="font-medium">{weeklyResult.orders?.updated ?? 0}</span> · Übersprungen: <span className="font-medium text-muted-foreground">{weeklyResult.orders?.skipped ?? 0}</span></div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Date Filter */}
             <Card className="border-border">
               <CardHeader className="pb-3">
