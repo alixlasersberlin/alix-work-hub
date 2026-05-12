@@ -241,15 +241,23 @@ export default function Artikel() {
             Artikel-Stammdaten aus Zoho Books{lastSync ? ` · zuletzt synchronisiert: ${lastSync}` : ''}
           </p>
         </div>
-        <Button onClick={syncAll} disabled={syncing} className="gold-gradient text-primary-foreground">
-          {syncing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
-          Aus Zoho synchronisieren
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={downloadCsv} disabled={selectedIds.size === 0}>
+            <FileSpreadsheet className="w-4 h-4 mr-2" /> CSV ({selectedIds.size})
+          </Button>
+          <Button variant="outline" onClick={downloadPdf} disabled={selectedIds.size === 0}>
+            <Download className="w-4 h-4 mr-2" /> PDF ({selectedIds.size})
+          </Button>
+          <Button onClick={syncAll} disabled={syncing} className="gold-gradient text-primary-foreground">
+            {syncing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+            Aus Zoho synchronisieren
+          </Button>
+        </div>
       </div>
 
       <Card className="p-3">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
+        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+          <div className="relative flex-1 min-w-[200px]">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Suche nach Name, SKU, Beschreibung, Kategorie, Marke..."
@@ -257,6 +265,20 @@ export default function Artikel() {
               onChange={(e) => setQuery(e.target.value)}
               className="pl-9"
             />
+          </div>
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="w-full sm:w-[220px]">
+              <SelectValue placeholder="Kategorie" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Alle Kategorien</SelectItem>
+              {categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <div className="flex gap-2 flex-wrap items-center">
+            <Button variant="outline" size="sm" onClick={selectAllFiltered}>Alle (gefiltert)</Button>
+            <Button variant="ghost" size="sm" onClick={clearSelection} disabled={selectedIds.size === 0}>Auswahl leeren</Button>
+            <Badge variant="secondary">{selectedIds.size} markiert</Badge>
           </div>
           <PageSizeSelector value={pageSize} onChange={setPageSize} />
         </div>
