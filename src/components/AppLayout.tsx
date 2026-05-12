@@ -36,7 +36,7 @@ const navItems: NavItem[] = [
       { path: '/verkauf/angebote', label: 'Angebote', icon: FileText, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance'] },
       { path: '/verkauf/anzahlungsrechnung', label: 'Anzahlungsrechnung', icon: Receipt, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Finance'] },
       { path: '/finance/rechnungen', label: 'Rechnung', icon: FileText, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Finance'] },
-      { path: '/finance/ratenzahler', label: 'Ratenzahler', icon: CreditCard, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Finance'] },
+      
       { path: '/verkauf/gutschriften', label: 'Gutschriften', icon: Undo2, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Finance'] },
     ],
   },
