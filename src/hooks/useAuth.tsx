@@ -14,6 +14,7 @@ interface UserProfile {
 }
 
 export type AccountBlockReason = 'inactive' | 'not_accepted' | 'password_reset' | null;
+export type MfaState = 'unknown' | 'not_enrolled' | 'challenge_required' | 'verified';
 
 interface AuthContextType {
   user: User | null;
@@ -22,6 +23,8 @@ interface AuthContextType {
   roles: string[];
   loading: boolean;
   blockReason: AccountBlockReason;
+  mfaState: MfaState;
+  refreshMfaState: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   hasRole: (role: string) => boolean;
@@ -38,6 +41,8 @@ const defaultAuthContext: AuthContextType = {
   roles: [],
   loading: false,
   blockReason: null,
+  mfaState: 'unknown',
+  refreshMfaState: async () => {},
   signIn: async () => ({ error: new Error('AuthProvider ist nicht initialisiert') }),
   signOut: async () => {},
   hasRole: () => false,
@@ -57,12 +62,26 @@ function getBlockReason(profile: UserProfile | null): AccountBlockReason {
   return null;
 }
 
+async function computeMfaState(): Promise<MfaState> {
+  try {
+    const { data: factorsData } = await supabase.auth.mfa.listFactors();
+    const verifiedTotp = (factorsData?.totp ?? []).filter((f: any) => f.status === 'verified');
+    if (verifiedTotp.length === 0) return 'not_enrolled';
+    const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (aalData?.currentLevel === 'aal2') return 'verified';
+    return 'challenge_required';
+  } catch {
+    return 'unknown';
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [roles, setRoles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [mfaState, setMfaState] = useState<MfaState>('unknown');
 
   async function fetchProfile(userId: string) {
     const { data } = await supabase
@@ -86,6 +105,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const refreshMfaState = useCallback(async () => {
+    setMfaState(await computeMfaState());
+  }, []);
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
@@ -95,10 +118,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setTimeout(async () => {
           await fetchProfile(session.user.id);
           await fetchRoles(session.user.id);
+          setMfaState(await computeMfaState());
         }, 0);
       } else {
         setProfile(null);
         setRoles([]);
+        setMfaState('unknown');
       }
     });
 
@@ -106,10 +131,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchProfile(session.user.id).then(() => {
-          fetchRoles(session.user.id).then(() => {
-            setLoading(false);
-          });
+        Promise.all([
+          fetchProfile(session.user.id),
+          fetchRoles(session.user.id),
+          computeMfaState(),
+        ]).then(([, , mfa]) => {
+          setMfaState(mfa);
+          setLoading(false);
         });
       } else {
         setLoading(false);
@@ -130,6 +158,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
     setProfile(null);
     setRoles([]);
+    setMfaState('unknown');
   };
 
   const refreshProfile = useCallback(async () => {
@@ -143,12 +172,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const hasAnyRole = (checkRoles: string[]) => checkRoles.some(r => roles.includes(r));
   const isAdmin = hasRole('Super Admin') || hasRole('Admin');
   const blockReason = getBlockReason(profile);
-  // 2FA is disabled — always verified
-  const isOtpVerified = true;
+  const isOtpVerified = mfaState === 'verified';
 
   return (
     <AuthContext.Provider value={{
       user, session, profile, roles, loading, blockReason,
+      mfaState, refreshMfaState,
       signIn, signOut,
       hasRole, hasAnyRole, isAdmin, isOtpVerified, refreshProfile,
     }}>
