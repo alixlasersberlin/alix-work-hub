@@ -10,6 +10,9 @@ import { useDrivingTimes } from '@/hooks/useDrivingTimes';
 import { DrivingTimeCell } from '@/components/DrivingTimeCell';
 import OrderStatsBar from '@/components/OrderStatsBar';
 import { PageSizeSelector, usePagination, PaginationControls } from '@/components/PageSizeSelector';
+import { ViewToggle } from '@/components/ViewToggle';
+import { useViewMode } from '@/hooks/useViewMode';
+import { OrderCard, OrderCardGrid } from '@/components/OrderCard';
 
 type SortField = 'expected_shipment_date' | 'order_number' | 'total_amount';
 type SortDir = 'asc' | 'desc';
@@ -86,6 +89,7 @@ export default function PriorityList() {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { drivingTimes, loading: drivingLoading, requestedIds, fetchDrivingTimes, retryFailed } = useDrivingTimes();
+  const [viewMode, setViewMode] = useViewMode();
 
   useEffect(() => {
     async function load() {
