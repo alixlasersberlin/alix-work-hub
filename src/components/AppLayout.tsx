@@ -225,12 +225,10 @@ export default function AppLayout() {
             const isCollapsedView = collapsed && !mobileOpen;
 
             if (hasChildren) {
+              const isNavigableParent = item.path === '/lager';
               return (
                 <div key={item.path}>
-                  <button
-                    type="button"
-                    onClick={() => toggleGroup(item.path)}
-                    title={isCollapsedView ? item.label : undefined}
+                  <div
                     className={cn(
                       "w-full flex items-center gap-2.5 rounded-lg text-[13px] font-medium transition-all duration-150",
                       isCollapsedView ? "md:px-0 md:py-2 md:justify-center px-3 py-2.5" : "px-3 py-2.5 md:py-2",
@@ -239,14 +237,41 @@ export default function AppLayout() {
                         : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent"
                     )}
                   >
-                    <item.icon className={cn("w-[18px] h-[18px] flex-shrink-0", childActive && "text-primary")} />
-                    {!isCollapsedView && (
-                      <>
-                        <span className="truncate flex-1 text-left">{labelWithCount(item.path, item.label)}</span>
-                        <ChevronDown className={cn("w-4 h-4 transition-transform", isOpen && "rotate-180")} />
-                      </>
+                    {isNavigableParent ? (
+                      <Link
+                        to={item.path}
+                        title={isCollapsedView ? item.label : undefined}
+                        className="flex items-center gap-2.5 flex-1 min-w-0"
+                      >
+                        <item.icon className={cn("w-[18px] h-[18px] flex-shrink-0", childActive && "text-primary")} />
+                        {!isCollapsedView && (
+                          <span className="truncate flex-1 text-left">{labelWithCount(item.path, item.label)}</span>
+                        )}
+                      </Link>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => toggleGroup(item.path)}
+                        title={isCollapsedView ? item.label : undefined}
+                        className="flex items-center gap-2.5 flex-1 min-w-0"
+                      >
+                        <item.icon className={cn("w-[18px] h-[18px] flex-shrink-0", childActive && "text-primary")} />
+                        {!isCollapsedView && (
+                          <span className="truncate flex-1 text-left">{labelWithCount(item.path, item.label)}</span>
+                        )}
+                      </button>
                     )}
-                  </button>
+                    {!isCollapsedView && (
+                      <button
+                        type="button"
+                        onClick={() => toggleGroup(item.path)}
+                        aria-label="Untermenü umschalten"
+                        className="p-1 -mr-1 rounded hover:bg-sidebar-accent/60"
+                      >
+                        <ChevronDown className={cn("w-4 h-4 transition-transform", isOpen && "rotate-180")} />
+                      </button>
+                    )}
+                  </div>
                   {!isCollapsedView && isOpen && (
                     <div className="mt-0.5 ml-3 pl-3 border-l border-border space-y-0.5">
                       {item.children!.map(child => {
