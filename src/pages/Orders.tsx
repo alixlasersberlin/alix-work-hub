@@ -17,6 +17,9 @@ import OrderDeferDialog from '@/components/OrderDeferDialog';
 import OrderStatsBar from '@/components/OrderStatsBar';
 import { useDrivingTimes } from '@/hooks/useDrivingTimes';
 import { DrivingTimeCell } from '@/components/DrivingTimeCell';
+import { ViewToggle } from '@/components/ViewToggle';
+import { useViewMode } from '@/hooks/useViewMode';
+import { OrderCard, OrderCardGrid } from '@/components/OrderCard';
 
 type SortField = 'order_number' | 'order_date' | 'total_amount' | 'created_at';
 type SortDir = 'asc' | 'desc';
@@ -42,6 +45,7 @@ export default function Orders() {
   const navigate = useNavigate();
   const { isAdmin, hasRole } = useAuth();
   const { drivingTimes, loading: drivingLoading, requestedIds, fetchDrivingTimes, retryFailed } = useDrivingTimes();
+  const [viewMode, setViewMode] = useViewMode();
 
   const canWrite = isAdmin || hasRole('Auftragsverwaltung');
 
