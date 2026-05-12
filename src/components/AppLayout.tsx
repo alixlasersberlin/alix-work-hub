@@ -110,6 +110,37 @@ export default function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const [lagerCounts, setLagerCounts] = useState<Record<string, number>>({});
+  // Desktop: flexible Sidebar-Breite (px), per Drag anpassbar, in localStorage gespeichert
+  const SIDEBAR_MIN = 180;
+  const SIDEBAR_MAX = 480;
+  const [sidebarWidth, setSidebarWidth] = useState<number>(() => {
+    if (typeof window === 'undefined') return 240;
+    const v = Number(localStorage.getItem('sidebar_width'));
+    return v >= SIDEBAR_MIN && v <= SIDEBAR_MAX ? v : 240;
+  });
+  const [resizing, setResizing] = useState(false);
+
+  useEffect(() => {
+    if (!resizing) return;
+    const onMove = (e: MouseEvent) => {
+      const w = Math.min(SIDEBAR_MAX, Math.max(SIDEBAR_MIN, e.clientX));
+      setSidebarWidth(w);
+    };
+    const onUp = () => {
+      setResizing(false);
+      try { localStorage.setItem('sidebar_width', String(sidebarWidth)); } catch {}
+    };
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [resizing, sidebarWidth]);
 
   // Drawer schließen, wenn die Route wechselt
   useEffect(() => {
@@ -243,14 +274,16 @@ export default function AppLayout() {
       )}
 
       {/* Sidebar */}
-      <aside className={cn(
-        "flex flex-col border-r border-border bg-sidebar transition-transform duration-200 flex-shrink-0",
-        // Mobile: fixed Drawer, slide-in/out
-        "fixed inset-y-0 left-0 z-50 w-[260px] pt-safe pb-safe pl-safe md:static md:translate-x-0 md:z-auto",
-        mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
-        // Desktop: collapsible width
-        collapsed ? "md:w-[60px]" : "md:w-60"
-      )}>
+      <aside
+        style={!collapsed ? { ['--sb-w' as any]: `${sidebarWidth}px` } : undefined}
+        className={cn(
+          "relative flex flex-col border-r border-border bg-sidebar transition-transform duration-200 flex-shrink-0",
+          // Mobile: fixed Drawer, slide-in/out
+          "fixed inset-y-0 left-0 z-50 w-[260px] pt-safe pb-safe pl-safe md:static md:translate-x-0 md:z-auto",
+          mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
+          // Desktop: collapsible Breite (eingeklappt fix, sonst per CSS-Var/Drag)
+          collapsed ? "md:w-[60px]" : "md:w-[var(--sb-w)]"
+        )}>
         {/* Brand */}
         <div className={cn(
           "flex items-center gap-2.5 border-b border-border h-16 flex-shrink-0",
@@ -540,6 +573,26 @@ export default function AppLayout() {
             </Button>
           </div>
         </div>
+        {/* Resize-Handle (nur Desktop, wenn nicht eingeklappt) */}
+        {!collapsed && (
+          <div
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Sidebar-Breite anpassen"
+            onMouseDown={(e) => { e.preventDefault(); setResizing(true); }}
+            onDoubleClick={() => { setSidebarWidth(240); try { localStorage.setItem('sidebar_width', '240'); } catch {} }}
+            title="Ziehen zum Anpassen · Doppelklick: zurücksetzen"
+            className={cn(
+              "hidden md:block absolute top-0 right-0 h-full w-1.5 -mr-[3px] cursor-col-resize z-50 group",
+              resizing ? "bg-primary/40" : "hover:bg-primary/30"
+            )}
+          >
+            <div className={cn(
+              "absolute inset-y-0 right-0 w-px transition-colors",
+              resizing ? "bg-primary" : "bg-transparent group-hover:bg-primary/60"
+            )} />
+          </div>
+        )}
       </aside>
 
       {/* Main Content */}
