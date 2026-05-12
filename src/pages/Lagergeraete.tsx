@@ -75,6 +75,7 @@ type DeviceTypeFilter = 'Neugerät' | 'Leihgerät';
 
 interface LagerDevicesPageProps {
   filterType?: DeviceTypeFilter;
+  filterStatuses?: string[];
   pageTitle?: string;
   pageSubtitle?: string;
   addLabel?: string;
