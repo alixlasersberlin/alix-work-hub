@@ -6,7 +6,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-// Tables to include in the backup (excluding pure audit/log tables and otp_challenges)
 const BACKUP_TABLES = [
   "app_settings",
   "audit_logs",
@@ -39,6 +38,7 @@ const BACKUP_TABLES = [
 ];
 
 const STORAGE_BUCKETS = ["production-orders", "production-photos", "order-invoices"];
+const PAGE_SIZE = 500;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -49,7 +49,6 @@ Deno.serve(async (req) => {
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const cronSecret = Deno.env.get("CRON_SECRET");
 
-  // Auth: either valid user JWT (admin verified below) or cron secret
   const authHeader = req.headers.get("Authorization") ?? "";
   const isCronCall = cronSecret && authHeader === `Bearer ${cronSecret}`;
   let callerUserId: string | null = null;
@@ -66,24 +65,17 @@ Deno.serve(async (req) => {
     if (body.notify_email && typeof body.notify_email === "string") {
       notifyEmail = body.notify_email;
     }
-  } catch {
-    /* ignore */
-  }
+  } catch { /* ignore */ }
 
   const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
   if (!isCronCall) {
     const token = authHeader.replace("Bearer ", "");
-    if (!token) {
-      return json({ error: "Unauthorized" }, 401);
-    }
+    if (!token) return json({ error: "Unauthorized" }, 401);
     const { data: userData, error: userErr } = await adminClient.auth.getUser(token);
-    if (userErr || !userData.user) {
-      return json({ error: "Invalid session" }, 401);
-    }
+    if (userErr || !userData.user) return json({ error: "Invalid session" }, 401);
     callerUserId = userData.user.id;
 
-    // Admin check
     const { data: roleRows } = await adminClient
       .from("user_roles")
       .select("roles!inner(name)")
@@ -106,7 +98,8 @@ Deno.serve(async (req) => {
   const backupId = crypto.randomUUID();
   const startedAt = new Date().toISOString();
   const dateStr = startedAt.replace(/[:.]/g, "-");
-  const storagePath = `${dateStr.slice(0, 10)}/backup-${dateStr}-${backupId.slice(0, 8)}.json`;
+  const folderPath = `${dateStr.slice(0, 10)}/backup-${dateStr}-${backupId.slice(0, 8)}`;
+  const manifestPath = `${folderPath}/manifest.json`;
 
   await adminClient.from("backups_metadata").insert({
     id: backupId,
@@ -115,7 +108,7 @@ Deno.serve(async (req) => {
     backup_status: "in_progress",
     started_at: startedAt,
     storage_location: "supabase_storage:backups",
-    storage_path: storagePath,
+    storage_path: manifestPath,
     notify_email: notifyEmail,
     created_by: callerUserId,
     message: source === "cron"
@@ -124,97 +117,114 @@ Deno.serve(async (req) => {
   });
 
   try {
-    const dump: Record<string, any> = {
+    const counts: Record<string, number> = {};
+    const files: Array<{ table: string; path: string; rows: number; size_bytes: number }> = [];
+    let totalSize = 0;
+
+    // Stream each table separately — upload as NDJSON, never hold all tables in memory.
+    for (const table of BACKUP_TABLES) {
+      const tablePath = `${folderPath}/tables/${table}.ndjson`;
+      const chunks: string[] = [];
+      let rowCount = 0;
+      let from = 0;
+
+      while (true) {
+        const { data, error } = await adminClient
+          .from(table)
+          .select("*")
+          .range(from, from + PAGE_SIZE - 1);
+        if (error) throw new Error(`Tabelle ${table}: ${error.message}`);
+        if (!data || data.length === 0) break;
+        for (const row of data) chunks.push(JSON.stringify(row));
+        rowCount += data.length;
+        if (data.length < PAGE_SIZE) break;
+        from += PAGE_SIZE;
+      }
+
+      const content = chunks.join("\n");
+      chunks.length = 0; // free
+      const blob = new Blob([content], { type: "application/x-ndjson" });
+      const size = blob.size;
+
+      const { error: upErr } = await adminClient.storage
+        .from("backups")
+        .upload(tablePath, blob, { contentType: "application/x-ndjson", upsert: false });
+      if (upErr) throw new Error(`Upload ${table}: ${upErr.message}`);
+
+      counts[table] = rowCount;
+      files.push({ table, path: tablePath, rows: rowCount, size_bytes: size });
+      totalSize += size;
+    }
+
+    // Storage inventory (lightweight)
+    const storageInventory: Record<string, any[]> = {};
+    let storageFileCount = 0;
+    if (scope === "full") {
+      for (const bucket of STORAGE_BUCKETS) {
+        const inv: any[] = [];
+        const { data } = await adminClient.storage.from(bucket).list("", {
+          limit: 1000,
+          sortBy: { column: "name", order: "asc" },
+        });
+        if (data) {
+          inv.push(...data);
+          for (const entry of data) {
+            if (entry.id === null) {
+              const { data: sub } = await adminClient.storage.from(bucket).list(entry.name, { limit: 1000 });
+              if (sub) inv.push(...sub.map((s) => ({ ...s, _folder: entry.name })));
+            }
+          }
+        }
+        storageInventory[bucket] = inv;
+        storageFileCount += inv.length;
+      }
+    }
+
+    const manifest = {
       meta: {
         backup_id: backupId,
         created_at: startedAt,
         source,
         scope,
         project_ref: "xmrmkgfgpoundfwhnxfs",
-        version: 1,
+        version: 2,
       },
-      tables: {} as Record<string, any[]>,
-      storage: {} as Record<string, any[]>,
-      counts: {} as Record<string, number>,
+      counts,
+      files,
+      storage: storageInventory,
+      storage_file_count: storageFileCount,
+      total_db_size_bytes: totalSize,
     };
+    const manifestStr = JSON.stringify(manifest, null, 2);
+    const manifestSize = new Blob([manifestStr]).size;
 
-    // Dump tables
-    for (const table of BACKUP_TABLES) {
-      const rows: any[] = [];
-      const pageSize = 1000;
-      let from = 0;
-      while (true) {
-        const { data, error } = await adminClient
-          .from(table)
-          .select("*")
-          .range(from, from + pageSize - 1);
-        if (error) {
-          throw new Error(`Tabelle ${table}: ${error.message}`);
-        }
-        if (!data || data.length === 0) break;
-        rows.push(...data);
-        if (data.length < pageSize) break;
-        from += pageSize;
-      }
-      dump.tables[table] = rows;
-      dump.counts[table] = rows.length;
-    }
-
-    // List storage objects (file inventory only — file blobs not embedded to keep dump portable)
-    if (scope === "full") {
-      for (const bucket of STORAGE_BUCKETS) {
-        const inventory: any[] = [];
-        const { data, error } = await adminClient.storage.from(bucket).list("", {
-          limit: 1000,
-          sortBy: { column: "name", order: "asc" },
-        });
-        if (!error && data) {
-          inventory.push(...data);
-          // Recurse one level deep into folders
-          for (const entry of data) {
-            if (entry.id === null) {
-              const { data: sub } = await adminClient.storage.from(bucket).list(entry.name, { limit: 1000 });
-              if (sub) inventory.push(...sub.map((s) => ({ ...s, _folder: entry.name })));
-            }
-          }
-        }
-        dump.storage[bucket] = inventory;
-      }
-    }
-
-    const json_str = JSON.stringify(dump);
-    const sizeBytes = new Blob([json_str]).size;
-    const fileCount = Object.values(dump.storage).reduce((acc: number, arr: any) => acc + (arr?.length ?? 0), 0);
-
-    // Upload to backups bucket
-    const { error: uploadErr } = await adminClient.storage
+    const { error: mErr } = await adminClient.storage
       .from("backups")
-      .upload(storagePath, new Blob([json_str], { type: "application/json" }), {
+      .upload(manifestPath, new Blob([manifestStr], { type: "application/json" }), {
         contentType: "application/json",
         upsert: false,
       });
-    if (uploadErr) throw new Error(`Upload fehlgeschlagen: ${uploadErr.message}`);
+    if (mErr) throw new Error(`Manifest-Upload: ${mErr.message}`);
 
-    // Signed URL valid for 7 days
     const expiresIn = 60 * 60 * 24 * 7;
     const { data: signed } = await adminClient.storage
       .from("backups")
-      .createSignedUrl(storagePath, expiresIn);
+      .createSignedUrl(manifestPath, expiresIn);
 
     const completedAt = new Date().toISOString();
+    const sizeBytes = totalSize + manifestSize;
     await adminClient
       .from("backups_metadata")
       .update({
         backup_status: "completed",
         completed_at: completedAt,
         backup_size_bytes: sizeBytes,
-        file_count: fileCount,
+        file_count: storageFileCount,
         integrity_status: "verified",
-        message: `Backup erfolgreich. ${BACKUP_TABLES.length} Tabellen, ${fileCount} Storage-Dateien indexiert.`,
+        message: `Backup erfolgreich. ${BACKUP_TABLES.length} Tabellen (NDJSON), ${storageFileCount} Storage-Dateien indexiert.`,
       })
       .eq("id", backupId);
 
-    // Send email notification
     let emailSent = false;
     if (notify && notifyEmail && signed?.signedUrl) {
       try {
@@ -234,16 +244,14 @@ Deno.serve(async (req) => {
               expires_in_hours: 168,
               size_mb: (sizeBytes / 1024 / 1024).toFixed(2),
               table_count: BACKUP_TABLES.length,
-              storage_file_count: fileCount,
+              storage_file_count: storageFileCount,
               source,
               created_at: startedAt,
             },
           }),
         });
         emailSent = emailRes.ok;
-        if (!emailRes.ok) {
-          console.error("Email send failed:", await emailRes.text());
-        }
+        if (!emailRes.ok) console.error("Email send failed:", await emailRes.text());
       } catch (e) {
         console.error("Email send exception:", e);
       }
@@ -252,10 +260,11 @@ Deno.serve(async (req) => {
     return json({
       success: true,
       backup_id: backupId,
-      storage_path: storagePath,
+      storage_path: manifestPath,
+      folder_path: folderPath,
       size_bytes: sizeBytes,
-      counts: dump.counts,
-      storage_file_count: fileCount,
+      counts,
+      storage_file_count: storageFileCount,
       download_url: signed?.signedUrl ?? null,
       expires_in_seconds: expiresIn,
       email_sent: emailSent,
