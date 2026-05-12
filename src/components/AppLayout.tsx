@@ -284,6 +284,7 @@ export default function AppLayout() {
                         const cIsOpen = openGroups[child.path] ?? (cActive || cGroupActive);
 
                         if (cHasChildren) {
+                          const isPool = child.path === '/lager/equipment-area';
                           return (
                             <div key={child.path}>
                               <button
@@ -292,11 +293,15 @@ export default function AppLayout() {
                                 className={cn(
                                   "w-full flex items-center gap-2.5 rounded-lg text-[13px] font-medium transition-all duration-150 px-3 py-2.5 md:py-2",
                                   (cActive || cGroupActive)
-                                    ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
-                                    : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent"
+                                    ? (isPool
+                                        ? "bg-white/15 text-white shadow-[inset_0_0_0_1px_hsl(0_0%_100%/0.3)]"
+                                        : "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]")
+                                    : (isPool
+                                        ? "text-white hover:text-white hover:bg-white/10"
+                                        : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent")
                                 )}
                               >
-                                <child.icon className={cn("w-[18px] h-[18px] flex-shrink-0", (cActive || cGroupActive) && "text-primary")} />
+                                <child.icon className={cn("w-[18px] h-[18px] flex-shrink-0", isPool ? "text-white" : ((cActive || cGroupActive) && "text-primary"))} />
                                 <span className="truncate flex-1 text-left">{labelWithCount(child.path, child.label)}</span>
                                 <ChevronDown className={cn("w-4 h-4 transition-transform", cIsOpen && "rotate-180")} />
                               </button>
