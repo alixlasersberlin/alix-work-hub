@@ -61,10 +61,10 @@ Deno.serve(async (req) => {
     await supabase
       .from("backups_metadata")
       .update({
-        backup_status: "completed",
+        backup_status: "success",
         completed_at: completedAt,
         backup_size_bytes: totalSize,
-        integrity_status: "verified",
+        integrity_status: "valid",
         storage_location: "supabase_internal",
         message: `Backup erfolgreich. Tabellen: ${Object.entries(results)
           .map(([t, c]) => `${t}(${c})`)
