@@ -497,18 +497,53 @@ export default function AppLayout() {
                           );
                         }
 
+                        const lagerColorMap: Record<string, { active: string; inactive: string; icon: string }> = {
+                          '/lager/leihgeraete': {
+                            active: 'bg-white/15 text-white shadow-[inset_0_0_0_1px_hsl(0_0%_100%/0.4)]',
+                            inactive: 'text-white hover:text-white hover:bg-white/10',
+                            icon: 'text-white',
+                          },
+                          '/lager/lagergeraete': {
+                            active: 'bg-green-500/15 text-green-500 shadow-[inset_0_0_0_1px_hsl(142_71%_45%/0.4)]',
+                            inactive: 'text-green-500 hover:text-green-500 hover:bg-green-500/10',
+                            icon: 'text-green-500',
+                          },
+                          '/lager/equipment-area/unterwegs': {
+                            active: 'bg-blue-500/15 text-blue-500 shadow-[inset_0_0_0_1px_hsl(217_91%_60%/0.4)]',
+                            inactive: 'text-blue-500 hover:text-blue-500 hover:bg-blue-500/10',
+                            icon: 'text-blue-500',
+                          },
+                          '/lager/equipment-area/produktion': {
+                            active: 'bg-amber-800/20 text-amber-700 shadow-[inset_0_0_0_1px_hsl(28_45%_35%/0.5)]',
+                            inactive: 'text-amber-700 hover:text-amber-600 hover:bg-amber-800/10',
+                            icon: 'text-amber-700',
+                          },
+                          '/lager/equipment-area/warehouse': {
+                            active: 'bg-yellow-500/15 text-yellow-500 shadow-[inset_0_0_0_1px_hsl(48_96%_53%/0.4)]',
+                            inactive: 'text-yellow-500 hover:text-yellow-500 hover:bg-yellow-500/10',
+                            icon: 'text-yellow-500',
+                          },
+                          '/lager/equipment-area/hold': {
+                            active: 'bg-red-500/15 text-red-500 shadow-[inset_0_0_0_1px_hsl(0_84%_60%/0.4)]',
+                            inactive: 'text-red-500 hover:text-red-500 hover:bg-red-500/10',
+                            icon: 'text-red-500',
+                          },
+                        };
+                        const cColored = lagerColorMap[child.path];
                         return (
                           <Link
                             key={child.path}
                             to={child.path}
                             className={cn(
                               "flex items-center gap-2.5 rounded-lg text-[14.5px] font-medium transition-all duration-150 px-3.5 py-3 md:py-2.5",
-                              cActive
-                                ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
-                                : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent"
+                              cColored
+                                ? cActive ? cColored.active : cColored.inactive
+                                : cActive
+                                  ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
+                                  : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent"
                             )}
                           >
-                            <child.icon className={cn("w-5 h-5 flex-shrink-0", cActive && "text-primary")} />
+                            <child.icon className={cn("w-5 h-5 flex-shrink-0", cColored ? cColored.icon : (cActive && "text-primary"))} />
                             <span className="truncate">{labelWithCount(child.path, child.label)}</span>
                           </Link>
                         );
