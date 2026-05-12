@@ -14,6 +14,8 @@ import {
   Search, MapPin, ArrowUpDown, Loader2, Inbox, Plus, CalendarIcon, List, CalendarDays
 } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
+import { useViewMode } from '@/hooks/useViewMode';
+import { ViewToggle } from '@/components/ViewToggle';
 
 type SortField = 'planned_date' | 'priority';
 type SortDir = 'asc' | 'desc';
