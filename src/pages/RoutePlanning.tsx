@@ -292,6 +292,72 @@ export default function RoutePlanning() {
         </div>
       )}
 
+      {view === 'list' && viewMode === 'cards' && (
+        loading ? (
+          <div className="py-12 text-center"><Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" /></div>
+        ) : filtered.length === 0 ? (
+          <div className="rounded-xl border border-border bg-card p-12 text-center card-glow">
+            <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
+            <p className="text-muted-foreground">Keine Touren gefunden.</p>
+          </div>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {filtered.map(p => {
+              const sources = [
+                p.orders?.shipping_address,
+                p.orders?.billing_address,
+                p.orders?.customers?.shipping_address,
+                p.orders?.customers?.billing_address,
+              ];
+              const city = sources.map(a => a?.city || a?.Stadt).find(v => v && String(v).trim()) || '—';
+              const zip = sources.map(a => a?.zip || a?.zipcode || a?.postal_code || a?.PLZ || a?.plz).find(v => v && String(v).trim()) || '';
+              return (
+                <div
+                  key={p.id}
+                  onClick={() => navigate(`/tourenplanung/${p.id}`)}
+                  className="rounded-xl border border-border bg-card card-glow p-4 cursor-pointer hover:border-primary/40 transition-colors space-y-2"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="font-mono font-semibold text-sm text-foreground truncate">{p.orders?.order_number || '—'}</div>
+                      <div className="text-xs text-muted-foreground truncate">
+                        {p.orders?.customers?.company_name || p.orders?.customers?.contact_name || '—'}
+                      </div>
+                    </div>
+                    <StatusBadge status={p.planning_status} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-1 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1.5">
+                      <CalendarIcon className="w-3.5 h-3.5" />
+                      {p.planned_date ? new Date(p.planned_date + 'T00:00:00').toLocaleDateString('de-DE') : '—'}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5" />
+                      <span className="truncate">{zip} {city}</span>
+                    </div>
+                  </div>
+                  {p.order_items && p.order_items.length > 0 && (
+                    <div className="text-xs text-muted-foreground border-t border-border/50 pt-2">
+                      {p.order_items.slice(0, 3).map((it: any) => (
+                        <div key={it.id} className="truncate">
+                          {it.quantity ? <span className="text-foreground">{Number(it.quantity)}× </span> : null}
+                          {it.item_name || '—'}
+                        </div>
+                      ))}
+                      {p.order_items.length > 3 && <div className="text-[10px]">+ {p.order_items.length - 3} weitere</div>}
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between pt-1">
+                    <span className={cn("text-xs capitalize", PRIORITY_COLORS[p.priority] || 'text-muted-foreground')}>{p.priority || 'normal'}</span>
+                    <span className="text-xs text-muted-foreground truncate">{p.assigned_employee || '—'}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )
+      )}
+
       {/* Calendar / Grouped View */}
       {view === 'calendar' && (
         <div className="space-y-6">
