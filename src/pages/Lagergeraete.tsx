@@ -844,19 +844,21 @@ export default function Lagergeraete({
             <TableBody>
               {filteredDevices.map((d) => (
                 <TableRow key={d.id} className={d.reserved_order_id ? 'bg-yellow-500/10 hover:bg-yellow-500/15' : ''}>
-                  <TableCell>
-                    <Checkbox
-                      checked={selectedIds.has(d.id)}
-                      onCheckedChange={(v) => {
-                        setSelectedIds((prev) => {
-                          const next = new Set(prev);
-                          if (v) next.add(d.id); else next.delete(d.id);
-                          return next;
-                        });
-                      }}
-                      aria-label={`Auswählen ${d.serial_number}`}
-                    />
-                  </TableCell>
+                  {selectionMode && (
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedIds.has(d.id)}
+                        onCheckedChange={(v) => {
+                          setSelectedIds((prev) => {
+                            const next = new Set(prev);
+                            if (v) next.add(d.id); else next.delete(d.id);
+                            return next;
+                          });
+                        }}
+                        aria-label={`Auswählen ${d.serial_number}`}
+                      />
+                    </TableCell>
+                  )}
                   <TableCell className="font-mono">{d.serial_number}</TableCell>
                   <TableCell>{d.model_name}</TableCell>
                   <TableCell>
