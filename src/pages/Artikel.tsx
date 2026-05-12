@@ -300,6 +300,13 @@ export default function Artikel() {
             <table className="w-full text-sm">
               <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
                 <tr>
+                  <th className="px-3 py-2 w-10">
+                    <Checkbox
+                      checked={paged.length > 0 && paged.every((i) => selectedIds.has(i.id))}
+                      onCheckedChange={togglePageAll}
+                      aria-label="Seite auswählen"
+                    />
+                  </th>
                   <th className="text-left px-3 py-2">Name</th>
                   <th className="text-left px-3 py-2">SKU</th>
                   <th className="text-left px-3 py-2">Kategorie</th>
@@ -311,8 +318,13 @@ export default function Artikel() {
                 </tr>
               </thead>
               <tbody>
-                {paged.map((it) => (
-                  <tr key={it.id} className="border-t border-border hover:bg-muted/20">
+                {paged.map((it) => {
+                  const checked = selectedIds.has(it.id);
+                  return (
+                  <tr key={it.id} className={`border-t border-border ${checked ? 'bg-primary/5' : 'hover:bg-muted/20'}`}>
+                    <td className="px-3 py-2">
+                      <Checkbox checked={checked} onCheckedChange={() => toggleId(it.id)} aria-label="Artikel markieren" />
+                    </td>
                     <td className="px-3 py-2 font-medium">{it.name ?? '–'}</td>
                     <td className="px-3 py-2 font-mono text-xs">{it.sku ?? '–'}</td>
                     <td className="px-3 py-2">{it.category_name ?? '–'}</td>
