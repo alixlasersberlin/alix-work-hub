@@ -88,7 +88,7 @@ function isSupplierOnly(roles: string[]) {
 }
 
 function ProtectedRoute({ children, requiredRoles }: { children: React.ReactNode; requiredRoles?: string[] }) {
-  const { user, roles, loading, blockReason } = useAuth();
+  const { user, roles, loading, blockReason, mfaState } = useAuth();
 
   if (loading) {
     return (
@@ -101,7 +101,17 @@ function ProtectedRoute({ children, requiredRoles }: { children: React.ReactNode
   if (!user) return <Navigate to="/login" replace />;
   if (blockReason) return <AccountBlocked />;
 
-  // Lieferanten dürfen ausschließlich /production aufrufen
+  // Pflicht-2FA
+  if (mfaState === 'not_enrolled') return <Navigate to="/mfa-setup" replace />;
+  if (mfaState === 'challenge_required') return <Navigate to="/mfa-challenge" replace />;
+  if (mfaState !== 'verified') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   if (isSupplierOnly(roles)) {
     if (requiredRoles && !requiredRoles.includes('Lieferant')) {
       return <Navigate to="/production" replace />;
@@ -110,6 +120,25 @@ function ProtectedRoute({ children, requiredRoles }: { children: React.ReactNode
 
   if (requiredRoles && !requiredRoles.some(r => roles.includes(r))) return <AccessDenied />;
 
+  return <>{children}</>;
+}
+
+function MfaGate({ children, expect }: { children: React.ReactNode; expect: 'not_enrolled' | 'challenge_required' | 'any' }) {
+  const { user, loading, mfaState, blockReason } = useAuth();
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+  if (!user) return <Navigate to="/login" replace />;
+  if (blockReason) return <AccountBlocked />;
+  if (mfaState === 'verified') return <Navigate to="/" replace />;
+  if (expect !== 'any' && mfaState !== expect && mfaState !== 'unknown') {
+    if (mfaState === 'not_enrolled') return <Navigate to="/mfa-setup" replace />;
+    if (mfaState === 'challenge_required') return <Navigate to="/mfa-challenge" replace />;
+  }
   return <>{children}</>;
 }
 
