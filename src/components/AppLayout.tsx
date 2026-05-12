@@ -74,6 +74,7 @@ const navItems: NavItem[] = [
     children: [
       { path: '/import', label: 'Import', icon: Cloud, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Read Only Audit'] },
       { path: '/system', label: 'Monitoring', icon: Server, roles: ['Admin', 'Super Admin', 'Read Only Audit'] },
+      { path: '/benutzer', label: 'Benutzer', icon: Users, roles: ['Admin', 'Super Admin'] },
     ],
   },
   {
@@ -92,7 +93,6 @@ const navItems: NavItem[] = [
       { path: '/finance/unpaid-zoho', label: 'Unbezahlte Rechnungen (Zoho)', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
     ],
   },
-  { path: '/benutzer', label: 'Benutzer', icon: Users, roles: ['Admin', 'Super Admin'] },
 ];
 
 export default function AppLayout() {
