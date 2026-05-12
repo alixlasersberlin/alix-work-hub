@@ -44,6 +44,8 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { Select as BulkSelect, SelectContent as BulkSelectContent, SelectItem as BulkSelectItem, SelectTrigger as BulkSelectTrigger, SelectValue as BulkSelectValue } from '@/components/ui/select';
+import { useViewMode } from '@/hooks/useViewMode';
+import { ViewToggle } from '@/components/ViewToggle';
 
 type LagerDevice = {
   id: string;
@@ -137,6 +139,7 @@ export default function Lagergeraete({
 
   // Global search across devices and available (unreserved) open orders
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useViewMode();
   type FreeOrder = {
     id: string;
     order_number: string;
@@ -683,24 +686,27 @@ export default function Lagergeraete({
 
       {/* Suchleiste */}
       <div className="space-y-3">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Suche Geräte (Seriennummer, Modell, Notiz, Auftrag…) oder freie Aufträge"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              aria-label="Suche zurücksetzen"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Suche Geräte (Seriennummer, Modell, Notiz, Auftrag…) oder freie Aufträge"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label="Suche zurücksetzen"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+          <ViewToggle value={viewMode} onChange={setViewMode} />
         </div>
 
         {searchQuery.trim().length >= 2 && isAdmin && (
@@ -819,6 +825,65 @@ export default function Lagergeraete({
         ) : filteredDevices.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground">
             Keine Lagergeräte passend zur Suche.
+          </div>
+        ) : viewMode === 'cards' ? (
+          <div className="grid gap-3 p-3 sm:grid-cols-2 xl:grid-cols-3">
+            {filteredDevices.map((d) => {
+              const s = getStatusFromNotes(d.notes);
+              return (
+                <div
+                  key={d.id}
+                  className={`rounded-lg border border-border p-3 space-y-2 hover:border-primary/40 transition-colors ${d.reserved_order_id ? 'bg-yellow-500/10' : 'bg-card'}`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="font-mono text-sm font-semibold truncate">{d.serial_number}</div>
+                      <div className="text-xs text-muted-foreground truncate">{d.model_name}</div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {selectionMode && (
+                        <Checkbox
+                          checked={selectedIds.has(d.id)}
+                          onCheckedChange={(v) => {
+                            setSelectedIds((prev) => {
+                              const next = new Set(prev);
+                              if (v) next.add(d.id); else next.delete(d.id);
+                              return next;
+                            });
+                          }}
+                          aria-label={`Auswählen ${d.serial_number}`}
+                        />
+                      )}
+                      <StatusBadge
+                        status={s}
+                        className={s === 'Transfer' ? 'bg-red-500/15 text-red-500 border-red-500/40 animate-pulse' : undefined}
+                      />
+                    </div>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Eingang: {format(new Date(d.entry_date), 'dd.MM.yyyy', { locale: de })}
+                  </div>
+                  {d.orders?.order_number && (
+                    <div className="space-y-1">
+                      <Badge className="font-mono bg-yellow-500/20 text-yellow-600 dark:text-yellow-300 border border-yellow-500/40 hover:bg-yellow-500/25">
+                        {d.orders.order_number}
+                      </Badge>
+                      {d.orders.customer_name && (
+                        <div className="text-xs text-muted-foreground truncate">{d.orders.customer_name}</div>
+                      )}
+                    </div>
+                  )}
+                  {d.notes && (
+                    <div className="text-xs text-muted-foreground line-clamp-2 border-t border-border/50 pt-2">{d.notes}</div>
+                  )}
+                  <div className="flex justify-end pt-1">
+                    <Button variant="ghost" size="sm" onClick={() => openEdit(d)} className="gap-1 h-8">
+                      <Pencil className="w-4 h-4" /> Bearbeiten
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         ) : (
           <Table>

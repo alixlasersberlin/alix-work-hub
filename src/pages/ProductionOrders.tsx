@@ -14,6 +14,8 @@ import { format, differenceInCalendarDays, isValid } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { PageSizeSelector, usePagination, PaginationControls } from '@/components/PageSizeSelector';
+import { useViewMode } from '@/hooks/useViewMode';
+import { ViewToggle } from '@/components/ViewToggle';
 
 type Mode = 'order' | 'reclamation';
 type Lang = 'de' | 'en' | 'zh';
@@ -102,6 +104,7 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [paymentFilter, setPaymentFilter] = useState<string>('all');
   const [sort, setSort] = useState<SortKey>('created_desc');
+  const [viewMode, setViewMode] = useViewMode();
 
   const t = T[lang];
   const navigate = useNavigate();
@@ -277,6 +280,7 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
             <span className="text-xs text-muted-foreground">
               {filtered.length} / {rows.length} {t.total}
             </span>
+            <ViewToggle value={viewMode} onChange={setViewMode} />
             <PageSizeSelector value={pageSize} onChange={setPageSize} />
           </div>
         </div>
@@ -291,8 +295,8 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
         <Card className="p-12 text-center text-muted-foreground">{t.noResults}</Card>
       ) : (
         <>
-          {/* Mobile / Tablet: Karten */}
-          <div className="lg:hidden space-y-2.5">
+          {/* Karten-Ansicht (immer mobil; auf Desktop wenn cards) */}
+          <div className={cn(viewMode === 'cards' ? 'grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3' : 'lg:hidden space-y-2.5')}>
             {paged.map(r => {
               const ps = r.payment_status || 'Nein';
               const due = dueLabel(r.liefertermin);
@@ -351,8 +355,8 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
             })}
           </div>
 
-          {/* Desktop: Tabelle */}
-          <Card className="hidden lg:block p-0 overflow-hidden">
+          {/* Desktop: Tabelle (nur in Zeilen-Modus) */}
+          <Card className={cn('p-0 overflow-hidden', viewMode === 'cards' ? 'hidden' : 'hidden lg:block')}>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-muted/40 border-b border-border">

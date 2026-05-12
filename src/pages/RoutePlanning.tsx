@@ -14,6 +14,8 @@ import {
   Search, MapPin, ArrowUpDown, Loader2, Inbox, Plus, CalendarIcon, List, CalendarDays
 } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
+import { useViewMode } from '@/hooks/useViewMode';
+import { ViewToggle } from '@/components/ViewToggle';
 
 type SortField = 'planned_date' | 'priority';
 type SortDir = 'asc' | 'desc';
@@ -39,6 +41,7 @@ export default function RoutePlanning() {
   const [sortField, setSortField] = useState<SortField>('planned_date');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [view, setView] = useState<'list' | 'calendar'>('list');
+  const [viewMode, setViewMode] = useViewMode();
 
   useEffect(() => {
     loadPlans();
@@ -132,6 +135,7 @@ export default function RoutePlanning() {
           <p className="text-sm text-muted-foreground mt-1">{filtered.length} Touren</p>
         </div>
         <div className="flex items-center gap-2">
+          {view === 'list' && <ViewToggle value={viewMode} onChange={setViewMode} />}
           <div className="flex rounded-lg border border-border overflow-hidden">
             <button
               className={cn("px-3 py-2 text-sm transition-colors", view === 'list' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground')}
@@ -189,7 +193,7 @@ export default function RoutePlanning() {
       {error && <div className="mb-4 p-4 rounded-lg bg-destructive/10 text-destructive text-sm">{error}</div>}
 
       {/* List View */}
-      {view === 'list' && (
+      {view === 'list' && viewMode === 'rows' && (
         <div className="rounded-xl border border-border bg-card card-glow overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -286,6 +290,72 @@ export default function RoutePlanning() {
             </table>
           </div>
         </div>
+      )}
+
+      {view === 'list' && viewMode === 'cards' && (
+        loading ? (
+          <div className="py-12 text-center"><Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" /></div>
+        ) : filtered.length === 0 ? (
+          <div className="rounded-xl border border-border bg-card p-12 text-center card-glow">
+            <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
+            <p className="text-muted-foreground">Keine Touren gefunden.</p>
+          </div>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {filtered.map(p => {
+              const sources = [
+                p.orders?.shipping_address,
+                p.orders?.billing_address,
+                p.orders?.customers?.shipping_address,
+                p.orders?.customers?.billing_address,
+              ];
+              const city = sources.map(a => a?.city || a?.Stadt).find(v => v && String(v).trim()) || '—';
+              const zip = sources.map(a => a?.zip || a?.zipcode || a?.postal_code || a?.PLZ || a?.plz).find(v => v && String(v).trim()) || '';
+              return (
+                <div
+                  key={p.id}
+                  onClick={() => navigate(`/tourenplanung/${p.id}`)}
+                  className="rounded-xl border border-border bg-card card-glow p-4 cursor-pointer hover:border-primary/40 transition-colors space-y-2"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="font-mono font-semibold text-sm text-foreground truncate">{p.orders?.order_number || '—'}</div>
+                      <div className="text-xs text-muted-foreground truncate">
+                        {p.orders?.customers?.company_name || p.orders?.customers?.contact_name || '—'}
+                      </div>
+                    </div>
+                    <StatusBadge status={p.planning_status} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-1 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1.5">
+                      <CalendarIcon className="w-3.5 h-3.5" />
+                      {p.planned_date ? new Date(p.planned_date + 'T00:00:00').toLocaleDateString('de-DE') : '—'}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5" />
+                      <span className="truncate">{zip} {city}</span>
+                    </div>
+                  </div>
+                  {p.order_items && p.order_items.length > 0 && (
+                    <div className="text-xs text-muted-foreground border-t border-border/50 pt-2">
+                      {p.order_items.slice(0, 3).map((it: any) => (
+                        <div key={it.id} className="truncate">
+                          {it.quantity ? <span className="text-foreground">{Number(it.quantity)}× </span> : null}
+                          {it.item_name || '—'}
+                        </div>
+                      ))}
+                      {p.order_items.length > 3 && <div className="text-[10px]">+ {p.order_items.length - 3} weitere</div>}
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between pt-1">
+                    <span className={cn("text-xs capitalize", PRIORITY_COLORS[p.priority] || 'text-muted-foreground')}>{p.priority || 'normal'}</span>
+                    <span className="text-xs text-muted-foreground truncate">{p.assigned_employee || '—'}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )
       )}
 
       {/* Calendar / Grouped View */}
