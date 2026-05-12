@@ -772,7 +772,15 @@ export default function Lagergeraete({
                     )}
                   </TableCell>
                   <TableCell>
-                    <StatusBadge status={getStatusFromNotes(d.notes)} />
+                    {(() => {
+                      const s = getStatusFromNotes(d.notes);
+                      return (
+                        <StatusBadge
+                          status={s}
+                          className={s === 'Transfer' ? 'bg-red-500/15 text-red-500 border-red-500/40 animate-pulse' : undefined}
+                        />
+                      );
+                    })()}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {d.notes ?? '—'}
