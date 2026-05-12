@@ -115,6 +115,7 @@ export default function Lagergeraete({
   const [serial, setSerial] = useState('');
   const [modelName, setModelName] = useState<string>('');
   const [deviceType, setDeviceType] = useState<'Neugerät' | 'Leihgerät'>(filterType ?? 'Neugerät');
+  const [deviceStatus, setDeviceStatus] = useState<DeviceStatus>('Bestand');
   const [entryDate, setEntryDate] = useState(today);
   const [notes, setNotes] = useState('');
   const [reservedOrderId, setReservedOrderId] = useState<string | null>(null);
