@@ -279,8 +279,8 @@ export default function AppLayout() {
               const rowEl = (
                 <div
                   className={cn(
-                    "w-full flex items-center gap-2.5 rounded-lg text-[13px] font-medium transition-all duration-150",
-                    isCollapsedView ? "md:px-0 md:py-2 md:justify-center px-3 py-2.5" : "px-3 py-2.5 md:py-2",
+                    "w-full flex items-center gap-2.5 rounded-lg text-[14.5px] font-medium transition-all duration-150",
+                    isCollapsedView ? "md:px-0 md:py-2.5 md:justify-center px-3.5 py-3" : "px-3.5 py-3 md:py-2.5",
                     childActive
                       ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
                       : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent"
@@ -292,7 +292,7 @@ export default function AppLayout() {
                       title={isCollapsedView ? item.label : undefined}
                       className="flex items-center gap-2.5 flex-1 min-w-0"
                     >
-                      <item.icon className={cn("w-[18px] h-[18px] flex-shrink-0", childActive && "text-primary")} />
+                      <item.icon className={cn("w-5 h-5 flex-shrink-0", childActive && "text-primary")} />
                       {!isCollapsedView && (
                         <span className="truncate flex-1 text-left">{labelWithCount(item.path, item.label)}</span>
                       )}
@@ -304,7 +304,7 @@ export default function AppLayout() {
                       title={isCollapsedView ? item.label : undefined}
                       className="flex items-center gap-2.5 flex-1 min-w-0"
                     >
-                      <item.icon className={cn("w-[18px] h-[18px] flex-shrink-0", childActive && "text-primary")} />
+                      <item.icon className={cn("w-5 h-5 flex-shrink-0", childActive && "text-primary")} />
                       {!isCollapsedView && (
                         <span className="truncate flex-1 text-left">{labelWithCount(item.path, item.label)}</span>
                       )}
@@ -390,7 +390,7 @@ export default function AppLayout() {
                                 type="button"
                                 onClick={() => toggleGroup(child.path)}
                                 className={cn(
-                                  "w-full flex items-center gap-2.5 rounded-lg text-[13px] font-medium transition-all duration-150 px-3 py-2.5 md:py-2",
+                                  "w-full flex items-center gap-2.5 rounded-lg text-[14.5px] font-medium transition-all duration-150 px-3.5 py-3 md:py-2.5",
                                   (cActive || cGroupActive)
                                     ? (isPool
                                         ? "bg-foreground/10 text-foreground shadow-[inset_0_0_0_1px_hsl(var(--foreground)/0.25)]"
@@ -400,7 +400,7 @@ export default function AppLayout() {
                                         : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent")
                                 )}
                               >
-                                <child.icon className={cn("w-[18px] h-[18px] flex-shrink-0", isPool ? "text-foreground" : ((cActive || cGroupActive) && "text-primary"))} />
+                                <child.icon className={cn("w-5 h-5 flex-shrink-0", isPool ? "text-foreground" : ((cActive || cGroupActive) && "text-primary"))} />
                                 <span className="truncate flex-1 text-left">{labelWithCount(child.path, child.label)}</span>
                                 <ChevronDown className={cn("w-4 h-4 transition-transform", cIsOpen && "rotate-180")} />
                               </button>
@@ -436,7 +436,7 @@ export default function AppLayout() {
                                         key={grand.path}
                                         to={grand.path}
                                         className={cn(
-                                          "flex items-center gap-2.5 rounded-lg text-[13px] font-medium transition-all duration-150 px-3 py-2.5 md:py-2",
+                                          "flex items-center gap-2.5 rounded-lg text-[14.5px] font-medium transition-all duration-150 px-3.5 py-3 md:py-2.5",
                                           colored
                                             ? gActive ? colored.active : colored.inactive
                                             : gActive
@@ -444,7 +444,7 @@ export default function AppLayout() {
                                               : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent"
                                         )}
                                       >
-                                        <grand.icon className={cn("w-[18px] h-[18px] flex-shrink-0", colored ? colored.icon : gActive && "text-primary")} />
+                                        <grand.icon className={cn("w-5 h-5 flex-shrink-0", colored ? colored.icon : gActive && "text-primary")} />
                                         <span className="truncate">{labelWithCount(grand.path, grand.label)}</span>
                                       </Link>
                                     );
@@ -460,13 +460,13 @@ export default function AppLayout() {
                             key={child.path}
                             to={child.path}
                             className={cn(
-                              "flex items-center gap-2.5 rounded-lg text-[13px] font-medium transition-all duration-150 px-3 py-2.5 md:py-2",
+                              "flex items-center gap-2.5 rounded-lg text-[14.5px] font-medium transition-all duration-150 px-3.5 py-3 md:py-2.5",
                               cActive
                                 ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
                                 : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent"
                             )}
                           >
-                            <child.icon className={cn("w-[18px] h-[18px] flex-shrink-0", cActive && "text-primary")} />
+                            <child.icon className={cn("w-5 h-5 flex-shrink-0", cActive && "text-primary")} />
                             <span className="truncate">{labelWithCount(child.path, child.label)}</span>
                           </Link>
                         );
@@ -483,14 +483,14 @@ export default function AppLayout() {
                 to={item.path}
                 title={isCollapsedView ? item.label : undefined}
                 className={cn(
-                  "flex items-center gap-2.5 rounded-lg text-[13px] font-medium transition-all duration-150",
-                  isCollapsedView ? "md:px-0 md:py-2 md:justify-center px-3 py-2.5" : "px-3 py-2.5 md:py-2",
+                  "flex items-center gap-2.5 rounded-lg text-[14.5px] font-medium transition-all duration-150",
+                  isCollapsedView ? "md:px-0 md:py-2.5 md:justify-center px-3.5 py-3" : "px-3.5 py-3 md:py-2.5",
                   active
                     ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
                     : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent"
                 )}
               >
-                <item.icon className={cn("w-[18px] h-[18px] flex-shrink-0", active && "text-primary")} />
+                <item.icon className={cn("w-5 h-5 flex-shrink-0", active && "text-primary")} />
                 {!isCollapsedView && <span className="truncate">{item.label}</span>}
               </Link>
             );
@@ -501,7 +501,7 @@ export default function AppLayout() {
         <div className="border-t border-border p-2 flex-shrink-0">
           {(!collapsed || mobileOpen) && (
             <div className={cn("px-2 py-2 mb-1", collapsed && "md:hidden")}>
-              <p className="text-[13px] font-medium text-foreground truncate">{profile?.full_name || 'Benutzer'}</p>
+              <p className="text-[14.5px] font-medium text-foreground truncate">{profile?.full_name || 'Benutzer'}</p>
               <p className="text-[11px] text-muted-foreground truncate">{profile?.email}</p>
             </div>
           )}
@@ -517,7 +517,7 @@ export default function AppLayout() {
             </Button>
             <Button
               variant="ghost"
-              className="h-8 flex-1 justify-start text-[13px] px-2 text-muted-foreground hover:text-destructive"
+              className="h-8 flex-1 justify-start text-[14.5px] px-2 text-muted-foreground hover:text-destructive"
               onClick={signOut}
               title="Abmelden"
             >
