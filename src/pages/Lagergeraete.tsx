@@ -40,6 +40,7 @@ import { toast } from 'sonner';
 import { ALIX_MODEL_GROUPS } from '@/lib/alix-models';
 import OrderPickerDialog from '@/components/OrderPickerDialog';
 import { useAuth } from '@/hooks/useAuth';
+import { StatusBadge } from '@/components/StatusBadge';
 
 type LagerDevice = {
   id: string;
