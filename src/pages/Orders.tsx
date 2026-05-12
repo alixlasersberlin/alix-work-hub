@@ -251,6 +251,48 @@ export default function Orders() {
 
           {error && <div className="p-4 rounded-lg bg-destructive/10 text-destructive text-sm">{error}</div>}
 
+          {viewMode === 'cards' ? (
+            loading ? (
+              <div className="py-12 text-center"><Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" /></div>
+            ) : filtered.length === 0 ? (
+              <div className="py-12 text-center">
+                <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
+                <p className="text-muted-foreground">Keine Aufträge gefunden.</p>
+              </div>
+            ) : (
+              <OrderCardGrid>
+                {paged.map(o => (
+                  <OrderCard
+                    key={`${o.id}-${o._seq}`}
+                    order={o}
+                    selectionMode={selectionMode}
+                    selected={selectedIds.has(o.id)}
+                    onToggleSelect={() => {
+                      const next = new Set(selectedIds);
+                      if (next.has(o.id)) next.delete(o.id); else next.add(o.id);
+                      setSelectedIds(next);
+                    }}
+                    onClick={() => navigate(`/auftraege/${o.id}`)}
+                    footer={
+                      <div className="flex items-center justify-between gap-2" onClick={e => e.stopPropagation()}>
+                        <DrivingTimeCell value={drivingTimes[o.id]} requested={requestedIds.has(o.id)} loading={drivingLoading} />
+                        {canWrite && (
+                          <div className="flex items-center gap-1">
+                            <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setEditOrder(o)}>
+                              <Pencil className="w-3 h-3 mr-1" /> Ändern
+                            </Button>
+                            <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setDeferOrder(o)}>
+                              <CalendarClock className="w-3 h-3 mr-1" /> Zurückstellen
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    }
+                  />
+                ))}
+              </OrderCardGrid>
+            )
+          ) : (
           <div className="rounded-xl border border-border bg-card card-glow overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -374,6 +416,7 @@ export default function Orders() {
               </table>
             </div>
           </div>
+          )}
 
           {/* Pagination */}
           {pageSize !== 'all' && totalPages > 1 && (
