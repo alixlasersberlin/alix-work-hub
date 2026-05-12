@@ -49,6 +49,7 @@ import Leihgeraete from "./pages/Leihgeraete";
 import EquipmentArea from "./pages/EquipmentArea";
 import EquipmentUnterwegs from "./pages/EquipmentUnterwegs";
 import EquipmentProduktion from "./pages/EquipmentProduktion";
+import EquipmentHold from "./pages/EquipmentHold";
 import Artikel from "./pages/Artikel";
 import AngebotErstellen from "./pages/AngebotErstellen";
 import { Loader2 } from "lucide-react";
@@ -161,6 +162,7 @@ function AppRoutes() {
         <Route path="/lager/equipment-area" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><EquipmentArea /></ProtectedRoute>} />
         <Route path="/lager/equipment-area/unterwegs" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><EquipmentUnterwegs /></ProtectedRoute>} />
         <Route path="/lager/equipment-area/produktion" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><EquipmentProduktion /></ProtectedRoute>} />
+        <Route path="/lager/equipment-area/hold" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><EquipmentHold /></ProtectedRoute>} />
       </Route>
       <Route path="/unsubscribe" element={<Unsubscribe />} />
       <Route path="*" element={<NotFound />} />
