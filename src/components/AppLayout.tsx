@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import WelcomeDialog from '@/components/WelcomeDialog';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
+import alixLogo from '@/assets/alix-logo-gold.png';
 
 const APP_VERSION = '3.0';
 
