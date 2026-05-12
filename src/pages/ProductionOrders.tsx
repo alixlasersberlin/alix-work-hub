@@ -295,8 +295,8 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
         <Card className="p-12 text-center text-muted-foreground">{t.noResults}</Card>
       ) : (
         <>
-          {/* Mobile / Tablet: Karten */}
-          <div className="lg:hidden space-y-2.5">
+          {/* Karten-Ansicht (immer mobil; auf Desktop wenn cards) */}
+          <div className={cn(viewMode === 'cards' ? 'grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3' : 'lg:hidden space-y-2.5')}>
             {paged.map(r => {
               const ps = r.payment_status || 'Nein';
               const due = dueLabel(r.liefertermin);
