@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import WelcomeDialog from '@/components/WelcomeDialog';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
+import alixLogo from '@/assets/alix-logo-gold.png';
 
 const APP_VERSION = '3.0';
 
@@ -242,16 +243,19 @@ export default function AppLayout() {
       )}>
         {/* Brand */}
         <div className={cn(
-          "flex items-center gap-2.5 border-b border-border h-14 flex-shrink-0",
+          "flex items-center gap-2.5 border-b border-border h-16 flex-shrink-0",
           collapsed ? "md:px-2 md:justify-center px-4" : "px-4"
         )}>
-          <div className="w-8 h-8 rounded-lg gold-gradient flex items-center justify-center flex-shrink-0">
-            <Shield className="w-4 h-4 text-primary-foreground" />
-          </div>
-          {(!collapsed || mobileOpen) && (
-            <span className={cn("font-display font-bold text-base gold-text truncate", collapsed && "md:hidden")}>
-              Alix Work
-            </span>
+          {collapsed && !mobileOpen ? (
+            <div className="w-9 h-9 rounded-lg gold-gradient flex items-center justify-center flex-shrink-0">
+              <Shield className="w-5 h-5 text-primary-foreground" />
+            </div>
+          ) : (
+            <img
+              src={alixLogo}
+              alt="Alix Lasers Logo"
+              className="h-9 w-auto object-contain max-w-full"
+            />
           )}
           {/* Close-Button auf Mobile */}
           <Button
