@@ -156,6 +156,7 @@ function AppRoutes() {
         <Route path="/lager" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Lager /></ProtectedRoute>} />
         <Route path="/lager/lagergeraete" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Lagergeraete filterType="Neugerät" pageTitle="Lagergeräte" pageSubtitle="Erfassung und Übersicht aller Neugeräte im Lager" addLabel="Neues Lagergerät" dialogTitle="Lagergerät" emptyLabel="Noch keine Lagergeräte erfasst." /></ProtectedRoute>} />
         <Route path="/lager/leihgeraete" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Leihgeraete /></ProtectedRoute>} />
+        <Route path="/lager/equipment-area" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><EquipmentArea /></ProtectedRoute>} />
       </Route>
       <Route path="/unsubscribe" element={<Unsubscribe />} />
       <Route path="*" element={<NotFound />} />
