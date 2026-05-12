@@ -77,7 +77,7 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    path: '/operation', label: 'OPERATION', icon: Workflow, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung'],
+    path: '/operation', label: 'OPERATIONS', icon: Workflow, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung'],
   },
   {
     path: '/tourenplanung', label: 'Tourenplanung', icon: MapPin, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung'],
