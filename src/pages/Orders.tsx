@@ -29,7 +29,7 @@ export default function Orders() {
   const [orders, setOrders] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [sortField, setSortField] = useState<SortField>('created_at');
+  const [sortField, setSortField] = useState<SortField>('order_date');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -55,7 +55,7 @@ export default function Orders() {
     const { data, error: err } = await supabase
       .from('orders')
       .select('*, customers(company_name, contact_name, shipping_address, billing_address), order_items(id, item_name, description, sku, quantity, unit, rate, amount)')
-      .order(sortField, { ascending: sortDir === 'asc' })
+      .order(sortField, { ascending: sortDir === 'asc', nullsFirst: false })
       .limit(500);
     if (err) setError(err.message);
     const loaded = data ?? [];
