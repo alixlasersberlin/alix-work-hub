@@ -377,16 +377,24 @@ export default function Dashboard() {
         {/* Recent Orders */}
         {canSeeOrders && (
           <div className="rounded-xl border border-border bg-card card-glow">
-            <div className="flex items-center gap-2 p-5 border-b border-border">
-              <Clock className="w-4 h-4 text-primary" />
-              <h2 className="font-display font-semibold text-foreground">Letzte Aufträge</h2>
-            </div>
-            {loading ? (
+            <button
+              type="button"
+              onClick={() => toggle('recent')}
+              className="w-full flex items-center justify-between gap-2 p-5 hover:bg-secondary/30 transition-colors"
+              aria-expanded={!collapsed.recent}
+            >
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-primary" />
+                <h2 className="font-display font-semibold text-foreground">Letzte Aufträge</h2>
+              </div>
+              <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${collapsed.recent ? '' : 'rotate-180'}`} />
+            </button>
+            {!collapsed.recent && (loading ? (
               <TableSkeleton />
             ) : recentOrders.length === 0 ? (
               <EmptyState icon={Inbox} message="Keine Aufträge vorhanden." />
             ) : (
-              <div className="divide-y divide-border">
+              <div className="divide-y divide-border border-t border-border">
                 {recentOrders.map(order => (
                   <div key={order.id} className="flex items-center justify-between p-4 hover:bg-secondary/30 transition-colors">
                     <div>
@@ -407,7 +415,7 @@ export default function Dashboard() {
                   </div>
                 ))}
               </div>
-            )}
+            ))}
           </div>
         )}
 
