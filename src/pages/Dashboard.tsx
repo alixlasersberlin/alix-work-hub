@@ -4,13 +4,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import {
   ClipboardList, Users, MapPin, Banknote, AlertCircle,
-  Clock, TrendingUp, FileText, CalendarDays, CircleDot, Inbox, Package, ChevronDown
+  Clock, TrendingUp, FileText, CalendarDays, CircleDot, Inbox, Package, ChevronDown,
+  Warehouse, PackageCheck
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface Stats {
-  customers: number;
-  orders: number;
+  freePoolDevices: number;
+  leihgeraete: number;
   openOrders: number;
   routes: number;
   openFinance: number;
@@ -114,7 +115,7 @@ function TableSkeleton({ rows = 3 }: { rows?: number }) {
 export default function Dashboard() {
   const navigate = useNavigate();
   const { profile, roles, hasRole, hasAnyRole, isAdmin } = useAuth();
-  const [stats, setStats] = useState<Stats>({ customers: 0, orders: 0, openOrders: 0, routes: 0, openFinance: 0 });
+  const [stats, setStats] = useState<Stats>({ freePoolDevices: 0, leihgeraete: 0, openOrders: 0, routes: 0, openFinance: 0 });
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [shipmentOrders, setShipmentOrders] = useState<ShipmentOrder[]>([]);
   const [routePlans, setRoutePlans] = useState<RoutePlan[]>([]);
@@ -141,18 +142,40 @@ export default function Dashboard() {
     async function load() {
       try {
         setError(null);
-        // Fetch all data in parallel based on role access
-        const customersRes = canSeeCustomers
-          ? await supabase.from('customers').select('id', { count: 'exact', head: true })
-          : { count: 0 };
 
-        const [ordersRes, openOrdersRes, recentOrdersRes] = canSeeOrders
+        // Lager-Geräte für die KPI-Karten (Freie Pool-Geräte + Leihgeräte gesamt)
+        const lagerRes = isAdmin
+          ? await supabase.from('lager_devices').select('notes, reserved_order_id')
+          : { data: [] as { notes: string | null; reserved_order_id: string | null }[] };
+
+        const getStatus = (n: string | null | undefined) => {
+          const m = /\[Status:\s*([^\]]+)\]/.exec(n ?? '');
+          return (m?.[1] ?? '').trim();
+        };
+        const isLeih = (n: string | null | undefined) =>
+          (n ?? '').includes('[Typ: Leihgerät]') || (n ?? '').includes('[Leihgerät]');
+
+        let freePoolDevices = 0;
+        let leihgeraete = 0;
+        for (const d of (lagerRes.data ?? []) as { notes: string | null; reserved_order_id: string | null }[]) {
+          if (isLeih(d.notes)) {
+            leihgeraete++;
+            continue;
+          }
+          // Pool = alle Nicht-Leihgeräte (Bestand, Transfer, Produktion, Hold, Warehouse).
+          // Frei = nicht reserviert und nicht im Status "Hold".
+          const status = getStatus(d.notes);
+          if (d.reserved_order_id == null && status !== 'Hold') {
+            freePoolDevices++;
+          }
+        }
+
+        const [openOrdersRes, recentOrdersRes] = canSeeOrders
           ? await Promise.all([
-              supabase.from('orders').select('id', { count: 'exact', head: true }),
               supabase.from('orders').select('id', { count: 'exact', head: true }).eq('order_status', 'offen'),
               supabase.from('orders').select('id, order_number, order_status, total_amount, currency, order_date, expected_shipment_date').order('created_at', { ascending: false }).limit(7),
             ])
-          : [{ count: 0 }, { count: 0 }, { data: [] }];
+          : [{ count: 0 }, { data: [] }];
 
         const shipmentOrdersRes = canSeeOrders
           ? await supabase.from('orders').select('id, order_number, expected_shipment_date, order_status, shipping_address, billing_address, customers(company_name, contact_name, shipping_address, billing_address), order_items(item_name, sku, description)').not('expected_shipment_date', 'is', null).order('expected_shipment_date', { ascending: true }).limit(500)
@@ -173,8 +196,8 @@ export default function Dashboard() {
           : [{ count: 0 }, { data: [] }];
 
         setStats({
-          customers: customersRes.count ?? 0,
-          orders: ordersRes.count ?? 0,
+          freePoolDevices,
+          leihgeraete,
           openOrders: openOrdersRes.count ?? 0,
           routes: routesRes.count ?? 0,
           openFinance: openFinanceRes.count ?? 0,
@@ -190,14 +213,14 @@ export default function Dashboard() {
       }
     }
     load();
-  }, [canSeeOrders, canSeeRoutes, canSeeFinance, canSeeCustomers]);
+  }, [canSeeOrders, canSeeRoutes, canSeeFinance, isAdmin]);
 
   const kpiCards = [
-    { label: 'Kunden', value: stats.customers, icon: Users, visible: canSeeCustomers },
-    { label: 'Aufträge gesamt', value: stats.orders, icon: ClipboardList, visible: canSeeOrders },
-    { label: 'Offene Aufträge', value: stats.openOrders, icon: AlertCircle, visible: canSeeOrders },
-    { label: 'Geplante Touren', value: stats.routes, icon: MapPin, visible: canSeeRoutes },
-    { label: 'Offene Zahlungen', value: stats.openFinance, icon: Banknote, visible: canSeeFinance },
+    { label: 'Freie Geräte (Pool)', value: stats.freePoolDevices, icon: PackageCheck, visible: isAdmin, onClick: () => navigate('/lager/equipment-area') },
+    { label: 'Leihgeräte', value: stats.leihgeraete, icon: Warehouse, visible: isAdmin, onClick: () => navigate('/lager/leihgeraete') },
+    { label: 'Offene Aufträge', value: stats.openOrders, icon: AlertCircle, visible: canSeeOrders, onClick: () => navigate('/auftraege') },
+    { label: 'Geplante Touren', value: stats.routes, icon: MapPin, visible: canSeeRoutes, onClick: () => navigate('/tourenplanung') },
+    { label: 'Offene Zahlungen', value: stats.openFinance, icon: Banknote, visible: canSeeFinance, onClick: () => navigate('/finance') },
   ].filter(c => c.visible);
 
   const kpiColors = [
@@ -231,13 +254,18 @@ export default function Dashboard() {
         {loading
           ? Array.from({ length: 5 }).map((_, i) => <CardSkeleton key={i} />)
           : kpiCards.map((card, i) => (
-              <div key={card.label} className="rounded-xl border border-border bg-card p-5 card-glow group hover:border-primary/20 transition-colors">
+              <button
+                key={card.label}
+                type="button"
+                onClick={card.onClick}
+                className="text-left rounded-xl border border-border bg-card p-5 card-glow group hover:border-primary/30 hover:bg-secondary/20 transition-colors"
+              >
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-sm text-muted-foreground">{card.label}</span>
                   <card.icon className={`w-5 h-5 ${kpiColors[i] || 'text-primary'}`} />
                 </div>
                 <p className="text-3xl font-display font-bold text-foreground">{card.value}</p>
-              </div>
+              </button>
             ))}
       </div>
 
