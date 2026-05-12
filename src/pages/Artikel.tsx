@@ -144,16 +144,87 @@ export default function Artikel() {
     }
   }
 
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    items.forEach((i) => { if (i.category_name) set.add(i.category_name); });
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'de'));
+  }, [items]);
+
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim();
-    if (!q) return items;
-    return items.filter((i) =>
-      `${i.name ?? ''} ${i.sku ?? ''} ${i.description ?? ''} ${i.category_name ?? ''} ${i.brand ?? ''}`
-        .toLowerCase().includes(q)
-    );
-  }, [items, query]);
+    return items.filter((i) => {
+      if (categoryFilter !== '__all__' && (i.category_name ?? '') !== categoryFilter) return false;
+      if (!q) return true;
+      return `${i.name ?? ''} ${i.sku ?? ''} ${i.description ?? ''} ${i.category_name ?? ''} ${i.brand ?? ''}`
+        .toLowerCase().includes(q);
+    });
+  }, [items, query, categoryFilter]);
 
   const { pageSize, setPageSize, page, setPage, totalPages, paged, total } = usePagination(filtered, 20);
+
+  const toggleId = (id: string) => setSelectedIds((s) => {
+    const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n;
+  });
+  const togglePageAll = () => {
+    const all = paged.length > 0 && paged.every((i) => selectedIds.has(i.id));
+    setSelectedIds((s) => {
+      const n = new Set(s);
+      paged.forEach((i) => (all ? n.delete(i.id) : n.add(i.id)));
+      return n;
+    });
+  };
+  const selectAllFiltered = () => setSelectedIds(new Set(filtered.map((i) => i.id)));
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const exportItems = () => items.filter((i) => selectedIds.has(i.id));
+  const exportRows = (list: ZohoItem[]) => list.map((it) => [
+    it.name ?? '', it.sku ?? '', it.category_name ?? '', it.brand ?? '',
+    it.unit ?? '', fmtMoney(it.rate, it.currency_code), fmtMoney(it.purchase_rate, it.currency_code),
+    it.stock_on_hand?.toString() ?? '', it.status ?? '',
+  ]);
+  const exportHeader = ['Name', 'SKU', 'Kategorie', 'Marke', 'Einheit', 'Verkaufspreis', 'Einkaufspreis', 'Bestand', 'Status'];
+
+  function downloadCsv() {
+    const list = exportItems();
+    if (list.length === 0) {
+      toast({ title: 'Keine Auswahl', description: 'Bitte mindestens einen Artikel auswählen.', variant: 'destructive' });
+      return;
+    }
+    const esc = (s: string) => `"${String(s).replace(/"/g, '""')}"`;
+    const lines = [exportHeader.map(esc).join(';'), ...exportRows(list).map((r) => r.map(esc).join(';'))];
+    const blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `artikel_export_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function downloadPdf() {
+    const list = exportItems();
+    if (list.length === 0) {
+      toast({ title: 'Keine Auswahl', description: 'Bitte mindestens einen Artikel auswählen.', variant: 'destructive' });
+      return;
+    }
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+    doc.setFontSize(16);
+    doc.text('Artikel-Export', 40, 40);
+    doc.setFontSize(9);
+    doc.setTextColor(120);
+    doc.text(`Erstellt: ${new Date().toLocaleString('de-DE')} · ${list.length} Artikel${categoryFilter !== '__all__' ? ` · Kategorie: ${categoryFilter}` : ''}`, 40, 56);
+    autoTable(doc, {
+      startY: 72,
+      head: [exportHeader],
+      body: exportRows(list),
+      styles: { fontSize: 8, cellPadding: 4, overflow: 'linebreak' },
+      headStyles: { fillColor: [212, 175, 55], textColor: 20, fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [248, 246, 240] },
+      margin: { left: 40, right: 40 },
+    });
+    doc.save(`artikel_export_${new Date().toISOString().slice(0, 10)}.pdf`);
+  }
+
 
   const lastSync = items.length > 0
     ? new Date(items.reduce((m, i) => (i.synced_at > m ? i.synced_at : m), items[0].synced_at)).toLocaleString('de-DE')
