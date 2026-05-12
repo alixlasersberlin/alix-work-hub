@@ -59,6 +59,7 @@ import AngebotErstellen from "./pages/AngebotErstellen";
 import Angebote from "./pages/Angebote";
 import Anzahlungsrechnung from "./pages/Anzahlungsrechnung";
 import Gutschriften from "./pages/Gutschriften";
+import Freigabe from "./pages/Freigabe";
 import Operation from "./pages/Operation";
 import { Loader2 } from "lucide-react";
 
@@ -138,6 +139,7 @@ function AppRoutes() {
         <Route path="/verkauf/angebote" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Angebote /></ProtectedRoute>} />
         <Route path="/verkauf/anzahlungsrechnung" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Anzahlungsrechnung /></ProtectedRoute>} />
         <Route path="/verkauf/gutschriften" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Gutschriften /></ProtectedRoute>} />
+        <Route path="/verkauf/freigabe" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Freigabe /></ProtectedRoute>} />
         <Route path="/operation" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Operation /></ProtectedRoute>} />
         <Route path="/prio-liste" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><PriorityList /></ProtectedRoute>} />
         <Route path="/anwaltsliste" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><LawyerList /></ProtectedRoute>} />
