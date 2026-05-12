@@ -1,13 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { PageSizeSelector, usePagination, PaginationControls } from '@/components/PageSizeSelector';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, RefreshCw, Search, Package, Eye, Pencil, Save, X } from 'lucide-react';
+import { Loader2, RefreshCw, Search, Package, Eye, Pencil, Save, X, Download, FileSpreadsheet } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -44,6 +48,8 @@ export default function Artikel() {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [query, setQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('__all__');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<ZohoItem | null>(null);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Partial<ZohoItem>>({});
@@ -138,16 +144,87 @@ export default function Artikel() {
     }
   }
 
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    items.forEach((i) => { if (i.category_name) set.add(i.category_name); });
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'de'));
+  }, [items]);
+
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim();
-    if (!q) return items;
-    return items.filter((i) =>
-      `${i.name ?? ''} ${i.sku ?? ''} ${i.description ?? ''} ${i.category_name ?? ''} ${i.brand ?? ''}`
-        .toLowerCase().includes(q)
-    );
-  }, [items, query]);
+    return items.filter((i) => {
+      if (categoryFilter !== '__all__' && (i.category_name ?? '') !== categoryFilter) return false;
+      if (!q) return true;
+      return `${i.name ?? ''} ${i.sku ?? ''} ${i.description ?? ''} ${i.category_name ?? ''} ${i.brand ?? ''}`
+        .toLowerCase().includes(q);
+    });
+  }, [items, query, categoryFilter]);
 
   const { pageSize, setPageSize, page, setPage, totalPages, paged, total } = usePagination(filtered, 20);
+
+  const toggleId = (id: string) => setSelectedIds((s) => {
+    const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n;
+  });
+  const togglePageAll = () => {
+    const all = paged.length > 0 && paged.every((i) => selectedIds.has(i.id));
+    setSelectedIds((s) => {
+      const n = new Set(s);
+      paged.forEach((i) => (all ? n.delete(i.id) : n.add(i.id)));
+      return n;
+    });
+  };
+  const selectAllFiltered = () => setSelectedIds(new Set(filtered.map((i) => i.id)));
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const exportItems = () => items.filter((i) => selectedIds.has(i.id));
+  const exportRows = (list: ZohoItem[]) => list.map((it) => [
+    it.name ?? '', it.sku ?? '', it.category_name ?? '', it.brand ?? '',
+    it.unit ?? '', fmtMoney(it.rate, it.currency_code), fmtMoney(it.purchase_rate, it.currency_code),
+    it.stock_on_hand?.toString() ?? '', it.status ?? '',
+  ]);
+  const exportHeader = ['Name', 'SKU', 'Kategorie', 'Marke', 'Einheit', 'Verkaufspreis', 'Einkaufspreis', 'Bestand', 'Status'];
+
+  function downloadCsv() {
+    const list = exportItems();
+    if (list.length === 0) {
+      toast({ title: 'Keine Auswahl', description: 'Bitte mindestens einen Artikel auswählen.', variant: 'destructive' });
+      return;
+    }
+    const esc = (s: string) => `"${String(s).replace(/"/g, '""')}"`;
+    const lines = [exportHeader.map(esc).join(';'), ...exportRows(list).map((r) => r.map(esc).join(';'))];
+    const blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `artikel_export_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function downloadPdf() {
+    const list = exportItems();
+    if (list.length === 0) {
+      toast({ title: 'Keine Auswahl', description: 'Bitte mindestens einen Artikel auswählen.', variant: 'destructive' });
+      return;
+    }
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+    doc.setFontSize(16);
+    doc.text('Artikel-Export', 40, 40);
+    doc.setFontSize(9);
+    doc.setTextColor(120);
+    doc.text(`Erstellt: ${new Date().toLocaleString('de-DE')} · ${list.length} Artikel${categoryFilter !== '__all__' ? ` · Kategorie: ${categoryFilter}` : ''}`, 40, 56);
+    autoTable(doc, {
+      startY: 72,
+      head: [exportHeader],
+      body: exportRows(list),
+      styles: { fontSize: 8, cellPadding: 4, overflow: 'linebreak' },
+      headStyles: { fillColor: [212, 175, 55], textColor: 20, fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [248, 246, 240] },
+      margin: { left: 40, right: 40 },
+    });
+    doc.save(`artikel_export_${new Date().toISOString().slice(0, 10)}.pdf`);
+  }
+
 
   const lastSync = items.length > 0
     ? new Date(items.reduce((m, i) => (i.synced_at > m ? i.synced_at : m), items[0].synced_at)).toLocaleString('de-DE')
@@ -164,15 +241,23 @@ export default function Artikel() {
             Artikel-Stammdaten aus Zoho Books{lastSync ? ` · zuletzt synchronisiert: ${lastSync}` : ''}
           </p>
         </div>
-        <Button onClick={syncAll} disabled={syncing} className="gold-gradient text-primary-foreground">
-          {syncing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
-          Aus Zoho synchronisieren
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={downloadCsv} disabled={selectedIds.size === 0}>
+            <FileSpreadsheet className="w-4 h-4 mr-2" /> CSV ({selectedIds.size})
+          </Button>
+          <Button variant="outline" onClick={downloadPdf} disabled={selectedIds.size === 0}>
+            <Download className="w-4 h-4 mr-2" /> PDF ({selectedIds.size})
+          </Button>
+          <Button onClick={syncAll} disabled={syncing} className="gold-gradient text-primary-foreground">
+            {syncing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+            Aus Zoho synchronisieren
+          </Button>
+        </div>
       </div>
 
       <Card className="p-3">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
+        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+          <div className="relative flex-1 min-w-[200px]">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Suche nach Name, SKU, Beschreibung, Kategorie, Marke..."
@@ -180,6 +265,20 @@ export default function Artikel() {
               onChange={(e) => setQuery(e.target.value)}
               className="pl-9"
             />
+          </div>
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="w-full sm:w-[220px]">
+              <SelectValue placeholder="Kategorie" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Alle Kategorien</SelectItem>
+              {categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <div className="flex gap-2 flex-wrap items-center">
+            <Button variant="outline" size="sm" onClick={selectAllFiltered}>Alle (gefiltert)</Button>
+            <Button variant="ghost" size="sm" onClick={clearSelection} disabled={selectedIds.size === 0}>Auswahl leeren</Button>
+            <Badge variant="secondary">{selectedIds.size} markiert</Badge>
           </div>
           <PageSizeSelector value={pageSize} onChange={setPageSize} />
         </div>
@@ -201,6 +300,13 @@ export default function Artikel() {
             <table className="w-full text-sm">
               <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
                 <tr>
+                  <th className="px-3 py-2 w-10">
+                    <Checkbox
+                      checked={paged.length > 0 && paged.every((i) => selectedIds.has(i.id))}
+                      onCheckedChange={togglePageAll}
+                      aria-label="Seite auswählen"
+                    />
+                  </th>
                   <th className="text-left px-3 py-2">Name</th>
                   <th className="text-left px-3 py-2">SKU</th>
                   <th className="text-left px-3 py-2">Kategorie</th>
@@ -212,8 +318,13 @@ export default function Artikel() {
                 </tr>
               </thead>
               <tbody>
-                {paged.map((it) => (
-                  <tr key={it.id} className="border-t border-border hover:bg-muted/20">
+                {paged.map((it) => {
+                  const checked = selectedIds.has(it.id);
+                  return (
+                  <tr key={it.id} className={`border-t border-border ${checked ? 'bg-primary/5' : 'hover:bg-muted/20'}`}>
+                    <td className="px-3 py-2">
+                      <Checkbox checked={checked} onCheckedChange={() => toggleId(it.id)} aria-label="Artikel markieren" />
+                    </td>
                     <td className="px-3 py-2 font-medium">{it.name ?? '–'}</td>
                     <td className="px-3 py-2 font-mono text-xs">{it.sku ?? '–'}</td>
                     <td className="px-3 py-2">{it.category_name ?? '–'}</td>
@@ -251,7 +362,8 @@ export default function Artikel() {
                       </Button>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
