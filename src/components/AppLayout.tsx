@@ -123,6 +123,7 @@ export default function AppLayout() {
         if (isLeih(d.notes)) leih++; else lager++;
       }
       setLagerCounts({
+        '/lager': leih + lager + transfer + produktion,
         '/lager/leihgeraete': leih,
         '/lager/lagergeraete': lager,
         '/lager/equipment-area/unterwegs': transfer,
@@ -241,7 +242,7 @@ export default function AppLayout() {
                     <item.icon className={cn("w-[18px] h-[18px] flex-shrink-0", childActive && "text-primary")} />
                     {!isCollapsedView && (
                       <>
-                        <span className="truncate flex-1 text-left">{item.label}</span>
+                        <span className="truncate flex-1 text-left">{labelWithCount(item.path, item.label)}</span>
                         <ChevronDown className={cn("w-4 h-4 transition-transform", isOpen && "rotate-180")} />
                       </>
                     )}
