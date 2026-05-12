@@ -18,6 +18,7 @@ type NavChild = { path: string; label: string; icon: typeof LayoutDashboard; rol
 type NavItem = NavChild & { children?: NavChild[] };
 
 const navItems: NavItem[] = [
+  { path: '/verkauf/artikel', label: 'ARTIKEL', icon: Package, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance'] },
   { path: '/', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance', 'Read Only Audit'] },
   {
     path: '/verkauf', label: 'VERKAUF', icon: TrendingUp, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance'],
