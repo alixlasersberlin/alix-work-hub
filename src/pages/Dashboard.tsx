@@ -249,7 +249,7 @@ export default function Dashboard() {
             <button
               type="button"
               onClick={() => toggle('shipment')}
-              className="w-full flex items-center justify-between gap-2 p-5 border-b border-border hover:bg-secondary/30 transition-colors"
+              className="w-full flex items-center justify-between gap-2 p-5 hover:bg-secondary/30 transition-colors"
               aria-expanded={!collapsed.shipment}
             >
               <div className="flex items-center gap-2">
@@ -259,131 +259,118 @@ export default function Dashboard() {
               <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${collapsed.shipment ? '' : 'rotate-180'}`} />
             </button>
             {!collapsed.shipment && (
-            <div className="p-5 border-b border-border space-y-3">
-              <div className="flex items-center justify-end gap-3 flex-wrap">
-                <div className="flex gap-1 flex-wrap">
-                  {[{ label: '7T', value: 7 }, { label: '14T', value: 14 }, { label: '30T', value: 30 }, { label: 'Alle', value: null }].map(opt => (
-                    <button
-                      key={opt.label}
-                      onClick={() => setShipmentFilter(opt.value)}
-                      className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
-                        shipmentFilter === opt.value
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-secondary text-muted-foreground hover:text-foreground'
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
+              <>
+                <div className="p-5 border-t border-border space-y-3">
+                  <div className="flex items-center justify-end gap-3 flex-wrap">
+                    <div className="flex gap-1 flex-wrap">
+                      {[{ label: '7T', value: 7 }, { label: '14T', value: 14 }, { label: '30T', value: 30 }, { label: 'Alle', value: null }].map(opt => (
+                        <button
+                          key={opt.label}
+                          onClick={() => setShipmentFilter(opt.value)}
+                          className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
+                            shipmentFilter === opt.value
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-secondary text-muted-foreground hover:text-foreground'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <input
+                      type="text"
+                      value={shipmentSearch}
+                      onChange={(e) => setShipmentSearch(e.target.value)}
+                      placeholder="Suche: Modell, Auftragsnr., Stadt, Name…"
+                      className="flex-1 min-w-[200px] h-8 px-3 text-xs rounded-md bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                    <div className="flex gap-1">
+                      {[{ label: '10', value: 10 }, { label: '20', value: 20 }, { label: '30', value: 30 }, { label: '50', value: 50 }, { label: 'Alle', value: null }].map(opt => (
+                        <button
+                          key={opt.label}
+                          onClick={() => setShipmentLimit(opt.value)}
+                          className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
+                            shipmentLimit === opt.value
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-secondary text-muted-foreground hover:text-foreground'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              </div>
-                  {[{ label: '7T', value: 7 }, { label: '14T', value: 14 }, { label: '30T', value: 30 }, { label: 'Alle', value: null }].map(opt => (
-                    <button
-                      key={opt.label}
-                      onClick={() => setShipmentFilter(opt.value)}
-                      className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
-                        shipmentFilter === opt.value
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-secondary text-muted-foreground hover:text-foreground'
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <input
-                  type="text"
-                  value={shipmentSearch}
-                  onChange={(e) => setShipmentSearch(e.target.value)}
-                  placeholder="Suche: Modell, Auftragsnr., Stadt, Name…"
-                  className="flex-1 min-w-[200px] h-8 px-3 text-xs rounded-md bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                />
-                <div className="flex gap-1">
-                  {[{ label: '10', value: 10 }, { label: '20', value: 20 }, { label: '30', value: 30 }, { label: '50', value: 50 }, { label: 'Alle', value: null }].map(opt => (
-                    <button
-                      key={opt.label}
-                      onClick={() => setShipmentLimit(opt.value)}
-                      className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
-                        shipmentLimit === opt.value
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-secondary text-muted-foreground hover:text-foreground'
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-            {loading ? (
-              <TableSkeleton />
-            ) : (() => {
-              const now = new Date();
-              const EXCLUDED_STATUSES = ['geliefert', 'anwalt', 'teilgeliefert'];
-              const statusFiltered = shipmentOrders.filter(o => {
-                const s = (o.order_status || '').toLowerCase().trim();
-                return !EXCLUDED_STATUSES.includes(s);
-              });
-              const dateFiltered = shipmentFilter === null
-                ? statusFiltered
-                : statusFiltered.filter(o => {
-                    if (!o.expected_shipment_date) return false;
-                    const diff = (new Date(o.expected_shipment_date).getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
-                    return diff <= shipmentFilter;
+                {loading ? (
+                  <TableSkeleton />
+                ) : (() => {
+                  const now = new Date();
+                  const EXCLUDED_STATUSES = ['geliefert', 'anwalt', 'teilgeliefert'];
+                  const statusFiltered = shipmentOrders.filter(o => {
+                    const s = (o.order_status || '').toLowerCase().trim();
+                    return !EXCLUDED_STATUSES.includes(s);
                   });
-              const q = shipmentSearch.trim().toLowerCase();
-              const searched = !q ? dateFiltered : dateFiltered.filter(o => {
-                const name = (o.customers?.company_name || '') + ' ' + (o.customers?.contact_name || '');
-                const addr = o.shipping_address || o.customers?.shipping_address || o.billing_address || o.customers?.billing_address || {};
-                const city = (addr.city || addr.state || '').toString();
-                const items = (o.order_items || []).map(i => `${i.item_name || ''} ${i.sku || ''} ${i.description || ''}`).join(' ');
-                const hay = `${o.order_number || ''} ${name} ${city} ${items}`.toLowerCase();
-                return hay.includes(q);
-              });
-              const filtered = shipmentLimit === null ? searched : searched.slice(0, shipmentLimit);
-              return filtered.length === 0 ? (
-                <EmptyState icon={Package} message="Keine Versanddaten im gewählten Zeitraum." />
-              ) : (
-                <div className="divide-y divide-border">
-                  {filtered.map(order => {
-                    const name = order.customers?.company_name || order.customers?.contact_name || '—';
-                    // Helper: check if address object has meaningful data
-                    const hasAddr = (a: any) => a && (a.address || a.street || a.city || a.zip || a.postal_code);
-                    const addr = (hasAddr(order.shipping_address) ? order.shipping_address : null)
-                      || (hasAddr(order.customers?.shipping_address) ? order.customers?.shipping_address : null)
-                      || (hasAddr(order.billing_address) ? order.billing_address : null)
-                      || (hasAddr(order.customers?.billing_address) ? order.customers?.billing_address : null);
-                    const addrStreet = addr?.street || addr?.address || '';
-                    const addrZip = addr?.zip || addr?.postal_code || addr?.postcode || '';
-                    const addrCity = addr?.city || addr?.state || '';
-                    const addrLine = [addrStreet, addrZip, addrCity].filter(Boolean).join(', ');
-                    return (
-                      <div
-                        key={order.id}
-                        onClick={() => navigate(`/auftraege/${order.id}`)}
-                        className="flex items-center justify-between p-4 hover:bg-secondary/30 transition-colors cursor-pointer"
-                      >
-                        <div>
-                          <p className="text-sm font-medium text-foreground">{name}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            {order.order_number}
-                          </p>
-                          {addrLine && (
-                            <p className="text-xs text-muted-foreground mt-0.5">📍 {addrLine}</p>
-                          )}
-                        </div>
-                        <div className="text-right flex flex-col items-end gap-1">
-                          <span className="text-sm font-medium text-foreground">{formatDate(order.expected_shipment_date)}</span>
-                          <StatusBadge status={order.order_status || 'offen'} />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            })()}
+                  const dateFiltered = shipmentFilter === null
+                    ? statusFiltered
+                    : statusFiltered.filter(o => {
+                        if (!o.expected_shipment_date) return false;
+                        const diff = (new Date(o.expected_shipment_date).getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+                        return diff <= shipmentFilter;
+                      });
+                  const q = shipmentSearch.trim().toLowerCase();
+                  const searched = !q ? dateFiltered : dateFiltered.filter(o => {
+                    const name = (o.customers?.company_name || '') + ' ' + (o.customers?.contact_name || '');
+                    const addr = o.shipping_address || o.customers?.shipping_address || o.billing_address || o.customers?.billing_address || {};
+                    const city = (addr.city || addr.state || '').toString();
+                    const items = (o.order_items || []).map(i => `${i.item_name || ''} ${i.sku || ''} ${i.description || ''}`).join(' ');
+                    const hay = `${o.order_number || ''} ${name} ${city} ${items}`.toLowerCase();
+                    return hay.includes(q);
+                  });
+                  const filtered = shipmentLimit === null ? searched : searched.slice(0, shipmentLimit);
+                  return filtered.length === 0 ? (
+                    <EmptyState icon={Package} message="Keine Versanddaten im gewählten Zeitraum." />
+                  ) : (
+                    <div className="divide-y divide-border border-t border-border">
+                      {filtered.map(order => {
+                        const name = order.customers?.company_name || order.customers?.contact_name || '—';
+                        const hasAddr = (a: any) => a && (a.address || a.street || a.city || a.zip || a.postal_code);
+                        const addr = (hasAddr(order.shipping_address) ? order.shipping_address : null)
+                          || (hasAddr(order.customers?.shipping_address) ? order.customers?.shipping_address : null)
+                          || (hasAddr(order.billing_address) ? order.billing_address : null)
+                          || (hasAddr(order.customers?.billing_address) ? order.customers?.billing_address : null);
+                        const addrStreet = addr?.street || addr?.address || '';
+                        const addrZip = addr?.zip || addr?.postal_code || addr?.postcode || '';
+                        const addrCity = addr?.city || addr?.state || '';
+                        const addrLine = [addrStreet, addrZip, addrCity].filter(Boolean).join(', ');
+                        return (
+                          <div
+                            key={order.id}
+                            onClick={() => navigate(`/auftraege/${order.id}`)}
+                            className="flex items-center justify-between p-4 hover:bg-secondary/30 transition-colors cursor-pointer"
+                          >
+                            <div>
+                              <p className="text-sm font-medium text-foreground">{name}</p>
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                {order.order_number}
+                              </p>
+                              {addrLine && (
+                                <p className="text-xs text-muted-foreground mt-0.5">📍 {addrLine}</p>
+                              )}
+                            </div>
+                            <div className="text-right flex flex-col items-end gap-1">
+                              <span className="text-sm font-medium text-foreground">{formatDate(order.expected_shipment_date)}</span>
+                              <StatusBadge status={order.order_status || 'offen'} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+              </>
+            )}
           </div>
         )}
 
