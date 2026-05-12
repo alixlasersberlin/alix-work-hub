@@ -9,6 +9,9 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { toast } from 'sonner';
 import OrderEditDialog from '@/components/OrderEditDialog';
 import OrderDeferDialog from '@/components/OrderDeferDialog';
+import { ViewToggle } from '@/components/ViewToggle';
+import { useViewMode } from '@/hooks/useViewMode';
+import { OrderCard, OrderCardGrid } from '@/components/OrderCard';
 
 const DEFER_STATUS = 'zurückgestellt';
 
@@ -23,6 +26,7 @@ export default function OrdersInClarification() {
   const navigate = useNavigate();
   const { isAdmin, hasRole } = useAuth();
   const canWrite = isAdmin || hasRole('Auftragsverwaltung');
+  const [viewMode, setViewMode] = useViewMode();
 
   async function load() {
     setLoading(true);
@@ -109,10 +113,44 @@ export default function OrdersInClarification() {
             className="pl-10 bg-secondary border-border"
           />
         </div>
+        <div className="ml-auto"><ViewToggle value={viewMode} onChange={setViewMode} /></div>
       </div>
 
       {error && <div className="p-4 rounded-lg bg-destructive/10 text-destructive text-sm mb-4">{error}</div>}
 
+      {viewMode === 'cards' ? (
+        loading ? (
+          <div className="py-12 text-center"><Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" /></div>
+        ) : filtered.length === 0 ? (
+          <div className="py-12 text-center">
+            <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
+            <p className="text-muted-foreground">Keine zurückgestellten Aufträge.</p>
+          </div>
+        ) : (
+          <OrderCardGrid>
+            {filtered.map(o => (
+              <OrderCard
+                key={o.id}
+                order={{ ...o, order_status: o.order_status || DEFER_STATUS }}
+                onClick={() => navigate(`/auftraege/${o.id}`)}
+                footer={canWrite ? (
+                  <div className="flex items-center gap-1 flex-wrap" onClick={e => e.stopPropagation()}>
+                    <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => reactivate(o)} disabled={reactivating === o.id}>
+                      {reactivating === o.id ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <RotateCcw className="w-3 h-3 mr-1" />} Aktivieren
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setDeferOrder(o)}>
+                      <CalendarClock className="w-3 h-3 mr-1" /> Datum
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setEditOrder(o)}>
+                      <Pencil className="w-3 h-3 mr-1" /> Ändern
+                    </Button>
+                  </div>
+                ) : undefined}
+              />
+            ))}
+          </OrderCardGrid>
+        )
+      ) : (
       <div className="rounded-xl border border-border bg-card card-glow overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -206,6 +244,7 @@ export default function OrdersInClarification() {
           </table>
         </div>
       </div>
+      )}
 
       {editOrder && (
         <OrderEditDialog order={editOrder} open onClose={() => setEditOrder(null)} onSaved={load} />
