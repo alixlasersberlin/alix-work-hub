@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
+import { supabase } from '@/integrations/supabase/client';
 import {
   LayoutDashboard, ClipboardList, MapPin, Banknote, Users, LogOut, Shield, Menu, X, ChevronLeft, Building2, Cloud, Server, ListOrdered, Sun, Moon, Gavel, Truck, PackageCheck, BarChart3, Factory, ShoppingCart, ChevronDown, TrendingUp, Workflow, AlertTriangle, Calendar, FileText, Warehouse, Settings, Package, FilePlus
 } from 'lucide-react';
@@ -93,11 +94,49 @@ export default function AppLayout() {
   // Mobile: Drawer offen?
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const [lagerCounts, setLagerCounts] = useState<Record<string, number>>({});
 
   // Drawer schließen, wenn die Route wechselt
   useEffect(() => {
     setMobileOpen(false);
   }, [location.pathname]);
+
+  // Geräte-Anzahlen für Lagerbestand-Untermenüs laden
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const { data, error } = await supabase
+        .from('lager_devices')
+        .select('notes');
+      if (cancelled || error || !data) return;
+      const getStatus = (n: string | null | undefined) => {
+        const m = /\[Status:\s*([^\]]+)\]/.exec(n ?? '');
+        return (m?.[1] ?? '').trim();
+      };
+      const isLeih = (n: string | null | undefined) =>
+        (n ?? '').includes('[Typ: Leihgerät]') || (n ?? '').includes('[Leihgerät]');
+      let leih = 0, lager = 0, transfer = 0, produktion = 0;
+      for (const d of data as { notes: string | null }[]) {
+        const s = getStatus(d.notes);
+        if (s === 'Transfer') { transfer++; continue; }
+        if (s === 'Produktion') { produktion++; continue; }
+        if (isLeih(d.notes)) leih++; else lager++;
+      }
+      setLagerCounts({
+        '/lager/leihgeraete': leih,
+        '/lager/lagergeraete': lager,
+        '/lager/equipment-area/unterwegs': transfer,
+        '/lager/equipment-area/produktion': produktion,
+        '/lager/equipment-area': lager + transfer + produktion,
+      });
+    };
+    load();
+  }, [location.pathname]);
+
+  const labelWithCount = (path: string, label: string) => {
+    const c = lagerCounts[path];
+    return c === undefined ? label : `${label} (${c})`;
+  };
 
   // Body-Scroll sperren, wenn Drawer offen
   useEffect(() => {
@@ -229,7 +268,7 @@ export default function AppLayout() {
                                 )}
                               >
                                 <child.icon className={cn("w-[18px] h-[18px] flex-shrink-0", (cActive || cGroupActive) && "text-primary")} />
-                                <span className="truncate flex-1 text-left">{child.label}</span>
+                                <span className="truncate flex-1 text-left">{labelWithCount(child.path, child.label)}</span>
                                 <ChevronDown className={cn("w-4 h-4 transition-transform", cIsOpen && "rotate-180")} />
                               </button>
                               {cIsOpen && (
@@ -248,7 +287,7 @@ export default function AppLayout() {
                                         )}
                                       >
                                         <grand.icon className={cn("w-[18px] h-[18px] flex-shrink-0", gActive && "text-primary")} />
-                                        <span className="truncate">{grand.label}</span>
+                                        <span className="truncate">{labelWithCount(grand.path, grand.label)}</span>
                                       </Link>
                                     );
                                   })}
@@ -270,7 +309,7 @@ export default function AppLayout() {
                             )}
                           >
                             <child.icon className={cn("w-[18px] h-[18px] flex-shrink-0", cActive && "text-primary")} />
-                            <span className="truncate">{child.label}</span>
+                            <span className="truncate">{labelWithCount(child.path, child.label)}</span>
                           </Link>
                         );
                       })}
