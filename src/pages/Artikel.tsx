@@ -362,7 +362,8 @@ export default function Artikel() {
                       </Button>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
