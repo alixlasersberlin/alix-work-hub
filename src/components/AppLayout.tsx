@@ -232,8 +232,12 @@ export default function AppLayout() {
 
             if (hasChildren) {
               const isNavigableParent = item.path === '/lager';
-              return (
+              const isLager = item.path === '/lager';
+              const rowContent = (
                 <div key={item.path}>
+                  <HoverCard openDelay={150} closeDelay={100}>
+                    <HoverCardTrigger asChild>
+                      <div>
                   <div
                     className={cn(
                       "w-full flex items-center gap-2.5 rounded-lg text-[13px] font-medium transition-all duration-150",
