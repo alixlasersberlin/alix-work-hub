@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
   const folderPath = `${dateStr.slice(0, 10)}/backup-${dateStr}-${backupId.slice(0, 8)}`;
   const manifestPath = `${folderPath}/manifest.json`;
 
-  await adminClient.from("backups_metadata").insert({
+  const { error: insErr } = await adminClient.from("backups_metadata").insert({
     id: backupId,
     backup_type: source === "cron" ? "automated" : "manual",
     backup_scope: scope,
@@ -115,6 +115,10 @@ Deno.serve(async (req) => {
       ? "Automatisches wöchentliches Backup gestartet"
       : "Manuelles Backup gestartet",
   });
+  if (insErr) {
+    console.error("backups_metadata insert failed:", insErr);
+    return json({ success: false, error: `Metadata-Insert: ${insErr.message}` }, 500);
+  }
 
   try {
     const counts: Record<string, number> = {};
