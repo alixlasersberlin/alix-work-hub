@@ -9,6 +9,9 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { toast } from 'sonner';
 import OrderEditDialog from '@/components/OrderEditDialog';
 import OrderDeferDialog from '@/components/OrderDeferDialog';
+import { ViewToggle } from '@/components/ViewToggle';
+import { useViewMode } from '@/hooks/useViewMode';
+import { OrderCard, OrderCardGrid } from '@/components/OrderCard';
 
 const DEFER_STATUS = 'zurückgestellt';
 
@@ -23,6 +26,7 @@ export default function OrdersInClarification() {
   const navigate = useNavigate();
   const { isAdmin, hasRole } = useAuth();
   const canWrite = isAdmin || hasRole('Auftragsverwaltung');
+  const [viewMode, setViewMode] = useViewMode();
 
   async function load() {
     setLoading(true);
