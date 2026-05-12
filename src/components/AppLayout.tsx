@@ -72,7 +72,6 @@ const navItems: NavItem[] = [
   {
     path: '/workflow', label: 'WORKFLOW', icon: Workflow, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Read Only Audit'],
     children: [
-      { path: '/geraetetypen', label: 'Gerätetypen', icon: BarChart3, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance'] },
       { path: '/import', label: 'Import', icon: Cloud, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Read Only Audit'] },
       { path: '/system', label: 'Monitoring', icon: Server, roles: ['Admin', 'Super Admin', 'Read Only Audit'] },
     ],
