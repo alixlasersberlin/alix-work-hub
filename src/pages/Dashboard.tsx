@@ -422,16 +422,24 @@ export default function Dashboard() {
         {/* Route Plans */}
         {canSeeRoutes && (
           <div className="rounded-xl border border-border bg-card card-glow">
-            <div className="flex items-center gap-2 p-5 border-b border-border">
-              <CalendarDays className="w-4 h-4 text-[hsl(var(--success))]" />
-              <h2 className="font-display font-semibold text-foreground">Tourenübersicht</h2>
-            </div>
-            {loading ? (
+            <button
+              type="button"
+              onClick={() => toggle('routes')}
+              className="w-full flex items-center justify-between gap-2 p-5 hover:bg-secondary/30 transition-colors"
+              aria-expanded={!collapsed.routes}
+            >
+              <div className="flex items-center gap-2">
+                <CalendarDays className="w-4 h-4 text-[hsl(var(--success))]" />
+                <h2 className="font-display font-semibold text-foreground">Tourenübersicht</h2>
+              </div>
+              <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${collapsed.routes ? '' : 'rotate-180'}`} />
+            </button>
+            {!collapsed.routes && (loading ? (
               <TableSkeleton />
             ) : routePlans.length === 0 ? (
               <EmptyState icon={MapPin} message="Keine offenen Touren vorhanden." />
             ) : (
-              <div className="divide-y divide-border">
+              <div className="divide-y divide-border border-t border-border">
                 {routePlans.map(route => (
                   <div key={route.id} className="flex items-center justify-between p-4 hover:bg-secondary/30 transition-colors">
                     <div>
@@ -449,7 +457,7 @@ export default function Dashboard() {
                   </div>
                 ))}
               </div>
-            )}
+            ))}
           </div>
         )}
 
