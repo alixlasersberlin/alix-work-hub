@@ -217,6 +217,7 @@ export default function Orders() {
             })()}
             {canWrite && (
               <div className="flex items-center gap-2 ml-auto">
+                <ViewToggle value={viewMode} onChange={setViewMode} />
                 <Button
                   variant={selectionMode ? 'default' : 'outline'}
                   size="sm"
@@ -239,6 +240,11 @@ export default function Orders() {
                     Verschieben ({selectedIds.size})
                   </Button>
                 )}
+              </div>
+            )}
+            {!canWrite && (
+              <div className="ml-auto">
+                <ViewToggle value={viewMode} onChange={setViewMode} />
               </div>
             )}
           </div>
