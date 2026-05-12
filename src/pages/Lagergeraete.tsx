@@ -127,6 +127,7 @@ export default function Lagergeraete({
   const [originalReservedOrderId, setOriginalReservedOrderId] = useState<string | null>(null);
   const [reservationWeek, setReservationWeek] = useState<string>('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [selectionMode, setSelectionMode] = useState(false);
   const [bulkStatus, setBulkStatus] = useState<DeviceStatus>('Bestand');
   const [bulkApplying, setBulkApplying] = useState(false);
 
