@@ -86,7 +86,7 @@ function getDeviceTypeFromNotes(notes: string | null | undefined): DeviceTypeFil
     : 'Neugerät';
 }
 
-const DEVICE_STATUS_OPTIONS = ['Bestand', 'Produktion', 'Shell Warehouse', 'Sperre BOSS'] as const;
+const DEVICE_STATUS_OPTIONS = ['Bestand', 'Produktion', 'Shell Warehouse', 'Sperre BOSS', 'Transfer'] as const;
 type DeviceStatus = typeof DEVICE_STATUS_OPTIONS[number];
 
 function getStatusFromNotes(notes: string | null | undefined): DeviceStatus {
