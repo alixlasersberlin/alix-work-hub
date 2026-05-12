@@ -4,7 +4,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Shield, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import alixLogo from '@/assets/alix-logo-gold.png';
 
 export default function Login() {
   const { signIn } = useAuth();
@@ -34,10 +35,7 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md animate-fade-in">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl gold-gradient mb-4">
-            <Shield className="w-8 h-8 text-primary-foreground" />
-          </div>
-          <h1 className="text-3xl font-display font-bold gold-text">Alix Work</h1>
+          <img src={alixLogo} alt="Alix Lasers" className="h-16 w-auto mx-auto mb-4 object-contain" />
           <p className="text-muted-foreground mt-2 text-sm">Enterprise Management Platform</p>
         </div>
 
