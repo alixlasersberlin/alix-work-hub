@@ -404,7 +404,7 @@ export default function ProductionPortal() {
           <p>{t.noOrders}</p>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className={cn(viewMode === 'cards' ? 'grid grid-cols-1 lg:grid-cols-2 gap-4' : 'flex flex-col gap-2')}>
           {filtered.map(row => {
             const ps = row.payment_status || 'Nein';
             const due = dueLabel(row.liefertermin);
