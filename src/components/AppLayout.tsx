@@ -123,6 +123,7 @@ export default function AppLayout() {
         if (isLeih(d.notes)) leih++; else lager++;
       }
       setLagerCounts({
+        '/lager': leih + lager + transfer + produktion,
         '/lager/leihgeraete': leih,
         '/lager/lagergeraete': lager,
         '/lager/equipment-area/unterwegs': transfer,
