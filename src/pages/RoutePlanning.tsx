@@ -41,6 +41,7 @@ export default function RoutePlanning() {
   const [sortField, setSortField] = useState<SortField>('planned_date');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [view, setView] = useState<'list' | 'calendar'>('list');
+  const [viewMode, setViewMode] = useViewMode();
 
   useEffect(() => {
     loadPlans();
