@@ -49,14 +49,9 @@ const navItems: NavItem[] = [
     children: [
       { path: '/lager/leihgeraete', label: 'Leihgeräte', icon: PackageCheck, roles: ['Admin', 'Super Admin'] },
       {
-        path: '/lager/warehouse', label: 'Warehouse', icon: Warehouse, roles: ['Admin', 'Super Admin'],
-        children: [
-          { path: '/lager/lagergeraete', label: 'Lagergeräte', icon: Warehouse, roles: ['Admin', 'Super Admin'] },
-        ],
-      },
-      {
         path: '/lager/equipment-area', label: 'Geräte Pool', icon: Package, roles: ['Admin', 'Super Admin'],
         children: [
+          { path: '/lager/lagergeraete', label: 'Lagergeräte', icon: Warehouse, roles: ['Admin', 'Super Admin'] },
           { path: '/lager/equipment-area/unterwegs', label: 'Unterwegs', icon: Truck, roles: ['Admin', 'Super Admin'] },
           { path: '/lager/equipment-area/produktion', label: 'Produktion', icon: Factory, roles: ['Admin', 'Super Admin'] },
           { path: '/lager/equipment-area/hold', label: 'Hold', icon: AlertTriangle, roles: ['Admin', 'Super Admin'] },
@@ -132,12 +127,11 @@ export default function AppLayout() {
       setLagerCounts({
         '/lager': leih + lager + transfer + produktion + hold,
         '/lager/leihgeraete': leih,
-        '/lager/warehouse': lager,
         '/lager/lagergeraete': lager,
         '/lager/equipment-area/unterwegs': transfer,
         '/lager/equipment-area/produktion': produktion,
         '/lager/equipment-area/hold': hold,
-        '/lager/equipment-area': transfer + produktion + hold,
+        '/lager/equipment-area': lager + transfer + produktion + hold,
       });
     };
     load();
