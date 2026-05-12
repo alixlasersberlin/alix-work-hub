@@ -235,11 +235,10 @@ export default function AppLayout() {
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
-      const today = new Date().toISOString().slice(0, 10);
       const { count } = await supabase
         .from('route_plans')
         .select('*', { count: 'exact', head: true })
-        .gte('planned_date', today);
+        .eq('planning_status', 'offen');
       if (cancelled) return;
       setLagerCounts((prev) => ({ ...prev, '/tourenplanung': count ?? 0 }));
     };
