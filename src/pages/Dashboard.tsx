@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import {
   ClipboardList, Users, MapPin, Banknote, AlertCircle,
-  Clock, TrendingUp, FileText, CalendarDays, CircleDot, Inbox, Package
+  Clock, TrendingUp, FileText, CalendarDays, CircleDot, Inbox, Package, ChevronDown
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
