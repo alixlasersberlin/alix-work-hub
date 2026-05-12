@@ -355,8 +355,8 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
             })}
           </div>
 
-          {/* Desktop: Tabelle */}
-          <Card className="hidden lg:block p-0 overflow-hidden">
+          {/* Desktop: Tabelle (nur in Zeilen-Modus) */}
+          <Card className={cn('p-0 overflow-hidden', viewMode === 'cards' ? 'hidden' : 'hidden lg:block')}>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-muted/40 border-b border-border">
