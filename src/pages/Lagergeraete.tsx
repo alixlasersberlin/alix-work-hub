@@ -302,6 +302,7 @@ export default function Lagergeraete({
     setSerial('');
     setModelName('');
     setDeviceType(filterType ?? 'Neugerät');
+    setDeviceStatus('Bestand');
     setEntryDate(today);
     setNotes('');
     setReservedOrderId(null);
