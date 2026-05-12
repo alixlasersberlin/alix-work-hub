@@ -40,6 +40,7 @@ import { toast } from 'sonner';
 import { ALIX_MODEL_GROUPS } from '@/lib/alix-models';
 import OrderPickerDialog from '@/components/OrderPickerDialog';
 import { useAuth } from '@/hooks/useAuth';
+import { StatusBadge } from '@/components/StatusBadge';
 
 type LagerDevice = {
   id: string;
@@ -741,7 +742,7 @@ export default function Lagergeraete({
                 <TableHead>Modell</TableHead>
                 <TableHead>Eingangsdatum</TableHead>
                 <TableHead>Reservierter Auftrag</TableHead>
-                <TableHead>KW Reservierung</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Notizen (intern)</TableHead>
                 <TableHead className="w-24 text-right">Aktionen</TableHead>
               </TableRow>
@@ -771,28 +772,7 @@ export default function Lagergeraete({
                     )}
                   </TableCell>
                   <TableCell>
-                    {d.reserved_order_id && isAdmin ? (
-                      <Input
-                        type="week"
-                        defaultValue={d.reservation_week ?? ''}
-                        className="h-8 w-[160px]"
-                        onBlur={async (e) => {
-                          const val = e.target.value || null;
-                          if (val === (d.reservation_week ?? null)) return;
-                          const { error } = await supabase
-                            .from('lager_devices')
-                            .update({ reservation_week: val })
-                            .eq('id', d.id);
-                          if (error) toast.error('Fehler: ' + error.message);
-                          else {
-                            toast.success('KW aktualisiert');
-                            setDevices((prev) => prev.map((x) => x.id === d.id ? { ...x, reservation_week: val } : x));
-                          }
-                        }}
-                      />
-                    ) : (
-                      <span className="text-muted-foreground">{formatWeek(d.reservation_week)}</span>
-                    )}
+                    <StatusBadge status={getStatusFromNotes(d.notes)} />
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {d.notes ?? '—'}
