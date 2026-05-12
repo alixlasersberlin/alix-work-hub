@@ -46,6 +46,7 @@ import Suppliers from "./pages/Suppliers";
 import Lager from "./pages/Lager";
 import Lagergeraete from "./pages/Lagergeraete";
 import Leihgeraete from "./pages/Leihgeraete";
+import EquipmentArea from "./pages/EquipmentArea";
 import Artikel from "./pages/Artikel";
 import AngebotErstellen from "./pages/AngebotErstellen";
 import { Loader2 } from "lucide-react";
