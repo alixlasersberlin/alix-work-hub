@@ -4,13 +4,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import {
   ClipboardList, Users, MapPin, Banknote, AlertCircle,
-  Clock, TrendingUp, FileText, CalendarDays, CircleDot, Inbox, Package, ChevronDown
+  Clock, TrendingUp, FileText, CalendarDays, CircleDot, Inbox, Package, ChevronDown,
+  Warehouse, PackageCheck
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface Stats {
-  customers: number;
-  orders: number;
+  freePoolDevices: number;
+  leihgeraete: number;
   openOrders: number;
   routes: number;
   openFinance: number;
