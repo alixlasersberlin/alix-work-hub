@@ -343,8 +343,11 @@ export default function Lagergeraete({
     const { data: userData } = await supabase.auth.getUser();
     const finalReservedOrderId = reservedOrderId;
 
-    const cleanedNotes = (parsed.data.notes ?? '').replace(/\s*\[Typ:\s*(Neugerät|Leihgerät)\]\s*/g, ' ').trim();
-    const notesWithType = `[Typ: ${deviceType}]${cleanedNotes ? ' ' + cleanedNotes : ''}`;
+    const cleanedNotes = (parsed.data.notes ?? '')
+      .replace(/\s*\[Typ:\s*(Neugerät|Leihgerät)\]\s*/g, ' ')
+      .replace(/\s*\[Status:\s*[^\]]+\]\s*/g, ' ')
+      .trim();
+    const notesWithType = `[Typ: ${deviceType}] [Status: ${deviceStatus}]${cleanedNotes ? ' ' + cleanedNotes : ''}`;
     const payload = {
       serial_number: parsed.data.serial_number,
       model_name: parsed.data.model_name,
