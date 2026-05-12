@@ -209,6 +209,53 @@ export default function AppLayout() {
                     <div className="mt-0.5 ml-3 pl-3 border-l border-border space-y-0.5">
                       {item.children!.map(child => {
                         const cActive = isActive(child.path);
+                        const cHasChildren = child.children && child.children.length > 0;
+                        const cGroupActive = cHasChildren && child.children!.some(g => isActive(g.path));
+                        const cIsOpen = openGroups[child.path] ?? (cActive || cGroupActive);
+
+                        if (cHasChildren) {
+                          return (
+                            <div key={child.path}>
+                              <button
+                                type="button"
+                                onClick={() => toggleGroup(child.path)}
+                                className={cn(
+                                  "w-full flex items-center gap-2.5 rounded-lg text-[13px] font-medium transition-all duration-150 px-3 py-2.5 md:py-2",
+                                  (cActive || cGroupActive)
+                                    ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
+                                    : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent"
+                                )}
+                              >
+                                <child.icon className={cn("w-[18px] h-[18px] flex-shrink-0", (cActive || cGroupActive) && "text-primary")} />
+                                <span className="truncate flex-1 text-left">{child.label}</span>
+                                <ChevronDown className={cn("w-4 h-4 transition-transform", cIsOpen && "rotate-180")} />
+                              </button>
+                              {cIsOpen && (
+                                <div className="mt-0.5 ml-3 pl-3 border-l border-border space-y-0.5">
+                                  {child.children!.map(grand => {
+                                    const gActive = isActive(grand.path);
+                                    return (
+                                      <Link
+                                        key={grand.path}
+                                        to={grand.path}
+                                        className={cn(
+                                          "flex items-center gap-2.5 rounded-lg text-[13px] font-medium transition-all duration-150 px-3 py-2.5 md:py-2",
+                                          gActive
+                                            ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
+                                            : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent"
+                                        )}
+                                      >
+                                        <grand.icon className={cn("w-[18px] h-[18px] flex-shrink-0", gActive && "text-primary")} />
+                                        <span className="truncate">{grand.label}</span>
+                                      </Link>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        }
+
                         return (
                           <Link
                             key={child.path}
