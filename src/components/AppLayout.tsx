@@ -573,6 +573,26 @@ export default function AppLayout() {
             </Button>
           </div>
         </div>
+        {/* Resize-Handle (nur Desktop, wenn nicht eingeklappt) */}
+        {!collapsed && (
+          <div
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Sidebar-Breite anpassen"
+            onMouseDown={(e) => { e.preventDefault(); setResizing(true); }}
+            onDoubleClick={() => { setSidebarWidth(240); try { localStorage.setItem('sidebar_width', '240'); } catch {} }}
+            title="Ziehen zum Anpassen · Doppelklick: zurücksetzen"
+            className={cn(
+              "hidden md:block absolute top-0 right-0 h-full w-1.5 -mr-[3px] cursor-col-resize z-50 group",
+              resizing ? "bg-primary/40" : "hover:bg-primary/30"
+            )}
+          >
+            <div className={cn(
+              "absolute inset-y-0 right-0 w-px transition-colors",
+              resizing ? "bg-primary" : "bg-transparent group-hover:bg-primary/60"
+            )} />
+          </div>
+        )}
       </aside>
 
       {/* Main Content */}
