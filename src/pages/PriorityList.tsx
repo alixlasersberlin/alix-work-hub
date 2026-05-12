@@ -204,6 +204,7 @@ export default function PriorityList() {
             </Button>
           );
         })()}
+        <div className="ml-auto"><ViewToggle value={viewMode} onChange={setViewMode} /></div>
       </div>
 
       <OrderStatsBar orders={orders} filteredCount={filtered.length} label="Prio-Liste Aufträge" />
