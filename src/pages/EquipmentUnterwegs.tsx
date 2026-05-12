@@ -79,7 +79,7 @@ export default function EquipmentUnterwegs() {
       <PageHeader
         icon={<Truck className="w-6 h-6 text-primary" />}
         title="Unterwegs"
-        subtitle="Lagergeräte mit Status „Transfer""
+        subtitle={'Lagergeräte mit Status „Transfer"'}
       />
 
       <div className="flex items-center justify-between gap-3">
