@@ -139,6 +139,7 @@ export default function Lagergeraete({
 
   // Global search across devices and available (unreserved) open orders
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useViewMode();
   type FreeOrder = {
     id: string;
     order_number: string;
