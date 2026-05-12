@@ -82,6 +82,7 @@ interface LagerDevicesPageProps {
   dialogTitle?: string;
   emptyLabel?: string;
   pageIcon?: React.ReactNode;
+  rowAccentClass?: string;
 }
 
 function getDeviceTypeFromNotes(notes: string | null | undefined): DeviceTypeFilter {
