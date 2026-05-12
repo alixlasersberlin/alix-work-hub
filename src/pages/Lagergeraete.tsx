@@ -163,11 +163,11 @@ export default function Lagergeraete({
   );
 
   const typeFilteredDevices = useMemo(() => {
-    // Lagerliste zeigt ausschließlich Geräte mit Status "Bestand"
-    const base = devices.filter((d) => getStatusFromNotes(d.notes) === 'Bestand');
+    const allowed = (filterStatuses ?? ['Bestand']).map((s) => s.toLowerCase());
+    const base = devices.filter((d) => allowed.includes(getStatusFromNotes(d.notes).toLowerCase()));
     if (!filterType) return base;
     return base.filter((d) => getDeviceTypeFromNotes(d.notes) === filterType);
-  }, [devices, filterType]);
+  }, [devices, filterType, filterStatuses]);
 
   const filteredDevices = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
