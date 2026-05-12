@@ -212,6 +212,27 @@ export default function PriorityList() {
       {error && <div className="p-4 rounded-lg bg-destructive/10 text-destructive text-sm mb-4">{error}</div>}
 
       {/* Table */}
+      {viewMode === 'cards' ? (
+        loading ? (
+          <div className="py-12 text-center"><Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" /></div>
+        ) : filtered.length === 0 ? (
+          <div className="py-12 text-center">
+            <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
+            <p className="text-muted-foreground">Keine Aufträge gefunden.</p>
+          </div>
+        ) : (
+          <OrderCardGrid>
+            {paged.map(o => (
+              <OrderCard
+                key={o.id}
+                order={o}
+                onClick={() => navigate(`/auftraege/${o.id}`)}
+                footer={<DrivingTimeCell value={drivingTimes[o.id]} requested={requestedIds.has(o.id)} loading={drivingLoading} />}
+              />
+            ))}
+          </OrderCardGrid>
+        )
+      ) : (
       <div className="rounded-xl border border-border bg-card card-glow overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -285,6 +306,7 @@ export default function PriorityList() {
           </table>
         </div>
       </div>
+      )}
       <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} total={total} />
     </div>
   );
