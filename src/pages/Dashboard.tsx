@@ -246,13 +246,37 @@ export default function Dashboard() {
         {/* Shipment Dates */}
         {canSeeOrders && (
           <div className="rounded-xl border border-border bg-card card-glow">
+            <button
+              type="button"
+              onClick={() => toggle('shipment')}
+              className="w-full flex items-center justify-between gap-2 p-5 border-b border-border hover:bg-secondary/30 transition-colors"
+              aria-expanded={!collapsed.shipment}
+            >
+              <div className="flex items-center gap-2">
+                <Package className="w-4 h-4 text-[hsl(var(--warning))]" />
+                <h2 className="font-display font-semibold text-foreground">Lieferdatum</h2>
+              </div>
+              <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${collapsed.shipment ? '' : 'rotate-180'}`} />
+            </button>
+            {!collapsed.shipment && (
             <div className="p-5 border-b border-border space-y-3">
-              <div className="flex items-center justify-between gap-3 flex-wrap">
-                <div className="flex items-center gap-2">
-                  <Package className="w-4 h-4 text-[hsl(var(--warning))]" />
-                  <h2 className="font-display font-semibold text-foreground">Lieferdatum</h2>
-                </div>
+              <div className="flex items-center justify-end gap-3 flex-wrap">
                 <div className="flex gap-1 flex-wrap">
+                  {[{ label: '7T', value: 7 }, { label: '14T', value: 14 }, { label: '30T', value: 30 }, { label: 'Alle', value: null }].map(opt => (
+                    <button
+                      key={opt.label}
+                      onClick={() => setShipmentFilter(opt.value)}
+                      className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
+                        shipmentFilter === opt.value
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-secondary text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
                   {[{ label: '7T', value: 7 }, { label: '14T', value: 14 }, { label: '30T', value: 30 }, { label: 'Alle', value: null }].map(opt => (
                     <button
                       key={opt.label}
