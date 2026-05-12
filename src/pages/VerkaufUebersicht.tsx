@@ -1,0 +1,134 @@
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { Card } from '@/components/ui/card';
+import { Building2, FileText, ClipboardList, Receipt, Undo2, TrendingUp, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+type Tile = {
+  key: string;
+  label: string;
+  icon: any;
+  to: string;
+  accent: string;
+  load: () => Promise<number | null>;
+};
+
+const TILES: Tile[] = [
+  {
+    key: 'kunden',
+    label: 'Kundenbestand',
+    icon: Building2,
+    to: '/kunden',
+    accent: 'from-blue-500/20 to-blue-500/5 border-blue-500/30',
+    load: async () => {
+      const { count } = await supabase.from('customers').select('*', { count: 'exact', head: true });
+      return count ?? 0;
+    },
+  },
+  {
+    key: 'angebote',
+    label: 'Offene Angebote',
+    icon: FileText,
+    to: '/verkauf/angebote',
+    accent: 'from-amber-500/20 to-amber-500/5 border-amber-500/30',
+    load: async () => null,
+  },
+  {
+    key: 'auftraege',
+    label: 'Aufträge',
+    icon: ClipboardList,
+    to: '/auftraege',
+    accent: 'from-primary/25 to-primary/5 border-primary/40',
+    load: async () => {
+      const { count } = await supabase.from('orders').select('*', { count: 'exact', head: true });
+      return count ?? 0;
+    },
+  },
+  {
+    key: 'anzahlung',
+    label: 'Anzahlungsrechnung offen',
+    icon: Receipt,
+    to: '/verkauf/anzahlungsrechnung',
+    accent: 'from-purple-500/20 to-purple-500/5 border-purple-500/30',
+    load: async () => null,
+  },
+  {
+    key: 'gutschriften',
+    label: 'Gutschriften',
+    icon: Undo2,
+    to: '/verkauf/gutschriften',
+    accent: 'from-rose-500/20 to-rose-500/5 border-rose-500/30',
+    load: async () => null,
+  },
+];
+
+export default function VerkaufUebersicht() {
+  const [counts, setCounts] = useState<Record<string, number | null>>({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      setLoading(true);
+      const entries = await Promise.all(
+        TILES.map(async (t) => {
+          try {
+            const v = await t.load();
+            return [t.key, v] as const;
+          } catch {
+            return [t.key, null] as const;
+          }
+        })
+      );
+      if (!alive) return;
+      setCounts(Object.fromEntries(entries));
+      setLoading(false);
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  return (
+    <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6 animate-fade-in">
+      <div className="flex items-center gap-3">
+        <TrendingUp className="w-6 h-6 text-primary" />
+        <div>
+          <h1 className="text-2xl font-display font-bold gold-text">Verkäufe – Übersicht</h1>
+          <p className="text-sm text-muted-foreground">Schneller Zugriff auf alle Verkaufsbereiche</p>
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {TILES.map((t) => {
+          const Icon = t.icon;
+          const value = counts[t.key];
+          return (
+            <Link key={t.key} to={t.to}>
+              <Card
+                className={cn(
+                  'p-5 h-full bg-gradient-to-br border transition-all duration-200 hover:scale-[1.02] hover:shadow-lg cursor-pointer card-glow',
+                  t.accent
+                )}
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className="p-2.5 rounded-lg bg-background/40 backdrop-blur-sm">
+                    <Icon className="w-5 h-5 text-foreground" />
+                  </div>
+                  {loading ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                  ) : (
+                    <span className="text-3xl font-display font-bold text-foreground tabular-nums">
+                      {value ?? '—'}
+                    </span>
+                  )}
+                </div>
+                <div className="text-sm font-medium text-foreground/90">{t.label}</div>
+                <div className="text-[11px] text-muted-foreground mt-1">Öffnen →</div>
+              </Card>
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
+}

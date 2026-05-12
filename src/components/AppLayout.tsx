@@ -326,7 +326,7 @@ export default function AppLayout() {
             const isCollapsedView = collapsed && !mobileOpen;
 
             if (hasChildren) {
-              const isNavigableParent = item.path === '/lager' || item.path === '/verkauf/artikel-uebersicht';
+              const isNavigableParent = item.path === '/lager' || item.path === '/verkauf/artikel-uebersicht' || item.path === '/verkauf';
               const rowEl = (
                 <div
                   className={cn(
