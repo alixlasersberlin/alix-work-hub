@@ -280,6 +280,7 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
             <span className="text-xs text-muted-foreground">
               {filtered.length} / {rows.length} {t.total}
             </span>
+            <ViewToggle value={viewMode} onChange={setViewMode} />
             <PageSizeSelector value={pageSize} onChange={setPageSize} />
           </div>
         </div>
