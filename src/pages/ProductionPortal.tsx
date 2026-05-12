@@ -386,7 +386,10 @@ export default function ProductionPortal() {
               </button>
             ))}
           </div>
-          <span>{filtered.length} / {rows.length} {t.total}</span>
+          <div className="flex items-center gap-2">
+            <span>{filtered.length} / {rows.length} {t.total}</span>
+            <ViewToggle value={viewMode} onChange={setViewMode} />
+          </div>
         </div>
       </Card>
 
