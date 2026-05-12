@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +8,7 @@ import { Shield, Loader2 } from 'lucide-react';
 
 export default function Login() {
   const { signIn } = useAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -20,7 +22,11 @@ export default function Login() {
     const { error } = await signIn(email, password);
     if (error) {
       setError('Ungültige Anmeldedaten. Bitte versuchen Sie es erneut.');
+      setLoading(false);
+      return;
     }
+    // Nach erfolgreichem Login immer aufs Dashboard
+    navigate('/', { replace: true });
     setLoading(false);
   };
 
