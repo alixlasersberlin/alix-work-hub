@@ -115,7 +115,7 @@ function TableSkeleton({ rows = 3 }: { rows?: number }) {
 export default function Dashboard() {
   const navigate = useNavigate();
   const { profile, roles, hasRole, hasAnyRole, isAdmin } = useAuth();
-  const [stats, setStats] = useState<Stats>({ customers: 0, orders: 0, openOrders: 0, routes: 0, openFinance: 0 });
+  const [stats, setStats] = useState<Stats>({ freePoolDevices: 0, leihgeraete: 0, openOrders: 0, routes: 0, openFinance: 0 });
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [shipmentOrders, setShipmentOrders] = useState<ShipmentOrder[]>([]);
   const [routePlans, setRoutePlans] = useState<RoutePlan[]>([]);
