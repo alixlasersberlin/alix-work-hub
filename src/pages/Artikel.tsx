@@ -49,6 +49,7 @@ export default function Artikel() {
   const [syncing, setSyncing] = useState(false);
   const [query, setQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('__all__');
+  const [statusFilter, setStatusFilter] = useState<string>('__all__');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<ZohoItem | null>(null);
   const [editing, setEditing] = useState(false);
@@ -256,15 +257,22 @@ export default function Artikel() {
     return Array.from(set).sort((a, b) => a.localeCompare(b, 'de'));
   }, [items, allCats]);
 
+  const statuses = useMemo(() => {
+    const set = new Set<string>();
+    items.forEach((i) => { if (i.status) set.add(i.status); });
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'de'));
+  }, [items]);
+
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim();
     return items.filter((i) => {
       if (categoryFilter !== '__all__' && (i.category_name ?? '') !== categoryFilter) return false;
+      if (statusFilter !== '__all__' && (i.status ?? '') !== statusFilter) return false;
       if (!q) return true;
-      return `${i.name ?? ''} ${i.sku ?? ''} ${i.description ?? ''} ${i.category_name ?? ''} ${i.brand ?? ''}`
+      return `${i.name ?? ''} ${i.sku ?? ''} ${i.description ?? ''} ${i.category_name ?? ''} ${i.brand ?? ''} ${i.status ?? ''}`
         .toLowerCase().includes(q);
     });
-  }, [items, query, categoryFilter]);
+  }, [items, query, categoryFilter, statusFilter]);
 
   const { pageSize, setPageSize, page, setPage, totalPages, paged, total } = usePagination(filtered, 20);
 
@@ -379,6 +387,15 @@ export default function Artikel() {
             <SelectContent>
               <SelectItem value="__all__">Alle Kategorien</SelectItem>
               {categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full lg:w-[200px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Alle Status</SelectItem>
+              {statuses.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
             </SelectContent>
           </Select>
           <div className="flex items-center gap-2 ml-auto">
