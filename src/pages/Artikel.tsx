@@ -78,6 +78,45 @@ export default function Artikel() {
   });
   const [massNewCategory, setMassNewCategory] = useState('');
 
+  // Create new article
+  const emptyDraft: Partial<ZohoItem> = {
+    name: '', sku: '', description: '', unit: 'Stk', rate: null, purchase_rate: null,
+    status: 'active', category_name: '', brand: '', manufacturer: '',
+    tax_name: '', tax_percentage: null, stock_on_hand: null, available_stock: null,
+    product_type: 'goods', item_type: 'inventory',
+  };
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createDraft, setCreateDraft] = useState<Partial<ZohoItem>>(emptyDraft);
+  const [creating, setCreating] = useState(false);
+
+  async function createItem() {
+    if (!createDraft.name || !createDraft.name.trim()) {
+      toast({ title: 'Name erforderlich', description: 'Bitte einen Namen eingeben.', variant: 'destructive' });
+      return;
+    }
+    setCreating(true);
+    const payload: any = {
+      ...createDraft,
+      name: createDraft.name?.trim(),
+      sku: createDraft.sku?.trim() || null,
+      source_system: 'manual',
+      zoho_item_id: `local-${(globalThis.crypto?.randomUUID?.() ?? Date.now().toString())}`,
+      currency_code: 'EUR',
+      synced_at: new Date().toISOString(),
+    };
+    Object.keys(payload).forEach((k) => { if (payload[k] === '') payload[k] = null; });
+    const { data, error } = await supabase.from('zoho_items').insert(payload).select().single();
+    setCreating(false);
+    if (error) {
+      toast({ title: 'Anlegen fehlgeschlagen', description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: 'Artikel angelegt', description: (data as ZohoItem).name ?? '' });
+    setItems((prev) => [data as ZohoItem, ...prev]);
+    setCreateOpen(false);
+    setCreateDraft(emptyDraft);
+  }
+
   async function applyMassEdit() {
     const itemIds = Array.from(selectedIds);
     if (itemIds.length === 0) return;
