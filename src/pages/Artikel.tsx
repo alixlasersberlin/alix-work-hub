@@ -310,9 +310,13 @@ export default function Artikel() {
           </Button>
           <Button variant="outline" onClick={downloadPdf} disabled={selectedIds.size === 0}>
             <Download className="w-4 h-4 mr-2" /> PDF ({selectedIds.size})
+          </Button>
           <Button variant="outline" onClick={openBulkDialog} disabled={selectedIds.size === 0}>
             <FolderTree className="w-4 h-4 mr-2" /> Kategorien ({selectedIds.size})
           </Button>
+          <Button onClick={syncAll} disabled={syncing} className="gold-gradient text-primary-foreground">
+            {syncing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+            Aus Zoho synchronisieren
           </Button>
         </div>
       </div>
