@@ -20,6 +20,7 @@ import { DrivingTimeCell } from '@/components/DrivingTimeCell';
 import { ViewToggle } from '@/components/ViewToggle';
 import { useViewMode } from '@/hooks/useViewMode';
 import { OrderCard, OrderCardGrid } from '@/components/OrderCard';
+import { ALIX_MODEL_GROUPS } from '@/lib/alix-models';
 
 type SortField = 'order_number' | 'order_date' | 'total_amount' | 'created_at';
 type SortDir = 'asc' | 'desc';
@@ -29,6 +30,7 @@ export default function Orders() {
   const [orders, setOrders] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [modelFilter, setModelFilter] = useState('all');
   const [sortField, setSortField] = useState<SortField>('order_date');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [loading, setLoading] = useState(true);
@@ -115,14 +117,20 @@ export default function Orders() {
       resolveCity(o)?.toLowerCase().includes(q) ||
       modelMatch;
     const matchStatus = statusFilter === 'all' || o.order_status === statusFilter;
+    const matchModel = modelFilter === 'all' || o.order_items?.some((it: any) => {
+      const m = modelFilter.toLowerCase();
+      return it.item_name?.toLowerCase().includes(m) ||
+        it.description?.toLowerCase().includes(m) ||
+        it.sku?.toLowerCase().includes(m);
+    });
     const notExcluded = !EXCLUDED_STATUSES.includes((o.order_status || '').toLowerCase());
-    return matchSearch && matchStatus && notExcluded;
+    return matchSearch && matchStatus && matchModel && notExcluded;
   });
 
   const totalPages = pageSize === 'all' ? 1 : Math.ceil(filtered.length / pageSize);
   const paged = pageSize === 'all' ? filtered : filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
-  useEffect(() => { setCurrentPage(1); }, [search, statusFilter, pageSize]);
+  useEffect(() => { setCurrentPage(1); }, [search, statusFilter, modelFilter, pageSize]);
 
   // Only fetch driving times for currently visible (paged) orders to avoid edge function timeout
   useEffect(() => {
@@ -185,6 +193,22 @@ export default function Orders() {
               <SelectContent>
                 <SelectItem value="all">Alle Status</SelectItem>
                 {statuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={modelFilter} onValueChange={setModelFilter}>
+              <SelectTrigger className="w-56 bg-secondary border-border">
+                <SelectValue placeholder="Gerät filtern" />
+              </SelectTrigger>
+              <SelectContent className="max-h-80">
+                <SelectItem value="all">Alle Geräte</SelectItem>
+                {ALIX_MODEL_GROUPS.map(group => (
+                  <div key={group.label}>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">{group.label}</div>
+                    {group.models.map(m => (
+                      <SelectItem key={m} value={m}>{m}</SelectItem>
+                    ))}
+                  </div>
+                ))}
               </SelectContent>
             </Select>
             <Select value={String(pageSize)} onValueChange={v => setPageSize(v === 'all' ? 'all' : Number(v) as 20 | 30 | 50)}>
