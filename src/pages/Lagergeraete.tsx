@@ -314,32 +314,32 @@ export default function Lagergeraete({
     loadDevices();
   }, []);
 
-  const [extraModelGroups, setExtraModelGroups] = useState<{ label: string; models: string[] }[]>([]);
+  type ModelOption = { name: string; sku?: string | null };
+  const [extraModelGroups, setExtraModelGroups] = useState<{ label: string; models: ModelOption[] }[]>([]);
 
   useEffect(() => {
     (async () => {
       const knownModels = new Set<string>();
       ALIX_MODEL_GROUPS.forEach((g) => g.models.forEach((m) => knownModels.add(m.toLowerCase())));
 
-      // Load all zoho items (Alix Lasers, Alix Beauty + others)
       const { data: items } = await supabase
         .from('zoho_items')
-        .select('name, category_name, brand, manufacturer')
+        .select('name, sku, category_name, brand, manufacturer')
         .order('name', { ascending: true })
         .limit(2000);
 
-      // Load distinct model names from lager_devices (internal/manual entries)
       const { data: existing } = await supabase
         .from('lager_devices')
         .select('model_name')
         .limit(2000);
 
-      const byCategory = new Map<string, Set<string>>();
-      const addTo = (cat: string, name: string) => {
-        const key = (name ?? '').trim();
+      const byCategory = new Map<string, Map<string, ModelOption>>();
+      const addTo = (cat: string, opt: ModelOption) => {
+        const key = (opt.name ?? '').trim();
         if (!key) return;
-        if (!byCategory.has(cat)) byCategory.set(cat, new Set());
-        byCategory.get(cat)!.add(key);
+        if (!byCategory.has(cat)) byCategory.set(cat, new Map());
+        const map = byCategory.get(cat)!;
+        if (!map.has(key.toLowerCase())) map.set(key.toLowerCase(), { name: key, sku: opt.sku ?? null });
       };
 
       (items ?? []).forEach((it: any) => {
@@ -347,22 +347,23 @@ export default function Lagergeraete({
         if (!name) return;
         const cat = (it.category_name || it.brand || it.manufacturer || 'Weitere Artikel').toString();
         const isAlixLasers = /alix\s*lasers?/i.test(cat);
-        // Always include Alix Lasers category items (per request); for others skip duplicates of static groups
         if (!isAlixLasers && knownModels.has(name.toLowerCase())) return;
-        addTo(isAlixLasers ? 'Alix Lasers (Artikel)' : cat, name);
+        addTo(isAlixLasers ? 'Alix Lasers (Artikel)' : cat, { name, sku: it.sku });
       });
 
-      const internal = new Set<string>();
+      const internal = new Map<string, ModelOption>();
       (existing ?? []).forEach((d: any) => {
         const n = (d.model_name ?? '').trim();
-        if (n && !knownModels.has(n.toLowerCase())) internal.add(n);
+        if (n && !knownModels.has(n.toLowerCase())) internal.set(n.toLowerCase(), { name: n });
       });
-      // Remove internal ones already covered by zoho category groups
-      byCategory.forEach((set) => set.forEach((n) => internal.delete(n)));
+      byCategory.forEach((m) => m.forEach((_, k) => internal.delete(k)));
       if (internal.size > 0) byCategory.set('Interne Modelle', internal);
 
       const groups = Array.from(byCategory.entries())
-        .map(([label, set]) => ({ label, models: Array.from(set).sort((a, b) => a.localeCompare(b)) }))
+        .map(([label, map]) => ({
+          label,
+          models: Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name)),
+        }))
         .sort((a, b) => {
           if (a.label === 'Interne Modelle') return 1;
           if (b.label === 'Interne Modelle') return -1;
