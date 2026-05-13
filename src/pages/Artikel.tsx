@@ -45,6 +45,7 @@ const fmtMoney = (n: number | null, cur: string | null) =>
 export default function Artikel() {
   const { toast } = useToast();
   const [items, setItems] = useState<ZohoItem[]>([]);
+  const [alixLasersItems, setAlixLasersItems] = useState<{ id: string; name: string | null; sku: string | null }[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [query, setQuery] = useState('');
@@ -218,7 +219,21 @@ export default function Artikel() {
     setLoading(false);
   }
 
-  useEffect(() => { load(); loadCategoryData(); }, []);
+  async function loadAlixLasers() {
+    const { data, error } = await supabase
+      .from('zoho_items')
+      .select('id,name,sku,category_name')
+      .ilike('category_name', '%alix lasers%')
+      .order('name', { ascending: true })
+      .limit(5000);
+    if (error) {
+      console.error('loadAlixLasers', error);
+      return;
+    }
+    setAlixLasersItems((data ?? []) as any);
+  }
+
+  useEffect(() => { load(); loadCategoryData(); loadAlixLasers(); }, []);
 
   async function syncAll() {
     setSyncing(true);
@@ -395,14 +410,11 @@ export default function Artikel() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="__placeholder__" disabled>Alix Lasers Gerät wählen…</SelectItem>
-              {items
-                .filter((i) => (i.category_name ?? '').toLowerCase() === 'alix lasers')
-                .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'de'))
-                .map((i) => (
-                  <SelectItem key={i.id} value={i.name ?? i.sku ?? i.id}>
-                    {i.name ?? i.sku ?? '—'}
-                  </SelectItem>
-                ))}
+              {alixLasersItems.map((i) => (
+                <SelectItem key={i.id} value={i.name ?? i.sku ?? i.id}>
+                  {i.name ?? i.sku ?? '—'}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
