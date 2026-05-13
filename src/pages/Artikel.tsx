@@ -337,7 +337,8 @@ export default function Artikel() {
 
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-[1600px] mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-display font-bold gold-text flex items-center gap-2">
             <Package className="w-6 h-6" /> Artikel
@@ -346,28 +347,11 @@ export default function Artikel() {
             Artikel-Stammdaten aus Zoho Books{lastSync ? ` · zuletzt synchronisiert: ${lastSync}` : ''}
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={downloadCsv} disabled={selectedIds.size === 0}>
-            <FileSpreadsheet className="w-4 h-4 mr-2" /> CSV ({selectedIds.size})
-          </Button>
-          <Button variant="outline" onClick={downloadPdf} disabled={selectedIds.size === 0}>
-            <Download className="w-4 h-4 mr-2" /> PDF ({selectedIds.size})
-          </Button>
-          <Button variant="outline" onClick={openBulkDialog} disabled={selectedIds.size === 0}>
-            <FolderTree className="w-4 h-4 mr-2" /> Kategorien ({selectedIds.size})
-          </Button>
-          <Button variant="outline" onClick={() => {
-            if (selectedIds.size === 0) {
-              toast({ title: 'Keine Auswahl', description: 'Bitte Artikel markieren.', variant: 'destructive' });
-              return;
-            }
-            setMassFields({ category_name: false, brand: false, manufacturer: false, status: false, unit: false });
-            setMassValues({ category_name: '', brand: '', manufacturer: '', status: 'active', unit: '' });
-            setMassNewCategory('');
-            setMassOpen(true);
-          }} disabled={selectedIds.size === 0}>
-            <Pencil className="w-4 h-4 mr-2" /> Massenänderung ({selectedIds.size})
-          </Button>
+        <div className="flex items-center gap-3">
+          <div className="text-right hidden sm:block">
+            <div className="text-2xl font-semibold gold-text leading-none">{items.length.toLocaleString('de-DE')}</div>
+            <div className="text-[11px] uppercase text-muted-foreground tracking-wider">Artikel gesamt</div>
+          </div>
           <Button onClick={syncAll} disabled={syncing} className="gold-gradient text-primary-foreground">
             {syncing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
             Aus Zoho synchronisieren
@@ -375,9 +359,10 @@ export default function Artikel() {
         </div>
       </div>
 
+      {/* Filterleiste */}
       <Card className="p-3">
-        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
-          <div className="relative flex-1 min-w-[200px]">
+        <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center">
+          <div className="relative flex-1 min-w-[220px]">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Suche nach Name, SKU, Beschreibung, Kategorie, Marke..."
@@ -387,7 +372,7 @@ export default function Artikel() {
             />
           </div>
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-full sm:w-[220px]">
+            <SelectTrigger className="w-full lg:w-[240px]">
               <SelectValue placeholder="Kategorie" />
             </SelectTrigger>
             <SelectContent>
@@ -395,14 +380,57 @@ export default function Artikel() {
               {categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
             </SelectContent>
           </Select>
-          <div className="flex gap-2 flex-wrap items-center">
-            <Button variant="outline" size="sm" onClick={selectAllFiltered}>Alle (gefiltert)</Button>
-            <Button variant="ghost" size="sm" onClick={clearSelection} disabled={selectedIds.size === 0}>Auswahl leeren</Button>
-            <Badge variant="secondary">{selectedIds.size} markiert</Badge>
+          <div className="flex items-center gap-2 ml-auto">
+            <Badge variant="outline" className="font-normal">
+              {filtered.length.toLocaleString('de-DE')} Treffer
+            </Badge>
+            <PageSizeSelector value={pageSize} onChange={setPageSize} />
           </div>
-          <PageSizeSelector value={pageSize} onChange={setPageSize} />
         </div>
       </Card>
+
+      {/* Aktionsleiste – nur sichtbar wenn Auswahl aktiv */}
+      {selectedIds.size > 0 ? (
+        <Card className="p-3 border-primary/40 bg-primary/5">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Badge className="gold-gradient text-primary-foreground">{selectedIds.size} markiert</Badge>
+              <Button variant="ghost" size="sm" onClick={clearSelection}>
+                <X className="w-3.5 h-3.5 mr-1" /> Leeren
+              </Button>
+            </div>
+            <div className="h-6 w-px bg-border hidden sm:block" />
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" onClick={openBulkDialog}>
+                <FolderTree className="w-4 h-4 mr-2" /> Kategorien
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => {
+                setMassFields({ category_name: false, brand: false, manufacturer: false, status: false, unit: false });
+                setMassValues({ category_name: '', brand: '', manufacturer: '', status: 'active', unit: '' });
+                setMassNewCategory('');
+                setMassOpen(true);
+              }}>
+                <Pencil className="w-4 h-4 mr-2" /> Massenänderung
+              </Button>
+            </div>
+            <div className="h-6 w-px bg-border hidden sm:block" />
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" onClick={downloadCsv}>
+                <FileSpreadsheet className="w-4 h-4 mr-2" /> CSV
+              </Button>
+              <Button variant="outline" size="sm" onClick={downloadPdf}>
+                <Download className="w-4 h-4 mr-2" /> PDF
+              </Button>
+            </div>
+          </div>
+        </Card>
+      ) : (
+        <div className="flex justify-end">
+          <Button variant="ghost" size="sm" onClick={selectAllFiltered} disabled={filtered.length === 0}>
+            Alle gefilterten markieren ({filtered.length})
+          </Button>
+        </div>
+      )}
 
       <Card className="overflow-hidden">
         {loading ? (
