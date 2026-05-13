@@ -55,6 +55,69 @@ export default function Artikel() {
   const [draft, setDraft] = useState<Partial<ZohoItem>>({});
   const [saving, setSaving] = useState(false);
 
+  // Bulk category assignment
+  type Cat = { id: string; name: string; color: string | null };
+  const [allCats, setAllCats] = useState<Cat[]>([]);
+  const [assignments, setAssignments] = useState<{ item_id: string; category_id: string }[]>([]);
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkAdd, setBulkAdd] = useState<Set<string>>(new Set());
+  const [bulkRemove, setBulkRemove] = useState<Set<string>>(new Set());
+  const [bulkSaving, setBulkSaving] = useState(false);
+
+  async function loadCategoryData() {
+    const [c, a] = await Promise.all([
+      supabase.from('product_categories').select('id,name,color').order('name'),
+      supabase.from('item_category_assignments').select('item_id,category_id'),
+    ]);
+    setAllCats((c.data as Cat[]) ?? []);
+    setAssignments((a.data as { item_id: string; category_id: string }[]) ?? []);
+  }
+
+  function openBulkDialog() {
+    if (selectedIds.size === 0) {
+      toast({ title: 'Keine Auswahl', description: 'Bitte mindestens einen Artikel markieren.', variant: 'destructive' });
+      return;
+    }
+    setBulkAdd(new Set());
+    setBulkRemove(new Set());
+    setBulkOpen(true);
+  }
+
+  async function applyBulk() {
+    const itemIds = Array.from(selectedIds);
+    if (itemIds.length === 0) return;
+    if (bulkAdd.size === 0 && bulkRemove.size === 0) { setBulkOpen(false); return; }
+    setBulkSaving(true);
+    try {
+      for (const catId of bulkRemove) {
+        const { error } = await supabase
+          .from('item_category_assignments')
+          .delete()
+          .eq('category_id', catId)
+          .in('item_id', itemIds);
+        if (error) throw error;
+      }
+      const existing = new Set(assignments.map(a => `${a.item_id}|${a.category_id}`));
+      const rows: { item_id: string; category_id: string }[] = [];
+      for (const catId of bulkAdd) {
+        for (const itemId of itemIds) {
+          if (!existing.has(`${itemId}|${catId}`)) rows.push({ item_id: itemId, category_id: catId });
+        }
+      }
+      if (rows.length > 0) {
+        const { error } = await supabase.from('item_category_assignments').insert(rows);
+        if (error) throw error;
+      }
+      toast({ title: 'Kategorien aktualisiert', description: `${itemIds.length} Artikel angepasst.` });
+      setBulkOpen(false);
+      await loadCategoryData();
+    } catch (e: any) {
+      toast({ title: 'Fehler', description: e?.message ?? String(e), variant: 'destructive' });
+    } finally {
+      setBulkSaving(false);
+    }
+  }
+
   function startEdit() {
     if (!selected) return;
     setDraft({
