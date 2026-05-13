@@ -91,11 +91,35 @@ export default function Backups() {
     }
     setDownloadingId(b.id);
     try {
-      const { data, error } = await supabase.storage
-        .from('backups')
-        .createSignedUrl(b.storage_path, 60 * 60);
-      if (error || !data?.signedUrl) throw new Error(error?.message || 'Signierter Link fehlgeschlagen');
-      window.open(data.signedUrl, '_blank');
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) throw new Error('Keine aktive Session');
+
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/download-backup-zip?backup_id=${encodeURIComponent(b.id)}`;
+      const res = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+      });
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(`HTTP ${res.status}: ${txt.slice(0, 200)}`);
+      }
+      const blob = await res.blob();
+      const cd = res.headers.get('Content-Disposition') || '';
+      const match = cd.match(/filename="?([^"]+)"?/);
+      const fileName = match?.[1] || `backup-${b.id.slice(0, 8)}.zip`;
+
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(link.href), 5000);
+      toast.success('Download gestartet');
     } catch (e: any) {
       toast.error('Download fehlgeschlagen: ' + (e?.message ?? String(e)));
     } finally {
