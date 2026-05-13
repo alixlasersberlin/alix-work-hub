@@ -49,6 +49,7 @@ export default function Artikel() {
   const [syncing, setSyncing] = useState(false);
   const [query, setQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('__all__');
+  const [statusFilter, setStatusFilter] = useState<string>('__all__');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<ZohoItem | null>(null);
   const [editing, setEditing] = useState(false);
