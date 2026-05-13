@@ -421,6 +421,9 @@ export default function Artikel() {
             {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
             Neu laden
           </Button>
+          <Button variant="outline" onClick={() => { setCreateDraft(emptyDraft); setCreateOpen(true); }}>
+            <Plus className="w-4 h-4 mr-2" /> Artikel anlegen
+          </Button>
           <Button onClick={syncAll} disabled={syncing} className="gold-gradient text-primary-foreground">
             {syncing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
             Aus Zoho synchronisieren
