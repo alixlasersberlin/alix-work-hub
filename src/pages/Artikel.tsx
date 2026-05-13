@@ -94,7 +94,7 @@ export default function Artikel() {
     }
     setMassSaving(true);
     payload.updated_at = new Date().toISOString();
-    const { error } = await supabase.from('zoho_items').update(payload).in('id', itemIds);
+    const { error } = await supabase.from('zoho_items').update(payload as any).in('id', itemIds);
     setMassSaving(false);
     if (error) {
       toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
