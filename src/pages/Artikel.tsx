@@ -257,15 +257,22 @@ export default function Artikel() {
     return Array.from(set).sort((a, b) => a.localeCompare(b, 'de'));
   }, [items, allCats]);
 
+  const statuses = useMemo(() => {
+    const set = new Set<string>();
+    items.forEach((i) => { if (i.status) set.add(i.status); });
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'de'));
+  }, [items]);
+
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim();
     return items.filter((i) => {
       if (categoryFilter !== '__all__' && (i.category_name ?? '') !== categoryFilter) return false;
+      if (statusFilter !== '__all__' && (i.status ?? '') !== statusFilter) return false;
       if (!q) return true;
-      return `${i.name ?? ''} ${i.sku ?? ''} ${i.description ?? ''} ${i.category_name ?? ''} ${i.brand ?? ''}`
+      return `${i.name ?? ''} ${i.sku ?? ''} ${i.description ?? ''} ${i.category_name ?? ''} ${i.brand ?? ''} ${i.status ?? ''}`
         .toLowerCase().includes(q);
     });
-  }, [items, query, categoryFilter]);
+  }, [items, query, categoryFilter, statusFilter]);
 
   const { pageSize, setPageSize, page, setPage, totalPages, paged, total } = usePagination(filtered, 20);
 
