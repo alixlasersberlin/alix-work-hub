@@ -191,6 +191,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
+  // Idle-Auto-Logout nach 20 Minuten Inaktivität
+  useEffect(() => {
+    if (!user) return;
+    const IDLE_MS = 20 * 60 * 1000;
+    let timer: number | undefined;
+
+    const reset = () => {
+      if (timer) window.clearTimeout(timer);
+      timer = window.setTimeout(async () => {
+        try {
+          // toast nur best-effort, dynamic import um Zyklen zu vermeiden
+          const { toast } = await import('sonner');
+          toast.warning('Automatisch abgemeldet wegen Inaktivität (20 Min.)');
+        } catch { /* ignore */ }
+        await signOut();
+      }, IDLE_MS);
+    };
+
+    const events: string[] = [
+      'mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'wheel',
+    ];
+    const handler = () => {
+      if (document.visibilityState === 'hidden') return;
+      reset();
+    };
+    events.forEach((ev) => window.addEventListener(ev, handler, { passive: true } as any));
+    document.addEventListener('visibilitychange', handler);
+    reset();
+
+    return () => {
+      if (timer) window.clearTimeout(timer);
+      events.forEach((ev) => window.removeEventListener(ev, handler));
+      document.removeEventListener('visibilitychange', handler);
+    };
+  }, [user]);
+
   const hasRole = (role: string) => roles.includes(role);
   const hasAnyRole = (checkRoles: string[]) => checkRoles.some(r => roles.includes(r));
   const isAdmin = hasRole('Super Admin') || hasRole('Admin');
