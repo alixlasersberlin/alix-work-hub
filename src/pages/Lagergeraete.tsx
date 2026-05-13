@@ -544,6 +544,16 @@ export default function Lagergeraete({
                         ))}
                       </SelectGroup>
                     ))}
+                    {extraModelGroups.map((group) => (
+                      <SelectGroup key={`extra-${group.label}`}>
+                        <SelectLabel>{group.label}</SelectLabel>
+                        {group.models.map((m) => (
+                          <SelectItem key={`${group.label}-${m}`} value={m}>
+                            {m}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
