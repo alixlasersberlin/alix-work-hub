@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, RefreshCw, Search, Package, Eye, Pencil, Save, X, Download, FileSpreadsheet, FolderTree, Plus } from 'lucide-react';
+import { Loader2, RefreshCw, Search, Package, Eye, Pencil, Save, X, Download, FileSpreadsheet, FolderTree, Plus, Copy } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -115,6 +115,48 @@ export default function Artikel() {
     setItems((prev) => [data as ZohoItem, ...prev]);
     setCreateOpen(false);
     setCreateDraft(emptyDraft);
+  }
+
+  const [duplicating, setDuplicating] = useState(false);
+  async function duplicateSelected() {
+    const sources = items.filter((i) => selectedIds.has(i.id));
+    if (sources.length === 0) {
+      toast({ title: 'Keine Auswahl', description: 'Bitte mindestens einen Artikel markieren.', variant: 'destructive' });
+      return;
+    }
+    setDuplicating(true);
+    const now = new Date().toISOString();
+    const rows = sources.map((s) => ({
+      source_system: 'manual',
+      zoho_item_id: `local-${(globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`)}`,
+      name: s.name ? `${s.name} (Kopie)` : 'Kopie',
+      sku: s.sku ? `${s.sku}-COPY` : null,
+      description: s.description,
+      unit: s.unit,
+      rate: s.rate,
+      purchase_rate: s.purchase_rate,
+      currency_code: s.currency_code ?? 'EUR',
+      status: s.status ?? 'active',
+      product_type: s.product_type,
+      item_type: s.item_type,
+      tax_name: s.tax_name,
+      tax_percentage: s.tax_percentage,
+      stock_on_hand: s.stock_on_hand,
+      available_stock: s.available_stock,
+      category_name: s.category_name,
+      brand: s.brand,
+      manufacturer: s.manufacturer,
+      synced_at: now,
+    }));
+    const { data, error } = await supabase.from('zoho_items').insert(rows).select();
+    setDuplicating(false);
+    if (error) {
+      toast({ title: 'Duplizieren fehlgeschlagen', description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: 'Dupliziert', description: `${data?.length ?? 0} Artikel kopiert.` });
+    setItems((prev) => [...((data ?? []) as ZohoItem[]), ...prev]);
+    clearSelection();
   }
 
   async function applyMassEdit() {
@@ -501,6 +543,10 @@ export default function Artikel() {
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" size="sm" onClick={openBulkDialog}>
                 <FolderTree className="w-4 h-4 mr-2" /> Kategorien
+              </Button>
+              <Button variant="outline" size="sm" onClick={duplicateSelected} disabled={duplicating}>
+                {duplicating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Copy className="w-4 h-4 mr-2" />}
+                Duplizieren
               </Button>
               <Button variant="outline" size="sm" onClick={() => {
                 setMassFields({ category_name: false, brand: false, manufacturer: false, status: false, unit: false });
