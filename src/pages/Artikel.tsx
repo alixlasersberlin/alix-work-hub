@@ -361,6 +361,10 @@ export default function Artikel() {
             <div className="text-2xl font-semibold gold-text leading-none">{items.length.toLocaleString('de-DE')}</div>
             <div className="text-[11px] uppercase text-muted-foreground tracking-wider">Artikel gesamt</div>
           </div>
+          <Button variant="outline" onClick={() => { load(); loadCategoryData(); }} disabled={loading} title="Artikel neu laden">
+            {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+            Neu laden
+          </Button>
           <Button onClick={syncAll} disabled={syncing} className="gold-gradient text-primary-foreground">
             {syncing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
             Aus Zoho synchronisieren
