@@ -69,6 +69,7 @@ import Gutschriften from "./pages/Gutschriften";
 import Freigabe from "./pages/Freigabe";
 import VerkaufUebersicht from "./pages/VerkaufUebersicht";
 import Operation from "./pages/Operation";
+import Logfiles from "./pages/Logfiles";
 import Papiere from "./pages/Papiere";
 import VersandPlaceholder from "./pages/VersandPlaceholder";
 import { Truck as TruckIcon, Banknote as BanknoteIcon, FileSignature, CreditCard } from "lucide-react";
