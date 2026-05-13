@@ -671,6 +671,109 @@ export default function Artikel() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Mass-edit Zoho fields */}
+      <Dialog open={massOpen} onOpenChange={setMassOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="gold-text flex items-center gap-2">
+              <Pencil className="w-5 h-5" /> Massenänderung
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 text-sm">
+            <p className="text-muted-foreground">
+              Felder aktivieren und Wert eintragen — wird auf <strong>{selectedIds.size}</strong> markierte Artikel angewendet.
+            </p>
+
+            {/* Kategorie */}
+            <div className="space-y-2 border border-border rounded-md p-3">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Checkbox
+                  checked={massFields.category_name}
+                  onCheckedChange={(v) => setMassFields(s => ({ ...s, category_name: !!v }))}
+                />
+                <span className="font-medium">Kategorie</span>
+              </label>
+              {massFields.category_name && (
+                <div className="space-y-2 pl-6">
+                  <Select
+                    value={massValues.category_name || '__new__'}
+                    onValueChange={(v) => {
+                      if (v === '__new__') setMassValues(s => ({ ...s, category_name: '' }));
+                      else { setMassValues(s => ({ ...s, category_name: v })); setMassNewCategory(''); }
+                    }}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Bestehende wählen oder neu" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__new__">– Neue Kategorie anlegen –</SelectItem>
+                      {categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  {!massValues.category_name && (
+                    <Input
+                      placeholder="Name der neuen Kategorie"
+                      value={massNewCategory}
+                      onChange={(e) => setMassNewCategory(e.target.value)}
+                    />
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Andere Felder */}
+            {([
+              { key: 'brand', label: 'Marke', placeholder: 'z. B. Alix Lasers' },
+              { key: 'manufacturer', label: 'Hersteller', placeholder: 'z. B. Alix' },
+              { key: 'unit', label: 'Einheit', placeholder: 'z. B. Stk' },
+            ] as { key: MassField; label: string; placeholder: string }[]).map(f => (
+              <div key={f.key} className="flex items-center gap-3">
+                <Checkbox
+                  checked={massFields[f.key]}
+                  onCheckedChange={(v) => setMassFields(s => ({ ...s, [f.key]: !!v }))}
+                />
+                <Label className="w-28 shrink-0">{f.label}</Label>
+                <Input
+                  className="flex-1"
+                  disabled={!massFields[f.key]}
+                  placeholder={f.placeholder}
+                  value={massValues[f.key]}
+                  onChange={(e) => setMassValues(s => ({ ...s, [f.key]: e.target.value }))}
+                />
+              </div>
+            ))}
+
+            <div className="flex items-center gap-3">
+              <Checkbox
+                checked={massFields.status}
+                onCheckedChange={(v) => setMassFields(s => ({ ...s, status: !!v }))}
+              />
+              <Label className="w-28 shrink-0">Status</Label>
+              <Select
+                value={massValues.status}
+                onValueChange={(v) => setMassValues(s => ({ ...s, status: v }))}
+                disabled={!massFields.status}
+              >
+                <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">active</SelectItem>
+                  <SelectItem value="inactive">inactive</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="ghost" onClick={() => setMassOpen(false)} disabled={massSaving}>Abbrechen</Button>
+            <Button
+              onClick={applyMassEdit}
+              disabled={massSaving}
+              className="gold-gradient text-primary-foreground"
+            >
+              {massSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+              Übernehmen
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
