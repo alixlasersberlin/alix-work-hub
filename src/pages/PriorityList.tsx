@@ -194,6 +194,22 @@ export default function PriorityList() {
             {statuses.map(s => <SelectItem key={s} value={s!}>{s}</SelectItem>)}
           </SelectContent>
         </Select>
+        <Select value={modelFilter} onValueChange={setModelFilter}>
+          <SelectTrigger className="w-56 bg-secondary border-border">
+            <SelectValue placeholder="Gerät filtern" />
+          </SelectTrigger>
+          <SelectContent className="max-h-80">
+            <SelectItem value="all">Alle Geräte</SelectItem>
+            {ALIX_MODEL_GROUPS.map(group => (
+              <div key={group.label}>
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">{group.label}</div>
+                {group.models.map(m => (
+                  <SelectItem key={m} value={m}>{m}</SelectItem>
+                ))}
+              </div>
+            ))}
+          </SelectContent>
+        </Select>
         <PageSizeSelector value={pageSize} onChange={setPageSize} />
         {(() => {
           const failed = paged.filter((o: any) => drivingTimes[o.id] === null);
