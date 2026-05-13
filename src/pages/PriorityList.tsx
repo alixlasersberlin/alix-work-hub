@@ -13,6 +13,7 @@ import { PageSizeSelector, usePagination, PaginationControls } from '@/component
 import { ViewToggle } from '@/components/ViewToggle';
 import { useViewMode } from '@/hooks/useViewMode';
 import { OrderCard, OrderCardGrid } from '@/components/OrderCard';
+import { ALIX_MODEL_GROUPS } from '@/lib/alix-models';
 
 type SortField = 'expected_shipment_date' | 'order_number' | 'total_amount';
 type SortDir = 'asc' | 'desc';
@@ -83,6 +84,7 @@ export default function PriorityList() {
   const [orders, setOrders] = useState<PrioOrder[]>([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [modelFilter, setModelFilter] = useState('all');
   const [sortField, setSortField] = useState<SortField>('expected_shipment_date');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [loading, setLoading] = useState(true);
@@ -126,7 +128,13 @@ export default function PriorityList() {
       resolveCity(o)?.toLowerCase().includes(q) ||
       modelMatch;
     const matchStatus = statusFilter === 'all' || o.order_status === statusFilter;
-    return matchSearch && matchStatus;
+    const matchModel = modelFilter === 'all' || o.order_items?.some(it => {
+      const m = modelFilter.toLowerCase();
+      return it.item_name?.toLowerCase().includes(m) ||
+        it.description?.toLowerCase().includes(m) ||
+        it.sku?.toLowerCase().includes(m);
+    });
+    return matchSearch && matchStatus && matchModel;
   });
 
   const { pageSize, setPageSize, page, setPage, totalPages, paged, total } = usePagination(filtered, 20);
