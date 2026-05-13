@@ -139,6 +139,7 @@ export default function Lagergeraete({
   const [selectionMode, setSelectionMode] = useState(false);
   const [bulkStatus, setBulkStatus] = useState<DeviceStatus>('Bestand');
   const [bulkApplying, setBulkApplying] = useState(false);
+  const [duplicating, setDuplicating] = useState(false);
 
   // Global search across devices and available (unreserved) open orders
   const [searchQuery, setSearchQuery] = useState('');
@@ -909,6 +910,39 @@ export default function Lagergeraete({
           >
             {bulkApplying ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
             Status anwenden
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={duplicating}
+            onClick={async () => {
+              setDuplicating(true);
+              const ids = Array.from(selectedIds);
+              const targets = devices.filter((d) => ids.includes(d.id));
+              const { data: userData } = await supabase.auth.getUser();
+              const payload = targets.map((d) => ({
+                serial_number: `${d.serial_number}-COPY-${Date.now().toString(36)}`,
+                model_name: d.model_name,
+                entry_date: today,
+                notes: d.notes,
+                airtable_record_id: null,
+                reserved_order_id: null,
+                reservation_week: null,
+                created_by: userData.user?.id,
+              }));
+              const { data: inserted, error } = await supabase
+                .from('lager_devices')
+                .insert(payload)
+                .select('id');
+              setDuplicating(false);
+              if (error) { toast.error(`Fehler beim Duplizieren: ${error.message}`); return; }
+              toast.success(`${inserted?.length ?? 0} Gerät(e) dupliziert`);
+              setSelectedIds(new Set());
+              loadDevices();
+            }}
+          >
+            {duplicating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+            Duplizieren
           </Button>
           <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>
             Auswahl aufheben
