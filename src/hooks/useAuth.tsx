@@ -209,19 +209,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }, IDLE_MS);
     };
 
-    const events: Array<keyof WindowEventMap> = [
-      'mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'wheel', 'visibilitychange',
+    const events: string[] = [
+      'mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'wheel',
     ];
     const handler = () => {
       if (document.visibilityState === 'hidden') return;
       reset();
     };
-    events.forEach((ev) => window.addEventListener(ev, handler, { passive: true }));
+    events.forEach((ev) => window.addEventListener(ev, handler, { passive: true } as any));
+    document.addEventListener('visibilitychange', handler);
     reset();
 
     return () => {
       if (timer) window.clearTimeout(timer);
       events.forEach((ev) => window.removeEventListener(ev, handler));
+      document.removeEventListener('visibilitychange', handler);
     };
   }, [user]);
 
