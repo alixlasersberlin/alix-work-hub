@@ -175,7 +175,7 @@ export default function Artikel() {
     setLoading(false);
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); loadCategoryData(); }, []);
 
   async function syncAll() {
     setSyncing(true);
