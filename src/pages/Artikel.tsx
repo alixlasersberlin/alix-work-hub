@@ -266,7 +266,9 @@ export default function Artikel() {
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim();
     return items.filter((i) => {
-      if (categoryFilter !== '__all__' && (i.category_name ?? '') !== categoryFilter) return false;
+      if (categoryFilter === '__none__') {
+        if ((i.category_name ?? '').trim() !== '') return false;
+      } else if (categoryFilter !== '__all__' && (i.category_name ?? '') !== categoryFilter) return false;
       if (statusFilter !== '__all__' && (i.status ?? '') !== statusFilter) return false;
       if (!q) return true;
       return `${i.name ?? ''} ${i.sku ?? ''} ${i.description ?? ''} ${i.category_name ?? ''} ${i.brand ?? ''} ${i.status ?? ''}`
@@ -390,6 +392,7 @@ export default function Artikel() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="__all__">Alle Kategorien</SelectItem>
+              <SelectItem value="__none__">Ohne Kategorie</SelectItem>
               {categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
             </SelectContent>
           </Select>
