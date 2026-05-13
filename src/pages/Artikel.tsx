@@ -64,6 +64,48 @@ export default function Artikel() {
   const [bulkRemove, setBulkRemove] = useState<Set<string>>(new Set());
   const [bulkSaving, setBulkSaving] = useState(false);
 
+  // Mass-edit (Zoho item fields like category_name, brand, status, ...)
+  type MassField = 'category_name' | 'brand' | 'manufacturer' | 'status' | 'unit';
+  const [massOpen, setMassOpen] = useState(false);
+  const [massSaving, setMassSaving] = useState(false);
+  const [massFields, setMassFields] = useState<Record<MassField, boolean>>({
+    category_name: false, brand: false, manufacturer: false, status: false, unit: false,
+  });
+  const [massValues, setMassValues] = useState<Record<MassField, string>>({
+    category_name: '', brand: '', manufacturer: '', status: 'active', unit: '',
+  });
+  const [massNewCategory, setMassNewCategory] = useState('');
+
+  async function applyMassEdit() {
+    const itemIds = Array.from(selectedIds);
+    if (itemIds.length === 0) return;
+    const payload: Record<string, any> = {};
+    (Object.keys(massFields) as MassField[]).forEach((k) => {
+      if (massFields[k]) {
+        const v = k === 'category_name' && massNewCategory.trim()
+          ? massNewCategory.trim()
+          : massValues[k];
+        payload[k] = v === '' ? null : v;
+      }
+    });
+    if (Object.keys(payload).length === 0) {
+      toast({ title: 'Nichts ausgewählt', description: 'Bitte mindestens ein Feld aktivieren.', variant: 'destructive' });
+      return;
+    }
+    setMassSaving(true);
+    payload.updated_at = new Date().toISOString();
+    const { error } = await supabase.from('zoho_items').update(payload).in('id', itemIds);
+    setMassSaving(false);
+    if (error) {
+      toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: 'Massenänderung übernommen', description: `${itemIds.length} Artikel aktualisiert.` });
+    setMassOpen(false);
+    await load();
+  }
+
+
   async function loadCategoryData() {
     const [c, a] = await Promise.all([
       supabase.from('product_categories').select('id,name,color').order('name'),
