@@ -358,6 +358,28 @@ export default function UserManagement() {
                 <Button size="sm" variant="outline" className="w-full justify-start gap-2" disabled={actionLoading} onClick={() => handleSendInvitation(selectedUser)}>
                   <Send className="w-4 h-4" /> Einladung {selectedUser.invitation_status === 'sent' ? 'erneut ' : ''}senden
                 </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full justify-start gap-2 text-warning hover:text-warning"
+                  disabled={actionLoading}
+                  onClick={async () => {
+                    if (!confirm(`2FA für ${selectedUser.full_name || selectedUser.email} zurücksetzen? Der User muss beim nächsten Login neu einrichten.`)) return;
+                    setActionLoading(true);
+                    try {
+                      const { data, error } = await supabase.functions.invoke('mfa-admin-reset', { body: { user_id: selectedUser.id } });
+                      if (error) throw error;
+                      if (!data?.success) throw new Error(data?.error || 'Reset fehlgeschlagen');
+                      toast.success(`2FA zurückgesetzt (${data.factors_removed ?? 0} Faktor(en) entfernt)`);
+                    } catch (e: any) {
+                      toast.error('Fehler: ' + (e?.message ?? String(e)));
+                    } finally {
+                      setActionLoading(false);
+                    }
+                  }}
+                >
+                  <ShieldOff className="w-4 h-4" /> 2FA zurücksetzen
+                </Button>
                 {selectedUser.account_status === 'active' ? (
                   <>
                     <Button size="sm" variant="outline" className="w-full justify-start gap-2 text-warning hover:text-warning" onClick={() => setShowConfirmAction({ action: 'disabled', user: selectedUser })}>
