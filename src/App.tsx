@@ -59,6 +59,7 @@ import EquipmentProduktion from "./pages/EquipmentProduktion";
 import EquipmentHold from "./pages/EquipmentHold";
 import Artikel from "./pages/Artikel";
 import Katalog from "./pages/Katalog";
+import Kategorie from "./pages/Kategorie";
 import Wareneingang from "./pages/Wareneingang";
 import ArtikelUebersicht from "./pages/ArtikelUebersicht";
 import AngebotErstellen from "./pages/AngebotErstellen";
