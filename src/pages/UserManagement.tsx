@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import {
-  Users, Shield, Search, Filter, Plus, Send, UserCheck, UserX, Lock,
+  Users, Shield, ShieldOff, Search, Filter, Plus, Send, UserCheck, UserX, Lock,
   Unlock, ChevronLeft, Mail, Phone, Clock, Building2, Key, AlertTriangle,
   CheckCircle2, XCircle, Loader2, RefreshCw, Edit3
 } from 'lucide-react';
