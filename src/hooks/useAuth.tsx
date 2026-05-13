@@ -63,9 +63,13 @@ function getBlockReason(profile: UserProfile | null): AccountBlockReason {
 }
 
 const MFA_TAB_KEY = 'alixwork.mfa_verified_tab';
+const MFA_GRACE_KEY = 'alixwork.mfa_grace_until';
+const MFA_GRACE_MS = 5 * 60 * 60 * 1000; // 5 Stunden
 
 export function markMfaVerifiedThisTab() {
   try { sessionStorage.setItem(MFA_TAB_KEY, '1'); } catch { /* ignore */ }
+  // Beim erfolgreichen TOTP startet ein 5h-Grace-Window auf diesem Gerät
+  try { localStorage.setItem(MFA_GRACE_KEY, String(Date.now() + MFA_GRACE_MS)); } catch { /* ignore */ }
 }
 
 export function clearMfaTabMarker() {
@@ -76,15 +80,31 @@ function isMfaVerifiedThisTab() {
   try { return sessionStorage.getItem(MFA_TAB_KEY) === '1'; } catch { return false; }
 }
 
+function isMfaWithinGrace() {
+  try {
+    const raw = localStorage.getItem(MFA_GRACE_KEY);
+    if (!raw) return false;
+    const until = Number(raw);
+    if (!Number.isFinite(until)) return false;
+    if (Date.now() < until) return true;
+    localStorage.removeItem(MFA_GRACE_KEY);
+    return false;
+  } catch { return false; }
+}
+
 async function computeMfaState(): Promise<MfaState> {
   try {
     const { data: factorsData } = await supabase.auth.mfa.listFactors();
     const verifiedTotp = (factorsData?.totp ?? []).filter((f: any) => f.status === 'verified');
     if (verifiedTotp.length === 0) return 'not_enrolled';
     const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-    // Pflicht-TOTP: AAL2 alleine reicht nicht — der Tab muss in dieser Session
-    // explizit verifiziert worden sein, sonst wird ein neuer Challenge erzwungen.
-    if (aalData?.currentLevel === 'aal2' && isMfaVerifiedThisTab()) return 'verified';
+    // 5h-Grace nach erfolgreichem TOTP: Tab gilt automatisch als verifiziert.
+    if (aalData?.currentLevel === 'aal2' && (isMfaVerifiedThisTab() || isMfaWithinGrace())) {
+      if (!isMfaVerifiedThisTab()) {
+        try { sessionStorage.setItem(MFA_TAB_KEY, '1'); } catch { /* ignore */ }
+      }
+      return 'verified';
+    }
     return 'challenge_required';
   } catch {
     return 'unknown';
