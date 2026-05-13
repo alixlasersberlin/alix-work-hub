@@ -203,7 +203,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           // toast nur best-effort, dynamic import um Zyklen zu vermeiden
           const { toast } = await import('sonner');
-          toast.warning('Automatisch abgemeldet wegen Inaktivität (20 Min.)');
+          toast.warning('Automatisch abgemeldet wegen Inaktivität (60 Min.)');
         } catch { /* ignore */ }
         await signOut();
       }, IDLE_MS);
