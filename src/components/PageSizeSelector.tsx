@@ -1,7 +1,7 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useState, useMemo } from 'react';
 
-export type PageSize = 10 | 20 | 50 | 'all';
+export type PageSize = 10 | 20 | 50 | 100 | 200 | 'all';
 
 export function PageSizeSelector({
   value,
@@ -13,7 +13,7 @@ export function PageSizeSelector({
   className?: string;
 }) {
   return (
-    <Select value={String(value)} onValueChange={(v) => onChange(v === 'all' ? 'all' : (Number(v) as 10 | 20 | 50))}>
+    <Select value={String(value)} onValueChange={(v) => onChange(v === 'all' ? 'all' : (Number(v) as 10 | 20 | 50 | 100 | 200))}>
       <SelectTrigger className={`w-32 bg-secondary border-border ${className}`}>
         <SelectValue />
       </SelectTrigger>
@@ -21,6 +21,8 @@ export function PageSizeSelector({
         <SelectItem value="10">10 / Seite</SelectItem>
         <SelectItem value="20">20 / Seite</SelectItem>
         <SelectItem value="50">50 / Seite</SelectItem>
+        <SelectItem value="100">100 / Seite</SelectItem>
+        <SelectItem value="200">200 / Seite</SelectItem>
         <SelectItem value="all">Alle</SelectItem>
       </SelectContent>
     </Select>
