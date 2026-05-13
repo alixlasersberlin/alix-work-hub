@@ -544,6 +544,10 @@ export default function Artikel() {
               <Button variant="outline" size="sm" onClick={openBulkDialog}>
                 <FolderTree className="w-4 h-4 mr-2" /> Kategorien
               </Button>
+              <Button variant="outline" size="sm" onClick={duplicateSelected} disabled={duplicating}>
+                {duplicating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Copy className="w-4 h-4 mr-2" />}
+                Duplizieren
+              </Button>
               <Button variant="outline" size="sm" onClick={() => {
                 setMassFields({ category_name: false, brand: false, manufacturer: false, status: false, unit: false });
                 setMassValues({ category_name: '', brand: '', manufacturer: '', status: 'active', unit: '' });
