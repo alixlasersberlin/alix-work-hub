@@ -386,6 +386,25 @@ export default function Artikel() {
               className="pl-9"
             />
           </div>
+          <Select
+            value="__placeholder__"
+            onValueChange={(v) => { if (v && v !== '__placeholder__') setQuery(v); }}
+          >
+            <SelectTrigger className="w-full lg:w-[260px]">
+              <SelectValue placeholder="Alix Lasers Gerät wählen…" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__placeholder__" disabled>Alix Lasers Gerät wählen…</SelectItem>
+              {items
+                .filter((i) => (i.category_name ?? '').toLowerCase() === 'alix lasers')
+                .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'de'))
+                .map((i) => (
+                  <SelectItem key={i.id} value={i.name ?? i.sku ?? i.id}>
+                    {i.name ?? i.sku ?? '—'}
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
             <SelectTrigger className="w-full lg:w-[240px]">
               <SelectValue placeholder="Kategorie" />
