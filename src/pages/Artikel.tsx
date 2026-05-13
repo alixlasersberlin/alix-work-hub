@@ -314,6 +314,18 @@ export default function Artikel() {
           <Button variant="outline" onClick={openBulkDialog} disabled={selectedIds.size === 0}>
             <FolderTree className="w-4 h-4 mr-2" /> Kategorien ({selectedIds.size})
           </Button>
+          <Button variant="outline" onClick={() => {
+            if (selectedIds.size === 0) {
+              toast({ title: 'Keine Auswahl', description: 'Bitte Artikel markieren.', variant: 'destructive' });
+              return;
+            }
+            setMassFields({ category_name: false, brand: false, manufacturer: false, status: false, unit: false });
+            setMassValues({ category_name: '', brand: '', manufacturer: '', status: 'active', unit: '' });
+            setMassNewCategory('');
+            setMassOpen(true);
+          }} disabled={selectedIds.size === 0}>
+            <Pencil className="w-4 h-4 mr-2" /> Massenänderung ({selectedIds.size})
+          </Button>
           <Button onClick={syncAll} disabled={syncing} className="gold-gradient text-primary-foreground">
             {syncing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
             Aus Zoho synchronisieren
