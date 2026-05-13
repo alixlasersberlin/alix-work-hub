@@ -314,6 +314,62 @@ export default function Lagergeraete({
     loadDevices();
   }, []);
 
+  const [extraModelGroups, setExtraModelGroups] = useState<{ label: string; models: string[] }[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const knownModels = new Set<string>();
+      ALIX_MODEL_GROUPS.forEach((g) => g.models.forEach((m) => knownModels.add(m.toLowerCase())));
+
+      // Load all zoho items (Alix Lasers, Alix Beauty + others)
+      const { data: items } = await supabase
+        .from('zoho_items')
+        .select('name, category_name, brand, manufacturer')
+        .order('name', { ascending: true })
+        .limit(2000);
+
+      // Load distinct model names from lager_devices (internal/manual entries)
+      const { data: existing } = await supabase
+        .from('lager_devices')
+        .select('model_name')
+        .limit(2000);
+
+      const byCategory = new Map<string, Set<string>>();
+      const addTo = (cat: string, name: string) => {
+        const key = (name ?? '').trim();
+        if (!key) return;
+        if (!byCategory.has(cat)) byCategory.set(cat, new Set());
+        byCategory.get(cat)!.add(key);
+      };
+
+      (items ?? []).forEach((it: any) => {
+        const name = (it.name ?? '').trim();
+        if (!name) return;
+        if (knownModels.has(name.toLowerCase())) return;
+        const cat = (it.category_name || it.brand || it.manufacturer || 'Weitere Artikel').toString();
+        addTo(cat, name);
+      });
+
+      const internal = new Set<string>();
+      (existing ?? []).forEach((d: any) => {
+        const n = (d.model_name ?? '').trim();
+        if (n && !knownModels.has(n.toLowerCase())) internal.add(n);
+      });
+      // Remove internal ones already covered by zoho category groups
+      byCategory.forEach((set) => set.forEach((n) => internal.delete(n)));
+      if (internal.size > 0) byCategory.set('Interne Modelle', internal);
+
+      const groups = Array.from(byCategory.entries())
+        .map(([label, set]) => ({ label, models: Array.from(set).sort((a, b) => a.localeCompare(b)) }))
+        .sort((a, b) => {
+          if (a.label === 'Interne Modelle') return 1;
+          if (b.label === 'Interne Modelle') return -1;
+          return a.label.localeCompare(b.label);
+        });
+      setExtraModelGroups(groups);
+    })();
+  }, [devices.length]);
+
   const resetForm = () => {
     setEditingId(null);
     setSerial('');
