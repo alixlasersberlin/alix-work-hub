@@ -389,6 +389,15 @@ export default function Artikel() {
               {categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
             </SelectContent>
           </Select>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full lg:w-[200px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Alle Status</SelectItem>
+              {statuses.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            </SelectContent>
+          </Select>
           <div className="flex items-center gap-2 ml-auto">
             <Badge variant="outline" className="font-normal">
               {filtered.length.toLocaleString('de-DE')} Treffer
