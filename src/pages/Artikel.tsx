@@ -219,7 +219,21 @@ export default function Artikel() {
     setLoading(false);
   }
 
-  useEffect(() => { load(); loadCategoryData(); }, []);
+  async function loadAlixLasers() {
+    const { data, error } = await supabase
+      .from('zoho_items')
+      .select('id,name,sku,category_name')
+      .ilike('category_name', '%alix lasers%')
+      .order('name', { ascending: true })
+      .limit(5000);
+    if (error) {
+      console.error('loadAlixLasers', error);
+      return;
+    }
+    setAlixLasersItems((data ?? []) as any);
+  }
+
+  useEffect(() => { load(); loadCategoryData(); loadAlixLasers(); }, []);
 
   async function syncAll() {
     setSyncing(true);
