@@ -126,7 +126,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // Bei jedem frischen Sign-In bzw. Sign-Out muss der TOTP erneut verlangt werden.
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED') {
+        clearMfaTabMarker();
+      }
+
       setSession(session);
       setUser(session?.user ?? null);
 
@@ -164,11 +169,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
+    clearMfaTabMarker();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     return { error: error ? new Error(error.message) : null };
   };
 
   const signOut = async () => {
+    clearMfaTabMarker();
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
