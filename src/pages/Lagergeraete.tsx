@@ -532,33 +532,64 @@ export default function Lagergeraete({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="model">Modell *</Label>
-                <Select value={modelName} onValueChange={setModelName}>
-                  <SelectTrigger id="model">
-                    <SelectValue placeholder="Modell auswählen" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-80">
-                    {ALIX_MODEL_GROUPS.map((group) => (
-                      <SelectGroup key={group.label}>
-                        <SelectLabel>{group.label}</SelectLabel>
-                        {group.models.map((m) => (
-                          <SelectItem key={m} value={m}>
-                            {m}
-                          </SelectItem>
+                <Popover open={modelPickerOpen} onOpenChange={setModelPickerOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      id="model"
+                      type="button"
+                      variant="outline"
+                      role="combobox"
+                      className="w-full justify-between font-normal"
+                    >
+                      <span className="truncate">{modelName || 'Modell auswählen'}</span>
+                      <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command
+                      filter={(value, search) => {
+                        if (!search) return 1;
+                        return value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0;
+                      }}
+                    >
+                      <CommandInput placeholder="Suche nach Name oder SKU…" />
+                      <CommandList className="max-h-72">
+                        <CommandEmpty>Keine Treffer.</CommandEmpty>
+                        {ALIX_MODEL_GROUPS.map((group) => (
+                          <CommandGroup key={group.label} heading={group.label}>
+                            {group.models.map((m) => (
+                              <CommandItem
+                                key={m}
+                                value={m}
+                                onSelect={() => { setModelName(m); setModelPickerOpen(false); }}
+                              >
+                                {m}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
                         ))}
-                      </SelectGroup>
-                    ))}
-                    {extraModelGroups.map((group) => (
-                      <SelectGroup key={`extra-${group.label}`}>
-                        <SelectLabel>{group.label}</SelectLabel>
-                        {group.models.map((m) => (
-                          <SelectItem key={`${group.label}-${m}`} value={m}>
-                            {m}
-                          </SelectItem>
+                        {extraModelGroups.map((group) => (
+                          <CommandGroup key={`extra-${group.label}`} heading={group.label}>
+                            {group.models.map((m) => (
+                              <CommandItem
+                                key={`${group.label}-${m.name}`}
+                                value={`${m.name} ${m.sku ?? ''}`}
+                                onSelect={() => { setModelName(m.name); setModelPickerOpen(false); }}
+                              >
+                                <div className="flex w-full items-center justify-between gap-2">
+                                  <span className="truncate">{m.name}</span>
+                                  {m.sku && (
+                                    <span className="text-xs text-muted-foreground shrink-0">{m.sku}</span>
+                                  )}
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
                         ))}
-                      </SelectGroup>
-                    ))}
-                  </SelectContent>
-                </Select>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="device-type">Gerätetyp *</Label>
