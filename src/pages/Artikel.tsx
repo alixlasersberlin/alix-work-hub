@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, RefreshCw, Search, Package, Eye, Pencil, Save, X, Download, FileSpreadsheet } from 'lucide-react';
+import { Loader2, RefreshCw, Search, Package, Eye, Pencil, Save, X, Download, FileSpreadsheet, FolderTree } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -54,6 +54,69 @@ export default function Artikel() {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Partial<ZohoItem>>({});
   const [saving, setSaving] = useState(false);
+
+  // Bulk category assignment
+  type Cat = { id: string; name: string; color: string | null };
+  const [allCats, setAllCats] = useState<Cat[]>([]);
+  const [assignments, setAssignments] = useState<{ item_id: string; category_id: string }[]>([]);
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkAdd, setBulkAdd] = useState<Set<string>>(new Set());
+  const [bulkRemove, setBulkRemove] = useState<Set<string>>(new Set());
+  const [bulkSaving, setBulkSaving] = useState(false);
+
+  async function loadCategoryData() {
+    const [c, a] = await Promise.all([
+      supabase.from('product_categories').select('id,name,color').order('name'),
+      supabase.from('item_category_assignments').select('item_id,category_id'),
+    ]);
+    setAllCats((c.data as Cat[]) ?? []);
+    setAssignments((a.data as { item_id: string; category_id: string }[]) ?? []);
+  }
+
+  function openBulkDialog() {
+    if (selectedIds.size === 0) {
+      toast({ title: 'Keine Auswahl', description: 'Bitte mindestens einen Artikel markieren.', variant: 'destructive' });
+      return;
+    }
+    setBulkAdd(new Set());
+    setBulkRemove(new Set());
+    setBulkOpen(true);
+  }
+
+  async function applyBulk() {
+    const itemIds = Array.from(selectedIds);
+    if (itemIds.length === 0) return;
+    if (bulkAdd.size === 0 && bulkRemove.size === 0) { setBulkOpen(false); return; }
+    setBulkSaving(true);
+    try {
+      for (const catId of bulkRemove) {
+        const { error } = await supabase
+          .from('item_category_assignments')
+          .delete()
+          .eq('category_id', catId)
+          .in('item_id', itemIds);
+        if (error) throw error;
+      }
+      const existing = new Set(assignments.map(a => `${a.item_id}|${a.category_id}`));
+      const rows: { item_id: string; category_id: string }[] = [];
+      for (const catId of bulkAdd) {
+        for (const itemId of itemIds) {
+          if (!existing.has(`${itemId}|${catId}`)) rows.push({ item_id: itemId, category_id: catId });
+        }
+      }
+      if (rows.length > 0) {
+        const { error } = await supabase.from('item_category_assignments').insert(rows);
+        if (error) throw error;
+      }
+      toast({ title: 'Kategorien aktualisiert', description: `${itemIds.length} Artikel angepasst.` });
+      setBulkOpen(false);
+      await loadCategoryData();
+    } catch (e: any) {
+      toast({ title: 'Fehler', description: e?.message ?? String(e), variant: 'destructive' });
+    } finally {
+      setBulkSaving(false);
+    }
+  }
 
   function startEdit() {
     if (!selected) return;
@@ -112,7 +175,7 @@ export default function Artikel() {
     setLoading(false);
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); loadCategoryData(); }, []);
 
   async function syncAll() {
     setSyncing(true);
@@ -247,6 +310,9 @@ export default function Artikel() {
           </Button>
           <Button variant="outline" onClick={downloadPdf} disabled={selectedIds.size === 0}>
             <Download className="w-4 h-4 mr-2" /> PDF ({selectedIds.size})
+          </Button>
+          <Button variant="outline" onClick={openBulkDialog} disabled={selectedIds.size === 0}>
+            <FolderTree className="w-4 h-4 mr-2" /> Kategorien ({selectedIds.size})
           </Button>
           <Button onClick={syncAll} disabled={syncing} className="gold-gradient text-primary-foreground">
             {syncing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
@@ -463,6 +529,92 @@ export default function Artikel() {
               </p>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk category assignment */}
+      <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="gold-text flex items-center gap-2">
+              <FolderTree className="w-5 h-5" /> Kategorien zuweisen
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <p className="text-muted-foreground">
+              Änderungen werden auf <strong>{selectedIds.size}</strong> markierte Artikel angewendet.
+              Hinzufügen = grün, Entfernen = rot. Nicht angetastete Kategorien bleiben unverändert.
+            </p>
+            {allCats.length === 0 ? (
+              <div className="text-center text-muted-foreground py-6">
+                Keine Kategorien vorhanden. Bitte zuerst unter „Kategorie" anlegen.
+              </div>
+            ) : (
+              <div className="border border-border rounded-md max-h-[420px] overflow-auto divide-y divide-border">
+                {allCats.map(c => {
+                  const count = Array.from(selectedIds).filter(id =>
+                    assignments.some(a => a.item_id === id && a.category_id === c.id),
+                  ).length;
+                  const allHave = count === selectedIds.size;
+                  const noneHave = count === 0;
+                  const adding = bulkAdd.has(c.id);
+                  const removing = bulkRemove.has(c.id);
+                  return (
+                    <div
+                      key={c.id}
+                      className={`flex items-center gap-3 px-3 py-2 ${
+                        adding ? 'bg-green-500/10' : removing ? 'bg-destructive/10' : ''
+                      }`}
+                    >
+                      <span
+                        className="w-3 h-3 rounded-full shrink-0"
+                        style={{ backgroundColor: c.color ?? '#D4AF37' }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium truncate">{c.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {allHave ? 'Allen zugewiesen' : noneHave ? 'Keinem zugewiesen' : `${count}/${selectedIds.size} zugewiesen`}
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant={adding ? 'default' : 'outline'}
+                        className="h-7 px-2"
+                        onClick={() => {
+                          setBulkAdd(s => { const n = new Set(s); n.has(c.id) ? n.delete(c.id) : n.add(c.id); return n; });
+                          setBulkRemove(s => { const n = new Set(s); n.delete(c.id); return n; });
+                        }}
+                      >
+                        + Zuweisen
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={removing ? 'destructive' : 'outline'}
+                        className="h-7 px-2"
+                        onClick={() => {
+                          setBulkRemove(s => { const n = new Set(s); n.has(c.id) ? n.delete(c.id) : n.add(c.id); return n; });
+                          setBulkAdd(s => { const n = new Set(s); n.delete(c.id); return n; });
+                        }}
+                      >
+                        − Entfernen
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="ghost" onClick={() => setBulkOpen(false)} disabled={bulkSaving}>Abbrechen</Button>
+            <Button
+              onClick={applyBulk}
+              disabled={bulkSaving || (bulkAdd.size === 0 && bulkRemove.size === 0)}
+              className="gold-gradient text-primary-foreground"
+            >
+              {bulkSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+              Übernehmen
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
