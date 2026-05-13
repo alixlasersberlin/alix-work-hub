@@ -444,9 +444,9 @@ export default function Artikel() {
               : 'Keine Treffer.'}
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-auto max-h-[calc(100vh-380px)]">
             <table className="w-full text-sm">
-              <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
+              <thead className="bg-muted/60 backdrop-blur text-xs uppercase text-muted-foreground sticky top-0 z-10">
                 <tr>
                   <th className="px-3 py-2 w-10">
                     <Checkbox
