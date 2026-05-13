@@ -45,6 +45,7 @@ const fmtMoney = (n: number | null, cur: string | null) =>
 export default function Artikel() {
   const { toast } = useToast();
   const [items, setItems] = useState<ZohoItem[]>([]);
+  const [alixLasersItems, setAlixLasersItems] = useState<{ id: string; name: string | null; sku: string | null }[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [query, setQuery] = useState('');
