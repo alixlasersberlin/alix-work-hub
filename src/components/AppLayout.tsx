@@ -202,6 +202,7 @@ export default function AppLayout() {
         '/lager/equipment-area/unterwegs': transfer,
         '/lager/equipment-area/produktion': produktion,
         '/lager/equipment-area/hold': hold,
+        '/lager/equipment-area/warehouse': lager,
         '/lager/equipment-area': lager + transfer + produktion + hold,
       });
     };
