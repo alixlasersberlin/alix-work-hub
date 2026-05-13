@@ -345,9 +345,11 @@ export default function Lagergeraete({
       (items ?? []).forEach((it: any) => {
         const name = (it.name ?? '').trim();
         if (!name) return;
-        if (knownModels.has(name.toLowerCase())) return;
         const cat = (it.category_name || it.brand || it.manufacturer || 'Weitere Artikel').toString();
-        addTo(cat, name);
+        const isAlixLasers = /alix\s*lasers?/i.test(cat);
+        // Always include Alix Lasers category items (per request); for others skip duplicates of static groups
+        if (!isAlixLasers && knownModels.has(name.toLowerCase())) return;
+        addTo(isAlixLasers ? 'Alix Lasers (Artikel)' : cat, name);
       });
 
       const internal = new Set<string>();
