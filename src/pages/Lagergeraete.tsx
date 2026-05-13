@@ -121,6 +121,7 @@ export default function Lagergeraete({
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [modelPickerOpen, setModelPickerOpen] = useState(false);
 
   const today = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
   const [editingId, setEditingId] = useState<string | null>(null);
