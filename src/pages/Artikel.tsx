@@ -410,14 +410,11 @@ export default function Artikel() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="__placeholder__" disabled>Alix Lasers Gerät wählen…</SelectItem>
-              {items
-                .filter((i) => (i.category_name ?? '').toLowerCase() === 'alix lasers')
-                .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'de'))
-                .map((i) => (
-                  <SelectItem key={i.id} value={i.name ?? i.sku ?? i.id}>
-                    {i.name ?? i.sku ?? '—'}
-                  </SelectItem>
-                ))}
+              {alixLasersItems.map((i) => (
+                <SelectItem key={i.id} value={i.name ?? i.sku ?? i.id}>
+                  {i.name ?? i.sku ?? '—'}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
