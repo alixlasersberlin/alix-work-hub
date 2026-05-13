@@ -252,8 +252,9 @@ export default function Artikel() {
   const categories = useMemo(() => {
     const set = new Set<string>();
     items.forEach((i) => { if (i.category_name) set.add(i.category_name); });
+    allCats.forEach((c) => { if (c.name) set.add(c.name); });
     return Array.from(set).sort((a, b) => a.localeCompare(b, 'de'));
-  }, [items]);
+  }, [items, allCats]);
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim();
