@@ -26,7 +26,7 @@ export default function Login() {
       setLoading(false);
       return;
     }
-    // Nach erfolgreichem Login immer aufs Dashboard
+    // Guard in App.tsx leitet auf /mfa-setup, /mfa-challenge oder / weiter
     navigate('/', { replace: true });
     setLoading(false);
   };

@@ -1217,6 +1217,8 @@ export type Database = {
           invitation_status: string
           is_active: boolean
           last_otp_verified_at: string | null
+          mfa_enrolled_at: string | null
+          mfa_recovery_codes_hash: string[]
           otp_channel: string
           password_reset_required: boolean
           phone_number: string | null
@@ -1233,6 +1235,8 @@ export type Database = {
           invitation_status?: string
           is_active?: boolean
           last_otp_verified_at?: string | null
+          mfa_enrolled_at?: string | null
+          mfa_recovery_codes_hash?: string[]
           otp_channel?: string
           password_reset_required?: boolean
           phone_number?: string | null
@@ -1249,6 +1253,8 @@ export type Database = {
           invitation_status?: string
           is_active?: boolean
           last_otp_verified_at?: string | null
+          mfa_enrolled_at?: string | null
+          mfa_recovery_codes_hash?: string[]
           otp_channel?: string
           password_reset_required?: boolean
           phone_number?: string | null
