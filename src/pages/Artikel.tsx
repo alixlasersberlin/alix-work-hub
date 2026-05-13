@@ -531,6 +531,92 @@ export default function Artikel() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Bulk category assignment */}
+      <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="gold-text flex items-center gap-2">
+              <FolderTree className="w-5 h-5" /> Kategorien zuweisen
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <p className="text-muted-foreground">
+              Änderungen werden auf <strong>{selectedIds.size}</strong> markierte Artikel angewendet.
+              Hinzufügen = grün, Entfernen = rot. Nicht angetastete Kategorien bleiben unverändert.
+            </p>
+            {allCats.length === 0 ? (
+              <div className="text-center text-muted-foreground py-6">
+                Keine Kategorien vorhanden. Bitte zuerst unter „Kategorie" anlegen.
+              </div>
+            ) : (
+              <div className="border border-border rounded-md max-h-[420px] overflow-auto divide-y divide-border">
+                {allCats.map(c => {
+                  const count = Array.from(selectedIds).filter(id =>
+                    assignments.some(a => a.item_id === id && a.category_id === c.id),
+                  ).length;
+                  const allHave = count === selectedIds.size;
+                  const noneHave = count === 0;
+                  const adding = bulkAdd.has(c.id);
+                  const removing = bulkRemove.has(c.id);
+                  return (
+                    <div
+                      key={c.id}
+                      className={`flex items-center gap-3 px-3 py-2 ${
+                        adding ? 'bg-green-500/10' : removing ? 'bg-destructive/10' : ''
+                      }`}
+                    >
+                      <span
+                        className="w-3 h-3 rounded-full shrink-0"
+                        style={{ backgroundColor: c.color ?? '#D4AF37' }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium truncate">{c.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {allHave ? 'Allen zugewiesen' : noneHave ? 'Keinem zugewiesen' : `${count}/${selectedIds.size} zugewiesen`}
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant={adding ? 'default' : 'outline'}
+                        className="h-7 px-2"
+                        onClick={() => {
+                          setBulkAdd(s => { const n = new Set(s); n.has(c.id) ? n.delete(c.id) : n.add(c.id); return n; });
+                          setBulkRemove(s => { const n = new Set(s); n.delete(c.id); return n; });
+                        }}
+                      >
+                        + Zuweisen
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={removing ? 'destructive' : 'outline'}
+                        className="h-7 px-2"
+                        onClick={() => {
+                          setBulkRemove(s => { const n = new Set(s); n.has(c.id) ? n.delete(c.id) : n.add(c.id); return n; });
+                          setBulkAdd(s => { const n = new Set(s); n.delete(c.id); return n; });
+                        }}
+                      >
+                        − Entfernen
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="ghost" onClick={() => setBulkOpen(false)} disabled={bulkSaving}>Abbrechen</Button>
+            <Button
+              onClick={applyBulk}
+              disabled={bulkSaving || (bulkAdd.size === 0 && bulkRemove.size === 0)}
+              className="gold-gradient text-primary-foreground"
+            >
+              {bulkSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+              Übernehmen
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
