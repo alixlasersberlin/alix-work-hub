@@ -62,13 +62,29 @@ function getBlockReason(profile: UserProfile | null): AccountBlockReason {
   return null;
 }
 
+const MFA_TAB_KEY = 'alixwork.mfa_verified_tab';
+
+export function markMfaVerifiedThisTab() {
+  try { sessionStorage.setItem(MFA_TAB_KEY, '1'); } catch { /* ignore */ }
+}
+
+export function clearMfaTabMarker() {
+  try { sessionStorage.removeItem(MFA_TAB_KEY); } catch { /* ignore */ }
+}
+
+function isMfaVerifiedThisTab() {
+  try { return sessionStorage.getItem(MFA_TAB_KEY) === '1'; } catch { return false; }
+}
+
 async function computeMfaState(): Promise<MfaState> {
   try {
     const { data: factorsData } = await supabase.auth.mfa.listFactors();
     const verifiedTotp = (factorsData?.totp ?? []).filter((f: any) => f.status === 'verified');
     if (verifiedTotp.length === 0) return 'not_enrolled';
     const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-    if (aalData?.currentLevel === 'aal2') return 'verified';
+    // Pflicht-TOTP: AAL2 alleine reicht nicht — der Tab muss in dieser Session
+    // explizit verifiziert worden sein, sonst wird ein neuer Challenge erzwungen.
+    if (aalData?.currentLevel === 'aal2' && isMfaVerifiedThisTab()) return 'verified';
     return 'challenge_required';
   } catch {
     return 'unknown';
