@@ -194,7 +194,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Idle-Auto-Logout nach 20 Minuten Inaktivität
   useEffect(() => {
     if (!user) return;
-    const IDLE_MS = 20 * 60 * 1000;
+    const IDLE_MS = 60 * 60 * 1000;
     let timer: number | undefined;
 
     const reset = () => {
