@@ -139,6 +139,7 @@ export default function Lagergeraete({
   const [selectionMode, setSelectionMode] = useState(false);
   const [bulkStatus, setBulkStatus] = useState<DeviceStatus>('Bestand');
   const [bulkApplying, setBulkApplying] = useState(false);
+  const [duplicating, setDuplicating] = useState(false);
 
   // Global search across devices and available (unreserved) open orders
   const [searchQuery, setSearchQuery] = useState('');
