@@ -59,6 +59,7 @@ import EquipmentProduktion from "./pages/EquipmentProduktion";
 import EquipmentHold from "./pages/EquipmentHold";
 import Artikel from "./pages/Artikel";
 import Katalog from "./pages/Katalog";
+import Kategorie from "./pages/Kategorie";
 import Wareneingang from "./pages/Wareneingang";
 import ArtikelUebersicht from "./pages/ArtikelUebersicht";
 import AngebotErstellen from "./pages/AngebotErstellen";
@@ -175,6 +176,7 @@ function AppRoutes() {
         <Route path="/auftraege/:id" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><OrderDetail /></ProtectedRoute>} />
         <Route path="/verkauf/artikel" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Artikel /></ProtectedRoute>} />
         <Route path="/verkauf/artikel/katalog" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Katalog /></ProtectedRoute>} />
+        <Route path="/verkauf/artikel/kategorie" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Kategorie /></ProtectedRoute>} />
         <Route path="/verkauf/artikel/wareneingang" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Wareneingang /></ProtectedRoute>} />
         <Route path="/verkauf/artikel-uebersicht" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><ArtikelUebersicht /></ProtectedRoute>} />
         <Route path="/verkauf" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><VerkaufUebersicht /></ProtectedRoute>} />
