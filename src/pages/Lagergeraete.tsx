@@ -46,6 +46,8 @@ import { Switch } from '@/components/ui/switch';
 import { Select as BulkSelect, SelectContent as BulkSelectContent, SelectItem as BulkSelectItem, SelectTrigger as BulkSelectTrigger, SelectValue as BulkSelectValue } from '@/components/ui/select';
 import { useViewMode } from '@/hooks/useViewMode';
 import { ViewToggle } from '@/components/ViewToggle';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 
 type LagerDevice = {
   id: string;
@@ -119,6 +121,7 @@ export default function Lagergeraete({
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [modelPickerOpen, setModelPickerOpen] = useState(false);
 
   const today = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -314,32 +317,32 @@ export default function Lagergeraete({
     loadDevices();
   }, []);
 
-  const [extraModelGroups, setExtraModelGroups] = useState<{ label: string; models: string[] }[]>([]);
+  type ModelOption = { name: string; sku?: string | null };
+  const [extraModelGroups, setExtraModelGroups] = useState<{ label: string; models: ModelOption[] }[]>([]);
 
   useEffect(() => {
     (async () => {
       const knownModels = new Set<string>();
       ALIX_MODEL_GROUPS.forEach((g) => g.models.forEach((m) => knownModels.add(m.toLowerCase())));
 
-      // Load all zoho items (Alix Lasers, Alix Beauty + others)
       const { data: items } = await supabase
         .from('zoho_items')
-        .select('name, category_name, brand, manufacturer')
+        .select('name, sku, category_name, brand, manufacturer')
         .order('name', { ascending: true })
         .limit(2000);
 
-      // Load distinct model names from lager_devices (internal/manual entries)
       const { data: existing } = await supabase
         .from('lager_devices')
         .select('model_name')
         .limit(2000);
 
-      const byCategory = new Map<string, Set<string>>();
-      const addTo = (cat: string, name: string) => {
-        const key = (name ?? '').trim();
+      const byCategory = new Map<string, Map<string, ModelOption>>();
+      const addTo = (cat: string, opt: ModelOption) => {
+        const key = (opt.name ?? '').trim();
         if (!key) return;
-        if (!byCategory.has(cat)) byCategory.set(cat, new Set());
-        byCategory.get(cat)!.add(key);
+        if (!byCategory.has(cat)) byCategory.set(cat, new Map());
+        const map = byCategory.get(cat)!;
+        if (!map.has(key.toLowerCase())) map.set(key.toLowerCase(), { name: key, sku: opt.sku ?? null });
       };
 
       (items ?? []).forEach((it: any) => {
@@ -347,22 +350,23 @@ export default function Lagergeraete({
         if (!name) return;
         const cat = (it.category_name || it.brand || it.manufacturer || 'Weitere Artikel').toString();
         const isAlixLasers = /alix\s*lasers?/i.test(cat);
-        // Always include Alix Lasers category items (per request); for others skip duplicates of static groups
         if (!isAlixLasers && knownModels.has(name.toLowerCase())) return;
-        addTo(isAlixLasers ? 'Alix Lasers (Artikel)' : cat, name);
+        addTo(isAlixLasers ? 'Alix Lasers (Artikel)' : cat, { name, sku: it.sku });
       });
 
-      const internal = new Set<string>();
+      const internal = new Map<string, ModelOption>();
       (existing ?? []).forEach((d: any) => {
         const n = (d.model_name ?? '').trim();
-        if (n && !knownModels.has(n.toLowerCase())) internal.add(n);
+        if (n && !knownModels.has(n.toLowerCase())) internal.set(n.toLowerCase(), { name: n });
       });
-      // Remove internal ones already covered by zoho category groups
-      byCategory.forEach((set) => set.forEach((n) => internal.delete(n)));
+      byCategory.forEach((m) => m.forEach((_, k) => internal.delete(k)));
       if (internal.size > 0) byCategory.set('Interne Modelle', internal);
 
       const groups = Array.from(byCategory.entries())
-        .map(([label, set]) => ({ label, models: Array.from(set).sort((a, b) => a.localeCompare(b)) }))
+        .map(([label, map]) => ({
+          label,
+          models: Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name)),
+        }))
         .sort((a, b) => {
           if (a.label === 'Interne Modelle') return 1;
           if (b.label === 'Interne Modelle') return -1;
@@ -531,33 +535,64 @@ export default function Lagergeraete({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="model">Modell *</Label>
-                <Select value={modelName} onValueChange={setModelName}>
-                  <SelectTrigger id="model">
-                    <SelectValue placeholder="Modell auswählen" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-80">
-                    {ALIX_MODEL_GROUPS.map((group) => (
-                      <SelectGroup key={group.label}>
-                        <SelectLabel>{group.label}</SelectLabel>
-                        {group.models.map((m) => (
-                          <SelectItem key={m} value={m}>
-                            {m}
-                          </SelectItem>
+                <Popover open={modelPickerOpen} onOpenChange={setModelPickerOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      id="model"
+                      type="button"
+                      variant="outline"
+                      role="combobox"
+                      className="w-full justify-between font-normal"
+                    >
+                      <span className="truncate">{modelName || 'Modell auswählen'}</span>
+                      <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command
+                      filter={(value, search) => {
+                        if (!search) return 1;
+                        return value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0;
+                      }}
+                    >
+                      <CommandInput placeholder="Suche nach Name oder SKU…" />
+                      <CommandList className="max-h-72">
+                        <CommandEmpty>Keine Treffer.</CommandEmpty>
+                        {ALIX_MODEL_GROUPS.map((group) => (
+                          <CommandGroup key={group.label} heading={group.label}>
+                            {group.models.map((m) => (
+                              <CommandItem
+                                key={m}
+                                value={m}
+                                onSelect={() => { setModelName(m); setModelPickerOpen(false); }}
+                              >
+                                {m}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
                         ))}
-                      </SelectGroup>
-                    ))}
-                    {extraModelGroups.map((group) => (
-                      <SelectGroup key={`extra-${group.label}`}>
-                        <SelectLabel>{group.label}</SelectLabel>
-                        {group.models.map((m) => (
-                          <SelectItem key={`${group.label}-${m}`} value={m}>
-                            {m}
-                          </SelectItem>
+                        {extraModelGroups.map((group) => (
+                          <CommandGroup key={`extra-${group.label}`} heading={group.label}>
+                            {group.models.map((m) => (
+                              <CommandItem
+                                key={`${group.label}-${m.name}`}
+                                value={`${m.name} ${m.sku ?? ''}`}
+                                onSelect={() => { setModelName(m.name); setModelPickerOpen(false); }}
+                              >
+                                <div className="flex w-full items-center justify-between gap-2">
+                                  <span className="truncate">{m.name}</span>
+                                  {m.sku && (
+                                    <span className="text-xs text-muted-foreground shrink-0">{m.sku}</span>
+                                  )}
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
                         ))}
-                      </SelectGroup>
-                    ))}
-                  </SelectContent>
-                </Select>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="device-type">Gerätetyp *</Label>
