@@ -390,6 +390,7 @@ export default function Artikel() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="__all__">Alle Kategorien</SelectItem>
+              <SelectItem value="__none__">Ohne Kategorie</SelectItem>
               {categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
             </SelectContent>
           </Select>
