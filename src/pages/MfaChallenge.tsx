@@ -10,6 +10,7 @@ import alixLogo from '@/assets/alix-logo-gold.png';
 
 export default function MfaChallenge() {
   const { signOut, refreshMfaState } = useAuth();
+  // markMfaVerifiedThisTab wird nach erfolgreicher Verifikation gesetzt
   const navigate = useNavigate();
   const [factorId, setFactorId] = useState('');
   const [code, setCode] = useState('');
