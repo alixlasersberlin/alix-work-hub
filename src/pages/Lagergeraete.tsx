@@ -46,6 +46,8 @@ import { Switch } from '@/components/ui/switch';
 import { Select as BulkSelect, SelectContent as BulkSelectContent, SelectItem as BulkSelectItem, SelectTrigger as BulkSelectTrigger, SelectValue as BulkSelectValue } from '@/components/ui/select';
 import { useViewMode } from '@/hooks/useViewMode';
 import { ViewToggle } from '@/components/ViewToggle';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 
 type LagerDevice = {
   id: string;
