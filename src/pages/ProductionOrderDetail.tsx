@@ -13,9 +13,12 @@ import { cn } from '@/lib/utils';
 export default function ProductionOrderDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { hasRole, user } = useAuth();
+  const isSuperAdmin = hasRole('Super Admin');
   const [data, setData] = useState<any>(null);
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [approving, setApproving] = useState(false);
   const [displayOrderNumber, setDisplayOrderNumber] = useState<string>('');
 
   useEffect(() => {
