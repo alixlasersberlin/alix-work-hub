@@ -237,7 +237,6 @@ export default function OrderDetail() {
                 ['Ext. Auftrags-ID', order.external_order_id],
                 ['Intern Nummer', order.internal_number],
                 ['Erstellt', new Date(order.created_at).toLocaleString('de-DE')],
-                ['Erstellt', new Date(order.created_at).toLocaleString('de-DE')],
               ].map(([l, v]) => (
                 <div key={l as string} className="flex justify-between">
                   <dt className="text-muted-foreground">{l}</dt>
