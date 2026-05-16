@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Plus, Loader2, Factory, Users as UsersIcon, FileText, Pencil, Trash2, AlertTriangle,
-  Search, Calendar, Truck, User, Package, Hash, ArrowUpDown,
+  Search, Calendar, Truck, User, Package, Hash, ArrowUpDown, CheckCircle2, XCircle, Clock,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, differenceInCalendarDays, isValid } from 'date-fns';
@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { PageSizeSelector, usePagination, PaginationControls } from '@/components/PageSizeSelector';
 import { useViewMode } from '@/hooks/useViewMode';
 import { ViewToggle } from '@/components/ViewToggle';
+import { useAuth } from '@/hooks/useAuth';
 
 type Mode = 'order' | 'reclamation';
 type Lang = 'de' | 'en' | 'zh';
