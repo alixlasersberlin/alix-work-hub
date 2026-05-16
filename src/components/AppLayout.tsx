@@ -368,9 +368,11 @@ export default function AppLayout() {
     const colorClass =
       c === 0
         ? 'text-red-500'
-        : path === '/lager' || path === '/tourenplanung'
-          ? 'text-green-500'
-          : undefined;
+        : path === '/einkauf'
+          ? 'text-red-500'
+          : path === '/lager' || path === '/tourenplanung'
+            ? 'text-green-500'
+            : undefined;
     return (
       <>
         {label} <span className={colorClass}>({c})</span>
