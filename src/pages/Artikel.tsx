@@ -164,6 +164,24 @@ export default function Artikel() {
     clearSelection();
   }
 
+  async function deleteSelected() {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    setDeleting(true);
+    // Zuerst Kategorie-Zuweisungen entfernen, sonst evtl. Verweise
+    await supabase.from('item_category_assignments').delete().in('item_id', ids);
+    const { error } = await supabase.from('zoho_items').delete().in('id', ids);
+    setDeleting(false);
+    setDeleteOpen(false);
+    if (error) {
+      toast({ title: 'Löschen fehlgeschlagen', description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: 'Gelöscht', description: `${ids.length} Artikel entfernt.` });
+    setItems((prev) => prev.filter((i) => !selectedIds.has(i.id)));
+    clearSelection();
+  }
+
   async function applyMassEdit() {
     const itemIds = Array.from(selectedIds);
     if (itemIds.length === 0) return;
