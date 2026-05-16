@@ -131,6 +131,31 @@ export default function OrderEditDialog({ order, open, onClose, onSaved }: Props
               className="bg-secondary border-border mt-1 font-mono uppercase"
             />
           </div>
+          <div className="rounded-md border border-border bg-secondary/50 p-3 space-y-3">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <Checkbox
+                checked={form.deposit_ok}
+                onCheckedChange={v => setForm(f => ({ ...f, deposit_ok: !!v }))}
+              />
+              <span className="text-sm font-semibold tracking-wide">ANZAHLUNG OK</span>
+            </label>
+            {form.deposit_ok && (
+              <div>
+                <Label className="text-xs text-muted-foreground">Mitarbeiter (Name)</Label>
+                <Input
+                  value={form.deposit_ok_by}
+                  onChange={e => set('deposit_ok_by', e.target.value)}
+                  placeholder="Name des Mitarbeiters"
+                  className="bg-background border-border mt-1"
+                />
+                {order?.deposit_ok_at && (
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Bestätigt am {new Date(order.deposit_ok_at).toLocaleString('de-DE')}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
           <div className="flex justify-end gap-2 pt-4">
             <Button variant="ghost" onClick={onClose}>Abbrechen</Button>
             <Button onClick={handleSave} disabled={saving} className="gold-gradient text-primary-foreground">
