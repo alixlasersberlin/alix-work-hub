@@ -445,6 +445,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
   const onSaveAndSend = async () => {
     const poId = await persist();
     if (!poId) return;
+    if (!(await ensureApproved(poId))) return;
     const pdf = await buildPdf('bilingual', poId);
     const supplier = suppliers.find(s => s.id === form.supplier_id);
     if (!pdf || !supplier || !selectedOrder) return;
