@@ -419,7 +419,25 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
                         </td>
                         <td className="p-3"><span className={cn('px-2 py-0.5 rounded text-xs font-medium', paymentClasses(ps))}>{tPayment(ps)}</span></td>
                         <td className="p-3"><span className={cn('px-2 py-0.5 rounded text-xs font-medium', statusClasses(r.status))}>{r.status}</span></td>
+                        <td className="p-3">
+                          {(() => {
+                            const a = r.approval_status || 'pending';
+                            const cls = a === 'approved'
+                              ? 'bg-green-500/15 text-green-500 border border-green-500/30'
+                              : a === 'rejected'
+                                ? 'bg-destructive/15 text-destructive border border-destructive/30'
+                                : 'bg-yellow-500/15 text-yellow-500 border border-yellow-500/30';
+                            const Icon = a === 'approved' ? CheckCircle2 : a === 'rejected' ? XCircle : Clock;
+                            const label = a === 'approved' ? 'Genehmigt' : a === 'rejected' ? 'Abgelehnt' : 'Wartet';
+                            return <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium', cls)}><Icon className="w-3 h-3" /> {label}</span>;
+                          })()}
+                        </td>
                         <td className="p-3 text-right whitespace-nowrap">
+                          {isSuperAdmin && (r.approval_status || 'pending') !== 'approved' && (
+                            <Button size="sm" variant="ghost" className="h-8 px-2 text-green-500 hover:text-green-500 hover:bg-green-500/10" onClick={() => approve(r.id)} title="Genehmigen">
+                              <CheckCircle2 className="w-4 h-4" />
+                            </Button>
+                          )}
                           <Button asChild size="sm" variant="ghost" className="h-8 w-8 p-0"><Link to={`${basePath}/${r.id}`}><FileText className="w-4 h-4" /></Link></Button>
                           <Button asChild size="sm" variant="ghost" className="h-8 w-8 p-0"><Link to={`${basePath}/${r.id}/bearbeiten`}><Pencil className="w-4 h-4" /></Link></Button>
                           <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => remove(r.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
