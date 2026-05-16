@@ -992,6 +992,10 @@ export type Database = {
       production_orders: {
         Row: {
           anmerkungen: string | null
+          approval_note: string | null
+          approval_status: string
+          approved_at: string | null
+          approved_by: string | null
           attachment_pdf_path: string | null
           bearbeiter: string
           created_at: string
@@ -1022,6 +1026,10 @@ export type Database = {
         }
         Insert: {
           anmerkungen?: string | null
+          approval_note?: string | null
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           attachment_pdf_path?: string | null
           bearbeiter: string
           created_at?: string
@@ -1052,6 +1060,10 @@ export type Database = {
         }
         Update: {
           anmerkungen?: string | null
+          approval_note?: string | null
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           attachment_pdf_path?: string | null
           bearbeiter?: string
           created_at?: string
