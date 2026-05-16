@@ -368,7 +368,7 @@ export default function AppLayout() {
     const colorClass =
       c === 0
         ? 'text-red-500'
-        : path === '/lager'
+        : path === '/lager' || path === '/tourenplanung'
           ? 'text-green-500'
           : undefined;
     return (
