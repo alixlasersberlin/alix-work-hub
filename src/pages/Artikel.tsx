@@ -11,9 +11,11 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, RefreshCw, Search, Package, Eye, Pencil, Save, X, Download, FileSpreadsheet, FolderTree, Plus, Copy } from 'lucide-react';
+import { Loader2, RefreshCw, Search, Package, Eye, Pencil, Save, X, Download, FileSpreadsheet, FolderTree, Plus, Copy, Trash2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { useAuth } from '@/hooks/useAuth';
 
 type ZohoItem = {
   id: string;
