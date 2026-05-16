@@ -237,14 +237,27 @@ export default function AppLayout() {
     };
     document.addEventListener('visibilitychange', onVisibility);
 
+    // Custom Event: Seiten können `window.dispatchEvent(new Event('lager-data-refresh'))`
+    // auslösen, sobald sie eigene Daten neu laden – damit aktualisiert sich auch
+    // sofort die Zählung im linken Menü.
+    const onCustomRefresh = () => scheduleReload();
+    window.addEventListener('lager-data-refresh', onCustomRefresh);
+
     return () => {
       cancelled = true;
       window.clearInterval(intervalId);
       if (debounceId) window.clearTimeout(debounceId);
       document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('lager-data-refresh', onCustomRefresh);
       supabase.removeChannel(channel);
     };
   }, []);
+
+  // Bei jedem Routenwechsel: Menüzählungen neu anfordern
+  useEffect(() => {
+    window.dispatchEvent(new Event('lager-data-refresh'));
+    window.dispatchEvent(new Event('route-plans-refresh'));
+  }, [location.pathname]);
 
   // Anzahl bevorstehender Touren (planned_date >= heute)
   useEffect(() => {
@@ -260,17 +273,21 @@ export default function AppLayout() {
     load();
     const intervalId = window.setInterval(load, 5 * 60 * 1000);
     let debounceId: number | undefined;
+    const scheduleReload = () => {
+      if (debounceId) window.clearTimeout(debounceId);
+      debounceId = window.setTimeout(load, 400);
+    };
     const channel = supabase
       .channel('route_plans_counts')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'route_plans' }, () => {
-        if (debounceId) window.clearTimeout(debounceId);
-        debounceId = window.setTimeout(load, 400);
-      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'route_plans' }, scheduleReload)
       .subscribe();
+    const onCustomRefresh = () => scheduleReload();
+    window.addEventListener('route-plans-refresh', onCustomRefresh);
     return () => {
       cancelled = true;
       window.clearInterval(intervalId);
       if (debounceId) window.clearTimeout(debounceId);
+      window.removeEventListener('route-plans-refresh', onCustomRefresh);
       supabase.removeChannel(channel);
     };
   }, []);
