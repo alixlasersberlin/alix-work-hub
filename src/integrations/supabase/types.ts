@@ -763,6 +763,9 @@ export type Database = {
           created_at: string
           currency: string | null
           customer_id: string
+          deposit_ok: boolean
+          deposit_ok_at: string | null
+          deposit_ok_by: string | null
           expected_shipment_date: string | null
           external_order_id: string | null
           id: string
@@ -783,6 +786,9 @@ export type Database = {
           created_at?: string
           currency?: string | null
           customer_id: string
+          deposit_ok?: boolean
+          deposit_ok_at?: string | null
+          deposit_ok_by?: string | null
           expected_shipment_date?: string | null
           external_order_id?: string | null
           id?: string
@@ -803,6 +809,9 @@ export type Database = {
           created_at?: string
           currency?: string | null
           customer_id?: string
+          deposit_ok?: boolean
+          deposit_ok_at?: string | null
+          deposit_ok_by?: string | null
           expected_shipment_date?: string | null
           external_order_id?: string | null
           id?: string

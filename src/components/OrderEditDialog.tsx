@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 
@@ -33,6 +34,8 @@ export default function OrderEditDialog({ order, open, onClose, onSaved }: Props
       : '',
     internal_number: order?.internal_number || '',
     lawyer_reason: order?.lawyer_reason || '',
+    deposit_ok: !!order?.deposit_ok,
+    deposit_ok_by: order?.deposit_ok_by || '',
   });
   const [saving, setSaving] = useState(false);
 
@@ -44,7 +47,12 @@ export default function OrderEditDialog({ order, open, onClose, onSaved }: Props
       toast.error('Intern Nummer: max. 10 Zeichen, nur Buchstaben und Zahlen');
       return;
     }
+    if (form.deposit_ok && !form.deposit_ok_by.trim()) {
+      toast.error('Bitte Mitarbeitername für "ANZAHLUNG OK" eintragen');
+      return;
+    }
     setSaving(true);
+    const depositChanged = !!order?.deposit_ok !== form.deposit_ok || (order?.deposit_ok_by || '') !== form.deposit_ok_by.trim();
     const { error } = await supabase.from('orders').update({
       order_status: form.order_status,
       total_amount: form.total_amount ? parseFloat(form.total_amount) : null,
@@ -53,7 +61,10 @@ export default function OrderEditDialog({ order, open, onClose, onSaved }: Props
       expected_shipment_date: form.expected_shipment_date || null,
       internal_number: intNum || null,
       lawyer_reason: form.order_status === 'Anwalt' ? (form.lawyer_reason || null) : null,
-    }).eq('id', order.id);
+      deposit_ok: form.deposit_ok,
+      deposit_ok_by: form.deposit_ok ? form.deposit_ok_by.trim() : null,
+      deposit_ok_at: form.deposit_ok ? (depositChanged ? new Date().toISOString() : order?.deposit_ok_at) : null,
+    } as any).eq('id', order.id);
     setSaving(false);
     if (error) { toast.error('Fehler beim Speichern: ' + error.message); return; }
     toast.success('Auftrag aktualisiert');
@@ -119,6 +130,31 @@ export default function OrderEditDialog({ order, open, onClose, onSaved }: Props
               placeholder="Max. 10 Zeichen (A-Z, 0-9)"
               className="bg-secondary border-border mt-1 font-mono uppercase"
             />
+          </div>
+          <div className="rounded-md border border-border bg-secondary/50 p-3 space-y-3">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <Checkbox
+                checked={form.deposit_ok}
+                onCheckedChange={v => setForm(f => ({ ...f, deposit_ok: !!v }))}
+              />
+              <span className="text-sm font-semibold tracking-wide">ANZAHLUNG OK</span>
+            </label>
+            {form.deposit_ok && (
+              <div>
+                <Label className="text-xs text-muted-foreground">Mitarbeiter (Name)</Label>
+                <Input
+                  value={form.deposit_ok_by}
+                  onChange={e => set('deposit_ok_by', e.target.value)}
+                  placeholder="Name des Mitarbeiters"
+                  className="bg-background border-border mt-1"
+                />
+                {order?.deposit_ok_at && (
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Bestätigt am {new Date(order.deposit_ok_at).toLocaleString('de-DE')}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
           <div className="flex justify-end gap-2 pt-4">
             <Button variant="ghost" onClick={onClose}>Abbrechen</Button>
