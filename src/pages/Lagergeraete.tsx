@@ -545,7 +545,7 @@ export default function Lagergeraete({
               <Plus className="w-4 h-4" /> {addLabel}
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingId ? `${dialogTitle} bearbeiten` : `${dialogTitle} erfassen`}</DialogTitle>
               <DialogDescription>
