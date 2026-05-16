@@ -217,7 +217,8 @@ export default function AppLayout() {
         if (s === 'Shell Warehouse') { warehouse++; continue; }
         if (isLeih(d.notes)) leih++; else lager++;
       }
-      setLagerCounts({
+      setLagerCounts((prev) => ({
+        ...prev,
         '/lager': leih + lager + transfer + produktion + hold + warehouse,
         '/lager/leihgeraete': leih,
         '/lager/lagergeraete': lager,
@@ -226,7 +227,7 @@ export default function AppLayout() {
         '/lager/equipment-area/hold': hold,
         '/lager/equipment-area/warehouse': warehouse,
         '/lager/equipment-area': lager + transfer + produktion + hold + warehouse,
-      });
+      }));
     };
 
     load();
