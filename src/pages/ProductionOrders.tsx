@@ -147,6 +147,18 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
     load();
   };
 
+  const approve = async (id: string) => {
+    const { error } = await supabase.from('production_orders').update({
+      approval_status: 'approved',
+      approved_by: user?.id ?? null,
+      approved_at: new Date().toISOString(),
+      approval_note: null,
+    }).eq('id', id);
+    if (error) return toast.error(error.message);
+    toast.success('Bestellung genehmigt');
+    load();
+  };
+
   const statusOptions = useMemo(() => {
     const set = new Set<string>();
     rows.forEach(r => r.status && set.add(r.status));
