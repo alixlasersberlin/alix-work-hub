@@ -801,7 +801,7 @@ export default function AppLayout() {
           </div>
         </header>
         <main className="flex-1 overflow-y-auto overflow-x-hidden scroll-touch pb-safe">
-          <Outlet />
+          <Outlet key={refreshKey} />
         </main>
       </div>
       <WelcomeDialog />
