@@ -418,8 +418,8 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
   };
 
   const ensureApproved = async (poId: string): Promise<boolean> => {
-    const { data } = await supabase.from('production_orders').select('approval_status').eq('id', poId).maybeSingle();
-    if (data?.approval_status !== 'approved') {
+    const { data } = await supabase.from('production_orders').select('*').eq('id', poId).maybeSingle();
+    if ((data as any)?.approval_status !== 'approved') {
       toast.error('Bestellung muss erst von einem Super Admin genehmigt werden.');
       return false;
     }
