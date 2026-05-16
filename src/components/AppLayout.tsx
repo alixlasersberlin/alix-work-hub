@@ -58,7 +58,7 @@ const navItems: NavItem[] = [
       { path: '/order/timeline', label: 'Timeline Bestellungen', icon: Calendar, roles: ['Admin', 'Super Admin'] },
       { path: '/order/frei-bestellung', label: 'Bestellung möglich', icon: CheckCircle2, roles: ['Admin', 'Super Admin'] },
       { path: '/order/reklamation', label: 'Bestellung Reklamation', icon: AlertTriangle, roles: ['Admin', 'Super Admin'] },
-      { path: '/order', label: 'Order', icon: Factory, roles: ['Admin', 'Super Admin'] },
+      { path: '/order', label: 'Factory Orders', icon: Factory, roles: ['Admin', 'Super Admin'] },
     ],
   },
   {
