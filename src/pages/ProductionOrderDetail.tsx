@@ -3,10 +3,12 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { ArrowLeft, Loader2, Pencil, Download } from 'lucide-react';
+import { ArrowLeft, Loader2, Pencil, Download, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { generateProductionOrderPdf } from '@/lib/production-order-pdf';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
+import { cn } from '@/lib/utils';
 
 export default function ProductionOrderDetail() {
   const { id } = useParams();
