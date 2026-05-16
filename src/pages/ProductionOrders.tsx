@@ -260,6 +260,15 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
                 {PAYMENT_VALUES.map(p => <SelectItem key={p} value={p}>{tPayment(p)}</SelectItem>)}
               </SelectContent>
             </Select>
+            <Select value={approvalFilter} onValueChange={setApprovalFilter}>
+              <SelectTrigger className="h-9 w-full lg:w-[170px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Freigaben</SelectItem>
+                <SelectItem value="pending">Wartet auf Freigabe</SelectItem>
+                <SelectItem value="approved">Genehmigt</SelectItem>
+                <SelectItem value="rejected">Abgelehnt</SelectItem>
+              </SelectContent>
+            </Select>
             <Select value={sort} onValueChange={(v: SortKey) => setSort(v)}>
               <SelectTrigger className="h-9 w-full lg:w-[180px] col-span-2 md:col-span-1">
                 <ArrowUpDown className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
