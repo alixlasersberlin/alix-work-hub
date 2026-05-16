@@ -1055,6 +1055,28 @@ export default function Artikel() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Artikel endgültig löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {selectedIds.size} markierte Artikel werden unwiderruflich gelöscht. Verknüpfte Kategorie-Zuweisungen werden ebenfalls entfernt.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); deleteSelected(); }}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
+              Endgültig löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
