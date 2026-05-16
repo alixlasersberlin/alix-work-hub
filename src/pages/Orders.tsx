@@ -410,7 +410,15 @@ export default function Orders() {
                             loading={drivingLoading}
                           />
                         </td>
-                        <td className="px-4 py-3 text-muted-foreground text-xs">{o.source_system}</td>
+                        <td className="px-4 py-3 text-xs">
+                          {o.deposit_ok ? (
+                            <span className="inline-flex items-center gap-1 text-emerald-500 font-medium">
+                              ✓ {o.deposit_ok_by || 'Ja'}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </td>
                         {canWrite && (
                           <td className="px-4 py-3 text-right" onClick={e => e.stopPropagation()}>
                             <div className="flex items-center justify-end gap-1">
