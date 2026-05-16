@@ -359,7 +359,12 @@ export default function AppLayout() {
 
   const labelWithCount = (path: string, label: string) => {
     const c = lagerCounts[path];
-    return c === undefined ? label : `${label} (${c})`;
+    if (c === undefined) return label;
+    return (
+      <>
+        {label} <span className={c === 0 ? 'text-red-500' : undefined}>({c})</span>
+      </>
+    );
   };
 
   // Body-Scroll sperren, wenn Drawer offen
