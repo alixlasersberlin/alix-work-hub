@@ -37,6 +37,8 @@ export default function OrderDetail() {
   const [activeTab, setActiveTab] = useState<'overview' | 'items' | 'deposit' | 'packages' | 'notes' | 'history' | 'raw'>('overview');
   const [depositOk, setDepositOk] = useState(false);
   const [depositBy, setDepositBy] = useState('');
+  const [depositAmount, setDepositAmount] = useState('');
+  const [depositAdditional, setDepositAdditional] = useState('');
   const [savingDeposit, setSavingDeposit] = useState(false);
 
   // Note form
