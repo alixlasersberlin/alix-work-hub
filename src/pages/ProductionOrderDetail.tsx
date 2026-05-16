@@ -36,6 +36,10 @@ export default function ProductionOrderDetail() {
 
   const downloadPdf = async (lang: 'bilingual' | 'en' = 'bilingual') => {
     if (!data) return;
+    if (data.approval_status !== 'approved') {
+      toast.error('Bestellung muss erst von einem Super Admin genehmigt werden.');
+      return;
+    }
     const pdf = await generateProductionOrderPdf({
       order_number: displayOrderNumber || data.order_number,
       modellname: data.modellname,
@@ -54,6 +58,27 @@ export default function ProductionOrderDetail() {
     a.href = url; a.download = pdf.filename; a.click();
     URL.revokeObjectURL(url);
     toast.success('PDF heruntergeladen');
+  };
+
+  const setApproval = async (status: 'approved' | 'rejected') => {
+    if (!id) return;
+    let note: string | null = null;
+    if (status === 'rejected') {
+      note = window.prompt('Ablehnungsgrund (optional):') ?? '';
+    }
+    setApproving(true);
+    const payload: any = {
+      approval_status: status,
+      approved_by: status === 'approved' ? user?.id : null,
+      approved_at: status === 'approved' ? new Date().toISOString() : null,
+      approval_note: note || null,
+    };
+    const { error } = await supabase.from('production_orders').update(payload).eq('id', id);
+    setApproving(false);
+    if (error) return toast.error(error.message);
+    toast.success(status === 'approved' ? 'Bestellung genehmigt' : 'Bestellung abgelehnt');
+    const { data: po } = await supabase.from('production_orders').select('*, supplier:suppliers(*)').eq('id', id).single();
+    setData(po);
   };
 
   if (loading) return <div className="p-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
