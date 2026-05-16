@@ -365,9 +365,15 @@ export default function AppLayout() {
   const labelWithCount = (path: string, label: string) => {
     const c = lagerCounts[path];
     if (c === undefined) return label;
+    const colorClass =
+      c === 0
+        ? 'text-red-500'
+        : path === '/lager'
+          ? 'text-green-500'
+          : undefined;
     return (
       <>
-        {label} <span className={c === 0 ? 'text-red-500' : undefined}>({c})</span>
+        {label} <span className={colorClass}>({c})</span>
       </>
     );
   };
