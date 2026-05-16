@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Pencil, Plus, Warehouse, Link2, X, Sparkles, Package, Search } from 'lucide-react';
+import { Loader2, Pencil, Plus, Warehouse, Link2, X, Sparkles, Package, Search, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { z } from 'zod';
@@ -143,6 +143,8 @@ export default function Lagergeraete({
 
   // Global search across devices and available (unreserved) open orders
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortField, setSortField] = useState<'serial_number' | 'model_name' | 'entry_date' | 'order_number' | 'status' | 'notes'>('serial_number');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [viewMode, setViewMode] = useViewMode();
   type FreeOrder = {
     id: string;
@@ -186,6 +188,34 @@ export default function Lagergeraete({
       return hay.includes(q);
     });
   }, [typeFilteredDevices, searchQuery]);
+
+  const sortedDevices = useMemo(() => {
+    const arr = [...filteredDevices];
+    const dir = sortDir === 'asc' ? 1 : -1;
+    arr.sort((a, b) => {
+      let av: any; let bv: any;
+      switch (sortField) {
+        case 'serial_number': av = a.serial_number ?? ''; bv = b.serial_number ?? ''; break;
+        case 'model_name': av = a.model_name ?? ''; bv = b.model_name ?? ''; break;
+        case 'entry_date': av = a.entry_date ?? ''; bv = b.entry_date ?? ''; break;
+        case 'order_number': av = a.orders?.order_number ?? ''; bv = b.orders?.order_number ?? ''; break;
+        case 'status': av = getStatusFromNotes(a.notes); bv = getStatusFromNotes(b.notes); break;
+        case 'notes': av = a.notes ?? ''; bv = b.notes ?? ''; break;
+      }
+      return String(av).localeCompare(String(bv), 'de', { numeric: true, sensitivity: 'base' }) * dir;
+    });
+    return arr;
+  }, [filteredDevices, sortField, sortDir]);
+
+  const toggleSort = (field: typeof sortField) => {
+    if (sortField === field) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    else { setSortField(field); setSortDir('asc'); }
+  };
+
+  const SortIcon = ({ field }: { field: typeof sortField }) => {
+    if (sortField !== field) return <ArrowUpDown className="w-3 h-3 opacity-50" />;
+    return sortDir === 'asc' ? <ArrowUp className="w-3 h-3 text-primary" /> : <ArrowDown className="w-3 h-3 text-primary" />;
+  };
 
   // Search free (unreserved) open orders matching the query
   useEffect(() => {
@@ -1038,17 +1068,17 @@ export default function Lagergeraete({
                     />
                   </TableHead>
                 )}
-                <TableHead>Seriennummer</TableHead>
-                <TableHead>Modell</TableHead>
-                <TableHead>Eingangsdatum</TableHead>
-                <TableHead>Reservierter Auftrag</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Notizen (intern)</TableHead>
+                <TableHead onClick={() => toggleSort('serial_number')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Seriennummer <SortIcon field="serial_number" /></span></TableHead>
+                <TableHead onClick={() => toggleSort('model_name')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Modell <SortIcon field="model_name" /></span></TableHead>
+                <TableHead onClick={() => toggleSort('entry_date')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Eingangsdatum <SortIcon field="entry_date" /></span></TableHead>
+                <TableHead onClick={() => toggleSort('order_number')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Reservierter Auftrag <SortIcon field="order_number" /></span></TableHead>
+                <TableHead onClick={() => toggleSort('status')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Status <SortIcon field="status" /></span></TableHead>
+                <TableHead onClick={() => toggleSort('notes')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Notizen (intern) <SortIcon field="notes" /></span></TableHead>
                 <TableHead className="w-24 text-right">Aktionen</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredDevices.map((d) => (
+              {sortedDevices.map((d) => (
                 <TableRow key={d.id} className={d.reserved_order_id ? 'bg-yellow-500/10 hover:bg-yellow-500/15' : (rowAccentClass ?? '')}>
                   {selectionMode && (
                     <TableCell>
