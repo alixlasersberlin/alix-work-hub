@@ -9,8 +9,10 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
-  ArrowLeft, ClipboardList, Building2, FileText, History, Loader2, Inbox, Send, Pencil, X, Check, Shield, Package, CalendarIcon, CalendarClock, Truck
+  ArrowLeft, ClipboardList, Building2, FileText, History, Loader2, Inbox, Send, Pencil, X, Check, Shield, Package, CalendarIcon, CalendarClock, Truck, Euro
 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { StatusBadge } from '@/components/StatusBadge';
 import InstallmentPlanDialog from '@/components/InstallmentPlanDialog';
 import SepaMandatButton from '@/components/SepaMandatButton';
@@ -32,7 +34,10 @@ export default function OrderDetail() {
   const [history, setHistory] = useState<any[]>([]);
   const [poCount, setPoCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'items' | 'packages' | 'notes' | 'history' | 'raw'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'items' | 'deposit' | 'packages' | 'notes' | 'history' | 'raw'>('overview');
+  const [depositOk, setDepositOk] = useState(false);
+  const [depositBy, setDepositBy] = useState('');
+  const [savingDeposit, setSavingDeposit] = useState(false);
 
   // Note form
   const [newNote, setNewNote] = useState('');
@@ -63,6 +68,8 @@ export default function OrderDetail() {
     setNotes(nRes.data ?? []);
     setItems(iRes.data ?? []);
     setHistory(hRes.data ?? []);
+    setDepositOk(!!oRes.data?.deposit_ok);
+    setDepositBy(oRes.data?.deposit_ok_by || '');
 
     // Anzahl Produktionsbestellungen f\u00fcr diese order_number
     if (oRes.data?.order_number) {
@@ -106,6 +113,24 @@ export default function OrderDetail() {
     setNotes(data ?? []);
   }
 
+  async function saveDeposit() {
+    if (depositOk && !depositBy.trim()) {
+      toast.error('Bitte Mitarbeitername eintragen');
+      return;
+    }
+    setSavingDeposit(true);
+    const depositChanged = !!order?.deposit_ok !== depositOk || (order?.deposit_ok_by || '') !== depositBy.trim();
+    const { error } = await supabase.from('orders').update({
+      deposit_ok: depositOk,
+      deposit_ok_by: depositOk ? depositBy.trim() : null,
+      deposit_ok_at: depositOk ? (depositChanged ? new Date().toISOString() : order?.deposit_ok_at) : null,
+    } as any).eq('id', id!);
+    setSavingDeposit(false);
+    if (error) { toast.error('Fehler: ' + error.message); return; }
+    toast.success('Anzahlung gespeichert');
+    loadAll();
+  }
+
   if (loading) return <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   if (!order) return <div className="p-8 text-center text-muted-foreground">Auftrag nicht gefunden.</div>;
 
@@ -126,6 +151,7 @@ export default function OrderDetail() {
   const tabs = [
     { key: 'overview', label: 'Übersicht', icon: ClipboardList },
     { key: 'items', label: `Artikel (${items.length})`, icon: Package },
+    { key: 'deposit', label: `Anzahlung${order?.deposit_ok ? ' ✓' : ''}`, icon: Euro },
     { key: 'packages', label: `Pakete (${packages.length})`, icon: Truck },
     { key: 'notes', label: `Notizen (${notes.length})`, icon: FileText },
     { key: 'history', label: `Historie (${history.length})`, icon: History },
@@ -210,7 +236,6 @@ export default function OrderDetail() {
                 ['Quelle', order.source_system],
                 ['Ext. Auftrags-ID', order.external_order_id],
                 ['Intern Nummer', order.internal_number],
-                ['ANZAHLUNG OK', order.deposit_ok ? `✓ ${order.deposit_ok_by || ''}${order.deposit_ok_at ? ' · ' + new Date(order.deposit_ok_at).toLocaleDateString('de-DE') : ''}` : 'Nein'],
                 ['Erstellt', new Date(order.created_at).toLocaleString('de-DE')],
               ].map(([l, v]) => (
                 <div key={l as string} className="flex justify-between">
@@ -352,6 +377,51 @@ export default function OrderDetail() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Anzahlung Tab */}
+      {activeTab === 'deposit' && (
+        <div className="rounded-xl border border-border bg-card p-6 card-glow max-w-xl">
+          <h2 className="text-base font-display font-bold text-foreground flex items-center gap-2 mb-4">
+            <Euro className="w-4 h-4 text-primary" /> Anzahlung
+          </h2>
+          <div className="space-y-4">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <Checkbox
+                checked={depositOk}
+                onCheckedChange={v => setDepositOk(!!v)}
+                disabled={!canWrite}
+              />
+              <span className="text-sm font-semibold tracking-wide">ANZAHLUNG OK</span>
+            </label>
+            {depositOk && (
+              <div>
+                <Label className="text-xs text-muted-foreground">Mitarbeiter (Name)</Label>
+                <Input
+                  value={depositBy}
+                  onChange={e => setDepositBy(e.target.value)}
+                  placeholder="Name des Mitarbeiters"
+                  disabled={!canWrite}
+                  className="bg-secondary border-border mt-1"
+                />
+              </div>
+            )}
+            {order.deposit_ok_at && (
+              <p className="text-xs text-muted-foreground">
+                Zuletzt bestätigt: {new Date(order.deposit_ok_at).toLocaleString('de-DE')}
+                {order.deposit_ok_by ? ` · ${order.deposit_ok_by}` : ''}
+              </p>
+            )}
+            {canWrite && (
+              <div className="flex justify-end pt-2">
+                <Button onClick={saveDeposit} disabled={savingDeposit} className="gold-gradient text-primary-foreground">
+                  {savingDeposit && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  Speichern
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
