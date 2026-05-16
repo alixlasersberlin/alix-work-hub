@@ -294,6 +294,35 @@ export default function AppLayout() {
     };
   }, []);
 
+  // Anzahl der Bestellungen (production_orders) – Echtzeit
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const { count } = await supabase
+        .from('production_orders')
+        .select('*', { count: 'exact', head: true });
+      if (cancelled) return;
+      setLagerCounts((prev) => ({ ...prev, '/einkauf': count ?? 0 }));
+    };
+    load();
+    const intervalId = window.setInterval(load, 5 * 60 * 1000);
+    let debounceId: number | undefined;
+    const scheduleReload = () => {
+      if (debounceId) window.clearTimeout(debounceId);
+      debounceId = window.setTimeout(load, 400);
+    };
+    const channel = supabase
+      .channel('production_orders_counts')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'production_orders' }, scheduleReload)
+      .subscribe();
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+      if (debounceId) window.clearTimeout(debounceId);
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const labelWithCount = (path: string, label: string) => {
     const c = lagerCounts[path];
     return c === undefined ? label : `${label} (${c})`;
