@@ -325,13 +325,17 @@ export default function AppLayout() {
         supabase.from('orders').select('*', { count: 'exact', head: true }).eq('deposit_ok', true).not('deposit_ok_by', 'is', null).neq('deposit_ok_by', ''),
       ]);
       if (cancelled) return;
+      const all = allRes.count ?? 0;
+      const rekla = reklaRes.count ?? 0;
+      const factory = factoryRes.count ?? 0;
+      const frei = freiRes.count ?? 0;
       setLagerCounts((prev) => ({
         ...prev,
-        '/einkauf': allRes.count ?? 0,
-        '/order/timeline': allRes.count ?? 0,
-        '/order/reklamation': reklaRes.count ?? 0,
-        '/order': factoryRes.count ?? 0,
-        '/order/frei-bestellung': freiRes.count ?? 0,
+        '/einkauf': all + frei + rekla + factory,
+        '/order/timeline': all,
+        '/order/reklamation': rekla,
+        '/order': factory,
+        '/order/frei-bestellung': frei,
       }));
     };
     load();
