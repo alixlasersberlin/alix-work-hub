@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -115,6 +115,29 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
     })();
   }, [id, isEdit]);
 
+  const [searchParams] = useSearchParams();
+
+  // Prefill from ?order_id (e.g. coming from "FREI für Bestellung" list)
+  useEffect(() => {
+    if (isEdit) return;
+    const qid = searchParams.get('order_id');
+    if (!qid || selectedOrder) return;
+    (async () => {
+      const { data: o } = await supabase
+        .from('orders')
+        .select('id, order_number, customer_id, deposit_ok, deposit_ok_by, customer:customers(company_name, contact_name)')
+        .eq('id', qid)
+        .maybeSingle();
+      if (!o) return;
+      if (!isReclamation && (!o.deposit_ok || !o.deposit_ok_by)) {
+        toast.error('Auftrag ist nicht für Bestellung freigegeben (Anzahlung fehlt).');
+        return;
+      }
+      await pickOrder(o);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, isEdit]);
+
   const searchOrders = async () => {
     const q = orderSearch.trim();
     if (!q) return;
@@ -122,11 +145,15 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
     const like = `%${q}%`;
 
     // 1) Direkt nach Auftragsnummer suchen
-    const { data: byNumber, error: e1 } = await supabase
+    let qNumber = supabase
       .from('orders')
-      .select('id, order_number, customer_id, customer:customers(company_name, contact_name)')
+      .select('id, order_number, customer_id, deposit_ok, deposit_ok_by, customer:customers(company_name, contact_name)')
       .ilike('order_number', like)
       .limit(20);
+    if (!isReclamation) {
+      qNumber = qNumber.eq('deposit_ok', true).not('deposit_ok_by', 'is', null).neq('deposit_ok_by', '');
+    }
+    const { data: byNumber, error: e1 } = await qNumber;
     if (e1) { setSearchingOrder(false); return toast.error(e1.message); }
 
     // 2) Kunden über Name finden, dann deren Aufträge
@@ -139,11 +166,15 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
     let byCustomer: any[] = [];
     const custIds = (matchedCustomers || []).map((c: any) => c.id);
     if (custIds.length) {
-      const { data } = await supabase
+      let qCust = supabase
         .from('orders')
-        .select('id, order_number, customer_id, customer:customers(company_name, contact_name)')
+        .select('id, order_number, customer_id, deposit_ok, deposit_ok_by, customer:customers(company_name, contact_name)')
         .in('customer_id', custIds)
         .limit(50);
+      if (!isReclamation) {
+        qCust = qCust.eq('deposit_ok', true).not('deposit_ok_by', 'is', null).neq('deposit_ok_by', '');
+      }
+      const { data } = await qCust;
       byCustomer = data || [];
     }
 
@@ -154,7 +185,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
 
     setSearchingOrder(false);
     setOrderResults(merged);
-    if (!merged.length) toast.info('Keine Aufträge gefunden');
+    if (!merged.length) toast.info(isReclamation ? 'Keine Aufträge gefunden' : 'Keine freigegebenen Aufträge gefunden (Anzahlung erforderlich)');
   };
 
   const pickOrder = async (o: any) => {

@@ -43,6 +43,7 @@ import DeviceStatistics from "./pages/DeviceStatistics";
 import NotFound from "./pages/NotFound";
 import Unsubscribe from "./pages/Unsubscribe";
 import ProductionOrders from "./pages/ProductionOrders";
+import OrdersFreiBestellung from "./pages/OrdersFreiBestellung";
 import ProductionOrderForm from "./pages/ProductionOrderForm";
 import ProductionOrderDetail from "./pages/ProductionOrderDetail";
 import ProductionTimeline from "./pages/ProductionTimeline";
@@ -217,6 +218,7 @@ function AppRoutes() {
         <Route path="/rollen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Rollen /></ProtectedRoute>} />
         <Route path="/system" element={<ProtectedRoute requiredRoles={SYSTEM_ROLES}><SystemMonitoring /></ProtectedRoute>} />
         <Route path="/order" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><ProductionOrders /></ProtectedRoute>} />
+        <Route path="/order/frei-bestellung" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><OrdersFreiBestellung /></ProtectedRoute>} />
         <Route path="/order/timeline" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><ProductionTimeline /></ProtectedRoute>} />
         <Route path="/order/zulieferer" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Suppliers /></ProtectedRoute>} />
         <Route path="/order/neu" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><ProductionOrderForm /></ProtectedRoute>} />
