@@ -170,6 +170,7 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
     let out = rows.filter(r => {
       if (statusFilter !== 'all' && r.status !== statusFilter) return false;
       if (paymentFilter !== 'all' && (r.payment_status || 'Nein') !== paymentFilter) return false;
+      if (approvalFilter !== 'all' && (r.approval_status || 'pending') !== approvalFilter) return false;
       if (!q) return true;
       const hay = [
         r.display_order_number, r.order_number, r.production_order_number,
@@ -191,7 +192,7 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
       }
     });
     return out;
-  }, [rows, search, statusFilter, paymentFilter, sort]);
+  }, [rows, search, statusFilter, paymentFilter, approvalFilter, sort]);
 
   const { pageSize, setPageSize, page, setPage, totalPages, paged, total } = usePagination(filtered, 20);
 
