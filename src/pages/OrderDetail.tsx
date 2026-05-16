@@ -34,7 +34,10 @@ export default function OrderDetail() {
   const [history, setHistory] = useState<any[]>([]);
   const [poCount, setPoCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'items' | 'packages' | 'notes' | 'history' | 'raw'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'items' | 'deposit' | 'packages' | 'notes' | 'history' | 'raw'>('overview');
+  const [depositOk, setDepositOk] = useState(false);
+  const [depositBy, setDepositBy] = useState('');
+  const [savingDeposit, setSavingDeposit] = useState(false);
 
   // Note form
   const [newNote, setNewNote] = useState('');
