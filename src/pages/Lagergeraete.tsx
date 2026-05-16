@@ -1078,7 +1078,7 @@ export default function Lagergeraete({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredDevices.map((d) => (
+              {sortedDevices.map((d) => (
                 <TableRow key={d.id} className={d.reserved_order_id ? 'bg-yellow-500/10 hover:bg-yellow-500/15' : (rowAccentClass ?? '')}>
                   {selectionMode && (
                     <TableCell>
