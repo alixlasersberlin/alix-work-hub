@@ -343,7 +343,7 @@ export default function Orders() {
                     <th className="text-left px-4 py-3 text-muted-foreground font-medium">
                       <span className="inline-flex items-center gap-1"><Car className="w-3.5 h-3.5" /> Fahrzeit</span>
                     </th>
-                    <th className="text-left px-4 py-3 text-muted-foreground font-medium">Quelle</th>
+                    <th className="text-left px-4 py-3 text-muted-foreground font-medium">Anzahlung OK</th>
                     {canWrite && <th className="text-right px-4 py-3 text-muted-foreground font-medium">Aktionen</th>}
                   </tr>
                 </thead>
@@ -410,7 +410,15 @@ export default function Orders() {
                             loading={drivingLoading}
                           />
                         </td>
-                        <td className="px-4 py-3 text-muted-foreground text-xs">{o.source_system}</td>
+                        <td className="px-4 py-3 text-xs">
+                          {o.deposit_ok ? (
+                            <span className="inline-flex items-center gap-1 text-emerald-500 font-medium">
+                              ✓ {o.deposit_ok_by || 'Ja'}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </td>
                         {canWrite && (
                           <td className="px-4 py-3 text-right" onClick={e => e.stopPropagation()}>
                             <div className="flex items-center justify-end gap-1">
