@@ -3,17 +3,22 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { ArrowLeft, Loader2, Pencil, Download } from 'lucide-react';
+import { ArrowLeft, Loader2, Pencil, Download, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { generateProductionOrderPdf } from '@/lib/production-order-pdf';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
+import { cn } from '@/lib/utils';
 
 export default function ProductionOrderDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { hasRole, user } = useAuth();
+  const isSuperAdmin = hasRole('Super Admin');
   const [data, setData] = useState<any>(null);
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [approving, setApproving] = useState(false);
   const [displayOrderNumber, setDisplayOrderNumber] = useState<string>('');
 
   useEffect(() => {
@@ -31,6 +36,10 @@ export default function ProductionOrderDetail() {
 
   const downloadPdf = async (lang: 'bilingual' | 'en' = 'bilingual') => {
     if (!data) return;
+    if (data.approval_status !== 'approved') {
+      toast.error('Bestellung muss erst von einem Super Admin genehmigt werden.');
+      return;
+    }
     const pdf = await generateProductionOrderPdf({
       order_number: displayOrderNumber || data.order_number,
       modellname: data.modellname,
@@ -49,6 +58,27 @@ export default function ProductionOrderDetail() {
     a.href = url; a.download = pdf.filename; a.click();
     URL.revokeObjectURL(url);
     toast.success('PDF heruntergeladen');
+  };
+
+  const setApproval = async (status: 'approved' | 'rejected') => {
+    if (!id) return;
+    let note: string | null = null;
+    if (status === 'rejected') {
+      note = window.prompt('Ablehnungsgrund (optional):') ?? '';
+    }
+    setApproving(true);
+    const payload: any = {
+      approval_status: status,
+      approved_by: status === 'approved' ? user?.id : null,
+      approved_at: status === 'approved' ? new Date().toISOString() : null,
+      approval_note: note || null,
+    };
+    const { error } = await supabase.from('production_orders').update(payload).eq('id', id);
+    setApproving(false);
+    if (error) return toast.error(error.message);
+    toast.success(status === 'approved' ? 'Bestellung genehmigt' : 'Bestellung abgelehnt');
+    const { data: po } = await supabase.from('production_orders').select('*, supplier:suppliers(*)').eq('id', id).single();
+    setData(po);
   };
 
   if (loading) return <div className="p-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
@@ -72,6 +102,48 @@ export default function ProductionOrderDetail() {
           <Button asChild><Link to={`${basePath}/${data.id}/bearbeiten`}><Pencil className="w-4 h-4 mr-2" /> Bearbeiten</Link></Button>
         </div>
       </div>
+
+      {/* Genehmigungs-Status */}
+      <Card className={cn(
+        'p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border',
+        data.approval_status === 'approved' && 'border-green-500/40 bg-green-500/5',
+        data.approval_status === 'rejected' && 'border-destructive/40 bg-destructive/5',
+        (!data.approval_status || data.approval_status === 'pending') && 'border-yellow-500/40 bg-yellow-500/5',
+      )}>
+        <div className="flex items-center gap-3">
+          {data.approval_status === 'approved' ? <CheckCircle2 className="w-5 h-5 text-green-500" />
+            : data.approval_status === 'rejected' ? <XCircle className="w-5 h-5 text-destructive" />
+            : <Clock className="w-5 h-5 text-yellow-500" />}
+          <div>
+            <div className="font-semibold">
+              {data.approval_status === 'approved' ? 'Genehmigt' : data.approval_status === 'rejected' ? 'Abgelehnt' : 'Wartet auf Genehmigung'}
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {data.approval_status === 'approved' && data.approved_at
+                ? `Freigegeben am ${format(new Date(data.approved_at), 'dd.MM.yyyy HH:mm')}`
+                : 'Nur Super Admins können diese Bestellung freigeben. Bis dahin ist der Versand gesperrt.'}
+              {data.approval_note && <div className="mt-1">Hinweis: {data.approval_note}</div>}
+            </div>
+          </div>
+        </div>
+        {isSuperAdmin && data.approval_status !== 'approved' && (
+          <div className="flex gap-2">
+            <Button size="sm" onClick={() => setApproval('approved')} disabled={approving} className="bg-green-600 hover:bg-green-700 text-white">
+              <CheckCircle2 className="w-4 h-4 mr-1" /> Genehmigen
+            </Button>
+            {data.approval_status !== 'rejected' && (
+              <Button size="sm" variant="destructive" onClick={() => setApproval('rejected')} disabled={approving}>
+                <XCircle className="w-4 h-4 mr-1" /> Ablehnen
+              </Button>
+            )}
+          </div>
+        )}
+        {isSuperAdmin && data.approval_status === 'approved' && (
+          <Button size="sm" variant="outline" onClick={() => setApproval('rejected')} disabled={approving}>
+            Genehmigung zurückziehen
+          </Button>
+        )}
+      </Card>
 
       {isReclamation && data.reclamation_reason && (
         <Card className="p-4 space-y-1 border-destructive/40 bg-destructive/5">

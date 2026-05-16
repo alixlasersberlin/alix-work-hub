@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Plus, Loader2, Factory, Users as UsersIcon, FileText, Pencil, Trash2, AlertTriangle,
-  Search, Calendar, Truck, User, Package, Hash, ArrowUpDown,
+  Search, Calendar, Truck, User, Package, Hash, ArrowUpDown, CheckCircle2, XCircle, Clock,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, differenceInCalendarDays, isValid } from 'date-fns';
@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { PageSizeSelector, usePagination, PaginationControls } from '@/components/PageSizeSelector';
 import { useViewMode } from '@/hooks/useViewMode';
 import { ViewToggle } from '@/components/ViewToggle';
+import { useAuth } from '@/hooks/useAuth';
 
 type Mode = 'order' | 'reclamation';
 type Lang = 'de' | 'en' | 'zh';
@@ -103,8 +104,11 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [paymentFilter, setPaymentFilter] = useState<string>('all');
+  const [approvalFilter, setApprovalFilter] = useState<string>('all');
   const [sort, setSort] = useState<SortKey>('created_desc');
   const [viewMode, setViewMode] = useViewMode();
+  const { hasRole, user } = useAuth();
+  const isSuperAdmin = hasRole('Super Admin');
 
   const t = T[lang];
   const navigate = useNavigate();
@@ -143,6 +147,18 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
     load();
   };
 
+  const approve = async (id: string) => {
+    const { error } = await supabase.from('production_orders').update({
+      approval_status: 'approved',
+      approved_by: user?.id ?? null,
+      approved_at: new Date().toISOString(),
+      approval_note: null,
+    } as any).eq('id', id);
+    if (error) return toast.error(error.message);
+    toast.success('Bestellung genehmigt');
+    load();
+  };
+
   const statusOptions = useMemo(() => {
     const set = new Set<string>();
     rows.forEach(r => r.status && set.add(r.status));
@@ -154,6 +170,7 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
     let out = rows.filter(r => {
       if (statusFilter !== 'all' && r.status !== statusFilter) return false;
       if (paymentFilter !== 'all' && (r.payment_status || 'Nein') !== paymentFilter) return false;
+      if (approvalFilter !== 'all' && (r.approval_status || 'pending') !== approvalFilter) return false;
       if (!q) return true;
       const hay = [
         r.display_order_number, r.order_number, r.production_order_number,
@@ -175,7 +192,7 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
       }
     });
     return out;
-  }, [rows, search, statusFilter, paymentFilter, sort]);
+  }, [rows, search, statusFilter, paymentFilter, approvalFilter, sort]);
 
   const { pageSize, setPageSize, page, setPage, totalPages, paged, total } = usePagination(filtered, 20);
 
@@ -241,6 +258,15 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
               <SelectContent>
                 <SelectItem value="all">{t.allPayment}</SelectItem>
                 {PAYMENT_VALUES.map(p => <SelectItem key={p} value={p}>{tPayment(p)}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={approvalFilter} onValueChange={setApprovalFilter}>
+              <SelectTrigger className="h-9 w-full lg:w-[170px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Freigaben</SelectItem>
+                <SelectItem value="pending">Wartet auf Freigabe</SelectItem>
+                <SelectItem value="approved">Genehmigt</SelectItem>
+                <SelectItem value="rejected">Abgelehnt</SelectItem>
               </SelectContent>
             </Select>
             <Select value={sort} onValueChange={(v: SortKey) => setSort(v)}>
@@ -369,6 +395,7 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
                     <th className="p-3 font-medium">{t.delivery}</th>
                     <th className="p-3 font-medium">{t.payment}</th>
                     <th className="p-3 font-medium">{t.status}</th>
+                    <th className="p-3 font-medium">Freigabe</th>
                     <th className="p-3 font-medium text-right">{t.actions}</th>
                   </tr>
                 </thead>
@@ -392,7 +419,25 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
                         </td>
                         <td className="p-3"><span className={cn('px-2 py-0.5 rounded text-xs font-medium', paymentClasses(ps))}>{tPayment(ps)}</span></td>
                         <td className="p-3"><span className={cn('px-2 py-0.5 rounded text-xs font-medium', statusClasses(r.status))}>{r.status}</span></td>
+                        <td className="p-3">
+                          {(() => {
+                            const a = r.approval_status || 'pending';
+                            const cls = a === 'approved'
+                              ? 'bg-green-500/15 text-green-500 border border-green-500/30'
+                              : a === 'rejected'
+                                ? 'bg-destructive/15 text-destructive border border-destructive/30'
+                                : 'bg-yellow-500/15 text-yellow-500 border border-yellow-500/30';
+                            const Icon = a === 'approved' ? CheckCircle2 : a === 'rejected' ? XCircle : Clock;
+                            const label = a === 'approved' ? 'Genehmigt' : a === 'rejected' ? 'Abgelehnt' : 'Wartet';
+                            return <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium', cls)}><Icon className="w-3 h-3" /> {label}</span>;
+                          })()}
+                        </td>
                         <td className="p-3 text-right whitespace-nowrap">
+                          {isSuperAdmin && (r.approval_status || 'pending') !== 'approved' && (
+                            <Button size="sm" variant="ghost" className="h-8 px-2 text-green-500 hover:text-green-500 hover:bg-green-500/10" onClick={() => approve(r.id)} title="Genehmigen">
+                              <CheckCircle2 className="w-4 h-4" />
+                            </Button>
+                          )}
                           <Button asChild size="sm" variant="ghost" className="h-8 w-8 p-0"><Link to={`${basePath}/${r.id}`}><FileText className="w-4 h-4" /></Link></Button>
                           <Button asChild size="sm" variant="ghost" className="h-8 w-8 p-0"><Link to={`${basePath}/${r.id}/bearbeiten`}><Pencil className="w-4 h-4" /></Link></Button>
                           <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => remove(r.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
