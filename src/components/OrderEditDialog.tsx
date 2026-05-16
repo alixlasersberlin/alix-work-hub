@@ -34,6 +34,8 @@ export default function OrderEditDialog({ order, open, onClose, onSaved }: Props
       : '',
     internal_number: order?.internal_number || '',
     lawyer_reason: order?.lawyer_reason || '',
+    deposit_ok: !!order?.deposit_ok,
+    deposit_ok_by: order?.deposit_ok_by || '',
   });
   const [saving, setSaving] = useState(false);
 
