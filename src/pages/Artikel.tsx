@@ -11,9 +11,11 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, RefreshCw, Search, Package, Eye, Pencil, Save, X, Download, FileSpreadsheet, FolderTree, Plus, Copy } from 'lucide-react';
+import { Loader2, RefreshCw, Search, Package, Eye, Pencil, Save, X, Download, FileSpreadsheet, FolderTree, Plus, Copy, Trash2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { useAuth } from '@/hooks/useAuth';
 
 type ZohoItem = {
   id: string;
@@ -44,6 +46,9 @@ const fmtMoney = (n: number | null, cur: string | null) =>
 
 export default function Artikel() {
   const { toast } = useToast();
+  const { isAdmin } = useAuth();
+  const [deleting, setDeleting] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [items, setItems] = useState<ZohoItem[]>([]);
   const [alixLasersItems, setAlixLasersItems] = useState<{ id: string; name: string | null; sku: string | null }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -156,6 +161,24 @@ export default function Artikel() {
     }
     toast({ title: 'Dupliziert', description: `${data?.length ?? 0} Artikel kopiert.` });
     setItems((prev) => [...((data ?? []) as ZohoItem[]), ...prev]);
+    clearSelection();
+  }
+
+  async function deleteSelected() {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    setDeleting(true);
+    // Zuerst Kategorie-Zuweisungen entfernen, sonst evtl. Verweise
+    await supabase.from('item_category_assignments').delete().in('item_id', ids);
+    const { error } = await supabase.from('zoho_items').delete().in('id', ids);
+    setDeleting(false);
+    setDeleteOpen(false);
+    if (error) {
+      toast({ title: 'Löschen fehlgeschlagen', description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: 'Gelöscht', description: `${ids.length} Artikel entfernt.` });
+    setItems((prev) => prev.filter((i) => !selectedIds.has(i.id)));
     clearSelection();
   }
 
@@ -566,6 +589,20 @@ export default function Artikel() {
                 <Download className="w-4 h-4 mr-2" /> PDF
               </Button>
             </div>
+            {isAdmin && (
+              <>
+                <div className="h-6 w-px bg-border hidden sm:block" />
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setDeleteOpen(true)}
+                  disabled={deleting}
+                >
+                  {deleting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
+                  Löschen
+                </Button>
+              </>
+            )}
           </div>
         </Card>
       ) : (
@@ -1018,6 +1055,28 @@ export default function Artikel() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Artikel endgültig löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {selectedIds.size} markierte Artikel werden unwiderruflich gelöscht. Verknüpfte Kategorie-Zuweisungen werden ebenfalls entfernt.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); deleteSelected(); }}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
+              Endgültig löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
