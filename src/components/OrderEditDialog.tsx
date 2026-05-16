@@ -47,7 +47,12 @@ export default function OrderEditDialog({ order, open, onClose, onSaved }: Props
       toast.error('Intern Nummer: max. 10 Zeichen, nur Buchstaben und Zahlen');
       return;
     }
+    if (form.deposit_ok && !form.deposit_ok_by.trim()) {
+      toast.error('Bitte Mitarbeitername für "ANZAHLUNG OK" eintragen');
+      return;
+    }
     setSaving(true);
+    const depositChanged = !!order?.deposit_ok !== form.deposit_ok || (order?.deposit_ok_by || '') !== form.deposit_ok_by.trim();
     const { error } = await supabase.from('orders').update({
       order_status: form.order_status,
       total_amount: form.total_amount ? parseFloat(form.total_amount) : null,
@@ -56,7 +61,10 @@ export default function OrderEditDialog({ order, open, onClose, onSaved }: Props
       expected_shipment_date: form.expected_shipment_date || null,
       internal_number: intNum || null,
       lawyer_reason: form.order_status === 'Anwalt' ? (form.lawyer_reason || null) : null,
-    }).eq('id', order.id);
+      deposit_ok: form.deposit_ok,
+      deposit_ok_by: form.deposit_ok ? form.deposit_ok_by.trim() : null,
+      deposit_ok_at: form.deposit_ok ? (depositChanged ? new Date().toISOString() : order?.deposit_ok_at) : null,
+    } as any).eq('id', order.id);
     setSaving(false);
     if (error) { toast.error('Fehler beim Speichern: ' + error.message); return; }
     toast.success('Auftrag aktualisiert');
