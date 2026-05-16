@@ -318,17 +318,20 @@ export default function AppLayout() {
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
-      const [allRes, reklaRes, factoryRes, freiRes] = await Promise.all([
+      const [allRes, reklaRes, factoryRes, freiRes, approvedRes] = await Promise.all([
         supabase.from('production_orders').select('*', { count: 'exact', head: true }),
         supabase.from('production_orders').select('*', { count: 'exact', head: true }).eq('is_reclamation', true),
         supabase.from('production_orders').select('*', { count: 'exact', head: true }).eq('is_reclamation', false),
         supabase.from('orders').select('*', { count: 'exact', head: true }).eq('deposit_ok', true).not('deposit_ok_by', 'is', null).neq('deposit_ok_by', ''),
+        supabase.from('production_orders').select('*', { count: 'exact', head: true }).eq('approval_status', 'approved'),
       ]);
       if (cancelled) return;
       const all = allRes.count ?? 0;
       const rekla = reklaRes.count ?? 0;
       const factory = factoryRes.count ?? 0;
       const frei = freiRes.count ?? 0;
+      const approved = approvedRes.count ?? 0;
+      const fertig = 0;
       setLagerCounts((prev) => ({
         ...prev,
         '/einkauf': all + frei + rekla + factory,
@@ -336,6 +339,10 @@ export default function AppLayout() {
         '/order/reklamation': rekla,
         '/order': factory,
         '/order/frei-bestellung': frei,
+        '/production/order-in': approved,
+        '/production/fertig': fertig,
+        '/production': approved + factory + fertig,
+        '__production_liste': factory,
       }));
     };
     load();
