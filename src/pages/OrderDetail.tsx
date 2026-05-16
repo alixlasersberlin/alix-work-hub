@@ -37,6 +37,8 @@ export default function OrderDetail() {
   const [activeTab, setActiveTab] = useState<'overview' | 'items' | 'deposit' | 'packages' | 'notes' | 'history' | 'raw'>('overview');
   const [depositOk, setDepositOk] = useState(false);
   const [depositBy, setDepositBy] = useState('');
+  const [depositAmount, setDepositAmount] = useState('');
+  const [depositAdditional, setDepositAdditional] = useState('');
   const [savingDeposit, setSavingDeposit] = useState(false);
 
   // Note form
@@ -70,6 +72,8 @@ export default function OrderDetail() {
     setHistory(hRes.data ?? []);
     setDepositOk(!!oRes.data?.deposit_ok);
     setDepositBy(oRes.data?.deposit_ok_by || '');
+    setDepositAmount(oRes.data?.deposit_amount != null ? String(oRes.data.deposit_amount) : '');
+    setDepositAdditional(oRes.data?.deposit_additional != null ? String(oRes.data.deposit_additional) : '');
 
     // Anzahl Produktionsbestellungen f\u00fcr diese order_number
     if (oRes.data?.order_number) {
@@ -124,6 +128,8 @@ export default function OrderDetail() {
       deposit_ok: depositOk,
       deposit_ok_by: depositOk ? depositBy.trim() : null,
       deposit_ok_at: depositOk ? (depositChanged ? new Date().toISOString() : order?.deposit_ok_at) : null,
+      deposit_amount: depositAmount.trim() ? parseFloat(depositAmount.replace(',', '.')) : null,
+      deposit_additional: depositAdditional.trim() ? parseFloat(depositAdditional.replace(',', '.')) : null,
     } as any).eq('id', id!);
     setSavingDeposit(false);
     if (error) { toast.error('Fehler: ' + error.message); return; }
@@ -407,6 +413,32 @@ export default function OrderDetail() {
                 />
               </div>
             )}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs text-muted-foreground">BETRAG</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={depositAmount}
+                  onChange={e => setDepositAmount(e.target.value)}
+                  placeholder="0,00"
+                  disabled={!canWrite}
+                  className="bg-secondary border-border mt-1"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Weitere Anzahlung</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={depositAdditional}
+                  onChange={e => setDepositAdditional(e.target.value)}
+                  placeholder="0,00"
+                  disabled={!canWrite}
+                  className="bg-secondary border-border mt-1"
+                />
+              </div>
+            </div>
             {order.deposit_ok_at && (
               <p className="text-xs text-muted-foreground">
                 Zuletzt bestätigt: {new Date(order.deposit_ok_at).toLocaleString('de-DE')}
