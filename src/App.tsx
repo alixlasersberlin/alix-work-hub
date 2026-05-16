@@ -43,6 +43,7 @@ import DeviceStatistics from "./pages/DeviceStatistics";
 import NotFound from "./pages/NotFound";
 import Unsubscribe from "./pages/Unsubscribe";
 import ProductionOrders from "./pages/ProductionOrders";
+import OrdersFreiBestellung from "./pages/OrdersFreiBestellung";
 import ProductionOrderForm from "./pages/ProductionOrderForm";
 import ProductionOrderDetail from "./pages/ProductionOrderDetail";
 import ProductionTimeline from "./pages/ProductionTimeline";
