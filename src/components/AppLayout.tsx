@@ -370,14 +370,16 @@ export default function AppLayout() {
   }, []);
 
   const labelWithCount = (path: string, label: string) => {
-    const c = lagerCounts[path];
+    const key = path === '/production' && label === 'Liste' ? '__production_liste' : path;
+    const c = lagerCounts[key];
     if (c === undefined) return label;
+    const isProductionGroup = path === '/production' && label === 'PRODUCTION';
     const colorClass =
       c === 0
         ? 'text-red-500'
         : path === '/einkauf'
           ? 'text-red-500'
-          : path === '/lager' || path === '/tourenplanung'
+          : path === '/lager' || path === '/tourenplanung' || isProductionGroup
             ? 'text-green-500'
             : undefined;
     return (
