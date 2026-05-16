@@ -189,6 +189,34 @@ export default function Lagergeraete({
     });
   }, [typeFilteredDevices, searchQuery]);
 
+  const sortedDevices = useMemo(() => {
+    const arr = [...filteredDevices];
+    const dir = sortDir === 'asc' ? 1 : -1;
+    arr.sort((a, b) => {
+      let av: any; let bv: any;
+      switch (sortField) {
+        case 'serial_number': av = a.serial_number ?? ''; bv = b.serial_number ?? ''; break;
+        case 'model_name': av = a.model_name ?? ''; bv = b.model_name ?? ''; break;
+        case 'entry_date': av = a.entry_date ?? ''; bv = b.entry_date ?? ''; break;
+        case 'order_number': av = a.orders?.order_number ?? ''; bv = b.orders?.order_number ?? ''; break;
+        case 'status': av = getStatusFromNotes(a.notes); bv = getStatusFromNotes(b.notes); break;
+        case 'notes': av = a.notes ?? ''; bv = b.notes ?? ''; break;
+      }
+      return String(av).localeCompare(String(bv), 'de', { numeric: true, sensitivity: 'base' }) * dir;
+    });
+    return arr;
+  }, [filteredDevices, sortField, sortDir]);
+
+  const toggleSort = (field: typeof sortField) => {
+    if (sortField === field) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    else { setSortField(field); setSortDir('asc'); }
+  };
+
+  const SortIcon = ({ field }: { field: typeof sortField }) => {
+    if (sortField !== field) return <ArrowUpDown className="w-3 h-3 opacity-50" />;
+    return sortDir === 'asc' ? <ArrowUp className="w-3 h-3 text-primary" /> : <ArrowDown className="w-3 h-3 text-primary" />;
+  };
+
   // Search free (unreserved) open orders matching the query
   useEffect(() => {
     const q = searchQuery.trim();
