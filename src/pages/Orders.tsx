@@ -343,7 +343,7 @@ export default function Orders() {
                     <th className="text-left px-4 py-3 text-muted-foreground font-medium">
                       <span className="inline-flex items-center gap-1"><Car className="w-3.5 h-3.5" /> Fahrzeit</span>
                     </th>
-                    <th className="text-left px-4 py-3 text-muted-foreground font-medium">Quelle</th>
+                    <th className="text-left px-4 py-3 text-muted-foreground font-medium">Anzahlung OK</th>
                     {canWrite && <th className="text-right px-4 py-3 text-muted-foreground font-medium">Aktionen</th>}
                   </tr>
                 </thead>
