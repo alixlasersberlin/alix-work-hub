@@ -153,7 +153,7 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
       approved_by: user?.id ?? null,
       approved_at: new Date().toISOString(),
       approval_note: null,
-    }).eq('id', id);
+    } as any).eq('id', id);
     if (error) return toast.error(error.message);
     toast.success('Bestellung genehmigt');
     load();
