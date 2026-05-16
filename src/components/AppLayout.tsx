@@ -140,6 +140,25 @@ export default function AppLayout() {
   });
   const [resizing, setResizing] = useState(false);
 
+  // Globaler Auto-Refresh: remountet die aktuelle Seite alle 60 Minuten,
+  // sodass alle Listen & Statistiken neu geladen werden. Zusätzlich bei
+  // Tab-Fokus, wenn die letzten Daten älter als 60 Min sind.
+  const [refreshKey, setRefreshKey] = useState(0);
+  useEffect(() => {
+    const REFRESH_MS = 60 * 60 * 1000;
+    let lastRefresh = Date.now();
+    const tick = () => { lastRefresh = Date.now(); setRefreshKey(k => k + 1); };
+    const intervalId = window.setInterval(tick, REFRESH_MS);
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible' && Date.now() - lastRefresh > REFRESH_MS) tick();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, []);
+
   useEffect(() => {
     if (!resizing) return;
     const onMove = (e: MouseEvent) => {
