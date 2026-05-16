@@ -380,6 +380,51 @@ export default function OrderDetail() {
         </div>
       )}
 
+      {/* Anzahlung Tab */}
+      {activeTab === 'deposit' && (
+        <div className="rounded-xl border border-border bg-card p-6 card-glow max-w-xl">
+          <h2 className="text-base font-display font-bold text-foreground flex items-center gap-2 mb-4">
+            <Euro className="w-4 h-4 text-primary" /> Anzahlung
+          </h2>
+          <div className="space-y-4">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <Checkbox
+                checked={depositOk}
+                onCheckedChange={v => setDepositOk(!!v)}
+                disabled={!canWrite}
+              />
+              <span className="text-sm font-semibold tracking-wide">ANZAHLUNG OK</span>
+            </label>
+            {depositOk && (
+              <div>
+                <Label className="text-xs text-muted-foreground">Mitarbeiter (Name)</Label>
+                <Input
+                  value={depositBy}
+                  onChange={e => setDepositBy(e.target.value)}
+                  placeholder="Name des Mitarbeiters"
+                  disabled={!canWrite}
+                  className="bg-secondary border-border mt-1"
+                />
+              </div>
+            )}
+            {order.deposit_ok_at && (
+              <p className="text-xs text-muted-foreground">
+                Zuletzt bestätigt: {new Date(order.deposit_ok_at).toLocaleString('de-DE')}
+                {order.deposit_ok_by ? ` · ${order.deposit_ok_by}` : ''}
+              </p>
+            )}
+            {canWrite && (
+              <div className="flex justify-end pt-2">
+                <Button onClick={saveDeposit} disabled={savingDeposit} className="gold-gradient text-primary-foreground">
+                  {savingDeposit && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  Speichern
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Packages Tab */}
       {activeTab === 'packages' && (
         <div className="rounded-xl border border-border bg-card p-6 card-glow">
