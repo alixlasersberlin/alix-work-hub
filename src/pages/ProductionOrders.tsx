@@ -104,8 +104,11 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [paymentFilter, setPaymentFilter] = useState<string>('all');
+  const [approvalFilter, setApprovalFilter] = useState<string>('all');
   const [sort, setSort] = useState<SortKey>('created_desc');
   const [viewMode, setViewMode] = useViewMode();
+  const { hasRole, user } = useAuth();
+  const isSuperAdmin = hasRole('Super Admin');
 
   const t = T[lang];
   const navigate = useNavigate();
