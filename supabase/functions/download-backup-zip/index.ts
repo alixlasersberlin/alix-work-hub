@@ -84,10 +84,11 @@ Deno.serve(async (req) => {
       zip.file(relative, await blob.arrayBuffer());
     }
 
+    // Use STORE (no compression) to stay within edge-function CPU limits.
+    // Backup payloads are mostly JSON; compression here was the bottleneck.
     const zipBuf = await zip.generateAsync({
       type: "uint8array",
-      compression: "DEFLATE",
-      compressionOptions: { level: 6 },
+      compression: "STORE",
     });
 
     const fileName = `backup-${backupId.slice(0, 8)}-${(meta.started_at ?? "").slice(0, 10)}.zip`;
