@@ -56,7 +56,7 @@ const navItems: NavItem[] = [
     path: '/einkauf', label: 'BESTELLUNGEN', icon: ShoppingCart, roles: ['Admin', 'Super Admin'],
     children: [
       { path: '/order/timeline', label: 'Timeline', icon: Calendar, roles: ['Admin', 'Super Admin'] },
-      { path: '/order/frei-bestellung', label: 'FREI für Bestellung', icon: CheckCircle2, roles: ['Admin', 'Super Admin'] },
+      { path: '/order/frei-bestellung', label: 'Bestellung möglich', icon: CheckCircle2, roles: ['Admin', 'Super Admin'] },
       { path: '/order', label: 'Order', icon: Factory, roles: ['Admin', 'Super Admin'] },
       { path: '/order/reklamation', label: 'Reklamation', icon: AlertTriangle, roles: ['Admin', 'Super Admin'] },
     ],
@@ -599,6 +599,11 @@ export default function AppLayout() {
                             active: 'bg-red-500/15 text-red-500 shadow-[inset_0_0_0_1px_hsl(0_84%_60%/0.4)]',
                             inactive: 'text-red-500 hover:text-red-500 hover:bg-red-500/10',
                             icon: 'text-red-500',
+                          },
+                          '/order/frei-bestellung': {
+                            active: 'bg-green-500/15 text-green-500 shadow-[inset_0_0_0_1px_hsl(142_71%_45%/0.4)]',
+                            inactive: 'text-green-500 hover:text-green-500 hover:bg-green-500/10',
+                            icon: 'text-green-500',
                           },
                         };
                         const cColored = lagerColorMap[child.path];

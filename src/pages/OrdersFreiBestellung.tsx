@@ -54,9 +54,9 @@ export default function OrdersFreiBestellung() {
     <div className="p-6 lg:p-8 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
-            <CheckCircle2 className="w-6 h-6 text-primary" />
-            FREI für Bestellung
+          <h1 className="text-2xl font-display font-bold text-green-500 flex items-center gap-2">
+            <CheckCircle2 className="w-6 h-6 text-green-500" />
+            Bestellung möglich
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {filtered.length} Aufträge mit bestätigter Anzahlung — bereit zur Bestellung
