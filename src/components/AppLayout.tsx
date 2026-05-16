@@ -605,6 +605,11 @@ export default function AppLayout() {
                             inactive: 'text-green-500 hover:text-green-500 hover:bg-green-500/10',
                             icon: 'text-green-500',
                           },
+                          '/order/reklamation': {
+                            active: 'bg-red-500/15 text-red-500 shadow-[inset_0_0_0_1px_hsl(0_84%_60%/0.4)]',
+                            inactive: 'text-red-500 hover:text-red-500 hover:bg-red-500/10',
+                            icon: 'text-red-500',
+                          },
                         };
                         const cColored = lagerColorMap[child.path];
                         return (
