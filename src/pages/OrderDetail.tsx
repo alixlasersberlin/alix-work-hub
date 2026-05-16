@@ -113,6 +113,24 @@ export default function OrderDetail() {
     setNotes(data ?? []);
   }
 
+  async function saveDeposit() {
+    if (depositOk && !depositBy.trim()) {
+      toast.error('Bitte Mitarbeitername eintragen');
+      return;
+    }
+    setSavingDeposit(true);
+    const depositChanged = !!order?.deposit_ok !== depositOk || (order?.deposit_ok_by || '') !== depositBy.trim();
+    const { error } = await supabase.from('orders').update({
+      deposit_ok: depositOk,
+      deposit_ok_by: depositOk ? depositBy.trim() : null,
+      deposit_ok_at: depositOk ? (depositChanged ? new Date().toISOString() : order?.deposit_ok_at) : null,
+    } as any).eq('id', id!);
+    setSavingDeposit(false);
+    if (error) { toast.error('Fehler: ' + error.message); return; }
+    toast.success('Anzahlung gespeichert');
+    loadAll();
+  }
+
   if (loading) return <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   if (!order) return <div className="p-8 text-center text-muted-foreground">Auftrag nicht gefunden.</div>;
 
