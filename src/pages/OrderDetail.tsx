@@ -413,6 +413,32 @@ export default function OrderDetail() {
                 />
               </div>
             )}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs text-muted-foreground">BETRAG</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={depositAmount}
+                  onChange={e => setDepositAmount(e.target.value)}
+                  placeholder="0,00"
+                  disabled={!canWrite}
+                  className="bg-secondary border-border mt-1"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Weitere Anzahlung</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={depositAdditional}
+                  onChange={e => setDepositAdditional(e.target.value)}
+                  placeholder="0,00"
+                  disabled={!canWrite}
+                  className="bg-secondary border-border mt-1"
+                />
+              </div>
+            </div>
             {order.deposit_ok_at && (
               <p className="text-xs text-muted-foreground">
                 Zuletzt bestätigt: {new Date(order.deposit_ok_at).toLocaleString('de-DE')}
