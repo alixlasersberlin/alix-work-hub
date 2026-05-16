@@ -395,6 +395,7 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
                     <th className="p-3 font-medium">{t.delivery}</th>
                     <th className="p-3 font-medium">{t.payment}</th>
                     <th className="p-3 font-medium">{t.status}</th>
+                    <th className="p-3 font-medium">Freigabe</th>
                     <th className="p-3 font-medium text-right">{t.actions}</th>
                   </tr>
                 </thead>
