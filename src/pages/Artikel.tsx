@@ -589,6 +589,20 @@ export default function Artikel() {
                 <Download className="w-4 h-4 mr-2" /> PDF
               </Button>
             </div>
+            {isAdmin && (
+              <>
+                <div className="h-6 w-px bg-border hidden sm:block" />
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setDeleteOpen(true)}
+                  disabled={deleting}
+                >
+                  {deleting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
+                  Löschen
+                </Button>
+              </>
+            )}
           </div>
         </Card>
       ) : (
