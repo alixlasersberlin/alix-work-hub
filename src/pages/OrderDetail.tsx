@@ -68,6 +68,8 @@ export default function OrderDetail() {
     setNotes(nRes.data ?? []);
     setItems(iRes.data ?? []);
     setHistory(hRes.data ?? []);
+    setDepositOk(!!oRes.data?.deposit_ok);
+    setDepositBy(oRes.data?.deposit_ok_by || '');
 
     // Anzahl Produktionsbestellungen f\u00fcr diese order_number
     if (oRes.data?.order_number) {
