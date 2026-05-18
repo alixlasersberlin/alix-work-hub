@@ -64,8 +64,7 @@ const ProductionOrderSupplierEmail = ({
             </Section>
           ) : null}
           <Text style={text}>
-            Der Download-Link ist <strong>{expires_in_days} Tage</strong> gültig. Bitte bestätigen Sie den Erhalt
-            und den voraussichtlichen Liefertermin.
+            Bitte bestätigen Sie den Erhalt und den voraussichtlichen Liefertermin.
           </Text>
           <Hr style={hr} />
           <Text style={footer}>Mit freundlichen Grüßen</Text>
