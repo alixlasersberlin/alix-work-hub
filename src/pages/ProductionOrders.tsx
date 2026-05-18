@@ -465,6 +465,16 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
                           )}
                           <Button asChild size="sm" variant="ghost" className="h-8 w-8 p-0"><Link to={`${basePath}/${r.id}`}><FileText className="w-4 h-4" /></Link></Button>
                           <Button asChild size="sm" variant="ghost" className="h-8 w-8 p-0"><Link to={`${basePath}/${r.id}/bearbeiten`}><Pencil className="w-4 h-4" /></Link></Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0 text-primary hover:text-primary hover:bg-primary/10"
+                            onClick={() => sendEmail(r.id)}
+                            disabled={sendingId === r.id || (r.approval_status || 'pending') !== 'approved'}
+                            title={(r.approval_status || 'pending') !== 'approved' ? 'Erst nach Freigabe versendbar' : 'E-Mail an Zulieferer senden'}
+                          >
+                            {sendingId === r.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+                          </Button>
                           <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => remove(r.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                         </td>
                       </tr>
