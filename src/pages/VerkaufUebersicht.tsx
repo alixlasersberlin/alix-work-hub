@@ -133,7 +133,7 @@ export default function VerkaufUebersicht() {
                     </div>
                   ) : (
                     <span className="text-3xl font-display font-bold text-foreground tabular-nums">
-                      {value ?? '—'}
+                      {typeof value === 'number' ? value : '—'}
                     </span>
                   )}
                 </div>
