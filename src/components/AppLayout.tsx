@@ -376,15 +376,21 @@ export default function AppLayout() {
     const key = path === '/production' && label === 'Liste' ? '__production_liste' : path;
     const c = lagerCounts[key];
     if (c === undefined) return label;
+    if (path === '/einkauf') {
+      const factory = lagerCounts['/order'] ?? 0;
+      return (
+        <>
+          {label} <span className="text-red-500">({c})</span> <span className="text-blue-500">({factory})</span>
+        </>
+      );
+    }
     const isProductionGroup = path === '/production' && label === 'PRODUCTION';
     const colorClass =
       c === 0
         ? 'text-red-500'
-        : path === '/einkauf'
-          ? 'text-red-500'
-          : path === '/lager' || path === '/tourenplanung' || isProductionGroup
-            ? 'text-green-500'
-            : undefined;
+        : path === '/lager' || path === '/tourenplanung' || isProductionGroup
+          ? 'text-green-500'
+          : undefined;
     return (
       <>
         {label} <span className={colorClass}>({c})</span>
