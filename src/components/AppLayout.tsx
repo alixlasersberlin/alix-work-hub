@@ -113,6 +113,7 @@ const navItems: NavItem[] = [
       { path: '/import', label: 'Import', icon: Cloud, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Read Only Audit'] },
       { path: '/system', label: 'Monitoring', icon: Server, roles: ['Admin', 'Super Admin', 'Read Only Audit'] },
       { path: '/benutzer', label: 'Benutzer', icon: Users, roles: ['Admin', 'Super Admin'] },
+      { path: '/order/zulieferer', label: 'Lieferanten', icon: Users, roles: ['Admin', 'Super Admin'] },
       { path: '/rollen', label: 'Rollen', icon: Shield, roles: ['Admin', 'Super Admin'] },
       { path: '/datensicherung', label: 'Datensicherung', icon: Shield, roles: ['Admin', 'Super Admin'] },
       { path: '/operation/logfiles', label: 'Logfiles', icon: ScrollText, roles: ['Admin', 'Super Admin', 'Read Only Audit'] },
