@@ -319,18 +319,20 @@ export default function AppLayout() {
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
-      const [allRes, reklaRes, factoryRes, freiRes, approvedRes] = await Promise.all([
+      const [allRes, reklaRes, factoryRes, freiOrdersRes, prodOrderIdsRes, approvedRes] = await Promise.all([
         supabase.from('production_orders').select('*', { count: 'exact', head: true }),
         supabase.from('production_orders').select('*', { count: 'exact', head: true }).eq('is_reclamation', true),
         supabase.from('production_orders').select('*', { count: 'exact', head: true }).eq('is_reclamation', false),
-        supabase.from('orders').select('*', { count: 'exact', head: true }).eq('deposit_ok', true).not('deposit_ok_by', 'is', null).neq('deposit_ok_by', ''),
+        supabase.from('orders').select('id').eq('deposit_ok', true).not('deposit_ok_by', 'is', null).neq('deposit_ok_by', '').limit(2000),
+        supabase.from('production_orders').select('order_id').limit(2000),
         supabase.from('production_orders').select('*', { count: 'exact', head: true }).eq('approval_status', 'approved'),
       ]);
       if (cancelled) return;
       const all = allRes.count ?? 0;
       const rekla = reklaRes.count ?? 0;
       const factory = factoryRes.count ?? 0;
-      const frei = freiRes.count ?? 0;
+      const usedOrderIds = new Set((prodOrderIdsRes.data ?? []).map((r: any) => r.order_id));
+      const frei = (freiOrdersRes.data ?? []).filter((o: any) => !usedOrderIds.has(o.id)).length;
       const approved = approvedRes.count ?? 0;
       const fertig = 0;
       setLagerCounts((prev) => ({
