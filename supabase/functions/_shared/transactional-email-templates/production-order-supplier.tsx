@@ -17,7 +17,6 @@ interface ProductionOrderSupplierProps {
   bearbeiter?: string
   anmerkungen?: string
   pdf_url?: string
-  expires_in_days?: number
   is_reclamation?: boolean
 }
 
