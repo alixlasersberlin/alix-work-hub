@@ -68,7 +68,7 @@ const TILES: Tile[] = [
 ];
 
 export default function VerkaufUebersicht() {
-  const [counts, setCounts] = useState<Record<string, number | null>>({});
+  const [counts, setCounts] = useState<Record<string, number | { open: number; total: number } | null>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
