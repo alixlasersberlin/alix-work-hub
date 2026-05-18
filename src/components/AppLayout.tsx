@@ -337,7 +337,7 @@ export default function AppLayout() {
       const fertig = 0;
       setLagerCounts((prev) => ({
         ...prev,
-        '/einkauf': all + frei + rekla + factory,
+        '/einkauf': frei,
         '/order/timeline': all,
         '/order/reklamation': rekla,
         '/order': factory,
