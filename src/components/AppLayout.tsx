@@ -363,14 +363,21 @@ export default function AppLayout() {
       .channel('orders_counts_einkauf')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, scheduleReload)
       .subscribe();
+    const onRefresh = () => scheduleReload();
+    window.addEventListener('einkauf-counts-refresh', onRefresh);
     return () => {
       cancelled = true;
       window.clearInterval(intervalId);
       if (debounceId) window.clearTimeout(debounceId);
+      window.removeEventListener('einkauf-counts-refresh', onRefresh);
       supabase.removeChannel(ch1);
       supabase.removeChannel(ch2);
     };
   }, []);
+
+  useEffect(() => {
+    window.dispatchEvent(new Event('einkauf-counts-refresh'));
+  }, [location.pathname]);
 
   const labelWithCount = (path: string, label: string) => {
     const key = path === '/production' && label === 'Liste' ? '__production_liste' : path;
