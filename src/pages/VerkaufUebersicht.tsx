@@ -120,6 +120,17 @@ export default function VerkaufUebersicht() {
                   </div>
                   {loading ? (
                     <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                  ) : value !== null && typeof value === 'object' ? (
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-display font-bold text-amber-500 tabular-nums">
+                        {value.open}
+                      </span>
+                      <span className="text-xs text-muted-foreground">offen</span>
+                      <span className="text-xl font-display font-bold text-foreground tabular-nums ml-1">
+                        {value.total}
+                      </span>
+                      <span className="text-xs text-muted-foreground">total</span>
+                    </div>
                   ) : (
                     <span className="text-3xl font-display font-bold text-foreground tabular-nums">
                       {value ?? '—'}
