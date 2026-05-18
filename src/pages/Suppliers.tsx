@@ -17,6 +17,7 @@ interface Supplier {
   address: string | null;
   phone: string | null;
   email: string;
+  email_secondary: string | null;
   notes: string | null;
 }
 
