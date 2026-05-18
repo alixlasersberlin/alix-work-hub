@@ -450,29 +450,71 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
     const supplier = suppliers.find(s => s.id === form.supplier_id);
     if (!pdf || !supplier || !selectedOrder) return;
 
-    // Download PDF
-    const url = URL.createObjectURL(pdf.blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = pdf.filename; a.click();
-    URL.revokeObjectURL(url);
+    const recipients = [supplier.email, supplier.email_secondary]
+      .map((e: string | null | undefined) => (e || '').trim())
+      .filter(Boolean);
+    if (recipients.length === 0) {
+      toast.error('Zulieferer hat keine E-Mail-Adresse hinterlegt');
+      return;
+    }
 
-    // Upload to storage
+    // Upload PDF to storage
     const path = `${poId}/${pdf.filename}`;
-    await supabase.storage.from('production-orders').upload(path, pdf.blob, { upsert: true, contentType: 'application/pdf' });
-    await supabase.from('production_orders').update({ pdf_path: path, sent_at: new Date().toISOString(), status: 'gesendet' }).eq('id', poId);
+    const up = await supabase.storage
+      .from('production-orders')
+      .upload(path, pdf.blob, { upsert: true, contentType: 'application/pdf' });
+    if (up.error) { toast.error(up.error.message); return; }
 
-    // Open mailto
-    const subject = encodeURIComponent(`Bestellung ${selectedOrder.order_number}`);
-    const body = encodeURIComponent(
-      `Sehr geehrte Damen und Herren,\n\nanbei unsere Bestellung ${selectedOrder.order_number}.\n\n` +
-      `Modell: ${form.modellname || '—'}\nFarbe: ${form.farbe}\nPower Handstück: ${form.power_handstueck}\n` +
-      `Liefertermin: ${form.liefertermin}\nBearbeiter: ${form.bearbeiter}\n\n` +
-      (form.anmerkungen ? `Anmerkungen:\n${form.anmerkungen}\n\n` : '') +
-      `Das Bestell-PDF wurde Ihnen heruntergeladen — bitte fügen Sie es als Anhang hinzu.\n\nMit freundlichen Grüßen`
+    // Create signed URL (14 days)
+    const EXPIRES_DAYS = 14;
+    const { data: signed, error: sigErr } = await supabase.storage
+      .from('production-orders')
+      .createSignedUrl(path, EXPIRES_DAYS * 24 * 60 * 60);
+    if (sigErr || !signed) { toast.error(sigErr?.message || 'Signed-URL Fehler'); return; }
+
+    await supabase.from('production_orders').update({
+      pdf_path: path,
+      sent_at: new Date().toISOString(),
+      status: 'gesendet',
+    }).eq('id', poId);
+
+    // Send transactional email to all recipients
+    const templateData = {
+      order_number: productionOrderNumber || selectedOrder.order_number,
+      supplier_name: supplier.name,
+      modellname: form.modellname,
+      farbe: form.farbe,
+      power_handstueck: form.power_handstueck,
+      liefertermin: form.liefertermin,
+      bearbeiter: form.bearbeiter,
+      anmerkungen: form.anmerkungen,
+      pdf_url: signed.signedUrl,
+      expires_in_days: EXPIRES_DAYS,
+      is_reclamation: isReclamation,
+    };
+
+    const results = await Promise.allSettled(
+      recipients.map(email =>
+        supabase.functions.invoke('send-transactional-email', {
+          body: {
+            templateName: 'production-order-supplier',
+            recipientEmail: email,
+            idempotencyKey: `po-send-${poId}-${email}`,
+            templateData,
+          },
+        })
+      )
     );
-    const recipients = [supplier.email, supplier.email_secondary].filter(Boolean).join(',');
-    window.location.href = `mailto:${recipients}?subject=${subject}&body=${body}`;
-    toast.success('PDF heruntergeladen – E-Mail wird geöffnet');
+    const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && (r.value as any)?.error));
+    if (failed.length === recipients.length) {
+      toast.error('E-Mail-Versand fehlgeschlagen');
+      return;
+    }
+    if (failed.length > 0) {
+      toast.warning(`E-Mail teilweise versendet (${recipients.length - failed.length}/${recipients.length})`);
+    } else {
+      toast.success(`E-Mail an ${recipients.length === 1 ? 'Zulieferer' : 'beide Adressen'} versendet`);
+    }
     setTimeout(() => navigate(basePath), 1500);
   };
 

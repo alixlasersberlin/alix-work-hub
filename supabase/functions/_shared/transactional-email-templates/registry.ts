@@ -11,8 +11,10 @@ export interface TemplateEntry {
 
 import { template as otpCode } from './otp-code.tsx'
 import { template as backupReady } from './backup-ready.tsx'
+import { template as productionOrderSupplier } from './production-order-supplier.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'otp-code': otpCode,
   'backup-ready': backupReady,
+  'production-order-supplier': productionOrderSupplier,
 }
