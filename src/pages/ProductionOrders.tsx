@@ -7,8 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Plus, Loader2, Factory, Users as UsersIcon, FileText, Pencil, Trash2, AlertTriangle,
-  Search, Calendar, Truck, User, Package, Hash, ArrowUpDown, CheckCircle2, XCircle, Clock,
+  Search, Calendar, Truck, User, Package, Hash, ArrowUpDown, CheckCircle2, XCircle, Clock, Mail,
 } from 'lucide-react';
+import { sendProductionOrderEmail } from '@/lib/send-production-order-email';
 import { toast } from 'sonner';
 import { format, differenceInCalendarDays, isValid } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -157,6 +158,20 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
     if (error) return toast.error(error.message);
     toast.success('Bestellung genehmigt');
     load();
+  };
+
+  const [sendingId, setSendingId] = useState<string | null>(null);
+  const sendEmail = async (id: string) => {
+    setSendingId(id);
+    const toastId = toast.loading('E-Mail wird versendet…');
+    try {
+      const res = await sendProductionOrderEmail(id);
+      if (res.ok) toast.success(res.message, { id: toastId });
+      else toast.error(res.message, { id: toastId });
+      if (res.ok) load();
+    } finally {
+      setSendingId(null);
+    }
   };
 
   const statusOptions = useMemo(() => {
@@ -374,6 +389,16 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
                   <div className="flex justify-end gap-0.5 mt-2 pt-2 border-t border-border/50">
                     <Button asChild size="sm" variant="ghost" className="h-8 w-8 p-0"><Link to={`${basePath}/${r.id}`}><FileText className="w-4 h-4" /></Link></Button>
                     <Button asChild size="sm" variant="ghost" className="h-8 w-8 p-0"><Link to={`${basePath}/${r.id}/bearbeiten`}><Pencil className="w-4 h-4" /></Link></Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 w-8 p-0 text-primary hover:text-primary hover:bg-primary/10"
+                      onClick={() => sendEmail(r.id)}
+                      disabled={sendingId === r.id || (r.approval_status || 'pending') !== 'approved'}
+                      title={(r.approval_status || 'pending') !== 'approved' ? 'Erst nach Freigabe versendbar' : 'E-Mail an Zulieferer senden'}
+                    >
+                      {sendingId === r.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+                    </Button>
                     <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => remove(r.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                   </div>
                 </Card>
@@ -440,6 +465,16 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
                           )}
                           <Button asChild size="sm" variant="ghost" className="h-8 w-8 p-0"><Link to={`${basePath}/${r.id}`}><FileText className="w-4 h-4" /></Link></Button>
                           <Button asChild size="sm" variant="ghost" className="h-8 w-8 p-0"><Link to={`${basePath}/${r.id}/bearbeiten`}><Pencil className="w-4 h-4" /></Link></Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0 text-primary hover:text-primary hover:bg-primary/10"
+                            onClick={() => sendEmail(r.id)}
+                            disabled={sendingId === r.id || (r.approval_status || 'pending') !== 'approved'}
+                            title={(r.approval_status || 'pending') !== 'approved' ? 'Erst nach Freigabe versendbar' : 'E-Mail an Zulieferer senden'}
+                          >
+                            {sendingId === r.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+                          </Button>
                           <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => remove(r.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                         </td>
                       </tr>
