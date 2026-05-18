@@ -41,8 +41,12 @@ const TILES: Tile[] = [
     to: '/auftraege',
     accent: 'from-primary/25 to-primary/5 border-primary/40',
     load: async () => {
-      const { count } = await supabase.from('orders').select('*', { count: 'exact', head: true });
-      return count ?? 0;
+      const OPEN = ['open', 'offen', 'draft', 'approved', 'overdue', 'teilgeliefert', 'zurückgestellt'];
+      const [openRes, totalRes] = await Promise.all([
+        supabase.from('orders').select('*', { count: 'exact', head: true }).in('order_status', OPEN),
+        supabase.from('orders').select('*', { count: 'exact', head: true }),
+      ]);
+      return { open: openRes.count ?? 0, total: totalRes.count ?? 0 } as any;
     },
   },
   {
