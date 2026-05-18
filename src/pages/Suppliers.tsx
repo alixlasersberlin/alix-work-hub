@@ -27,7 +27,7 @@ export default function Suppliers() {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Supplier | null>(null);
-  const [form, setForm] = useState({ name: '', address: '', phone: '', email: '', notes: '' });
+  const [form, setForm] = useState({ name: '', address: '', phone: '', email: '', email_secondary: '', notes: '' });
   const { pageSize, setPageSize, page, setPage, totalPages, paged, total } = usePagination(rows, 20);
 
   const load = async () => {
