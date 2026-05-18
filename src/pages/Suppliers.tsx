@@ -126,7 +126,10 @@ export default function Suppliers() {
               {paged.map(s => (
                 <tr key={s.id} className="border-b border-border hover:bg-muted/30">
                   <td className="p-3 font-medium">{s.name}</td>
-                  <td className="p-3">{s.email}</td>
+                  <td className="p-3">
+                    <div>{s.email}</div>
+                    {s.email_secondary && <div className="text-xs text-muted-foreground">+ {s.email_secondary}</div>}
+                  </td>
                   <td className="p-3">{s.phone || '—'}</td>
                   <td className="p-3 text-muted-foreground text-xs whitespace-pre-line">{s.address || '—'}</td>
                   <td className="p-3 text-right">
