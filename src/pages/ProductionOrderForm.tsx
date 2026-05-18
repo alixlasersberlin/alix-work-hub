@@ -470,7 +470,8 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
       (form.anmerkungen ? `Anmerkungen:\n${form.anmerkungen}\n\n` : '') +
       `Das Bestell-PDF wurde Ihnen heruntergeladen — bitte fügen Sie es als Anhang hinzu.\n\nMit freundlichen Grüßen`
     );
-    window.location.href = `mailto:${supplier.email}?subject=${subject}&body=${body}`;
+    const recipients = [supplier.email, supplier.email_secondary].filter(Boolean).join(',');
+    window.location.href = `mailto:${recipients}?subject=${subject}&body=${body}`;
     toast.success('PDF heruntergeladen – E-Mail wird geöffnet');
     setTimeout(() => navigate(basePath), 1500);
   };

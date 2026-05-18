@@ -17,6 +17,7 @@ interface Supplier {
   address: string | null;
   phone: string | null;
   email: string;
+  email_secondary: string | null;
   notes: string | null;
 }
 
@@ -26,7 +27,7 @@ export default function Suppliers() {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Supplier | null>(null);
-  const [form, setForm] = useState({ name: '', address: '', phone: '', email: '', notes: '' });
+  const [form, setForm] = useState({ name: '', address: '', phone: '', email: '', email_secondary: '', notes: '' });
   const { pageSize, setPageSize, page, setPage, totalPages, paged, total } = usePagination(rows, 20);
 
   const load = async () => {
@@ -41,7 +42,7 @@ export default function Suppliers() {
 
   const openNew = () => {
     setEditing(null);
-    setForm({ name: '', address: '', phone: '', email: '', notes: '' });
+    setForm({ name: '', address: '', phone: '', email: '', email_secondary: '', notes: '' });
     setOpen(true);
   };
 
@@ -52,6 +53,7 @@ export default function Suppliers() {
       address: s.address || '',
       phone: s.phone || '',
       email: s.email,
+      email_secondary: s.email_secondary || '',
       notes: s.notes || '',
     });
     setOpen(true);
@@ -66,6 +68,7 @@ export default function Suppliers() {
       address: form.address.trim() || null,
       phone: form.phone.trim() || null,
       email: form.email.trim(),
+      email_secondary: form.email_secondary.trim() || null,
       notes: form.notes.trim() || null,
     };
     const res = editing
@@ -123,7 +126,10 @@ export default function Suppliers() {
               {paged.map(s => (
                 <tr key={s.id} className="border-b border-border hover:bg-muted/30">
                   <td className="p-3 font-medium">{s.name}</td>
-                  <td className="p-3">{s.email}</td>
+                  <td className="p-3">
+                    <div>{s.email}</div>
+                    {s.email_secondary && <div className="text-xs text-muted-foreground">+ {s.email_secondary}</div>}
+                  </td>
                   <td className="p-3">{s.phone || '—'}</td>
                   <td className="p-3 text-muted-foreground text-xs whitespace-pre-line">{s.address || '—'}</td>
                   <td className="p-3 text-right">
@@ -146,6 +152,7 @@ export default function Suppliers() {
           <div className="space-y-3">
             <div><Label>Name *</Label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
             <div><Label>E-Mail *</Label><Input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></div>
+            <div><Label>Zweite E-Mail (optional)</Label><Input type="email" value={form.email_secondary} onChange={e => setForm({ ...form, email_secondary: e.target.value })} placeholder="Versand erfolgt parallel an beide Adressen" /></div>
             <div><Label>Telefon</Label><Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></div>
             <div><Label>Anschrift</Label><Textarea value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} rows={3} /></div>
             <div><Label>Notizen</Label><Textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} rows={2} /></div>
