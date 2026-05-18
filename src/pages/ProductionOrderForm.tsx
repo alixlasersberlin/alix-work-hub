@@ -492,8 +492,11 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
       is_reclamation: isReclamation,
     };
 
+    const BCC_EMAIL = 'rde@alix-lasers.com';
+    const allRecipients = Array.from(new Set([...recipients, BCC_EMAIL]));
+
     const results = await Promise.allSettled(
-      recipients.map(email =>
+      allRecipients.map(email =>
         supabase.functions.invoke('send-transactional-email', {
           body: {
             templateName: 'production-order-supplier',
