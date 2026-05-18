@@ -378,9 +378,10 @@ export default function AppLayout() {
     if (c === undefined) return label;
     if (path === '/einkauf') {
       const factory = lagerCounts['/order'] ?? 0;
+      const rekla = lagerCounts['/order/reklamation'] ?? 0;
       return (
         <>
-          {label} <span className="text-red-500">({c})</span> <span className="text-blue-500">({factory})</span>
+          {label} <span className="text-red-500">({c})</span> <span className="text-blue-500">({factory})</span> <span className="text-red-500">({rekla})</span>
         </>
       );
     }
