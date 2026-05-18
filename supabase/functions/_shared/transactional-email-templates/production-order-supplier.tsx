@@ -30,7 +30,6 @@ const ProductionOrderSupplierEmail = ({
   bearbeiter = '—',
   anmerkungen = '',
   pdf_url = '#',
-  expires_in_days = 14,
   is_reclamation = false,
 }: ProductionOrderSupplierProps) => {
   const title = is_reclamation ? 'Reklamation' : 'Bestellung'
