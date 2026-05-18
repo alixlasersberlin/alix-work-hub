@@ -149,6 +149,7 @@ export default function Suppliers() {
           <div className="space-y-3">
             <div><Label>Name *</Label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
             <div><Label>E-Mail *</Label><Input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></div>
+            <div><Label>Zweite E-Mail (optional)</Label><Input type="email" value={form.email_secondary} onChange={e => setForm({ ...form, email_secondary: e.target.value })} placeholder="Versand erfolgt parallel an beide Adressen" /></div>
             <div><Label>Telefon</Label><Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></div>
             <div><Label>Anschrift</Label><Textarea value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} rows={3} /></div>
             <div><Label>Notizen</Label><Textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} rows={2} /></div>
