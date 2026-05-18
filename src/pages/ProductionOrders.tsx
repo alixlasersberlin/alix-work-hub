@@ -160,6 +160,20 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
     load();
   };
 
+  const [sendingId, setSendingId] = useState<string | null>(null);
+  const sendEmail = async (id: string) => {
+    setSendingId(id);
+    const toastId = toast.loading('E-Mail wird versendet…');
+    try {
+      const res = await sendProductionOrderEmail(id);
+      if (res.ok) toast.success(res.message, { id: toastId });
+      else toast.error(res.message, { id: toastId });
+      if (res.ok) load();
+    } finally {
+      setSendingId(null);
+    }
+  };
+
   const statusOptions = useMemo(() => {
     const set = new Set<string>();
     rows.forEach(r => r.status && set.add(r.status));
