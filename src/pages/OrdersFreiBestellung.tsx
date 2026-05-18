@@ -32,7 +32,12 @@ export default function OrdersFreiBestellung() {
         .order('deposit_ok_at', { ascending: false })
         .limit(500);
       if (err) setError(err.message);
-      setOrders(data ?? []);
+      // Bestellungen ausblenden, für die bereits eine Produktionsbestellung existiert (→ Factory Orders)
+      const { data: existing } = await supabase
+        .from('production_orders')
+        .select('order_id');
+      const usedOrderIds = new Set((existing ?? []).map((p: any) => p.order_id));
+      setOrders((data ?? []).filter((o: any) => !usedOrderIds.has(o.id)));
       setLoading(false);
     })();
   }, []);
