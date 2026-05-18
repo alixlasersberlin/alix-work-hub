@@ -11,7 +11,7 @@ type Tile = {
   icon: any;
   to: string;
   accent: string;
-  load: () => Promise<number | null>;
+  load: () => Promise<number | { open: number; total: number } | null>;
 };
 
 const TILES: Tile[] = [
