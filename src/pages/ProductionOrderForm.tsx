@@ -492,8 +492,11 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
       is_reclamation: isReclamation,
     };
 
+    const BCC_EMAIL = 'rde@alix-lasers.com';
+    const allRecipients = Array.from(new Set([...recipients, BCC_EMAIL]));
+
     const results = await Promise.allSettled(
-      recipients.map(email =>
+      allRecipients.map(email =>
         supabase.functions.invoke('send-transactional-email', {
           body: {
             templateName: 'production-order-supplier',
@@ -505,14 +508,14 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
       )
     );
     const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && (r.value as any)?.error));
-    if (failed.length === recipients.length) {
+    if (failed.length === allRecipients.length) {
       toast.error('E-Mail-Versand fehlgeschlagen');
       return;
     }
     if (failed.length > 0) {
-      toast.warning(`E-Mail teilweise versendet (${recipients.length - failed.length}/${recipients.length})`);
+      toast.warning(`E-Mail teilweise versendet (${allRecipients.length - failed.length}/${allRecipients.length})`);
     } else {
-      toast.success(`E-Mail an ${recipients.length === 1 ? 'Zulieferer' : 'beide Adressen'} versendet`);
+      toast.success(`E-Mail an Zulieferer versendet (Kopie an ${BCC_EMAIL})`);
     }
     setTimeout(() => navigate(basePath), 1500);
   };
