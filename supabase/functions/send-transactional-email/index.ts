@@ -85,6 +85,12 @@ Deno.serve(async (req) => {
 
   // Send directly via Lovable email API
   try {
+    const tokenBytes = new Uint8Array(32)
+    crypto.getRandomValues(tokenBytes)
+    const unsubscribeToken = Array.from(tokenBytes)
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('')
+
     await sendLovableEmail(
       {
         to: effectiveRecipient,
@@ -95,6 +101,7 @@ Deno.serve(async (req) => {
         text: plainText,
         purpose: 'transactional',
         idempotency_key: idempotencyKey,
+        unsubscribe_token: unsubscribeToken,
       } as any,
       { apiKey },
     )
