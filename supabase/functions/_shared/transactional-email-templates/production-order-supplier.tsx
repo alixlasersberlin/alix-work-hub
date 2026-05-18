@@ -32,42 +32,78 @@ const ProductionOrderSupplierEmail = ({
   pdf_url = '#',
   is_reclamation = false,
 }: ProductionOrderSupplierProps) => {
-  const title = is_reclamation ? 'Reklamation' : 'Bestellung'
+  const titleEn = is_reclamation ? 'Reclamation' : 'Order'
+  const titleZh = is_reclamation ? '索赔' : '订单'
+  const formattedDate = liefertermin ? new Date(liefertermin).toLocaleDateString('en-GB') : '—'
   return (
-    <Html lang="de" dir="ltr">
+    <Html lang="en" dir="ltr">
       <Head />
-      <Preview>{title} {order_number} – {SITE_NAME}</Preview>
+      <Preview>{titleEn} {order_number} – {SITE_NAME}</Preview>
       <Body style={main}>
         <Container style={container}>
-          <Heading style={h1}>{SITE_NAME} – {title} {order_number}</Heading>
+          {/* ===== ENGLISH ===== */}
+          <Heading style={h1}>{SITE_NAME} – {titleEn} {order_number}</Heading>
           <Text style={text}>
-            {supplier_name ? `Sehr geehrtes Team von ${supplier_name},` : 'Sehr geehrte Damen und Herren,'}
+            {supplier_name ? `Dear ${supplier_name} team,` : 'Dear Sir or Madam,'}
           </Text>
           <Text style={text}>
-            anbei finden Sie unsere {title.toLowerCase()} <strong>{order_number}</strong>.
-            Das vollständige Bestell-PDF (zweisprachig) kann über den Button unten heruntergeladen werden.
+            please find attached our {titleEn.toLowerCase()} <strong>{order_number}</strong>.
+            The complete bilingual order PDF can be downloaded via the button below.
           </Text>
           <Section style={infoSection}>
-            <Text style={infoRow}><strong>Modell:</strong> {modellname || '—'}</Text>
-            <Text style={infoRow}><strong>Farbe:</strong> {farbe || '—'}</Text>
-            <Text style={infoRow}><strong>Power Handstück:</strong> {power_handstueck || '—'}</Text>
-            <Text style={infoRow}><strong>Liefertermin:</strong> {liefertermin ? new Date(liefertermin).toLocaleDateString('de-DE') : '—'}</Text>
-            <Text style={infoRow}><strong>Bearbeiter:</strong> {bearbeiter || '—'}</Text>
+            <Text style={infoRow}><strong>Model:</strong> {modellname || '—'}</Text>
+            <Text style={infoRow}><strong>Color:</strong> {farbe || '—'}</Text>
+            <Text style={infoRow}><strong>Handpiece Power:</strong> {power_handstueck || '—'}</Text>
+            <Text style={infoRow}><strong>Delivery Date:</strong> {formattedDate}</Text>
+            <Text style={infoRow}><strong>Contact:</strong> {bearbeiter || '—'}</Text>
           </Section>
-          <Section style={{ textAlign: 'center', margin: '32px 0' }}>
-            <Button href={pdf_url} style={btn}>Bestell-PDF herunterladen</Button>
+          <Section style={{ textAlign: 'center', margin: '24px 0' }}>
+            <Button href={pdf_url} style={btn}>Download Order PDF</Button>
           </Section>
           {anmerkungen ? (
             <Section>
-              <Text style={text}><strong>Anmerkungen:</strong></Text>
+              <Text style={text}><strong>Notes:</strong></Text>
               <Text style={text}>{anmerkungen}</Text>
             </Section>
           ) : null}
           <Text style={text}>
-            Bitte bestätigen Sie den Erhalt und den voraussichtlichen Liefertermin.
+            Please confirm receipt and the expected delivery date.
+          </Text>
+          <Text style={footer}>Best regards</Text>
+          <Text style={footer}>— {SITE_NAME}</Text>
+
+          <Hr style={hr} />
+
+          {/* ===== CHINESE ===== */}
+          <Heading style={h1}>{SITE_NAME} – {titleZh} {order_number}</Heading>
+          <Text style={text}>
+            {supplier_name ? `尊敬的 ${supplier_name} 团队：` : '尊敬的女士／先生：'}
+          </Text>
+          <Text style={text}>
+            随函附上我们的{titleZh} <strong>{order_number}</strong>。
+            完整的双语订单 PDF 可通过下方按钮下载。
+          </Text>
+          <Section style={infoSection}>
+            <Text style={infoRow}><strong>型号：</strong> {modellname || '—'}</Text>
+            <Text style={infoRow}><strong>颜色：</strong> {farbe || '—'}</Text>
+            <Text style={infoRow}><strong>手柄功率：</strong> {power_handstueck || '—'}</Text>
+            <Text style={infoRow}><strong>交货日期：</strong> {formattedDate}</Text>
+            <Text style={infoRow}><strong>联系人：</strong> {bearbeiter || '—'}</Text>
+          </Section>
+          <Section style={{ textAlign: 'center', margin: '24px 0' }}>
+            <Button href={pdf_url} style={btn}>下载订单 PDF</Button>
+          </Section>
+          {anmerkungen ? (
+            <Section>
+              <Text style={text}><strong>备注：</strong></Text>
+              <Text style={text}>{anmerkungen}</Text>
+            </Section>
+          ) : null}
+          <Text style={text}>
+            请确认收到并告知预计交货日期。
           </Text>
           <Hr style={hr} />
-          <Text style={footer}>Mit freundlichen Grüßen</Text>
+          <Text style={footer}>此致敬礼</Text>
           <Text style={footer}>— {SITE_NAME}</Text>
         </Container>
       </Body>
@@ -77,29 +113,32 @@ const ProductionOrderSupplierEmail = ({
 
 export const template = {
   component: ProductionOrderSupplierEmail,
-  subject: (data: Record<string, any>) =>
-    `${data.is_reclamation ? 'Reklamation' : 'Bestellung'} ${data.order_number ?? ''} – ${SITE_NAME}`,
-  displayName: 'Produktionsbestellung an Zulieferer',
+  subject: (data: Record<string, any>) => {
+    const en = data.is_reclamation ? 'Reclamation' : 'Order'
+    const zh = data.is_reclamation ? '索赔' : '订单'
+    return `${en} / ${zh} ${data.order_number ?? ''} – ${SITE_NAME}`
+  },
+  displayName: 'Produktionsbestellung an Zulieferer (EN/ZH)',
   previewData: {
     order_number: 'OR-00012-SO-1234',
     supplier_name: 'Beispiel GmbH',
     modellname: 'Alix Pro 3',
-    farbe: 'Schwarz - Gold',
+    farbe: 'Black - Gold',
     power_handstueck: '2000W',
     liefertermin: '2026-06-01',
     bearbeiter: 'Max Mustermann',
-    anmerkungen: 'Bitte rechtzeitig liefern.',
+    anmerkungen: 'Please deliver on time.',
     pdf_url: 'https://example.com/order.pdf',
     is_reclamation: false,
   },
 } satisfies TemplateEntry
 
-const main = { backgroundColor: '#ffffff', fontFamily: "'Inter', Arial, sans-serif" }
+const main = { backgroundColor: '#ffffff', fontFamily: "'Inter', Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif" }
 const container = { padding: '40px 25px', maxWidth: '600px', margin: '0 auto' }
 const h1 = { fontSize: '22px', fontWeight: '700' as const, color: '#000000', margin: '0 0 24px', textAlign: 'center' as const }
 const text = { fontSize: '14px', color: '#55575d', lineHeight: '1.6', margin: '0 0 16px' }
 const infoSection = { backgroundColor: '#f5f0e6', borderRadius: '8px', padding: '20px', margin: '0 0 16px', border: '1px solid #e8dfc8' }
 const infoRow = { fontSize: '13px', color: '#333', margin: '4px 0', lineHeight: '1.5' }
 const btn = { backgroundColor: '#9a7b2d', color: '#fff', padding: '14px 28px', borderRadius: '6px', textDecoration: 'none', fontWeight: '600' as const, fontSize: '14px' }
-const hr = { borderColor: '#e8dfc8', margin: '24px 0' }
+const hr = { borderColor: '#e8dfc8', margin: '32px 0' }
 const footer = { fontSize: '12px', color: '#999999', margin: '4px 0 0', lineHeight: '1.5' }
