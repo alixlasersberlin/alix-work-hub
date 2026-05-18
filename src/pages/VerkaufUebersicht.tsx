@@ -11,7 +11,7 @@ type Tile = {
   icon: any;
   to: string;
   accent: string;
-  load: () => Promise<number | null>;
+  load: () => Promise<number | { open: number; total: number } | null>;
 };
 
 const TILES: Tile[] = [
@@ -41,8 +41,12 @@ const TILES: Tile[] = [
     to: '/auftraege',
     accent: 'from-primary/25 to-primary/5 border-primary/40',
     load: async () => {
-      const { count } = await supabase.from('orders').select('*', { count: 'exact', head: true });
-      return count ?? 0;
+      const OPEN = ['open', 'offen', 'draft', 'approved', 'overdue', 'teilgeliefert', 'zurückgestellt'];
+      const [openRes, totalRes] = await Promise.all([
+        supabase.from('orders').select('*', { count: 'exact', head: true }).in('order_status', OPEN),
+        supabase.from('orders').select('*', { count: 'exact', head: true }),
+      ]);
+      return { open: openRes.count ?? 0, total: totalRes.count ?? 0 } as any;
     },
   },
   {
@@ -64,7 +68,7 @@ const TILES: Tile[] = [
 ];
 
 export default function VerkaufUebersicht() {
-  const [counts, setCounts] = useState<Record<string, number | null>>({});
+  const [counts, setCounts] = useState<Record<string, number | { open: number; total: number } | null>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -116,9 +120,20 @@ export default function VerkaufUebersicht() {
                   </div>
                   {loading ? (
                     <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                  ) : value !== null && typeof value === 'object' ? (
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-display font-bold text-amber-500 tabular-nums">
+                        {value.open}
+                      </span>
+                      <span className="text-xs text-muted-foreground">offen</span>
+                      <span className="text-xl font-display font-bold text-foreground tabular-nums ml-1">
+                        {value.total}
+                      </span>
+                      <span className="text-xs text-muted-foreground">total</span>
+                    </div>
                   ) : (
                     <span className="text-3xl font-display font-bold text-foreground tabular-nums">
-                      {value ?? '—'}
+                      {typeof value === 'number' ? value : '—'}
                     </span>
                   )}
                 </div>
