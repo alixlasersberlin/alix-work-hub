@@ -7,8 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Plus, Loader2, Factory, Users as UsersIcon, FileText, Pencil, Trash2, AlertTriangle,
-  Search, Calendar, Truck, User, Package, Hash, ArrowUpDown, CheckCircle2, XCircle, Clock,
+  Search, Calendar, Truck, User, Package, Hash, ArrowUpDown, CheckCircle2, XCircle, Clock, Mail,
 } from 'lucide-react';
+import { sendProductionOrderEmail } from '@/lib/send-production-order-email';
 import { toast } from 'sonner';
 import { format, differenceInCalendarDays, isValid } from 'date-fns';
 import { de } from 'date-fns/locale';
