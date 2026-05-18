@@ -42,7 +42,7 @@ export default function Suppliers() {
 
   const openNew = () => {
     setEditing(null);
-    setForm({ name: '', address: '', phone: '', email: '', notes: '' });
+    setForm({ name: '', address: '', phone: '', email: '', email_secondary: '', notes: '' });
     setOpen(true);
   };
 
@@ -53,6 +53,7 @@ export default function Suppliers() {
       address: s.address || '',
       phone: s.phone || '',
       email: s.email,
+      email_secondary: s.email_secondary || '',
       notes: s.notes || '',
     });
     setOpen(true);
@@ -67,6 +68,7 @@ export default function Suppliers() {
       address: form.address.trim() || null,
       phone: form.phone.trim() || null,
       email: form.email.trim(),
+      email_secondary: form.email_secondary.trim() || null,
       notes: form.notes.trim() || null,
     };
     const res = editing
