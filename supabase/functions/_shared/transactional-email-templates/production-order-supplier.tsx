@@ -90,7 +90,6 @@ export const template = {
     bearbeiter: 'Max Mustermann',
     anmerkungen: 'Bitte rechtzeitig liefern.',
     pdf_url: 'https://example.com/order.pdf',
-    expires_in_days: 14,
     is_reclamation: false,
   },
 } satisfies TemplateEntry
