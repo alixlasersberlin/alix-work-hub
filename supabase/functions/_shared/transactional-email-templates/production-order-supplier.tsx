@@ -17,7 +17,6 @@ interface ProductionOrderSupplierProps {
   bearbeiter?: string
   anmerkungen?: string
   pdf_url?: string
-  expires_in_days?: number
   is_reclamation?: boolean
 }
 
@@ -31,7 +30,6 @@ const ProductionOrderSupplierEmail = ({
   bearbeiter = '—',
   anmerkungen = '',
   pdf_url = '#',
-  expires_in_days = 14,
   is_reclamation = false,
 }: ProductionOrderSupplierProps) => {
   const title = is_reclamation ? 'Reklamation' : 'Bestellung'
@@ -66,8 +64,7 @@ const ProductionOrderSupplierEmail = ({
             </Section>
           ) : null}
           <Text style={text}>
-            Der Download-Link ist <strong>{expires_in_days} Tage</strong> gültig. Bitte bestätigen Sie den Erhalt
-            und den voraussichtlichen Liefertermin.
+            Bitte bestätigen Sie den Erhalt und den voraussichtlichen Liefertermin.
           </Text>
           <Hr style={hr} />
           <Text style={footer}>Mit freundlichen Grüßen</Text>
@@ -93,7 +90,6 @@ export const template = {
     bearbeiter: 'Max Mustermann',
     anmerkungen: 'Bitte rechtzeitig liefern.',
     pdf_url: 'https://example.com/order.pdf',
-    expires_in_days: 14,
     is_reclamation: false,
   },
 } satisfies TemplateEntry
