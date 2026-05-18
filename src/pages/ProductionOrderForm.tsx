@@ -465,12 +465,12 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
       .upload(path, pdf.blob, { upsert: true, contentType: 'application/pdf' });
     if (up.error) { toast.error(up.error.message); return; }
 
-    // Create signed URL (14 days)
-    const EXPIRES_DAYS = 14;
+    // Create long-lived signed URL (~10 Jahre, effektiv permanent – Versand erfolgt erst nach Freigabe)
+    const TEN_YEARS_SECONDS = 60 * 60 * 24 * 365 * 10;
     const { data: signed, error: sigErr } = await supabase.storage
       .from('production-orders')
-      .createSignedUrl(path, EXPIRES_DAYS * 24 * 60 * 60);
-    if (sigErr || !signed) { toast.error(sigErr?.message || 'Signed-URL Fehler'); return; }
+      .createSignedUrl(path, TEN_YEARS_SECONDS);
+    if (sigErr || !signed) { toast.error(sigErr?.message || 'Link-Erstellung fehlgeschlagen'); return; }
 
     await supabase.from('production_orders').update({
       pdf_path: path,
@@ -489,7 +489,6 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
       bearbeiter: form.bearbeiter,
       anmerkungen: form.anmerkungen,
       pdf_url: signed.signedUrl,
-      expires_in_days: EXPIRES_DAYS,
       is_reclamation: isReclamation,
     };
 
