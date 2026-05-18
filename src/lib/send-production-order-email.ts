@@ -2,6 +2,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { generateProductionOrderPdf } from '@/lib/production-order-pdf';
 
 const BCC_EMAIL = 'rde@alix-lasers.com';
+const CC_EMAIL = 'natalia.p@alix-operation.de';
 const TEN_YEARS_SECONDS = 60 * 60 * 24 * 365 * 10;
 
 export interface SendResult {
@@ -92,7 +93,7 @@ export async function sendProductionOrderEmail(poId: string): Promise<SendResult
     is_reclamation: !!po.is_reclamation,
   };
 
-  const allRecipients = Array.from(new Set([...recipients, BCC_EMAIL]));
+  const allRecipients = Array.from(new Set([...recipients, CC_EMAIL, BCC_EMAIL]));
   const results = await Promise.allSettled(
     allRecipients.map(email =>
       supabase.functions.invoke('send-transactional-email', {
