@@ -210,6 +210,29 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
     setSelectedItemIds(new Set());
   };
 
+  const searchCustomers = async () => {
+    const q = customerSearch.trim();
+    if (!q) return;
+    setSearchingCustomer(true);
+    const like = `%${q}%`;
+    const { data, error } = await supabase
+      .from('customers')
+      .select('id, company_name, contact_name, email')
+      .or(`company_name.ilike.${like},contact_name.ilike.${like},email.ilike.${like}`)
+      .order('company_name', { ascending: true })
+      .limit(50);
+    setSearchingCustomer(false);
+    if (error) return toast.error(error.message);
+    setCustomerResults(data || []);
+    if (!(data || []).length) toast.info('Keine Kunden gefunden');
+  };
+
+  const pickCustomer = (c: any) => {
+    setSelectedCustomer(c);
+    setCustomerResults([]);
+    setCustomerSearch('');
+  };
+
   const toggleItem = (id: string) => {
     const next = new Set(selectedItemIds);
     next.has(id) ? next.delete(id) : next.add(id);
