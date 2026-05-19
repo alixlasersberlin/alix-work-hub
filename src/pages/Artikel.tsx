@@ -318,13 +318,27 @@ export default function Artikel() {
 
   async function load() {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('zoho_items')
-      .select('*')
-      .order('name', { ascending: true })
-      .limit(2000);
-    if (error) toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
-    setItems((data as ZohoItem[]) ?? []);
+    const PAGE = 1000;
+    let from = 0;
+    const all: ZohoItem[] = [];
+    // Alle Artikel laden (Supabase liefert max. 1000 pro Anfrage)
+    while (true) {
+      const { data, error } = await supabase
+        .from('zoho_items')
+        .select('*')
+        .order('name', { ascending: true })
+        .range(from, from + PAGE - 1);
+      if (error) {
+        toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
+        break;
+      }
+      const batch = (data as ZohoItem[]) ?? [];
+      all.push(...batch);
+      if (batch.length < PAGE) break;
+      from += PAGE;
+      if (from > 50000) break; // Sicherheitsanker
+    }
+    setItems(all);
     setLoading(false);
   }
 
