@@ -117,7 +117,12 @@ export default function Artikel() {
       return;
     }
     toast({ title: 'Artikel angelegt', description: (data as ZohoItem).name ?? '' });
-    setItems((prev) => [data as ZohoItem, ...prev]);
+    setItems((prev) => [data as ZohoItem, ...prev.filter((p) => p.id !== (data as ZohoItem).id)]);
+    // Filter zurücksetzen, damit der neue Artikel garantiert sichtbar ist
+    setQuery('');
+    setCategoryFilter('__all__');
+    setStatusFilter('__all__');
+    setPage(1);
     setCreateOpen(false);
     setCreateDraft(emptyDraft);
   }
