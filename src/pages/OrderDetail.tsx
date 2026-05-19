@@ -39,6 +39,7 @@ export default function OrderDetail() {
   const [depositBy, setDepositBy] = useState('');
   const [depositAmount, setDepositAmount] = useState('');
   const [depositAdditional, setDepositAdditional] = useState('');
+  const [depositBookingDate, setDepositBookingDate] = useState('');
   const [savingDeposit, setSavingDeposit] = useState(false);
 
   // Note form
@@ -74,6 +75,7 @@ export default function OrderDetail() {
     setDepositBy(oRes.data?.deposit_ok_by || '');
     setDepositAmount(oRes.data?.deposit_amount != null ? String(oRes.data.deposit_amount) : '');
     setDepositAdditional(oRes.data?.deposit_additional != null ? String(oRes.data.deposit_additional) : '');
+    setDepositBookingDate((oRes.data as any)?.deposit_booking_date || '');
 
     // Anzahl Produktionsbestellungen f\u00fcr diese order_number
     if (oRes.data?.order_number) {
@@ -130,6 +132,7 @@ export default function OrderDetail() {
       deposit_ok_at: depositOk ? (depositChanged ? new Date().toISOString() : order?.deposit_ok_at) : null,
       deposit_amount: depositAmount.trim() ? parseFloat(depositAmount.replace(',', '.')) : null,
       deposit_additional: depositAdditional.trim() ? parseFloat(depositAdditional.replace(',', '.')) : null,
+      deposit_booking_date: depositOk && depositBookingDate ? depositBookingDate : null,
     } as any).eq('id', id!);
     setSavingDeposit(false);
     if (error) { toast.error('Fehler: ' + error.message); return; }
@@ -402,15 +405,27 @@ export default function OrderDetail() {
               <span className="text-sm font-semibold tracking-wide">ANZAHLUNG OK</span>
             </label>
             {depositOk && (
-              <div>
-                <Label className="text-xs text-muted-foreground">Mitarbeiter (Name)</Label>
-                <Input
-                  value={depositBy}
-                  onChange={e => setDepositBy(e.target.value)}
-                  placeholder="Name des Mitarbeiters"
-                  disabled={!canWrite}
-                  className="bg-secondary border-border mt-1"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs text-muted-foreground">Mitarbeiter (Name)</Label>
+                  <Input
+                    value={depositBy}
+                    onChange={e => setDepositBy(e.target.value)}
+                    placeholder="Name des Mitarbeiters"
+                    disabled={!canWrite}
+                    className="bg-secondary border-border mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Buchungsdatum</Label>
+                  <Input
+                    type="date"
+                    value={depositBookingDate}
+                    onChange={e => setDepositBookingDate(e.target.value)}
+                    disabled={!canWrite}
+                    className="bg-secondary border-border mt-1"
+                  />
+                </div>
               </div>
             )}
             <div className="grid grid-cols-2 gap-3">
