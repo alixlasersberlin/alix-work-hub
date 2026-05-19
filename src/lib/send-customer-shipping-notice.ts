@@ -50,7 +50,7 @@ export async function sendCustomerShippingNotice(
     const subject = renderTemplate(tpl.subject, vars);
     const body = renderTemplate(tpl.body, vars);
 
-    const key = `ship-notice-${orderId}-${deviceId ?? 'na'}-${trigger}-${Date.now()}`;
+    const key = `${templateKey}-${orderId}-${deviceId ?? 'na'}-${trigger}-${Date.now()}`;
     const { error } = await supabase.functions.invoke('send-transactional-email', {
       body: {
         templateName: 'customer-shipping-notice',
@@ -64,8 +64,9 @@ export async function sendCustomerShippingNotice(
     // Protokoll im Auftrag (Tab "E-Mails")
     const { data: userData } = await supabase.auth.getUser();
     const triggerLabel = trigger === 'manuell' ? 'Manuell versendet' : 'Automatisch versendet';
+    const templateLabel = (tpl as any).display_name || templateKey;
     const noteText = [
-      `[${triggerLabel}] Voravisierung Lieferung`,
+      `[${triggerLabel}] ${templateLabel}`,
       `An: ${customer.email}`,
       `Betreff: ${subject}`,
       '',
