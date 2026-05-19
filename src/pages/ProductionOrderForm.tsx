@@ -351,7 +351,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
   };
 
   const validate = () => {
-    if (!selectedOrder) { toast.error('Bitte einen Auftrag auswählen'); return false; }
+    if (!selectedOrder && !selectedCustomer) { toast.error('Bitte einen Auftrag oder Kunden auswählen'); return false; }
     if (!form.supplier_id) { toast.error('Bitte einen Zulieferer wählen'); return false; }
     if (!form.farbe.trim()) { toast.error('Farbe ist Pflichtfeld'); return false; }
     if (!form.power_handstueck.trim()) { toast.error('Power Handstück ist Pflichtfeld'); return false; }
@@ -367,12 +367,23 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
     return true;
   };
 
+  const customerDisplayName = (c: any) =>
+    c?.company_name || c?.contact_name || c?.email || '';
+
   const persist = async (): Promise<string | null> => {
-    if (!validate() || !selectedOrder) return null;
+    if (!validate()) return null;
     setSaving(true);
-    const payload = {
-      order_id: selectedOrder.id,
-      order_number: selectedOrder.order_number,
+    const customerForPo =
+      selectedOrder?.customer_id
+        ? { id: selectedOrder.customer_id, name: selectedOrder.customer?.company_name || selectedOrder.customer?.contact_name || null }
+        : selectedCustomer
+          ? { id: selectedCustomer.id, name: customerDisplayName(selectedCustomer) }
+          : { id: null, name: null };
+    const payload: any = {
+      order_id: selectedOrder?.id ?? null,
+      order_number: selectedOrder?.order_number ?? null,
+      customer_id: customerForPo.id,
+      customer_name_snapshot: customerForPo.name,
       supplier_id: form.supplier_id,
       modellname: form.modellname.trim() || null,
       farbe: form.farbe.trim(),
