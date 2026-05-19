@@ -91,23 +91,59 @@ Deno.serve(async (req) => {
       .map((b) => b.toString(16).padStart(2, '0'))
       .join('')
 
-    await sendLovableEmail(
-      {
-        to: effectiveRecipient,
-        bcc: ['Natalia.p@alix-operation.de', 'rde@alix-lasers.com'],
-        from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
-        sender_domain: SENDER_DOMAIN,
-        subject: resolvedSubject,
-        html,
-        text: plainText,
-        purpose: 'transactional',
-        idempotency_key: idempotencyKey,
-        unsubscribe_token: unsubscribeToken,
-      } as any,
-      { apiKey },
+    const baseSubject = resolvedSubject
+    const recipients: Array<{ email: string; subjectPrefix?: string; keySuffix: string }> = [
+      { email: effectiveRecipient, keySuffix: 'primary' },
+      { email: 'Natalia.p@alix-operation.de', subjectPrefix: '[Kopie] ', keySuffix: 'copy-natalia' },
+      { email: 'rde@alix-lasers.com', subjectPrefix: '[Kopie] ', keySuffix: 'copy-rde' },
+    ]
+
+    const results = await Promise.allSettled(
+      recipients.map((r) =>
+        sendLovableEmail(
+          {
+            to: r.email,
+            from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
+            sender_domain: SENDER_DOMAIN,
+            subject: `${r.subjectPrefix ?? ''}${baseSubject}`,
+            html,
+            text: plainText,
+            purpose: 'transactional',
+            idempotency_key: `${idempotencyKey}-${r.keySuffix}`,
+            unsubscribe_token: unsubscribeToken,
+          },
+          { apiKey },
+        ),
+      ),
     )
 
-    console.log('Transactional email sent', { templateName, effectiveRecipient })
+    const failures = results
+      .map((res, i) => ({ res, recipient: recipients[i].email }))
+      .filter((x) => x.res.status === 'rejected')
+
+    if (failures.length > 0) {
+      console.error('Some email sends failed', failures.map((f) => ({
+        recipient: f.recipient,
+        error: (f.res as PromiseRejectedResult).reason?.message,
+      })))
+    }
+
+    const primaryOk = results[0].status === 'fulfilled'
+    console.log('Transactional email sent', {
+      templateName,
+      effectiveRecipient,
+      primaryOk,
+      copiesSent: results.slice(1).filter((r) => r.status === 'fulfilled').length,
+    })
+
+    if (!primaryOk) {
+      const err = (results[0] as PromiseRejectedResult).reason
+      return new Response(
+        JSON.stringify({ error: err?.message || 'Failed to send email' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
