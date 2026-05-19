@@ -405,15 +405,27 @@ export default function OrderDetail() {
               <span className="text-sm font-semibold tracking-wide">ANZAHLUNG OK</span>
             </label>
             {depositOk && (
-              <div>
-                <Label className="text-xs text-muted-foreground">Mitarbeiter (Name)</Label>
-                <Input
-                  value={depositBy}
-                  onChange={e => setDepositBy(e.target.value)}
-                  placeholder="Name des Mitarbeiters"
-                  disabled={!canWrite}
-                  className="bg-secondary border-border mt-1"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs text-muted-foreground">Mitarbeiter (Name)</Label>
+                  <Input
+                    value={depositBy}
+                    onChange={e => setDepositBy(e.target.value)}
+                    placeholder="Name des Mitarbeiters"
+                    disabled={!canWrite}
+                    className="bg-secondary border-border mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Buchungsdatum</Label>
+                  <Input
+                    type="date"
+                    value={depositBookingDate}
+                    onChange={e => setDepositBookingDate(e.target.value)}
+                    disabled={!canWrite}
+                    className="bg-secondary border-border mt-1"
+                  />
+                </div>
               </div>
             )}
             <div className="grid grid-cols-2 gap-3">
