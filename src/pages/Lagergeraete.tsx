@@ -523,6 +523,13 @@ export default function Lagergeraete({
       }
     }
 
+    // Notify customer when an order is freshly assigned to a device
+    if (finalReservedOrderId && finalReservedOrderId !== originalReservedOrderId) {
+      const res = await sendCustomerShippingNotice(finalReservedOrderId, editingId ?? undefined);
+      if (res.ok) toast.success('Kunden-Voravisierung versendet');
+      else toast.warning('Kunden-E-Mail nicht versendet: ' + res.message);
+    }
+
     setSaving(false);
     toast.success(editingId ? 'Lagergerät aktualisiert' : 'Lagergerät erfasst');
     resetForm();
