@@ -529,7 +529,9 @@ export default function Lagergeraete({
         ? 'customer_in_transit'
         : deviceStatus === 'Produktion'
           ? 'customer_in_production'
-          : 'customer_warehouse_received';
+          : deviceStatus === 'Shell Warehouse'
+            ? 'customer_warehouse_prepared'
+            : 'customer_warehouse_received';
       const res = await sendCustomerShippingNotice(finalReservedOrderId, editingId ?? undefined, 'automatisch', tplKey);
       if (res.ok) toast.success('Kunden-E-Mail versendet');
       else toast.warning('Kunden-E-Mail nicht versendet: ' + res.message);
