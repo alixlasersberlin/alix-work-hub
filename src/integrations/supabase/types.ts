@@ -265,6 +265,39 @@ export type Database = {
         }
         Relationships: []
       }
+      email_templates: {
+        Row: {
+          body: string
+          display_name: string
+          id: string
+          placeholders: string[]
+          subject: string
+          template_key: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          body: string
+          display_name: string
+          id?: string
+          placeholders?: string[]
+          subject: string
+          template_key: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          body?: string
+          display_name?: string
+          id?: string
+          placeholders?: string[]
+          subject?: string
+          template_key?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       finance_records: {
         Row: {
           amount_due: number | null
