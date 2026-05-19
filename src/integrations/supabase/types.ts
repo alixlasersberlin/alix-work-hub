@@ -1000,14 +1000,16 @@ export type Database = {
           bearbeiter: string
           created_at: string
           created_by: string | null
+          customer_id: string | null
+          customer_name_snapshot: string | null
           farbe: string
           id: string
           invoice_pdf_path: string | null
           is_reclamation: boolean
           liefertermin: string
           modellname: string | null
-          order_id: string
-          order_number: string
+          order_id: string | null
+          order_number: string | null
           payment_status: string
           pdf_path: string | null
           photo_front_path: string | null
@@ -1034,14 +1036,16 @@ export type Database = {
           bearbeiter: string
           created_at?: string
           created_by?: string | null
+          customer_id?: string | null
+          customer_name_snapshot?: string | null
           farbe: string
           id?: string
           invoice_pdf_path?: string | null
           is_reclamation?: boolean
           liefertermin: string
           modellname?: string | null
-          order_id: string
-          order_number: string
+          order_id?: string | null
+          order_number?: string | null
           payment_status?: string
           pdf_path?: string | null
           photo_front_path?: string | null
@@ -1068,14 +1072,16 @@ export type Database = {
           bearbeiter?: string
           created_at?: string
           created_by?: string | null
+          customer_id?: string | null
+          customer_name_snapshot?: string | null
           farbe?: string
           id?: string
           invoice_pdf_path?: string | null
           is_reclamation?: boolean
           liefertermin?: string
           modellname?: string | null
-          order_id?: string
-          order_number?: string
+          order_id?: string | null
+          order_number?: string | null
           payment_status?: string
           pdf_path?: string | null
           photo_front_path?: string | null
@@ -1093,6 +1099,13 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "production_orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "production_orders_supplier_id_fkey"
             columns: ["supplier_id"]
