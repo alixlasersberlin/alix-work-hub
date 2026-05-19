@@ -75,6 +75,7 @@ export default function OrderDetail() {
     setDepositBy(oRes.data?.deposit_ok_by || '');
     setDepositAmount(oRes.data?.deposit_amount != null ? String(oRes.data.deposit_amount) : '');
     setDepositAdditional(oRes.data?.deposit_additional != null ? String(oRes.data.deposit_additional) : '');
+    setDepositBookingDate((oRes.data as any)?.deposit_booking_date || '');
 
     // Anzahl Produktionsbestellungen f\u00fcr diese order_number
     if (oRes.data?.order_number) {
