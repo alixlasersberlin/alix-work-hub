@@ -353,8 +353,8 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
   const validate = () => {
     if (!selectedOrder && !selectedCustomer) { toast.error('Bitte einen Auftrag oder Kunden auswählen'); return false; }
     if (!form.supplier_id) { toast.error('Bitte einen Zulieferer wählen'); return false; }
-    if (!form.farbe.trim()) { toast.error('Farbe ist Pflichtfeld'); return false; }
-    if (!form.power_handstueck.trim()) { toast.error('Power Handstück ist Pflichtfeld'); return false; }
+    if (!isReclamation && !form.farbe.trim()) { toast.error('Farbe ist Pflichtfeld'); return false; }
+    if (!isReclamation && !form.power_handstueck.trim()) { toast.error('Power Handstück ist Pflichtfeld'); return false; }
     if (!form.bearbeiter.trim()) { toast.error('Bearbeiter ist Pflichtfeld'); return false; }
     if (!form.liefertermin) { toast.error('Liefertermin ist Pflichtfeld'); return false; }
     if (isReclamation && !form.reclamation_reason.trim()) { toast.error('Reklamationsgrund ist Pflichtfeld'); return false; }
@@ -807,7 +807,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
             </Select>
           </div>
           <div>
-            <Label>Farbe *</Label>
+            <Label>Farbe {!isReclamation && '*'}</Label>
             {(() => {
               const FARBEN = ['Blau - Gold','Weiss - Gold','Schwarz - Gold','Pink - Gold','Rot - Gold','Weiss','Schwarz','Blau'];
               const isPreset = FARBEN.includes(form.farbe);
@@ -836,7 +836,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
             })()}
           </div>
           <div>
-            <Label>Power Handstück *</Label>
+            <Label>Power Handstück {!isReclamation && '*'}</Label>
             <Select value={form.power_handstueck} onValueChange={v => setForm({ ...form, power_handstueck: v })}>
               <SelectTrigger><SelectValue placeholder="Power wählen…" /></SelectTrigger>
               <SelectContent>
