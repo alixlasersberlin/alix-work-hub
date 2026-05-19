@@ -43,9 +43,33 @@ export async function sendCustomerShippingNotice(
       .maybeSingle();
     if (!tpl) return { ok: false, message: `E-Mail Vorlage '${templateKey}' nicht gefunden` };
 
+    // Geräte-Infos zusammenstellen: konkretes Gerät (deviceId) oder alle reservierten Geräte des Auftrags
+    let devices: Array<{ model_name: string | null; serial_number: string | null }> = [];
+    if (deviceId) {
+      const { data: dev } = await supabase
+        .from('lager_devices')
+        .select('model_name, serial_number')
+        .eq('id', deviceId)
+        .maybeSingle();
+      if (dev) devices = [dev];
+    }
+    if (devices.length === 0) {
+      const { data: devs } = await supabase
+        .from('lager_devices')
+        .select('model_name, serial_number')
+        .eq('reserved_order_id', orderId);
+      devices = devs || [];
+    }
+    const deviceInfo = devices.length > 0
+      ? devices
+          .map((d) => `- ${d.model_name || 'Gerät'}${d.serial_number ? ` (SN: ${d.serial_number})` : ''}`)
+          .join('\n')
+      : '–';
+
     const vars = {
       customerName: customer.contact_name || customer.company_name || '',
       orderNumber: order.order_number || '',
+      deviceInfo,
     };
     const subject = renderTemplate(tpl.subject, vars);
     const body = renderTemplate(tpl.body, vars);
