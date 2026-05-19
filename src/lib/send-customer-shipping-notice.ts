@@ -19,7 +19,7 @@ export async function sendCustomerShippingNotice(
   orderId: string,
   deviceId?: string,
   trigger: ShippingNoticeTrigger = 'automatisch',
-  templateKey: 'customer_warehouse_received' | 'customer_shipping_notice' | 'customer_in_transit' = 'customer_warehouse_received',
+  templateKey: 'customer_warehouse_received' | 'customer_shipping_notice' | 'customer_in_transit' | 'customer_in_production' = 'customer_warehouse_received',
 ): Promise<{ ok: boolean; message: string }> {
   try {
     const { data: order, error: oErr } = await supabase
