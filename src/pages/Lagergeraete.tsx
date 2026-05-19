@@ -1051,7 +1051,20 @@ export default function Lagergeraete({
                   {d.notes && (
                     <div className="text-xs text-muted-foreground line-clamp-2 border-t border-border/50 pt-2">{d.notes}</div>
                   )}
-                  <div className="flex justify-end pt-1">
+                  <div className="flex justify-end gap-1 pt-1">
+                    {d.reserved_order_id && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="gap-1 h-8 text-primary hover:text-primary"
+                        onClick={async () => {
+                          const r = await sendCustomerShippingNotice(d.reserved_order_id!, d.id, 'manuell');
+                          if (r.ok) toast.success(r.message); else toast.error(r.message);
+                        }}
+                      >
+                        <Mail className="w-4 h-4" /> E-Mail an Kunde
+                      </Button>
+                    )}
                     <Button variant="ghost" size="sm" onClick={() => openEdit(d)} className="gap-1 h-8">
                       <Pencil className="w-4 h-4" /> Bearbeiten
                     </Button>
