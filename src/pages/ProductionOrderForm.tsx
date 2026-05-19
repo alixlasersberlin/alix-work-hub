@@ -836,7 +836,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
             })()}
           </div>
           <div>
-            <Label>Power Handstück *</Label>
+            <Label>Power Handstück {!isReclamation && '*'}</Label>
             <Select value={form.power_handstueck} onValueChange={v => setForm({ ...form, power_handstueck: v })}>
               <SelectTrigger><SelectValue placeholder="Power wählen…" /></SelectTrigger>
               <SelectContent>
