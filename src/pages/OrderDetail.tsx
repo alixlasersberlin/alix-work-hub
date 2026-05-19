@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
-  ArrowLeft, ClipboardList, Building2, FileText, History, Loader2, Inbox, Send, Pencil, X, Check, Shield, Package, CalendarIcon, CalendarClock, Truck, Euro
+  ArrowLeft, ClipboardList, Building2, FileText, History, Loader2, Inbox, Send, Pencil, X, Check, Shield, Package, CalendarIcon, CalendarClock, Truck, Euro, Mail
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -19,6 +19,7 @@ import SepaMandatButton from '@/components/SepaMandatButton';
 import OrderEditDialog from '@/components/OrderEditDialog';
 import OrderDeferDialog from '@/components/OrderDeferDialog';
 import MietkaufDialog from '@/components/MietkaufDialog';
+import { sendCustomerShippingNotice } from '@/lib/send-customer-shipping-notice';
 
 export default function OrderDetail() {
   const { id } = useParams<{ id: string }>();
@@ -34,7 +35,8 @@ export default function OrderDetail() {
   const [history, setHistory] = useState<any[]>([]);
   const [poCount, setPoCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'items' | 'deposit' | 'packages' | 'notes' | 'history' | 'raw'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'items' | 'deposit' | 'packages' | 'notes' | 'emails' | 'history' | 'raw'>('overview');
+  const [sendingEmail, setSendingEmail] = useState(false);
   const [depositOk, setDepositOk] = useState(false);
   const [depositBy, setDepositBy] = useState('');
   const [depositAmount, setDepositAmount] = useState('');
@@ -157,12 +159,16 @@ export default function OrderDetail() {
 
   const packages: any[] = Array.isArray(order?.raw_data?.packages) ? order.raw_data.packages : [];
 
+  const emailNotes = notes.filter((n: any) => n.note_type === 'email');
+  const generalNotes = notes.filter((n: any) => n.note_type !== 'email');
+
   const tabs = [
     { key: 'overview', label: 'Übersicht', icon: ClipboardList },
     { key: 'items', label: `Artikel (${items.length})`, icon: Package },
     { key: 'deposit', label: `Anzahlung${order?.deposit_ok ? ' ✓' : ''}`, icon: Euro },
     { key: 'packages', label: `Pakete (${packages.length})`, icon: Truck },
-    { key: 'notes', label: `Notizen (${notes.length})`, icon: FileText },
+    { key: 'notes', label: `Notizen (${generalNotes.length})`, icon: FileText },
+    { key: 'emails', label: `E-Mails (${emailNotes.length})`, icon: Mail },
     { key: 'history', label: `Historie (${history.length})`, icon: History },
     ...(isAdmin ? [{ key: 'raw', label: 'Rohdaten', icon: Shield }] : []),
   ] as const;
@@ -200,6 +206,23 @@ export default function OrderDetail() {
               </Button>
               <Button variant="outline" size="sm" onClick={() => setDeferOpen(true)}>
                 <CalendarClock className="w-3.5 h-3.5 mr-1.5" /> Zurückstellen
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-primary/40 text-primary hover:bg-primary/10"
+                disabled={sendingEmail || !customer?.email}
+                title={!customer?.email ? 'Kunde hat keine E-Mail-Adresse' : 'Voravisierung an Kunde senden'}
+                onClick={async () => {
+                  setSendingEmail(true);
+                  const r = await sendCustomerShippingNotice(order.id, undefined, 'manuell');
+                  setSendingEmail(false);
+                  if (r.ok) { toast.success(r.message); loadAll(); }
+                  else toast.error(r.message);
+                }}
+              >
+                {sendingEmail ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Mail className="w-3.5 h-3.5 mr-1.5" />}
+                E-Mail an Kunde
               </Button>
             </>
           )}
@@ -570,14 +593,14 @@ export default function OrderDetail() {
             </div>
           )}
 
-          {notes.length === 0 ? (
+          {generalNotes.length === 0 ? (
             <div className="rounded-xl border border-border bg-card p-8 text-center card-glow">
               <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
               <p className="text-muted-foreground">Keine Notizen vorhanden.</p>
             </div>
           ) : (
             <div className="space-y-3">
-              {notes.map(n => (
+              {generalNotes.map(n => (
                 <div key={n.id} className="rounded-xl border border-border bg-card p-4 card-glow">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2">
@@ -601,6 +624,53 @@ export default function OrderDetail() {
                   ) : (
                     <p className="text-sm text-foreground whitespace-pre-wrap">{n.note_text}</p>
                   )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* E-Mails Tab */}
+      {activeTab === 'emails' && (
+        <div>
+          {canWrite && (
+            <div className="rounded-xl border border-border bg-card p-4 card-glow mb-4 flex items-center justify-between gap-4 flex-wrap">
+              <div className="text-sm text-muted-foreground">
+                Sendet die Voravisierungs-E-Mail an <span className="font-medium text-foreground">{customer?.email || '— keine Kunden-E-Mail —'}</span>. Inhalt unter Operation → E-Mail Vorlagen anpassbar.
+              </div>
+              <Button
+                size="sm"
+                disabled={sendingEmail || !customer?.email}
+                onClick={async () => {
+                  setSendingEmail(true);
+                  const r = await sendCustomerShippingNotice(order.id, undefined, 'manuell');
+                  setSendingEmail(false);
+                  if (r.ok) { toast.success(r.message); loadAll(); }
+                  else toast.error(r.message);
+                }}
+                className="gold-gradient text-primary-foreground"
+              >
+                {sendingEmail ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
+                E-Mail an Kunde senden
+              </Button>
+            </div>
+          )}
+          {emailNotes.length === 0 ? (
+            <div className="rounded-xl border border-border bg-card p-8 text-center card-glow">
+              <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
+              <p className="text-muted-foreground">Noch keine E-Mails an den Kunden versendet.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {emailNotes.map(n => (
+                <div key={n.id} className="rounded-xl border border-border bg-card p-4 card-glow">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Mail className="w-4 h-4 text-primary" />
+                    <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">E-Mail</span>
+                    <span className="text-xs text-muted-foreground">{new Date(n.created_at).toLocaleString('de-DE')}</span>
+                  </div>
+                  <pre className="text-sm text-foreground whitespace-pre-wrap font-sans">{n.note_text}</pre>
                 </div>
               ))}
             </div>

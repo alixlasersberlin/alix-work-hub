@@ -4,12 +4,21 @@ function renderTemplate(tpl: string, vars: Record<string, string>): string {
   return tpl.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, k) => vars[k] ?? '');
 }
 
+export type ShippingNoticeTrigger = 'automatisch' | 'manuell';
+
 /**
  * Sendet die "Voravisierung Lieferung" E-Mail an den Kunden eines Auftrags.
  * Subject + Body kommen aus public.email_templates (key: customer_shipping_notice)
  * und können im Operations-Menü bearbeitet werden.
+ *
+ * Erfolgreich versendete E-Mails werden zusätzlich als Notiz (note_type='email')
+ * am Auftrag protokolliert, damit sie im Tab "E-Mails" sichtbar sind.
  */
-export async function sendCustomerShippingNotice(orderId: string, deviceId?: string): Promise<{ ok: boolean; message: string }> {
+export async function sendCustomerShippingNotice(
+  orderId: string,
+  deviceId?: string,
+  trigger: ShippingNoticeTrigger = 'automatisch',
+): Promise<{ ok: boolean; message: string }> {
   try {
     const { data: order, error: oErr } = await supabase
       .from('orders')
@@ -39,7 +48,7 @@ export async function sendCustomerShippingNotice(orderId: string, deviceId?: str
     const subject = renderTemplate(tpl.subject, vars);
     const body = renderTemplate(tpl.body, vars);
 
-    const key = `ship-notice-${orderId}-${deviceId ?? 'na'}`;
+    const key = `ship-notice-${orderId}-${deviceId ?? 'na'}-${trigger}-${Date.now()}`;
     const { error } = await supabase.functions.invoke('send-transactional-email', {
       body: {
         templateName: 'customer-shipping-notice',
@@ -49,6 +58,25 @@ export async function sendCustomerShippingNotice(orderId: string, deviceId?: str
       },
     });
     if (error) return { ok: false, message: error.message };
+
+    // Protokoll im Auftrag (Tab "E-Mails")
+    const { data: userData } = await supabase.auth.getUser();
+    const triggerLabel = trigger === 'manuell' ? 'Manuell versendet' : 'Automatisch versendet';
+    const noteText = [
+      `[${triggerLabel}] Voravisierung Lieferung`,
+      `An: ${customer.email}`,
+      `Betreff: ${subject}`,
+      '',
+      body,
+    ].join('\n');
+    await supabase.from('order_notes').insert({
+      order_id: orderId,
+      note_type: 'email',
+      is_internal: true,
+      note_text: noteText,
+      created_by: userData.user?.id ?? null,
+    });
+
     return { ok: true, message: `E-Mail an ${customer.email} versendet` };
   } catch (e: any) {
     return { ok: false, message: e?.message || 'Unbekannter Fehler' };
