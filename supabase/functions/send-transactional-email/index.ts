@@ -3,7 +3,7 @@ import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { sendLovableEmail } from 'npm:@lovable.dev/email-js@0.0.4'
 import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
 
-const SITE_NAME = "alix-pro-hub"
+const SITE_NAME = "Alix Lasers Datacenter"
 const SENDER_DOMAIN = "notify.alixlasers.ai"
 const FROM_DOMAIN = "notify.alixlasers.ai"
 
