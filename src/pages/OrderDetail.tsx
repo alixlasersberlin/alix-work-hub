@@ -159,12 +159,16 @@ export default function OrderDetail() {
 
   const packages: any[] = Array.isArray(order?.raw_data?.packages) ? order.raw_data.packages : [];
 
+  const emailNotes = notes.filter((n: any) => n.note_type === 'email');
+  const generalNotes = notes.filter((n: any) => n.note_type !== 'email');
+
   const tabs = [
     { key: 'overview', label: 'Übersicht', icon: ClipboardList },
     { key: 'items', label: `Artikel (${items.length})`, icon: Package },
     { key: 'deposit', label: `Anzahlung${order?.deposit_ok ? ' ✓' : ''}`, icon: Euro },
     { key: 'packages', label: `Pakete (${packages.length})`, icon: Truck },
-    { key: 'notes', label: `Notizen (${notes.length})`, icon: FileText },
+    { key: 'notes', label: `Notizen (${generalNotes.length})`, icon: FileText },
+    { key: 'emails', label: `E-Mails (${emailNotes.length})`, icon: Mail },
     { key: 'history', label: `Historie (${history.length})`, icon: History },
     ...(isAdmin ? [{ key: 'raw', label: 'Rohdaten', icon: Shield }] : []),
   ] as const;
