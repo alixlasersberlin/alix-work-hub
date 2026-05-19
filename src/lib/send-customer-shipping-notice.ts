@@ -7,14 +7,20 @@ function renderTemplate(tpl: string, vars: Record<string, string>): string {
 export type ShippingNoticeTrigger = 'automatisch' | 'manuell';
 
 /**
- * Sendet die "Voravisierung Lieferung" E-Mail an den Kunden eines Auftrags.
- * Subject + Body kommen aus public.email_templates (key: customer_shipping_notice)
- * und können im Operations-Menü bearbeitet werden.
+ * Sendet eine Auftrags-bezogene E-Mail an den Kunden anhand einer Vorlage
+ * aus public.email_templates. Standard-Vorlage: 'customer_warehouse_received'
+ * (Lagereingang) wird automatisch bei Zubuchung versendet.
+ * 'customer_shipping_notice' (Teillieferung) wird nur manuell versendet.
  *
- * Erfolgreich versendete E-Mails werden zusätzlich als Notiz (note_type='email')
- * am Auftrag protokolliert, damit sie im Tab "E-Mails" sichtbar sind.
+ * Erfolgreich versendete E-Mails werden als Notiz (note_type='email')
+ * am Auftrag protokolliert (Tab "E-Mails").
  */
 export async function sendCustomerShippingNotice(
+  orderId: string,
+  deviceId?: string,
+  trigger: ShippingNoticeTrigger = 'automatisch',
+  templateKey: 'customer_warehouse_received' | 'customer_shipping_notice' = 'customer_warehouse_received',
+): Promise<{ ok: boolean; message: string }> {
   orderId: string,
   deviceId?: string,
   trigger: ShippingNoticeTrigger = 'automatisch',
