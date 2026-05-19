@@ -38,6 +38,7 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ALIX_MODEL_GROUPS } from '@/lib/alix-models';
+import { sendCustomerShippingNotice } from '@/lib/send-customer-shipping-notice';
 import OrderPickerDialog from '@/components/OrderPickerDialog';
 import { useAuth } from '@/hooks/useAuth';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -520,6 +521,13 @@ export default function Lagergeraete({
           toast.warning('Tourenplan konnte nicht entfernt werden: ' + delErr.message);
         }
       }
+    }
+
+    // Notify customer when an order is freshly assigned to a device
+    if (finalReservedOrderId && finalReservedOrderId !== originalReservedOrderId) {
+      const res = await sendCustomerShippingNotice(finalReservedOrderId, editingId ?? undefined);
+      if (res.ok) toast.success('Kunden-Voravisierung versendet');
+      else toast.warning('Kunden-E-Mail nicht versendet: ' + res.message);
     }
 
     setSaving(false);

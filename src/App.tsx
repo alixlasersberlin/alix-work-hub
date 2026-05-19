@@ -72,6 +72,7 @@ import Freigabe from "./pages/Freigabe";
 import VerkaufUebersicht from "./pages/VerkaufUebersicht";
 import Operation from "./pages/Operation";
 import Logfiles from "./pages/Logfiles";
+import EmailTemplates from "./pages/EmailTemplates";
 import Papiere from "./pages/Papiere";
 import VersandPlaceholder from "./pages/VersandPlaceholder";
 import { Truck as TruckIcon, Banknote as BanknoteIcon, FileSignature, CreditCard } from "lucide-react";
@@ -190,6 +191,7 @@ function AppRoutes() {
         <Route path="/verkauf/freigabe" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Freigabe /></ProtectedRoute>} />
         <Route path="/operation" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Operation /></ProtectedRoute>} />
         <Route path="/operation/logfiles" element={<ProtectedRoute requiredRoles={SYSTEM_ROLES}><Logfiles /></ProtectedRoute>} />
+        <Route path="/operation/email-vorlagen" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><EmailTemplates /></ProtectedRoute>} />
         <Route path="/papiere" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Papiere /></ProtectedRoute>} />
         <Route path="/versand/lieferscheine" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><VersandPlaceholder title="Lieferscheine" description="Versand & Lieferdokumente" icon={TruckIcon} /></ProtectedRoute>} />
         <Route path="/versand/ratenplan" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><VersandPlaceholder title="Ratenplan" description="Übersicht aller Ratenpläne" icon={BanknoteIcon} /></ProtectedRoute>} />
