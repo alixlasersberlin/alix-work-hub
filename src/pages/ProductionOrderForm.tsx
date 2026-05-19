@@ -100,14 +100,20 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
         payment_status: (po as any).payment_status || 'Nein',
         reclamation_reason: (po as any).reclamation_reason || '',
       });
-      // Load source order
-      const { data: order } = await supabase.from('orders').select('*').eq('id', po.order_id).single();
-      setSelectedOrder(order);
+      // Load source order (falls vorhanden)
+      if (po.order_id) {
+        const { data: order } = await supabase.from('orders').select('*, customer:customers(company_name, contact_name)').eq('id', po.order_id).single();
+        setSelectedOrder(order);
+        setMainMode('order');
+        const { data: srcItems } = await supabase.from('order_items').select('*').eq('order_id', po.order_id).order('item_order');
+        setOrderItems(srcItems || []);
+      } else if ((po as any).customer_id) {
+        const { data: cust } = await supabase.from('customers').select('id, company_name, contact_name').eq('id', (po as any).customer_id).maybeSingle();
+        setSelectedCustomer(cust || { id: (po as any).customer_id, company_name: (po as any).customer_name_snapshot, contact_name: null });
+        setMainMode('customer');
+      }
       // Load items from this PO
       const { data: poItems } = await supabase.from('production_order_items').select('*').eq('production_order_id', id).order('item_order');
-      // Load all source order items
-      const { data: srcItems } = await supabase.from('order_items').select('*').eq('order_id', po.order_id).order('item_order');
-      setOrderItems(srcItems || []);
       const ids = new Set<string>((poItems || []).map(i => i.source_order_item_id).filter(Boolean));
       setSelectedItemIds(ids);
       const manual = (poItems || []).filter(i => !i.source_order_item_id).map(i => ({
