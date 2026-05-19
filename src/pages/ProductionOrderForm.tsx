@@ -584,9 +584,31 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
         </h1>
       </div>
 
-      {/* Auftrag */}
+      {/* Auftrag oder Kunde */}
       <Card className="p-4 space-y-3">
-        <h2 className="font-semibold">1. Haupt Auftrag auswählen</h2>
+        <h2 className="font-semibold">1. Auftrag oder Kunde wählen</h2>
+
+        {!isEdit && !selectedOrder && !selectedCustomer && (
+          <div className="flex gap-2 border-b border-border pb-3">
+            <Button
+              type="button"
+              variant={mainMode === 'order' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setMainMode('order')}
+            >
+              Auftrag auswählen
+            </Button>
+            <Button
+              type="button"
+              variant={mainMode === 'customer' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setMainMode('customer')}
+            >
+              Nur Kunde (ohne Auftrag)
+            </Button>
+          </div>
+        )}
+
         {selectedOrder ? (
           <div className="flex items-center justify-between bg-muted/40 p-3 rounded">
             <div>
@@ -603,7 +625,23 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
             </div>
             {!isEdit && <Button variant="outline" size="sm" onClick={() => { setSelectedOrder(null); setOrderItems([]); setSelectedItemIds(new Set()); }}>Anderen wählen</Button>}
           </div>
-        ) : (
+        ) : selectedCustomer ? (
+          <div className="flex items-center justify-between bg-muted/40 p-3 rounded">
+            <div>
+              {isEdit && productionOrderNumber && (
+                <div className="text-xs text-muted-foreground mb-1">
+                  Bestellnummer: <span className="font-mono font-semibold text-foreground">{productionOrderNumber}</span>
+                </div>
+              )}
+              <div className="text-xs text-muted-foreground">Kunde (ohne Auftrag):</div>
+              <div className="font-semibold">{customerDisplayName(selectedCustomer)}</div>
+              {selectedCustomer.contact_name && selectedCustomer.company_name && (
+                <div className="text-xs text-muted-foreground mt-1">{selectedCustomer.contact_name}</div>
+              )}
+            </div>
+            {!isEdit && <Button variant="outline" size="sm" onClick={() => setSelectedCustomer(null)}>Anderen wählen</Button>}
+          </div>
+        ) : mainMode === 'order' ? (
           <div className="space-y-2">
             <div className="flex gap-2">
               <Input placeholder="Auftragsnummer oder Kundenname" value={orderSearch}
@@ -621,38 +659,68 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
               </button>
             ))}
           </div>
+        ) : (
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <Input placeholder="Kundenname, Firma oder E-Mail" value={customerSearch}
+                onChange={e => setCustomerSearch(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && searchCustomers()} />
+              <Button onClick={searchCustomers} disabled={searchingCustomer}>
+                {searchingCustomer ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+              </Button>
+            </div>
+            {customerResults.map(c => (
+              <button key={c.id} type="button" onClick={() => pickCustomer(c)}
+                className="w-full text-left p-2 rounded border border-border hover:bg-muted/40">
+                <div className="font-medium">{c.company_name || c.contact_name || c.email}</div>
+                {c.company_name && c.contact_name && (
+                  <div className="text-xs text-muted-foreground">{c.contact_name}</div>
+                )}
+                {c.email && <div className="text-xs text-muted-foreground">{c.email}</div>}
+              </button>
+            ))}
+            <p className="text-xs text-muted-foreground italic">
+              Die Bestellung wird ohne Auftrag direkt auf den Kunden erfasst. Positionen müssen manuell unter Punkt 2 hinzugefügt werden.
+            </p>
+          </div>
         )}
       </Card>
 
       {/* Positionen */}
-      {selectedOrder && (
+      {(selectedOrder || selectedCustomer) && (
         <Card className="p-4 space-y-3">
-          <h2 className="font-semibold">2. Positionen aus Auftrag auswählen</h2>
-          {orderItems.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Keine Positionen im Auftrag.</p>
-          ) : (
-            <div className="space-y-2">
-              {orderItems.map(it => (
-                <label key={it.id} className="flex items-start gap-3 p-2 rounded border border-border hover:bg-muted/30 cursor-pointer">
-                  <Checkbox checked={selectedItemIds.has(it.id)} onCheckedChange={() => toggleItem(it.id)} className="mt-1" />
-                  <div className="flex-1">
-                    <div className="font-medium">{it.item_name || '—'}</div>
-                    {it.description && <div className="text-xs text-muted-foreground">{it.description}</div>}
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Menge: {it.quantity} {it.unit || ''} {it.sku && `· SKU: ${it.sku}`}
+          <h2 className="font-semibold">
+            {selectedOrder ? '2. Positionen aus Auftrag auswählen' : '2. Positionen manuell hinzufügen'}
+          </h2>
+          {selectedOrder && (
+            orderItems.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Keine Positionen im Auftrag.</p>
+            ) : (
+              <div className="space-y-2">
+                {orderItems.map(it => (
+                  <label key={it.id} className="flex items-start gap-3 p-2 rounded border border-border hover:bg-muted/30 cursor-pointer">
+                    <Checkbox checked={selectedItemIds.has(it.id)} onCheckedChange={() => toggleItem(it.id)} className="mt-1" />
+                    <div className="flex-1">
+                      <div className="font-medium">{it.item_name || '—'}</div>
+                      {it.description && <div className="text-xs text-muted-foreground">{it.description}</div>}
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Menge: {it.quantity} {it.unit || ''} {it.sku && `· SKU: ${it.sku}`}
+                      </div>
                     </div>
-                  </div>
-                </label>
-              ))}
-            </div>
+                  </label>
+                ))}
+              </div>
+            )
           )}
 
           {/* Manuelle Positionen */}
-          <div className="pt-4 border-t border-border space-y-3">
+          <div className={selectedOrder ? "pt-4 border-t border-border space-y-3" : "space-y-3"}>
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-medium text-sm">Manuelle Positionen</h3>
-                <p className="text-xs text-muted-foreground">Positionen, die nicht im Auftrag enthalten sind</p>
+                <p className="text-xs text-muted-foreground">
+                  {selectedOrder ? 'Positionen, die nicht im Auftrag enthalten sind' : 'Mindestens eine Position erforderlich'}
+                </p>
               </div>
               <Button type="button" variant="outline" size="sm" onClick={addManualItem}>
                 <Plus className="w-4 h-4 mr-1" /> Hinzufügen
