@@ -515,13 +515,22 @@ export default function Artikel() {
           </div>
           <Select
             value="__placeholder__"
-            onValueChange={(v) => { if (v && v !== '__placeholder__') setQuery(v); }}
+            onValueChange={(v) => {
+              if (!v || v === '__placeholder__') return;
+              if (v === '__all_alix__') {
+                setQuery('');
+                setCategoryFilter('Alix Lasers');
+              } else {
+                setQuery(v);
+              }
+            }}
           >
             <SelectTrigger className="w-full lg:w-[260px]">
               <SelectValue placeholder="Alix Lasers Gerät wählen…" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="__placeholder__" disabled>Alix Lasers Gerät wählen…</SelectItem>
+              <SelectItem value="__all_alix__">Alle Alix Lasers Geräte</SelectItem>
               {alixLasersItems.map((i) => (
                 <SelectItem key={i.id} value={i.name ?? i.sku ?? i.id}>
                   {i.name ?? i.sku ?? '—'}
