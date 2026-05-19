@@ -132,6 +132,7 @@ export default function OrderDetail() {
       deposit_ok_at: depositOk ? (depositChanged ? new Date().toISOString() : order?.deposit_ok_at) : null,
       deposit_amount: depositAmount.trim() ? parseFloat(depositAmount.replace(',', '.')) : null,
       deposit_additional: depositAdditional.trim() ? parseFloat(depositAdditional.replace(',', '.')) : null,
+      deposit_booking_date: depositOk && depositBookingDate ? depositBookingDate : null,
     } as any).eq('id', id!);
     setSavingDeposit(false);
     if (error) { toast.error('Fehler: ' + error.message); return; }
