@@ -207,6 +207,23 @@ export default function OrderDetail() {
               <Button variant="outline" size="sm" onClick={() => setDeferOpen(true)}>
                 <CalendarClock className="w-3.5 h-3.5 mr-1.5" /> Zurückstellen
               </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-primary/40 text-primary hover:bg-primary/10"
+                disabled={sendingEmail || !customer?.email}
+                title={!customer?.email ? 'Kunde hat keine E-Mail-Adresse' : 'Voravisierung an Kunde senden'}
+                onClick={async () => {
+                  setSendingEmail(true);
+                  const r = await sendCustomerShippingNotice(order.id, undefined, 'manuell');
+                  setSendingEmail(false);
+                  if (r.ok) { toast.success(r.message); loadAll(); }
+                  else toast.error(r.message);
+                }}
+              >
+                {sendingEmail ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Mail className="w-3.5 h-3.5 mr-1.5" />}
+                E-Mail an Kunde
+              </Button>
             </>
           )}
           <SepaMandatButton order={order} />
