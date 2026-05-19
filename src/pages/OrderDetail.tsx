@@ -614,6 +614,53 @@ export default function OrderDetail() {
         </div>
       )}
 
+      {/* E-Mails Tab */}
+      {activeTab === 'emails' && (
+        <div>
+          {canWrite && (
+            <div className="rounded-xl border border-border bg-card p-4 card-glow mb-4 flex items-center justify-between gap-4 flex-wrap">
+              <div className="text-sm text-muted-foreground">
+                Sendet die Voravisierungs-E-Mail an <span className="font-medium text-foreground">{customer?.email || '— keine Kunden-E-Mail —'}</span>. Inhalt unter Operation → E-Mail Vorlagen anpassbar.
+              </div>
+              <Button
+                size="sm"
+                disabled={sendingEmail || !customer?.email}
+                onClick={async () => {
+                  setSendingEmail(true);
+                  const r = await sendCustomerShippingNotice(order.id, undefined, 'manuell');
+                  setSendingEmail(false);
+                  if (r.ok) { toast.success(r.message); loadAll(); }
+                  else toast.error(r.message);
+                }}
+                className="gold-gradient text-primary-foreground"
+              >
+                {sendingEmail ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
+                E-Mail an Kunde senden
+              </Button>
+            </div>
+          )}
+          {emailNotes.length === 0 ? (
+            <div className="rounded-xl border border-border bg-card p-8 text-center card-glow">
+              <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
+              <p className="text-muted-foreground">Noch keine E-Mails an den Kunden versendet.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {emailNotes.map(n => (
+                <div key={n.id} className="rounded-xl border border-border bg-card p-4 card-glow">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Mail className="w-4 h-4 text-primary" />
+                    <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">E-Mail</span>
+                    <span className="text-xs text-muted-foreground">{new Date(n.created_at).toLocaleString('de-DE')}</span>
+                  </div>
+                  <pre className="text-sm text-foreground whitespace-pre-wrap font-sans">{n.note_text}</pre>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* History Tab */}
       {activeTab === 'history' && (
         <div>
