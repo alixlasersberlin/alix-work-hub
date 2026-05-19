@@ -21,10 +21,6 @@ export async function sendCustomerShippingNotice(
   trigger: ShippingNoticeTrigger = 'automatisch',
   templateKey: 'customer_warehouse_received' | 'customer_shipping_notice' = 'customer_warehouse_received',
 ): Promise<{ ok: boolean; message: string }> {
-  orderId: string,
-  deviceId?: string,
-  trigger: ShippingNoticeTrigger = 'automatisch',
-): Promise<{ ok: boolean; message: string }> {
   try {
     const { data: order, error: oErr } = await supabase
       .from('orders')
@@ -42,10 +38,10 @@ export async function sendCustomerShippingNotice(
 
     const { data: tpl } = await supabase
       .from('email_templates')
-      .select('subject, body')
-      .eq('template_key', 'customer_shipping_notice')
+      .select('subject, body, display_name')
+      .eq('template_key', templateKey)
       .maybeSingle();
-    if (!tpl) return { ok: false, message: 'E-Mail Vorlage nicht gefunden' };
+    if (!tpl) return { ok: false, message: `E-Mail Vorlage '${templateKey}' nicht gefunden` };
 
     const vars = {
       customerName: customer.contact_name || customer.company_name || '',
