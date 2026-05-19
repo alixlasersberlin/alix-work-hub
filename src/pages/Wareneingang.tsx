@@ -38,13 +38,22 @@ export default function Wareneingang() {
 
   useEffect(() => {
     (async () => {
-      const { data, error } = await supabase
-        .from('zoho_items')
-        .select('id, name, sku, stock_on_hand')
-        .order('name', { ascending: true })
-        .limit(2000);
-      if (error) toast.error('Artikel konnten nicht geladen werden');
-      setItems((data as Item[]) || []);
+      const PAGE = 1000;
+      let from = 0;
+      const all: Item[] = [];
+      while (true) {
+        const { data, error } = await supabase
+          .from('zoho_items')
+          .select('id, name, sku, stock_on_hand')
+          .order('name', { ascending: true })
+          .range(from, from + PAGE - 1);
+        if (error) { toast.error('Artikel konnten nicht geladen werden'); break; }
+        const batch = (data as Item[]) || [];
+        all.push(...batch);
+        if (batch.length < PAGE || from > 50000) break;
+        from += PAGE;
+      }
+      setItems(all);
       setLoading(false);
     })();
     try {
