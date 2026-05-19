@@ -215,7 +215,7 @@ export default function OrderDetail() {
                 title={!customer?.email ? 'Kunde hat keine E-Mail-Adresse' : 'Voravisierung an Kunde senden'}
                 onClick={async () => {
                   setSendingEmail(true);
-                  const r = await sendCustomerShippingNotice(order.id, undefined, 'manuell');
+                  const r = await sendCustomerShippingNotice(order.id, undefined, 'manuell', 'customer_shipping_notice');
                   setSendingEmail(false);
                   if (r.ok) { toast.success(r.message); loadAll(); }
                   else toast.error(r.message);
@@ -644,7 +644,7 @@ export default function OrderDetail() {
                 disabled={sendingEmail || !customer?.email}
                 onClick={async () => {
                   setSendingEmail(true);
-                  const r = await sendCustomerShippingNotice(order.id, undefined, 'manuell');
+                  const r = await sendCustomerShippingNotice(order.id, undefined, 'manuell', 'customer_shipping_notice');
                   setSendingEmail(false);
                   if (r.ok) { toast.success(r.message); loadAll(); }
                   else toast.error(r.message);

@@ -7,17 +7,19 @@ function renderTemplate(tpl: string, vars: Record<string, string>): string {
 export type ShippingNoticeTrigger = 'automatisch' | 'manuell';
 
 /**
- * Sendet die "Voravisierung Lieferung" E-Mail an den Kunden eines Auftrags.
- * Subject + Body kommen aus public.email_templates (key: customer_shipping_notice)
- * und können im Operations-Menü bearbeitet werden.
+ * Sendet eine Auftrags-bezogene E-Mail an den Kunden anhand einer Vorlage
+ * aus public.email_templates. Standard-Vorlage: 'customer_warehouse_received'
+ * (Lagereingang) wird automatisch bei Zubuchung versendet.
+ * 'customer_shipping_notice' (Teillieferung) wird nur manuell versendet.
  *
- * Erfolgreich versendete E-Mails werden zusätzlich als Notiz (note_type='email')
- * am Auftrag protokolliert, damit sie im Tab "E-Mails" sichtbar sind.
+ * Erfolgreich versendete E-Mails werden als Notiz (note_type='email')
+ * am Auftrag protokolliert (Tab "E-Mails").
  */
 export async function sendCustomerShippingNotice(
   orderId: string,
   deviceId?: string,
   trigger: ShippingNoticeTrigger = 'automatisch',
+  templateKey: 'customer_warehouse_received' | 'customer_shipping_notice' = 'customer_warehouse_received',
 ): Promise<{ ok: boolean; message: string }> {
   try {
     const { data: order, error: oErr } = await supabase
@@ -36,10 +38,10 @@ export async function sendCustomerShippingNotice(
 
     const { data: tpl } = await supabase
       .from('email_templates')
-      .select('subject, body')
-      .eq('template_key', 'customer_shipping_notice')
+      .select('subject, body, display_name')
+      .eq('template_key', templateKey)
       .maybeSingle();
-    if (!tpl) return { ok: false, message: 'E-Mail Vorlage nicht gefunden' };
+    if (!tpl) return { ok: false, message: `E-Mail Vorlage '${templateKey}' nicht gefunden` };
 
     const vars = {
       customerName: customer.contact_name || customer.company_name || '',
@@ -48,7 +50,7 @@ export async function sendCustomerShippingNotice(
     const subject = renderTemplate(tpl.subject, vars);
     const body = renderTemplate(tpl.body, vars);
 
-    const key = `ship-notice-${orderId}-${deviceId ?? 'na'}-${trigger}-${Date.now()}`;
+    const key = `${templateKey}-${orderId}-${deviceId ?? 'na'}-${trigger}-${Date.now()}`;
     const { error } = await supabase.functions.invoke('send-transactional-email', {
       body: {
         templateName: 'customer-shipping-notice',
@@ -62,8 +64,9 @@ export async function sendCustomerShippingNotice(
     // Protokoll im Auftrag (Tab "E-Mails")
     const { data: userData } = await supabase.auth.getUser();
     const triggerLabel = trigger === 'manuell' ? 'Manuell versendet' : 'Automatisch versendet';
+    const templateLabel = (tpl as any).display_name || templateKey;
     const noteText = [
-      `[${triggerLabel}] Voravisierung Lieferung`,
+      `[${triggerLabel}] ${templateLabel}`,
       `An: ${customer.email}`,
       `Betreff: ${subject}`,
       '',

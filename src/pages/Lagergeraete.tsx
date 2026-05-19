@@ -1058,7 +1058,7 @@ export default function Lagergeraete({
                         size="sm"
                         className="gap-1 h-8 text-primary hover:text-primary"
                         onClick={async () => {
-                          const r = await sendCustomerShippingNotice(d.reserved_order_id!, d.id, 'manuell');
+                          const r = await sendCustomerShippingNotice(d.reserved_order_id!, d.id, 'manuell', 'customer_shipping_notice');
                           if (r.ok) toast.success(r.message); else toast.error(r.message);
                         }}
                       >
@@ -1159,7 +1159,7 @@ export default function Lagergeraete({
                           size="sm"
                           className="gap-1 text-primary hover:text-primary"
                           onClick={async () => {
-                            const r = await sendCustomerShippingNotice(d.reserved_order_id!, d.id, 'manuell');
+                            const r = await sendCustomerShippingNotice(d.reserved_order_id!, d.id, 'manuell', 'customer_shipping_notice');
                             if (r.ok) toast.success(r.message); else toast.error(r.message);
                           }}
                         >
