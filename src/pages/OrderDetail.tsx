@@ -576,14 +576,14 @@ export default function OrderDetail() {
             </div>
           )}
 
-          {notes.length === 0 ? (
+          {generalNotes.length === 0 ? (
             <div className="rounded-xl border border-border bg-card p-8 text-center card-glow">
               <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
               <p className="text-muted-foreground">Keine Notizen vorhanden.</p>
             </div>
           ) : (
             <div className="space-y-3">
-              {notes.map(n => (
+              {generalNotes.map(n => (
                 <div key={n.id} className="rounded-xl border border-border bg-card p-4 card-glow">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2">
