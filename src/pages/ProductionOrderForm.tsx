@@ -42,6 +42,13 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
   const [manualItems, setManualItems] = useState<Array<{ item_name: string; description: string; sku: string; quantity: string; unit: string }>>([]);
 
+  // Modus: Auftrag oder nur Kunde
+  const [mainMode, setMainMode] = useState<'order' | 'customer'>('order');
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [customerResults, setCustomerResults] = useState<any[]>([]);
+  const [searchingCustomer, setSearchingCustomer] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+
   const [form, setForm] = useState({
     supplier_id: '',
     modellname: '',
@@ -93,14 +100,20 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
         payment_status: (po as any).payment_status || 'Nein',
         reclamation_reason: (po as any).reclamation_reason || '',
       });
-      // Load source order
-      const { data: order } = await supabase.from('orders').select('*').eq('id', po.order_id).single();
-      setSelectedOrder(order);
+      // Load source order (falls vorhanden)
+      if (po.order_id) {
+        const { data: order } = await supabase.from('orders').select('*, customer:customers(company_name, contact_name)').eq('id', po.order_id).single();
+        setSelectedOrder(order);
+        setMainMode('order');
+        const { data: srcItems } = await supabase.from('order_items').select('*').eq('order_id', po.order_id).order('item_order');
+        setOrderItems(srcItems || []);
+      } else if ((po as any).customer_id) {
+        const { data: cust } = await supabase.from('customers').select('id, company_name, contact_name').eq('id', (po as any).customer_id).maybeSingle();
+        setSelectedCustomer(cust || { id: (po as any).customer_id, company_name: (po as any).customer_name_snapshot, contact_name: null });
+        setMainMode('customer');
+      }
       // Load items from this PO
       const { data: poItems } = await supabase.from('production_order_items').select('*').eq('production_order_id', id).order('item_order');
-      // Load all source order items
-      const { data: srcItems } = await supabase.from('order_items').select('*').eq('order_id', po.order_id).order('item_order');
-      setOrderItems(srcItems || []);
       const ids = new Set<string>((poItems || []).map(i => i.source_order_item_id).filter(Boolean));
       setSelectedItemIds(ids);
       const manual = (poItems || []).filter(i => !i.source_order_item_id).map(i => ({
@@ -195,6 +208,29 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
     const { data } = await supabase.from('order_items').select('*').eq('order_id', o.id).order('item_order');
     setOrderItems(data || []);
     setSelectedItemIds(new Set());
+  };
+
+  const searchCustomers = async () => {
+    const q = customerSearch.trim();
+    if (!q) return;
+    setSearchingCustomer(true);
+    const like = `%${q}%`;
+    const { data, error } = await supabase
+      .from('customers')
+      .select('id, company_name, contact_name, email')
+      .or(`company_name.ilike.${like},contact_name.ilike.${like},email.ilike.${like}`)
+      .order('company_name', { ascending: true })
+      .limit(50);
+    setSearchingCustomer(false);
+    if (error) return toast.error(error.message);
+    setCustomerResults(data || []);
+    if (!(data || []).length) toast.info('Keine Kunden gefunden');
+  };
+
+  const pickCustomer = (c: any) => {
+    setSelectedCustomer(c);
+    setCustomerResults([]);
+    setCustomerSearch('');
   };
 
   const toggleItem = (id: string) => {
@@ -315,7 +351,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
   };
 
   const validate = () => {
-    if (!selectedOrder) { toast.error('Bitte einen Auftrag auswählen'); return false; }
+    if (!selectedOrder && !selectedCustomer) { toast.error('Bitte einen Auftrag oder Kunden auswählen'); return false; }
     if (!form.supplier_id) { toast.error('Bitte einen Zulieferer wählen'); return false; }
     if (!form.farbe.trim()) { toast.error('Farbe ist Pflichtfeld'); return false; }
     if (!form.power_handstueck.trim()) { toast.error('Power Handstück ist Pflichtfeld'); return false; }
@@ -331,12 +367,23 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
     return true;
   };
 
+  const customerDisplayName = (c: any) =>
+    c?.company_name || c?.contact_name || c?.email || '';
+
   const persist = async (): Promise<string | null> => {
-    if (!validate() || !selectedOrder) return null;
+    if (!validate()) return null;
     setSaving(true);
-    const payload = {
-      order_id: selectedOrder.id,
-      order_number: selectedOrder.order_number,
+    const customerForPo =
+      selectedOrder?.customer_id
+        ? { id: selectedOrder.customer_id, name: selectedOrder.customer?.company_name || selectedOrder.customer?.contact_name || null }
+        : selectedCustomer
+          ? { id: selectedCustomer.id, name: customerDisplayName(selectedCustomer) }
+          : { id: null, name: null };
+    const payload: any = {
+      order_id: selectedOrder?.id ?? null,
+      order_number: selectedOrder?.order_number ?? null,
+      customer_id: customerForPo.id,
+      customer_name_snapshot: customerForPo.name,
       supplier_id: form.supplier_id,
       modellname: form.modellname.trim() || null,
       farbe: form.farbe.trim(),
@@ -392,8 +439,8 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
 
   const buildPdf = async (lang: 'bilingual' | 'en' = 'bilingual', poId?: string | null) => {
     const supplier = suppliers.find(s => s.id === form.supplier_id);
-    if (!supplier || !selectedOrder) return null;
-    let displayNumber = selectedOrder.order_number;
+    if (!supplier) return null;
+    let displayNumber = selectedOrder?.order_number || '';
     const targetId = poId || id;
     if (targetId) {
       const { data: poRow } = await supabase
@@ -403,6 +450,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
         .maybeSingle();
       if (poRow?.production_order_number) displayNumber = poRow.production_order_number;
     }
+    if (!displayNumber) displayNumber = '—';
     return generateProductionOrderPdf({
       order_number: displayNumber,
       ...form,
@@ -536,9 +584,31 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
         </h1>
       </div>
 
-      {/* Auftrag */}
+      {/* Auftrag oder Kunde */}
       <Card className="p-4 space-y-3">
-        <h2 className="font-semibold">1. Haupt Auftrag auswählen</h2>
+        <h2 className="font-semibold">1. Auftrag oder Kunde wählen</h2>
+
+        {!isEdit && !selectedOrder && !selectedCustomer && (
+          <div className="flex gap-2 border-b border-border pb-3">
+            <Button
+              type="button"
+              variant={mainMode === 'order' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setMainMode('order')}
+            >
+              Auftrag auswählen
+            </Button>
+            <Button
+              type="button"
+              variant={mainMode === 'customer' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setMainMode('customer')}
+            >
+              Nur Kunde (ohne Auftrag)
+            </Button>
+          </div>
+        )}
+
         {selectedOrder ? (
           <div className="flex items-center justify-between bg-muted/40 p-3 rounded">
             <div>
@@ -555,7 +625,23 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
             </div>
             {!isEdit && <Button variant="outline" size="sm" onClick={() => { setSelectedOrder(null); setOrderItems([]); setSelectedItemIds(new Set()); }}>Anderen wählen</Button>}
           </div>
-        ) : (
+        ) : selectedCustomer ? (
+          <div className="flex items-center justify-between bg-muted/40 p-3 rounded">
+            <div>
+              {isEdit && productionOrderNumber && (
+                <div className="text-xs text-muted-foreground mb-1">
+                  Bestellnummer: <span className="font-mono font-semibold text-foreground">{productionOrderNumber}</span>
+                </div>
+              )}
+              <div className="text-xs text-muted-foreground">Kunde (ohne Auftrag):</div>
+              <div className="font-semibold">{customerDisplayName(selectedCustomer)}</div>
+              {selectedCustomer.contact_name && selectedCustomer.company_name && (
+                <div className="text-xs text-muted-foreground mt-1">{selectedCustomer.contact_name}</div>
+              )}
+            </div>
+            {!isEdit && <Button variant="outline" size="sm" onClick={() => setSelectedCustomer(null)}>Anderen wählen</Button>}
+          </div>
+        ) : mainMode === 'order' ? (
           <div className="space-y-2">
             <div className="flex gap-2">
               <Input placeholder="Auftragsnummer oder Kundenname" value={orderSearch}
@@ -573,38 +659,68 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
               </button>
             ))}
           </div>
+        ) : (
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <Input placeholder="Kundenname, Firma oder E-Mail" value={customerSearch}
+                onChange={e => setCustomerSearch(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && searchCustomers()} />
+              <Button onClick={searchCustomers} disabled={searchingCustomer}>
+                {searchingCustomer ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+              </Button>
+            </div>
+            {customerResults.map(c => (
+              <button key={c.id} type="button" onClick={() => pickCustomer(c)}
+                className="w-full text-left p-2 rounded border border-border hover:bg-muted/40">
+                <div className="font-medium">{c.company_name || c.contact_name || c.email}</div>
+                {c.company_name && c.contact_name && (
+                  <div className="text-xs text-muted-foreground">{c.contact_name}</div>
+                )}
+                {c.email && <div className="text-xs text-muted-foreground">{c.email}</div>}
+              </button>
+            ))}
+            <p className="text-xs text-muted-foreground italic">
+              Die Bestellung wird ohne Auftrag direkt auf den Kunden erfasst. Positionen müssen manuell unter Punkt 2 hinzugefügt werden.
+            </p>
+          </div>
         )}
       </Card>
 
       {/* Positionen */}
-      {selectedOrder && (
+      {(selectedOrder || selectedCustomer) && (
         <Card className="p-4 space-y-3">
-          <h2 className="font-semibold">2. Positionen aus Auftrag auswählen</h2>
-          {orderItems.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Keine Positionen im Auftrag.</p>
-          ) : (
-            <div className="space-y-2">
-              {orderItems.map(it => (
-                <label key={it.id} className="flex items-start gap-3 p-2 rounded border border-border hover:bg-muted/30 cursor-pointer">
-                  <Checkbox checked={selectedItemIds.has(it.id)} onCheckedChange={() => toggleItem(it.id)} className="mt-1" />
-                  <div className="flex-1">
-                    <div className="font-medium">{it.item_name || '—'}</div>
-                    {it.description && <div className="text-xs text-muted-foreground">{it.description}</div>}
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Menge: {it.quantity} {it.unit || ''} {it.sku && `· SKU: ${it.sku}`}
+          <h2 className="font-semibold">
+            {selectedOrder ? '2. Positionen aus Auftrag auswählen' : '2. Positionen manuell hinzufügen'}
+          </h2>
+          {selectedOrder && (
+            orderItems.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Keine Positionen im Auftrag.</p>
+            ) : (
+              <div className="space-y-2">
+                {orderItems.map(it => (
+                  <label key={it.id} className="flex items-start gap-3 p-2 rounded border border-border hover:bg-muted/30 cursor-pointer">
+                    <Checkbox checked={selectedItemIds.has(it.id)} onCheckedChange={() => toggleItem(it.id)} className="mt-1" />
+                    <div className="flex-1">
+                      <div className="font-medium">{it.item_name || '—'}</div>
+                      {it.description && <div className="text-xs text-muted-foreground">{it.description}</div>}
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Menge: {it.quantity} {it.unit || ''} {it.sku && `· SKU: ${it.sku}`}
+                      </div>
                     </div>
-                  </div>
-                </label>
-              ))}
-            </div>
+                  </label>
+                ))}
+              </div>
+            )
           )}
 
           {/* Manuelle Positionen */}
-          <div className="pt-4 border-t border-border space-y-3">
+          <div className={selectedOrder ? "pt-4 border-t border-border space-y-3" : "space-y-3"}>
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-medium text-sm">Manuelle Positionen</h3>
-                <p className="text-xs text-muted-foreground">Positionen, die nicht im Auftrag enthalten sind</p>
+                <p className="text-xs text-muted-foreground">
+                  {selectedOrder ? 'Positionen, die nicht im Auftrag enthalten sind' : 'Mindestens eine Position erforderlich'}
+                </p>
               </div>
               <Button type="button" variant="outline" size="sm" onClick={addManualItem}>
                 <Plus className="w-4 h-4 mr-1" /> Hinzufügen
