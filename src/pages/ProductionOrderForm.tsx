@@ -807,7 +807,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
             </Select>
           </div>
           <div>
-            <Label>Farbe *</Label>
+            <Label>Farbe {!isReclamation && '*'}</Label>
             {(() => {
               const FARBEN = ['Blau - Gold','Weiss - Gold','Schwarz - Gold','Pink - Gold','Rot - Gold','Weiss','Schwarz','Blau'];
               const isPreset = FARBEN.includes(form.farbe);
