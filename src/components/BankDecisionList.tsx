@@ -9,7 +9,7 @@ import { Search, Loader2, Inbox, Eye } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 interface Props {
-  status: 'approved' | 'rejected' | 'pending';
+  status: 'approved' | 'rejected' | 'pending' | Array<'approved' | 'rejected' | 'pending' | 'in_review'>;
   title: string;
   subtitle: string;
   icon: LucideIcon;
@@ -26,17 +26,19 @@ export default function BankDecisionList({ status, title, subtitle, icon: Icon, 
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const { data, error: err } = await supabase
+      let q = supabase
         .from('bank_financing_requests')
-        .select('id, decided_at, decision_note, order_id, orders(id, order_number, order_date, total_amount, currency, order_status, customers(company_name, contact_name))')
-        .eq('status', status)
+        .select('id, status, decided_at, decision_note, order_id, orders(id, order_number, order_date, total_amount, currency, order_status, customers(company_name, contact_name))')
         .order('decided_at', { ascending: false, nullsFirst: false })
         .limit(1000);
+      if (Array.isArray(status)) q = q.in('status', status);
+      else q = q.eq('status', status);
+      const { data, error: err } = await q;
       if (err) setError(err.message);
       setRows(data ?? []);
       setLoading(false);
     })();
-  }, [status]);
+  }, [Array.isArray(status) ? status.join(',') : status]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
