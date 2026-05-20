@@ -179,52 +179,48 @@ export default function BankFinancingTab({ orderId }: Props) {
       </div>
 
       <div className="rounded-lg border border-border p-4 bg-background/40 space-y-3">
-        <label className="flex items-center gap-3 cursor-pointer">
-          <Checkbox checked={decisionConfirm} onCheckedChange={v => setDecisionConfirm(!!v)} disabled={!canWrite} />
-          <span className="text-sm font-semibold tracking-wide">ENTSCHEIDUNG DER BANK BESTÄTIGEN</span>
-        </label>
+        <p className="text-sm font-semibold tracking-wide">ENTSCHEIDUNG DER BANK BESTÄTIGEN</p>
+
+        <RadioGroup
+          value={decisionConfirm ? (decisionChoice === 'approved' ? 'ja' : decisionChoice === 'rejected' ? 'nein' : '') : ''}
+          onValueChange={(v) => {
+            if (v === 'ja') { setDecisionConfirm(true); setDecisionChoice('approved'); }
+            else if (v === 'nein') { setDecisionConfirm(true); setDecisionChoice('rejected'); }
+          }}
+          disabled={!canWrite}
+          className="flex gap-6"
+        >
+          <label className="flex items-center gap-2 cursor-pointer">
+            <RadioGroupItem value="ja" id="bf-ja" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+            <span className="text-sm">Ja (Zusage)</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <RadioGroupItem value="nein" id="bf-nein" />
+            <XCircle className="w-4 h-4 text-destructive" />
+            <span className="text-sm">Nein (Absage)</span>
+          </label>
+        </RadioGroup>
+
+        {decisionConfirm && decisionChoice === 'rejected' && (
+          <div>
+            <Label className="text-xs text-muted-foreground">Grund der Absage</Label>
+            <Textarea
+              value={decisionNote}
+              onChange={e => setDecisionNote(e.target.value)}
+              disabled={!canWrite}
+              placeholder="Begründung der Bank…"
+              className="bg-secondary border-border mt-1 min-h-[60px]"
+            />
+          </div>
+        )}
 
         {decisionConfirm && (
-          <div className="pl-8 space-y-3">
-            <RadioGroup
-              value={decisionChoice}
-              onValueChange={(v) => setDecisionChoice(v as Status)}
-              disabled={!canWrite}
-              className="flex gap-6"
-            >
-              <label className="flex items-center gap-2 cursor-pointer">
-                <RadioGroupItem value="approved" id="bf-app" />
-                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                <span className="text-sm">Zusage (positiv)</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <RadioGroupItem value="rejected" id="bf-rej" />
-                <XCircle className="w-4 h-4 text-destructive" />
-                <span className="text-sm">Absage (negativ)</span>
-              </label>
-            </RadioGroup>
-
-            {decisionChoice === 'rejected' && (
-              <div>
-                <Label className="text-xs text-muted-foreground">Grund der Absage</Label>
-                <Textarea
-                  value={decisionNote}
-                  onChange={e => setDecisionNote(e.target.value)}
-                  disabled={!canWrite}
-                  placeholder="Begründung der Bank…"
-                  className="bg-secondary border-border mt-1 min-h-[60px]"
-                />
-              </div>
-            )}
-
-            <p className="text-xs text-muted-foreground">
-              {decisionChoice === 'approved'
-                ? 'Bei Speichern wird der Auftrag unter "Zusagen Bank" geführt.'
-                : decisionChoice === 'rejected'
-                ? 'Bei Speichern wird der Auftrag unter "Absagen Bank" geführt.'
-                : 'Bitte Zusage oder Absage wählen.'}
-            </p>
-          </div>
+          <p className="text-xs text-muted-foreground">
+            {decisionChoice === 'approved'
+              ? 'Bei Speichern wird der Auftrag unter "Zusagen Bank" geführt.'
+              : 'Bei Speichern wird der Auftrag unter "Absagen Bank" geführt.'}
+          </p>
         )}
 
         {record?.decided_at && (
