@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Landmark, Search, Loader2, Inbox, Eye } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
+import { PageSizeSelector, usePagination, PaginationControls } from '@/components/PageSizeSelector';
 
 export default function LeasingBank() {
   const navigate = useNavigate();
