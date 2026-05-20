@@ -150,24 +150,49 @@ Deno.serve(async (req) => {
       recipients.push({ email, subjectPrefix: '[Kopie] ', keySuffix: `copy-extra-${idx}` })
     })
 
-    const results = await Promise.allSettled(
-      recipients.map((r) =>
-        sendLovableEmail(
-          {
-            to: r.email,
-            from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
-            sender_domain: SENDER_DOMAIN,
-            subject: `${r.subjectPrefix ?? ''}${baseSubject}`,
-            html,
-            text: plainText,
-            purpose: 'transactional',
-            idempotency_key: `${idempotencyKey}-${r.keySuffix}`,
-            unsubscribe_token: unsubscribeToken,
-          },
-          { apiKey },
-        ),
-      ),
-    )
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+    const isRateLimited = (msg?: string) => !!msg && /429|rate.?limit|high demand/i.test(msg)
+
+    const sendOne = async (r: typeof recipients[number]) => {
+      let attempt = 0
+      while (true) {
+        try {
+          return await sendLovableEmail(
+            {
+              to: r.email,
+              from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
+              sender_domain: SENDER_DOMAIN,
+              subject: `${r.subjectPrefix ?? ''}${baseSubject}`,
+              html,
+              text: plainText,
+              purpose: 'transactional',
+              idempotency_key: `${idempotencyKey}-${r.keySuffix}`,
+              unsubscribe_token: unsubscribeToken,
+            },
+            { apiKey },
+          )
+        } catch (err: any) {
+          if (isRateLimited(err?.message) && attempt < 4) {
+            attempt++
+            await sleep(1000 * attempt)
+            continue
+          }
+          throw err
+        }
+      }
+    }
+
+    const results: PromiseSettledResult<any>[] = []
+    for (let i = 0; i < recipients.length; i++) {
+      const r = recipients[i]
+      try {
+        const value = await sendOne(r)
+        results.push({ status: 'fulfilled', value } as PromiseFulfilledResult<any>)
+      } catch (reason: any) {
+        results.push({ status: 'rejected', reason } as PromiseRejectedResult)
+      }
+      if (i < recipients.length - 1) await sleep(400)
+    }
 
     const failures = results
       .map((res, i) => ({ res, recipient: recipients[i].email }))
