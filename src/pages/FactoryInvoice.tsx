@@ -342,6 +342,22 @@ export default function FactoryInvoice() {
                       <Download className="w-3.5 h-3.5 mr-1.5" /> {t.pdf}
                     </Button>
                   )}
+                  {canUpload && r.invoice_pdf_path && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-red-500/40 text-red-500 hover:bg-red-500/10 hover:text-red-500"
+                      onClick={() => setDeleteRow(r)}
+                      disabled={deletingId === r.id}
+                    >
+                      {deletingId === r.id ? (
+                        <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                      )}
+                      {t.delete}
+                    </Button>
+                  )}
                   {canUpload && (
                     <Button
                       size="sm"
@@ -363,6 +379,33 @@ export default function FactoryInvoice() {
           </div>
         </Card>
       )}
+
+      <AlertDialog open={!!deleteRow} onOpenChange={(v) => !v && setDeleteRow(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t.deleteTitle}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t.deleteDesc}
+              {deleteRow && (
+                <div className="mt-2 text-xs font-mono text-foreground">
+                  {deleteRow.production_order_number || deleteRow.order_number}
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={!!deletingId}>{t.cancel}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteInvoice}
+              disabled={!!deletingId}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deletingId && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {t.confirmDelete}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
