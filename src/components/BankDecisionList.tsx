@@ -9,7 +9,7 @@ import { Search, Loader2, Inbox, Eye } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 interface Props {
-  status: 'approved' | 'rejected';
+  status: 'approved' | 'rejected' | 'pending';
   title: string;
   subtitle: string;
   icon: LucideIcon;

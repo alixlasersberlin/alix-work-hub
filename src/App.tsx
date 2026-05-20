@@ -80,6 +80,7 @@ import VersandPlaceholder from "./pages/VersandPlaceholder";
 import LeasingBank from "./pages/LeasingBank";
 import ZusagenBank from "./pages/ZusagenBank";
 import AbsagenBank from "./pages/AbsagenBank";
+import AnfragenOffen from "./pages/AnfragenOffen";
 import Detailsuche from "./pages/Detailsuche";
 import { Truck as TruckIcon, Banknote as BanknoteIcon, FileSignature, CreditCard } from "lucide-react";
 import { Loader2 } from "lucide-react";
@@ -229,6 +230,7 @@ function AppRoutes() {
         <Route path="/finanzierungen/leasing-bank" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><LeasingBank /></ProtectedRoute>} />
         <Route path="/finanzierungen/zusagen-bank" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><ZusagenBank /></ProtectedRoute>} />
         <Route path="/finanzierungen/absagen-bank" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><AbsagenBank /></ProtectedRoute>} />
+        <Route path="/finanzierungen/anfragen-offen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><AnfragenOffen /></ProtectedRoute>} />
         <Route path="/benutzer" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><UserManagement /></ProtectedRoute>} />
         <Route path="/import" element={<ProtectedRoute requiredRoles={IMPORT_ROLES}><ImportManagement /></ProtectedRoute>} />
         <Route path="/datensicherung" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Backups /></ProtectedRoute>} />
