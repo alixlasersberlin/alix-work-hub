@@ -45,6 +45,7 @@ export default function EmailTemplates() {
   const canEdit = roles.some(r => ['Admin', 'Super Admin'].includes(r));
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
+  const [bulkSending, setBulkSending] = useState<string | null>(null);
   const [templates, setTemplates] = useState<TemplateRow[]>([]);
 
   const load = async () => {
