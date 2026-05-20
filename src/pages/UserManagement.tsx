@@ -230,6 +230,37 @@ export default function UserManagement() {
     setActionLoading(false);
   };
 
+  /* ─── Approve invitation (Benutzer freischalten) ─── */
+  const handleApproveInvitation = async (user: EnrichedUser) => {
+    setActionLoading(true);
+    try {
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({
+          invitation_status: 'accepted',
+          account_status: 'active',
+          is_active: true,
+        })
+        .eq('id', user.id);
+      if (error) throw error;
+      await supabase.from('audit_logs').insert({
+        user_id: (await supabase.auth.getUser()).data.user?.id || null,
+        action: 'invitation_approved',
+        module: 'user_management',
+        record_id: user.id,
+        details: { email: user.email },
+      });
+      toast.success(`${user.full_name || user.email} freigeschaltet`);
+      loadData();
+      if (selectedUser?.id === user.id) {
+        setSelectedUser(prev => prev ? { ...prev, invitation_status: 'accepted', account_status: 'active', is_active: true } : null);
+      }
+    } catch (e: any) {
+      toast.error(`Fehler: ${e.message}`);
+    }
+    setActionLoading(false);
+  };
+
   /* ─── Status change ─── */
   const handleStatusChange = async (user: EnrichedUser, newStatus: string) => {
     setActionLoading(true);
