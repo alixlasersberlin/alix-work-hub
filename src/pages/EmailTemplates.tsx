@@ -118,14 +118,32 @@ export default function EmailTemplates() {
       }
 
       let ok = 0, fail = 0;
-      for (const d of list) {
-        const res = await sendCustomerShippingNotice(
+      const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+      const isRateLimited = (msg?: string) => !!msg && /429|rate.?limit|high demand/i.test(msg);
+
+      for (let i = 0; i < list.length; i++) {
+        const d = list[i];
+        let res = await sendCustomerShippingNotice(
           d.reserved_order_id as string,
           d.id,
           'manuell',
           t.template_key as any,
         );
+        // Retry mit Backoff bei Rate-Limit (bis zu 3x)
+        let attempt = 0;
+        while (!res.ok && isRateLimited(res.message) && attempt < 3) {
+          attempt++;
+          await sleep(2000 * attempt);
+          res = await sendCustomerShippingNotice(
+            d.reserved_order_id as string,
+            d.id,
+            'manuell',
+            t.template_key as any,
+          );
+        }
         if (res.ok) ok++; else { fail++; console.warn('Bulk-Versand Fehler', d, res.message); }
+        // Drossel zwischen Sends, um 429 zu vermeiden (~1.2s zwischen Calls)
+        if (i < list.length - 1) await sleep(1200);
       }
       toast.success(`Versendet: ${ok} · Fehler: ${fail}`);
     } catch (e: any) {
