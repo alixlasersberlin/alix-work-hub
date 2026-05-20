@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import {
   ClipboardList, Users, MapPin, Banknote, AlertCircle,
   Clock, TrendingUp, FileText, CalendarDays, CircleDot, Inbox, Package, ChevronDown,
-  Warehouse, PackageCheck
+  Warehouse, PackageCheck, ShieldAlert, UserCheck
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
