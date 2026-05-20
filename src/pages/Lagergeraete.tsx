@@ -100,6 +100,13 @@ function getDeviceTypeFromNotes(notes: string | null | undefined): DeviceTypeFil
 const DEVICE_STATUS_OPTIONS = ['Bestand', 'Produktion', 'Shell Warehouse', 'Sperre BOSS', 'Transfer', 'Hold'] as const;
 type DeviceStatus = typeof DEVICE_STATUS_OPTIONS[number];
 
+// Mapping Geräte-Status → Kunden-E-Mail-Vorlage (template_key) für Bulk-Versand
+const BULK_TEMPLATE_BY_STATUS: Record<string, 'customer_warehouse_prepared' | 'customer_in_production' | 'customer_in_transit'> = {
+  'Shell Warehouse': 'customer_warehouse_prepared',
+  'Produktion': 'customer_in_production',
+  'Transfer': 'customer_in_transit',
+};
+
 function getStatusFromNotes(notes: string | null | undefined): DeviceStatus {
   const m = /\[Status:\s*([^\]]+)\]/.exec(notes ?? '');
   const v = m?.[1]?.trim();
