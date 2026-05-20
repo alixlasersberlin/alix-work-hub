@@ -189,7 +189,7 @@ export default function OrdersFreiBestellung() {
               <tr className="border-b border-border bg-secondary/50">
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Auftragsnr.</th>
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Kunde</th>
-                <th className="text-left px-4 py-3 text-muted-foreground font-medium">Mitarbeiter</th>
+                <th className="text-left px-4 py-3 text-muted-foreground font-medium">Artikel</th>
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Freigabe am</th>
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Anzahlung</th>
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Lieferdatum</th>
@@ -214,7 +214,18 @@ export default function OrdersFreiBestellung() {
                     <tr key={o.id} className="hover:bg-secondary/30 transition-colors">
                       <td className="px-4 py-3 font-medium text-foreground cursor-pointer" onClick={() => navigate(`/auftraege/${o.id}`)}>{o.order_number}</td>
                       <td className="px-4 py-3 text-muted-foreground">{o.customers?.company_name || o.customers?.contact_name || '—'}</td>
-                      <td className="px-4 py-3 text-foreground">{o.deposit_ok_by || '—'}</td>
+                      <td className="px-4 py-3 text-foreground">
+                        {(() => {
+                          const items = itemsByOrder[o.id] || [];
+                          const names = items.map(i => i.item_name).filter(Boolean) as string[];
+                          if (names.length === 0) return <span className="text-muted-foreground">—</span>;
+                          return (
+                            <span title={names.join(', ')} className="line-clamp-2">
+                              {names.join(', ')}
+                            </span>
+                          );
+                        })()}
+                      </td>
                       <td className="px-4 py-3 text-muted-foreground">{formatDate(o.deposit_ok_at)}</td>
                       <td className="px-4 py-3 text-muted-foreground">
                         {o.deposit_amount != null ? `${Number(o.deposit_amount).toLocaleString('de-DE', { minimumFractionDigits: 2 })} ${o.currency || '€'}` : '—'}
