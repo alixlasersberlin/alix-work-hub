@@ -229,6 +229,25 @@ Deno.serve(async (req) => {
       })
       .eq("id", backupId);
 
+    // Replicate to Hetzner Object Storage (best-effort, non-blocking for response)
+    let hetznerSync: any = null;
+    try {
+      const syncRes = await fetch(`${supabaseUrl}/functions/v1/sync-backup-to-hetzner`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${serviceRoleKey}`,
+        },
+        body: JSON.stringify({ folder_path: folderPath, backup_id: backupId }),
+      });
+      hetznerSync = await syncRes.json().catch(() => ({ ok: syncRes.ok }));
+    } catch (e) {
+      console.error("Hetzner sync failed:", e);
+      hetznerSync = { success: false, error: String(e) };
+    }
+
+
+
     let emailSent = false;
     if (notify && notifyEmail && signed?.signedUrl) {
       try {
@@ -273,6 +292,7 @@ Deno.serve(async (req) => {
       expires_in_seconds: expiresIn,
       email_sent: emailSent,
       notify_email: notifyEmail,
+      hetzner_sync: hetznerSync,
     });
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : String(err);
