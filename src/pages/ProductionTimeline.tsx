@@ -45,7 +45,20 @@ export default function ProductionTimeline() {
         ...r,
         display_order_number: r.production_order_number || r.order_number,
       }));
-      setRows(list);
+      // Fetch customer names via orders.order_number
+      const orderNumbers = Array.from(new Set(list.map((r: any) => r.order_number).filter(Boolean)));
+      const nameMap = new Map<string, string>();
+      if (orderNumbers.length > 0) {
+        const { data: orders } = await supabase
+          .from('orders')
+          .select('order_number, customers(company_name, contact_name)')
+          .in('order_number', orderNumbers as string[]);
+        (orders || []).forEach((o: any) => {
+          const name = o.customers?.company_name || o.customers?.contact_name || '';
+          if (o.order_number && name) nameMap.set(o.order_number, name);
+        });
+      }
+      setRows(list.map((r: any) => ({ ...r, customer_name: nameMap.get(r.order_number) || null })));
     }
     setLoading(false);
   };
