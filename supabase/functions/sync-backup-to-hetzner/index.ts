@@ -17,6 +17,32 @@ function json(body: unknown, status = 200) {
   });
 }
 
+function parseS3Error(xmlText: string) {
+  const code = xmlText.match(/<Code>([^<]+)<\/Code>/i)?.[1] ?? null;
+  const message = xmlText.match(/<Message>([^<]+)<\/Message>/i)?.[1] ?? null;
+  return { code, message };
+}
+
+function formatS3Error(status: number, responseText: string, bucket: string, base: string, region: string) {
+  const { code, message } = parseS3Error(responseText);
+
+  if (code === "NoSuchBucket") {
+    return `Hetzner-Bucket \"${bucket}\" wurde nicht gefunden. Bitte Bucket-Name, Endpoint (${base}) und Region (${region}) prüfen.`;
+  }
+
+  if (code === "AccessDenied") {
+    return `Zugriff auf Hetzner-Bucket \"${bucket}\" verweigert. Bitte Access Key, Secret Key und Bucket-Rechte prüfen.`;
+  }
+
+  const detail = message || responseText.trim().slice(0, 300) || "Unbekannter S3-Fehler";
+  return `S3-Fehler ${status}${code ? ` (${code})` : ""}: ${detail}`;
+}
+
+function isFatalS3Error(status: number, responseText: string) {
+  const { code } = parseS3Error(responseText);
+  return code === "NoSuchBucket" || code === "AccessDenied" || status === 401 || status === 403;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -87,6 +113,12 @@ Deno.serve(async (req) => {
 
   const startedAt = Date.now();
   try {
+    const bucketCheck = await aws.fetch(`${base}/${bucket}?list-type=2&max-keys=1`, { method: "GET" });
+    if (!bucketCheck.ok) {
+      const responseText = await bucketCheck.text();
+      throw new Error(formatS3Error(bucketCheck.status, responseText, bucket, base, region));
+    }
+
     const paths = await listAll(folderPath ?? "");
     const uploaded: string[] = [];
     const skipped: string[] = [];
@@ -118,7 +150,9 @@ Deno.serve(async (req) => {
         headers: { "Content-Type": blob.type || "application/octet-stream" },
       });
       if (!put.ok) {
-        failed.push({ path: p, error: `PUT ${put.status}: ${await put.text()}` });
+        const responseText = await put.text();
+        failed.push({ path: p, error: formatS3Error(put.status, responseText, bucket, base, region) });
+        if (isFatalS3Error(put.status, responseText)) break;
         continue;
       }
       uploaded.push(p);
