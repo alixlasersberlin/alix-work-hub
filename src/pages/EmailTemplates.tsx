@@ -5,6 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { StatusBadge } from '@/components/StatusBadge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -18,6 +20,15 @@ interface TemplateRow {
   placeholders: string[];
   updated_at: string;
 }
+
+// Mapping Vorlage → zugeordneter Geräte-/Auftragsstatus
+const STATUS_BY_KEY: Record<string, string> = {
+  customer_warehouse_received: 'Lagereingang',
+  customer_warehouse_prepared: 'Shell Warehouse',
+  customer_in_production: 'Produktion',
+  customer_in_transit: 'Unterwegs',
+  customer_shipping_notice: 'Teillieferung',
+};
 
 export default function EmailTemplates() {
   const { roles } = useAuth();
@@ -69,37 +80,47 @@ export default function EmailTemplates() {
       ) : templates.length === 0 ? (
         <Card><CardContent className="py-10 text-center text-muted-foreground text-sm">Keine Vorlagen vorhanden.</CardContent></Card>
       ) : (
-        templates.map(t => (
-          <Card key={t.id}>
-            <CardHeader>
-              <CardTitle>{t.display_name}</CardTitle>
-              <CardDescription>
-                Schlüssel: <code>{t.template_key}</code>
-                {t.placeholders?.length > 0 && (
-                  <> · Platzhalter: {t.placeholders.map(p => <code key={p} className="mx-1">{`{{${p}}}`}</code>)}</>
-                )}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Betreff</Label>
-                <Input value={t.subject} disabled={!canEdit} onChange={e => updateField(t.id, 'subject', e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label>Inhalt</Label>
-                <Textarea value={t.body} disabled={!canEdit} rows={12} onChange={e => updateField(t.id, 'body', e.target.value)} />
-              </div>
-              {canEdit && (
-                <div className="flex justify-end">
-                  <Button onClick={() => save(t)} disabled={saving === t.id}>
-                    {saving === t.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                    Speichern
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        ))
+        <Accordion type="multiple" className="space-y-3">
+          {templates.map(t => {
+            const status = STATUS_BY_KEY[t.template_key];
+            return (
+              <AccordionItem key={t.id} value={t.id} className="border rounded-lg bg-card">
+                <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                  <div className="flex items-center gap-3 flex-1 text-left">
+                    <span className="font-medium">{t.display_name}</span>
+                    {status && <StatusBadge status={status} />}
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-4">
+                  <CardDescription className="mb-3">
+                    Schlüssel: <code>{t.template_key}</code>
+                    {t.placeholders?.length > 0 && (
+                      <> · Platzhalter: {t.placeholders.map(p => <code key={p} className="mx-1">{`{{${p}}}`}</code>)}</>
+                    )}
+                  </CardDescription>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Betreff</Label>
+                      <Input value={t.subject} disabled={!canEdit} onChange={e => updateField(t.id, 'subject', e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Inhalt</Label>
+                      <Textarea value={t.body} disabled={!canEdit} rows={12} onChange={e => updateField(t.id, 'body', e.target.value)} />
+                    </div>
+                    {canEdit && (
+                      <div className="flex justify-end">
+                        <Button onClick={() => save(t)} disabled={saving === t.id}>
+                          {saving === t.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                          Speichern
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            );
+          })}
+        </Accordion>
       )}
     </div>
   );
