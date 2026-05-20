@@ -251,6 +251,25 @@ export default function FactoryInvoice() {
     }
   };
 
+  const togglePaymentOk = async (row: Row) => {
+    if (!canUpload) return;
+    const nextOk = row.payment_status !== 'Ja';
+    setPayingId(row.id);
+    try {
+      const { error } = await supabase.rpc('set_factory_invoice_payment_ok', {
+        _production_order_id: row.id,
+        _ok: nextOk,
+      });
+      if (error) throw error;
+      toast.success(nextOk ? t.paymentSet : t.paymentReset);
+      setRows(prev => prev.map(r => r.id === row.id ? { ...r, payment_status: nextOk ? 'Ja' : 'Nein' } : r));
+    } catch (err: any) {
+      toast.error(err?.message || t.paymentFailed);
+    } finally {
+      setPayingId(null);
+    }
+  };
+
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <input
