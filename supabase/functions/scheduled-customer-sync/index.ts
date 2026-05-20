@@ -170,7 +170,7 @@ Deno.serve(async (req: Request) => {
     const MAX_PAGES = 50; // safety limit
 
     while (page <= MAX_PAGES) {
-      const apiUrl = `${zohoConfig.booksApiBaseUrl}/contacts?organization_id=${zohoConfig.organizationId}&page=${page}&per_page=200&last_modified_time=${lastModifiedAfter}`;
+      const apiUrl = `${zohoConfig.booksApiBaseUrl}/contacts?organization_id=${zohoConfig.organizationId}&page=${page}&per_page=200&last_modified_time=${encodeURIComponent(lastModifiedAfter)}`;
 
       console.log(`[scheduled-sync] Fetching page ${page}: ${apiUrl}`);
 
