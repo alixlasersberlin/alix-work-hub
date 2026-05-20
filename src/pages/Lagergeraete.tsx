@@ -149,6 +149,43 @@ export default function Lagergeraete({
   const [bulkStatus, setBulkStatus] = useState<DeviceStatus>('Bestand');
   const [bulkApplying, setBulkApplying] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
+  const [bulkResending, setBulkResending] = useState(false);
+
+  // Welcher Status der aktuellen Seite ist Bulk-Versand-fähig?
+  const bulkResendStatus = useMemo(
+    () => (filterStatuses ?? []).find((s) => BULK_TEMPLATE_BY_STATUS[s]),
+    [filterStatuses],
+  );
+  const bulkResendTemplateKey = bulkResendStatus ? BULK_TEMPLATE_BY_STATUS[bulkResendStatus] : null;
+
+  const runBulkResend = async () => {
+    if (!bulkResendStatus || !bulkResendTemplateKey) return;
+    setBulkResending(true);
+    try {
+      const targets = devices.filter(
+        (d) => d.reserved_order_id && getStatusFromNotes(d.notes) === bulkResendStatus,
+      );
+      if (targets.length === 0) {
+        toast.info('Keine passenden Geräte mit Auftrag gefunden.');
+        return;
+      }
+      let ok = 0, fail = 0;
+      for (const d of targets) {
+        const res = await sendCustomerShippingNotice(
+          d.reserved_order_id as string,
+          d.id,
+          'manuell',
+          bulkResendTemplateKey,
+        );
+        if (res.ok) ok++; else { fail++; console.warn('Bulk-Versand Fehler', d, res.message); }
+      }
+      toast.success(`Versendet: ${ok} · Fehler: ${fail}`);
+    } catch (e: any) {
+      toast.error('Bulk-Versand fehlgeschlagen: ' + (e?.message || 'Unbekannter Fehler'));
+    } finally {
+      setBulkResending(false);
+    }
+  };
 
   // Global search across devices and available (unreserved) open orders
   const [searchQuery, setSearchQuery] = useState('');
