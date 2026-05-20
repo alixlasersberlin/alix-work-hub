@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Receipt, Search, Upload, Download, Building2, Calendar, CheckCircle2, Trash2 } from 'lucide-react';
+import { Loader2, Receipt, Search, Upload, Download, Building2, Calendar, CheckCircle2, Trash2, BadgeEuro } from 'lucide-react';
 import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
   AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction
@@ -48,6 +48,11 @@ const T: Record<Lang, Record<string, string>> = {
     confirmDelete: 'Endgültig löschen',
     deleted: 'Invoice gelöscht',
     deleteFailed: 'Löschen fehlgeschlagen',
+    paymentOk: 'PAYMENT OK',
+    paymentReceived: 'Bezahlt',
+    paymentSet: 'Zahlung als erhalten markiert',
+    paymentReset: 'Zahlung zurückgesetzt',
+    paymentFailed: 'Aktualisierung fehlgeschlagen',
   },
   en: {
     title: 'Factory Invoice',
@@ -74,6 +79,11 @@ const T: Record<Lang, Record<string, string>> = {
     confirmDelete: 'Delete permanently',
     deleted: 'Invoice deleted',
     deleteFailed: 'Delete failed',
+    paymentOk: 'PAYMENT OK',
+    paymentReceived: 'Paid',
+    paymentSet: 'Payment marked as received',
+    paymentReset: 'Payment reset',
+    paymentFailed: 'Update failed',
   },
   zh: {
     title: 'Factory Invoice',
@@ -100,6 +110,11 @@ const T: Record<Lang, Record<string, string>> = {
     confirmDelete: '永久删除',
     deleted: '发票已删除',
     deleteFailed: '删除失败',
+    paymentOk: 'PAYMENT OK',
+    paymentReceived: '已付款',
+    paymentSet: '付款已标记为收到',
+    paymentReset: '付款已重置',
+    paymentFailed: '更新失败',
   },
 };
 
@@ -116,6 +131,7 @@ interface Row {
   approval_status: string;
   approved_at: string | null;
   invoice_pdf_path: string | null;
+  payment_status: string | null;
   is_reclamation: boolean;
   supplier?: { name: string | null } | null;
 }
@@ -128,6 +144,7 @@ export default function FactoryInvoice() {
   const [search, setSearch] = useState('');
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [payingId, setPayingId] = useState<string | null>(null);
   const [deleteRow, setDeleteRow] = useState<Row | null>(null);
   const [lang, setLang] = useState<Lang>(() => (localStorage.getItem('production_lang') as Lang) || 'de');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -141,7 +158,7 @@ export default function FactoryInvoice() {
     setLoading(true);
     const { data, error } = await supabase
       .from('production_orders')
-      .select('id, order_number, production_order_number, status, liefertermin, modellname, farbe, bearbeiter, supplier_id, approval_status, approved_at, invoice_pdf_path, is_reclamation, supplier:suppliers(name)')
+      .select('id, order_number, production_order_number, status, liefertermin, modellname, farbe, bearbeiter, supplier_id, approval_status, approved_at, invoice_pdf_path, payment_status, is_reclamation, supplier:suppliers(name)')
       .eq('approval_status', 'approved')
       .order('approved_at', { ascending: false });
     if (error) toast.error(error.message);
@@ -234,6 +251,25 @@ export default function FactoryInvoice() {
     }
   };
 
+  const togglePaymentOk = async (row: Row) => {
+    if (!canUpload) return;
+    const nextOk = row.payment_status !== 'Ja';
+    setPayingId(row.id);
+    try {
+      const { error } = await supabase.rpc('set_factory_invoice_payment_ok', {
+        _production_order_id: row.id,
+        _ok: nextOk,
+      });
+      if (error) throw error;
+      toast.success(nextOk ? t.paymentSet : t.paymentReset);
+      setRows(prev => prev.map(r => r.id === row.id ? { ...r, payment_status: nextOk ? 'Ja' : 'Nein' } : r));
+    } catch (err: any) {
+      toast.error(err?.message || t.paymentFailed);
+    } finally {
+      setPayingId(null);
+    }
+  };
+
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <input
@@ -317,6 +353,11 @@ export default function FactoryInvoice() {
                         <CheckCircle2 className="w-3 h-3" /> {t.invoice}
                       </Badge>
                     )}
+                    {r.payment_status === 'Ja' && (
+                      <Badge variant="outline" className="text-[10px] border-emerald-500/40 text-emerald-500 gap-1">
+                        <BadgeEuro className="w-3 h-3" /> {t.paymentReceived}
+                      </Badge>
+                    )}
                   </div>
                   <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-3 flex-wrap">
                     {r.supplier?.name && (
@@ -337,6 +378,26 @@ export default function FactoryInvoice() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  {canUpload && (
+                    <Button
+                      variant={r.payment_status === 'Ja' ? 'outline' : 'default'}
+                      size="sm"
+                      className={cn(
+                        r.payment_status === 'Ja'
+                          ? 'border-emerald-500/50 text-emerald-500 hover:bg-emerald-500/10 hover:text-emerald-500'
+                          : 'bg-emerald-600 hover:bg-emerald-600/90 text-white'
+                      )}
+                      onClick={() => togglePaymentOk(r)}
+                      disabled={payingId === r.id}
+                    >
+                      {payingId === r.id ? (
+                        <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                      ) : (
+                        <BadgeEuro className="w-3.5 h-3.5 mr-1.5" />
+                      )}
+                      {r.payment_status === 'Ja' ? t.paymentReceived : t.paymentOk}
+                    </Button>
+                  )}
                   {r.invoice_pdf_path && (
                     <Button variant="outline" size="sm" onClick={() => downloadInvoice(r)}>
                       <Download className="w-3.5 h-3.5 mr-1.5" /> {t.pdf}
