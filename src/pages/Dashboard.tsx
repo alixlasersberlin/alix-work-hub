@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import {
   ClipboardList, Users, MapPin, Banknote, AlertCircle,
   Clock, TrendingUp, FileText, CalendarDays, CircleDot, Inbox, Package, ChevronDown,
-  Warehouse, PackageCheck
+  Warehouse, PackageCheck, ShieldAlert, UserCheck
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -54,6 +54,26 @@ interface FinanceRecord {
   amount_due: number | null;
   amount_paid: number | null;
   currency: string | null;
+}
+
+interface ActiveSession {
+  id: string;
+  user_id: string;
+  created_at: string;
+  expires_at: string | null;
+  ip_address: string | null;
+  device_info: string | null;
+  user_profiles?: { full_name: string | null; email: string | null } | null;
+}
+
+interface SecurityIncident {
+  id: string;
+  created_at: string;
+  action: string;
+  module: string;
+  ip_address: string | null;
+  details: any;
+  user_profiles?: { full_name: string | null; email: string | null } | null;
 }
 
 import { StatusBadge } from '@/components/StatusBadge';
@@ -120,6 +140,8 @@ export default function Dashboard() {
   const [shipmentOrders, setShipmentOrders] = useState<ShipmentOrder[]>([]);
   const [routePlans, setRoutePlans] = useState<RoutePlan[]>([]);
   const [financeRecords, setFinanceRecords] = useState<FinanceRecord[]>([]);
+  const [activeSessions, setActiveSessions] = useState<ActiveSession[]>([]);
+  const [securityIncidents, setSecurityIncidents] = useState<SecurityIncident[]>([]);
   const [shipmentFilter, setShipmentFilter] = useState<number | null>(14);
   const [shipmentLimit, setShipmentLimit] = useState<number | null>(10);
   const [shipmentSearch, setShipmentSearch] = useState('');
@@ -130,6 +152,8 @@ export default function Dashboard() {
     recent: true,
     routes: true,
     finance: true,
+    sessions: false,
+    security: false,
   });
   const toggle = (k: string) => setCollapsed(p => ({ ...p, [k]: !p[k] }));
 
@@ -137,6 +161,7 @@ export default function Dashboard() {
   const canSeeRoutes = isAdmin || hasAnyRole(['Tourenplanung', 'Auftragsverwaltung']);
   const canSeeFinance = isAdmin || hasRole('Finance');
   const canSeeCustomers = isAdmin || hasAnyRole(['Auftragsverwaltung', 'Tourenplanung', 'Finance']);
+  const canSeeAudit = isAdmin || hasRole('Read Only Audit');
 
   useEffect(() => {
     async function load() {
@@ -195,6 +220,25 @@ export default function Dashboard() {
             ])
           : [{ count: 0 }, { data: [] }];
 
+        const sessionsRes = isAdmin
+          ? await supabase
+              .from('login_sessions')
+              .select('id, user_id, created_at, expires_at, ip_address, device_info, user_profiles!login_sessions_user_id_fkey(full_name, email)')
+              .eq('is_active', true)
+              .gt('expires_at', new Date().toISOString())
+              .order('created_at', { ascending: false })
+              .limit(20)
+          : { data: [] };
+
+        const incidentsRes = canSeeAudit
+          ? await supabase
+              .from('audit_logs')
+              .select('id, created_at, action, module, ip_address, details, user_profiles!audit_logs_user_id_fkey(full_name, email)')
+              .or('action.ilike.%fail%,action.ilike.%denied%,action.ilike.%unauthorized%,action.ilike.%block%,action.ilike.%suspicious%,action.ilike.%mfa%,action.ilike.%delete%,action.ilike.%reauth%,module.eq.security,module.eq.auth')
+              .order('created_at', { ascending: false })
+              .limit(15)
+          : { data: [] };
+
         setStats({
           freePoolDevices,
           leihgeraete,
@@ -206,6 +250,8 @@ export default function Dashboard() {
         setShipmentOrders(shipmentOrdersRes.data ?? []);
         setRoutePlans(routePlansRes.data ?? []);
         setFinanceRecords(financeRes.data ?? []);
+        setActiveSessions((sessionsRes.data ?? []) as any);
+        setSecurityIncidents((incidentsRes.data ?? []) as any);
       } catch (e: any) {
         setError('Daten konnten nicht geladen werden. Bitte versuchen Sie es erneut.');
       } finally {
@@ -213,7 +259,7 @@ export default function Dashboard() {
       }
     }
     load();
-  }, [canSeeOrders, canSeeRoutes, canSeeFinance, isAdmin]);
+  }, [canSeeOrders, canSeeRoutes, canSeeFinance, isAdmin, canSeeAudit]);
 
   const kpiCards = [
     { label: 'Freie Geräte (Pool)', value: stats.freePoolDevices, icon: PackageCheck, visible: isAdmin, onClick: () => navigate('/lager/equipment-area') },
@@ -545,6 +591,101 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* Admin: Active Sessions + Security Incidents */}
+      {(isAdmin || canSeeAudit) && (
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          {isAdmin && (
+            <div className="rounded-xl border border-border bg-card card-glow">
+              <button
+                type="button"
+                onClick={() => toggle('sessions')}
+                className="w-full flex items-center justify-between gap-2 p-5 hover:bg-secondary/30 transition-colors"
+                aria-expanded={!collapsed.sessions}
+              >
+                <div className="flex items-center gap-2">
+                  <UserCheck className="w-4 h-4 text-[hsl(var(--success))]" />
+                  <h2 className="font-display font-semibold text-foreground">Aktive Sitzungen</h2>
+                  <span className="ml-1 text-xs text-muted-foreground">({activeSessions.length})</span>
+                </div>
+                <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${collapsed.sessions ? '' : 'rotate-180'}`} />
+              </button>
+              {!collapsed.sessions && (loading ? (
+                <TableSkeleton />
+              ) : activeSessions.length === 0 ? (
+                <EmptyState icon={UserCheck} message="Aktuell ist niemand eingeloggt." />
+              ) : (
+                <div className="divide-y divide-border border-t border-border max-h-96 overflow-y-auto">
+                  {activeSessions.map(s => (
+                    <div key={s.id} className="flex items-center justify-between p-4 hover:bg-secondary/30 transition-colors">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">
+                          {s.user_profiles?.full_name || s.user_profiles?.email || s.user_id.slice(0, 8)}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                          {s.user_profiles?.email || '—'}
+                        </p>
+                        {(s.ip_address || s.device_info) && (
+                          <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                            {s.ip_address || ''}{s.ip_address && s.device_info ? ' · ' : ''}{s.device_info || ''}
+                          </p>
+                        )}
+                      </div>
+                      <div className="text-right ml-3 shrink-0">
+                        <p className="text-xs text-muted-foreground">seit</p>
+                        <p className="text-xs text-foreground">{new Date(s.created_at).toLocaleString('de-DE')}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {canSeeAudit && (
+            <div className="rounded-xl border border-border bg-card card-glow">
+              <button
+                type="button"
+                onClick={() => toggle('security')}
+                className="w-full flex items-center justify-between gap-2 p-5 hover:bg-secondary/30 transition-colors"
+                aria-expanded={!collapsed.security}
+              >
+                <div className="flex items-center gap-2">
+                  <ShieldAlert className="w-4 h-4 text-destructive" />
+                  <h2 className="font-display font-semibold text-foreground">Sicherheitsvorfälle</h2>
+                  <span className="ml-1 text-xs text-muted-foreground">({securityIncidents.length})</span>
+                </div>
+                <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${collapsed.security ? '' : 'rotate-180'}`} />
+              </button>
+              {!collapsed.security && (loading ? (
+                <TableSkeleton />
+              ) : securityIncidents.length === 0 ? (
+                <EmptyState icon={ShieldAlert} message="Keine sicherheitsrelevanten Vorfälle." />
+              ) : (
+                <div className="divide-y divide-border border-t border-border max-h-96 overflow-y-auto">
+                  {securityIncidents.map(i => (
+                    <div
+                      key={i.id}
+                      className="flex items-start justify-between p-4 hover:bg-secondary/30 transition-colors cursor-pointer"
+                      onClick={() => navigate('/logfiles')}
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-destructive truncate">{i.action}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                          {i.module}{i.user_profiles?.full_name ? ` · ${i.user_profiles.full_name}` : ''}{i.ip_address ? ` · ${i.ip_address}` : ''}
+                        </p>
+                      </div>
+                      <div className="text-right ml-3 shrink-0">
+                        <p className="text-xs text-muted-foreground">{new Date(i.created_at).toLocaleString('de-DE')}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
