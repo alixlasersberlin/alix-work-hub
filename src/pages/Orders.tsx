@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Search, ClipboardList, ArrowUpDown, Loader2, Inbox, CalendarDays, List, Car, Pencil, CalendarClock, MoveRight } from 'lucide-react';
+import { Search, ClipboardList, ArrowUpDown, Loader2, Inbox, CalendarDays, List, Car, Pencil, CalendarClock, MoveRight, CheckCircle2, PackageCheck } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
 import { toast } from 'sonner';
 import OrdersCalendar from '@/components/OrdersCalendar';
