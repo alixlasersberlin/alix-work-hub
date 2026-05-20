@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Receipt, Search, Upload, Download, Building2, Calendar, CheckCircle2, Trash2 } from 'lucide-react';
+import { Loader2, Receipt, Search, Upload, Download, Building2, Calendar, CheckCircle2, Trash2, BadgeEuro } from 'lucide-react';
 import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
   AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction

@@ -1836,6 +1836,10 @@ export type Database = {
       }
       requires_reauth: { Args: never; Returns: boolean }
       session_requires_reauth: { Args: never; Returns: boolean }
+      set_factory_invoice_payment_ok: {
+        Args: { _ok: boolean; _production_order_id: string }
+        Returns: undefined
+      }
       set_factory_invoice_pdf: {
         Args: { _path: string; _production_order_id: string }
         Returns: undefined
