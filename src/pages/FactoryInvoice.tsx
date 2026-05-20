@@ -93,6 +93,13 @@ const T: Record<Lang, Record<string, string>> = {
     uploaded: '发票已上传',
     uploadFailed: '上传失败',
     downloadFailed: '下载失败',
+    delete: '删除',
+    deleteTitle: '删除发票？',
+    deleteDesc: '已上传的工厂发票 PDF 将被永久删除。',
+    cancel: '取消',
+    confirmDelete: '永久删除',
+    deleted: '发票已删除',
+    deleteFailed: '删除失败',
   },
 };
 
