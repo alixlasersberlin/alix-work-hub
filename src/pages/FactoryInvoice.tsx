@@ -79,6 +79,11 @@ const T: Record<Lang, Record<string, string>> = {
     confirmDelete: 'Delete permanently',
     deleted: 'Invoice deleted',
     deleteFailed: 'Delete failed',
+    paymentOk: 'PAYMENT OK',
+    paymentReceived: 'Paid',
+    paymentSet: 'Payment marked as received',
+    paymentReset: 'Payment reset',
+    paymentFailed: 'Update failed',
   },
   zh: {
     title: 'Factory Invoice',
