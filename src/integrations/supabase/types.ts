@@ -165,6 +165,9 @@ export type Database = {
           decision_text: string | null
           has_offer: boolean
           id: string
+          in_processing: boolean
+          in_processing_date: string | null
+          in_processing_note: string | null
           offer_file_path: string | null
           order_id: string
           request_date: string | null
@@ -181,6 +184,9 @@ export type Database = {
           decision_text?: string | null
           has_offer?: boolean
           id?: string
+          in_processing?: boolean
+          in_processing_date?: string | null
+          in_processing_note?: string | null
           offer_file_path?: string | null
           order_id: string
           request_date?: string | null
@@ -197,6 +203,9 @@ export type Database = {
           decision_text?: string | null
           has_offer?: boolean
           id?: string
+          in_processing?: boolean
+          in_processing_date?: string | null
+          in_processing_note?: string | null
           offer_file_path?: string | null
           order_id?: string
           request_date?: string | null
