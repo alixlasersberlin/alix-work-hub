@@ -1764,6 +1764,10 @@ export type Database = {
       can_manage_orders: { Args: never; Returns: boolean }
       can_manage_planning: { Args: never; Returns: boolean }
       can_upload_factory_invoice: { Args: never; Returns: boolean }
+      clear_factory_invoice_pdf: {
+        Args: { _production_order_id: string }
+        Returns: undefined
+      }
       current_supplier_id: { Args: never; Returns: string }
       has_role: { Args: { check_role: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
