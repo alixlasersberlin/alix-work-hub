@@ -192,6 +192,62 @@ export default function BankFinancingTab({ orderId }: Props) {
       </div>
 
       <div className="rounded-lg border border-border p-4 bg-background/40 space-y-3">
+        <p className="text-sm font-semibold tracking-wide">FINANZIERUNGSDATEN</p>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label className="text-xs text-muted-foreground">Kaufpreis (€)</Label>
+            <Input
+              type="number" step="0.01" min="0"
+              value={purchasePrice}
+              onChange={e => setPurchasePrice(e.target.value)}
+              disabled={!canWrite}
+              className="bg-secondary border-border mt-1"
+              placeholder="0,00"
+            />
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground">Anzahlung (€)</Label>
+            <Input
+              type="number" step="0.01" min="0"
+              value={downPayment}
+              onChange={e => setDownPayment(e.target.value)}
+              disabled={!canWrite}
+              className="bg-secondary border-border mt-1"
+              placeholder="0,00"
+            />
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground">Gewünschte Laufzeit</Label>
+            <Select
+              value={termMonths}
+              onValueChange={(v) => setTermMonths(v)}
+              disabled={!canWrite}
+            >
+              <SelectTrigger className="bg-secondary border-border mt-1">
+                <SelectValue placeholder="Laufzeit wählen…" />
+              </SelectTrigger>
+              <SelectContent>
+                {TERM_OPTIONS.map(m => (
+                  <SelectItem key={m} value={String(m)}>{m} Monate</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground">Restwert (€)</Label>
+            <Input
+              type="number" step="0.01" min="0"
+              value={residualValue}
+              onChange={e => setResidualValue(e.target.value)}
+              disabled={!canWrite}
+              className="bg-secondary border-border mt-1"
+              placeholder="0,00"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-border p-4 bg-background/40 space-y-3">
         <div className="flex items-center justify-between">
           <p className="text-sm font-semibold tracking-wide">ANFRAGE IN BEARBEITUNG</p>
           <label className="flex items-center gap-2 cursor-pointer">
