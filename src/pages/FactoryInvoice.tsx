@@ -353,6 +353,11 @@ export default function FactoryInvoice() {
                         <CheckCircle2 className="w-3 h-3" /> {t.invoice}
                       </Badge>
                     )}
+                    {r.payment_status === 'Ja' && (
+                      <Badge variant="outline" className="text-[10px] border-emerald-500/40 text-emerald-500 gap-1">
+                        <BadgeEuro className="w-3 h-3" /> {t.paymentReceived}
+                      </Badge>
+                    )}
                   </div>
                   <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-3 flex-wrap">
                     {r.supplier?.name && (
