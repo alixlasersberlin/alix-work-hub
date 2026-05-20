@@ -297,13 +297,14 @@ export default function BankFinancingTab({ orderId }: Props) {
         <p className="text-sm font-semibold tracking-wide">ENTSCHEIDUNG DER BANK BESTÄTIGEN</p>
 
         <RadioGroup
-          value={decisionConfirm ? (decisionChoice === 'approved' ? 'ja' : decisionChoice === 'rejected' ? 'nein' : '') : ''}
+          value={decisionConfirm ? (decisionChoice === 'approved' ? 'ja' : decisionChoice === 'rejected' ? 'nein' : decisionChoice === 'in_review' ? 'pruefung' : '') : ''}
           onValueChange={(v) => {
             if (v === 'ja') { setDecisionConfirm(true); setDecisionChoice('approved'); }
             else if (v === 'nein') { setDecisionConfirm(true); setDecisionChoice('rejected'); }
+            else if (v === 'pruefung') { setDecisionConfirm(true); setDecisionChoice('in_review'); }
           }}
           disabled={!canWrite}
-          className="flex gap-6"
+          className="flex gap-6 flex-wrap"
         >
           <label className="flex items-center gap-2 cursor-pointer">
             <RadioGroupItem value="ja" id="bf-ja" />
@@ -314,6 +315,11 @@ export default function BankFinancingTab({ orderId }: Props) {
             <RadioGroupItem value="nein" id="bf-nein" />
             <XCircle className="w-4 h-4 text-destructive" />
             <span className="text-sm">Nein (Absage)</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <RadioGroupItem value="pruefung" id="bf-pruefung" />
+            <Clock className="w-4 h-4 text-amber-500" />
+            <span className="text-sm">In Prüfung</span>
           </label>
         </RadioGroup>
 
@@ -334,7 +340,9 @@ export default function BankFinancingTab({ orderId }: Props) {
           <p className="text-xs text-muted-foreground">
             {decisionChoice === 'approved'
               ? 'Bei Speichern wird der Auftrag unter "Zusagen Bank" geführt.'
-              : 'Bei Speichern wird der Auftrag unter "Absagen Bank" geführt.'}
+              : decisionChoice === 'rejected'
+              ? 'Bei Speichern wird der Auftrag unter "Absagen Bank" geführt.'
+              : 'Bei Speichern wird der Auftrag unter "Anfragen offen" geführt (In Prüfung).'}
           </p>
         )}
 
