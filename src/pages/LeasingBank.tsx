@@ -51,7 +51,7 @@ export default function LeasingBank() {
       <div className="flex items-center gap-3">
         <Landmark className="h-7 w-7 text-primary" />
         <div>
-          <h1 className="text-3xl font-bold">Anfrage Leasing</h1>
+          <h1 className="text-3xl font-bold">Verfügbare Aufträge</h1>
           <p className="text-muted-foreground text-sm">
             Alle nicht ausgelieferten Aufträge mit Status <span className="font-medium">OPEN</span>.
           </p>
