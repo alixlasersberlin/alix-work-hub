@@ -41,6 +41,22 @@ Deno.serve(async (req) => {
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
+    // Authorization: only allow privileged roles to send emails (prevent abuse by e.g. suppliers)
+    const { data: isAdmin } = await authClient.rpc('is_admin')
+    let allowed = !!isAdmin
+    if (!allowed) {
+      const { data: canManage } = await authClient.rpc('can_manage_orders')
+      allowed = !!canManage
+    }
+    if (!allowed) {
+      const { data: canFinance } = await authClient.rpc('can_access_finance')
+      allowed = !!canFinance
+    }
+    if (!allowed) {
+      return new Response(JSON.stringify({ error: 'Forbidden' }), {
+        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
   } catch {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
