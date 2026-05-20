@@ -8,26 +8,19 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
-  try {
-    return new Response(JSON.stringify({
-      success: true,
-      verified_at: new Date().toISOString(),
-      disabled: true,
-      message: "Die Zwei-Faktor-Authentifizierung ist deaktiviert.",
-    }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  } catch (error) {
-    console.error("verify-otp-challenge noop error:", error);
-    return new Response(JSON.stringify({
-      success: true,
-      verified_at: new Date().toISOString(),
-      disabled: true,
-      message: "Die Zwei-Faktor-Authentifizierung ist deaktiviert.",
-    }), {
-      status: 200,
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+
+  return new Response(JSON.stringify({
+    error: "Gone",
+    message: "Diese Endpunkt ist deaktiviert. 2FA wird über Supabase TOTP verwaltet.",
+  }), {
+    status: 410,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
 });
