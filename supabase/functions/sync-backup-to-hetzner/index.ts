@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
     region,
   });
 
-  const base = endpoint.replace(/\/+$/, "");
+  const base = (/^https?:\/\//i.test(endpoint) ? endpoint : `https://${endpoint}`).replace(/\/+$/, "");
 
   let folderPath: string | undefined;
   let backupId: string | undefined;
