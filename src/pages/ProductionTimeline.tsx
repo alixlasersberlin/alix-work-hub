@@ -78,6 +78,7 @@ export default function ProductionTimeline() {
         r.production_order_number,
         r.modellname,
         r.supplier?.name,
+        r.customer_name,
       ].filter(Boolean).join(' ').toLowerCase();
       return haystack.includes(q);
     });
