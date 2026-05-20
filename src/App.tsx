@@ -50,6 +50,7 @@ import ProductionTimeline from "./pages/ProductionTimeline";
 import ProductionPortal from "./pages/ProductionPortal";
 import ProductionFertig from "./pages/ProductionFertig";
 import ProductionOrderIn from "./pages/ProductionOrderIn";
+import FactoryInvoice from "./pages/FactoryInvoice";
 import Suppliers from "./pages/Suppliers";
 import Lager from "./pages/Lager";
 import Lagergeraete from "./pages/Lagergeraete";
@@ -87,6 +88,7 @@ const ADMIN_ROLES = ['Admin', 'Super Admin'];
 const IMPORT_ROLES = ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Read Only Audit'];
 const SYSTEM_ROLES = ['Admin', 'Super Admin', 'Read Only Audit'];
 const PRODUCTION_ROLES = ['Admin', 'Super Admin', 'Lieferant'];
+const FACTORY_INVOICE_ROLES = ['Admin', 'Super Admin', 'FACTORY INVOICE'];
 
 function isSupplierOnly(roles: string[]) {
   return roles.includes('Lieferant') && !roles.some(r => ['Admin', 'Super Admin'].includes(r));
@@ -234,6 +236,7 @@ function AppRoutes() {
         <Route path="/production" element={<ProtectedRoute requiredRoles={PRODUCTION_ROLES}><ProductionPortal /></ProtectedRoute>} />
         <Route path="/production/fertig" element={<ProtectedRoute requiredRoles={PRODUCTION_ROLES}><ProductionFertig /></ProtectedRoute>} />
         <Route path="/production/order-in" element={<ProtectedRoute requiredRoles={PRODUCTION_ROLES}><ProductionOrderIn /></ProtectedRoute>} />
+        <Route path="/production/factory-invoice" element={<ProtectedRoute requiredRoles={FACTORY_INVOICE_ROLES}><FactoryInvoice /></ProtectedRoute>} />
         <Route path="/lager" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Lager /></ProtectedRoute>} />
         <Route path="/lager/lagergeraete" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Lagergeraete filterType="Neugerät" pageTitle="Lagergeräte" pageSubtitle="Erfassung und Übersicht aller Neugeräte im Lager" addLabel="Neues Lagergerät" dialogTitle="Lagergerät" emptyLabel="Noch keine Lagergeräte erfasst." rowAccentClass="bg-emerald-500/10 hover:bg-emerald-500/15" /></ProtectedRoute>} />
         <Route path="/lager/leihgeraete" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Leihgeraete /></ProtectedRoute>} />
