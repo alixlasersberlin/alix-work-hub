@@ -87,6 +87,9 @@ export default function BankFinancingTab({ orderId }: Props) {
       decision_note: decisionNote || null,
       decided_at: decisionChoice !== 'pending' && decisionConfirm ? new Date().toISOString() : null,
       decided_by: decisionChoice !== 'pending' && decisionConfirm ? user?.id : null,
+      in_processing: inProcessing,
+      in_processing_date: inProcessingDate || null,
+      in_processing_note: inProcessingNote || null,
       updated_by: user?.id,
       ...patch,
     };
