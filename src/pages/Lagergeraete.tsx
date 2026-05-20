@@ -101,11 +101,15 @@ const DEVICE_STATUS_OPTIONS = ['Bestand', 'Produktion', 'Shell Warehouse', 'Sper
 type DeviceStatus = typeof DEVICE_STATUS_OPTIONS[number];
 
 // Mapping Geräte-Status → Kunden-E-Mail-Vorlage (template_key) für Bulk-Versand
-const BULK_TEMPLATE_BY_STATUS: Record<string, 'customer_warehouse_prepared' | 'customer_in_production' | 'customer_in_transit'> = {
+const BULK_TEMPLATE_BY_STATUS: Record<string, 'customer_warehouse_prepared' | 'customer_in_production' | 'customer_in_transit' | 'customer_warehouse_received'> = {
   'Shell Warehouse': 'customer_warehouse_prepared',
   'Produktion': 'customer_in_production',
   'Transfer': 'customer_in_transit',
+  'Bestand': 'customer_warehouse_received',
 };
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const isRateLimited = (msg?: string) => !!msg && /429|rate_limit|High demand/i.test(msg);
 
 function getStatusFromNotes(notes: string | null | undefined): DeviceStatus {
   const m = /\[Status:\s*([^\]]+)\]/.exec(notes ?? '');
