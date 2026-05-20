@@ -55,10 +55,14 @@ export default function BankFinancingTab({ orderId }: Props) {
     setDecisionText(data?.decision_text || '');
     setDecisionChoice((data?.status as Status) || 'pending');
     setDecisionNote(data?.decision_note || '');
-    setDecisionConfirm(data?.status === 'approved' || data?.status === 'rejected');
+    setDecisionConfirm(data?.status === 'approved' || data?.status === 'rejected' || data?.status === 'in_review');
     setInProcessing(!!data?.in_processing);
     setInProcessingDate(data?.in_processing_date || '');
     setInProcessingNote(data?.in_processing_note || '');
+    setPurchasePrice(data?.purchase_price != null ? String(data.purchase_price) : '');
+    setDownPayment(data?.down_payment != null ? String(data.down_payment) : '');
+    setTermMonths(data?.term_months != null ? String(data.term_months) : '');
+    setResidualValue(data?.residual_value != null ? String(data.residual_value) : '');
     if (data?.offer_file_path) {
       const { data: signed } = await supabase.storage.from('bank-offers').createSignedUrl(data.offer_file_path, 3600);
       setOfferUrl(signed?.signedUrl || null);
