@@ -100,6 +100,10 @@ export default function BankFinancingTab({ orderId }: Props) {
       in_processing: inProcessing,
       in_processing_date: inProcessingDate || null,
       in_processing_note: inProcessingNote || null,
+      purchase_price: purchasePrice === '' ? null : Number(purchasePrice),
+      down_payment: downPayment === '' ? null : Number(downPayment),
+      term_months: termMonths === '' ? null : Number(termMonths),
+      residual_value: residualValue === '' ? null : Number(residualValue),
       updated_by: user?.id,
       ...patch,
     };
