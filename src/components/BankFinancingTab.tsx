@@ -50,6 +50,9 @@ export default function BankFinancingTab({ orderId }: Props) {
     setDecisionChoice((data?.status as Status) || 'pending');
     setDecisionNote(data?.decision_note || '');
     setDecisionConfirm(data?.status === 'approved' || data?.status === 'rejected');
+    setInProcessing(!!data?.in_processing);
+    setInProcessingDate(data?.in_processing_date || '');
+    setInProcessingNote(data?.in_processing_note || '');
     if (data?.offer_file_path) {
       const { data: signed } = await supabase.storage.from('bank-offers').createSignedUrl(data.offer_file_path, 3600);
       setOfferUrl(signed?.signedUrl || null);
