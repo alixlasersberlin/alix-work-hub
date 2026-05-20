@@ -23,6 +23,7 @@ type Row = {
   payment_status: string;
   is_reclamation: boolean;
   supplier?: { name: string | null } | null;
+  customer_name?: string | null;
 };
 
 export default function ProductionTimeline() {
