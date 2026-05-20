@@ -48,6 +48,11 @@ const T: Record<Lang, Record<string, string>> = {
     confirmDelete: 'Endgültig löschen',
     deleted: 'Invoice gelöscht',
     deleteFailed: 'Löschen fehlgeschlagen',
+    paymentOk: 'PAYMENT OK',
+    paymentReceived: 'Bezahlt',
+    paymentSet: 'Zahlung als erhalten markiert',
+    paymentReset: 'Zahlung zurückgesetzt',
+    paymentFailed: 'Aktualisierung fehlgeschlagen',
   },
   en: {
     title: 'Factory Invoice',
