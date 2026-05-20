@@ -228,6 +228,7 @@ function AppRoutes() {
         <Route path="/finance/:id/bearbeiten" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Finance']}><FinanceForm /></ProtectedRoute>} />
         <Route path="/finanzierungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><LeasingBank /></ProtectedRoute>} />
         <Route path="/finanzierungen/leasing-bank" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><LeasingBank /></ProtectedRoute>} />
+        <Route path="/finanzierungen/beantragen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanzierungBeantragen /></ProtectedRoute>} />
         <Route path="/finanzierungen/zusagen-bank" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><ZusagenBank /></ProtectedRoute>} />
         <Route path="/finanzierungen/absagen-bank" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><AbsagenBank /></ProtectedRoute>} />
         <Route path="/finanzierungen/anfragen-offen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><AnfragenOffen /></ProtectedRoute>} />
