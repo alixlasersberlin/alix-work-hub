@@ -103,7 +103,7 @@ export default function LeasingBank() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.map((o) => (
+                  {paged.map((o) => (
                     <TableRow key={o.id} className="cursor-pointer" onClick={() => navigate(`/auftraege/${o.id}`)}>
                       <TableCell className="font-medium">{o.order_number || '—'}</TableCell>
                       <TableCell>{o.customers?.company_name || o.customers?.contact_name || '—'}</TableCell>
@@ -126,6 +126,7 @@ export default function LeasingBank() {
                   ))}
                 </TableBody>
               </Table>
+              <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} total={total} />
             </div>
           )}
         </CardContent>
