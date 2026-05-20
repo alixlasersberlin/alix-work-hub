@@ -599,6 +599,30 @@ export default function Lagergeraete({
           title={pageTitle}
           subtitle={pageSubtitle}
         />
+        <div className="flex items-center gap-2">
+          {isAdmin && bulkResendStatus && bulkResendTemplateKey && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" className="gap-2" disabled={bulkResending}>
+                  {bulkResending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  Erneut an alle senden
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>E-Mail erneut an alle Kunden senden?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Versendet die zugeordnete Vorlage manuell an alle Kunden, deren reservierte Geräte aktuell den Status
+                    <strong> "{bulkResendStatus}"</strong> haben. Aktion kann nicht rückgängig gemacht werden.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                  <AlertDialogAction onClick={runBulkResend}>Jetzt versenden</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
           <DialogTrigger asChild>
             <Button className="gap-2">
