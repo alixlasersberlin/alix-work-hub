@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import alixLogo from '@/assets/alix-logo-gold.png';
+import Turnstile from '@/components/Turnstile';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Login() {
   const { signIn } = useAuth();
@@ -14,19 +16,48 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string>('');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!captchaToken) {
+      setError('Bitte bestätigen Sie das Sicherheits-Captcha.');
+      return;
+    }
+
     setLoading(true);
+
+    try {
+      const { data, error: verifyError } = await supabase.functions.invoke('verify-turnstile', {
+        body: { token: captchaToken },
+      });
+      if (verifyError || !data?.success) {
+        setError('Sicherheitsprüfung fehlgeschlagen. Bitte erneut versuchen.');
+        setCaptchaToken('');
+        if (window.turnstile) {
+          try { window.turnstile.reset(); } catch { /* ignore */ }
+        }
+        setLoading(false);
+        return;
+      }
+    } catch {
+      setError('Sicherheitsprüfung nicht erreichbar. Bitte erneut versuchen.');
+      setLoading(false);
+      return;
+    }
 
     const { error } = await signIn(email, password);
     if (error) {
       setError('Ungültige Anmeldedaten. Bitte versuchen Sie es erneut.');
+      setCaptchaToken('');
+      if (window.turnstile) {
+        try { window.turnstile.reset(); } catch { /* ignore */ }
+      }
       setLoading(false);
       return;
     }
-    // Guard in App.tsx leitet auf /mfa-setup, /mfa-challenge oder / weiter
     navigate('/', { replace: true });
     setLoading(false);
   };
@@ -67,11 +98,17 @@ export default function Login() {
               />
             </div>
 
+            <Turnstile
+              theme="dark"
+              onToken={setCaptchaToken}
+              onExpire={() => setCaptchaToken('')}
+            />
+
             {error && (
               <p className="text-sm text-destructive bg-destructive/10 rounded-lg p-3">{error}</p>
             )}
 
-            <Button type="submit" disabled={loading} className="w-full gold-gradient font-semibold">
+            <Button type="submit" disabled={loading || !captchaToken} className="w-full gold-gradient font-semibold">
               {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               Anmelden
             </Button>
