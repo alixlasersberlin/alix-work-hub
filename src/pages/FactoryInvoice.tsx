@@ -110,6 +110,11 @@ const T: Record<Lang, Record<string, string>> = {
     confirmDelete: '永久删除',
     deleted: '发票已删除',
     deleteFailed: '删除失败',
+    paymentOk: 'PAYMENT OK',
+    paymentReceived: '已付款',
+    paymentSet: '付款已标记为收到',
+    paymentReset: '付款已重置',
+    paymentFailed: '更新失败',
   },
 };
 
