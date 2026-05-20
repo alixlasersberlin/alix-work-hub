@@ -23,6 +23,7 @@ type Row = {
   payment_status: string;
   is_reclamation: boolean;
   supplier?: { name: string | null } | null;
+  customer_name?: string | null;
 };
 
 export default function ProductionTimeline() {
@@ -44,7 +45,20 @@ export default function ProductionTimeline() {
         ...r,
         display_order_number: r.production_order_number || r.order_number,
       }));
-      setRows(list);
+      // Fetch customer names via orders.order_number
+      const orderNumbers = Array.from(new Set(list.map((r: any) => r.order_number).filter(Boolean)));
+      const nameMap = new Map<string, string>();
+      if (orderNumbers.length > 0) {
+        const { data: orders } = await supabase
+          .from('orders')
+          .select('order_number, customers(company_name, contact_name)')
+          .in('order_number', orderNumbers as string[]);
+        (orders || []).forEach((o: any) => {
+          const name = o.customers?.company_name || o.customers?.contact_name || '';
+          if (o.order_number && name) nameMap.set(o.order_number, name);
+        });
+      }
+      setRows(list.map((r: any) => ({ ...r, customer_name: nameMap.get(r.order_number) || null })));
     }
     setLoading(false);
   };
@@ -64,6 +78,7 @@ export default function ProductionTimeline() {
         r.production_order_number,
         r.modellname,
         r.supplier?.name,
+        r.customer_name,
       ].filter(Boolean).join(' ').toLowerCase();
       return haystack.includes(q);
     });
@@ -174,6 +189,11 @@ export default function ProductionTimeline() {
                             {r.is_reclamation ? 'Reklamation' : 'Bestellung'}
                           </span>
                           <span className="px-2 py-0.5 rounded text-[10px] bg-muted text-muted-foreground">{r.status}</span>
+                          {r.customer_name && (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-primary/10 text-primary">
+                              {r.customer_name}
+                            </span>
+                          )}
                         </div>
                         <div className="text-xs text-muted-foreground mt-1 truncate">
                           {r.modellname || '—'} · {r.supplier?.name || '—'} · {r.bearbeiter}
