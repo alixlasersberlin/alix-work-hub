@@ -67,7 +67,7 @@ const navItems: NavItem[] = [
       { path: '/production/order-in', label: 'Order In', icon: Inbox, roles: ['Admin', 'Super Admin', 'Lieferant', 'FACTORY INVOICE'] },
       { path: '/production', label: 'Liste', icon: ListOrdered, roles: ['Admin', 'Super Admin', 'Lieferant', 'FACTORY INVOICE'] },
       { path: '/production/fertig', label: 'Fertig', icon: CheckCircle2, roles: ['Admin', 'Super Admin', 'Lieferant', 'FACTORY INVOICE'] },
-      { path: '/production/factory-invoice', label: 'Factory Invoice', icon: Receipt, roles: ['Admin', 'Super Admin'] },
+      { path: '/production/factory-invoice', label: 'Factory Invoice', icon: Receipt, roles: ['Admin', 'Super Admin', 'FACTORY INVOICE'] },
     ],
   },
   {
