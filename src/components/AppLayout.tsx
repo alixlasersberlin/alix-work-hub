@@ -111,6 +111,8 @@ const navItems: NavItem[] = [
     path: '/finanzierungen', label: 'FINANZIERUNGEN', icon: Landmark, roles: ['Admin', 'Super Admin', 'Finance'],
     children: [
       { path: '/finanzierungen/leasing-bank', label: 'Anfrage Leasing', icon: Landmark, roles: ['Admin', 'Super Admin', 'Finance'] },
+      { path: '/finanzierungen/zusagen-bank', label: 'Zusagen Bank', icon: CheckCircle2, roles: ['Admin', 'Super Admin', 'Finance'] },
+      { path: '/finanzierungen/absagen-bank', label: 'Absagen Bank', icon: X, roles: ['Admin', 'Super Admin', 'Finance'] },
     ],
   },
   {

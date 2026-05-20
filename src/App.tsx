@@ -77,6 +77,8 @@ import EmailTemplates from "./pages/EmailTemplates";
 import Papiere from "./pages/Papiere";
 import VersandPlaceholder from "./pages/VersandPlaceholder";
 import LeasingBank from "./pages/LeasingBank";
+import ZusagenBank from "./pages/ZusagenBank";
+import AbsagenBank from "./pages/AbsagenBank";
 import { Truck as TruckIcon, Banknote as BanknoteIcon, FileSignature, CreditCard } from "lucide-react";
 import { Loader2 } from "lucide-react";
 
