@@ -108,6 +108,12 @@ const navItems: NavItem[] = [
     ],
   },
   {
+    path: '/finanzierungen', label: 'FINANZIERUNGEN', icon: Landmark, roles: ['Admin', 'Super Admin', 'Finance'],
+    children: [
+      { path: '/finanzierungen/leasing-bank', label: 'Leasing Bank', icon: Landmark, roles: ['Admin', 'Super Admin', 'Finance'] },
+    ],
+  },
+  {
     path: '/operation', label: 'OPERATIONS', icon: Workflow, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Read Only Audit'],
     children: [
       { path: '/geraetetypen', label: 'Gerätetypen', icon: BarChart3, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance'] },
