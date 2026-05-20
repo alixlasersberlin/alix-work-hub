@@ -219,7 +219,7 @@ export default function FinanzierungBeantragen() {
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Ausgewählter Auftrag</CardTitle>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => navigate(`/auftraege/${selected.id}`)}>
+                <Button variant="outline" size="sm" onClick={() => setShowOrderDialog(true)}>
                   <Eye className="h-4 w-4 mr-1" /> Auftrag öffnen
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => setSelected(null)}>
