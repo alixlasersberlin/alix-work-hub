@@ -651,6 +651,11 @@ export default function UserManagement() {
                           <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleSendInvitation(u)} title="Einladung senden">
                             <Send className="w-3.5 h-3.5" />
                           </Button>
+                          {u.invitation_status !== 'accepted' && (
+                            <Button size="icon" variant="ghost" className="h-7 w-7 text-success hover:text-success" onClick={() => handleApproveInvitation(u)} title="Benutzer freischalten">
+                              <UserCheck className="w-3.5 h-3.5" />
+                            </Button>
+                          )}
                           <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEditRoles(u)} title="Rollen bearbeiten">
                             <Edit3 className="w-3.5 h-3.5" />
                           </Button>
