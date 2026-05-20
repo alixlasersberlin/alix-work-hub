@@ -153,7 +153,33 @@ export default function EmailTemplates() {
                       <Textarea value={t.body} disabled={!canEdit} rows={12} onChange={e => updateField(t.id, 'body', e.target.value)} />
                     </div>
                     {canEdit && (
-                      <div className="flex justify-end">
+                      <div className="flex justify-between gap-2">
+                        <div>
+                          {BULK_DEVICE_STATUS_BY_KEY[t.template_key] && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="outline" disabled={bulkSending === t.id}>
+                                  {bulkSending === t.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
+                                  Erneut an alle senden
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>E-Mail erneut an alle Kunden senden?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Versendet diese Vorlage manuell an alle Kunden, deren reservierte Geräte aktuell den Status
+                                    <strong> "{BULK_DEVICE_STATUS_BY_KEY[t.template_key]}"</strong> haben.
+                                    Aktion kann nicht rückgängig gemacht werden.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => bulkResend(t)}>Jetzt versenden</AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
+                        </div>
                         <Button onClick={() => save(t)} disabled={saving === t.id}>
                           {saving === t.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                           Speichern
