@@ -144,6 +144,7 @@ export default function FactoryInvoice() {
   const [search, setSearch] = useState('');
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [payingId, setPayingId] = useState<string | null>(null);
   const [deleteRow, setDeleteRow] = useState<Row | null>(null);
   const [lang, setLang] = useState<Lang>(() => (localStorage.getItem('production_lang') as Lang) || 'de');
   const fileInputRef = useRef<HTMLInputElement>(null);
