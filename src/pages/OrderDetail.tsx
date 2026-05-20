@@ -167,6 +167,7 @@ export default function OrderDetail() {
     { key: 'overview', label: 'Übersicht', icon: ClipboardList },
     { key: 'items', label: `Artikel (${items.length})`, icon: Package },
     { key: 'deposit', label: `Anzahlung${order?.deposit_ok ? ' ✓' : ''}`, icon: Euro },
+    { key: 'financing', label: 'Anfrage Finanzierung', icon: Landmark },
     { key: 'packages', label: `Pakete (${packages.length})`, icon: Truck },
     { key: 'notes', label: `Notizen (${generalNotes.length})`, icon: FileText },
     { key: 'emails', label: `E-Mails (${emailNotes.length})`, icon: Mail },
