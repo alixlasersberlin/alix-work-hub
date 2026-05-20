@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Mail, Loader2, Save, Send } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Mail, Loader2, Save, Send, UserRound, Search } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -7,11 +7,21 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { StatusBadge } from '@/components/StatusBadge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { sendCustomerShippingNotice } from '@/lib/send-customer-shipping-notice';
 import { toast } from 'sonner';
+
+interface OrderSearchResult {
+  id: string;
+  order_number: string | null;
+  internal_number: string | null;
+  customer_name: string | null;
+  customer_email: string | null;
+}
+
 
 interface TemplateRow {
   id: string;
