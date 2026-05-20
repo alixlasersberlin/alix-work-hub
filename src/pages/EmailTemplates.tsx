@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Mail, Loader2, Save, Send } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Mail, Loader2, Save, Send, UserRound, Search } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -7,11 +7,21 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { StatusBadge } from '@/components/StatusBadge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { sendCustomerShippingNotice } from '@/lib/send-customer-shipping-notice';
 import { toast } from 'sonner';
+
+interface OrderSearchResult {
+  id: string;
+  order_number: string | null;
+  internal_number: string | null;
+  customer_name: string | null;
+  customer_email: string | null;
+}
+
 
 interface TemplateRow {
   id: string;
@@ -168,8 +178,8 @@ export default function EmailTemplates() {
                       <Textarea value={t.body} disabled={!canEdit} rows={12} onChange={e => updateField(t.id, 'body', e.target.value)} />
                     </div>
                     {canEdit && (
-                      <div className="flex justify-between gap-2">
-                        <div>
+                      <div className="flex justify-between gap-2 flex-wrap">
+                        <div className="flex gap-2 flex-wrap">
                           {BULK_DEVICE_STATUS_BY_KEY[t.template_key] && (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
@@ -194,6 +204,7 @@ export default function EmailTemplates() {
                               </AlertDialogContent>
                             </AlertDialog>
                           )}
+                          <SingleSendDialog template={t} />
                         </div>
                         <Button onClick={() => save(t)} disabled={saving === t.id}>
                           {saving === t.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
@@ -201,6 +212,7 @@ export default function EmailTemplates() {
                         </Button>
                       </div>
                     )}
+
                   </div>
                 </AccordionContent>
               </AccordionItem>
@@ -211,3 +223,132 @@ export default function EmailTemplates() {
     </div>
   );
 }
+
+function SingleSendDialog({ template }: { template: TemplateRow }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [results, setResults] = useState<OrderSearchResult[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [selected, setSelected] = useState<OrderSearchResult | null>(null);
+  const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    if (!open) {
+      setSearch(''); setResults([]); setSelected(null);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const q = search.trim();
+    if (q.length < 2) { setResults([]); return; }
+    let cancelled = false;
+    setSearching(true);
+    const t = setTimeout(async () => {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('id, order_number, internal_number, customers(contact_name, company_name, email)')
+        .or(`order_number.ilike.%${q}%,internal_number.ilike.%${q}%`)
+        .limit(15);
+      if (cancelled) return;
+      setSearching(false);
+      if (error) { toast.error('Suche fehlgeschlagen: ' + error.message); return; }
+      const mapped: OrderSearchResult[] = (data || []).map((o: any) => ({
+        id: o.id,
+        order_number: o.order_number,
+        internal_number: o.internal_number,
+        customer_name: o.customers?.contact_name || o.customers?.company_name || null,
+        customer_email: o.customers?.email || null,
+      }));
+      setResults(mapped);
+    }, 300);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [search, open]);
+
+  const send = async () => {
+    if (!selected) return;
+    setSending(true);
+    const res = await sendCustomerShippingNotice(
+      selected.id,
+      undefined,
+      'manuell',
+      template.template_key as any,
+    );
+    setSending(false);
+    if (res.ok) { toast.success(res.message); setOpen(false); }
+    else toast.error('Versand fehlgeschlagen: ' + res.message);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline">
+          <UserRound className="w-4 h-4 mr-2" />
+          An einen Kunden senden
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>{template.display_name} – an einen Kunden senden</DialogTitle>
+          <DialogDescription>
+            Auftrag suchen (Auftrags-Nr. oder interne Nummer). Die E-Mail wird an die hinterlegte Kunden-Adresse versendet.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              autoFocus
+              placeholder="Auftrags-Nr. suchen…"
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setSelected(null); }}
+              className="pl-9"
+            />
+          </div>
+          <div className="max-h-64 overflow-y-auto border rounded-md divide-y">
+            {searching && <div className="p-3 text-sm text-muted-foreground flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Suche…</div>}
+            {!searching && search.trim().length >= 2 && results.length === 0 && (
+              <div className="p-3 text-sm text-muted-foreground">Keine Treffer.</div>
+            )}
+            {!searching && search.trim().length < 2 && (
+              <div className="p-3 text-sm text-muted-foreground">Mindestens 2 Zeichen eingeben.</div>
+            )}
+            {results.map((r) => {
+              const active = selected?.id === r.id;
+              return (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => setSelected(r)}
+                  className={`w-full text-left px-3 py-2 text-sm hover:bg-accent ${active ? 'bg-accent' : ''}`}
+                >
+                  <div className="font-medium">
+                    {r.order_number || r.internal_number || '—'}
+                    {r.internal_number && r.order_number && r.internal_number !== r.order_number && (
+                      <span className="text-muted-foreground"> · {r.internal_number}</span>
+                    )}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {r.customer_name || 'Unbekannter Kunde'}
+                    {r.customer_email ? ` · ${r.customer_email}` : ' · keine E-Mail'}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          {selected && !selected.customer_email && (
+            <p className="text-xs text-destructive">Dieser Kunde hat keine E-Mail-Adresse hinterlegt.</p>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>Abbrechen</Button>
+          <Button onClick={send} disabled={!selected || !selected.customer_email || sending}>
+            {sending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
+            Jetzt versenden
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
