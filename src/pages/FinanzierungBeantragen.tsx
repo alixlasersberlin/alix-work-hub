@@ -54,7 +54,7 @@ function formatAddress(addr: any): string {
 }
 
 export default function FinanzierungBeantragen() {
-  const navigate = useNavigate();
+  const [showOrderDialog, setShowOrderDialog] = useState(false);
   const [orders, setOrders] = useState<AvailableOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
