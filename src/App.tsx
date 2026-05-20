@@ -20,6 +20,7 @@ import Orders from "./pages/Orders";
 import OrderDetail from "./pages/OrderDetail";
 import OrdersInClarification from "./pages/OrdersInClarification";
 import PriorityList from "./pages/PriorityList";
+import HoldList from "./pages/HoldList";
 import RoutePlanning from "./pages/RoutePlanning";
 import RoutePlanDetail from "./pages/RoutePlanDetail";
 import RoutePlanForm from "./pages/RoutePlanForm";
@@ -206,6 +207,7 @@ function AppRoutes() {
         <Route path="/versand/mietkauf" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><VersandPlaceholder title="Mietkauf" description="Mietkauf-Verträge" icon={FileSignature} /></ProtectedRoute>} />
         <Route path="/versand/sepa-mandat" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><VersandPlaceholder title="SEPA Mandat" description="SEPA-Lastschriftmandate" icon={CreditCard} /></ProtectedRoute>} />
         <Route path="/prio-liste" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><PriorityList /></ProtectedRoute>} />
+        <Route path="/prio-liste/hold" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><HoldList /></ProtectedRoute>} />
         <Route path="/anwaltsliste" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><LawyerList /></ProtectedRoute>} />
         <Route path="/geliefert" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><DeliveredList /></ProtectedRoute>} />
         <Route path="/teilgeliefert" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><PartialDeliveryList /></ProtectedRoute>} />
