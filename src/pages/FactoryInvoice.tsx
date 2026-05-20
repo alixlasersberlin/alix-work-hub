@@ -131,6 +131,7 @@ interface Row {
   approval_status: string;
   approved_at: string | null;
   invoice_pdf_path: string | null;
+  payment_status: string | null;
   is_reclamation: boolean;
   supplier?: { name: string | null } | null;
 }
