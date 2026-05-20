@@ -78,6 +78,7 @@ import EmailTemplates from "./pages/EmailTemplates";
 import Papiere from "./pages/Papiere";
 import VersandPlaceholder from "./pages/VersandPlaceholder";
 import LeasingBank from "./pages/LeasingBank";
+import FinanzierungBeantragen from "./pages/FinanzierungBeantragen";
 import ZusagenBank from "./pages/ZusagenBank";
 import AbsagenBank from "./pages/AbsagenBank";
 import AnfragenOffen from "./pages/AnfragenOffen";
