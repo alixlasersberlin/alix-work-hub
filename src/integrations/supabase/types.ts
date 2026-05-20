@@ -235,6 +235,7 @@ export type Database = {
           company_name: string | null
           contact_name: string | null
           created_at: string
+          created_by: string | null
           email: string | null
           external_customer_id: string | null
           iban: string | null
@@ -244,6 +245,7 @@ export type Database = {
           shipping_address: Json | null
           source_system: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           bank_name?: string | null
@@ -252,6 +254,7 @@ export type Database = {
           company_name?: string | null
           contact_name?: string | null
           created_at?: string
+          created_by?: string | null
           email?: string | null
           external_customer_id?: string | null
           iban?: string | null
@@ -261,6 +264,7 @@ export type Database = {
           shipping_address?: Json | null
           source_system: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           bank_name?: string | null
@@ -269,6 +273,7 @@ export type Database = {
           company_name?: string | null
           contact_name?: string | null
           created_at?: string
+          created_by?: string | null
           email?: string | null
           external_customer_id?: string | null
           iban?: string | null
@@ -278,6 +283,7 @@ export type Database = {
           shipping_address?: Json | null
           source_system?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
