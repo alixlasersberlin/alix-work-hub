@@ -378,6 +378,26 @@ export default function FactoryInvoice() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  {canUpload && (
+                    <Button
+                      variant={r.payment_status === 'Ja' ? 'outline' : 'default'}
+                      size="sm"
+                      className={cn(
+                        r.payment_status === 'Ja'
+                          ? 'border-emerald-500/50 text-emerald-500 hover:bg-emerald-500/10 hover:text-emerald-500'
+                          : 'bg-emerald-600 hover:bg-emerald-600/90 text-white'
+                      )}
+                      onClick={() => togglePaymentOk(r)}
+                      disabled={payingId === r.id}
+                    >
+                      {payingId === r.id ? (
+                        <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                      ) : (
+                        <BadgeEuro className="w-3.5 h-3.5 mr-1.5" />
+                      )}
+                      {r.payment_status === 'Ja' ? t.paymentReceived : t.paymentOk}
+                    </Button>
+                  )}
                   {r.invoice_pdf_path && (
                     <Button variant="outline" size="sm" onClick={() => downloadInvoice(r)}>
                       <Download className="w-3.5 h-3.5 mr-1.5" /> {t.pdf}
