@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Landmark, Search, Loader2, Inbox, Eye } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
+import { PageSizeSelector, usePagination, PaginationControls } from '@/components/PageSizeSelector';
 
 export default function LeasingBank() {
   const navigate = useNavigate();
@@ -42,6 +43,8 @@ export default function LeasingBank() {
     });
   }, [orders, search]);
 
+  const { pageSize, setPageSize, page, setPage, totalPages, paged, total } = usePagination(filtered, 20);
+
   const fmtMoney = (v: number | null, c?: string | null) =>
     v == null ? '—' : new Intl.NumberFormat('de-DE', { style: 'currency', currency: c || 'EUR' }).format(Number(v));
   const fmtDate = (d: string | null) => (d ? new Date(d).toLocaleDateString('de-DE') : '—');
@@ -61,14 +64,17 @@ export default function LeasingBank() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-3 flex-wrap">
           <CardTitle>Übersicht ({filtered.length})</CardTitle>
-          <div className="relative w-full max-w-xs">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Suche Auftrag / Kunde…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-8"
-            />
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="relative w-full max-w-xs">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Suche Auftrag / Kunde…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-8"
+              />
+            </div>
+            <PageSizeSelector value={pageSize} onChange={setPageSize} />
           </div>
         </CardHeader>
         <CardContent>
@@ -97,7 +103,7 @@ export default function LeasingBank() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.map((o) => (
+                  {paged.map((o) => (
                     <TableRow key={o.id} className="cursor-pointer" onClick={() => navigate(`/auftraege/${o.id}`)}>
                       <TableCell className="font-medium">{o.order_number || '—'}</TableCell>
                       <TableCell>{o.customers?.company_name || o.customers?.contact_name || '—'}</TableCell>
@@ -120,6 +126,7 @@ export default function LeasingBank() {
                   ))}
                 </TableBody>
               </Table>
+              <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} total={total} />
             </div>
           )}
         </CardContent>
