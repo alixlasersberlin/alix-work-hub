@@ -163,6 +163,7 @@ export type Database = {
           decided_by: string | null
           decision_note: string | null
           decision_text: string | null
+          down_payment: number | null
           has_offer: boolean
           id: string
           in_processing: boolean
@@ -170,8 +171,11 @@ export type Database = {
           in_processing_note: string | null
           offer_file_path: string | null
           order_id: string
+          purchase_price: number | null
           request_date: string | null
+          residual_value: number | null
           status: string
+          term_months: number | null
           updated_at: string
           updated_by: string | null
         }
@@ -182,6 +186,7 @@ export type Database = {
           decided_by?: string | null
           decision_note?: string | null
           decision_text?: string | null
+          down_payment?: number | null
           has_offer?: boolean
           id?: string
           in_processing?: boolean
@@ -189,8 +194,11 @@ export type Database = {
           in_processing_note?: string | null
           offer_file_path?: string | null
           order_id: string
+          purchase_price?: number | null
           request_date?: string | null
+          residual_value?: number | null
           status?: string
+          term_months?: number | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -201,6 +209,7 @@ export type Database = {
           decided_by?: string | null
           decision_note?: string | null
           decision_text?: string | null
+          down_payment?: number | null
           has_offer?: boolean
           id?: string
           in_processing?: boolean
@@ -208,8 +217,11 @@ export type Database = {
           in_processing_note?: string | null
           offer_file_path?: string | null
           order_id?: string
+          purchase_price?: number | null
           request_date?: string | null
+          residual_value?: number | null
           status?: string
+          term_months?: number | null
           updated_at?: string
           updated_by?: string | null
         }

@@ -7,14 +7,16 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Landmark, Loader2, Upload, FileText, CheckCircle2, XCircle, ExternalLink } from 'lucide-react';
+import { Landmark, Loader2, Upload, FileText, CheckCircle2, XCircle, ExternalLink, Clock } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 
 interface Props {
   orderId: string;
 }
 
-type Status = 'pending' | 'approved' | 'rejected';
+type Status = 'pending' | 'in_review' | 'approved' | 'rejected';
+const TERM_OPTIONS = [12, 24, 36, 48, 60, 72];
 
 export default function BankFinancingTab({ orderId }: Props) {
   const { user, isAdmin, hasRole } = useAuth();
@@ -35,6 +37,10 @@ export default function BankFinancingTab({ orderId }: Props) {
   const [inProcessing, setInProcessing] = useState(false);
   const [inProcessingDate, setInProcessingDate] = useState('');
   const [inProcessingNote, setInProcessingNote] = useState('');
+  const [purchasePrice, setPurchasePrice] = useState<string>('');
+  const [downPayment, setDownPayment] = useState<string>('');
+  const [termMonths, setTermMonths] = useState<string>('');
+  const [residualValue, setResidualValue] = useState<string>('');
 
   async function load() {
     setLoading(true);
@@ -49,10 +55,14 @@ export default function BankFinancingTab({ orderId }: Props) {
     setDecisionText(data?.decision_text || '');
     setDecisionChoice((data?.status as Status) || 'pending');
     setDecisionNote(data?.decision_note || '');
-    setDecisionConfirm(data?.status === 'approved' || data?.status === 'rejected');
+    setDecisionConfirm(data?.status === 'approved' || data?.status === 'rejected' || data?.status === 'in_review');
     setInProcessing(!!data?.in_processing);
     setInProcessingDate(data?.in_processing_date || '');
     setInProcessingNote(data?.in_processing_note || '');
+    setPurchasePrice(data?.purchase_price != null ? String(data.purchase_price) : '');
+    setDownPayment(data?.down_payment != null ? String(data.down_payment) : '');
+    setTermMonths(data?.term_months != null ? String(data.term_months) : '');
+    setResidualValue(data?.residual_value != null ? String(data.residual_value) : '');
     if (data?.offer_file_path) {
       const { data: signed } = await supabase.storage.from('bank-offers').createSignedUrl(data.offer_file_path, 3600);
       setOfferUrl(signed?.signedUrl || null);
@@ -90,6 +100,10 @@ export default function BankFinancingTab({ orderId }: Props) {
       in_processing: inProcessing,
       in_processing_date: inProcessingDate || null,
       in_processing_note: inProcessingNote || null,
+      purchase_price: purchasePrice === '' ? null : Number(purchasePrice),
+      down_payment: downPayment === '' ? null : Number(downPayment),
+      term_months: termMonths === '' ? null : Number(termMonths),
+      residual_value: residualValue === '' ? null : Number(residualValue),
       updated_by: user?.id,
       ...patch,
     };
@@ -111,6 +125,7 @@ export default function BankFinancingTab({ orderId }: Props) {
       toast.success(
         finalStatus === 'approved' ? 'Zusage gespeichert – Auftrag in ZUSAGEN BANK' :
         finalStatus === 'rejected' ? 'Absage gespeichert – Auftrag in ABSAGEN BANK' :
+        finalStatus === 'in_review' ? 'In Prüfung – Auftrag in ANFRAGEN OFFEN' :
         'Anfrage gespeichert'
       );
       load();
@@ -177,6 +192,62 @@ export default function BankFinancingTab({ orderId }: Props) {
       </div>
 
       <div className="rounded-lg border border-border p-4 bg-background/40 space-y-3">
+        <p className="text-sm font-semibold tracking-wide">FINANZIERUNGSDATEN</p>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label className="text-xs text-muted-foreground">Kaufpreis (€)</Label>
+            <Input
+              type="number" step="0.01" min="0"
+              value={purchasePrice}
+              onChange={e => setPurchasePrice(e.target.value)}
+              disabled={!canWrite}
+              className="bg-secondary border-border mt-1"
+              placeholder="0,00"
+            />
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground">Anzahlung (€)</Label>
+            <Input
+              type="number" step="0.01" min="0"
+              value={downPayment}
+              onChange={e => setDownPayment(e.target.value)}
+              disabled={!canWrite}
+              className="bg-secondary border-border mt-1"
+              placeholder="0,00"
+            />
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground">Gewünschte Laufzeit</Label>
+            <Select
+              value={termMonths}
+              onValueChange={(v) => setTermMonths(v)}
+              disabled={!canWrite}
+            >
+              <SelectTrigger className="bg-secondary border-border mt-1">
+                <SelectValue placeholder="Laufzeit wählen…" />
+              </SelectTrigger>
+              <SelectContent>
+                {TERM_OPTIONS.map(m => (
+                  <SelectItem key={m} value={String(m)}>{m} Monate</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground">Restwert (€)</Label>
+            <Input
+              type="number" step="0.01" min="0"
+              value={residualValue}
+              onChange={e => setResidualValue(e.target.value)}
+              disabled={!canWrite}
+              className="bg-secondary border-border mt-1"
+              placeholder="0,00"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-border p-4 bg-background/40 space-y-3">
         <div className="flex items-center justify-between">
           <p className="text-sm font-semibold tracking-wide">ANFRAGE IN BEARBEITUNG</p>
           <label className="flex items-center gap-2 cursor-pointer">
@@ -226,13 +297,14 @@ export default function BankFinancingTab({ orderId }: Props) {
         <p className="text-sm font-semibold tracking-wide">ENTSCHEIDUNG DER BANK BESTÄTIGEN</p>
 
         <RadioGroup
-          value={decisionConfirm ? (decisionChoice === 'approved' ? 'ja' : decisionChoice === 'rejected' ? 'nein' : '') : ''}
+          value={decisionConfirm ? (decisionChoice === 'approved' ? 'ja' : decisionChoice === 'rejected' ? 'nein' : decisionChoice === 'in_review' ? 'pruefung' : '') : ''}
           onValueChange={(v) => {
             if (v === 'ja') { setDecisionConfirm(true); setDecisionChoice('approved'); }
             else if (v === 'nein') { setDecisionConfirm(true); setDecisionChoice('rejected'); }
+            else if (v === 'pruefung') { setDecisionConfirm(true); setDecisionChoice('in_review'); }
           }}
           disabled={!canWrite}
-          className="flex gap-6"
+          className="flex gap-6 flex-wrap"
         >
           <label className="flex items-center gap-2 cursor-pointer">
             <RadioGroupItem value="ja" id="bf-ja" />
@@ -243,6 +315,11 @@ export default function BankFinancingTab({ orderId }: Props) {
             <RadioGroupItem value="nein" id="bf-nein" />
             <XCircle className="w-4 h-4 text-destructive" />
             <span className="text-sm">Nein (Absage)</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <RadioGroupItem value="pruefung" id="bf-pruefung" />
+            <Clock className="w-4 h-4 text-amber-500" />
+            <span className="text-sm">In Prüfung</span>
           </label>
         </RadioGroup>
 
@@ -263,7 +340,9 @@ export default function BankFinancingTab({ orderId }: Props) {
           <p className="text-xs text-muted-foreground">
             {decisionChoice === 'approved'
               ? 'Bei Speichern wird der Auftrag unter "Zusagen Bank" geführt.'
-              : 'Bei Speichern wird der Auftrag unter "Absagen Bank" geführt.'}
+              : decisionChoice === 'rejected'
+              ? 'Bei Speichern wird der Auftrag unter "Absagen Bank" geführt.'
+              : 'Bei Speichern wird der Auftrag unter "Anfragen offen" geführt (In Prüfung).'}
           </p>
         )}
 
