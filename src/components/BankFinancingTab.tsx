@@ -357,14 +357,23 @@ export default function BankFinancingTab({ orderId }: Props) {
         Dieser Vorgang hat keinen Einfluss auf Bestellungen oder andere Auftragsabläufe.
       </p>
 
-      {canWrite && (
-        <div className="flex justify-end">
+      <div className="flex justify-end gap-2 flex-wrap">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleDownloadPdf}
+          className="border-primary/40"
+        >
+          <Download className="w-4 h-4 mr-2" />
+          Als PDF speichern
+        </Button>
+        {canWrite && (
           <Button onClick={handleSave} disabled={saving} className="gold-gradient text-primary-foreground">
             {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             Speichern
           </Button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
