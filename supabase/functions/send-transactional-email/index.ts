@@ -146,6 +146,9 @@ Deno.serve(async (req) => {
       { email: 'Natalia.p@alix-operation.de', subjectPrefix: '[Kopie] ', keySuffix: 'copy-natalia' },
       { email: 'rde@alix-lasers.com', subjectPrefix: '[Kopie] ', keySuffix: 'copy-rde' },
     ]
+    extraCc.forEach((email, idx) => {
+      recipients.push({ email, subjectPrefix: '[Kopie] ', keySuffix: `copy-extra-${idx}` })
+    })
 
     const results = await Promise.allSettled(
       recipients.map((r) =>
