@@ -220,6 +220,25 @@ export default function Dashboard() {
             ])
           : [{ count: 0 }, { data: [] }];
 
+        const sessionsRes = isAdmin
+          ? await supabase
+              .from('login_sessions')
+              .select('id, user_id, created_at, expires_at, ip_address, device_info, user_profiles!login_sessions_user_id_fkey(full_name, email)')
+              .eq('is_active', true)
+              .gt('expires_at', new Date().toISOString())
+              .order('created_at', { ascending: false })
+              .limit(20)
+          : { data: [] };
+
+        const incidentsRes = canSeeAudit
+          ? await supabase
+              .from('audit_logs')
+              .select('id, created_at, action, module, ip_address, details, user_profiles!audit_logs_user_id_fkey(full_name, email)')
+              .or('action.ilike.%fail%,action.ilike.%denied%,action.ilike.%unauthorized%,action.ilike.%block%,action.ilike.%suspicious%,action.ilike.%mfa%,action.ilike.%delete%,action.ilike.%reauth%,module.eq.security,module.eq.auth')
+              .order('created_at', { ascending: false })
+              .limit(15)
+          : { data: [] };
+
         setStats({
           freePoolDevices,
           leihgeraete,
@@ -231,6 +250,8 @@ export default function Dashboard() {
         setShipmentOrders(shipmentOrdersRes.data ?? []);
         setRoutePlans(routePlansRes.data ?? []);
         setFinanceRecords(financeRes.data ?? []);
+        setActiveSessions((sessionsRes.data ?? []) as any);
+        setSecurityIncidents((incidentsRes.data ?? []) as any);
       } catch (e: any) {
         setError('Daten konnten nicht geladen werden. Bitte versuchen Sie es erneut.');
       } finally {
