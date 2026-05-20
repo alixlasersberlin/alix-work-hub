@@ -178,8 +178,8 @@ export default function EmailTemplates() {
                       <Textarea value={t.body} disabled={!canEdit} rows={12} onChange={e => updateField(t.id, 'body', e.target.value)} />
                     </div>
                     {canEdit && (
-                      <div className="flex justify-between gap-2">
-                        <div>
+                      <div className="flex justify-between gap-2 flex-wrap">
+                        <div className="flex gap-2 flex-wrap">
                           {BULK_DEVICE_STATUS_BY_KEY[t.template_key] && (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
@@ -204,6 +204,7 @@ export default function EmailTemplates() {
                               </AlertDialogContent>
                             </AlertDialog>
                           )}
+                          <SingleSendDialog template={t} />
                         </div>
                         <Button onClick={() => save(t)} disabled={saving === t.id}>
                           {saving === t.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
@@ -211,6 +212,7 @@ export default function EmailTemplates() {
                         </Button>
                       </div>
                     )}
+
                   </div>
                 </AccordionContent>
               </AccordionItem>
