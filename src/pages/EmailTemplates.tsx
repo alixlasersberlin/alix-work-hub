@@ -35,6 +35,7 @@ const STATUS_BY_KEY: Record<string, string> = {
 // Vorlagen, die per Bulk-Versand erneut an Kunden gesendet werden können.
 // Mapping Vorlage → erforderlicher Status im lager_devices.notes ("[Status: ...]")
 const BULK_DEVICE_STATUS_BY_KEY: Record<string, string> = {
+  customer_warehouse_received: 'Lagereingang',
   customer_warehouse_prepared: 'Shell Warehouse',
   customer_in_production: 'Produktion',
   customer_in_transit: 'Transfer',
@@ -81,17 +82,31 @@ export default function EmailTemplates() {
     if (!deviceStatus) return;
     setBulkSending(t.id);
     try {
-      const { data: devices, error } = await supabase
+      // 'Lagereingang' = Default-Status 'Bestand' (kein expliziter [Status:]-Tag oder explizit Bestand)
+      const isLagereingang = deviceStatus === 'Lagereingang';
+      let query = supabase
         .from('lager_devices')
         .select('id, reserved_order_id, notes')
-        .not('reserved_order_id', 'is', null)
-        .like('notes', `%[Status: ${deviceStatus}]%`);
+        .not('reserved_order_id', 'is', null);
+      if (!isLagereingang) {
+        query = query.like('notes', `%[Status: ${deviceStatus}]%`);
+      }
+      const { data: devices, error } = await query;
       if (error) throw error;
-      const list = (devices || []).filter((d) => d.reserved_order_id);
+      let list = (devices || []).filter((d) => d.reserved_order_id);
+      if (isLagereingang) {
+        // Nur Geräte ohne anderen Status (Default = Bestand)
+        list = list.filter((d) => {
+          const m = /\[Status:\s*([^\]]+)\]/.exec(d.notes ?? '');
+          const s = m?.[1]?.trim();
+          return !s || s === 'Bestand';
+        });
+      }
       if (list.length === 0) {
         toast.info('Keine passenden Geräte gefunden.');
         return;
       }
+
       let ok = 0, fail = 0;
       for (const d of list) {
         const res = await sendCustomerShippingNotice(
