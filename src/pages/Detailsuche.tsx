@@ -464,7 +464,7 @@ export default function Detailsuche() {
                           </td>
                         </tr>
                       )}
-                    </>
+                    </Fragment>
                   );
                 })}
               </tbody>
