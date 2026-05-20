@@ -19,6 +19,7 @@ type NavItem = NavChild & { children?: NavChild[] };
 
 const navItems: NavItem[] = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance', 'Read Only Audit'] },
+  { path: '/detailsuche', label: 'DETAILSUCHE', icon: SearchCheck, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance', 'Read Only Audit'] },
   {
     path: '/verkauf/artikel-uebersicht', label: 'ARTIKEL', icon: Package, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance'],
     children: [
