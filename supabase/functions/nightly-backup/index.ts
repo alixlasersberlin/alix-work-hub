@@ -26,10 +26,9 @@ Deno.serve(async (req) => {
       status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 
   const backupId = crypto.randomUUID();
   const startedAt = new Date().toISOString();
