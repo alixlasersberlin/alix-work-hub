@@ -389,6 +389,11 @@ export default function UserManagement() {
                 <Button size="sm" variant="outline" className="w-full justify-start gap-2" disabled={actionLoading} onClick={() => handleSendInvitation(selectedUser)}>
                   <Send className="w-4 h-4" /> Einladung {selectedUser.invitation_status === 'sent' ? 'erneut ' : ''}senden
                 </Button>
+                {selectedUser.invitation_status !== 'accepted' && (
+                  <Button size="sm" variant="outline" className="w-full justify-start gap-2 text-success hover:text-success" disabled={actionLoading} onClick={() => handleApproveInvitation(selectedUser)}>
+                    <UserCheck className="w-4 h-4" /> Benutzer freischalten
+                  </Button>
+                )}
                 <Button
                   size="sm"
                   variant="outline"
