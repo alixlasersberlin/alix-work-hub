@@ -67,6 +67,13 @@ const T: Record<Lang, Record<string, string>> = {
     uploaded: 'Invoice uploaded',
     uploadFailed: 'Upload failed',
     downloadFailed: 'Download failed',
+    delete: 'Delete',
+    deleteTitle: 'Delete invoice?',
+    deleteDesc: 'The uploaded factory invoice PDF will be permanently removed.',
+    cancel: 'Cancel',
+    confirmDelete: 'Delete permanently',
+    deleted: 'Invoice deleted',
+    deleteFailed: 'Delete failed',
   },
   zh: {
     title: 'Factory Invoice',
