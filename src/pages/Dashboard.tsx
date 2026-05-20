@@ -318,7 +318,7 @@ export default function Dashboard() {
       {/* Data sections */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {/* Shipment Dates */}
-        {canSeeOrders && (
+        {canSeeOrders && !isAdmin && (
           <div className="rounded-xl border border-border bg-card card-glow">
             <button
               type="button"
@@ -449,7 +449,7 @@ export default function Dashboard() {
         )}
 
         {/* Recent Orders */}
-        {canSeeOrders && (
+        {canSeeOrders && !isAdmin && (
           <div className="rounded-xl border border-border bg-card card-glow">
             <button
               type="button"
@@ -494,7 +494,7 @@ export default function Dashboard() {
         )}
 
         {/* Route Plans */}
-        {canSeeRoutes && (
+        {canSeeRoutes && !isAdmin && (
           <div className="rounded-xl border border-border bg-card card-glow">
             <button
               type="button"
@@ -536,7 +536,7 @@ export default function Dashboard() {
         )}
 
         {/* Finance Overview */}
-        {canSeeFinance && (
+        {canSeeFinance && !isAdmin && (
           <div className="rounded-xl border border-border bg-card card-glow xl:col-span-2">
             <button
               type="button"
