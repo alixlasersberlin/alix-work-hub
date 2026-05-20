@@ -35,6 +35,7 @@ const STATUS_BY_KEY: Record<string, string> = {
 // Vorlagen, die per Bulk-Versand erneut an Kunden gesendet werden können.
 // Mapping Vorlage → erforderlicher Status im lager_devices.notes ("[Status: ...]")
 const BULK_DEVICE_STATUS_BY_KEY: Record<string, string> = {
+  customer_warehouse_received: 'Lagereingang',
   customer_warehouse_prepared: 'Shell Warehouse',
   customer_in_production: 'Produktion',
   customer_in_transit: 'Transfer',
