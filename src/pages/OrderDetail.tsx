@@ -497,6 +497,11 @@ export default function OrderDetail() {
         </div>
       )}
 
+      {/* Financing Tab */}
+      {activeTab === 'financing' && id && (
+        <BankFinancingTab orderId={id} />
+      )}
+
       {/* Packages Tab */}
       {activeTab === 'packages' && (
         <div className="rounded-xl border border-border bg-card p-6 card-glow">
