@@ -125,6 +125,7 @@ export default function BankFinancingTab({ orderId }: Props) {
       toast.success(
         finalStatus === 'approved' ? 'Zusage gespeichert – Auftrag in ZUSAGEN BANK' :
         finalStatus === 'rejected' ? 'Absage gespeichert – Auftrag in ABSAGEN BANK' :
+        finalStatus === 'in_review' ? 'In Prüfung – Auftrag in ANFRAGEN OFFEN' :
         'Anfrage gespeichert'
       );
       load();
