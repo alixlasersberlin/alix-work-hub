@@ -127,6 +127,8 @@ export default function FactoryInvoice() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteRow, setDeleteRow] = useState<Row | null>(null);
   const [lang, setLang] = useState<Lang>(() => (localStorage.getItem('production_lang') as Lang) || 'de');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const activeRowRef = useRef<Row | null>(null);
