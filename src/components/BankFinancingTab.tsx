@@ -37,6 +37,10 @@ export default function BankFinancingTab({ orderId }: Props) {
   const [inProcessing, setInProcessing] = useState(false);
   const [inProcessingDate, setInProcessingDate] = useState('');
   const [inProcessingNote, setInProcessingNote] = useState('');
+  const [purchasePrice, setPurchasePrice] = useState<string>('');
+  const [downPayment, setDownPayment] = useState<string>('');
+  const [termMonths, setTermMonths] = useState<string>('');
+  const [residualValue, setResidualValue] = useState<string>('');
 
   async function load() {
     setLoading(true);
