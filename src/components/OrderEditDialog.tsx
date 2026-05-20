@@ -11,7 +11,7 @@ import { Loader2 } from 'lucide-react';
 
 const STATUS_OPTIONS = [
   'offen', 'bestätigt', 'in Bearbeitung', 'versendet', 'teilgeliefert', 'geliefert',
-  'abgeschlossen', 'storniert', 'zurückgestellt', 'Anwalt',
+  'abgeschlossen', 'storniert', 'zurückgestellt', 'Hold', 'Anwalt',
 ];
 
 const LAWYER_REASONS = ['Zahlungsverzug', 'Auftragserfüllung', 'Stornierung', 'Keine Anzahlung'];
