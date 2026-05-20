@@ -21,7 +21,7 @@ export default function LeasingBank() {
       const { data, error: err } = await supabase
         .from('orders')
         .select('id, order_number, order_date, total_amount, currency, order_status, customers(company_name, contact_name)')
-        .eq('order_status', 'open')
+        .in('order_status', ['open', 'hold', 'Hold', 'HOLD', 'on_hold', 'On Hold', 'overdue', 'Overdue', 'überfällig', 'Überfällig'])
         .order('order_date', { ascending: false, nullsFirst: false })
         .limit(1000);
       if (err) setError(err.message);
@@ -53,7 +53,7 @@ export default function LeasingBank() {
         <div>
           <h1 className="text-3xl font-bold">Verfügbare Aufträge</h1>
           <p className="text-muted-foreground text-sm">
-            Alle nicht ausgelieferten Aufträge mit Status <span className="font-medium">OPEN</span>.
+            Aufträge mit Status <span className="font-medium">OPEN</span>, <span className="font-medium">HOLD</span> oder <span className="font-medium">OVERDUE</span>.
           </p>
         </div>
       </div>
