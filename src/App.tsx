@@ -76,6 +76,7 @@ import Logfiles from "./pages/Logfiles";
 import EmailTemplates from "./pages/EmailTemplates";
 import Papiere from "./pages/Papiere";
 import VersandPlaceholder from "./pages/VersandPlaceholder";
+import LeasingBank from "./pages/LeasingBank";
 import { Truck as TruckIcon, Banknote as BanknoteIcon, FileSignature, CreditCard } from "lucide-react";
 import { Loader2 } from "lucide-react";
 
@@ -218,6 +219,8 @@ function AppRoutes() {
         <Route path="/finance/neu" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Finance']}><FinanceForm /></ProtectedRoute>} />
         <Route path="/finance/:id" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceDetail /></ProtectedRoute>} />
         <Route path="/finance/:id/bearbeiten" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Finance']}><FinanceForm /></ProtectedRoute>} />
+        <Route path="/finanzierungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><LeasingBank /></ProtectedRoute>} />
+        <Route path="/finanzierungen/leasing-bank" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><LeasingBank /></ProtectedRoute>} />
         <Route path="/benutzer" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><UserManagement /></ProtectedRoute>} />
         <Route path="/import" element={<ProtectedRoute requiredRoles={IMPORT_ROLES}><ImportManagement /></ProtectedRoute>} />
         <Route path="/datensicherung" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Backups /></ProtectedRoute>} />
