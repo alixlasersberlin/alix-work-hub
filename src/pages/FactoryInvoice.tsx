@@ -41,6 +41,13 @@ const T: Record<Lang, Record<string, string>> = {
     uploaded: 'Invoice hochgeladen',
     uploadFailed: 'Upload fehlgeschlagen',
     downloadFailed: 'Download fehlgeschlagen',
+    delete: 'Löschen',
+    deleteTitle: 'Invoice löschen?',
+    deleteDesc: 'Die hochgeladene Factory-Invoice-PDF wird unwiderruflich entfernt.',
+    cancel: 'Abbrechen',
+    confirmDelete: 'Endgültig löschen',
+    deleted: 'Invoice gelöscht',
+    deleteFailed: 'Löschen fehlgeschlagen',
   },
   en: {
     title: 'Factory Invoice',
