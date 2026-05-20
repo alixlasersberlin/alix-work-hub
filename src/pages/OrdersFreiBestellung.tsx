@@ -220,9 +220,27 @@ export default function OrdersFreiBestellung() {
                           const names = items.map(i => i.item_name).filter(Boolean) as string[];
                           if (names.length === 0) return <span className="text-muted-foreground">—</span>;
                           return (
-                            <span title={names.join(', ')} className="line-clamp-2">
-                              {names.join(', ')}
-                            </span>
+                            <HoverCard openDelay={100} closeDelay={50}>
+                              <HoverCardTrigger asChild>
+                                <span className="line-clamp-2 cursor-help underline decoration-dotted decoration-muted-foreground/50 underline-offset-2">
+                                  {names.join(', ')}
+                                </span>
+                              </HoverCardTrigger>
+                              <HoverCardContent className="w-80 max-h-80 overflow-auto">
+                                <div className="text-xs font-semibold text-muted-foreground mb-2">
+                                  Artikel ({items.length})
+                                </div>
+                                <ul className="space-y-2 text-sm">
+                                  {items.map((it, idx) => (
+                                    <li key={idx} className="border-b border-border/50 pb-2 last:border-0 last:pb-0">
+                                      <div className="font-medium text-foreground">{it.item_name || '—'}</div>
+                                      {it.sku && <div className="text-xs text-muted-foreground font-mono">SKU: {it.sku}</div>}
+                                      {it.description && <div className="text-xs text-muted-foreground mt-0.5">{it.description}</div>}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </HoverCardContent>
+                            </HoverCard>
                           );
                         })()}
                       </td>
