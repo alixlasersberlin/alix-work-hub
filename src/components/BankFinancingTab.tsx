@@ -176,6 +176,41 @@ export default function BankFinancingTab({ orderId }: Props) {
         )}
       </div>
 
+      <div className="rounded-lg border border-border p-4 bg-background/40 space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-semibold tracking-wide">ANFRAGE IN BEARBEITUNG</p>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <Checkbox
+              checked={inProcessing}
+              onCheckedChange={(v) => setInProcessing(!!v)}
+              disabled={!canWrite}
+            />
+            <span className="text-sm">In Bearbeitung</span>
+          </label>
+        </div>
+        <div>
+          <Label className="text-xs text-muted-foreground">Datum</Label>
+          <Input
+            type="date"
+            value={inProcessingDate}
+            onChange={e => setInProcessingDate(e.target.value)}
+            disabled={!canWrite || !inProcessing}
+            className="bg-secondary border-border mt-1"
+          />
+        </div>
+        <div>
+          <Label className="text-xs text-muted-foreground">Bemerkung</Label>
+          <Textarea
+            value={inProcessingNote}
+            onChange={e => setInProcessingNote(e.target.value)}
+            disabled={!canWrite || !inProcessing}
+            placeholder="Bemerkung zur laufenden Bearbeitung…"
+            className="bg-secondary border-border mt-1 min-h-[60px]"
+          />
+        </div>
+      </div>
+
+
       <div>
         <Label className="text-xs text-muted-foreground">Entscheidung (Freitext)</Label>
         <Textarea
