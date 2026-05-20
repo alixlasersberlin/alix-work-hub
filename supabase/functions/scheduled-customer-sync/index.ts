@@ -155,7 +155,8 @@ Deno.serve(async (req: Request) => {
     const cutoff = new Date(now);
     cutoff.setDate(cutoff.getDate() - daysBack);
     cutoff.setHours(0, 0, 0, 0);
-    const lastModifiedAfter = cutoff.toISOString().split("T")[0]; // YYYY-MM-DD
+    // Zoho Books requires ISO8601 datetime, e.g. 2026-05-13T00:00:00+0000
+    const lastModifiedAfter = cutoff.toISOString().replace(/\.\d{3}Z$/, "+0000");
 
     console.log(`[scheduled-sync] Starting sync for ${sourceSystem}, modified since ${lastModifiedAfter}`);
 
