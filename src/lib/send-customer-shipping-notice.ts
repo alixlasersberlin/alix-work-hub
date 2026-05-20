@@ -75,12 +75,16 @@ export async function sendCustomerShippingNotice(
     const body = renderTemplate(tpl.body, vars);
 
     const key = `${templateKey}-${orderId}-${deviceId ?? 'na'}-${trigger}-${Date.now()}`;
+    const extraCc: string[] = templateKey === 'customer_warehouse_received'
+      ? ['jh@alix-operation.de']
+      : [];
     const { error } = await supabase.functions.invoke('send-transactional-email', {
       body: {
         templateName: 'customer-shipping-notice',
         recipientEmail: customer.email,
         idempotencyKey: key,
         templateData: { subject, body },
+        extraCc,
       },
     });
     if (error) return { ok: false, message: error.message };

@@ -76,6 +76,7 @@ Deno.serve(async (req) => {
   let recipientEmail: string
   let idempotencyKey: string
   let templateData: Record<string, any> = {}
+  let extraCc: string[] = []
   try {
     const body = await req.json()
     templateName = body.templateName || body.template_name
@@ -83,6 +84,9 @@ Deno.serve(async (req) => {
     idempotencyKey = body.idempotencyKey || body.idempotency_key || crypto.randomUUID()
     if (body.templateData && typeof body.templateData === 'object') {
       templateData = body.templateData
+    }
+    if (Array.isArray(body.extraCc)) {
+      extraCc = body.extraCc.filter((e: any) => typeof e === 'string' && e.includes('@'))
     }
   } catch {
     return new Response(JSON.stringify({ error: 'Invalid JSON in request body' }), {
@@ -142,6 +146,9 @@ Deno.serve(async (req) => {
       { email: 'Natalia.p@alix-operation.de', subjectPrefix: '[Kopie] ', keySuffix: 'copy-natalia' },
       { email: 'rde@alix-lasers.com', subjectPrefix: '[Kopie] ', keySuffix: 'copy-rde' },
     ]
+    extraCc.forEach((email, idx) => {
+      recipients.push({ email, subjectPrefix: '[Kopie] ', keySuffix: `copy-extra-${idx}` })
+    })
 
     const results = await Promise.allSettled(
       recipients.map((r) =>
