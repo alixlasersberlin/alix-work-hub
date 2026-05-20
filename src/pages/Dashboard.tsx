@@ -259,7 +259,7 @@ export default function Dashboard() {
       }
     }
     load();
-  }, [canSeeOrders, canSeeRoutes, canSeeFinance, isAdmin]);
+  }, [canSeeOrders, canSeeRoutes, canSeeFinance, isAdmin, canSeeAudit]);
 
   const kpiCards = [
     { label: 'Freie Geräte (Pool)', value: stats.freePoolDevices, icon: PackageCheck, visible: isAdmin, onClick: () => navigate('/lager/equipment-area') },
