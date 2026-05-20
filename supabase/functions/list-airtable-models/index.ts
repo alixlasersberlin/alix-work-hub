@@ -1,4 +1,7 @@
 import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2.95.0/cors";
+import { createClient } from "npm:@supabase/supabase-js@2";
+
+
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/airtable";
 
