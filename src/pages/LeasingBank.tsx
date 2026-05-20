@@ -43,6 +43,8 @@ export default function LeasingBank() {
     });
   }, [orders, search]);
 
+  const { pageSize, setPageSize, page, setPage, totalPages, paged, total } = usePagination(filtered, 20);
+
   const fmtMoney = (v: number | null, c?: string | null) =>
     v == null ? '—' : new Intl.NumberFormat('de-DE', { style: 'currency', currency: c || 'EUR' }).format(Number(v));
   const fmtDate = (d: string | null) => (d ? new Date(d).toLocaleDateString('de-DE') : '—');
