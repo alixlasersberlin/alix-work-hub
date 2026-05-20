@@ -64,14 +64,17 @@ export default function LeasingBank() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-3 flex-wrap">
           <CardTitle>Übersicht ({filtered.length})</CardTitle>
-          <div className="relative w-full max-w-xs">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Suche Auftrag / Kunde…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-8"
-            />
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="relative w-full max-w-xs">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Suche Auftrag / Kunde…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-8"
+              />
+            </div>
+            <PageSizeSelector value={pageSize} onChange={setPageSize} />
           </div>
         </CardHeader>
         <CardContent>
