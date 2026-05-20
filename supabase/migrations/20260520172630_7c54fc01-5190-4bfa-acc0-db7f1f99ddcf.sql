@@ -1,0 +1,36 @@
+
+REVOKE EXECUTE ON FUNCTION public.can_upload_factory_invoice() FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.set_factory_invoice_pdf(uuid, text) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.clear_factory_invoice_pdf(uuid) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.set_factory_invoice_payment_ok(uuid, boolean) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.log_audit_event(text, text, text, jsonb, text, text) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.requires_reauth() FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.session_requires_reauth() FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.current_supplier_id() FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.can_access_import_logs() FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.can_access_orders() FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.can_access_planning() FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.can_manage_orders() FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.can_manage_planning() FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.can_access_finance() FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.has_role(text) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.is_admin() FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.is_supplier() FROM PUBLIC, anon;
+
+GRANT EXECUTE ON FUNCTION public.can_upload_factory_invoice() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.set_factory_invoice_pdf(uuid, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.clear_factory_invoice_pdf(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.set_factory_invoice_payment_ok(uuid, boolean) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.log_audit_event(text, text, text, jsonb, text, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.requires_reauth() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.session_requires_reauth() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.current_supplier_id() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.can_access_import_logs() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.can_access_orders() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.can_access_planning() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.can_manage_orders() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.can_manage_planning() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.can_access_finance() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.has_role(text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.is_admin() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.is_supplier() TO authenticated;
