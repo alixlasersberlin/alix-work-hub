@@ -140,6 +140,8 @@ export default function Dashboard() {
   const [shipmentOrders, setShipmentOrders] = useState<ShipmentOrder[]>([]);
   const [routePlans, setRoutePlans] = useState<RoutePlan[]>([]);
   const [financeRecords, setFinanceRecords] = useState<FinanceRecord[]>([]);
+  const [activeSessions, setActiveSessions] = useState<ActiveSession[]>([]);
+  const [securityIncidents, setSecurityIncidents] = useState<SecurityIncident[]>([]);
   const [shipmentFilter, setShipmentFilter] = useState<number | null>(14);
   const [shipmentLimit, setShipmentLimit] = useState<number | null>(10);
   const [shipmentSearch, setShipmentSearch] = useState('');
@@ -150,6 +152,8 @@ export default function Dashboard() {
     recent: true,
     routes: true,
     finance: true,
+    sessions: false,
+    security: false,
   });
   const toggle = (k: string) => setCollapsed(p => ({ ...p, [k]: !p[k] }));
 
@@ -157,6 +161,7 @@ export default function Dashboard() {
   const canSeeRoutes = isAdmin || hasAnyRole(['Tourenplanung', 'Auftragsverwaltung']);
   const canSeeFinance = isAdmin || hasRole('Finance');
   const canSeeCustomers = isAdmin || hasAnyRole(['Auftragsverwaltung', 'Tourenplanung', 'Finance']);
+  const canSeeAudit = isAdmin || hasRole('Read Only Audit');
 
   useEffect(() => {
     async function load() {
