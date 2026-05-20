@@ -1763,6 +1763,7 @@ export type Database = {
       can_access_planning: { Args: never; Returns: boolean }
       can_manage_orders: { Args: never; Returns: boolean }
       can_manage_planning: { Args: never; Returns: boolean }
+      can_upload_factory_invoice: { Args: never; Returns: boolean }
       current_supplier_id: { Args: never; Returns: string }
       has_role: { Args: { check_role: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
@@ -1780,6 +1781,10 @@ export type Database = {
       }
       requires_reauth: { Args: never; Returns: boolean }
       session_requires_reauth: { Args: never; Returns: boolean }
+      set_factory_invoice_pdf: {
+        Args: { _path: string; _production_order_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
