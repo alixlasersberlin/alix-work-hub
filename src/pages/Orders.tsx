@@ -77,7 +77,12 @@ export default function Orders() {
     }
 
     // Anzeige: nur originale Zoho-Auftragsnummer, kein Suffix, keine interne Nummer
-    const expanded = loaded.map(o => ({ ...o, _seq: 1, _displayNumber: o.order_number }));
+    const expanded = loaded.map(o => ({
+      ...o,
+      _seq: 1,
+      _displayNumber: o.order_number,
+      _productionOrderCount: o.order_number ? (poCountMap[o.order_number] || 0) : 0,
+    }));
 
     setOrders(expanded);
     setLoading(false);
