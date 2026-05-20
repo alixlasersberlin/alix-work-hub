@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Landmark, Loader2, Upload, FileText, CheckCircle2, XCircle, ExternalLink, Clock } from 'lucide-react';
+import { Landmark, Loader2, Upload, FileText, CheckCircle2, XCircle, ExternalLink, Clock, Download } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 
@@ -135,6 +135,141 @@ export default function BankFinancingTab({ orderId }: Props) {
       setSaving(false);
     }
   }
+
+  async function handleDownloadPdf() {
+    try {
+      const [{ default: jsPDF }, autoTableMod] = await Promise.all([
+        import('jspdf'),
+        import('jspdf-autotable'),
+      ]);
+      const autoTable: any = (autoTableMod as any).default || (autoTableMod as any).autoTable;
+
+      // Load order + customer context
+      const { data: order } = await supabase
+        .from('orders')
+        .select('order_number, order_date, total_amount, currency, customers(company_name, contact_name, email, phone)')
+        .eq('id', orderId)
+        .maybeSingle();
+
+      const cust: any = order?.customers || {};
+      const orderNo = order?.order_number || '—';
+      const customerName = cust.company_name || cust.contact_name || '—';
+
+      const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+      const pageW = doc.internal.pageSize.getWidth();
+      const now = new Date().toLocaleString('de-DE');
+
+      // Header
+      doc.setFillColor(15, 15, 15);
+      doc.rect(0, 0, pageW, 70, 'F');
+      doc.setTextColor(201, 168, 76);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(18);
+      doc.text('Finanzierungsanfrage Bank', 40, 35);
+      doc.setFontSize(10);
+      doc.setTextColor(220, 220, 220);
+      doc.text(`Auftrag ${orderNo}`, 40, 55);
+      doc.setTextColor(180, 180, 180);
+      doc.text(`Erstellt: ${now}`, pageW - 40, 55, { align: 'right' });
+
+      doc.setTextColor(0, 0, 0);
+      doc.setFont('helvetica', 'normal');
+
+      const fmtMoney = (v: string | number | null) => {
+        const n = v === '' || v == null ? null : Number(v);
+        return n == null || Number.isNaN(n)
+          ? '—'
+          : new Intl.NumberFormat('de-DE', { style: 'currency', currency: order?.currency || 'EUR' }).format(n);
+      };
+      const fmtDateDe = (d: string) => (d ? new Date(d).toLocaleDateString('de-DE') : '—');
+      const yesNo = (b: boolean) => (b ? 'Ja' : 'Nein');
+      const statusLabel =
+        decisionConfirm && decisionChoice === 'approved' ? 'Zusage'
+        : decisionConfirm && decisionChoice === 'rejected' ? 'Absage'
+        : decisionConfirm && decisionChoice === 'in_review' ? 'In Prüfung'
+        : 'Offen';
+
+      autoTable(doc, {
+        startY: 90,
+        head: [['Auftragsdaten', '']],
+        body: [
+          ['Auftragsnummer', orderNo],
+          ['Auftragsdatum', fmtDateDe(order?.order_date || '')],
+          ['Kunde', customerName],
+          ['E-Mail', cust.email || '—'],
+          ['Telefon', cust.phone || '—'],
+          ['Auftragssumme', fmtMoney(order?.total_amount ?? null)],
+        ],
+        theme: 'grid',
+        headStyles: { fillColor: [201, 168, 76], textColor: 20, fontStyle: 'bold' },
+        styles: { fontSize: 10, cellPadding: 6 },
+        columnStyles: { 0: { cellWidth: 170, fontStyle: 'bold' } },
+      });
+
+      autoTable(doc, {
+        startY: (doc as any).lastAutoTable.finalY + 16,
+        head: [['Finanzierungsdaten', '']],
+        body: [
+          ['Anfragedatum', fmtDateDe(requestDate)],
+          ['Angebot vorhanden', yesNo(hasOffer)],
+          ['Kaufpreis', fmtMoney(purchasePrice)],
+          ['Anzahlung', fmtMoney(downPayment)],
+          ['Gewünschte Laufzeit', termMonths ? `${termMonths} Monate` : '—'],
+          ['Restwert', fmtMoney(residualValue)],
+        ],
+        theme: 'grid',
+        headStyles: { fillColor: [201, 168, 76], textColor: 20, fontStyle: 'bold' },
+        styles: { fontSize: 10, cellPadding: 6 },
+        columnStyles: { 0: { cellWidth: 170, fontStyle: 'bold' } },
+      });
+
+      autoTable(doc, {
+        startY: (doc as any).lastAutoTable.finalY + 16,
+        head: [['Bearbeitungsstatus', '']],
+        body: [
+          ['In Bearbeitung', yesNo(inProcessing)],
+          ['Bearbeitung seit', fmtDateDe(inProcessingDate)],
+          ['Bemerkung Bearbeitung', inProcessingNote || '—'],
+        ],
+        theme: 'grid',
+        headStyles: { fillColor: [201, 168, 76], textColor: 20, fontStyle: 'bold' },
+        styles: { fontSize: 10, cellPadding: 6 },
+        columnStyles: { 0: { cellWidth: 170, fontStyle: 'bold' } },
+      });
+
+      autoTable(doc, {
+        startY: (doc as any).lastAutoTable.finalY + 16,
+        head: [['Entscheidung der Bank', '']],
+        body: [
+          ['Status', statusLabel],
+          ['Anmerkung Entscheidung', decisionText || '—'],
+          ['Grund der Absage', decisionChoice === 'rejected' ? (decisionNote || '—') : '—'],
+        ],
+        theme: 'grid',
+        headStyles: { fillColor: [201, 168, 76], textColor: 20, fontStyle: 'bold' },
+        styles: { fontSize: 10, cellPadding: 6 },
+        columnStyles: { 0: { cellWidth: 170, fontStyle: 'bold' } },
+      });
+
+      // Footer
+      const pageCount = (doc as any).internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(120, 120, 120);
+        doc.text(`Seite ${i} / ${pageCount}`, pageW - 40, doc.internal.pageSize.getHeight() - 20, { align: 'right' });
+        doc.text('Alix Work · Finanzierungsanfrage', 40, doc.internal.pageSize.getHeight() - 20);
+      }
+
+      const filename = `Finanzierungsanfrage_${orderNo}_${new Date().toISOString().slice(0, 10)}.pdf`;
+      doc.save(filename);
+      toast.success('PDF wurde heruntergeladen');
+    } catch (e: any) {
+      toast.error('PDF-Erstellung fehlgeschlagen: ' + (e?.message || e));
+    }
+  }
+
+
 
   if (loading) {
     return <div className="p-8 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
@@ -357,14 +492,23 @@ export default function BankFinancingTab({ orderId }: Props) {
         Dieser Vorgang hat keinen Einfluss auf Bestellungen oder andere Auftragsabläufe.
       </p>
 
-      {canWrite && (
-        <div className="flex justify-end">
+      <div className="flex justify-end gap-2 flex-wrap">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleDownloadPdf}
+          className="border-primary/40"
+        >
+          <Download className="w-4 h-4 mr-2" />
+          Als PDF speichern
+        </Button>
+        {canWrite && (
           <Button onClick={handleSave} disabled={saving} className="gold-gradient text-primary-foreground">
             {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             Speichern
           </Button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
