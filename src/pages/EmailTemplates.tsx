@@ -76,6 +76,40 @@ export default function EmailTemplates() {
     else toast.success('Vorlage gespeichert');
   };
 
+  const bulkResend = async (t: TemplateRow) => {
+    const deviceStatus = BULK_DEVICE_STATUS_BY_KEY[t.template_key];
+    if (!deviceStatus) return;
+    setBulkSending(t.id);
+    try {
+      const { data: devices, error } = await supabase
+        .from('lager_devices')
+        .select('id, reserved_order_id, notes')
+        .not('reserved_order_id', 'is', null)
+        .like('notes', `%[Status: ${deviceStatus}]%`);
+      if (error) throw error;
+      const list = (devices || []).filter((d) => d.reserved_order_id);
+      if (list.length === 0) {
+        toast.info('Keine passenden Geräte gefunden.');
+        return;
+      }
+      let ok = 0, fail = 0;
+      for (const d of list) {
+        const res = await sendCustomerShippingNotice(
+          d.reserved_order_id as string,
+          d.id,
+          'manuell',
+          t.template_key as any,
+        );
+        if (res.ok) ok++; else { fail++; console.warn('Bulk-Versand Fehler', d, res.message); }
+      }
+      toast.success(`Versendet: ${ok} · Fehler: ${fail}`);
+    } catch (e: any) {
+      toast.error('Bulk-Versand fehlgeschlagen: ' + (e?.message || 'Unbekannter Fehler'));
+    } finally {
+      setBulkSending(null);
+    }
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center gap-3">
