@@ -189,7 +189,7 @@ export default function OrdersFreiBestellung() {
               <tr className="border-b border-border bg-secondary/50">
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Auftragsnr.</th>
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Kunde</th>
-                <th className="text-left px-4 py-3 text-muted-foreground font-medium">Mitarbeiter</th>
+                <th className="text-left px-4 py-3 text-muted-foreground font-medium">Artikel</th>
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Freigabe am</th>
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Anzahlung</th>
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Lieferdatum</th>
