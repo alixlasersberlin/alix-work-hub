@@ -211,6 +211,29 @@ export default function FactoryInvoice() {
     URL.revokeObjectURL(url);
   };
 
+  const handleDeleteInvoice = async () => {
+    const row = deleteRow;
+    if (!row || !row.invoice_pdf_path) return;
+    setDeletingId(row.id);
+    try {
+      const { error: rmErr } = await supabase.storage
+        .from('production-orders')
+        .remove([row.invoice_pdf_path]);
+      if (rmErr) throw rmErr;
+      const { error: rpcErr } = await supabase.rpc('clear_factory_invoice_pdf', {
+        _production_order_id: row.id,
+      });
+      if (rpcErr) throw rpcErr;
+      toast.success(t.deleted);
+      setDeleteRow(null);
+      await load();
+    } catch (err: any) {
+      toast.error(err?.message || t.deleteFailed);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <input
