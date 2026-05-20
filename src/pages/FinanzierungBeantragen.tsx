@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { FileSignature, Search, Loader2, Inbox, Eye, X, User, Package } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { StatusBadge } from '@/components/StatusBadge';
 import { supabase } from '@/integrations/supabase/client';
 import BankFinancingTab from '@/components/BankFinancingTab';
@@ -54,7 +54,7 @@ function formatAddress(addr: any): string {
 }
 
 export default function FinanzierungBeantragen() {
-  const navigate = useNavigate();
+  const [showOrderDialog, setShowOrderDialog] = useState(false);
   const [orders, setOrders] = useState<AvailableOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -219,7 +219,7 @@ export default function FinanzierungBeantragen() {
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Ausgewählter Auftrag</CardTitle>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => navigate(`/auftraege/${selected.id}`)}>
+                <Button variant="outline" size="sm" onClick={() => setShowOrderDialog(true)}>
                   <Eye className="h-4 w-4 mr-1" /> Auftrag öffnen
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => setSelected(null)}>
@@ -361,6 +361,25 @@ export default function FinanzierungBeantragen() {
           )}
         </>
       )}
+
+      <Dialog open={showOrderDialog} onOpenChange={setShowOrderDialog}>
+        <DialogContent className="max-w-6xl w-[95vw] h-[90vh] p-0 flex flex-col overflow-hidden">
+          <DialogHeader className="px-6 py-4 border-b border-border">
+            <DialogTitle>
+              Auftrag {selected?.order_number || ''}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden">
+            {selected && (
+              <iframe
+                src={`/auftraege/${selected.id}`}
+                title="Auftrag Details"
+                className="w-full h-full border-0"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
