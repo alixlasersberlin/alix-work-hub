@@ -101,11 +101,15 @@ const DEVICE_STATUS_OPTIONS = ['Bestand', 'Produktion', 'Shell Warehouse', 'Sper
 type DeviceStatus = typeof DEVICE_STATUS_OPTIONS[number];
 
 // Mapping Geräte-Status → Kunden-E-Mail-Vorlage (template_key) für Bulk-Versand
-const BULK_TEMPLATE_BY_STATUS: Record<string, 'customer_warehouse_prepared' | 'customer_in_production' | 'customer_in_transit'> = {
+const BULK_TEMPLATE_BY_STATUS: Record<string, 'customer_warehouse_prepared' | 'customer_in_production' | 'customer_in_transit' | 'customer_warehouse_received'> = {
   'Shell Warehouse': 'customer_warehouse_prepared',
   'Produktion': 'customer_in_production',
   'Transfer': 'customer_in_transit',
+  'Bestand': 'customer_warehouse_received',
 };
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const isRateLimited = (msg?: string) => !!msg && /429|rate_limit|High demand/i.test(msg);
 
 function getStatusFromNotes(notes: string | null | undefined): DeviceStatus {
   const m = /\[Status:\s*([^\]]+)\]/.exec(notes ?? '');
@@ -150,6 +154,7 @@ export default function Lagergeraete({
   const [bulkApplying, setBulkApplying] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
   const [bulkResending, setBulkResending] = useState(false);
+  const [bulkSendEmail, setBulkSendEmail] = useState(true);
 
   // Welcher Status der aktuellen Seite ist Bulk-Versand-fähig?
   const bulkResendStatus = useMemo(
@@ -993,6 +998,15 @@ export default function Lagergeraete({
               ))}
             </BulkSelectContent>
           </BulkSelect>
+          <label className="flex items-center gap-2 text-xs cursor-pointer select-none">
+            <Checkbox checked={bulkSendEmail} onCheckedChange={(v) => setBulkSendEmail(!!v)} />
+            E-Mail für neuen Status senden
+            {BULK_TEMPLATE_BY_STATUS[bulkStatus] ? (
+              <span className="text-muted-foreground">({BULK_TEMPLATE_BY_STATUS[bulkStatus]})</span>
+            ) : (
+              <span className="text-muted-foreground">(keine Vorlage)</span>
+            )}
+          </label>
           <Button
             size="sm"
             disabled={bulkApplying}
@@ -1000,7 +1014,9 @@ export default function Lagergeraete({
               setBulkApplying(true);
               const ids = Array.from(selectedIds);
               const targets = devices.filter((d) => ids.includes(d.id));
+              const tplKey = BULK_TEMPLATE_BY_STATUS[bulkStatus] ?? null;
               let ok = 0; let fail = 0;
+              const toEmail: Array<{ deviceId: string; orderId: string }> = [];
               for (const d of targets) {
                 const cleaned = (d.notes ?? '').replace(/\s*\[Status:\s*[^\]]+\]\s*/g, ' ').trim();
                 const typMatch = (d.notes ?? '').match(/\[Typ:\s*(Neugerät|Leihgerät)\]/);
@@ -1015,16 +1031,38 @@ export default function Lagergeraete({
                 else {
                   ok++;
                   setDevices((prev) => prev.map((x) => x.id === d.id ? { ...x, notes: newNotes } : x));
+                  if (bulkSendEmail && tplKey && d.reserved_order_id) {
+                    toEmail.push({ deviceId: d.id, orderId: d.reserved_order_id });
+                  }
                 }
               }
+
+              let mailOk = 0, mailFail = 0;
+              for (let i = 0; i < toEmail.length; i++) {
+                const t = toEmail[i];
+                let attempt = 0; let sent = false;
+                while (attempt < 3 && !sent) {
+                  attempt++;
+                  const res = await sendCustomerShippingNotice(t.orderId, t.deviceId, 'manuell', tplKey!);
+                  if (res.ok) { sent = true; mailOk++; break; }
+                  if (isRateLimited(res.message)) { await sleep(2000 * attempt); continue; }
+                  mailFail++; console.warn('Status-E-Mail Fehler', t, res.message); break;
+                }
+                if (!sent && attempt >= 3) mailFail++;
+                if (i < toEmail.length - 1) await sleep(1200);
+              }
+
               setBulkApplying(false);
               setSelectedIds(new Set());
-              if (fail === 0) toast.success(`${ok} Status aktualisiert`);
-              else toast.warning(`${ok} aktualisiert, ${fail} Fehler`);
+              const parts = [`${ok} Status aktualisiert`];
+              if (fail > 0) parts.push(`${fail} Fehler`);
+              if (toEmail.length > 0) parts.push(`${mailOk} E-Mails gesendet${mailFail ? `, ${mailFail} fehlgeschlagen` : ''}`);
+              if (fail === 0 && mailFail === 0) toast.success(parts.join(' · '));
+              else toast.warning(parts.join(' · '));
             }}
           >
             {bulkApplying ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-            Status anwenden
+            Statuswechsel anwenden
           </Button>
           <Button
             size="sm"
