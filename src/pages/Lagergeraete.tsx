@@ -858,6 +858,7 @@ export default function Lagergeraete({
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <OrderPickerDialog
