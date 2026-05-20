@@ -2,6 +2,9 @@ import * as React from 'npm:react@18.3.1'
 import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { sendLovableEmail } from 'npm:@lovable.dev/email-js@0.0.4'
 import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
+import { createClient } from 'npm:@supabase/supabase-js@2'
+
+
 
 const SITE_NAME = "Alix Lasers Datacenter"
 const SENDER_DOMAIN = "notify.alixlasers.ai"
@@ -16,6 +19,32 @@ const corsHeaders = {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
+  }
+
+  // Require authenticated caller (JWT) to prevent open email relay
+  const authHeader = req.headers.get('Authorization') ?? ''
+  if (!authHeader.startsWith('Bearer ')) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
+  try {
+    const authClient = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } }, auth: { autoRefreshToken: false, persistSession: false } },
+    )
+    const token = authHeader.replace('Bearer ', '')
+    const { data, error } = await authClient.auth.getUser(token)
+    if (error || !data?.user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+  } catch {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
   }
 
   const apiKey = Deno.env.get('LOVABLE_API_KEY')

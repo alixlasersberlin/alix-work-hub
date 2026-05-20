@@ -11,9 +11,24 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  // Restrict to authorized callers via CRON_SECRET or service role key
+  const cronSecret = Deno.env.get("CRON_SECRET");
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const authHeader = req.headers.get("Authorization") ?? "";
+  const apiKeyHeader = req.headers.get("apikey") ?? "";
+  const expected = cronSecret ? `Bearer ${cronSecret}` : null;
+  const isAuthorized =
+    (expected && authHeader === expected) ||
+    authHeader === `Bearer ${serviceRoleKey}` ||
+    apiKeyHeader === serviceRoleKey;
+  if (!isAuthorized) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabase = createClient(supabaseUrl, serviceRoleKey);
+
 
   const backupId = crypto.randomUUID();
   const startedAt = new Date().toISOString();
