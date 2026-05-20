@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Search, ClipboardList, ArrowUpDown, Loader2, Inbox, CalendarDays, List, Car, Pencil, CalendarClock, MoveRight } from 'lucide-react';
+import { Search, ClipboardList, ArrowUpDown, Loader2, Inbox, CalendarDays, List, Car, Pencil, CalendarClock, MoveRight, CheckCircle2, PackageCheck } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
 import { toast } from 'sonner';
 import OrdersCalendar from '@/components/OrdersCalendar';
@@ -77,7 +77,12 @@ export default function Orders() {
     }
 
     // Anzeige: nur originale Zoho-Auftragsnummer, kein Suffix, keine interne Nummer
-    const expanded = loaded.map(o => ({ ...o, _seq: 1, _displayNumber: o.order_number }));
+    const expanded = loaded.map(o => ({
+      ...o,
+      _seq: 1,
+      _displayNumber: o.order_number,
+      _productionOrderCount: o.order_number ? (poCountMap[o.order_number] || 0) : 0,
+    }));
 
     setOrders(expanded);
     setLoading(false);
@@ -299,7 +304,18 @@ export default function Orders() {
                     onClick={() => navigate(`/auftraege/${o.id}`)}
                     footer={
                       <div className="flex items-center justify-between gap-2" onClick={e => e.stopPropagation()}>
-                        <DrivingTimeCell value={drivingTimes[o.id]} requested={requestedIds.has(o.id)} loading={drivingLoading} />
+                        <div className="flex items-center gap-2">
+                          <DrivingTimeCell value={drivingTimes[o.id]} requested={requestedIds.has(o.id)} loading={drivingLoading} />
+                          {o._productionOrderCount > 0 && (
+                            <span
+                              className="inline-flex items-center gap-1 text-emerald-500 text-xs font-medium"
+                              title={`${o._productionOrderCount} Bestellung(en) ausgelöst`}
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              Bestellung getätigt
+                            </span>
+                          )}
+                        </div>
                         {canWrite && (
                           <div className="flex items-center gap-1">
                             <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setEditOrder(o)}>
@@ -344,18 +360,19 @@ export default function Orders() {
                       <span className="inline-flex items-center gap-1"><Car className="w-3.5 h-3.5" /> Fahrzeit</span>
                     </th>
                     <th className="text-left px-4 py-3 text-muted-foreground font-medium">Anzahlung OK</th>
+                    <th className="text-left px-4 py-3 text-muted-foreground font-medium">Bestellung</th>
                     {canWrite && <th className="text-right px-4 py-3 text-muted-foreground font-medium">Aktionen</th>}
                   </tr>
                 </thead>
                 {loading ? (
                   <tbody>
-                    <tr><td colSpan={(canWrite ? 8 : 7) + (selectionMode ? 1 : 0)} className="px-4 py-12 text-center">
+                    <tr><td colSpan={(canWrite ? 9 : 8) + (selectionMode ? 1 : 0)} className="px-4 py-12 text-center">
                       <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" />
                     </td></tr>
                   </tbody>
                 ) : filtered.length === 0 ? (
                   <tbody>
-                    <tr><td colSpan={(canWrite ? 8 : 7) + (selectionMode ? 1 : 0)} className="px-4 py-12 text-center">
+                    <tr><td colSpan={(canWrite ? 9 : 8) + (selectionMode ? 1 : 0)} className="px-4 py-12 text-center">
                       <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
                       <p className="text-muted-foreground">Keine Aufträge gefunden.</p>
                     </td></tr>
@@ -414,6 +431,19 @@ export default function Orders() {
                           {o.deposit_ok ? (
                             <span className="inline-flex items-center gap-1 text-emerald-500 font-medium">
                               ✓ {o.deposit_ok_by || 'Ja'}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-xs">
+                          {o._productionOrderCount > 0 ? (
+                            <span
+                              className="inline-flex items-center gap-1 text-emerald-500 font-medium"
+                              title={`${o._productionOrderCount} Bestellung(en) ausgelöst`}
+                            >
+                              <CheckCircle2 className="w-4 h-4" />
+                              Bestellung getätigt
                             </span>
                           ) : (
                             <span className="text-muted-foreground">—</span>
