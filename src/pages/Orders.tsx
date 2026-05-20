@@ -304,7 +304,18 @@ export default function Orders() {
                     onClick={() => navigate(`/auftraege/${o.id}`)}
                     footer={
                       <div className="flex items-center justify-between gap-2" onClick={e => e.stopPropagation()}>
-                        <DrivingTimeCell value={drivingTimes[o.id]} requested={requestedIds.has(o.id)} loading={drivingLoading} />
+                        <div className="flex items-center gap-2">
+                          <DrivingTimeCell value={drivingTimes[o.id]} requested={requestedIds.has(o.id)} loading={drivingLoading} />
+                          {o._productionOrderCount > 0 && (
+                            <span
+                              className="inline-flex items-center gap-1 text-emerald-500 text-xs font-medium"
+                              title={`${o._productionOrderCount} Bestellung(en) ausgelöst`}
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              Bestellung getätigt
+                            </span>
+                          )}
+                        </div>
                         {canWrite && (
                           <div className="flex items-center gap-1">
                             <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setEditOrder(o)}>
