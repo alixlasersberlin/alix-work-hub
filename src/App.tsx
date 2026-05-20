@@ -50,6 +50,7 @@ import ProductionTimeline from "./pages/ProductionTimeline";
 import ProductionPortal from "./pages/ProductionPortal";
 import ProductionFertig from "./pages/ProductionFertig";
 import ProductionOrderIn from "./pages/ProductionOrderIn";
+import FactoryInvoice from "./pages/FactoryInvoice";
 import Suppliers from "./pages/Suppliers";
 import Lager from "./pages/Lager";
 import Lagergeraete from "./pages/Lagergeraete";
