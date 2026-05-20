@@ -56,6 +56,26 @@ interface FinanceRecord {
   currency: string | null;
 }
 
+interface ActiveSession {
+  id: string;
+  user_id: string;
+  created_at: string;
+  expires_at: string | null;
+  ip_address: string | null;
+  device_info: string | null;
+  user_profiles?: { full_name: string | null; email: string | null } | null;
+}
+
+interface SecurityIncident {
+  id: string;
+  created_at: string;
+  action: string;
+  module: string;
+  ip_address: string | null;
+  details: any;
+  user_profiles?: { full_name: string | null; email: string | null } | null;
+}
+
 import { StatusBadge } from '@/components/StatusBadge';
 
 function formatCurrency(amount: number | null, currency: string | null) {
