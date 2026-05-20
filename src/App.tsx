@@ -80,6 +80,7 @@ import VersandPlaceholder from "./pages/VersandPlaceholder";
 import LeasingBank from "./pages/LeasingBank";
 import ZusagenBank from "./pages/ZusagenBank";
 import AbsagenBank from "./pages/AbsagenBank";
+import AnfragenOffen from "./pages/AnfragenOffen";
 import Detailsuche from "./pages/Detailsuche";
 import { Truck as TruckIcon, Banknote as BanknoteIcon, FileSignature, CreditCard } from "lucide-react";
 import { Loader2 } from "lucide-react";
