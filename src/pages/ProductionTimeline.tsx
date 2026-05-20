@@ -189,6 +189,11 @@ export default function ProductionTimeline() {
                             {r.is_reclamation ? 'Reklamation' : 'Bestellung'}
                           </span>
                           <span className="px-2 py-0.5 rounded text-[10px] bg-muted text-muted-foreground">{r.status}</span>
+                          {r.customer_name && (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-primary/10 text-primary">
+                              {r.customer_name}
+                            </span>
+                          )}
                         </div>
                         <div className="text-xs text-muted-foreground mt-1 truncate">
                           {r.modellname || '—'} · {r.supplier?.name || '—'} · {r.bearbeiter}
