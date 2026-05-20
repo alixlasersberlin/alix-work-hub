@@ -230,6 +230,37 @@ export default function UserManagement() {
     setActionLoading(false);
   };
 
+  /* ─── Approve invitation (Benutzer freischalten) ─── */
+  const handleApproveInvitation = async (user: EnrichedUser) => {
+    setActionLoading(true);
+    try {
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({
+          invitation_status: 'accepted',
+          account_status: 'active',
+          is_active: true,
+        })
+        .eq('id', user.id);
+      if (error) throw error;
+      await supabase.from('audit_logs').insert({
+        user_id: (await supabase.auth.getUser()).data.user?.id || null,
+        action: 'invitation_approved',
+        module: 'user_management',
+        record_id: user.id,
+        details: { email: user.email },
+      });
+      toast.success(`${user.full_name || user.email} freigeschaltet`);
+      loadData();
+      if (selectedUser?.id === user.id) {
+        setSelectedUser(prev => prev ? { ...prev, invitation_status: 'accepted', account_status: 'active', is_active: true } : null);
+      }
+    } catch (e: any) {
+      toast.error(`Fehler: ${e.message}`);
+    }
+    setActionLoading(false);
+  };
+
   /* ─── Status change ─── */
   const handleStatusChange = async (user: EnrichedUser, newStatus: string) => {
     setActionLoading(true);
@@ -358,6 +389,11 @@ export default function UserManagement() {
                 <Button size="sm" variant="outline" className="w-full justify-start gap-2" disabled={actionLoading} onClick={() => handleSendInvitation(selectedUser)}>
                   <Send className="w-4 h-4" /> Einladung {selectedUser.invitation_status === 'sent' ? 'erneut ' : ''}senden
                 </Button>
+                {selectedUser.invitation_status !== 'accepted' && (
+                  <Button size="sm" variant="outline" className="w-full justify-start gap-2 text-success hover:text-success" disabled={actionLoading} onClick={() => handleApproveInvitation(selectedUser)}>
+                    <UserCheck className="w-4 h-4" /> Benutzer freischalten
+                  </Button>
+                )}
                 <Button
                   size="sm"
                   variant="outline"
@@ -615,6 +651,11 @@ export default function UserManagement() {
                           <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleSendInvitation(u)} title="Einladung senden">
                             <Send className="w-3.5 h-3.5" />
                           </Button>
+                          {u.invitation_status !== 'accepted' && (
+                            <Button size="icon" variant="ghost" className="h-7 w-7 text-success hover:text-success" onClick={() => handleApproveInvitation(u)} title="Benutzer freischalten">
+                              <UserCheck className="w-3.5 h-3.5" />
+                            </Button>
+                          )}
                           <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEditRoles(u)} title="Rollen bearbeiten">
                             <Edit3 className="w-3.5 h-3.5" />
                           </Button>
