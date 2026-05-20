@@ -7,14 +7,16 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Landmark, Loader2, Upload, FileText, CheckCircle2, XCircle, ExternalLink } from 'lucide-react';
+import { Landmark, Loader2, Upload, FileText, CheckCircle2, XCircle, ExternalLink, Clock } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 
 interface Props {
   orderId: string;
 }
 
-type Status = 'pending' | 'approved' | 'rejected';
+type Status = 'pending' | 'in_review' | 'approved' | 'rejected';
+const TERM_OPTIONS = [12, 24, 36, 48, 60, 72];
 
 export default function BankFinancingTab({ orderId }: Props) {
   const { user, isAdmin, hasRole } = useAuth();
