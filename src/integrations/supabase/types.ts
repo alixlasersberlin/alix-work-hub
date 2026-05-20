@@ -155,6 +155,57 @@ export type Database = {
           },
         ]
       }
+      bank_financing_requests: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          decided_at: string | null
+          decided_by: string | null
+          decision_note: string | null
+          decision_text: string | null
+          has_offer: boolean
+          id: string
+          offer_file_path: string | null
+          order_id: string
+          request_date: string | null
+          status: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          decision_text?: string | null
+          has_offer?: boolean
+          id?: string
+          offer_file_path?: string | null
+          order_id: string
+          request_date?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          decision_text?: string | null
+          has_offer?: boolean
+          id?: string
+          offer_file_path?: string | null
+          order_id?: string
+          request_date?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       customers: {
         Row: {
           bank_name: string | null
