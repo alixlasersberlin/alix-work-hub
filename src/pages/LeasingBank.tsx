@@ -53,7 +53,7 @@ export default function LeasingBank() {
         <div>
           <h1 className="text-3xl font-bold">Verfügbare Aufträge</h1>
           <p className="text-muted-foreground text-sm">
-            Alle nicht ausgelieferten Aufträge mit Status <span className="font-medium">OPEN</span>.
+            Aufträge mit Status <span className="font-medium">OPEN</span>, <span className="font-medium">HOLD</span> oder <span className="font-medium">OVERDUE</span>.
           </p>
         </div>
       </div>
