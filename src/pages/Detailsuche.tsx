@@ -328,7 +328,7 @@ export default function Detailsuche() {
                     { count: r.notes.length, label: 'Notizen', icon: MessageSquare, color: 'text-muted-foreground bg-muted/30' },
                   ].filter(b => b.count > 0);
                   return (
-                    <>
+                    <Fragment key={h.id}>
                       <tr key={h.id} className="hover:bg-secondary/30">
                         <td className="px-2">
                           <button onClick={() => toggleExpand(h.id)} className="p-1 hover:bg-muted rounded" aria-label="Vorgänge anzeigen">
