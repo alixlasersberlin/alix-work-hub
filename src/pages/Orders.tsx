@@ -425,6 +425,19 @@ export default function Orders() {
                             <span className="text-muted-foreground">—</span>
                           )}
                         </td>
+                        <td className="px-4 py-3 text-xs">
+                          {o._productionOrderCount > 0 ? (
+                            <span
+                              className="inline-flex items-center gap-1 text-emerald-500 font-medium"
+                              title={`${o._productionOrderCount} Bestellung(en) ausgelöst`}
+                            >
+                              <CheckCircle2 className="w-4 h-4" />
+                              Bestellung getätigt
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </td>
                         {canWrite && (
                           <td className="px-4 py-3 text-right" onClick={e => e.stopPropagation()}>
                             <div className="flex items-center justify-end gap-1">
