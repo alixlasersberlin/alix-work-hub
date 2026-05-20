@@ -87,8 +87,9 @@ const FINANCE_ROLES = ['Admin', 'Super Admin', 'Finance'];
 const ADMIN_ROLES = ['Admin', 'Super Admin'];
 const IMPORT_ROLES = ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Read Only Audit'];
 const SYSTEM_ROLES = ['Admin', 'Super Admin', 'Read Only Audit'];
-const PRODUCTION_ROLES = ['Admin', 'Super Admin', 'Lieferant'];
+const PRODUCTION_ROLES = ['Admin', 'Super Admin', 'Lieferant', 'FACTORY INVOICE'];
 const FACTORY_INVOICE_ROLES = ['Admin', 'Super Admin', 'FACTORY INVOICE'];
+const PRODUCTION_VIEW_ROLES = ['Admin', 'Super Admin', 'FACTORY INVOICE'];
 
 function isSupplierOnly(roles: string[]) {
   return roles.includes('Lieferant') && !roles.some(r => ['Admin', 'Super Admin'].includes(r));
@@ -229,10 +230,11 @@ function AppRoutes() {
         <Route path="/order/neu" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><ProductionOrderForm /></ProtectedRoute>} />
         <Route path="/order/reklamation" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><ProductionOrders mode="reclamation" /></ProtectedRoute>} />
         <Route path="/order/reklamation/neu" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><ProductionOrderForm mode="reclamation" /></ProtectedRoute>} />
-        <Route path="/order/reklamation/:id" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><ProductionOrderDetail /></ProtectedRoute>} />
+        <Route path="/order/reklamation/:id" element={<ProtectedRoute requiredRoles={PRODUCTION_VIEW_ROLES}><ProductionOrderDetail /></ProtectedRoute>} />
         <Route path="/order/reklamation/:id/bearbeiten" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><ProductionOrderForm mode="reclamation" /></ProtectedRoute>} />
-        <Route path="/order/:id" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><ProductionOrderDetail /></ProtectedRoute>} />
+        <Route path="/order/:id" element={<ProtectedRoute requiredRoles={PRODUCTION_VIEW_ROLES}><ProductionOrderDetail /></ProtectedRoute>} />
         <Route path="/order/:id/bearbeiten" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><ProductionOrderForm /></ProtectedRoute>} />
+
         <Route path="/production" element={<ProtectedRoute requiredRoles={PRODUCTION_ROLES}><ProductionPortal /></ProtectedRoute>} />
         <Route path="/production/fertig" element={<ProtectedRoute requiredRoles={PRODUCTION_ROLES}><ProductionFertig /></ProtectedRoute>} />
         <Route path="/production/order-in" element={<ProtectedRoute requiredRoles={PRODUCTION_ROLES}><ProductionOrderIn /></ProtectedRoute>} />
