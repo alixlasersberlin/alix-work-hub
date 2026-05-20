@@ -159,7 +159,8 @@ Deno.serve(async (req: Request) => {
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - daysBack);
     cutoff.setHours(0, 0, 0, 0);
-    const lastModifiedAfter = cutoff.toISOString().split("T")[0];
+    // Zoho Books requires ISO8601 datetime, e.g. 2026-05-13T00:00:00+0000
+    const lastModifiedAfter = cutoff.toISOString().replace(/\.\d{3}Z$/, "+0000");
 
     console.log(`[scheduled-order-sync] Start ${sourceSystem}, modified since ${lastModifiedAfter}`);
 
@@ -173,7 +174,7 @@ Deno.serve(async (req: Request) => {
     const MAX_PAGES = 50;
 
     while (page <= MAX_PAGES) {
-      const apiUrl = `${zohoConfig.booksApiBaseUrl}/salesorders?organization_id=${zohoConfig.organizationId}&page=${page}&per_page=200&last_modified_time=${lastModifiedAfter}`;
+      const apiUrl = `${zohoConfig.booksApiBaseUrl}/salesorders?organization_id=${zohoConfig.organizationId}&page=${page}&per_page=200&last_modified_time=${encodeURIComponent(lastModifiedAfter)}`;
       const res = await fetch(apiUrl, { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } });
       if (!res.ok) {
         const text = await res.text();
