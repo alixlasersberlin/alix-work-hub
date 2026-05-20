@@ -78,6 +78,7 @@ import EmailTemplates from "./pages/EmailTemplates";
 import Papiere from "./pages/Papiere";
 import VersandPlaceholder from "./pages/VersandPlaceholder";
 import LeasingBank from "./pages/LeasingBank";
+import FinanzierungBeantragen from "./pages/FinanzierungBeantragen";
 import ZusagenBank from "./pages/ZusagenBank";
 import AbsagenBank from "./pages/AbsagenBank";
 import AnfragenOffen from "./pages/AnfragenOffen";
@@ -228,6 +229,7 @@ function AppRoutes() {
         <Route path="/finance/:id/bearbeiten" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Finance']}><FinanceForm /></ProtectedRoute>} />
         <Route path="/finanzierungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><LeasingBank /></ProtectedRoute>} />
         <Route path="/finanzierungen/leasing-bank" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><LeasingBank /></ProtectedRoute>} />
+        <Route path="/finanzierungen/beantragen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanzierungBeantragen /></ProtectedRoute>} />
         <Route path="/finanzierungen/zusagen-bank" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><ZusagenBank /></ProtectedRoute>} />
         <Route path="/finanzierungen/absagen-bank" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><AbsagenBank /></ProtectedRoute>} />
         <Route path="/finanzierungen/anfragen-offen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><AnfragenOffen /></ProtectedRoute>} />
