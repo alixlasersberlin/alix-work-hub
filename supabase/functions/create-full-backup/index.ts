@@ -292,6 +292,7 @@ Deno.serve(async (req) => {
       expires_in_seconds: expiresIn,
       email_sent: emailSent,
       notify_email: notifyEmail,
+      hetzner_sync: hetznerSync,
     });
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : String(err);
