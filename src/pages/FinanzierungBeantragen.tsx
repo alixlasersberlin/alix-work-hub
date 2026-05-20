@@ -361,6 +361,25 @@ export default function FinanzierungBeantragen() {
           )}
         </>
       )}
+
+      <Dialog open={showOrderDialog} onOpenChange={setShowOrderDialog}>
+        <DialogContent className="max-w-6xl w-[95vw] h-[90vh] p-0 flex flex-col overflow-hidden">
+          <DialogHeader className="px-6 py-4 border-b border-border">
+            <DialogTitle>
+              Auftrag {selected?.order_number || ''}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden">
+            {selected && (
+              <iframe
+                src={`/auftraege/${selected.id}`}
+                title="Auftrag Details"
+                className="w-full h-full border-0"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
