@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Pencil, Plus, Warehouse, Link2, X, Sparkles, Package, Search, ArrowUpDown, ArrowUp, ArrowDown, Mail } from 'lucide-react';
+import { Loader2, Pencil, Plus, Warehouse, Link2, X, Sparkles, Package, Search, ArrowUpDown, ArrowUp, ArrowDown, Mail, Send } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { z } from 'zod';
@@ -99,6 +100,13 @@ function getDeviceTypeFromNotes(notes: string | null | undefined): DeviceTypeFil
 const DEVICE_STATUS_OPTIONS = ['Bestand', 'Produktion', 'Shell Warehouse', 'Sperre BOSS', 'Transfer', 'Hold'] as const;
 type DeviceStatus = typeof DEVICE_STATUS_OPTIONS[number];
 
+// Mapping Geräte-Status → Kunden-E-Mail-Vorlage (template_key) für Bulk-Versand
+const BULK_TEMPLATE_BY_STATUS: Record<string, 'customer_warehouse_prepared' | 'customer_in_production' | 'customer_in_transit'> = {
+  'Shell Warehouse': 'customer_warehouse_prepared',
+  'Produktion': 'customer_in_production',
+  'Transfer': 'customer_in_transit',
+};
+
 function getStatusFromNotes(notes: string | null | undefined): DeviceStatus {
   const m = /\[Status:\s*([^\]]+)\]/.exec(notes ?? '');
   const v = m?.[1]?.trim();
@@ -141,6 +149,43 @@ export default function Lagergeraete({
   const [bulkStatus, setBulkStatus] = useState<DeviceStatus>('Bestand');
   const [bulkApplying, setBulkApplying] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
+  const [bulkResending, setBulkResending] = useState(false);
+
+  // Welcher Status der aktuellen Seite ist Bulk-Versand-fähig?
+  const bulkResendStatus = useMemo(
+    () => (filterStatuses ?? []).find((s) => BULK_TEMPLATE_BY_STATUS[s]),
+    [filterStatuses],
+  );
+  const bulkResendTemplateKey = bulkResendStatus ? BULK_TEMPLATE_BY_STATUS[bulkResendStatus] : null;
+
+  const runBulkResend = async () => {
+    if (!bulkResendStatus || !bulkResendTemplateKey) return;
+    setBulkResending(true);
+    try {
+      const targets = devices.filter(
+        (d) => d.reserved_order_id && getStatusFromNotes(d.notes) === bulkResendStatus,
+      );
+      if (targets.length === 0) {
+        toast.info('Keine passenden Geräte mit Auftrag gefunden.');
+        return;
+      }
+      let ok = 0, fail = 0;
+      for (const d of targets) {
+        const res = await sendCustomerShippingNotice(
+          d.reserved_order_id as string,
+          d.id,
+          'manuell',
+          bulkResendTemplateKey,
+        );
+        if (res.ok) ok++; else { fail++; console.warn('Bulk-Versand Fehler', d, res.message); }
+      }
+      toast.success(`Versendet: ${ok} · Fehler: ${fail}`);
+    } catch (e: any) {
+      toast.error('Bulk-Versand fehlgeschlagen: ' + (e?.message || 'Unbekannter Fehler'));
+    } finally {
+      setBulkResending(false);
+    }
+  };
 
   // Global search across devices and available (unreserved) open orders
   const [searchQuery, setSearchQuery] = useState('');
@@ -554,6 +599,30 @@ export default function Lagergeraete({
           title={pageTitle}
           subtitle={pageSubtitle}
         />
+        <div className="flex items-center gap-2">
+          {isAdmin && bulkResendStatus && bulkResendTemplateKey && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" className="gap-2" disabled={bulkResending}>
+                  {bulkResending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  Erneut an alle senden
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>E-Mail erneut an alle Kunden senden?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Versendet die zugeordnete Vorlage manuell an alle Kunden, deren reservierte Geräte aktuell den Status
+                    <strong> "{bulkResendStatus}"</strong> haben. Aktion kann nicht rückgängig gemacht werden.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                  <AlertDialogAction onClick={runBulkResend}>Jetzt versenden</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
           <DialogTrigger asChild>
             <Button className="gap-2">
@@ -789,6 +858,7 @@ export default function Lagergeraete({
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <OrderPickerDialog
