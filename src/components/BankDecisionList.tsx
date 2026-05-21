@@ -164,6 +164,14 @@ export default function BankDecisionList({ status, title, subtitle, icon: Icon, 
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => { e.stopPropagation(); setEditRow(r); }}
+                              title="Anfrage bearbeiten"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
                             {allowDelete && (
                               <Button
                                 variant="ghost"
