@@ -397,6 +397,30 @@ export default function BankDecisionList({ status, title, subtitle, icon: Icon, 
           {editRow && <BankFinancingTab orderId={editRow.order_id} />}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!toSend} onOpenChange={(o) => !o && !sending && setToSend(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Anfrage per E-Mail versenden?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Die Leasing-Anfrage für Auftrag{' '}
+              <span className="font-medium">{toSend?.orders?.order_number || '—'}</span>{' '}
+              wird an <span className="font-medium">gregor.polywka@hoenen-leasing.de</span> und{' '}
+              <span className="font-medium">l.scheidler@alix-operation.de</span> versendet
+              und in der Akte des Auftrags gespeichert.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={sending}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); handleSend(); }}
+              disabled={sending}
+            >
+              {sending ? 'Sende…' : 'Senden'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
