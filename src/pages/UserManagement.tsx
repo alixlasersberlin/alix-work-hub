@@ -422,6 +422,21 @@ export default function UserManagement() {
                 >
                   <ShieldOff className="w-4 h-4" /> 2FA zurücksetzen
                 </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full justify-start gap-2"
+                  disabled={actionLoading}
+                  onClick={() => {
+                    setPwNew('');
+                    setPwConfirm('');
+                    setPwRequireReset(true);
+                    setShowPasswordDialog(true);
+                  }}
+                >
+                  <Key className="w-4 h-4" /> Passwort ändern
+                </Button>
+
                 {selectedUser.account_status === 'active' ? (
                   <>
                     <Button size="sm" variant="outline" className="w-full justify-start gap-2 text-warning hover:text-warning" onClick={() => setShowConfirmAction({ action: 'disabled', user: selectedUser })}>
