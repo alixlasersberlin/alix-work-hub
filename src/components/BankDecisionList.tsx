@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import BankFinancingTab from '@/components/BankFinancingTab';
-import { Search, Loader2, Inbox, Eye, Trash2, Pencil, ArrowUp, ArrowDown, ArrowUpDown, CalendarDays } from 'lucide-react';
+import { Search, Loader2, Inbox, Eye, Trash2, Pencil, ArrowUp, ArrowDown, ArrowUpDown, CalendarDays, Mail } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -34,6 +34,8 @@ export default function BankDecisionList({ status, title, subtitle, icon: Icon, 
   const [toDelete, setToDelete] = useState<any>(null);
   const [deleting, setDeleting] = useState(false);
   const [editRow, setEditRow] = useState<any>(null);
+  const [toSend, setToSend] = useState<any>(null);
+  const [sending, setSending] = useState(false);
 
   const handleDelete = async () => {
     if (!toDelete) return;
@@ -51,6 +53,83 @@ export default function BankDecisionList({ status, title, subtitle, icon: Icon, 
     toast.success('Anfrage gelöscht. Auftrag steht wieder unter „Verfügbare Aufträge".');
     setToDelete(null);
   };
+
+  const formatAddress = (addr: any): string => {
+    if (!addr || typeof addr !== 'object') return '';
+    const parts = [
+      addr.attention || addr.contact_name,
+      addr.address || addr.street,
+      addr.street2,
+      [addr.zip || addr.postal_code, addr.city].filter(Boolean).join(' '),
+      addr.state,
+      addr.country,
+    ].filter((p) => p && String(p).trim().length > 0);
+    return parts.join(', ');
+  };
+
+  const handleSend = async () => {
+    if (!toSend) return;
+    setSending(true);
+    try {
+      const { data: full, error: fetchErr } = await supabase
+        .from('bank_financing_requests')
+        .select('id, order_id, request_date, purchase_price, down_payment, term_months, residual_value, decision_note, in_processing_note, orders(order_number, order_date, total_amount, currency, billing_address, shipping_address, customers(company_name, contact_name, email, phone, billing_address, shipping_address))')
+        .eq('id', toSend.id)
+        .single();
+      if (fetchErr || !full) throw new Error(fetchErr?.message || 'Anfrage nicht gefunden');
+
+      const o: any = full.orders;
+      const cust: any = o?.customers;
+      const addr = cust?.billing_address || cust?.shipping_address || o?.billing_address || o?.shipping_address;
+      const templateData = {
+        orderNumber: o?.order_number ?? '',
+        customerName: cust?.company_name || cust?.contact_name || '',
+        customerAddress: formatAddress(addr),
+        customerEmail: cust?.email || '',
+        customerPhone: cust?.phone || '',
+        purchasePrice: full.purchase_price,
+        downPayment: full.down_payment,
+        termMonths: full.term_months,
+        residualValue: full.residual_value,
+        requestDate: full.request_date
+          ? new Date(full.request_date).toLocaleDateString('de-DE')
+          : '',
+        totalAmount: o?.total_amount,
+        currency: o?.currency || 'EUR',
+        note: full.in_processing_note || full.decision_note || '',
+      };
+
+      const recipients = ['gregor.polywka@hoenen-leasing.de', 'l.scheidler@alix-operation.de'];
+
+      const { error: sendErr } = await supabase.functions.invoke('send-transactional-email', {
+        body: {
+          templateName: 'bank-financing-request',
+          recipientEmail: recipients[0],
+          idempotencyKey: `bank-req-${full.id}-${Date.now()}`,
+          templateData,
+          extraCc: recipients.slice(1),
+        },
+      });
+      if (sendErr) throw new Error(sendErr.message);
+
+      if (full.order_id) {
+        await supabase.from('order_notes').insert({
+          order_id: full.order_id,
+          note_type: 'email',
+          is_internal: true,
+          note_text: `Leasing-Anfrage per E-Mail versendet an: ${recipients.join(', ')} (Auftrag ${o?.order_number || ''}).`,
+        });
+      }
+
+      toast.success('Anfrage erfolgreich per E-Mail versendet und in der Akte gespeichert.');
+      setToSend(null);
+    } catch (e: any) {
+      toast.error('Versand fehlgeschlagen: ' + (e?.message || 'Unbekannter Fehler'));
+    } finally {
+      setSending(false);
+    }
+  };
+
 
   const navigate = useNavigate();
   const [rows, setRows] = useState<any[]>([]);
@@ -253,6 +332,15 @@ export default function BankDecisionList({ status, title, subtitle, icon: Icon, 
                             >
                               <Pencil className="h-4 w-4" />
                             </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => { e.stopPropagation(); setToSend(r); }}
+                              title="Anfrage per E-Mail versenden"
+                              className="text-primary hover:text-primary"
+                            >
+                              <Mail className="h-4 w-4" />
+                            </Button>
                             {allowDelete && (
                               <Button
                                 variant="ghost"
@@ -309,6 +397,30 @@ export default function BankDecisionList({ status, title, subtitle, icon: Icon, 
           {editRow && <BankFinancingTab orderId={editRow.order_id} />}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!toSend} onOpenChange={(o) => !o && !sending && setToSend(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Anfrage per E-Mail versenden?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Die Leasing-Anfrage für Auftrag{' '}
+              <span className="font-medium">{toSend?.orders?.order_number || '—'}</span>{' '}
+              wird an <span className="font-medium">gregor.polywka@hoenen-leasing.de</span> und{' '}
+              <span className="font-medium">l.scheidler@alix-operation.de</span> versendet
+              und in der Akte des Auftrags gespeichert.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={sending}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); handleSend(); }}
+              disabled={sending}
+            >
+              {sending ? 'Sende…' : 'Senden'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
