@@ -82,6 +82,7 @@ const navItems: NavItem[] = [
       { path: '/lager/equipment-area/produktion', label: 'Produktion', icon: Factory, roles: ['Admin', 'Super Admin'] },
       { path: '/lager/equipment-area/warehouse', label: 'Warehouse', icon: Warehouse, roles: ['Admin', 'Super Admin'] },
       { path: '/lager/equipment-area/hold', label: 'Hold', icon: AlertTriangle, roles: ['Admin', 'Super Admin'] },
+      { path: '/lager/equipment-area/ausgeliefert', label: 'Ausgeliefert', icon: PackageCheck, roles: ['Admin', 'Super Admin'] },
     ],
   },
   {
@@ -224,25 +225,27 @@ export default function AppLayout() {
       };
       const isLeih = (n: string | null | undefined) =>
         (n ?? '').includes('[Typ: Leihgerät]') || (n ?? '').includes('[Leihgerät]');
-      let leih = 0, lager = 0, transfer = 0, produktion = 0, hold = 0, warehouse = 0;
+      let leih = 0, lager = 0, transfer = 0, produktion = 0, hold = 0, warehouse = 0, ausgeliefert = 0;
       for (const d of data as { notes: string | null }[]) {
         const s = getStatus(d.notes);
         if (s === 'Transfer') { transfer++; continue; }
         if (s === 'Produktion') { produktion++; continue; }
         if (s === 'Hold') { hold++; continue; }
         if (s === 'Shell Warehouse') { warehouse++; continue; }
+        if (s === 'Ausgeliefert') { ausgeliefert++; continue; }
         if (isLeih(d.notes)) leih++; else lager++;
       }
       setLagerCounts((prev) => ({
         ...prev,
-        '/lager': leih + lager + transfer + produktion + hold + warehouse,
+        '/lager': leih + lager + transfer + produktion + hold + warehouse + ausgeliefert,
         '/lager/leihgeraete': leih,
         '/lager/lagergeraete': lager,
         '/lager/equipment-area/unterwegs': transfer,
         '/lager/equipment-area/produktion': produktion,
         '/lager/equipment-area/hold': hold,
         '/lager/equipment-area/warehouse': warehouse,
-        '/lager/equipment-area': lager + transfer + produktion + hold + warehouse,
+        '/lager/equipment-area/ausgeliefert': ausgeliefert,
+        '/lager/equipment-area': lager + transfer + produktion + hold + warehouse + ausgeliefert,
       }));
     };
 
