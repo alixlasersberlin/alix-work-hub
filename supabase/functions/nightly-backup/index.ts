@@ -109,6 +109,30 @@ Deno.serve(async (req) => {
       })
       .eq("id", backupId);
 
+    // Fire-and-forget alert email (failure + integrity issue)
+    try {
+      await supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "backup-failure-alert",
+          recipientEmail: "rde@alix-lasers.com",
+          idempotencyKey: `backup-fail-${backupId}`,
+          templateData: {
+            backup_id: backupId,
+            backup_type: "automated",
+            backup_scope: "full",
+            failure_kind: "Backup fehlgeschlagen",
+            backup_status: "failed",
+            integrity_status: "invalid",
+            error_message: errorMsg,
+            occurred_at: new Date().toISOString(),
+            source: "cron (nightly-backup)",
+          },
+        },
+      });
+    } catch (alertErr) {
+      console.error("Failed to send backup failure alert:", alertErr);
+    }
+
     return new Response(
       JSON.stringify({ success: false, error: errorMsg }),
       {
