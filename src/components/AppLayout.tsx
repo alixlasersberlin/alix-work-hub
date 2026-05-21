@@ -9,6 +9,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import WelcomeDialog from '@/components/WelcomeDialog';
+import LeoWelcomeDialog from '@/components/LeoWelcomeDialog';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import alixLogo from '@/assets/alix-logo-gold.png';
 
@@ -882,6 +883,7 @@ export default function AppLayout() {
         </main>
       </div>
       <WelcomeDialog />
+      <LeoWelcomeDialog />
     </div>
   );
 }
