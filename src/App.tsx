@@ -263,6 +263,7 @@ function AppRoutes() {
         <Route path="/lager/equipment-area/unterwegs" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><EquipmentUnterwegs /></ProtectedRoute>} />
         <Route path="/lager/equipment-area/produktion" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><EquipmentProduktion /></ProtectedRoute>} />
         <Route path="/lager/equipment-area/hold" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><EquipmentHold /></ProtectedRoute>} />
+        <Route path="/lager/equipment-area/ausgeliefert" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><EquipmentAusgeliefert /></ProtectedRoute>} />
       </Route>
       <Route path="/unsubscribe" element={<Unsubscribe />} />
       <Route path="*" element={<NotFound />} />
