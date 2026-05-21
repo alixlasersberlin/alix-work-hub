@@ -41,6 +41,7 @@ export default function BankFinancingTab({ orderId }: Props) {
   const [downPayment, setDownPayment] = useState<string>('');
   const [termMonths, setTermMonths] = useState<string>('');
   const [residualValue, setResidualValue] = useState<string>('');
+  const [orderAddress, setOrderAddress] = useState<string>('');
 
   async function load() {
     setLoading(true);
@@ -52,7 +53,7 @@ export default function BankFinancingTab({ orderId }: Props) {
         .maybeSingle(),
       supabase
         .from('orders')
-        .select('total_amount, deposit_amount, deposit_additional')
+        .select('total_amount, deposit_amount, deposit_additional, billing_address, shipping_address, customers(billing_address, shipping_address)')
         .eq('id', orderId)
         .maybeSingle(),
     ]);
@@ -79,6 +80,18 @@ export default function BankFinancingTab({ orderId }: Props) {
     );
     setTermMonths(data?.term_months != null ? String(data.term_months) : '');
     setResidualValue(data?.residual_value != null ? String(data.residual_value) : '');
+    const cust: any = (order as any)?.customers || {};
+    const addr: any =
+      (order as any)?.billing_address ||
+      (order as any)?.shipping_address ||
+      cust.billing_address ||
+      cust.shipping_address ||
+      {};
+    const line1 = [addr.address, addr.street2].filter(Boolean).join(' ');
+    const line2 = [addr.zip || addr.postal_code, addr.city].filter(Boolean).join(' ');
+    const line3 = [addr.state, addr.country].filter(Boolean).join(', ');
+    const formatted = [addr.attention, line1, line2, line3].filter(Boolean).join('\n');
+    setOrderAddress(formatted);
     if (data?.offer_file_path) {
       const { data: signed } = await supabase.storage.from('bank-offers').createSignedUrl(data.offer_file_path, 3600);
       setOfferUrl(signed?.signedUrl || null);
@@ -232,6 +245,7 @@ export default function BankFinancingTab({ orderId }: Props) {
           ['Anzahlung', fmtMoney(downPayment)],
           ['Gewünschte Laufzeit', termMonths ? `${termMonths} Monate` : '—'],
           ['Restwert', fmtMoney(residualValue)],
+          ['Adresse', orderAddress || '—'],
         ],
         theme: 'grid',
         headStyles: { fillColor: [201, 168, 76], textColor: 20, fontStyle: 'bold' },
@@ -395,6 +409,15 @@ export default function BankFinancingTab({ orderId }: Props) {
               placeholder="0,00"
             />
           </div>
+        </div>
+        <div>
+          <Label className="text-xs text-muted-foreground">Adresse (aus Auftrag)</Label>
+          <Textarea
+            value={orderAddress}
+            readOnly
+            placeholder="Keine Adresse im Auftrag hinterlegt"
+            className="bg-secondary border-border mt-1 min-h-[80px]"
+          />
         </div>
       </div>
 
