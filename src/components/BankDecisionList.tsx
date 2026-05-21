@@ -183,6 +183,29 @@ export default function BankDecisionList({ status, title, subtitle, icon: Icon, 
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Anfrage löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Die Finanzierungs-Anfrage für Auftrag{' '}
+              <span className="font-medium">{toDelete?.orders?.order_number || '—'}</span>{' '}
+              wird gelöscht. Der Auftrag erscheint danach wieder unter „Verfügbare Aufträge".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); handleDelete(); }}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? 'Lösche…' : 'Löschen'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
