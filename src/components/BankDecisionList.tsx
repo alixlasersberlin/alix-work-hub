@@ -217,6 +217,17 @@ export default function BankDecisionList({ status, title, subtitle, icon: Icon, 
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!editRow} onOpenChange={(o) => !o && setEditRow(null)}>
+        <DialogContent className="max-w-3xl w-[95vw] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Anfrage bearbeiten – {editRow?.orders?.order_number || '—'}
+            </DialogTitle>
+          </DialogHeader>
+          {editRow && <BankFinancingTab orderId={editRow.order_id} />}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
