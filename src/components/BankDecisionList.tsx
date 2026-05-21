@@ -57,6 +57,24 @@ export default function BankDecisionList({ status, title, subtitle, icon: Icon, 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [weekSearch, setWeekSearch] = useState('');
+  type SortKey = 'order_number' | 'customer' | 'order_date' | 'amount' | 'decided_at' | 'note';
+  const [sortKey, setSortKey] = useState<SortKey>('decided_at');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+
+  const toggleSort = (k: SortKey) => {
+    if (sortKey === k) setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
+    else { setSortKey(k); setSortDir('asc'); }
+  };
+
+  const getIsoWeek = (d: Date) => {
+    const target = new Date(d.valueOf());
+    target.setHours(0, 0, 0, 0);
+    target.setDate(target.getDate() + 3 - ((target.getDay() + 6) % 7));
+    const jan4 = new Date(target.getFullYear(), 0, 4);
+    const week = 1 + Math.round(((target.getTime() - jan4.getTime()) / 86400000 - 3 + ((jan4.getDay() + 6) % 7)) / 7);
+    return { week, year: target.getFullYear() };
+  };
 
   useEffect(() => {
     (async () => {
