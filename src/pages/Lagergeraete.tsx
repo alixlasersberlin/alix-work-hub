@@ -97,7 +97,7 @@ function getDeviceTypeFromNotes(notes: string | null | undefined): DeviceTypeFil
     : 'Neugerät';
 }
 
-const DEVICE_STATUS_OPTIONS = ['Bestand', 'Produktion', 'Shell Warehouse', 'Sperre BOSS', 'Transfer', 'Hold'] as const;
+const DEVICE_STATUS_OPTIONS = ['Bestand', 'Produktion', 'Shell Warehouse', 'Sperre BOSS', 'Transfer', 'Hold', 'Ausgeliefert'] as const;
 type DeviceStatus = typeof DEVICE_STATUS_OPTIONS[number];
 
 // Mapping Geräte-Status → Kunden-E-Mail-Vorlage (template_key) für Bulk-Versand
