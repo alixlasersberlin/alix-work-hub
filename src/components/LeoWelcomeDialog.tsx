@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Heart, Loader2, Sparkles } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import confetti from 'canvas-confetti';
 
 const TARGET_EMAIL = 'l.scheidler@alix-operation.de';
 
