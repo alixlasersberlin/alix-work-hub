@@ -883,6 +883,7 @@ export default function AppLayout() {
         </main>
       </div>
       <WelcomeDialog />
+      <LeoWelcomeDialog />
     </div>
   );
 }
