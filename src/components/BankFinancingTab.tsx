@@ -192,6 +192,12 @@ export default function BankFinancingTab({ orderId }: Props) {
       // Header
       doc.setFillColor(15, 15, 15);
       doc.rect(0, 0, pageW, 70, 'F');
+      // Logo top right
+      try {
+        const logoH = 36;
+        const logoW = 150;
+        doc.addImage(alixLogo, 'PNG', pageW - 40 - logoW, (70 - logoH) / 2, logoW, logoH, undefined, 'FAST');
+      } catch {}
       doc.setTextColor(201, 168, 76);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(18);
@@ -200,7 +206,7 @@ export default function BankFinancingTab({ orderId }: Props) {
       doc.setTextColor(220, 220, 220);
       doc.text(`Auftrag ${orderNo}`, 40, 55);
       doc.setTextColor(180, 180, 180);
-      doc.text(`Erstellt: ${now}`, pageW - 40, 55, { align: 'right' });
+      doc.text(`Erstellt: ${now}`, 40, 68);
 
       doc.setTextColor(0, 0, 0);
       doc.setFont('helvetica', 'normal');
