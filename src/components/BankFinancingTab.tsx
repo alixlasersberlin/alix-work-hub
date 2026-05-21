@@ -44,11 +44,18 @@ export default function BankFinancingTab({ orderId }: Props) {
 
   async function load() {
     setLoading(true);
-    const { data } = await supabase
-      .from('bank_financing_requests')
-      .select('*')
-      .eq('order_id', orderId)
-      .maybeSingle();
+    const [{ data }, { data: order }] = await Promise.all([
+      supabase
+        .from('bank_financing_requests')
+        .select('*')
+        .eq('order_id', orderId)
+        .maybeSingle(),
+      supabase
+        .from('orders')
+        .select('total_amount, deposit_amount, deposit_additional')
+        .eq('id', orderId)
+        .maybeSingle(),
+    ]);
     setRecord(data);
     setRequestDate(data?.request_date || '');
     setHasOffer(!!data?.has_offer);
@@ -59,8 +66,17 @@ export default function BankFinancingTab({ orderId }: Props) {
     setInProcessing(!!data?.in_processing);
     setInProcessingDate(data?.in_processing_date || '');
     setInProcessingNote(data?.in_processing_note || '');
-    setPurchasePrice(data?.purchase_price != null ? String(data.purchase_price) : '');
-    setDownPayment(data?.down_payment != null ? String(data.down_payment) : '');
+    const orderTotal = order?.total_amount != null ? Number(order.total_amount) : null;
+    const orderDeposit =
+      order?.deposit_amount != null || order?.deposit_additional != null
+        ? Number(order?.deposit_amount ?? 0) + Number(order?.deposit_additional ?? 0)
+        : null;
+    setPurchasePrice(
+      data?.purchase_price != null ? String(data.purchase_price) : orderTotal != null ? String(orderTotal) : ''
+    );
+    setDownPayment(
+      data?.down_payment != null ? String(data.down_payment) : orderDeposit != null ? String(orderDeposit) : ''
+    );
     setTermMonths(data?.term_months != null ? String(data.term_months) : '');
     setResidualValue(data?.residual_value != null ? String(data.residual_value) : '');
     if (data?.offer_file_path) {
