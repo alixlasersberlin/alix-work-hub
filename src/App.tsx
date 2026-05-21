@@ -61,6 +61,7 @@ import EquipmentUnterwegs from "./pages/EquipmentUnterwegs";
 import EquipmentWarehouse from "./pages/EquipmentWarehouse";
 import EquipmentProduktion from "./pages/EquipmentProduktion";
 import EquipmentHold from "./pages/EquipmentHold";
+import EquipmentAusgeliefert from "./pages/EquipmentAusgeliefert";
 import Artikel from "./pages/Artikel";
 import Katalog from "./pages/Katalog";
 import Kategorie from "./pages/Kategorie";
