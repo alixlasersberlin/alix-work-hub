@@ -110,8 +110,19 @@ export default function LeasingBank() {
                 <TableBody>
                   {paged.map((o) => (
                     <TableRow key={o.id} className="cursor-pointer" onClick={() => navigate(`/auftraege/${o.id}`)}>
-                      <TableCell className="font-medium">{o.order_number || '—'}</TableCell>
-                      <TableCell>{o.customers?.company_name || o.customers?.contact_name || '—'}</TableCell>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          {requestedOrderIds.has(o.id) && (
+                            <span
+                              title="Anfrage gestellt"
+                              className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-yellow-400/20 text-yellow-500 ring-1 ring-yellow-500/40"
+                            >
+                              <Check className="h-3.5 w-3.5" />
+                            </span>
+                          )}
+                          <span>{o.order_number || '—'}</span>
+                        </div>
+                      </TableCell>
                       <TableCell>{fmtDate(o.order_date)}</TableCell>
                       <TableCell className="text-right">{fmtMoney(o.total_amount, o.currency)}</TableCell>
                       <TableCell><StatusBadge status={o.order_status} /></TableCell>
