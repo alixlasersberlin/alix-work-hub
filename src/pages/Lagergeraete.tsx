@@ -1313,6 +1313,16 @@ export default function Lagergeraete({
                           <Mail className="w-4 h-4" /> E-Mail an Kunde
                         </Button>
                       )}
+                      {getStatusFromNotes(d.notes) !== 'Ausgeliefert' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => markAsDelivered(d)}
+                          className="gap-1 text-blue-500 hover:text-blue-600"
+                        >
+                          <PackageCheck className="w-4 h-4" /> Lieferung
+                        </Button>
+                      )}
                       <Button variant="ghost" size="sm" onClick={() => openEdit(d)} className="gap-1">
                         <Pencil className="w-4 h-4" /> Bearbeiten
                       </Button>
