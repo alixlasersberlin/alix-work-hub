@@ -332,6 +332,15 @@ export default function BankDecisionList({ status, title, subtitle, icon: Icon, 
                             >
                               <Pencil className="h-4 w-4" />
                             </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => { e.stopPropagation(); setToSend(r); }}
+                              title="Anfrage per E-Mail versenden"
+                              className="text-primary hover:text-primary"
+                            >
+                              <Mail className="h-4 w-4" />
+                            </Button>
                             {allowDelete && (
                               <Button
                                 variant="ghost"
