@@ -5,13 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Landmark, Search, Loader2, Inbox, Eye } from 'lucide-react';
+import { Landmark, Search, Loader2, Inbox, Eye, Check } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
 import { PageSizeSelector, usePagination, PaginationControls } from '@/components/PageSizeSelector';
 
 export default function LeasingBank() {
   const navigate = useNavigate();
   const [orders, setOrders] = useState<any[]>([]);
+  const [requestedOrderIds, setRequestedOrderIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -19,14 +20,18 @@ export default function LeasingBank() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const { data, error: err } = await supabase
-        .from('orders')
-        .select('id, order_number, order_date, total_amount, currency, order_status, customers(company_name, contact_name)')
-        .in('order_status', ['open', 'hold', 'Hold', 'HOLD', 'on_hold', 'On Hold', 'overdue', 'Overdue', 'überfällig', 'Überfällig'])
-        .order('order_date', { ascending: false, nullsFirst: false })
-        .limit(1000);
+      const [{ data, error: err }, { data: reqs }] = await Promise.all([
+        supabase
+          .from('orders')
+          .select('id, order_number, order_date, total_amount, currency, order_status, customers(company_name, contact_name)')
+          .in('order_status', ['open', 'hold', 'Hold', 'HOLD', 'on_hold', 'On Hold', 'overdue', 'Overdue', 'überfällig', 'Überfällig'])
+          .order('order_date', { ascending: false, nullsFirst: false })
+          .limit(1000),
+        supabase.from('bank_financing_requests').select('order_id'),
+      ]);
       if (err) setError(err.message);
       setOrders(data ?? []);
+      setRequestedOrderIds(new Set((reqs ?? []).map((r: any) => r.order_id)));
       setLoading(false);
     })();
   }, []);
@@ -105,7 +110,19 @@ export default function LeasingBank() {
                 <TableBody>
                   {paged.map((o) => (
                     <TableRow key={o.id} className="cursor-pointer" onClick={() => navigate(`/auftraege/${o.id}`)}>
-                      <TableCell className="font-medium">{o.order_number || '—'}</TableCell>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          {requestedOrderIds.has(o.id) && (
+                            <span
+                              title="Anfrage gestellt"
+                              className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-yellow-400/20 text-yellow-500 ring-1 ring-yellow-500/40"
+                            >
+                              <Check className="h-3.5 w-3.5" />
+                            </span>
+                          )}
+                          <span>{o.order_number || '—'}</span>
+                        </div>
+                      </TableCell>
                       <TableCell>{o.customers?.company_name || o.customers?.contact_name || '—'}</TableCell>
                       <TableCell>{fmtDate(o.order_date)}</TableCell>
                       <TableCell className="text-right">{fmtMoney(o.total_amount, o.currency)}</TableCell>
