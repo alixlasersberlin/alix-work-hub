@@ -98,6 +98,12 @@ export default function UserManagement() {
   const [showCreate, setShowCreate] = useState(false);
   const [showEditRoles, setShowEditRoles] = useState(false);
   const [showConfirmAction, setShowConfirmAction] = useState<{ action: string; user: EnrichedUser } | null>(null);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [pwNew, setPwNew] = useState('');
+  const [pwConfirm, setPwConfirm] = useState('');
+  const [pwRequireReset, setPwRequireReset] = useState(true);
+  const [pwSaving, setPwSaving] = useState(false);
+
 
   // Create form
   const [createForm, setCreateForm] = useState({
@@ -416,6 +422,21 @@ export default function UserManagement() {
                 >
                   <ShieldOff className="w-4 h-4" /> 2FA zurücksetzen
                 </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full justify-start gap-2"
+                  disabled={actionLoading}
+                  onClick={() => {
+                    setPwNew('');
+                    setPwConfirm('');
+                    setPwRequireReset(true);
+                    setShowPasswordDialog(true);
+                  }}
+                >
+                  <Key className="w-4 h-4" /> Passwort ändern
+                </Button>
+
                 {selectedUser.account_status === 'active' ? (
                   <>
                     <Button size="sm" variant="outline" className="w-full justify-start gap-2 text-warning hover:text-warning" onClick={() => setShowConfirmAction({ action: 'disabled', user: selectedUser })}>
@@ -501,7 +522,70 @@ export default function UserManagement() {
           </div>
         </div>
 
+        {/* Password Change Dialog */}
+        <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Passwort ändern</DialogTitle>
+              <DialogDescription>
+                Neues Passwort für <strong>{selectedUser?.full_name || selectedUser?.email}</strong> festlegen.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="pw-new">Neues Passwort</Label>
+                <Input id="pw-new" type="password" value={pwNew} onChange={e => setPwNew(e.target.value)} placeholder="Mindestens 8 Zeichen" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="pw-confirm">Passwort bestätigen</Label>
+                <Input id="pw-confirm" type="password" value={pwConfirm} onChange={e => setPwConfirm(e.target.value)} />
+              </div>
+              <div className="flex items-center gap-2">
+                <Checkbox id="pw-require" checked={pwRequireReset} onCheckedChange={v => setPwRequireReset(!!v)} />
+                <Label htmlFor="pw-require" className="text-sm cursor-pointer">
+                  Benutzer muss Passwort beim nächsten Login ändern
+                </Label>
+              </div>
+              <div className="rounded-lg bg-secondary/50 border border-border p-3 text-xs text-muted-foreground">
+                Mindestens 8 Zeichen. Empfohlen: Groß-/Kleinbuchstaben und Zahlen.
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowPasswordDialog(false)} disabled={pwSaving}>Abbrechen</Button>
+              <Button
+                disabled={pwSaving}
+                onClick={async () => {
+                  if (!selectedUser) return;
+                  if (pwNew.length < 8) { toast.error('Passwort muss mindestens 8 Zeichen lang sein'); return; }
+                  if (pwNew !== pwConfirm) { toast.error('Passwörter stimmen nicht überein'); return; }
+                  setPwSaving(true);
+                  try {
+                    const { data, error } = await supabase.functions.invoke('admin-reset-password', {
+                      body: { user_id: selectedUser.id, new_password: pwNew, require_reset: pwRequireReset },
+                    });
+                    if (error || data?.error) throw new Error(data?.error || error?.message);
+                    toast.success('Passwort wurde geändert');
+                    setShowPasswordDialog(false);
+                    setPwNew(''); setPwConfirm('');
+                    loadData();
+                    if (selectedUser) {
+                      setSelectedUser(prev => prev ? { ...prev, password_reset_required: pwRequireReset } : null);
+                    }
+                  } catch (e: any) {
+                    toast.error(`Fehler: ${e.message}`);
+                  }
+                  setPwSaving(false);
+                }}
+              >
+                {pwSaving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                Passwort speichern
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         {/* Confirm Action Dialog */}
+
         <Dialog open={!!showConfirmAction} onOpenChange={() => setShowConfirmAction(null)}>
           <DialogContent>
             <DialogHeader>
