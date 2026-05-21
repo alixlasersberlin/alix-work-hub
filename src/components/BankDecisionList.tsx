@@ -210,12 +210,12 @@ export default function BankDecisionList({ status, title, subtitle, icon: Icon, 
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Auftragsnr.</TableHead>
-                    <TableHead>Kunde</TableHead>
-                    <TableHead>Auftragsdatum</TableHead>
-                    <TableHead className="text-right">Betrag</TableHead>
-                    <TableHead>Anfrage gestellt</TableHead>
-                    {status === 'rejected' && <TableHead>Grund</TableHead>}
+                    <SortableHead k="order_number">Auftragsnr.</SortableHead>
+                    <SortableHead k="customer">Kunde</SortableHead>
+                    <SortableHead k="order_date">Auftragsdatum</SortableHead>
+                    <SortableHead k="amount" className="text-right">Betrag</SortableHead>
+                    <SortableHead k="decided_at">Anfrage gestellt</SortableHead>
+                    {status === 'rejected' && <SortableHead k="note">Grund</SortableHead>}
                     <TableHead className="w-[60px]"></TableHead>
                   </TableRow>
                 </TableHeader>
