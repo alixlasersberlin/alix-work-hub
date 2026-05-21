@@ -12,6 +12,7 @@ import { PageSizeSelector, usePagination, PaginationControls } from '@/component
 export default function LeasingBank() {
   const navigate = useNavigate();
   const [orders, setOrders] = useState<any[]>([]);
+  const [requestedOrderIds, setRequestedOrderIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -19,14 +20,18 @@ export default function LeasingBank() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const { data, error: err } = await supabase
-        .from('orders')
-        .select('id, order_number, order_date, total_amount, currency, order_status, customers(company_name, contact_name)')
-        .in('order_status', ['open', 'hold', 'Hold', 'HOLD', 'on_hold', 'On Hold', 'overdue', 'Overdue', 'überfällig', 'Überfällig'])
-        .order('order_date', { ascending: false, nullsFirst: false })
-        .limit(1000);
+      const [{ data, error: err }, { data: reqs }] = await Promise.all([
+        supabase
+          .from('orders')
+          .select('id, order_number, order_date, total_amount, currency, order_status, customers(company_name, contact_name)')
+          .in('order_status', ['open', 'hold', 'Hold', 'HOLD', 'on_hold', 'On Hold', 'overdue', 'Overdue', 'überfällig', 'Überfällig'])
+          .order('order_date', { ascending: false, nullsFirst: false })
+          .limit(1000),
+        supabase.from('bank_financing_requests').select('order_id'),
+      ]);
       if (err) setError(err.message);
       setOrders(data ?? []);
+      setRequestedOrderIds(new Set((reqs ?? []).map((r: any) => r.order_id)));
       setLoading(false);
     })();
   }, []);
