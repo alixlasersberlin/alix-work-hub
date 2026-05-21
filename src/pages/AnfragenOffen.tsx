@@ -9,6 +9,8 @@ export default function AnfragenOffen() {
       subtitle="Übersicht der laufenden, noch nicht entschiedenen Leasing-Anfragen."
       icon={Clock}
       emptyText="Keine offenen Anfragen vorhanden."
+      allowDelete
     />
   );
 }
+

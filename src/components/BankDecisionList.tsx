@@ -5,8 +5,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Search, Loader2, Inbox, Eye } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Search, Loader2, Inbox, Eye, Trash2 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface Props {
   status: 'approved' | 'rejected' | 'pending' | Array<'approved' | 'rejected' | 'pending' | 'in_review'>;
@@ -14,9 +25,30 @@ interface Props {
   subtitle: string;
   icon: LucideIcon;
   emptyText: string;
+  allowDelete?: boolean;
 }
 
-export default function BankDecisionList({ status, title, subtitle, icon: Icon, emptyText }: Props) {
+export default function BankDecisionList({ status, title, subtitle, icon: Icon, emptyText, allowDelete = false }: Props) {
+  const [toDelete, setToDelete] = useState<any>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!toDelete) return;
+    setDeleting(true);
+    const { error: err } = await supabase
+      .from('bank_financing_requests')
+      .delete()
+      .eq('id', toDelete.id);
+    setDeleting(false);
+    if (err) {
+      toast.error('Löschen fehlgeschlagen: ' + err.message);
+      return;
+    }
+    setRows((prev) => prev.filter((x) => x.id !== toDelete.id));
+    toast.success('Anfrage gelöscht. Auftrag steht wieder unter „Verfügbare Aufträge".');
+    setToDelete(null);
+  };
+
   const navigate = useNavigate();
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -120,13 +152,27 @@ export default function BankDecisionList({ status, title, subtitle, icon: Icon, 
                           </TableCell>
                         )}
                         <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={(e) => { e.stopPropagation(); navigate(`/auftraege/${o.id}`); }}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => { e.stopPropagation(); navigate(`/auftraege/${o.id}`); }}
+                              title="Auftrag öffnen"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            {allowDelete && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={(e) => { e.stopPropagation(); setToDelete(r); }}
+                                title="Anfrage löschen"
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
@@ -137,6 +183,29 @@ export default function BankDecisionList({ status, title, subtitle, icon: Icon, 
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Anfrage löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Die Finanzierungs-Anfrage für Auftrag{' '}
+              <span className="font-medium">{toDelete?.orders?.order_number || '—'}</span>{' '}
+              wird gelöscht. Der Auftrag erscheint danach wieder unter „Verfügbare Aufträge".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); handleDelete(); }}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? 'Lösche…' : 'Löschen'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
