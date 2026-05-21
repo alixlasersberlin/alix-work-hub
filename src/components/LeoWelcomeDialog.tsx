@@ -46,15 +46,13 @@ export default function LeoWelcomeDialog() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [requests, setRequests] = useState<OpenRequest[]>([]);
+  const [blink, setBlink] = useState(false);
 
   const quote = useMemo(() => getDayQuote(), []);
 
   useEffect(() => {
     if (!user?.email) return;
     if (user.email.toLowerCase() !== TARGET_EMAIL) return;
-    const key = `leo_welcome_${user.id}_${new Date().toDateString()}`;
-    if (sessionStorage.getItem(key)) return;
-    sessionStorage.setItem(key, '1');
 
     let cancelled = false;
     (async () => {
@@ -89,7 +87,25 @@ export default function LeoWelcomeDialog() {
       setOpen(true);
     })();
     return () => { cancelled = true; };
-  }, [user]);
+  }, [user?.id, user?.email]);
+
+  // Blink every second for 15 seconds whenever dialog opens
+  useEffect(() => {
+    if (!open) {
+      setBlink(false);
+      return;
+    }
+    setBlink(true);
+    const interval = setInterval(() => setBlink(b => !b), 1000);
+    const stop = setTimeout(() => {
+      clearInterval(interval);
+      setBlink(false);
+    }, 15000);
+    return () => {
+      clearInterval(interval);
+      clearTimeout(stop);
+    };
+  }, [open]);
 
   if (!user?.email || user.email.toLowerCase() !== TARGET_EMAIL) return null;
 
@@ -98,11 +114,17 @@ export default function LeoWelcomeDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent
-        className="max-w-2xl max-h-[85vh] overflow-y-auto border-2"
+        className="max-w-2xl max-h-[85vh] overflow-y-auto border-4 transition-all duration-200"
         style={{
-          background: 'linear-gradient(135deg, #ff1493 0%, #ff69b4 50%, #ffb6d9 100%)',
-          borderColor: '#ff1493',
+          background: blink
+            ? 'linear-gradient(135deg, #ff00aa 0%, #ff1493 50%, #ff66c4 100%)'
+            : 'linear-gradient(135deg, #ff1493 0%, #ff69b4 50%, #ffb6d9 100%)',
+          borderColor: blink ? '#fff200' : '#ff1493',
+          boxShadow: blink
+            ? '0 0 60px 12px rgba(255, 20, 147, 0.9), 0 0 120px 24px rgba(255, 242, 0, 0.5)'
+            : '0 10px 40px rgba(255, 20, 147, 0.4)',
           color: '#3a0024',
+          zIndex: 9999,
         }}
       >
         <DialogHeader>
