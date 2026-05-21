@@ -123,6 +123,7 @@ export default function LeasingBank() {
                           <span>{o.order_number || '—'}</span>
                         </div>
                       </TableCell>
+                      <TableCell>{o.customers?.company_name || o.customers?.contact_name || '—'}</TableCell>
                       <TableCell>{fmtDate(o.order_date)}</TableCell>
                       <TableCell className="text-right">{fmtMoney(o.total_amount, o.currency)}</TableCell>
                       <TableCell><StatusBadge status={o.order_status} /></TableCell>
