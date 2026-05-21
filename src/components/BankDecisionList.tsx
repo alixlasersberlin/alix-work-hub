@@ -28,7 +28,27 @@ interface Props {
   allowDelete?: boolean;
 }
 
-export default function BankDecisionList({ status, title, subtitle, icon: Icon, emptyText }: Props) {
+export default function BankDecisionList({ status, title, subtitle, icon: Icon, emptyText, allowDelete = false }: Props) {
+  const [toDelete, setToDelete] = useState<any>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!toDelete) return;
+    setDeleting(true);
+    const { error: err } = await supabase
+      .from('bank_financing_requests')
+      .delete()
+      .eq('id', toDelete.id);
+    setDeleting(false);
+    if (err) {
+      toast.error('Löschen fehlgeschlagen: ' + err.message);
+      return;
+    }
+    setRows((prev) => prev.filter((x) => x.id !== toDelete.id));
+    toast.success('Anfrage gelöscht. Auftrag steht wieder unter „Verfügbare Aufträge".');
+    setToDelete(null);
+  };
+
   const navigate = useNavigate();
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
