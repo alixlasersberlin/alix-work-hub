@@ -5,8 +5,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Search, Loader2, Inbox, Eye } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Search, Loader2, Inbox, Eye, Trash2 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface Props {
   status: 'approved' | 'rejected' | 'pending' | Array<'approved' | 'rejected' | 'pending' | 'in_review'>;
@@ -14,6 +25,7 @@ interface Props {
   subtitle: string;
   icon: LucideIcon;
   emptyText: string;
+  allowDelete?: boolean;
 }
 
 export default function BankDecisionList({ status, title, subtitle, icon: Icon, emptyText }: Props) {
