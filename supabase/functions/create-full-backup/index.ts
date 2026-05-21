@@ -307,6 +307,29 @@ Deno.serve(async (req) => {
       })
       .eq("id", backupId);
 
+    try {
+      await adminClient.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "backup-failure-alert",
+          recipientEmail: "rde@alix-lasers.com",
+          idempotencyKey: `backup-fail-${backupId}`,
+          templateData: {
+            backup_id: backupId,
+            backup_type: source === "cron" ? "automated" : "manual",
+            backup_scope: scope,
+            failure_kind: "Backup fehlgeschlagen",
+            backup_status: "failed",
+            integrity_status: "invalid",
+            error_message: errorMsg,
+            occurred_at: new Date().toISOString(),
+            source: source === "cron" ? "cron (create-full-backup)" : "manual (create-full-backup)",
+          },
+        },
+      });
+    } catch (alertErr) {
+      console.error("Failed to send backup failure alert:", alertErr);
+    }
+
     return json({ success: false, error: errorMsg }, 500);
   }
 });
