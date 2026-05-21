@@ -409,6 +409,15 @@ export default function BankFinancingTab({ orderId }: Props) {
             />
           </div>
         </div>
+        <div>
+          <Label className="text-xs text-muted-foreground">Adresse (aus Auftrag)</Label>
+          <Textarea
+            value={orderAddress}
+            readOnly
+            placeholder="Keine Adresse im Auftrag hinterlegt"
+            className="bg-secondary border-border mt-1 min-h-[80px]"
+          />
+        </div>
       </div>
 
       <div className="rounded-lg border border-border p-4 bg-background/40 space-y-3">
