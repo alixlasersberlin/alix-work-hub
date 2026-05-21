@@ -54,37 +54,44 @@ export default function LeoWelcomeDialog() {
     if (!user?.email) return;
     if (user.email.toLowerCase() !== TARGET_EMAIL) return;
 
+    // Open immediately on every login/mount, then load data in background
+    setOpen(true);
+    setLoading(true);
+
     let cancelled = false;
     (async () => {
-      setLoading(true);
-      const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
-      const { data, error } = await supabase
-        .from('bank_financing_requests')
-        .select('id, request_date, created_at, status, orders(order_number, customers(company_name, contact_name))')
-        .in('status', ['pending', 'in_review'])
-        .lt('created_at', sevenDaysAgo)
-        .order('created_at', { ascending: true });
-      if (cancelled) return;
-      if (!error && data) {
-        const mapped: OpenRequest[] = (data as any[]).map(r => {
-          const refDate = r.request_date ? new Date(r.request_date) : new Date(r.created_at);
-          const cust = r.orders?.customers;
-          return {
-            id: r.id,
-            request_date: refDate.toISOString(),
-            created_at: r.created_at,
-            status: r.status,
-            order_number: r.orders?.order_number ?? null,
-            customer: cust?.company_name || cust?.contact_name || null,
-          };
-        }).filter(r => {
-          const ageMs = Date.now() - new Date(r.request_date || r.created_at).getTime();
-          return ageMs > 7 * 86400000;
-        });
-        setRequests(mapped);
+      try {
+        const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+        const { data, error } = await supabase
+          .from('bank_financing_requests')
+          .select('id, request_date, created_at, status, orders(order_number, customers(company_name, contact_name))')
+          .in('status', ['pending', 'in_review'])
+          .lt('created_at', sevenDaysAgo)
+          .order('created_at', { ascending: true });
+        if (cancelled) return;
+        if (!error && data) {
+          const mapped: OpenRequest[] = (data as any[]).map(r => {
+            const refDate = r.request_date ? new Date(r.request_date) : new Date(r.created_at);
+            const cust = r.orders?.customers;
+            return {
+              id: r.id,
+              request_date: refDate.toISOString(),
+              created_at: r.created_at,
+              status: r.status,
+              order_number: r.orders?.order_number ?? null,
+              customer: cust?.company_name || cust?.contact_name || null,
+            };
+          }).filter(r => {
+            const ageMs = Date.now() - new Date(r.request_date || r.created_at).getTime();
+            return ageMs > 7 * 86400000;
+          });
+          setRequests(mapped);
+        }
+      } catch (e) {
+        console.error('[LeoWelcomeDialog] load failed', e);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-      setLoading(false);
-      setOpen(true);
     })();
     return () => { cancelled = true; };
   }, [user?.id, user?.email]);
