@@ -13,10 +13,12 @@ import { template as otpCode } from './otp-code.tsx'
 import { template as backupReady } from './backup-ready.tsx'
 import { template as productionOrderSupplier } from './production-order-supplier.tsx'
 import { template as customerShippingNotice } from './customer-shipping-notice.tsx'
+import { template as backupFailureAlert } from './backup-failure-alert.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'otp-code': otpCode,
   'backup-ready': backupReady,
   'production-order-supplier': productionOrderSupplier,
   'customer-shipping-notice': customerShippingNotice,
+  'backup-failure-alert': backupFailureAlert,
 }
