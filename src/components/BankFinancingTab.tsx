@@ -10,6 +10,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Landmark, Loader2, Upload, FileText, CheckCircle2, XCircle, ExternalLink, Clock, Download } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
+import alixLogo from '@/assets/alix-logo-gold.png';
 
 interface Props {
   orderId: string;
