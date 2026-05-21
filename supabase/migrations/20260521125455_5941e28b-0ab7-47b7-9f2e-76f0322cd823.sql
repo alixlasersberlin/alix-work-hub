@@ -1,0 +1,1 @@
+UPDATE public.bank_financing_requests SET decided_at = '2026-05-01T00:00:00+00:00' WHERE id = '93322395-9674-4cfb-a4e4-5808178c1590';
