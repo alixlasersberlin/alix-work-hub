@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Heart, Loader2, Sparkles } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import confetti from 'canvas-confetti';
 
 const TARGET_EMAIL = 'l.scheidler@alix-operation.de';
 
@@ -110,6 +111,75 @@ export default function LeoWelcomeDialog() {
     }, 15000);
     return () => {
       clearInterval(interval);
+      clearTimeout(stop);
+    };
+  }, [open]);
+
+  // Konfetti-Regen + Raketen über den ganzen Bildschirm wenn Dialog öffnet
+  useEffect(() => {
+    if (!open) return;
+    const colors = ['#ff1493', '#ff69b4', '#ffb6d9', '#fff200', '#ff00aa', '#ffffff'];
+    const end = Date.now() + 15000;
+
+    // Dauerhafter Konfetti-Regen von oben
+    const rainInterval = setInterval(() => {
+      confetti({
+        particleCount: 6,
+        startVelocity: 12,
+        ticks: 200,
+        gravity: 0.6,
+        spread: 360,
+        origin: { x: Math.random(), y: -0.05 },
+        colors,
+        scalar: 1.1,
+        zIndex: 10000,
+        disableForReducedMotion: true,
+      });
+    }, 120);
+
+    // Raketen, die vom unteren Rand hochschießen und explodieren
+    const rocketInterval = setInterval(() => {
+      const x = Math.random();
+      // Aufstieg (kleiner Schweif)
+      confetti({
+        particleCount: 8,
+        startVelocity: 55,
+        angle: 90,
+        spread: 12,
+        ticks: 80,
+        gravity: 1.2,
+        origin: { x, y: 1 },
+        colors,
+        scalar: 0.8,
+        zIndex: 10000,
+        disableForReducedMotion: true,
+      });
+      // Explosion oben
+      setTimeout(() => {
+        confetti({
+          particleCount: 120,
+          startVelocity: 35,
+          spread: 360,
+          ticks: 160,
+          gravity: 0.9,
+          origin: { x, y: 0.25 + Math.random() * 0.2 },
+          colors,
+          scalar: 1.2,
+          shapes: ['circle', 'square'],
+          zIndex: 10000,
+          disableForReducedMotion: true,
+        });
+      }, 600);
+    }, 900);
+
+    const stop = setTimeout(() => {
+      clearInterval(rainInterval);
+      clearInterval(rocketInterval);
+    }, end - Date.now());
+
+    return () => {
+      clearInterval(rainInterval);
+      clearInterval(rocketInterval);
       clearTimeout(stop);
     };
   }, [open]);
