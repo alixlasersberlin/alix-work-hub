@@ -98,6 +98,12 @@ export default function UserManagement() {
   const [showCreate, setShowCreate] = useState(false);
   const [showEditRoles, setShowEditRoles] = useState(false);
   const [showConfirmAction, setShowConfirmAction] = useState<{ action: string; user: EnrichedUser } | null>(null);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [pwNew, setPwNew] = useState('');
+  const [pwConfirm, setPwConfirm] = useState('');
+  const [pwRequireReset, setPwRequireReset] = useState(true);
+  const [pwSaving, setPwSaving] = useState(false);
+
 
   // Create form
   const [createForm, setCreateForm] = useState({
