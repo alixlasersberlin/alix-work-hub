@@ -15,7 +15,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Search, Loader2, Inbox, Eye, Trash2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import BankFinancingTab from '@/components/BankFinancingTab';
+import { Search, Loader2, Inbox, Eye, Trash2, Pencil } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -31,6 +33,7 @@ interface Props {
 export default function BankDecisionList({ status, title, subtitle, icon: Icon, emptyText, allowDelete = false }: Props) {
   const [toDelete, setToDelete] = useState<any>(null);
   const [deleting, setDeleting] = useState(false);
+  const [editRow, setEditRow] = useState<any>(null);
 
   const handleDelete = async () => {
     if (!toDelete) return;
@@ -161,6 +164,14 @@ export default function BankDecisionList({ status, title, subtitle, icon: Icon, 
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => { e.stopPropagation(); setEditRow(r); }}
+                              title="Anfrage bearbeiten"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
                             {allowDelete && (
                               <Button
                                 variant="ghost"
@@ -206,6 +217,17 @@ export default function BankDecisionList({ status, title, subtitle, icon: Icon, 
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!editRow} onOpenChange={(o) => !o && setEditRow(null)}>
+        <DialogContent className="max-w-3xl w-[95vw] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Anfrage bearbeiten – {editRow?.orders?.order_number || '—'}
+            </DialogTitle>
+          </DialogHeader>
+          {editRow && <BankFinancingTab orderId={editRow.order_id} />}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
