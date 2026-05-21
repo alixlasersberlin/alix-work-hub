@@ -245,6 +245,7 @@ export default function BankFinancingTab({ orderId }: Props) {
           ['Anzahlung', fmtMoney(downPayment)],
           ['Gewünschte Laufzeit', termMonths ? `${termMonths} Monate` : '—'],
           ['Restwert', fmtMoney(residualValue)],
+          ['Adresse', orderAddress || '—'],
         ],
         theme: 'grid',
         headStyles: { fillColor: [201, 168, 76], textColor: 20, fontStyle: 'bold' },
