@@ -133,7 +133,7 @@ export default function BankDecisionList({ status, title, subtitle, icon: Icon, 
                     <TableHead>Kunde</TableHead>
                     <TableHead>Auftragsdatum</TableHead>
                     <TableHead className="text-right">Betrag</TableHead>
-                    <TableHead>Entscheidung am</TableHead>
+                    <TableHead>Anfrage gestellt</TableHead>
                     {status === 'rejected' && <TableHead>Grund</TableHead>}
                     <TableHead className="w-[60px]"></TableHead>
                   </TableRow>
