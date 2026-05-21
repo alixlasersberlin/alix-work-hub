@@ -33,6 +33,7 @@ interface Props {
 export default function BankDecisionList({ status, title, subtitle, icon: Icon, emptyText, allowDelete = false }: Props) {
   const [toDelete, setToDelete] = useState<any>(null);
   const [deleting, setDeleting] = useState(false);
+  const [editRow, setEditRow] = useState<any>(null);
 
   const handleDelete = async () => {
     if (!toDelete) return;
