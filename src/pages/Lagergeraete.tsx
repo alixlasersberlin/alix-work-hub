@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Pencil, Plus, Warehouse, Link2, X, Sparkles, Package, Search, ArrowUpDown, ArrowUp, ArrowDown, Mail, Send } from 'lucide-react';
+import { Loader2, Pencil, Plus, Warehouse, Link2, X, Sparkles, Package, Search, ArrowUpDown, ArrowUp, ArrowDown, Mail, Send, PackageCheck } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -486,6 +486,28 @@ export default function Lagergeraete({
     setReservationWeek(d.reservation_week ?? '');
     setOpen(true);
   };
+
+  const markAsDelivered = async (d: LagerDevice) => {
+    if (!confirm(`Gerät "${d.serial_number}" als ausgeliefert markieren?\n\nEs wird aus dem Bestand entfernt und unter „Ausgeliefert" geführt.`)) return;
+    const typPart = getDeviceTypeFromNotes(d.notes) === 'Leihgerät' ? '[Typ: Leihgerät] ' : '[Typ: Neugerät] ';
+    const rest = (d.notes ?? '')
+      .replace(/\s*\[Status:\s*[^\]]+\]\s*/g, ' ')
+      .replace(/\s*\[Typ:\s*[^\]]+\]\s*/g, ' ')
+      .replace(/\s*\[Leihgerät\]\s*/g, ' ')
+      .trim();
+    const newNotes = `${typPart}[Status: Ausgeliefert]${rest ? ' ' + rest : ''}`;
+    const { error } = await supabase
+      .from('lager_devices')
+      .update({ notes: newNotes })
+      .eq('id', d.id);
+    if (error) {
+      toast.error('Fehler: ' + error.message);
+      return;
+    }
+    setDevices((prev) => prev.map((x) => x.id === d.id ? { ...x, notes: newNotes } : x));
+    toast.success(`Gerät ${d.serial_number} als ausgeliefert markiert.`);
+  };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1180,6 +1202,16 @@ export default function Lagergeraete({
                         <Mail className="w-4 h-4" /> E-Mail an Kunde
                       </Button>
                     )}
+                    {getStatusFromNotes(d.notes) !== 'Ausgeliefert' && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => markAsDelivered(d)}
+                        className="gap-1 h-8 text-blue-500 hover:text-blue-600"
+                      >
+                        <PackageCheck className="w-4 h-4" /> Lieferung
+                      </Button>
+                    )}
                     <Button variant="ghost" size="sm" onClick={() => openEdit(d)} className="gap-1 h-8">
                       <Pencil className="w-4 h-4" /> Bearbeiten
                     </Button>
@@ -1279,6 +1311,16 @@ export default function Lagergeraete({
                           }}
                         >
                           <Mail className="w-4 h-4" /> E-Mail an Kunde
+                        </Button>
+                      )}
+                      {getStatusFromNotes(d.notes) !== 'Ausgeliefert' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => markAsDelivered(d)}
+                          className="gap-1 text-blue-500 hover:text-blue-600"
+                        >
+                          <PackageCheck className="w-4 h-4" /> Lieferung
                         </Button>
                       )}
                       <Button variant="ghost" size="sm" onClick={() => openEdit(d)} className="gap-1">
