@@ -487,6 +487,28 @@ export default function Lagergeraete({
     setOpen(true);
   };
 
+  const markAsDelivered = async (d: LagerDevice) => {
+    if (!confirm(`Gerät "${d.serial_number}" als ausgeliefert markieren?\n\nEs wird aus dem Bestand entfernt und unter „Ausgeliefert" geführt.`)) return;
+    const typPart = getDeviceTypeFromNotes(d.notes) === 'Leihgerät' ? '[Typ: Leihgerät] ' : '[Typ: Neugerät] ';
+    const rest = (d.notes ?? '')
+      .replace(/\s*\[Status:\s*[^\]]+\]\s*/g, ' ')
+      .replace(/\s*\[Typ:\s*[^\]]+\]\s*/g, ' ')
+      .replace(/\s*\[Leihgerät\]\s*/g, ' ')
+      .trim();
+    const newNotes = `${typPart}[Status: Ausgeliefert]${rest ? ' ' + rest : ''}`;
+    const { error } = await supabase
+      .from('lager_devices')
+      .update({ notes: newNotes })
+      .eq('id', d.id);
+    if (error) {
+      toast.error('Fehler: ' + error.message);
+      return;
+    }
+    setDevices((prev) => prev.map((x) => x.id === d.id ? { ...x, notes: newNotes } : x));
+    toast.success(`Gerät ${d.serial_number} als ausgeliefert markiert.`);
+  };
+
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const parsed = formSchema.safeParse({
