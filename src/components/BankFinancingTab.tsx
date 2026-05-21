@@ -41,6 +41,7 @@ export default function BankFinancingTab({ orderId }: Props) {
   const [downPayment, setDownPayment] = useState<string>('');
   const [termMonths, setTermMonths] = useState<string>('');
   const [residualValue, setResidualValue] = useState<string>('');
+  const [orderAddress, setOrderAddress] = useState<string>('');
 
   async function load() {
     setLoading(true);
