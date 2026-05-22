@@ -18,6 +18,15 @@ import { PageSizeSelector, usePagination, PaginationControls } from '@/component
 import { useViewMode } from '@/hooks/useViewMode';
 import { ViewToggle } from '@/components/ViewToggle';
 import { useAuth } from '@/hooks/useAuth';
+import { Warehouse } from 'lucide-react';
+import {
+  findLagerMatch,
+  lagerFoundNote,
+  LAGER_NOTE_MARKER,
+  LAGER_MISSING_MARKER,
+  type LagerDeviceRow,
+  type LagerMatch,
+} from '@/lib/lager-match';
 
 type Mode = 'order' | 'reclamation';
 type Lang = 'de' | 'en' | 'zh';
