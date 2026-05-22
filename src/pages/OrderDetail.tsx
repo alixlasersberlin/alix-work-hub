@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
-  ArrowLeft, ClipboardList, Building2, FileText, History, Loader2, Inbox, Send, Pencil, X, Check, Shield, Package, CalendarIcon, CalendarClock, Truck, Euro, Mail, Landmark
+  ArrowLeft, ClipboardList, Building2, FileText, History, Loader2, Inbox, Send, Pencil, X, Check, Shield, Package, CalendarIcon, CalendarClock, Truck, Euro, Mail, Landmark, Plus, Trash2
 } from 'lucide-react';
 import BankFinancingTab from '@/components/BankFinancingTab';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -44,6 +44,11 @@ export default function OrderDetail() {
   const [depositAdditional, setDepositAdditional] = useState('');
   const [depositBookingDate, setDepositBookingDate] = useState('');
   const [savingDeposit, setSavingDeposit] = useState(false);
+  const [additionalDeposits, setAdditionalDeposits] = useState<any[]>([]);
+  const [newAddAmount, setNewAddAmount] = useState('');
+  const [newAddDate, setNewAddDate] = useState('');
+  const [newAddNote, setNewAddNote] = useState('');
+  const [addingDeposit, setAddingDeposit] = useState(false);
 
   // Note form
   const [newNote, setNewNote] = useState('');
@@ -63,17 +68,19 @@ export default function OrderDetail() {
 
   async function loadAll() {
     setLoading(true);
-    const [oRes, nRes, hRes, iRes] = await Promise.all([
+    const [oRes, nRes, hRes, iRes, adRes] = await Promise.all([
       supabase.from('orders').select('*, customers(*)').eq('id', id!).maybeSingle(),
       supabase.from('order_notes').select('*').eq('order_id', id!).order('created_at', { ascending: false }),
       supabase.from('order_status_history').select('*').eq('order_id', id!).order('created_at', { ascending: false }),
       supabase.from('order_items').select('*').eq('order_id', id!).order('item_order', { ascending: true }),
+      supabase.from('order_additional_deposits' as any).select('*').eq('order_id', id!).order('booking_date', { ascending: true }),
     ]);
     setOrder(oRes.data);
     setCustomer(oRes.data?.customers);
     setNotes(nRes.data ?? []);
     setItems(iRes.data ?? []);
     setHistory(hRes.data ?? []);
+    setAdditionalDeposits((adRes as any).data ?? []);
     setDepositOk(!!oRes.data?.deposit_ok);
     setDepositBy(oRes.data?.deposit_ok_by || '');
     setDepositAmount(oRes.data?.deposit_amount != null ? String(oRes.data.deposit_amount) : '');
@@ -140,6 +147,33 @@ export default function OrderDetail() {
     setSavingDeposit(false);
     if (error) { toast.error('Fehler: ' + error.message); return; }
     toast.success('Anzahlung gespeichert');
+    loadAll();
+  }
+
+  async function addAdditionalDeposit() {
+    const amt = newAddAmount.trim() ? parseFloat(newAddAmount.replace(',', '.')) : NaN;
+    if (!Number.isFinite(amt) || amt <= 0) { toast.error('Bitte gültigen Betrag eingeben'); return; }
+    if (!newAddDate) { toast.error('Bitte Datum auswählen'); return; }
+    setAddingDeposit(true);
+    const { error } = await supabase.from('order_additional_deposits' as any).insert({
+      order_id: id!,
+      amount: amt,
+      booking_date: newAddDate,
+      note: newAddNote.trim() || null,
+      created_by: user?.id ?? null,
+    } as any);
+    setAddingDeposit(false);
+    if (error) { toast.error('Fehler: ' + error.message); return; }
+    setNewAddAmount(''); setNewAddDate(''); setNewAddNote('');
+    toast.success('Weitere Anzahlung hinzugefügt');
+    loadAll();
+  }
+
+  async function deleteAdditionalDeposit(depId: string) {
+    if (!confirm('Diese Anzahlung wirklich löschen?')) return;
+    const { error } = await supabase.from('order_additional_deposits' as any).delete().eq('id', depId);
+    if (error) { toast.error('Fehler: ' + error.message); return; }
+    toast.success('Anzahlung gelöscht');
     loadAll();
   }
 
@@ -416,7 +450,7 @@ export default function OrderDetail() {
 
       {/* Anzahlung Tab */}
       {activeTab === 'deposit' && (
-        <div className="rounded-xl border border-border bg-card p-6 card-glow max-w-xl">
+        <div className="rounded-xl border border-border bg-card p-6 card-glow max-w-3xl">
           <h2 className="text-base font-display font-bold text-foreground flex items-center gap-2 mb-4">
             <Euro className="w-4 h-4 text-primary" /> Anzahlung
           </h2>
@@ -453,32 +487,19 @@ export default function OrderDetail() {
                 </div>
               </div>
             )}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-xs text-muted-foreground">BETRAG</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={depositAmount}
-                  onChange={e => setDepositAmount(e.target.value)}
-                  placeholder="0,00"
-                  disabled={!canWrite}
-                  className="bg-secondary border-border mt-1"
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Weitere Anzahlung</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={depositAdditional}
-                  onChange={e => setDepositAdditional(e.target.value)}
-                  placeholder="0,00"
-                  disabled={!canWrite}
-                  className="bg-secondary border-border mt-1"
-                />
-              </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">BETRAG</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={depositAmount}
+                onChange={e => setDepositAmount(e.target.value)}
+                placeholder="0,00"
+                disabled={!canWrite}
+                className="bg-secondary border-border mt-1 max-w-[240px]"
+              />
             </div>
+
             {order.deposit_ok_at && (
               <p className="text-xs text-muted-foreground">
                 Zuletzt bestätigt: {new Date(order.deposit_ok_at).toLocaleString('de-DE')}
@@ -493,6 +514,69 @@ export default function OrderDetail() {
                 </Button>
               </div>
             )}
+
+            {/* Weitere Anzahlungen */}
+            <div className="pt-4 mt-4 border-t border-border space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold tracking-wide">Weitere Anzahlungen</h3>
+                <span className="text-xs text-muted-foreground">{additionalDeposits.length} Eintrag(e)</span>
+              </div>
+
+              {additionalDeposits.length === 0 ? (
+                <p className="text-xs text-muted-foreground">Keine weiteren Anzahlungen erfasst.</p>
+              ) : (
+                <div className="space-y-2">
+                  {additionalDeposits.map(d => (
+                    <div key={d.id} className="flex items-center gap-3 rounded-md border border-border bg-secondary/40 px-3 py-2">
+                      <div className="flex-1 grid grid-cols-3 gap-3 text-sm">
+                        <div>
+                          <div className="text-[10px] uppercase text-muted-foreground">Betrag</div>
+                          <div className="font-semibold">{Number(d.amount).toLocaleString('de-DE', { minimumFractionDigits: 2 })} €</div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] uppercase text-muted-foreground">Datum</div>
+                          <div>{new Date(d.booking_date).toLocaleDateString('de-DE')}</div>
+                        </div>
+                        <div className="truncate">
+                          <div className="text-[10px] uppercase text-muted-foreground">Notiz</div>
+                          <div className="truncate" title={d.note || ''}>{d.note || '—'}</div>
+                        </div>
+                      </div>
+                      {isAdmin && (
+                        <Button variant="ghost" size="icon" onClick={() => deleteAdditionalDeposit(d.id)} className="h-8 w-8 text-destructive hover:text-destructive">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {canWrite && (
+                <div className="rounded-md border border-dashed border-border p-3 space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Betrag *</Label>
+                      <Input type="number" step="0.01" value={newAddAmount} onChange={e => setNewAddAmount(e.target.value)} placeholder="0,00" className="bg-secondary border-border mt-1" />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Datum *</Label>
+                      <Input type="date" value={newAddDate} onChange={e => setNewAddDate(e.target.value)} className="bg-secondary border-border mt-1" />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Notiz</Label>
+                      <Input value={newAddNote} onChange={e => setNewAddNote(e.target.value)} placeholder="optional" className="bg-secondary border-border mt-1" />
+                    </div>
+                  </div>
+                  <div className="flex justify-end">
+                    <Button size="sm" onClick={addAdditionalDeposit} disabled={addingDeposit} className="gold-gradient text-primary-foreground">
+                      {addingDeposit ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
+                      Anzahlung hinzufügen
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
