@@ -150,6 +150,33 @@ export default function OrderDetail() {
     loadAll();
   }
 
+  async function addAdditionalDeposit() {
+    const amt = newAddAmount.trim() ? parseFloat(newAddAmount.replace(',', '.')) : NaN;
+    if (!Number.isFinite(amt) || amt <= 0) { toast.error('Bitte gültigen Betrag eingeben'); return; }
+    if (!newAddDate) { toast.error('Bitte Datum auswählen'); return; }
+    setAddingDeposit(true);
+    const { error } = await supabase.from('order_additional_deposits' as any).insert({
+      order_id: id!,
+      amount: amt,
+      booking_date: newAddDate,
+      note: newAddNote.trim() || null,
+      created_by: user?.id ?? null,
+    } as any);
+    setAddingDeposit(false);
+    if (error) { toast.error('Fehler: ' + error.message); return; }
+    setNewAddAmount(''); setNewAddDate(''); setNewAddNote('');
+    toast.success('Weitere Anzahlung hinzugefügt');
+    loadAll();
+  }
+
+  async function deleteAdditionalDeposit(depId: string) {
+    if (!confirm('Diese Anzahlung wirklich löschen?')) return;
+    const { error } = await supabase.from('order_additional_deposits' as any).delete().eq('id', depId);
+    if (error) { toast.error('Fehler: ' + error.message); return; }
+    toast.success('Anzahlung gelöscht');
+    loadAll();
+  }
+
   if (loading) return <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   if (!order) return <div className="p-8 text-center text-muted-foreground">Auftrag nicht gefunden.</div>;
 
