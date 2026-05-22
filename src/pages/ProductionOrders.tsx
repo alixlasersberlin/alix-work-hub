@@ -119,6 +119,7 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
   const [viewMode, setViewMode] = useViewMode();
   const { hasRole, user } = useAuth();
   const isSuperAdmin = hasRole('Super Admin');
+  const [lagerMatches, setLagerMatches] = useState<Record<string, LagerMatch | 'none'>>({});
 
   const t = T[lang];
   const navigate = useNavigate();
