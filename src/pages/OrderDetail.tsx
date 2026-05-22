@@ -161,13 +161,20 @@ export default function OrderDetail() {
       amount: amt,
       booking_date: newAddDate,
       note: newAddNote.trim() || null,
+      geleistet: newAddGeleistet === 'ja',
       created_by: user?.id ?? null,
     } as any);
     setAddingDeposit(false);
     if (error) { toast.error('Fehler: ' + error.message); return; }
-    setNewAddAmount(''); setNewAddDate(''); setNewAddNote('');
+    setNewAddAmount(''); setNewAddDate(''); setNewAddNote(''); setNewAddGeleistet('nein');
     toast.success('Weitere Anzahlung hinzugefügt');
     loadAll();
+  }
+
+  async function toggleDepositGeleistet(depId: string, value: boolean) {
+    const { error } = await supabase.from('order_additional_deposits' as any).update({ geleistet: value } as any).eq('id', depId);
+    if (error) { toast.error('Fehler: ' + error.message); return; }
+    setAdditionalDeposits(prev => prev.map(d => d.id === depId ? { ...d, geleistet: value } : d));
   }
 
   async function deleteAdditionalDeposit(depId: string) {
