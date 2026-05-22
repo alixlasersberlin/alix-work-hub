@@ -487,32 +487,19 @@ export default function OrderDetail() {
                 </div>
               </div>
             )}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-xs text-muted-foreground">BETRAG</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={depositAmount}
-                  onChange={e => setDepositAmount(e.target.value)}
-                  placeholder="0,00"
-                  disabled={!canWrite}
-                  className="bg-secondary border-border mt-1"
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Weitere Anzahlung</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={depositAdditional}
-                  onChange={e => setDepositAdditional(e.target.value)}
-                  placeholder="0,00"
-                  disabled={!canWrite}
-                  className="bg-secondary border-border mt-1"
-                />
-              </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">BETRAG</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={depositAmount}
+                onChange={e => setDepositAmount(e.target.value)}
+                placeholder="0,00"
+                disabled={!canWrite}
+                className="bg-secondary border-border mt-1 max-w-[240px]"
+              />
             </div>
+
             {order.deposit_ok_at && (
               <p className="text-xs text-muted-foreground">
                 Zuletzt bestätigt: {new Date(order.deposit_ok_at).toLocaleString('de-DE')}
@@ -527,6 +514,69 @@ export default function OrderDetail() {
                 </Button>
               </div>
             )}
+
+            {/* Weitere Anzahlungen */}
+            <div className="pt-4 mt-4 border-t border-border space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold tracking-wide">Weitere Anzahlungen</h3>
+                <span className="text-xs text-muted-foreground">{additionalDeposits.length} Eintrag(e)</span>
+              </div>
+
+              {additionalDeposits.length === 0 ? (
+                <p className="text-xs text-muted-foreground">Keine weiteren Anzahlungen erfasst.</p>
+              ) : (
+                <div className="space-y-2">
+                  {additionalDeposits.map(d => (
+                    <div key={d.id} className="flex items-center gap-3 rounded-md border border-border bg-secondary/40 px-3 py-2">
+                      <div className="flex-1 grid grid-cols-3 gap-3 text-sm">
+                        <div>
+                          <div className="text-[10px] uppercase text-muted-foreground">Betrag</div>
+                          <div className="font-semibold">{Number(d.amount).toLocaleString('de-DE', { minimumFractionDigits: 2 })} €</div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] uppercase text-muted-foreground">Datum</div>
+                          <div>{new Date(d.booking_date).toLocaleDateString('de-DE')}</div>
+                        </div>
+                        <div className="truncate">
+                          <div className="text-[10px] uppercase text-muted-foreground">Notiz</div>
+                          <div className="truncate" title={d.note || ''}>{d.note || '—'}</div>
+                        </div>
+                      </div>
+                      {isAdmin && (
+                        <Button variant="ghost" size="icon" onClick={() => deleteAdditionalDeposit(d.id)} className="h-8 w-8 text-destructive hover:text-destructive">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {canWrite && (
+                <div className="rounded-md border border-dashed border-border p-3 space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Betrag *</Label>
+                      <Input type="number" step="0.01" value={newAddAmount} onChange={e => setNewAddAmount(e.target.value)} placeholder="0,00" className="bg-secondary border-border mt-1" />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Datum *</Label>
+                      <Input type="date" value={newAddDate} onChange={e => setNewAddDate(e.target.value)} className="bg-secondary border-border mt-1" />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Notiz</Label>
+                      <Input value={newAddNote} onChange={e => setNewAddNote(e.target.value)} placeholder="optional" className="bg-secondary border-border mt-1" />
+                    </div>
+                  </div>
+                  <div className="flex justify-end">
+                    <Button size="sm" onClick={addAdditionalDeposit} disabled={addingDeposit} className="gold-gradient text-primary-foreground">
+                      {addingDeposit ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
+                      Anzahlung hinzufügen
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
