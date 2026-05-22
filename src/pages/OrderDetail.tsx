@@ -68,17 +68,19 @@ export default function OrderDetail() {
 
   async function loadAll() {
     setLoading(true);
-    const [oRes, nRes, hRes, iRes] = await Promise.all([
+    const [oRes, nRes, hRes, iRes, adRes] = await Promise.all([
       supabase.from('orders').select('*, customers(*)').eq('id', id!).maybeSingle(),
       supabase.from('order_notes').select('*').eq('order_id', id!).order('created_at', { ascending: false }),
       supabase.from('order_status_history').select('*').eq('order_id', id!).order('created_at', { ascending: false }),
       supabase.from('order_items').select('*').eq('order_id', id!).order('item_order', { ascending: true }),
+      supabase.from('order_additional_deposits' as any).select('*').eq('order_id', id!).order('booking_date', { ascending: true }),
     ]);
     setOrder(oRes.data);
     setCustomer(oRes.data?.customers);
     setNotes(nRes.data ?? []);
     setItems(iRes.data ?? []);
     setHistory(hRes.data ?? []);
+    setAdditionalDeposits((adRes as any).data ?? []);
     setDepositOk(!!oRes.data?.deposit_ok);
     setDepositBy(oRes.data?.deposit_ok_by || '');
     setDepositAmount(oRes.data?.deposit_amount != null ? String(oRes.data.deposit_amount) : '');
