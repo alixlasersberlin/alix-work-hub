@@ -626,6 +626,47 @@ export type Database = {
           },
         ]
       }
+      order_additional_deposits: {
+        Row: {
+          amount: number
+          booking_date: string
+          created_at: string
+          created_by: string | null
+          id: string
+          note: string | null
+          order_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          booking_date: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          order_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          booking_date?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          order_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_additional_deposits_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_documents: {
         Row: {
           created_at: string
