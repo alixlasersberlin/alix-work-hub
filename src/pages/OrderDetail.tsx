@@ -44,6 +44,11 @@ export default function OrderDetail() {
   const [depositAdditional, setDepositAdditional] = useState('');
   const [depositBookingDate, setDepositBookingDate] = useState('');
   const [savingDeposit, setSavingDeposit] = useState(false);
+  const [additionalDeposits, setAdditionalDeposits] = useState<any[]>([]);
+  const [newAddAmount, setNewAddAmount] = useState('');
+  const [newAddDate, setNewAddDate] = useState('');
+  const [newAddNote, setNewAddNote] = useState('');
+  const [addingDeposit, setAddingDeposit] = useState(false);
 
   // Note form
   const [newNote, setNewNote] = useState('');
