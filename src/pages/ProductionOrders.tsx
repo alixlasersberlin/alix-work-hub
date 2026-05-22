@@ -18,6 +18,15 @@ import { PageSizeSelector, usePagination, PaginationControls } from '@/component
 import { useViewMode } from '@/hooks/useViewMode';
 import { ViewToggle } from '@/components/ViewToggle';
 import { useAuth } from '@/hooks/useAuth';
+import { Warehouse } from 'lucide-react';
+import {
+  findLagerMatch,
+  lagerFoundNote,
+  LAGER_NOTE_MARKER,
+  LAGER_MISSING_MARKER,
+  type LagerDeviceRow,
+  type LagerMatch,
+} from '@/lib/lager-match';
 
 type Mode = 'order' | 'reclamation';
 type Lang = 'de' | 'en' | 'zh';
@@ -110,6 +119,7 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
   const [viewMode, setViewMode] = useViewMode();
   const { hasRole, user } = useAuth();
   const isSuperAdmin = hasRole('Super Admin');
+  const [lagerMatches, setLagerMatches] = useState<Record<string, LagerMatch | 'none'>>({});
 
   const t = T[lang];
   const navigate = useNavigate();
@@ -139,6 +149,81 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
   };
 
   useEffect(() => { load(); }, [isReclamation]);
+
+  // Auto-Check: prüft jede Bestellung gegen freie Lagergeräte (Lager/Unterwegs/Produktion/Warehouse/Hold).
+  // Bei Treffer: Gerät auf order_id reservieren + Notiz in production_orders.anmerkungen anhängen.
+  // Bei Miss: einmalige Notiz "muss bestellt werden" in anmerkungen anhängen.
+  useEffect(() => {
+    if (loading || rows.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      const { data: devData } = await supabase
+        .from('lager_devices')
+        .select('id, serial_number, model_name, notes, reserved_order_id')
+        .is('reserved_order_id', null);
+      if (cancelled) return;
+      const devices = (devData as LagerDeviceRow[]) ?? [];
+      const used = new Set<string>();
+      const result: Record<string, LagerMatch | 'none'> = {};
+
+      for (const r of rows) {
+        if (!r.order_id) continue;
+        if ((r.anmerkungen || '').includes(LAGER_NOTE_MARKER)) {
+          // already checked once — read previous result from note
+          if ((r.anmerkungen || '').includes('Im Lager gefunden')) {
+            // we don't have device here, skip badge (will display generic)
+          }
+          continue;
+        }
+        const pool = devices.filter(d => !used.has(d.id));
+        const match = findLagerMatch(r.modellname, r.farbe, pool);
+        if (match) {
+          used.add(match.device.id);
+          // claim device (only if still unreserved)
+          const { data: claimed, error: claimErr } = await supabase
+            .from('lager_devices')
+            .update({ reserved_order_id: r.order_id })
+            .eq('id', match.device.id)
+            .is('reserved_order_id', null)
+            .select('id');
+          if (claimErr || !claimed || claimed.length === 0) continue;
+          const note = lagerFoundNote(match.department, match.device.serial_number);
+          const newAnm = r.anmerkungen ? `${r.anmerkungen}\n${note}` : note;
+          await supabase.from('production_orders').update({ anmerkungen: newAnm }).eq('id', r.id);
+          result[r.id] = match;
+        } else {
+          const newAnm = r.anmerkungen
+            ? `${r.anmerkungen}\n${LAGER_MISSING_MARKER}`
+            : LAGER_MISSING_MARKER;
+          await supabase.from('production_orders').update({ anmerkungen: newAnm }).eq('id', r.id);
+          result[r.id] = 'none';
+        }
+      }
+      if (cancelled) return;
+      // also derive badge state for rows that were previously checked
+      for (const r of rows) {
+        if (result[r.id]) continue;
+        const anm = r.anmerkungen || '';
+        if (anm.includes('Im Lager gefunden')) {
+          // parse department from previous note
+          const m = /Abteilung\s+([^,\]]+)/.exec(anm);
+          const sn = /SN\s+([^\]]+)/.exec(anm);
+          if (m) {
+            result[r.id] = {
+              device: { id: '', serial_number: (sn?.[1] || '').trim(), model_name: '', notes: null, reserved_order_id: null },
+              department: m[1].trim() as any,
+            };
+          }
+        } else if (anm.includes(LAGER_NOTE_MARKER)) {
+          result[r.id] = 'none';
+        }
+      }
+      setLagerMatches(result);
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, rows.length]);
+
 
   const remove = async (id: string) => {
     if (!confirm(t.confirmDelete)) return;
@@ -356,6 +441,18 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
                     <div className="flex flex-col gap-1 items-end">
                       <span className={cn('px-2 py-0.5 rounded text-[10px] font-medium', statusClasses(r.status))}>{r.status}</span>
                       <span className={cn('px-2 py-0.5 rounded text-[10px] font-medium', paymentClasses(ps))}>{tPayment(ps)}</span>
+                      {(() => {
+                        const lm = lagerMatches[r.id];
+                        if (!lm) return null;
+                        if (lm === 'none') {
+                          return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground border border-border" title="Nicht im Lager — muss bestellt werden">
+                            <Warehouse className="w-3 h-3" /> Kein Lager
+                          </span>;
+                        }
+                        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-500/15 text-emerald-500 border border-emerald-500/30" title={`Reserviert: ${lm.device.serial_number}`}>
+                          <Warehouse className="w-3 h-3" /> {lm.department}
+                        </span>;
+                      })()}
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
@@ -420,6 +517,7 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
                     <th className="p-3 font-medium">{t.delivery}</th>
                     <th className="p-3 font-medium">{t.payment}</th>
                     <th className="p-3 font-medium">{t.status}</th>
+                    <th className="p-3 font-medium">Lager</th>
                     <th className="p-3 font-medium">Freigabe</th>
                     <th className="p-3 font-medium text-right">{t.actions}</th>
                   </tr>
@@ -444,6 +542,14 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
                         </td>
                         <td className="p-3"><span className={cn('px-2 py-0.5 rounded text-xs font-medium', paymentClasses(ps))}>{tPayment(ps)}</span></td>
                         <td className="p-3"><span className={cn('px-2 py-0.5 rounded text-xs font-medium', statusClasses(r.status))}>{r.status}</span></td>
+                        <td className="p-3">
+                          {(() => {
+                            const lm = lagerMatches[r.id];
+                            if (!lm) return <span className="text-muted-foreground text-xs">—</span>;
+                            if (lm === 'none') return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground border border-border" title="Nicht im Lager — muss bestellt werden"><Warehouse className="w-3 h-3" /> Kein Lager</span>;
+                            return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-emerald-500/15 text-emerald-500 border border-emerald-500/30" title={`Reserviert: ${lm.device.serial_number}`}><Warehouse className="w-3 h-3" /> {lm.department}</span>;
+                          })()}
+                        </td>
                         <td className="p-3">
                           {(() => {
                             const a = r.approval_status || 'pending';
