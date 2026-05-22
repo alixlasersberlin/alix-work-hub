@@ -450,7 +450,7 @@ export default function OrderDetail() {
 
       {/* Anzahlung Tab */}
       {activeTab === 'deposit' && (
-        <div className="rounded-xl border border-border bg-card p-6 card-glow max-w-xl">
+        <div className="rounded-xl border border-border bg-card p-6 card-glow max-w-3xl">
           <h2 className="text-base font-display font-bold text-foreground flex items-center gap-2 mb-4">
             <Euro className="w-4 h-4 text-primary" /> Anzahlung
           </h2>
