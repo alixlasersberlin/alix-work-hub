@@ -544,6 +544,14 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
                         <td className="p-3"><span className={cn('px-2 py-0.5 rounded text-xs font-medium', statusClasses(r.status))}>{r.status}</span></td>
                         <td className="p-3">
                           {(() => {
+                            const lm = lagerMatches[r.id];
+                            if (!lm) return <span className="text-muted-foreground text-xs">—</span>;
+                            if (lm === 'none') return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground border border-border" title="Nicht im Lager — muss bestellt werden"><Warehouse className="w-3 h-3" /> Kein Lager</span>;
+                            return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-emerald-500/15 text-emerald-500 border border-emerald-500/30" title={`Reserviert: ${lm.device.serial_number}`}><Warehouse className="w-3 h-3" /> {lm.department}</span>;
+                          })()}
+                        </td>
+                        <td className="p-3">
+                          {(() => {
                             const a = r.approval_status || 'pending';
                             const cls = a === 'approved'
                               ? 'bg-green-500/15 text-green-500 border border-green-500/30'
