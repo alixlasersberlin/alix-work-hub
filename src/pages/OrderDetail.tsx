@@ -48,6 +48,7 @@ export default function OrderDetail() {
   const [newAddAmount, setNewAddAmount] = useState('');
   const [newAddDate, setNewAddDate] = useState('');
   const [newAddNote, setNewAddNote] = useState('');
+  const [newAddGeleistet, setNewAddGeleistet] = useState<'ja' | 'nein'>('nein');
   const [addingDeposit, setAddingDeposit] = useState(false);
 
   // Note form
@@ -160,13 +161,20 @@ export default function OrderDetail() {
       amount: amt,
       booking_date: newAddDate,
       note: newAddNote.trim() || null,
+      geleistet: newAddGeleistet === 'ja',
       created_by: user?.id ?? null,
     } as any);
     setAddingDeposit(false);
     if (error) { toast.error('Fehler: ' + error.message); return; }
-    setNewAddAmount(''); setNewAddDate(''); setNewAddNote('');
+    setNewAddAmount(''); setNewAddDate(''); setNewAddNote(''); setNewAddGeleistet('nein');
     toast.success('Weitere Anzahlung hinzugefügt');
     loadAll();
+  }
+
+  async function toggleDepositGeleistet(depId: string, value: boolean) {
+    const { error } = await supabase.from('order_additional_deposits' as any).update({ geleistet: value } as any).eq('id', depId);
+    if (error) { toast.error('Fehler: ' + error.message); return; }
+    setAdditionalDeposits(prev => prev.map(d => d.id === depId ? { ...d, geleistet: value } : d));
   }
 
   async function deleteAdditionalDeposit(depId: string) {
@@ -528,7 +536,7 @@ export default function OrderDetail() {
                 <div className="space-y-2">
                   {additionalDeposits.map(d => (
                     <div key={d.id} className="flex items-center gap-3 rounded-md border border-border bg-secondary/40 px-3 py-2">
-                      <div className="flex-1 grid grid-cols-3 gap-3 text-sm">
+                      <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
                         <div>
                           <div className="text-[10px] uppercase text-muted-foreground">Betrag</div>
                           <div className="font-semibold">{Number(d.amount).toLocaleString('de-DE', { minimumFractionDigits: 2 })} €</div>
@@ -536,6 +544,22 @@ export default function OrderDetail() {
                         <div>
                           <div className="text-[10px] uppercase text-muted-foreground">Datum</div>
                           <div>{new Date(d.booking_date).toLocaleDateString('de-DE')}</div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] uppercase text-muted-foreground">Geleistet</div>
+                          {canWrite ? (
+                            <Select value={d.geleistet ? 'ja' : 'nein'} onValueChange={v => toggleDepositGeleistet(d.id, v === 'ja')}>
+                              <SelectTrigger className="h-8 bg-secondary border-border mt-1">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="ja">Ja</SelectItem>
+                                <SelectItem value="nein">Nein</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <div className={d.geleistet ? 'text-emerald-400 font-semibold' : 'text-muted-foreground'}>{d.geleistet ? 'Ja' : 'Nein'}</div>
+                          )}
                         </div>
                         <div className="truncate">
                           <div className="text-[10px] uppercase text-muted-foreground">Notiz</div>
@@ -554,7 +578,7 @@ export default function OrderDetail() {
 
               {canWrite && (
                 <div className="rounded-md border border-dashed border-border p-3 space-y-3">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                     <div>
                       <Label className="text-xs text-muted-foreground">Betrag *</Label>
                       <Input type="number" step="0.01" value={newAddAmount} onChange={e => setNewAddAmount(e.target.value)} placeholder="0,00" className="bg-secondary border-border mt-1" />
@@ -562,6 +586,18 @@ export default function OrderDetail() {
                     <div>
                       <Label className="text-xs text-muted-foreground">Datum *</Label>
                       <Input type="date" value={newAddDate} onChange={e => setNewAddDate(e.target.value)} className="bg-secondary border-border mt-1" />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Geleistet</Label>
+                      <Select value={newAddGeleistet} onValueChange={v => setNewAddGeleistet(v as 'ja' | 'nein')}>
+                        <SelectTrigger className="bg-secondary border-border mt-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ja">Ja</SelectItem>
+                          <SelectItem value="nein">Nein</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div>
                       <Label className="text-xs text-muted-foreground">Notiz</Label>
