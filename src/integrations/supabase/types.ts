@@ -632,6 +632,7 @@ export type Database = {
           booking_date: string
           created_at: string
           created_by: string | null
+          geleistet: boolean
           id: string
           note: string | null
           order_id: string
@@ -642,6 +643,7 @@ export type Database = {
           booking_date: string
           created_at?: string
           created_by?: string | null
+          geleistet?: boolean
           id?: string
           note?: string | null
           order_id: string
@@ -652,6 +654,7 @@ export type Database = {
           booking_date?: string
           created_at?: string
           created_by?: string | null
+          geleistet?: boolean
           id?: string
           note?: string | null
           order_id?: string
