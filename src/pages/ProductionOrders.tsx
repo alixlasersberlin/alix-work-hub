@@ -150,6 +150,81 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
 
   useEffect(() => { load(); }, [isReclamation]);
 
+  // Auto-Check: prüft jede Bestellung gegen freie Lagergeräte (Lager/Unterwegs/Produktion/Warehouse/Hold).
+  // Bei Treffer: Gerät auf order_id reservieren + Notiz in production_orders.anmerkungen anhängen.
+  // Bei Miss: einmalige Notiz "muss bestellt werden" in anmerkungen anhängen.
+  useEffect(() => {
+    if (loading || rows.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      const { data: devData } = await supabase
+        .from('lager_devices')
+        .select('id, serial_number, model_name, notes, reserved_order_id')
+        .is('reserved_order_id', null);
+      if (cancelled) return;
+      const devices = (devData as LagerDeviceRow[]) ?? [];
+      const used = new Set<string>();
+      const result: Record<string, LagerMatch | 'none'> = {};
+
+      for (const r of rows) {
+        if (!r.order_id) continue;
+        if ((r.anmerkungen || '').includes(LAGER_NOTE_MARKER)) {
+          // already checked once — read previous result from note
+          if ((r.anmerkungen || '').includes('Im Lager gefunden')) {
+            // we don't have device here, skip badge (will display generic)
+          }
+          continue;
+        }
+        const pool = devices.filter(d => !used.has(d.id));
+        const match = findLagerMatch(r.modellname, r.farbe, pool);
+        if (match) {
+          used.add(match.device.id);
+          // claim device (only if still unreserved)
+          const { data: claimed, error: claimErr } = await supabase
+            .from('lager_devices')
+            .update({ reserved_order_id: r.order_id })
+            .eq('id', match.device.id)
+            .is('reserved_order_id', null)
+            .select('id');
+          if (claimErr || !claimed || claimed.length === 0) continue;
+          const note = lagerFoundNote(match.department, match.device.serial_number);
+          const newAnm = r.anmerkungen ? `${r.anmerkungen}\n${note}` : note;
+          await supabase.from('production_orders').update({ anmerkungen: newAnm }).eq('id', r.id);
+          result[r.id] = match;
+        } else {
+          const newAnm = r.anmerkungen
+            ? `${r.anmerkungen}\n${LAGER_MISSING_MARKER}`
+            : LAGER_MISSING_MARKER;
+          await supabase.from('production_orders').update({ anmerkungen: newAnm }).eq('id', r.id);
+          result[r.id] = 'none';
+        }
+      }
+      if (cancelled) return;
+      // also derive badge state for rows that were previously checked
+      for (const r of rows) {
+        if (result[r.id]) continue;
+        const anm = r.anmerkungen || '';
+        if (anm.includes('Im Lager gefunden')) {
+          // parse department from previous note
+          const m = /Abteilung\s+([^,\]]+)/.exec(anm);
+          const sn = /SN\s+([^\]]+)/.exec(anm);
+          if (m) {
+            result[r.id] = {
+              device: { id: '', serial_number: (sn?.[1] || '').trim(), model_name: '', notes: null, reserved_order_id: null },
+              department: m[1].trim() as any,
+            };
+          }
+        } else if (anm.includes(LAGER_NOTE_MARKER)) {
+          result[r.id] = 'none';
+        }
+      }
+      setLagerMatches(result);
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, rows.length]);
+
+
   const remove = async (id: string) => {
     if (!confirm(t.confirmDelete)) return;
     const { error } = await supabase.from('production_orders').delete().eq('id', id);
