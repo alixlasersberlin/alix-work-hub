@@ -48,6 +48,7 @@ export default function OrderDetail() {
   const [newAddAmount, setNewAddAmount] = useState('');
   const [newAddDate, setNewAddDate] = useState('');
   const [newAddNote, setNewAddNote] = useState('');
+  const [newAddGeleistet, setNewAddGeleistet] = useState<'ja' | 'nein'>('nein');
   const [addingDeposit, setAddingDeposit] = useState(false);
 
   // Note form
