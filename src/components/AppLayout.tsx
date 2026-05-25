@@ -386,7 +386,7 @@ export default function AppLayout() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, scheduleReload)
       .subscribe();
     const ch3 = supabase
-      .channel('lager_devices_counts')
+      .channel('lager_devices_counts_einkauf')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'lager_devices' }, scheduleReload)
       .subscribe();
     const onRefresh = () => scheduleReload();
