@@ -67,6 +67,7 @@ export default function OrdersFreiBestellung() {
   const [reserveOrder, setReserveOrder] = useState<any | null>(null);
   const [reserveDeviceId, setReserveDeviceId] = useState<string>('');
   const [reserving, setReserving] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const reload = async () => {
     setLoading(true);
