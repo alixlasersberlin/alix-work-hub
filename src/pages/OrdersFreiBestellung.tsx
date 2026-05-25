@@ -306,9 +306,9 @@ export default function OrdersFreiBestellung() {
             </thead>
             <tbody className="divide-y divide-border">
               {loading ? (
-                <tr><td colSpan={9} className="px-4 py-12 text-center"><Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" /></td></tr>
+                <tr><td colSpan={10} className="px-4 py-12 text-center"><Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" /></td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={9} className="px-4 py-12 text-center">
+                <tr><td colSpan={10} className="px-4 py-12 text-center">
                   <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
                   <p className="text-muted-foreground">Keine Aufträge mit Anzahlungsbestätigung gefunden.</p>
                 </td></tr>
@@ -316,8 +316,16 @@ export default function OrdersFreiBestellung() {
                 paged.map(o => {
                   const matches = matchesByOrder[o.id] || [];
                   const inStock = matches.length > 0;
+                  const isSel = selected.has(o.id);
                   return (
-                    <tr key={o.id} className="hover:bg-secondary/30 transition-colors">
+                    <tr key={o.id} className={`hover:bg-secondary/30 transition-colors ${isSel ? 'bg-primary/5' : ''}`}>
+                      <td className="px-3 py-3 w-8" onClick={(e) => e.stopPropagation()}>
+                        <Checkbox
+                          checked={isSel}
+                          onCheckedChange={() => toggleOne(o.id)}
+                          aria-label="Auswählen"
+                        />
+                      </td>
                       <td className="px-4 py-3 font-medium text-foreground cursor-pointer" onClick={() => navigate(`/auftraege/${o.id}`)}>{o.order_number}</td>
                       <td className="px-4 py-3 text-muted-foreground">{o.customers?.company_name || o.customers?.contact_name || '—'}</td>
                       <td className="px-4 py-3 text-foreground">
