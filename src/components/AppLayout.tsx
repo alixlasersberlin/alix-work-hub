@@ -385,6 +385,10 @@ export default function AppLayout() {
       .channel('orders_counts_einkauf')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, scheduleReload)
       .subscribe();
+    const ch3 = supabase
+      .channel('lager_devices_counts')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'lager_devices' }, scheduleReload)
+      .subscribe();
     const onRefresh = () => scheduleReload();
     window.addEventListener('einkauf-counts-refresh', onRefresh);
     return () => {
@@ -394,6 +398,7 @@ export default function AppLayout() {
       window.removeEventListener('einkauf-counts-refresh', onRefresh);
       supabase.removeChannel(ch1);
       supabase.removeChannel(ch2);
+      supabase.removeChannel(ch3);
     };
   }, []);
 
