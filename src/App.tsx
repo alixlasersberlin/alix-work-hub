@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -5,89 +6,101 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/hooks/useTheme";
+import { Truck as TruckIcon, Banknote as BanknoteIcon, FileSignature, CreditCard, Loader2 } from "lucide-react";
+
+// Eager: Auth-/Shell-Routen (klein & für initialen Render nötig)
 import Login from "./pages/Login";
-import SetPassword from "./pages/SetPassword";
 import AccountBlocked from "./pages/AccountBlocked";
 import AccessDenied from "./pages/AccessDenied";
 import MfaSetup from "./pages/MfaSetup";
 import MfaChallenge from "./pages/MfaChallenge";
 import MfaRecovery from "./pages/MfaRecovery";
 import AppLayout from "./components/AppLayout";
-import Dashboard from "./pages/Dashboard";
-import Customers from "./pages/Customers";
-import CustomerDetail from "./pages/CustomerDetail";
-import Orders from "./pages/Orders";
-import OrderDetail from "./pages/OrderDetail";
-import OrdersInClarification from "./pages/OrdersInClarification";
-import PriorityList from "./pages/PriorityList";
-import HoldList from "./pages/HoldList";
-import RoutePlanning from "./pages/RoutePlanning";
-import RoutePlanDetail from "./pages/RoutePlanDetail";
-import RoutePlanForm from "./pages/RoutePlanForm";
-import RoutePlanningSettings from "./pages/RoutePlanningSettings";
-import Finance from "./pages/Finance";
-import Ratenzahler from "./pages/Ratenzahler";
-import Invoices from "./pages/Invoices";
-import OffenePosten from "./pages/OffenePosten";
-import ZohoUnpaidInvoices from "./pages/ZohoUnpaidInvoices";
-import FinanceDetail from "./pages/FinanceDetail";
-import FinanceForm from "./pages/FinanceForm";
-import UserManagement from "./pages/UserManagement";
-import ImportManagement from "./pages/ImportManagement";
-import Backups from "./pages/Backups";
-import Rollen from "./pages/Rollen";
-import SystemMonitoring from "./pages/SystemMonitoring";
-import LawyerList from "./pages/LawyerList";
-import DeliveredList from "./pages/DeliveredList";
-import PartialDeliveryList from "./pages/PartialDeliveryList";
-import DeviceStatistics from "./pages/DeviceStatistics";
 import NotFound from "./pages/NotFound";
-import Unsubscribe from "./pages/Unsubscribe";
-import ProductionOrders from "./pages/ProductionOrders";
-import OrdersFreiBestellung from "./pages/OrdersFreiBestellung";
-import ProductionOrderForm from "./pages/ProductionOrderForm";
-import ProductionOrderDetail from "./pages/ProductionOrderDetail";
-import ProductionTimeline from "./pages/ProductionTimeline";
-import ProductionPortal from "./pages/ProductionPortal";
-import ProductionFertig from "./pages/ProductionFertig";
-import ProductionOrderIn from "./pages/ProductionOrderIn";
-import FactoryInvoice from "./pages/FactoryInvoice";
-import Suppliers from "./pages/Suppliers";
-import Lager from "./pages/Lager";
-import Lagergeraete from "./pages/Lagergeraete";
-import Leihgeraete from "./pages/Leihgeraete";
-import EquipmentArea from "./pages/EquipmentArea";
-import EquipmentUnterwegs from "./pages/EquipmentUnterwegs";
-import EquipmentWarehouse from "./pages/EquipmentWarehouse";
-import EquipmentProduktion from "./pages/EquipmentProduktion";
-import EquipmentHold from "./pages/EquipmentHold";
-import EquipmentAusgeliefert from "./pages/EquipmentAusgeliefert";
-import Artikel from "./pages/Artikel";
-import Katalog from "./pages/Katalog";
-import Kategorie from "./pages/Kategorie";
-import Wareneingang from "./pages/Wareneingang";
-import ArtikelUebersicht from "./pages/ArtikelUebersicht";
-import AngebotErstellen from "./pages/AngebotErstellen";
-import Angebote from "./pages/Angebote";
-import Anzahlungsrechnung from "./pages/Anzahlungsrechnung";
-import Gutschriften from "./pages/Gutschriften";
-import Freigabe from "./pages/Freigabe";
-import VerkaufUebersicht from "./pages/VerkaufUebersicht";
-import Operation from "./pages/Operation";
-import Logfiles from "./pages/Logfiles";
-import EmailTemplates from "./pages/EmailTemplates";
-import Papiere from "./pages/Papiere";
-import VersandPlaceholder from "./pages/VersandPlaceholder";
-import LeasingBank from "./pages/LeasingBank";
-import FinanzierungBeantragen from "./pages/FinanzierungBeantragen";
-import ZusagenBank from "./pages/ZusagenBank";
-import AbsagenBank from "./pages/AbsagenBank";
-import AnfragenOffen from "./pages/AnfragenOffen";
-import Detailsuche from "./pages/Detailsuche";
-import { Truck as TruckIcon, Banknote as BanknoteIcon, FileSignature, CreditCard } from "lucide-react";
-import { Loader2 } from "lucide-react";
 
-const queryClient = new QueryClient();
+// Lazy: alle Hauptseiten → Route-basiertes Code-Splitting
+const SetPassword = lazy(() => import("./pages/SetPassword"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Customers = lazy(() => import("./pages/Customers"));
+const CustomerDetail = lazy(() => import("./pages/CustomerDetail"));
+const Orders = lazy(() => import("./pages/Orders"));
+const OrderDetail = lazy(() => import("./pages/OrderDetail"));
+const OrdersInClarification = lazy(() => import("./pages/OrdersInClarification"));
+const PriorityList = lazy(() => import("./pages/PriorityList"));
+const HoldList = lazy(() => import("./pages/HoldList"));
+const RoutePlanning = lazy(() => import("./pages/RoutePlanning"));
+const RoutePlanDetail = lazy(() => import("./pages/RoutePlanDetail"));
+const RoutePlanForm = lazy(() => import("./pages/RoutePlanForm"));
+const RoutePlanningSettings = lazy(() => import("./pages/RoutePlanningSettings"));
+const Finance = lazy(() => import("./pages/Finance"));
+const Ratenzahler = lazy(() => import("./pages/Ratenzahler"));
+const Invoices = lazy(() => import("./pages/Invoices"));
+const OffenePosten = lazy(() => import("./pages/OffenePosten"));
+const ZohoUnpaidInvoices = lazy(() => import("./pages/ZohoUnpaidInvoices"));
+const FinanceDetail = lazy(() => import("./pages/FinanceDetail"));
+const FinanceForm = lazy(() => import("./pages/FinanceForm"));
+const UserManagement = lazy(() => import("./pages/UserManagement"));
+const ImportManagement = lazy(() => import("./pages/ImportManagement"));
+const Backups = lazy(() => import("./pages/Backups"));
+const Rollen = lazy(() => import("./pages/Rollen"));
+const SystemMonitoring = lazy(() => import("./pages/SystemMonitoring"));
+const LawyerList = lazy(() => import("./pages/LawyerList"));
+const DeliveredList = lazy(() => import("./pages/DeliveredList"));
+const PartialDeliveryList = lazy(() => import("./pages/PartialDeliveryList"));
+const DeviceStatistics = lazy(() => import("./pages/DeviceStatistics"));
+const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
+const ProductionOrders = lazy(() => import("./pages/ProductionOrders"));
+const OrdersFreiBestellung = lazy(() => import("./pages/OrdersFreiBestellung"));
+const ProductionOrderForm = lazy(() => import("./pages/ProductionOrderForm"));
+const ProductionOrderDetail = lazy(() => import("./pages/ProductionOrderDetail"));
+const ProductionTimeline = lazy(() => import("./pages/ProductionTimeline"));
+const ProductionPortal = lazy(() => import("./pages/ProductionPortal"));
+const ProductionFertig = lazy(() => import("./pages/ProductionFertig"));
+const ProductionOrderIn = lazy(() => import("./pages/ProductionOrderIn"));
+const FactoryInvoice = lazy(() => import("./pages/FactoryInvoice"));
+const Suppliers = lazy(() => import("./pages/Suppliers"));
+const Lager = lazy(() => import("./pages/Lager"));
+const Lagergeraete = lazy(() => import("./pages/Lagergeraete"));
+const Leihgeraete = lazy(() => import("./pages/Leihgeraete"));
+const EquipmentArea = lazy(() => import("./pages/EquipmentArea"));
+const EquipmentUnterwegs = lazy(() => import("./pages/EquipmentUnterwegs"));
+const EquipmentWarehouse = lazy(() => import("./pages/EquipmentWarehouse"));
+const EquipmentProduktion = lazy(() => import("./pages/EquipmentProduktion"));
+const EquipmentHold = lazy(() => import("./pages/EquipmentHold"));
+const EquipmentAusgeliefert = lazy(() => import("./pages/EquipmentAusgeliefert"));
+const Artikel = lazy(() => import("./pages/Artikel"));
+const Katalog = lazy(() => import("./pages/Katalog"));
+const Kategorie = lazy(() => import("./pages/Kategorie"));
+const Wareneingang = lazy(() => import("./pages/Wareneingang"));
+const ArtikelUebersicht = lazy(() => import("./pages/ArtikelUebersicht"));
+const AngebotErstellen = lazy(() => import("./pages/AngebotErstellen"));
+const Angebote = lazy(() => import("./pages/Angebote"));
+const Anzahlungsrechnung = lazy(() => import("./pages/Anzahlungsrechnung"));
+const Gutschriften = lazy(() => import("./pages/Gutschriften"));
+const Freigabe = lazy(() => import("./pages/Freigabe"));
+const VerkaufUebersicht = lazy(() => import("./pages/VerkaufUebersicht"));
+const Operation = lazy(() => import("./pages/Operation"));
+const Logfiles = lazy(() => import("./pages/Logfiles"));
+const EmailTemplates = lazy(() => import("./pages/EmailTemplates"));
+const Papiere = lazy(() => import("./pages/Papiere"));
+const VersandPlaceholder = lazy(() => import("./pages/VersandPlaceholder"));
+const LeasingBank = lazy(() => import("./pages/LeasingBank"));
+const FinanzierungBeantragen = lazy(() => import("./pages/FinanzierungBeantragen"));
+const ZusagenBank = lazy(() => import("./pages/ZusagenBank"));
+const AbsagenBank = lazy(() => import("./pages/AbsagenBank"));
+const AnfragenOffen = lazy(() => import("./pages/AnfragenOffen"));
+const Detailsuche = lazy(() => import("./pages/Detailsuche"));
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60_000,
+      gcTime: 5 * 60_000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 const ORDER_ROLES = ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance'];
 const PLANNING_ROLES = ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung'];
@@ -103,30 +116,24 @@ function isSupplierOnly(roles: string[]) {
   return roles.includes('Lieferant') && !roles.some(r => ['Admin', 'Super Admin'].includes(r));
 }
 
+function FullscreenLoader() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+    </div>
+  );
+}
+
 function ProtectedRoute({ children, requiredRoles }: { children: React.ReactNode; requiredRoles?: string[] }) {
   const { user, roles, loading, blockReason, mfaState } = useAuth();
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
+  if (loading) return <FullscreenLoader />;
   if (!user) return <Navigate to="/login" replace />;
   if (blockReason) return <AccountBlocked />;
 
-  // Pflicht-2FA
   if (mfaState === 'not_enrolled') return <Navigate to="/mfa-setup" replace />;
   if (mfaState === 'challenge_required') return <Navigate to="/mfa-challenge" replace />;
-  if (mfaState !== 'verified') {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  if (mfaState !== 'verified') return <FullscreenLoader />;
 
   if (isSupplierOnly(roles)) {
     if (requiredRoles && !requiredRoles.includes('Lieferant')) {
@@ -141,13 +148,7 @@ function ProtectedRoute({ children, requiredRoles }: { children: React.ReactNode
 
 function MfaGate({ children, expect }: { children: React.ReactNode; expect: 'not_enrolled' | 'challenge_required' | 'any' }) {
   const { user, loading, mfaState, blockReason } = useAuth();
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  if (loading) return <FullscreenLoader />;
   if (!user) return <Navigate to="/login" replace />;
   if (blockReason) return <AccountBlocked />;
   if (mfaState === 'verified') return <Navigate to="/" replace />;
@@ -167,107 +168,103 @@ function HomeRoute() {
 function AppRoutes() {
   const { user, loading } = useAuth();
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  if (loading) return <FullscreenLoader />;
 
   return (
-    <Routes>
-      <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
-      <Route path="/passwort-setzen" element={<SetPassword />} />
-      <Route path="/mfa-setup" element={<MfaGate expect="not_enrolled"><MfaSetup /></MfaGate>} />
-      <Route path="/mfa-challenge" element={<MfaGate expect="challenge_required"><MfaChallenge /></MfaGate>} />
-      <Route path="/mfa-recovery" element={<MfaGate expect="any"><MfaRecovery /></MfaGate>} />
-      <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-        <Route path="/" element={<HomeRoute />} />
-        <Route path="/detailsuche" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Detailsuche /></ProtectedRoute>} />
-        <Route path="/kunden" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Customers /></ProtectedRoute>} />
-        <Route path="/kunden/:id" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><CustomerDetail /></ProtectedRoute>} />
-        <Route path="/auftraege" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Orders /></ProtectedRoute>} />
-        <Route path="/auftraege/in-klaerung" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><OrdersInClarification /></ProtectedRoute>} />
-        <Route path="/auftraege/:id" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><OrderDetail /></ProtectedRoute>} />
-        <Route path="/verkauf/artikel" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Artikel /></ProtectedRoute>} />
-        <Route path="/verkauf/artikel/katalog" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Katalog /></ProtectedRoute>} />
-        <Route path="/verkauf/artikel/kategorie" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Kategorie /></ProtectedRoute>} />
-        <Route path="/verkauf/artikel/wareneingang" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Wareneingang /></ProtectedRoute>} />
-        <Route path="/verkauf/artikel-uebersicht" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><ArtikelUebersicht /></ProtectedRoute>} />
-        <Route path="/verkauf" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><VerkaufUebersicht /></ProtectedRoute>} />
-        <Route path="/verkauf/angebot/neu" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Auftragsverwaltung']}><AngebotErstellen /></ProtectedRoute>} />
-        <Route path="/verkauf/angebote" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Angebote /></ProtectedRoute>} />
-        <Route path="/verkauf/anzahlungsrechnung" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Anzahlungsrechnung /></ProtectedRoute>} />
-        <Route path="/verkauf/gutschriften" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Gutschriften /></ProtectedRoute>} />
-        <Route path="/verkauf/freigabe" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Freigabe /></ProtectedRoute>} />
-        <Route path="/operation" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Operation /></ProtectedRoute>} />
-        <Route path="/operation/logfiles" element={<ProtectedRoute requiredRoles={SYSTEM_ROLES}><Logfiles /></ProtectedRoute>} />
-        <Route path="/operation/email-vorlagen" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><EmailTemplates /></ProtectedRoute>} />
-        <Route path="/papiere" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Papiere /></ProtectedRoute>} />
-        <Route path="/versand/lieferscheine" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><VersandPlaceholder title="Lieferscheine" description="Versand & Lieferdokumente" icon={TruckIcon} /></ProtectedRoute>} />
-        <Route path="/versand/ratenplan" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><VersandPlaceholder title="Ratenplan" description="Übersicht aller Ratenpläne" icon={BanknoteIcon} /></ProtectedRoute>} />
-        <Route path="/versand/mietkauf" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><VersandPlaceholder title="Mietkauf" description="Mietkauf-Verträge" icon={FileSignature} /></ProtectedRoute>} />
-        <Route path="/versand/sepa-mandat" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><VersandPlaceholder title="SEPA Mandat" description="SEPA-Lastschriftmandate" icon={CreditCard} /></ProtectedRoute>} />
-        <Route path="/prio-liste" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><PriorityList /></ProtectedRoute>} />
-        <Route path="/prio-liste/hold" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><HoldList /></ProtectedRoute>} />
-        <Route path="/anwaltsliste" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><LawyerList /></ProtectedRoute>} />
-        <Route path="/geliefert" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><DeliveredList /></ProtectedRoute>} />
-        <Route path="/teilgeliefert" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><PartialDeliveryList /></ProtectedRoute>} />
-        <Route path="/geraetetypen" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><DeviceStatistics /></ProtectedRoute>} />
-        <Route path="/tourenplanung" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><RoutePlanning /></ProtectedRoute>} />
-        <Route path="/tourenplanung/einstellungen" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Tourenplanung']}><RoutePlanningSettings /></ProtectedRoute>} />
-        <Route path="/tourenplanung/neu" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Tourenplanung']}><RoutePlanForm /></ProtectedRoute>} />
-        <Route path="/tourenplanung/:id" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><RoutePlanDetail /></ProtectedRoute>} />
-        <Route path="/tourenplanung/:id/bearbeiten" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Tourenplanung']}><RoutePlanForm /></ProtectedRoute>} />
-        <Route path="/finance" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Finance /></ProtectedRoute>} />
-        <Route path="/finance/ratenzahler" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Ratenzahler /></ProtectedRoute>} />
-        <Route path="/finance/rechnungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Invoices /></ProtectedRoute>} />
-        <Route path="/finance/offene-posten" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><OffenePosten /></ProtectedRoute>} />
-        <Route path="/finance/unpaid-zoho" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><ZohoUnpaidInvoices /></ProtectedRoute>} />
-        <Route path="/finance/neu" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Finance']}><FinanceForm /></ProtectedRoute>} />
-        <Route path="/finance/:id" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceDetail /></ProtectedRoute>} />
-        <Route path="/finance/:id/bearbeiten" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Finance']}><FinanceForm /></ProtectedRoute>} />
-        <Route path="/finanzierungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><LeasingBank /></ProtectedRoute>} />
-        <Route path="/finanzierungen/leasing-bank" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><LeasingBank /></ProtectedRoute>} />
-        <Route path="/finanzierungen/beantragen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanzierungBeantragen /></ProtectedRoute>} />
-        <Route path="/finanzierungen/zusagen-bank" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><ZusagenBank /></ProtectedRoute>} />
-        <Route path="/finanzierungen/absagen-bank" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><AbsagenBank /></ProtectedRoute>} />
-        <Route path="/finanzierungen/anfragen-offen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><AnfragenOffen /></ProtectedRoute>} />
-        <Route path="/benutzer" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><UserManagement /></ProtectedRoute>} />
-        <Route path="/import" element={<ProtectedRoute requiredRoles={IMPORT_ROLES}><ImportManagement /></ProtectedRoute>} />
-        <Route path="/datensicherung" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Backups /></ProtectedRoute>} />
-        <Route path="/rollen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Rollen /></ProtectedRoute>} />
-        <Route path="/system" element={<ProtectedRoute requiredRoles={SYSTEM_ROLES}><SystemMonitoring /></ProtectedRoute>} />
-        <Route path="/order" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><ProductionOrders /></ProtectedRoute>} />
-        <Route path="/order/frei-bestellung" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><OrdersFreiBestellung /></ProtectedRoute>} />
-        <Route path="/order/timeline" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><ProductionTimeline /></ProtectedRoute>} />
-        <Route path="/order/zulieferer" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Suppliers /></ProtectedRoute>} />
-        <Route path="/order/neu" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><ProductionOrderForm /></ProtectedRoute>} />
-        <Route path="/order/reklamation" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><ProductionOrders mode="reclamation" /></ProtectedRoute>} />
-        <Route path="/order/reklamation/neu" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><ProductionOrderForm mode="reclamation" /></ProtectedRoute>} />
-        <Route path="/order/reklamation/:id" element={<ProtectedRoute requiredRoles={PRODUCTION_VIEW_ROLES}><ProductionOrderDetail /></ProtectedRoute>} />
-        <Route path="/order/reklamation/:id/bearbeiten" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><ProductionOrderForm mode="reclamation" /></ProtectedRoute>} />
-        <Route path="/order/:id" element={<ProtectedRoute requiredRoles={PRODUCTION_VIEW_ROLES}><ProductionOrderDetail /></ProtectedRoute>} />
-        <Route path="/order/:id/bearbeiten" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><ProductionOrderForm /></ProtectedRoute>} />
+    <Suspense fallback={<FullscreenLoader />}>
+      <Routes>
+        <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
+        <Route path="/passwort-setzen" element={<SetPassword />} />
+        <Route path="/mfa-setup" element={<MfaGate expect="not_enrolled"><MfaSetup /></MfaGate>} />
+        <Route path="/mfa-challenge" element={<MfaGate expect="challenge_required"><MfaChallenge /></MfaGate>} />
+        <Route path="/mfa-recovery" element={<MfaGate expect="any"><MfaRecovery /></MfaGate>} />
+        <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+          <Route path="/" element={<HomeRoute />} />
+          <Route path="/detailsuche" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Detailsuche /></ProtectedRoute>} />
+          <Route path="/kunden" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Customers /></ProtectedRoute>} />
+          <Route path="/kunden/:id" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><CustomerDetail /></ProtectedRoute>} />
+          <Route path="/auftraege" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Orders /></ProtectedRoute>} />
+          <Route path="/auftraege/in-klaerung" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><OrdersInClarification /></ProtectedRoute>} />
+          <Route path="/auftraege/:id" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><OrderDetail /></ProtectedRoute>} />
+          <Route path="/verkauf/artikel" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Artikel /></ProtectedRoute>} />
+          <Route path="/verkauf/artikel/katalog" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Katalog /></ProtectedRoute>} />
+          <Route path="/verkauf/artikel/kategorie" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Kategorie /></ProtectedRoute>} />
+          <Route path="/verkauf/artikel/wareneingang" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Wareneingang /></ProtectedRoute>} />
+          <Route path="/verkauf/artikel-uebersicht" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><ArtikelUebersicht /></ProtectedRoute>} />
+          <Route path="/verkauf" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><VerkaufUebersicht /></ProtectedRoute>} />
+          <Route path="/verkauf/angebot/neu" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Auftragsverwaltung']}><AngebotErstellen /></ProtectedRoute>} />
+          <Route path="/verkauf/angebote" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Angebote /></ProtectedRoute>} />
+          <Route path="/verkauf/anzahlungsrechnung" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Anzahlungsrechnung /></ProtectedRoute>} />
+          <Route path="/verkauf/gutschriften" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Gutschriften /></ProtectedRoute>} />
+          <Route path="/verkauf/freigabe" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Freigabe /></ProtectedRoute>} />
+          <Route path="/operation" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Operation /></ProtectedRoute>} />
+          <Route path="/operation/logfiles" element={<ProtectedRoute requiredRoles={SYSTEM_ROLES}><Logfiles /></ProtectedRoute>} />
+          <Route path="/operation/email-vorlagen" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><EmailTemplates /></ProtectedRoute>} />
+          <Route path="/papiere" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Papiere /></ProtectedRoute>} />
+          <Route path="/versand/lieferscheine" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><VersandPlaceholder title="Lieferscheine" description="Versand & Lieferdokumente" icon={TruckIcon} /></ProtectedRoute>} />
+          <Route path="/versand/ratenplan" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><VersandPlaceholder title="Ratenplan" description="Übersicht aller Ratenpläne" icon={BanknoteIcon} /></ProtectedRoute>} />
+          <Route path="/versand/mietkauf" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><VersandPlaceholder title="Mietkauf" description="Mietkauf-Verträge" icon={FileSignature} /></ProtectedRoute>} />
+          <Route path="/versand/sepa-mandat" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><VersandPlaceholder title="SEPA Mandat" description="SEPA-Lastschriftmandate" icon={CreditCard} /></ProtectedRoute>} />
+          <Route path="/prio-liste" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><PriorityList /></ProtectedRoute>} />
+          <Route path="/prio-liste/hold" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><HoldList /></ProtectedRoute>} />
+          <Route path="/anwaltsliste" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><LawyerList /></ProtectedRoute>} />
+          <Route path="/geliefert" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><DeliveredList /></ProtectedRoute>} />
+          <Route path="/teilgeliefert" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><PartialDeliveryList /></ProtectedRoute>} />
+          <Route path="/geraetetypen" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><DeviceStatistics /></ProtectedRoute>} />
+          <Route path="/tourenplanung" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><RoutePlanning /></ProtectedRoute>} />
+          <Route path="/tourenplanung/einstellungen" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Tourenplanung']}><RoutePlanningSettings /></ProtectedRoute>} />
+          <Route path="/tourenplanung/neu" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Tourenplanung']}><RoutePlanForm /></ProtectedRoute>} />
+          <Route path="/tourenplanung/:id" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><RoutePlanDetail /></ProtectedRoute>} />
+          <Route path="/tourenplanung/:id/bearbeiten" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Tourenplanung']}><RoutePlanForm /></ProtectedRoute>} />
+          <Route path="/finance" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Finance /></ProtectedRoute>} />
+          <Route path="/finance/ratenzahler" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Ratenzahler /></ProtectedRoute>} />
+          <Route path="/finance/rechnungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Invoices /></ProtectedRoute>} />
+          <Route path="/finance/offene-posten" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><OffenePosten /></ProtectedRoute>} />
+          <Route path="/finance/unpaid-zoho" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><ZohoUnpaidInvoices /></ProtectedRoute>} />
+          <Route path="/finance/neu" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Finance']}><FinanceForm /></ProtectedRoute>} />
+          <Route path="/finance/:id" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceDetail /></ProtectedRoute>} />
+          <Route path="/finance/:id/bearbeiten" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Finance']}><FinanceForm /></ProtectedRoute>} />
+          <Route path="/finanzierungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><LeasingBank /></ProtectedRoute>} />
+          <Route path="/finanzierungen/leasing-bank" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><LeasingBank /></ProtectedRoute>} />
+          <Route path="/finanzierungen/beantragen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanzierungBeantragen /></ProtectedRoute>} />
+          <Route path="/finanzierungen/zusagen-bank" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><ZusagenBank /></ProtectedRoute>} />
+          <Route path="/finanzierungen/absagen-bank" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><AbsagenBank /></ProtectedRoute>} />
+          <Route path="/finanzierungen/anfragen-offen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><AnfragenOffen /></ProtectedRoute>} />
+          <Route path="/benutzer" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><UserManagement /></ProtectedRoute>} />
+          <Route path="/import" element={<ProtectedRoute requiredRoles={IMPORT_ROLES}><ImportManagement /></ProtectedRoute>} />
+          <Route path="/datensicherung" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Backups /></ProtectedRoute>} />
+          <Route path="/rollen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Rollen /></ProtectedRoute>} />
+          <Route path="/system" element={<ProtectedRoute requiredRoles={SYSTEM_ROLES}><SystemMonitoring /></ProtectedRoute>} />
+          <Route path="/order" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><ProductionOrders /></ProtectedRoute>} />
+          <Route path="/order/frei-bestellung" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><OrdersFreiBestellung /></ProtectedRoute>} />
+          <Route path="/order/timeline" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><ProductionTimeline /></ProtectedRoute>} />
+          <Route path="/order/zulieferer" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Suppliers /></ProtectedRoute>} />
+          <Route path="/order/neu" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><ProductionOrderForm /></ProtectedRoute>} />
+          <Route path="/order/reklamation" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><ProductionOrders mode="reclamation" /></ProtectedRoute>} />
+          <Route path="/order/reklamation/neu" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><ProductionOrderForm mode="reclamation" /></ProtectedRoute>} />
+          <Route path="/order/reklamation/:id" element={<ProtectedRoute requiredRoles={PRODUCTION_VIEW_ROLES}><ProductionOrderDetail /></ProtectedRoute>} />
+          <Route path="/order/reklamation/:id/bearbeiten" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><ProductionOrderForm mode="reclamation" /></ProtectedRoute>} />
+          <Route path="/order/:id" element={<ProtectedRoute requiredRoles={PRODUCTION_VIEW_ROLES}><ProductionOrderDetail /></ProtectedRoute>} />
+          <Route path="/order/:id/bearbeiten" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><ProductionOrderForm /></ProtectedRoute>} />
 
-        <Route path="/production" element={<ProtectedRoute requiredRoles={PRODUCTION_ROLES}><ProductionPortal /></ProtectedRoute>} />
-        <Route path="/production/fertig" element={<ProtectedRoute requiredRoles={PRODUCTION_ROLES}><ProductionFertig /></ProtectedRoute>} />
-        <Route path="/production/order-in" element={<ProtectedRoute requiredRoles={PRODUCTION_ROLES}><ProductionOrderIn /></ProtectedRoute>} />
-        <Route path="/production/factory-invoice" element={<ProtectedRoute requiredRoles={FACTORY_INVOICE_ROLES}><FactoryInvoice /></ProtectedRoute>} />
-        <Route path="/lager" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Lager /></ProtectedRoute>} />
-        <Route path="/lager/lagergeraete" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Lagergeraete filterType="Neugerät" pageTitle="Lagergeräte" pageSubtitle="Erfassung und Übersicht aller Neugeräte im Lager" addLabel="Neues Lagergerät" dialogTitle="Lagergerät" emptyLabel="Noch keine Lagergeräte erfasst." rowAccentClass="bg-emerald-500/10 hover:bg-emerald-500/15" /></ProtectedRoute>} />
-        <Route path="/lager/leihgeraete" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Leihgeraete /></ProtectedRoute>} />
-        <Route path="/lager/equipment-area" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><EquipmentArea /></ProtectedRoute>} />
-        <Route path="/lager/equipment-area/warehouse" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><EquipmentWarehouse /></ProtectedRoute>} />
-        <Route path="/lager/equipment-area/unterwegs" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><EquipmentUnterwegs /></ProtectedRoute>} />
-        <Route path="/lager/equipment-area/produktion" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><EquipmentProduktion /></ProtectedRoute>} />
-        <Route path="/lager/equipment-area/hold" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><EquipmentHold /></ProtectedRoute>} />
-        <Route path="/lager/equipment-area/ausgeliefert" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><EquipmentAusgeliefert /></ProtectedRoute>} />
-      </Route>
-      <Route path="/unsubscribe" element={<Unsubscribe />} />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+          <Route path="/production" element={<ProtectedRoute requiredRoles={PRODUCTION_ROLES}><ProductionPortal /></ProtectedRoute>} />
+          <Route path="/production/fertig" element={<ProtectedRoute requiredRoles={PRODUCTION_ROLES}><ProductionFertig /></ProtectedRoute>} />
+          <Route path="/production/order-in" element={<ProtectedRoute requiredRoles={PRODUCTION_ROLES}><ProductionOrderIn /></ProtectedRoute>} />
+          <Route path="/production/factory-invoice" element={<ProtectedRoute requiredRoles={FACTORY_INVOICE_ROLES}><FactoryInvoice /></ProtectedRoute>} />
+          <Route path="/lager" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Lager /></ProtectedRoute>} />
+          <Route path="/lager/lagergeraete" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Lagergeraete filterType="Neugerät" pageTitle="Lagergeräte" pageSubtitle="Erfassung und Übersicht aller Neugeräte im Lager" addLabel="Neues Lagergerät" dialogTitle="Lagergerät" emptyLabel="Noch keine Lagergeräte erfasst." rowAccentClass="bg-emerald-500/10 hover:bg-emerald-500/15" /></ProtectedRoute>} />
+          <Route path="/lager/leihgeraete" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Leihgeraete /></ProtectedRoute>} />
+          <Route path="/lager/equipment-area" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><EquipmentArea /></ProtectedRoute>} />
+          <Route path="/lager/equipment-area/warehouse" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><EquipmentWarehouse /></ProtectedRoute>} />
+          <Route path="/lager/equipment-area/unterwegs" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><EquipmentUnterwegs /></ProtectedRoute>} />
+          <Route path="/lager/equipment-area/produktion" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><EquipmentProduktion /></ProtectedRoute>} />
+          <Route path="/lager/equipment-area/hold" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><EquipmentHold /></ProtectedRoute>} />
+          <Route path="/lager/equipment-area/ausgeliefert" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><EquipmentAusgeliefert /></ProtectedRoute>} />
+        </Route>
+        <Route path="/unsubscribe" element={<Unsubscribe />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
   );
 }
 
