@@ -286,6 +286,13 @@ export default function OrdersFreiBestellung() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-secondary/50">
+                <th className="px-3 py-3 w-8">
+                  <Checkbox
+                    checked={allVisibleSelected}
+                    onCheckedChange={toggleAll}
+                    aria-label="Alle auswählen"
+                  />
+                </th>
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Auftragsnr.</th>
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Kunde</th>
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Artikel</th>
