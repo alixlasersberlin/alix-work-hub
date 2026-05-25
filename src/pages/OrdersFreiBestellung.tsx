@@ -3,14 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, Search, Loader2, Inbox, Factory, Warehouse } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { CheckCircle2, Search, Loader2, Inbox, Factory, Warehouse, Download, FileText, FileSpreadsheet } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
 import { PageSizeSelector, usePagination, PaginationControls } from '@/components/PageSizeSelector';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
+import { createPDF } from '@/lib/pdf-utils';
+import autoTable from 'jspdf-autotable';
 
 function formatDate(date: string | null) {
   if (!date) return '—';
@@ -63,6 +67,7 @@ export default function OrdersFreiBestellung() {
   const [reserveOrder, setReserveOrder] = useState<any | null>(null);
   const [reserveDeviceId, setReserveDeviceId] = useState<string>('');
   const [reserving, setReserving] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const reload = async () => {
     setLoading(true);
@@ -159,6 +164,82 @@ export default function OrdersFreiBestellung() {
     reload();
   };
 
+  const allVisibleSelected = paged.length > 0 && paged.every((o: any) => selected.has(o.id));
+  const toggleAll = () => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (allVisibleSelected) paged.forEach((o: any) => next.delete(o.id));
+      else paged.forEach((o: any) => next.add(o.id));
+      return next;
+    });
+  };
+  const toggleOne = (id: string) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const getExportRows = () =>
+    selected.size > 0 ? filtered.filter((o: any) => selected.has(o.id)) : filtered;
+
+  const rowToCells = (o: any) => {
+    const items = itemsByOrder[o.id] || [];
+    const names = items.map(i => i.item_name).filter(Boolean).join(', ');
+    const matches = matchesByOrder[o.id] || [];
+    return [
+      o.order_number || '',
+      o.customers?.company_name || o.customers?.contact_name || '',
+      names,
+      formatDate(o.deposit_ok_at),
+      o.deposit_amount != null ? `${Number(o.deposit_amount).toFixed(2).replace('.', ',')} ${o.currency || 'EUR'}` : '',
+      formatDate(o.expected_shipment_date),
+      matches.length > 0 ? `${matches.length}x vorhanden` : '',
+      o.order_status || '',
+    ];
+  };
+
+  const downloadCSV = () => {
+    const data = getExportRows();
+    const headers = ['Auftragsnr.', 'Kunde', 'Artikel', 'Freigabe am', 'Anzahlung', 'Lieferdatum', 'Lagerbestand', 'Status'];
+    const lines = [headers.join(';')];
+    data.forEach((o: any) => {
+      const cells = rowToCells(o).map(v => `"${String(v).replace(/"/g, '""')}"`);
+      lines.push(cells.join(';'));
+    });
+    const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `bestellung_moeglich_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${data.length} Einträge exportiert`);
+  };
+
+  const downloadPDF = () => {
+    const data = getExportRows();
+    const doc = createPDF({ orientation: 'landscape' });
+    doc.setFont('Inter', 'bold');
+    doc.setFontSize(14);
+    doc.text('Bestellung möglich', 14, 14);
+    doc.setFont('Inter', 'normal');
+    doc.setFontSize(9);
+    doc.text(`${data.length} Aufträge · ${new Date().toLocaleDateString('de-DE')}`, 14, 20);
+    autoTable(doc, {
+      startY: 24,
+      styles: { font: 'Inter', fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [30, 30, 30], textColor: 255 },
+      head: [['Auftragsnr.', 'Kunde', 'Artikel', 'Freigabe am', 'Anzahlung', 'Lieferdatum', 'Lagerbestand', 'Status']],
+      body: data.map(rowToCells),
+    });
+    doc.save(`bestellung_moeglich_${new Date().toISOString().slice(0, 10)}.pdf`);
+    toast.success(`${data.length} Einträge exportiert`);
+  };
+
+  const selectionCount = selected.size;
+
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -169,8 +250,25 @@ export default function OrdersFreiBestellung() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {filtered.length} Aufträge mit bestätigter Anzahlung — bereit zur Bestellung
+            {selectionCount > 0 && ` · ${selectionCount} ausgewählt`}
           </p>
         </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="default">
+              <Download className="w-4 h-4 mr-2" />
+              Download ({selectionCount > 0 ? selectionCount : filtered.length})
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={downloadCSV}>
+              <FileSpreadsheet className="w-4 h-4 mr-2" /> Als CSV
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={downloadPDF}>
+              <FileText className="w-4 h-4 mr-2" /> Als PDF
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
@@ -188,6 +286,13 @@ export default function OrdersFreiBestellung() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-secondary/50">
+                <th className="px-3 py-3 w-8">
+                  <Checkbox
+                    checked={allVisibleSelected}
+                    onCheckedChange={toggleAll}
+                    aria-label="Alle auswählen"
+                  />
+                </th>
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Auftragsnr.</th>
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Kunde</th>
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Artikel</th>
@@ -201,9 +306,9 @@ export default function OrdersFreiBestellung() {
             </thead>
             <tbody className="divide-y divide-border">
               {loading ? (
-                <tr><td colSpan={9} className="px-4 py-12 text-center"><Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" /></td></tr>
+                <tr><td colSpan={10} className="px-4 py-12 text-center"><Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" /></td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={9} className="px-4 py-12 text-center">
+                <tr><td colSpan={10} className="px-4 py-12 text-center">
                   <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
                   <p className="text-muted-foreground">Keine Aufträge mit Anzahlungsbestätigung gefunden.</p>
                 </td></tr>
@@ -211,8 +316,16 @@ export default function OrdersFreiBestellung() {
                 paged.map(o => {
                   const matches = matchesByOrder[o.id] || [];
                   const inStock = matches.length > 0;
+                  const isSel = selected.has(o.id);
                   return (
-                    <tr key={o.id} className="hover:bg-secondary/30 transition-colors">
+                    <tr key={o.id} className={`hover:bg-secondary/30 transition-colors ${isSel ? 'bg-primary/5' : ''}`}>
+                      <td className="px-3 py-3 w-8" onClick={(e) => e.stopPropagation()}>
+                        <Checkbox
+                          checked={isSel}
+                          onCheckedChange={() => toggleOne(o.id)}
+                          aria-label="Auswählen"
+                        />
+                      </td>
                       <td className="px-4 py-3 font-medium text-foreground cursor-pointer" onClick={() => navigate(`/auftraege/${o.id}`)}>{o.order_number}</td>
                       <td className="px-4 py-3 text-muted-foreground">{o.customers?.company_name || o.customers?.contact_name || '—'}</td>
                       <td className="px-4 py-3 text-foreground">
