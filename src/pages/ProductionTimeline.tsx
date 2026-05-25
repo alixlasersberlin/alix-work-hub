@@ -2,14 +2,18 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
-import { Calendar, Loader2, Factory, AlertTriangle, FileText, Search } from 'lucide-react';
+import { Calendar, Loader2, Factory, AlertTriangle, FileText, Search, Download, FileSpreadsheet } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { format, differenceInCalendarDays, isValid } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { createPDF } from '@/lib/pdf-utils';
+import autoTable from 'jspdf-autotable';
 
 type Row = {
   id: string;
@@ -32,6 +36,7 @@ export default function ProductionTimeline() {
   const [filter, setFilter] = useState<'all' | 'order' | 'reclamation'>('all');
   const [search, setSearch] = useState('');
   const [pageSize, setPageSize] = useState<'10' | '20' | '30' | 'all'>('20');
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const load = async () => {
     setLoading(true);
@@ -45,7 +50,6 @@ export default function ProductionTimeline() {
         ...r,
         display_order_number: r.production_order_number || r.order_number,
       }));
-      // Fetch customer names via orders.order_number
       const orderNumbers = Array.from(new Set(list.map((r: any) => r.order_number).filter(Boolean)));
       const nameMap = new Map<string, string>();
       if (orderNumbers.length > 0) {
@@ -89,6 +93,23 @@ export default function ProductionTimeline() {
     return filtered.slice(0, parseInt(pageSize, 10));
   }, [filtered, pageSize]);
 
+  const allVisibleSelected = visible.length > 0 && visible.every(r => selected.has(r.id));
+  const toggleAll = () => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (allVisibleSelected) visible.forEach(r => next.delete(r.id));
+      else visible.forEach(r => next.add(r.id));
+      return next;
+    });
+  };
+  const toggleOne = (id: string) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -102,6 +123,70 @@ export default function ProductionTimeline() {
     return { label: `In ${diff} Tagen`, cls: 'bg-green-500/15 text-green-500' };
   };
 
+  const getExportRows = () =>
+    selected.size > 0 ? filtered.filter(r => selected.has(r.id)) : filtered;
+
+  const fmtDate = (d: string) =>
+    d && isValid(new Date(d)) ? format(new Date(d), 'dd.MM.yyyy') : '';
+
+  const downloadCSV = () => {
+    const data = getExportRows();
+    const headers = ['Typ', 'Auftragsnr.', 'Modell', 'Kunde', 'Zulieferer', 'Bearbeiter', 'Liefertermin', 'Status'];
+    const lines = [headers.join(';')];
+    data.forEach(r => {
+      const cells = [
+        r.is_reclamation ? 'Reklamation' : 'Bestellung',
+        r.display_order_number || '',
+        r.modellname || '',
+        r.customer_name || '',
+        r.supplier?.name || '',
+        r.bearbeiter || '',
+        fmtDate(r.liefertermin),
+        r.status || '',
+      ].map(v => `"${String(v).replace(/"/g, '""')}"`);
+      lines.push(cells.join(';'));
+    });
+    const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `timeline_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${data.length} Einträge exportiert`);
+  };
+
+  const downloadPDF = () => {
+    const data = getExportRows();
+    const doc = createPDF({ orientation: 'landscape' });
+    doc.setFont('Inter', 'bold');
+    doc.setFontSize(14);
+    doc.text('Timeline – Produktionsaufträge', 14, 14);
+    doc.setFont('Inter', 'normal');
+    doc.setFontSize(9);
+    doc.text(`${data.length} Einträge · ${new Date().toLocaleDateString('de-DE')}`, 14, 20);
+    autoTable(doc, {
+      startY: 24,
+      styles: { font: 'Inter', fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [30, 30, 30], textColor: 255 },
+      head: [['Typ', 'Auftragsnr.', 'Modell', 'Kunde', 'Zulieferer', 'Bearbeiter', 'Liefertermin', 'Status']],
+      body: data.map(r => [
+        r.is_reclamation ? 'Reklamation' : 'Bestellung',
+        r.display_order_number || '',
+        r.modellname || '—',
+        r.customer_name || '—',
+        r.supplier?.name || '—',
+        r.bearbeiter || '—',
+        fmtDate(r.liefertermin),
+        r.status || '',
+      ]),
+    });
+    doc.save(`timeline_${new Date().toISOString().slice(0, 10)}.pdf`);
+    toast.success(`${data.length} Einträge exportiert`);
+  };
+
+  const selectionCount = selected.size;
+
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-4 md:space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
@@ -111,24 +196,43 @@ export default function ProductionTimeline() {
           </h1>
           <p className="text-xs md:text-sm text-muted-foreground">
             Alle Bestellungen und Reklamationen nach Fälligkeit sortiert
+            {selectionCount > 0 && ` · ${selectionCount} ausgewählt`}
           </p>
         </div>
-        <div className="flex gap-1 p-1 bg-muted/30 rounded-lg">
-          {(['all', 'order', 'reclamation'] as const).map(f => (
-            <button
-              key={f}
-              type="button"
-              onClick={() => setFilter(f)}
-              className={cn(
-                'px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
-                filter === f
-                  ? 'bg-primary/15 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.3)]'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-            >
-              {f === 'all' ? 'Alle' : f === 'order' ? 'Bestellungen' : 'Reklamationen'}
-            </button>
-          ))}
+        <div className="flex items-center gap-2">
+          <div className="flex gap-1 p-1 bg-muted/30 rounded-lg">
+            {(['all', 'order', 'reclamation'] as const).map(f => (
+              <button
+                key={f}
+                type="button"
+                onClick={() => setFilter(f)}
+                className={cn(
+                  'px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+                  filter === f
+                    ? 'bg-primary/15 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.3)]'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                {f === 'all' ? 'Alle' : f === 'order' ? 'Bestellungen' : 'Reklamationen'}
+              </button>
+            ))}
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="default" size="sm">
+                <Download className="w-4 h-4 mr-2" />
+                Download ({selectionCount > 0 ? selectionCount : filtered.length})
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={downloadCSV}>
+                <FileSpreadsheet className="w-4 h-4 mr-2" /> Als CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={downloadPDF}>
+                <FileText className="w-4 h-4 mr-2" /> Als PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -165,61 +269,93 @@ export default function ProductionTimeline() {
         ) : visible.length === 0 ? (
           <div className="p-12 text-center text-muted-foreground">Keine Einträge vorhanden.</div>
         ) : (
-          <div className="divide-y divide-border">
-            {visible.map(r => {
-              const ds = getDeliveryStatus(r.liefertermin);
-              const basePath = r.is_reclamation ? '/order/reklamation' : '/order';
-              return (
-                <div key={r.id} className="p-4 hover:bg-muted/30 transition-colors">
-                  <div className="flex items-start justify-between gap-3 flex-wrap">
-                    <div className="flex items-start gap-3 min-w-0 flex-1">
-                      <div className={cn(
-                        'w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0',
-                        r.is_reclamation ? 'bg-destructive/15 text-destructive' : 'bg-primary/15 text-primary'
-                      )}>
-                        {r.is_reclamation ? <AlertTriangle className="w-4 h-4" /> : <Factory className="w-4 h-4" />}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-mono font-semibold text-foreground">{r.display_order_number}</span>
-                          <span className={cn(
-                            'px-2 py-0.5 rounded text-[10px] font-medium',
-                            r.is_reclamation ? 'bg-destructive/15 text-destructive' : 'bg-primary/10 text-primary'
-                          )}>
-                            {r.is_reclamation ? 'Reklamation' : 'Bestellung'}
-                          </span>
-                          <span className="px-2 py-0.5 rounded text-[10px] bg-muted text-muted-foreground">{r.status}</span>
-                          {r.customer_name && (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-primary/10 text-primary">
-                              {r.customer_name}
+          <>
+            <div className="flex items-center gap-3 px-4 py-2 border-b border-border bg-muted/20">
+              <Checkbox
+                checked={allVisibleSelected}
+                onCheckedChange={toggleAll}
+                aria-label="Alle auswählen"
+              />
+              <span className="text-xs text-muted-foreground">
+                {allVisibleSelected ? 'Auswahl aufheben' : 'Alle sichtbaren auswählen'}
+              </span>
+              {selectionCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setSelected(new Set())}
+                  className="ml-auto text-xs text-primary hover:underline"
+                >
+                  Auswahl zurücksetzen ({selectionCount})
+                </button>
+              )}
+            </div>
+            <div className="divide-y divide-border">
+              {visible.map(r => {
+                const ds = getDeliveryStatus(r.liefertermin);
+                const basePath = r.is_reclamation ? '/order/reklamation' : '/order';
+                const isSel = selected.has(r.id);
+                return (
+                  <div key={r.id} className={cn(
+                    "p-4 hover:bg-muted/30 transition-colors",
+                    isSel && "bg-primary/5"
+                  )}>
+                    <div className="flex items-start justify-between gap-3 flex-wrap">
+                      <div className="flex items-start gap-3 min-w-0 flex-1">
+                        <div className="pt-1">
+                          <Checkbox
+                            checked={isSel}
+                            onCheckedChange={() => toggleOne(r.id)}
+                            aria-label="Auswählen"
+                          />
+                        </div>
+                        <div className={cn(
+                          'w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0',
+                          r.is_reclamation ? 'bg-destructive/15 text-destructive' : 'bg-primary/15 text-primary'
+                        )}>
+                          {r.is_reclamation ? <AlertTriangle className="w-4 h-4" /> : <Factory className="w-4 h-4" />}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-mono font-semibold text-foreground">{r.display_order_number}</span>
+                            <span className={cn(
+                              'px-2 py-0.5 rounded text-[10px] font-medium',
+                              r.is_reclamation ? 'bg-destructive/15 text-destructive' : 'bg-primary/10 text-primary'
+                            )}>
+                              {r.is_reclamation ? 'Reklamation' : 'Bestellung'}
                             </span>
-                          )}
-                        </div>
-                        <div className="text-xs text-muted-foreground mt-1 truncate">
-                          {r.modellname || '—'} · {r.supplier?.name || '—'} · {r.bearbeiter}
+                            <span className="px-2 py-0.5 rounded text-[10px] bg-muted text-muted-foreground">{r.status}</span>
+                            {r.customer_name && (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-primary/10 text-primary">
+                                {r.customer_name}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-1 truncate">
+                            {r.modellname || '—'} · {r.supplier?.name || '—'} · {r.bearbeiter}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <div className="text-right">
-                        <div className="text-sm font-medium text-foreground">
-                          {r.liefertermin && isValid(new Date(r.liefertermin))
-                            ? format(new Date(r.liefertermin), 'dd. MMM yyyy', { locale: de })
-                            : '—'}
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <div className="text-right">
+                          <div className="text-sm font-medium text-foreground">
+                            {r.liefertermin && isValid(new Date(r.liefertermin))
+                              ? format(new Date(r.liefertermin), 'dd. MMM yyyy', { locale: de })
+                              : '—'}
+                          </div>
+                          <span className={cn('inline-block mt-0.5 px-2 py-0.5 rounded text-[10px] font-medium', ds.cls)}>
+                            {ds.label}
+                          </span>
                         </div>
-                        <span className={cn('inline-block mt-0.5 px-2 py-0.5 rounded text-[10px] font-medium', ds.cls)}>
-                          {ds.label}
-                        </span>
+                        <Button asChild size="sm" variant="ghost">
+                          <Link to={`${basePath}/${r.id}`}><FileText className="w-4 h-4" /></Link>
+                        </Button>
                       </div>
-                      <Button asChild size="sm" variant="ghost">
-                        <Link to={`${basePath}/${r.id}`}><FileText className="w-4 h-4" /></Link>
-                      </Button>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </Card>
     </div>
