@@ -580,27 +580,40 @@ table tbody tr:hover {
   transition: background-color 0.18s ease, box-shadow 0.18s ease;
 }
 .design-aurora table tbody tr:nth-child(odd) {
-  background-color: hsl(222 40% 99%);
+  background-color: hsl(222 40% 99%) !important;
 }
 .design-aurora table tbody tr:nth-child(even) {
-  background-color: hsl(222 35% 96%);
+  background-color: hsl(222 35% 96%) !important;
 }
 .design-aurora table tbody tr:hover {
-  background-color: hsl(43 95% 62% / 0.10) !important;
+  background-color: hsl(43 95% 62% / 0.12) !important;
   box-shadow: inset 4px 0 0 0 hsl(43 95% 62%);
 }
 .design-aurora table tbody td {
   border-bottom: none;
 }
 
-/* Listen / Card-Listen – Streifen für Nicht-Tabellen */
+/* Listen / divide-y / Card-Stapel – Streifen für Nicht-Tabellen */
 .design-aurora [role="list"] > *:nth-child(odd),
-.design-aurora ul.divide-y > li:nth-child(odd) {
+.design-aurora ul > li:nth-child(odd),
+.design-aurora ol > li:nth-child(odd),
+.design-aurora .divide-y > *:nth-child(odd),
+.design-aurora [class*="divide-y"] > *:nth-child(odd) {
   background-color: hsl(222 40% 99%);
 }
 .design-aurora [role="list"] > *:nth-child(even),
-.design-aurora ul.divide-y > li:nth-child(even) {
+.design-aurora ul > li:nth-child(even),
+.design-aurora ol > li:nth-child(even),
+.design-aurora .divide-y > *:nth-child(even),
+.design-aurora [class*="divide-y"] > *:nth-child(even) {
   background-color: hsl(222 35% 96%);
+}
+.design-aurora [role="list"] > *:hover,
+.design-aurora .divide-y > *:hover,
+.design-aurora [class*="divide-y"] > *:hover {
+  background-color: hsl(43 95% 62% / 0.10);
+  box-shadow: inset 4px 0 0 0 hsl(43 95% 62%);
+  transition: background-color 0.18s ease, box-shadow 0.18s ease;
 }
 
 /* Typografie – etwas wärmer & klarer */
@@ -771,24 +784,38 @@ table tbody tr:hover {
 
 .design-aurora.dark table tbody tr {
   border-bottom: 1px solid hsl(220 25% 96% / 0.06);
+  transition: background-color 0.18s ease, box-shadow 0.18s ease;
 }
 .design-aurora.dark table tbody tr:nth-child(odd) {
-  background-color: hsl(224 38% 9% / 0.5);
+  background-color: hsl(224 38% 9% / 0.5) !important;
 }
 .design-aurora.dark table tbody tr:nth-child(even) {
-  background-color: hsl(224 38% 12% / 0.5);
+  background-color: hsl(224 38% 12% / 0.5) !important;
 }
 .design-aurora.dark table tbody tr:hover {
-  background-color: hsl(43 95% 62% / 0.10) !important;
+  background-color: hsl(43 95% 62% / 0.12) !important;
   box-shadow: inset 4px 0 0 0 hsl(43 95% 62%);
 }
 .design-aurora.dark [role="list"] > *:nth-child(odd),
-.design-aurora.dark ul.divide-y > li:nth-child(odd) {
+.design-aurora.dark ul > li:nth-child(odd),
+.design-aurora.dark ol > li:nth-child(odd),
+.design-aurora.dark .divide-y > *:nth-child(odd),
+.design-aurora.dark [class*="divide-y"] > *:nth-child(odd) {
   background-color: hsl(224 38% 9% / 0.5);
 }
 .design-aurora.dark [role="list"] > *:nth-child(even),
-.design-aurora.dark ul.divide-y > li:nth-child(even) {
+.design-aurora.dark ul > li:nth-child(even),
+.design-aurora.dark ol > li:nth-child(even),
+.design-aurora.dark .divide-y > *:nth-child(even),
+.design-aurora.dark [class*="divide-y"] > *:nth-child(even) {
   background-color: hsl(224 38% 12% / 0.5);
+}
+.design-aurora.dark [role="list"] > *:hover,
+.design-aurora.dark .divide-y > *:hover,
+.design-aurora.dark [class*="divide-y"] > *:hover {
+  background-color: hsl(43 95% 62% / 0.10);
+  box-shadow: inset 4px 0 0 0 hsl(43 95% 62%);
+  transition: background-color 0.18s ease, box-shadow 0.18s ease;
 }
 
 .design-aurora.dark h1,
