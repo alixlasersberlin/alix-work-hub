@@ -407,3 +407,228 @@ table tbody tr:hover {
   background: linear-gradient(180deg, hsl(43 88% 55% / 0.5), hsl(195 90% 62% / 0.4));
 }
 
+
+/* ============================================================
+   AlixWork Aurora Ultra – Premium Light Design
+   Aktiv via .design-aurora auf <html>.
+   Liquid Glass · Aurora Gradients · AI Light · Pearl White.
+   ============================================================ */
+.design-aurora {
+  --background: 220 30% 98%;
+  --foreground: 222 30% 12%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 222 30% 12%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 30% 12%;
+
+  --primary: 222 45% 18%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 220 25% 95%;
+  --secondary-foreground: 222 30% 14%;
+
+  --muted: 220 25% 95%;
+  --muted-foreground: 222 15% 42%;
+
+  --accent: 43 90% 55%;
+  --accent-foreground: 222 30% 10%;
+
+  --destructive: 0 75% 52%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 220 20% 88%;
+  --input: 220 20% 88%;
+  --ring: 43 90% 55%;
+
+  --surface-1: 0 0% 100%;
+  --surface-2: 220 30% 97%;
+  --surface-3: 220 25% 94%;
+
+  --sidebar-background: 220 35% 99%;
+  --sidebar-foreground: 222 30% 16%;
+  --sidebar-primary: 222 45% 18%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 220 30% 95%;
+  --sidebar-accent-foreground: 222 30% 12%;
+  --sidebar-border: 220 20% 90%;
+  --sidebar-ring: 43 90% 55%;
+
+  --aurora-1: 270 90% 78%;
+  --aurora-2: 200 95% 72%;
+  --aurora-3: 160 80% 70%;
+  --aurora-gold: 43 95% 62%;
+
+  --gradient-gold: linear-gradient(135deg, hsl(43 95% 62%), hsl(38 95% 72%));
+  --shadow-gold: 0 10px 40px -10px hsl(43 95% 62% / 0.35);
+  --shadow-card:
+    0 1px 0 0 hsl(0 0% 100% / 0.9) inset,
+    0 1px 2px 0 hsl(222 30% 20% / 0.04),
+    0 10px 40px -12px hsl(222 30% 20% / 0.10),
+    0 30px 60px -30px hsl(222 50% 30% / 0.12);
+}
+
+/* Aurora Live Background */
+.design-aurora body {
+  background:
+    radial-gradient(900px 600px at 8% -10%, hsl(var(--aurora-1) / 0.22), transparent 60%),
+    radial-gradient(800px 500px at 100% 0%, hsl(var(--aurora-2) / 0.20), transparent 60%),
+    radial-gradient(700px 500px at 50% 110%, hsl(var(--aurora-3) / 0.18), transparent 60%),
+    linear-gradient(180deg, hsl(220 35% 99%), hsl(220 30% 97%));
+  background-attachment: fixed;
+}
+
+.design-aurora body::before {
+  content: "";
+  position: fixed;
+  inset: -20%;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 50% at 30% 30%, hsl(var(--aurora-1) / 0.18), transparent 60%),
+    radial-gradient(50% 50% at 70% 60%, hsl(var(--aurora-2) / 0.18), transparent 60%),
+    radial-gradient(40% 40% at 50% 80%, hsl(var(--aurora-gold) / 0.10), transparent 60%);
+  filter: blur(40px);
+  animation: aurora-drift 22s ease-in-out infinite alternate;
+}
+
+@keyframes aurora-drift {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  50%  { transform: translate3d(2%, -2%, 0) scale(1.05); }
+  100% { transform: translate3d(-2%, 2%, 0) scale(1.02); }
+}
+
+/* Liquid Glass für Karten, Popover, Dropdowns */
+.design-aurora .bg-card,
+.design-aurora [data-radix-popper-content-wrapper] > * {
+  background: linear-gradient(180deg, hsl(0 0% 100% / 0.78), hsl(220 30% 99% / 0.72)) !important;
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  border: 1px solid hsl(220 20% 100% / 0.7);
+  box-shadow: var(--shadow-card);
+  border-radius: calc(var(--radius) + 4px);
+}
+
+/* Floating Card Hover */
+.design-aurora .bg-card {
+  transition:
+    transform 0.5s cubic-bezier(.2,.8,.2,1),
+    box-shadow 0.5s ease,
+    border-color 0.3s ease;
+  will-change: transform;
+}
+.design-aurora .bg-card:hover {
+  transform: translateY(-4px);
+  border-color: hsl(43 90% 70% / 0.55);
+  box-shadow:
+    0 1px 0 0 hsl(0 0% 100%) inset,
+    0 30px 60px -20px hsl(222 50% 30% / 0.18),
+    0 0 0 1px hsl(43 95% 62% / 0.18),
+    0 0 60px -10px hsl(var(--aurora-2) / 0.30);
+}
+
+/* Premium Buttons – magnetisch & weich */
+.design-aurora .bg-primary {
+  background: linear-gradient(135deg, hsl(222 50% 16%), hsl(222 40% 24%)) !important;
+  color: hsl(0 0% 100%) !important;
+  box-shadow:
+    0 1px 0 hsl(0 0% 100% / 0.18) inset,
+    0 10px 30px -10px hsl(222 50% 16% / 0.45);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
+}
+.design-aurora .bg-primary:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+  box-shadow:
+    0 1px 0 hsl(0 0% 100% / 0.25) inset,
+    0 16px 40px -10px hsl(43 95% 62% / 0.45),
+    0 0 0 1px hsl(43 95% 62% / 0.35);
+}
+
+/* Sidebar – Glaspaneel mit Aurora-Akzent */
+.design-aurora aside,
+.design-aurora nav[data-sidebar],
+.design-aurora [class*="sidebar"] {
+  background: linear-gradient(180deg, hsl(0 0% 100% / 0.78), hsl(220 30% 98% / 0.72));
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  border-right: 1px solid hsl(220 25% 92% / 0.8);
+}
+
+/* Aktiver Sidebar-Eintrag mit AI Light */
+.design-aurora [data-active="true"],
+.design-aurora .bg-sidebar-accent {
+  background: linear-gradient(90deg,
+    hsl(var(--aurora-2) / 0.18),
+    hsl(var(--aurora-1) / 0.10)) !important;
+  box-shadow: inset 3px 0 0 0 hsl(43 95% 62%);
+}
+
+/* Inputs – Liquid Glass */
+.design-aurora input,
+.design-aurora textarea,
+.design-aurora select {
+  background-color: hsl(0 0% 100% / 0.75);
+  border-color: hsl(220 20% 88% / 0.9);
+  backdrop-filter: blur(8px);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
+}
+.design-aurora input:focus,
+.design-aurora textarea:focus,
+.design-aurora select:focus {
+  border-color: hsl(43 95% 62% / 0.7);
+  background-color: hsl(0 0% 100% / 0.95);
+  box-shadow:
+    0 0 0 4px hsl(43 95% 62% / 0.15),
+    0 8px 24px -8px hsl(43 95% 62% / 0.25);
+}
+
+/* Tabellen-Hover – sanftes Aurora-Glow */
+.design-aurora table tbody tr:hover {
+  background-color: hsl(var(--aurora-2) / 0.07) !important;
+  box-shadow: inset 4px 0 0 0 hsl(43 95% 62%);
+}
+
+/* Typografie – etwas wärmer & klarer */
+.design-aurora h1,
+.design-aurora h2,
+.design-aurora h3 {
+  color: hsl(222 45% 14%);
+  letter-spacing: -0.01em;
+}
+
+/* AI Breathing Glow für Primary Badges/Accents */
+@keyframes aurora-breathe {
+  0%, 100% { box-shadow: 0 0 0 0 hsl(43 95% 62% / 0.35); }
+  50%      { box-shadow: 0 0 0 8px hsl(43 95% 62% / 0); }
+}
+.design-aurora .badge-ai,
+.design-aurora [data-ai-pulse="true"] {
+  animation: aurora-breathe 2.6s ease-in-out infinite;
+}
+
+/* Floating Heading Entrance */
+@keyframes aurora-float-in {
+  0%   { opacity: 0; transform: translateY(10px); filter: blur(6px); }
+  100% { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+.design-aurora main h1,
+.design-aurora main h2 {
+  animation: aurora-float-in 0.6s cubic-bezier(.2,.8,.2,1) both;
+}
+
+/* Scrollbar */
+.design-aurora ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg,
+    hsl(var(--aurora-1) / 0.5),
+    hsl(var(--aurora-2) / 0.5));
+  border-radius: 999px;
+}
+
+/* Reduzierte Bewegung respektieren */
+@media (prefers-reduced-motion: reduce) {
+  .design-aurora body::before { animation: none; }
+  .design-aurora main h1,
+  .design-aurora main h2 { animation: none; }
+}
