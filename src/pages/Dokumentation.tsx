@@ -189,38 +189,77 @@ export default function Dokumentation() {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Allgemeine Richtlinien</CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm text-muted-foreground space-y-2">
+          <ul className="list-disc pl-5 space-y-1">
+            <li><strong>RBAC:</strong> Jede Aktion wird durch Rollen abgesichert. Nur freigegebene Rollen sehen bzw. ändern Daten.</li>
+            <li><strong>MFA-Pflicht:</strong> Alle Benutzer müssen Multi-Factor-Authentication eingerichtet haben.</li>
+            <li><strong>Audit-Trail:</strong> Sicherheitsrelevante Aktionen werden in Logfiles protokolliert.</li>
+            <li><strong>Zoho als Quelle der Wahrheit:</strong> Stammdaten (Aufträge, Kunden, Rechnungen) werden aus Zoho synchronisiert. Die <code>order_number</code> ist unveränderlich.</li>
+            <li><strong>Datenhaltung:</strong> Supabase ist das primäre Backend mit Row-Level-Security. Keine neuen Tabellen ohne Abstimmung.</li>
+            <li><strong>Auto-Refresh:</strong> Listen aktualisieren sich automatisch alle 15 Minuten und beim erneuten Fokussieren des Tabs.</li>
+          </ul>
+        </CardContent>
+      </Card>
+
       <div className="grid gap-6">
-        {sections.map((section) => (
-          <Card key={section.title}>
-            <CardHeader className="flex flex-row items-start gap-3 space-y-0">
-              <section.icon className="h-6 w-6 text-primary mt-1" />
-              <div className="flex-1">
-                <CardTitle className="text-xl">{section.title}</CardTitle>
-                <p className="text-sm text-muted-foreground mt-1">{section.intro}</p>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <ul className="divide-y divide-border">
-                {section.entries.map((e) => (
-                  <li key={e.path + e.label} className="py-3 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-                    <div className="min-w-0">
-                      <Link to={e.path} className="font-medium text-primary hover:underline">
-                        {e.label}
-                      </Link>
-                      <p className="text-sm text-muted-foreground">{e.desc}</p>
-                      <p className="text-xs text-muted-foreground/70 mt-1 font-mono">{e.path}</p>
+        {sections.map((section) => {
+          const detail = workflowDetails[section.title];
+          return (
+            <Card key={section.title}>
+              <CardHeader className="flex flex-row items-start gap-3 space-y-0">
+                <section.icon className="h-6 w-6 text-primary mt-1" />
+                <div className="flex-1">
+                  <CardTitle className="text-xl">{section.title}</CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">{section.intro}</p>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                {detail && (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="rounded-md border border-border bg-muted/30 p-4">
+                      <h4 className="text-sm font-semibold mb-2 text-foreground">Wirkungsweise</h4>
+                      <ol className="list-decimal pl-5 space-y-1 text-sm text-muted-foreground">
+                        {detail.workflow.map((w, i) => <li key={i}>{w}</li>)}
+                      </ol>
                     </div>
-                    <div className="flex flex-wrap gap-1 sm:max-w-[50%] sm:justify-end">
-                      {e.roles.map((r) => (
-                        <Badge key={r} variant="secondary" className="text-[10px]">{r}</Badge>
-                      ))}
+                    <div className="rounded-md border border-border bg-muted/30 p-4">
+                      <h4 className="text-sm font-semibold mb-2 text-foreground">Richtlinien</h4>
+                      <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
+                        {detail.guidelines.map((g, i) => <li key={i}>{g}</li>)}
+                      </ul>
                     </div>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-        ))}
+                  </div>
+                )}
+
+                <div>
+                  <h4 className="text-sm font-semibold mb-2 text-foreground">Menüpunkte</h4>
+                  <ul className="divide-y divide-border">
+                    {section.entries.map((e) => (
+                      <li key={e.path + e.label} className="py-3 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                        <div className="min-w-0">
+                          <Link to={e.path} className="font-medium text-primary hover:underline">
+                            {e.label}
+                          </Link>
+                          <p className="text-sm text-muted-foreground">{e.desc}</p>
+                          <p className="text-xs text-muted-foreground/70 mt-1 font-mono">{e.path}</p>
+                        </div>
+                        <div className="flex flex-wrap gap-1 sm:max-w-[50%] sm:justify-end">
+                          {e.roles.map((r) => (
+                            <Badge key={r} variant="secondary" className="text-[10px]">{r}</Badge>
+                          ))}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );
