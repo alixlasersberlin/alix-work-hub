@@ -74,7 +74,7 @@ export default function AuroraPrioTicker() {
   return (
     <div
       className="hidden md:flex items-center gap-2 max-w-[420px] lg:max-w-[560px] xl:max-w-[720px] h-9 px-3 rounded-full border border-[hsl(43_95%_62%/0.35)] bg-[hsl(43_95%_62%/0.06)] overflow-hidden"
-      title="Top 5 PRIO Bestellungen"
+      title="Top 10 PRIO Bestellungen"
     >
       <div className="flex items-center gap-1.5 shrink-0 text-xs font-semibold uppercase tracking-wider text-[hsl(43_95%_50%)]">
         <Flame className="w-3.5 h-3.5" />
