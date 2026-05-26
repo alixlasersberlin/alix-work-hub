@@ -8,7 +8,10 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
+import { CNNNewsTicker } from '@/components/CNNNewsTicker';
 
 /**
  * Aurora Ticker – Laufschrift mit umschaltbaren Quellen (Prio / Timeline / Lager).
