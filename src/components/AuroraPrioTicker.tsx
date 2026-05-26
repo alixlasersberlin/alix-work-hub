@@ -213,7 +213,11 @@ export default function AuroraPrioTicker() {
             {loop.map((it, i) => (
               <button
                 key={`${it.id}-${i}`}
-                onClick={() => it.href && navigate(it.href)}
+                onClick={() => {
+                  if (!it.href) return;
+                  if (/^https?:\/\//.test(it.href)) window.open(it.href, '_blank', 'noopener,noreferrer');
+                  else navigate(it.href);
+                }}
                 className="inline-flex items-center gap-2 hover:underline focus:outline-none"
               >
                 <span className="font-mono font-semibold text-foreground/90">{it.label}</span>
