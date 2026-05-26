@@ -40,7 +40,7 @@ export function CNNNewsTicker() {
   const loop = [...display, ...display];
 
   return (
-    <div className="relative flex items-center gap-3 rounded-xl border border-border bg-gradient-to-r from-red-600/15 via-card to-card overflow-hidden h-14">
+    <div className="relative flex items-center gap-3 rounded-xl border border-border bg-gradient-to-r from-red-600/15 via-card to-card overflow-hidden h-10">
       <style>{`
         @keyframes cnn-marquee {
           0% { transform: translateX(0); }
