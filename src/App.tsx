@@ -6,6 +6,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/hooks/useTheme";
+import { DesignVariantProvider } from "@/hooks/useDesignVariant";
+import DesignVariantSwitcher from "@/components/DesignVariantSwitcher";
 import { Truck as TruckIcon, Banknote as BanknoteIcon, FileSignature, CreditCard, Loader2 } from "lucide-react";
 
 // Eager: Auth-/Shell-Routen (klein & für initialen Render nötig)
@@ -284,15 +286,18 @@ function AppRoutes() {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AuthProvider>
-            <AppRoutes />
-          </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
+      <DesignVariantProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AuthProvider>
+              <AppRoutes />
+              <DesignVariantSwitcher />
+            </AuthProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+      </DesignVariantProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );

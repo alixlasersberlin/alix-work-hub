@@ -257,3 +257,153 @@ table tbody tr:hover {
   background-color: hsl(var(--primary) / 0.08) !important;
   box-shadow: inset 4px 0 0 0 hsl(var(--primary));
 }
+
+/* ============================================================
+   AlixWork 3D Beta – Design-Variante
+   Aktiv, wenn auf <html> die Klasse .design-beta3d gesetzt ist.
+   Greift NICHT in die Classic-Variante ein.
+   Palette: Dark Navy · Schwarz · Gold · Ice Blue
+   ============================================================ */
+.design-beta3d {
+  --background: 222 47% 6%;
+  --foreground: 210 40% 96%;
+
+  --card: 222 45% 9%;
+  --card-foreground: 210 40% 96%;
+
+  --popover: 222 45% 10%;
+  --popover-foreground: 210 40% 96%;
+
+  --primary: 43 88% 55%;
+  --primary-foreground: 222 47% 6%;
+
+  --secondary: 222 40% 14%;
+  --secondary-foreground: 210 40% 96%;
+
+  --muted: 222 35% 13%;
+  --muted-foreground: 210 25% 70%;
+
+  --accent: 195 90% 62%;
+  --accent-foreground: 222 47% 6%;
+
+  --border: 222 35% 18%;
+  --input: 222 35% 18%;
+  --ring: 43 88% 55%;
+
+  --surface-1: 222 45% 9%;
+  --surface-2: 222 40% 12%;
+  --surface-3: 222 38% 15%;
+
+  --sidebar-background: 222 50% 5%;
+  --sidebar-foreground: 210 40% 92%;
+  --sidebar-primary: 43 88% 55%;
+  --sidebar-primary-foreground: 222 47% 6%;
+  --sidebar-accent: 222 40% 12%;
+  --sidebar-accent-foreground: 210 40% 96%;
+  --sidebar-border: 222 35% 16%;
+  --sidebar-ring: 43 88% 55%;
+
+  --ice-blue: 195 90% 62%;
+  --navy-deep: 222 50% 5%;
+
+  --gradient-gold: linear-gradient(135deg, hsl(43 88% 55%), hsl(38 92% 65%));
+  --gradient-dark: linear-gradient(160deg, hsl(222 50% 8%), hsl(222 47% 4%));
+  --shadow-gold: 0 8px 32px -8px hsl(43 88% 55% / 0.35);
+  --shadow-card: 0 10px 40px -10px hsl(222 80% 2% / 0.7), 0 2px 0 0 hsl(210 40% 96% / 0.04) inset;
+}
+
+.design-beta3d body {
+  background:
+    radial-gradient(1200px 600px at 10% -10%, hsl(195 90% 62% / 0.08), transparent 60%),
+    radial-gradient(1000px 500px at 110% 10%, hsl(43 88% 55% / 0.10), transparent 60%),
+    linear-gradient(180deg, hsl(222 50% 5%), hsl(222 47% 4%));
+  background-attachment: fixed;
+}
+
+/* Glas-Effekt für Karten, Popover, Sidebar */
+.design-beta3d .bg-card,
+.design-beta3d [data-radix-popper-content-wrapper] > * {
+  background: linear-gradient(180deg, hsl(222 45% 11% / 0.85), hsl(222 45% 8% / 0.85)) !important;
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border-color: hsl(210 40% 96% / 0.08);
+  box-shadow:
+    0 1px 0 0 hsl(210 40% 96% / 0.06) inset,
+    0 20px 60px -20px hsl(222 80% 2% / 0.7),
+    0 0 0 1px hsl(43 88% 55% / 0.04);
+}
+
+/* 3D-Card-Hover */
+.design-beta3d .bg-card {
+  transition: transform 0.35s cubic-bezier(.2,.8,.2,1), box-shadow 0.35s ease, border-color 0.3s ease;
+  will-change: transform;
+}
+.design-beta3d .bg-card:hover {
+  transform: translateY(-3px);
+  border-color: hsl(43 88% 55% / 0.35);
+  box-shadow:
+    0 1px 0 0 hsl(210 40% 96% / 0.08) inset,
+    0 30px 60px -20px hsl(222 80% 2% / 0.8),
+    0 0 0 1px hsl(43 88% 55% / 0.18),
+    0 0 40px -10px hsl(195 90% 62% / 0.25);
+}
+
+/* Buttons – Glas + Glow */
+.design-beta3d .bg-primary {
+  background: linear-gradient(135deg, hsl(43 88% 55%), hsl(38 92% 65%)) !important;
+  box-shadow:
+    0 1px 0 hsl(40 100% 90% / 0.4) inset,
+    0 8px 24px -8px hsl(43 88% 55% / 0.55);
+}
+.design-beta3d .bg-primary:hover {
+  filter: brightness(1.06);
+  box-shadow:
+    0 1px 0 hsl(40 100% 90% / 0.5) inset,
+    0 10px 30px -8px hsl(43 88% 55% / 0.7);
+}
+
+/* Sidebar als dunkles Glasspanel mit Ice-Blue-Akzent */
+.design-beta3d aside,
+.design-beta3d nav[data-sidebar],
+.design-beta3d [class*="sidebar"] {
+  background: linear-gradient(180deg, hsl(222 50% 6% / 0.92), hsl(222 50% 4% / 0.92));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-right: 1px solid hsl(195 90% 62% / 0.08);
+}
+
+/* Inputs glasig */
+.design-beta3d input,
+.design-beta3d textarea,
+.design-beta3d select {
+  background-color: hsl(222 45% 10% / 0.7);
+  border-color: hsl(210 40% 96% / 0.10);
+}
+.design-beta3d input:focus,
+.design-beta3d textarea:focus,
+.design-beta3d select:focus {
+  border-color: hsl(43 88% 55% / 0.55);
+  box-shadow: 0 0 0 3px hsl(43 88% 55% / 0.18);
+}
+
+/* Tabellen-Hover im Beta-Theme: Ice-Blue Schimmer */
+.design-beta3d table tbody tr:hover {
+  background-color: hsl(195 90% 62% / 0.06) !important;
+  box-shadow: inset 4px 0 0 0 hsl(43 88% 55%);
+}
+
+/* Sanftes Floating für Hauptüberschriften */
+@keyframes beta3d-float-in {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.design-beta3d main h1,
+.design-beta3d main h2 {
+  animation: beta3d-float-in 0.5s ease-out both;
+}
+
+/* Scrollbar im Beta-Theme */
+.design-beta3d ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, hsl(43 88% 55% / 0.5), hsl(195 90% 62% / 0.4));
+}
+
