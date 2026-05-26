@@ -1,4 +1,4 @@
-import { Sparkles, Monitor, Check } from 'lucide-react';
+import { Sparkles, Monitor, Check, Wand2 } from 'lucide-react';
 import { useState } from 'react';
 import { useDesignVariant, type DesignVariant } from '@/hooks/useDesignVariant';
 import {
@@ -11,9 +11,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 
-const options: { value: DesignVariant; label: string; description: string; icon: typeof Monitor; beta?: boolean }[] = [
+const options: { value: DesignVariant; label: string; description: string; icon: typeof Monitor; beta?: boolean; ultra?: boolean }[] = [
   { value: 'classic', label: 'Classic Design', description: 'Aktuelles AlixWork Design', icon: Monitor },
   { value: 'beta3d', label: 'AlixWork 3D Beta', description: '3D Command Center · Glas · Gold', icon: Sparkles, beta: true },
+  { value: 'aurora', label: 'AlixWork Aurora Ultra', description: 'Liquid Glass · Aurora · AI Light', icon: Wand2, ultra: true },
 ];
 
 export default function DesignVariantSwitcher() {
@@ -39,6 +40,11 @@ export default function DesignVariantSwitcher() {
                 Beta
               </Badge>
             )}
+            {variant === 'aurora' && (
+              <Badge variant="outline" className="ml-1 h-4 border-primary/60 px-1 text-[10px] text-primary">
+                Ultra
+              </Badge>
+            )}
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" side="top" className="w-64">
@@ -60,6 +66,11 @@ export default function DesignVariantSwitcher() {
                     {opt.beta && (
                       <Badge variant="outline" className="h-4 border-primary/60 px-1 text-[10px] text-primary">
                         Beta
+                      </Badge>
+                    )}
+                    {opt.ultra && (
+                      <Badge variant="outline" className="h-4 border-primary/60 px-1 text-[10px] text-primary">
+                        Ultra
                       </Badge>
                     )}
                   </div>
