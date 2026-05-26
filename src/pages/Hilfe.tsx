@@ -21,9 +21,15 @@ export default function Hilfe() {
           </CardHeader>
           <CardContent className="text-sm text-muted-foreground space-y-2">
             <p>Bei technischen Problemen oder Fragen wenden Sie sich an das IT-Team.</p>
-            <a href="mailto:it@alix-finance.de" className="inline-flex items-center gap-2 text-primary hover:underline">
-              <Mail className="h-4 w-4" /> it@alix-finance.de
+            <a href="mailto:rde@alix-lasers.com" className="inline-flex items-center gap-2 text-primary hover:underline">
+              <Mail className="h-4 w-4" /> rde@alix-lasers.com
             </a>
+            <p className="text-xs">
+              Aktuelle Antwortzeit: bis{' '}
+              <span className="font-medium text-foreground">
+                {new Date(Date.now() + 6 * 7 * 24 * 60 * 60 * 1000).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+              </span>
+            </p>
           </CardContent>
         </Card>
 
