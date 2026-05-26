@@ -68,6 +68,11 @@ export default function DesignVariantSwitcher() {
                         Beta
                       </Badge>
                     )}
+                    {opt.ultra && (
+                      <Badge variant="outline" className="h-4 border-primary/60 px-1 text-[10px] text-primary">
+                        Ultra
+                      </Badge>
+                    )}
                   </div>
                   <p className="text-xs text-muted-foreground">{opt.description}</p>
                 </div>
