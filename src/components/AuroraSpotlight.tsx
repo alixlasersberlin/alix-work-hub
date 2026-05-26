@@ -43,35 +43,10 @@ export default function AuroraSpotlight() {
       }
     };
 
-    // Card tilt (sehr dezent)
-    const onCardMove = (e: MouseEvent) => {
-      const card = (e.target as HTMLElement)?.closest<HTMLElement>('.bg-card');
-      if (!card) return;
-      const r = card.getBoundingClientRect();
-      const cx = (e.clientX - r.left) / r.width - 0.5;
-      const cy = (e.clientY - r.top) / r.height - 0.5;
-      card.style.setProperty('--tilt-x', `${(-cy * 4).toFixed(2)}deg`);
-      card.style.setProperty('--tilt-y', `${(cx * 4).toFixed(2)}deg`);
-      card.style.setProperty('--shine-x', `${((e.clientX - r.left) / r.width) * 100}%`);
-      card.style.setProperty('--shine-y', `${((e.clientY - r.top) / r.height) * 100}%`);
-      card.classList.add('aurora-tilt');
-    };
-    const onCardLeave = (e: MouseEvent) => {
-      const card = (e.target as HTMLElement)?.closest<HTMLElement>('.bg-card');
-      if (!card) return;
-      card.style.removeProperty('--tilt-x');
-      card.style.removeProperty('--tilt-y');
-      card.classList.remove('aurora-tilt');
-    };
-
     window.addEventListener('mousemove', onMove, { passive: true });
-    document.addEventListener('mousemove', onCardMove, { passive: true });
-    document.addEventListener('mouseout', onCardLeave, { passive: true });
 
     return () => {
       window.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mousemove', onCardMove);
-      document.removeEventListener('mouseout', onCardLeave);
       if (rafId) cancelAnimationFrame(rafId);
       root.classList.remove('aurora-spotlight-on');
       root.style.removeProperty('--aurora-mx');
