@@ -879,6 +879,7 @@ export default function AppLayout() {
             </Button>
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
+            <DesignVariantSwitcher inline />
             <div className="flex items-center gap-2 text-sm">
               <span className="font-display font-bold gold-text">AlixWork</span>
               <span className="text-muted-foreground font-mono text-xs hidden sm:inline">v{APP_VERSION}</span>
