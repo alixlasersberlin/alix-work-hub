@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import {
   BookOpen, LayoutDashboard, SearchCheck, Package, TrendingUp, ClipboardList,
   ShoppingCart, Factory, Warehouse, MapPin, FileText, Banknote, Landmark,
-  Workflow, HelpCircle, ArrowLeft,
+  Workflow, HelpCircle, ArrowLeft, ShieldCheck, Cpu,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
