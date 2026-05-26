@@ -181,11 +181,6 @@ export default function AuroraPrioTicker() {
               </DropdownMenuItem>
             );
           })}
-          <DropdownMenuSeparator />
-          <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">CNN Live</DropdownMenuLabel>
-          <div className="px-1 pb-1" onClick={(e) => e.stopPropagation()}>
-            <CNNNewsTicker />
-          </div>
         </DropdownMenuContent>
       </DropdownMenu>
 
