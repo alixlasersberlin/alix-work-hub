@@ -8,6 +8,7 @@ import {
   Warehouse, PackageCheck, ShieldAlert, UserCheck
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { CNNNewsTicker } from '@/components/CNNNewsTicker';
 
 interface Stats {
   freePoolDevices: number;
@@ -279,6 +280,9 @@ export default function Dashboard() {
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in space-y-8">
+      {/* CNN Live Ticker */}
+      <CNNNewsTicker />
+
       {/* Header */}
       <div>
         <h1 className="text-2xl font-display font-bold text-foreground">
