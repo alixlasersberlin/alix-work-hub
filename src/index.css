@@ -920,5 +920,5 @@ table tbody tr:hover {
   .aurora-ticker-track { animation: none; }
 }
 .aurora-ticker-track.aurora-ticker-slow {
-  animation-duration: 180s;
+  animation-duration: 360s;
 }
