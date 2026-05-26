@@ -910,7 +910,7 @@ table tbody tr:hover {
   to   { transform: translateX(-50%); }
 }
 .aurora-ticker-track {
-  animation: aurora-ticker 40s linear infinite;
+  animation: aurora-ticker 90s linear infinite;
   will-change: transform;
 }
 .aurora-ticker-track:hover {
