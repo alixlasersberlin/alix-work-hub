@@ -17,24 +17,23 @@ const options: { value: DesignVariant; label: string; description: string; icon:
   { value: 'aurora', label: 'AlixWork Aurora Ultra', description: 'Liquid Glass · Aurora · AI Light', icon: Wand2, ultra: true },
 ];
 
-export default function DesignVariantSwitcher() {
+export default function DesignVariantSwitcher({ inline = false }: { inline?: boolean } = {}) {
   const { variant, setVariant } = useDesignVariant();
   const [open, setOpen] = useState(false);
 
   const active = options.find(o => o.value === variant) ?? options[0];
   const ActiveIcon = active.icon;
 
-  return (
-    <div className="fixed bottom-4 left-4 z-[60] print:hidden">
-      <DropdownMenu open={open} onOpenChange={setOpen}>
-        <DropdownMenuTrigger asChild>
-          <button
-            type="button"
-            aria-label="Design wechseln"
-            className="group flex items-center gap-2 rounded-full border border-border/60 bg-background/80 px-3 py-2 text-xs font-medium text-foreground shadow-lg backdrop-blur-md transition-all hover:border-primary/60 hover:bg-background/95 hover:shadow-xl"
-          >
-            <ActiveIcon className="h-4 w-4 text-primary" />
-            <span className="hidden sm:inline">Design</span>
+  const trigger = (
+    <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          aria-label="Design wechseln"
+          className="group flex items-center gap-2 rounded-full border border-border/60 bg-background/80 px-3 py-1.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-md transition-all hover:border-primary/60 hover:bg-background/95 hover:shadow-md"
+        >
+          <ActiveIcon className="h-4 w-4 text-primary" />
+          <span className="hidden sm:inline">Design</span>
             {variant === 'beta3d' && (
               <Badge variant="outline" className="ml-1 h-4 border-primary/60 px-1 text-[10px] text-primary">
                 Beta
