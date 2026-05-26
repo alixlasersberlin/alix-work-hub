@@ -828,7 +828,7 @@ export default function AppLayout() {
             </Button>
             <Button
               variant="ghost"
-              className="h-8 justify-start text-[14.5px] px-2 text-muted-foreground hover:text-destructive flex-shrink-0"
+              className="h-8 flex-1 justify-start text-[14.5px] px-2 text-muted-foreground hover:text-destructive"
               onClick={signOut}
               title="Abmelden"
             >
