@@ -892,7 +892,10 @@ export default function AppLayout() {
             <div className="flex items-center gap-2 text-sm">
               <span className="font-display font-bold gold-text">AlixWork</span>
               <span className="text-muted-foreground font-mono text-xs hidden sm:inline">v{APP_VERSION}</span>
-            </div>
+          </div>
+          <div className="flex-1 min-w-0 mx-3 hidden md:block">
+            <CNNNewsTicker />
+          </div>
             <Button
               variant="ghost"
               size="icon"
