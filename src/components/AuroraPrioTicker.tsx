@@ -15,7 +15,7 @@ import {
  * Nur sichtbar im Aurora-Design.
  */
 
-type Mode = 'prio' | 'timeline' | 'lager';
+type Mode = 'prio' | 'timeline' | 'lager' | 'cnn';
 
 interface TickerItem {
   id: string;
