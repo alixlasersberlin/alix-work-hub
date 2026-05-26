@@ -147,6 +147,28 @@ const sections: Section[] = [
     ],
   },
   {
+    icon: ShieldCheck, title: 'Authentifizierung & Sicherheit', intro: 'Login, MFA, Sitzungs- und Zugriffsschutz.',
+    entries: [
+      { path: '/login', label: 'Login', desc: 'E-Mail/Passwort-Login mit Turnstile-Bot-Schutz.', roles: ['Öffentlich'] },
+      { path: '/passwort-setzen', label: 'Passwort setzen', desc: 'Einmal-Link zur Erst- oder Neuvergabe des Passworts.', roles: ['Eingeladene Nutzer'] },
+      { path: '/mfa-setup', label: 'MFA einrichten', desc: 'Pflicht-Setup einer TOTP-App (Google/MS Authenticator).', roles: ['Alle Rollen'] },
+      { path: '/mfa-challenge', label: 'MFA Challenge', desc: '6-stelliger Code bei jedem Login.', roles: ['Alle Rollen'] },
+      { path: '/mfa-recovery', label: 'MFA Recovery', desc: 'Wiederherstellung über zuvor erzeugte Recovery-Codes.', roles: ['Alle Rollen'] },
+      { path: '/account-blocked', label: 'Account gesperrt', desc: 'Anzeige bei block_reason im Profil.', roles: ['Gesperrte Nutzer'] },
+      { path: '/access-denied', label: 'Zugriff verweigert', desc: 'Fallback bei fehlender Rolle für eine Route.', roles: ['Alle Rollen'] },
+      { path: '/unsubscribe', label: 'Abmeldung E-Mails', desc: 'Öffentlicher Link zum Abbestellen von Mails.', roles: ['Öffentlich'] },
+    ],
+  },
+  {
+    icon: Cpu, title: 'System & Integrationen', intro: 'Edge Functions, Cronjobs und externe Anbindungen.',
+    entries: [
+      { path: '/system', label: 'Monitoring', desc: 'Status aller Edge Functions und Sync-Jobs.', roles: ['Admin', 'Super Admin', 'Read Only Audit'] },
+      { path: '/import', label: 'Zoho-Import', desc: 'Manuelle Synchronisation mit Zoho Books/Inventory.', roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Read Only Audit'] },
+      { path: '/datensicherung', label: 'Backups', desc: 'Nächtliche Backups inkl. Hetzner-Mirror.', roles: ['Admin', 'Super Admin'] },
+      { path: '/operation/email-vorlagen', label: 'E-Mail Vorlagen', desc: 'Versionierte Transaktionsvorlagen (Resend).', roles: ['Admin', 'Super Admin', 'Auftragsverwaltung'] },
+    ],
+  },
+  {
     icon: HelpCircle, title: 'Hilfe', intro: 'Support, Dokumentation und Kontakt.',
     entries: [
       { path: '/hilfe', label: 'Hilfe', desc: 'Support-Kontakt, FAQ und Dokumentation.', roles: ['Alle Rollen'] },
