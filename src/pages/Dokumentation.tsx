@@ -154,7 +154,7 @@ const sections: Section[] = [
   },
 ];
 
-type WorkflowDetail = { workflow: string[]; guidelines: string[] };
+type WorkflowDetail = { workflow: string[]; guidelines: string[]; events?: string[] };
 
 const workflowDetails: Record<string, WorkflowDetail> = {
   'Dashboard': {
@@ -222,43 +222,77 @@ const workflowDetails: Record<string, WorkflowDetail> = {
   },
   'Bestellungen': {
     workflow: [
-      'Bestellung wird durch Auftragsverwaltung angelegt (production_orders).',
-      'Status: draft → pending_approval → approved.',
-      'Super Admin prüft und genehmigt die Bestellung (approval_status, approved_by, approved_at).',
-      'Erst nach Freigabe wird die PDF generiert und an den Lieferanten gesendet.',
-      'Reklamationen folgen demselben Genehmigungsprozess.',
+      'Auftragsverwaltung legt unter /order/neu eine production_order an (Modell, Farbe, Lieferant, Liefertermin, Wunschdatum).',
+      'Datensatz wird mit status="offen" und approval_status="pending_approval" in der Tabelle production_orders gespeichert.',
+      'Reklamationen werden über /order/reklamation/neu mit is_reclamation=true angelegt und folgen demselben Prozess.',
+      'Super Admin öffnet die Bestellung unter /order/:id, prüft Inhalt und klickt „Genehmigen".',
+      'Genehmigung setzt approval_status="approved", approved_by=auth.uid() und approved_at=now() (Audit-Trail).',
+      'Erst nach Freigabe ruft der Bearbeiter sendProductionOrderEmail(poId) auf — die Funktion bricht ab, falls approval_status !== "approved".',
+      'Die PDF wird via lib/production-order-pdf.ts erzeugt, in Storage hochgeladen (pdf_path) und über die Edge Function send-transactional-email an den Lieferanten gesendet.',
+      'Nach erfolgreichem Versand wird status auf "gesendet" gesetzt; die Bestellung erscheint im Lieferanten-Portal /production.',
+    ],
+    events: [
+      'Vor Freigabe: PDF-Download und E-Mail-Versand sind blockiert (UI-Button deaktiviert + Server-Check in send-production-order-email).',
+      'Bei Genehmigung: Eintrag in audit/Logfiles, sichtbar unter /operation/logfiles.',
+      'Nach Versand: Lieferant erhält E-Mail mit PDF-Link, die Bestellung wird in /production/order-in sichtbar.',
+      'Storno einer freigegebenen Bestellung erfordert erneute Super-Admin-Aktion (kein „stilles" Zurücksetzen).',
+      'Timeline-Ansicht (/order/timeline) aktualisiert sich live via Supabase Realtime, sobald sich der Status ändert.',
     ],
     guidelines: [
-      'KEINE PDF-Erstellung oder -Versand vor Super-Admin-Freigabe.',
-      'Lieferanten sehen ausschließlich freigegebene Bestellungen.',
-      'Reklamationen sind als solche zu kennzeichnen (mode=reclamation).',
-      'Jede Genehmigung erzeugt einen Audit-Eintrag.',
+      'KEINE PDF-Erstellung oder -Versand vor Super-Admin-Freigabe — gilt für Server UND UI.',
+      'Lieferanten sehen ausschließlich Bestellungen mit approval_status="approved" (RLS-Policy).',
+      'Reklamationen müssen mit is_reclamation=true angelegt werden — sie laufen sonst nicht durch den Reklamations-Filter.',
+      'Jede Statusänderung (offen → gesendet → in_produktion → fertig) wird mit Timestamp gespeichert.',
+      'Die Zoho-orders.order_number bleibt unverändert; production_order_number ist eine separate, interne Nummer.',
     ],
   },
   'Production': {
     workflow: [
-      'Lieferant meldet sich an und sieht ausschließlich seine freigegebenen Bestellungen.',
-      'Order In: neue Aufträge bestätigen.',
-      'Liste: Bearbeitung laufender Aufträge mit Statuswechseln.',
-      'Fertig: Abschluss meldet das Gerät als produktionsfertig.',
-      'Factory Invoice: Werks-Rechnung wird hochgeladen und geprüft.',
+      'Lieferant loggt sich ein → useAuth lädt Rolle "Lieferant"; AppLayout zeigt nur den Production-Bereich.',
+      'ProductionPortal (/production) lädt production_orders gefiltert nach supplier_id = aktueller User UND approval_status="approved" (RLS erzwingt dies serverseitig).',
+      'Order In (/production/order-in): neu eingegangene Bestellungen werden bestätigt → status wechselt von "gesendet" auf "in_produktion".',
+      'Liste (/production): laufende Fertigung. Statuswechsel über Dropdown aktualisiert production_orders.status direkt in Supabase.',
+      'Fertig (/production/fertig): Lieferant markiert Gerät als fertig → status="fertig", optional Seriennummer, Fotos und payment_status werden erfasst.',
+      'Factory Invoice (/production/factory-invoice): Werks-Rechnung wird mit Betrag, Datum und PDF hochgeladen; Rolle "FACTORY INVOICE" prüft gegen freigegebene Bestellsumme.',
+    ],
+    events: [
+      'Statuswechsel auf "fertig" stößt Equipment-Übergabe an: das Gerät wandert in der Lager-Equipment-Area von "Produktion" nach "Warehouse" (sobald der Wareneingang erfasst ist).',
+      'payment_status wechselt von "Nein" → "Ja", sobald die Factory Invoice freigegeben wurde.',
+      'Mehrsprachiges UI (DE/EN/CN) — Lieferanten sehen ihre bevorzugte Sprache (user_profiles.preferred_language).',
+      'Realtime-Update: Statuswechsel sind sofort in /order/timeline und im Dashboard sichtbar.',
+      'Wird eine freigegebene Bestellung von Super Admin auf "abgelehnt" gesetzt, verschwindet sie unmittelbar aus dem Lieferanten-Portal.',
     ],
     guidelines: [
-      'Lieferanten haben ausschließlich Zugriff auf eigene Aufträge (RLS).',
-      'Statuswechsel ohne vorherigen Schritt sind nicht zulässig.',
-      'Rechnungsbeträge müssen mit der freigegebenen Bestellung übereinstimmen.',
+      'Lieferanten haben ausschließlich Zugriff auf eigene Aufträge (RLS: supplier_id = (select supplier_id from user_profiles where id=auth.uid())).',
+      'Statuswechsel sind monoton: offen → gesendet → in_produktion → fertig. Rücksprünge nur durch Admin.',
+      'Rechnungsbeträge müssen mit der freigegebenen Bestellung übereinstimmen — Abweichungen lösen Warnung in /production/factory-invoice aus.',
+      'Seriennummern sind verpflichtend, bevor "fertig" gesetzt werden darf.',
+      'Fotos werden in Supabase Storage abgelegt; nur Lieferant und Admin haben Lesezugriff.',
     ],
   },
   'Lagerbestand': {
     workflow: [
-      'Geräte werden im Wareneingang erfasst und einer Lager-Area zugeordnet.',
-      'Statuswechsel (Warehouse → Produktion → Unterwegs → Ausgeliefert) erfolgt manuell oder automatisch via Tourenplan.',
-      'Hold-Status entfernt das Gerät vorübergehend aus der Verfügbarkeit.',
+      'Wareneingang (/verkauf/artikel/wareneingang) erfasst ein Neugerät: Modell, Seriennummer, Lieferant, Eingangsdatum → schreibt in lager_devices mit area="Warehouse".',
+      'Leihgeräte werden separat unter /lager/leihgeraete verwaltet (eigene Tabelle für Verleih-Workflow mit Rückgabedatum).',
+      'Lagergeräte (/lager/lagergeraete) listen alle aktiven Neugeräte.',
+      'Equipment-Area-Seiten (Warehouse, Unterwegs, Produktion, Hold, Ausgeliefert) filtern lager_devices nach area-Feld.',
+      'Statuswechsel: Mitarbeiter verschiebt Gerät zwischen Areas; jede Änderung schreibt area, area_changed_at und area_changed_by.',
+      'Bei Auslieferung über die Tourenplanung wird area automatisch auf "Ausgeliefert" gesetzt und das Gerät dem Auftrag (order_id) fest zugeordnet.',
+    ],
+    events: [
+      'Beim Speichern in Wareneingang wird lager_match.ts ausgeführt: das Gerät wird mit offenen Aufträgen abgeglichen (Modell + Farbe) und ein Vorschlag erzeugt.',
+      'Bei Match erscheint das Gerät in /prio-liste mit Hinweis „Lieferbar".',
+      'Hold-Status (area="Hold") entfernt das Gerät aus der Verfügbarkeitsberechnung im Dashboard und der Prio-Liste.',
+      'Zähler in der Sidebar (lager_devices_counts) werden alle 15 Minuten automatisch neu geladen (siehe AppLayout-Refresh-Logik).',
+      'Sobald ein Gerät den Status „Ausgeliefert" erreicht, wird der zugehörige Auftrag in /geliefert oder /teilgeliefert eingereiht (je nach Anzahl gelieferter Positionen).',
+      'Reklamation eines ausgelieferten Geräts setzt area zurück auf "Warehouse" und eröffnet automatisch eine Reklamations-Bestellung (Verweis auf BESTELLUNGEN-Flow).',
     ],
     guidelines: [
-      'Jede Statusänderung wird mit Zeitstempel und User dokumentiert.',
-      'Leihgeräte und Lagergeräte werden getrennt verwaltet.',
-      'Ausgelieferte Geräte sind dem Auftrag fest zugeordnet.',
+      'Jede Statusänderung wird mit Zeitstempel und User dokumentiert (area_changed_at, area_changed_by) — keine stillen Verschiebungen.',
+      'Leihgeräte und Lagergeräte werden strikt getrennt; ein Gerät kann nicht gleichzeitig in beiden Listen erscheinen.',
+      'Ausgelieferte Geräte sind dem Auftrag fest zugeordnet (order_id) und dürfen nicht ohne Reklamationsvorgang umgehängt werden.',
+      'Seriennummern sind unique — Duplikate werden beim Wareneingang abgelehnt.',
+      'Nur Admin/Super Admin dürfen Geräte aus dem System löschen; reguläre Nutzer können nur den Status ändern.',
     ],
   },
   'Tourenplanung': {
@@ -419,6 +453,15 @@ export default function Dokumentation() {
                         {detail.guidelines.map((g, i) => <li key={i}>{g}</li>)}
                       </ul>
                     </div>
+                  </div>
+                )}
+
+                {detail?.events && (
+                  <div className="rounded-md border border-primary/30 bg-primary/5 p-4">
+                    <h4 className="text-sm font-semibold mb-2 text-foreground">Programmierte Abläufe &amp; Ereignisse</h4>
+                    <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
+                      {detail.events.map((ev, i) => <li key={i}>{ev}</li>)}
+                    </ul>
                   </div>
                 )}
 
