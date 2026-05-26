@@ -208,6 +208,7 @@ function AppRoutes() {
           <Route path="/operation/logfiles" element={<ProtectedRoute requiredRoles={SYSTEM_ROLES}><Logfiles /></ProtectedRoute>} />
           <Route path="/operation/email-vorlagen" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><EmailTemplates /></ProtectedRoute>} />
           <Route path="/hilfe" element={<ProtectedRoute><Hilfe /></ProtectedRoute>} />
+          <Route path="/hilfe/dokumentation" element={<ProtectedRoute><Dokumentation /></ProtectedRoute>} />
           <Route path="/operation/hilfe" element={<Navigate to="/hilfe" replace />} />
           <Route path="/papiere" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Papiere /></ProtectedRoute>} />
           <Route path="/versand/lieferscheine" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><VersandPlaceholder title="Lieferscheine" description="Versand & Lieferdokumente" icon={TruckIcon} /></ProtectedRoute>} />
