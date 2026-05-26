@@ -14,6 +14,7 @@ import DesignVariantSwitcher from '@/components/DesignVariantSwitcher';
 import AuroraPrioTicker from '@/components/AuroraPrioTicker';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import alixLogo from '@/assets/alix-logo-gold.png';
+import { CNNNewsTicker } from '@/components/CNNNewsTicker';
 
 
 const APP_VERSION = '4.0';
