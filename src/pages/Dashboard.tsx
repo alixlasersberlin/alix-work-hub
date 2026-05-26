@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CNNNewsTicker } from '@/components/CNNNewsTicker';
+import { SidebarInfoBar } from '@/components/SidebarInfoBar';
 
 interface Stats {
   freePoolDevices: number;
@@ -282,6 +283,13 @@ export default function Dashboard() {
     <div className="p-6 lg:p-8 animate-fade-in space-y-8">
       {/* CNN Live Ticker */}
       <CNNNewsTicker />
+
+      {/* Info-Leiste (KW, Datum, Uhrzeiten, Wetter) */}
+      <div className="rounded-xl border border-border overflow-hidden">
+        <SidebarInfoBar />
+      </div>
+
+
 
       {/* Header */}
       <div>
