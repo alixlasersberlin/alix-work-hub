@@ -136,13 +136,34 @@ export default function AuroraPrioTicker() {
       });
     }
 
+    async function loadCNN() {
+      try {
+        const res = await fetch(
+          'https://api.rss2json.com/v1/api.json?rss_url=' +
+            encodeURIComponent('http://rss.cnn.com/rss/edition.rss')
+        );
+        const json = await res.json();
+        return ((json?.items ?? []) as any[]).slice(0, 15).map((it, idx): TickerItem => ({
+          id: `${idx}-${it.link}`,
+          label: it.title,
+          meta: 'CNN',
+          tone: 'text-[hsl(0_72%_55%)]',
+          href: it.link,
+        }));
+      } catch {
+        return [];
+      }
+    }
+
     async function load() {
       try {
         const next = mode === 'prio'
           ? await loadPrio()
           : mode === 'timeline'
             ? await loadTimeline()
-            : await loadLager();
+            : mode === 'lager'
+              ? await loadLager()
+              : await loadCNN();
         if (!cancelled) setItems(next);
       } catch {
         if (!cancelled) setItems([]);
