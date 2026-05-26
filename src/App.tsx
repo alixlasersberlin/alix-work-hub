@@ -231,7 +231,7 @@ function AppRoutes() {
           <Route path="/finanzierungen/zusagen-bank" element={<ProtectedRoute requiredRoles={FINANCING_ROLES}><ZusagenBank /></ProtectedRoute>} />
           <Route path="/finanzierungen/absagen-bank" element={<ProtectedRoute requiredRoles={FINANCING_ROLES}><AbsagenBank /></ProtectedRoute>} />
           <Route path="/finanzierungen/anfragen-offen" element={<ProtectedRoute requiredRoles={FINANCING_ROLES}><AnfragenOffen /></ProtectedRoute>} />
-          <Route path="/auftraege/:id" element={<ProtectedRoute requiredRoles={FINANCING_ROLES}><OrderDetail /></ProtectedRoute>} />
+          
           <Route path="/benutzer" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><UserManagement /></ProtectedRoute>} />
           <Route path="/import" element={<ProtectedRoute requiredRoles={IMPORT_ROLES}><ImportManagement /></ProtectedRoute>} />
           <Route path="/datensicherung" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Backups /></ProtectedRoute>} />
