@@ -8,6 +8,7 @@ import {
   Warehouse, PackageCheck, ShieldAlert, UserCheck
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { CNNNewsTicker } from '@/components/CNNNewsTicker';
 
 interface Stats {
   freePoolDevices: number;
