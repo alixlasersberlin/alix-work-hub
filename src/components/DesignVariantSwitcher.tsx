@@ -46,7 +46,7 @@ export default function DesignVariantSwitcher({ inline = false }: { inline?: boo
           )}
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align={inline ? 'end' : 'start'} side={inline ? 'bottom' : 'top'} className="w-64 z-[70]">
+      <DropdownMenuContent align={inline ? 'end' : 'start'} side={inline ? 'bottom' : 'top'} sideOffset={8} className="w-64 z-[200]">
         <DropdownMenuLabel className="text-xs text-muted-foreground">Design-Variante</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {options.map(opt => {
