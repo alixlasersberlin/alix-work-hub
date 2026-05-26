@@ -588,7 +588,7 @@ export default function AppLayout() {
                   {item.path === '/lager' ? (
                     <HoverCard openDelay={150} closeDelay={100}>
                       <HoverCardTrigger asChild>{rowEl}</HoverCardTrigger>
-                      <HoverCardContent side="right" align="start" sideOffset={12} collisionPadding={16} avoidCollisions className="w-80 z-[10000] shadow-2xl">
+                      <HoverCardContent side="right" align="center" sideOffset={24} collisionPadding={24} avoidCollisions className="w-96 z-[10000] shadow-2xl border-primary/30 bg-popover/95 backdrop-blur-md">
                         <div className="space-y-3">
                           <p className="text-sm font-medium leading-relaxed">
                             Danke, dass du heute die Kunden zufrieden stellst und deinen Chef auch. <span className="text-lg">😊</span>
