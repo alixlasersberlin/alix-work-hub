@@ -133,6 +133,7 @@ const navItems: NavItem[] = [
       { path: '/datensicherung', label: 'Datensicherung', icon: Shield, roles: ['Admin', 'Super Admin'] },
       { path: '/operation/logfiles', label: 'Logfiles', icon: ScrollText, roles: ['Admin', 'Super Admin', 'Read Only Audit'] },
       { path: '/operation/email-vorlagen', label: 'E-Mail Vorlagen', icon: Mail, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung'] },
+      { path: '/operation/hilfe', label: 'Hilfe', icon: HelpCircle, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Read Only Audit', 'Finance', 'Finanzierungen', 'Lieferant', 'FACTORY INVOICE'] },
     ],
   },
 ];
