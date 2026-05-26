@@ -769,10 +769,10 @@ table tbody tr:hover {
   z-index: 1;
   background:
     radial-gradient(
-      280px circle at var(--aurora-mx, 50%) var(--aurora-my, 50%),
-      hsl(var(--aurora-gold) / 0.16),
-      hsl(var(--aurora-2) / 0.10) 30%,
-      hsl(var(--aurora-1) / 0.06) 55%,
+      180px circle at var(--aurora-mx, 50%) var(--aurora-my, 50%),
+      hsl(var(--aurora-gold) / 0.14),
+      hsl(var(--aurora-2) / 0.08) 30%,
+      hsl(var(--aurora-1) / 0.04) 55%,
       transparent 72%
     );
   mix-blend-mode: screen;
@@ -783,10 +783,10 @@ table tbody tr:hover {
 .design-aurora.dark.aurora-spotlight-on body::after {
   background:
     radial-gradient(
-      300px circle at var(--aurora-mx, 50%) var(--aurora-my, 50%),
-      hsl(var(--aurora-gold) / 0.20),
-      hsl(var(--aurora-2) / 0.14) 32%,
-      hsl(var(--aurora-1) / 0.08) 58%,
+      200px circle at var(--aurora-mx, 50%) var(--aurora-my, 50%),
+      hsl(var(--aurora-gold) / 0.18),
+      hsl(var(--aurora-2) / 0.12) 32%,
+      hsl(var(--aurora-1) / 0.06) 58%,
       transparent 74%
     );
   mix-blend-mode: screen;
