@@ -136,7 +136,7 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    path: '/hilfe', label: 'HILFE', icon: HelpCircle, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Read Only Audit', 'Finance', 'Finanzierungen', 'Lieferant', 'FACTORY INVOICE'],
+    path: '/hilfe', label: 'HILFE', icon: HelpCircle, roles: null,
   },
 ];
 
