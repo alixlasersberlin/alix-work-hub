@@ -47,7 +47,7 @@ export default function AuroraPrioTicker() {
         .not('expected_shipment_date', 'is', null)
         .in('order_status', ['overdue', 'Overdue', 'invoiced', 'Invoiced', 'open', 'Open', 'offen', 'Offen', 'approved', 'Approved'])
         .order('expected_shipment_date', { ascending: true })
-        .limit(5);
+        .limit(10);
       if (!cancelled && data) setRows(data as any);
     }
     load();
