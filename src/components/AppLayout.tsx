@@ -14,6 +14,7 @@ import DesignVariantSwitcher from '@/components/DesignVariantSwitcher';
 import AuroraPrioTicker from '@/components/AuroraPrioTicker';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import alixLogo from '@/assets/alix-logo-gold.png';
+import { SidebarInfoBar } from '@/components/SidebarInfoBar';
 
 const APP_VERSION = '4.0';
 
@@ -518,6 +519,11 @@ export default function AppLayout() {
             <X className="w-4 h-4" />
           </Button>
         </div>
+
+        {/* Info-Leiste unter Logo */}
+        {!(collapsed && !mobileOpen) && <SidebarInfoBar />}
+
+
 
         {/* Navigation */}
         <nav className="flex-1 py-2 px-2 space-y-0.5 overflow-y-auto scroll-touch">
