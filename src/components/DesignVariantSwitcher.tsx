@@ -40,6 +40,11 @@ export default function DesignVariantSwitcher() {
                 Beta
               </Badge>
             )}
+            {variant === 'aurora' && (
+              <Badge variant="outline" className="ml-1 h-4 border-primary/60 px-1 text-[10px] text-primary">
+                Ultra
+              </Badge>
+            )}
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" side="top" className="w-64">
