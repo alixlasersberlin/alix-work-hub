@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Flame, GanttChart, Package, ChevronDown } from 'lucide-react';
+import { Flame, GanttChart, Package, ChevronDown, Radio } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useDesignVariant } from '@/hooks/useDesignVariant';
 import {
@@ -8,10 +8,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
-import { CNNNewsTicker } from '@/components/CNNNewsTicker';
 
 /**
  * Aurora Ticker – Laufschrift mit umschaltbaren Quellen (Prio / Timeline / Lager).
