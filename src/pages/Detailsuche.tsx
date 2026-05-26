@@ -282,7 +282,7 @@ export default function Detailsuche() {
       <PageHeader
         icon={<SearchCheck className="w-6 h-6 text-primary" />}
         title="Detailsuche"
-        subtitle="Suche nach Name, PLZ, Wohnort, Auftragsnummer, Telefonnummer oder Modell"
+        subtitle="Suche nach Name, PLZ, Wohnort, Auftragsnummer, Telefonnummer, Modell oder Seriennummer"
       />
 
       <div className="rounded-xl border border-border bg-card p-6 space-y-4">
