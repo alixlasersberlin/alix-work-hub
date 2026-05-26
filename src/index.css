@@ -783,7 +783,7 @@ table tbody tr:hover {
 .design-aurora.dark.aurora-spotlight-on body::after {
   background:
     radial-gradient(
-      200px circle at var(--aurora-mx, 50%) var(--aurora-my, 50%),
+      120px circle at var(--aurora-mx, 50%) var(--aurora-my, 50%),
       hsl(var(--aurora-gold) / 0.18),
       hsl(var(--aurora-2) / 0.12) 32%,
       hsl(var(--aurora-1) / 0.06) 58%,
