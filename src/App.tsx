@@ -82,6 +82,7 @@ const VerkaufUebersicht = lazy(() => import("./pages/VerkaufUebersicht"));
 const Operation = lazy(() => import("./pages/Operation"));
 const Logfiles = lazy(() => import("./pages/Logfiles"));
 const EmailTemplates = lazy(() => import("./pages/EmailTemplates"));
+const Hilfe = lazy(() => import("./pages/Hilfe"));
 const Papiere = lazy(() => import("./pages/Papiere"));
 const VersandPlaceholder = lazy(() => import("./pages/VersandPlaceholder"));
 const LeasingBank = lazy(() => import("./pages/LeasingBank"));
