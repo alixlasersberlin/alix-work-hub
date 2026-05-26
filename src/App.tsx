@@ -105,6 +105,7 @@ const queryClient = new QueryClient({
 const ORDER_ROLES = ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance'];
 const PLANNING_ROLES = ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung'];
 const FINANCE_ROLES = ['Admin', 'Super Admin', 'Finance'];
+const FINANCING_ROLES = ['Admin', 'Super Admin', 'Finance', 'Finanzierungen'];
 const ADMIN_ROLES = ['Admin', 'Super Admin'];
 const IMPORT_ROLES = ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Read Only Audit'];
 const SYSTEM_ROLES = ['Admin', 'Super Admin', 'Read Only Audit'];
@@ -162,6 +163,10 @@ function MfaGate({ children, expect }: { children: React.ReactNode; expect: 'not
 function HomeRoute() {
   const { roles } = useAuth();
   if (isSupplierOnly(roles)) return <Navigate to="/production" replace />;
+  // Nur-Finanzierungen-Nutzer landen direkt im Finanzierungs-Bereich
+  if (roles.length > 0 && roles.every((r) => r === 'Finanzierungen')) {
+    return <Navigate to="/finanzierungen" replace />;
+  }
   return <Dashboard />;
 }
 
@@ -185,7 +190,7 @@ function AppRoutes() {
           <Route path="/kunden/:id" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><CustomerDetail /></ProtectedRoute>} />
           <Route path="/auftraege" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Orders /></ProtectedRoute>} />
           <Route path="/auftraege/in-klaerung" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><OrdersInClarification /></ProtectedRoute>} />
-          <Route path="/auftraege/:id" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><OrderDetail /></ProtectedRoute>} />
+          <Route path="/auftraege/:id" element={<ProtectedRoute requiredRoles={[...ORDER_ROLES, 'Finanzierungen']}><OrderDetail /></ProtectedRoute>} />
           <Route path="/verkauf/artikel" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Artikel /></ProtectedRoute>} />
           <Route path="/verkauf/artikel/katalog" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Katalog /></ProtectedRoute>} />
           <Route path="/verkauf/artikel/kategorie" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Kategorie /></ProtectedRoute>} />
@@ -224,12 +229,13 @@ function AppRoutes() {
           <Route path="/finance/neu" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Finance']}><FinanceForm /></ProtectedRoute>} />
           <Route path="/finance/:id" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceDetail /></ProtectedRoute>} />
           <Route path="/finance/:id/bearbeiten" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Finance']}><FinanceForm /></ProtectedRoute>} />
-          <Route path="/finanzierungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><LeasingBank /></ProtectedRoute>} />
-          <Route path="/finanzierungen/leasing-bank" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><LeasingBank /></ProtectedRoute>} />
-          <Route path="/finanzierungen/beantragen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanzierungBeantragen /></ProtectedRoute>} />
-          <Route path="/finanzierungen/zusagen-bank" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><ZusagenBank /></ProtectedRoute>} />
-          <Route path="/finanzierungen/absagen-bank" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><AbsagenBank /></ProtectedRoute>} />
-          <Route path="/finanzierungen/anfragen-offen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><AnfragenOffen /></ProtectedRoute>} />
+          <Route path="/finanzierungen" element={<ProtectedRoute requiredRoles={FINANCING_ROLES}><LeasingBank /></ProtectedRoute>} />
+          <Route path="/finanzierungen/leasing-bank" element={<ProtectedRoute requiredRoles={FINANCING_ROLES}><LeasingBank /></ProtectedRoute>} />
+          <Route path="/finanzierungen/beantragen" element={<ProtectedRoute requiredRoles={FINANCING_ROLES}><FinanzierungBeantragen /></ProtectedRoute>} />
+          <Route path="/finanzierungen/zusagen-bank" element={<ProtectedRoute requiredRoles={FINANCING_ROLES}><ZusagenBank /></ProtectedRoute>} />
+          <Route path="/finanzierungen/absagen-bank" element={<ProtectedRoute requiredRoles={FINANCING_ROLES}><AbsagenBank /></ProtectedRoute>} />
+          <Route path="/finanzierungen/anfragen-offen" element={<ProtectedRoute requiredRoles={FINANCING_ROLES}><AnfragenOffen /></ProtectedRoute>} />
+          
           <Route path="/benutzer" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><UserManagement /></ProtectedRoute>} />
           <Route path="/import" element={<ProtectedRoute requiredRoles={IMPORT_ROLES}><ImportManagement /></ProtectedRoute>} />
           <Route path="/datensicherung" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Backups /></ProtectedRoute>} />

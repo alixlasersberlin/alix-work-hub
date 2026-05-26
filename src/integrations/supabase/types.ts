@@ -1888,6 +1888,7 @@ export type Database = {
     }
     Functions: {
       can_access_finance: { Args: never; Returns: boolean }
+      can_access_financing: { Args: never; Returns: boolean }
       can_access_import_logs: { Args: never; Returns: boolean }
       can_access_orders: { Args: never; Returns: boolean }
       can_access_planning: { Args: never; Returns: boolean }
