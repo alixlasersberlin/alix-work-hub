@@ -879,6 +879,7 @@ export default function AppLayout() {
             </Button>
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
+            <AuroraPrioTicker />
             <DesignVariantSwitcher inline />
             <div className="flex items-center gap-2 text-sm">
               <span className="font-display font-bold gold-text">AlixWork</span>
