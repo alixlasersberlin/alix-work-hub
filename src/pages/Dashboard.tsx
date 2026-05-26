@@ -284,6 +284,13 @@ export default function Dashboard() {
       {/* CNN Live Ticker */}
       <CNNNewsTicker />
 
+      {/* Info-Leiste (KW, Datum, Uhrzeiten, Wetter) */}
+      <div className="rounded-xl border border-border overflow-hidden">
+        <SidebarInfoBar />
+      </div>
+
+
+
       {/* Header */}
       <div>
         <h1 className="text-2xl font-display font-bold text-foreground">
