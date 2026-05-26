@@ -1,0 +1,227 @@
+import { Link } from 'react-router-dom';
+import {
+  BookOpen, LayoutDashboard, SearchCheck, Package, TrendingUp, ClipboardList,
+  ShoppingCart, Factory, Warehouse, MapPin, FileText, Banknote, Landmark,
+  Workflow, HelpCircle, ArrowLeft,
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+
+type Entry = { path: string; label: string; desc: string; roles: string[] };
+type Section = {
+  icon: typeof BookOpen;
+  title: string;
+  intro: string;
+  entries: Entry[];
+};
+
+const sections: Section[] = [
+  {
+    icon: LayoutDashboard, title: 'Dashboard', intro: 'Rollenbasierte Startseite mit KPIs zu Aufträgen, Finanzen und Operations.',
+    entries: [
+      { path: '/', label: 'Dashboard', desc: 'Übersicht aller relevanten Kennzahlen für die eigene Rolle.', roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance', 'Read Only Audit'] },
+    ],
+  },
+  {
+    icon: SearchCheck, title: 'Detailsuche', intro: 'Globale Suche über Aufträge, Kunden und Belege.',
+    entries: [
+      { path: '/detailsuche', label: 'Detailsuche', desc: 'Volltextsuche mit Filtern über alle Datensätze.', roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance', 'Read Only Audit'] },
+    ],
+  },
+  {
+    icon: Package, title: 'Artikel', intro: 'Stammdaten zu Produkten, Kategorien, Katalog und Wareneingang.',
+    entries: [
+      { path: '/verkauf/artikel-uebersicht', label: 'Artikel-Übersicht', desc: 'KPI-Übersicht über Artikel und Bestände.', roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance'] },
+      { path: '/verkauf/artikel', label: 'Alle Artikel', desc: 'Vollständige Artikelliste mit Such- und Filterfunktion.', roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance'] },
+      { path: '/verkauf/artikel/kategorie', label: 'Kategorie', desc: 'Verwaltung der Artikelkategorien.', roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance'] },
+      { path: '/verkauf/artikel/katalog', label: 'Katalog', desc: 'Strukturierter Produktkatalog für den Vertrieb.', roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance'] },
+      { path: '/verkauf/artikel/wareneingang', label: 'Wareneingang', desc: 'Erfassung neuer Lieferungen.', roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance'] },
+    ],
+  },
+  {
+    icon: TrendingUp, title: 'Verkäufe', intro: 'Vom Kundenstamm über Angebote bis zur Rechnung.',
+    entries: [
+      { path: '/verkauf', label: 'Übersicht', desc: 'KPI-Dashboard für Verkaufsaktivitäten.', roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance'] },
+      { path: '/kunden', label: 'Kunden', desc: 'Kundenstammdaten mit Detailansicht und Bearbeitung.', roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance'] },
+      { path: '/verkauf/angebot/neu', label: 'Angebot erstellen', desc: 'Neues Angebot für einen Kunden anlegen.', roles: ['Admin', 'Super Admin', 'Auftragsverwaltung'] },
+      { path: '/verkauf/angebote', label: 'Angebote', desc: 'Liste aller offenen und abgeschlossenen Angebote.', roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance'] },
+      { path: '/verkauf/freigabe', label: 'Freigabe', desc: 'Aufträge in der Freigabe-Warteschleife.', roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance'] },
+      { path: '/auftraege', label: 'Aufträge', desc: 'Zentrale Auftragsübersicht inkl. Status und Synchronisation mit Zoho.', roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance'] },
+      { path: '/auftraege/in-klaerung', label: 'In Klärung', desc: 'Aufträge, die noch geklärt werden müssen.', roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance'] },
+      { path: '/verkauf/anzahlungsrechnung', label: 'Anzahlungsrechnung', desc: 'Anzahlungsrechnungen erfassen und verfolgen.', roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Finance'] },
+      { path: '/finance/rechnungen', label: 'Rechnung', desc: 'Rechnungsübersicht (geteilt mit Buchhaltung).', roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Finance'] },
+      { path: '/verkauf/gutschriften', label: 'Gutschriften', desc: 'Gutschriften zu Rechnungen verwalten.', roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Finance'] },
+    ],
+  },
+  {
+    icon: ClipboardList, title: 'Prio-Listen', intro: 'Operative Listen für Priorisierung, Anwaltsfälle und Lieferungen.',
+    entries: [
+      { path: '/prio-liste', label: 'Prio-Liste', desc: 'Priorisierte Aufträge in Bearbeitung.', roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance'] },
+      { path: '/prio-liste/hold', label: 'Hold', desc: 'Pausierte Aufträge auf Wiedervorlage.', roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance'] },
+      { path: '/anwaltsliste', label: 'Anwaltsliste', desc: 'Aufträge mit juristischer Bearbeitung.', roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance'] },
+      { path: '/geliefert', label: 'Auftrag geliefert', desc: 'Vollständig ausgelieferte Aufträge.', roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance'] },
+      { path: '/teilgeliefert', label: 'Teilgeliefert', desc: 'Aufträge mit Teillieferungen.', roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance'] },
+    ],
+  },
+  {
+    icon: ShoppingCart, title: 'Bestellungen', intro: 'Beschaffung und Produktions-Bestellungen inkl. Reklamationen. Super-Admin-Freigabe erforderlich.',
+    entries: [
+      { path: '/order/timeline', label: 'Timeline Bestellungen', desc: 'Zeitstrahl aller Bestellungen.', roles: ['Admin', 'Super Admin'] },
+      { path: '/order/frei-bestellung', label: 'Bestellung möglich', desc: 'Aufträge, die zur Bestellung bereit sind.', roles: ['Admin', 'Super Admin'] },
+      { path: '/order/reklamation', label: 'Bestellung Reklamation', desc: 'Reklamations-Bestellungen verwalten.', roles: ['Admin', 'Super Admin'] },
+      { path: '/order', label: 'Factory Orders', desc: 'Bestellungen an Werke / Lieferanten.', roles: ['Admin', 'Super Admin'] },
+    ],
+  },
+  {
+    icon: Factory, title: 'Production', intro: 'Lieferanten-Portal für eingehende und ausgehende Produktionsaufträge.',
+    entries: [
+      { path: '/production/order-in', label: 'Order In', desc: 'Eingehende Aufträge für die Produktion.', roles: ['Admin', 'Super Admin', 'Lieferant', 'FACTORY INVOICE'] },
+      { path: '/production', label: 'Liste', desc: 'Aktive Produktionsaufträge.', roles: ['Admin', 'Super Admin', 'Lieferant', 'FACTORY INVOICE'] },
+      { path: '/production/fertig', label: 'Fertig', desc: 'Abgeschlossene Produktionsaufträge.', roles: ['Admin', 'Super Admin', 'Lieferant', 'FACTORY INVOICE'] },
+      { path: '/production/factory-invoice', label: 'Factory Invoice', desc: 'Werks-Rechnungen einsehen und prüfen.', roles: ['Admin', 'Super Admin', 'FACTORY INVOICE'] },
+    ],
+  },
+  {
+    icon: Warehouse, title: 'Lagerbestand', intro: 'Übersicht über Leihgeräte, Lagergeräte und Equipment-Status.',
+    entries: [
+      { path: '/lager/leihgeraete', label: 'Leihgeräte', desc: 'Verleihgeräte und deren aktueller Status.', roles: ['Admin', 'Super Admin'] },
+      { path: '/lager/lagergeraete', label: 'Lagergeräte', desc: 'Neugeräte im Lagerbestand.', roles: ['Admin', 'Super Admin'] },
+      { path: '/lager/equipment-area/unterwegs', label: 'Unterwegs', desc: 'Geräte auf dem Transportweg.', roles: ['Admin', 'Super Admin'] },
+      { path: '/lager/equipment-area/produktion', label: 'Produktion', desc: 'Geräte in der Produktion.', roles: ['Admin', 'Super Admin'] },
+      { path: '/lager/equipment-area/warehouse', label: 'Warehouse', desc: 'Geräte im Warehouse.', roles: ['Admin', 'Super Admin'] },
+      { path: '/lager/equipment-area/hold', label: 'Hold', desc: 'Geräte mit Hold-Status.', roles: ['Admin', 'Super Admin'] },
+      { path: '/lager/equipment-area/ausgeliefert', label: 'Ausgeliefert', desc: 'Bereits ausgelieferte Geräte.', roles: ['Admin', 'Super Admin'] },
+    ],
+  },
+  {
+    icon: MapPin, title: 'Tourenplanung', intro: 'Planung und Verwaltung von Liefertouren.',
+    entries: [
+      { path: '/tourenplanung', label: 'Übersicht', desc: 'Übersicht aller Tourenpläne.', roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung'] },
+      { path: '/tourenplanung/neu', label: 'Neue Tour', desc: 'Neuen Tourenplan anlegen.', roles: ['Admin', 'Super Admin', 'Tourenplanung'] },
+      { path: '/tourenplanung/einstellungen', label: 'Einstellungen', desc: 'Konfiguration für Tourenplanung (Fahrzeiten, Regeln).', roles: ['Admin', 'Super Admin', 'Tourenplanung'] },
+    ],
+  },
+  {
+    icon: FileText, title: 'Versand', intro: 'Versanddokumente und Zahlungsmandate.',
+    entries: [
+      { path: '/papiere', label: 'Übersicht', desc: 'Übersicht aller Versandpapiere.', roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Finance'] },
+      { path: '/versand/lieferscheine', label: 'Lieferscheine', desc: 'Lieferscheine ausstellen und einsehen.', roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Finance'] },
+      { path: '/versand/ratenplan', label: 'Ratenplan', desc: 'Ratenpläne zu Aufträgen.', roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Finance'] },
+      { path: '/versand/mietkauf', label: 'Mietkauf', desc: 'Mietkauf-Verträge.', roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Finance'] },
+      { path: '/versand/sepa-mandat', label: 'SEPA Mandat', desc: 'SEPA-Lastschriftmandate verwalten.', roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Finance'] },
+    ],
+  },
+  {
+    icon: Banknote, title: 'Buchhaltung', intro: 'Finanzdaten, Rechnungen und Zahlungsüberwachung.',
+    entries: [
+      { path: '/finance', label: 'Übersicht', desc: 'Finanz-KPIs und Auswertungen.', roles: ['Admin', 'Super Admin', 'Finance'] },
+      { path: '/finance/ratenzahler', label: 'Ratenzahler', desc: 'Übersicht aller Ratenzahler.', roles: ['Admin', 'Super Admin', 'Finance'] },
+      { path: '/finance/rechnungen', label: 'Rechnungen', desc: 'Alle ausgestellten Rechnungen.', roles: ['Admin', 'Super Admin', 'Finance'] },
+      { path: '/finance/offene-posten', label: 'Offene Posten', desc: 'Unbezahlte Rechnungen.', roles: ['Admin', 'Super Admin', 'Finance'] },
+      { path: '/finance/unpaid-zoho', label: 'Unbezahlte Rechnungen (Zoho)', desc: 'Offene Posten aus Zoho Books.', roles: ['Admin', 'Super Admin', 'Finance'] },
+    ],
+  },
+  {
+    icon: Landmark, title: 'Finanzierungen', intro: 'Bank-/Leasing-Finanzierungen für Aufträge.',
+    entries: [
+      { path: '/finanzierungen/leasing-bank', label: 'Verfügbare Aufträge', desc: 'Aufträge, die für eine Bankfinanzierung in Frage kommen.', roles: ['Admin', 'Super Admin', 'Finance', 'Finanzierungen'] },
+      { path: '/finanzierungen/beantragen', label: 'Finanzierung beantragen', desc: 'Neue Bankfinanzierung anstoßen.', roles: ['Admin', 'Super Admin', 'Finance', 'Finanzierungen'] },
+      { path: '/finanzierungen/anfragen-offen', label: 'Anfragen offen', desc: 'Offene Finanzierungsanfragen.', roles: ['Admin', 'Super Admin', 'Finance', 'Finanzierungen'] },
+      { path: '/finanzierungen/zusagen-bank', label: 'Zusagen Bank', desc: 'Erfolgreich finanzierte Anfragen.', roles: ['Admin', 'Super Admin', 'Finance', 'Finanzierungen'] },
+      { path: '/finanzierungen/absagen-bank', label: 'Absagen Bank', desc: 'Abgelehnte Finanzierungsanfragen.', roles: ['Admin', 'Super Admin', 'Finance', 'Finanzierungen'] },
+    ],
+  },
+  {
+    icon: Workflow, title: 'Operations', intro: 'Administrative Werkzeuge: Benutzer, Rollen, Import, Monitoring.',
+    entries: [
+      { path: '/geraetetypen', label: 'Gerätetypen', desc: 'Statistik aller Gerätetypen im System.', roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance'] },
+      { path: '/import', label: 'Import', desc: 'Datenimport / Zoho-Synchronisation steuern.', roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Read Only Audit'] },
+      { path: '/system', label: 'Monitoring', desc: 'System- und Job-Monitoring.', roles: ['Admin', 'Super Admin', 'Read Only Audit'] },
+      { path: '/benutzer', label: 'Benutzer', desc: 'Benutzerverwaltung und Einladungen.', roles: ['Admin', 'Super Admin'] },
+      { path: '/order/zulieferer', label: 'Lieferanten', desc: 'Lieferantenstammdaten pflegen.', roles: ['Admin', 'Super Admin'] },
+      { path: '/rollen', label: 'Rollen', desc: 'Rollendefinitionen einsehen und ändern.', roles: ['Admin', 'Super Admin'] },
+      { path: '/datensicherung', label: 'Datensicherung', desc: 'Backups erstellen und herunterladen.', roles: ['Admin', 'Super Admin'] },
+      { path: '/operation/logfiles', label: 'Logfiles', desc: 'System- und Audit-Logs einsehen.', roles: ['Admin', 'Super Admin', 'Read Only Audit'] },
+      { path: '/operation/email-vorlagen', label: 'E-Mail Vorlagen', desc: 'Transaktions-E-Mails bearbeiten.', roles: ['Admin', 'Super Admin', 'Auftragsverwaltung'] },
+    ],
+  },
+  {
+    icon: HelpCircle, title: 'Hilfe', intro: 'Support, Dokumentation und Kontakt.',
+    entries: [
+      { path: '/hilfe', label: 'Hilfe', desc: 'Support-Kontakt, FAQ und Dokumentation.', roles: ['Alle Rollen'] },
+    ],
+  },
+];
+
+export default function Dokumentation() {
+  return (
+    <div className="container mx-auto p-6 space-y-6">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <BookOpen className="h-7 w-7 text-primary" />
+          <div>
+            <h1 className="text-3xl font-bold">Dokumentation</h1>
+            <p className="text-muted-foreground text-sm">
+              Komplette Übersicht aller Module und Unterpunkte von Alix Work.
+            </p>
+          </div>
+        </div>
+        <Button asChild variant="outline" size="sm">
+          <Link to="/hilfe"><ArrowLeft className="h-4 w-4 mr-2" /> Zurück zur Hilfe</Link>
+        </Button>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Über diese Übersicht</CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm text-muted-foreground space-y-2">
+          <p>
+            Die Anwendung „Alix Work" bündelt alle operativen Prozesse von Auftragsverwaltung über
+            Produktion und Lager bis hin zu Buchhaltung und Finanzierungen. Sichtbarkeit und Zugriff
+            werden über Rollen gesteuert (RBAC) — Admins sehen alles, spezialisierte Rollen nur die
+            für sie freigegebenen Bereiche.
+          </p>
+          <p>
+            Klicken Sie auf einen Eintrag, um direkt in den jeweiligen Bereich zu springen.
+          </p>
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-6">
+        {sections.map((section) => (
+          <Card key={section.title}>
+            <CardHeader className="flex flex-row items-start gap-3 space-y-0">
+              <section.icon className="h-6 w-6 text-primary mt-1" />
+              <div className="flex-1">
+                <CardTitle className="text-xl">{section.title}</CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">{section.intro}</p>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <ul className="divide-y divide-border">
+                {section.entries.map((e) => (
+                  <li key={e.path + e.label} className="py-3 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                    <div className="min-w-0">
+                      <Link to={e.path} className="font-medium text-primary hover:underline">
+                        {e.label}
+                      </Link>
+                      <p className="text-sm text-muted-foreground">{e.desc}</p>
+                      <p className="text-xs text-muted-foreground/70 mt-1 font-mono">{e.path}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-1 sm:max-w-[50%] sm:justify-end">
+                      {e.roles.map((r) => (
+                        <Badge key={r} variant="secondary" className="text-[10px]">{r}</Badge>
+                      ))}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
