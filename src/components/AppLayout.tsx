@@ -828,18 +828,13 @@ export default function AppLayout() {
             </Button>
             <Button
               variant="ghost"
-              className="h-8 justify-start text-[14.5px] px-2 text-muted-foreground hover:text-destructive flex-shrink-0"
+              className="h-8 flex-1 justify-start text-[14.5px] px-2 text-muted-foreground hover:text-destructive"
               onClick={signOut}
               title="Abmelden"
             >
               <LogOut className="w-4 h-4" />
               <span className="ml-1.5">Abmelden</span>
             </Button>
-            {(!collapsed || mobileOpen) && (
-              <div className="flex-1 min-w-0">
-                <CNNNewsTicker />
-              </div>
-            )}
           </div>
         </div>
         {/* Resize-Handle (nur Desktop, wenn nicht eingeklappt) */}
@@ -897,7 +892,10 @@ export default function AppLayout() {
             <div className="flex items-center gap-2 text-sm">
               <span className="font-display font-bold gold-text">AlixWork</span>
               <span className="text-muted-foreground font-mono text-xs hidden sm:inline">v{APP_VERSION}</span>
-            </div>
+          </div>
+          <div className="flex-1 min-w-0 mx-3 hidden md:block">
+            <CNNNewsTicker />
+          </div>
             <Button
               variant="ghost"
               size="icon"
