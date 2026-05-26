@@ -835,11 +835,6 @@ export default function AppLayout() {
               <LogOut className="w-4 h-4" />
               <span className="ml-1.5">Abmelden</span>
             </Button>
-            {(!collapsed || mobileOpen) && (
-              <div className="flex-1 min-w-0">
-                <CNNNewsTicker />
-              </div>
-            )}
           </div>
         </div>
         {/* Resize-Handle (nur Desktop, wenn nicht eingeklappt) */}
