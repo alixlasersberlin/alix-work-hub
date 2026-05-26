@@ -54,7 +54,7 @@ type Hit = {
   related: Related;
 };
 
-const EMPTY = { name: '', zip: '', city: '', orderNumber: '', phone: '', model: '' };
+const EMPTY = { name: '', zip: '', city: '', orderNumber: '', phone: '', model: '', serial: '' };
 
 function formatDate(d: string | null) {
   return d ? new Date(d).toLocaleDateString('de-DE') : '—';
