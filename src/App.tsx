@@ -163,6 +163,10 @@ function MfaGate({ children, expect }: { children: React.ReactNode; expect: 'not
 function HomeRoute() {
   const { roles } = useAuth();
   if (isSupplierOnly(roles)) return <Navigate to="/production" replace />;
+  // Nur-Finanzierungen-Nutzer landen direkt im Finanzierungs-Bereich
+  if (roles.length > 0 && roles.every((r) => r === 'Finanzierungen')) {
+    return <Navigate to="/finanzierungen" replace />;
+  }
   return <Dashboard />;
 }
 
