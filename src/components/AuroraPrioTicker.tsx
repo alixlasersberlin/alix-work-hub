@@ -187,7 +187,7 @@ export default function AuroraPrioTicker() {
         {items.length === 0 ? (
           <span className="text-xs text-foreground/50">Keine Einträge</span>
         ) : (
-          <div className="aurora-ticker-track flex items-center gap-8 whitespace-nowrap text-xs">
+          <div className={`aurora-ticker-track flex items-center gap-8 whitespace-nowrap text-xs ${mode === 'lager' ? 'aurora-ticker-slow' : ''}`}>
             {loop.map((it, i) => (
               <button
                 key={`${it.id}-${i}`}
