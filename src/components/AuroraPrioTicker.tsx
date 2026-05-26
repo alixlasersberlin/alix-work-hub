@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Flame, GanttChart, Package, ChevronDown } from 'lucide-react';
+import { Flame, GanttChart, Package, ChevronDown, Radio } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useDesignVariant } from '@/hooks/useDesignVariant';
 import {
@@ -8,17 +8,14 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
-import { CNNNewsTicker } from '@/components/CNNNewsTicker';
 
 /**
  * Aurora Ticker – Laufschrift mit umschaltbaren Quellen (Prio / Timeline / Lager).
  * Nur sichtbar im Aurora-Design.
  */
 
-type Mode = 'prio' | 'timeline' | 'lager';
+type Mode = 'prio' | 'timeline' | 'lager' | 'cnn';
 
 interface TickerItem {
   id: string;
@@ -34,6 +31,7 @@ const MODES: { value: Mode; label: string; icon: typeof Flame }[] = [
   { value: 'prio', label: 'PRIO Top 10', icon: Flame },
   { value: 'timeline', label: 'Timeline Top 10', icon: GanttChart },
   { value: 'lager', label: 'Lagerbestand', icon: Package },
+  { value: 'cnn', label: 'CNN Live', icon: Radio },
 ];
 
 function daysUntil(date: string | null): number | null {
@@ -138,13 +136,34 @@ export default function AuroraPrioTicker() {
       });
     }
 
+    async function loadCNN() {
+      try {
+        const res = await fetch(
+          'https://api.rss2json.com/v1/api.json?rss_url=' +
+            encodeURIComponent('http://rss.cnn.com/rss/edition.rss')
+        );
+        const json = await res.json();
+        return ((json?.items ?? []) as any[]).slice(0, 15).map((it, idx): TickerItem => ({
+          id: `${idx}-${it.link}`,
+          label: it.title,
+          meta: 'CNN',
+          tone: 'text-[hsl(0_72%_55%)]',
+          href: it.link,
+        }));
+      } catch {
+        return [];
+      }
+    }
+
     async function load() {
       try {
         const next = mode === 'prio'
           ? await loadPrio()
           : mode === 'timeline'
             ? await loadTimeline()
-            : await loadLager();
+            : mode === 'lager'
+              ? await loadLager()
+              : await loadCNN();
         if (!cancelled) setItems(next);
       } catch {
         if (!cancelled) setItems([]);
@@ -183,11 +202,6 @@ export default function AuroraPrioTicker() {
               </DropdownMenuItem>
             );
           })}
-          <DropdownMenuSeparator />
-          <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">CNN Live</DropdownMenuLabel>
-          <div className="px-1 pb-1" onClick={(e) => e.stopPropagation()}>
-            <CNNNewsTicker />
-          </div>
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -199,7 +213,11 @@ export default function AuroraPrioTicker() {
             {loop.map((it, i) => (
               <button
                 key={`${it.id}-${i}`}
-                onClick={() => it.href && navigate(it.href)}
+                onClick={() => {
+                  if (!it.href) return;
+                  if (/^https?:\/\//.test(it.href)) window.open(it.href, '_blank', 'noopener,noreferrer');
+                  else navigate(it.href);
+                }}
                 className="inline-flex items-center gap-2 hover:underline focus:outline-none"
               >
                 <span className="font-mono font-semibold text-foreground/90">{it.label}</span>
