@@ -632,3 +632,8 @@ table tbody tr:hover {
   .design-aurora main h1,
   .design-aurora main h2 { animation: none; }
 }
+
+/* Ensure Radix popovers/dropdowns/tooltips render above floating cards & glass layers */
+[data-radix-popper-content-wrapper] {
+  z-index: 100 !important;
+}
