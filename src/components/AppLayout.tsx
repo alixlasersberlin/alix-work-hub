@@ -505,7 +505,7 @@ export default function AppLayout() {
             <img
               src={alixLogo}
               alt="Alix Lasers Logo"
-              className="h-9 w-auto object-contain max-w-full"
+              className="h-7 w-auto object-contain max-w-full"
             />
           )}
           {/* Close-Button auf Mobile */}
