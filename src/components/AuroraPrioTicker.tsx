@@ -166,7 +166,7 @@ export default function AuroraPrioTicker() {
           <span className="hidden lg:inline">{current.label}</span>
           <ChevronDown className="w-3 h-3 opacity-70" />
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="z-[100]">
+        <DropdownMenuContent align="start" sideOffset={8} className="z-[9999]">
           {MODES.map((m) => {
             const MIcon = m.icon;
             return (
