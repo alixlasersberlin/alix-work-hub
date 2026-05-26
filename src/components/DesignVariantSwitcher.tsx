@@ -34,53 +34,55 @@ export default function DesignVariantSwitcher({ inline = false }: { inline?: boo
         >
           <ActiveIcon className="h-4 w-4 text-primary" />
           <span className="hidden sm:inline">Design</span>
-            {variant === 'beta3d' && (
-              <Badge variant="outline" className="ml-1 h-4 border-primary/60 px-1 text-[10px] text-primary">
-                Beta
-              </Badge>
-            )}
-            {variant === 'aurora' && (
-              <Badge variant="outline" className="ml-1 h-4 border-primary/60 px-1 text-[10px] text-primary">
-                Ultra
-              </Badge>
-            )}
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" side="top" className="w-64">
-          <DropdownMenuLabel className="text-xs text-muted-foreground">Design-Variante</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          {options.map(opt => {
-            const Icon = opt.icon;
-            const isActive = opt.value === variant;
-            return (
-              <DropdownMenuItem
-                key={opt.value}
-                onSelect={() => setVariant(opt.value)}
-                className="flex items-start gap-3 py-2.5"
-              >
-                <Icon className="h-4 w-4 mt-0.5 shrink-0 text-primary" />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">{opt.label}</span>
-                    {opt.beta && (
-                      <Badge variant="outline" className="h-4 border-primary/60 px-1 text-[10px] text-primary">
-                        Beta
-                      </Badge>
-                    )}
-                    {opt.ultra && (
-                      <Badge variant="outline" className="h-4 border-primary/60 px-1 text-[10px] text-primary">
-                        Ultra
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground">{opt.description}</p>
+          {variant === 'beta3d' && (
+            <Badge variant="outline" className="ml-1 h-4 border-primary/60 px-1 text-[10px] text-primary">
+              Beta
+            </Badge>
+          )}
+          {variant === 'aurora' && (
+            <Badge variant="outline" className="ml-1 h-4 border-primary/60 px-1 text-[10px] text-primary">
+              Ultra
+            </Badge>
+          )}
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align={inline ? 'end' : 'start'} side={inline ? 'bottom' : 'top'} className="w-64 z-[70]">
+        <DropdownMenuLabel className="text-xs text-muted-foreground">Design-Variante</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {options.map(opt => {
+          const Icon = opt.icon;
+          const isActive = opt.value === variant;
+          return (
+            <DropdownMenuItem
+              key={opt.value}
+              onSelect={() => setVariant(opt.value)}
+              className="flex items-start gap-3 py-2.5"
+            >
+              <Icon className="h-4 w-4 mt-0.5 shrink-0 text-primary" />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">{opt.label}</span>
+                  {opt.beta && (
+                    <Badge variant="outline" className="h-4 border-primary/60 px-1 text-[10px] text-primary">
+                      Beta
+                    </Badge>
+                  )}
+                  {opt.ultra && (
+                    <Badge variant="outline" className="h-4 border-primary/60 px-1 text-[10px] text-primary">
+                      Ultra
+                    </Badge>
+                  )}
                 </div>
-                {isActive && <Check className="h-4 w-4 text-primary" />}
-              </DropdownMenuItem>
-            );
-          })}
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
+                <p className="text-xs text-muted-foreground">{opt.description}</p>
+              </div>
+              {isActive && <Check className="h-4 w-4 text-primary" />}
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
+
+  if (inline) return trigger;
+  return <div className="fixed bottom-4 left-4 z-[60] print:hidden">{trigger}</div>;
 }
