@@ -769,8 +769,26 @@ table tbody tr:hover {
   background-color: hsl(224 38% 12% / 0.9);
 }
 
+.design-aurora.dark table tbody tr {
+  border-bottom: 1px solid hsl(220 25% 96% / 0.06);
+}
+.design-aurora.dark table tbody tr:nth-child(odd) {
+  background-color: hsl(224 38% 9% / 0.5);
+}
+.design-aurora.dark table tbody tr:nth-child(even) {
+  background-color: hsl(224 38% 12% / 0.5);
+}
 .design-aurora.dark table tbody tr:hover {
-  background-color: hsl(var(--aurora-2) / 0.10) !important;
+  background-color: hsl(43 95% 62% / 0.10) !important;
+  box-shadow: inset 4px 0 0 0 hsl(43 95% 62%);
+}
+.design-aurora.dark [role="list"] > *:nth-child(odd),
+.design-aurora.dark ul.divide-y > li:nth-child(odd) {
+  background-color: hsl(224 38% 9% / 0.5);
+}
+.design-aurora.dark [role="list"] > *:nth-child(even),
+.design-aurora.dark ul.divide-y > li:nth-child(even) {
+  background-color: hsl(224 38% 12% / 0.5);
 }
 
 .design-aurora.dark h1,
