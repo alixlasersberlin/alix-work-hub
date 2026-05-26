@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { CalendarDays, Clock, Thermometer, Hash } from 'lucide-react';
+import { CalendarDays, Clock, Thermometer, Hash, Globe2 } from 'lucide-react';
 
 function getISOWeek(d: Date) {
   const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
