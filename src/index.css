@@ -769,7 +769,7 @@ table tbody tr:hover {
   z-index: 1;
   background:
     radial-gradient(
-      180px circle at var(--aurora-mx, 50%) var(--aurora-my, 50%),
+      90px circle at var(--aurora-mx, 50%) var(--aurora-my, 50%),
       hsl(var(--aurora-gold) / 0.14),
       hsl(var(--aurora-2) / 0.08) 30%,
       hsl(var(--aurora-1) / 0.04) 55%,
