@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import WelcomeDialog from '@/components/WelcomeDialog';
 import LeoWelcomeDialog from '@/components/LeoWelcomeDialog';
 import DesignVariantSwitcher from '@/components/DesignVariantSwitcher';
+import AuroraPrioTicker from '@/components/AuroraPrioTicker';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import alixLogo from '@/assets/alix-logo-gold.png';
 
@@ -879,6 +880,7 @@ export default function AppLayout() {
             </Button>
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
+            <AuroraPrioTicker />
             <DesignVariantSwitcher inline />
             <div className="flex items-center gap-2 text-sm">
               <span className="font-display font-bold gold-text">AlixWork</span>
