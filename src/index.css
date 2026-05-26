@@ -661,7 +661,7 @@ table tbody tr:hover {
 
 /* Ensure Radix popovers/dropdowns/tooltips render above floating cards & glass layers */
 [data-radix-popper-content-wrapper] {
-  z-index: 100 !important;
+  z-index: 10000 !important;
 }
 
 /* ============================================================
