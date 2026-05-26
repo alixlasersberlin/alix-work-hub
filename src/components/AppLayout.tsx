@@ -543,7 +543,7 @@ export default function AppLayout() {
                     isCollapsedView ? "md:px-0 md:py-2.5 md:justify-center px-3.5 py-3" : "px-3.5 py-3 md:py-2.5",
                     childActive
                       ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
-                      : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent"
+                      : "text-sidebar-foreground hover:text-primary hover:bg-primary/15"
                   )}
                 >
                   {isNavigableParent ? (
@@ -657,7 +657,7 @@ export default function AppLayout() {
                                         : "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]")
                                     : (isPool
                                         ? "text-foreground hover:text-foreground hover:bg-foreground/5"
-                                        : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent")
+                                        : "text-sidebar-foreground hover:text-primary hover:bg-primary/15")
                                 )}
                               >
                                 <child.icon className={cn("w-5 h-5 flex-shrink-0", isPool ? "text-foreground" : ((cActive || cGroupActive) && "text-primary"))} />
@@ -701,7 +701,7 @@ export default function AppLayout() {
                                             ? gActive ? colored.active : colored.inactive
                                             : gActive
                                               ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
-                                              : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent"
+                                              : "text-sidebar-foreground hover:text-primary hover:bg-primary/15"
                                         )}
                                       >
                                         <grand.icon className={cn("w-5 h-5 flex-shrink-0", colored ? colored.icon : gActive && "text-primary")} />
@@ -773,7 +773,7 @@ export default function AppLayout() {
                                 ? cActive ? cColored.active : cColored.inactive
                                 : cActive
                                   ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
-                                  : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent"
+                                  : "text-sidebar-foreground hover:text-primary hover:bg-primary/15"
                             )}
                           >
                             <child.icon className={cn("w-5 h-5 flex-shrink-0", cColored ? cColored.icon : (cActive && "text-primary"))} />
@@ -797,7 +797,7 @@ export default function AppLayout() {
                   isCollapsedView ? "md:px-0 md:py-2.5 md:justify-center px-3.5 py-3" : "px-3.5 py-3 md:py-2.5",
                   active
                     ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
-                    : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent"
+                    : "text-sidebar-foreground hover:text-primary hover:bg-primary/15"
                 )}
               >
                 <item.icon className={cn("w-5 h-5 flex-shrink-0", active && "text-primary")} />
