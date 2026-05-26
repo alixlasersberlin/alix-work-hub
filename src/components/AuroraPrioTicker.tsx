@@ -159,14 +159,14 @@ export default function AuroraPrioTicker() {
   const loop = [...items, ...items];
 
   return (
-    <div className="hidden md:flex items-stretch gap-0 h-9 max-w-[460px] lg:max-w-[620px] xl:max-w-[820px] rounded-full border border-[hsl(43_95%_62%/0.35)] bg-[hsl(43_95%_62%/0.06)] overflow-hidden">
+    <div className="relative z-20 hidden md:flex items-stretch gap-0 h-9 max-w-[460px] lg:max-w-[620px] xl:max-w-[820px] rounded-full border border-[hsl(43_95%_62%/0.35)] bg-[hsl(43_95%_62%/0.06)] overflow-hidden">
       <DropdownMenu>
         <DropdownMenuTrigger className="flex items-center gap-1.5 px-3 text-xs font-semibold uppercase tracking-wider text-[hsl(43_95%_50%)] hover:bg-[hsl(43_95%_62%/0.10)] focus:outline-none border-r border-[hsl(43_95%_62%/0.25)]">
           <Icon className="w-3.5 h-3.5" />
           <span className="hidden lg:inline">{current.label}</span>
           <ChevronDown className="w-3 h-3 opacity-70" />
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" sideOffset={8} className="z-[9999]">
+        <DropdownMenuContent align="start" side="bottom" sideOffset={10} className="z-[9999] min-w-[180px]">
           {MODES.map((m) => {
             const MIcon = m.icon;
             return (
