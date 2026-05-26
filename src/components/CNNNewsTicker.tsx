@@ -40,7 +40,7 @@ export function CNNNewsTicker() {
   const loop = [...display, ...display];
 
   return (
-    <div className="relative flex items-center gap-3 rounded-xl border border-border bg-gradient-to-r from-red-600/15 via-card to-card overflow-hidden h-10">
+    <div className="relative flex items-center gap-3 rounded-xl border border-border bg-card overflow-hidden h-10">
       <style>{`
         @keyframes cnn-marquee {
           0% { transform: translateX(0); }
@@ -53,8 +53,8 @@ export function CNNNewsTicker() {
           animation-play-state: paused;
         }
       `}</style>
-      <div className="flex items-center gap-1.5 pl-3 pr-3 h-full bg-red-600 text-white text-[11px] font-bold uppercase tracking-wider flex-shrink-0 z-10">
-        <Radio className="w-3.5 h-3.5 animate-pulse" />
+      <div className="flex items-center gap-1.5 pl-4 pr-3 h-full text-foreground text-[11px] font-bold uppercase tracking-wider flex-shrink-0 z-10 border-r border-border">
+        <Radio className="w-3.5 h-3.5 text-primary animate-pulse" />
         CNN Live
       </div>
       <div className="cnn-marquee-wrapper flex-1 overflow-hidden">
@@ -67,7 +67,7 @@ export function CNNNewsTicker() {
               rel="noopener noreferrer"
               className="text-[13px] text-foreground/90 hover:text-primary px-6 inline-flex items-center gap-3"
             >
-              <span className="text-red-500">●</span>
+              <span className="text-primary">●</span>
               {it.title}
             </a>
           ))}
