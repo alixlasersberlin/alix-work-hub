@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { DesignVariantProvider } from "@/hooks/useDesignVariant";
 import DesignVariantSwitcher from "@/components/DesignVariantSwitcher";
+import AuroraSpotlight from "@/components/AuroraSpotlight";
 import { Truck as TruckIcon, Banknote as BanknoteIcon, FileSignature, CreditCard, Loader2 } from "lucide-react";
 
 // Eager: Auth-/Shell-Routen (klein & für initialen Render nötig)
@@ -293,7 +294,7 @@ const App = () => (
           <BrowserRouter>
             <AuthProvider>
               <AppRoutes />
-              
+              <AuroraSpotlight />
             </AuthProvider>
           </BrowserRouter>
         </TooltipProvider>

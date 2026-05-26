@@ -637,3 +637,202 @@ table tbody tr:hover {
 [data-radix-popper-content-wrapper] {
   z-index: 100 !important;
 }
+
+/* ============================================================
+   AlixWork Aurora Ultra – DARK Variant
+   Aktiv, wenn <html> sowohl .design-aurora als auch .dark trägt.
+   Höhere Spezifität als das Basis-.dark, daher gewinnt es.
+   ============================================================ */
+.design-aurora.dark {
+  --background: 224 40% 6%;
+  --foreground: 220 25% 96%;
+
+  --card: 224 38% 9%;
+  --card-foreground: 220 25% 96%;
+
+  --popover: 224 40% 10%;
+  --popover-foreground: 220 25% 96%;
+
+  --primary: 43 95% 62%;
+  --primary-foreground: 224 40% 6%;
+
+  --secondary: 224 30% 14%;
+  --secondary-foreground: 220 25% 95%;
+
+  --muted: 224 28% 13%;
+  --muted-foreground: 220 15% 70%;
+
+  --accent: 200 95% 65%;
+  --accent-foreground: 224 40% 6%;
+
+  --destructive: 0 75% 58%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 224 25% 18%;
+  --input: 224 25% 18%;
+  --ring: 43 95% 62%;
+
+  --surface-1: 224 38% 9%;
+  --surface-2: 224 32% 12%;
+  --surface-3: 224 28% 15%;
+
+  --sidebar-background: 224 45% 5%;
+  --sidebar-foreground: 220 25% 92%;
+  --sidebar-primary: 43 95% 62%;
+  --sidebar-primary-foreground: 224 40% 6%;
+  --sidebar-accent: 224 32% 12%;
+  --sidebar-accent-foreground: 220 25% 96%;
+  --sidebar-border: 224 25% 16%;
+  --sidebar-ring: 43 95% 62%;
+
+  --aurora-1: 270 90% 65%;
+  --aurora-2: 200 95% 60%;
+  --aurora-3: 160 80% 55%;
+  --aurora-gold: 43 95% 62%;
+
+  --gradient-gold: linear-gradient(135deg, hsl(43 95% 62%), hsl(38 95% 70%));
+  --shadow-gold: 0 10px 40px -10px hsl(43 95% 62% / 0.45);
+  --shadow-card:
+    0 1px 0 0 hsl(220 25% 96% / 0.05) inset,
+    0 10px 40px -12px hsl(224 80% 2% / 0.6),
+    0 30px 60px -30px hsl(224 80% 2% / 0.8);
+}
+
+.design-aurora.dark body {
+  background:
+    radial-gradient(900px 600px at 8% -10%, hsl(var(--aurora-1) / 0.22), transparent 60%),
+    radial-gradient(800px 500px at 100% 0%, hsl(var(--aurora-2) / 0.22), transparent 60%),
+    radial-gradient(700px 500px at 50% 110%, hsl(var(--aurora-3) / 0.18), transparent 60%),
+    linear-gradient(180deg, hsl(224 45% 6%), hsl(224 40% 4%));
+}
+
+.design-aurora.dark body::before {
+  background:
+    radial-gradient(60% 50% at 30% 30%, hsl(var(--aurora-1) / 0.30), transparent 60%),
+    radial-gradient(50% 50% at 70% 60%, hsl(var(--aurora-2) / 0.28), transparent 60%),
+    radial-gradient(40% 40% at 50% 80%, hsl(var(--aurora-gold) / 0.14), transparent 60%);
+}
+
+.design-aurora.dark .bg-card,
+.design-aurora.dark [data-radix-popper-content-wrapper] > * {
+  background: linear-gradient(180deg, hsl(224 38% 11% / 0.78), hsl(224 38% 8% / 0.72)) !important;
+  border: 1px solid hsl(220 25% 96% / 0.08);
+}
+
+.design-aurora.dark .bg-card:hover {
+  border-color: hsl(43 95% 62% / 0.45);
+  box-shadow:
+    0 1px 0 0 hsl(220 25% 96% / 0.08) inset,
+    0 30px 60px -20px hsl(224 80% 2% / 0.85),
+    0 0 0 1px hsl(43 95% 62% / 0.22),
+    0 0 60px -10px hsl(var(--aurora-2) / 0.35);
+}
+
+.design-aurora.dark .bg-primary {
+  background: linear-gradient(135deg, hsl(43 95% 62%), hsl(38 95% 70%)) !important;
+  color: hsl(224 40% 6%) !important;
+  box-shadow:
+    0 1px 0 hsl(40 100% 92% / 0.45) inset,
+    0 10px 30px -10px hsl(43 95% 62% / 0.55);
+}
+.design-aurora.dark .bg-primary:hover {
+  box-shadow:
+    0 1px 0 hsl(40 100% 92% / 0.55) inset,
+    0 16px 40px -10px hsl(43 95% 62% / 0.7),
+    0 0 0 1px hsl(43 95% 62% / 0.45);
+}
+
+.design-aurora.dark aside,
+.design-aurora.dark nav[data-sidebar],
+.design-aurora.dark [class*="sidebar"] {
+  background: linear-gradient(180deg, hsl(224 45% 6% / 0.85), hsl(224 45% 4% / 0.85));
+  border-right: 1px solid hsl(200 95% 60% / 0.10);
+}
+
+.design-aurora.dark input,
+.design-aurora.dark textarea,
+.design-aurora.dark select {
+  background-color: hsl(224 38% 10% / 0.7);
+  border-color: hsl(220 25% 96% / 0.10);
+}
+.design-aurora.dark input:focus,
+.design-aurora.dark textarea:focus,
+.design-aurora.dark select:focus {
+  background-color: hsl(224 38% 12% / 0.9);
+}
+
+.design-aurora.dark table tbody tr:hover {
+  background-color: hsl(var(--aurora-2) / 0.10) !important;
+}
+
+.design-aurora.dark h1,
+.design-aurora.dark h2,
+.design-aurora.dark h3 {
+  color: hsl(220 30% 96%);
+}
+
+/* ============================================================
+   AURORA SPOTLIGHT – das beste Feature der Welt 🌌
+   Cursor-folgender Lichtkegel + Card-Tilt + Shine.
+   Aktiviert via .aurora-spotlight-on (durch AuroraSpotlight.tsx).
+   ============================================================ */
+.design-aurora.aurora-spotlight-on body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background:
+    radial-gradient(
+      520px circle at var(--aurora-mx, 50%) var(--aurora-my, 50%),
+      hsl(var(--aurora-gold) / 0.18),
+      hsl(var(--aurora-2) / 0.12) 28%,
+      hsl(var(--aurora-1) / 0.08) 50%,
+      transparent 70%
+    );
+  mix-blend-mode: screen;
+  transition: opacity 0.3s ease;
+  will-change: background-position;
+}
+
+.design-aurora.dark.aurora-spotlight-on body::after {
+  background:
+    radial-gradient(
+      560px circle at var(--aurora-mx, 50%) var(--aurora-my, 50%),
+      hsl(var(--aurora-gold) / 0.22),
+      hsl(var(--aurora-2) / 0.18) 30%,
+      hsl(var(--aurora-1) / 0.12) 55%,
+      transparent 72%
+    );
+  mix-blend-mode: screen;
+}
+
+/* Tilt-Reaktion auf Karten (sehr dezent, Premium-Feeling) */
+.design-aurora .bg-card.aurora-tilt {
+  transform:
+    perspective(900px)
+    rotateX(var(--tilt-x, 0deg))
+    rotateY(var(--tilt-y, 0deg))
+    translateY(-3px);
+}
+.design-aurora .bg-card.aurora-tilt::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: radial-gradient(
+    220px circle at var(--shine-x, 50%) var(--shine-y, 50%),
+    hsl(var(--aurora-gold) / 0.18),
+    transparent 60%
+  );
+  mix-blend-mode: screen;
+  opacity: 0.9;
+}
+.design-aurora .bg-card { position: relative; overflow: hidden; }
+
+/* Spotlight bei reduced motion deaktivieren */
+@media (prefers-reduced-motion: reduce) {
+  .design-aurora.aurora-spotlight-on body::after { display: none; }
+  .design-aurora .bg-card.aurora-tilt { transform: none; }
+}
