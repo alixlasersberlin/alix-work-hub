@@ -8,7 +8,10 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
+import { CNNNewsTicker } from '@/components/CNNNewsTicker';
 
 /**
  * Aurora Ticker – Laufschrift mit umschaltbaren Quellen (Prio / Timeline / Lager).
@@ -166,7 +169,7 @@ export default function AuroraPrioTicker() {
           <span className="hidden lg:inline">{current.label}</span>
           <ChevronDown className="w-3 h-3 opacity-70" />
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" side="bottom" sideOffset={10} className="z-[9999] min-w-[180px]">
+        <DropdownMenuContent align="start" side="bottom" sideOffset={10} className="z-[9999] min-w-[420px] p-2">
           {MODES.map((m) => {
             const MIcon = m.icon;
             return (
@@ -180,6 +183,11 @@ export default function AuroraPrioTicker() {
               </DropdownMenuItem>
             );
           })}
+          <DropdownMenuSeparator />
+          <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">CNN Live</DropdownMenuLabel>
+          <div className="px-1 pb-1" onClick={(e) => e.stopPropagation()}>
+            <CNNNewsTicker />
+          </div>
         </DropdownMenuContent>
       </DropdownMenu>
 

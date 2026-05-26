@@ -14,7 +14,7 @@ import DesignVariantSwitcher from '@/components/DesignVariantSwitcher';
 import AuroraPrioTicker from '@/components/AuroraPrioTicker';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import alixLogo from '@/assets/alix-logo-gold.png';
-import { CNNNewsTicker } from '@/components/CNNNewsTicker';
+
 
 
 const APP_VERSION = '4.0';
@@ -892,9 +892,6 @@ export default function AppLayout() {
             <div className="flex items-center gap-2 text-sm">
               <span className="font-display font-bold gold-text">AlixWork</span>
               <span className="text-muted-foreground font-mono text-xs hidden sm:inline">v{APP_VERSION}</span>
-          </div>
-          <div className="flex-1 min-w-0 mx-3 hidden md:block">
-            <CNNNewsTicker />
           </div>
             <Button
               variant="ghost"
