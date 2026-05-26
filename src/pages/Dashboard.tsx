@@ -8,7 +8,7 @@ import {
   Warehouse, PackageCheck, ShieldAlert, UserCheck
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CNNNewsTicker } from '@/components/CNNNewsTicker';
+
 import { SidebarInfoBar } from '@/components/SidebarInfoBar';
 
 interface Stats {
