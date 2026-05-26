@@ -520,8 +520,8 @@ export default function AppLayout() {
           </Button>
         </div>
 
-        {/* Info-Leiste unter Logo */}
-        {!(collapsed && !mobileOpen) && <SidebarInfoBar />}
+
+
 
 
 
