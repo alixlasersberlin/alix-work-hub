@@ -903,3 +903,19 @@ table tbody tr:hover {
 .design-aurora.dark table thead th {
   background: linear-gradient(180deg, hsl(224 38% 11%) 0%, hsl(224 38% 9% / 0.95) 100%);
 }
+
+/* Aurora Prio Ticker – Laufschrift */
+@keyframes aurora-ticker {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.aurora-ticker-track {
+  animation: aurora-ticker 40s linear infinite;
+  will-change: transform;
+}
+.aurora-ticker-track:hover {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .aurora-ticker-track { animation: none; }
+}
