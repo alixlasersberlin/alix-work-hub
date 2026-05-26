@@ -105,6 +105,7 @@ const queryClient = new QueryClient({
 const ORDER_ROLES = ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance'];
 const PLANNING_ROLES = ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung'];
 const FINANCE_ROLES = ['Admin', 'Super Admin', 'Finance'];
+const FINANCING_ROLES = ['Admin', 'Super Admin', 'Finance', 'Finanzierungen'];
 const ADMIN_ROLES = ['Admin', 'Super Admin'];
 const IMPORT_ROLES = ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Read Only Audit'];
 const SYSTEM_ROLES = ['Admin', 'Super Admin', 'Read Only Audit'];
