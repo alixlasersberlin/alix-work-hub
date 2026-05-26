@@ -456,6 +456,15 @@ export default function Dokumentation() {
                   </div>
                 )}
 
+                {detail?.events && (
+                  <div className="rounded-md border border-primary/30 bg-primary/5 p-4">
+                    <h4 className="text-sm font-semibold mb-2 text-foreground">Programmierte Abläufe &amp; Ereignisse</h4>
+                    <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
+                      {detail.events.map((ev, i) => <li key={i}>{ev}</li>)}
+                    </ul>
+                  </div>
+                )}
+
                 <div>
                   <h4 className="text-sm font-semibold mb-2 text-foreground">Menüpunkte</h4>
                   <ul className="divide-y divide-border">
