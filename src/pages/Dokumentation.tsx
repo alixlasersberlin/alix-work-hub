@@ -154,7 +154,7 @@ const sections: Section[] = [
   },
 ];
 
-type WorkflowDetail = { workflow: string[]; guidelines: string[] };
+type WorkflowDetail = { workflow: string[]; guidelines: string[]; events?: string[] };
 
 const workflowDetails: Record<string, WorkflowDetail> = {
   'Dashboard': {
