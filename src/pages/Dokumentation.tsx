@@ -154,6 +154,193 @@ const sections: Section[] = [
   },
 ];
 
+type WorkflowDetail = { workflow: string[]; guidelines: string[] };
+
+const workflowDetails: Record<string, WorkflowDetail> = {
+  'Dashboard': {
+    workflow: [
+      'Beim Login werden Rolle und Berechtigungen geladen.',
+      'Das Dashboard rendert je Rolle die relevanten KPI-Karten (Aufträge, Touren, Finanzen).',
+      'Daten werden via Supabase-Queries geladen und über React Query gecached (Auto-Refresh alle 15 min).',
+      'Klick auf eine KPI-Karte führt direkt in den jeweiligen Detail-Bereich.',
+    ],
+    guidelines: [
+      'Keine Schreiboperationen vom Dashboard aus.',
+      'Nur aggregierte Zahlen — Rohdaten gehören in die jeweiligen Module.',
+      'Bei fehlender Rolle für eine KPI wird die Karte ausgeblendet, nicht gesperrt.',
+    ],
+  },
+  'Detailsuche': {
+    workflow: [
+      'Suchbegriff wird in Auftragsnummer, Kundenname, Rechnungsnummer und Artikelnummer geprüft.',
+      'Treffer werden gruppiert nach Entität angezeigt.',
+      'Per Klick erfolgt der Sprung in die Detailansicht des Treffers.',
+    ],
+    guidelines: [
+      'Suche respektiert Rollen — nur freigegebene Entitäten werden angezeigt.',
+      'Suchanfragen werden in den Logfiles erfasst (Audit).',
+    ],
+  },
+  'Artikel': {
+    workflow: [
+      'Artikel werden über die Zoho-Synchronisation aus dem Items-Modul geladen.',
+      'Kategorien und Kataloge ordnen Artikel logisch für Vertrieb und Produktion.',
+      'Wareneingang erfasst neue Lieferungen und schreibt Bestände im Lager fort.',
+    ],
+    guidelines: [
+      'Artikelnummern stammen aus Zoho und werden nie lokal geändert.',
+      'Kataloge dienen ausschließlich der Anzeige — keine Preislogik.',
+      'Wareneingang erzeugt ein Audit-Event je erfasstem Gerät.',
+    ],
+  },
+  'Verkäufe': {
+    workflow: [
+      'Angebot wird erstellt → Freigabe durch Auftragsverwaltung → Auftrag entsteht.',
+      'Auftrag wird automatisch mit Zoho synchronisiert (order_number bleibt unverändert).',
+      'Anzahlungsrechnung und Schlussrechnung werden aus dem Auftrag generiert.',
+      'Gutschriften referenzieren immer die ursprüngliche Rechnung.',
+    ],
+    guidelines: [
+      'Zoho ist die Quelle der Wahrheit für Aufträge, Kunden und Rechnungen.',
+      'Manuelle Änderungen an Auftragsnummern sind verboten — nur Anzeige-Kombinationen erlaubt.',
+      'Freigabe-Prozess ist verpflichtend, bevor ein Auftrag in die Produktion geht.',
+      'Finanzdaten (Rechnungsbeträge) sind nach Erzeugung unveränderlich.',
+    ],
+  },
+  'Prio-Listen': {
+    workflow: [
+      'Aufträge werden anhand von Status, Liefertermin und Priorität in Listen sortiert.',
+      'Mitarbeiter ziehen aus der Prio-Liste die nächsten Aufgaben.',
+      'Hold-Status pausiert einen Auftrag mit Wiedervorlage-Datum.',
+      'Anwaltsliste markiert Fälle in juristischer Bearbeitung.',
+    ],
+    guidelines: [
+      'Statuswechsel werden protokolliert (Wer/Wann/Warum).',
+      'Hold benötigt einen Grund und ein Wiedervorlage-Datum.',
+      'Geliefert/Teilgeliefert-Status wird nur durch Tourenplanung oder Auftragsverwaltung gesetzt.',
+    ],
+  },
+  'Bestellungen': {
+    workflow: [
+      'Bestellung wird durch Auftragsverwaltung angelegt (production_orders).',
+      'Status: draft → pending_approval → approved.',
+      'Super Admin prüft und genehmigt die Bestellung (approval_status, approved_by, approved_at).',
+      'Erst nach Freigabe wird die PDF generiert und an den Lieferanten gesendet.',
+      'Reklamationen folgen demselben Genehmigungsprozess.',
+    ],
+    guidelines: [
+      'KEINE PDF-Erstellung oder -Versand vor Super-Admin-Freigabe.',
+      'Lieferanten sehen ausschließlich freigegebene Bestellungen.',
+      'Reklamationen sind als solche zu kennzeichnen (mode=reclamation).',
+      'Jede Genehmigung erzeugt einen Audit-Eintrag.',
+    ],
+  },
+  'Production': {
+    workflow: [
+      'Lieferant meldet sich an und sieht ausschließlich seine freigegebenen Bestellungen.',
+      'Order In: neue Aufträge bestätigen.',
+      'Liste: Bearbeitung laufender Aufträge mit Statuswechseln.',
+      'Fertig: Abschluss meldet das Gerät als produktionsfertig.',
+      'Factory Invoice: Werks-Rechnung wird hochgeladen und geprüft.',
+    ],
+    guidelines: [
+      'Lieferanten haben ausschließlich Zugriff auf eigene Aufträge (RLS).',
+      'Statuswechsel ohne vorherigen Schritt sind nicht zulässig.',
+      'Rechnungsbeträge müssen mit der freigegebenen Bestellung übereinstimmen.',
+    ],
+  },
+  'Lagerbestand': {
+    workflow: [
+      'Geräte werden im Wareneingang erfasst und einer Lager-Area zugeordnet.',
+      'Statuswechsel (Warehouse → Produktion → Unterwegs → Ausgeliefert) erfolgt manuell oder automatisch via Tourenplan.',
+      'Hold-Status entfernt das Gerät vorübergehend aus der Verfügbarkeit.',
+    ],
+    guidelines: [
+      'Jede Statusänderung wird mit Zeitstempel und User dokumentiert.',
+      'Leihgeräte und Lagergeräte werden getrennt verwaltet.',
+      'Ausgelieferte Geräte sind dem Auftrag fest zugeordnet.',
+    ],
+  },
+  'Tourenplanung': {
+    workflow: [
+      'Aufträge mit Status „lieferbereit" erscheinen in der Planung.',
+      'Tourenplan bündelt mehrere Aufträge nach Region und Fahrzeit.',
+      'Fahrzeiten werden über die Google-Maps-Edge-Function berechnet.',
+      'Nach Auslieferung werden Aufträge automatisch auf „geliefert" gesetzt.',
+    ],
+    guidelines: [
+      'Operative Planung ändert keine Stammdaten (nur Status und Tourzuordnung).',
+      'Einstellungen (Fahrer, Fahrzeuge) sind Admin/Tourenplanung vorbehalten.',
+      'Touren-Historie bleibt zur Nachverfolgung erhalten.',
+    ],
+  },
+  'Versand': {
+    workflow: [
+      'Nach Auslieferung werden Versandpapiere automatisch generiert.',
+      'Lieferschein wird per E-Mail an den Kunden gesendet (Customer-Shipping-Notice).',
+      'Ratenplan oder Mietkauf werden bei entsprechender Zahlart erzeugt.',
+      'SEPA-Mandate werden vom Kunden digital unterschrieben.',
+    ],
+    guidelines: [
+      'Versandpapiere sind nach Erstellung unveränderlich (Audit).',
+      'SEPA-Mandate folgen den geltenden Banken-Vorgaben (Gläubiger-ID, Mandatsreferenz).',
+      'Mietkauf-Verträge müssen vor Lieferung vorliegen.',
+    ],
+  },
+  'Buchhaltung': {
+    workflow: [
+      'Rechnungen werden aus Zoho Books synchronisiert (Edge Function).',
+      'Offene Posten zeigen unbezahlte Rechnungen mit Fälligkeit.',
+      'Ratenzahler werden eigenständig überwacht (Plan vs. Ist).',
+      'Mahnstufen werden automatisch berechnet (1–3) anhand Tagen Überfälligkeit.',
+    ],
+    guidelines: [
+      'Finanzdaten sind read-only aus Sicht der App (Quelle: Zoho).',
+      'Manuelle Zahlungseingänge werden in Zoho gebucht, nicht in der App.',
+      'Zugriff nur für Rollen Finance und Admin.',
+    ],
+  },
+  'Finanzierungen': {
+    workflow: [
+      'Auftrag wird zur Finanzierung freigegeben (Verfügbare Aufträge).',
+      'Finanzierung wird beantragt → Anfrage geht per E-Mail an die Bank.',
+      'Status durchläuft: Anfrage offen → Zusage Bank ODER Absage Bank.',
+      'Bei Zusage wird der Auftrag mit der Finanzierungsreferenz verknüpft.',
+    ],
+    guidelines: [
+      'Bank-Korrespondenz wird zentral protokolliert (bank_financing_requests).',
+      'Rolle „Finanzierungen" sieht ausschließlich diesen Bereich.',
+      'Absagen müssen mit Grund dokumentiert werden.',
+    ],
+  },
+  'Operations': {
+    workflow: [
+      'Admins verwalten Benutzer (Einladung, Sperren, Rollen-Zuweisung).',
+      'Import-Modul startet Zoho-Synchronisationen (Aufträge, Kunden, Rechnungen).',
+      'Monitoring zeigt Status aller Edge Functions und Sync-Jobs.',
+      'Logfiles enthalten sicherheitsrelevante Ereignisse.',
+      'Backups werden nächtlich automatisch erstellt und nach Hetzner gespiegelt.',
+    ],
+    guidelines: [
+      'Benutzer-Anlage geschieht ausschließlich über Einladung (kein Self-Signup).',
+      'Rollen-Änderungen sind audit-pflichtig.',
+      'E-Mail-Vorlagen werden zentral gepflegt und versioniert.',
+      'Datensicherung muss regelmäßig auf Wiederherstellbarkeit getestet werden.',
+    ],
+  },
+  'Hilfe': {
+    workflow: [
+      'Support-Anfragen werden per E-Mail an das IT-Team gesendet.',
+      'Diese Dokumentation gibt einen Überblick über alle Module.',
+      'Häufige Fragen werden im FAQ-Bereich gepflegt.',
+    ],
+    guidelines: [
+      'Sensible Daten (Passwörter, Tokens) niemals per E-Mail teilen.',
+      'IT-Team reagiert innerhalb der vereinbarten Service-Zeiten.',
+    ],
+  },
+};
+
 export default function Dokumentation() {
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -189,38 +376,77 @@ export default function Dokumentation() {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Allgemeine Richtlinien</CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm text-muted-foreground space-y-2">
+          <ul className="list-disc pl-5 space-y-1">
+            <li><strong>RBAC:</strong> Jede Aktion wird durch Rollen abgesichert. Nur freigegebene Rollen sehen bzw. ändern Daten.</li>
+            <li><strong>MFA-Pflicht:</strong> Alle Benutzer müssen Multi-Factor-Authentication eingerichtet haben.</li>
+            <li><strong>Audit-Trail:</strong> Sicherheitsrelevante Aktionen werden in Logfiles protokolliert.</li>
+            <li><strong>Zoho als Quelle der Wahrheit:</strong> Stammdaten (Aufträge, Kunden, Rechnungen) werden aus Zoho synchronisiert. Die <code>order_number</code> ist unveränderlich.</li>
+            <li><strong>Datenhaltung:</strong> Supabase ist das primäre Backend mit Row-Level-Security. Keine neuen Tabellen ohne Abstimmung.</li>
+            <li><strong>Auto-Refresh:</strong> Listen aktualisieren sich automatisch alle 15 Minuten und beim erneuten Fokussieren des Tabs.</li>
+          </ul>
+        </CardContent>
+      </Card>
+
       <div className="grid gap-6">
-        {sections.map((section) => (
-          <Card key={section.title}>
-            <CardHeader className="flex flex-row items-start gap-3 space-y-0">
-              <section.icon className="h-6 w-6 text-primary mt-1" />
-              <div className="flex-1">
-                <CardTitle className="text-xl">{section.title}</CardTitle>
-                <p className="text-sm text-muted-foreground mt-1">{section.intro}</p>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <ul className="divide-y divide-border">
-                {section.entries.map((e) => (
-                  <li key={e.path + e.label} className="py-3 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-                    <div className="min-w-0">
-                      <Link to={e.path} className="font-medium text-primary hover:underline">
-                        {e.label}
-                      </Link>
-                      <p className="text-sm text-muted-foreground">{e.desc}</p>
-                      <p className="text-xs text-muted-foreground/70 mt-1 font-mono">{e.path}</p>
+        {sections.map((section) => {
+          const detail = workflowDetails[section.title];
+          return (
+            <Card key={section.title}>
+              <CardHeader className="flex flex-row items-start gap-3 space-y-0">
+                <section.icon className="h-6 w-6 text-primary mt-1" />
+                <div className="flex-1">
+                  <CardTitle className="text-xl">{section.title}</CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">{section.intro}</p>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                {detail && (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="rounded-md border border-border bg-muted/30 p-4">
+                      <h4 className="text-sm font-semibold mb-2 text-foreground">Wirkungsweise</h4>
+                      <ol className="list-decimal pl-5 space-y-1 text-sm text-muted-foreground">
+                        {detail.workflow.map((w, i) => <li key={i}>{w}</li>)}
+                      </ol>
                     </div>
-                    <div className="flex flex-wrap gap-1 sm:max-w-[50%] sm:justify-end">
-                      {e.roles.map((r) => (
-                        <Badge key={r} variant="secondary" className="text-[10px]">{r}</Badge>
-                      ))}
+                    <div className="rounded-md border border-border bg-muted/30 p-4">
+                      <h4 className="text-sm font-semibold mb-2 text-foreground">Richtlinien</h4>
+                      <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
+                        {detail.guidelines.map((g, i) => <li key={i}>{g}</li>)}
+                      </ul>
                     </div>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-        ))}
+                  </div>
+                )}
+
+                <div>
+                  <h4 className="text-sm font-semibold mb-2 text-foreground">Menüpunkte</h4>
+                  <ul className="divide-y divide-border">
+                    {section.entries.map((e) => (
+                      <li key={e.path + e.label} className="py-3 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                        <div className="min-w-0">
+                          <Link to={e.path} className="font-medium text-primary hover:underline">
+                            {e.label}
+                          </Link>
+                          <p className="text-sm text-muted-foreground">{e.desc}</p>
+                          <p className="text-xs text-muted-foreground/70 mt-1 font-mono">{e.path}</p>
+                        </div>
+                        <div className="flex flex-wrap gap-1 sm:max-w-[50%] sm:justify-end">
+                          {e.roles.map((r) => (
+                            <Badge key={r} variant="secondary" className="text-[10px]">{r}</Badge>
+                          ))}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );
