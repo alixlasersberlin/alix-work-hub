@@ -1,4 +1,4 @@
-import { HelpCircle, Mail, BookOpen, LifeBuoy } from 'lucide-react';
+import { HelpCircle, Mail, BookOpen, LifeBuoy, ClipboardList } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -44,6 +44,19 @@ export default function Hilfe() {
             </CardContent>
           </Card>
         </Link>
+
+        <Link to="/hilfe/arbeitsanleitung" className="block">
+          <Card className="hover:border-primary/60 transition-colors h-full">
+            <CardHeader className="flex flex-row items-center gap-3 space-y-0">
+              <ClipboardList className="h-6 w-6 text-primary" />
+              <CardTitle className="text-lg">Arbeitsanleitung</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              <p>Schritt-für-Schritt-Anleitung für Mitarbeiter – aktuell: Bestellungen & Production.</p>
+            </CardContent>
+          </Card>
+        </Link>
+
 
         <Card>
           <CardHeader className="flex flex-row items-center gap-3 space-y-0">
