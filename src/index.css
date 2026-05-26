@@ -919,3 +919,6 @@ table tbody tr:hover {
 @media (prefers-reduced-motion: reduce) {
   .aurora-ticker-track { animation: none; }
 }
+.aurora-ticker-track.aurora-ticker-slow {
+  animation-duration: 180s;
+}
