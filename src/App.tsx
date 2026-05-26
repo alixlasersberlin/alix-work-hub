@@ -293,7 +293,7 @@ const App = () => (
           <BrowserRouter>
             <AuthProvider>
               <AppRoutes />
-              <DesignVariantSwitcher />
+              
             </AuthProvider>
           </BrowserRouter>
         </TooltipProvider>

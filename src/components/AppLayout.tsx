@@ -10,10 +10,11 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import WelcomeDialog from '@/components/WelcomeDialog';
 import LeoWelcomeDialog from '@/components/LeoWelcomeDialog';
+import DesignVariantSwitcher from '@/components/DesignVariantSwitcher';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import alixLogo from '@/assets/alix-logo-gold.png';
 
-const APP_VERSION = '3.0';
+const APP_VERSION = '4.0';
 
 type NavChild = { path: string; label: string; icon: typeof LayoutDashboard; roles: string[] | null; children?: NavChild[] };
 type NavItem = NavChild & { children?: NavChild[] };
@@ -878,6 +879,7 @@ export default function AppLayout() {
             </Button>
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
+            <DesignVariantSwitcher inline />
             <div className="flex items-center gap-2 text-sm">
               <span className="font-display font-bold gold-text">AlixWork</span>
               <span className="text-muted-foreground font-mono text-xs hidden sm:inline">v{APP_VERSION}</span>
