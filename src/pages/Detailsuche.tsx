@@ -175,6 +175,7 @@ export default function Detailsuche() {
       if (trimmed.orderNumber) q = q.ilike('order_number', `%${trimmed.orderNumber}%`);
       if (customerIds) q = q.in('customer_id', Array.from(customerIds));
       if (modelOrderIds) q = q.in('id', Array.from(modelOrderIds));
+      if (serialOrderIds) q = q.in('id', Array.from(serialOrderIds));
 
       const { data: rows, error: oErr } = await q;
       if (oErr) throw oErr;
