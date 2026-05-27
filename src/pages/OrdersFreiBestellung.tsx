@@ -370,18 +370,36 @@ export default function OrdersFreiBestellung() {
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">{formatDate(o.expected_shipment_date)}</td>
                       <td className="px-4 py-3">
-                        {inStock ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-emerald-500/10 text-emerald-500 text-xs font-medium">
-                            <Warehouse className="w-3.5 h-3.5" />
-                            {matches.length}× vorhanden
-                          </span>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
-                        )}
+                        {(() => {
+                          const reserved = reservedByOrder[o.id] || [];
+                          if (reserved.length > 0) {
+                            return (
+                              <span
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-amber-500/15 text-amber-500 text-xs font-medium"
+                                title={reserved.map(r => `${r.model_name} (SN: ${r.serial_number})`).join('\n')}
+                              >
+                                <Warehouse className="w-3.5 h-3.5" />
+                                {reserved.length}× reserviert
+                              </span>
+                            );
+                          }
+                          return inStock ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-emerald-500/10 text-emerald-500 text-xs font-medium">
+                              <Warehouse className="w-3.5 h-3.5" />
+                              {matches.length}× vorhanden
+                            </span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          );
+                        })()}
                       </td>
                       <td className="px-4 py-3"><StatusBadge status={o.order_status} /></td>
                       <td className="px-4 py-3 text-right">
-                        {inStock ? (
+                        {(reservedByOrder[o.id]?.length ?? 0) > 0 ? (
+                          <span className="inline-flex items-center gap-1 text-xs text-amber-500 font-medium">
+                            <CheckCircle2 className="w-4 h-4" /> Aus Lager reserviert
+                          </span>
+                        ) : inStock ? (
                           <Button size="sm" variant="default" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => openReserve(o)}>
                             <Warehouse className="w-4 h-4 mr-1" /> Aus Lager reservieren
                           </Button>
