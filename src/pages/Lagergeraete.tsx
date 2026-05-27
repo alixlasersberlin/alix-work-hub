@@ -1124,6 +1124,79 @@ export default function Lagergeraete({
             {duplicating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
             Duplizieren
           </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              const ids = Array.from(selectedIds);
+              const rows = devices.filter((d) => ids.includes(d.id));
+              const header = ['Seriennummer', 'Modell', 'Status', 'Eingangsdatum', 'Auftrag', 'Kunde', 'KW', 'Notizen'];
+              const esc = (v: any) => {
+                const s = (v ?? '').toString().replace(/"/g, '""');
+                return /[";\n]/.test(s) ? `"${s}"` : s;
+              };
+              const lines = [header.join(';')];
+              rows.forEach((d) => {
+                const cleaned = (d.notes ?? '').replace(/\[Status:[^\]]+\]/g, '').replace(/\[Typ:[^\]]+\]/g, '').trim();
+                lines.push([
+                  d.serial_number,
+                  d.model_name,
+                  getStatusFromNotes(d.notes),
+                  d.entry_date,
+                  d.orders?.order_number ?? '',
+                  d.orders?.customer_name ?? '',
+                  formatWeek(d.reservation_week),
+                  cleaned,
+                ].map(esc).join(';'));
+              });
+              const blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `${pageTitle.replace(/\s+/g, '_')}_${format(new Date(), 'yyyyMMdd_HHmm')}.csv`;
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+          >
+            <FileDown className="w-4 h-4 mr-2" /> CSV
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              const ids = Array.from(selectedIds);
+              const rows = devices.filter((d) => ids.includes(d.id));
+              const doc = createPDF({ orientation: 'landscape' });
+              doc.setFont('Inter', 'bold');
+              doc.setFontSize(14);
+              doc.text(`${pageTitle} – Auswahl (${rows.length})`, 14, 14);
+              doc.setFont('Inter', 'normal');
+              doc.setFontSize(9);
+              doc.text(format(new Date(), 'dd.MM.yyyy HH:mm', { locale: de }), 14, 20);
+              autoTable(doc, {
+                startY: 26,
+                head: [['Seriennummer', 'Modell', 'Status', 'Eingang', 'Auftrag', 'Kunde', 'KW', 'Notizen']],
+                body: rows.map((d) => {
+                  const cleaned = (d.notes ?? '').replace(/\[Status:[^\]]+\]/g, '').replace(/\[Typ:[^\]]+\]/g, '').trim();
+                  return [
+                    d.serial_number,
+                    d.model_name,
+                    getStatusFromNotes(d.notes),
+                    d.entry_date,
+                    d.orders?.order_number ?? '',
+                    d.orders?.customer_name ?? '',
+                    formatWeek(d.reservation_week),
+                    cleaned,
+                  ];
+                }),
+                styles: { font: 'Inter', fontSize: 8, cellPadding: 2 },
+                headStyles: { fillColor: [30, 30, 30] },
+              });
+              doc.save(`${pageTitle.replace(/\s+/g, '_')}_${format(new Date(), 'yyyyMMdd_HHmm')}.pdf`);
+            }}
+          >
+            <FileText className="w-4 h-4 mr-2" /> PDF
+          </Button>
           <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>
             Auswahl aufheben
           </Button>
