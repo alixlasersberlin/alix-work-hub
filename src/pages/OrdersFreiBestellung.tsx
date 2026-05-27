@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { createPDF } from '@/lib/pdf-utils';
 import autoTable from 'jspdf-autotable';
+import { fetchPendingRestbestellungOrderIds } from '@/lib/restbestellung';
 
 function formatDate(date: string | null) {
   if (!date) return '—';
