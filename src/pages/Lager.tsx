@@ -40,6 +40,9 @@ const COLORS = {
 export default function Lager() {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<SearchHit[]>([]);
+  const [searching, setSearching] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -61,6 +64,106 @@ export default function Lager() {
     }
     return { leih, lager, transfer, produktion, total: leih + lager + transfer + produktion };
   }, [rows]);
+
+  function areaFor(notes: string | null, leih: boolean): { label: string; path: string; color: string } {
+    const s = getStatus(notes);
+    if (s === 'Transfer') return { label: 'Unterwegs', path: '/lager/equipment-area/unterwegs', color: COLORS.Unterwegs };
+    if (s === 'Produktion') return { label: 'Produktion', path: '/lager/equipment-area/produktion', color: COLORS.Produktion };
+    if (s === 'Ausgeliefert') return { label: 'Ausgeliefert', path: '/lager/equipment-area/ausgeliefert', color: 'hsl(217 91% 60%)' };
+    if (s === 'Hold' || s === 'Sperre BOSS') return { label: 'Hold', path: '/lager/equipment-area/hold', color: 'hsl(0 84% 60%)' };
+    if (/warehouse/i.test(s)) return { label: 'Warehouse', path: '/lager/equipment-area/warehouse', color: 'hsl(0 0% 100%)' };
+    if (leih) return { label: 'Leihgeräte', path: '/lager/leihgeraete', color: COLORS.Leihgeräte };
+    return { label: 'Lagergeräte', path: '/lager/lagergeraete', color: COLORS.Lagergeräte };
+  }
+
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < 2) { setResults([]); setSearching(false); return; }
+    setSearching(true);
+    const t = setTimeout(async () => {
+      const like = `%${q}%`;
+      const { data: direct } = await supabase
+        .from('lager_devices')
+        .select('id, serial_number, model_name, notes, reserved_order_id')
+        .or(`serial_number.ilike.${like},model_name.ilike.${like}`)
+        .limit(50);
+
+      const { data: ordsNum } = await supabase
+        .from('orders')
+        .select('id, order_number, customers(company_name, contact_name)')
+        .ilike('order_number', like)
+        .limit(50);
+
+      const { data: custs } = await supabase
+        .from('customers')
+        .select('id')
+        .or(`company_name.ilike.${like},contact_name.ilike.${like}`)
+        .limit(50);
+      const custIds = (custs ?? []).map((c: any) => c.id);
+      let ordsCust: any[] = [];
+      if (custIds.length > 0) {
+        const { data } = await supabase
+          .from('orders')
+          .select('id, order_number, customers(company_name, contact_name)')
+          .in('customer_id', custIds)
+          .limit(100);
+        ordsCust = data ?? [];
+      }
+      const orders = [...(ordsNum ?? []), ...ordsCust];
+      const orderIds = Array.from(new Set(orders.map((o: any) => o.id)));
+      let byOrder: any[] = [];
+      if (orderIds.length > 0) {
+        const { data: dvs } = await supabase
+          .from('lager_devices')
+          .select('id, serial_number, model_name, notes, reserved_order_id')
+          .in('reserved_order_id', orderIds)
+          .limit(100);
+        byOrder = dvs ?? [];
+      }
+
+      const merged = new Map<string, any>();
+      [...(direct ?? []), ...byOrder].forEach((d) => merged.set(d.id, d));
+
+      const orderMap: Record<string, { order_number: string; customer_name: string | null }> = {};
+      orders.forEach((o: any) => {
+        orderMap[o.id] = {
+          order_number: o.order_number,
+          customer_name: o.customers?.company_name || o.customers?.contact_name || null,
+        };
+      });
+      const allOrderIds = Array.from(new Set(Array.from(merged.values()).map((d) => d.reserved_order_id).filter(Boolean)));
+      const missing = allOrderIds.filter((id) => !orderMap[id]);
+      if (missing.length > 0) {
+        const { data: more } = await supabase
+          .from('orders')
+          .select('id, order_number, customers(company_name, contact_name)')
+          .in('id', missing);
+        (more ?? []).forEach((o: any) => {
+          orderMap[o.id] = {
+            order_number: o.order_number,
+            customer_name: o.customers?.company_name || o.customers?.contact_name || null,
+          };
+        });
+      }
+
+      const hits: SearchHit[] = Array.from(merged.values()).map((d) => {
+        const area = areaFor(d.notes, isLeih(d.notes));
+        const info = d.reserved_order_id ? orderMap[d.reserved_order_id] : null;
+        return {
+          id: d.id,
+          serial_number: d.serial_number,
+          model_name: d.model_name,
+          status: getStatus(d.notes) || (isLeih(d.notes) ? 'Leihgerät' : 'Bestand'),
+          area,
+          order_number: info?.order_number ?? null,
+          customer_name: info?.customer_name ?? null,
+        };
+      });
+      setResults(hits.slice(0, 100));
+      setSearching(false);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [query]);
 
   const chartData = [
     { key: 'Leihgeräte', name: 'Leihgeräte', value: counts.leih, color: COLORS.Leihgeräte, path: '/lager/leihgeraete', icon: PackageCheck },
