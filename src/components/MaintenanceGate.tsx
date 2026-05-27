@@ -10,10 +10,11 @@ interface MaintenanceState {
 }
 
 export default function MaintenanceGate({ children }: { children: React.ReactNode }) {
-  const { user, hasRole, signOut, loading: authLoading } = useAuth();
+  const { user, hasRole, signOut, loading: authLoading, roles } = useAuth();
   const [state, setState] = useState<MaintenanceState | null>(null);
 
   const isSuperAdmin = hasRole('Super Admin');
+  const rolesReady = !authLoading && (!user || roles.length > 0);
 
   useEffect(() => {
     let cancelled = false;
@@ -57,12 +58,12 @@ export default function MaintenanceGate({ children }: { children: React.ReactNod
 
   // Wenn Wartung aktiv und User eingeloggt (kein Super Admin) → abmelden
   useEffect(() => {
-    if (state?.enabled && user && !isSuperAdmin && !authLoading) {
+    if (state?.enabled && user && rolesReady && !isSuperAdmin) {
       signOut().catch(() => { /* noop */ });
     }
-  }, [state?.enabled, user, isSuperAdmin, authLoading, signOut]);
+  }, [state?.enabled, user, isSuperAdmin, rolesReady, signOut]);
 
-  if (state?.enabled && !isSuperAdmin) {
+  if (state?.enabled && rolesReady && !isSuperAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-6">
         <div className="max-w-lg w-full rounded-2xl border border-border bg-card shadow-2xl p-8 text-center space-y-5">
