@@ -32,9 +32,9 @@ function getZohoConfig(source: string) {
   if (!c) return null;
   const getEnv = (key: string) => (Deno.env.get(key) ?? "").trim();
   return {
-    clientId: getEnv(`${c.prefix}_CLIENT_ID`) || (source === "zoho_eu_2" ? getEnv("ZOHO_EU_1_CLIENT_ID") : ""),
-    clientSecret: getEnv(`${c.prefix}_CLIENT_SECRET`) || (source === "zoho_eu_2" ? getEnv("ZOHO_EU_1_CLIENT_SECRET") : ""),
-    refreshToken: getEnv(`${c.prefix}_REFRESH_TOKEN`) || (source === "zoho_eu_2" ? getEnv("ZOHO_EU_1_REFRESH_TOKEN") : ""),
+    clientId: (source === "zoho_eu_2" ? getEnv("ZOHO_EU_1_CLIENT_ID") : getEnv(`${c.prefix}_CLIENT_ID`)),
+    clientSecret: (source === "zoho_eu_2" ? getEnv("ZOHO_EU_1_CLIENT_SECRET") : getEnv(`${c.prefix}_CLIENT_SECRET`)),
+    refreshToken: (source === "zoho_eu_2" ? getEnv("ZOHO_EU_1_REFRESH_TOKEN") : getEnv(`${c.prefix}_REFRESH_TOKEN`)),
     organizationId: getEnv(`${c.prefix}_ORGANIZATION_ID`),
     accountsBaseUrl: c.accountsBase,
     booksApiBaseUrl: c.apiBase,
