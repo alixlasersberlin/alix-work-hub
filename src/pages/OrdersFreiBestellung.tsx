@@ -59,6 +59,7 @@ export default function OrdersFreiBestellung() {
   const [orders, setOrders] = useState<any[]>([]);
   const [itemsByOrder, setItemsByOrder] = useState<Record<string, OrderItem[]>>({});
   const [freeBestand, setFreeBestand] = useState<FreeDevice[]>([]);
+  const [reservedByOrder, setReservedByOrder] = useState<Record<string, { id: string; serial_number: string; model_name: string }[]>>({});
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
