@@ -21,9 +21,9 @@ function getZohoConfig(sourceSystem: string) {
   const cfg = map[sourceSystem];
   if (!cfg) return null;
   return {
-    clientId: Deno.env.get(`${cfg.prefix}_CLIENT_ID`) ?? "",
-    clientSecret: Deno.env.get(`${cfg.prefix}_CLIENT_SECRET`) ?? "",
-    refreshToken: Deno.env.get(`${cfg.prefix}_REFRESH_TOKEN`) ?? "",
+    clientId: Deno.env.get(`${cfg.prefix}_CLIENT_ID`) || (sourceSystem === "zoho_eu_2" ? Deno.env.get("ZOHO_EU_1_CLIENT_ID") ?? "" : ""),
+    clientSecret: Deno.env.get(`${cfg.prefix}_CLIENT_SECRET`) || (sourceSystem === "zoho_eu_2" ? Deno.env.get("ZOHO_EU_1_CLIENT_SECRET") ?? "" : ""),
+    refreshToken: Deno.env.get(`${cfg.prefix}_REFRESH_TOKEN`) || (sourceSystem === "zoho_eu_2" ? Deno.env.get("ZOHO_EU_1_REFRESH_TOKEN") ?? "" : ""),
     organizationId: Deno.env.get(`${cfg.prefix}_ORGANIZATION_ID`) ?? "",
     accountsBaseUrl: cfg.accountsBase,
     booksApiBaseUrl: cfg.apiBase,
