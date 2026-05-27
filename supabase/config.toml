@@ -42,6 +42,9 @@ verify_jwt = false
 [functions.import-all-items-eu2]
 verify_jwt = false
 
+[functions.import-all-customers-eu2]
+verify_jwt = false
+
 
 
 
