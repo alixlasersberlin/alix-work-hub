@@ -15,11 +15,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import BankFinancingTab from '@/components/BankFinancingTab';
-import { Search, Loader2, Inbox, Eye, Trash2, Pencil, ArrowUp, ArrowDown, ArrowUpDown, CalendarDays, Mail } from 'lucide-react';
+import { Search, Loader2, Inbox, Eye, Trash2, Pencil, ArrowUp, ArrowDown, ArrowUpDown, CalendarDays, Mail, FileText, Download } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
+import { generateFinancingRequestPdf } from '@/lib/financing-request-pdf';
 
 interface Props {
   status: 'approved' | 'rejected' | 'pending' | Array<'approved' | 'rejected' | 'pending' | 'in_review'>;
