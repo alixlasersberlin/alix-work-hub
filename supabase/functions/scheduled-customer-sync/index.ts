@@ -151,6 +151,7 @@ Deno.serve(async (req: Request) => {
 
     // Calculate cutoff date for last_modified_time filter (default 1 day, configurable)
     const daysBack = Math.max(1, Math.min(365, Number(body.days_back ?? 1) || 1));
+    const maxContacts = body.max_contacts != null ? Math.max(1, Number(body.max_contacts)) : null;
     const now = new Date();
     const cutoff = new Date(now);
     cutoff.setDate(cutoff.getDate() - daysBack);
@@ -195,6 +196,7 @@ Deno.serve(async (req: Request) => {
       totalFetched += contacts.length;
 
       for (const contact of contacts) {
+        if (maxContacts != null && (totalImported + totalUpdated + totalSkipped + totalFailed) >= maxContacts) break;
         const externalId = contact.contact_id?.toString();
         if (!externalId) { totalSkipped++; continue; }
 
@@ -271,6 +273,7 @@ Deno.serve(async (req: Request) => {
         await sleep(100);
       }
 
+      if (maxContacts != null && (totalImported + totalUpdated + totalSkipped + totalFailed) >= maxContacts) break;
       if (!hasMore) break;
       page++;
 
