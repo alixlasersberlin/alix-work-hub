@@ -36,3 +36,7 @@ verify_jwt = false
 [functions.nightly-backup]
 verify_jwt = false
 
+[functions.test-zoho-eu2]
+verify_jwt = false
+
+
