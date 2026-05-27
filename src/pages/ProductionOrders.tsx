@@ -24,6 +24,7 @@ import {
   lagerFoundNote,
   LAGER_NOTE_MARKER,
   LAGER_MISSING_MARKER,
+  stripLagerMarkers,
   type LagerDeviceRow,
   type LagerMatch,
 } from '@/lib/lager-match';
@@ -188,13 +189,13 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
             .select('id');
           if (claimErr || !claimed || claimed.length === 0) continue;
           const note = lagerFoundNote(match.department, match.device.serial_number);
-          const newAnm = r.anmerkungen ? `${r.anmerkungen}\n${note}` : note;
+          const base = stripLagerMarkers(r.anmerkungen);
+          const newAnm = base ? `${base}\n${note}` : note;
           await supabase.from('production_orders').update({ anmerkungen: newAnm }).eq('id', r.id);
           result[r.id] = match;
         } else {
-          const newAnm = r.anmerkungen
-            ? `${r.anmerkungen}\n${LAGER_MISSING_MARKER}`
-            : LAGER_MISSING_MARKER;
+          const base = stripLagerMarkers(r.anmerkungen);
+          const newAnm = base ? `${base}\n${LAGER_MISSING_MARKER}` : LAGER_MISSING_MARKER;
           await supabase.from('production_orders').update({ anmerkungen: newAnm }).eq('id', r.id);
           result[r.id] = 'none';
         }

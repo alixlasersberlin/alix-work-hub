@@ -96,8 +96,21 @@ export function findLagerMatch(
   return null;
 }
 
-export const LAGER_NOTE_MARKER = '[LAGER-CHECK]';
+// Common prefix used to detect ANY previously-written LAGER-CHECK note (hit or miss).
+export const LAGER_NOTE_MARKER = '[LAGER-CHECK';
 export const LAGER_MISSING_MARKER = '[LAGER-CHECK: NICHT VORHANDEN — muss bestellt werden]';
 export function lagerFoundNote(department: Department, serial: string): string {
   return `[LAGER-CHECK: Im Lager gefunden & reserviert — Abteilung ${department}, SN ${serial}]`;
+}
+
+/**
+ * Remove every existing [LAGER-CHECK ...] marker from an anmerkungen string
+ * so we can safely re-append a single, fresh marker without duplicating.
+ */
+export function stripLagerMarkers(anmerkungen: string | null | undefined): string {
+  if (!anmerkungen) return '';
+  return anmerkungen
+    .replace(/\s*\[LAGER-CHECK[^\]]*\]\s*/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
