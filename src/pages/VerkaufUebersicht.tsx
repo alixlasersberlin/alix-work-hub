@@ -50,6 +50,21 @@ const TILES: Tile[] = [
     },
   },
   {
+    key: 'auftraege_at',
+    label: '🇦🇹 Aufträge Alix Austria (-AT)',
+    icon: ClipboardList,
+    to: '/auftraege?region=at',
+    accent: 'from-red-500/20 to-red-500/5 border-red-500/30',
+    load: async () => {
+      const OPEN = ['open', 'offen', 'draft', 'approved', 'overdue', 'teilgeliefert', 'zurückgestellt'];
+      const [openRes, totalRes] = await Promise.all([
+        supabase.from('orders').select('*', { count: 'exact', head: true }).in('order_status', OPEN).eq('source_system', 'zoho_eu_2'),
+        supabase.from('orders').select('*', { count: 'exact', head: true }).eq('source_system', 'zoho_eu_2'),
+      ]);
+      return { open: openRes.count ?? 0, total: totalRes.count ?? 0 } as any;
+    },
+  },
+  {
     key: 'anzahlung',
     label: 'Anzahlungsrechnung offen',
     icon: Receipt,
