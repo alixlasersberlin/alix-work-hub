@@ -14,6 +14,8 @@ import { toast } from 'sonner';
 import OrdersCalendar from '@/components/OrdersCalendar';
 import OrderEditDialog from '@/components/OrderEditDialog';
 import OrderDeferDialog from '@/components/OrderDeferDialog';
+import OrderItemsEditDialog from '@/components/OrderItemsEditDialog';
+import { Package } from 'lucide-react';
 import OrderStatsBar from '@/components/OrderStatsBar';
 import { useDrivingTimes } from '@/hooks/useDrivingTimes';
 import { DrivingTimeCell } from '@/components/DrivingTimeCell';
@@ -45,6 +47,7 @@ export default function Orders() {
   const [currentPage, setCurrentPage] = useState(1);
   const [editOrder, setEditOrder] = useState<any>(null);
   const [deferOrder, setDeferOrder] = useState<any>(null);
+  const [itemsOrder, setItemsOrder] = useState<any>(null);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkOpen, setBulkOpen] = useState(false);
@@ -56,6 +59,7 @@ export default function Orders() {
   const [viewMode, setViewMode] = useViewMode();
 
   const canWrite = isAdmin || hasRole('Auftragsverwaltung');
+  const canEditItems = hasRole('Super Admin');
 
   async function load() {
     setLoading(true);
@@ -342,6 +346,11 @@ export default function Orders() {
                             <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setDeferOrder(o)}>
                               <CalendarClock className="w-3 h-3 mr-1" /> Zurückstellen
                             </Button>
+                            {canEditItems && (
+                              <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-primary" onClick={() => setItemsOrder(o)}>
+                                <Package className="w-3 h-3 mr-1" /> Artikel
+                              </Button>
+                            )}
                           </div>
                         )}
                       </div>
@@ -486,6 +495,16 @@ export default function Orders() {
                               >
                                 <CalendarClock className="w-3 h-3 mr-1" /> Zurückstellen
                               </Button>
+                              {canEditItems && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 px-2 text-xs text-primary hover:text-primary"
+                                  onClick={() => setItemsOrder(o)}
+                                >
+                                  <Package className="w-3 h-3 mr-1" /> Artikel
+                                </Button>
+                              )}
                             </div>
                           </td>
                         )}
@@ -538,6 +557,15 @@ export default function Orders() {
       )}
       {deferOrder && (
         <OrderDeferDialog order={deferOrder} open onClose={() => setDeferOrder(null)} onSaved={load} />
+      )}
+      {itemsOrder && (
+        <OrderItemsEditDialog
+          orderId={itemsOrder.id}
+          orderNumber={itemsOrder._displayNumber || itemsOrder.order_number}
+          open
+          onClose={() => setItemsOrder(null)}
+          onSaved={load}
+        />
       )}
       <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
         <DialogContent>
