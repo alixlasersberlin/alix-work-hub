@@ -3,6 +3,7 @@ import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Building2, Calendar, Euro, Hash } from 'lucide-react';
+import { withAt } from '@/lib/atSuffix';
 
 interface OrderCardProps {
   order: any;
