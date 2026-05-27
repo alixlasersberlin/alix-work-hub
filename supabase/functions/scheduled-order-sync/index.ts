@@ -317,8 +317,10 @@ Deno.serve(async (req: Request) => {
         }
 
         await sleep(120);
+        if (maxOrders && (totalImported + totalUpdated) >= maxOrders) break;
       }
 
+      if (maxOrders && (totalImported + totalUpdated) >= maxOrders) break;
       if (!hasMore) break;
       page++;
       await sleep(500);
