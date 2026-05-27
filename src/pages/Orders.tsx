@@ -32,7 +32,11 @@ export default function Orders() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [modelFilter, setModelFilter] = useState('all');
-  const [regionFilter, setRegionFilter] = useState<'all' | 'de' | 'at'>('all');
+  const [searchParams] = useSearchParams();
+  const initialRegion = (searchParams.get('region') as 'all' | 'de' | 'at' | null) ?? 'all';
+  const [regionFilter, setRegionFilter] = useState<'all' | 'de' | 'at'>(
+    initialRegion === 'de' || initialRegion === 'at' ? initialRegion : 'all'
+  );
   const [sortField, setSortField] = useState<SortField>('order_date');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [loading, setLoading] = useState(true);
