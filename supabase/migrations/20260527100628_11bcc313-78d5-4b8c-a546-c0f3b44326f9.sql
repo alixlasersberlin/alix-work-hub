@@ -1,0 +1,1 @@
+UPDATE public.lager_devices SET reserved_order_id = NULL, updated_at = now() WHERE reserved_order_id = '820bc94d-ba6f-4569-a2fc-059c43275ef0' AND id <> '68cc82be-169a-4e95-b4e2-72513eefb716';
