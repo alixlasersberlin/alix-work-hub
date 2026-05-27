@@ -10,10 +10,11 @@ interface MaintenanceState {
 }
 
 export default function MaintenanceGate({ children }: { children: React.ReactNode }) {
-  const { user, hasRole, signOut, loading: authLoading } = useAuth();
+  const { user, hasRole, signOut, loading: authLoading, roles } = useAuth();
   const [state, setState] = useState<MaintenanceState | null>(null);
 
   const isSuperAdmin = hasRole('Super Admin');
+  const rolesReady = !authLoading && (!user || roles.length > 0);
 
   useEffect(() => {
     let cancelled = false;
