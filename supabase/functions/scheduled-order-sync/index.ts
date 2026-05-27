@@ -173,8 +173,44 @@ Deno.serve(async (req: Request) => {
     let totalSkipped = 0;
     let totalFailed = 0;
     let totalFetched = 0;
+    let autoSyncedCustomers = 0;
     const errors: { id: string; message: string }[] = [];
     const MAX_PAGES = 50;
+    const maxOrders = body.max_orders != null ? Math.max(1, Number(body.max_orders)) : null;
+    const autoSyncCustomers = body.auto_sync_customers !== false;
+
+    async function ensureCustomer(externalCustomerId: string): Promise<string | null> {
+      const { data: existing } = await adminClient
+        .from("customers").select("id")
+        .eq("external_customer_id", externalCustomerId)
+        .eq("source_system", sourceSystem).maybeSingle();
+      if (existing) return existing.id;
+      if (!autoSyncCustomers) return null;
+      try {
+        const cRes = await fetch(
+          `${zohoConfig.booksApiBaseUrl}/contacts/${externalCustomerId}?organization_id=${zohoConfig.organizationId}`,
+          { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } },
+        );
+        if (!cRes.ok) return null;
+        const cJson = await cRes.json();
+        const c = cJson.contact;
+        if (!c) return null;
+        const { data: ins, error: insErr } = await adminClient.from("customers").upsert({
+          external_customer_id: String(c.contact_id),
+          source_system: sourceSystem,
+          company_name: c.company_name ?? null,
+          contact_name: c.contact_name ?? null,
+          email: c.email ?? null,
+          phone: c.mobile || c.phone || null,
+          billing_address: c.billing_address ?? null,
+          shipping_address: c.shipping_address ?? null,
+          raw_data: c,
+        }, { onConflict: "external_customer_id,source_system" }).select("id").single();
+        if (insErr || !ins) return null;
+        autoSyncedCustomers++;
+        return ins.id;
+      } catch { return null; }
+    }
 
     while (page <= MAX_PAGES) {
       const apiUrl = `${zohoConfig.booksApiBaseUrl}/salesorders?organization_id=${zohoConfig.organizationId}&page=${page}&per_page=200&last_modified_time=${encodeURIComponent(lastModifiedAfter)}`;
