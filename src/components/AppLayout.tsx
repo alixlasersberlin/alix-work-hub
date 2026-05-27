@@ -384,7 +384,7 @@ export default function AppLayout() {
       }));
     };
     load();
-    const intervalId = window.setInterval(load, 15 * 60 * 1000);
+    const intervalId = window.setInterval(load, 5 * 60 * 1000);
     let debounceId: number | undefined;
     const scheduleReload = () => {
       if (debounceId) window.clearTimeout(debounceId);
