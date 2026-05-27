@@ -327,8 +327,11 @@ export default function ProductionPortal() {
             {t.worklist} {supplierName ? `– ${supplierName}` : ''}
           </p>
         </div>
-        <div className="text-right text-xs text-muted-foreground">
-          {t.loggedInAs} <span className="text-foreground font-medium">{profile?.full_name || profile?.email}</span>
+        <div className="flex items-center gap-3">
+          <DesignVariantSwitcher inline />
+          <div className="text-right text-xs text-muted-foreground">
+            {t.loggedInAs} <span className="text-foreground font-medium">{profile?.full_name || profile?.email}</span>
+          </div>
         </div>
       </div>
 
