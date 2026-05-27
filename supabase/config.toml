@@ -39,6 +39,9 @@ verify_jwt = false
 [functions.test-import-eu2]
 verify_jwt = false
 
+[functions.import-all-items-eu2]
+verify_jwt = false
+
 
 
 
