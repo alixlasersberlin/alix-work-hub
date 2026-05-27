@@ -32,6 +32,7 @@ export default function Orders() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [modelFilter, setModelFilter] = useState('all');
+  const [regionFilter, setRegionFilter] = useState<'all' | 'de' | 'at'>('all');
   const [sortField, setSortField] = useState<SortField>('order_date');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [loading, setLoading] = useState(true);
@@ -130,13 +131,15 @@ export default function Orders() {
         it.sku?.toLowerCase().includes(m);
     });
     const notExcluded = !EXCLUDED_STATUSES.includes((o.order_status || '').toLowerCase());
-    return matchSearch && matchStatus && matchModel && notExcluded;
+    const isAt = o.source_system === 'zoho_eu_2';
+    const matchRegion = regionFilter === 'all' || (regionFilter === 'at' ? isAt : !isAt);
+    return matchSearch && matchStatus && matchModel && matchRegion && notExcluded;
   });
 
   const totalPages = pageSize === 'all' ? 1 : Math.ceil(filtered.length / pageSize);
   const paged = pageSize === 'all' ? filtered : filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
-  useEffect(() => { setCurrentPage(1); }, [search, statusFilter, modelFilter, pageSize]);
+  useEffect(() => { setCurrentPage(1); }, [search, statusFilter, modelFilter, regionFilter, pageSize]);
 
   // Only fetch driving times for currently visible (paged) orders to avoid edge function timeout
   useEffect(() => {
@@ -215,6 +218,16 @@ export default function Orders() {
                     ))}
                   </div>
                 ))}
+              </SelectContent>
+            </Select>
+            <Select value={regionFilter} onValueChange={(v) => setRegionFilter(v as 'all' | 'de' | 'at')}>
+              <SelectTrigger className="w-48 bg-secondary border-border">
+                <SelectValue placeholder="Region filtern" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Regionen</SelectItem>
+                <SelectItem value="de">🇩🇪 Alix Deutschland</SelectItem>
+                <SelectItem value="at">🇦🇹 Alix Austria (-AT)</SelectItem>
               </SelectContent>
             </Select>
             <Select value={String(pageSize)} onValueChange={v => setPageSize(v === 'all' ? 'all' : Number(v) as 20 | 30 | 50)}>
