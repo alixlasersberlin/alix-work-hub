@@ -15,11 +15,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import BankFinancingTab from '@/components/BankFinancingTab';
-import { Search, Loader2, Inbox, Eye, Trash2, Pencil, ArrowUp, ArrowDown, ArrowUpDown, CalendarDays, Mail } from 'lucide-react';
+import { Search, Loader2, Inbox, Eye, Trash2, Pencil, ArrowUp, ArrowDown, ArrowUpDown, CalendarDays, Mail, FileText, Download } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
+import { generateFinancingRequestPdf } from '@/lib/financing-request-pdf';
 
 interface Props {
   status: 'approved' | 'rejected' | 'pending' | Array<'approved' | 'rejected' | 'pending' | 'in_review'>;
@@ -36,6 +37,10 @@ export default function BankDecisionList({ status, title, subtitle, icon: Icon, 
   const [editRow, setEditRow] = useState<any>(null);
   const [toSend, setToSend] = useState<any>(null);
   const [sending, setSending] = useState(false);
+  const [pdfRow, setPdfRow] = useState<any>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [pdfFileName, setPdfFileName] = useState<string>('Leasing-Anfrage.pdf');
 
   const handleDelete = async () => {
     if (!toDelete) return;
@@ -129,6 +134,66 @@ export default function BankDecisionList({ status, title, subtitle, icon: Icon, 
       setSending(false);
     }
   };
+
+  const openPdf = async (row: any) => {
+    setPdfRow(row);
+    setPdfLoading(true);
+    setPdfUrl(null);
+    try {
+      const { data: full, error: fetchErr } = await supabase
+        .from('bank_financing_requests')
+        .select('id, order_id, request_date, purchase_price, down_payment, term_months, residual_value, decision_note, in_processing_note, orders(order_number, order_date, total_amount, currency, billing_address, shipping_address, customers(company_name, contact_name, email, phone, billing_address, shipping_address))')
+        .eq('id', row.id)
+        .single();
+      if (fetchErr || !full) throw new Error(fetchErr?.message || 'Anfrage nicht gefunden');
+
+      const o: any = full.orders;
+      const cust: any = o?.customers;
+      const addr = cust?.billing_address || cust?.shipping_address || o?.billing_address || o?.shipping_address;
+      const doc = generateFinancingRequestPdf({
+        orderNumber: o?.order_number ?? '',
+        customerName: cust?.company_name || cust?.contact_name || '',
+        customerAddress: formatAddress(addr),
+        customerEmail: cust?.email || '',
+        customerPhone: cust?.phone || '',
+        purchasePrice: full.purchase_price,
+        downPayment: full.down_payment,
+        termMonths: full.term_months,
+        residualValue: full.residual_value,
+        requestDate: full.request_date ? new Date(full.request_date).toLocaleDateString('de-DE') : '',
+        totalAmount: o?.total_amount,
+        currency: o?.currency || 'EUR',
+        note: full.in_processing_note || full.decision_note || '',
+      });
+      const blob = doc.output('blob');
+      const url = URL.createObjectURL(blob);
+      setPdfUrl(url);
+      setPdfFileName(`Leasing-Anfrage_${o?.order_number || full.id}.pdf`);
+    } catch (e: any) {
+      toast.error('PDF konnte nicht erstellt werden: ' + (e?.message || 'Unbekannter Fehler'));
+      setPdfRow(null);
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
+  const closePdf = () => {
+    if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+    setPdfUrl(null);
+    setPdfRow(null);
+  };
+
+  const downloadPdf = () => {
+    if (!pdfUrl) return;
+    const a = document.createElement('a');
+    a.href = pdfUrl;
+    a.download = pdfFileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
+
+
 
 
   const navigate = useNavigate();
@@ -335,6 +400,14 @@ export default function BankDecisionList({ status, title, subtitle, icon: Icon, 
                             <Button
                               variant="ghost"
                               size="icon"
+                              onClick={(e) => { e.stopPropagation(); openPdf(r); }}
+                              title="Anfrage als PDF anzeigen / herunterladen"
+                            >
+                              <FileText className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               onClick={(e) => { e.stopPropagation(); setToSend(r); }}
                               title="Anfrage per E-Mail versenden"
                               className="text-primary hover:text-primary"
@@ -421,6 +494,31 @@ export default function BankDecisionList({ status, title, subtitle, icon: Icon, 
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!pdfRow} onOpenChange={(o) => !o && closePdf()}>
+        <DialogContent className="max-w-5xl w-[95vw] max-h-[92vh] p-0 overflow-hidden flex flex-col">
+          <DialogHeader className="px-5 pt-5 pb-3 border-b">
+            <DialogTitle>
+              Leasing-Anfrage – {pdfRow?.orders?.order_number || '—'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 min-h-[60vh] bg-muted">
+            {pdfLoading || !pdfUrl ? (
+              <div className="h-full flex items-center justify-center text-muted-foreground">
+                <Loader2 className="h-5 w-5 mr-2 animate-spin" /> PDF wird erzeugt…
+              </div>
+            ) : (
+              <iframe src={pdfUrl} title="Leasing-Anfrage PDF" className="w-full h-full min-h-[60vh] border-0" />
+            )}
+          </div>
+          <DialogFooter className="px-5 py-3 border-t">
+            <Button variant="outline" onClick={closePdf}>Schließen</Button>
+            <Button onClick={downloadPdf} disabled={!pdfUrl}>
+              <Download className="h-4 w-4 mr-2" /> Herunterladen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
