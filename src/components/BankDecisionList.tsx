@@ -135,6 +135,66 @@ export default function BankDecisionList({ status, title, subtitle, icon: Icon, 
     }
   };
 
+  const openPdf = async (row: any) => {
+    setPdfRow(row);
+    setPdfLoading(true);
+    setPdfUrl(null);
+    try {
+      const { data: full, error: fetchErr } = await supabase
+        .from('bank_financing_requests')
+        .select('id, order_id, request_date, purchase_price, down_payment, term_months, residual_value, decision_note, in_processing_note, orders(order_number, order_date, total_amount, currency, billing_address, shipping_address, customers(company_name, contact_name, email, phone, billing_address, shipping_address))')
+        .eq('id', row.id)
+        .single();
+      if (fetchErr || !full) throw new Error(fetchErr?.message || 'Anfrage nicht gefunden');
+
+      const o: any = full.orders;
+      const cust: any = o?.customers;
+      const addr = cust?.billing_address || cust?.shipping_address || o?.billing_address || o?.shipping_address;
+      const doc = generateFinancingRequestPdf({
+        orderNumber: o?.order_number ?? '',
+        customerName: cust?.company_name || cust?.contact_name || '',
+        customerAddress: formatAddress(addr),
+        customerEmail: cust?.email || '',
+        customerPhone: cust?.phone || '',
+        purchasePrice: full.purchase_price,
+        downPayment: full.down_payment,
+        termMonths: full.term_months,
+        residualValue: full.residual_value,
+        requestDate: full.request_date ? new Date(full.request_date).toLocaleDateString('de-DE') : '',
+        totalAmount: o?.total_amount,
+        currency: o?.currency || 'EUR',
+        note: full.in_processing_note || full.decision_note || '',
+      });
+      const blob = doc.output('blob');
+      const url = URL.createObjectURL(blob);
+      setPdfUrl(url);
+      setPdfFileName(`Leasing-Anfrage_${o?.order_number || full.id}.pdf`);
+    } catch (e: any) {
+      toast.error('PDF konnte nicht erstellt werden: ' + (e?.message || 'Unbekannter Fehler'));
+      setPdfRow(null);
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
+  const closePdf = () => {
+    if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+    setPdfUrl(null);
+    setPdfRow(null);
+  };
+
+  const downloadPdf = () => {
+    if (!pdfUrl) return;
+    const a = document.createElement('a');
+    a.href = pdfUrl;
+    a.download = pdfFileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
+
+
+
 
   const navigate = useNavigate();
   const [rows, setRows] = useState<any[]>([]);
