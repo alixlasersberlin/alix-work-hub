@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useViewMode } from '@/hooks/useViewMode';
 import { ViewToggle } from '@/components/ViewToggle';
+import DesignVariantSwitcher from '@/components/DesignVariantSwitcher';
 
 type PhotoSide = 'front' | 'right' | 'left';
 
@@ -326,8 +327,11 @@ export default function ProductionPortal() {
             {t.worklist} {supplierName ? `– ${supplierName}` : ''}
           </p>
         </div>
-        <div className="text-right text-xs text-muted-foreground">
-          {t.loggedInAs} <span className="text-foreground font-medium">{profile?.full_name || profile?.email}</span>
+        <div className="flex items-center gap-3">
+          <DesignVariantSwitcher inline />
+          <div className="text-right text-xs text-muted-foreground">
+            {t.loggedInAs} <span className="text-foreground font-medium">{profile?.full_name || profile?.email}</span>
+          </div>
         </div>
       </div>
 
