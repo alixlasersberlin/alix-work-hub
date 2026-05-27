@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2, Save, Trash2, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Props {
@@ -22,21 +22,26 @@ interface Item {
   quantity: number | null;
   rate: number | null;
   amount: number | null;
+  item_order?: number | null;
+  _isNew?: boolean;
 }
 
 export default function OrderItemsEditDialog({ orderId, orderNumber, open, onClose, onSaved }: Props) {
   const [items, setItems] = useState<Item[]>([]);
+  const [removedIds, setRemovedIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [note, setNote] = useState('');
 
   useEffect(() => {
     if (!open) return;
+    setRemovedIds([]);
+    setNote('');
     (async () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('order_items')
-        .select('id, item_name, sku, quantity, rate, amount')
+        .select('id, item_name, sku, quantity, rate, amount, item_order')
         .eq('order_id', orderId)
         .order('item_order', { ascending: true });
       if (error) toast.error('Fehler beim Laden: ' + error.message);
@@ -45,13 +50,33 @@ export default function OrderItemsEditDialog({ orderId, orderNumber, open, onClo
     })();
   }, [open, orderId]);
 
-  const updateQty = (id: string, qty: string) => {
-    const q = qty === '' ? null : parseFloat(qty);
+  const patchItem = (id: string, patch: Partial<Item>) => {
     setItems(prev => prev.map(it => {
       if (it.id !== id) return it;
-      const newAmount = q != null && it.rate != null ? q * Number(it.rate) : it.amount;
-      return { ...it, quantity: q, amount: newAmount };
+      const next = { ...it, ...patch };
+      const q = next.quantity;
+      const r = next.rate;
+      next.amount = q != null && r != null ? Number(q) * Number(r) : next.amount;
+      return next;
     }));
+  };
+
+  const removeItem = (id: string, isNew?: boolean) => {
+    if (!isNew) setRemovedIds(prev => [...prev, id]);
+    setItems(prev => prev.filter(it => it.id !== id));
+  };
+
+  const addItem = () => {
+    setItems(prev => [...prev, {
+      id: `new-${crypto.randomUUID()}`,
+      item_name: '',
+      sku: '',
+      quantity: 1,
+      rate: 0,
+      amount: 0,
+      item_order: (prev[prev.length - 1]?.item_order ?? prev.length) + 1,
+      _isNew: true,
+    }]);
   };
 
   const newTotal = items.reduce((s, it) => s + (Number(it.amount) || 0), 0);
@@ -59,31 +84,54 @@ export default function OrderItemsEditDialog({ orderId, orderNumber, open, onClo
   async function handleSave() {
     setSaving(true);
     try {
-      // Update each item
-      for (const it of items) {
-        const { error } = await supabase
-          .from('order_items')
-          .update({ quantity: it.quantity, amount: it.amount })
-          .eq('id', it.id);
+      // Delete removed
+      if (removedIds.length > 0) {
+        const { error } = await supabase.from('order_items').delete().in('id', removedIds);
         if (error) throw error;
       }
 
-      // Update order: new total, status back to "offen" (erneut fällig stellen)
+      // Update existing & insert new
+      for (const it of items) {
+        if (it._isNew) {
+          const { error } = await supabase.from('order_items').insert({
+            order_id: orderId,
+            item_name: it.item_name,
+            sku: it.sku,
+            quantity: it.quantity,
+            rate: it.rate,
+            amount: it.amount,
+            item_order: it.item_order ?? 0,
+          });
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from('order_items')
+            .update({
+              item_name: it.item_name,
+              sku: it.sku,
+              quantity: it.quantity,
+              rate: it.rate,
+              amount: it.amount,
+            })
+            .eq('id', it.id);
+          if (error) throw error;
+        }
+      }
+
       const { error: ordErr } = await supabase
         .from('orders')
         .update({ total_amount: newTotal, order_status: 'offen' })
         .eq('id', orderId);
       if (ordErr) throw ordErr;
 
-      // Status history note
       await supabase.from('order_notes').insert({
         order_id: orderId,
-        note_text: `Mengenkorrektur aus Teilgeliefert. Neuer Betrag: ${newTotal.toFixed(2)}${note ? ` — ${note}` : ''}`,
+        note_text: `Artikelliste bearbeitet. Neuer Betrag: ${newTotal.toFixed(2)}${note ? ` — ${note}` : ''}`,
         note_type: 'correction',
         is_internal: true,
       });
 
-      toast.success('Auftrag aktualisiert und erneut fällig gestellt');
+      toast.success('Auftrag aktualisiert');
       onSaved();
       onClose();
     } catch (e: any) {
@@ -95,11 +143,11 @@ export default function OrderItemsEditDialog({ orderId, orderNumber, open, onClo
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="font-display">Mengen korrigieren {orderNumber ? `– ${orderNumber}` : ''}</DialogTitle>
+          <DialogTitle className="font-display">Artikelliste bearbeiten {orderNumber ? `– ${orderNumber}` : ''}</DialogTitle>
           <DialogDescription>
-            Korrigiere die gelieferten Mengen. Der Auftrag wird neu berechnet und auf Status „offen" zurückgesetzt (erneut fällig).
+            Artikel hinzufügen, entfernen oder ändern. Der Auftrag wird neu berechnet und auf Status „offen" gesetzt.
           </DialogDescription>
         </DialogHeader>
 
@@ -112,46 +160,89 @@ export default function OrderItemsEditDialog({ orderId, orderNumber, open, onClo
                 <thead className="bg-secondary/50">
                   <tr>
                     <th className="text-left px-3 py-2 text-muted-foreground font-medium">Artikel</th>
-                    <th className="text-left px-3 py-2 text-muted-foreground font-medium">SKU</th>
-                    <th className="text-right px-3 py-2 text-muted-foreground font-medium">Preis</th>
-                    <th className="text-right px-3 py-2 text-muted-foreground font-medium w-32">Menge</th>
-                    <th className="text-right px-3 py-2 text-muted-foreground font-medium">Betrag</th>
+                    <th className="text-left px-3 py-2 text-muted-foreground font-medium w-32">SKU</th>
+                    <th className="text-right px-3 py-2 text-muted-foreground font-medium w-28">Preis</th>
+                    <th className="text-right px-3 py-2 text-muted-foreground font-medium w-24">Menge</th>
+                    <th className="text-right px-3 py-2 text-muted-foreground font-medium w-28">Betrag</th>
+                    <th className="w-10"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
                   {items.map(it => (
-                    <tr key={it.id}>
-                      <td className="px-3 py-2 text-foreground">{it.item_name || '—'}</td>
-                      <td className="px-3 py-2 text-muted-foreground">{it.sku || '—'}</td>
-                      <td className="px-3 py-2 text-right text-muted-foreground">
-                        {it.rate != null ? Number(it.rate).toFixed(2) : '—'}
+                    <tr key={it.id} className={it._isNew ? 'bg-primary/5' : ''}>
+                      <td className="px-2 py-1.5">
+                        <Input
+                          value={it.item_name ?? ''}
+                          onChange={e => patchItem(it.id, { item_name: e.target.value })}
+                          className="h-8 bg-secondary border-border"
+                          placeholder="Artikelname"
+                        />
                       </td>
-                      <td className="px-3 py-2">
+                      <td className="px-2 py-1.5">
+                        <Input
+                          value={it.sku ?? ''}
+                          onChange={e => patchItem(it.id, { sku: e.target.value })}
+                          className="h-8 bg-secondary border-border"
+                          placeholder="SKU"
+                        />
+                      </td>
+                      <td className="px-2 py-1.5">
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={it.rate ?? ''}
+                          onChange={e => patchItem(it.id, { rate: e.target.value === '' ? null : parseFloat(e.target.value) })}
+                          className="h-8 text-right bg-secondary border-border"
+                        />
+                      </td>
+                      <td className="px-2 py-1.5">
                         <Input
                           type="number"
                           step="0.01"
                           min="0"
                           value={it.quantity ?? ''}
-                          onChange={e => updateQty(it.id, e.target.value)}
+                          onChange={e => patchItem(it.id, { quantity: e.target.value === '' ? null : parseFloat(e.target.value) })}
                           className="h-8 text-right bg-secondary border-border"
                         />
                       </td>
-                      <td className="px-3 py-2 text-right font-medium text-foreground">
+                      <td className="px-3 py-1.5 text-right font-medium text-foreground">
                         {it.amount != null ? Number(it.amount).toFixed(2) : '—'}
+                      </td>
+                      <td className="px-2 py-1.5 text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => removeItem(it.id, it._isNew)}
+                          title="Entfernen"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
                       </td>
                     </tr>
                   ))}
                   {items.length === 0 && (
-                    <tr><td colSpan={5} className="px-3 py-6 text-center text-muted-foreground">Keine Artikel.</td></tr>
+                    <tr><td colSpan={6} className="px-3 py-6 text-center text-muted-foreground">Keine Artikel.</td></tr>
                   )}
                 </tbody>
                 <tfoot>
                   <tr className="bg-secondary/30 border-t border-border">
                     <td colSpan={4} className="px-3 py-2 text-right text-muted-foreground">Neuer Gesamtbetrag</td>
                     <td className="px-3 py-2 text-right font-display font-bold text-primary">{newTotal.toFixed(2)}</td>
+                    <td></td>
                   </tr>
                 </tfoot>
               </table>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <Button variant="outline" size="sm" onClick={addItem} className="gap-1.5">
+                <Plus className="w-3.5 h-3.5" /> Position hinzufügen
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                {removedIds.length > 0 && `${removedIds.length} zu löschen · `}
+                {items.filter(i => i._isNew).length > 0 && `${items.filter(i => i._isNew).length} neu`}
+              </span>
             </div>
 
             <div>
@@ -159,16 +250,16 @@ export default function OrderItemsEditDialog({ orderId, orderNumber, open, onClo
               <Input
                 value={note}
                 onChange={e => setNote(e.target.value)}
-                placeholder="Grund der Korrektur..."
+                placeholder="Grund der Änderung..."
                 className="bg-secondary border-border mt-1"
               />
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="ghost" onClick={onClose} disabled={saving}>Abbrechen</Button>
-              <Button onClick={handleSave} disabled={saving || items.length === 0} className="gold-gradient text-primary-foreground">
+              <Button onClick={handleSave} disabled={saving} className="gold-gradient text-primary-foreground">
                 {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                Speichern & erneut fällig stellen
+                Speichern
               </Button>
             </div>
           </div>
