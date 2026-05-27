@@ -63,6 +63,12 @@ export default function OrderDetail() {
   const [shipDateValue, setShipDateValue] = useState('');
   const [editOpen, setEditOpen] = useState(false);
   const [deferOpen, setDeferOpen] = useState(false);
+  const [restPending, setRestPending] = useState(false);
+
+  useEffect(() => {
+    if (!id) return;
+    hasPendingRestbestellung(id).then(setRestPending);
+  }, [id]);
 
   useEffect(() => {
     if (!id) return;
