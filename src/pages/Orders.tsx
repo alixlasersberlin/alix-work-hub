@@ -59,6 +59,7 @@ export default function Orders() {
   const [viewMode, setViewMode] = useViewMode();
 
   const canWrite = isAdmin || hasRole('Auftragsverwaltung');
+  const canEditItems = hasRole('Super Admin');
 
   async function load() {
     setLoading(true);
