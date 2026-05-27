@@ -7,6 +7,7 @@ import { ArrowLeft, Building2, ClipboardList, Loader2, Inbox, Pencil, Trash2 } f
 import { StatusBadge } from '@/components/StatusBadge';
 import CustomerEditDialog from '@/components/CustomerEditDialog';
 import CustomerDeleteDialog from '@/components/CustomerDeleteDialog';
+import { withAt } from '@/lib/atSuffix';
 
 export default function CustomerDetail() {
   const { id } = useParams<{ id: string }>();
