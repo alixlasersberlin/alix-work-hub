@@ -1426,6 +1426,30 @@ export type Database = {
         }
         Relationships: []
       }
+      system_maintenance: {
+        Row: {
+          enabled: boolean
+          id: boolean
+          message: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          enabled?: boolean
+          id?: boolean
+          message?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          enabled?: boolean
+          id?: boolean
+          message?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       user_invitations: {
         Row: {
           accepted_at: string | null
