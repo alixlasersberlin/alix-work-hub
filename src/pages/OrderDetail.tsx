@@ -103,9 +103,9 @@ export default function OrderDetail() {
     setLoading(false);
   }
 
-  // Anzeige: nur originale Zoho-Auftragsnummer
-  const displayOrderNumbers = order?.order_number ? [order.order_number] : [];
-  const primaryDisplayNumber = order?.order_number || '';
+  // Anzeige: originale Zoho-Auftragsnummer + "-AT" Suffix für Alix Austria
+  const displayOrderNumbers = order?.order_number ? [withAt(order.order_number, order.source_system)] : [];
+  const primaryDisplayNumber = withAt(order?.order_number, order?.source_system) || '';
 
   async function submitNote() {
     if (!newNote.trim() || !id || !user) return;
