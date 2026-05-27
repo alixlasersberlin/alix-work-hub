@@ -494,6 +494,31 @@ export default function BankDecisionList({ status, title, subtitle, icon: Icon, 
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!pdfRow} onOpenChange={(o) => !o && closePdf()}>
+        <DialogContent className="max-w-5xl w-[95vw] max-h-[92vh] p-0 overflow-hidden flex flex-col">
+          <DialogHeader className="px-5 pt-5 pb-3 border-b">
+            <DialogTitle>
+              Leasing-Anfrage – {pdfRow?.orders?.order_number || '—'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 min-h-[60vh] bg-muted">
+            {pdfLoading || !pdfUrl ? (
+              <div className="h-full flex items-center justify-center text-muted-foreground">
+                <Loader2 className="h-5 w-5 mr-2 animate-spin" /> PDF wird erzeugt…
+              </div>
+            ) : (
+              <iframe src={pdfUrl} title="Leasing-Anfrage PDF" className="w-full h-full min-h-[60vh] border-0" />
+            )}
+          </div>
+          <DialogFooter className="px-5 py-3 border-t">
+            <Button variant="outline" onClick={closePdf}>Schließen</Button>
+            <Button onClick={downloadPdf} disabled={!pdfUrl}>
+              <Download className="h-4 w-4 mr-2" /> Herunterladen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
