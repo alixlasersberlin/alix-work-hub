@@ -81,7 +81,7 @@ export default function Orders() {
     const expanded = loaded.map(o => ({
       ...o,
       _seq: 1,
-      _displayNumber: o.order_number,
+      _displayNumber: withAt(o.order_number, o.source_system),
       _productionOrderCount: o.order_number ? (poCountMap[o.order_number] || 0) : 0,
     }));
 
