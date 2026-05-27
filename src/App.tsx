@@ -96,6 +96,8 @@ const ZusagenBank = lazy(() => import("./pages/ZusagenBank"));
 const AbsagenBank = lazy(() => import("./pages/AbsagenBank"));
 const AnfragenOffen = lazy(() => import("./pages/AnfragenOffen"));
 const Detailsuche = lazy(() => import("./pages/Detailsuche"));
+const Systemwartung = lazy(() => import("./pages/Systemwartung"));
+import MaintenanceGate from "./components/MaintenanceGate";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -211,6 +213,7 @@ function AppRoutes() {
           <Route path="/operation" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Operation /></ProtectedRoute>} />
           <Route path="/operation/logfiles" element={<ProtectedRoute requiredRoles={SYSTEM_ROLES}><Logfiles /></ProtectedRoute>} />
           <Route path="/operation/email-vorlagen" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><EmailTemplates /></ProtectedRoute>} />
+          <Route path="/operation/systemwartung" element={<ProtectedRoute requiredRoles={['Super Admin']}><Systemwartung /></ProtectedRoute>} />
           <Route path="/hilfe" element={<ProtectedRoute><Hilfe /></ProtectedRoute>} />
           <Route path="/hilfe/dokumentation" element={<ProtectedRoute><Dokumentation /></ProtectedRoute>} />
           <Route path="/hilfe/arbeitsanleitung" element={<ProtectedRoute><Arbeitsanleitung /></ProtectedRoute>} />
