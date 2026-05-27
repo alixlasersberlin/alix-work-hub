@@ -510,7 +510,14 @@ export default function BankDecisionList({ status, title, subtitle, icon: Icon, 
                 <Loader2 className="h-5 w-5 mr-2 animate-spin" /> PDF wird erzeugt…
               </div>
             ) : (
-              <iframe src={pdfUrl} title="Leasing-Anfrage PDF" className="w-full h-full min-h-[60vh] border-0" />
+              <object data={pdfUrl} type="application/pdf" className="w-full h-full min-h-[60vh]">
+                <div className="h-full flex flex-col items-center justify-center gap-3 text-muted-foreground p-6 text-center">
+                  <p>Die PDF kann in diesem Browser nicht eingebettet werden.</p>
+                  <Button onClick={downloadPdf}>
+                    <Download className="h-4 w-4 mr-2" /> PDF herunterladen
+                  </Button>
+                </div>
+              </object>
             )}
           </div>
           <DialogFooter className="px-5 py-3 border-t">
