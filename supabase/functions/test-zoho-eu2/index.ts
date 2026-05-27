@@ -6,9 +6,10 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    const clientId = Deno.env.get('ZOHO_EU_2_CLIENT_ID');
-    const clientSecret = Deno.env.get('ZOHO_EU_2_CLIENT_SECRET');
-    const refreshToken = Deno.env.get('ZOHO_EU_2_REFRESH_TOKEN');
+    // Use EU_1 credentials (same Zoho user) + EU_2 org id
+    const clientId = Deno.env.get('ZOHO_EU_1_CLIENT_ID');
+    const clientSecret = Deno.env.get('ZOHO_EU_1_CLIENT_SECRET');
+    const refreshToken = Deno.env.get('ZOHO_EU_1_REFRESH_TOKEN');
     const orgId = Deno.env.get('ZOHO_EU_2_ORGANIZATION_ID');
 
     if (!clientId || !clientSecret || !refreshToken || !orgId) {
