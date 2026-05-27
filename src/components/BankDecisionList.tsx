@@ -37,6 +37,10 @@ export default function BankDecisionList({ status, title, subtitle, icon: Icon, 
   const [editRow, setEditRow] = useState<any>(null);
   const [toSend, setToSend] = useState<any>(null);
   const [sending, setSending] = useState(false);
+  const [pdfRow, setPdfRow] = useState<any>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [pdfFileName, setPdfFileName] = useState<string>('Leasing-Anfrage.pdf');
 
   const handleDelete = async () => {
     if (!toDelete) return;
