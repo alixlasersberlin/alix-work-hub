@@ -234,18 +234,13 @@ Deno.serve(async (req: Request) => {
         if (!externalCustomerId) { totalSkipped++; continue; }
 
         try {
-          // Find local customer
-          const { data: customer } = await adminClient
-            .from("customers")
-            .select("id")
-            .eq("external_customer_id", externalCustomerId)
-            .eq("source_system", sourceSystem)
-            .maybeSingle();
-          if (!customer) {
+          const customerId = await ensureCustomer(externalCustomerId);
+          if (!customerId) {
             totalSkipped++;
             errors.push({ id: externalOrderId, message: `Customer ${externalCustomerId} not found locally` });
             continue;
           }
+          const customer = { id: customerId };
 
           // Fetch detail for line_items + addresses
           let detail = so;
