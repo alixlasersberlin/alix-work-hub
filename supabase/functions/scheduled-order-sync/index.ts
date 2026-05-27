@@ -278,7 +278,7 @@ Deno.serve(async (req: Request) => {
           }
 
           if (orderId && Array.isArray(detail.line_items)) {
-            await syncLineItems(adminClient, orderId, detail.line_items);
+            await syncLineItems(adminClient, orderId, detail.line_items, sourceSystem);
           }
         } catch (err: any) {
           totalFailed++;
