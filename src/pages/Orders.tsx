@@ -558,6 +558,15 @@ export default function Orders() {
       {deferOrder && (
         <OrderDeferDialog order={deferOrder} open onClose={() => setDeferOrder(null)} onSaved={load} />
       )}
+      {itemsOrder && (
+        <OrderItemsEditDialog
+          orderId={itemsOrder.id}
+          orderNumber={itemsOrder._displayNumber || itemsOrder.order_number}
+          open
+          onClose={() => setItemsOrder(null)}
+          onSaved={load}
+        />
+      )}
       <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
         <DialogContent>
           <DialogHeader>
