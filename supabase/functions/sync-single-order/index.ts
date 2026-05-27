@@ -43,8 +43,12 @@ async function getAccessToken(config: any): Promise<string> {
   return data.access_token;
 }
 
-async function syncLineItems(adminClient: any, orderId: string, lineItems: any[]) {
+async function syncLineItems(adminClient: any, orderId: string, lineItems: any[], sourceSystem: string) {
   if (!lineItems || lineItems.length === 0) return;
+
+  const isAt = sourceSystem === "zoho_eu_2";
+  const atSuffix = (v: any) =>
+    v == null || v === "" ? v : (isAt && !String(v).endsWith("-AT") ? `${v}-AT` : v);
 
   for (let i = 0; i < lineItems.length; i++) {
     const li = lineItems[i];
@@ -53,9 +57,9 @@ async function syncLineItems(adminClient: any, orderId: string, lineItems: any[]
     const itemPayload = {
       order_id: orderId,
       external_item_id: externalItemId,
-      item_name: li.name ?? li.item_name ?? null,
+      item_name: atSuffix(li.name ?? li.item_name ?? null),
       description: li.description ?? null,
-      sku: li.sku ?? li.item_code ?? null,
+      sku: atSuffix(li.sku ?? li.item_code ?? null),
       quantity: li.quantity ?? 1,
       rate: li.rate ?? null,
       amount: li.item_total ?? li.amount ?? null,
