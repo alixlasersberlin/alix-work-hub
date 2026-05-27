@@ -33,12 +33,12 @@ Deno.serve(async (req) => {
   const beforeC = await admin.from('customers').select('id', { count: 'exact', head: true }).eq('source_system', 'zoho_eu_2');
   const beforeO = await admin.from('orders').select('id', { count: 'exact', head: true }).eq('source_system', 'zoho_eu_2');
 
-  // 1) Customers (limit 3 for safety)
-  const r1 = await invoke('scheduled-customer-sync', { source_system: 'zoho_eu_2', days_back: 3650, max_contacts: 3 });
-  // 2) Orders (last 30 days)
-  const r2 = await invoke('scheduled-order-sync', { source_system: 'zoho_eu_2', days_back: 30 });
-  // 3) Invoices
-  const r3 = await invoke('sync-zoho-invoices', { source_system: 'zoho_eu_2', days_back: 30 });
+  // 1) Customers (limit 1)
+  const r1 = await invoke('scheduled-customer-sync', { source_system: 'zoho_eu_2', days_back: 3650, max_contacts: 1 });
+  // 2) Items (limit 1)
+  const r2 = await invoke('sync-zoho-items', { source_system: 'zoho_eu_2', per_page: 1, max_pages: 1 });
+  // 3) Orders (limit 1)
+  const r3 = await invoke('scheduled-order-sync', { source_system: 'zoho_eu_2', days_back: 365, max_orders: 1 });
 
   const afterC = await admin.from('customers').select('id', { count: 'exact', head: true }).eq('source_system', 'zoho_eu_2');
   const afterO = await admin.from('orders').select('id', { count: 'exact', head: true }).eq('source_system', 'zoho_eu_2');
