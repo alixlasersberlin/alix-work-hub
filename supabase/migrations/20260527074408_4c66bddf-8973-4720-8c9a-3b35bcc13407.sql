@@ -1,0 +1,1 @@
+UPDATE public.system_maintenance SET enabled = false, updated_at = now() WHERE id = true;
