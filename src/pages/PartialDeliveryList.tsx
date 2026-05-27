@@ -31,23 +31,35 @@ export default function PartialDeliveryList() {
   const { isAdmin } = useAuth();
   const [editOrder, setEditOrder] = useState<{ id: string; order_number: string | null } | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [pendingRest, setPendingRest] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     async function load() {
       setLoading(true);
       setError(null);
-      const { data, error: err } = await supabase
-        .from('orders')
-        .select('id, order_number, order_status, order_date, expected_shipment_date, total_amount, currency, source_system, customers(company_name, contact_name)')
-        .eq('order_status', 'teilgeliefert')
-        .order(sortField, { ascending: sortDir === 'asc' })
-        .limit(500);
+      const [{ data, error: err }, pending] = await Promise.all([
+        supabase
+          .from('orders')
+          .select('id, order_number, order_status, order_date, expected_shipment_date, total_amount, currency, source_system, customers(company_name, contact_name)')
+          .eq('order_status', 'teilgeliefert')
+          .order(sortField, { ascending: sortDir === 'asc' })
+          .limit(500),
+        fetchPendingRestbestellungOrderIds(),
+      ]);
       if (err) setError(err.message);
       setOrders(data ?? []);
+      setPendingRest(pending);
       setLoading(false);
     }
     load();
   }, [sortField, sortDir, reloadKey]);
+
+  const handleCreateRest = async (orderId: string, orderNumber: string | null) => {
+    const { error } = await createRestbestellungMarker(orderId);
+    if (error) { toast.error('Fehler: ' + error); return; }
+    toast.success(`Auftrag ${orderNumber ?? ''} in „Bestellung möglich" übernommen`);
+    setReloadKey(k => k + 1);
+  };
 
   const filtered = useMemo(() => orders.filter(o => {
     if (!search) return true;
