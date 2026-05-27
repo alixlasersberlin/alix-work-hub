@@ -1,12 +1,24 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Warehouse, PackageCheck, Truck, Factory, Package, Loader2 } from 'lucide-react';
+import { Warehouse, PackageCheck, Truck, Factory, Package, Loader2, Search, X } from 'lucide-react';
 import { PageHeader } from '@/components/PageShell';
+import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
   PieChart, Pie, Legend,
 } from 'recharts';
+
+type SearchHit = {
+  id: string;
+  serial_number: string;
+  model_name: string;
+  status: string;
+  area: { label: string; path: string; color: string };
+  order_number?: string | null;
+  customer_name?: string | null;
+};
+
 
 interface Row { notes: string | null; reserved_order_id: string | null }
 
@@ -28,6 +40,9 @@ const COLORS = {
 export default function Lager() {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<SearchHit[]>([]);
+  const [searching, setSearching] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -50,6 +65,106 @@ export default function Lager() {
     return { leih, lager, transfer, produktion, total: leih + lager + transfer + produktion };
   }, [rows]);
 
+  function areaFor(notes: string | null, leih: boolean): { label: string; path: string; color: string } {
+    const s = getStatus(notes);
+    if (s === 'Transfer') return { label: 'Unterwegs', path: '/lager/equipment-area/unterwegs', color: COLORS.Unterwegs };
+    if (s === 'Produktion') return { label: 'Produktion', path: '/lager/equipment-area/produktion', color: COLORS.Produktion };
+    if (s === 'Ausgeliefert') return { label: 'Ausgeliefert', path: '/lager/equipment-area/ausgeliefert', color: 'hsl(217 91% 60%)' };
+    if (s === 'Hold' || s === 'Sperre BOSS') return { label: 'Hold', path: '/lager/equipment-area/hold', color: 'hsl(0 84% 60%)' };
+    if (/warehouse/i.test(s)) return { label: 'Warehouse', path: '/lager/equipment-area/warehouse', color: 'hsl(0 0% 100%)' };
+    if (leih) return { label: 'Leihgeräte', path: '/lager/leihgeraete', color: COLORS.Leihgeräte };
+    return { label: 'Lagergeräte', path: '/lager/lagergeraete', color: COLORS.Lagergeräte };
+  }
+
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < 2) { setResults([]); setSearching(false); return; }
+    setSearching(true);
+    const t = setTimeout(async () => {
+      const like = `%${q}%`;
+      const { data: direct } = await supabase
+        .from('lager_devices')
+        .select('id, serial_number, model_name, notes, reserved_order_id')
+        .or(`serial_number.ilike.${like},model_name.ilike.${like}`)
+        .limit(50);
+
+      const { data: ordsNum } = await supabase
+        .from('orders')
+        .select('id, order_number, customers(company_name, contact_name)')
+        .ilike('order_number', like)
+        .limit(50);
+
+      const { data: custs } = await supabase
+        .from('customers')
+        .select('id')
+        .or(`company_name.ilike.${like},contact_name.ilike.${like}`)
+        .limit(50);
+      const custIds = (custs ?? []).map((c: any) => c.id);
+      let ordsCust: any[] = [];
+      if (custIds.length > 0) {
+        const { data } = await supabase
+          .from('orders')
+          .select('id, order_number, customers(company_name, contact_name)')
+          .in('customer_id', custIds)
+          .limit(100);
+        ordsCust = data ?? [];
+      }
+      const orders = [...(ordsNum ?? []), ...ordsCust];
+      const orderIds = Array.from(new Set(orders.map((o: any) => o.id)));
+      let byOrder: any[] = [];
+      if (orderIds.length > 0) {
+        const { data: dvs } = await supabase
+          .from('lager_devices')
+          .select('id, serial_number, model_name, notes, reserved_order_id')
+          .in('reserved_order_id', orderIds)
+          .limit(100);
+        byOrder = dvs ?? [];
+      }
+
+      const merged = new Map<string, any>();
+      [...(direct ?? []), ...byOrder].forEach((d) => merged.set(d.id, d));
+
+      const orderMap: Record<string, { order_number: string; customer_name: string | null }> = {};
+      orders.forEach((o: any) => {
+        orderMap[o.id] = {
+          order_number: o.order_number,
+          customer_name: o.customers?.company_name || o.customers?.contact_name || null,
+        };
+      });
+      const allOrderIds = Array.from(new Set(Array.from(merged.values()).map((d) => d.reserved_order_id).filter(Boolean)));
+      const missing = allOrderIds.filter((id) => !orderMap[id]);
+      if (missing.length > 0) {
+        const { data: more } = await supabase
+          .from('orders')
+          .select('id, order_number, customers(company_name, contact_name)')
+          .in('id', missing);
+        (more ?? []).forEach((o: any) => {
+          orderMap[o.id] = {
+            order_number: o.order_number,
+            customer_name: o.customers?.company_name || o.customers?.contact_name || null,
+          };
+        });
+      }
+
+      const hits: SearchHit[] = Array.from(merged.values()).map((d) => {
+        const area = areaFor(d.notes, isLeih(d.notes));
+        const info = d.reserved_order_id ? orderMap[d.reserved_order_id] : null;
+        return {
+          id: d.id,
+          serial_number: d.serial_number,
+          model_name: d.model_name,
+          status: getStatus(d.notes) || (isLeih(d.notes) ? 'Leihgerät' : 'Bestand'),
+          area,
+          order_number: info?.order_number ?? null,
+          customer_name: info?.customer_name ?? null,
+        };
+      });
+      setResults(hits.slice(0, 100));
+      setSearching(false);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [query]);
+
   const chartData = [
     { key: 'Leihgeräte', name: 'Leihgeräte', value: counts.leih, color: COLORS.Leihgeräte, path: '/lager/leihgeraete', icon: PackageCheck },
     { key: 'Lagergeräte', name: 'Lagergeräte', value: counts.lager, color: COLORS.Lagergeräte, path: '/lager/lagergeraete', icon: Warehouse },
@@ -64,6 +179,70 @@ export default function Lager() {
         title="Lagerbestand"
         subtitle={`Übersicht aller Abteilungen · ${counts.total} Geräte gesamt`}
       />
+
+      {/* Suche */}
+      <div className="rounded-lg border border-border bg-card p-4">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Suche nach Modell, Seriennummer, Auftragsnummer oder Kundenname…"
+            className="pl-9 pr-9"
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery('')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-muted text-muted-foreground"
+              aria-label="Suche leeren"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+
+        {query.trim().length >= 2 && (
+          <div className="mt-4">
+            {searching ? (
+              <div className="flex items-center text-sm text-muted-foreground">
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Suche läuft…
+              </div>
+            ) : results.length === 0 ? (
+              <div className="text-sm text-muted-foreground">Keine Treffer.</div>
+            ) : (
+              <div className="space-y-1">
+                <div className="text-xs text-muted-foreground mb-2">{results.length} Treffer</div>
+                <div className="divide-y divide-border rounded-md border border-border overflow-hidden">
+                  {results.map((r) => (
+                    <Link
+                      key={r.id}
+                      to={r.area.path}
+                      className="flex items-center justify-between gap-3 px-3 py-2 hover:bg-muted/50 transition-colors text-sm"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium truncate">{r.model_name}</div>
+                        <div className="text-xs text-muted-foreground truncate">
+                          SN {r.serial_number}
+                          {r.order_number ? ` · Auftrag ${r.order_number}` : ''}
+                          {r.customer_name ? ` · ${r.customer_name}` : ''}
+                        </div>
+                      </div>
+                      <span
+                        className="text-xs px-2 py-0.5 rounded-full border whitespace-nowrap"
+                        style={{ color: r.area.color, borderColor: `${r.area.color}55`, backgroundColor: `${r.area.color}15` }}
+                      >
+                        {r.area.label}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
 
       {loading ? (
         <div className="rounded-lg border border-border bg-card p-12 flex items-center justify-center text-muted-foreground">
