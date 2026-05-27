@@ -273,6 +273,7 @@ Deno.serve(async (req: Request) => {
         await sleep(100);
       }
 
+      if (maxContacts != null && (totalImported + totalUpdated + totalSkipped + totalFailed) >= maxContacts) break;
       if (!hasMore) break;
       page++;
 
