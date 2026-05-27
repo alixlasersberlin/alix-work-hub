@@ -10,8 +10,9 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
-  ArrowLeft, ClipboardList, Building2, FileText, History, Loader2, Inbox, Send, Pencil, X, Check, Shield, Package, CalendarIcon, CalendarClock, Truck, Euro, Mail, Landmark, Plus, Trash2
+  ArrowLeft, ClipboardList, Building2, FileText, History, Loader2, Inbox, Send, Pencil, X, Check, Shield, Package, CalendarIcon, CalendarClock, Truck, Euro, Mail, Landmark, Plus, Trash2, ShoppingCart, CheckCircle2
 } from 'lucide-react';
+import { createRestbestellungMarker, hasPendingRestbestellung } from '@/lib/restbestellung';
 import BankFinancingTab from '@/components/BankFinancingTab';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -62,6 +63,12 @@ export default function OrderDetail() {
   const [shipDateValue, setShipDateValue] = useState('');
   const [editOpen, setEditOpen] = useState(false);
   const [deferOpen, setDeferOpen] = useState(false);
+  const [restPending, setRestPending] = useState(false);
+
+  useEffect(() => {
+    if (!id) return;
+    hasPendingRestbestellung(id).then(setRestPending);
+  }, [id]);
 
   useEffect(() => {
     if (!id) return;
@@ -245,6 +252,28 @@ export default function OrderDetail() {
                 }}>
                   <Truck className="w-3.5 h-3.5 mr-1.5" /> Als geliefert markieren
                 </Button>
+              )}
+              {order.order_status === 'teilgeliefert' && (
+                restPending ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-emerald-500/10 text-emerald-500 text-xs font-medium border border-emerald-500/30">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    In „Bestellung möglich"
+                  </span>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
+                    onClick={async () => {
+                      const { error } = await createRestbestellungMarker(order.id);
+                      if (error) { toast.error('Fehler: ' + error); return; }
+                      toast.success('Restbestellung in „Bestellung möglich" übernommen');
+                      setRestPending(true);
+                    }}
+                  >
+                    <ShoppingCart className="w-3.5 h-3.5 mr-1.5" /> Restbestellung erzeugen
+                  </Button>
+                )
               )}
               <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
                 <Pencil className="w-3.5 h-3.5 mr-1.5" /> Ändern

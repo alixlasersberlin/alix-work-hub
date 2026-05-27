@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { PackageCheck, Search, Loader2, Inbox, ArrowUpDown, Pencil } from 'lucide-react';
+import { PackageCheck, Search, Loader2, Inbox, ArrowUpDown, Pencil, ShoppingCart, CheckCircle2 } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
 import { useAuth } from '@/hooks/useAuth';
 import OrderItemsEditDialog from '@/components/OrderItemsEditDialog';
 import OrderStatsBar from '@/components/OrderStatsBar';
 import { PageSizeSelector, usePagination, PaginationControls } from '@/components/PageSizeSelector';
+import { toast } from 'sonner';
+import { createRestbestellungMarker, fetchPendingRestbestellungOrderIds } from '@/lib/restbestellung';
 
 type SortField = 'order_number' | 'expected_shipment_date' | 'total_amount';
 type SortDir = 'asc' | 'desc';
@@ -29,23 +31,35 @@ export default function PartialDeliveryList() {
   const { isAdmin } = useAuth();
   const [editOrder, setEditOrder] = useState<{ id: string; order_number: string | null } | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [pendingRest, setPendingRest] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     async function load() {
       setLoading(true);
       setError(null);
-      const { data, error: err } = await supabase
-        .from('orders')
-        .select('id, order_number, order_status, order_date, expected_shipment_date, total_amount, currency, source_system, customers(company_name, contact_name)')
-        .eq('order_status', 'teilgeliefert')
-        .order(sortField, { ascending: sortDir === 'asc' })
-        .limit(500);
+      const [{ data, error: err }, pending] = await Promise.all([
+        supabase
+          .from('orders')
+          .select('id, order_number, order_status, order_date, expected_shipment_date, total_amount, currency, source_system, customers(company_name, contact_name)')
+          .eq('order_status', 'teilgeliefert')
+          .order(sortField, { ascending: sortDir === 'asc' })
+          .limit(500),
+        fetchPendingRestbestellungOrderIds(),
+      ]);
       if (err) setError(err.message);
       setOrders(data ?? []);
+      setPendingRest(pending);
       setLoading(false);
     }
     load();
   }, [sortField, sortDir, reloadKey]);
+
+  const handleCreateRest = async (orderId: string, orderNumber: string | null) => {
+    const { error } = await createRestbestellungMarker(orderId);
+    if (error) { toast.error('Fehler: ' + error); return; }
+    toast.success(`Auftrag ${orderNumber ?? ''} in „Bestellung möglich" übernommen`);
+    setReloadKey(k => k + 1);
+  };
 
   const filtered = useMemo(() => orders.filter(o => {
     if (!search) return true;
@@ -137,14 +151,32 @@ export default function PartialDeliveryList() {
                     <td className="px-4 py-3"><StatusBadge status={o.order_status} /></td>
                     {isAdmin && (
                       <td className="px-4 py-3 text-right" onClick={e => e.stopPropagation()}>
-                        <Button
-                          size="sm"
-                          className="gold-gradient text-primary-foreground"
-                          onClick={() => setEditOrder({ id: o.id, order_number: o.order_number })}
-                        >
-                          <Pencil className="w-3.5 h-3.5 mr-1" />
-                          ÄNDERUNG
-                        </Button>
+                        <div className="flex items-center justify-end gap-2 flex-wrap">
+                          {pendingRest.has(o.id) ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-emerald-500/10 text-emerald-500 text-xs font-medium">
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              In „Bestellung möglich"
+                            </span>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
+                              onClick={() => handleCreateRest(o.id, o.order_number)}
+                            >
+                              <ShoppingCart className="w-3.5 h-3.5 mr-1" />
+                              Restbestellung
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            className="gold-gradient text-primary-foreground"
+                            onClick={() => setEditOrder({ id: o.id, order_number: o.order_number })}
+                          >
+                            <Pencil className="w-3.5 h-3.5 mr-1" />
+                            ÄNDERUNG
+                          </Button>
+                        </div>
                       </td>
                     )}
                   </tr>

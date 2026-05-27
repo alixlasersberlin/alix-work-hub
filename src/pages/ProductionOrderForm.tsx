@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { generateProductionOrderPdf } from '@/lib/production-order-pdf';
 import { ALIX_MODEL_GROUPS } from '@/lib/alix-models';
 import { useAuth } from '@/hooks/useAuth';
+import { markRestbestellungDone } from '@/lib/restbestellung';
 
 type Mode = 'order' | 'reclamation';
 
@@ -408,6 +409,10 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
       const { data, error } = await supabase.from('production_orders').insert(payload).select('id').single();
       if (error || !data) { toast.error(error?.message || 'Fehler'); setSaving(false); return null; }
       poId = data.id;
+      // Falls dieser Auftrag als "Restbestellung" in Bestellung möglich markiert war, Marker erledigen
+      if (selectedOrder?.id) {
+        try { await markRestbestellungDone(selectedOrder.id); } catch { /* ignore */ }
+      }
     }
     if (poId) {
       const fromOrder = selectedItems.map((it, idx) => ({
