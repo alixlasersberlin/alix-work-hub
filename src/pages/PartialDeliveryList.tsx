@@ -151,14 +151,32 @@ export default function PartialDeliveryList() {
                     <td className="px-4 py-3"><StatusBadge status={o.order_status} /></td>
                     {isAdmin && (
                       <td className="px-4 py-3 text-right" onClick={e => e.stopPropagation()}>
-                        <Button
-                          size="sm"
-                          className="gold-gradient text-primary-foreground"
-                          onClick={() => setEditOrder({ id: o.id, order_number: o.order_number })}
-                        >
-                          <Pencil className="w-3.5 h-3.5 mr-1" />
-                          ÄNDERUNG
-                        </Button>
+                        <div className="flex items-center justify-end gap-2 flex-wrap">
+                          {pendingRest.has(o.id) ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-emerald-500/10 text-emerald-500 text-xs font-medium">
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              In „Bestellung möglich"
+                            </span>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
+                              onClick={() => handleCreateRest(o.id, o.order_number)}
+                            >
+                              <ShoppingCart className="w-3.5 h-3.5 mr-1" />
+                              Restbestellung
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            className="gold-gradient text-primary-foreground"
+                            onClick={() => setEditOrder({ id: o.id, order_number: o.order_number })}
+                          >
+                            <Pencil className="w-3.5 h-3.5 mr-1" />
+                            ÄNDERUNG
+                          </Button>
+                        </div>
                       </td>
                     )}
                   </tr>
