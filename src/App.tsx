@@ -296,8 +296,10 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <AuthProvider>
-              <AppRoutes />
-              <AuroraSpotlight />
+              <MaintenanceGate>
+                <AppRoutes />
+                <AuroraSpotlight />
+              </MaintenanceGate>
             </AuthProvider>
           </BrowserRouter>
         </TooltipProvider>
