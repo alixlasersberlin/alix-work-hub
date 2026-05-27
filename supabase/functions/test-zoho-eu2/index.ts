@@ -6,9 +6,9 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    const clientId = Deno.env.get('ZOHO_EU_2_CLIENT_ID');
-    const clientSecret = Deno.env.get('ZOHO_EU_2_CLIENT_SECRET');
-    const refreshToken = Deno.env.get('ZOHO_EU_2_REFRESH_TOKEN');
+    const clientId = Deno.env.get('ZOHO_EU_2_CLIENT_ID') || Deno.env.get('ZOHO_EU_1_CLIENT_ID');
+    const clientSecret = Deno.env.get('ZOHO_EU_2_CLIENT_SECRET') || Deno.env.get('ZOHO_EU_1_CLIENT_SECRET');
+    const refreshToken = Deno.env.get('ZOHO_EU_2_REFRESH_TOKEN') || Deno.env.get('ZOHO_EU_1_REFRESH_TOKEN');
     const orgId = Deno.env.get('ZOHO_EU_2_ORGANIZATION_ID');
 
     if (!clientId || !clientSecret || !refreshToken || !orgId) {
