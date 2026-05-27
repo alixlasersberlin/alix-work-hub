@@ -21,6 +21,7 @@ import { ViewToggle } from '@/components/ViewToggle';
 import { useViewMode } from '@/hooks/useViewMode';
 import { OrderCard, OrderCardGrid } from '@/components/OrderCard';
 import { ALIX_MODEL_GROUPS } from '@/lib/alix-models';
+import { withAt } from '@/lib/atSuffix';
 
 type SortField = 'order_number' | 'order_date' | 'total_amount' | 'created_at';
 type SortDir = 'asc' | 'desc';
