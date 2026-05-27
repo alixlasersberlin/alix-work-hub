@@ -1,12 +1,24 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Warehouse, PackageCheck, Truck, Factory, Package, Loader2 } from 'lucide-react';
+import { Warehouse, PackageCheck, Truck, Factory, Package, Loader2, Search, X } from 'lucide-react';
 import { PageHeader } from '@/components/PageShell';
+import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
   PieChart, Pie, Legend,
 } from 'recharts';
+
+type SearchHit = {
+  id: string;
+  serial_number: string;
+  model_name: string;
+  status: string;
+  area: { label: string; path: string; color: string };
+  order_number?: string | null;
+  customer_name?: string | null;
+};
+
 
 interface Row { notes: string | null; reserved_order_id: string | null }
 
