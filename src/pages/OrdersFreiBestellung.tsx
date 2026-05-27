@@ -82,18 +82,23 @@ export default function OrdersFreiBestellung() {
       .limit(500);
     if (err) setError(err.message);
 
-    // Exclude orders that already have a production order OR a reserved lager device
+    // Exclude orders that already have a production order (still include reserved-from-warehouse orders)
     const [{ data: existing }, { data: reservedDevs }, { data: freeDevs }] = await Promise.all([
       supabase.from('production_orders').select('order_id'),
-      supabase.from('lager_devices').select('reserved_order_id').not('reserved_order_id', 'is', null),
+      supabase.from('lager_devices').select('id, serial_number, model_name, reserved_order_id').not('reserved_order_id', 'is', null),
       supabase.from('lager_devices').select('id, serial_number, model_name, notes').is('reserved_order_id', null),
     ]);
-    const usedOrderIds = new Set([
-      ...((existing ?? []).map((p: any) => p.order_id)),
-      ...((reservedDevs ?? []).map((p: any) => p.reserved_order_id)),
-    ]);
+    const usedOrderIds = new Set(((existing ?? []).map((p: any) => p.order_id)));
     const filteredOrders = (data ?? []).filter((o: any) => !usedOrderIds.has(o.id));
     setOrders(filteredOrders);
+
+    // Map reserved devices by order id
+    const resMap: Record<string, { id: string; serial_number: string; model_name: string }[]> = {};
+    for (const d of (reservedDevs ?? []) as any[]) {
+      if (!d.reserved_order_id) continue;
+      (resMap[d.reserved_order_id] ??= []).push({ id: d.id, serial_number: d.serial_number, model_name: d.model_name });
+    }
+    setReservedByOrder(resMap);
 
     // Only Bestand devices
     const bestandOnly = ((freeDevs as FreeDevice[]) ?? []).filter(d => getStatus(d.notes) === 'Bestand');
