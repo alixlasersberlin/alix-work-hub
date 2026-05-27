@@ -224,7 +224,7 @@ export default function AppLayout() {
   useEffect(() => {
     let cancelled = false;
     let lastLoadedAt = 0;
-    const REFRESH_MS = 15 * 60 * 1000; // 15 Minuten
+    const REFRESH_MS = 5 * 60 * 1000; // 5 Minuten
 
     const load = async () => {
       const { data, error } = await supabase
@@ -325,7 +325,7 @@ export default function AppLayout() {
       setLagerCounts((prev) => ({ ...prev, '/tourenplanung': count ?? 0 }));
     };
     load();
-    const intervalId = window.setInterval(load, 15 * 60 * 1000);
+    const intervalId = window.setInterval(load, 5 * 60 * 1000);
     let debounceId: number | undefined;
     const scheduleReload = () => {
       if (debounceId) window.clearTimeout(debounceId);
@@ -384,7 +384,7 @@ export default function AppLayout() {
       }));
     };
     load();
-    const intervalId = window.setInterval(load, 15 * 60 * 1000);
+    const intervalId = window.setInterval(load, 5 * 60 * 1000);
     let debounceId: number | undefined;
     const scheduleReload = () => {
       if (debounceId) window.clearTimeout(debounceId);
