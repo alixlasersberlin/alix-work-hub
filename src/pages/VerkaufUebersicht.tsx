@@ -36,15 +36,15 @@ const TILES: Tile[] = [
   },
   {
     key: 'auftraege',
-    label: 'Aufträge',
+    label: '🇩🇪 Aufträge Alix Deutschland',
     icon: ClipboardList,
-    to: '/auftraege',
+    to: '/auftraege?region=de',
     accent: 'from-primary/25 to-primary/5 border-primary/40',
     load: async () => {
       const OPEN = ['open', 'offen', 'draft', 'approved', 'overdue', 'teilgeliefert', 'zurückgestellt'];
       const [openRes, totalRes] = await Promise.all([
-        supabase.from('orders').select('*', { count: 'exact', head: true }).in('order_status', OPEN),
-        supabase.from('orders').select('*', { count: 'exact', head: true }),
+        supabase.from('orders').select('*', { count: 'exact', head: true }).in('order_status', OPEN).neq('source_system', 'zoho_eu_2'),
+        supabase.from('orders').select('*', { count: 'exact', head: true }).neq('source_system', 'zoho_eu_2'),
       ]);
       return { open: openRes.count ?? 0, total: totalRes.count ?? 0 } as any;
     },
