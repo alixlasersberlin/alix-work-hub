@@ -196,6 +196,7 @@ Deno.serve(async (req: Request) => {
       totalFetched += contacts.length;
 
       for (const contact of contacts) {
+        if (maxContacts != null && (totalImported + totalUpdated + totalSkipped + totalFailed) >= maxContacts) break;
         const externalId = contact.contact_id?.toString();
         if (!externalId) { totalSkipped++; continue; }
 
