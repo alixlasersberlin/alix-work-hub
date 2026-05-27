@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useViewMode } from '@/hooks/useViewMode';
 import { ViewToggle } from '@/components/ViewToggle';
+import DesignVariantSwitcher from '@/components/DesignVariantSwitcher';
 
 type PhotoSide = 'front' | 'right' | 'left';
 
