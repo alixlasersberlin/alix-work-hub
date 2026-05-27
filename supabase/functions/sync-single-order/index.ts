@@ -306,7 +306,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // Sync line items
-    await syncLineItems(adminClient, upsertedOrder.id, salesOrder.line_items ?? []);
+    await syncLineItems(adminClient, upsertedOrder.id, salesOrder.line_items ?? [], source_system);
 
     await adminClient.from("order_import_logs").insert({
       source_system,
