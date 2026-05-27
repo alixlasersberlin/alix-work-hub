@@ -224,7 +224,7 @@ export default function AppLayout() {
   useEffect(() => {
     let cancelled = false;
     let lastLoadedAt = 0;
-    const REFRESH_MS = 15 * 60 * 1000; // 15 Minuten
+    const REFRESH_MS = 5 * 60 * 1000; // 5 Minuten
 
     const load = async () => {
       const { data, error } = await supabase
