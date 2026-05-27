@@ -24,6 +24,7 @@ import {
   lagerFoundNote,
   LAGER_NOTE_MARKER,
   LAGER_MISSING_MARKER,
+  stripLagerMarkers,
   type LagerDeviceRow,
   type LagerMatch,
 } from '@/lib/lager-match';
