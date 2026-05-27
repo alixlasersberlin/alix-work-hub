@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { PackageCheck, Search, Loader2, Inbox, ArrowUpDown, Pencil } from 'lucide-react';
+import { PackageCheck, Search, Loader2, Inbox, ArrowUpDown, Pencil, ShoppingCart, CheckCircle2 } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
 import { useAuth } from '@/hooks/useAuth';
 import OrderItemsEditDialog from '@/components/OrderItemsEditDialog';
 import OrderStatsBar from '@/components/OrderStatsBar';
 import { PageSizeSelector, usePagination, PaginationControls } from '@/components/PageSizeSelector';
+import { toast } from 'sonner';
+import { createRestbestellungMarker, fetchPendingRestbestellungOrderIds } from '@/lib/restbestellung';
 
 type SortField = 'order_number' | 'expected_shipment_date' | 'total_amount';
 type SortDir = 'asc' | 'desc';
