@@ -74,7 +74,11 @@ export default function OrdersFreiBestellung() {
   const reload = async () => {
     setLoading(true);
     setError(null);
-    const { data, error: err } = await supabase
+
+    // Zusätzlich: teilgelieferte Aufträge mit "Restbestellung pending"-Marker
+    const pendingRestIds = await fetchPendingRestbestellungOrderIds();
+
+    const baseQuery = supabase
       .from('orders')
       .select('id, order_number, order_status, order_date, expected_shipment_date, total_amount, currency, deposit_ok, deposit_ok_by, deposit_ok_at, deposit_amount, customers(company_name, contact_name)')
       .eq('deposit_ok', true)
@@ -82,16 +86,28 @@ export default function OrdersFreiBestellung() {
       .neq('deposit_ok_by', '')
       .order('deposit_ok_at', { ascending: false })
       .limit(500);
+
+    const restQuery = pendingRestIds.size > 0
+      ? supabase
+          .from('orders')
+          .select('id, order_number, order_status, order_date, expected_shipment_date, total_amount, currency, deposit_ok, deposit_ok_by, deposit_ok_at, deposit_amount, customers(company_name, contact_name)')
+          .in('id', Array.from(pendingRestIds))
+          .eq('order_status', 'teilgeliefert')
+      : Promise.resolve({ data: [] as any[], error: null });
+
+    const [{ data, error: err }, { data: restData }] = await Promise.all([baseQuery, restQuery]);
     if (err) setError(err.message);
 
-    // Exclude orders that already have a production order (still include reserved-from-warehouse orders)
+    // Exclude orders that already have a production order — außer für teilgelieferte Rest-Aufträge.
     const [{ data: existing }, { data: reservedDevs }, { data: freeDevs }] = await Promise.all([
       supabase.from('production_orders').select('order_id'),
       supabase.from('lager_devices').select('id, serial_number, model_name, reserved_order_id').not('reserved_order_id', 'is', null),
       supabase.from('lager_devices').select('id, serial_number, model_name, notes').is('reserved_order_id', null),
     ]);
     const usedOrderIds = new Set(((existing ?? []).map((p: any) => p.order_id)));
-    const filteredOrders = (data ?? []).filter((o: any) => !usedOrderIds.has(o.id));
+    const baseFiltered = (data ?? []).filter((o: any) => !usedOrderIds.has(o.id) && !pendingRestIds.has(o.id));
+    const restMapped = (restData ?? []).map((o: any) => ({ ...o, _isRestbestellung: true }));
+    const filteredOrders = [...restMapped, ...baseFiltered];
     setOrders(filteredOrders);
 
     // Map reserved devices by order id
