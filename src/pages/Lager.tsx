@@ -180,6 +180,70 @@ export default function Lager() {
         subtitle={`Übersicht aller Abteilungen · ${counts.total} Geräte gesamt`}
       />
 
+      {/* Suche */}
+      <div className="rounded-lg border border-border bg-card p-4">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Suche nach Modell, Seriennummer, Auftragsnummer oder Kundenname…"
+            className="pl-9 pr-9"
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery('')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-muted text-muted-foreground"
+              aria-label="Suche leeren"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+
+        {query.trim().length >= 2 && (
+          <div className="mt-4">
+            {searching ? (
+              <div className="flex items-center text-sm text-muted-foreground">
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Suche läuft…
+              </div>
+            ) : results.length === 0 ? (
+              <div className="text-sm text-muted-foreground">Keine Treffer.</div>
+            ) : (
+              <div className="space-y-1">
+                <div className="text-xs text-muted-foreground mb-2">{results.length} Treffer</div>
+                <div className="divide-y divide-border rounded-md border border-border overflow-hidden">
+                  {results.map((r) => (
+                    <Link
+                      key={r.id}
+                      to={r.area.path}
+                      className="flex items-center justify-between gap-3 px-3 py-2 hover:bg-muted/50 transition-colors text-sm"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium truncate">{r.model_name}</div>
+                        <div className="text-xs text-muted-foreground truncate">
+                          SN {r.serial_number}
+                          {r.order_number ? ` · Auftrag ${r.order_number}` : ''}
+                          {r.customer_name ? ` · ${r.customer_name}` : ''}
+                        </div>
+                      </div>
+                      <span
+                        className="text-xs px-2 py-0.5 rounded-full border whitespace-nowrap"
+                        style={{ color: r.area.color, borderColor: `${r.area.color}55`, backgroundColor: `${r.area.color}15` }}
+                      >
+                        {r.area.label}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+
       {loading ? (
         <div className="rounded-lg border border-border bg-card p-12 flex items-center justify-center text-muted-foreground">
           <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Lade Bestand…
