@@ -226,7 +226,10 @@ export default function Lagergeraete({
 
   const typeFilteredDevices = useMemo(() => {
     const allowed = (filterStatuses ?? ['Bestand']).map((s) => s.toLowerCase());
-    const base = devices.filter((d) => allowed.includes(getStatusFromNotes(d.notes).toLowerCase()));
+    const isWarehouse = (filterStatuses ?? []).includes('Shell Warehouse');
+    let base = devices.filter((d) => allowed.includes(getStatusFromNotes(d.notes).toLowerCase()));
+    // Reservierte Geräte werden im Warehouse ausgeblendet – sie erscheinen in „Bestellungen möglich".
+    if (isWarehouse) base = base.filter((d) => !d.reserved_order_id);
     if (!filterType) return base;
     return base.filter((d) => getDeviceTypeFromNotes(d.notes) === filterType);
   }, [devices, filterType, filterStatuses]);
