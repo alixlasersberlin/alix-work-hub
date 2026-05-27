@@ -8,7 +8,7 @@ import {
   PieChart, Pie, Legend,
 } from 'recharts';
 
-interface Row { notes: string | null }
+interface Row { notes: string | null; reserved_order_id: string | null }
 
 function getStatus(n: string | null | undefined) {
   const m = /\[Status:\s*([^\]]+)\]/.exec(n ?? '');
@@ -31,7 +31,7 @@ export default function Lager() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from('lager_devices').select('notes');
+      const { data } = await supabase.from('lager_devices').select('notes, reserved_order_id');
       setRows((data as Row[]) ?? []);
       setLoading(false);
     })();
@@ -40,6 +40,8 @@ export default function Lager() {
   const counts = useMemo(() => {
     let leih = 0, lager = 0, transfer = 0, produktion = 0;
     for (const r of rows) {
+      // Reservierte Geräte zählen nicht mehr als verfügbarer Lagerbestand
+      if (r.reserved_order_id) continue;
       const s = getStatus(r.notes);
       if (s === 'Transfer') { transfer++; continue; }
       if (s === 'Produktion') { produktion++; continue; }
