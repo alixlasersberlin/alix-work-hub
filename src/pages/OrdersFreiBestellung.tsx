@@ -349,7 +349,16 @@ export default function OrdersFreiBestellung() {
                           aria-label="Auswählen"
                         />
                       </td>
-                      <td className="px-4 py-3 font-medium text-foreground cursor-pointer" onClick={() => navigate(`/auftraege/${o.id}`)}>{o.order_number}</td>
+                      <td className="px-4 py-3 font-medium text-foreground cursor-pointer" onClick={() => navigate(`/auftraege/${o.id}`)}>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span>{o.order_number}</span>
+                          {o._isRestbestellung && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-500 text-[10px] font-semibold uppercase tracking-wider">
+                              Restbestellung
+                            </span>
+                          )}
+                        </div>
+                      </td>
                       <td className="px-4 py-3 text-muted-foreground">{o.customers?.company_name || o.customers?.contact_name || '—'}</td>
                       <td className="px-4 py-3 text-foreground">
                         {(() => {
