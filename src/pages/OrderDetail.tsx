@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { withAt } from '@/lib/atSuffix';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
@@ -102,9 +103,9 @@ export default function OrderDetail() {
     setLoading(false);
   }
 
-  // Anzeige: nur originale Zoho-Auftragsnummer
-  const displayOrderNumbers = order?.order_number ? [order.order_number] : [];
-  const primaryDisplayNumber = order?.order_number || '';
+  // Anzeige: originale Zoho-Auftragsnummer + "-AT" Suffix für Alix Austria
+  const displayOrderNumbers = order?.order_number ? [withAt(order.order_number, order.source_system)] : [];
+  const primaryDisplayNumber = withAt(order?.order_number, order?.source_system) || '';
 
   async function submitNote() {
     if (!newNote.trim() || !id || !user) return;

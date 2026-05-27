@@ -59,17 +59,20 @@ async function getAccessToken(config: ZohoConfig): Promise<string> {
   return data.access_token;
 }
 
-async function syncLineItems(adminClient: any, orderId: string, lineItems: any[]) {
+async function syncLineItems(adminClient: any, orderId: string, lineItems: any[], sourceSystem: string) {
   if (!lineItems || lineItems.length === 0) return;
+  const isAt = sourceSystem === "zoho_eu_2";
+  const atSuffix = (v: any) =>
+    v == null || v === "" ? v : (isAt && !String(v).endsWith("-AT") ? `${v}-AT` : v);
   for (let i = 0; i < lineItems.length; i++) {
     const li = lineItems[i];
     const externalItemId = li.line_item_id?.toString() || li.item_id?.toString() || null;
     const itemPayload = {
       order_id: orderId,
       external_item_id: externalItemId,
-      item_name: li.name ?? li.item_name ?? null,
+      item_name: atSuffix(li.name ?? li.item_name ?? null),
       description: li.description ?? null,
-      sku: li.sku ?? li.item_code ?? null,
+      sku: atSuffix(li.sku ?? li.item_code ?? null),
       quantity: li.quantity ?? 1,
       rate: li.rate ?? null,
       amount: li.item_total ?? li.amount ?? null,
@@ -275,7 +278,7 @@ Deno.serve(async (req: Request) => {
           }
 
           if (orderId && Array.isArray(detail.line_items)) {
-            await syncLineItems(adminClient, orderId, detail.line_items);
+            await syncLineItems(adminClient, orderId, detail.line_items, sourceSystem);
           }
         } catch (err: any) {
           totalFailed++;

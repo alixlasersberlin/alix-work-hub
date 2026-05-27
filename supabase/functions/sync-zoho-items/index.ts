@@ -128,11 +128,14 @@ Deno.serve(async (req) => {
         processed++;
         try {
           const itemId = String(it.item_id);
+          const isAt = sourceSystem === "zoho_eu_2";
+          const atSuffix = (v: string | null | undefined) =>
+            v == null || v === "" ? v : (isAt && !String(v).endsWith("-AT") ? `${v}-AT` : v);
           const payload = {
             source_system: sourceSystem,
             zoho_item_id: itemId,
-            name: it.name ?? it.item_name ?? null,
-            sku: it.sku ?? null,
+            name: atSuffix(it.name ?? it.item_name ?? null) ?? null,
+            sku: atSuffix(it.sku ?? null) ?? null,
             description: it.description ?? null,
             unit: it.unit ?? null,
             rate: it.rate != null ? Number(it.rate) : null,

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Flame, GanttChart, Package, ChevronDown, Radio } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { withAt } from '@/lib/atSuffix';
 import { useDesignVariant } from '@/hooks/useDesignVariant';
 import {
   DropdownMenu,
@@ -79,7 +80,7 @@ export default function AuroraPrioTicker() {
     async function loadPrio() {
       const { data } = await supabase
         .from('orders')
-        .select('id, order_number, expected_shipment_date, customers(company_name, contact_name)')
+        .select('id, order_number, source_system, expected_shipment_date, customers(company_name, contact_name)')
         .not('expected_shipment_date', 'is', null)
         .in('order_status', ['overdue', 'Overdue', 'invoiced', 'Invoiced', 'open', 'Open', 'offen', 'Offen', 'approved', 'Approved'])
         .order('expected_shipment_date', { ascending: true })
@@ -89,7 +90,7 @@ export default function AuroraPrioTicker() {
         const name = r.customers?.company_name || r.customers?.contact_name || '—';
         return {
           id: r.id,
-          label: `#${r.order_number}  ${name}`,
+          label: `#${withAt(r.order_number, r.source_system)}  ${name}`,
           meta: dateLabel(d),
           tone: dateTone(d),
           href: `/order/${r.id}`,

@@ -21,6 +21,7 @@ import { ViewToggle } from '@/components/ViewToggle';
 import { useViewMode } from '@/hooks/useViewMode';
 import { OrderCard, OrderCardGrid } from '@/components/OrderCard';
 import { ALIX_MODEL_GROUPS } from '@/lib/alix-models';
+import { withAt } from '@/lib/atSuffix';
 
 type SortField = 'order_number' | 'order_date' | 'total_amount' | 'created_at';
 type SortDir = 'asc' | 'desc';
@@ -80,7 +81,7 @@ export default function Orders() {
     const expanded = loaded.map(o => ({
       ...o,
       _seq: 1,
-      _displayNumber: o.order_number,
+      _displayNumber: withAt(o.order_number, o.source_system),
       _productionOrderCount: o.order_number ? (poCountMap[o.order_number] || 0) : 0,
     }));
 

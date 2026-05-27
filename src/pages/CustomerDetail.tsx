@@ -7,6 +7,7 @@ import { ArrowLeft, Building2, ClipboardList, Loader2, Inbox, Pencil, Trash2 } f
 import { StatusBadge } from '@/components/StatusBadge';
 import CustomerEditDialog from '@/components/CustomerEditDialog';
 import CustomerDeleteDialog from '@/components/CustomerDeleteDialog';
+import { withAt } from '@/lib/atSuffix';
 
 export default function CustomerDetail() {
   const { id } = useParams<{ id: string }>();
@@ -82,7 +83,7 @@ export default function CustomerDetail() {
               ['E-Mail', customer.email],
               ['Telefon', customer.phone],
               ['Quelle', customer.source_system],
-              ['Ext. Kunden-ID', customer.external_customer_id],
+              ['Ext. Kunden-ID', withAt(customer.external_customer_id, customer.source_system)],
               ['IBAN', customer.iban],
               ['BIC', customer.bic],
               ['Bank', customer.bank_name],
@@ -117,7 +118,7 @@ export default function CustomerDetail() {
                   onClick={() => navigate(`/auftraege/${o.id}`)}
                 >
                   <div>
-                    <p className="font-medium text-foreground text-sm">{o.order_number}</p>
+                    <p className="font-medium text-foreground text-sm">{withAt(o.order_number, o.source_system)}</p>
                     <p className="text-xs text-muted-foreground">{o.order_date ? new Date(o.order_date).toLocaleDateString('de-DE') : '—'}</p>
                   </div>
                   <div className="text-right">

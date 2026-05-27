@@ -3,6 +3,7 @@ import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Building2, Calendar, Euro, Hash } from 'lucide-react';
+import { withAt } from '@/lib/atSuffix';
 
 interface OrderCardProps {
   order: any;
@@ -31,7 +32,7 @@ export function OrderCard({
   footer,
   customerLabel,
 }: OrderCardProps) {
-  const number = displayNumber || order._displayNumber || order.order_number || '—';
+  const number = displayNumber || order._displayNumber || withAt(order.order_number, order.source_system) || '—';
   const customer =
     customerLabel ||
     order.customers?.company_name ||
