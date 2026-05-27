@@ -83,7 +83,7 @@ export default function CustomerDetail() {
               ['E-Mail', customer.email],
               ['Telefon', customer.phone],
               ['Quelle', customer.source_system],
-              ['Ext. Kunden-ID', customer.external_customer_id],
+              ['Ext. Kunden-ID', withAt(customer.external_customer_id, customer.source_system)],
               ['IBAN', customer.iban],
               ['BIC', customer.bic],
               ['Bank', customer.bank_name],
