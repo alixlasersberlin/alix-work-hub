@@ -495,6 +495,16 @@ export default function Orders() {
                               >
                                 <CalendarClock className="w-3 h-3 mr-1" /> Zurückstellen
                               </Button>
+                              {canEditItems && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 px-2 text-xs text-primary hover:text-primary"
+                                  onClick={() => setItemsOrder(o)}
+                                >
+                                  <Package className="w-3 h-3 mr-1" /> Artikel
+                                </Button>
+                              )}
                             </div>
                           </td>
                         )}
