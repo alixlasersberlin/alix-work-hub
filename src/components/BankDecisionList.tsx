@@ -165,7 +165,9 @@ export default function BankDecisionList({ status, title, subtitle, icon: Icon, 
         currency: o?.currency || 'EUR',
         note: full.in_processing_note || full.decision_note || '',
       });
-      const blob = doc.output('blob');
+      // Safari/iOS rejects PDF blobs whose type is not exactly 'application/pdf' in iframes.
+      const rawBlob = doc.output('blob');
+      const blob = new Blob([rawBlob], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       setPdfUrl(url);
       setPdfFileName(`Leasing-Anfrage_${o?.order_number || full.id}.pdf`);
