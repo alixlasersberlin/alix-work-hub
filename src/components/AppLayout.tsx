@@ -229,7 +229,7 @@ export default function AppLayout() {
     const load = async () => {
       const { data, error } = await supabase
         .from('lager_devices')
-        .select('notes');
+        .select('notes, reserved_order_id');
       if (cancelled || error || !data) return;
       lastLoadedAt = Date.now();
       const getStatus = (n: string | null | undefined) => {
@@ -239,12 +239,16 @@ export default function AppLayout() {
       const isLeih = (n: string | null | undefined) =>
         (n ?? '').includes('[Typ: Leihgerät]') || (n ?? '').includes('[Leihgerät]');
       let leih = 0, lager = 0, transfer = 0, produktion = 0, hold = 0, warehouse = 0, ausgeliefert = 0;
-      for (const d of data as { notes: string | null }[]) {
+      for (const d of data as { notes: string | null; reserved_order_id: string | null }[]) {
         const s = getStatus(d.notes);
         if (s === 'Transfer') { transfer++; continue; }
         if (s === 'Produktion') { produktion++; continue; }
         if (s === 'Hold') { hold++; continue; }
-        if (s === 'Shell Warehouse') { warehouse++; continue; }
+        if (s === 'Shell Warehouse') {
+          // Reservierte Geräte werden im Warehouse nicht mehr gezählt
+          if (!d.reserved_order_id) warehouse++;
+          continue;
+        }
         if (s === 'Ausgeliefert') { ausgeliefert++; continue; }
         if (isLeih(d.notes)) leih++; else lager++;
       }
