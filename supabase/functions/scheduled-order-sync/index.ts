@@ -255,13 +255,14 @@ Deno.serve(async (req: Request) => {
             }
           } catch (_) { /* ignore */ }
 
+          const nullIfEmpty = (v: any) => (v == null || v === "" ? null : v);
           const orderPayload = {
             external_order_id: externalOrderId,
             source_system: sourceSystem,
             customer_id: customer.id,
             order_number: detail.salesorder_number ?? so.salesorder_number ?? externalOrderId,
-            order_date: detail.date ?? so.date ?? null,
-            expected_shipment_date: detail.shipment_date ?? so.shipment_date ?? null,
+            order_date: nullIfEmpty(detail.date ?? so.date),
+            expected_shipment_date: nullIfEmpty(detail.shipment_date ?? so.shipment_date),
             order_status: detail.status ?? so.status ?? "offen",
             total_amount: detail.total ?? so.total ?? null,
             currency: detail.currency_code ?? so.currency_code ?? null,
