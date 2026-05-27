@@ -151,6 +151,7 @@ Deno.serve(async (req: Request) => {
 
     // Calculate cutoff date for last_modified_time filter (default 1 day, configurable)
     const daysBack = Math.max(1, Math.min(365, Number(body.days_back ?? 1) || 1));
+    const maxContacts = body.max_contacts != null ? Math.max(1, Number(body.max_contacts)) : null;
     const now = new Date();
     const cutoff = new Date(now);
     cutoff.setDate(cutoff.getDate() - daysBack);
