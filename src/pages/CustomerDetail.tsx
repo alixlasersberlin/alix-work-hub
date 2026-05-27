@@ -118,7 +118,7 @@ export default function CustomerDetail() {
                   onClick={() => navigate(`/auftraege/${o.id}`)}
                 >
                   <div>
-                    <p className="font-medium text-foreground text-sm">{o.order_number}</p>
+                    <p className="font-medium text-foreground text-sm">{withAt(o.order_number, o.source_system)}</p>
                     <p className="text-xs text-muted-foreground">{o.order_date ? new Date(o.order_date).toLocaleDateString('de-DE') : '—'}</p>
                   </div>
                   <div className="text-right">
