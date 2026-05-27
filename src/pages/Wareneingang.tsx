@@ -78,10 +78,21 @@ export default function Wareneingang() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch {}
   };
 
-  const handleBook = () => {
+  const handleBook = async () => {
     if (!selected) { toast.error('Bitte Artikel auswählen'); return; }
     const qty = Number(quantity);
     if (!qty || qty <= 0) { toast.error('Menge muss größer 0 sein'); return; }
+
+    const newStock = (selected.stock_on_hand ?? 0) + qty;
+    const { error } = await supabase
+      .from('zoho_items')
+      .update({ stock_on_hand: newStock })
+      .eq('id', selected.id);
+    if (error) {
+      toast.error('Bestand konnte nicht aktualisiert werden: ' + error.message);
+      return;
+    }
+
     const r: Receipt = {
       id: crypto.randomUUID(),
       created_at: new Date().toISOString(),
@@ -94,9 +105,11 @@ export default function Wareneingang() {
       note: note.trim() || null,
     };
     persist([r, ...receipts]);
-    toast.success(`Wareneingang gebucht: ${qty}× ${selected.name}`);
+    setItems(prev => prev.map(it => it.id === selected.id ? { ...it, stock_on_hand: newStock } : it));
+    toast.success(`Wareneingang gebucht: ${qty}× ${selected.name} (neuer Bestand: ${newStock})`);
     setQuantity(''); setSupplier(''); setReference(''); setNote(''); setSelectedItemId('');
   };
+
 
   return (
     <div className="container mx-auto p-6 space-y-6">
