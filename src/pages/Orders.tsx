@@ -47,6 +47,7 @@ export default function Orders() {
   const [currentPage, setCurrentPage] = useState(1);
   const [editOrder, setEditOrder] = useState<any>(null);
   const [deferOrder, setDeferOrder] = useState<any>(null);
+  const [itemsOrder, setItemsOrder] = useState<any>(null);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkOpen, setBulkOpen] = useState(false);
