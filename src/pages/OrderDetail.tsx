@@ -253,6 +253,28 @@ export default function OrderDetail() {
                   <Truck className="w-3.5 h-3.5 mr-1.5" /> Als geliefert markieren
                 </Button>
               )}
+              {order.order_status === 'teilgeliefert' && (
+                restPending ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-emerald-500/10 text-emerald-500 text-xs font-medium border border-emerald-500/30">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    In „Bestellung möglich"
+                  </span>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
+                    onClick={async () => {
+                      const { error } = await createRestbestellungMarker(order.id);
+                      if (error) { toast.error('Fehler: ' + error); return; }
+                      toast.success('Restbestellung in „Bestellung möglich" übernommen');
+                      setRestPending(true);
+                    }}
+                  >
+                    <ShoppingCart className="w-3.5 h-3.5 mr-1.5" /> Restbestellung erzeugen
+                  </Button>
+                )
+              )}
               <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
                 <Pencil className="w-3.5 h-3.5 mr-1.5" /> Ändern
               </Button>
