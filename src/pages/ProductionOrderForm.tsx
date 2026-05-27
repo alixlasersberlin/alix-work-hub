@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { generateProductionOrderPdf } from '@/lib/production-order-pdf';
 import { ALIX_MODEL_GROUPS } from '@/lib/alix-models';
 import { useAuth } from '@/hooks/useAuth';
+import { markRestbestellungDone } from '@/lib/restbestellung';
 
 type Mode = 'order' | 'reclamation';
 
