@@ -300,10 +300,12 @@ export default function PriorityList() {
                   return (
                     <tr
                       key={o.id}
-                      className="hover:bg-secondary/30 transition-colors cursor-pointer"
+                      className={`hover:bg-secondary/30 transition-colors cursor-pointer ${isOrderVip(o) ? 'bg-gradient-to-r from-amber-500/[0.08] to-transparent' : ''}`}
                       onClick={() => navigate(`/auftraege/${o.id}`)}
                     >
-                      <td className="px-4 py-3 text-muted-foreground font-mono text-xs">{idx + 1}</td>
+                      <td className="px-4 py-3 text-muted-foreground font-mono text-xs">
+                        {isOrderVip(o) ? <VipBadge size="sm" iconOnly /> : idx + 1}
+                      </td>
                       <td className="px-4 py-3 font-medium text-foreground">
                         <span className="inline-flex items-center gap-1.5">
                           <Package className="w-3.5 h-3.5 text-muted-foreground" />
@@ -314,7 +316,12 @@ export default function PriorityList() {
                         {getPriorityLabel(days)}
                       </td>
                       <td className="px-4 py-3 font-medium text-foreground">{o.order_number}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{name}</td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        <span className="inline-flex items-center gap-1.5">
+                          {name}
+                          {isOrderVip(o) && <VipBadge size="sm" />}
+                        </span>
+                      </td>
                       <td className="px-4 py-3 text-muted-foreground">{city || '—'}</td>
                       <td className="px-4 py-3 text-foreground">
                         {o.total_amount != null ? Number(o.total_amount).toLocaleString('de-DE', { style: 'currency', currency: o.currency || 'EUR' }) : '—'}
