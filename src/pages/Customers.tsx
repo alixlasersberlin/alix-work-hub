@@ -11,6 +11,7 @@ import CustomerEditDialog from '@/components/CustomerEditDialog';
 import CustomerDeleteDialog from '@/components/CustomerDeleteDialog';
 import { VipBadge } from '@/components/VipBadge';
 import { isCustomerVip, vipFirst } from '@/lib/vip';
+import { SourceBadge, sourceLabel, sourceFlag } from '@/lib/source-system';
 
 type SortField = 'company_name' | 'contact_name' | 'created_at';
 type SortDir = 'asc' | 'desc';
