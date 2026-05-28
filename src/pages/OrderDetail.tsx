@@ -267,7 +267,7 @@ export default function OrderDetail() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {order.order_date ? new Date(order.order_date).toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' }) : '—'}
-            {' · '}{order.source_system}
+            {' · '}<span>{sourceFlag(order.source_system)} {sourceLabel(order.source_system)}</span>
           </p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
