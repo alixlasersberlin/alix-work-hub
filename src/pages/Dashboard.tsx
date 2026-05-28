@@ -318,6 +318,49 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* VIP Status */}
+      {canSeeCustomers && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <button
+            type="button"
+            onClick={() => navigate('/kunden')}
+            className="text-left rounded-xl border border-amber-400/40 bg-gradient-to-br from-amber-500/[0.12] via-amber-500/[0.04] to-transparent p-5 shadow-[0_0_30px_-12px_hsl(45_100%_50%/0.55)] hover:border-amber-300/70 hover:shadow-[0_0_40px_-10px_hsl(45_100%_50%/0.7)] transition-all group"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <VipBadge size="md" />
+                <span className="text-sm font-medium text-foreground/90">VIP-Kunden</span>
+              </div>
+              <Crown className="w-5 h-5 fill-amber-400 text-amber-400 group-hover:scale-110 transition-transform" />
+            </div>
+            <p className="text-4xl font-display font-bold text-foreground tabular-nums">
+              {loading ? <Skeleton className="h-10 w-16 inline-block" /> : stats.vipCustomers}
+            </p>
+            <p className="text-xs text-muted-foreground mt-2">Bevorzugte Kunden – Position 1 in allen Listen</p>
+          </button>
+          {canSeeOrders && (
+            <button
+              type="button"
+              onClick={() => navigate('/auftraege')}
+              className="text-left rounded-xl border border-amber-400/40 bg-gradient-to-br from-amber-500/[0.12] via-amber-500/[0.04] to-transparent p-5 shadow-[0_0_30px_-12px_hsl(45_100%_50%/0.55)] hover:border-amber-300/70 hover:shadow-[0_0_40px_-10px_hsl(45_100%_50%/0.7)] transition-all group"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <VipBadge size="md" />
+                  <span className="text-sm font-medium text-foreground/90">VIP-Aufträge</span>
+                </div>
+                <Crown className="w-5 h-5 fill-amber-400 text-amber-400 group-hover:scale-110 transition-transform" />
+              </div>
+              <p className="text-4xl font-display font-bold text-foreground tabular-nums">
+                {loading ? <Skeleton className="h-10 w-16 inline-block" /> : stats.vipOrders}
+              </p>
+              <p className="text-xs text-muted-foreground mt-2">Als VIP markierte Aufträge mit höchster Priorität</p>
+            </button>
+          )}
+        </div>
+      )}
+
+
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {loading
