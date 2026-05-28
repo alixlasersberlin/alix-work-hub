@@ -37,13 +37,22 @@ export default function Customers() {
   async function loadAll() {
     setLoading(true);
     setError(null);
-    const { data, error: err } = await supabase
-      .from('customers')
-      .select('*')
-      .order(sortField, { ascending: sortDir === 'asc' })
-      .limit(1000);
-    if (err) { setError(err.message); }
-    setCustomers(data ?? []);
+    const CHUNK = 1000;
+    let from = 0;
+    const all: any[] = [];
+    for (;;) {
+      const { data, error: err } = await supabase
+        .from('customers')
+        .select('*')
+        .order(sortField, { ascending: sortDir === 'asc' })
+        .range(from, from + CHUNK - 1);
+      if (err) { setError(err.message); break; }
+      if (!data || data.length === 0) break;
+      all.push(...data);
+      if (data.length < CHUNK) break;
+      from += CHUNK;
+    }
+    setCustomers(all);
     setLoading(false);
   }
 
