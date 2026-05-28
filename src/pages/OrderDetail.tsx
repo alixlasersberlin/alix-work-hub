@@ -664,6 +664,11 @@ export default function OrderDetail() {
         <BankFinancingTab orderId={id} />
       )}
 
+      {/* Einkauf AT Tab */}
+      {activeTab === 'at_purchase' && id && canSeeAtPurchase && (
+        <AtPurchaseTab orderId={id} />
+      )}
+
       {/* Packages Tab */}
       {activeTab === 'packages' && (
         <div className="rounded-xl border border-border bg-card p-6 card-glow">
