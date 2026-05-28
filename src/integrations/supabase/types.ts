@@ -673,6 +673,42 @@ export type Database = {
           },
         ]
       }
+      order_at_purchase: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          currency: string | null
+          einkaufspreis: number | null
+          id: string
+          note: string | null
+          order_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          einkaufspreis?: number | null
+          id?: string
+          note?: string | null
+          order_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          einkaufspreis?: number | null
+          id?: string
+          note?: string | null
+          order_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       order_documents: {
         Row: {
           created_at: string

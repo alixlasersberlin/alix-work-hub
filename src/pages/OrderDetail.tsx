@@ -10,10 +10,11 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
-  ArrowLeft, ClipboardList, Building2, FileText, History, Loader2, Inbox, Send, Pencil, X, Check, Shield, Package, CalendarIcon, CalendarClock, Truck, Euro, Mail, Landmark, Plus, Trash2, ShoppingCart, CheckCircle2
+  ArrowLeft, ClipboardList, Building2, FileText, History, Loader2, Inbox, Send, Pencil, X, Check, Shield, Package, CalendarIcon, CalendarClock, Truck, Euro, Mail, Landmark, Plus, Trash2, ShoppingCart, ShoppingBag, CheckCircle2
 } from 'lucide-react';
 import { createRestbestellungMarker, hasPendingRestbestellung } from '@/lib/restbestellung';
 import BankFinancingTab from '@/components/BankFinancingTab';
+import AtPurchaseTab from '@/components/AtPurchaseTab';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -40,7 +41,7 @@ export default function OrderDetail() {
   const [history, setHistory] = useState<any[]>([]);
   const [poCount, setPoCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'items' | 'deposit' | 'financing' | 'packages' | 'notes' | 'emails' | 'history' | 'raw'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'items' | 'deposit' | 'financing' | 'at_purchase' | 'packages' | 'notes' | 'emails' | 'history' | 'raw'>('overview');
   const [sendingEmail, setSendingEmail] = useState(false);
   const [depositOk, setDepositOk] = useState(false);
   const [depositBy, setDepositBy] = useState('');
@@ -215,11 +216,15 @@ export default function OrderDetail() {
   const emailNotes = notes.filter((n: any) => n.note_type === 'email');
   const generalNotes = notes.filter((n: any) => n.note_type !== 'email');
 
+  const isAtOrder = order?.source_system === 'zoho_eu_2';
+  const canSeeAtPurchase = isAtOrder && (hasRole('Super Admin') || hasRole('Österreich'));
+
   const tabs = [
     { key: 'overview', label: 'Übersicht', icon: ClipboardList },
     { key: 'items', label: `Artikel (${items.length})`, icon: Package },
     { key: 'deposit', label: `Anzahlung${order?.deposit_ok ? ' ✓' : ''}`, icon: Euro },
     { key: 'financing', label: 'Anfrage Finanzierung', icon: Landmark },
+    ...(canSeeAtPurchase ? [{ key: 'at_purchase', label: 'Einkauf AT', icon: ShoppingBag }] : []),
     { key: 'packages', label: `Pakete (${packages.length})`, icon: Truck },
     { key: 'notes', label: `Notizen (${generalNotes.length})`, icon: FileText },
     { key: 'emails', label: `E-Mails (${emailNotes.length})`, icon: Mail },
@@ -657,6 +662,11 @@ export default function OrderDetail() {
       {/* Financing Tab */}
       {activeTab === 'financing' && id && (
         <BankFinancingTab orderId={id} />
+      )}
+
+      {/* Einkauf AT Tab */}
+      {activeTab === 'at_purchase' && id && canSeeAtPurchase && (
+        <AtPurchaseTab orderId={id} />
       )}
 
       {/* Packages Tab */}
