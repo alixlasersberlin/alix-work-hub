@@ -103,7 +103,7 @@ export default function PriorityList() {
       setError(null);
       const { data, error: err } = await supabase
         .from('orders')
-        .select('id, order_number, order_status, order_date, expected_shipment_date, total_amount, currency, source_system, shipping_address, billing_address, customers(company_name, contact_name, shipping_address, billing_address), order_items(item_name, description, sku)')
+        .select('id, order_number, order_status, order_date, expected_shipment_date, total_amount, currency, source_system, shipping_address, billing_address, is_vip, customers(company_name, contact_name, shipping_address, billing_address, is_vip), order_items(item_name, description, sku)')
         .not('expected_shipment_date', 'is', null)
         .in('order_status', ['overdue', 'Overdue', 'invoiced', 'Invoiced', 'open', 'Open', 'offen', 'Offen', 'approved', 'Approved'])
         .order(sortField, { ascending: sortDir === 'asc' })
@@ -141,7 +141,10 @@ export default function PriorityList() {
     return matchSearch && matchStatus && matchModel;
   });
 
-  const { pageSize, setPageSize, page, setPage, totalPages, paged, total } = usePagination(filtered, 20);
+  // VIPs immer an Position 1
+  const sorted = vipFirst(filtered, isOrderVip);
+
+  const { pageSize, setPageSize, page, setPage, totalPages, paged, total } = usePagination(sorted, 20);
 
   // Only fetch driving times for currently visible (paged) orders to avoid edge function timeout
   useEffect(() => {
