@@ -245,7 +245,7 @@ export default function Customers() {
                     <td className="px-4 py-3 text-muted-foreground">{c.contact_name || '—'}</td>
                     <td className="px-4 py-3 text-muted-foreground">{c.email || '—'}</td>
                     <td className="px-4 py-3 text-muted-foreground">{c.phone || '—'}</td>
-                    <td className="px-4 py-3"><span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-accent/10 text-accent-foreground">{c.source_system}</span></td>
+                    <td className="px-4 py-3"><SourceBadge source={c.source_system} /></td>
                     <td className="px-4 py-3 text-muted-foreground text-xs">{new Date(c.created_at).toLocaleDateString('de-DE')}</td>
                     {isAdmin && (
                       <td className="px-4 py-3 text-right">
