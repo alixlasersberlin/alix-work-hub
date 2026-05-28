@@ -248,6 +248,7 @@ export type Database = {
           external_customer_id: string | null
           iban: string | null
           id: string
+          is_vip: boolean
           phone: string | null
           raw_data: Json | null
           shipping_address: Json | null
@@ -267,6 +268,7 @@ export type Database = {
           external_customer_id?: string | null
           iban?: string | null
           id?: string
+          is_vip?: boolean
           phone?: string | null
           raw_data?: Json | null
           shipping_address?: Json | null
@@ -286,6 +288,7 @@ export type Database = {
           external_customer_id?: string | null
           iban?: string | null
           id?: string
+          is_vip?: boolean
           phone?: string | null
           raw_data?: Json | null
           shipping_address?: Json | null
@@ -936,6 +939,7 @@ export type Database = {
           external_order_id: string | null
           id: string
           internal_number: string | null
+          is_vip: boolean
           lawyer_reason: string | null
           order_date: string | null
           order_number: string
@@ -962,6 +966,7 @@ export type Database = {
           external_order_id?: string | null
           id?: string
           internal_number?: string | null
+          is_vip?: boolean
           lawyer_reason?: string | null
           order_date?: string | null
           order_number: string
@@ -988,6 +993,7 @@ export type Database = {
           external_order_id?: string | null
           id?: string
           internal_number?: string | null
+          is_vip?: boolean
           lawyer_reason?: string | null
           order_date?: string | null
           order_number?: string
