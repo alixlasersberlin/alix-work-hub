@@ -14,6 +14,8 @@ import { ViewToggle } from '@/components/ViewToggle';
 import { useViewMode } from '@/hooks/useViewMode';
 import { OrderCard, OrderCardGrid } from '@/components/OrderCard';
 import { ALIX_MODEL_GROUPS } from '@/lib/alix-models';
+import { VipBadge } from '@/components/VipBadge';
+import { isOrderVip, vipFirst } from '@/lib/vip';
 
 type SortField = 'expected_shipment_date' | 'order_number' | 'total_amount';
 type SortDir = 'asc' | 'desc';
@@ -34,7 +36,9 @@ interface PrioOrder {
     contact_name: string | null;
     shipping_address: any;
     billing_address: any;
+    is_vip?: boolean | null;
   } | null;
+  is_vip?: boolean | null;
   order_items: { item_name: string | null; description: string | null; sku: string | null }[] | null;
 }
 
