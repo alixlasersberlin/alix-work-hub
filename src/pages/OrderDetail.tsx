@@ -219,17 +219,37 @@ export default function OrderDetail() {
   const isAtOrder = order?.source_system === 'zoho_eu_2';
   const canSeeAtPurchase = isAtOrder && (hasRole('Super Admin') || hasRole('Österreich'));
 
-  const tabs = [
-    { key: 'overview', label: 'Übersicht', icon: ClipboardList },
-    { key: 'items', label: `Artikel (${items.length})`, icon: Package },
-    { key: 'deposit', label: `Anzahlung${order?.deposit_ok ? ' ✓' : ''}`, icon: Euro },
-    { key: 'financing', label: 'Anfrage Finanzierung', icon: Landmark },
-    ...(canSeeAtPurchase ? [{ key: 'at_purchase', label: 'Einkauf AT', icon: ShoppingBag }] : []),
-    { key: 'packages', label: `Pakete (${packages.length})`, icon: Truck },
-    { key: 'notes', label: `Notizen (${generalNotes.length})`, icon: FileText },
-    { key: 'emails', label: `E-Mails (${emailNotes.length})`, icon: Mail },
-    { key: 'history', label: `Historie (${history.length})`, icon: History },
-    ...(isAdmin ? [{ key: 'raw', label: 'Rohdaten', icon: Shield }] : []),
+  const tabGroups = [
+    {
+      name: 'Auftrag',
+      tabs: [
+        { key: 'overview', label: 'Übersicht', icon: ClipboardList },
+        { key: 'items', label: 'Artikel', icon: Package, count: items.length },
+        { key: 'packages', label: 'Pakete', icon: Truck, count: packages.length },
+      ],
+    },
+    {
+      name: 'Finanzen',
+      tabs: [
+        { key: 'deposit', label: 'Anzahlung', icon: Euro, badge: order?.deposit_ok ? '✓' : undefined },
+        { key: 'financing', label: 'Finanzierung', icon: Landmark },
+        ...(canSeeAtPurchase ? [{ key: 'at_purchase', label: 'Einkauf AT', icon: ShoppingBag }] : []),
+      ],
+    },
+    {
+      name: 'Kommunikation',
+      tabs: [
+        { key: 'notes', label: 'Notizen', icon: FileText, count: generalNotes.length },
+        { key: 'emails', label: 'E-Mails', icon: Mail, count: emailNotes.length },
+      ],
+    },
+    {
+      name: 'System',
+      tabs: [
+        { key: 'history', label: 'Historie', icon: History, count: history.length },
+        ...(isAdmin ? [{ key: 'raw', label: 'Rohdaten', icon: Shield }] : []),
+      ],
+    },
   ] as const;
 
   return (
