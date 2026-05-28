@@ -41,7 +41,7 @@ export default function OrderDetail() {
   const [history, setHistory] = useState<any[]>([]);
   const [poCount, setPoCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'items' | 'deposit' | 'financing' | 'packages' | 'notes' | 'emails' | 'history' | 'raw'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'items' | 'deposit' | 'financing' | 'at_purchase' | 'packages' | 'notes' | 'emails' | 'history' | 'raw'>('overview');
   const [sendingEmail, setSendingEmail] = useState(false);
   const [depositOk, setDepositOk] = useState(false);
   const [depositBy, setDepositBy] = useState('');
