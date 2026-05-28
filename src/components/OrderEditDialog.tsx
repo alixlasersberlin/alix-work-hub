@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
+import { sendCustomerShippingNotice } from '@/lib/send-customer-shipping-notice';
 
 const STATUS_OPTIONS = [
   'offen', 'bestätigt', 'in Bearbeitung', 'versendet', 'teilgeliefert', 'geliefert',
