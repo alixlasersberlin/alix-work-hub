@@ -23,6 +23,8 @@ import OrderEditDialog from '@/components/OrderEditDialog';
 import OrderDeferDialog from '@/components/OrderDeferDialog';
 import MietkaufDialog from '@/components/MietkaufDialog';
 import { sendCustomerShippingNotice } from '@/lib/send-customer-shipping-notice';
+import { VipBadge } from '@/components/VipBadge';
+import { isOrderVip } from '@/lib/vip';
 
 export default function OrderDetail() {
   const { id } = useParams<{ id: string }>();
@@ -234,7 +236,10 @@ export default function OrderDetail() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">{primaryDisplayNumber}</h1>
+          <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-3 flex-wrap">
+            {isOrderVip({ ...order, customers: customer }) && <VipBadge size="lg" />}
+            {primaryDisplayNumber}
+          </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {order.order_date ? new Date(order.order_date).toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' }) : '—'}
             {' · '}{order.source_system}
