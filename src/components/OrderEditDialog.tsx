@@ -69,6 +69,10 @@ export default function OrderEditDialog({ order, open, onClose, onSaved }: Props
     setSaving(false);
     if (error) { toast.error('Fehler beim Speichern: ' + error.message); return; }
     toast.success('Auftrag aktualisiert');
+    if (form.order_status === 'geliefert' && order?.order_status !== 'geliefert') {
+      const mail = await sendCustomerShippingNotice(order.id, undefined, 'automatisch', 'customer_delivered');
+      if (mail.ok) toast.success(mail.message); else toast.error('E-Mail nicht versendet: ' + mail.message);
+    }
     onSaved();
     onClose();
   }
