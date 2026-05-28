@@ -216,11 +216,15 @@ export default function OrderDetail() {
   const emailNotes = notes.filter((n: any) => n.note_type === 'email');
   const generalNotes = notes.filter((n: any) => n.note_type !== 'email');
 
+  const isAtOrder = order?.source_system === 'zoho_eu_2';
+  const canSeeAtPurchase = isAtOrder && (hasRole('Super Admin') || hasRole('Österreich'));
+
   const tabs = [
     { key: 'overview', label: 'Übersicht', icon: ClipboardList },
     { key: 'items', label: `Artikel (${items.length})`, icon: Package },
     { key: 'deposit', label: `Anzahlung${order?.deposit_ok ? ' ✓' : ''}`, icon: Euro },
     { key: 'financing', label: 'Anfrage Finanzierung', icon: Landmark },
+    ...(canSeeAtPurchase ? [{ key: 'at_purchase', label: 'Einkauf AT', icon: ShoppingBag }] : []),
     { key: 'packages', label: `Pakete (${packages.length})`, icon: Truck },
     { key: 'notes', label: `Notizen (${generalNotes.length})`, icon: FileText },
     { key: 'emails', label: `E-Mails (${emailNotes.length})`, icon: Mail },
