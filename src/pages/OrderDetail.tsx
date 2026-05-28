@@ -219,17 +219,37 @@ export default function OrderDetail() {
   const isAtOrder = order?.source_system === 'zoho_eu_2';
   const canSeeAtPurchase = isAtOrder && (hasRole('Super Admin') || hasRole('Österreich'));
 
-  const tabs = [
-    { key: 'overview', label: 'Übersicht', icon: ClipboardList },
-    { key: 'items', label: `Artikel (${items.length})`, icon: Package },
-    { key: 'deposit', label: `Anzahlung${order?.deposit_ok ? ' ✓' : ''}`, icon: Euro },
-    { key: 'financing', label: 'Anfrage Finanzierung', icon: Landmark },
-    ...(canSeeAtPurchase ? [{ key: 'at_purchase', label: 'Einkauf AT', icon: ShoppingBag }] : []),
-    { key: 'packages', label: `Pakete (${packages.length})`, icon: Truck },
-    { key: 'notes', label: `Notizen (${generalNotes.length})`, icon: FileText },
-    { key: 'emails', label: `E-Mails (${emailNotes.length})`, icon: Mail },
-    { key: 'history', label: `Historie (${history.length})`, icon: History },
-    ...(isAdmin ? [{ key: 'raw', label: 'Rohdaten', icon: Shield }] : []),
+  const tabGroups = [
+    {
+      name: 'Auftrag',
+      tabs: [
+        { key: 'overview', label: 'Übersicht', icon: ClipboardList },
+        { key: 'items', label: 'Artikel', icon: Package, count: items.length },
+        { key: 'packages', label: 'Pakete', icon: Truck, count: packages.length },
+      ],
+    },
+    {
+      name: 'Finanzen',
+      tabs: [
+        { key: 'deposit', label: 'Anzahlung', icon: Euro, badge: order?.deposit_ok ? '✓' : undefined },
+        { key: 'financing', label: 'Finanzierung', icon: Landmark },
+        ...(canSeeAtPurchase ? [{ key: 'at_purchase', label: 'Einkauf AT', icon: ShoppingBag }] : []),
+      ],
+    },
+    {
+      name: 'Kommunikation',
+      tabs: [
+        { key: 'notes', label: 'Notizen', icon: FileText, count: generalNotes.length },
+        { key: 'emails', label: 'E-Mails', icon: Mail, count: emailNotes.length },
+      ],
+    },
+    {
+      name: 'System',
+      tabs: [
+        { key: 'history', label: 'Historie', icon: History, count: history.length },
+        ...(isAdmin ? [{ key: 'raw', label: 'Rohdaten', icon: Shield }] : []),
+      ],
+    },
   ] as const;
 
   return (
@@ -320,19 +340,37 @@ export default function OrderDetail() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 border-b border-border">
-        {tabs.map(t => (
-          <button
-            key={t.key}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
-              activeTab === t.key
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            }`}
-            onClick={() => setActiveTab(t.key as any)}
-          >
-            <t.icon className="w-4 h-4" /> {t.label}
-          </button>
+      <div className="flex flex-wrap items-stretch gap-x-1 gap-y-1 mb-6 border-b border-border">
+        {tabGroups.map((group, gi) => (
+          <div key={group.name} className="flex items-stretch">
+            {gi > 0 && <div className="self-center mx-2 h-5 w-px bg-border/70" aria-hidden />}
+            {group.tabs.map((t: any) => {
+              const active = activeTab === t.key;
+              return (
+                <button
+                  key={t.key}
+                  title={`${group.name} · ${t.label}`}
+                  className={`flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
+                    active
+                      ? 'border-primary text-primary'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  }`}
+                  onClick={() => setActiveTab(t.key as any)}
+                >
+                  <t.icon className="w-4 h-4" />
+                  <span>{t.label}</span>
+                  {typeof t.count === 'number' && (
+                    <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${
+                      active ? 'bg-primary/15 text-primary' : 'bg-secondary text-muted-foreground'
+                    }`}>{t.count}</span>
+                  )}
+                  {t.badge && (
+                    <span className="text-emerald-400 text-xs">{t.badge}</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         ))}
       </div>
 
