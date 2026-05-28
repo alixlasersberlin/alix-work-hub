@@ -5,9 +5,10 @@ import { useAuth } from '@/hooks/useAuth';
 import {
   ClipboardList, Users, MapPin, Banknote, AlertCircle,
   Clock, TrendingUp, FileText, CalendarDays, CircleDot, Inbox, Package, ChevronDown,
-  Warehouse, PackageCheck, ShieldAlert, UserCheck
+  Warehouse, PackageCheck, ShieldAlert, UserCheck, Crown
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { VipBadge } from '@/components/VipBadge';
 
 import { SidebarInfoBar } from '@/components/SidebarInfoBar';
 
@@ -17,6 +18,8 @@ interface Stats {
   openOrders: number;
   routes: number;
   openFinance: number;
+  vipCustomers: number;
+  vipOrders: number;
 }
 
 interface RecentOrder {
@@ -137,7 +140,7 @@ function TableSkeleton({ rows = 3 }: { rows?: number }) {
 export default function Dashboard() {
   const navigate = useNavigate();
   const { profile, roles, hasRole, hasAnyRole, isAdmin } = useAuth();
-  const [stats, setStats] = useState<Stats>({ freePoolDevices: 0, leihgeraete: 0, openOrders: 0, routes: 0, openFinance: 0 });
+  const [stats, setStats] = useState<Stats>({ freePoolDevices: 0, leihgeraete: 0, openOrders: 0, routes: 0, openFinance: 0, vipCustomers: 0, vipOrders: 0 });
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [shipmentOrders, setShipmentOrders] = useState<ShipmentOrder[]>([]);
   const [routePlans, setRoutePlans] = useState<RoutePlan[]>([]);
@@ -241,12 +244,21 @@ export default function Dashboard() {
               .limit(15)
           : { data: [] };
 
+        const [vipCustomersRes, vipOrdersRes] = canSeeCustomers
+          ? await Promise.all([
+              supabase.from('customers').select('id', { count: 'exact', head: true }).eq('is_vip', true),
+              supabase.from('orders').select('id', { count: 'exact', head: true }).eq('is_vip', true),
+            ])
+          : [{ count: 0 }, { count: 0 }];
+
         setStats({
           freePoolDevices,
           leihgeraete,
           openOrders: openOrdersRes.count ?? 0,
           routes: routesRes.count ?? 0,
           openFinance: openFinanceRes.count ?? 0,
+          vipCustomers: vipCustomersRes.count ?? 0,
+          vipOrders: vipOrdersRes.count ?? 0,
         });
         setRecentOrders(recentOrdersRes.data ?? []);
         setShipmentOrders(shipmentOrdersRes.data ?? []);
