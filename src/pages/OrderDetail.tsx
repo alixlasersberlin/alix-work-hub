@@ -248,6 +248,8 @@ export default function OrderDetail() {
                   const { error } = await supabase.from('orders').update({ order_status: 'geliefert' }).eq('id', order.id);
                   if (error) { toast.error('Fehler: ' + error.message); return; }
                   toast.success('Auftrag als geliefert markiert');
+                  const mail = await sendCustomerShippingNotice(order.id, undefined, 'automatisch', 'customer_delivered');
+                  if (mail.ok) toast.success(mail.message); else toast.error('E-Mail nicht versendet: ' + mail.message);
                   loadAll();
                 }}>
                   <Truck className="w-3.5 h-3.5 mr-1.5" /> Als geliefert markieren

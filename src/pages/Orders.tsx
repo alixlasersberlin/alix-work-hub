@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { sendCustomerShippingNotice } from '@/lib/send-customer-shipping-notice';
 import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -595,15 +596,29 @@ export default function Orders() {
               onClick={async () => {
                 setBulkSaving(true);
                 const ids = Array.from(selectedIds);
+                // Aufträge ermitteln, deren Status sich tatsächlich auf "geliefert" ändert
+                const newlyDeliveredIds = bulkStatus === 'geliefert'
+                  ? orders.filter(o => ids.includes(o.id) && o.order_status !== 'geliefert').map(o => o.id)
+                  : [];
                 const { error: err } = await supabase
                   .from('orders')
                   .update({ order_status: bulkStatus })
                   .in('id', ids);
-                setBulkSaving(false);
                 if (err) {
+                  setBulkSaving(false);
                   toast.error('Fehler: ' + err.message);
                   return;
                 }
+                if (newlyDeliveredIds.length > 0) {
+                  let ok = 0, fail = 0;
+                  for (const oid of newlyDeliveredIds) {
+                    const r = await sendCustomerShippingNotice(oid, undefined, 'automatisch', 'customer_delivered');
+                    if (r.ok) ok++; else fail++;
+                    await new Promise(res => setTimeout(res, 1200));
+                  }
+                  toast.success(`Liefer-E-Mails versendet: ${ok} · Fehler: ${fail}`);
+                }
+                setBulkSaving(false);
                 toast.success(`${ids.length} Auftrag/Aufträge auf "${bulkStatus}" gesetzt.`);
                 setBulkOpen(false);
                 setSelectedIds(new Set());
