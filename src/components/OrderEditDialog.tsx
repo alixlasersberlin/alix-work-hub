@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { sendCustomerShippingNotice } from '@/lib/send-customer-shipping-notice';
+import { VipBadge } from '@/components/VipBadge';
 
 const STATUS_OPTIONS = [
   'offen', 'bestätigt', 'in Bearbeitung', 'versendet', 'teilgeliefert', 'geliefert',
@@ -37,6 +38,7 @@ export default function OrderEditDialog({ order, open, onClose, onSaved }: Props
     lawyer_reason: order?.lawyer_reason || '',
     deposit_ok: !!order?.deposit_ok,
     deposit_ok_by: order?.deposit_ok_by || '',
+    is_vip: !!order?.is_vip,
   });
   const [saving, setSaving] = useState(false);
 
@@ -65,6 +67,7 @@ export default function OrderEditDialog({ order, open, onClose, onSaved }: Props
       deposit_ok: form.deposit_ok,
       deposit_ok_by: form.deposit_ok ? form.deposit_ok_by.trim() : null,
       deposit_ok_at: form.deposit_ok ? (depositChanged ? new Date().toISOString() : order?.deposit_ok_at) : null,
+      is_vip: form.is_vip,
     } as any).eq('id', order.id);
     setSaving(false);
     if (error) { toast.error('Fehler beim Speichern: ' + error.message); return; }
@@ -84,6 +87,13 @@ export default function OrderEditDialog({ order, open, onClose, onSaved }: Props
           <DialogTitle className="font-display">Auftrag bearbeiten</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
+          <label className="flex items-center justify-between gap-3 rounded-md border border-amber-500/30 bg-gradient-to-r from-amber-500/10 to-transparent p-3 cursor-pointer">
+            <span className="flex items-center gap-2">
+              <VipBadge size="md" />
+              <span className="text-sm font-medium">VIP-Auftrag – Position 1 in allen Listen</span>
+            </span>
+            <Checkbox checked={form.is_vip} onCheckedChange={v => setForm(f => ({ ...f, is_vip: !!v }))} />
+          </label>
           <div>
             <Label className="text-xs text-muted-foreground">Status</Label>
             <Select value={form.order_status} onValueChange={v => set('order_status', v)}>

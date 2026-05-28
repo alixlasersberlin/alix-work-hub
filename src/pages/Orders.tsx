@@ -18,6 +18,8 @@ import OrderDeferDialog from '@/components/OrderDeferDialog';
 import OrderItemsEditDialog from '@/components/OrderItemsEditDialog';
 import { Package } from 'lucide-react';
 import OrderStatsBar from '@/components/OrderStatsBar';
+import { VipBadge } from '@/components/VipBadge';
+import { isOrderVip, vipFirst } from '@/lib/vip';
 import { useDrivingTimes } from '@/hooks/useDrivingTimes';
 import { DrivingTimeCell } from '@/components/DrivingTimeCell';
 import { ViewToggle } from '@/components/ViewToggle';
@@ -67,7 +69,7 @@ export default function Orders() {
     setError(null);
     const { data, error: err } = await supabase
       .from('orders')
-      .select('*, customers(company_name, contact_name, shipping_address, billing_address), order_items(id, item_name, description, sku, quantity, unit, rate, amount)')
+      .select('*, customers(company_name, contact_name, shipping_address, billing_address, is_vip), order_items(id, item_name, description, sku, quantity, unit, rate, amount)')
       .order(sortField, { ascending: sortDir === 'asc', nullsFirst: false })
       .limit(500);
     if (err) setError(err.message);
@@ -145,8 +147,11 @@ export default function Orders() {
     return matchSearch && matchStatus && matchModel && matchRegion && notExcluded;
   });
 
-  const totalPages = pageSize === 'all' ? 1 : Math.ceil(filtered.length / pageSize);
-  const paged = pageSize === 'all' ? filtered : filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  // VIP-Kunden und VIP-Aufträge immer an Position 1
+  const sorted = vipFirst(filtered, isOrderVip);
+
+  const totalPages = pageSize === 'all' ? 1 : Math.ceil(sorted.length / pageSize);
+  const paged = pageSize === 'all' ? sorted : sorted.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   useEffect(() => { setCurrentPage(1); }, [search, statusFilter, modelFilter, regionFilter, pageSize]);
 
@@ -432,7 +437,12 @@ export default function Orders() {
                             />
                           </td>
                         )}
-                        <td className="px-4 py-3 font-medium text-foreground">{o._displayNumber || o.order_number}</td>
+                        <td className="px-4 py-3 font-medium text-foreground">
+                          <span className="inline-flex items-center gap-2">
+                            {isOrderVip(o) && <VipBadge size="sm" iconOnly />}
+                            {o._displayNumber || o.order_number}
+                          </span>
+                        </td>
                         <td className="px-4 py-3 text-muted-foreground">
                           <div className="flex flex-col">
                             <span className="text-foreground">{o.customers?.company_name || o.customers?.contact_name || '—'}</span>

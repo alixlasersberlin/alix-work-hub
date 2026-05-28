@@ -4,8 +4,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
+import { VipBadge } from '@/components/VipBadge';
 
 interface Props {
   customer: any;
@@ -31,6 +33,7 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
     iban: customer?.iban || '',
     bic: customer?.bic || '',
     bank_name: customer?.bank_name || '',
+    is_vip: !!customer?.is_vip,
   });
   const [saving, setSaving] = useState(false);
 
@@ -95,7 +98,8 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
       iban: form.iban || null,
       bic: form.bic || null,
       bank_name: form.bank_name || null,
-    }).eq('id', customer.id);
+      is_vip: form.is_vip,
+    } as any).eq('id', customer.id);
     setSaving(false);
     if (error) { toast.error('Fehler beim Speichern: ' + error.message); return; }
     toast.success('Kundendaten aktualisiert');
@@ -121,6 +125,13 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
           <DialogTitle className="font-display">Kunde bearbeiten</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
+          <label className="flex items-center justify-between gap-3 rounded-md border border-amber-500/30 bg-gradient-to-r from-amber-500/10 to-transparent p-3 cursor-pointer">
+            <span className="flex items-center gap-2">
+              <VipBadge size="md" />
+              <span className="text-sm font-medium">VIP-Kunde – bevorzugte Behandlung, Position 1 in allen Listen</span>
+            </span>
+            <Checkbox checked={form.is_vip} onCheckedChange={v => setForm(f => ({ ...f, is_vip: !!v }))} />
+          </label>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Firmenname" field="company_name" />
             <Field label="Kontaktperson" field="contact_name" />

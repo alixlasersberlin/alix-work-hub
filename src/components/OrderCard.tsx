@@ -4,6 +4,8 @@ import { cn } from '@/lib/utils';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Building2, Calendar, Euro, Hash } from 'lucide-react';
 import { withAt } from '@/lib/atSuffix';
+import { VipBadge } from '@/components/VipBadge';
+import { isOrderVip } from '@/lib/vip';
 
 interface OrderCardProps {
   order: any;
@@ -62,11 +64,13 @@ export function OrderCard({
       }}
       className={cn(
         "group relative p-4 cursor-pointer transition-all duration-150 hover:shadow-md hover:border-primary/40",
-        selected && "ring-2 ring-primary border-primary/60 bg-primary/5"
+        selected && "ring-2 ring-primary border-primary/60 bg-primary/5",
+        isOrderVip(order) && "border-amber-400/60 bg-gradient-to-br from-amber-500/[0.06] to-transparent shadow-[0_0_24px_-12px_hsl(45_100%_50%/0.5)]"
       )}
     >
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex items-center gap-1.5 text-sm font-semibold text-foreground truncate">
+          {isOrderVip(order) && <VipBadge size="sm" iconOnly />}
           <Hash className="w-3.5 h-3.5 text-primary flex-shrink-0" />
           <span className="truncate">{number}</span>
         </div>

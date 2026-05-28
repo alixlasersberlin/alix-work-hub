@@ -9,6 +9,8 @@ import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import CustomerEditDialog from '@/components/CustomerEditDialog';
 import CustomerDeleteDialog from '@/components/CustomerDeleteDialog';
+import { VipBadge } from '@/components/VipBadge';
+import { isCustomerVip, vipFirst } from '@/lib/vip';
 
 type SortField = 'company_name' | 'contact_name' | 'created_at';
 type SortDir = 'asc' | 'desc';
@@ -93,7 +95,8 @@ export default function Customers() {
   useEffect(() => { setPage(0); }, [search, sourceFilter, letterFilter, pageSize]);
 
   const totalFiltered = filtered.length;
-  const paginated = pageSize === 0 ? filtered : filtered.slice(page * pageSize, (page + 1) * pageSize);
+  const sortedFiltered = vipFirst(filtered, isCustomerVip);
+  const paginated = pageSize === 0 ? sortedFiltered : sortedFiltered.slice(page * pageSize, (page + 1) * pageSize);
   const totalPages = pageSize === 0 ? 1 : Math.ceil(totalFiltered / pageSize);
 
   const toggleSort = (field: SortField) => {
@@ -213,10 +216,15 @@ export default function Customers() {
                 paginated.map(c => (
                   <tr
                     key={c.id}
-                    className="hover:bg-secondary/30 transition-colors cursor-pointer"
+                    className={`hover:bg-secondary/30 transition-colors cursor-pointer ${isCustomerVip(c) ? 'bg-gradient-to-r from-amber-500/[0.08] to-transparent' : ''}`}
                     onClick={() => navigate(`/kunden/${c.id}`)}
                   >
-                    <td className="px-4 py-3 font-medium text-foreground">{c.company_name || '—'}</td>
+                    <td className="px-4 py-3 font-medium text-foreground">
+                      <span className="inline-flex items-center gap-2">
+                        {isCustomerVip(c) && <VipBadge size="sm" iconOnly />}
+                        {c.company_name || '—'}
+                      </span>
+                    </td>
                     <td className="px-4 py-3 text-muted-foreground">{c.contact_name || '—'}</td>
                     <td className="px-4 py-3 text-muted-foreground">{c.email || '—'}</td>
                     <td className="px-4 py-3 text-muted-foreground">{c.phone || '—'}</td>

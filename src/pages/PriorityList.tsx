@@ -14,6 +14,8 @@ import { ViewToggle } from '@/components/ViewToggle';
 import { useViewMode } from '@/hooks/useViewMode';
 import { OrderCard, OrderCardGrid } from '@/components/OrderCard';
 import { ALIX_MODEL_GROUPS } from '@/lib/alix-models';
+import { VipBadge } from '@/components/VipBadge';
+import { isOrderVip, vipFirst } from '@/lib/vip';
 
 type SortField = 'expected_shipment_date' | 'order_number' | 'total_amount';
 type SortDir = 'asc' | 'desc';
@@ -34,7 +36,9 @@ interface PrioOrder {
     contact_name: string | null;
     shipping_address: any;
     billing_address: any;
+    is_vip?: boolean | null;
   } | null;
+  is_vip?: boolean | null;
   order_items: { item_name: string | null; description: string | null; sku: string | null }[] | null;
 }
 
@@ -99,7 +103,7 @@ export default function PriorityList() {
       setError(null);
       const { data, error: err } = await supabase
         .from('orders')
-        .select('id, order_number, order_status, order_date, expected_shipment_date, total_amount, currency, source_system, shipping_address, billing_address, customers(company_name, contact_name, shipping_address, billing_address), order_items(item_name, description, sku)')
+        .select('id, order_number, order_status, order_date, expected_shipment_date, total_amount, currency, source_system, shipping_address, billing_address, is_vip, customers(company_name, contact_name, shipping_address, billing_address, is_vip), order_items(item_name, description, sku)')
         .not('expected_shipment_date', 'is', null)
         .in('order_status', ['overdue', 'Overdue', 'invoiced', 'Invoiced', 'open', 'Open', 'offen', 'Offen', 'approved', 'Approved'])
         .order(sortField, { ascending: sortDir === 'asc' })
@@ -137,7 +141,10 @@ export default function PriorityList() {
     return matchSearch && matchStatus && matchModel;
   });
 
-  const { pageSize, setPageSize, page, setPage, totalPages, paged, total } = usePagination(filtered, 20);
+  // VIPs immer an Position 1
+  const sorted = vipFirst(filtered, isOrderVip);
+
+  const { pageSize, setPageSize, page, setPage, totalPages, paged, total } = usePagination(sorted, 20);
 
   // Only fetch driving times for currently visible (paged) orders to avoid edge function timeout
   useEffect(() => {
@@ -293,10 +300,12 @@ export default function PriorityList() {
                   return (
                     <tr
                       key={o.id}
-                      className="hover:bg-secondary/30 transition-colors cursor-pointer"
+                      className={`hover:bg-secondary/30 transition-colors cursor-pointer ${isOrderVip(o) ? 'bg-gradient-to-r from-amber-500/[0.08] to-transparent' : ''}`}
                       onClick={() => navigate(`/auftraege/${o.id}`)}
                     >
-                      <td className="px-4 py-3 text-muted-foreground font-mono text-xs">{idx + 1}</td>
+                      <td className="px-4 py-3 text-muted-foreground font-mono text-xs">
+                        {isOrderVip(o) ? <VipBadge size="sm" iconOnly /> : idx + 1}
+                      </td>
                       <td className="px-4 py-3 font-medium text-foreground">
                         <span className="inline-flex items-center gap-1.5">
                           <Package className="w-3.5 h-3.5 text-muted-foreground" />
@@ -307,7 +316,12 @@ export default function PriorityList() {
                         {getPriorityLabel(days)}
                       </td>
                       <td className="px-4 py-3 font-medium text-foreground">{o.order_number}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{name}</td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        <span className="inline-flex items-center gap-1.5">
+                          {name}
+                          {isOrderVip(o) && <VipBadge size="sm" />}
+                        </span>
+                      </td>
                       <td className="px-4 py-3 text-muted-foreground">{city || '—'}</td>
                       <td className="px-4 py-3 text-foreground">
                         {o.total_amount != null ? Number(o.total_amount).toLocaleString('de-DE', { style: 'currency', currency: o.currency || 'EUR' }) : '—'}
