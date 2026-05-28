@@ -148,7 +148,14 @@ export default function Customers() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Alle Quellen</SelectItem>
-            {sources.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            {sources.map(s => (
+              <SelectItem key={s} value={s}>
+                <span className="inline-flex items-center gap-2">
+                  <span aria-hidden>{sourceFlag(s)}</span>
+                  {sourceLabel(s)}
+                </span>
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
         <Select value={String(pageSize)} onValueChange={v => setPageSize(Number(v))}>
