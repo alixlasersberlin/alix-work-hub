@@ -11,6 +11,7 @@ import CustomerEditDialog from '@/components/CustomerEditDialog';
 import CustomerDeleteDialog from '@/components/CustomerDeleteDialog';
 import { VipBadge } from '@/components/VipBadge';
 import { isCustomerVip, vipFirst } from '@/lib/vip';
+import { SourceBadge, sourceLabel, sourceFlag } from '@/lib/source-system';
 
 type SortField = 'company_name' | 'contact_name' | 'created_at';
 type SortDir = 'asc' | 'desc';
@@ -147,7 +148,14 @@ export default function Customers() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Alle Quellen</SelectItem>
-            {sources.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            {sources.map(s => (
+              <SelectItem key={s} value={s}>
+                <span className="inline-flex items-center gap-2">
+                  <span aria-hidden>{sourceFlag(s)}</span>
+                  {sourceLabel(s)}
+                </span>
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
         <Select value={String(pageSize)} onValueChange={v => setPageSize(Number(v))}>
@@ -237,7 +245,7 @@ export default function Customers() {
                     <td className="px-4 py-3 text-muted-foreground">{c.contact_name || '—'}</td>
                     <td className="px-4 py-3 text-muted-foreground">{c.email || '—'}</td>
                     <td className="px-4 py-3 text-muted-foreground">{c.phone || '—'}</td>
-                    <td className="px-4 py-3"><span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-accent/10 text-accent-foreground">{c.source_system}</span></td>
+                    <td className="px-4 py-3"><SourceBadge source={c.source_system} /></td>
                     <td className="px-4 py-3 text-muted-foreground text-xs">{new Date(c.created_at).toLocaleDateString('de-DE')}</td>
                     {isAdmin && (
                       <td className="px-4 py-3 text-right">

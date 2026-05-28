@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { withAt } from '@/lib/atSuffix';
+import { sourceLabel, sourceFlag } from '@/lib/source-system';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
@@ -267,7 +268,7 @@ export default function OrderDetail() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {order.order_date ? new Date(order.order_date).toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' }) : '—'}
-            {' · '}{order.source_system}
+            {' · '}<span>{sourceFlag(order.source_system)} {sourceLabel(order.source_system)}</span>
           </p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
@@ -389,7 +390,7 @@ export default function OrderDetail() {
                 ['Betrag', order.total_amount != null ? Number(order.total_amount).toLocaleString('de-DE', { style: 'currency', currency: order.currency || 'EUR' }) : '—'],
                 ['Währung', order.currency],
                 ['Bestelldatum', order.order_date ? new Date(order.order_date).toLocaleDateString('de-DE') : '—'],
-                ['Quelle', order.source_system],
+                ['Quelle', `${sourceFlag(order.source_system)} ${sourceLabel(order.source_system)}`.trim()],
                 ['Ext. Auftrags-ID', order.external_order_id],
                 ['Intern Nummer', order.internal_number],
                 ['Erstellt', new Date(order.created_at).toLocaleString('de-DE')],
