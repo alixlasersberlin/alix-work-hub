@@ -110,16 +110,18 @@ const queryClient = new QueryClient({
   },
 });
 
-const ORDER_ROLES = ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Tourenplanung', 'Finance'];
-const PLANNING_ROLES = ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung'];
+const ORDER_ROLES = ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance'];
+const PLANNING_ROLES = ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order'];
 const FINANCE_ROLES = ['Admin', 'Super Admin', 'Finance'];
-const FINANCING_ROLES = ['Admin', 'Super Admin', 'Finance', 'Finanzierungen'];
+const FINANCING_ROLES = ['Admin', 'Super Admin', 'Finance', 'Finanzierungen', 'Order'];
 const ADMIN_ROLES = ['Admin', 'Super Admin'];
-const IMPORT_ROLES = ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Read Only Audit'];
+const IMPORT_ROLES = ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Read Only Audit'];
 const SYSTEM_ROLES = ['Admin', 'Super Admin', 'Read Only Audit'];
-const PRODUCTION_ROLES = ['Admin', 'Super Admin', 'Lieferant', 'FACTORY INVOICE'];
+const PRODUCTION_ROLES = ['Admin', 'Super Admin', 'Lieferant', 'FACTORY INVOICE', 'Order'];
 const FACTORY_INVOICE_ROLES = ['Admin', 'Super Admin', 'FACTORY INVOICE'];
-const PRODUCTION_VIEW_ROLES = ['Admin', 'Super Admin', 'FACTORY INVOICE'];
+const PRODUCTION_VIEW_ROLES = ['Admin', 'Super Admin', 'FACTORY INVOICE', 'Order'];
+const ORDER_MGMT_ROLES = ['Admin', 'Super Admin', 'Order'];
+const WAREHOUSE_ROLES = ['Admin', 'Super Admin', 'Order'];
 
 function isSupplierOnly(roles: string[]) {
   return roles.includes('Lieferant') && !roles.some(r => ['Admin', 'Super Admin'].includes(r));
@@ -172,7 +174,7 @@ function HomeRoute() {
   const { roles } = useAuth();
   if (isSupplierOnly(roles)) return <Navigate to="/production" replace />;
   // Nur-Finanzierungen-Nutzer landen direkt im Finanzierungs-Bereich
-  if (roles.length > 0 && roles.every((r) => r === 'Finanzierungen')) {
+  if (roles.length > 0 && roles.every((r) => r === 'Finanzierungen', 'Order')) {
     return <Navigate to="/finanzierungen" replace />;
   }
   return <Dashboard />;
@@ -198,14 +200,14 @@ function AppRoutes() {
           <Route path="/kunden/:id" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><CustomerDetail /></ProtectedRoute>} />
           <Route path="/auftraege" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Orders /></ProtectedRoute>} />
           <Route path="/auftraege/in-klaerung" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><OrdersInClarification /></ProtectedRoute>} />
-          <Route path="/auftraege/:id" element={<ProtectedRoute requiredRoles={[...ORDER_ROLES, 'Finanzierungen']}><OrderDetail /></ProtectedRoute>} />
+          <Route path="/auftraege/:id" element={<ProtectedRoute requiredRoles={[...ORDER_ROLES, 'Finanzierungen', 'Order']}><OrderDetail /></ProtectedRoute>} />
           <Route path="/verkauf/artikel" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Artikel /></ProtectedRoute>} />
           <Route path="/verkauf/artikel/katalog" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Katalog /></ProtectedRoute>} />
           <Route path="/verkauf/artikel/kategorie" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Kategorie /></ProtectedRoute>} />
           <Route path="/verkauf/artikel/wareneingang" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Wareneingang /></ProtectedRoute>} />
           <Route path="/verkauf/artikel-uebersicht" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><ArtikelUebersicht /></ProtectedRoute>} />
           <Route path="/verkauf" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><VerkaufUebersicht /></ProtectedRoute>} />
-          <Route path="/verkauf/angebot/neu" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Auftragsverwaltung']}><AngebotErstellen /></ProtectedRoute>} />
+          <Route path="/verkauf/angebot/neu" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order']}><AngebotErstellen /></ProtectedRoute>} />
           <Route path="/verkauf/angebote" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Angebote /></ProtectedRoute>} />
           <Route path="/verkauf/anzahlungsrechnung" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Anzahlungsrechnung /></ProtectedRoute>} />
           <Route path="/verkauf/gutschriften" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Gutschriften /></ProtectedRoute>} />
@@ -254,31 +256,32 @@ function AppRoutes() {
           <Route path="/datensicherung" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Backups /></ProtectedRoute>} />
           <Route path="/rollen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Rollen /></ProtectedRoute>} />
           <Route path="/system" element={<ProtectedRoute requiredRoles={SYSTEM_ROLES}><SystemMonitoring /></ProtectedRoute>} />
-          <Route path="/order" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><ProductionOrders /></ProtectedRoute>} />
-          <Route path="/order/frei-bestellung" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><OrdersFreiBestellung /></ProtectedRoute>} />
-          <Route path="/order/timeline" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><ProductionTimeline /></ProtectedRoute>} />
+          <Route path="/order" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><ProductionOrders /></ProtectedRoute>} />
+          <Route path="/order/frei-bestellung" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><OrdersFreiBestellung /></ProtectedRoute>} />
+          <Route path="/order/timeline" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><ProductionTimeline /></ProtectedRoute>} />
           <Route path="/order/zulieferer" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Suppliers /></ProtectedRoute>} />
-          <Route path="/order/neu" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><ProductionOrderForm /></ProtectedRoute>} />
-          <Route path="/order/reklamation" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><ProductionOrders mode="reclamation" /></ProtectedRoute>} />
-          <Route path="/order/reklamation/neu" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><ProductionOrderForm mode="reclamation" /></ProtectedRoute>} />
+          <Route path="/order/neu" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><ProductionOrderForm /></ProtectedRoute>} />
+          <Route path="/order/reklamation" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><ProductionOrders mode="reclamation" /></ProtectedRoute>} />
+          <Route path="/order/reklamation/neu" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><ProductionOrderForm mode="reclamation" /></ProtectedRoute>} />
           <Route path="/order/reklamation/:id" element={<ProtectedRoute requiredRoles={PRODUCTION_VIEW_ROLES}><ProductionOrderDetail /></ProtectedRoute>} />
-          <Route path="/order/reklamation/:id/bearbeiten" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><ProductionOrderForm mode="reclamation" /></ProtectedRoute>} />
+          <Route path="/order/reklamation/:id/bearbeiten" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><ProductionOrderForm mode="reclamation" /></ProtectedRoute>} />
           <Route path="/order/:id" element={<ProtectedRoute requiredRoles={PRODUCTION_VIEW_ROLES}><ProductionOrderDetail /></ProtectedRoute>} />
-          <Route path="/order/:id/bearbeiten" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><ProductionOrderForm /></ProtectedRoute>} />
+          <Route path="/order/:id/bearbeiten" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><ProductionOrderForm /></ProtectedRoute>} />
 
           <Route path="/production" element={<ProtectedRoute requiredRoles={PRODUCTION_ROLES}><ProductionPortal /></ProtectedRoute>} />
           <Route path="/production/fertig" element={<ProtectedRoute requiredRoles={PRODUCTION_ROLES}><ProductionFertig /></ProtectedRoute>} />
           <Route path="/production/order-in" element={<ProtectedRoute requiredRoles={PRODUCTION_ROLES}><ProductionOrderIn /></ProtectedRoute>} />
           <Route path="/production/factory-invoice" element={<ProtectedRoute requiredRoles={FACTORY_INVOICE_ROLES}><FactoryInvoice /></ProtectedRoute>} />
-          <Route path="/lager" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Lager /></ProtectedRoute>} />
-          <Route path="/lager/lagergeraete" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Lagergeraete filterType="Neugerät" pageTitle="Lagergeräte" pageSubtitle="Erfassung und Übersicht aller Neugeräte im Lager" addLabel="Neues Lagergerät" dialogTitle="Lagergerät" emptyLabel="Noch keine Lagergeräte erfasst." rowAccentClass="bg-emerald-500/10 hover:bg-emerald-500/15" /></ProtectedRoute>} />
-          <Route path="/lager/leihgeraete" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Leihgeraete /></ProtectedRoute>} />
-          <Route path="/lager/equipment-area" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><EquipmentArea /></ProtectedRoute>} />
-          <Route path="/lager/equipment-area/warehouse" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><EquipmentWarehouse /></ProtectedRoute>} />
-          <Route path="/lager/equipment-area/unterwegs" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><EquipmentUnterwegs /></ProtectedRoute>} />
-          <Route path="/lager/equipment-area/produktion" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><EquipmentProduktion /></ProtectedRoute>} />
-          <Route path="/lager/equipment-area/hold" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><EquipmentHold /></ProtectedRoute>} />
-          <Route path="/lager/equipment-area/ausgeliefert" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><EquipmentAusgeliefert /></ProtectedRoute>} />
+          <Route path="/lager" element={<ProtectedRoute requiredRoles={WAREHOUSE_ROLES}><Lager /></ProtectedRoute>} />
+          <Route path="/lager/lagergeraete" element={<ProtectedRoute requiredRoles={WAREHOUSE_ROLES}><Lagergeraete filterType="Neugerät" pageTitle="Lagergeräte" pageSubtitle="Erfassung und Übersicht aller Neugeräte im Lager" addLabel="Neues Lagergerät" dialogTitle="Lagergerät" emptyLabel="Noch keine Lagergeräte erfasst." rowAccentClass="bg-emerald-500/10 hover:bg-emerald-500/15" /></ProtectedRoute>} />
+          <Route path="/lager/leihgeraete" element={<ProtectedRoute requiredRoles={WAREHOUSE_ROLES}><Leihgeraete /></ProtectedRoute>} />
+          <Route path="/lager/equipment-area" element={<ProtectedRoute requiredRoles={WAREHOUSE_ROLES}><EquipmentArea /></ProtectedRoute>} />
+          <Route path="/lager/equipment-area/warehouse" element={<ProtectedRoute requiredRoles={WAREHOUSE_ROLES}><EquipmentWarehouse /></ProtectedRoute>} />
+          <Route path="/lager/equipment-area/unterwegs" element={<ProtectedRoute requiredRoles={WAREHOUSE_ROLES}><EquipmentUnterwegs /></ProtectedRoute>} />
+          <Route path="/lager/equipment-area/produktion" element={<ProtectedRoute requiredRoles={WAREHOUSE_ROLES}><EquipmentProduktion /></ProtectedRoute>} />
+          <Route path="/lager/equipment-area/hold" element={<ProtectedRoute requiredRoles={WAREHOUSE_ROLES}><EquipmentHold /></ProtectedRoute>} />
+          <Route path="/lager/equipment-area/ausgeliefert" element={<ProtectedRoute requiredRoles={WAREHOUSE_ROLES}><EquipmentAusgeliefert /></ProtectedRoute>} />
+
         </Route>
         <Route path="/unsubscribe" element={<Unsubscribe />} />
         <Route path="*" element={<NotFound />} />
