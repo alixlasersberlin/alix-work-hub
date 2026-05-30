@@ -13,6 +13,7 @@ import {
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useAtOnly } from '@/hooks/useAtOnly';
 
 type Lang = 'de' | 'en' | 'zh';
 
@@ -139,6 +140,7 @@ interface Row {
 export default function FactoryInvoice() {
   const { roles } = useAuth();
   const canUpload = roles.includes('Super Admin') || roles.includes('FACTORY INVOICE');
+  const atOnly = useAtOnly();
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -156,17 +158,21 @@ export default function FactoryInvoice() {
 
   const load = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    let qb = supabase
       .from('production_orders')
-      .select('id, order_number, production_order_number, status, liefertermin, modellname, farbe, bearbeiter, supplier_id, approval_status, approved_at, invoice_pdf_path, payment_status, is_reclamation, supplier:suppliers(name)')
+      .select(atOnly
+        ? 'id, order_number, production_order_number, status, liefertermin, modellname, farbe, bearbeiter, supplier_id, approval_status, approved_at, invoice_pdf_path, payment_status, is_reclamation, supplier:suppliers(name), orders!inner(source_system)'
+        : 'id, order_number, production_order_number, status, liefertermin, modellname, farbe, bearbeiter, supplier_id, approval_status, approved_at, invoice_pdf_path, payment_status, is_reclamation, supplier:suppliers(name)')
       .eq('approval_status', 'approved')
       .order('approved_at', { ascending: false });
+    if (atOnly) qb = qb.eq('orders.source_system', 'zoho_eu_2');
+    const { data, error } = await qb;
     if (error) toast.error(error.message);
-    else setRows(data || []);
+    else setRows(data as any || []);
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [atOnly]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();

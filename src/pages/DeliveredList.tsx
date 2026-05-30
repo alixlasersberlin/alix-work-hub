@@ -6,6 +6,7 @@ import { Truck, Search, Loader2, Inbox, ArrowUpDown } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
 import OrderStatsBar from '@/components/OrderStatsBar';
 import { PageSizeSelector, usePagination, PaginationControls } from '@/components/PageSizeSelector';
+import { useAtOnly } from '@/hooks/useAtOnly';
 
 type SortField = 'order_number' | 'expected_shipment_date' | 'total_amount';
 type SortDir = 'asc' | 'desc';
@@ -23,23 +24,26 @@ export default function DeliveredList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const atOnly = useAtOnly();
 
   useEffect(() => {
     async function load() {
       setLoading(true);
       setError(null);
-      const { data, error: err } = await supabase
+      let qb = supabase
         .from('orders')
         .select('id, order_number, order_status, order_date, expected_shipment_date, total_amount, currency, source_system, customers(company_name, contact_name)')
         .eq('order_status', 'geliefert')
         .order(sortField, { ascending: sortDir === 'asc' })
         .limit(500);
+      if (atOnly) qb = qb.eq('source_system', 'zoho_eu_2');
+      const { data, error: err } = await qb;
       if (err) setError(err.message);
       setOrders(data ?? []);
       setLoading(false);
     }
     load();
-  }, [sortField, sortDir]);
+  }, [sortField, sortDir, atOnly]);
 
   const filtered = useMemo(() => orders.filter(o => {
     if (!search) return true;

@@ -16,6 +16,7 @@ import { OrderCard, OrderCardGrid } from '@/components/OrderCard';
 import { ALIX_MODEL_GROUPS } from '@/lib/alix-models';
 import { VipBadge } from '@/components/VipBadge';
 import { isOrderVip, vipFirst } from '@/lib/vip';
+import { useAtOnly } from '@/hooks/useAtOnly';
 
 type SortField = 'expected_shipment_date' | 'order_number' | 'total_amount';
 type SortDir = 'asc' | 'desc';
@@ -96,25 +97,28 @@ export default function PriorityList() {
   const navigate = useNavigate();
   const { drivingTimes, loading: drivingLoading, requestedIds, fetchDrivingTimes, retryFailed } = useDrivingTimes();
   const [viewMode, setViewMode] = useViewMode();
+  const atOnly = useAtOnly();
 
   useEffect(() => {
     async function load() {
       setLoading(true);
       setError(null);
-      const { data, error: err } = await supabase
+      let qb = supabase
         .from('orders')
         .select('id, order_number, order_status, order_date, expected_shipment_date, total_amount, currency, source_system, shipping_address, billing_address, is_vip, customers(company_name, contact_name, shipping_address, billing_address, is_vip), order_items(item_name, description, sku)')
         .not('expected_shipment_date', 'is', null)
         .in('order_status', ['overdue', 'Overdue', 'invoiced', 'Invoiced', 'open', 'Open', 'offen', 'Offen', 'approved', 'Approved'])
         .order(sortField, { ascending: sortDir === 'asc' })
         .limit(500);
+      if (atOnly) qb = qb.eq('source_system', 'zoho_eu_2');
+      const { data, error: err } = await qb;
       if (err) setError(err.message);
       const loaded = (data ?? []) as any as PrioOrder[];
       setOrders(loaded);
       setLoading(false);
     }
     load();
-  }, [sortField, sortDir]);
+  }, [sortField, sortDir, atOnly]);
 
   const statuses = [...new Set(orders.map(o => o.order_status).filter(Boolean))];
 

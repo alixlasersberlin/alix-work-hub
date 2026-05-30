@@ -12,6 +12,7 @@ import OrderDeferDialog from '@/components/OrderDeferDialog';
 import { ViewToggle } from '@/components/ViewToggle';
 import { useViewMode } from '@/hooks/useViewMode';
 import { OrderCard, OrderCardGrid } from '@/components/OrderCard';
+import { useAtOnly } from '@/hooks/useAtOnly';
 
 const DEFER_STATUS = 'zurückgestellt';
 
@@ -27,16 +28,19 @@ export default function OrdersInClarification() {
   const { isAdmin, hasRole } = useAuth();
   const canWrite = isAdmin || hasRole('Auftragsverwaltung');
   const [viewMode, setViewMode] = useViewMode();
+  const atOnly = useAtOnly();
 
   async function load() {
     setLoading(true);
     setError(null);
-    const { data, error: err } = await supabase
+    let qb = supabase
       .from('orders')
       .select('*, customers(company_name, contact_name, shipping_address, billing_address)')
       .eq('order_status', DEFER_STATUS)
       .order('expected_shipment_date', { ascending: true, nullsFirst: false })
       .limit(500);
+    if (atOnly) qb = qb.eq('source_system', 'zoho_eu_2');
+    const { data, error: err } = await qb;
     if (err) setError(err.message);
     setOrders(data ?? []);
     setLoading(false);
@@ -54,7 +58,7 @@ export default function OrdersInClarification() {
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, []);
+  }, [atOnly]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
