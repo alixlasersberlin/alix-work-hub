@@ -161,7 +161,7 @@ export default function OrdersFreiBestellung() {
     setLoading(false);
   };
 
-  useEffect(() => { reload(); }, []);
+  useEffect(() => { reload(); }, [atOnly]);
 
   const matchesByOrder = useMemo(() => {
     const m: Record<string, FreeDevice[]> = {};
