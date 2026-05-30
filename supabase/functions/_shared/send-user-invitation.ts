@@ -15,12 +15,17 @@ export async function sendUserInvitationEmail({
   userId,
   email,
 }: SendUserInvitationParams) {
-  const { error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email);
+  const siteUrl = Deno.env.get("SITE_URL") ?? "https://alix-finance.de";
+  const redirectTo = `${siteUrl.replace(/\/$/, "")}/passwort-setzen`;
+
+  const { error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
+    redirectTo,
+  });
 
   if (inviteError) {
     const { error: magicErr } = await adminClient.auth.signInWithOtp({
       email,
-      options: { shouldCreateUser: false },
+      options: { shouldCreateUser: false, emailRedirectTo: redirectTo },
     });
 
     if (magicErr) {
