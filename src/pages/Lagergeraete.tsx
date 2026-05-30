@@ -493,8 +493,7 @@ export default function Lagergeraete({
     setOpen(true);
   };
 
-  const markAsDelivered = async (d: LagerDevice) => {
-    if (!confirm(`Gerät "${d.serial_number}" als ausgeliefert markieren?\n\nEs wird aus dem Bestand entfernt und unter „Ausgeliefert" geführt.`)) return;
+  const performMarkAsDelivered = async (d: LagerDevice) => {
     const typPart = getDeviceTypeFromNotes(d.notes) === 'Leihgerät' ? '[Typ: Leihgerät] ' : '[Typ: Neugerät] ';
     const rest = (d.notes ?? '')
       .replace(/\s*\[Status:\s*[^\]]+\]\s*/g, ' ')
@@ -513,6 +512,8 @@ export default function Lagergeraete({
     setDevices((prev) => prev.map((x) => x.id === d.id ? { ...x, notes: newNotes } : x));
     toast.success(`Gerät ${d.serial_number} als ausgeliefert markiert.`);
   };
+
+  const markAsDelivered = (d: LagerDevice) => setDeliverDevice(d);
 
 
   const handleSubmit = async (e: React.FormEvent) => {
