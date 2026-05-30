@@ -4,6 +4,7 @@ import { Flame, GanttChart, Package, ChevronDown, Radio } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { withAt } from '@/lib/atSuffix';
 import { useDesignVariant } from '@/hooks/useDesignVariant';
+import { useAtOnly } from '@/hooks/useAtOnly';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -59,6 +60,7 @@ function dateTone(days: number | null): string {
 
 export default function AuroraPrioTicker() {
   const { variant } = useDesignVariant();
+  const atOnly = useAtOnly();
   const [mode, setMode] = useState<Mode>(() => {
     if (typeof window === 'undefined') return 'prio';
     const stored = window.localStorage.getItem(MODE_STORAGE_KEY) as Mode | null;
@@ -78,13 +80,13 @@ export default function AuroraPrioTicker() {
     let cancelled = false;
 
     async function loadPrio() {
-      const { data } = await supabase
+      let q = supabase
         .from('orders')
         .select('id, order_number, source_system, expected_shipment_date, customers(company_name, contact_name)')
         .not('expected_shipment_date', 'is', null)
-        .in('order_status', ['overdue', 'Overdue', 'invoiced', 'Invoiced', 'open', 'Open', 'offen', 'Offen', 'approved', 'Approved'])
-        .order('expected_shipment_date', { ascending: true })
-        .limit(10);
+        .in('order_status', ['overdue', 'Overdue', 'invoiced', 'Invoiced', 'open', 'Open', 'offen', 'Offen', 'approved', 'Approved']);
+      if (atOnly) q = q.eq('source_system', 'zoho_eu_2');
+      const { data } = await q.order('expected_shipment_date', { ascending: true }).limit(10);
       return (data ?? []).map((r: any): TickerItem => {
         const d = daysUntil(r.expected_shipment_date);
         const name = r.customers?.company_name || r.customers?.contact_name || '—';
@@ -99,12 +101,12 @@ export default function AuroraPrioTicker() {
     }
 
     async function loadTimeline() {
-      const { data } = await supabase
+      let q = supabase
         .from('production_orders')
-        .select('id, production_order_number, order_number, modellname, liefertermin, customer_name_snapshot')
-        .not('liefertermin', 'is', null)
-        .order('liefertermin', { ascending: true })
-        .limit(10);
+        .select('id, production_order_number, order_number, modellname, liefertermin, customer_name_snapshot, orders!inner(source_system)')
+        .not('liefertermin', 'is', null);
+      if (atOnly) q = q.eq('orders.source_system', 'zoho_eu_2');
+      const { data } = await q.order('liefertermin', { ascending: true }).limit(10);
       return (data ?? []).map((r: any): TickerItem => {
         const d = daysUntil(r.liefertermin);
         const num = r.production_order_number || r.order_number || '—';
@@ -120,11 +122,13 @@ export default function AuroraPrioTicker() {
     }
 
     async function loadLager() {
-      const { data } = await supabase
+      let q = supabase
         .from('lager_devices')
-        .select('id, serial_number, model_name, entry_date, reserved_order_id')
-        .order('entry_date', { ascending: false })
-        .limit(50);
+        .select(atOnly
+          ? 'id, serial_number, model_name, entry_date, reserved_order_id, orders!inner(source_system)'
+          : 'id, serial_number, model_name, entry_date, reserved_order_id');
+      if (atOnly) q = q.eq('orders.source_system', 'zoho_eu_2');
+      const { data } = await q.order('entry_date', { ascending: false }).limit(50);
       return (data ?? []).map((r: any): TickerItem => {
         const reserved = !!r.reserved_order_id;
         return {
@@ -173,10 +177,16 @@ export default function AuroraPrioTicker() {
     load();
     const iv = setInterval(load, 5 * 60 * 1000);
     return () => { cancelled = true; clearInterval(iv); };
-  }, [variant, mode]);
+  }, [variant, mode, atOnly]);
+
+  // Für Rolle Österreich: CNN-News ausblenden (kein AT-Bezug) und ggf. auf 'prio' zurücksetzen.
+  useEffect(() => {
+    if (atOnly && mode === 'cnn') setMode('prio');
+  }, [atOnly, mode]);
 
   if (variant !== 'aurora') return null;
 
+  const visibleModes = atOnly ? MODES.filter(m => m.value !== 'cnn') : MODES;
   const current = MODES.find(m => m.value === mode)!;
   const Icon = current.icon;
   const loop = [...items, ...items];
@@ -190,7 +200,7 @@ export default function AuroraPrioTicker() {
           <ChevronDown className="w-3 h-3 opacity-70" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" side="bottom" sideOffset={10} className="z-[9999] min-w-[420px] p-2">
-          {MODES.map((m) => {
+          {visibleModes.map((m) => {
             const MIcon = m.icon;
             return (
               <DropdownMenuItem
