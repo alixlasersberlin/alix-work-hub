@@ -16,6 +16,7 @@ import {
 import { createRestbestellungMarker, hasPendingRestbestellung } from '@/lib/restbestellung';
 import BankFinancingTab from '@/components/BankFinancingTab';
 import AtPurchaseTab from '@/components/AtPurchaseTab';
+import AtApprovalTab from '@/components/AtApprovalTab';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -219,6 +220,7 @@ export default function OrderDetail() {
 
   const isAtOrder = order?.source_system === 'zoho_eu_2';
   const canSeeAtPurchase = isAtOrder && (hasRole('Super Admin') || hasRole('Österreich'));
+  const canSeeAtApproval = isAtOrder && (hasRole('Super Admin') || hasRole('Admin') || hasRole('Österreich'));
 
   const tabGroups = [
     {
@@ -235,7 +237,7 @@ export default function OrderDetail() {
         { key: 'deposit', label: 'Anzahlung', icon: Euro, badge: order?.deposit_ok ? '✓' : undefined },
         { key: 'financing', label: 'Finanzierung', icon: Landmark },
         ...(canSeeAtPurchase ? [{ key: 'at_purchase', label: 'Einkauf AT', icon: ShoppingBag }] : []),
-        ...(canSeeAtPurchase ? [{ key: 'at_approval', label: 'Freigabe AT', icon: CheckCircle2 }] : []),
+        ...(canSeeAtApproval ? [{ key: 'at_approval', label: 'Freigabe AT', icon: CheckCircle2 }] : []),
       ],
     },
     {
@@ -710,19 +712,8 @@ export default function OrderDetail() {
       )}
 
       {/* Freigabe AT Tab */}
-      {activeTab === 'at_approval' && id && canSeeAtPurchase && (
-        <div className="rounded-xl border border-amber-500/30 bg-gradient-to-br from-amber-500/5 to-transparent p-6 card-glow max-w-2xl">
-          <div className="flex items-center gap-2 mb-1">
-            <CheckCircle2 className="w-4 h-4 text-amber-400" />
-            <h2 className="text-base font-display font-bold text-foreground">Freigabe AT</h2>
-          </div>
-          <p className="text-xs text-muted-foreground mb-6">
-            Freigabe-Workflow für Alix Austria · Sichtbar für Super Admin & Rolle „Österreich"
-          </p>
-          <div className="text-sm text-muted-foreground py-8 text-center border border-dashed border-border rounded-lg">
-            Noch keine Freigabe-Aktionen konfiguriert.
-          </div>
-        </div>
+      {activeTab === 'at_approval' && id && canSeeAtApproval && (
+        <AtApprovalTab orderId={id} />
       )}
 
       {/* Packages Tab */}
