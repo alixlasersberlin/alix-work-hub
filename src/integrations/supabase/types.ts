@@ -673,6 +673,57 @@ export type Database = {
           },
         ]
       }
+      order_at_approval: {
+        Row: {
+          bestellfreigabe: boolean
+          bezahlt: boolean
+          created_at: string
+          created_by: string | null
+          datum_zahlung: string | null
+          id: string
+          name: string | null
+          oder: string | null
+          order_id: string
+          rechnung: boolean
+          rechnungswert: number | null
+          restsumme: number | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          bestellfreigabe?: boolean
+          bezahlt?: boolean
+          created_at?: string
+          created_by?: string | null
+          datum_zahlung?: string | null
+          id?: string
+          name?: string | null
+          oder?: string | null
+          order_id: string
+          rechnung?: boolean
+          rechnungswert?: number | null
+          restsumme?: number | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          bestellfreigabe?: boolean
+          bezahlt?: boolean
+          created_at?: string
+          created_by?: string | null
+          datum_zahlung?: string | null
+          id?: string
+          name?: string | null
+          oder?: string | null
+          order_id?: string
+          rechnung?: boolean
+          rechnungswert?: number | null
+          restsumme?: number | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       order_at_purchase: {
         Row: {
           created_at: string
