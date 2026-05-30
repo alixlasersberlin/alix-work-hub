@@ -66,17 +66,8 @@ export default function SetPassword() {
       const { error: updateError } = await supabase.auth.updateUser({ password });
       if (updateError) throw updateError;
 
-      // Update profile: mark password_reset_required = false, invitation_status = accepted
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase
-          .from('user_profiles')
-          .update({
-            password_reset_required: false,
-            invitation_status: 'accepted',
-          })
-          .eq('id', user.id);
-      }
+      // Mark password setup as completed (RPC bypasses self-update trigger)
+      await supabase.rpc('complete_password_setup');
 
       setSuccess(true);
       // Sign out so user logs in fresh with new password + OTP
