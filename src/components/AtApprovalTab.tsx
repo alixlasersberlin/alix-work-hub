@@ -253,7 +253,7 @@ export default function AtApprovalTab({ orderId }: Props) {
           </Button>
         </div>
       ) : (
-        <p className="text-xs text-amber-400/80 italic mt-4">Nur lesend – Bearbeitung erfordert Super-Admin-Rolle.</p>
+        <p className="text-xs text-amber-400/80 italic mt-4">Nur lesend – Bearbeitung erfordert Admin- oder Super-Admin-Rolle.</p>
       )}
     </div>
   );
