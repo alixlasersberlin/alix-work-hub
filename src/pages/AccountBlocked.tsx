@@ -50,16 +50,7 @@ function PasswordResetForm() {
       const { error: updateError } = await supabase.auth.updateUser({ password });
       if (updateError) throw updateError;
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase
-          .from('user_profiles')
-          .update({
-            password_reset_required: false,
-            invitation_status: 'accepted',
-          })
-          .eq('id', user.id);
-      }
+      await supabase.rpc('complete_password_setup');
 
       setSuccess(true);
       setTimeout(async () => {
