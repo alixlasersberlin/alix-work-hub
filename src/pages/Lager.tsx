@@ -182,7 +182,7 @@ export default function Lager() {
       <PageHeader
         icon={<Warehouse className="w-6 h-6 text-primary" />}
         title="Lagerbestand"
-        subtitle={`Übersicht aller Abteilungen · ${counts.total} Geräte gesamt`}
+        subtitle={`Übersicht aller Abteilungen · ${displayedTotal} Geräte gesamt`}
       />
 
       {/* Suche */}
