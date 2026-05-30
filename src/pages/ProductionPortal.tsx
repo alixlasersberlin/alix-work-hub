@@ -330,6 +330,12 @@ export default function ProductionPortal() {
         </div>
         <div className="flex items-center gap-3">
           <DesignVariantSwitcher inline />
+          <Link
+            to="/hilfe"
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors border border-border rounded-md px-2.5 py-1.5"
+          >
+            <HelpCircle className="w-3.5 h-3.5" /> Hilfe
+          </Link>
           <div className="text-right text-xs text-muted-foreground">
             {t.loggedInAs} <span className="text-foreground font-medium">{profile?.full_name || profile?.email}</span>
           </div>
