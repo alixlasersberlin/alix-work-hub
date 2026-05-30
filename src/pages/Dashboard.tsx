@@ -254,8 +254,12 @@ export default function Dashboard() {
 
         const [vipCustomersRes, vipOrdersRes] = canSeeCustomers
           ? await Promise.all([
-              supabase.from('customers').select('id', { count: 'exact', head: true }).eq('is_vip', true),
-              supabase.from('orders').select('id', { count: 'exact', head: true }).eq('is_vip', true),
+              (atOnly
+                ? supabase.from('customers').select('id', { count: 'exact', head: true }).eq('is_vip', true).eq('source_system', 'zoho_eu_2')
+                : supabase.from('customers').select('id', { count: 'exact', head: true }).eq('is_vip', true)),
+              (atOnly
+                ? supabase.from('orders').select('id', { count: 'exact', head: true }).eq('is_vip', true).eq('source_system', 'zoho_eu_2')
+                : supabase.from('orders').select('id', { count: 'exact', head: true }).eq('is_vip', true)),
             ])
           : [{ count: 0 }, { count: 0 }];
 
