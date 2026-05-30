@@ -237,7 +237,7 @@ export default function OrderDetail() {
         { key: 'deposit', label: 'Anzahlung', icon: Euro, badge: order?.deposit_ok ? '✓' : undefined },
         { key: 'financing', label: 'Finanzierung', icon: Landmark },
         ...(canSeeAtPurchase ? [{ key: 'at_purchase', label: 'Einkauf AT', icon: ShoppingBag }] : []),
-        ...(canSeeAtPurchase ? [{ key: 'at_approval', label: 'Freigabe AT', icon: CheckCircle2 }] : []),
+        ...(canSeeAtApproval ? [{ key: 'at_approval', label: 'Freigabe AT', icon: CheckCircle2 }] : []),
       ],
     },
     {
