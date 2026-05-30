@@ -15,8 +15,7 @@ interface Props {
 
 export default function AtApprovalTab({ orderId }: Props) {
   const { hasRole } = useAuth();
-  const isSuperAdmin = hasRole('Super Admin');
-  const canWrite = isSuperAdmin;
+  const canWrite = hasRole('Super Admin') || hasRole('Admin');
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
