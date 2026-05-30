@@ -357,14 +357,29 @@ export default function AppLayout() {
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
+      const baseProdSel = atOnly
+        ? supabase.from('production_orders').select('*, orders!inner(source_system)', { count: 'exact', head: true }).eq('orders.source_system', 'zoho_eu_2')
+        : supabase.from('production_orders').select('*', { count: 'exact', head: true });
+      const reklaProd = atOnly
+        ? supabase.from('production_orders').select('*, orders!inner(source_system)', { count: 'exact', head: true }).eq('orders.source_system', 'zoho_eu_2').eq('is_reclamation', true)
+        : supabase.from('production_orders').select('*', { count: 'exact', head: true }).eq('is_reclamation', true);
+      const factoryProd = atOnly
+        ? supabase.from('production_orders').select('*, orders!inner(source_system)', { count: 'exact', head: true }).eq('orders.source_system', 'zoho_eu_2').eq('is_reclamation', false)
+        : supabase.from('production_orders').select('*', { count: 'exact', head: true }).eq('is_reclamation', false);
+      const approvedProd = atOnly
+        ? supabase.from('production_orders').select('*, orders!inner(source_system)', { count: 'exact', head: true }).eq('orders.source_system', 'zoho_eu_2').eq('approval_status', 'approved')
+        : supabase.from('production_orders').select('*', { count: 'exact', head: true }).eq('approval_status', 'approved');
+      const freiOrdersQ = atOnly
+        ? supabase.from('orders').select('id').eq('source_system', 'zoho_eu_2').eq('deposit_ok', true).not('deposit_ok_by', 'is', null).neq('deposit_ok_by', '').limit(2000)
+        : supabase.from('orders').select('id').eq('deposit_ok', true).not('deposit_ok_by', 'is', null).neq('deposit_ok_by', '').limit(2000);
       const [allRes, reklaRes, factoryRes, freiOrdersRes, prodOrderIdsRes, reservedDevsRes, approvedRes] = await Promise.all([
-        supabase.from('production_orders').select('*', { count: 'exact', head: true }),
-        supabase.from('production_orders').select('*', { count: 'exact', head: true }).eq('is_reclamation', true),
-        supabase.from('production_orders').select('*', { count: 'exact', head: true }).eq('is_reclamation', false),
-        supabase.from('orders').select('id').eq('deposit_ok', true).not('deposit_ok_by', 'is', null).neq('deposit_ok_by', '').limit(2000),
+        baseProdSel,
+        reklaProd,
+        factoryProd,
+        freiOrdersQ,
         supabase.from('production_orders').select('order_id').limit(2000),
         supabase.from('lager_devices').select('reserved_order_id').not('reserved_order_id', 'is', null).limit(2000),
-        supabase.from('production_orders').select('*', { count: 'exact', head: true }).eq('approval_status', 'approved'),
+        approvedProd,
       ]);
       if (cancelled) return;
       const all = allRes.count ?? 0;
