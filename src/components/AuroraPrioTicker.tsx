@@ -177,10 +177,16 @@ export default function AuroraPrioTicker() {
     load();
     const iv = setInterval(load, 5 * 60 * 1000);
     return () => { cancelled = true; clearInterval(iv); };
-  }, [variant, mode]);
+  }, [variant, mode, atOnly]);
+
+  // Für Rolle Österreich: CNN-News ausblenden (kein AT-Bezug) und ggf. auf 'prio' zurücksetzen.
+  useEffect(() => {
+    if (atOnly && mode === 'cnn') setMode('prio');
+  }, [atOnly, mode]);
 
   if (variant !== 'aurora') return null;
 
+  const visibleModes = atOnly ? MODES.filter(m => m.value !== 'cnn') : MODES;
   const current = MODES.find(m => m.value === mode)!;
   const Icon = current.icon;
   const loop = [...items, ...items];
@@ -194,7 +200,7 @@ export default function AuroraPrioTicker() {
           <ChevronDown className="w-3 h-3 opacity-70" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" side="bottom" sideOffset={10} className="z-[9999] min-w-[420px] p-2">
-          {MODES.map((m) => {
+          {visibleModes.map((m) => {
             const MIcon = m.icon;
             return (
               <DropdownMenuItem
