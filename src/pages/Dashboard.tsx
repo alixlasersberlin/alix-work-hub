@@ -141,6 +141,7 @@ function TableSkeleton({ rows = 3 }: { rows?: number }) {
 export default function Dashboard() {
   const navigate = useNavigate();
   const { profile, roles, hasRole, hasAnyRole, isAdmin } = useAuth();
+  const atOnly = useAtOnly();
   const [stats, setStats] = useState<Stats>({ freePoolDevices: 0, leihgeraete: 0, openOrders: 0, routes: 0, openFinance: 0, vipCustomers: 0, vipOrders: 0 });
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [shipmentOrders, setShipmentOrders] = useState<ShipmentOrder[]>([]);
@@ -163,10 +164,10 @@ export default function Dashboard() {
   });
   const toggle = (k: string) => setCollapsed(p => ({ ...p, [k]: !p[k] }));
 
-  const canSeeOrders = isAdmin || hasAnyRole(['Auftragsverwaltung', 'Tourenplanung', 'Finance']);
+  const canSeeOrders = isAdmin || hasAnyRole(['Auftragsverwaltung', 'Tourenplanung', 'Finance', 'Österreich']);
   const canSeeRoutes = isAdmin || hasAnyRole(['Tourenplanung', 'Auftragsverwaltung']);
   const canSeeFinance = isAdmin || hasRole('Finance');
-  const canSeeCustomers = isAdmin || hasAnyRole(['Auftragsverwaltung', 'Tourenplanung', 'Finance']);
+  const canSeeCustomers = isAdmin || hasAnyRole(['Auftragsverwaltung', 'Tourenplanung', 'Finance', 'Österreich']);
   const canSeeAudit = isAdmin || hasRole('Read Only Audit');
 
   useEffect(() => {
