@@ -122,11 +122,13 @@ export default function AuroraPrioTicker() {
     }
 
     async function loadLager() {
-      const { data } = await supabase
+      let q = supabase
         .from('lager_devices')
-        .select('id, serial_number, model_name, entry_date, reserved_order_id')
-        .order('entry_date', { ascending: false })
-        .limit(50);
+        .select(atOnly
+          ? 'id, serial_number, model_name, entry_date, reserved_order_id, orders!inner(source_system)'
+          : 'id, serial_number, model_name, entry_date, reserved_order_id');
+      if (atOnly) q = q.eq('orders.source_system', 'zoho_eu_2');
+      const { data } = await q.order('entry_date', { ascending: false }).limit(50);
       return (data ?? []).map((r: any): TickerItem => {
         const reserved = !!r.reserved_order_id;
         return {
