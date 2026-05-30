@@ -44,6 +44,7 @@ export default function Lager() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchHit[]>([]);
   const [searching, setSearching] = useState(false);
+  const atOnly = useAtOnly();
 
   useEffect(() => {
     (async () => {
