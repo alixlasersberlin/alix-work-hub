@@ -16,6 +16,7 @@ import {
 import { StatusBadge } from '@/components/StatusBadge';
 import { useViewMode } from '@/hooks/useViewMode';
 import { ViewToggle } from '@/components/ViewToggle';
+import { useAtOnly } from '@/hooks/useAtOnly';
 
 type SortField = 'planned_date' | 'priority';
 type SortDir = 'asc' | 'desc';
@@ -42,19 +43,24 @@ export default function RoutePlanning() {
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [view, setView] = useState<'list' | 'calendar'>('list');
   const [viewMode, setViewMode] = useViewMode();
+  const atOnly = useAtOnly();
 
   useEffect(() => {
     loadPlans();
-  }, [sortField, sortDir]);
+  }, [sortField, sortDir, atOnly]);
 
   async function loadPlans() {
     setLoading(true);
     setError(null);
-    const { data, error: err } = await supabase
+    let qb = supabase
       .from('route_plans')
-      .select('*, orders(order_number, order_status, shipping_address, billing_address, customers(company_name, contact_name, shipping_address, billing_address))')
+      .select(atOnly
+        ? '*, orders!inner(order_number, order_status, source_system, shipping_address, billing_address, customers(company_name, contact_name, shipping_address, billing_address))'
+        : '*, orders(order_number, order_status, shipping_address, billing_address, customers(company_name, contact_name, shipping_address, billing_address))')
       .order(sortField === 'priority' ? 'priority' : 'planned_date', { ascending: sortDir === 'asc' })
       .limit(500);
+    if (atOnly) qb = qb.eq('orders.source_system', 'zoho_eu_2');
+    const { data, error: err } = await qb;
     if (err) setError(err.message);
     const plansData = data ?? [];
     // Fetch reserved devices and order items for these orders

@@ -11,6 +11,7 @@ import OrderStatsBar from '@/components/OrderStatsBar';
 import { PageSizeSelector, usePagination, PaginationControls } from '@/components/PageSizeSelector';
 import { toast } from 'sonner';
 import { createRestbestellungMarker, fetchPendingRestbestellungOrderIds } from '@/lib/restbestellung';
+import { useAtOnly } from '@/hooks/useAtOnly';
 
 type SortField = 'order_number' | 'expected_shipment_date' | 'total_amount';
 type SortDir = 'asc' | 'desc';
@@ -32,18 +33,21 @@ export default function PartialDeliveryList() {
   const [editOrder, setEditOrder] = useState<{ id: string; order_number: string | null } | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [pendingRest, setPendingRest] = useState<Set<string>>(new Set());
+  const atOnly = useAtOnly();
 
   useEffect(() => {
     async function load() {
       setLoading(true);
       setError(null);
+      let qb = supabase
+        .from('orders')
+        .select('id, order_number, order_status, order_date, expected_shipment_date, total_amount, currency, source_system, customers(company_name, contact_name)')
+        .eq('order_status', 'teilgeliefert')
+        .order(sortField, { ascending: sortDir === 'asc' })
+        .limit(500);
+      if (atOnly) qb = qb.eq('source_system', 'zoho_eu_2');
       const [{ data, error: err }, pending] = await Promise.all([
-        supabase
-          .from('orders')
-          .select('id, order_number, order_status, order_date, expected_shipment_date, total_amount, currency, source_system, customers(company_name, contact_name)')
-          .eq('order_status', 'teilgeliefert')
-          .order(sortField, { ascending: sortDir === 'asc' })
-          .limit(500),
+        qb,
         fetchPendingRestbestellungOrderIds(),
       ]);
       if (err) setError(err.message);
@@ -52,7 +56,7 @@ export default function PartialDeliveryList() {
       setLoading(false);
     }
     load();
-  }, [sortField, sortDir, reloadKey]);
+  }, [sortField, sortDir, reloadKey, atOnly]);
 
   const handleCreateRest = async (orderId: string, orderNumber: string | null) => {
     const { error } = await createRestbestellungMarker(orderId);

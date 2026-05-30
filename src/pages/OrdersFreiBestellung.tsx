@@ -16,6 +16,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/h
 import { createPDF } from '@/lib/pdf-utils';
 import autoTable from 'jspdf-autotable';
 import { fetchPendingRestbestellungOrderIds } from '@/lib/restbestellung';
+import { useAtOnly } from '@/hooks/useAtOnly';
 
 function formatDate(date: string | null) {
   if (!date) return '—';
@@ -65,6 +66,7 @@ export default function OrdersFreiBestellung() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const atOnly = useAtOnly();
 
   const [reserveOrder, setReserveOrder] = useState<any | null>(null);
   const [reserveDeviceId, setReserveDeviceId] = useState<string>('');
@@ -78,7 +80,7 @@ export default function OrdersFreiBestellung() {
     // Zusätzlich: teilgelieferte Aufträge mit "Restbestellung pending"-Marker
     const pendingRestIds = await fetchPendingRestbestellungOrderIds();
 
-    const baseQuery = supabase
+    let baseQuery = supabase
       .from('orders')
       .select('id, order_number, source_system, order_status, order_date, expected_shipment_date, total_amount, currency, deposit_ok, deposit_ok_by, deposit_ok_at, deposit_amount, customers(company_name, contact_name)')
       .eq('deposit_ok', true)
@@ -86,14 +88,18 @@ export default function OrdersFreiBestellung() {
       .neq('deposit_ok_by', '')
       .order('deposit_ok_at', { ascending: false })
       .limit(500);
+    if (atOnly) baseQuery = baseQuery.eq('source_system', 'zoho_eu_2');
 
-    const restQuery = pendingRestIds.size > 0
-      ? supabase
-          .from('orders')
-          .select('id, order_number, source_system, order_status, order_date, expected_shipment_date, total_amount, currency, deposit_ok, deposit_ok_by, deposit_ok_at, deposit_amount, customers(company_name, contact_name)')
-          .in('id', Array.from(pendingRestIds))
-          .eq('order_status', 'teilgeliefert')
-      : Promise.resolve({ data: [] as any[], error: null });
+    let restQuery: any = Promise.resolve({ data: [] as any[], error: null });
+    if (pendingRestIds.size > 0) {
+      let rq = supabase
+        .from('orders')
+        .select('id, order_number, source_system, order_status, order_date, expected_shipment_date, total_amount, currency, deposit_ok, deposit_ok_by, deposit_ok_at, deposit_amount, customers(company_name, contact_name)')
+        .in('id', Array.from(pendingRestIds))
+        .eq('order_status', 'teilgeliefert');
+      if (atOnly) rq = rq.eq('source_system', 'zoho_eu_2');
+      restQuery = rq;
+    }
 
     const [{ data, error: err }, { data: restData }] = await Promise.all([baseQuery, restQuery]);
     if (err) setError(err.message);
@@ -155,7 +161,7 @@ export default function OrdersFreiBestellung() {
     setLoading(false);
   };
 
-  useEffect(() => { reload(); }, []);
+  useEffect(() => { reload(); }, [atOnly]);
 
   const matchesByOrder = useMemo(() => {
     const m: Record<string, FreeDevice[]> = {};

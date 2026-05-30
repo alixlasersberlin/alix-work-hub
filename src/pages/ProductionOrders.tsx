@@ -28,6 +28,7 @@ import {
   type LagerDeviceRow,
   type LagerMatch,
 } from '@/lib/lager-match';
+import { useAtOnly } from '@/hooks/useAtOnly';
 
 type Mode = 'order' | 'reclamation';
 type Lang = 'de' | 'en' | 'zh';
@@ -120,6 +121,7 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
   const [viewMode, setViewMode] = useViewMode();
   const { hasRole, user } = useAuth();
   const isSuperAdmin = hasRole('Super Admin');
+  const atOnly = useAtOnly();
   const [lagerMatches, setLagerMatches] = useState<Record<string, LagerMatch | 'none'>>({});
 
   const t = T[lang];
@@ -133,11 +135,15 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
 
   const load = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    let qb = supabase
       .from('production_orders')
-      .select('*, supplier:suppliers(name, email)')
+      .select(atOnly
+        ? '*, supplier:suppliers(name, email), orders!inner(source_system)'
+        : '*, supplier:suppliers(name, email)')
       .eq('is_reclamation', isReclamation)
       .order('created_at', { ascending: false });
+    if (atOnly) qb = qb.eq('orders.source_system', 'zoho_eu_2');
+    const { data, error } = await qb;
     if (error) toast.error(error.message);
     else {
       const list = (data || []).map((r: any) => ({
@@ -149,7 +155,7 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, [isReclamation]);
+  useEffect(() => { load(); }, [isReclamation, atOnly]);
 
   // Auto-Check: prüft jede Bestellung gegen freie Lagergeräte (Lager/Unterwegs/Produktion/Warehouse/Hold).
   // Bei Treffer: Gerät auf order_id reservieren + Notiz in production_orders.anmerkungen anhängen.

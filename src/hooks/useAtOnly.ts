@@ -1,11 +1,12 @@
 import { useAuth } from '@/hooks/useAuth';
 
 /**
- * Liefert true, wenn der aktuelle Nutzer ausschließlich die Rolle „Österreich" besitzt
- * (oder zumindest kein Admin/Super Admin ist). In diesem Fall werden alle Listen
- * auf -AT (source_system='zoho_eu_2') eingeschränkt.
+ * Liefert true, sobald der aktuelle Nutzer die Rolle „Österreich" besitzt.
+ * In diesem Fall werden alle Listen/Abfragen in der UI strikt auf -AT
+ * (source_system='zoho_eu_2') eingeschränkt – unabhängig davon, ob der
+ * Nutzer zusätzlich Admin/Super Admin ist.
  */
 export function useAtOnly(): boolean {
-  const { hasRole, isAdmin } = useAuth();
-  return hasRole('Österreich') && !isAdmin;
+  const { hasRole } = useAuth();
+  return hasRole('Österreich');
 }
