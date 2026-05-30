@@ -179,6 +179,8 @@ export default function Detailsuche() {
       if (customerIds) q = q.in('customer_id', Array.from(customerIds));
       if (modelOrderIds) q = q.in('id', Array.from(modelOrderIds));
       if (serialOrderIds) q = q.in('id', Array.from(serialOrderIds));
+      // Rolle Österreich: ausschließlich Aufträge aus Zoho EU 2 (-AT)
+      if (atOnly) q = q.eq('source_system', 'zoho_eu_2');
 
       const { data: rows, error: oErr } = await q;
       if (oErr) throw oErr;
