@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useAtOnly } from '@/hooks/useAtOnly';
 import { useTheme } from '@/hooks/useTheme';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -161,6 +162,7 @@ export default function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const [lagerCounts, setLagerCounts] = useState<Record<string, number>>({});
+  const atOnly = useAtOnly();
   // Desktop: flexible Sidebar-Breite (px), per Drag anpassbar, in localStorage gespeichert
   const SIDEBAR_MIN = 180;
   const SIDEBAR_MAX = 480;
@@ -355,14 +357,29 @@ export default function AppLayout() {
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
+      const baseProdSel = atOnly
+        ? supabase.from('production_orders').select('*, orders!inner(source_system)', { count: 'exact', head: true }).eq('orders.source_system', 'zoho_eu_2')
+        : supabase.from('production_orders').select('*', { count: 'exact', head: true });
+      const reklaProd = atOnly
+        ? supabase.from('production_orders').select('*, orders!inner(source_system)', { count: 'exact', head: true }).eq('orders.source_system', 'zoho_eu_2').eq('is_reclamation', true)
+        : supabase.from('production_orders').select('*', { count: 'exact', head: true }).eq('is_reclamation', true);
+      const factoryProd = atOnly
+        ? supabase.from('production_orders').select('*, orders!inner(source_system)', { count: 'exact', head: true }).eq('orders.source_system', 'zoho_eu_2').eq('is_reclamation', false)
+        : supabase.from('production_orders').select('*', { count: 'exact', head: true }).eq('is_reclamation', false);
+      const approvedProd = atOnly
+        ? supabase.from('production_orders').select('*, orders!inner(source_system)', { count: 'exact', head: true }).eq('orders.source_system', 'zoho_eu_2').eq('approval_status', 'approved')
+        : supabase.from('production_orders').select('*', { count: 'exact', head: true }).eq('approval_status', 'approved');
+      const freiOrdersQ = atOnly
+        ? supabase.from('orders').select('id').eq('source_system', 'zoho_eu_2').eq('deposit_ok', true).not('deposit_ok_by', 'is', null).neq('deposit_ok_by', '').limit(2000)
+        : supabase.from('orders').select('id').eq('deposit_ok', true).not('deposit_ok_by', 'is', null).neq('deposit_ok_by', '').limit(2000);
       const [allRes, reklaRes, factoryRes, freiOrdersRes, prodOrderIdsRes, reservedDevsRes, approvedRes] = await Promise.all([
-        supabase.from('production_orders').select('*', { count: 'exact', head: true }),
-        supabase.from('production_orders').select('*', { count: 'exact', head: true }).eq('is_reclamation', true),
-        supabase.from('production_orders').select('*', { count: 'exact', head: true }).eq('is_reclamation', false),
-        supabase.from('orders').select('id').eq('deposit_ok', true).not('deposit_ok_by', 'is', null).neq('deposit_ok_by', '').limit(2000),
+        baseProdSel,
+        reklaProd,
+        factoryProd,
+        freiOrdersQ,
         supabase.from('production_orders').select('order_id').limit(2000),
         supabase.from('lager_devices').select('reserved_order_id').not('reserved_order_id', 'is', null).limit(2000),
-        supabase.from('production_orders').select('*', { count: 'exact', head: true }).eq('approval_status', 'approved'),
+        approvedProd,
       ]);
       if (cancelled) return;
       const all = allRes.count ?? 0;
@@ -418,7 +435,7 @@ export default function AppLayout() {
       supabase.removeChannel(ch2);
       supabase.removeChannel(ch3);
     };
-  }, []);
+  }, [atOnly]);
 
   useEffect(() => {
     window.dispatchEvent(new Event('einkauf-counts-refresh'));
@@ -465,10 +482,14 @@ export default function AppLayout() {
     return item.roles.some(r => roles.includes(r));
   };
 
-  const visibleItems = navItems.filter(filterByRoles).map(item => ({
-    ...item,
-    children: item.children?.filter(filterByRoles),
-  }));
+  const visibleItems = navItems
+    .filter(filterByRoles)
+    .map(item => ({
+      ...item,
+      children: item.children?.filter(filterByRoles),
+    }))
+    // Hide groups whose children are all hidden by role
+    .filter(item => !item.children || item.children.length > 0);
 
   const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/';
