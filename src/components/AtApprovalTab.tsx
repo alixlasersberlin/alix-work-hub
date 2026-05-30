@@ -212,7 +212,13 @@ export default function AtApprovalTab({ orderId }: Props) {
             onValueChange={(v) => setBestellfreigabe(v === 'ja')}
             disabled={!canWrite}
           >
-            <SelectTrigger className="bg-secondary border-amber-500/40 mt-1">
+            <SelectTrigger
+              className={`mt-1 border-2 font-semibold transition-colors ${
+                bestellfreigabe
+                  ? 'bg-green-500/20 border-green-500/60 text-green-300 hover:bg-green-500/25'
+                  : 'bg-red-500/20 border-red-500/60 text-red-300 hover:bg-red-500/25'
+              }`}
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
