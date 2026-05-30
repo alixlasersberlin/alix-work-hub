@@ -4,6 +4,7 @@ import { Flame, GanttChart, Package, ChevronDown, Radio } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { withAt } from '@/lib/atSuffix';
 import { useDesignVariant } from '@/hooks/useDesignVariant';
+import { useAtOnly } from '@/hooks/useAtOnly';
 import {
   DropdownMenu,
   DropdownMenuContent,
