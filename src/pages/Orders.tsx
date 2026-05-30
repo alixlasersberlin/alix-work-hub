@@ -39,9 +39,10 @@ export default function Orders() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [modelFilter, setModelFilter] = useState('all');
   const [searchParams] = useSearchParams();
+  const atOnly = useAtOnly();
   const initialRegion = (searchParams.get('region') as 'all' | 'de' | 'at' | null) ?? 'all';
   const [regionFilter, setRegionFilter] = useState<'all' | 'de' | 'at'>(
-    initialRegion === 'de' || initialRegion === 'at' ? initialRegion : 'all'
+    atOnly ? 'at' : (initialRegion === 'de' || initialRegion === 'at' ? initialRegion : 'all')
   );
   const [sortField, setSortField] = useState<SortField>('order_date');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
