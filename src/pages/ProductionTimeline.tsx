@@ -14,6 +14,7 @@ import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { createPDF } from '@/lib/pdf-utils';
 import autoTable from 'jspdf-autotable';
+import { useAtOnly } from '@/hooks/useAtOnly';
 
 type Row = {
   id: string;
