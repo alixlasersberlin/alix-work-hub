@@ -153,6 +153,7 @@ export default function Lagergeraete({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectionMode, setSelectionMode] = useState(false);
   const [bulkStatus, setBulkStatus] = useState<DeviceStatus>('Bestand');
+  const [deliverDevice, setDeliverDevice] = useState<LagerDevice | null>(null);
   const [bulkApplying, setBulkApplying] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
   const [bulkResending, setBulkResending] = useState(false);
@@ -492,8 +493,7 @@ export default function Lagergeraete({
     setOpen(true);
   };
 
-  const markAsDelivered = async (d: LagerDevice) => {
-    if (!confirm(`Gerät "${d.serial_number}" als ausgeliefert markieren?\n\nEs wird aus dem Bestand entfernt und unter „Ausgeliefert" geführt.`)) return;
+  const performMarkAsDelivered = async (d: LagerDevice) => {
     const typPart = getDeviceTypeFromNotes(d.notes) === 'Leihgerät' ? '[Typ: Leihgerät] ' : '[Typ: Neugerät] ';
     const rest = (d.notes ?? '')
       .replace(/\s*\[Status:\s*[^\]]+\]\s*/g, ' ')
@@ -512,6 +512,8 @@ export default function Lagergeraete({
     setDevices((prev) => prev.map((x) => x.id === d.id ? { ...x, notes: newNotes } : x));
     toast.success(`Gerät ${d.serial_number} als ausgeliefert markiert.`);
   };
+
+  const markAsDelivered = (d: LagerDevice) => setDeliverDevice(d);
 
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -1412,6 +1414,29 @@ export default function Lagergeraete({
           </Table>
         )}
       </div>
+
+      <AlertDialog open={!!deliverDevice} onOpenChange={(o) => !o && setDeliverDevice(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Gerät als ausgeliefert markieren?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Gerät „{deliverDevice?.serial_number}" wird aus dem Bestand entfernt und unter „Ausgeliefert" geführt.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                const d = deliverDevice;
+                setDeliverDevice(null);
+                if (d) await performMarkAsDelivered(d);
+              }}
+            >
+              Ja, als ausgeliefert markieren
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
