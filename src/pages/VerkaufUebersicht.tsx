@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Building2, FileText, ClipboardList, Receipt, Undo2, TrendingUp, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAtOnly } from '@/hooks/useAtOnly';
 
 type Tile = {
   key: string;
