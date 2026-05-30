@@ -117,7 +117,7 @@ export default function AtApprovalTab({ orderId }: Props) {
       </div>
       <p className="text-xs text-muted-foreground mb-6 flex items-center gap-1.5">
         <Lock className="w-3 h-3" />
-        Sichtbar für alle Rollen · Bearbeitung nur durch Admin & Super Admin
+        Sichtbar für Super Admin, Admin & Rolle Österreich · Bearbeitung nur durch Admin & Super Admin
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
