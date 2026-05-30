@@ -4,7 +4,7 @@ import { Flame, GanttChart, Package, ChevronDown, Radio } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { withAt } from '@/lib/atSuffix';
 import { useDesignVariant } from '@/hooks/useDesignVariant';
-import { useAtOnly } from '@/hooks/useAtOnly';
+import { useAuth } from '@/hooks/useAuth';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -60,7 +60,8 @@ function dateTone(days: number | null): string {
 
 export default function AuroraPrioTicker() {
   const { variant } = useDesignVariant();
-  const atOnly = useAtOnly();
+  const { hasRole } = useAuth();
+  const atOnly = hasRole('Österreich');
   const [mode, setMode] = useState<Mode>(() => {
     if (typeof window === 'undefined') return 'prio';
     const stored = window.localStorage.getItem(MODE_STORAGE_KEY) as Mode | null;
