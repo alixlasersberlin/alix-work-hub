@@ -84,15 +84,30 @@ const TILES: Tile[] = [
 ];
 
 export default function VerkaufUebersicht() {
+  const atOnly = useAtOnly();
   const [counts, setCounts] = useState<Record<string, number | { open: number; total: number } | null>>({});
   const [loading, setLoading] = useState(true);
+
+  const visibleTiles = atOnly
+    ? TILES.filter((t) => t.key !== 'auftraege' && t.key !== 'kunden').concat([{
+        key: 'kunden',
+        label: 'Kundenbestand (-AT)',
+        icon: Building2,
+        to: '/kunden',
+        accent: 'from-blue-500/20 to-blue-500/5 border-blue-500/30',
+        load: async () => {
+          const { count } = await supabase.from('customers').select('*', { count: 'exact', head: true }).eq('source_system', 'zoho_eu_2');
+          return count ?? 0;
+        },
+      }])
+    : TILES;
 
   useEffect(() => {
     let alive = true;
     (async () => {
       setLoading(true);
       const entries = await Promise.all(
-        TILES.map(async (t) => {
+        visibleTiles.map(async (t) => {
           try {
             const v = await t.load();
             return [t.key, v] as const;
