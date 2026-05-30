@@ -1414,6 +1414,29 @@ export default function Lagergeraete({
           </Table>
         )}
       </div>
+
+      <AlertDialog open={!!deliverDevice} onOpenChange={(o) => !o && setDeliverDevice(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Gerät als ausgeliefert markieren?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Gerät „{deliverDevice?.serial_number}" wird aus dem Bestand entfernt und unter „Ausgeliefert" geführt.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                const d = deliverDevice;
+                setDeliverDevice(null);
+                if (d) await performMarkAsDelivered(d);
+              }}
+            >
+              Ja, als ausgeliefert markieren
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
