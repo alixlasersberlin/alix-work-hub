@@ -236,16 +236,18 @@ export default function Orders() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={regionFilter} onValueChange={(v) => setRegionFilter(v as 'all' | 'de' | 'at')}>
-              <SelectTrigger className="w-48 bg-secondary border-border">
-                <SelectValue placeholder="Region filtern" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Alle Regionen</SelectItem>
-                <SelectItem value="de">🇩🇪 Alix Deutschland</SelectItem>
-                <SelectItem value="at">🇦🇹 Alix Austria (-AT)</SelectItem>
-              </SelectContent>
-            </Select>
+            {!atOnly && (
+              <Select value={regionFilter} onValueChange={(v) => setRegionFilter(v as 'all' | 'de' | 'at')}>
+                <SelectTrigger className="w-48 bg-secondary border-border">
+                  <SelectValue placeholder="Region filtern" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Alle Regionen</SelectItem>
+                  <SelectItem value="de">🇩🇪 Alix Deutschland</SelectItem>
+                  <SelectItem value="at">🇦🇹 Alix Austria (-AT)</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
             <Select value={String(pageSize)} onValueChange={v => setPageSize(v === 'all' ? 'all' : Number(v) as 20 | 30 | 50)}>
               <SelectTrigger className="w-36 bg-secondary border-border">
                 <SelectValue />
