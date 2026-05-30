@@ -482,10 +482,14 @@ export default function AppLayout() {
     return item.roles.some(r => roles.includes(r));
   };
 
-  const visibleItems = navItems.filter(filterByRoles).map(item => ({
-    ...item,
-    children: item.children?.filter(filterByRoles),
-  }));
+  const visibleItems = navItems
+    .filter(filterByRoles)
+    .map(item => ({
+      ...item,
+      children: item.children?.filter(filterByRoles),
+    }))
+    // Hide groups whose children are all hidden by role
+    .filter(item => !item.children || item.children.length > 0);
 
   const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/';
