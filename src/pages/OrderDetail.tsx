@@ -220,6 +220,7 @@ export default function OrderDetail() {
 
   const isAtOrder = order?.source_system === 'zoho_eu_2';
   const canSeeAtPurchase = isAtOrder && (hasRole('Super Admin') || hasRole('Österreich'));
+  const canSeeAtApproval = isAtOrder && (hasRole('Super Admin') || hasRole('Admin') || hasRole('Österreich'));
 
   const tabGroups = [
     {
