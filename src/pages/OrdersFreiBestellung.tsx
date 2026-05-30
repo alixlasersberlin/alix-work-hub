@@ -80,7 +80,7 @@ export default function OrdersFreiBestellung() {
 
     const baseQuery = supabase
       .from('orders')
-      .select('id, order_number, order_status, order_date, expected_shipment_date, total_amount, currency, deposit_ok, deposit_ok_by, deposit_ok_at, deposit_amount, customers(company_name, contact_name)')
+      .select('id, order_number, source_system, order_status, order_date, expected_shipment_date, total_amount, currency, deposit_ok, deposit_ok_by, deposit_ok_at, deposit_amount, customers(company_name, contact_name)')
       .eq('deposit_ok', true)
       .not('deposit_ok_by', 'is', null)
       .neq('deposit_ok_by', '')
@@ -90,7 +90,7 @@ export default function OrdersFreiBestellung() {
     const restQuery = pendingRestIds.size > 0
       ? supabase
           .from('orders')
-          .select('id, order_number, order_status, order_date, expected_shipment_date, total_amount, currency, deposit_ok, deposit_ok_by, deposit_ok_at, deposit_amount, customers(company_name, contact_name)')
+          .select('id, order_number, source_system, order_status, order_date, expected_shipment_date, total_amount, currency, deposit_ok, deposit_ok_by, deposit_ok_at, deposit_amount, customers(company_name, contact_name)')
           .in('id', Array.from(pendingRestIds))
           .eq('order_status', 'teilgeliefert')
       : Promise.resolve({ data: [] as any[], error: null });
@@ -107,7 +107,22 @@ export default function OrdersFreiBestellung() {
     const usedOrderIds = new Set(((existing ?? []).map((p: any) => p.order_id)));
     const baseFiltered = (data ?? []).filter((o: any) => !usedOrderIds.has(o.id) && !pendingRestIds.has(o.id));
     const restMapped = (restData ?? []).map((o: any) => ({ ...o, _isRestbestellung: true }));
-    const filteredOrders = [...restMapped, ...baseFiltered];
+    const combined = [...restMapped, ...baseFiltered];
+
+    // Für -AT-Aufträge zusätzlich die Bestellfreigabe aus order_at_approval prüfen
+    const atIds = combined.filter((o: any) => o.source_system === 'zoho_eu_2').map((o: any) => o.id);
+    const approvedAtIds = new Set<string>();
+    if (atIds.length > 0) {
+      const { data: approvals } = await (supabase as any)
+        .from('order_at_approval')
+        .select('order_id, bestellfreigabe')
+        .in('order_id', atIds)
+        .eq('bestellfreigabe', true);
+      (approvals || []).forEach((a: any) => approvedAtIds.add(a.order_id));
+    }
+    const filteredOrders = combined.filter((o: any) =>
+      o.source_system !== 'zoho_eu_2' || approvedAtIds.has(o.id)
+    );
     setOrders(filteredOrders);
 
     // Map reserved devices by order id
