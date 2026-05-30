@@ -80,13 +80,13 @@ export default function AuroraPrioTicker() {
     let cancelled = false;
 
     async function loadPrio() {
-      const { data } = await supabase
+      let q = supabase
         .from('orders')
         .select('id, order_number, source_system, expected_shipment_date, customers(company_name, contact_name)')
         .not('expected_shipment_date', 'is', null)
-        .in('order_status', ['overdue', 'Overdue', 'invoiced', 'Invoiced', 'open', 'Open', 'offen', 'Offen', 'approved', 'Approved'])
-        .order('expected_shipment_date', { ascending: true })
-        .limit(10);
+        .in('order_status', ['overdue', 'Overdue', 'invoiced', 'Invoiced', 'open', 'Open', 'offen', 'Offen', 'approved', 'Approved']);
+      if (atOnly) q = q.eq('source_system', 'zoho_eu_2');
+      const { data } = await q.order('expected_shipment_date', { ascending: true }).limit(10);
       return (data ?? []).map((r: any): TickerItem => {
         const d = daysUntil(r.expected_shipment_date);
         const name = r.customers?.company_name || r.customers?.contact_name || '—';
