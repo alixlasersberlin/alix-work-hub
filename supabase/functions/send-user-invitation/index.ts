@@ -46,14 +46,20 @@ Deno.serve(async (req) => {
       return json({ error: "User profile not found or missing email" }, 404);
     }
 
-    // Generate a password reset link as invitation
-    const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
-      type: "magiclink",
-      email: profile.email,
-    });
+    // Actually SEND the invitation email via Supabase Auth
+    const { error: linkError } = await adminClient.auth.admin.inviteUserByEmail(
+      profile.email,
+    );
 
     if (linkError) {
-      return json({ error: `Link generation error: ${linkError.message}` }, 500);
+      // If user already exists in auth, fall back to a magic link email
+      const { error: magicErr } = await adminClient.auth.signInWithOtp({
+        email: profile.email,
+        options: { shouldCreateUser: false },
+      });
+      if (magicErr) {
+        return json({ error: `Invitation send error: ${linkError.message} / ${magicErr.message}` }, 500);
+      }
     }
 
     // Record invitation
