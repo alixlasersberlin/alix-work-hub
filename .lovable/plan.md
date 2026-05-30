@@ -1,79 +1,59 @@
 ## Ziel
 
-Jeder Login erfordert künftig nach Passwort einen 6-stelligen TOTP-Code aus einer Authenticator-App (Google Authenticator, Authy, 1Password etc.). Der Eintrag in der App heißt **ALIX WORK**. Das bisherige E-Mail/SMS-OTP entfällt.
+Die Rolle **Österreich** erhält Sichtbarkeit auf die Menüs **KUNDEN, ARTIKEL, VERKÄUFE, PRIO-LISTEN, BESTELLUNGEN, LAGERBESTAND, TOURENPLANUNG, VERSAND, HILFE** — sieht dort aber **ausschließlich Datensätze mit Bezug zu Alix Austria** (`source_system='zoho_eu_2'`, d. h. mit -AT-Suffix). Schreibrechte für andere Rollen bleiben unverändert; Österreich bleibt grundsätzlich Read-Only (außer wo bereits explizit anders festgelegt).
 
----
+## 1. Sidebar (AppLayout.tsx)
 
-## Ablauf für den User
+Die Rolle `'Österreich'` wird in den `roles`-Arrays folgender Top-Level-Gruppen und passender Kinder ergänzt:
+- KUNDEN, ARTIKEL, VERKÄUFE, PRIO-LISTEN, BESTELLUNGEN, LAGERBESTAND, TOURENPLANUNG, VERSAND, HILFE
+- Nicht ergänzt: OPERATIONS, FINANZIERUNGEN, FINANCE, ADMIN-Bereiche
 
-1. **Login** mit E-Mail + Passwort wie bisher.
-2. **Wenn noch kein Authenticator eingerichtet ist** → erzwungene Setup-Seite:
-   - QR-Code (Issuer: `ALIX WORK`, Account: E-Mail) + manueller Secret-Key
-   - User scannt mit App, gibt aktuellen 6-stelligen Code ein
-   - Nach erfolgreicher Verifizierung werden **8 einmalige Recovery-Codes** angezeigt (nur einmal sichtbar, müssen sicher gespeichert werden)
-   - Erst danach Zugang zur App.
-3. **Wenn Authenticator schon eingerichtet ist** → Challenge-Seite, 6-stelliger Code wird bei jedem Login abgefragt.
-4. **Verlust des Geräts**: User klickt „Recovery-Code verwenden", gibt einen seiner 8 Codes ein. Der Code wird verbraucht, sein Authenticator-Faktor wird zurückgesetzt, beim nächsten Login muss er neu einrichten.
-5. **Admin-Reset**: In der User-Verwaltung gibt es pro User einen Button „2FA zurücksetzen". Damit muss der User beim nächsten Login neu einrichten.
+## 2. RLS-Erweiterungen (Migration)
 
----
+Neue SECURITY DEFINER-Funktion:
+```
+public.is_at_role() → bool   -- has_role('Österreich')
+```
 
-## Umsetzung (technisch)
+Pro Tabelle eine zusätzliche **permissive SELECT-Policy**, die nur AT-Datensätze freigibt:
 
-### Datenbank (Migration)
-- `user_profiles` um zwei Spalten erweitern:
-  - `mfa_enrolled_at timestamptz null`
-  - `mfa_recovery_codes_hash text[] not null default '{}'` (SHA-256 der Klartext-Codes)
-- Trigger `check_user_profile_self_update` so anpassen, dass User diese beiden Felder bei sich selbst schreiben dürfen.
+| Tabelle | AT-Filter |
+|---|---|
+| `orders` | `source_system = 'zoho_eu_2'` |
+| `order_items` | via `order_id → orders.source_system = 'zoho_eu_2'` |
+| `order_notes`, `order_status_history`, `order_documents`, `order_additional_deposits` | via `order_id → orders` |
+| `customers` | `source_system = 'zoho_eu_2'` |
+| `production_orders`, `production_order_items` | via `order_id → orders` |
+| `lager_devices` | via `reserved_order_id → orders` ODER alle Geräte (zu klären — siehe offene Frage) |
+| `finance_records`, `bank_financing_requests` | **kein** Zugriff für Österreich |
 
-Keine neue Tabelle. Faktoren-Verwaltung übernimmt Supabase Auth selbst (`auth.mfa_factors`).
+Bestehende Policies bleiben unverändert (Admin/Order/etc. behalten ihre Rechte). Da Policies OR-verknüpft sind, fügt Österreich nur seine AT-Sicht hinzu, ohne andere Rollen einzuschränken.
 
-### Edge Functions
-- `mfa-store-recovery-codes` – generiert 8 Codes, speichert Hashes auf eigenem Profil, gibt Klartext einmalig zurück.
-- `mfa-use-recovery-code` – prüft Code gegen Hash, entfernt verbrauchten Hash und löscht alle TOTP-Faktoren des Users via Admin-API (zwingt Re-Enrollment).
-- `mfa-admin-reset` – nur Admin: löscht Faktoren + Recovery-Codes eines Ziel-Users.
+## 3. UI-Filter
 
-Bestehende `send-otp-challenge` / `verify-otp-challenge` werden nicht mehr aufgerufen, bleiben aber im Repo (können später entfernt werden).
+Damit Admins eine unveränderte Vollsicht behalten und Österreich automatisch nur AT sieht, wird ein zentraler Helper genutzt:
 
-### Frontend
-- **`useAuth`**: ergänzen um aktuelles AAL (`aal1`/`aal2`) und MFA-Status (enrolled / not enrolled).
-- **Routing-Guard** in `App.tsx`:
-  - Eingeloggt + nicht enrolled → Redirect auf `/mfa-setup`
-  - Eingeloggt + enrolled + AAL=aal1 → Redirect auf `/mfa-challenge`
-  - Erst bei AAL=aal2 darf die App betreten werden.
-- **Neue Seiten**:
-  - `/mfa-setup`: ruft `supabase.auth.mfa.enroll({ factorType: 'totp', issuer: 'ALIX WORK', friendlyName: 'ALIX WORK' })`, zeigt QR + Secret, verifiziert Code, dann Recovery-Codes-Anzeige mit Pflicht-Bestätigung „Habe ich gespeichert".
-  - `/mfa-challenge`: Eingabe 6-stelliger Code, Link „Recovery-Code verwenden".
-  - `/mfa-recovery`: Eingabe Recovery-Code → Aufruf Edge Function → Logout → Hinweis „Bitte neu anmelden und Authenticator erneut einrichten".
-- **`Login.tsx`**: bisherige OTP-Schritte entfernen, nach erfolgreichem Passwort-Login wird vom Guard auf Setup oder Challenge umgeleitet.
-- **`ReauthDialog.tsx`**: bleibt vorerst, ruft aber statt E-Mail-OTP eine TOTP-Challenge auf (separater optionaler Schritt – kann auch deaktiviert werden, da Login bereits AAL2 erzwingt).
-- **`UserManagement.tsx`**: pro User Button „2FA zurücksetzen" → Edge Function `mfa-admin-reset`.
+```
+useAtOnly() → boolean   // hasRole('Österreich') && !isAdmin
+```
 
-### Issuer / Anzeige in der App
-Der String `ALIX WORK` wird sowohl als `issuer` als auch als `friendlyName` beim Enroll übergeben. Damit erscheint in Google Authenticator: **ALIX WORK (user@example.com)**.
+In folgenden Listen wird bei `useAtOnly === true` ein zusätzlicher Filter `source_system='zoho_eu_2'` an die Supabase-Query gehängt bzw. Region-Filter fest auf 'at' gesetzt und der Region-Selector ausgeblendet:
 
----
+- `Orders.tsx`, `OrdersInClarification.tsx`, `OrdersFreiBestellung.tsx`
+- `PriorityList.tsx`, `HoldList.tsx`, `DeliveredList.tsx`, `PartialDeliveryList.tsx`
+- `ProductionOrders.tsx` (auch Reklamation), Versand-Listen
+- `Customers`-Liste, `Artikel`-Liste
+- `RoutePlanning`-Übersicht
+- `Lagergeraete.tsx` (nur reservierte AT-Geräte + unreservierte mit AT-Modell? — siehe offene Frage)
 
-## Was sich für bestehende User ändert
+## 4. Detail-Seiten
 
-- Beim nächsten Login werden alle User direkt auf `/mfa-setup` geleitet und müssen einmalig einrichten – kein optionaler Übergang.
-- E-Mail-OTPs werden nicht mehr versendet.
+Die Detail-Routen (`/auftraege/:id`, `/kunden/:id` …) werden nicht extra gesperrt — die RLS verhindert ohnehin das Laden nicht-AT-Datensätze für Österreich.
 
----
+## Offene Punkte (kurze Bestätigung nötig)
 
-## Voraussetzung in Supabase Dashboard
+1. **LAGERBESTAND**: Soll Österreich nur Geräte sehen, die einem -AT-Auftrag reserviert sind, oder alle freien Geräte plus AT-Reservierungen?
+2. **BESTELLUNGEN (production_orders)**: Reine Leseansicht für Österreich auch für nicht von ihm erstellte Bestellungen?
+3. **HILFE**: Hier vermutlich keine Filterung nötig — sichtbar wie für alle?
 
-In **Authentication → Providers → MFA** muss **TOTP** aktiviert sein. Das ist meist Standard, ich gebe nach der Migration einen Hinweis-Link, falls beim Testen ein Fehler auftritt.
-
----
-
-## Reihenfolge der Änderungen
-
-1. Migration (DB-Spalten + Trigger-Anpassung)
-2. Edge Functions (3 Stück)
-3. `useAuth` + Routing-Guard
-4. Setup-, Challenge-, Recovery-Seite
-5. Admin-Reset in UserManagement
-6. Login-Seite OTP-Schritte entfernen
-
-Soll ich so umsetzen?
+Sobald du diese drei Punkte bestätigst, setze ich Migration + UI in einem Rutsch um.
