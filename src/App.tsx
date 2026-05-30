@@ -27,6 +27,7 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Customers = lazy(() => import("./pages/Customers"));
 const CustomerDetail = lazy(() => import("./pages/CustomerDetail"));
 const Orders = lazy(() => import("./pages/Orders"));
+const OrdersAt = lazy(() => import("./pages/OrdersAt"));
 const OrderDetail = lazy(() => import("./pages/OrderDetail"));
 const OrdersInClarification = lazy(() => import("./pages/OrdersInClarification"));
 const PriorityList = lazy(() => import("./pages/PriorityList"));
@@ -199,6 +200,7 @@ function AppRoutes() {
           <Route path="/kunden" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Customers /></ProtectedRoute>} />
           <Route path="/kunden/:id" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><CustomerDetail /></ProtectedRoute>} />
           <Route path="/auftraege" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Orders /></ProtectedRoute>} />
+          <Route path="/auftraege-at" element={<ProtectedRoute requiredRoles={[...ORDER_ROLES, 'Österreich']}><OrdersAt /></ProtectedRoute>} />
           <Route path="/auftraege/in-klaerung" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><OrdersInClarification /></ProtectedRoute>} />
           <Route path="/auftraege/:id" element={<ProtectedRoute requiredRoles={[...ORDER_ROLES, 'Finanzierungen', 'Order']}><OrderDetail /></ProtectedRoute>} />
           <Route path="/verkauf/artikel" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Artikel /></ProtectedRoute>} />

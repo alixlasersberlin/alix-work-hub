@@ -48,6 +48,7 @@ const navItems: NavItem[] = [
       { path: '/verkauf/angebote', label: 'Angebote', icon: FileText, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance'] },
       { path: '/verkauf/freigabe', label: 'Freigabe', icon: CheckCircle2, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance'] },
       { path: '/auftraege', label: 'Aufträge', icon: ClipboardList, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance'] },
+      { path: '/auftraege-at', label: 'Aufträge AT', icon: ClipboardList, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich'] },
       { path: '/verkauf/anzahlungsrechnung', label: 'Anzahlungsrechnung', icon: Receipt, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance'] },
       { path: '/finance/rechnungen', label: 'Rechnung', icon: FileText, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance'] },
       
