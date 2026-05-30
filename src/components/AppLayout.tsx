@@ -482,11 +482,20 @@ export default function AppLayout() {
     return item.roles.some(r => roles.includes(r));
   };
 
+  const atHiddenPaths = new Set<string>([
+    '/lager/equipment-area/unterwegs',
+    '/lager/equipment-area/produktion',
+    '/lager/equipment-area/warehouse',
+    '/lager/equipment-area/hold',
+  ]);
+
   const visibleItems = navItems
     .filter(filterByRoles)
     .map(item => ({
       ...item,
-      children: item.children?.filter(filterByRoles),
+      children: item.children
+        ?.filter(filterByRoles)
+        .filter(c => !atOnly || !atHiddenPaths.has(c.path)),
     }))
     // Hide groups whose children are all hidden by role
     .filter(item => !item.children || item.children.length > 0);
