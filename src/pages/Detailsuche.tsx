@@ -11,6 +11,7 @@ import {
 import { PageHeader } from '@/components/PageShell';
 import { StatusBadge } from '@/components/StatusBadge';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
 
 type ProductionVorgang = {
   id: string;
