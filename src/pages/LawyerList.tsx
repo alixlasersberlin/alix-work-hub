@@ -39,23 +39,26 @@ export default function LawyerList() {
   const navigate = useNavigate();
   const { hasRole } = useAuth();
   const canEdit = hasRole('Admin') || hasRole('Super Admin') || hasRole('Auftragsverwaltung');
+  const atOnly = useAtOnly();
 
   useEffect(() => {
     async function load() {
       setLoading(true);
       setError(null);
-      const { data, error: err } = await supabase
+      let q = supabase
         .from('orders')
         .select('id, order_number, order_status, order_date, expected_shipment_date, total_amount, currency, source_system, lawyer_reason, salesperson_name, internal_number, customers(company_name, contact_name)')
         .ilike('order_status', 'anwalt')
         .order(sortField, { ascending: sortDir === 'asc' })
         .limit(500);
+      if (atOnly) q = q.eq('source_system', 'zoho_eu_2');
+      const { data, error: err } = await q;
       if (err) setError(err.message);
       setOrders(data ?? []);
       setLoading(false);
     }
     load();
-  }, [sortField, sortDir, reloadKey]);
+  }, [sortField, sortDir, reloadKey, atOnly]);
 
   const reasons = useMemo(() => {
     const set = new Set<string>();
