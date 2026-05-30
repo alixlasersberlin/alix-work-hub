@@ -42,7 +42,7 @@ export default function OrderDetail() {
   const [history, setHistory] = useState<any[]>([]);
   const [poCount, setPoCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'items' | 'deposit' | 'financing' | 'at_purchase' | 'packages' | 'notes' | 'emails' | 'history' | 'raw'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'items' | 'deposit' | 'financing' | 'at_purchase' | 'at_approval' | 'packages' | 'notes' | 'emails' | 'history' | 'raw'>('overview');
   const [sendingEmail, setSendingEmail] = useState(false);
   const [depositOk, setDepositOk] = useState(false);
   const [depositBy, setDepositBy] = useState('');
@@ -235,6 +235,7 @@ export default function OrderDetail() {
         { key: 'deposit', label: 'Anzahlung', icon: Euro, badge: order?.deposit_ok ? '✓' : undefined },
         { key: 'financing', label: 'Finanzierung', icon: Landmark },
         ...(canSeeAtPurchase ? [{ key: 'at_purchase', label: 'Einkauf AT', icon: ShoppingBag }] : []),
+        ...(canSeeAtPurchase ? [{ key: 'at_approval', label: 'Freigabe AT', icon: CheckCircle2 }] : []),
       ],
     },
     {
@@ -706,6 +707,22 @@ export default function OrderDetail() {
       {/* Einkauf AT Tab */}
       {activeTab === 'at_purchase' && id && canSeeAtPurchase && (
         <AtPurchaseTab orderId={id} />
+      )}
+
+      {/* Freigabe AT Tab */}
+      {activeTab === 'at_approval' && id && canSeeAtPurchase && (
+        <div className="rounded-xl border border-amber-500/30 bg-gradient-to-br from-amber-500/5 to-transparent p-6 card-glow max-w-2xl">
+          <div className="flex items-center gap-2 mb-1">
+            <CheckCircle2 className="w-4 h-4 text-amber-400" />
+            <h2 className="text-base font-display font-bold text-foreground">Freigabe AT</h2>
+          </div>
+          <p className="text-xs text-muted-foreground mb-6">
+            Freigabe-Workflow für Alix Austria · Sichtbar für Super Admin & Rolle „Österreich"
+          </p>
+          <div className="text-sm text-muted-foreground py-8 text-center border border-dashed border-border rounded-lg">
+            Noch keine Freigabe-Aktionen konfiguriert.
+          </div>
+        </div>
       )}
 
       {/* Packages Tab */}
