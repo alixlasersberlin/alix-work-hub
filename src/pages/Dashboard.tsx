@@ -165,7 +165,7 @@ export default function Dashboard() {
   const toggle = (k: string) => setCollapsed(p => ({ ...p, [k]: !p[k] }));
 
   const canSeeOrders = isAdmin || hasAnyRole(['Auftragsverwaltung', 'Tourenplanung', 'Finance', 'Österreich']);
-  const canSeeRoutes = isAdmin || hasAnyRole(['Tourenplanung', 'Auftragsverwaltung']);
+  const canSeeRoutes = isAdmin || hasAnyRole(['Tourenplanung', 'Auftragsverwaltung', 'Österreich']);
   const canSeeFinance = isAdmin || hasRole('Finance');
   const canSeeCustomers = isAdmin || hasAnyRole(['Auftragsverwaltung', 'Tourenplanung', 'Finance', 'Österreich']);
   const canSeeAudit = isAdmin || hasRole('Read Only Audit');
