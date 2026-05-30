@@ -38,13 +38,16 @@ export default function ProductionTimeline() {
   const [search, setSearch] = useState('');
   const [pageSize, setPageSize] = useState<'10' | '20' | '30' | 'all'>('20');
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const atOnly = useAtOnly();
 
   const load = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    let qb = supabase
       .from('production_orders')
-      .select('*, supplier:suppliers(name)')
+      .select(atOnly ? '*, supplier:suppliers(name), orders!inner(source_system)' : '*, supplier:suppliers(name)')
       .order('liefertermin', { ascending: true });
+    if (atOnly) qb = qb.eq('orders.source_system', 'zoho_eu_2');
+    const { data, error } = await qb;
     if (error) toast.error(error.message);
     else {
       const list = (data || []).map((r: any) => ({
@@ -68,7 +71,7 @@ export default function ProductionTimeline() {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [atOnly]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
