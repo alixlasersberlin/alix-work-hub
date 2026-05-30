@@ -101,12 +101,12 @@ export default function AuroraPrioTicker() {
     }
 
     async function loadTimeline() {
-      const { data } = await supabase
+      let q = supabase
         .from('production_orders')
-        .select('id, production_order_number, order_number, modellname, liefertermin, customer_name_snapshot')
-        .not('liefertermin', 'is', null)
-        .order('liefertermin', { ascending: true })
-        .limit(10);
+        .select('id, production_order_number, order_number, modellname, liefertermin, customer_name_snapshot, orders!inner(source_system)')
+        .not('liefertermin', 'is', null);
+      if (atOnly) q = q.eq('orders.source_system', 'zoho_eu_2');
+      const { data } = await q.order('liefertermin', { ascending: true }).limit(10);
       return (data ?? []).map((r: any): TickerItem => {
         const d = daysUntil(r.liefertermin);
         const num = r.production_order_number || r.order_number || '—';
