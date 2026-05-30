@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Building2, FileText, ClipboardList, Receipt, Undo2, TrendingUp, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAtOnly } from '@/hooks/useAtOnly';
 
 type Tile = {
   key: string;
@@ -83,15 +84,30 @@ const TILES: Tile[] = [
 ];
 
 export default function VerkaufUebersicht() {
+  const atOnly = useAtOnly();
   const [counts, setCounts] = useState<Record<string, number | { open: number; total: number } | null>>({});
   const [loading, setLoading] = useState(true);
+
+  const visibleTiles = atOnly
+    ? TILES.filter((t) => t.key !== 'auftraege' && t.key !== 'kunden').concat([{
+        key: 'kunden',
+        label: 'Kundenbestand (-AT)',
+        icon: Building2,
+        to: '/kunden',
+        accent: 'from-blue-500/20 to-blue-500/5 border-blue-500/30',
+        load: async () => {
+          const { count } = await supabase.from('customers').select('*', { count: 'exact', head: true }).eq('source_system', 'zoho_eu_2');
+          return count ?? 0;
+        },
+      }])
+    : TILES;
 
   useEffect(() => {
     let alive = true;
     (async () => {
       setLoading(true);
       const entries = await Promise.all(
-        TILES.map(async (t) => {
+        visibleTiles.map(async (t) => {
           try {
             const v = await t.load();
             return [t.key, v] as const;
@@ -105,7 +121,7 @@ export default function VerkaufUebersicht() {
       setLoading(false);
     })();
     return () => { alive = false; };
-  }, []);
+  }, [atOnly]);
 
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6 animate-fade-in">
@@ -118,7 +134,7 @@ export default function VerkaufUebersicht() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {TILES.map((t) => {
+        {visibleTiles.map((t) => {
           const Icon = t.icon;
           const value = counts[t.key];
           return (
