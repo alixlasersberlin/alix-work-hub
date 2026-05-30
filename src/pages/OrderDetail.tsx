@@ -709,6 +709,22 @@ export default function OrderDetail() {
         <AtPurchaseTab orderId={id} />
       )}
 
+      {/* Freigabe AT Tab */}
+      {activeTab === 'at_approval' && id && canSeeAtPurchase && (
+        <div className="rounded-xl border border-amber-500/30 bg-gradient-to-br from-amber-500/5 to-transparent p-6 card-glow max-w-2xl">
+          <div className="flex items-center gap-2 mb-1">
+            <CheckCircle2 className="w-4 h-4 text-amber-400" />
+            <h2 className="text-base font-display font-bold text-foreground">Freigabe AT</h2>
+          </div>
+          <p className="text-xs text-muted-foreground mb-6">
+            Freigabe-Workflow für Alix Austria · Sichtbar für Super Admin & Rolle „Österreich"
+          </p>
+          <div className="text-sm text-muted-foreground py-8 text-center border border-dashed border-border rounded-lg">
+            Noch keine Freigabe-Aktionen konfiguriert.
+          </div>
+        </div>
+      )}
+
       {/* Packages Tab */}
       {activeTab === 'packages' && (
         <div className="rounded-xl border border-border bg-card p-6 card-glow">
