@@ -8,6 +8,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
   PieChart, Pie, Legend,
 } from 'recharts';
+import { useAtOnly } from '@/hooks/useAtOnly';
 
 type SearchHit = {
   id: string;
@@ -43,6 +44,7 @@ export default function Lager() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchHit[]>([]);
   const [searching, setSearching] = useState(false);
+  const atOnly = useAtOnly();
 
   useEffect(() => {
     (async () => {
@@ -168,16 +170,19 @@ export default function Lager() {
   const chartData = [
     { key: 'Leihgeräte', name: 'Leihgeräte', value: counts.leih, color: COLORS.Leihgeräte, path: '/lager/leihgeraete', icon: PackageCheck },
     { key: 'Lagergeräte', name: 'Lagergeräte', value: counts.lager, color: COLORS.Lagergeräte, path: '/lager/lagergeraete', icon: Warehouse },
-    { key: 'Unterwegs', name: 'Unterwegs', value: counts.transfer, color: COLORS.Unterwegs, path: '/lager/equipment-area/unterwegs', icon: Truck },
-    { key: 'Produktion', name: 'Produktion', value: counts.produktion, color: COLORS.Produktion, path: '/lager/equipment-area/produktion', icon: Factory },
+    ...(atOnly ? [] : [
+      { key: 'Unterwegs', name: 'Unterwegs', value: counts.transfer, color: COLORS.Unterwegs, path: '/lager/equipment-area/unterwegs', icon: Truck },
+      { key: 'Produktion', name: 'Produktion', value: counts.produktion, color: COLORS.Produktion, path: '/lager/equipment-area/produktion', icon: Factory },
+    ]),
   ];
+  const displayedTotal = chartData.reduce((s, c) => s + c.value, 0);
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
       <PageHeader
         icon={<Warehouse className="w-6 h-6 text-primary" />}
         title="Lagerbestand"
-        subtitle={`Übersicht aller Abteilungen · ${counts.total} Geräte gesamt`}
+        subtitle={`Übersicht aller Abteilungen · ${displayedTotal} Geräte gesamt`}
       />
 
       {/* Suche */}
