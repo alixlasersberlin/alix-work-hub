@@ -27,6 +27,7 @@ import { useViewMode } from '@/hooks/useViewMode';
 import { OrderCard, OrderCardGrid } from '@/components/OrderCard';
 import { ALIX_MODEL_GROUPS } from '@/lib/alix-models';
 import { withAt } from '@/lib/atSuffix';
+import { useAtOnly } from '@/hooks/useAtOnly';
 
 type SortField = 'order_number' | 'order_date' | 'total_amount' | 'created_at';
 type SortDir = 'asc' | 'desc';
@@ -38,9 +39,10 @@ export default function Orders() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [modelFilter, setModelFilter] = useState('all');
   const [searchParams] = useSearchParams();
+  const atOnly = useAtOnly();
   const initialRegion = (searchParams.get('region') as 'all' | 'de' | 'at' | null) ?? 'all';
   const [regionFilter, setRegionFilter] = useState<'all' | 'de' | 'at'>(
-    initialRegion === 'de' || initialRegion === 'at' ? initialRegion : 'all'
+    atOnly ? 'at' : (initialRegion === 'de' || initialRegion === 'at' ? initialRegion : 'all')
   );
   const [sortField, setSortField] = useState<SortField>('order_date');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
@@ -234,16 +236,18 @@ export default function Orders() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={regionFilter} onValueChange={(v) => setRegionFilter(v as 'all' | 'de' | 'at')}>
-              <SelectTrigger className="w-48 bg-secondary border-border">
-                <SelectValue placeholder="Region filtern" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Alle Regionen</SelectItem>
-                <SelectItem value="de">🇩🇪 Alix Deutschland</SelectItem>
-                <SelectItem value="at">🇦🇹 Alix Austria (-AT)</SelectItem>
-              </SelectContent>
-            </Select>
+            {!atOnly && (
+              <Select value={regionFilter} onValueChange={(v) => setRegionFilter(v as 'all' | 'de' | 'at')}>
+                <SelectTrigger className="w-48 bg-secondary border-border">
+                  <SelectValue placeholder="Region filtern" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Alle Regionen</SelectItem>
+                  <SelectItem value="de">🇩🇪 Alix Deutschland</SelectItem>
+                  <SelectItem value="at">🇦🇹 Alix Austria (-AT)</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
             <Select value={String(pageSize)} onValueChange={v => setPageSize(v === 'all' ? 'all' : Number(v) as 20 | 30 | 50)}>
               <SelectTrigger className="w-36 bg-secondary border-border">
                 <SelectValue />

@@ -111,8 +111,8 @@ const queryClient = new QueryClient({
   },
 });
 
-const ORDER_ROLES = ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance'];
-const PLANNING_ROLES = ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order'];
+const ORDER_ROLES = ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich'];
+const PLANNING_ROLES = ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'Österreich'];
 const FINANCE_ROLES = ['Admin', 'Super Admin', 'Finance'];
 const FINANCING_ROLES = ['Admin', 'Super Admin', 'Finance', 'Finanzierungen', 'Order'];
 const ADMIN_ROLES = ['Admin', 'Super Admin'];
@@ -120,9 +120,9 @@ const IMPORT_ROLES = ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Re
 const SYSTEM_ROLES = ['Admin', 'Super Admin', 'Read Only Audit'];
 const PRODUCTION_ROLES = ['Admin', 'Super Admin', 'Lieferant', 'FACTORY INVOICE', 'Order'];
 const FACTORY_INVOICE_ROLES = ['Admin', 'Super Admin', 'FACTORY INVOICE'];
-const PRODUCTION_VIEW_ROLES = ['Admin', 'Super Admin', 'FACTORY INVOICE', 'Order'];
-const ORDER_MGMT_ROLES = ['Admin', 'Super Admin', 'Order'];
-const WAREHOUSE_ROLES = ['Admin', 'Super Admin', 'Order'];
+const PRODUCTION_VIEW_ROLES = ['Admin', 'Super Admin', 'FACTORY INVOICE', 'Order', 'Österreich'];
+const ORDER_MGMT_ROLES = ['Admin', 'Super Admin', 'Order', 'Österreich'];
+const WAREHOUSE_ROLES = ['Admin', 'Super Admin', 'Order', 'Österreich'];
 
 function isSupplierOnly(roles: string[]) {
   return roles.includes('Lieferant') && !roles.some(r => ['Admin', 'Super Admin'].includes(r));
