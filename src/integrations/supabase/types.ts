@@ -2016,6 +2016,7 @@ export type Database = {
         Args: { _production_order_id: string }
         Returns: undefined
       }
+      complete_password_setup: { Args: never; Returns: undefined }
       current_supplier_id: { Args: never; Returns: string }
       has_role: { Args: { check_role: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
