@@ -80,6 +80,8 @@ function totalVorgaenge(r: Related) {
 
 export default function Detailsuche() {
   const navigate = useNavigate();
+  const { hasRole } = useAuth();
+  const atOnly = hasRole('Österreich');
   const [form, setForm] = useState({ ...EMPTY });
   const [loading, setLoading] = useState(false);
   const [hits, setHits] = useState<Hit[] | null>(null);
