@@ -16,6 +16,7 @@ import {
 import { createRestbestellungMarker, hasPendingRestbestellung } from '@/lib/restbestellung';
 import BankFinancingTab from '@/components/BankFinancingTab';
 import AtPurchaseTab from '@/components/AtPurchaseTab';
+import AtApprovalTab from '@/components/AtApprovalTab';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { StatusBadge } from '@/components/StatusBadge';
