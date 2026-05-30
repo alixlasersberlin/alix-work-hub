@@ -15,8 +15,7 @@ interface Props {
 
 export default function AtApprovalTab({ orderId }: Props) {
   const { hasRole } = useAuth();
-  const isSuperAdmin = hasRole('Super Admin');
-  const canWrite = isSuperAdmin;
+  const canWrite = hasRole('Super Admin') || hasRole('Admin');
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -118,7 +117,7 @@ export default function AtApprovalTab({ orderId }: Props) {
       </div>
       <p className="text-xs text-muted-foreground mb-6 flex items-center gap-1.5">
         <Lock className="w-3 h-3" />
-        Sichtbar für Super Admin, Admin & Rolle „Österreich" · Bearbeitung nur durch Super Admin
+        Sichtbar für alle Rollen · Bearbeitung nur durch Admin & Super Admin
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -254,7 +253,7 @@ export default function AtApprovalTab({ orderId }: Props) {
           </Button>
         </div>
       ) : (
-        <p className="text-xs text-amber-400/80 italic mt-4">Nur lesend – Bearbeitung erfordert Super-Admin-Rolle.</p>
+        <p className="text-xs text-amber-400/80 italic mt-4">Nur lesend – Bearbeitung erfordert Admin- oder Super-Admin-Rolle.</p>
       )}
     </div>
   );
