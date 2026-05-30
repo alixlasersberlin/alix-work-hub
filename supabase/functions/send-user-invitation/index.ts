@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { sendUserInvitationEmail } from "../_shared/send-user-invitation.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -46,50 +47,11 @@ Deno.serve(async (req) => {
       return json({ error: "User profile not found or missing email" }, 404);
     }
 
-    // Actually SEND the invitation email via Supabase Auth
-    const { error: linkError } = await adminClient.auth.admin.inviteUserByEmail(
-      profile.email,
-    );
-
-    if (linkError) {
-      // If user already exists in auth, fall back to a magic link email
-      const { error: magicErr } = await adminClient.auth.signInWithOtp({
-        email: profile.email,
-        options: { shouldCreateUser: false },
-      });
-      if (magicErr) {
-        return json({ error: `Invitation send error: ${linkError.message} / ${magicErr.message}` }, 500);
-      }
-    }
-
-    // Record invitation
-    const { error: invError } = await adminClient.from("user_invitations").insert({
-      user_id,
+    await sendUserInvitationEmail({
+      adminClient,
+      callerClient,
+      userId: user_id,
       email: profile.email,
-      invitation_status: "sent",
-      sent_at: new Date().toISOString(),
-      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-      created_by: (await callerClient.auth.getUser()).data.user?.id || null,
-    });
-
-    if (invError) {
-      console.error("Invitation record error:", invError);
-    }
-
-    // Update invitation_status on profile
-    await adminClient
-      .from("user_profiles")
-      .update({ invitation_status: "sent" })
-      .eq("id", user_id);
-
-    // Audit
-    const { data: { user: callerUser } } = await callerClient.auth.getUser();
-    await adminClient.from("audit_logs").insert({
-      user_id: callerUser?.id || null,
-      action: "invitation_sent",
-      module: "user_management",
-      record_id: user_id,
-      details: { email: profile.email },
     });
 
     return json({

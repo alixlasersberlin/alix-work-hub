@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { sendUserInvitationEmail } from "../_shared/send-user-invitation.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -88,6 +89,13 @@ Deno.serve(async (req) => {
         console.error("Roles error:", rolesError);
       }
     }
+
+    await sendUserInvitationEmail({
+      adminClient,
+      callerClient,
+      userId,
+      email,
+    });
 
     // 4. Audit log
     const { data: { user: callerUser } } = await callerClient.auth.getUser();
