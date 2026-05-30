@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { VipBadge } from '@/components/VipBadge';
 
 import { SidebarInfoBar } from '@/components/SidebarInfoBar';
+import { useAtOnly } from '@/hooks/useAtOnly';
 
 interface Stats {
   freePoolDevices: number;
@@ -140,6 +141,7 @@ function TableSkeleton({ rows = 3 }: { rows?: number }) {
 export default function Dashboard() {
   const navigate = useNavigate();
   const { profile, roles, hasRole, hasAnyRole, isAdmin } = useAuth();
+  const atOnly = useAtOnly();
   const [stats, setStats] = useState<Stats>({ freePoolDevices: 0, leihgeraete: 0, openOrders: 0, routes: 0, openFinance: 0, vipCustomers: 0, vipOrders: 0 });
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [shipmentOrders, setShipmentOrders] = useState<ShipmentOrder[]>([]);
@@ -162,10 +164,10 @@ export default function Dashboard() {
   });
   const toggle = (k: string) => setCollapsed(p => ({ ...p, [k]: !p[k] }));
 
-  const canSeeOrders = isAdmin || hasAnyRole(['Auftragsverwaltung', 'Tourenplanung', 'Finance']);
+  const canSeeOrders = isAdmin || hasAnyRole(['Auftragsverwaltung', 'Tourenplanung', 'Finance', 'Österreich']);
   const canSeeRoutes = isAdmin || hasAnyRole(['Tourenplanung', 'Auftragsverwaltung']);
   const canSeeFinance = isAdmin || hasRole('Finance');
-  const canSeeCustomers = isAdmin || hasAnyRole(['Auftragsverwaltung', 'Tourenplanung', 'Finance']);
+  const canSeeCustomers = isAdmin || hasAnyRole(['Auftragsverwaltung', 'Tourenplanung', 'Finance', 'Österreich']);
   const canSeeAudit = isAdmin || hasRole('Read Only Audit');
 
   useEffect(() => {
@@ -202,13 +204,19 @@ export default function Dashboard() {
 
         const [openOrdersRes, recentOrdersRes] = canSeeOrders
           ? await Promise.all([
-              supabase.from('orders').select('id', { count: 'exact', head: true }).eq('order_status', 'offen'),
-              supabase.from('orders').select('id, order_number, order_status, total_amount, currency, order_date, expected_shipment_date').order('created_at', { ascending: false }).limit(7),
+              (atOnly
+                ? supabase.from('orders').select('id', { count: 'exact', head: true }).eq('order_status', 'offen').eq('source_system', 'zoho_eu_2')
+                : supabase.from('orders').select('id', { count: 'exact', head: true }).eq('order_status', 'offen')),
+              (atOnly
+                ? supabase.from('orders').select('id, order_number, order_status, total_amount, currency, order_date, expected_shipment_date').eq('source_system', 'zoho_eu_2').order('created_at', { ascending: false }).limit(7)
+                : supabase.from('orders').select('id, order_number, order_status, total_amount, currency, order_date, expected_shipment_date').order('created_at', { ascending: false }).limit(7)),
             ])
           : [{ count: 0 }, { data: [] }];
 
         const shipmentOrdersRes = canSeeOrders
-          ? await supabase.from('orders').select('id, order_number, expected_shipment_date, order_status, shipping_address, billing_address, customers(company_name, contact_name, shipping_address, billing_address), order_items(item_name, sku, description)').not('expected_shipment_date', 'is', null).order('expected_shipment_date', { ascending: true }).limit(500)
+          ? await (atOnly
+              ? supabase.from('orders').select('id, order_number, expected_shipment_date, order_status, shipping_address, billing_address, customers(company_name, contact_name, shipping_address, billing_address), order_items(item_name, sku, description)').eq('source_system', 'zoho_eu_2').not('expected_shipment_date', 'is', null).order('expected_shipment_date', { ascending: true }).limit(500)
+              : supabase.from('orders').select('id, order_number, expected_shipment_date, order_status, shipping_address, billing_address, customers(company_name, contact_name, shipping_address, billing_address), order_items(item_name, sku, description)').not('expected_shipment_date', 'is', null).order('expected_shipment_date', { ascending: true }).limit(500))
           : { data: [] };
 
         const [routesRes, routePlansRes] = canSeeRoutes
@@ -246,8 +254,12 @@ export default function Dashboard() {
 
         const [vipCustomersRes, vipOrdersRes] = canSeeCustomers
           ? await Promise.all([
-              supabase.from('customers').select('id', { count: 'exact', head: true }).eq('is_vip', true),
-              supabase.from('orders').select('id', { count: 'exact', head: true }).eq('is_vip', true),
+              (atOnly
+                ? supabase.from('customers').select('id', { count: 'exact', head: true }).eq('is_vip', true).eq('source_system', 'zoho_eu_2')
+                : supabase.from('customers').select('id', { count: 'exact', head: true }).eq('is_vip', true)),
+              (atOnly
+                ? supabase.from('orders').select('id', { count: 'exact', head: true }).eq('is_vip', true).eq('source_system', 'zoho_eu_2')
+                : supabase.from('orders').select('id', { count: 'exact', head: true }).eq('is_vip', true)),
             ])
           : [{ count: 0 }, { count: 0 }];
 
@@ -273,7 +285,7 @@ export default function Dashboard() {
       }
     }
     load();
-  }, [canSeeOrders, canSeeRoutes, canSeeFinance, isAdmin, canSeeAudit]);
+  }, [canSeeOrders, canSeeRoutes, canSeeFinance, isAdmin, canSeeAudit, canSeeCustomers, atOnly]);
 
   const kpiCards = [
     { label: 'Freie Geräte (Pool)', value: stats.freePoolDevices, icon: PackageCheck, visible: isAdmin, onClick: () => navigate('/lager/equipment-area') },
