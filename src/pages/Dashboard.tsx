@@ -165,7 +165,7 @@ export default function Dashboard() {
   const toggle = (k: string) => setCollapsed(p => ({ ...p, [k]: !p[k] }));
 
   const canSeeOrders = isAdmin || hasAnyRole(['Auftragsverwaltung', 'Tourenplanung', 'Finance', 'Österreich']);
-  const canSeeRoutes = isAdmin || hasAnyRole(['Tourenplanung', 'Auftragsverwaltung']);
+  const canSeeRoutes = isAdmin || hasAnyRole(['Tourenplanung', 'Auftragsverwaltung', 'Österreich']);
   const canSeeFinance = isAdmin || hasRole('Finance');
   const canSeeCustomers = isAdmin || hasAnyRole(['Auftragsverwaltung', 'Tourenplanung', 'Finance', 'Österreich']);
   const canSeeAudit = isAdmin || hasRole('Read Only Audit');
@@ -221,8 +221,12 @@ export default function Dashboard() {
 
         const [routesRes, routePlansRes] = canSeeRoutes
           ? await Promise.all([
-              supabase.from('route_plans').select('id', { count: 'exact', head: true }),
-              supabase.from('route_plans').select('id, planned_date, planning_status, assigned_employee, priority').or('planning_status.eq.offen,planning_status.eq.geplant,planning_status.eq.in Bearbeitung').order('planned_date', { ascending: true }).limit(7),
+              (atOnly
+                ? supabase.from('route_plans').select('id, orders!inner(source_system)', { count: 'exact', head: true }).eq('orders.source_system', 'zoho_eu_2')
+                : supabase.from('route_plans').select('id', { count: 'exact', head: true })),
+              (atOnly
+                ? supabase.from('route_plans').select('id, planned_date, planning_status, assigned_employee, priority, orders!inner(source_system)').eq('orders.source_system', 'zoho_eu_2').or('planning_status.eq.offen,planning_status.eq.geplant,planning_status.eq.in Bearbeitung').order('planned_date', { ascending: true }).limit(7)
+                : supabase.from('route_plans').select('id, planned_date, planning_status, assigned_employee, priority').or('planning_status.eq.offen,planning_status.eq.geplant,planning_status.eq.in Bearbeitung').order('planned_date', { ascending: true }).limit(7)),
             ])
           : [{ count: 0 }, { data: [] }];
 
