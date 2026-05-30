@@ -12,6 +12,7 @@ import CustomerDeleteDialog from '@/components/CustomerDeleteDialog';
 import { VipBadge } from '@/components/VipBadge';
 import { isCustomerVip, vipFirst } from '@/lib/vip';
 import { SourceBadge, sourceLabel, sourceFlag } from '@/lib/source-system';
+import { useAtOnly } from '@/hooks/useAtOnly';
 
 type SortField = 'company_name' | 'contact_name' | 'created_at';
 type SortDir = 'asc' | 'desc';
@@ -32,6 +33,7 @@ export default function Customers() {
   const [page, setPage] = useState(0);
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
+  const atOnly = useAtOnly();
   const [editCustomer, setEditCustomer] = useState<any>(null);
   const [deleteCustomer, setDeleteCustomer] = useState<any>(null);
 
@@ -42,11 +44,13 @@ export default function Customers() {
     let from = 0;
     const all: any[] = [];
     for (;;) {
-      const { data, error: err } = await supabase
+      let qb = supabase
         .from('customers')
         .select('*')
         .order(sortField, { ascending: sortDir === 'asc' })
         .range(from, from + CHUNK - 1);
+      if (atOnly) qb = qb.eq('source_system', 'zoho_eu_2');
+      const { data, error: err } = await qb;
       if (err) { setError(err.message); break; }
       if (!data || data.length === 0) break;
       all.push(...data);
@@ -59,7 +63,7 @@ export default function Customers() {
 
   useEffect(() => {
     loadAll();
-  }, [sortField, sortDir]);
+  }, [sortField, sortDir, atOnly]);
 
   const sources = [...new Set(customers.map(c => c.source_system).filter(Boolean))];
 
