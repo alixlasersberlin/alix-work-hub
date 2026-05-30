@@ -204,13 +204,19 @@ export default function Dashboard() {
 
         const [openOrdersRes, recentOrdersRes] = canSeeOrders
           ? await Promise.all([
-              supabase.from('orders').select('id', { count: 'exact', head: true }).eq('order_status', 'offen'),
-              supabase.from('orders').select('id, order_number, order_status, total_amount, currency, order_date, expected_shipment_date').order('created_at', { ascending: false }).limit(7),
+              (atOnly
+                ? supabase.from('orders').select('id', { count: 'exact', head: true }).eq('order_status', 'offen').eq('source_system', 'zoho_eu_2')
+                : supabase.from('orders').select('id', { count: 'exact', head: true }).eq('order_status', 'offen')),
+              (atOnly
+                ? supabase.from('orders').select('id, order_number, order_status, total_amount, currency, order_date, expected_shipment_date').eq('source_system', 'zoho_eu_2').order('created_at', { ascending: false }).limit(7)
+                : supabase.from('orders').select('id, order_number, order_status, total_amount, currency, order_date, expected_shipment_date').order('created_at', { ascending: false }).limit(7)),
             ])
           : [{ count: 0 }, { data: [] }];
 
         const shipmentOrdersRes = canSeeOrders
-          ? await supabase.from('orders').select('id, order_number, expected_shipment_date, order_status, shipping_address, billing_address, customers(company_name, contact_name, shipping_address, billing_address), order_items(item_name, sku, description)').not('expected_shipment_date', 'is', null).order('expected_shipment_date', { ascending: true }).limit(500)
+          ? await (atOnly
+              ? supabase.from('orders').select('id, order_number, expected_shipment_date, order_status, shipping_address, billing_address, customers(company_name, contact_name, shipping_address, billing_address), order_items(item_name, sku, description)').eq('source_system', 'zoho_eu_2').not('expected_shipment_date', 'is', null).order('expected_shipment_date', { ascending: true }).limit(500)
+              : supabase.from('orders').select('id, order_number, expected_shipment_date, order_status, shipping_address, billing_address, customers(company_name, contact_name, shipping_address, billing_address), order_items(item_name, sku, description)').not('expected_shipment_date', 'is', null).order('expected_shipment_date', { ascending: true }).limit(500))
           : { data: [] };
 
         const [routesRes, routePlansRes] = canSeeRoutes
