@@ -205,16 +205,21 @@ export default function AtApprovalTab({ orderId }: Props) {
         </div>
 
         {/* Bestellfreigabe */}
-        <div className="flex items-center justify-between rounded-lg border border-amber-500/40 bg-amber-500/5 px-3 py-2.5">
-          <Label className="text-sm font-medium">Bestellfreigabe</Label>
-          <div className="flex items-center gap-2">
-            <Checkbox
-              checked={bestellfreigabe}
-              onCheckedChange={(v) => setBestellfreigabe(!!v)}
-              disabled={!canWrite}
-            />
-            <span className="text-xs text-muted-foreground w-8">{bestellfreigabe ? 'Ja' : 'Nein'}</span>
-          </div>
+        <div>
+          <Label className="text-xs text-muted-foreground">Bestellfreigabe</Label>
+          <Select
+            value={bestellfreigabe ? 'ja' : 'nein'}
+            onValueChange={(v) => setBestellfreigabe(v === 'ja')}
+            disabled={!canWrite}
+          >
+            <SelectTrigger className="bg-secondary border-amber-500/40 mt-1">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ja">Ja</SelectItem>
+              <SelectItem value="nein">Nein</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Name */}
