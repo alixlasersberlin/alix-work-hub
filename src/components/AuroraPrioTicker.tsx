@@ -177,7 +177,21 @@ export default function AuroraPrioTicker() {
     }
     load();
     const iv = setInterval(load, 5 * 60 * 1000);
-    return () => { cancelled = true; clearInterval(iv); };
+
+    // Realtime: aktualisiere sofort bei Status-/Lieferänderungen
+    const channel = supabase
+      .channel('aurora-ticker-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => load())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'production_orders' }, () => load())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'lager_devices' }, () => load())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'order_status_history' }, () => load())
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      clearInterval(iv);
+      supabase.removeChannel(channel);
+    };
   }, [variant, mode, atOnly]);
 
   // Für Rolle Österreich: CNN-News ausblenden (kein AT-Bezug) und ggf. auf 'prio' zurücksetzen.
