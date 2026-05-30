@@ -60,6 +60,7 @@ function dateTone(days: number | null): string {
 
 export default function AuroraPrioTicker() {
   const { variant } = useDesignVariant();
+  const atOnly = useAtOnly();
   const [mode, setMode] = useState<Mode>(() => {
     if (typeof window === 'undefined') return 'prio';
     const stored = window.localStorage.getItem(MODE_STORAGE_KEY) as Mode | null;
