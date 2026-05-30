@@ -435,7 +435,7 @@ export default function AppLayout() {
       supabase.removeChannel(ch2);
       supabase.removeChannel(ch3);
     };
-  }, []);
+  }, [atOnly]);
 
   useEffect(() => {
     window.dispatchEvent(new Event('einkauf-counts-refresh'));
