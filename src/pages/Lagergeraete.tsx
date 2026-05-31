@@ -495,23 +495,39 @@ export default function Lagergeraete({
   };
 
   const performMarkAsDelivered = async (d: LagerDevice) => {
-    const typPart = getDeviceTypeFromNotes(d.notes) === 'Leihgerät' ? '[Typ: Leihgerät] ' : '[Typ: Neugerät] ';
+    const isLeih = getDeviceTypeFromNotes(d.notes) === 'Leihgerät';
+    const typPart = isLeih ? '[Typ: Leihgerät] ' : '[Typ: Neugerät] ';
     const rest = (d.notes ?? '')
       .replace(/\s*\[Status:\s*[^\]]+\]\s*/g, ' ')
       .replace(/\s*\[Typ:\s*[^\]]+\]\s*/g, ' ')
       .replace(/\s*\[Leihgerät\]\s*/g, ' ')
       .trim();
-    const newNotes = `${typPart}[Status: Ausgeliefert]${rest ? ' ' + rest : ''}`;
+    // Leihgeräte bleiben immer in Lagerbestand und werden bei Rückgabe nur freigegeben,
+    // damit sie erneut vermietet werden können. Neugeräte werden "Ausgeliefert".
+    const newStatus = isLeih ? 'Bestand' : 'Ausgeliefert';
+    const newNotes = `${typPart}[Status: ${newStatus}]${rest ? ' ' + rest : ''}`;
+    const payload: { notes: string; reserved_order_id?: null; reservation_week?: null } = { notes: newNotes };
+    if (isLeih) {
+      payload.reserved_order_id = null;
+      payload.reservation_week = null;
+    }
     const { error } = await supabase
       .from('lager_devices')
-      .update({ notes: newNotes })
+      .update(payload)
       .eq('id', d.id);
     if (error) {
       toast.error('Fehler: ' + error.message);
       return;
     }
-    setDevices((prev) => prev.map((x) => x.id === d.id ? { ...x, notes: newNotes } : x));
-    toast.success(`Gerät ${d.serial_number} als ausgeliefert markiert.`);
+    setDevices((prev) => prev.map((x) => x.id === d.id
+      ? { ...x, notes: newNotes, ...(isLeih ? { reserved_order_id: null, reservation_week: null, orders: null } : {}) }
+      : x,
+    ));
+    toast.success(
+      isLeih
+        ? `Leihgerät ${d.serial_number} freigegeben — wieder verfügbar für Vermietung.`
+        : `Gerät ${d.serial_number} als ausgeliefert markiert.`,
+    );
   };
 
   const markAsDelivered = (d: LagerDevice) => setDeliverDevice(d);
@@ -538,7 +554,8 @@ export default function Lagergeraete({
       .replace(/\s*\[Typ:\s*(Neugerät|Leihgerät)\]\s*/g, ' ')
       .replace(/\s*\[Status:\s*[^\]]+\]\s*/g, ' ')
       .trim();
-    const notesWithType = `[Typ: ${deviceType}] [Status: ${deviceStatus}]${cleanedNotes ? ' ' + cleanedNotes : ''}`;
+    const effectiveStatus = deviceType === 'Leihgerät' ? 'Bestand' : deviceStatus;
+    const notesWithType = `[Typ: ${deviceType}] [Status: ${effectiveStatus}]${cleanedNotes ? ' ' + cleanedNotes : ''}`;
     const payload = {
       serial_number: parsed.data.serial_number,
       model_name: parsed.data.model_name,
@@ -758,7 +775,11 @@ export default function Lagergeraete({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="device-status">Status *</Label>
-                <Select value={deviceStatus} onValueChange={(v) => setDeviceStatus(v as DeviceStatus)}>
+                <Select
+                  value={deviceType === 'Leihgerät' ? 'Bestand' : deviceStatus}
+                  onValueChange={(v) => setDeviceStatus(v as DeviceStatus)}
+                  disabled={deviceType === 'Leihgerät'}
+                >
                   <SelectTrigger id="device-status">
                     <SelectValue placeholder="Status auswählen" />
                   </SelectTrigger>
@@ -768,6 +789,11 @@ export default function Lagergeraete({
                     ))}
                   </SelectContent>
                 </Select>
+                {deviceType === 'Leihgerät' && (
+                  <p className="text-xs text-muted-foreground">
+                    Leihgeräte verbleiben immer im Lagerbestand und können bei freier Verfügbarkeit erneut vermietet werden.
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="entry-date">Eingangsdatum *</Label>
@@ -1418,24 +1444,35 @@ export default function Lagergeraete({
 
       <AlertDialog open={!!deliverDevice} onOpenChange={(o) => !o && setDeliverDevice(null)}>
         <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Gerät als ausgeliefert markieren?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Gerät „{deliverDevice?.serial_number}" wird aus dem Bestand entfernt und unter „Ausgeliefert" geführt.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={async () => {
-                const d = deliverDevice;
-                setDeliverDevice(null);
-                if (d) await performMarkAsDelivered(d);
-              }}
-            >
-              Ja, als ausgeliefert markieren
-            </AlertDialogAction>
-          </AlertDialogFooter>
+          {(() => {
+            const isLeih = deliverDevice ? getDeviceTypeFromNotes(deliverDevice.notes) === 'Leihgerät' : false;
+            return (
+              <>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    {isLeih ? 'Leihgerät als zurückgegeben / geliefert markieren?' : 'Gerät als ausgeliefert markieren?'}
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {isLeih
+                      ? `Leihgerät „${deliverDevice?.serial_number}" bleibt im Lagerbestand und wird wieder als verfügbar geführt (Reservierung wird aufgehoben).`
+                      : `Gerät „${deliverDevice?.serial_number}" wird aus dem Bestand entfernt und unter „Ausgeliefert" geführt.`}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={async () => {
+                      const d = deliverDevice;
+                      setDeliverDevice(null);
+                      if (d) await performMarkAsDelivered(d);
+                    }}
+                  >
+                    {isLeih ? 'Ja, freigeben' : 'Ja, als ausgeliefert markieren'}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </>
+            );
+          })()}
         </AlertDialogContent>
       </AlertDialog>
     </div>
