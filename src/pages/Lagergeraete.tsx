@@ -495,23 +495,39 @@ export default function Lagergeraete({
   };
 
   const performMarkAsDelivered = async (d: LagerDevice) => {
-    const typPart = getDeviceTypeFromNotes(d.notes) === 'Leihgerät' ? '[Typ: Leihgerät] ' : '[Typ: Neugerät] ';
+    const isLeih = getDeviceTypeFromNotes(d.notes) === 'Leihgerät';
+    const typPart = isLeih ? '[Typ: Leihgerät] ' : '[Typ: Neugerät] ';
     const rest = (d.notes ?? '')
       .replace(/\s*\[Status:\s*[^\]]+\]\s*/g, ' ')
       .replace(/\s*\[Typ:\s*[^\]]+\]\s*/g, ' ')
       .replace(/\s*\[Leihgerät\]\s*/g, ' ')
       .trim();
-    const newNotes = `${typPart}[Status: Ausgeliefert]${rest ? ' ' + rest : ''}`;
+    // Leihgeräte bleiben immer in Lagerbestand und werden bei Rückgabe nur freigegeben,
+    // damit sie erneut vermietet werden können. Neugeräte werden "Ausgeliefert".
+    const newStatus = isLeih ? 'Bestand' : 'Ausgeliefert';
+    const newNotes = `${typPart}[Status: ${newStatus}]${rest ? ' ' + rest : ''}`;
+    const payload: { notes: string; reserved_order_id?: null; reservation_week?: null } = { notes: newNotes };
+    if (isLeih) {
+      payload.reserved_order_id = null;
+      payload.reservation_week = null;
+    }
     const { error } = await supabase
       .from('lager_devices')
-      .update({ notes: newNotes })
+      .update(payload)
       .eq('id', d.id);
     if (error) {
       toast.error('Fehler: ' + error.message);
       return;
     }
-    setDevices((prev) => prev.map((x) => x.id === d.id ? { ...x, notes: newNotes } : x));
-    toast.success(`Gerät ${d.serial_number} als ausgeliefert markiert.`);
+    setDevices((prev) => prev.map((x) => x.id === d.id
+      ? { ...x, notes: newNotes, ...(isLeih ? { reserved_order_id: null, reservation_week: null, orders: null } : {}) }
+      : x,
+    ));
+    toast.success(
+      isLeih
+        ? `Leihgerät ${d.serial_number} freigegeben — wieder verfügbar für Vermietung.`
+        : `Gerät ${d.serial_number} als ausgeliefert markiert.`,
+    );
   };
 
   const markAsDelivered = (d: LagerDevice) => setDeliverDevice(d);
