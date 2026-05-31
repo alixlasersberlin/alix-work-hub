@@ -1434,24 +1434,35 @@ export default function Lagergeraete({
 
       <AlertDialog open={!!deliverDevice} onOpenChange={(o) => !o && setDeliverDevice(null)}>
         <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Gerät als ausgeliefert markieren?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Gerät „{deliverDevice?.serial_number}" wird aus dem Bestand entfernt und unter „Ausgeliefert" geführt.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={async () => {
-                const d = deliverDevice;
-                setDeliverDevice(null);
-                if (d) await performMarkAsDelivered(d);
-              }}
-            >
-              Ja, als ausgeliefert markieren
-            </AlertDialogAction>
-          </AlertDialogFooter>
+          {(() => {
+            const isLeih = deliverDevice ? getDeviceTypeFromNotes(deliverDevice.notes) === 'Leihgerät' : false;
+            return (
+              <>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    {isLeih ? 'Leihgerät als zurückgegeben / geliefert markieren?' : 'Gerät als ausgeliefert markieren?'}
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {isLeih
+                      ? `Leihgerät „${deliverDevice?.serial_number}" bleibt im Lagerbestand und wird wieder als verfügbar geführt (Reservierung wird aufgehoben).`
+                      : `Gerät „${deliverDevice?.serial_number}" wird aus dem Bestand entfernt und unter „Ausgeliefert" geführt.`}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={async () => {
+                      const d = deliverDevice;
+                      setDeliverDevice(null);
+                      if (d) await performMarkAsDelivered(d);
+                    }}
+                  >
+                    {isLeih ? 'Ja, freigeben' : 'Ja, als ausgeliefert markieren'}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </>
+            );
+          })()}
         </AlertDialogContent>
       </AlertDialog>
     </div>
