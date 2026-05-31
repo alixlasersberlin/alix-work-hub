@@ -66,6 +66,7 @@ const Suppliers = lazy(() => import("./pages/Suppliers"));
 const Lager = lazy(() => import("./pages/Lager"));
 const Lagergeraete = lazy(() => import("./pages/Lagergeraete"));
 const Leihgeraete = lazy(() => import("./pages/Leihgeraete"));
+const DoppelteReservierungen = lazy(() => import("./pages/DoppelteReservierungen"));
 const EquipmentArea = lazy(() => import("./pages/EquipmentArea"));
 const EquipmentUnterwegs = lazy(() => import("./pages/EquipmentUnterwegs"));
 const EquipmentWarehouse = lazy(() => import("./pages/EquipmentWarehouse"));
@@ -277,6 +278,7 @@ function AppRoutes() {
           <Route path="/lager" element={<ProtectedRoute requiredRoles={WAREHOUSE_ROLES}><Lager /></ProtectedRoute>} />
           <Route path="/lager/lagergeraete" element={<ProtectedRoute requiredRoles={WAREHOUSE_ROLES}><Lagergeraete filterType="Neugerät" pageTitle="Lagergeräte" pageSubtitle="Erfassung und Übersicht aller Neugeräte im Lager" addLabel="Neues Lagergerät" dialogTitle="Lagergerät" emptyLabel="Noch keine Lagergeräte erfasst." rowAccentClass="bg-emerald-500/10 hover:bg-emerald-500/15" /></ProtectedRoute>} />
           <Route path="/lager/leihgeraete" element={<ProtectedRoute requiredRoles={WAREHOUSE_ROLES}><Leihgeraete /></ProtectedRoute>} />
+          <Route path="/lager/doppelte-reservierungen" element={<ProtectedRoute requiredRoles={WAREHOUSE_ROLES}><DoppelteReservierungen /></ProtectedRoute>} />
           <Route path="/lager/equipment-area" element={<ProtectedRoute requiredRoles={WAREHOUSE_ROLES}><EquipmentArea /></ProtectedRoute>} />
           <Route path="/lager/equipment-area/warehouse" element={<ProtectedRoute requiredRoles={WAREHOUSE_ROLES}><EquipmentWarehouse /></ProtectedRoute>} />
           <Route path="/lager/equipment-area/unterwegs" element={<ProtectedRoute requiredRoles={WAREHOUSE_ROLES}><EquipmentUnterwegs /></ProtectedRoute>} />
