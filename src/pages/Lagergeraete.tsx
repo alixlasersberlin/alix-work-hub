@@ -554,7 +554,8 @@ export default function Lagergeraete({
       .replace(/\s*\[Typ:\s*(Neugerät|Leihgerät)\]\s*/g, ' ')
       .replace(/\s*\[Status:\s*[^\]]+\]\s*/g, ' ')
       .trim();
-    const notesWithType = `[Typ: ${deviceType}] [Status: ${deviceStatus}]${cleanedNotes ? ' ' + cleanedNotes : ''}`;
+    const effectiveStatus = deviceType === 'Leihgerät' ? 'Bestand' : deviceStatus;
+    const notesWithType = `[Typ: ${deviceType}] [Status: ${effectiveStatus}]${cleanedNotes ? ' ' + cleanedNotes : ''}`;
     const payload = {
       serial_number: parsed.data.serial_number,
       model_name: parsed.data.model_name,
