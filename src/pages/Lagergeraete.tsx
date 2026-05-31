@@ -774,7 +774,11 @@ export default function Lagergeraete({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="device-status">Status *</Label>
-                <Select value={deviceStatus} onValueChange={(v) => setDeviceStatus(v as DeviceStatus)}>
+                <Select
+                  value={deviceType === 'Leihgerät' ? 'Bestand' : deviceStatus}
+                  onValueChange={(v) => setDeviceStatus(v as DeviceStatus)}
+                  disabled={deviceType === 'Leihgerät'}
+                >
                   <SelectTrigger id="device-status">
                     <SelectValue placeholder="Status auswählen" />
                   </SelectTrigger>
@@ -784,6 +788,11 @@ export default function Lagergeraete({
                     ))}
                   </SelectContent>
                 </Select>
+                {deviceType === 'Leihgerät' && (
+                  <p className="text-xs text-muted-foreground">
+                    Leihgeräte verbleiben immer im Lagerbestand und können bei freier Verfügbarkeit erneut vermietet werden.
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="entry-date">Eingangsdatum *</Label>
