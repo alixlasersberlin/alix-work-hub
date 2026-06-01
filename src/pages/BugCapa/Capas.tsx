@@ -26,10 +26,12 @@ type Capa = {
 };
 
 export default function Capas() {
-  const { user } = useAuth();
+  const { user, hasRole } = useAuth();
+  const isSuperAdmin = hasRole('Super Admin');
   const [rows, setRows] = useState<Capa[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Capa | null>(null);
   const [detail, setDetail] = useState<Capa | null>(null);
   const [form, setForm] = useState({
     title: '', trigger_type: 'sonstiges',
