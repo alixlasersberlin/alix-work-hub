@@ -1,11 +1,12 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { Star, Truck, MessageSquare, Monitor, LayoutDashboard } from 'lucide-react';
+import { Star, Truck, MessageSquare, Monitor, LayoutDashboard, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const tabs = [
   { to: '/bewertungen', label: 'Übersicht', icon: LayoutDashboard, end: true },
   { to: '/bewertungen/geliefert', label: 'Aufträge geliefert', icon: Truck },
   { to: '/bewertungen/abgegeben', label: 'Abgegebene Bewertungen', icon: MessageSquare },
+  { to: '/bewertungen/geschlossen', label: 'Geschlossen', icon: Lock },
   { to: '/bewertungen/frontend', label: 'Frontend', icon: Monitor },
 ];
 
