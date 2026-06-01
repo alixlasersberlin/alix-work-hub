@@ -160,8 +160,10 @@ Deno.serve(async (req) => {
     const sentType = manual ? 'manual' : 'automatic'
     const now = new Date().toISOString()
 
+    const isRateLimit = !!mailErr && /429|rate.?limit|high demand/i.test(mailErr.message || '')
+
     await admin.from('reviews').update({
-      invitation_status: mailErr ? 'failed' : (existing ? 'resent' : 'sent'),
+      invitation_status: mailErr ? (isRateLimit ? 'queued' : 'failed') : (existing ? 'resent' : 'sent'),
       invitation_sent_at: now,
       invitation_sent_by: userId,
     }).eq('id', reviewId)
@@ -172,11 +174,23 @@ Deno.serve(async (req) => {
       customer_email: customer.email,
       sent_by: userId,
       sent_type: sentType,
-      delivery_status: mailErr ? 'failed' : 'queued',
+      delivery_status: mailErr ? (isRateLimit ? 'queued' : 'failed') : 'queued',
       error_message: mailErr ? mailErr.message : null,
     })
 
-    if (mailErr) return json({ error: mailErr.message }, 500)
+    if (mailErr) {
+      // 200 zurückgeben, damit der echte Grund im Frontend ankommt
+      // (supabase-js verschluckt Bodies bei non-2xx Status)
+      return json({
+        ok: false,
+        rate_limited: isRateLimit,
+        error: isRateLimit
+          ? 'E-Mail-Dienst überlastet (429). Bitte in einer Minute erneut versuchen.'
+          : mailErr.message,
+        review_id: reviewId,
+        review_url: reviewUrl,
+      }, 200)
+    }
     return json({ ok: true, review_id: reviewId, review_url: reviewUrl })
   } catch (e: any) {
     return json({ error: e?.message || 'Unbekannter Fehler' }, 500)

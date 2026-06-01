@@ -224,6 +224,8 @@ export default function DeliveredOrders() {
       const r = await sendReviewInvitation(o.id, { manual: true });
       if (r.ok) ok++; else fail++;
       setBulkProgress({ done: i + 1, total: targets.length });
+      // Throttle: ~1.5 s zwischen Sends, um Rate-Limit zu vermeiden
+      if (i < targets.length - 1) await new Promise(res => setTimeout(res, 1500));
     }
     setBulkBusy(false);
     setBulkProgress(null);
