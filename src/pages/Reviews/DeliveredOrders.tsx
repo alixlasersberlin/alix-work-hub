@@ -112,6 +112,9 @@ export default function DeliveredOrders() {
         .eq('id', existing.id);
       error = res.error;
     } else {
+      const token = (typeof crypto !== 'undefined' && 'randomUUID' in crypto)
+        ? `closed-${crypto.randomUUID()}`
+        : `closed-${Date.now()}-${Math.random().toString(36).slice(2)}`;
       const res = await (supabase as any)
         .from('reviews')
         .insert({
@@ -120,6 +123,7 @@ export default function DeliveredOrders() {
           customer_name: order.customers?.company_name || order.customers?.contact_name || null,
           customer_email: order.customers?.email || null,
           order_number: order.order_number,
+          review_token: token,
           closed_at: new Date().toISOString(),
           closed_by: user?.id ?? null,
           closed_reason: closeReason.trim() || null,
