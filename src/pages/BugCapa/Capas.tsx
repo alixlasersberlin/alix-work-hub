@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { StatusBadge } from '@/components/StatusBadge';
-import { Plus, MessageSquare } from 'lucide-react';
+import { Plus, MessageSquare, Pencil, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Section, CAPA_STATUS, statusLabel } from './_shared';
 import { QmDetailDrawer } from './QmDetailDrawer';
@@ -26,10 +26,12 @@ type Capa = {
 };
 
 export default function Capas() {
-  const { user } = useAuth();
+  const { user, hasRole } = useAuth();
+  const isSuperAdmin = hasRole('Super Admin');
   const [rows, setRows] = useState<Capa[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Capa | null>(null);
   const [detail, setDetail] = useState<Capa | null>(null);
   const [form, setForm] = useState({
     title: '', trigger_type: 'sonstiges',
@@ -112,6 +114,39 @@ export default function Capas() {
     load();
   }
 
+  async function startEdit(r: Capa) {
+    const { data, error } = await (supabase as any).from('capas').select('*').eq('id', r.id).single();
+    if (error) { toast.error('Laden fehlgeschlagen: ' + error.message); return; }
+    setForm({
+      title: data.title ?? '',
+      trigger_type: data.trigger_type ?? 'sonstiges',
+      root_cause: data.root_cause ?? '',
+      immediate_action: data.immediate_action ?? '',
+      corrective_action: data.corrective_action ?? '',
+      preventive_action: data.preventive_action ?? '',
+      due_date: data.due_date ?? '',
+    });
+    setEditing(r);
+  }
+
+  async function saveEdit() {
+    if (!editing) return;
+    if (!form.title.trim()) { toast.error('Titel erforderlich'); return; }
+    const { error } = await (supabase as any).from('capas').update({
+      title: form.title.trim(),
+      trigger_type: form.trigger_type,
+      root_cause: form.root_cause || null,
+      immediate_action: form.immediate_action || null,
+      corrective_action: form.corrective_action || null,
+      preventive_action: form.preventive_action || null,
+      due_date: form.due_date || null,
+    }).eq('id', editing.id);
+    if (error) { toast.error('Speichern fehlgeschlagen: ' + error.message); return; }
+    toast.success('CAPA aktualisiert');
+    setEditing(null);
+    load();
+  }
+
   return (
     <Section
       title={`CAPA (${rows.length})`}
@@ -173,10 +208,22 @@ export default function Capas() {
                 <TableCell className="text-sm">{r.due_date ?? '—'}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1">
-                    <Select value={r.status} onValueChange={v => setStatus(r.id, v)}>
-                      <SelectTrigger className="h-8 w-44"><SelectValue /></SelectTrigger>
-                      <SelectContent>{CAPA_STATUS.map(s => <SelectItem key={s} value={s}>{statusLabel(s)}</SelectItem>)}</SelectContent>
-                    </Select>
+                    {isSuperAdmin ? (
+                      <>
+                        <Select value={r.status} onValueChange={v => setStatus(r.id, v)}>
+                          <SelectTrigger className="h-8 w-44"><SelectValue /></SelectTrigger>
+                          <SelectContent>{CAPA_STATUS.map(s => <SelectItem key={s} value={s}>{statusLabel(s)}</SelectItem>)}</SelectContent>
+                        </Select>
+                        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => startEdit(r)} title="Bearbeiten">
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        {r.status !== 'geschlossen' && (
+                          <Button size="icon" variant="ghost" className="h-8 w-8 text-emerald-500" onClick={() => setStatus(r.id, 'geschlossen')} title="Als gelöst markieren">
+                            <CheckCircle2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </>
+                    ) : null}
                     <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setDetail(r)}>
                       <MessageSquare className="h-4 w-4" />
                     </Button>
@@ -194,6 +241,32 @@ export default function Capas() {
         entityId={detail?.id ?? null}
         title={detail ? `${detail.capa_number} – ${detail.title}` : ''}
       />
+      <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader><DialogTitle>CAPA bearbeiten {editing?.capa_number}</DialogTitle></DialogHeader>
+          <div className="grid gap-3 py-2 max-h-[70vh] overflow-y-auto pr-1">
+            <div><Label>Titel *</Label><Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} /></div>
+            <div>
+              <Label>Auslöser</Label>
+              <Select value={form.trigger_type} onValueChange={v => setForm({ ...form, trigger_type: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {['bug', 'reklamation', 'audit', 'sonstiges'].map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div><Label>Ursachenanalyse</Label><Textarea rows={3} value={form.root_cause} onChange={e => setForm({ ...form, root_cause: e.target.value })} /></div>
+            <div><Label>Sofortmaßnahme</Label><Textarea rows={2} value={form.immediate_action} onChange={e => setForm({ ...form, immediate_action: e.target.value })} /></div>
+            <div><Label>Korrekturmaßnahme</Label><Textarea rows={2} value={form.corrective_action} onChange={e => setForm({ ...form, corrective_action: e.target.value })} /></div>
+            <div><Label>Vorbeugemaßnahme</Label><Textarea rows={2} value={form.preventive_action} onChange={e => setForm({ ...form, preventive_action: e.target.value })} /></div>
+            <div><Label>Frist</Label><Input type="date" value={form.due_date} onChange={e => setForm({ ...form, due_date: e.target.value })} /></div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEditing(null)}>Abbrechen</Button>
+            <Button onClick={saveEdit}>Speichern</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Section>
   );
 }

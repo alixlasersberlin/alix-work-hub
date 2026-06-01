@@ -13,6 +13,7 @@ import { Plus, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { Section, BUG_STATUS, BUG_PRIORITY, BUG_CRITICALITY, statusLabel } from './_shared';
 import { QmDetailDrawer } from './QmDetailDrawer';
+import { Pencil, CheckCircle2 } from 'lucide-react';
 
 type Bug = {
   id: string;
@@ -29,10 +30,12 @@ type Bug = {
 };
 
 export default function Bugs() {
-  const { user } = useAuth();
+  const { user, hasRole } = useAuth();
+  const isSuperAdmin = hasRole('Super Admin');
   const [rows, setRows] = useState<Bug[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Bug | null>(null);
   const [detail, setDetail] = useState<Bug | null>(null);
   const [form, setForm] = useState({
     title: '', description: '', product: '', module: '', software_version: '',
@@ -113,6 +116,39 @@ export default function Bugs() {
     load();
   }
 
+  function startEdit(r: Bug) {
+    setForm({
+      title: r.title,
+      description: '',
+      product: r.product ?? '',
+      module: r.module ?? '',
+      software_version: r.software_version ?? '',
+      priority: r.priority,
+      criticality: r.criticality,
+      due_date: r.due_date ?? '',
+    });
+    setEditing(r);
+  }
+
+  async function saveEdit() {
+    if (!editing) return;
+    if (!form.title.trim()) { toast.error('Titel erforderlich'); return; }
+    const { error } = await (supabase as any).from('bugs').update({
+      title: form.title.trim(),
+      description: form.description || null,
+      product: form.product || null,
+      module: form.module || null,
+      software_version: form.software_version || null,
+      priority: form.priority,
+      criticality: form.criticality,
+      due_date: form.due_date || null,
+    }).eq('id', editing.id);
+    if (error) { toast.error('Speichern fehlgeschlagen: ' + error.message); return; }
+    toast.success('Bug aktualisiert');
+    setEditing(null);
+    load();
+  }
+
   return (
     <Section
       title={`Bugs (${rows.length})`}
@@ -187,10 +223,22 @@ export default function Bugs() {
                 <TableCell className="text-sm">{r.due_date ?? '—'}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1">
-                    <Select value={r.status} onValueChange={v => setStatus(r.id, v)}>
-                      <SelectTrigger className="h-8 w-36"><SelectValue /></SelectTrigger>
-                      <SelectContent>{BUG_STATUS.map(s => <SelectItem key={s} value={s}>{statusLabel(s)}</SelectItem>)}</SelectContent>
-                    </Select>
+                    {isSuperAdmin ? (
+                      <>
+                        <Select value={r.status} onValueChange={v => setStatus(r.id, v)}>
+                          <SelectTrigger className="h-8 w-36"><SelectValue /></SelectTrigger>
+                          <SelectContent>{BUG_STATUS.map(s => <SelectItem key={s} value={s}>{statusLabel(s)}</SelectItem>)}</SelectContent>
+                        </Select>
+                        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => startEdit(r)} title="Bearbeiten">
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        {r.status !== 'erledigt' && r.status !== 'geschlossen' && (
+                          <Button size="icon" variant="ghost" className="h-8 w-8 text-emerald-500" onClick={() => setStatus(r.id, 'erledigt')} title="Als gelöst markieren">
+                            <CheckCircle2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </>
+                    ) : null}
                     <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setDetail(r)}>
                       <MessageSquare className="h-4 w-4" />
                     </Button>
@@ -208,6 +256,41 @@ export default function Bugs() {
         entityId={detail?.id ?? null}
         title={detail ? `${detail.ticket_number} – ${detail.title}` : ''}
       />
+      <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader><DialogTitle>Bug bearbeiten {editing?.ticket_number}</DialogTitle></DialogHeader>
+          <div className="grid gap-3 py-2">
+            <div><Label>Titel *</Label><Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} /></div>
+            <div><Label>Beschreibung</Label><Textarea rows={4} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></div>
+            <div className="grid grid-cols-3 gap-3">
+              <div><Label>Produkt</Label><Input value={form.product} onChange={e => setForm({ ...form, product: e.target.value })} /></div>
+              <div><Label>Modul</Label><Input value={form.module} onChange={e => setForm({ ...form, module: e.target.value })} /></div>
+              <div><Label>Softwareversion</Label><Input value={form.software_version} onChange={e => setForm({ ...form, software_version: e.target.value })} /></div>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <Label>Priorität</Label>
+                <Select value={form.priority} onValueChange={v => setForm({ ...form, priority: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{BUG_PRIORITY.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Kritikalität</Label>
+                <Select value={form.criticality} onValueChange={v => setForm({ ...form, criticality: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{BUG_CRITICALITY.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div><Label>Fälligkeit</Label><Input type="date" value={form.due_date} onChange={e => setForm({ ...form, due_date: e.target.value })} /></div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEditing(null)}>Abbrechen</Button>
+            <Button onClick={saveEdit}>Speichern</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Section>
   );
 }
