@@ -1,0 +1,165 @@
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { StatusBadge } from '@/components/StatusBadge';
+import { Plus } from 'lucide-react';
+import { toast } from 'sonner';
+import { Section, BUG_STATUS, BUG_PRIORITY, BUG_CRITICALITY, statusLabel } from './_shared';
+
+type Bug = {
+  id: string;
+  ticket_number: string;
+  title: string;
+  product: string | null;
+  module: string | null;
+  software_version: string | null;
+  priority: string;
+  criticality: string;
+  status: string;
+  due_date: string | null;
+  created_at: string;
+};
+
+export default function Bugs() {
+  const { user } = useAuth();
+  const [rows, setRows] = useState<Bug[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({
+    title: '', description: '', product: '', module: '', software_version: '',
+    priority: 'normal', criticality: 'mittel', due_date: '',
+  });
+
+  async function load() {
+    setLoading(true);
+    const { data, error } = await (supabase as any)
+      .from('bugs').select('*').order('created_at', { ascending: false }).limit(500);
+    if (error) toast.error('Bugs laden fehlgeschlagen: ' + error.message);
+    setRows((data ?? []) as Bug[]);
+    setLoading(false);
+  }
+
+  useEffect(() => { load(); }, []);
+
+  async function create() {
+    if (!form.title.trim()) { toast.error('Titel erforderlich'); return; }
+    if (!user) return;
+    const payload: any = {
+      title: form.title.trim(),
+      description: form.description || null,
+      product: form.product || null,
+      module: form.module || null,
+      software_version: form.software_version || null,
+      priority: form.priority,
+      criticality: form.criticality,
+      due_date: form.due_date || null,
+      reporter_id: user.id,
+      created_by: user.id,
+    };
+    const { error } = await (supabase as any).from('bugs').insert(payload);
+    if (error) { toast.error('Anlegen fehlgeschlagen: ' + error.message); return; }
+    toast.success('Bug angelegt');
+    setOpen(false);
+    setForm({ title: '', description: '', product: '', module: '', software_version: '', priority: 'normal', criticality: 'mittel', due_date: '' });
+    load();
+  }
+
+  async function setStatus(id: string, status: string) {
+    const { error } = await (supabase as any).from('bugs').update({ status }).eq('id', id);
+    if (error) { toast.error('Update fehlgeschlagen: ' + error.message); return; }
+    load();
+  }
+
+  return (
+    <Section
+      title={`Bugs (${rows.length})`}
+      action={
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button><Plus className="h-4 w-4 mr-1" /> Neuer Bug</Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader><DialogTitle>Neuen Bug erfassen</DialogTitle></DialogHeader>
+            <div className="grid gap-3 py-2">
+              <div><Label>Titel *</Label><Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} /></div>
+              <div><Label>Beschreibung</Label><Textarea rows={4} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></div>
+              <div className="grid grid-cols-3 gap-3">
+                <div><Label>Produkt</Label><Input value={form.product} onChange={e => setForm({ ...form, product: e.target.value })} /></div>
+                <div><Label>Modul</Label><Input value={form.module} onChange={e => setForm({ ...form, module: e.target.value })} /></div>
+                <div><Label>Softwareversion</Label><Input value={form.software_version} onChange={e => setForm({ ...form, software_version: e.target.value })} /></div>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <Label>Priorität</Label>
+                  <Select value={form.priority} onValueChange={v => setForm({ ...form, priority: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{BUG_PRIORITY.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Kritikalität</Label>
+                  <Select value={form.criticality} onValueChange={v => setForm({ ...form, criticality: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{BUG_CRITICALITY.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div><Label>Fälligkeit</Label><Input type="date" value={form.due_date} onChange={e => setForm({ ...form, due_date: e.target.value })} /></div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setOpen(false)}>Abbrechen</Button>
+              <Button onClick={create}>Speichern</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      }
+    >
+      <div className="rounded-md border border-border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Ticket</TableHead>
+              <TableHead>Titel</TableHead>
+              <TableHead>Produkt / Modul</TableHead>
+              <TableHead>Prio</TableHead>
+              <TableHead>Kritisch.</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Fällig</TableHead>
+              <TableHead></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground">Lade …</TableCell></TableRow>
+            ) : rows.length === 0 ? (
+              <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground">Noch keine Bugs erfasst.</TableCell></TableRow>
+            ) : rows.map(r => (
+              <TableRow key={r.id}>
+                <TableCell className="font-mono text-xs">{r.ticket_number}</TableCell>
+                <TableCell className="font-medium">{r.title}</TableCell>
+                <TableCell className="text-sm text-muted-foreground">{[r.product, r.module].filter(Boolean).join(' / ') || '—'}</TableCell>
+                <TableCell><StatusBadge status={r.priority} /></TableCell>
+                <TableCell><StatusBadge status={r.criticality} /></TableCell>
+                <TableCell><StatusBadge status={statusLabel(r.status)} /></TableCell>
+                <TableCell className="text-sm">{r.due_date ?? '—'}</TableCell>
+                <TableCell>
+                  <Select value={r.status} onValueChange={v => setStatus(r.id, v)}>
+                    <SelectTrigger className="h-8 w-36"><SelectValue /></SelectTrigger>
+                    <SelectContent>{BUG_STATUS.map(s => <SelectItem key={s} value={s}>{statusLabel(s)}</SelectItem>)}</SelectContent>
+                  </Select>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </Section>
+  );
+}
