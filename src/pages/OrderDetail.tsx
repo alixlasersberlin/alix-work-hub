@@ -285,9 +285,28 @@ export default function OrderDetail() {
                   toast.success('Auftrag als geliefert markiert');
                   const mail = await sendCustomerShippingNotice(order.id, undefined, 'automatisch', 'customer_delivered');
                   if (mail.ok) toast.success(mail.message); else toast.error('E-Mail nicht versendet: ' + mail.message);
+                  sendReviewInvitation(order.id, { manual: false }).catch(() => {});
                   loadAll();
                 }}>
                   <Truck className="w-3.5 h-3.5 mr-1.5" /> Als geliefert markieren
+                </Button>
+              )}
+              {hasRole('Super Admin') && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
+                  onClick={async () => {
+                    if (!order.customer_email) {
+                      toast.error('Für diesen Auftrag ist keine Kunden-E-Mail hinterlegt.');
+                      return;
+                    }
+                    const res = await sendReviewInvitation(order.id, { manual: true });
+                    if (res?.ok) toast.success(res.message || 'Bewertungseinladung versendet');
+                    else toast.error(res?.message || 'Bewertungseinladung fehlgeschlagen');
+                  }}
+                >
+                  <Mail className="w-3.5 h-3.5 mr-1.5" /> Bewertung manuell senden
                 </Button>
               )}
               {order.order_status === 'teilgeliefert' && (
