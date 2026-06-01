@@ -30,10 +30,12 @@ type Bug = {
 };
 
 export default function Bugs() {
-  const { user } = useAuth();
+  const { user, hasRole } = useAuth();
+  const isSuperAdmin = hasRole('Super Admin');
   const [rows, setRows] = useState<Bug[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Bug | null>(null);
   const [detail, setDetail] = useState<Bug | null>(null);
   const [form, setForm] = useState({
     title: '', description: '', product: '', module: '', software_version: '',
