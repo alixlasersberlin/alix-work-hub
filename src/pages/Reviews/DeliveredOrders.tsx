@@ -4,10 +4,14 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Send, RotateCw, CheckCircle2, Loader2, Search, Mail, AlertTriangle } from 'lucide-react';
+import { Send, RotateCw, CheckCircle2, Loader2, Search, Mail, AlertTriangle, Lock, Unlock } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { sendReviewInvitation } from '@/lib/review-invitation';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 type Order = {
   id: string;
@@ -19,21 +23,27 @@ type Order = {
 };
 
 type Review = {
+  id?: string;
   order_id: string;
   invitation_sent_at: string | null;
   invitation_status: string | null;
   submitted_at: string | null;
   rating_delivery: number | null;
+  closed_at: string | null;
+  closed_by: string | null;
+  closed_reason: string | null;
 };
 
 export default function DeliveredOrders() {
-  const { hasRole } = useAuth();
+  const { hasRole, user } = useAuth();
   const isSuperAdmin = hasRole('Super Admin');
   const [orders, setOrders] = useState<Order[]>([]);
   const [reviews, setReviews] = useState<Record<string, Review>>({});
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [closeTarget, setCloseTarget] = useState<Order | null>(null);
+  const [closeReason, setCloseReason] = useState('');
 
   async function load() {
     setLoading(true);
@@ -51,7 +61,7 @@ export default function DeliveredOrders() {
       const ids = list.map(o => o.id);
       const { data: revData } = await (supabase as any)
         .from('reviews')
-        .select('order_id, invitation_sent_at, invitation_status, submitted_at, rating_delivery')
+        .select('id, order_id, invitation_sent_at, invitation_status, submitted_at, rating_delivery, closed_at, closed_by, closed_reason')
         .in('order_id', ids);
       const map: Record<string, Review> = {};
       ((revData ?? []) as Review[]).forEach(r => { map[r.order_id] = r; });
@@ -82,6 +92,64 @@ export default function DeliveredOrders() {
     setBusy(null);
     if (r.ok) { toast.success('Einladung versendet'); load(); }
     else toast.error('Versand fehlgeschlagen: ' + (r.message || ''));
+  }
+
+  async function confirmClose() {
+    if (!closeTarget) return;
+    const order = closeTarget;
+    setBusy(order.id);
+    const existing = reviews[order.id];
+    let error: any = null;
+    if (existing?.id) {
+      const res = await (supabase as any)
+        .from('reviews')
+        .update({
+          closed_at: new Date().toISOString(),
+          closed_by: user?.id ?? null,
+          closed_reason: closeReason.trim() || null,
+          status: 'closed',
+        })
+        .eq('id', existing.id);
+      error = res.error;
+    } else {
+      const res = await (supabase as any)
+        .from('reviews')
+        .insert({
+          order_id: order.id,
+          customer_id: order.customer_id,
+          customer_name: order.customers?.company_name || order.customers?.contact_name || null,
+          customer_email: order.customers?.email || null,
+          order_number: order.order_number,
+          closed_at: new Date().toISOString(),
+          closed_by: user?.id ?? null,
+          closed_reason: closeReason.trim() || null,
+          status: 'closed',
+          invitation_status: 'closed',
+        });
+      error = res.error;
+    }
+    setBusy(null);
+    if (error) {
+      toast.error('Schließen fehlgeschlagen: ' + error.message);
+    } else {
+      toast.success('Auftrag für Bewertung geschlossen');
+      setCloseTarget(null);
+      setCloseReason('');
+      load();
+    }
+  }
+
+  async function reopenReview(orderId: string) {
+    const existing = reviews[orderId];
+    if (!existing?.id) return;
+    setBusy(orderId);
+    const { error } = await (supabase as any)
+      .from('reviews')
+      .update({ closed_at: null, closed_by: null, closed_reason: null, status: existing.submitted_at ? 'submitted' : (existing.invitation_sent_at ? 'sent' : 'pending') })
+      .eq('id', existing.id);
+    setBusy(null);
+    if (error) toast.error('Wiederöffnen fehlgeschlagen: ' + error.message);
+    else { toast.success('Bewertung wieder geöffnet'); load(); }
   }
 
   return (
@@ -134,8 +202,16 @@ export default function DeliveredOrders() {
               const hasEmail = !!o.customers?.email;
               const submitted = !!rev?.submitted_at;
               const sent = !!rev?.invitation_sent_at;
+              const closed = !!rev?.closed_at;
               return (
-                <TableRow key={o.id} className={submitted ? 'bg-emerald-500/5' : ''}>
+                <TableRow
+                  key={o.id}
+                  className={
+                    submitted ? 'bg-emerald-500/5'
+                    : closed ? 'bg-muted/40 text-muted-foreground'
+                    : ''
+                  }
+                >
                   <TableCell>
                     <Link to={`/auftraege/${o.id}`} className="font-mono text-xs hover:underline">
                       {o.order_number}
@@ -171,29 +247,61 @@ export default function DeliveredOrders() {
                         <CheckCircle2 className="h-3 w-3" />
                         abgegeben{rev?.rating_delivery ? ` · ${rev.rating_delivery}★` : ''}
                       </span>
+                    ) : closed ? (
+                      <span
+                        className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-muted text-foreground/70"
+                        title={rev?.closed_reason || ''}
+                      >
+                        <Lock className="h-3 w-3" /> geschlossen
+                      </span>
                     ) : (
                       <span className="text-xs text-muted-foreground">offen</span>
                     )}
                   </TableCell>
                   <TableCell className="text-right">
-                    {isSuperAdmin && !submitted && (
-                      <Button
-                        size="sm"
-                        variant={sent ? 'outline' : 'default'}
-                        disabled={busy === o.id || !hasEmail}
-                        onClick={() => sendInvite(o.id, hasEmail)}
-                      >
-                        {busy === o.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : sent ? (
-                          <><RotateCw className="h-4 w-4" /> Erneut senden</>
-                        ) : (
-                          <><Send className="h-4 w-4" /> Bewertung senden</>
-                        )}
-                      </Button>
-                    )}
-                    {submitted && <span className="text-xs text-muted-foreground">erledigt</span>}
-                    {!isSuperAdmin && !submitted && <span className="text-xs text-muted-foreground">—</span>}
+                    <div className="inline-flex items-center gap-2 justify-end">
+                      {isSuperAdmin && !submitted && !closed && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant={sent ? 'outline' : 'default'}
+                            disabled={busy === o.id || !hasEmail}
+                            onClick={() => sendInvite(o.id, hasEmail)}
+                          >
+                            {busy === o.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : sent ? (
+                              <><RotateCw className="h-4 w-4" /> Erneut senden</>
+                            ) : (
+                              <><Send className="h-4 w-4" /> Bewertung senden</>
+                            )}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            disabled={busy === o.id}
+                            onClick={() => { setCloseTarget(o); setCloseReason(''); }}
+                            title="Auftrag für Bewertung schließen"
+                          >
+                            <Lock className="h-4 w-4" /> Schließen
+                          </Button>
+                        </>
+                      )}
+                      {isSuperAdmin && closed && !submitted && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={busy === o.id}
+                          onClick={() => reopenReview(o.id)}
+                          title="Bewertung wieder öffnen"
+                        >
+                          {busy === o.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Unlock className="h-4 w-4" /> Öffnen</>}
+                        </Button>
+                      )}
+                      {submitted && <span className="text-xs text-muted-foreground">erledigt</span>}
+                      {!isSuperAdmin && !submitted && !closed && <span className="text-xs text-muted-foreground">—</span>}
+                      {!isSuperAdmin && closed && <span className="text-xs text-muted-foreground">geschlossen</span>}
+                    </div>
                   </TableCell>
                 </TableRow>
               );
@@ -201,6 +309,32 @@ export default function DeliveredOrders() {
           </TableBody>
         </Table>
       </div>
+
+      <AlertDialog open={!!closeTarget} onOpenChange={(open) => { if (!open) { setCloseTarget(null); setCloseReason(''); } }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Auftrag für Bewertung schließen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Für Auftrag <span className="font-mono">{closeTarget?.order_number}</span> wird keine
+              Bewertungseinladung mehr versendet. Du kannst diesen Vorgang später wieder öffnen.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2">
+            <label className="text-sm text-muted-foreground">Grund (optional)</label>
+            <Input
+              value={closeReason}
+              onChange={e => setCloseReason(e.target.value)}
+              placeholder="z. B. Kunde wünscht keine Kontaktaufnahme"
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmClose} disabled={busy === closeTarget?.id}>
+              Schließen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
