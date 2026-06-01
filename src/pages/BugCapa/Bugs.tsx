@@ -256,6 +256,41 @@ export default function Bugs() {
         entityId={detail?.id ?? null}
         title={detail ? `${detail.ticket_number} – ${detail.title}` : ''}
       />
+      <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader><DialogTitle>Bug bearbeiten {editing?.ticket_number}</DialogTitle></DialogHeader>
+          <div className="grid gap-3 py-2">
+            <div><Label>Titel *</Label><Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} /></div>
+            <div><Label>Beschreibung</Label><Textarea rows={4} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></div>
+            <div className="grid grid-cols-3 gap-3">
+              <div><Label>Produkt</Label><Input value={form.product} onChange={e => setForm({ ...form, product: e.target.value })} /></div>
+              <div><Label>Modul</Label><Input value={form.module} onChange={e => setForm({ ...form, module: e.target.value })} /></div>
+              <div><Label>Softwareversion</Label><Input value={form.software_version} onChange={e => setForm({ ...form, software_version: e.target.value })} /></div>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <Label>Priorität</Label>
+                <Select value={form.priority} onValueChange={v => setForm({ ...form, priority: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{BUG_PRIORITY.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Kritikalität</Label>
+                <Select value={form.criticality} onValueChange={v => setForm({ ...form, criticality: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{BUG_CRITICALITY.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div><Label>Fälligkeit</Label><Input type="date" value={form.due_date} onChange={e => setForm({ ...form, due_date: e.target.value })} /></div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEditing(null)}>Abbrechen</Button>
+            <Button onClick={saveEdit}>Speichern</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Section>
   );
 }
