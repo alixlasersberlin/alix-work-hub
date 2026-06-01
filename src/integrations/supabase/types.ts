@@ -46,6 +46,68 @@ export type Database = {
           },
         ]
       }
+      audit_findings: {
+        Row: {
+          area: string | null
+          audit_date: string | null
+          audit_name: string
+          auditor: string | null
+          capa_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string
+          finding_number: string | null
+          finding_type: string
+          id: string
+          reference: string | null
+          status: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          area?: string | null
+          audit_date?: string | null
+          audit_name: string
+          auditor?: string | null
+          capa_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description: string
+          finding_number?: string | null
+          finding_type?: string
+          id?: string
+          reference?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          area?: string | null
+          audit_date?: string | null
+          audit_name?: string
+          auditor?: string | null
+          capa_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          finding_number?: string | null
+          finding_type?: string
+          id?: string
+          reference?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_findings_capa_id_fkey"
+            columns: ["capa_id"]
+            isOneToOne: false
+            referencedRelation: "capas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -231,6 +293,232 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: true
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bugs: {
+        Row: {
+          assignee_id: string | null
+          created_at: string
+          created_by: string | null
+          criticality: string
+          description: string | null
+          due_date: string | null
+          id: string
+          module: string | null
+          priority: string
+          product: string | null
+          reporter_id: string
+          software_version: string | null
+          status: string
+          ticket_number: string | null
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          assignee_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          criticality?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          module?: string | null
+          priority?: string
+          product?: string | null
+          reporter_id: string
+          software_version?: string | null
+          status?: string
+          ticket_number?: string | null
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          assignee_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          criticality?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          module?: string | null
+          priority?: string
+          product?: string | null
+          reporter_id?: string
+          software_version?: string | null
+          status?: string
+          ticket_number?: string | null
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      capa_actions: {
+        Row: {
+          action_text: string
+          audit_finding_id: string | null
+          bug_id: string | null
+          capa_id: string | null
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          due_date: string | null
+          evidence_text: string | null
+          id: string
+          responsible_id: string | null
+          source: string
+          status: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          action_text: string
+          audit_finding_id?: string | null
+          bug_id?: string | null
+          capa_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          due_date?: string | null
+          evidence_text?: string | null
+          id?: string
+          responsible_id?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          action_text?: string
+          audit_finding_id?: string | null
+          bug_id?: string | null
+          capa_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          due_date?: string | null
+          evidence_text?: string | null
+          id?: string
+          responsible_id?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "capa_actions_audit_finding_id_fkey"
+            columns: ["audit_finding_id"]
+            isOneToOne: false
+            referencedRelation: "audit_findings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "capa_actions_bug_id_fkey"
+            columns: ["bug_id"]
+            isOneToOne: false
+            referencedRelation: "bugs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "capa_actions_capa_id_fkey"
+            columns: ["capa_id"]
+            isOneToOne: false
+            referencedRelation: "capas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      capas: {
+        Row: {
+          audit_finding_id: string | null
+          bug_id: string | null
+          capa_number: string | null
+          closure_approved_at: string | null
+          closure_approved_by: string | null
+          corrective_action: string | null
+          created_at: string
+          created_by: string | null
+          due_date: string | null
+          effectiveness_check: string | null
+          effectiveness_ok: boolean | null
+          id: string
+          immediate_action: string | null
+          preventive_action: string | null
+          production_order_id: string | null
+          responsible_id: string | null
+          root_cause: string | null
+          status: string
+          title: string
+          trigger_type: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          audit_finding_id?: string | null
+          bug_id?: string | null
+          capa_number?: string | null
+          closure_approved_at?: string | null
+          closure_approved_by?: string | null
+          corrective_action?: string | null
+          created_at?: string
+          created_by?: string | null
+          due_date?: string | null
+          effectiveness_check?: string | null
+          effectiveness_ok?: boolean | null
+          id?: string
+          immediate_action?: string | null
+          preventive_action?: string | null
+          production_order_id?: string | null
+          responsible_id?: string | null
+          root_cause?: string | null
+          status?: string
+          title: string
+          trigger_type?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          audit_finding_id?: string | null
+          bug_id?: string | null
+          capa_number?: string | null
+          closure_approved_at?: string | null
+          closure_approved_by?: string | null
+          corrective_action?: string | null
+          created_at?: string
+          created_by?: string | null
+          due_date?: string | null
+          effectiveness_check?: string | null
+          effectiveness_ok?: boolean | null
+          id?: string
+          immediate_action?: string | null
+          preventive_action?: string | null
+          production_order_id?: string | null
+          responsible_id?: string | null
+          root_cause?: string | null
+          status?: string
+          title?: string
+          trigger_type?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "capas_audit_finding_fk"
+            columns: ["audit_finding_id"]
+            isOneToOne: false
+            referencedRelation: "audit_findings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "capas_bug_id_fkey"
+            columns: ["bug_id"]
+            isOneToOne: false
+            referencedRelation: "bugs"
             referencedColumns: ["id"]
           },
         ]
@@ -1374,6 +1662,66 @@ export type Database = {
           },
         ]
       }
+      qm_attachments: {
+        Row: {
+          created_at: string
+          entity_id: string
+          entity_type: string
+          file_name: string
+          file_path: string
+          file_type: string | null
+          id: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          file_name: string
+          file_path: string
+          file_type?: string | null
+          id?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          file_name?: string
+          file_path?: string
+          file_type?: string | null
+          id?: string
+          uploaded_by?: string | null
+        }
+        Relationships: []
+      }
+      qm_comments: {
+        Row: {
+          comment_text: string
+          created_at: string
+          created_by: string | null
+          entity_id: string
+          entity_type: string
+          id: string
+        }
+        Insert: {
+          comment_text: string
+          created_at?: string
+          created_by?: string | null
+          entity_id: string
+          entity_type: string
+          id?: string
+        }
+        Update: {
+          comment_text?: string
+          created_at?: string
+          created_by?: string | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+        }
+        Relationships: []
+      }
       roles: {
         Row: {
           created_at: string
@@ -2009,6 +2357,7 @@ export type Database = {
       can_access_import_logs: { Args: never; Returns: boolean }
       can_access_orders: { Args: never; Returns: boolean }
       can_access_planning: { Args: never; Returns: boolean }
+      can_access_qm: { Args: never; Returns: boolean }
       can_manage_orders: { Args: never; Returns: boolean }
       can_manage_planning: { Args: never; Returns: boolean }
       can_upload_factory_invoice: { Args: never; Returns: boolean }
