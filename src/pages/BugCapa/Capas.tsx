@@ -114,6 +114,39 @@ export default function Capas() {
     load();
   }
 
+  async function startEdit(r: Capa) {
+    const { data, error } = await (supabase as any).from('capas').select('*').eq('id', r.id).single();
+    if (error) { toast.error('Laden fehlgeschlagen: ' + error.message); return; }
+    setForm({
+      title: data.title ?? '',
+      trigger_type: data.trigger_type ?? 'sonstiges',
+      root_cause: data.root_cause ?? '',
+      immediate_action: data.immediate_action ?? '',
+      corrective_action: data.corrective_action ?? '',
+      preventive_action: data.preventive_action ?? '',
+      due_date: data.due_date ?? '',
+    });
+    setEditing(r);
+  }
+
+  async function saveEdit() {
+    if (!editing) return;
+    if (!form.title.trim()) { toast.error('Titel erforderlich'); return; }
+    const { error } = await (supabase as any).from('capas').update({
+      title: form.title.trim(),
+      trigger_type: form.trigger_type,
+      root_cause: form.root_cause || null,
+      immediate_action: form.immediate_action || null,
+      corrective_action: form.corrective_action || null,
+      preventive_action: form.preventive_action || null,
+      due_date: form.due_date || null,
+    }).eq('id', editing.id);
+    if (error) { toast.error('Speichern fehlgeschlagen: ' + error.message); return; }
+    toast.success('CAPA aktualisiert');
+    setEditing(null);
+    load();
+  }
+
   return (
     <Section
       title={`CAPA (${rows.length})`}
