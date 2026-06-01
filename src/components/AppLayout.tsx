@@ -161,7 +161,7 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    path: '/bewertungen', label: 'Bewertungen', icon: Star, roles: null,
+    path: '/bewertungen', label: 'BEWERTUNGEN', icon: Star, roles: null,
   },
   {
     path: '/hilfe', label: 'HILFE', icon: HelpCircle, roles: null,
