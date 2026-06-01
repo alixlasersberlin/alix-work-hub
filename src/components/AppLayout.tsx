@@ -5,7 +5,7 @@ import { useAtOnly } from '@/hooks/useAtOnly';
 import { useTheme } from '@/hooks/useTheme';
 import { supabase } from '@/integrations/supabase/client';
 import {
-  LayoutDashboard, ClipboardList, MapPin, Banknote, Users, LogOut, Shield, Menu, X, ChevronLeft, Building2, Cloud, Server, ListOrdered, Sun, Moon, Gavel, Truck, PackageCheck, BarChart3, Factory, ShoppingCart, ChevronDown, TrendingUp, Workflow, AlertTriangle, Calendar, FileText, FileSignature, Warehouse, Settings, Package, FilePlus, BookOpen, Receipt, Undo2, CreditCard, CheckCircle2, FolderTree, ScrollText, Inbox, Mail, Landmark, SearchCheck, Pause, Clock, HelpCircle, Star
+  LayoutDashboard, ClipboardList, MapPin, Banknote, Users, LogOut, Shield, Menu, X, ChevronLeft, Building2, Cloud, Server, ListOrdered, Sun, Moon, Gavel, Truck, PackageCheck, BarChart3, Factory, ShoppingCart, ChevronDown, TrendingUp, Workflow, AlertTriangle, Calendar, FileText, FileSignature, Warehouse, Settings, Package, FilePlus, BookOpen, Receipt, Undo2, CreditCard, CheckCircle2, FolderTree, ScrollText, Inbox, Mail, Landmark, SearchCheck, Pause, Clock, HelpCircle, Star, Lock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -166,6 +166,7 @@ const navItems: NavItem[] = [
       { path: '/bewertungen', label: 'Übersicht', icon: LayoutDashboard, roles: null },
       { path: '/bewertungen/geliefert', label: 'Aufträge geliefert', icon: Truck, roles: null },
       { path: '/bewertungen/abgegeben', label: 'Abgegebene Bewertungen', icon: Star, roles: null },
+      { path: '/bewertungen/geschlossen', label: 'Geschlossen', icon: Lock, roles: null },
       { path: '/bewertungen/frontend', label: 'Frontend', icon: Cloud, roles: null },
     ],
   },
