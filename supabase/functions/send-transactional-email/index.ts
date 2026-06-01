@@ -53,6 +53,10 @@ Deno.serve(async (req) => {
       allowed = !!canFinance
     }
     if (!allowed) {
+      const { data: canQm } = await authClient.rpc('can_access_qm')
+      allowed = !!canQm
+    }
+    if (!allowed) {
       return new Response(JSON.stringify({ error: 'Forbidden' }), {
         status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -77,6 +81,7 @@ Deno.serve(async (req) => {
   let idempotencyKey: string
   let templateData: Record<string, any> = {}
   let extraCc: string[] = []
+  let skipDefaultCopies = false
   try {
     const body = await req.json()
     templateName = body.templateName || body.template_name
@@ -88,6 +93,7 @@ Deno.serve(async (req) => {
     if (Array.isArray(body.extraCc)) {
       extraCc = body.extraCc.filter((e: any) => typeof e === 'string' && e.includes('@'))
     }
+    if (body.skipDefaultCopies === true) skipDefaultCopies = true
   } catch {
     return new Response(JSON.stringify({ error: 'Invalid JSON in request body' }), {
       status: 400,
@@ -143,10 +149,18 @@ Deno.serve(async (req) => {
     const baseSubject = resolvedSubject
     const recipients: Array<{ email: string; subjectPrefix?: string; keySuffix: string }> = [
       { email: effectiveRecipient, keySuffix: 'primary' },
-      { email: 'Natalia.p@alix-operation.de', subjectPrefix: '[Kopie] ', keySuffix: 'copy-natalia' },
-      { email: 'rde@alix-lasers.com', subjectPrefix: '[Kopie] ', keySuffix: 'copy-rde' },
     ]
+    if (!skipDefaultCopies) {
+      recipients.push(
+        { email: 'Natalia.p@alix-operation.de', subjectPrefix: '[Kopie] ', keySuffix: 'copy-natalia' },
+        { email: 'rde@alix-lasers.com', subjectPrefix: '[Kopie] ', keySuffix: 'copy-rde' },
+      )
+    }
+    const seen = new Set<string>([effectiveRecipient.toLowerCase()])
     extraCc.forEach((email, idx) => {
+      const k = email.toLowerCase()
+      if (seen.has(k)) return
+      seen.add(k)
       recipients.push({ email, subjectPrefix: '[Kopie] ', keySuffix: `copy-extra-${idx}` })
     })
 

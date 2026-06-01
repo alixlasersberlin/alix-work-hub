@@ -15,6 +15,7 @@ import { template as productionOrderSupplier } from './production-order-supplier
 import { template as customerShippingNotice } from './customer-shipping-notice.tsx'
 import { template as backupFailureAlert } from './backup-failure-alert.tsx'
 import { template as bankFinancingRequest } from './bank-financing-request.tsx'
+import { template as bugCapaNotification } from './bug-capa-notification.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'otp-code': otpCode,
@@ -23,4 +24,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'customer-shipping-notice': customerShippingNotice,
   'backup-failure-alert': backupFailureAlert,
   'bank-financing-request': bankFinancingRequest,
+  'bug-capa-notification': bugCapaNotification,
 }

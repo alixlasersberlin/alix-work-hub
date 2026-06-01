@@ -51,7 +51,7 @@ export default function Capas() {
   async function create() {
     if (!form.title.trim()) { toast.error('Titel erforderlich'); return; }
     if (!user) return;
-    const { error } = await (supabase as any).from('capas').insert({
+    const insertPayload = {
       title: form.title.trim(),
       trigger_type: form.trigger_type,
       root_cause: form.root_cause || null,
@@ -61,12 +61,49 @@ export default function Capas() {
       due_date: form.due_date || null,
       responsible_id: user.id,
       created_by: user.id,
-    });
+    };
+    const { data: inserted, error } = await (supabase as any)
+      .from('capas').insert(insertPayload).select('id, capa_number, title').single();
     if (error) { toast.error('Anlegen fehlgeschlagen: ' + error.message); return; }
     toast.success('CAPA angelegt');
     setOpen(false);
     setForm({ title: '', trigger_type: 'sonstiges', root_cause: '', immediate_action: '', corrective_action: '', preventive_action: '', due_date: '' });
     load();
+
+    // Benachrichtigung an rde@alix-lasers.com mit Kopie an den Verfasser
+    try {
+      const reporterEmail = (user as any)?.email as string | undefined;
+      const reporterName = ((user as any)?.user_metadata?.full_name as string | undefined) || reporterEmail || '';
+      const bodyParts = [
+        insertPayload.root_cause && `Ursachenanalyse:\n${insertPayload.root_cause}`,
+        insertPayload.immediate_action && `Sofortmaßnahme:\n${insertPayload.immediate_action}`,
+        insertPayload.corrective_action && `Korrekturmaßnahme:\n${insertPayload.corrective_action}`,
+        insertPayload.preventive_action && `Vorbeugemaßnahme:\n${insertPayload.preventive_action}`,
+      ].filter(Boolean).join('\n\n');
+      await supabase.functions.invoke('send-transactional-email', {
+        body: {
+          templateName: 'bug-capa-notification',
+          recipientEmail: 'rde@alix-lasers.com',
+          extraCc: reporterEmail ? [reporterEmail] : [],
+          skipDefaultCopies: true,
+          idempotencyKey: `capa-notify-${inserted.id}`,
+          templateData: {
+            kind: 'CAPA',
+            ticketNumber: inserted.capa_number,
+            title: inserted.title,
+            reporterName,
+            reporterEmail,
+            fields: [
+              { label: 'Auslöser', value: insertPayload.trigger_type ?? '' },
+              { label: 'Frist', value: insertPayload.due_date ?? '' },
+            ],
+            body: bodyParts,
+          },
+        },
+      });
+    } catch (e: any) {
+      console.error('CAPA-Notification fehlgeschlagen', e);
+    }
   }
 
   async function setStatus(id: string, status: string) {
