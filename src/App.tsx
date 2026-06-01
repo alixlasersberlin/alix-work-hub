@@ -99,6 +99,14 @@ const AbsagenBank = lazy(() => import("./pages/AbsagenBank"));
 const AnfragenOffen = lazy(() => import("./pages/AnfragenOffen"));
 const Detailsuche = lazy(() => import("./pages/Detailsuche"));
 const Systemwartung = lazy(() => import("./pages/Systemwartung"));
+const BugCapaLayoutLazy = lazy(() => import("./pages/BugCapa/_shared").then(m => ({ default: m.BugCapaLayout })));
+const BugCapaDashboard = lazy(() => import("./pages/BugCapa/BugCapaDashboard"));
+const BugCapaBugs = lazy(() => import("./pages/BugCapa/Bugs"));
+const BugCapaCapas = lazy(() => import("./pages/BugCapa/Capas"));
+const BugCapaReklamationen = lazy(() => import("./pages/BugCapa/Reklamationen"));
+const BugCapaAudit = lazy(() => import("./pages/BugCapa/AuditFindings"));
+const BugCapaMassnahmen = lazy(() => import("./pages/BugCapa/Massnahmen"));
+const BugCapaBerichte = lazy(() => import("./pages/BugCapa/Berichte"));
 import MaintenanceGate from "./components/MaintenanceGate";
 
 const queryClient = new QueryClient({
@@ -124,6 +132,7 @@ const FACTORY_INVOICE_ROLES = ['Admin', 'Super Admin', 'FACTORY INVOICE'];
 const PRODUCTION_VIEW_ROLES = ['Admin', 'Super Admin', 'FACTORY INVOICE', 'Order', 'Österreich'];
 const ORDER_MGMT_ROLES = ['Admin', 'Super Admin', 'Order', 'Österreich'];
 const WAREHOUSE_ROLES = ['Admin', 'Super Admin', 'Order', 'Österreich'];
+const QM_ROLES = ['Admin', 'Super Admin', 'QM'];
 
 function isSupplierOnly(roles: string[]) {
   return roles.includes('Lieferant') && !roles.some(r => ['Admin', 'Super Admin'].includes(r));
@@ -285,6 +294,16 @@ function AppRoutes() {
           <Route path="/lager/equipment-area/produktion" element={<ProtectedRoute requiredRoles={WAREHOUSE_ROLES}><EquipmentProduktion /></ProtectedRoute>} />
           <Route path="/lager/equipment-area/hold" element={<ProtectedRoute requiredRoles={WAREHOUSE_ROLES}><EquipmentHold /></ProtectedRoute>} />
           <Route path="/lager/equipment-area/ausgeliefert" element={<ProtectedRoute requiredRoles={WAREHOUSE_ROLES}><EquipmentAusgeliefert /></ProtectedRoute>} />
+
+          <Route path="/bug-capa" element={<ProtectedRoute requiredRoles={QM_ROLES}><BugCapaLayoutLazy /></ProtectedRoute>}>
+            <Route index element={<BugCapaDashboard />} />
+            <Route path="bugs" element={<BugCapaBugs />} />
+            <Route path="capa" element={<BugCapaCapas />} />
+            <Route path="reklamationen" element={<BugCapaReklamationen />} />
+            <Route path="audit" element={<BugCapaAudit />} />
+            <Route path="massnahmen" element={<BugCapaMassnahmen />} />
+            <Route path="berichte" element={<BugCapaBerichte />} />
+          </Route>
 
         </Route>
         <Route path="/unsubscribe" element={<Unsubscribe />} />
