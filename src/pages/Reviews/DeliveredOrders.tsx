@@ -88,15 +88,24 @@ export default function DeliveredOrders() {
     );
   }, [orders, search]);
 
+  // Pagination: 20 / 50 / 100 / all
+  const [pageSize, setPageSize] = useState<number | 'all'>(20);
+  useEffect(() => { /* reset selection on filter change handled below */ }, [search]);
+  const visible = useMemo(
+    () => (pageSize === 'all' ? filtered : filtered.slice(0, pageSize)),
+    [filtered, pageSize],
+  );
+
   // Only orders that are actionable (not submitted, not closed) can be selected
+  // Scoped to the currently visible (paginated) rows so "Alle auswählen" matches what the user sees.
   const selectableIds = useMemo(() => {
-    return filtered
+    return visible
       .filter(o => {
         const r = reviews[o.id];
         return !r?.submitted_at && !r?.closed_at;
       })
       .map(o => o.id);
-  }, [filtered, reviews]);
+  }, [visible, reviews]);
 
   const selectedIds = useMemo(() => Object.keys(selected).filter(k => selected[k]), [selected]);
   const selectedCount = selectedIds.length;
@@ -284,18 +293,38 @@ export default function DeliveredOrders() {
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="text-sm text-muted-foreground">
-          {loading ? '…' : `${filtered.length} ausgelieferte Aufträge`}
+          {loading
+            ? '…'
+            : pageSize === 'all' || filtered.length <= (pageSize as number)
+              ? `${filtered.length} ausgelieferte Aufträge`
+              : `${visible.length} von ${filtered.length} ausgelieferten Aufträgen`}
         </div>
-        <div className="relative">
-          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Auftrag oder Kunde suchen…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="pl-8 w-72"
-          />
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="inline-flex items-center gap-1 rounded-md border bg-card p-0.5">
+            {([20, 50, 100, 'all'] as const).map(size => (
+              <Button
+                key={String(size)}
+                size="sm"
+                variant={pageSize === size ? 'default' : 'ghost'}
+                className="h-7 px-2 text-xs"
+                onClick={() => { setPageSize(size); }}
+              >
+                {size === 'all' ? 'Alle' : size}
+              </Button>
+            ))}
+          </div>
+          <div className="relative">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Auftrag oder Kunde suchen…"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="pl-8 w-72"
+            />
+          </div>
         </div>
       </div>
+
 
       {isSuperAdmin && selectedCount > 0 && (
         <div className="flex items-center justify-between gap-3 flex-wrap rounded-lg border bg-card px-4 py-2">
@@ -366,7 +395,7 @@ export default function DeliveredOrders() {
                 </TableCell>
               </TableRow>
             )}
-            {filtered.map(o => {
+            {visible.map(o => {
               const rev = reviews[o.id];
               const hasEmail = !!o.customers?.email;
               const submitted = !!rev?.submitted_at;
