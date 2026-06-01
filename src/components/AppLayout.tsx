@@ -162,6 +162,12 @@ const navItems: NavItem[] = [
   },
   {
     path: '/bewertungen', label: 'BEWERTUNGEN', icon: Star, roles: null,
+    children: [
+      { path: '/bewertungen', label: 'Übersicht', icon: LayoutDashboard, roles: null },
+      { path: '/bewertungen/geliefert', label: 'Aufträge geliefert', icon: Truck, roles: null },
+      { path: '/bewertungen/abgegeben', label: 'Abgegebene Bewertungen', icon: Star, roles: null },
+      { path: '/bewertungen/frontend', label: 'Frontend', icon: Cloud, roles: null },
+    ],
   },
   {
     path: '/hilfe', label: 'HILFE', icon: HelpCircle, roles: null,

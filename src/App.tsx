@@ -107,7 +107,11 @@ const BugCapaReklamationen = lazy(() => import("./pages/BugCapa/Reklamationen"))
 const BugCapaAudit = lazy(() => import("./pages/BugCapa/AuditFindings"));
 const BugCapaMassnahmen = lazy(() => import("./pages/BugCapa/Massnahmen"));
 const BugCapaBerichte = lazy(() => import("./pages/BugCapa/Berichte"));
-const ReviewsList = lazy(() => import("./pages/Reviews/ReviewsList"));
+const ReviewsLayout = lazy(() => import("./pages/Reviews/_layout"));
+const ReviewsOverview = lazy(() => import("./pages/Reviews/Overview"));
+const ReviewsDelivered = lazy(() => import("./pages/Reviews/DeliveredOrders"));
+const ReviewsSubmitted = lazy(() => import("./pages/Reviews/Submitted"));
+const ReviewsFrontendPreview = lazy(() => import("./pages/Reviews/FrontendPreview"));
 const PublicReviewForm = lazy(() => import("./pages/PublicReview/ReviewForm"));
 const ReviewThanks = lazy(() => import("./pages/PublicReview/ReviewThanks"));
 import MaintenanceGate from "./components/MaintenanceGate";
@@ -308,7 +312,12 @@ function AppRoutes() {
             <Route path="berichte" element={<BugCapaBerichte />} />
           </Route>
 
-          <Route path="/bewertungen" element={<ProtectedRoute><ReviewsList /></ProtectedRoute>} />
+          <Route path="/bewertungen" element={<ProtectedRoute><ReviewsLayout /></ProtectedRoute>}>
+            <Route index element={<ReviewsOverview />} />
+            <Route path="geliefert" element={<ReviewsDelivered />} />
+            <Route path="abgegeben" element={<ReviewsSubmitted />} />
+            <Route path="frontend" element={<ReviewsFrontendPreview />} />
+          </Route>
 
         </Route>
         <Route path="/unsubscribe" element={<Unsubscribe />} />
