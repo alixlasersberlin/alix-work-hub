@@ -116,6 +116,39 @@ export default function Bugs() {
     load();
   }
 
+  function startEdit(r: Bug) {
+    setForm({
+      title: r.title,
+      description: '',
+      product: r.product ?? '',
+      module: r.module ?? '',
+      software_version: r.software_version ?? '',
+      priority: r.priority,
+      criticality: r.criticality,
+      due_date: r.due_date ?? '',
+    });
+    setEditing(r);
+  }
+
+  async function saveEdit() {
+    if (!editing) return;
+    if (!form.title.trim()) { toast.error('Titel erforderlich'); return; }
+    const { error } = await (supabase as any).from('bugs').update({
+      title: form.title.trim(),
+      description: form.description || null,
+      product: form.product || null,
+      module: form.module || null,
+      software_version: form.software_version || null,
+      priority: form.priority,
+      criticality: form.criticality,
+      due_date: form.due_date || null,
+    }).eq('id', editing.id);
+    if (error) { toast.error('Speichern fehlgeschlagen: ' + error.message); return; }
+    toast.success('Bug aktualisiert');
+    setEditing(null);
+    load();
+  }
+
   return (
     <Section
       title={`Bugs (${rows.length})`}
