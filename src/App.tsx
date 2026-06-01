@@ -308,8 +308,12 @@ function AppRoutes() {
             <Route path="berichte" element={<BugCapaBerichte />} />
           </Route>
 
+          <Route path="/bewertungen" element={<ProtectedRoute><ReviewsList /></ProtectedRoute>} />
+
         </Route>
         <Route path="/unsubscribe" element={<Unsubscribe />} />
+        <Route path="/bewertung/danke" element={<ReviewThanks />} />
+        <Route path="/bewertung/:token" element={<PublicReviewForm />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
