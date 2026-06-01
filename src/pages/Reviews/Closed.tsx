@@ -68,7 +68,7 @@ export default function ClosedReviews({ withReview = false }: { withReview?: boo
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="text-sm text-muted-foreground inline-flex items-center gap-2">
           <Lock className="h-4 w-4" />
-          {loading ? '…' : `${filtered.length} geschlossene Aufträge (ohne Bewertung)`}
+          {loading ? '…' : `${filtered.length} geschlossene Aufträge (${withReview ? 'mit Bewertung' : 'ohne Bewertung'})`}
         </div>
         <div className="relative">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
