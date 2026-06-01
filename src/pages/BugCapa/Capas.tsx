@@ -9,9 +9,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { StatusBadge } from '@/components/StatusBadge';
-import { Plus } from 'lucide-react';
+import { Plus, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { Section, CAPA_STATUS, statusLabel } from './_shared';
+import { QmDetailDrawer } from './QmDetailDrawer';
 
 type Capa = {
   id: string;
@@ -29,6 +30,7 @@ export default function Capas() {
   const [rows, setRows] = useState<Capa[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [detail, setDetail] = useState<Capa | null>(null);
   const [form, setForm] = useState({
     title: '', trigger_type: 'sonstiges',
     root_cause: '', immediate_action: '', corrective_action: '', preventive_action: '',
@@ -133,16 +135,28 @@ export default function Capas() {
                 <TableCell><StatusBadge status={statusLabel(r.status)} /></TableCell>
                 <TableCell className="text-sm">{r.due_date ?? '—'}</TableCell>
                 <TableCell>
-                  <Select value={r.status} onValueChange={v => setStatus(r.id, v)}>
-                    <SelectTrigger className="h-8 w-44"><SelectValue /></SelectTrigger>
-                    <SelectContent>{CAPA_STATUS.map(s => <SelectItem key={s} value={s}>{statusLabel(s)}</SelectItem>)}</SelectContent>
-                  </Select>
+                  <div className="flex items-center gap-1">
+                    <Select value={r.status} onValueChange={v => setStatus(r.id, v)}>
+                      <SelectTrigger className="h-8 w-44"><SelectValue /></SelectTrigger>
+                      <SelectContent>{CAPA_STATUS.map(s => <SelectItem key={s} value={s}>{statusLabel(s)}</SelectItem>)}</SelectContent>
+                    </Select>
+                    <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setDetail(r)}>
+                      <MessageSquare className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
+      <QmDetailDrawer
+        open={!!detail}
+        onOpenChange={(v) => !v && setDetail(null)}
+        entityType="capa"
+        entityId={detail?.id ?? null}
+        title={detail ? `${detail.capa_number} – ${detail.title}` : ''}
+      />
     </Section>
   );
 }
