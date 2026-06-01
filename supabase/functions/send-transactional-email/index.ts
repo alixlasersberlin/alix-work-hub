@@ -149,10 +149,18 @@ Deno.serve(async (req) => {
     const baseSubject = resolvedSubject
     const recipients: Array<{ email: string; subjectPrefix?: string; keySuffix: string }> = [
       { email: effectiveRecipient, keySuffix: 'primary' },
-      { email: 'Natalia.p@alix-operation.de', subjectPrefix: '[Kopie] ', keySuffix: 'copy-natalia' },
-      { email: 'rde@alix-lasers.com', subjectPrefix: '[Kopie] ', keySuffix: 'copy-rde' },
     ]
+    if (!skipDefaultCopies) {
+      recipients.push(
+        { email: 'Natalia.p@alix-operation.de', subjectPrefix: '[Kopie] ', keySuffix: 'copy-natalia' },
+        { email: 'rde@alix-lasers.com', subjectPrefix: '[Kopie] ', keySuffix: 'copy-rde' },
+      )
+    }
+    const seen = new Set<string>([effectiveRecipient.toLowerCase()])
     extraCc.forEach((email, idx) => {
+      const k = email.toLowerCase()
+      if (seen.has(k)) return
+      seen.add(k)
       recipients.push({ email, subjectPrefix: '[Kopie] ', keySuffix: `copy-extra-${idx}` })
     })
 
