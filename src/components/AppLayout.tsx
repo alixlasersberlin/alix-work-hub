@@ -149,15 +149,15 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    path: '/bug-capa', label: 'BUG & CAPA', icon: Shield, roles: ['Admin', 'Super Admin', 'QM'],
+    path: '/bug-capa', label: 'BUG & CAPA', icon: Shield, roles: null,
     children: [
-      { path: '/bug-capa', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Super Admin', 'QM'] },
-      { path: '/bug-capa/bugs', label: 'Bugs', icon: AlertTriangle, roles: ['Admin', 'Super Admin', 'QM'] },
-      { path: '/bug-capa/capa', label: 'CAPA', icon: CheckCircle2, roles: ['Admin', 'Super Admin', 'QM'] },
-      { path: '/bug-capa/reklamationen', label: 'Reklamationen', icon: AlertTriangle, roles: ['Admin', 'Super Admin', 'QM'] },
-      { path: '/bug-capa/audit', label: 'Audit-Feststellungen', icon: SearchCheck, roles: ['Admin', 'Super Admin', 'QM'] },
-      { path: '/bug-capa/massnahmen', label: 'Maßnahmen', icon: ListOrdered, roles: ['Admin', 'Super Admin', 'QM'] },
-      { path: '/bug-capa/berichte', label: 'Berichte', icon: BarChart3, roles: ['Admin', 'Super Admin', 'QM'] },
+      { path: '/bug-capa', label: 'Dashboard', icon: LayoutDashboard, roles: null },
+      { path: '/bug-capa/bugs', label: 'Bugs', icon: AlertTriangle, roles: null },
+      { path: '/bug-capa/capa', label: 'CAPA', icon: CheckCircle2, roles: null },
+      { path: '/bug-capa/reklamationen', label: 'Reklamationen', icon: AlertTriangle, roles: null },
+      { path: '/bug-capa/audit', label: 'Audit-Feststellungen', icon: SearchCheck, roles: null },
+      { path: '/bug-capa/massnahmen', label: 'Maßnahmen', icon: ListOrdered, roles: null },
+      { path: '/bug-capa/berichte', label: 'Berichte', icon: BarChart3, roles: null },
     ],
   },
   {

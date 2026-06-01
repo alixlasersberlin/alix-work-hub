@@ -295,7 +295,7 @@ function AppRoutes() {
           <Route path="/lager/equipment-area/hold" element={<ProtectedRoute requiredRoles={WAREHOUSE_ROLES}><EquipmentHold /></ProtectedRoute>} />
           <Route path="/lager/equipment-area/ausgeliefert" element={<ProtectedRoute requiredRoles={WAREHOUSE_ROLES}><EquipmentAusgeliefert /></ProtectedRoute>} />
 
-          <Route path="/bug-capa" element={<ProtectedRoute requiredRoles={QM_ROLES}><BugCapaLayoutLazy /></ProtectedRoute>}>
+          <Route path="/bug-capa" element={<BugCapaLayoutLazy />}>
             <Route index element={<BugCapaDashboard />} />
             <Route path="bugs" element={<BugCapaBugs />} />
             <Route path="capa" element={<BugCapaCapas />} />
