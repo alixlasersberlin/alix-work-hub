@@ -26,6 +26,7 @@ import OrderEditDialog from '@/components/OrderEditDialog';
 import OrderDeferDialog from '@/components/OrderDeferDialog';
 import MietkaufDialog from '@/components/MietkaufDialog';
 import { sendCustomerShippingNotice } from '@/lib/send-customer-shipping-notice';
+import { sendReviewInvitation } from '@/lib/review-invitation';
 import { VipBadge } from '@/components/VipBadge';
 import { isOrderVip } from '@/lib/vip';
 
