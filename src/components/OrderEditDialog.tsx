@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { sendCustomerShippingNotice } from '@/lib/send-customer-shipping-notice';
+import { sendReviewInvitation } from '@/lib/review-invitation';
 import { VipBadge } from '@/components/VipBadge';
 
 const STATUS_OPTIONS = [
