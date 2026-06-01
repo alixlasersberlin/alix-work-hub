@@ -142,8 +142,9 @@ Deno.serve(async (req) => {
 
     const reviewUrl = `${PUBLIC_BASE}/bewertung/${token}`
 
-    // E-Mail versenden
-    const { error: mailErr } = await admin.functions.invoke('send-transactional-email', {
+    // E-Mail versenden — über userClient, damit send-transactional-email
+    // die User-Berechtigung (is_admin / can_manage_orders / …) prüfen kann.
+    const { error: mailErr } = await userClient.functions.invoke('send-transactional-email', {
       body: {
         templateName: 'review-invitation',
         recipientEmail: customer.email,
