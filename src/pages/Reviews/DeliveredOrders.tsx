@@ -293,18 +293,38 @@ export default function DeliveredOrders() {
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="text-sm text-muted-foreground">
-          {loading ? '…' : `${filtered.length} ausgelieferte Aufträge`}
+          {loading
+            ? '…'
+            : pageSize === 'all' || filtered.length <= (pageSize as number)
+              ? `${filtered.length} ausgelieferte Aufträge`
+              : `${visible.length} von ${filtered.length} ausgelieferten Aufträgen`}
         </div>
-        <div className="relative">
-          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Auftrag oder Kunde suchen…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="pl-8 w-72"
-          />
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="inline-flex items-center gap-1 rounded-md border bg-card p-0.5">
+            {([20, 50, 100, 'all'] as const).map(size => (
+              <Button
+                key={String(size)}
+                size="sm"
+                variant={pageSize === size ? 'default' : 'ghost'}
+                className="h-7 px-2 text-xs"
+                onClick={() => { setPageSize(size); }}
+              >
+                {size === 'all' ? 'Alle' : size}
+              </Button>
+            ))}
+          </div>
+          <div className="relative">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Auftrag oder Kunde suchen…"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="pl-8 w-72"
+            />
+          </div>
         </div>
       </div>
+
 
       {isSuperAdmin && selectedCount > 0 && (
         <div className="flex items-center justify-between gap-3 flex-wrap rounded-lg border bg-card px-4 py-2">
