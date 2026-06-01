@@ -149,7 +149,7 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    path: '/bug-capa', label: 'BUGS & CAPA ISO 13485', icon: Shield, roles: null,
+    path: '/bug-capa', label: 'BUG & CAPA ISO13485', icon: Shield, roles: null,
     children: [
       { path: '/bug-capa', label: 'Dashboard', icon: LayoutDashboard, roles: null },
       { path: '/bug-capa/bugs', label: 'Bugs', icon: AlertTriangle, roles: null },
