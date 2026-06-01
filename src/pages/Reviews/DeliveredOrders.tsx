@@ -88,15 +88,24 @@ export default function DeliveredOrders() {
     );
   }, [orders, search]);
 
+  // Pagination: 20 / 50 / 100 / all
+  const [pageSize, setPageSize] = useState<number | 'all'>(20);
+  useEffect(() => { /* reset selection on filter change handled below */ }, [search]);
+  const visible = useMemo(
+    () => (pageSize === 'all' ? filtered : filtered.slice(0, pageSize)),
+    [filtered, pageSize],
+  );
+
   // Only orders that are actionable (not submitted, not closed) can be selected
+  // Scoped to the currently visible (paginated) rows so "Alle auswählen" matches what the user sees.
   const selectableIds = useMemo(() => {
-    return filtered
+    return visible
       .filter(o => {
         const r = reviews[o.id];
         return !r?.submitted_at && !r?.closed_at;
       })
       .map(o => o.id);
-  }, [filtered, reviews]);
+  }, [visible, reviews]);
 
   const selectedIds = useMemo(() => Object.keys(selected).filter(k => selected[k]), [selected]);
   const selectedCount = selectedIds.length;
