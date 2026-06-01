@@ -163,7 +163,7 @@ export default function DeliveredOrders() {
           closed_at: new Date().toISOString(),
           closed_by: user?.id ?? null,
           closed_reason: closeReason.trim() || null,
-          status: 'closed',
+          status: 'archived',
         })
         .eq('id', existing.id);
       error = res.error;
@@ -183,8 +183,7 @@ export default function DeliveredOrders() {
           closed_at: new Date().toISOString(),
           closed_by: user?.id ?? null,
           closed_reason: closeReason.trim() || null,
-          status: 'closed',
-          invitation_status: 'closed',
+          status: 'archived',
         });
       error = res.error;
     }
@@ -205,7 +204,7 @@ export default function DeliveredOrders() {
     setBusy(orderId);
     const { error } = await (supabase as any)
       .from('reviews')
-      .update({ closed_at: null, closed_by: null, closed_reason: null, status: existing.submitted_at ? 'submitted' : (existing.invitation_sent_at ? 'sent' : 'pending') })
+      .update({ closed_at: null, closed_by: null, closed_reason: null, status: existing.submitted_at ? 'submitted' : 'open' })
       .eq('id', existing.id);
     setBusy(null);
     if (error) toast.error('Wiederöffnen fehlgeschlagen: ' + error.message);
@@ -251,7 +250,7 @@ export default function DeliveredOrders() {
             closed_at: new Date().toISOString(),
             closed_by: user?.id ?? null,
             closed_reason: reason,
-            status: 'closed',
+            status: 'archived',
           })
           .eq('id', existing.id);
         error = res.error;
@@ -271,8 +270,7 @@ export default function DeliveredOrders() {
             closed_at: new Date().toISOString(),
             closed_by: user?.id ?? null,
             closed_reason: reason,
-            status: 'closed',
-            invitation_status: 'closed',
+            status: 'archived',
           });
         error = res.error;
       }
