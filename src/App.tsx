@@ -111,6 +111,7 @@ const ReviewsLayout = lazy(() => import("./pages/Reviews/_layout"));
 const ReviewsOverview = lazy(() => import("./pages/Reviews/Overview"));
 const ReviewsDelivered = lazy(() => import("./pages/Reviews/DeliveredOrders"));
 const ReviewsSubmitted = lazy(() => import("./pages/Reviews/Submitted"));
+const ReviewsClosed = lazy(() => import("./pages/Reviews/Closed"));
 const ReviewsFrontendPreview = lazy(() => import("./pages/Reviews/FrontendPreview"));
 const PublicReviewForm = lazy(() => import("./pages/PublicReview/ReviewForm"));
 const ReviewThanks = lazy(() => import("./pages/PublicReview/ReviewThanks"));
@@ -316,6 +317,7 @@ function AppRoutes() {
             <Route index element={<ReviewsOverview />} />
             <Route path="geliefert" element={<ReviewsDelivered />} />
             <Route path="abgegeben" element={<ReviewsSubmitted />} />
+            <Route path="geschlossen" element={<ReviewsClosed />} />
             <Route path="frontend" element={<ReviewsFrontendPreview />} />
           </Route>
 
