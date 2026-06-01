@@ -21,7 +21,7 @@ type Row = {
   status: string | null;
 };
 
-export default function ClosedReviews() {
+export default function ClosedReviews({ withReview = false }: { withReview?: boolean } = {}) {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -29,18 +29,17 @@ export default function ClosedReviews() {
 
   const load = async () => {
     setLoading(true);
-    const { data } = await (supabase as any)
+    let q = (supabase as any)
       .from('reviews')
       .select('id, order_id, order_number, customer_name, customer_email, product_name, closed_at, closed_by, closed_reason, submitted_at, status')
-      .not('closed_at', 'is', null)
-      .is('submitted_at', null)
-      .order('closed_at', { ascending: false })
-      .limit(1000);
+      .not('closed_at', 'is', null);
+    q = withReview ? q.not('submitted_at', 'is', null) : q.is('submitted_at', null);
+    const { data } = await q.order('closed_at', { ascending: false }).limit(1000);
     setRows((data ?? []) as Row[]);
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [withReview]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
