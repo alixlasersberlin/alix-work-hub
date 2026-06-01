@@ -208,10 +208,22 @@ export default function Capas() {
                 <TableCell className="text-sm">{r.due_date ?? '—'}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1">
-                    <Select value={r.status} onValueChange={v => setStatus(r.id, v)}>
-                      <SelectTrigger className="h-8 w-44"><SelectValue /></SelectTrigger>
-                      <SelectContent>{CAPA_STATUS.map(s => <SelectItem key={s} value={s}>{statusLabel(s)}</SelectItem>)}</SelectContent>
-                    </Select>
+                    {isSuperAdmin ? (
+                      <>
+                        <Select value={r.status} onValueChange={v => setStatus(r.id, v)}>
+                          <SelectTrigger className="h-8 w-44"><SelectValue /></SelectTrigger>
+                          <SelectContent>{CAPA_STATUS.map(s => <SelectItem key={s} value={s}>{statusLabel(s)}</SelectItem>)}</SelectContent>
+                        </Select>
+                        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => startEdit(r)} title="Bearbeiten">
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        {r.status !== 'geschlossen' && (
+                          <Button size="icon" variant="ghost" className="h-8 w-8 text-emerald-500" onClick={() => setStatus(r.id, 'geschlossen')} title="Als gelöst markieren">
+                            <CheckCircle2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </>
+                    ) : null}
                     <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setDetail(r)}>
                       <MessageSquare className="h-4 w-4" />
                     </Button>
