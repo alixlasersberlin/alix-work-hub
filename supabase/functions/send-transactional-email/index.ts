@@ -53,6 +53,10 @@ Deno.serve(async (req) => {
       allowed = !!canFinance
     }
     if (!allowed) {
+      const { data: canQm } = await authClient.rpc('can_access_qm')
+      allowed = !!canQm
+    }
+    if (!allowed) {
       return new Response(JSON.stringify({ error: 'Forbidden' }), {
         status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
