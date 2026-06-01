@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Send, RotateCw, CheckCircle2, Loader2, Search, Mail, AlertTriangle, Lock, Unlock } from 'lucide-react';
 import { toast } from 'sonner';
@@ -44,6 +45,11 @@ export default function DeliveredOrders() {
   const [search, setSearch] = useState('');
   const [closeTarget, setCloseTarget] = useState<Order | null>(null);
   const [closeReason, setCloseReason] = useState('');
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
+  const [bulkAction, setBulkAction] = useState<null | 'send' | 'close'>(null);
+  const [bulkReason, setBulkReason] = useState('');
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
 
   async function load() {
     setLoading(true);
@@ -81,6 +87,47 @@ export default function DeliveredOrders() {
       (o.customers?.contact_name || '').toLowerCase().includes(q),
     );
   }, [orders, search]);
+
+  // Only orders that are actionable (not submitted, not closed) can be selected
+  const selectableIds = useMemo(() => {
+    return filtered
+      .filter(o => {
+        const r = reviews[o.id];
+        return !r?.submitted_at && !r?.closed_at;
+      })
+      .map(o => o.id);
+  }, [filtered, reviews]);
+
+  const selectedIds = useMemo(() => Object.keys(selected).filter(k => selected[k]), [selected]);
+  const selectedCount = selectedIds.length;
+  const allSelected = selectableIds.length > 0 && selectableIds.every(id => selected[id]);
+  const someSelected = selectedCount > 0 && !allSelected;
+
+  function toggleAll() {
+    if (allSelected) {
+      setSelected({});
+    } else {
+      const next: Record<string, boolean> = {};
+      selectableIds.forEach(id => { next[id] = true; });
+      setSelected(next);
+    }
+  }
+  function toggleOne(id: string) {
+    setSelected(s => ({ ...s, [id]: !s[id] }));
+  }
+  function clearSelection() {
+    setSelected({});
+  }
+
+  // Filter selected by capability for the chosen action
+  const selectedOrders = useMemo(
+    () => filtered.filter(o => selected[o.id]),
+    [filtered, selected],
+  );
+  const sendableSelected = useMemo(
+    () => selectedOrders.filter(o => !!o.customers?.email),
+    [selectedOrders],
+  );
 
   async function sendInvite(orderId: string, hasEmail: boolean) {
     if (!hasEmail) {
@@ -156,6 +203,83 @@ export default function DeliveredOrders() {
     else { toast.success('Bewertung wieder geöffnet'); load(); }
   }
 
+  async function runBulkSend() {
+    const targets = sendableSelected;
+    if (!targets.length) return;
+    setBulkBusy(true);
+    setBulkProgress({ done: 0, total: targets.length });
+    let ok = 0, fail = 0;
+    for (let i = 0; i < targets.length; i++) {
+      const o = targets[i];
+      const r = await sendReviewInvitation(o.id, { manual: true });
+      if (r.ok) ok++; else fail++;
+      setBulkProgress({ done: i + 1, total: targets.length });
+    }
+    setBulkBusy(false);
+    setBulkProgress(null);
+    setBulkAction(null);
+    clearSelection();
+    if (fail === 0) toast.success(`${ok} Einladungen versendet`);
+    else toast.warning(`${ok} versendet, ${fail} fehlgeschlagen`);
+    load();
+  }
+
+  async function runBulkClose() {
+    const targets = selectedOrders;
+    if (!targets.length) return;
+    setBulkBusy(true);
+    setBulkProgress({ done: 0, total: targets.length });
+    const reason = bulkReason.trim() || null;
+    let ok = 0, fail = 0;
+    for (let i = 0; i < targets.length; i++) {
+      const order = targets[i];
+      const existing = reviews[order.id];
+      let error: any = null;
+      if (existing?.id) {
+        const res = await (supabase as any)
+          .from('reviews')
+          .update({
+            closed_at: new Date().toISOString(),
+            closed_by: user?.id ?? null,
+            closed_reason: reason,
+            status: 'closed',
+          })
+          .eq('id', existing.id);
+        error = res.error;
+      } else {
+        const token = (typeof crypto !== 'undefined' && 'randomUUID' in crypto)
+          ? `closed-${crypto.randomUUID()}`
+          : `closed-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        const res = await (supabase as any)
+          .from('reviews')
+          .insert({
+            order_id: order.id,
+            customer_id: order.customer_id,
+            customer_name: order.customers?.company_name || order.customers?.contact_name || null,
+            customer_email: order.customers?.email || null,
+            order_number: order.order_number,
+            review_token: token,
+            closed_at: new Date().toISOString(),
+            closed_by: user?.id ?? null,
+            closed_reason: reason,
+            status: 'closed',
+            invitation_status: 'closed',
+          });
+        error = res.error;
+      }
+      if (error) fail++; else ok++;
+      setBulkProgress({ done: i + 1, total: targets.length });
+    }
+    setBulkBusy(false);
+    setBulkProgress(null);
+    setBulkAction(null);
+    setBulkReason('');
+    clearSelection();
+    if (fail === 0) toast.success(`${ok} Aufträge geschlossen`);
+    else toast.warning(`${ok} geschlossen, ${fail} fehlgeschlagen`);
+    load();
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -173,10 +297,51 @@ export default function DeliveredOrders() {
         </div>
       </div>
 
+      {isSuperAdmin && selectedCount > 0 && (
+        <div className="flex items-center justify-between gap-3 flex-wrap rounded-lg border bg-card px-4 py-2">
+          <div className="text-sm">
+            <span className="font-medium">{selectedCount}</span> ausgewählt
+            {sendableSelected.length !== selectedCount && (
+              <span className="text-muted-foreground ml-2">
+                ({sendableSelected.length} mit E-Mail · {selectedCount - sendableSelected.length} ohne)
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="ghost" onClick={clearSelection}>Abbrechen</Button>
+            <Button
+              size="sm"
+              variant="default"
+              disabled={sendableSelected.length === 0}
+              onClick={() => setBulkAction('send')}
+            >
+              <Send className="h-4 w-4" /> Massenversand ({sendableSelected.length})
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => { setBulkReason(''); setBulkAction('close'); }}
+            >
+              <Lock className="h-4 w-4" /> Alle schließen ({selectedCount})
+            </Button>
+          </div>
+        </div>
+      )}
+
       <div className="rounded-lg border bg-card">
         <Table>
           <TableHeader>
             <TableRow>
+              {isSuperAdmin && (
+                <TableHead className="w-8">
+                  <Checkbox
+                    checked={allSelected ? true : someSelected ? 'indeterminate' : false}
+                    onCheckedChange={toggleAll}
+                    disabled={selectableIds.length === 0}
+                    aria-label="Alle auswählen"
+                  />
+                </TableHead>
+              )}
               <TableHead>Auftrag</TableHead>
               <TableHead>Kunde</TableHead>
               <TableHead>E-Mail</TableHead>
@@ -189,14 +354,14 @@ export default function DeliveredOrders() {
           <TableBody>
             {loading && (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-10">
+                <TableCell colSpan={isSuperAdmin ? 8 : 7} className="text-center py-10">
                   <Loader2 className="h-5 w-5 animate-spin inline" />
                 </TableCell>
               </TableRow>
             )}
             {!loading && filtered.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
+                <TableCell colSpan={isSuperAdmin ? 8 : 7} className="text-center py-10 text-muted-foreground">
                   Keine ausgelieferten Aufträge.
                 </TableCell>
               </TableRow>
@@ -207,6 +372,7 @@ export default function DeliveredOrders() {
               const submitted = !!rev?.submitted_at;
               const sent = !!rev?.invitation_sent_at;
               const closed = !!rev?.closed_at;
+              const selectable = !submitted && !closed;
               return (
                 <TableRow
                   key={o.id}
@@ -216,6 +382,16 @@ export default function DeliveredOrders() {
                     : ''
                   }
                 >
+                  {isSuperAdmin && (
+                    <TableCell>
+                      <Checkbox
+                        checked={!!selected[o.id]}
+                        onCheckedChange={() => toggleOne(o.id)}
+                        disabled={!selectable}
+                        aria-label={`Auftrag ${o.order_number} auswählen`}
+                      />
+                    </TableCell>
+                  )}
                   <TableCell>
                     <Link to={`/auftraege/${o.id}`} className="font-mono text-xs hover:underline">
                       {o.order_number}
@@ -335,6 +511,62 @@ export default function DeliveredOrders() {
             <AlertDialogCancel>Abbrechen</AlertDialogCancel>
             <AlertDialogAction onClick={confirmClose} disabled={busy === closeTarget?.id}>
               Schließen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={bulkAction === 'send'} onOpenChange={(open) => { if (!open && !bulkBusy) setBulkAction(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Massenversand der Bewertungseinladungen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              An <span className="font-medium">{sendableSelected.length}</span> Kunden wird eine Bewertungseinladung versendet.
+              {selectedCount - sendableSelected.length > 0 && (
+                <> {selectedCount - sendableSelected.length} Auswahl(en) ohne E-Mail werden übersprungen.</>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {bulkProgress && (
+            <div className="text-sm text-muted-foreground">
+              Verarbeite {bulkProgress.done} / {bulkProgress.total}…
+            </div>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={bulkBusy}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={runBulkSend} disabled={bulkBusy || sendableSelected.length === 0}>
+              {bulkBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Jetzt versenden</>}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={bulkAction === 'close'} onOpenChange={(open) => { if (!open && !bulkBusy) { setBulkAction(null); setBulkReason(''); } }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{selectedCount} Aufträge für Bewertung schließen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Für die ausgewählten Aufträge werden keine Bewertungseinladungen mehr versendet. Du kannst sie später einzeln wieder öffnen.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2">
+            <label className="text-sm text-muted-foreground">Grund (optional, gilt für alle)</label>
+            <Input
+              value={bulkReason}
+              onChange={e => setBulkReason(e.target.value)}
+              placeholder="z. B. Kunde wünscht keine Kontaktaufnahme"
+              disabled={bulkBusy}
+            />
+          </div>
+          {bulkProgress && (
+            <div className="text-sm text-muted-foreground">
+              Verarbeite {bulkProgress.done} / {bulkProgress.total}…
+            </div>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={bulkBusy}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={runBulkClose} disabled={bulkBusy}>
+              {bulkBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Alle schließen</>}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
