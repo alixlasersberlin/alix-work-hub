@@ -1,11 +1,42 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Section, BUG_STATUS, CAPA_STATUS } from './_shared';
+import { Button } from '@/components/ui/button';
+import { Download } from 'lucide-react';
+import { toast } from 'sonner';
+import { BUG_STATUS, CAPA_STATUS } from './_shared';
+
+function toCsv(rows: Record<string, any>[]): string {
+  if (rows.length === 0) return '';
+  const headers = Object.keys(rows[0]);
+  const escape = (v: any) => {
+    if (v === null || v === undefined) return '';
+    const s = typeof v === 'object' ? JSON.stringify(v) : String(v);
+    return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  return [headers.join(';'), ...rows.map(r => headers.map(h => escape(r[h])).join(';'))].join('\n');
+}
+
+function download(filename: string, csv: string) {
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+const EXPORTS: { key: string; label: string; table: string }[] = [
+  { key: 'bugs', label: 'Bugs', table: 'bugs' },
+  { key: 'capas', label: 'CAPA', table: 'capas' },
+  { key: 'audit', label: 'Audit-Feststellungen', table: 'audit_findings' },
+  { key: 'actions', label: 'Maßnahmen', table: 'capa_actions' },
+];
 
 export default function Berichte() {
   const [bugs, setBugs] = useState<Record<string, number>>({});
   const [capas, setCapas] = useState<Record<string, number>>({});
+  const [busy, setBusy] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -22,6 +53,17 @@ export default function Berichte() {
       setCapas(bag(c.data));
     })();
   }, []);
+
+  async function exportCsv(table: string, label: string) {
+    setBusy(table);
+    const { data, error } = await (supabase as any).from(table).select('*').order('created_at', { ascending: false }).limit(5000);
+    setBusy(null);
+    if (error) { toast.error('Export fehlgeschlagen: ' + error.message); return; }
+    if (!data || data.length === 0) { toast.info('Keine Daten zum Export.'); return; }
+    const ts = new Date().toISOString().slice(0, 10);
+    download(`${label}-${ts}.csv`, toCsv(data));
+    toast.success(`${label} exportiert (${data.length})`);
+  }
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
@@ -48,9 +90,14 @@ export default function Berichte() {
         </CardContent>
       </Card>
       <Card className="md:col-span-2">
-        <CardHeader><CardTitle>Hinweis</CardTitle></CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
-          Diese Übersicht ist eine erste Auswertung. Erweiterte Berichte (CSV-Export, Zeitreihen, Verantwortlichkeiten) können bei Bedarf ergänzt werden.
+        <CardHeader><CardTitle>CSV-Export</CardTitle></CardHeader>
+        <CardContent className="flex flex-wrap gap-2">
+          {EXPORTS.map(e => (
+            <Button key={e.key} variant="outline" disabled={busy === e.table} onClick={() => exportCsv(e.table, e.label)}>
+              <Download className="h-4 w-4 mr-2" />
+              {busy === e.table ? 'Exportiere…' : e.label}
+            </Button>
+          ))}
         </CardContent>
       </Card>
     </div>
