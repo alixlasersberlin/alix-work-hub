@@ -79,14 +79,16 @@ export default function DeliveredOrders() {
   useEffect(() => { load(); }, []);
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return orders;
+    // Geschlossene Aufträge erscheinen ausschließlich im Tab "Geschlossen"
+    let list = orders.filter(o => !reviews[o.id]?.closed_at);
+    if (!search.trim()) return list;
     const q = search.trim().toLowerCase();
-    return orders.filter(o =>
+    return list.filter(o =>
       (o.order_number || '').toLowerCase().includes(q) ||
       (o.customers?.company_name || '').toLowerCase().includes(q) ||
       (o.customers?.contact_name || '').toLowerCase().includes(q),
     );
-  }, [orders, search]);
+  }, [orders, reviews, search]);
 
   // Pagination: 20 / 50 / 100 / all
   const [pageSize, setPageSize] = useState<number | 'all'>(20);

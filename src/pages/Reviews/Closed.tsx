@@ -21,7 +21,7 @@ type Row = {
   status: string | null;
 };
 
-export default function ClosedReviews() {
+export default function ClosedReviews({ withReview = false }: { withReview?: boolean } = {}) {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -29,18 +29,17 @@ export default function ClosedReviews() {
 
   const load = async () => {
     setLoading(true);
-    const { data } = await (supabase as any)
+    let q = (supabase as any)
       .from('reviews')
       .select('id, order_id, order_number, customer_name, customer_email, product_name, closed_at, closed_by, closed_reason, submitted_at, status')
-      .not('closed_at', 'is', null)
-      .is('submitted_at', null)
-      .order('closed_at', { ascending: false })
-      .limit(1000);
+      .not('closed_at', 'is', null);
+    q = withReview ? q.not('submitted_at', 'is', null) : q.is('submitted_at', null);
+    const { data } = await q.order('closed_at', { ascending: false }).limit(1000);
     setRows((data ?? []) as Row[]);
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [withReview]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -69,7 +68,7 @@ export default function ClosedReviews() {
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="text-sm text-muted-foreground inline-flex items-center gap-2">
           <Lock className="h-4 w-4" />
-          {loading ? '…' : `${filtered.length} geschlossene Aufträge (ohne Bewertung)`}
+          {loading ? '…' : `${filtered.length} geschlossene Aufträge (${withReview ? 'mit Bewertung' : 'ohne Bewertung'})`}
         </div>
         <div className="relative">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
