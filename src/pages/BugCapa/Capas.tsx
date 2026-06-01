@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { StatusBadge } from '@/components/StatusBadge';
-import { Plus, MessageSquare } from 'lucide-react';
+import { Plus, MessageSquare, Pencil, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Section, CAPA_STATUS, statusLabel } from './_shared';
 import { QmDetailDrawer } from './QmDetailDrawer';
