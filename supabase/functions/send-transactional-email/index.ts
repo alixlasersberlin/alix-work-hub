@@ -81,6 +81,7 @@ Deno.serve(async (req) => {
   let idempotencyKey: string
   let templateData: Record<string, any> = {}
   let extraCc: string[] = []
+  let skipDefaultCopies = false
   try {
     const body = await req.json()
     templateName = body.templateName || body.template_name
@@ -92,6 +93,7 @@ Deno.serve(async (req) => {
     if (Array.isArray(body.extraCc)) {
       extraCc = body.extraCc.filter((e: any) => typeof e === 'string' && e.includes('@'))
     }
+    if (body.skipDefaultCopies === true) skipDefaultCopies = true
   } catch {
     return new Response(JSON.stringify({ error: 'Invalid JSON in request body' }), {
       status: 400,
