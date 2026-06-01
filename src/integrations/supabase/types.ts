@@ -1722,6 +1722,125 @@ export type Database = {
         }
         Relationships: []
       }
+      review_email_logs: {
+        Row: {
+          customer_email: string | null
+          delivery_status: string | null
+          error_message: string | null
+          id: string
+          order_id: string | null
+          review_id: string | null
+          sent_at: string
+          sent_by: string | null
+          sent_type: string
+        }
+        Insert: {
+          customer_email?: string | null
+          delivery_status?: string | null
+          error_message?: string | null
+          id?: string
+          order_id?: string | null
+          review_id?: string | null
+          sent_at?: string
+          sent_by?: string | null
+          sent_type: string
+        }
+        Update: {
+          customer_email?: string | null
+          delivery_status?: string | null
+          error_message?: string | null
+          id?: string
+          order_id?: string | null
+          review_id?: string | null
+          sent_at?: string
+          sent_by?: string | null
+          sent_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_email_logs_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reviews: {
+        Row: {
+          created_at: string
+          customer_email: string | null
+          customer_id: string | null
+          customer_name: string | null
+          delivery_date: string | null
+          id: string
+          improvement_text: string | null
+          invitation_sent_at: string | null
+          invitation_sent_by: string | null
+          invitation_status: string
+          order_id: string
+          order_number: string | null
+          product_name: string | null
+          rating_delivery: number | null
+          rating_driver_friendliness: number | null
+          rating_training_text: string | null
+          review_token: string
+          status: string
+          submitted_at: string | null
+          token_expires_at: string | null
+          training_answer: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          delivery_date?: string | null
+          id?: string
+          improvement_text?: string | null
+          invitation_sent_at?: string | null
+          invitation_sent_by?: string | null
+          invitation_status?: string
+          order_id: string
+          order_number?: string | null
+          product_name?: string | null
+          rating_delivery?: number | null
+          rating_driver_friendliness?: number | null
+          rating_training_text?: string | null
+          review_token: string
+          status?: string
+          submitted_at?: string | null
+          token_expires_at?: string | null
+          training_answer?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          delivery_date?: string | null
+          id?: string
+          improvement_text?: string | null
+          invitation_sent_at?: string | null
+          invitation_sent_by?: string | null
+          invitation_status?: string
+          order_id?: string
+          order_number?: string | null
+          product_name?: string | null
+          rating_delivery?: number | null
+          rating_driver_friendliness?: number | null
+          rating_training_text?: string | null
+          review_token?: string
+          status?: string
+          submitted_at?: string | null
+          token_expires_at?: string | null
+          training_answer?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       roles: {
         Row: {
           created_at: string
