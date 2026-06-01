@@ -107,6 +107,9 @@ const BugCapaReklamationen = lazy(() => import("./pages/BugCapa/Reklamationen"))
 const BugCapaAudit = lazy(() => import("./pages/BugCapa/AuditFindings"));
 const BugCapaMassnahmen = lazy(() => import("./pages/BugCapa/Massnahmen"));
 const BugCapaBerichte = lazy(() => import("./pages/BugCapa/Berichte"));
+const ReviewsList = lazy(() => import("./pages/Reviews/ReviewsList"));
+const PublicReviewForm = lazy(() => import("./pages/PublicReview/ReviewForm"));
+const ReviewThanks = lazy(() => import("./pages/PublicReview/ReviewThanks"));
 import MaintenanceGate from "./components/MaintenanceGate";
 
 const queryClient = new QueryClient({
