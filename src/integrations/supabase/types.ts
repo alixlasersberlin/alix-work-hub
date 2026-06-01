@@ -1768,6 +1768,9 @@ export type Database = {
       }
       reviews: {
         Row: {
+          closed_at: string | null
+          closed_by: string | null
+          closed_reason: string | null
           created_at: string
           customer_email: string | null
           customer_id: string | null
@@ -1792,6 +1795,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          closed_at?: string | null
+          closed_by?: string | null
+          closed_reason?: string | null
           created_at?: string
           customer_email?: string | null
           customer_id?: string | null
@@ -1816,6 +1822,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          closed_at?: string | null
+          closed_by?: string | null
+          closed_reason?: string | null
           created_at?: string
           customer_email?: string | null
           customer_id?: string | null
