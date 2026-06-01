@@ -65,12 +65,46 @@ export default function Bugs() {
       reporter_id: user.id,
       created_by: user.id,
     };
-    const { error } = await (supabase as any).from('bugs').insert(payload);
+    const { data: inserted, error } = await (supabase as any)
+      .from('bugs').insert(payload).select('id, ticket_number, title').single();
     if (error) { toast.error('Anlegen fehlgeschlagen: ' + error.message); return; }
     toast.success('Bug angelegt');
     setOpen(false);
     setForm({ title: '', description: '', product: '', module: '', software_version: '', priority: 'normal', criticality: 'mittel', due_date: '' });
     load();
+
+    // Benachrichtigung an rde@alix-lasers.com mit Kopie an den Verfasser
+    try {
+      const reporterEmail = (user as any)?.email as string | undefined;
+      const reporterName = ((user as any)?.user_metadata?.full_name as string | undefined) || reporterEmail || '';
+      await supabase.functions.invoke('send-transactional-email', {
+        body: {
+          templateName: 'bug-capa-notification',
+          recipientEmail: 'rde@alix-lasers.com',
+          extraCc: reporterEmail ? [reporterEmail] : [],
+          skipDefaultCopies: true,
+          idempotencyKey: `bug-notify-${inserted.id}`,
+          templateData: {
+            kind: 'Bug',
+            ticketNumber: inserted.ticket_number,
+            title: inserted.title,
+            reporterName,
+            reporterEmail,
+            fields: [
+              { label: 'Produkt', value: payload.product ?? '' },
+              { label: 'Modul', value: payload.module ?? '' },
+              { label: 'Softwareversion', value: payload.software_version ?? '' },
+              { label: 'Priorität', value: payload.priority ?? '' },
+              { label: 'Kritikalität', value: payload.criticality ?? '' },
+              { label: 'Fälligkeit', value: payload.due_date ?? '' },
+            ],
+            body: payload.description ?? '',
+          },
+        },
+      });
+    } catch (e: any) {
+      console.error('Bug-Notification fehlgeschlagen', e);
+    }
   }
 
   async function setStatus(id: string, status: string) {
