@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { sendCustomerShippingNotice } from '@/lib/send-customer-shipping-notice';
+import { sendReviewInvitation } from '@/lib/review-invitation';
 import { VipBadge } from '@/components/VipBadge';
 
 const STATUS_OPTIONS = [
@@ -75,6 +76,8 @@ export default function OrderEditDialog({ order, open, onClose, onSaved }: Props
     if (form.order_status === 'geliefert' && order?.order_status !== 'geliefert') {
       const mail = await sendCustomerShippingNotice(order.id, undefined, 'automatisch', 'customer_delivered');
       if (mail.ok) toast.success(mail.message); else toast.error('E-Mail nicht versendet: ' + mail.message);
+      // Automatische Bewertungseinladung (fehlerresistent)
+      sendReviewInvitation(order.id, { manual: false }).catch(() => {});
     }
     onSaved();
     onClose();
