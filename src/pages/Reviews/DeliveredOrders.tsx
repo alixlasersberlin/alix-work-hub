@@ -395,7 +395,7 @@ export default function DeliveredOrders() {
                 </TableCell>
               </TableRow>
             )}
-            {filtered.map(o => {
+            {visible.map(o => {
               const rev = reviews[o.id];
               const hasEmail = !!o.customers?.email;
               const submitted = !!rev?.submitted_at;
