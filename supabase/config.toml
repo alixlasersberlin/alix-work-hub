@@ -48,6 +48,12 @@ verify_jwt = false
 [functions.import-all-orders-eu2]
 verify_jwt = false
 
+[functions.get-review-context]
+verify_jwt = false
+
+[functions.submit-review]
+verify_jwt = false
+
 
 
 
