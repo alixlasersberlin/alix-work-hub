@@ -573,7 +573,8 @@ export default function OrdersFreiBestellung() {
                       );
                     })()}
                   </>
-                );
+                  );
+                })
               )}
             </tbody>
           </table>
