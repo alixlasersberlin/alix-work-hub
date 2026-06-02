@@ -198,6 +198,23 @@ export default function ProductionOrderIn() {
           ))}
         </div>
       )}
+
+      <OrderPickerDialog
+        open={!!reassignFor}
+        onOpenChange={(o) => { if (!o) setReassignFor(null); }}
+        onSelect={async (o) => {
+          if (!reassignFor) return;
+          const customerName = o.customers?.company_name || o.customers?.contact_name || null;
+          const { error } = await supabase
+            .from('production_orders')
+            .update({ order_number: o.order_number, customer_name_snapshot: customerName })
+            .eq('id', reassignFor.id);
+          if (error) { toast.error(error.message); return; }
+          toast.success(`Bestellung neu zugewiesen: ${o.order_number}`);
+          setReassignFor(null);
+          load();
+        }}
+      />
     </div>
   );
 }
