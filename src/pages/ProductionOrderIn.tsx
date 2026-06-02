@@ -146,6 +146,11 @@ export default function ProductionOrderIn() {
                         )}
                         <Badge variant="outline" className="text-[10px]">{r.status}</Badge>
                       </div>
+                      {r.customer_name_snapshot && (
+                        <div className="text-xs font-medium text-foreground/90 mt-0.5 truncate">
+                          {r.customer_name_snapshot}
+                        </div>
+                      )}
                       <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-3 flex-wrap">
                         {r.modellname && <span>{r.modellname}</span>}
                         {r.farbe && <span>· {r.farbe}</span>}
