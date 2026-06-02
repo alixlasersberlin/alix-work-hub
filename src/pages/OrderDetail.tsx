@@ -23,6 +23,8 @@ import { StatusBadge } from '@/components/StatusBadge';
 import InstallmentPlanDialog from '@/components/InstallmentPlanDialog';
 import SepaMandatButton from '@/components/SepaMandatButton';
 import OrderEditDialog from '@/components/OrderEditDialog';
+import OrderItemsEditDialog from '@/components/OrderItemsEditDialog';
+
 import OrderDeferDialog from '@/components/OrderDeferDialog';
 import MietkaufDialog from '@/components/MietkaufDialog';
 import { sendCustomerShippingNotice } from '@/lib/send-customer-shipping-notice';
@@ -68,6 +70,8 @@ export default function OrderDetail() {
   const [editingShipDate, setEditingShipDate] = useState(false);
   const [shipDateValue, setShipDateValue] = useState('');
   const [editOpen, setEditOpen] = useState(false);
+  const [itemsEditOpen, setItemsEditOpen] = useState(false);
+
   const [deferOpen, setDeferOpen] = useState(false);
   const [restPending, setRestPending] = useState(false);
 
@@ -507,9 +511,17 @@ export default function OrderDetail() {
       {/* Items Tab */}
       {activeTab === 'items' && (
         <div className="rounded-xl border border-border bg-card p-6 card-glow">
-          <h2 className="text-base font-display font-bold text-foreground flex items-center gap-2 mb-4">
-            <Package className="w-4 h-4 text-primary" /> Artikelpositionen
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-display font-bold text-foreground flex items-center gap-2">
+              <Package className="w-4 h-4 text-primary" /> Artikelpositionen
+            </h2>
+            {hasRole('Super Admin') && (
+              <Button size="sm" variant="outline" onClick={() => setItemsEditOpen(true)} className="gap-1.5">
+                <Pencil className="w-3.5 h-3.5" /> Positionen bearbeiten
+              </Button>
+            )}
+          </div>
+
           {items.length === 0 ? (
             <div className="text-center py-8">
               <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
@@ -969,6 +981,16 @@ export default function OrderDetail() {
       {editOpen && order && (
         <OrderEditDialog order={order} open onClose={() => setEditOpen(false)} onSaved={loadAll} />
       )}
+      {itemsEditOpen && order && (
+        <OrderItemsEditDialog
+          orderId={order.id}
+          orderNumber={order.order_number}
+          open
+          onClose={() => setItemsEditOpen(false)}
+          onSaved={loadAll}
+        />
+      )}
+
       {deferOpen && order && (
         <OrderDeferDialog order={order} open onClose={() => setDeferOpen(false)} onSaved={loadAll} />
       )}
