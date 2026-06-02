@@ -74,11 +74,15 @@ export default function OrdersFreiBestellung() {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const atOnly = useAtOnly();
+  const { hasRole } = useAuth();
+  const isSuperAdmin = hasRole('Super Admin');
 
   const [reserveOrder, setReserveOrder] = useState<any | null>(null);
   const [reserveDeviceId, setReserveDeviceId] = useState<string>('');
   const [reserving, setReserving] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [unassignOrder, setUnassignOrder] = useState<any | null>(null);
+  const [unassigning, setUnassigning] = useState(false);
 
   const reload = async () => {
     setLoading(true);
