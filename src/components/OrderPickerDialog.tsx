@@ -70,7 +70,11 @@ export default function OrderPickerDialog({ open, onOpenChange, onSelect, filter
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Auftrag auswählen</DialogTitle>
-          <DialogDescription>Suche und wähle einen Auftrag aus dem Verkauf.</DialogDescription>
+          <DialogDescription>
+            {filterModel
+              ? `Nur Aufträge mit Modell „${filterModel}".`
+              : 'Suche und wähle einen Auftrag aus dem Verkauf.'}
+          </DialogDescription>
         </DialogHeader>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
