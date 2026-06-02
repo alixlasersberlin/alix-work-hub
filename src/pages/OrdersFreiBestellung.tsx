@@ -83,6 +83,12 @@ export default function OrdersFreiBestellung() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [unassignOrder, setUnassignOrder] = useState<any | null>(null);
   const [unassigning, setUnassigning] = useState(false);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const toggleExpand = (id: string) => setExpanded(prev => {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
 
   const reload = async () => {
     setLoading(true);
