@@ -356,6 +356,16 @@ export default function ProductionTimeline() {
                             {ds.label}
                           </span>
                         </div>
+                        {canReassign && !r.is_reclamation && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setReassignFor(r)}
+                            title="Auftrag neu zuweisen"
+                          >
+                            <UserCog className="w-4 h-4 mr-1" /> Zuweisen
+                          </Button>
+                        )}
                         <Button asChild size="sm" variant="ghost">
                           <Link to={`${basePath}/${r.id}`}><FileText className="w-4 h-4" /></Link>
                         </Button>
@@ -368,6 +378,24 @@ export default function ProductionTimeline() {
           </>
         )}
       </Card>
+
+      <OrderPickerDialog
+        open={!!reassignFor}
+        filterModel={reassignFor?.modellname || null}
+        onOpenChange={(o) => { if (!o) setReassignFor(null); }}
+        onSelect={async (o) => {
+          if (!reassignFor) return;
+          const customerName = o.customers?.company_name || o.customers?.contact_name || null;
+          const { error } = await supabase
+            .from('production_orders')
+            .update({ order_number: o.order_number, customer_name_snapshot: customerName })
+            .eq('id', reassignFor.id);
+          if (error) { toast.error(error.message); return; }
+          toast.success(`Bestellung neu zugewiesen: ${o.order_number}`);
+          setReassignFor(null);
+          load();
+        }}
+      />
     </div>
   );
 }
