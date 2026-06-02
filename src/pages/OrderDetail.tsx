@@ -981,6 +981,16 @@ export default function OrderDetail() {
       {editOpen && order && (
         <OrderEditDialog order={order} open onClose={() => setEditOpen(false)} onSaved={loadAll} />
       )}
+      {itemsEditOpen && order && (
+        <OrderItemsEditDialog
+          orderId={order.id}
+          orderNumber={order.order_number}
+          open
+          onClose={() => setItemsEditOpen(false)}
+          onSaved={loadAll}
+        />
+      )}
+
       {deferOpen && order && (
         <OrderDeferDialog order={order} open onClose={() => setDeferOpen(false)} onSaved={loadAll} />
       )}
