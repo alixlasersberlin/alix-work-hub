@@ -199,6 +199,8 @@ export default function Lagergeraete({
 
   // Global search across devices and available (unreserved) open orders
   const [searchQuery, setSearchQuery] = useState('');
+  const [datePeriod, setDatePeriod] = useState<'this_month' | 'last_month' | 'this_year' | 'all'>('all');
+
   const [sortField, setSortField] = useState<'serial_number' | 'model_name' | 'entry_date' | 'order_number' | 'status' | 'notes'>('serial_number');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [viewMode, setViewMode] = useViewMode();
@@ -241,12 +243,35 @@ export default function Lagergeraete({
 
   const filteredDevices = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
-    if (!q) return typeFilteredDevices;
-    return typeFilteredDevices.filter((d) => {
+    const isWarehouse = (filterStatuses ?? []).includes('Shell Warehouse');
+    let base = typeFilteredDevices;
+    if (isWarehouse && datePeriod !== 'all') {
+      const now = new Date();
+      let from: Date;
+      let to: Date;
+      if (datePeriod === 'this_month') {
+        from = new Date(now.getFullYear(), now.getMonth(), 1);
+        to = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+      } else if (datePeriod === 'last_month') {
+        from = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        to = new Date(now.getFullYear(), now.getMonth(), 1);
+      } else {
+        from = new Date(now.getFullYear(), 0, 1);
+        to = new Date(now.getFullYear() + 1, 0, 1);
+      }
+      base = base.filter((d) => {
+        if (!d.entry_date) return false;
+        const dt = new Date(d.entry_date);
+        return dt >= from && dt < to;
+      });
+    }
+    if (!q) return base;
+    return base.filter((d) => {
       const hay = `${d.serial_number ?? ''} ${d.model_name ?? ''} ${d.notes ?? ''} ${d.orders?.order_number ?? ''} ${d.reservation_week ?? ''}`.toLowerCase();
       return hay.includes(q);
     });
-  }, [typeFilteredDevices, searchQuery]);
+  }, [typeFilteredDevices, searchQuery, datePeriod, filterStatuses]);
+
 
   const sortedDevices = useMemo(() => {
     const arr = [...filteredDevices];
@@ -987,7 +1012,21 @@ export default function Lagergeraete({
               </button>
             )}
           </div>
+          {(filterStatuses ?? []).includes('Shell Warehouse') && (
+            <Select value={datePeriod} onValueChange={(v) => setDatePeriod(v as typeof datePeriod)}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Zeitraum" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="this_month">Dieser Monat</SelectItem>
+                <SelectItem value="last_month">Voriger Monat</SelectItem>
+                <SelectItem value="this_year">Dieses Jahr</SelectItem>
+                <SelectItem value="all">Alle</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
           <ViewToggle value={viewMode} onChange={setViewMode} />
+
         </div>
 
         {searchQuery.trim().length >= 2 && isAdmin && (
