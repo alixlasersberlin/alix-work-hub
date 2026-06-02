@@ -48,6 +48,7 @@ export default function OrderPickerDialog({ open, onOpenChange, onSelect, filter
       let q = supabase
         .from('orders')
         .select('id, order_number, order_status, customers(company_name, contact_name)')
+        .in('order_status', ['open', 'offen', 'teilgeliefert', 'overdue'])
         .order('created_at', { ascending: false })
         .limit(500);
       if (orderIds) q = q.in('id', orderIds);
