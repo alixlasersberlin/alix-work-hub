@@ -1012,7 +1012,21 @@ export default function Lagergeraete({
               </button>
             )}
           </div>
+          {(filterStatuses ?? []).includes('Shell Warehouse') && (
+            <Select value={datePeriod} onValueChange={(v) => setDatePeriod(v as typeof datePeriod)}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Zeitraum" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="this_month">Dieser Monat</SelectItem>
+                <SelectItem value="last_month">Voriger Monat</SelectItem>
+                <SelectItem value="this_year">Dieses Jahr</SelectItem>
+                <SelectItem value="all">Alle</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
           <ViewToggle value={viewMode} onChange={setViewMode} />
+
         </div>
 
         {searchQuery.trim().length >= 2 && isAdmin && (
