@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CheckCircle2, Search, Loader2, Inbox, Factory, Warehouse, Download, FileText, FileSpreadsheet, Trash2 } from 'lucide-react';
+import { CheckCircle2, Search, Loader2, Inbox, Factory, Warehouse, Download, FileText, FileSpreadsheet, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
 import { PageSizeSelector, usePagination, PaginationControls } from '@/components/PageSizeSelector';
 import {
