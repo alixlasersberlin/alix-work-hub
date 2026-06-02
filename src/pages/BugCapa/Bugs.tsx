@@ -39,6 +39,11 @@ export default function Bugs() {
   const [editing, setEditing] = useState<Bug | null>(null);
   const [detail, setDetail] = useState<Bug | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [view, setView] = useState<'active' | 'closed'>('active');
+  const CLOSED_STATUSES = ['geschlossen', 'erledigt'];
+  const visibleRows = rows.filter(r =>
+    view === 'closed' ? CLOSED_STATUSES.includes(r.status) : !CLOSED_STATUSES.includes(r.status)
+  );
   const [form, setForm] = useState({
     title: '', description: '', product: '', module: '', software_version: '',
     priority: 'normal', criticality: 'mittel', due_date: '',
