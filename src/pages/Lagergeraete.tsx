@@ -807,7 +807,7 @@ export default function Lagergeraete({
                 />
               </div>
 
-              {isAdmin && (
+              {canReserve && (
                 <div className="space-y-2">
                   <Label>Auftragszuweisung</Label>
                   {reservedOrderNumber ? (
