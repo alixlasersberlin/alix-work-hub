@@ -200,6 +200,20 @@ export default function Bugs() {
         </Dialog>
       }
     >
+      <div className="mb-3 inline-flex rounded-md border border-border p-1 bg-muted/30">
+        <button
+          onClick={() => setView('active')}
+          className={`px-3 py-1.5 text-sm rounded ${view === 'active' ? 'bg-background shadow-sm font-medium' : 'text-muted-foreground hover:text-foreground'}`}
+        >
+          Offene ({rows.filter(r => !CLOSED_STATUSES.includes(r.status)).length})
+        </button>
+        <button
+          onClick={() => setView('closed')}
+          className={`px-3 py-1.5 text-sm rounded ${view === 'closed' ? 'bg-background shadow-sm font-medium' : 'text-muted-foreground hover:text-foreground'}`}
+        >
+          Geschlossene ({rows.filter(r => CLOSED_STATUSES.includes(r.status)).length})
+        </button>
+      </div>
       <div className="rounded-md border border-border">
         <Table>
           <TableHeader>
