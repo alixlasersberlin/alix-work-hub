@@ -41,6 +41,10 @@ export default function ProductionTimeline() {
   const [pageSize, setPageSize] = useState<'10' | '20' | '30' | 'all'>('20');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const atOnly = useAtOnly();
+  const { roles } = useAuth();
+  const isAdmin = roles.includes('Admin') || roles.includes('Super Admin');
+  const canReassign = isAdmin || roles.includes('Order');
+  const [reassignFor, setReassignFor] = useState<Row | null>(null);
 
   const load = async () => {
     setLoading(true);
