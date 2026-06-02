@@ -20,6 +20,7 @@ type Props = {
 
 export default function OrderPickerDialog({ open, onOpenChange, onSelect, filterModel }: Props) {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [itemsByOrder, setItemsByOrder] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
 
@@ -51,7 +52,27 @@ export default function OrderPickerDialog({ open, onOpenChange, onSelect, filter
         .limit(500);
       if (orderIds) q = q.in('id', orderIds);
       const { data } = await q;
-      setOrders((data ?? []) as any);
+      const list = (data ?? []) as Order[];
+      setOrders(list);
+
+      const ids = list.map((o) => o.id);
+      if (ids.length > 0) {
+        const { data: itemRows } = await supabase
+          .from('order_items')
+          .select('order_id, item_name, sku')
+          .in('order_id', ids)
+          .limit(5000);
+        const map: Record<string, string[]> = {};
+        (itemRows ?? []).forEach((r: any) => {
+          if (!r.order_id) return;
+          (map[r.order_id] ||= []).push([r.item_name, r.sku].filter(Boolean).join(' '));
+        });
+        const joined: Record<string, string> = {};
+        Object.keys(map).forEach((k) => (joined[k] = map[k].join(' ').toLowerCase()));
+        setItemsByOrder(joined);
+      } else {
+        setItemsByOrder({});
+      }
       setLoading(false);
     })();
   }, [open, filterModel]);
@@ -63,9 +84,10 @@ export default function OrderPickerDialog({ open, onOpenChange, onSelect, filter
       (o) =>
         o.order_number?.toLowerCase().includes(q) ||
         o.customers?.company_name?.toLowerCase().includes(q) ||
-        o.customers?.contact_name?.toLowerCase().includes(q),
+        o.customers?.contact_name?.toLowerCase().includes(q) ||
+        itemsByOrder[o.id]?.includes(q),
     );
-  }, [orders, search]);
+  }, [orders, search, itemsByOrder]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
