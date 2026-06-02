@@ -134,6 +134,7 @@ interface Row {
   invoice_pdf_path: string | null;
   payment_status: string | null;
   is_reclamation: boolean;
+  customer_name_snapshot: string | null;
   supplier?: { name: string | null } | null;
 }
 
