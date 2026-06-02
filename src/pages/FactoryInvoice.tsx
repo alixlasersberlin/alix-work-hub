@@ -366,6 +366,11 @@ export default function FactoryInvoice() {
                       </Badge>
                     )}
                   </div>
+                  {r.customer_name_snapshot && (
+                    <div className="text-xs font-medium text-foreground/90 mt-0.5 truncate">
+                      {r.customer_name_snapshot}
+                    </div>
+                  )}
                   <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-3 flex-wrap">
                     {r.supplier?.name && (
                       <span className="flex items-center gap-1">
