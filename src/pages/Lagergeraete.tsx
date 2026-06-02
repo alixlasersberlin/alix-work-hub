@@ -199,6 +199,8 @@ export default function Lagergeraete({
 
   // Global search across devices and available (unreserved) open orders
   const [searchQuery, setSearchQuery] = useState('');
+  const [datePeriod, setDatePeriod] = useState<'this_month' | 'last_month' | 'this_year' | 'all'>('all');
+
   const [sortField, setSortField] = useState<'serial_number' | 'model_name' | 'entry_date' | 'order_number' | 'status' | 'notes'>('serial_number');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [viewMode, setViewMode] = useViewMode();
