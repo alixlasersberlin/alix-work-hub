@@ -15,9 +15,10 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSelect: (order: Order) => void;
+  filterModel?: string | null;
 };
 
-export default function OrderPickerDialog({ open, onOpenChange, onSelect }: Props) {
+export default function OrderPickerDialog({ open, onOpenChange, onSelect, filterModel }: Props) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
@@ -25,16 +26,33 @@ export default function OrderPickerDialog({ open, onOpenChange, onSelect }: Prop
   useEffect(() => {
     if (!open) return;
     setLoading(true);
-    supabase
-      .from('orders')
-      .select('id, order_number, order_status, customers(company_name, contact_name)')
-      .order('created_at', { ascending: false })
-      .limit(500)
-      .then(({ data }) => {
-        setOrders((data ?? []) as any);
-        setLoading(false);
-      });
-  }, [open]);
+    (async () => {
+      let orderIds: string[] | null = null;
+      const model = filterModel?.trim();
+      if (model) {
+        const { data: items } = await supabase
+          .from('order_items')
+          .select('order_id')
+          .ilike('item_name', `%${model}%`)
+          .limit(2000);
+        orderIds = Array.from(new Set((items ?? []).map((i: any) => i.order_id).filter(Boolean)));
+        if (orderIds.length === 0) {
+          setOrders([]);
+          setLoading(false);
+          return;
+        }
+      }
+      let q = supabase
+        .from('orders')
+        .select('id, order_number, order_status, customers(company_name, contact_name)')
+        .order('created_at', { ascending: false })
+        .limit(500);
+      if (orderIds) q = q.in('id', orderIds);
+      const { data } = await q;
+      setOrders((data ?? []) as any);
+      setLoading(false);
+    })();
+  }, [open, filterModel]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
