@@ -167,8 +167,9 @@ export default function OrdersFreiBestellung() {
       const ids = filteredOrders.map((o: any) => o.id);
       const { data: items } = await supabase
         .from('order_items')
-        .select('order_id, item_name, description, sku')
-        .in('order_id', ids);
+        .select('order_id, item_name, description, sku, quantity, unit, item_order')
+        .in('order_id', ids)
+        .order('item_order', { ascending: true });
       const map: Record<string, OrderItem[]> = {};
       for (const it of (items as OrderItem[]) ?? []) {
         (map[it.order_id] ??= []).push(it);
