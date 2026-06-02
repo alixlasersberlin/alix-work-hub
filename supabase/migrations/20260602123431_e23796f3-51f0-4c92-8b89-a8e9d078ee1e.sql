@@ -1,0 +1,1 @@
+DELETE FROM public.lager_devices WHERE serial_number = '9732647982698';
