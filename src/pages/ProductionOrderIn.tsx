@@ -6,9 +6,10 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Inbox, Search, Download, Building2, Calendar } from 'lucide-react';
+import { Loader2, Inbox, Search, Download, Building2, Calendar, UserCog } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import OrderPickerDialog from '@/components/OrderPickerDialog';
 import { cn } from '@/lib/utils';
 
 interface Row {
@@ -36,6 +37,8 @@ export default function ProductionOrderIn() {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [reassignFor, setReassignFor] = useState<Row | null>(null);
+  const canReassign = isAdmin || roles.includes('Auftragsverwaltung') || roles.includes('Order');
 
   const load = async () => {
     setLoading(true);
@@ -172,6 +175,16 @@ export default function ProductionOrderIn() {
                       >
                         <Download className="w-3.5 h-3.5 mr-1.5" /> PDF
                       </Button>
+                      {canReassign && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setReassignFor(r)}
+                          title="Auftrag/Kunde zuweisen"
+                        >
+                          <UserCog className="w-3.5 h-3.5 mr-1.5" /> Zuweisen
+                        </Button>
+                      )}
                       {isAdmin && (
                         <Link to={`/order/${r.id}`}>
                           <Button variant="ghost" size="sm">Öffnen</Button>
@@ -185,6 +198,23 @@ export default function ProductionOrderIn() {
           ))}
         </div>
       )}
+
+      <OrderPickerDialog
+        open={!!reassignFor}
+        onOpenChange={(o) => { if (!o) setReassignFor(null); }}
+        onSelect={async (o) => {
+          if (!reassignFor) return;
+          const customerName = o.customers?.company_name || o.customers?.contact_name || null;
+          const { error } = await supabase
+            .from('production_orders')
+            .update({ order_number: o.order_number, customer_name_snapshot: customerName })
+            .eq('id', reassignFor.id);
+          if (error) { toast.error(error.message); return; }
+          toast.success(`Bestellung neu zugewiesen: ${o.order_number}`);
+          setReassignFor(null);
+          load();
+        }}
+      />
     </div>
   );
 }
