@@ -134,6 +134,7 @@ interface Row {
   invoice_pdf_path: string | null;
   payment_status: string | null;
   is_reclamation: boolean;
+  customer_name_snapshot: string | null;
   supplier?: { name: string | null } | null;
 }
 
@@ -161,8 +162,8 @@ export default function FactoryInvoice() {
     let qb = supabase
       .from('production_orders')
       .select(atOnly
-        ? 'id, order_number, production_order_number, status, liefertermin, modellname, farbe, bearbeiter, supplier_id, approval_status, approved_at, invoice_pdf_path, payment_status, is_reclamation, supplier:suppliers(name), orders!inner(source_system)'
-        : 'id, order_number, production_order_number, status, liefertermin, modellname, farbe, bearbeiter, supplier_id, approval_status, approved_at, invoice_pdf_path, payment_status, is_reclamation, supplier:suppliers(name)')
+        ? 'id, order_number, production_order_number, status, liefertermin, modellname, farbe, bearbeiter, supplier_id, approval_status, approved_at, invoice_pdf_path, payment_status, is_reclamation, customer_name_snapshot, supplier:suppliers(name), orders!inner(source_system)'
+        : 'id, order_number, production_order_number, status, liefertermin, modellname, farbe, bearbeiter, supplier_id, approval_status, approved_at, invoice_pdf_path, payment_status, is_reclamation, customer_name_snapshot, supplier:suppliers(name)')
       .eq('approval_status', 'approved')
       .order('approved_at', { ascending: false });
     if (atOnly) qb = qb.eq('orders.source_system', 'zoho_eu_2');
@@ -365,6 +366,11 @@ export default function FactoryInvoice() {
                       </Badge>
                     )}
                   </div>
+                  {r.customer_name_snapshot && (
+                    <div className="text-xs font-medium text-foreground/90 mt-0.5 truncate">
+                      {r.customer_name_snapshot}
+                    </div>
+                  )}
                   <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-3 flex-wrap">
                     {r.supplier?.name && (
                       <span className="flex items-center gap-1">
