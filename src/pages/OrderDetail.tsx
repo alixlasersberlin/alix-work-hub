@@ -23,6 +23,8 @@ import { StatusBadge } from '@/components/StatusBadge';
 import InstallmentPlanDialog from '@/components/InstallmentPlanDialog';
 import SepaMandatButton from '@/components/SepaMandatButton';
 import OrderEditDialog from '@/components/OrderEditDialog';
+import OrderItemsEditDialog from '@/components/OrderItemsEditDialog';
+
 import OrderDeferDialog from '@/components/OrderDeferDialog';
 import MietkaufDialog from '@/components/MietkaufDialog';
 import { sendCustomerShippingNotice } from '@/lib/send-customer-shipping-notice';
