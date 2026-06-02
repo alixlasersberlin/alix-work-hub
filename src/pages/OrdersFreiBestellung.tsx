@@ -4,12 +4,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CheckCircle2, Search, Loader2, Inbox, Factory, Warehouse, Download, FileText, FileSpreadsheet } from 'lucide-react';
+import { CheckCircle2, Search, Loader2, Inbox, Factory, Warehouse, Download, FileText, FileSpreadsheet, Trash2 } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
 import { PageSizeSelector, usePagination, PaginationControls } from '@/components/PageSizeSelector';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
@@ -17,6 +21,9 @@ import { createPDF } from '@/lib/pdf-utils';
 import autoTable from 'jspdf-autotable';
 import { fetchPendingRestbestellungOrderIds } from '@/lib/restbestellung';
 import { useAtOnly } from '@/hooks/useAtOnly';
+import { useAuth } from '@/hooks/useAuth';
+
+const FREI_HIDDEN_NOTE = 'frei_bestellung_hidden';
 
 function formatDate(date: string | null) {
   if (!date) return '—';
@@ -67,11 +74,15 @@ export default function OrdersFreiBestellung() {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const atOnly = useAtOnly();
+  const { hasRole } = useAuth();
+  const isSuperAdmin = hasRole('Super Admin');
 
   const [reserveOrder, setReserveOrder] = useState<any | null>(null);
   const [reserveDeviceId, setReserveDeviceId] = useState<string>('');
   const [reserving, setReserving] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [unassignOrder, setUnassignOrder] = useState<any | null>(null);
+  const [unassigning, setUnassigning] = useState(false);
 
   const reload = async () => {
     setLoading(true);
@@ -105,14 +116,16 @@ export default function OrdersFreiBestellung() {
     if (err) setError(err.message);
 
     // Exclude orders that already have a production order — außer für teilgelieferte Rest-Aufträge.
-    const [{ data: existing }, { data: reservedDevs }, { data: freeDevs }] = await Promise.all([
+    const [{ data: existing }, { data: reservedDevs }, { data: freeDevs }, { data: hiddenNotes }] = await Promise.all([
       supabase.from('production_orders').select('order_id'),
       supabase.from('lager_devices').select('id, serial_number, model_name, reserved_order_id').not('reserved_order_id', 'is', null),
       supabase.from('lager_devices').select('id, serial_number, model_name, notes').is('reserved_order_id', null),
+      supabase.from('order_notes').select('order_id').eq('note_type', FREI_HIDDEN_NOTE),
     ]);
     const usedOrderIds = new Set(((existing ?? []).map((p: any) => p.order_id)));
-    const baseFiltered = (data ?? []).filter((o: any) => !usedOrderIds.has(o.id) && !pendingRestIds.has(o.id));
-    const restMapped = (restData ?? []).map((o: any) => ({ ...o, _isRestbestellung: true }));
+    const hiddenOrderIds = new Set(((hiddenNotes ?? []) as any[]).map(n => n.order_id));
+    const baseFiltered = (data ?? []).filter((o: any) => !usedOrderIds.has(o.id) && !pendingRestIds.has(o.id) && !hiddenOrderIds.has(o.id));
+    const restMapped = (restData ?? []).map((o: any) => ({ ...o, _isRestbestellung: true })).filter((o: any) => !hiddenOrderIds.has(o.id));
     const combined = [...restMapped, ...baseFiltered];
 
     // Für -AT-Aufträge zusätzlich die Bestellfreigabe aus order_at_approval prüfen
@@ -205,6 +218,36 @@ export default function OrdersFreiBestellung() {
     toast.success('Gerät aus Lagerbestand reserviert — keine Bestellung nötig');
     setReserveOrder(null);
     setReserveDeviceId('');
+    reload();
+  };
+
+  const confirmUnassign = async () => {
+    if (!unassignOrder) return;
+    setUnassigning(true);
+    // 1. Reservierungen aller Lagergeräte für diesen Auftrag aufheben
+    const { error: lagerErr } = await supabase
+      .from('lager_devices')
+      .update({ reserved_order_id: null })
+      .eq('reserved_order_id', unassignOrder.id);
+    if (lagerErr) {
+      setUnassigning(false);
+      toast.error('Lager-Reservierung konnte nicht entfernt werden: ' + lagerErr.message);
+      return;
+    }
+    // 2. Auftrag aus "Bestellung möglich" ausblenden (Marker-Notiz)
+    const { error: noteErr } = await supabase.from('order_notes').insert({
+      order_id: unassignOrder.id,
+      note_type: FREI_HIDDEN_NOTE,
+      note_text: 'Zuordnung gelöscht — aus „Bestellung möglich" entfernt.',
+      is_internal: true,
+    });
+    setUnassigning(false);
+    if (noteErr) {
+      toast.error('Eintrag konnte nicht ausgeblendet werden: ' + noteErr.message);
+      return;
+    }
+    toast.success('Zuordnung gelöscht und Auftrag aus Liste entfernt');
+    setUnassignOrder(null);
     reload();
   };
 
@@ -442,19 +485,32 @@ export default function OrdersFreiBestellung() {
                       </td>
                       <td className="px-4 py-3"><StatusBadge status={o.order_status} /></td>
                       <td className="px-4 py-3 text-right">
-                        {(reservedByOrder[o.id]?.length ?? 0) > 0 ? (
-                          <span className="inline-flex items-center gap-1 text-xs text-amber-500 font-medium">
-                            <CheckCircle2 className="w-4 h-4" /> Aus Lager reserviert
-                          </span>
-                        ) : inStock ? (
-                          <Button size="sm" variant="default" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => openReserve(o)}>
-                            <Warehouse className="w-4 h-4 mr-1" /> Aus Lager reservieren
-                          </Button>
-                        ) : (
-                          <Button size="sm" onClick={() => navigate(`/order/neu?order_id=${o.id}`)}>
-                            <Factory className="w-4 h-4 mr-1" /> Bestellung
-                          </Button>
-                        )}
+                        <div className="flex items-center justify-end gap-2">
+                          {(reservedByOrder[o.id]?.length ?? 0) > 0 ? (
+                            <span className="inline-flex items-center gap-1 text-xs text-amber-500 font-medium">
+                              <CheckCircle2 className="w-4 h-4" /> Aus Lager reserviert
+                            </span>
+                          ) : inStock ? (
+                            <Button size="sm" variant="default" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => openReserve(o)}>
+                              <Warehouse className="w-4 h-4 mr-1" /> Aus Lager reservieren
+                            </Button>
+                          ) : (
+                            <Button size="sm" onClick={() => navigate(`/order/neu?order_id=${o.id}`)}>
+                              <Factory className="w-4 h-4 mr-1" /> Bestellung
+                            </Button>
+                          )}
+                          {isSuperAdmin && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                              onClick={() => setUnassignOrder(o)}
+                              title="Lager-Reservierung entfernen und Auftrag aus dieser Liste ausblenden"
+                            >
+                              <Trash2 className="w-4 h-4 mr-1" /> Zuordnung löschen
+                            </Button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -504,6 +560,32 @@ export default function OrdersFreiBestellung() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!unassignOrder} onOpenChange={(v) => { if (!v) setUnassignOrder(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Trash2 className="w-5 h-5 text-destructive" />
+              Zuordnung löschen
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Alle Lager-Reservierungen für Auftrag <span className="font-medium text-foreground">{unassignOrder?.order_number}</span> werden entfernt
+              und der Auftrag wird aus „Bestellung möglich" ausgeblendet. Der Auftrag selbst bleibt unverändert.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={unassigning}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); confirmUnassign(); }}
+              disabled={unassigning}
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+            >
+              {unassigning ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Trash2 className="w-4 h-4 mr-1" />}
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
