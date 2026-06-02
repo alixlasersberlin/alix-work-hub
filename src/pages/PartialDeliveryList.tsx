@@ -29,7 +29,8 @@ export default function PartialDeliveryList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
-  const { isAdmin } = useAuth();
+  const { isAdmin, hasRole } = useAuth();
+  const canManageRest = isAdmin || hasRole('Order');
   const [editOrder, setEditOrder] = useState<{ id: string; order_number: string | null } | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [pendingRest, setPendingRest] = useState<Set<string>>(new Set());
@@ -130,14 +131,14 @@ export default function PartialDeliveryList() {
                 <SortHeader field="expected_shipment_date" label="Lieferdatum" />
                 <SortHeader field="total_amount" label="Betrag" />
                 <th className="text-left px-4 py-3 text-muted-foreground font-medium">Status</th>
-                {isAdmin && <th className="text-right px-4 py-3 text-muted-foreground font-medium">Aktion</th>}
+                {canManageRest && <th className="text-right px-4 py-3 text-muted-foreground font-medium">Aktion</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {loading ? (
-                <tr><td colSpan={isAdmin ? 8 : 7} className="px-4 py-12 text-center"><Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" /></td></tr>
+                <tr><td colSpan={canManageRest ? 8 : 7} className="px-4 py-12 text-center"><Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" /></td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={isAdmin ? 8 : 7} className="px-4 py-12 text-center">
+                <tr><td colSpan={canManageRest ? 8 : 7} className="px-4 py-12 text-center">
                   <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
                   <p className="text-muted-foreground">Keine Aufträge mit Status „teilgeliefert" gefunden.</p>
                 </td></tr>
@@ -153,7 +154,7 @@ export default function PartialDeliveryList() {
                       {o.total_amount != null ? `${o.total_amount.toLocaleString('de-DE', { minimumFractionDigits: 2 })} ${o.currency || '€'}` : '—'}
                     </td>
                     <td className="px-4 py-3"><StatusBadge status={o.order_status} /></td>
-                    {isAdmin && (
+                    {canManageRest && (
                       <td className="px-4 py-3 text-right" onClick={e => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-2 flex-wrap">
                           {pendingRest.has(o.id) ? (
