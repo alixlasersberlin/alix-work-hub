@@ -560,6 +560,32 @@ export default function OrdersFreiBestellung() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!unassignOrder} onOpenChange={(v) => { if (!v) setUnassignOrder(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Trash2 className="w-5 h-5 text-destructive" />
+              Zuordnung löschen
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Alle Lager-Reservierungen für Auftrag <span className="font-medium text-foreground">{unassignOrder?.order_number}</span> werden entfernt
+              und der Auftrag wird aus „Bestellung möglich" ausgeblendet. Der Auftrag selbst bleibt unverändert.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={unassigning}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); confirmUnassign(); }}
+              disabled={unassigning}
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+            >
+              {unassigning ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Trash2 className="w-4 h-4 mr-1" />}
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
