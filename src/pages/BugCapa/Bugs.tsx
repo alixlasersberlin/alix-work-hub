@@ -158,7 +158,7 @@ export default function Bugs() {
 
   return (
     <Section
-      title={`Bugs (${rows.length})`}
+      title={`Bugs (${visibleRows.length})`}
       action={
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
