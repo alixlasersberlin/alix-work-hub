@@ -131,7 +131,8 @@ export default function Lagergeraete({
   pageIcon,
   rowAccentClass,
 }: LagerDevicesPageProps = {}) {
-  const { isAdmin } = useAuth();
+  const { isAdmin, hasRole } = useAuth();
+  const canReserve = isAdmin || hasRole('Order');
   const [devices, setDevices] = useState<LagerDevice[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
@@ -806,7 +807,7 @@ export default function Lagergeraete({
                 />
               </div>
 
-              {isAdmin && (
+              {canReserve && (
                 <div className="space-y-2">
                   <Label>Auftragszuweisung</Label>
                   {reservedOrderNumber ? (
