@@ -26,6 +26,7 @@ interface Row {
   approved_at: string | null;
   created_at: string;
   is_reclamation: boolean;
+  customer_name_snapshot: string | null;
   supplier?: { name: string | null } | null;
 }
 
