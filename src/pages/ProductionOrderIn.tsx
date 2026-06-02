@@ -175,6 +175,16 @@ export default function ProductionOrderIn() {
                       >
                         <Download className="w-3.5 h-3.5 mr-1.5" /> PDF
                       </Button>
+                      {canReassign && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setReassignFor(r)}
+                          title="Auftrag/Kunde zuweisen"
+                        >
+                          <UserCog className="w-3.5 h-3.5 mr-1.5" /> Zuweisen
+                        </Button>
+                      )}
                       {isAdmin && (
                         <Link to={`/order/${r.id}`}>
                           <Button variant="ghost" size="sm">Öffnen</Button>
