@@ -572,7 +572,7 @@ export default function OrdersFreiBestellung() {
                         </tr>
                       );
                     })()}
-                  </>
+                  </FragmentRow>
                   );
                 })
               )}
