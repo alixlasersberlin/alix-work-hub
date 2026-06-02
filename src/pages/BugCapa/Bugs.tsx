@@ -13,7 +13,7 @@ import { Plus, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { Section, BUG_STATUS, BUG_PRIORITY, BUG_CRITICALITY, statusLabel } from './_shared';
 import { QmDetailDrawer } from './QmDetailDrawer';
-import { Pencil, CheckCircle2 } from 'lucide-react';
+import { Pencil, CheckCircle2, ChevronRight, ChevronDown } from 'lucide-react';
 
 type Bug = {
   id: string;
