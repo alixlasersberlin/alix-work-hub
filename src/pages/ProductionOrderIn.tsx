@@ -37,6 +37,8 @@ export default function ProductionOrderIn() {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [reassignFor, setReassignFor] = useState<Row | null>(null);
+  const canReassign = isAdmin || roles.includes('Auftragsverwaltung') || roles.includes('Order');
 
   const load = async () => {
     setLoading(true);
