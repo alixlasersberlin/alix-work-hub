@@ -485,19 +485,32 @@ export default function OrdersFreiBestellung() {
                       </td>
                       <td className="px-4 py-3"><StatusBadge status={o.order_status} /></td>
                       <td className="px-4 py-3 text-right">
-                        {(reservedByOrder[o.id]?.length ?? 0) > 0 ? (
-                          <span className="inline-flex items-center gap-1 text-xs text-amber-500 font-medium">
-                            <CheckCircle2 className="w-4 h-4" /> Aus Lager reserviert
-                          </span>
-                        ) : inStock ? (
-                          <Button size="sm" variant="default" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => openReserve(o)}>
-                            <Warehouse className="w-4 h-4 mr-1" /> Aus Lager reservieren
-                          </Button>
-                        ) : (
-                          <Button size="sm" onClick={() => navigate(`/order/neu?order_id=${o.id}`)}>
-                            <Factory className="w-4 h-4 mr-1" /> Bestellung
-                          </Button>
-                        )}
+                        <div className="flex items-center justify-end gap-2">
+                          {(reservedByOrder[o.id]?.length ?? 0) > 0 ? (
+                            <span className="inline-flex items-center gap-1 text-xs text-amber-500 font-medium">
+                              <CheckCircle2 className="w-4 h-4" /> Aus Lager reserviert
+                            </span>
+                          ) : inStock ? (
+                            <Button size="sm" variant="default" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => openReserve(o)}>
+                              <Warehouse className="w-4 h-4 mr-1" /> Aus Lager reservieren
+                            </Button>
+                          ) : (
+                            <Button size="sm" onClick={() => navigate(`/order/neu?order_id=${o.id}`)}>
+                              <Factory className="w-4 h-4 mr-1" /> Bestellung
+                            </Button>
+                          )}
+                          {isSuperAdmin && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                              onClick={() => setUnassignOrder(o)}
+                              title="Lager-Reservierung entfernen und Auftrag aus dieser Liste ausblenden"
+                            >
+                              <Trash2 className="w-4 h-4 mr-1" /> Zuordnung löschen
+                            </Button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
