@@ -162,8 +162,8 @@ export default function FactoryInvoice() {
     let qb = supabase
       .from('production_orders')
       .select(atOnly
-        ? 'id, order_number, production_order_number, status, liefertermin, modellname, farbe, bearbeiter, supplier_id, approval_status, approved_at, invoice_pdf_path, payment_status, is_reclamation, supplier:suppliers(name), orders!inner(source_system)'
-        : 'id, order_number, production_order_number, status, liefertermin, modellname, farbe, bearbeiter, supplier_id, approval_status, approved_at, invoice_pdf_path, payment_status, is_reclamation, supplier:suppliers(name)')
+        ? 'id, order_number, production_order_number, status, liefertermin, modellname, farbe, bearbeiter, supplier_id, approval_status, approved_at, invoice_pdf_path, payment_status, is_reclamation, customer_name_snapshot, supplier:suppliers(name), orders!inner(source_system)'
+        : 'id, order_number, production_order_number, status, liefertermin, modellname, farbe, bearbeiter, supplier_id, approval_status, approved_at, invoice_pdf_path, payment_status, is_reclamation, customer_name_snapshot, supplier:suppliers(name)')
       .eq('approval_status', 'approved')
       .order('approved_at', { ascending: false });
     if (atOnly) qb = qb.eq('orders.source_system', 'zoho_eu_2');
