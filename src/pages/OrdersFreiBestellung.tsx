@@ -420,9 +420,18 @@ export default function OrdersFreiBestellung() {
                           aria-label="Auswählen"
                         />
                       </td>
-                      <td className="px-4 py-3 font-medium text-foreground cursor-pointer" onClick={() => navigate(`/auftraege/${o.id}`)}>
+                      <td className="px-4 py-3 font-medium text-foreground">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span>{o.order_number}</span>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); toggleExpand(o.id); }}
+                            className="p-1 -ml-1 rounded hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors"
+                            aria-label={expanded.has(o.id) ? 'Positionen ausblenden' : 'Positionen anzeigen'}
+                            title={expanded.has(o.id) ? 'Positionen ausblenden' : 'Positionen anzeigen'}
+                          >
+                            {expanded.has(o.id) ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                          </button>
+                          <span className="cursor-pointer hover:underline" onClick={() => navigate(`/auftraege/${o.id}`)}>{o.order_number}</span>
                           {o._isRestbestellung && (
                             <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-500 text-[10px] font-semibold uppercase tracking-wider">
                               Restbestellung
@@ -520,8 +529,50 @@ export default function OrdersFreiBestellung() {
                         </div>
                       </td>
                     </tr>
-                  );
-                })
+                    {expanded.has(o.id) && (() => {
+                      const items = itemsByOrder[o.id] || [];
+                      return (
+                        <tr key={o.id + '_pos'} className="bg-secondary/20">
+                          <td colSpan={10} className="px-4 py-4">
+                            <div className="ml-8 border-l-2 border-primary/40 pl-4">
+                              <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                                Positionen ({items.length})
+                              </div>
+                              {items.length === 0 ? (
+                                <div className="text-sm text-muted-foreground">Keine Positionen vorhanden.</div>
+                              ) : (
+                                <table className="w-full text-xs">
+                                  <thead>
+                                    <tr className="text-left text-muted-foreground border-b border-border/60">
+                                      <th className="py-1.5 pr-3 font-medium">#</th>
+                                      <th className="py-1.5 pr-3 font-medium">Artikel</th>
+                                      <th className="py-1.5 pr-3 font-medium">SKU</th>
+                                      <th className="py-1.5 pr-3 font-medium">Beschreibung</th>
+                                      <th className="py-1.5 pr-3 font-medium text-right">Menge</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y divide-border/40">
+                                    {items.map((it, idx) => (
+                                      <tr key={idx}>
+                                        <td className="py-1.5 pr-3 text-muted-foreground">{idx + 1}</td>
+                                        <td className="py-1.5 pr-3 text-foreground font-medium">{it.item_name || '—'}</td>
+                                        <td className="py-1.5 pr-3 text-muted-foreground font-mono">{it.sku || '—'}</td>
+                                        <td className="py-1.5 pr-3 text-muted-foreground">{it.description || '—'}</td>
+                                        <td className="py-1.5 pr-3 text-foreground text-right">
+                                          {it.quantity != null ? `${Number(it.quantity).toLocaleString('de-DE')}${it.unit ? ' ' + it.unit : ''}` : '—'}
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })()}
+                  </>
+                );
               )}
             </tbody>
           </table>
