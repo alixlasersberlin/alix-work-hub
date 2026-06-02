@@ -412,6 +412,7 @@ export default function OrdersFreiBestellung() {
                   const inStock = matches.length > 0;
                   const isSel = selected.has(o.id);
                   return (
+                    <>
                     <tr key={o.id} className={`hover:bg-secondary/30 transition-colors ${isSel ? 'bg-primary/5' : ''}`}>
                       <td className="px-3 py-3 w-8" onClick={(e) => e.stopPropagation()}>
                         <Checkbox
