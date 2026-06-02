@@ -116,14 +116,16 @@ export default function OrdersFreiBestellung() {
     if (err) setError(err.message);
 
     // Exclude orders that already have a production order — außer für teilgelieferte Rest-Aufträge.
-    const [{ data: existing }, { data: reservedDevs }, { data: freeDevs }] = await Promise.all([
+    const [{ data: existing }, { data: reservedDevs }, { data: freeDevs }, { data: hiddenNotes }] = await Promise.all([
       supabase.from('production_orders').select('order_id'),
       supabase.from('lager_devices').select('id, serial_number, model_name, reserved_order_id').not('reserved_order_id', 'is', null),
       supabase.from('lager_devices').select('id, serial_number, model_name, notes').is('reserved_order_id', null),
+      supabase.from('order_notes').select('order_id').eq('note_type', FREI_HIDDEN_NOTE),
     ]);
     const usedOrderIds = new Set(((existing ?? []).map((p: any) => p.order_id)));
-    const baseFiltered = (data ?? []).filter((o: any) => !usedOrderIds.has(o.id) && !pendingRestIds.has(o.id));
-    const restMapped = (restData ?? []).map((o: any) => ({ ...o, _isRestbestellung: true }));
+    const hiddenOrderIds = new Set(((hiddenNotes ?? []) as any[]).map(n => n.order_id));
+    const baseFiltered = (data ?? []).filter((o: any) => !usedOrderIds.has(o.id) && !pendingRestIds.has(o.id) && !hiddenOrderIds.has(o.id));
+    const restMapped = (restData ?? []).map((o: any) => ({ ...o, _isRestbestellung: true })).filter((o: any) => !hiddenOrderIds.has(o.id));
     const combined = [...restMapped, ...baseFiltered];
 
     // Für -AT-Aufträge zusätzlich die Bestellfreigabe aus order_at_approval prüfen
