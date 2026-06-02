@@ -74,7 +74,9 @@ export default function OrderPickerDialog({ open, onOpenChange, onSelect, filter
           <DialogTitle>Auftrag auswählen</DialogTitle>
           <DialogDescription>
             {filterModel
-              ? `Nur Aufträge mit Modell „${filterModel}".`
+              ? fallback
+                ? `Keine Aufträge mit Modell „${filterModel}" gefunden – alle Aufträge werden angezeigt.`
+                : `Nur Aufträge mit Modell „${filterModel}".`
               : 'Suche und wähle einen Auftrag aus dem Verkauf.'}
           </DialogDescription>
         </DialogHeader>
