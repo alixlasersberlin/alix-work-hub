@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,7 @@ import { Plus, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { Section, BUG_STATUS, BUG_PRIORITY, BUG_CRITICALITY, statusLabel } from './_shared';
 import { QmDetailDrawer } from './QmDetailDrawer';
-import { Pencil, CheckCircle2 } from 'lucide-react';
+import { Pencil, CheckCircle2, ChevronRight, ChevronDown } from 'lucide-react';
 
 type Bug = {
   id: string;
@@ -38,6 +38,7 @@ export default function Bugs() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Bug | null>(null);
   const [detail, setDetail] = useState<Bug | null>(null);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [form, setForm] = useState({
     title: '', description: '', product: '', module: '', software_version: '',
     priority: 'normal', criticality: 'mittel', due_date: '',
@@ -214,18 +215,23 @@ export default function Bugs() {
             ) : rows.length === 0 ? (
               <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground">Noch keine Bugs erfasst.</TableCell></TableRow>
             ) : rows.map(r => (
-              <TableRow key={r.id}>
-                <TableCell className="font-mono text-xs">{r.ticket_number}</TableCell>
-                <TableCell className="font-medium align-top">
-                  <div className="space-y-1 max-w-xl">
-                    <div>{r.title}</div>
-                    {r.description && (
-                      <div className="text-xs text-muted-foreground whitespace-pre-wrap break-words font-normal">
-                        {r.description}
-                      </div>
-                    )}
+              <Fragment key={r.id}>
+              <TableRow>
+                <TableCell className="font-mono text-xs">
+                  <div className="flex items-center gap-1">
+                    {r.description ? (
+                      <button
+                        onClick={() => setExpanded(p => ({ ...p, [r.id]: !p[r.id] }))}
+                        className="text-muted-foreground hover:text-foreground"
+                        title={expanded[r.id] ? 'Beschreibung einklappen' : 'Beschreibung ausklappen'}
+                      >
+                        {expanded[r.id] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                      </button>
+                    ) : <span className="w-4 inline-block" />}
+                    <span>{r.ticket_number}</span>
                   </div>
                 </TableCell>
+                <TableCell className="font-medium">{r.title}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">{[r.product, r.module].filter(Boolean).join(' / ') || '—'}</TableCell>
                 <TableCell><StatusBadge status={r.priority} /></TableCell>
                 <TableCell><StatusBadge status={r.criticality} /></TableCell>
@@ -255,6 +261,15 @@ export default function Bugs() {
                   </div>
                 </TableCell>
               </TableRow>
+              {r.description && expanded[r.id] && (
+                <TableRow key={r.id + '-desc'} className="bg-muted/30 hover:bg-muted/30">
+                  <TableCell></TableCell>
+                  <TableCell colSpan={7} className="text-sm text-muted-foreground whitespace-pre-wrap break-words py-3">
+                    {r.description}
+                  </TableCell>
+                </TableRow>
+              )}
+              </Fragment>
             ))}
           </TableBody>
         </Table>
