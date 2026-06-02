@@ -106,7 +106,7 @@ export default function OrderPickerDialog({ open, onOpenChange, onSelect, filter
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             autoFocus
-            placeholder="Auftragsnummer oder Kunde…"
+            placeholder="Auftragsnummer, Kunde oder Modell…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-10"
