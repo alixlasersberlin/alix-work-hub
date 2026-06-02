@@ -29,7 +29,8 @@ export default function PartialDeliveryList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
-  const { isAdmin } = useAuth();
+  const { isAdmin, hasRole } = useAuth();
+  const canManageRest = isAdmin || hasRole('Order');
   const [editOrder, setEditOrder] = useState<{ id: string; order_number: string | null } | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [pendingRest, setPendingRest] = useState<Set<string>>(new Set());
