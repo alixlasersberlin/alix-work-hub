@@ -231,9 +231,9 @@ export default function Bugs() {
           <TableBody>
             {loading ? (
               <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground">Lade …</TableCell></TableRow>
-            ) : rows.length === 0 ? (
-              <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground">Noch keine Bugs erfasst.</TableCell></TableRow>
-            ) : rows.map(r => (
+            ) : visibleRows.length === 0 ? (
+              <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground">{view === 'closed' ? 'Keine geschlossenen Bugs.' : 'Keine offenen Bugs.'}</TableCell></TableRow>
+            ) : visibleRows.map(r => (
               <Fragment key={r.id}>
               <TableRow>
                 <TableCell className="font-mono text-xs">
