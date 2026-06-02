@@ -39,6 +39,11 @@ export default function Bugs() {
   const [editing, setEditing] = useState<Bug | null>(null);
   const [detail, setDetail] = useState<Bug | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [view, setView] = useState<'active' | 'closed'>('active');
+  const CLOSED_STATUSES = ['geschlossen', 'erledigt'];
+  const visibleRows = rows.filter(r =>
+    view === 'closed' ? CLOSED_STATUSES.includes(r.status) : !CLOSED_STATUSES.includes(r.status)
+  );
   const [form, setForm] = useState({
     title: '', description: '', product: '', module: '', software_version: '',
     priority: 'normal', criticality: 'mittel', due_date: '',
@@ -153,7 +158,7 @@ export default function Bugs() {
 
   return (
     <Section
-      title={`Bugs (${rows.length})`}
+      title={`Bugs (${visibleRows.length})`}
       action={
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
@@ -195,6 +200,20 @@ export default function Bugs() {
         </Dialog>
       }
     >
+      <div className="mb-3 inline-flex rounded-md border border-border p-1 bg-muted/30">
+        <button
+          onClick={() => setView('active')}
+          className={`px-3 py-1.5 text-sm rounded ${view === 'active' ? 'bg-background shadow-sm font-medium' : 'text-muted-foreground hover:text-foreground'}`}
+        >
+          Offene ({rows.filter(r => !CLOSED_STATUSES.includes(r.status)).length})
+        </button>
+        <button
+          onClick={() => setView('closed')}
+          className={`px-3 py-1.5 text-sm rounded ${view === 'closed' ? 'bg-background shadow-sm font-medium' : 'text-muted-foreground hover:text-foreground'}`}
+        >
+          Geschlossene ({rows.filter(r => CLOSED_STATUSES.includes(r.status)).length})
+        </button>
+      </div>
       <div className="rounded-md border border-border">
         <Table>
           <TableHeader>
@@ -212,9 +231,9 @@ export default function Bugs() {
           <TableBody>
             {loading ? (
               <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground">Lade …</TableCell></TableRow>
-            ) : rows.length === 0 ? (
-              <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground">Noch keine Bugs erfasst.</TableCell></TableRow>
-            ) : rows.map(r => (
+            ) : visibleRows.length === 0 ? (
+              <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground">{view === 'closed' ? 'Keine geschlossenen Bugs.' : 'Keine offenen Bugs.'}</TableCell></TableRow>
+            ) : visibleRows.map(r => (
               <Fragment key={r.id}>
               <TableRow>
                 <TableCell className="font-mono text-xs">
