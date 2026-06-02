@@ -243,12 +243,35 @@ export default function Lagergeraete({
 
   const filteredDevices = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
-    if (!q) return typeFilteredDevices;
-    return typeFilteredDevices.filter((d) => {
+    const isWarehouse = (filterStatuses ?? []).includes('Shell Warehouse');
+    let base = typeFilteredDevices;
+    if (isWarehouse && datePeriod !== 'all') {
+      const now = new Date();
+      let from: Date;
+      let to: Date;
+      if (datePeriod === 'this_month') {
+        from = new Date(now.getFullYear(), now.getMonth(), 1);
+        to = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+      } else if (datePeriod === 'last_month') {
+        from = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        to = new Date(now.getFullYear(), now.getMonth(), 1);
+      } else {
+        from = new Date(now.getFullYear(), 0, 1);
+        to = new Date(now.getFullYear() + 1, 0, 1);
+      }
+      base = base.filter((d) => {
+        if (!d.entry_date) return false;
+        const dt = new Date(d.entry_date);
+        return dt >= from && dt < to;
+      });
+    }
+    if (!q) return base;
+    return base.filter((d) => {
       const hay = `${d.serial_number ?? ''} ${d.model_name ?? ''} ${d.notes ?? ''} ${d.orders?.order_number ?? ''} ${d.reservation_week ?? ''}`.toLowerCase();
       return hay.includes(q);
     });
-  }, [typeFilteredDevices, searchQuery]);
+  }, [typeFilteredDevices, searchQuery, datePeriod, filterStatuses]);
+
 
   const sortedDevices = useMemo(() => {
     const arr = [...filteredDevices];
