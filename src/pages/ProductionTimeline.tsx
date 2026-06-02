@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
-import { Calendar, Loader2, Factory, AlertTriangle, FileText, Search, Download, FileSpreadsheet } from 'lucide-react';
+import { Calendar, Loader2, Factory, AlertTriangle, FileText, Search, Download, FileSpreadsheet, UserCog } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,8 @@ import { cn } from '@/lib/utils';
 import { createPDF } from '@/lib/pdf-utils';
 import autoTable from 'jspdf-autotable';
 import { useAtOnly } from '@/hooks/useAtOnly';
+import { useAuth } from '@/hooks/useAuth';
+import OrderPickerDialog from '@/components/OrderPickerDialog';
 
 type Row = {
   id: string;
@@ -39,6 +41,10 @@ export default function ProductionTimeline() {
   const [pageSize, setPageSize] = useState<'10' | '20' | '30' | 'all'>('20');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const atOnly = useAtOnly();
+  const { roles } = useAuth();
+  const isAdmin = roles.includes('Admin') || roles.includes('Super Admin');
+  const canReassign = isAdmin || roles.includes('Order');
+  const [reassignFor, setReassignFor] = useState<Row | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -350,6 +356,16 @@ export default function ProductionTimeline() {
                             {ds.label}
                           </span>
                         </div>
+                        {canReassign && !r.is_reclamation && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setReassignFor(r)}
+                            title="Auftrag neu zuweisen"
+                          >
+                            <UserCog className="w-4 h-4 mr-1" /> Zuweisen
+                          </Button>
+                        )}
                         <Button asChild size="sm" variant="ghost">
                           <Link to={`${basePath}/${r.id}`}><FileText className="w-4 h-4" /></Link>
                         </Button>
@@ -362,6 +378,24 @@ export default function ProductionTimeline() {
           </>
         )}
       </Card>
+
+      <OrderPickerDialog
+        open={!!reassignFor}
+        filterModel={reassignFor?.modellname || null}
+        onOpenChange={(o) => { if (!o) setReassignFor(null); }}
+        onSelect={async (o) => {
+          if (!reassignFor) return;
+          const customerName = o.customers?.company_name || o.customers?.contact_name || null;
+          const { error } = await supabase
+            .from('production_orders')
+            .update({ order_number: o.order_number, customer_name_snapshot: customerName })
+            .eq('id', reassignFor.id);
+          if (error) { toast.error(error.message); return; }
+          toast.success(`Bestellung neu zugewiesen: ${o.order_number}`);
+          setReassignFor(null);
+          load();
+        }}
+      />
     </div>
   );
 }
