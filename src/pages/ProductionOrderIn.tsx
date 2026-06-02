@@ -201,6 +201,7 @@ export default function ProductionOrderIn() {
 
       <OrderPickerDialog
         open={!!reassignFor}
+        filterModel={reassignFor?.modellname || null}
         onOpenChange={(o) => { if (!o) setReassignFor(null); }}
         onSelect={async (o) => {
           if (!reassignFor) return;
