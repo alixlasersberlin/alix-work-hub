@@ -477,6 +477,11 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
                       <div className="font-mono font-semibold text-sm text-foreground truncate">
                         {r.display_order_number}
                       </div>
+                      {r.customer_name_snapshot && (
+                        <div className="text-xs font-medium text-foreground/90 truncate mt-0.5">
+                          {r.customer_name_snapshot}
+                        </div>
+                      )}
                     </div>
                     <div className="flex flex-col gap-1 items-end">
                       <span className={cn('px-2 py-0.5 rounded text-[10px] font-medium', statusClasses(r.status))}>{r.status}</span>
@@ -571,6 +576,9 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
                         <td className="p-3">
                           <div className="font-mono font-semibold text-foreground">{r.display_order_number}</div>
                           <div className="text-[10px] text-muted-foreground font-mono">{r.order_number}</div>
+                          {r.customer_name_snapshot && (
+                            <div className="text-xs font-medium text-foreground/90 mt-0.5">{r.customer_name_snapshot}</div>
+                          )}
                         </td>
                         <td className="p-3 font-mono uppercase text-xs">{r.sonderwuensche || '—'}</td>
                         <td className="p-3">{r.supplier?.name || '—'}</td>
