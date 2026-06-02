@@ -215,7 +215,7 @@ export default function Bugs() {
             ) : rows.length === 0 ? (
               <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground">Noch keine Bugs erfasst.</TableCell></TableRow>
             ) : rows.map(r => (
-              <FragmentWithKey key={r.id}>
+              <Fragment key={r.id}>
               <TableRow>
                 <TableCell className="font-mono text-xs">
                   <div className="flex items-center gap-1">
