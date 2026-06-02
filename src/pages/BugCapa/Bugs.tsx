@@ -19,6 +19,7 @@ type Bug = {
   id: string;
   ticket_number: string;
   title: string;
+  description: string | null;
   product: string | null;
   module: string | null;
   software_version: string | null;
