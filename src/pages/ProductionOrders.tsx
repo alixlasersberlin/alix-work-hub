@@ -164,12 +164,28 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
     if (loading || rows.length === 0) return;
     let cancelled = false;
     (async () => {
+      const orderIds = Array.from(new Set(rows.map(r => r.order_id).filter(Boolean)));
       const { data: devData } = await supabase
         .from('lager_devices')
         .select('id, serial_number, model_name, notes, reserved_order_id')
         .is('reserved_order_id', null);
+      // Bereits reservierte Geräte für diese Aufträge laden, damit wir pro Position
+      // (modellname + farbe) nur EIN Gerät reservieren.
+      const { data: reservedData } = orderIds.length > 0
+        ? await supabase
+            .from('lager_devices')
+            .select('id, serial_number, model_name, notes, reserved_order_id')
+            .in('reserved_order_id', orderIds)
+        : { data: [] as any[] };
       if (cancelled) return;
       const devices = (devData as LagerDeviceRow[]) ?? [];
+      const reservedByOrder = new Map<string, LagerDeviceRow[]>();
+      for (const d of (reservedData ?? []) as LagerDeviceRow[]) {
+        if (!d.reserved_order_id) continue;
+        const arr = reservedByOrder.get(d.reserved_order_id) ?? [];
+        arr.push(d);
+        reservedByOrder.set(d.reserved_order_id, arr);
+      }
       const used = new Set<string>();
       const result: Record<string, LagerMatch | 'none'> = {};
 
@@ -180,6 +196,17 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
           if ((r.anmerkungen || '').includes('Im Lager gefunden')) {
             // we don't have device here, skip badge (will display generic)
           }
+          continue;
+        }
+        // Pro Position: prüfen ob für diesen Auftrag bereits ein passendes Gerät
+        // (gleiches Modell + gleiche Farbe) reserviert ist — dann NICHT erneut reservieren.
+        const alreadyReserved = reservedByOrder.get(r.order_id) ?? [];
+        const positionPool = alreadyReserved
+          .filter(d => !used.has(d.id))
+          .map(d => ({ ...d, reserved_order_id: null as string | null }));
+        const positionHit = findLagerMatch(r.modellname, r.farbe, positionPool);
+        if (positionHit) {
+          used.add(positionHit.device.id);
           continue;
         }
         const pool = devices.filter(d => !used.has(d.id));
@@ -194,6 +221,11 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
             .is('reserved_order_id', null)
             .select('id');
           if (claimErr || !claimed || claimed.length === 0) continue;
+          // In den lokalen Cache aufnehmen, damit nachfolgende gleiche Positionen
+          // dieses Geräts nicht erneut reservieren.
+          const arr = reservedByOrder.get(r.order_id) ?? [];
+          arr.push({ ...match.device, reserved_order_id: r.order_id });
+          reservedByOrder.set(r.order_id, arr);
           const note = lagerFoundNote(match.department, match.device.serial_number);
           const base = stripLagerMarkers(r.anmerkungen);
           const newAnm = base ? `${base}\n${note}` : note;
@@ -206,6 +238,7 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
           result[r.id] = 'none';
         }
       }
+
       if (cancelled) return;
       // also derive badge state for rows that were previously checked
       for (const r of rows) {
