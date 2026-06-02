@@ -4,12 +4,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CheckCircle2, Search, Loader2, Inbox, Factory, Warehouse, Download, FileText, FileSpreadsheet } from 'lucide-react';
+import { CheckCircle2, Search, Loader2, Inbox, Factory, Warehouse, Download, FileText, FileSpreadsheet, Trash2 } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
 import { PageSizeSelector, usePagination, PaginationControls } from '@/components/PageSizeSelector';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
@@ -17,6 +21,9 @@ import { createPDF } from '@/lib/pdf-utils';
 import autoTable from 'jspdf-autotable';
 import { fetchPendingRestbestellungOrderIds } from '@/lib/restbestellung';
 import { useAtOnly } from '@/hooks/useAtOnly';
+import { useAuth } from '@/hooks/useAuth';
+
+const FREI_HIDDEN_NOTE = 'frei_bestellung_hidden';
 
 function formatDate(date: string | null) {
   if (!date) return '—';
