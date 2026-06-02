@@ -38,6 +38,7 @@ export default function Bugs() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Bug | null>(null);
   const [detail, setDetail] = useState<Bug | null>(null);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [form, setForm] = useState({
     title: '', description: '', product: '', module: '', software_version: '',
     priority: 'normal', criticality: 'mittel', due_date: '',
