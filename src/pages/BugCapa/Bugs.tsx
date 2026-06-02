@@ -216,7 +216,16 @@ export default function Bugs() {
             ) : rows.map(r => (
               <TableRow key={r.id}>
                 <TableCell className="font-mono text-xs">{r.ticket_number}</TableCell>
-                <TableCell className="font-medium">{r.title}</TableCell>
+                <TableCell className="font-medium align-top">
+                  <div className="space-y-1 max-w-xl">
+                    <div>{r.title}</div>
+                    {r.description && (
+                      <div className="text-xs text-muted-foreground whitespace-pre-wrap break-words font-normal">
+                        {r.description}
+                      </div>
+                    )}
+                  </div>
+                </TableCell>
                 <TableCell className="text-sm text-muted-foreground">{[r.product, r.module].filter(Boolean).join(' / ') || '—'}</TableCell>
                 <TableCell><StatusBadge status={r.priority} /></TableCell>
                 <TableCell><StatusBadge status={r.criticality} /></TableCell>
