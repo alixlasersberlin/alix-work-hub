@@ -310,7 +310,9 @@ export default function Orders() {
                 <ViewToggle value={viewMode} onChange={setViewMode} />
               </div>
             )}
+            </div>
           </div>
+
 
           {error && <div className="p-4 rounded-lg bg-destructive/10 text-destructive text-sm">{error}</div>}
 
