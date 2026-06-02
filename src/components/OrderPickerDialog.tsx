@@ -23,9 +23,12 @@ export default function OrderPickerDialog({ open, onOpenChange, onSelect, filter
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
 
+  const [fallback, setFallback] = useState(false);
+
   useEffect(() => {
     if (!open) return;
     setLoading(true);
+    setFallback(false);
     (async () => {
       let orderIds: string[] | null = null;
       const model = filterModel?.trim();
@@ -37,9 +40,8 @@ export default function OrderPickerDialog({ open, onOpenChange, onSelect, filter
           .limit(2000);
         orderIds = Array.from(new Set((items ?? []).map((i: any) => i.order_id).filter(Boolean)));
         if (orderIds.length === 0) {
-          setOrders([]);
-          setLoading(false);
-          return;
+          orderIds = null;
+          setFallback(true);
         }
       }
       let q = supabase
@@ -72,7 +74,9 @@ export default function OrderPickerDialog({ open, onOpenChange, onSelect, filter
           <DialogTitle>Auftrag auswählen</DialogTitle>
           <DialogDescription>
             {filterModel
-              ? `Nur Aufträge mit Modell „${filterModel}".`
+              ? fallback
+                ? `Keine Aufträge mit Modell „${filterModel}" gefunden – alle Aufträge werden angezeigt.`
+                : `Nur Aufträge mit Modell „${filterModel}".`
               : 'Suche und wähle einen Auftrag aus dem Verkauf.'}
           </DialogDescription>
         </DialogHeader>
