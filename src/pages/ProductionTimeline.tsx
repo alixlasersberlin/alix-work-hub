@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
-import { Calendar, Loader2, Factory, AlertTriangle, FileText, Search, Download, FileSpreadsheet } from 'lucide-react';
+import { Calendar, Loader2, Factory, AlertTriangle, FileText, Search, Download, FileSpreadsheet, UserCog } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,8 @@ import { cn } from '@/lib/utils';
 import { createPDF } from '@/lib/pdf-utils';
 import autoTable from 'jspdf-autotable';
 import { useAtOnly } from '@/hooks/useAtOnly';
+import { useAuth } from '@/hooks/useAuth';
+import OrderPickerDialog from '@/components/OrderPickerDialog';
 
 type Row = {
   id: string;
