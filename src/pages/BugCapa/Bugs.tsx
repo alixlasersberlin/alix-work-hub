@@ -120,7 +120,7 @@ export default function Bugs() {
   function startEdit(r: Bug) {
     setForm({
       title: r.title,
-      description: '',
+      description: r.description ?? '',
       product: r.product ?? '',
       module: r.module ?? '',
       software_version: r.software_version ?? '',
