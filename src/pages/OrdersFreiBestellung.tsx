@@ -221,6 +221,36 @@ export default function OrdersFreiBestellung() {
     reload();
   };
 
+  const confirmUnassign = async () => {
+    if (!unassignOrder) return;
+    setUnassigning(true);
+    // 1. Reservierungen aller Lagergeräte für diesen Auftrag aufheben
+    const { error: lagerErr } = await supabase
+      .from('lager_devices')
+      .update({ reserved_order_id: null })
+      .eq('reserved_order_id', unassignOrder.id);
+    if (lagerErr) {
+      setUnassigning(false);
+      toast.error('Lager-Reservierung konnte nicht entfernt werden: ' + lagerErr.message);
+      return;
+    }
+    // 2. Auftrag aus "Bestellung möglich" ausblenden (Marker-Notiz)
+    const { error: noteErr } = await supabase.from('order_notes').insert({
+      order_id: unassignOrder.id,
+      note_type: FREI_HIDDEN_NOTE,
+      note_text: 'Zuordnung gelöscht — aus „Bestellung möglich" entfernt.',
+      is_internal: true,
+    });
+    setUnassigning(false);
+    if (noteErr) {
+      toast.error('Eintrag konnte nicht ausgeblendet werden: ' + noteErr.message);
+      return;
+    }
+    toast.success('Zuordnung gelöscht und Auftrag aus Liste entfernt');
+    setUnassignOrder(null);
+    reload();
+  };
+
   const allVisibleSelected = paged.length > 0 && paged.every((o: any) => selected.has(o.id));
   const toggleAll = () => {
     setSelected(prev => {
