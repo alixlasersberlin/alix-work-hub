@@ -511,9 +511,17 @@ export default function OrderDetail() {
       {/* Items Tab */}
       {activeTab === 'items' && (
         <div className="rounded-xl border border-border bg-card p-6 card-glow">
-          <h2 className="text-base font-display font-bold text-foreground flex items-center gap-2 mb-4">
-            <Package className="w-4 h-4 text-primary" /> Artikelpositionen
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-display font-bold text-foreground flex items-center gap-2">
+              <Package className="w-4 h-4 text-primary" /> Artikelpositionen
+            </h2>
+            {hasRole('Super Admin') && (
+              <Button size="sm" variant="outline" onClick={() => setItemsEditOpen(true)} className="gap-1.5">
+                <Pencil className="w-3.5 h-3.5" /> Positionen bearbeiten
+              </Button>
+            )}
+          </div>
+
           {items.length === 0 ? (
             <div className="text-center py-8">
               <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
