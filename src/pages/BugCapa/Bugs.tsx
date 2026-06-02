@@ -269,7 +269,7 @@ export default function Bugs() {
                   </TableCell>
                 </TableRow>
               )}
-              </>
+              </Fragment>
             ))}
           </TableBody>
         </Table>
