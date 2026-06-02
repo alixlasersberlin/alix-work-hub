@@ -42,7 +42,7 @@ type FreeDevice = {
   notes: string | null;
 };
 
-type OrderItem = { order_id: string; item_name: string | null; description: string | null; sku: string | null };
+type OrderItem = { order_id: string; item_name: string | null; description: string | null; sku: string | null; quantity: number | null; unit: string | null };
 
 function normalize(s: string | null | undefined) {
   return (s || '').toLowerCase().replace(/\s+/g, ' ').trim();
