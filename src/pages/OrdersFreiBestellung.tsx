@@ -1,10 +1,10 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CheckCircle2, Search, Loader2, Inbox, Factory, Warehouse, Download, FileText, FileSpreadsheet, Trash2 } from 'lucide-react';
+import { CheckCircle2, Search, Loader2, Inbox, Factory, Warehouse, Download, FileText, FileSpreadsheet, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
 import { PageSizeSelector, usePagination, PaginationControls } from '@/components/PageSizeSelector';
 import {
@@ -42,7 +42,7 @@ type FreeDevice = {
   notes: string | null;
 };
 
-type OrderItem = { order_id: string; item_name: string | null; description: string | null; sku: string | null };
+type OrderItem = { order_id: string; item_name: string | null; description: string | null; sku: string | null; quantity: number | null; unit: string | null };
 
 function normalize(s: string | null | undefined) {
   return (s || '').toLowerCase().replace(/\s+/g, ' ').trim();
@@ -83,6 +83,12 @@ export default function OrdersFreiBestellung() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [unassignOrder, setUnassignOrder] = useState<any | null>(null);
   const [unassigning, setUnassigning] = useState(false);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const toggleExpand = (id: string) => setExpanded(prev => {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
 
   const reload = async () => {
     setLoading(true);
@@ -161,8 +167,9 @@ export default function OrdersFreiBestellung() {
       const ids = filteredOrders.map((o: any) => o.id);
       const { data: items } = await supabase
         .from('order_items')
-        .select('order_id, item_name, description, sku')
-        .in('order_id', ids);
+        .select('order_id, item_name, description, sku, quantity, unit, item_order')
+        .in('order_id', ids)
+        .order('item_order', { ascending: true });
       const map: Record<string, OrderItem[]> = {};
       for (const it of (items as OrderItem[]) ?? []) {
         (map[it.order_id] ??= []).push(it);
@@ -405,7 +412,8 @@ export default function OrdersFreiBestellung() {
                   const inStock = matches.length > 0;
                   const isSel = selected.has(o.id);
                   return (
-                    <tr key={o.id} className={`hover:bg-secondary/30 transition-colors ${isSel ? 'bg-primary/5' : ''}`}>
+                    <Fragment key={o.id}>
+                    <tr className={`hover:bg-secondary/30 transition-colors ${isSel ? 'bg-primary/5' : ''}`}>
                       <td className="px-3 py-3 w-8" onClick={(e) => e.stopPropagation()}>
                         <Checkbox
                           checked={isSel}
@@ -413,9 +421,18 @@ export default function OrdersFreiBestellung() {
                           aria-label="Auswählen"
                         />
                       </td>
-                      <td className="px-4 py-3 font-medium text-foreground cursor-pointer" onClick={() => navigate(`/auftraege/${o.id}`)}>
+                      <td className="px-4 py-3 font-medium text-foreground">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span>{o.order_number}</span>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); toggleExpand(o.id); }}
+                            className="p-1 -ml-1 rounded hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors"
+                            aria-label={expanded.has(o.id) ? 'Positionen ausblenden' : 'Positionen anzeigen'}
+                            title={expanded.has(o.id) ? 'Positionen ausblenden' : 'Positionen anzeigen'}
+                          >
+                            {expanded.has(o.id) ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                          </button>
+                          <span className="cursor-pointer hover:underline" onClick={() => navigate(`/auftraege/${o.id}`)}>{o.order_number}</span>
                           {o._isRestbestellung && (
                             <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-500 text-[10px] font-semibold uppercase tracking-wider">
                               Restbestellung
@@ -513,6 +530,49 @@ export default function OrdersFreiBestellung() {
                         </div>
                       </td>
                     </tr>
+                    {expanded.has(o.id) && (() => {
+                      const items = itemsByOrder[o.id] || [];
+                      return (
+                        <tr key={o.id + '_pos'} className="bg-secondary/20">
+                          <td colSpan={10} className="px-4 py-4">
+                            <div className="ml-8 border-l-2 border-primary/40 pl-4">
+                              <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                                Positionen ({items.length})
+                              </div>
+                              {items.length === 0 ? (
+                                <div className="text-sm text-muted-foreground">Keine Positionen vorhanden.</div>
+                              ) : (
+                                <table className="w-full text-xs">
+                                  <thead>
+                                    <tr className="text-left text-muted-foreground border-b border-border/60">
+                                      <th className="py-1.5 pr-3 font-medium">#</th>
+                                      <th className="py-1.5 pr-3 font-medium">Artikel</th>
+                                      <th className="py-1.5 pr-3 font-medium">SKU</th>
+                                      <th className="py-1.5 pr-3 font-medium">Beschreibung</th>
+                                      <th className="py-1.5 pr-3 font-medium text-right">Menge</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y divide-border/40">
+                                    {items.map((it, idx) => (
+                                      <tr key={idx}>
+                                        <td className="py-1.5 pr-3 text-muted-foreground">{idx + 1}</td>
+                                        <td className="py-1.5 pr-3 text-foreground font-medium">{it.item_name || '—'}</td>
+                                        <td className="py-1.5 pr-3 text-muted-foreground font-mono">{it.sku || '—'}</td>
+                                        <td className="py-1.5 pr-3 text-muted-foreground">{it.description || '—'}</td>
+                                        <td className="py-1.5 pr-3 text-foreground text-right">
+                                          {it.quantity != null ? `${Number(it.quantity).toLocaleString('de-DE')}${it.unit ? ' ' + it.unit : ''}` : '—'}
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })()}
+                  </Fragment>
                   );
                 })
               )}
