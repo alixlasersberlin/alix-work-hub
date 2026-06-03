@@ -468,8 +468,16 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
             {paged.map(r => {
               const ps = r.payment_status || 'Nein';
               const due = dueLabel(r.liefertermin);
+              const blocked = r.related_order_status === 'Hold' || r.related_order_status === 'Anwalt'
+                ? r.related_order_status : null;
               return (
-                <Card key={r.id} className="p-3.5 hover:border-primary/40 transition-colors">
+                <Card key={r.id} className={cn("p-3.5 hover:border-primary/40 transition-colors", blocked && "border-destructive/60")}>
+                  {blocked && (
+                    <div className="mb-2 -mt-1 -mx-1 px-3 py-1.5 rounded-md bg-destructive text-destructive-foreground text-xs font-semibold uppercase tracking-wide text-center">
+                      Auftrag: {blocked}
+                    </div>
+                  )}
+
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mb-0.5">
