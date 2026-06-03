@@ -273,13 +273,13 @@ export default function RoutePlanning() {
               <tbody className="divide-y divide-border">
                 {loading ? (
                   <tr><td colSpan={9} className="px-4 py-12 text-center"><Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" /></td></tr>
-                ) : filtered.length === 0 ? (
+                ) : paged.length === 0 ? (
                   <tr><td colSpan={9} className="px-4 py-12 text-center">
                     <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
                     <p className="text-muted-foreground">Keine Touren gefunden.</p>
                   </td></tr>
                 ) : (
-                  filtered.map(p => (
+                  paged.map(p => (
                     <tr key={p.id} className="hover:bg-secondary/30 transition-colors cursor-pointer" onClick={() => navigate(`/tourenplanung/${p.id}`)}>
                       <td className="px-4 py-3 font-medium text-foreground">{p.orders?.order_number || '—'}</td>
                       <td className="px-4 py-3 text-muted-foreground">{p.orders?.customers?.company_name || p.orders?.customers?.contact_name || '—'}</td>
