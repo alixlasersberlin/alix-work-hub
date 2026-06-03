@@ -99,6 +99,8 @@ export default function RoutePlanning() {
       p.orders?.customers?.contact_name?.toLowerCase().includes(q) ||
       p.assigned_employee?.toLowerCase().includes(q);
     const ps = (p.planning_status || '').toLowerCase();
+    const os = (p.orders?.order_status || '').toLowerCase();
+    if (os.includes('hold') || os.includes('anwalt')) return false;
     const isClosed = CLOSED_STATUSES.includes(ps);
     const matchCompletion =
       completionFilter === 'alle' ||
