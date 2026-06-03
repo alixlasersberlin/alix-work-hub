@@ -118,13 +118,13 @@ export default function RoutePlanning() {
   // Group by date for calendar view
   const groupedByDate = useMemo(() => {
     const groups: Record<string, any[]> = {};
-    filtered.forEach(p => {
+    paged.forEach(p => {
       const key = p.planned_date || 'Ohne Datum';
       if (!groups[key]) groups[key] = [];
       groups[key].push(p);
     });
     return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
-  }, [filtered]);
+  }, [paged]);
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
