@@ -185,8 +185,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    return () => subscription.unsubscribe();
+    // Beim Tab-Fokus / Sichtbarkeitswechsel Profil und Rollen neu laden,
+    // damit Rollen-Änderungen ohne erneutes Login wirksam werden.
+    const onFocus = () => {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session?.user) {
+          fetchProfile(session.user.id);
+          fetchRoles(session.user.id);
+        }
+      });
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') onFocus();
+    };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibility);
+
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
   }, []);
+
 
   const signIn = async (email: string, password: string) => {
     clearMfaTabMarker();
