@@ -176,7 +176,7 @@ export default function AuroraPrioTicker() {
       }
     }
     load();
-    const iv = setInterval(load, 5 * 60 * 1000);
+    const iv = setInterval(load, 60 * 60 * 1000);
 
     // Realtime: aktualisiere sofort bei Status-/Lieferänderungen
     const channel = supabase
