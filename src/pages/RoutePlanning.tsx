@@ -175,6 +175,24 @@ export default function RoutePlanning() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input placeholder="Suche nach Auftrag, Kunde, Mitarbeiter..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10 bg-secondary border-border" />
         </div>
+        <div className="flex rounded-lg border border-border overflow-hidden">
+          {(['offen', 'erledigt', 'alle'] as const).map(opt => (
+            <button
+              key={opt}
+              type="button"
+              onClick={() => setCompletionFilter(opt)}
+              className={cn(
+                "px-3 py-2 text-sm capitalize transition-colors",
+                completionFilter === opt
+                  ? 'bg-primary/10 text-primary font-medium'
+                  : 'text-muted-foreground hover:text-foreground',
+                opt !== 'offen' && 'border-l border-border'
+              )}
+            >
+              {opt === 'offen' ? 'Offen' : opt === 'erledigt' ? 'Erledigt' : 'Alle'}
+            </button>
+          ))}
+        </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-44 bg-secondary border-border"><SelectValue placeholder="Status" /></SelectTrigger>
           <SelectContent>
