@@ -98,11 +98,17 @@ export default function RoutePlanning() {
       p.orders?.customers?.company_name?.toLowerCase().includes(q) ||
       p.orders?.customers?.contact_name?.toLowerCase().includes(q) ||
       p.assigned_employee?.toLowerCase().includes(q);
+    const ps = (p.planning_status || '').toLowerCase();
+    const isClosed = CLOSED_STATUSES.includes(ps);
+    const matchCompletion =
+      completionFilter === 'alle' ||
+      (completionFilter === 'erledigt' && isClosed) ||
+      (completionFilter === 'offen' && !isClosed);
     const matchStatus = statusFilter === 'all' || p.planning_status === statusFilter;
     const matchEmployee = employeeFilter === 'all' || p.assigned_employee === employeeFilter;
     const matchDate = !dateFilter || p.planned_date === format(dateFilter, 'yyyy-MM-dd');
-    return matchSearch && matchStatus && matchEmployee && matchDate;
-  }), [plans, search, statusFilter, employeeFilter, dateFilter]);
+    return matchSearch && matchCompletion && matchStatus && matchEmployee && matchDate;
+  }), [plans, search, completionFilter, statusFilter, employeeFilter, dateFilter]);
 
   // Group by date for calendar view
   const groupedByDate = useMemo(() => {
