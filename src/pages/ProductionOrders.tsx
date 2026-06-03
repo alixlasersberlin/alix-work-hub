@@ -138,8 +138,8 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
     let qb = supabase
       .from('production_orders')
       .select(atOnly
-        ? '*, supplier:suppliers(name, email), orders!inner(source_system)'
-        : '*, supplier:suppliers(name, email)')
+        ? '*, supplier:suppliers(name, email), orders!inner(source_system, order_status)'
+        : '*, supplier:suppliers(name, email), orders(order_status)')
       .eq('is_reclamation', isReclamation)
       .order('created_at', { ascending: false });
     if (atOnly) qb = qb.eq('orders.source_system', 'zoho_eu_2');
@@ -149,11 +149,13 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
       const list = (data || []).map((r: any) => ({
         ...r,
         display_order_number: r.production_order_number || r.order_number,
+        related_order_status: r.orders?.order_status ?? null,
       }));
       setRows(list);
     }
     setLoading(false);
   };
+
 
   useEffect(() => { load(); }, [isReclamation, atOnly]);
 
@@ -466,8 +468,16 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
             {paged.map(r => {
               const ps = r.payment_status || 'Nein';
               const due = dueLabel(r.liefertermin);
+              const blocked = r.related_order_status === 'Hold' || r.related_order_status === 'Anwalt'
+                ? r.related_order_status : null;
               return (
-                <Card key={r.id} className="p-3.5 hover:border-primary/40 transition-colors">
+                <Card key={r.id} className={cn("p-3.5 hover:border-primary/40 transition-colors", blocked && "border-destructive/60")}>
+                  {blocked && (
+                    <div className="mb-2 -mt-1 -mx-1 px-3 py-1.5 rounded-md bg-destructive text-destructive-foreground text-xs font-semibold uppercase tracking-wide text-center">
+                      Auftrag: {blocked}
+                    </div>
+                  )}
+
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mb-0.5">
@@ -571,15 +581,23 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
                   {paged.map(r => {
                     const ps = r.payment_status || 'Nein';
                     const due = dueLabel(r.liefertermin);
+                    const blocked = r.related_order_status === 'Hold' || r.related_order_status === 'Anwalt'
+                      ? r.related_order_status : null;
                     return (
-                      <tr key={r.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
+                      <tr key={r.id} className={cn("border-b border-border last:border-0 hover:bg-muted/20 transition-colors", blocked && "bg-destructive/5")}>
                         <td className="p-3">
+                          {blocked && (
+                            <div className="mb-1 inline-block px-2 py-0.5 rounded bg-destructive text-destructive-foreground text-[10px] font-semibold uppercase tracking-wide">
+                              Auftrag: {blocked}
+                            </div>
+                          )}
                           <div className="font-mono font-semibold text-foreground">{r.display_order_number}</div>
                           <div className="text-[10px] text-muted-foreground font-mono">{r.order_number}</div>
                           {r.customer_name_snapshot && (
                             <div className="text-xs font-medium text-foreground/90 mt-0.5">{r.customer_name_snapshot}</div>
                           )}
                         </td>
+
                         <td className="p-3 font-mono uppercase text-xs">{r.sonderwuensche || '—'}</td>
                         <td className="p-3">{r.supplier?.name || '—'}</td>
                         <td className="p-3">{r.modellname || '—'}</td>
