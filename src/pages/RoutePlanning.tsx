@@ -37,6 +37,7 @@ export default function RoutePlanning() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [completionFilter, setCompletionFilter] = useState<'offen' | 'erledigt' | 'alle'>('offen');
   const [employeeFilter, setEmployeeFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState<Date | undefined>();
   const [sortField, setSortField] = useState<SortField>('planned_date');
@@ -44,6 +45,8 @@ export default function RoutePlanning() {
   const [view, setView] = useState<'list' | 'calendar'>('list');
   const [viewMode, setViewMode] = useViewMode();
   const atOnly = useAtOnly();
+
+  const CLOSED_STATUSES = ['erledigt', 'abgesagt', 'storniert'];
 
   useEffect(() => {
     loadPlans();
@@ -95,11 +98,17 @@ export default function RoutePlanning() {
       p.orders?.customers?.company_name?.toLowerCase().includes(q) ||
       p.orders?.customers?.contact_name?.toLowerCase().includes(q) ||
       p.assigned_employee?.toLowerCase().includes(q);
+    const ps = (p.planning_status || '').toLowerCase();
+    const isClosed = CLOSED_STATUSES.includes(ps);
+    const matchCompletion =
+      completionFilter === 'alle' ||
+      (completionFilter === 'erledigt' && isClosed) ||
+      (completionFilter === 'offen' && !isClosed);
     const matchStatus = statusFilter === 'all' || p.planning_status === statusFilter;
     const matchEmployee = employeeFilter === 'all' || p.assigned_employee === employeeFilter;
     const matchDate = !dateFilter || p.planned_date === format(dateFilter, 'yyyy-MM-dd');
-    return matchSearch && matchStatus && matchEmployee && matchDate;
-  }), [plans, search, statusFilter, employeeFilter, dateFilter]);
+    return matchSearch && matchCompletion && matchStatus && matchEmployee && matchDate;
+  }), [plans, search, completionFilter, statusFilter, employeeFilter, dateFilter]);
 
   // Group by date for calendar view
   const groupedByDate = useMemo(() => {
@@ -165,6 +174,24 @@ export default function RoutePlanning() {
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input placeholder="Suche nach Auftrag, Kunde, Mitarbeiter..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10 bg-secondary border-border" />
+        </div>
+        <div className="flex rounded-lg border border-border overflow-hidden">
+          {(['offen', 'erledigt', 'alle'] as const).map(opt => (
+            <button
+              key={opt}
+              type="button"
+              onClick={() => setCompletionFilter(opt)}
+              className={cn(
+                "px-3 py-2 text-sm capitalize transition-colors",
+                completionFilter === opt
+                  ? 'bg-primary/10 text-primary font-medium'
+                  : 'text-muted-foreground hover:text-foreground',
+                opt !== 'offen' && 'border-l border-border'
+              )}
+            >
+              {opt === 'offen' ? 'Offen' : opt === 'erledigt' ? 'Erledigt' : 'Alle'}
+            </button>
+          ))}
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-44 bg-secondary border-border"><SelectValue placeholder="Status" /></SelectTrigger>
