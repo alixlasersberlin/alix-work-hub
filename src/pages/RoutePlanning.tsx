@@ -355,14 +355,14 @@ export default function RoutePlanning() {
       {view === 'list' && viewMode === 'cards' && (
         loading ? (
           <div className="py-12 text-center"><Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" /></div>
-        ) : filtered.length === 0 ? (
+        ) : paged.length === 0 ? (
           <div className="rounded-xl border border-border bg-card p-12 text-center card-glow">
             <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
             <p className="text-muted-foreground">Keine Touren gefunden.</p>
           </div>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {filtered.map(p => {
+            {paged.map(p => {
               const sources = [
                 p.orders?.shipping_address,
                 p.orders?.billing_address,
