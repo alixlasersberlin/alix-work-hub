@@ -37,6 +37,7 @@ export default function RoutePlanning() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [completionFilter, setCompletionFilter] = useState<'offen' | 'erledigt' | 'alle'>('offen');
   const [employeeFilter, setEmployeeFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState<Date | undefined>();
   const [sortField, setSortField] = useState<SortField>('planned_date');
@@ -44,6 +45,8 @@ export default function RoutePlanning() {
   const [view, setView] = useState<'list' | 'calendar'>('list');
   const [viewMode, setViewMode] = useViewMode();
   const atOnly = useAtOnly();
+
+  const CLOSED_STATUSES = ['erledigt', 'abgesagt', 'storniert'];
 
   useEffect(() => {
     loadPlans();
