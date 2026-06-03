@@ -25,7 +25,7 @@ export function CNNNewsTicker() {
       }
     };
     load();
-    const t = setInterval(load, 10 * 60 * 1000);
+    const t = setInterval(load, 60 * 60 * 1000);
     return () => {
       cancelled = true;
       clearInterval(t);
