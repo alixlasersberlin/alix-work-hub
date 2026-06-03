@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.release_on_hold_or_lawyer() FROM PUBLIC, anon, authenticated;
