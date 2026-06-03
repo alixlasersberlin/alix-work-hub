@@ -43,6 +43,7 @@ export default function RoutePlanning() {
   const [sortField, setSortField] = useState<SortField>('planned_date');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [view, setView] = useState<'list' | 'calendar'>('list');
+  const [pageSize, setPageSize] = useState<20 | 50 | 100 | 'all'>(20);
   const [viewMode, setViewMode] = useViewMode();
   const atOnly = useAtOnly();
 
