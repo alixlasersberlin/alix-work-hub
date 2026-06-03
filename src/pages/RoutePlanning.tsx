@@ -152,9 +152,31 @@ export default function RoutePlanning() {
             <MapPin className="w-6 h-6 text-primary" />
             Tourenplanung
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">{filtered.length} Touren</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            {pageSize === 'all' || filtered.length <= pageSize
+              ? `${filtered.length} Touren`
+              : `${paged.length} von ${filtered.length} Touren`}
+          </p>
         </div>
         <div className="flex items-center gap-2">
+          <div className="flex rounded-lg border border-border overflow-hidden">
+            {([20, 50, 100, 'all'] as const).map((opt, i) => (
+              <button
+                key={String(opt)}
+                type="button"
+                onClick={() => setPageSize(opt)}
+                className={cn(
+                  "px-3 py-2 text-sm transition-colors",
+                  pageSize === opt
+                    ? 'bg-primary/10 text-primary font-medium'
+                    : 'text-muted-foreground hover:text-foreground',
+                  i > 0 && 'border-l border-border'
+                )}
+              >
+                {opt === 'all' ? 'Alle' : opt}
+              </button>
+            ))}
+          </div>
           {view === 'list' && <ViewToggle value={viewMode} onChange={setViewMode} />}
           <div className="flex rounded-lg border border-border overflow-hidden">
             <button
