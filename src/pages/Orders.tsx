@@ -105,10 +105,10 @@ export default function Orders() {
 
   useEffect(() => { load(); }, [sortField, sortDir]);
 
-  const EXCLUDED_STATUSES = ['geliefert', 'teilgeliefert', 'anwalt', 'zurückgestellt', 'hold', 'on hold', 'on_hold'];
+  const EXCLUDED_STATUSES: string[] = [];
 
-  const statuses = [...new Set(orders.map(o => o.order_status).filter(Boolean))]
-    .filter(s => !EXCLUDED_STATUSES.includes(s.toLowerCase()));
+  const statuses = [...new Set(orders.map(o => o.order_status).filter(Boolean))];
+
 
   const resolveCity = (order: any): string => {
     const hasAddr = (a: any) => a && (a.city || a.address || a.street);
