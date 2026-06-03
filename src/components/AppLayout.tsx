@@ -70,7 +70,7 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    path: '/auftragsverwaltung/bestellungen', label: 'BESTELLUNGEN', icon: ShoppingCart, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich'],
+    path: '/auftragsverwaltung/bestellungen', label: 'BESTELLWESEN', icon: ShoppingCart, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich'],
   },
   {
     path: '/einkauf', label: 'BESTELLUNGEN', icon: ShoppingCart, roles: ['Admin', 'Super Admin', 'Order', 'Österreich'],
