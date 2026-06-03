@@ -138,8 +138,8 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
     let qb = supabase
       .from('production_orders')
       .select(atOnly
-        ? '*, supplier:suppliers(name, email), orders!inner(source_system)'
-        : '*, supplier:suppliers(name, email)')
+        ? '*, supplier:suppliers(name, email), orders!inner(source_system, order_status)'
+        : '*, supplier:suppliers(name, email), orders(order_status)')
       .eq('is_reclamation', isReclamation)
       .order('created_at', { ascending: false });
     if (atOnly) qb = qb.eq('orders.source_system', 'zoho_eu_2');
@@ -149,11 +149,13 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
       const list = (data || []).map((r: any) => ({
         ...r,
         display_order_number: r.production_order_number || r.order_number,
+        related_order_status: r.orders?.order_status ?? null,
       }));
       setRows(list);
     }
     setLoading(false);
   };
+
 
   useEffect(() => { load(); }, [isReclamation, atOnly]);
 
