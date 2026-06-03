@@ -113,6 +113,8 @@ export default function RoutePlanning() {
     return matchSearch && matchCompletion && matchStatus && matchEmployee && matchDate;
   }), [plans, search, completionFilter, statusFilter, employeeFilter, dateFilter]);
 
+  const paged = useMemo(() => pageSize === 'all' ? filtered : filtered.slice(0, pageSize), [filtered, pageSize]);
+
   // Group by date for calendar view
   const groupedByDate = useMemo(() => {
     const groups: Record<string, any[]> = {};
