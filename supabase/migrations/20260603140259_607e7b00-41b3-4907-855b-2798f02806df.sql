@@ -1,0 +1,1 @@
+UPDATE public.orders SET order_status = 'geliefert', updated_at = now() WHERE order_number IN ('SO-4199','SO-4083','SO-4177','SO-4218','SO-4134');
