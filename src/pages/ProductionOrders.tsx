@@ -581,15 +581,23 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
                   {paged.map(r => {
                     const ps = r.payment_status || 'Nein';
                     const due = dueLabel(r.liefertermin);
+                    const blocked = r.related_order_status === 'Hold' || r.related_order_status === 'Anwalt'
+                      ? r.related_order_status : null;
                     return (
-                      <tr key={r.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
+                      <tr key={r.id} className={cn("border-b border-border last:border-0 hover:bg-muted/20 transition-colors", blocked && "bg-destructive/5")}>
                         <td className="p-3">
+                          {blocked && (
+                            <div className="mb-1 inline-block px-2 py-0.5 rounded bg-destructive text-destructive-foreground text-[10px] font-semibold uppercase tracking-wide">
+                              Auftrag: {blocked}
+                            </div>
+                          )}
                           <div className="font-mono font-semibold text-foreground">{r.display_order_number}</div>
                           <div className="text-[10px] text-muted-foreground font-mono">{r.order_number}</div>
                           {r.customer_name_snapshot && (
                             <div className="text-xs font-medium text-foreground/90 mt-0.5">{r.customer_name_snapshot}</div>
                           )}
                         </td>
+
                         <td className="p-3 font-mono uppercase text-xs">{r.sonderwuensche || '—'}</td>
                         <td className="p-3">{r.supplier?.name || '—'}</td>
                         <td className="p-3">{r.modellname || '—'}</td>
