@@ -43,6 +43,7 @@ export default function RoutePlanning() {
   const [sortField, setSortField] = useState<SortField>('planned_date');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [view, setView] = useState<'list' | 'calendar'>('list');
+  const [pageSize, setPageSize] = useState<20 | 50 | 100 | 'all'>(20);
   const [viewMode, setViewMode] = useViewMode();
   const atOnly = useAtOnly();
 
@@ -112,16 +113,18 @@ export default function RoutePlanning() {
     return matchSearch && matchCompletion && matchStatus && matchEmployee && matchDate;
   }), [plans, search, completionFilter, statusFilter, employeeFilter, dateFilter]);
 
+  const paged = useMemo(() => pageSize === 'all' ? filtered : filtered.slice(0, pageSize), [filtered, pageSize]);
+
   // Group by date for calendar view
   const groupedByDate = useMemo(() => {
     const groups: Record<string, any[]> = {};
-    filtered.forEach(p => {
+    paged.forEach(p => {
       const key = p.planned_date || 'Ohne Datum';
       if (!groups[key]) groups[key] = [];
       groups[key].push(p);
     });
     return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
-  }, [filtered]);
+  }, [paged]);
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
@@ -149,9 +152,31 @@ export default function RoutePlanning() {
             <MapPin className="w-6 h-6 text-primary" />
             Tourenplanung
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">{filtered.length} Touren</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            {pageSize === 'all' || filtered.length <= pageSize
+              ? `${filtered.length} Touren`
+              : `${paged.length} von ${filtered.length} Touren`}
+          </p>
         </div>
         <div className="flex items-center gap-2">
+          <div className="flex rounded-lg border border-border overflow-hidden">
+            {([20, 50, 100, 'all'] as const).map((opt, i) => (
+              <button
+                key={String(opt)}
+                type="button"
+                onClick={() => setPageSize(opt)}
+                className={cn(
+                  "px-3 py-2 text-sm transition-colors",
+                  pageSize === opt
+                    ? 'bg-primary/10 text-primary font-medium'
+                    : 'text-muted-foreground hover:text-foreground',
+                  i > 0 && 'border-l border-border'
+                )}
+              >
+                {opt === 'all' ? 'Alle' : opt}
+              </button>
+            ))}
+          </div>
           {view === 'list' && <ViewToggle value={viewMode} onChange={setViewMode} />}
           <div className="flex rounded-lg border border-border overflow-hidden">
             <button
@@ -248,13 +273,13 @@ export default function RoutePlanning() {
               <tbody className="divide-y divide-border">
                 {loading ? (
                   <tr><td colSpan={9} className="px-4 py-12 text-center"><Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" /></td></tr>
-                ) : filtered.length === 0 ? (
+                ) : paged.length === 0 ? (
                   <tr><td colSpan={9} className="px-4 py-12 text-center">
                     <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
                     <p className="text-muted-foreground">Keine Touren gefunden.</p>
                   </td></tr>
                 ) : (
-                  filtered.map(p => (
+                  paged.map(p => (
                     <tr key={p.id} className="hover:bg-secondary/30 transition-colors cursor-pointer" onClick={() => navigate(`/tourenplanung/${p.id}`)}>
                       <td className="px-4 py-3 font-medium text-foreground">{p.orders?.order_number || '—'}</td>
                       <td className="px-4 py-3 text-muted-foreground">{p.orders?.customers?.company_name || p.orders?.customers?.contact_name || '—'}</td>
@@ -330,14 +355,14 @@ export default function RoutePlanning() {
       {view === 'list' && viewMode === 'cards' && (
         loading ? (
           <div className="py-12 text-center"><Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" /></div>
-        ) : filtered.length === 0 ? (
+        ) : paged.length === 0 ? (
           <div className="rounded-xl border border-border bg-card p-12 text-center card-glow">
             <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
             <p className="text-muted-foreground">Keine Touren gefunden.</p>
           </div>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {filtered.map(p => {
+            {paged.map(p => {
               const sources = [
                 p.orders?.shipping_address,
                 p.orders?.billing_address,
