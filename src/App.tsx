@@ -318,6 +318,7 @@ function AppRoutes() {
           </Route>
 
           <Route path="/mdr-ce" element={<ProtectedRoute requiredRoles={['Super Admin']}><MdrCe /></ProtectedRoute>} />
+          <Route path="/mdr-ce/iso-13485" element={<ProtectedRoute requiredRoles={['Super Admin']}><Iso13485 /></ProtectedRoute>} />
 
           <Route path="/bewertungen" element={<ProtectedRoute><ReviewsLayout /></ProtectedRoute>}>
             <Route index element={<ReviewsOverview />} />
