@@ -104,6 +104,10 @@ function PasswordResetForm() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Mindestens 8 Zeichen"
                   required
+                  autoComplete="off"
+                  data-1p-ignore
+                  data-lpignore="true"
+                  data-form-type="other"
                   className="bg-secondary border-border focus:ring-primary pr-10"
                 />
                 <button
@@ -125,6 +129,10 @@ function PasswordResetForm() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Passwort wiederholen"
                 required
+                autoComplete="off"
+                data-1p-ignore
+                data-lpignore="true"
+                data-form-type="other"
                 className="bg-secondary border-border focus:ring-primary"
               />
             </div>
