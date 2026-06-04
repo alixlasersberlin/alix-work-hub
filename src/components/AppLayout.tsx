@@ -145,21 +145,6 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    path: '/operation', label: 'OPERATIONS', icon: Workflow, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Read Only Audit'],
-    children: [
-      { path: '/geraetetypen', label: 'Gerätetypen', icon: BarChart3, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance'] },
-      { path: '/import', label: 'Import', icon: Cloud, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Read Only Audit'] },
-      { path: '/system', label: 'Monitoring', icon: Server, roles: ['Admin', 'Super Admin', 'Read Only Audit'] },
-      { path: '/benutzer', label: 'Benutzer', icon: Users, roles: ['Admin', 'Super Admin'] },
-      { path: '/order/zulieferer', label: 'Lieferanten', icon: Users, roles: ['Admin', 'Super Admin'] },
-      { path: '/rollen', label: 'Rollen', icon: Shield, roles: ['Admin', 'Super Admin'] },
-      { path: '/datensicherung', label: 'Datensicherung', icon: Shield, roles: ['Admin', 'Super Admin'] },
-      { path: '/operation/logfiles', label: 'Logfiles', icon: ScrollText, roles: ['Admin', 'Super Admin', 'Read Only Audit'] },
-      { path: '/operation/email-vorlagen', label: 'E-Mail Vorlagen', icon: Mail, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order'] },
-      { path: '/operation/systemwartung', label: 'Systemwartung', icon: AlertTriangle, roles: ['Super Admin'] },
-    ],
-  },
-  {
     path: '/bug-capa', label: 'BUG & CAPA ISO13485', icon: Shield, roles: null,
     children: [
       { path: '/bug-capa', label: 'Dashboard', icon: LayoutDashboard, roles: null },
@@ -184,6 +169,22 @@ const navItems: NavItem[] = [
   {
     path: '/hilfe', label: 'HILFE', icon: HelpCircle, roles: null,
   },
+  {
+    path: '/operation', label: 'OPERATIONS', icon: Workflow, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Read Only Audit'],
+    children: [
+      { path: '/geraetetypen', label: 'Gerätetypen', icon: BarChart3, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance'] },
+      { path: '/import', label: 'Import', icon: Cloud, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Read Only Audit'] },
+      { path: '/system', label: 'Monitoring', icon: Server, roles: ['Admin', 'Super Admin', 'Read Only Audit'] },
+      { path: '/benutzer', label: 'Benutzer', icon: Users, roles: ['Admin', 'Super Admin'] },
+      { path: '/order/zulieferer', label: 'Lieferanten', icon: Users, roles: ['Admin', 'Super Admin'] },
+      { path: '/rollen', label: 'Rollen', icon: Shield, roles: ['Admin', 'Super Admin'] },
+      { path: '/datensicherung', label: 'Datensicherung', icon: Shield, roles: ['Admin', 'Super Admin'] },
+      { path: '/operation/logfiles', label: 'Logfiles', icon: ScrollText, roles: ['Admin', 'Super Admin', 'Read Only Audit'] },
+      { path: '/operation/email-vorlagen', label: 'E-Mail Vorlagen', icon: Mail, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order'] },
+      { path: '/operation/systemwartung', label: 'Systemwartung', icon: AlertTriangle, roles: ['Super Admin'] },
+    ],
+  },
+
 ];
 
 export default function AppLayout() {
