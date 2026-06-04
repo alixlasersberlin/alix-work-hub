@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { PageHeader, PageLoading, PageError, DataCard } from '@/components/PageShell';
-import { Zap, RefreshCw, Search, Loader2 } from 'lucide-react';
+import { Zap, RefreshCw, Search, Loader2, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
