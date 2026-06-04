@@ -26,6 +26,7 @@ type Row = {
   total: number | null;
   currency: string | null;
   device_name: string | null;
+  created_at: string | null;
 };
 
 type PageSize = 10 | 20 | 50 | 100 | 'all';
