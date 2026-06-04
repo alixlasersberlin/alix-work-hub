@@ -32,6 +32,7 @@ const navItems: NavItem[] = [
     children: [
       { path: '/detailsuche', label: 'Suche', icon: SearchCheck, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Read Only Audit'] },
       { path: '/lager/doppelte-reservierungen', label: 'Doppelte Reservierungen', icon: AlertTriangle, roles: ['Admin', 'Super Admin', 'Order'] },
+      { path: '/geraetesperren', label: 'GERÄTESPERREN', icon: Lock, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Read Only Audit'] },
     ],
   },
   {
@@ -833,6 +834,11 @@ export default function AppLayout() {
                             active: 'bg-blue-500/15 text-blue-500 shadow-[inset_0_0_0_1px_hsl(217_91%_60%/0.4)]',
                             inactive: 'text-blue-500 hover:text-blue-500 hover:bg-blue-500/10',
                             icon: 'text-blue-500',
+                          },
+                          '/geraetesperren': {
+                            active: 'bg-red-500/15 text-red-500 shadow-[inset_0_0_0_1px_hsl(0_84%_60%/0.4)]',
+                            inactive: 'text-red-500 hover:text-red-500 hover:bg-red-500/10',
+                            icon: 'text-red-500',
                           },
                         };
                         const cColored = lagerColorMap[child.path];
