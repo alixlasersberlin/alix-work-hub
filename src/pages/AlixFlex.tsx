@@ -67,9 +67,16 @@ export default function AlixFlex() {
   const [sourceFilter, setSourceFilter] = useState<string>('all');
   const [billingRunFilter, setBillingRunFilter] = useState<string>('all'); // 'all' | '1' | '15'
   const [importing, setImporting] = useState(false);
+  const [sortKey, setSortKey] = useState<keyof Row>('start_date');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [detailId, setDetailId] = useState<string | null>(null);
   const [detail, setDetail] = useState<any | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+
+  const toggleSort = (key: keyof Row) => {
+    if (sortKey === key) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    else { setSortKey(key); setSortDir('asc'); }
+  };
 
   const openDetail = async (id: string) => {
     setDetailId(id);
