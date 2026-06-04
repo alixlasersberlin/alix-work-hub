@@ -350,7 +350,7 @@ export default function Dashboard() {
             <div className="flex items-center gap-2">
               <ListOrdered className="w-4 h-4 text-primary" />
               <h2 className="font-display font-semibold text-foreground">Prio-Liste</h2>
-              <span className="text-xs text-muted-foreground">Top 10 nach Liefertermin</span>
+              <span className="text-xs text-muted-foreground">Top 5 nach Liefertermin</span>
             </div>
             <button
               type="button"
