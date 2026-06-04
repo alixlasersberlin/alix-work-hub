@@ -101,8 +101,8 @@ export default function AlixFlex() {
     setError(null);
     const { data, error } = await supabase
       .from('zoho_recurring_profiles')
-      .select('id, source_system, recurrence_name, reference_number, status, customer_name, company_name, recurrence_frequency, repeat_every, start_date, next_invoice_date, last_sent_date, total, currency, device_name')
-      .order('start_date', { ascending: false, nullsFirst: false })
+      .select('id, source_system, recurrence_name, reference_number, status, customer_name, company_name, recurrence_frequency, repeat_every, start_date, next_invoice_date, last_sent_date, total, currency, device_name, created_at')
+      .order('created_at', { ascending: false, nullsFirst: false })
       .limit(5000);
     if (error) { setError(error.message); setRows([]); }
     else setRows((data ?? []) as Row[]);
