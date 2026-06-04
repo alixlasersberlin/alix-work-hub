@@ -32,9 +32,9 @@ const navItems: NavItem[] = [
     children: [
       { path: '/detailsuche', label: 'Suche', icon: SearchCheck, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Read Only Audit'] },
       { path: '/lager/doppelte-reservierungen', label: 'Doppelte Reservierungen', icon: AlertTriangle, roles: ['Admin', 'Super Admin', 'Order'] },
-      { path: '/geraetesperren', label: 'GERÄTESPERREN', icon: Lock, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Read Only Audit'] },
     ],
   },
+  { path: '/geraetesperren', label: 'GERÄTESPERREN', icon: Lock, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Read Only Audit'] },
   {
     path: '/auftragsverwaltung', label: 'AUFTRAGSVERWALTUNG', icon: ClipboardList, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich'],
     children: [
@@ -866,6 +866,7 @@ export default function AppLayout() {
               );
             }
 
+            const isRed = item.path === '/geraetesperren';
             return (
               <Link
                 key={item.path}
@@ -874,12 +875,16 @@ export default function AppLayout() {
                 className={cn(
                   "flex items-center gap-2.5 rounded-lg text-[14.5px] font-medium transition-all duration-150",
                   isCollapsedView ? "md:px-0 md:py-2.5 md:justify-center px-3.5 py-3" : "px-3.5 py-3 md:py-2.5",
-                  active
-                    ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
-                    : "text-sidebar-foreground hover:text-primary hover:bg-primary/15"
+                  isRed
+                    ? (active
+                        ? "bg-red-500/15 text-red-500 shadow-[inset_0_0_0_1px_hsl(0_84%_60%/0.4)]"
+                        : "text-red-500 hover:text-red-500 hover:bg-red-500/10")
+                    : (active
+                        ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
+                        : "text-sidebar-foreground hover:text-primary hover:bg-primary/15")
                 )}
               >
-                <item.icon className={cn("w-5 h-5 flex-shrink-0", active && "text-primary")} />
+                <item.icon className={cn("w-5 h-5 flex-shrink-0", isRed ? "text-red-500" : (active && "text-primary"))} />
                 {!isCollapsedView && <span className="truncate">{item.label}</span>}
               </Link>
             );
