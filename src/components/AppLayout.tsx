@@ -134,7 +134,7 @@ const navItems: NavItem[] = [
       { path: '/finance/offene-posten', label: 'Offene Posten', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
       { path: '/finance/unpaid-zoho', label: 'Unbezahlte Rechnungen (Zoho)', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
       {
-        path: '/finanzierungen', label: 'FINANZIERUNGEN', icon: Landmark, roles: ['Admin', 'Super Admin', 'Finance', 'Finanzierungen', 'Order'],
+        path: '/finanzierungen', label: 'FREMD LEASING', icon: Landmark, roles: ['Admin', 'Super Admin', 'Finance', 'Finanzierungen', 'Order'],
         children: [
           { path: '/finanzierungen/leasing-bank', label: 'Verfügbare Aufträge', icon: Landmark, roles: ['Admin', 'Super Admin', 'Finance', 'Finanzierungen', 'Order'] },
           { path: '/finanzierungen/beantragen', label: 'Finanzierung beantragen', icon: FileSignature, roles: ['Admin', 'Super Admin', 'Finance', 'Finanzierungen', 'Order'] },
