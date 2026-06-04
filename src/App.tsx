@@ -108,6 +108,7 @@ const BugCapaAudit = lazy(() => import("./pages/BugCapa/AuditFindings"));
 const BugCapaMassnahmen = lazy(() => import("./pages/BugCapa/Massnahmen"));
 const BugCapaBerichte = lazy(() => import("./pages/BugCapa/Berichte"));
 const MdrCe = lazy(() => import("./pages/MdrCe"));
+const Iso13485 = lazy(() => import("./pages/Iso13485"));
 const ReviewsLayout = lazy(() => import("./pages/Reviews/_layout"));
 const ReviewsOverview = lazy(() => import("./pages/Reviews/Overview"));
 const ReviewsDelivered = lazy(() => import("./pages/Reviews/DeliveredOrders"));
