@@ -568,10 +568,9 @@ export default function AppLayout() {
           "fixed inset-y-0 left-0 z-50 w-[260px] pt-safe pb-safe pl-safe md:static md:translate-x-0 md:z-auto",
           mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
           // Desktop: collapsible Breite (eingeklappt fix, sonst per CSS-Var/Drag)
-          collapsed ? "md:w-[60px]" : "md:w-[var(--sb-w)]",
-          // Aurora: linke Sidebar auf Desktop komplett ausblenden (Menü liegt im Header)
-          isAurora && "md:hidden"
+          collapsed ? "md:w-[60px]" : "md:w-[var(--sb-w)]"
         )}>
+
         {/* Brand */}
         <div className={cn(
           "flex items-center gap-2.5 border-b border-border h-16 flex-shrink-0",
