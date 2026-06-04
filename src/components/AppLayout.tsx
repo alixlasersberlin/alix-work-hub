@@ -169,18 +169,6 @@ const navItems: NavItem[] = [
       { path: '/operation/systemwartung', label: 'Systemwartung', icon: AlertTriangle, roles: ['Super Admin'] },
     ],
   },
-  {
-    path: '/bug-capa', label: 'BUG & CAPA ISO13485', icon: Shield, roles: null,
-    children: [
-      { path: '/bug-capa', label: 'Dashboard', icon: LayoutDashboard, roles: null },
-      { path: '/bug-capa/bugs', label: 'Bugs', icon: AlertTriangle, roles: null },
-      { path: '/bug-capa/capa', label: 'CAPA', icon: CheckCircle2, roles: null },
-      { path: '/bug-capa/reklamationen', label: 'Reklamationen', icon: AlertTriangle, roles: null },
-      { path: '/bug-capa/audit', label: 'Audit-Feststellungen', icon: SearchCheck, roles: null },
-      { path: '/bug-capa/massnahmen', label: 'Maßnahmen', icon: ListOrdered, roles: null },
-      { path: '/bug-capa/berichte', label: 'Berichte', icon: BarChart3, roles: null },
-    ],
-  },
 
 ];
 
