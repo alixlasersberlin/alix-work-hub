@@ -895,10 +895,10 @@ export default function AppLayout() {
               variant="ghost"
               className="h-8 justify-start text-[14.5px] px-2 text-muted-foreground hover:text-foreground"
               onClick={() => navigate('/bug-capa')}
-              title="BUGS"
+              title="Bugs"
             >
               <Shield className="w-4 h-4" />
-              <span className="ml-1.5">BUGS</span>
+              <span className="ml-1.5">Bugs</span>
             </Button>
             <Button
               variant="ghost"
