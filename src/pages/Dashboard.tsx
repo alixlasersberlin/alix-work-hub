@@ -269,6 +269,12 @@ export default function Dashboard() {
             ])
           : [{ count: 0 }, { count: 0 }];
 
+        const prioRes = canSeeOrders
+          ? await (atOnly
+              ? supabase.from('orders').select('id, order_number, order_status, expected_shipment_date, is_vip, source_system, customers(company_name, contact_name, is_vip)').not('expected_shipment_date', 'is', null).in('order_status', ['overdue','Overdue','invoiced','Invoiced','open','Open','offen','Offen','approved','Approved']).eq('source_system', 'zoho_eu_2').order('expected_shipment_date', { ascending: true }).limit(10)
+              : supabase.from('orders').select('id, order_number, order_status, expected_shipment_date, is_vip, source_system, customers(company_name, contact_name, is_vip)').not('expected_shipment_date', 'is', null).in('order_status', ['overdue','Overdue','invoiced','Invoiced','open','Open','offen','Offen','approved','Approved']).order('expected_shipment_date', { ascending: true }).limit(10))
+          : { data: [] };
+
         setStats({
           freePoolDevices,
           leihgeraete,
