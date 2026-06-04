@@ -972,10 +972,8 @@ export default function AppLayout() {
               </Link>
             )}
           </div>
-          {/* Aurora Top-Navigation */}
-          {isAurora && (
-            <AuroraTopNav items={visibleItems} labelWithCount={labelWithCount} />
-          )}
+          <div className="flex-1" />
+
           <div className="flex items-center gap-2 sm:gap-4">
             <DesignVariantSwitcher inline />
 
