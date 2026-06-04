@@ -63,7 +63,7 @@ export default function AlixFlex() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [pageSize, setPageSize] = useState<PageSize>(50);
+  const [pageSize, setPageSize] = useState<PageSize>(20);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sourceFilter, setSourceFilter] = useState<string>('all');
   const [billingRunFilter, setBillingRunFilter] = useState<string>('all'); // 'all' | '1' | '15'
