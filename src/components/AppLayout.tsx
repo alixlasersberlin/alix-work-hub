@@ -190,6 +190,7 @@ export default function AppLayout() {
   const { variant } = useDesignVariant();
   const isAurora = variant === 'aurora';
   const location = useLocation();
+  const navigate = useNavigate();
   // Desktop: eingeklappt? (schmale Icon-Leiste)
   const [collapsed, setCollapsed] = useState(false);
   // Mobile: Drawer offen?
