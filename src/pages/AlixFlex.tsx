@@ -128,6 +128,38 @@ export default function AlixFlex() {
         return day === targetDay;
       });
     }
+    if (dateRangeFilter !== 'all') {
+      const now = new Date();
+      let from: Date | null = null;
+      let to: Date | null = null;
+      if (dateRangeFilter === 'current_month') {
+        from = new Date(now.getFullYear(), now.getMonth(), 1);
+        to = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+      } else if (dateRangeFilter === 'last_month') {
+        from = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        to = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+      } else if (dateRangeFilter === 'last_3_months') {
+        from = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+        to = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+      } else if (dateRangeFilter === 'current_year') {
+        from = new Date(now.getFullYear(), 0, 1);
+        to = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
+      } else if (dateRangeFilter === 'last_year') {
+        from = new Date(now.getFullYear() - 1, 0, 1);
+        to = new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59);
+      } else if (dateRangeFilter === 'custom') {
+        if (customFrom) from = new Date(customFrom + 'T00:00:00');
+        if (customTo) to = new Date(customTo + 'T23:59:59');
+      }
+      res = res.filter((r) => {
+        const d = r.next_invoice_date ?? r.start_date;
+        if (!d) return false;
+        const t = new Date(d).getTime();
+        if (from && t < from.getTime()) return false;
+        if (to && t > to.getTime()) return false;
+        return true;
+      });
+    }
     if (q) {
       res = res.filter((r) =>
         [r.recurrence_name, r.reference_number, r.customer_name, r.company_name, r.device_name]
@@ -135,7 +167,7 @@ export default function AlixFlex() {
       );
     }
     return res;
-  }, [rows, search, statusFilter, sourceFilter, billingRunFilter]);
+  }, [rows, search, statusFilter, sourceFilter, billingRunFilter, dateRangeFilter, customFrom, customTo]);
 
   const sorted = useMemo(() => {
     const arr = [...filtered];
