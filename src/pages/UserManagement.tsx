@@ -534,11 +534,11 @@ export default function UserManagement() {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="pw-new">Neues Passwort</Label>
-                <Input id="pw-new" type="password" value={pwNew} onChange={e => setPwNew(e.target.value)} placeholder="Mindestens 8 Zeichen" />
+                <Input id="pw-new" type="password" value={pwNew} onChange={e => setPwNew(e.target.value)} placeholder="Mindestens 8 Zeichen" autoComplete="off" data-1p-ignore data-lpignore="true" data-form-type="other" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="pw-confirm">Passwort bestätigen</Label>
-                <Input id="pw-confirm" type="password" value={pwConfirm} onChange={e => setPwConfirm(e.target.value)} />
+                <Input id="pw-confirm" type="password" value={pwConfirm} onChange={e => setPwConfirm(e.target.value)} autoComplete="off" data-1p-ignore data-lpignore="true" data-form-type="other" />
               </div>
               <div className="flex items-center gap-2">
                 <Checkbox id="pw-require" checked={pwRequireReset} onCheckedChange={v => setPwRequireReset(!!v)} />
@@ -775,7 +775,7 @@ export default function UserManagement() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Passwort (optional)</Label>
-                <Input type="password" value={createForm.password} onChange={e => setCreateForm(f => ({ ...f, password: e.target.value }))} placeholder="Auto-generiert wenn leer" />
+                <Input type="password" value={createForm.password} onChange={e => setCreateForm(f => ({ ...f, password: e.target.value }))} placeholder="Auto-generiert wenn leer" autoComplete="off" data-1p-ignore data-lpignore="true" data-form-type="other" />
               </div>
               <div>
                 <Label>Telefon</Label>
