@@ -56,7 +56,7 @@ export default function AuroraTopNav({ items, labelWithCount }: Props) {
   };
 
   return (
-    <nav className="hidden md:flex items-center gap-0.5 overflow-x-auto scroll-touch flex-1 min-w-0 px-2">
+    <nav className="hidden md:flex flex-col gap-0.5 overflow-y-auto scroll-touch h-full w-full px-2 py-2">
       {items.map((item) => {
         const active = isActive(item.path);
         const hasChildren = item.children && item.children.length > 0;
@@ -66,14 +66,14 @@ export default function AuroraTopNav({ items, labelWithCount }: Props) {
               key={item.path}
               to={item.path}
               className={cn(
-                'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[12.5px] font-medium whitespace-nowrap transition-colors',
+                'flex items-center gap-2 px-3 py-2 rounded-md text-[12.5px] font-medium whitespace-nowrap transition-colors',
                 active
                   ? 'bg-primary/15 text-primary'
                   : 'text-foreground/80 hover:text-primary hover:bg-primary/10',
               )}
             >
-              <item.icon className="w-4 h-4" />
-              <span>{item.label}</span>
+              <item.icon className="w-4 h-4 flex-shrink-0" />
+              <span className="truncate">{item.label}</span>
             </Link>
           );
         }
@@ -83,18 +83,18 @@ export default function AuroraTopNav({ items, labelWithCount }: Props) {
               <button
                 type="button"
                 className={cn(
-                  'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[12.5px] font-medium whitespace-nowrap transition-colors',
+                  'w-full flex items-center gap-2 px-3 py-2 rounded-md text-[12.5px] font-medium whitespace-nowrap transition-colors',
                   active
                     ? 'bg-primary/15 text-primary'
                     : 'text-foreground/80 hover:text-primary hover:bg-primary/10',
                 )}
               >
-                <item.icon className="w-4 h-4" />
-                <span>{item.label}</span>
+                <item.icon className="w-4 h-4 flex-shrink-0" />
+                <span className="truncate flex-1 text-left">{item.label}</span>
                 <ChevronDown className="w-3 h-3 opacity-60" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="min-w-[240px] z-[300]">
+            <DropdownMenuContent align="end" side="left" className="min-w-[240px] z-[300]">
               <DropdownMenuLabel className="text-[11px] text-muted-foreground">{item.label}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               {item.children!.map(renderChild)}
