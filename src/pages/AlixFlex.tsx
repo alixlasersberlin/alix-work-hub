@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { PageHeader, PageLoading, PageError, DataCard } from '@/components/PageShell';
-import { Zap, RefreshCw, Search, Loader2 } from 'lucide-react';
+import { Zap, RefreshCw, Search, Loader2, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -67,9 +67,16 @@ export default function AlixFlex() {
   const [sourceFilter, setSourceFilter] = useState<string>('all');
   const [billingRunFilter, setBillingRunFilter] = useState<string>('all'); // 'all' | '1' | '15'
   const [importing, setImporting] = useState(false);
+  const [sortKey, setSortKey] = useState<keyof Row>('start_date');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [detailId, setDetailId] = useState<string | null>(null);
   const [detail, setDetail] = useState<any | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+
+  const toggleSort = (key: keyof Row) => {
+    if (sortKey === key) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    else { setSortKey(key); setSortDir('asc'); }
+  };
 
   const openDetail = async (id: string) => {
     setDetailId(id);
@@ -126,7 +133,29 @@ export default function AlixFlex() {
     return res;
   }, [rows, search, statusFilter, sourceFilter, billingRunFilter]);
 
-  const visible = useMemo(() => pageSize === 'all' ? filtered : filtered.slice(0, pageSize), [filtered, pageSize]);
+  const sorted = useMemo(() => {
+    const arr = [...filtered];
+    const dir = sortDir === 'asc' ? 1 : -1;
+    const dateKeys = new Set(['start_date', 'next_invoice_date', 'last_sent_date']);
+    const numKeys = new Set(['total', 'repeat_every']);
+    arr.sort((a, b) => {
+      const av = a[sortKey] as any;
+      const bv = b[sortKey] as any;
+      if (av == null && bv == null) return 0;
+      if (av == null) return 1;
+      if (bv == null) return -1;
+      if (dateKeys.has(sortKey as string)) {
+        return (new Date(av).getTime() - new Date(bv).getTime()) * dir;
+      }
+      if (numKeys.has(sortKey as string)) {
+        return ((av as number) - (bv as number)) * dir;
+      }
+      return String(av).localeCompare(String(bv), 'de', { numeric: true }) * dir;
+    });
+    return arr;
+  }, [filtered, sortKey, sortDir]);
+
+  const visible = useMemo(() => pageSize === 'all' ? sorted : sorted.slice(0, pageSize), [sorted, pageSize]);
 
   const runImport = async (source: 'zoho_eu_1' | 'zoho_eu_2') => {
     let page = 1;
@@ -243,16 +272,31 @@ export default function AlixFlex() {
             <table className="w-full text-sm">
               <thead className="bg-muted/30 text-xs uppercase text-muted-foreground">
                 <tr>
-                  <th className="text-left px-3 py-3 font-medium">Quelle</th>
-                  <th className="text-left px-3 py-3 font-medium">Profil</th>
-                  <th className="text-left px-3 py-3 font-medium">Referenz</th>
-                  <th className="text-left px-3 py-3 font-medium">Kunde</th>
-                  <th className="text-left px-3 py-3 font-medium">Gerät</th>
-                  <th className="text-left px-3 py-3 font-medium">Frequenz</th>
-                  <th className="text-left px-3 py-3 font-medium">Start</th>
-                  <th className="text-left px-3 py-3 font-medium">Nächste</th>
-                  <th className="text-right px-3 py-3 font-medium">Betrag</th>
-                  <th className="text-left px-3 py-3 font-medium">Status</th>
+                  {([
+                    ['source_system', 'Quelle', 'left'],
+                    ['recurrence_name', 'Profil', 'left'],
+                    ['reference_number', 'Referenz', 'left'],
+                    ['company_name', 'Kunde', 'left'],
+                    ['device_name', 'Gerät', 'left'],
+                    ['recurrence_frequency', 'Frequenz', 'left'],
+                    ['start_date', 'Start', 'left'],
+                    ['next_invoice_date', 'Nächste', 'left'],
+                    ['total', 'Betrag', 'right'],
+                    ['status', 'Status', 'left'],
+                  ] as [keyof Row, string, 'left' | 'right'][]).map(([key, label, align]) => (
+                    <th
+                      key={key as string}
+                      onClick={() => toggleSort(key)}
+                      className={`px-3 py-3 font-medium cursor-pointer select-none hover:text-foreground transition-colors ${align === 'right' ? 'text-right' : 'text-left'}`}
+                    >
+                      <span className={`inline-flex items-center gap-1 ${align === 'right' ? 'flex-row-reverse' : ''}`}>
+                        {label}
+                        {sortKey === key
+                          ? (sortDir === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)
+                          : <ArrowUpDown className="w-3 h-3 opacity-40" />}
+                      </span>
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
