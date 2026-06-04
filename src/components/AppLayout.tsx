@@ -972,10 +972,8 @@ export default function AppLayout() {
               </Link>
             )}
           </div>
-          {/* Aurora Top-Navigation */}
-          {isAurora && (
-            <AuroraTopNav items={visibleItems} labelWithCount={labelWithCount} />
-          )}
+          <div className="flex-1" />
+
           <div className="flex items-center gap-2 sm:gap-4">
             <DesignVariantSwitcher inline />
 
@@ -998,6 +996,12 @@ export default function AppLayout() {
           <Outlet key={refreshKey} />
         </main>
       </div>
+      {/* Aurora: vertikale Menü-Sidebar rechts */}
+      {isAurora && (
+        <aside className="hidden md:flex flex-col w-[220px] flex-shrink-0 border-l border-border bg-sidebar pt-safe pb-safe">
+          <AuroraTopNav items={visibleItems} labelWithCount={labelWithCount} />
+        </aside>
+      )}
       <WelcomeDialog />
       <LeoWelcomeDialog />
     </div>
