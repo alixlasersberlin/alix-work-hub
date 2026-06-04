@@ -634,7 +634,7 @@ export default function AppLayout() {
                     >
                       <item.icon className={cn("w-5 h-5 flex-shrink-0", childActive && "text-primary")} />
                       {!isCollapsedView && (
-                        <span className="truncate flex-1 text-left">{labelWithCount(item.path, item.label)}</span>
+                        <span className="truncate flex-1 text-left">{item.path === '/tourenplanung' ? item.label : labelWithCount(item.path, item.label)}</span>
                       )}
                     </Link>
                   ) : (
@@ -646,7 +646,7 @@ export default function AppLayout() {
                     >
                       <item.icon className={cn("w-5 h-5 flex-shrink-0", childActive && "text-primary")} />
                       {!isCollapsedView && (
-                        <span className="truncate flex-1 text-left">{labelWithCount(item.path, item.label)}</span>
+                        <span className="truncate flex-1 text-left">{item.path === '/tourenplanung' ? item.label : labelWithCount(item.path, item.label)}</span>
                       )}
                     </button>
                   )}
