@@ -5,10 +5,11 @@ import { useAuth } from '@/hooks/useAuth';
 import {
   ClipboardList, Users, MapPin, Banknote, AlertCircle,
   Clock, TrendingUp, FileText, CalendarDays, CircleDot, Inbox, Package, ChevronDown,
-  Warehouse, PackageCheck, ShieldAlert, UserCheck, Crown
+  Warehouse, PackageCheck, ShieldAlert, UserCheck, Crown, ListOrdered
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { VipBadge } from '@/components/VipBadge';
+import { isOrderVip, vipFirst } from '@/lib/vip';
 
 import { SidebarInfoBar } from '@/components/SidebarInfoBar';
 import { useAtOnly } from '@/hooks/useAtOnly';
