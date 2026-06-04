@@ -5,10 +5,11 @@ import { useAuth } from '@/hooks/useAuth';
 import {
   ClipboardList, Users, MapPin, Banknote, AlertCircle,
   Clock, TrendingUp, FileText, CalendarDays, CircleDot, Inbox, Package, ChevronDown,
-  Warehouse, PackageCheck, ShieldAlert, UserCheck, Crown
+  Warehouse, PackageCheck, ShieldAlert, UserCheck, Crown, ListOrdered
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { VipBadge } from '@/components/VipBadge';
+import { isOrderVip, vipFirst } from '@/lib/vip';
 
 import { SidebarInfoBar } from '@/components/SidebarInfoBar';
 import { useAtOnly } from '@/hooks/useAtOnly';
@@ -149,6 +150,7 @@ export default function Dashboard() {
   const [financeRecords, setFinanceRecords] = useState<FinanceRecord[]>([]);
   const [activeSessions, setActiveSessions] = useState<ActiveSession[]>([]);
   const [securityIncidents, setSecurityIncidents] = useState<SecurityIncident[]>([]);
+  const [prioOrders, setPrioOrders] = useState<any[]>([]);
   const [shipmentFilter, setShipmentFilter] = useState<number | null>(14);
   const [shipmentLimit, setShipmentLimit] = useState<number | null>(10);
   const [shipmentSearch, setShipmentSearch] = useState('');
@@ -267,6 +269,12 @@ export default function Dashboard() {
             ])
           : [{ count: 0 }, { count: 0 }];
 
+        const prioRes = canSeeOrders
+          ? await (atOnly
+              ? supabase.from('orders').select('id, order_number, order_status, expected_shipment_date, is_vip, source_system, customers(company_name, contact_name, is_vip)').not('expected_shipment_date', 'is', null).in('order_status', ['overdue','Overdue','invoiced','Invoiced','open','Open','offen','Offen','approved','Approved']).eq('source_system', 'zoho_eu_2').order('expected_shipment_date', { ascending: true }).limit(10)
+              : supabase.from('orders').select('id, order_number, order_status, expected_shipment_date, is_vip, source_system, customers(company_name, contact_name, is_vip)').not('expected_shipment_date', 'is', null).in('order_status', ['overdue','Overdue','invoiced','Invoiced','open','Open','offen','Offen','approved','Approved']).order('expected_shipment_date', { ascending: true }).limit(10))
+          : { data: [] };
+
         setStats({
           freePoolDevices,
           leihgeraete,
@@ -282,6 +290,7 @@ export default function Dashboard() {
         setFinanceRecords(financeRes.data ?? []);
         setActiveSessions((sessionsRes.data ?? []) as any);
         setSecurityIncidents((incidentsRes.data ?? []) as any);
+        setPrioOrders(vipFirst((prioRes.data ?? []) as any[], isOrderVip));
       } catch (e: any) {
         setError('Daten konnten nicht geladen werden. Bitte versuchen Sie es erneut.');
       } finally {
@@ -333,6 +342,75 @@ export default function Dashboard() {
           <p className="text-sm text-destructive">{error}</p>
         </div>
       )}
+
+      {/* Prio-Liste */}
+      {canSeeOrders && (
+        <div className="rounded-xl border border-border bg-card card-glow overflow-hidden">
+          <div className="flex items-center justify-between p-5 border-b border-border">
+            <div className="flex items-center gap-2">
+              <ListOrdered className="w-4 h-4 text-primary" />
+              <h2 className="font-display font-semibold text-foreground">Prio-Liste</h2>
+              <span className="text-xs text-muted-foreground">Top 10 nach Liefertermin</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate('/prio-liste')}
+              className="text-xs text-primary hover:underline"
+            >
+              Alle anzeigen →
+            </button>
+          </div>
+          {loading ? (
+            <TableSkeleton rows={5} />
+          ) : prioOrders.length === 0 ? (
+            <EmptyState icon={Inbox} message="Keine Aufträge in der Prio-Liste." />
+          ) : (
+            <div className="divide-y divide-border">
+              {prioOrders.map((o: any) => {
+                const days = o.expected_shipment_date
+                  ? Math.ceil((new Date(o.expected_shipment_date).setHours(0,0,0,0) - new Date().setHours(0,0,0,0)) / 86400000)
+                  : null;
+                const dayLabel = days === null ? '—'
+                  : days < 0 ? `${Math.abs(days)} T überfällig`
+                  : days === 0 ? 'Heute'
+                  : days === 1 ? 'Morgen'
+                  : `in ${days} T`;
+                const dayColor = days === null ? 'text-muted-foreground'
+                  : days < 0 ? 'text-destructive'
+                  : days <= 7 ? 'text-[hsl(var(--warning))]'
+                  : days <= 21 ? 'text-primary'
+                  : 'text-[hsl(var(--success))]';
+                const vip = isOrderVip(o);
+                const name = o.customers?.company_name || o.customers?.contact_name || '—';
+                const displayNumber = o.source_system === 'zoho_eu_2' ? `${o.order_number}-AT` : o.order_number;
+                return (
+                  <button
+                    key={o.id}
+                    type="button"
+                    onClick={() => navigate(`/auftraege/${o.id}`)}
+                    className="w-full text-left flex items-center justify-between gap-3 p-4 hover:bg-secondary/30 transition-colors"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      {vip && <VipBadge size="sm" />}
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium text-foreground truncate">{displayNumber}</div>
+                        <div className="text-xs text-muted-foreground truncate">{name}</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <span className="text-xs text-muted-foreground tabular-nums">{formatDate(o.expected_shipment_date)}</span>
+                      <span className={`text-xs font-semibold tabular-nums ${dayColor}`}>{dayLabel}</span>
+                      <StatusBadge status={o.order_status || '—'} />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+
 
       {/* VIP Status */}
       {canSeeCustomers && (
