@@ -137,7 +137,7 @@ export default function AlixFlex() {
   const sorted = useMemo(() => {
     const arr = [...filtered];
     const dir = sortDir === 'asc' ? 1 : -1;
-    const dateKeys = new Set(['start_date', 'next_invoice_date', 'last_sent_date']);
+    const dateKeys = new Set(['start_date', 'next_invoice_date', 'last_sent_date', 'created_at']);
     const numKeys = new Set(['total', 'repeat_every']);
     arr.sort((a, b) => {
       const av = a[sortKey] as any;
