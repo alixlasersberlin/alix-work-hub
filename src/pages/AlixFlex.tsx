@@ -272,16 +272,31 @@ export default function AlixFlex() {
             <table className="w-full text-sm">
               <thead className="bg-muted/30 text-xs uppercase text-muted-foreground">
                 <tr>
-                  <th className="text-left px-3 py-3 font-medium">Quelle</th>
-                  <th className="text-left px-3 py-3 font-medium">Profil</th>
-                  <th className="text-left px-3 py-3 font-medium">Referenz</th>
-                  <th className="text-left px-3 py-3 font-medium">Kunde</th>
-                  <th className="text-left px-3 py-3 font-medium">Gerät</th>
-                  <th className="text-left px-3 py-3 font-medium">Frequenz</th>
-                  <th className="text-left px-3 py-3 font-medium">Start</th>
-                  <th className="text-left px-3 py-3 font-medium">Nächste</th>
-                  <th className="text-right px-3 py-3 font-medium">Betrag</th>
-                  <th className="text-left px-3 py-3 font-medium">Status</th>
+                  {([
+                    ['source_system', 'Quelle', 'left'],
+                    ['recurrence_name', 'Profil', 'left'],
+                    ['reference_number', 'Referenz', 'left'],
+                    ['company_name', 'Kunde', 'left'],
+                    ['device_name', 'Gerät', 'left'],
+                    ['recurrence_frequency', 'Frequenz', 'left'],
+                    ['start_date', 'Start', 'left'],
+                    ['next_invoice_date', 'Nächste', 'left'],
+                    ['total', 'Betrag', 'right'],
+                    ['status', 'Status', 'left'],
+                  ] as [keyof Row, string, 'left' | 'right'][]).map(([key, label, align]) => (
+                    <th
+                      key={key as string}
+                      onClick={() => toggleSort(key)}
+                      className={`px-3 py-3 font-medium cursor-pointer select-none hover:text-foreground transition-colors ${align === 'right' ? 'text-right' : 'text-left'}`}
+                    >
+                      <span className={`inline-flex items-center gap-1 ${align === 'right' ? 'flex-row-reverse' : ''}`}>
+                        {label}
+                        {sortKey === key
+                          ? (sortDir === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)
+                          : <ArrowUpDown className="w-3 h-3 opacity-40" />}
+                      </span>
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
