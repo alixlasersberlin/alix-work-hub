@@ -280,6 +280,36 @@ export default function AlixFlex() {
                 <SelectItem value="15">15. des Monats</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={dateRangeFilter} onValueChange={setDateRangeFilter}>
+              <SelectTrigger className="w-[180px]"><SelectValue placeholder="Zeitraum" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Zeiträume</SelectItem>
+                <SelectItem value="current_month">Laufender Monat</SelectItem>
+                <SelectItem value="last_month">Letzter Monat</SelectItem>
+                <SelectItem value="last_3_months">3 Monate</SelectItem>
+                <SelectItem value="current_year">Laufendes Jahr</SelectItem>
+                <SelectItem value="last_year">Vorjahr</SelectItem>
+                <SelectItem value="custom">Freie Eingabe</SelectItem>
+              </SelectContent>
+            </Select>
+            {dateRangeFilter === 'custom' && (
+              <>
+                <Input
+                  type="date"
+                  value={customFrom}
+                  onChange={(e) => setCustomFrom(e.target.value)}
+                  className="w-[160px]"
+                  aria-label="Von"
+                />
+                <Input
+                  type="date"
+                  value={customTo}
+                  onChange={(e) => setCustomTo(e.target.value)}
+                  className="w-[160px]"
+                  aria-label="Bis"
+                />
+              </>
+            )}
             <Select value={String(pageSize)} onValueChange={(v) => setPageSize(v === 'all' ? 'all' : (Number(v) as PageSize))}>
               <SelectTrigger className="w-[110px]"><SelectValue /></SelectTrigger>
               <SelectContent>
