@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { PageHeader, PageLoading, PageError, DataCard } from '@/components/PageShell';
-import { Zap, RefreshCw, Search } from 'lucide-react';
+import { Zap, RefreshCw, Search, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -65,6 +66,26 @@ export default function AlixFlex() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sourceFilter, setSourceFilter] = useState<string>('all');
   const [importing, setImporting] = useState(false);
+  const [detailId, setDetailId] = useState<string | null>(null);
+  const [detail, setDetail] = useState<any | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+
+  const openDetail = async (id: string) => {
+    setDetailId(id);
+    setDetail(null);
+    setDetailLoading(true);
+    const { data, error } = await supabase
+      .from('zoho_recurring_profiles')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+    if (error) {
+      toast({ title: 'Fehler beim Laden', description: error.message, variant: 'destructive' });
+    } else {
+      setDetail(data);
+    }
+    setDetailLoading(false);
+  };
 
   const fetchRows = async () => {
     setLoading(true);
@@ -222,7 +243,11 @@ export default function AlixFlex() {
                   </tr>
                 ) : (
                   visible.map((r) => (
-                    <tr key={r.id} className="border-t border-border hover:bg-muted/20">
+                    <tr
+                      key={r.id}
+                      onClick={() => openDetail(r.id)}
+                      className="border-t border-border hover:bg-muted/30 cursor-pointer transition-colors"
+                    >
                       <td className="px-3 py-3 whitespace-nowrap">{sourceLabel(r.source_system)}</td>
                       <td className="px-3 py-3 font-medium">{r.recurrence_name ?? '–'}</td>
                       <td className="px-3 py-3">{r.reference_number ?? '–'}</td>
@@ -245,6 +270,89 @@ export default function AlixFlex() {
           </div>
         </DataCard>
       )}
+
+      <Dialog open={!!detailId} onOpenChange={(o) => { if (!o) { setDetailId(null); setDetail(null); } }}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Zap className="w-5 h-5 text-primary" />
+              {detail?.recurrence_name ?? 'Stammdaten'}
+            </DialogTitle>
+            <DialogDescription>
+              {detail ? `${sourceLabel(detail.source_system)} • ${detail.reference_number ?? '–'}` : 'Lädt…'}
+            </DialogDescription>
+          </DialogHeader>
+
+          {detailLoading || !detail ? (
+            <div className="py-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
+          ) : (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                <Field label="Kunde" value={detail.company_name || detail.customer_name} />
+                <Field label="E-Mail" value={detail.email} />
+                <Field label="Verkäufer" value={detail.salesperson_name} />
+                <Field label="Status">
+                  <Badge variant="outline" className={statusVariant(detail.status)}>{detail.status ?? '–'}</Badge>
+                </Field>
+                <Field label="Frequenz" value={`${detail.recurrence_frequency ?? '–'}${detail.repeat_every ? ` × ${detail.repeat_every}` : ''}`} />
+                <Field label="Gerät" value={detail.device_name} />
+                <Field label="Start" value={fmtDate(detail.start_date)} />
+                <Field label="Ende" value={fmtDate(detail.end_date)} />
+                <Field label="Nächste Rechnung" value={fmtDate(detail.next_invoice_date)} />
+                <Field label="Zuletzt versendet" value={fmtDate(detail.last_sent_date)} />
+                <Field label="Netto" value={fmtMoney(detail.sub_total, detail.currency)} />
+                <Field label="Gesamt" value={fmtMoney(detail.total, detail.currency)} />
+              </div>
+
+              {Array.isArray(detail.line_items) && detail.line_items.length > 0 && (
+                <div>
+                  <div className="text-xs uppercase text-muted-foreground mb-2">Positionen</div>
+                  <div className="rounded-lg border border-border overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead className="bg-muted/30 text-xs uppercase text-muted-foreground">
+                        <tr>
+                          <th className="text-left px-3 py-2">Name</th>
+                          <th className="text-right px-3 py-2">Menge</th>
+                          <th className="text-right px-3 py-2">Preis</th>
+                          <th className="text-right px-3 py-2">Summe</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {detail.line_items.map((li: any, i: number) => (
+                          <tr key={i} className="border-t border-border">
+                            <td className="px-3 py-2">{li.name ?? li.item_name ?? li.description ?? '–'}</td>
+                            <td className="px-3 py-2 text-right tabular-nums">{li.quantity ?? '–'}</td>
+                            <td className="px-3 py-2 text-right tabular-nums">{fmtMoney(li.rate ?? li.price ?? null, detail.currency)}</td>
+                            <td className="px-3 py-2 text-right tabular-nums">{fmtMoney(li.item_total ?? li.total ?? null, detail.currency)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {isAdmin && detail.raw_data && (
+                <details className="text-xs">
+                  <summary className="cursor-pointer text-muted-foreground hover:text-foreground">Rohdaten (Zoho)</summary>
+                  <pre className="mt-2 p-3 bg-muted/30 rounded-lg overflow-x-auto max-h-96">
+                    {JSON.stringify(detail.raw_data, null, 2)}
+                  </pre>
+                </details>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function Field({ label, value, children }: { label: string; value?: string | number | null; children?: React.ReactNode }) {
+  return (
+    <div>
+      <div className="text-xs uppercase text-muted-foreground">{label}</div>
+      <div className="mt-0.5 font-medium">{children ?? (value ?? '–')}</div>
     </div>
   );
 }
