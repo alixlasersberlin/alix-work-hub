@@ -133,7 +133,29 @@ export default function AlixFlex() {
     return res;
   }, [rows, search, statusFilter, sourceFilter, billingRunFilter]);
 
-  const visible = useMemo(() => pageSize === 'all' ? filtered : filtered.slice(0, pageSize), [filtered, pageSize]);
+  const sorted = useMemo(() => {
+    const arr = [...filtered];
+    const dir = sortDir === 'asc' ? 1 : -1;
+    const dateKeys = new Set(['start_date', 'next_invoice_date', 'last_sent_date']);
+    const numKeys = new Set(['total', 'repeat_every']);
+    arr.sort((a, b) => {
+      const av = a[sortKey] as any;
+      const bv = b[sortKey] as any;
+      if (av == null && bv == null) return 0;
+      if (av == null) return 1;
+      if (bv == null) return -1;
+      if (dateKeys.has(sortKey as string)) {
+        return (new Date(av).getTime() - new Date(bv).getTime()) * dir;
+      }
+      if (numKeys.has(sortKey as string)) {
+        return ((av as number) - (bv as number)) * dir;
+      }
+      return String(av).localeCompare(String(bv), 'de', { numeric: true }) * dir;
+    });
+    return arr;
+  }, [filtered, sortKey, sortDir]);
+
+  const visible = useMemo(() => pageSize === 'all' ? sorted : sorted.slice(0, pageSize), [sorted, pageSize]);
 
   const runImport = async (source: 'zoho_eu_1' | 'zoho_eu_2') => {
     let page = 1;
