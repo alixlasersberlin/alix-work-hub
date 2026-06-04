@@ -377,6 +377,10 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* Laufleiste (Prio-Ticker) */}
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <AuroraPrioTicker />
+      </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
