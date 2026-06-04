@@ -169,6 +169,9 @@ const navItems: NavItem[] = [
       { path: '/operation/systemwartung', label: 'Systemwartung', icon: AlertTriangle, roles: ['Super Admin'] },
     ],
   },
+  {
+    path: '/mdr-ce', label: 'MDR CE', icon: ShieldCheck, roles: null,
+  },
 
 ];
 
