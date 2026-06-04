@@ -179,52 +179,55 @@ export default function AlixFlex() {
       />
 
       <DataCard className="p-4 mb-4">
-        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
-          <div className="relative flex-1">
+        <div className="flex flex-col gap-3">
+          <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Suche: Profil, Kunde, Firma, Gerät, Referenz…"
-              className="pl-9"
+              className="pl-9 w-full"
             />
           </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[150px]"><SelectValue placeholder="Status" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Alle Status</SelectItem>
-              <SelectItem value="active">Aktiv</SelectItem>
-              <SelectItem value="stopped">Gestoppt</SelectItem>
-              <SelectItem value="expired">Abgelaufen</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={sourceFilter} onValueChange={setSourceFilter}>
-            <SelectTrigger className="w-[160px]"><SelectValue placeholder="Quelle" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Alle Quellen</SelectItem>
-              <SelectItem value="zoho_eu_1">🇩🇪 Alix Deutschland</SelectItem>
-              <SelectItem value="zoho_eu_2">🇦🇹 Alix Austria</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={billingRunFilter} onValueChange={setBillingRunFilter}>
-            <SelectTrigger className="w-[180px]"><SelectValue placeholder="Buchungslauf" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Alle Buchungsläufe</SelectItem>
-              <SelectItem value="1">1. des Monats</SelectItem>
-              <SelectItem value="15">15. des Monats</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={String(pageSize)} onValueChange={(v) => setPageSize(v === 'all' ? 'all' : (Number(v) as PageSize))}>
-            <SelectTrigger className="w-[110px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="10">10</SelectItem>
-              <SelectItem value="20">20</SelectItem>
-              <SelectItem value="50">50</SelectItem>
-              <SelectItem value="100">100</SelectItem>
-              <SelectItem value="all">Alle</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[150px]"><SelectValue placeholder="Status" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Status</SelectItem>
+                <SelectItem value="active">Aktiv</SelectItem>
+                <SelectItem value="stopped">Gestoppt</SelectItem>
+                <SelectItem value="expired">Abgelaufen</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={sourceFilter} onValueChange={setSourceFilter}>
+              <SelectTrigger className="w-[160px]"><SelectValue placeholder="Quelle" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Quellen</SelectItem>
+                <SelectItem value="zoho_eu_1">🇩🇪 Alix Deutschland</SelectItem>
+                <SelectItem value="zoho_eu_2">🇦🇹 Alix Austria</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={billingRunFilter} onValueChange={setBillingRunFilter}>
+              <SelectTrigger className="w-[180px]"><SelectValue placeholder="Buchungslauf" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Buchungsläufe</SelectItem>
+                <SelectItem value="1">1. des Monats</SelectItem>
+                <SelectItem value="15">15. des Monats</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={String(pageSize)} onValueChange={(v) => setPageSize(v === 'all' ? 'all' : (Number(v) as PageSize))}>
+              <SelectTrigger className="w-[110px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+                <SelectItem value="100">100</SelectItem>
+                <SelectItem value="all">Alle</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
+
         <div className="mt-2 text-xs text-muted-foreground">
           {filtered.length} Profile • angezeigt: {visible.length}
         </div>
