@@ -206,6 +206,14 @@ export default function AlixFlex() {
               <SelectItem value="zoho_eu_2">🇦🇹 Alix Austria</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={billingRunFilter} onValueChange={setBillingRunFilter}>
+            <SelectTrigger className="w-[180px]"><SelectValue placeholder="Buchungslauf" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle Buchungsläufe</SelectItem>
+              <SelectItem value="1">1. des Monats</SelectItem>
+              <SelectItem value="15">15. des Monats</SelectItem>
+            </SelectContent>
+          </Select>
           <Select value={String(pageSize)} onValueChange={(v) => setPageSize(v === 'all' ? 'all' : (Number(v) as PageSize))}>
             <SelectTrigger className="w-[110px]"><SelectValue /></SelectTrigger>
             <SelectContent>
