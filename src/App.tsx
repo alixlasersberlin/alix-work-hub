@@ -38,6 +38,7 @@ const RoutePlanForm = lazy(() => import("./pages/RoutePlanForm"));
 const RoutePlanningSettings = lazy(() => import("./pages/RoutePlanningSettings"));
 const Finance = lazy(() => import("./pages/Finance"));
 const Ratenzahler = lazy(() => import("./pages/Ratenzahler"));
+const AlixFlex = lazy(() => import("./pages/AlixFlex"));
 const Invoices = lazy(() => import("./pages/Invoices"));
 const OffenePosten = lazy(() => import("./pages/OffenePosten"));
 const ZohoUnpaidInvoices = lazy(() => import("./pages/ZohoUnpaidInvoices"));
@@ -262,6 +263,7 @@ function AppRoutes() {
           <Route path="/tourenplanung/:id/bearbeiten" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Tourenplanung']}><RoutePlanForm /></ProtectedRoute>} />
           <Route path="/finance" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Finance /></ProtectedRoute>} />
           <Route path="/finance/ratenzahler" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Ratenzahler /></ProtectedRoute>} />
+          <Route path="/finance/alix-flex" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><AlixFlex /></ProtectedRoute>} />
           <Route path="/finance/rechnungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Invoices /></ProtectedRoute>} />
           <Route path="/finance/offene-posten" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><OffenePosten /></ProtectedRoute>} />
           <Route path="/finance/unpaid-zoho" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><ZohoUnpaidInvoices /></ProtectedRoute>} />
