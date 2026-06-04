@@ -189,6 +189,8 @@ const navItems: NavItem[] = [
 export default function AppLayout() {
   const { profile, roles, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { variant } = useDesignVariant();
+  const isAurora = variant === 'aurora';
   const location = useLocation();
   // Desktop: eingeklappt? (schmale Icon-Leiste)
   const [collapsed, setCollapsed] = useState(false);
