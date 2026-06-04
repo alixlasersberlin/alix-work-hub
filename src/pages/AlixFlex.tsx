@@ -65,6 +65,7 @@ export default function AlixFlex() {
   const [pageSize, setPageSize] = useState<PageSize>(50);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sourceFilter, setSourceFilter] = useState<string>('all');
+  const [billingRunFilter, setBillingRunFilter] = useState<string>('all'); // 'all' | '1' | '15'
   const [importing, setImporting] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [detail, setDetail] = useState<any | null>(null);
@@ -107,6 +108,15 @@ export default function AlixFlex() {
     let res = rows;
     if (statusFilter !== 'all') res = res.filter((r) => (r.status ?? '').toLowerCase() === statusFilter);
     if (sourceFilter !== 'all') res = res.filter((r) => r.source_system === sourceFilter);
+    if (billingRunFilter !== 'all') {
+      const targetDay = Number(billingRunFilter);
+      res = res.filter((r) => {
+        const d = r.next_invoice_date ?? r.start_date;
+        if (!d) return false;
+        const day = new Date(d).getDate();
+        return day === targetDay;
+      });
+    }
     if (q) {
       res = res.filter((r) =>
         [r.recurrence_name, r.reference_number, r.customer_name, r.company_name, r.device_name]
@@ -114,7 +124,7 @@ export default function AlixFlex() {
       );
     }
     return res;
-  }, [rows, search, statusFilter, sourceFilter]);
+  }, [rows, search, statusFilter, sourceFilter, billingRunFilter]);
 
   const visible = useMemo(() => pageSize === 'all' ? filtered : filtered.slice(0, pageSize), [filtered, pageSize]);
 
