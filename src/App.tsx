@@ -107,6 +107,7 @@ const BugCapaReklamationen = lazy(() => import("./pages/BugCapa/Reklamationen"))
 const BugCapaAudit = lazy(() => import("./pages/BugCapa/AuditFindings"));
 const BugCapaMassnahmen = lazy(() => import("./pages/BugCapa/Massnahmen"));
 const BugCapaBerichte = lazy(() => import("./pages/BugCapa/Berichte"));
+const MdrCe = lazy(() => import("./pages/MdrCe"));
 const ReviewsLayout = lazy(() => import("./pages/Reviews/_layout"));
 const ReviewsOverview = lazy(() => import("./pages/Reviews/Overview"));
 const ReviewsDelivered = lazy(() => import("./pages/Reviews/DeliveredOrders"));
@@ -314,6 +315,8 @@ function AppRoutes() {
             <Route path="massnahmen" element={<BugCapaMassnahmen />} />
             <Route path="berichte" element={<BugCapaBerichte />} />
           </Route>
+
+          <Route path="/mdr-ce" element={<ProtectedRoute requiredRoles={['Super Admin']}><MdrCe /></ProtectedRoute>} />
 
           <Route path="/bewertungen" element={<ProtectedRoute><ReviewsLayout /></ProtectedRoute>}>
             <Route index element={<ReviewsOverview />} />
