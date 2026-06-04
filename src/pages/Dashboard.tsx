@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { VipBadge } from '@/components/VipBadge';
 
 import { SidebarInfoBar } from '@/components/SidebarInfoBar';
+import AuroraPrioTicker from '@/components/AuroraPrioTicker';
 import { useAtOnly } from '@/hooks/useAtOnly';
 
 interface Stats {
