@@ -42,7 +42,7 @@ export default function SubmittedReviews() {
     (async () => {
       const { data } = await (supabase as any)
         .from('reviews')
-        .select('*')
+        .select('id, order_id, customer_id, customer_name, customer_email, order_number, product_name, delivery_date, rating_delivery, rating_driver_friendliness, training_answer, rating_training_text, improvement_text, token_expires_at, invitation_sent_at, invitation_sent_by, invitation_status, submitted_at, status, created_at, updated_at, closed_at, closed_by, closed_reason')
         .not('submitted_at', 'is', null)
         .order('submitted_at', { ascending: false })
         .limit(1000);
