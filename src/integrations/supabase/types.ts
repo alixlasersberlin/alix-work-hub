@@ -2430,6 +2430,93 @@ export type Database = {
         }
         Relationships: []
       }
+      zoho_recurring_profiles: {
+        Row: {
+          company_name: string | null
+          created_at: string
+          currency: string | null
+          customer_id: string | null
+          customer_name: string | null
+          device_name: string | null
+          email: string | null
+          end_date: string | null
+          id: string
+          last_sent_date: string | null
+          line_items: Json | null
+          next_invoice_date: string | null
+          raw_data: Json | null
+          recurrence_frequency: string | null
+          recurrence_name: string | null
+          reference_number: string | null
+          repeat_every: number | null
+          salesperson_name: string | null
+          source_system: string
+          start_date: string | null
+          status: string | null
+          sub_total: number | null
+          synced_at: string
+          total: number | null
+          updated_at: string
+          zoho_recurring_invoice_id: string
+        }
+        Insert: {
+          company_name?: string | null
+          created_at?: string
+          currency?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          device_name?: string | null
+          email?: string | null
+          end_date?: string | null
+          id?: string
+          last_sent_date?: string | null
+          line_items?: Json | null
+          next_invoice_date?: string | null
+          raw_data?: Json | null
+          recurrence_frequency?: string | null
+          recurrence_name?: string | null
+          reference_number?: string | null
+          repeat_every?: number | null
+          salesperson_name?: string | null
+          source_system: string
+          start_date?: string | null
+          status?: string | null
+          sub_total?: number | null
+          synced_at?: string
+          total?: number | null
+          updated_at?: string
+          zoho_recurring_invoice_id: string
+        }
+        Update: {
+          company_name?: string | null
+          created_at?: string
+          currency?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          device_name?: string | null
+          email?: string | null
+          end_date?: string | null
+          id?: string
+          last_sent_date?: string | null
+          line_items?: Json | null
+          next_invoice_date?: string | null
+          raw_data?: Json | null
+          recurrence_frequency?: string | null
+          recurrence_name?: string | null
+          reference_number?: string | null
+          repeat_every?: number | null
+          salesperson_name?: string | null
+          source_system?: string
+          start_date?: string | null
+          status?: string | null
+          sub_total?: number | null
+          synced_at?: string
+          total?: number | null
+          updated_at?: string
+          zoho_recurring_invoice_id?: string
+        }
+        Relationships: []
+      }
       zoho_unpaid_invoices: {
         Row: {
           balance: number | null
