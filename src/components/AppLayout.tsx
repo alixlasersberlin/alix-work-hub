@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Link, useLocation, Outlet } from 'react-router-dom';
+import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useAtOnly } from '@/hooks/useAtOnly';
 import { useTheme } from '@/hooks/useTheme';
@@ -167,9 +167,6 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    path: '/hilfe', label: 'HILFE', icon: HelpCircle, roles: null,
-  },
-  {
     path: '/operation', label: 'OPERATIONS', icon: Workflow, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Read Only Audit'],
     children: [
       { path: '/geraetetypen', label: 'Gerätetypen', icon: BarChart3, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance'] },
@@ -193,6 +190,7 @@ export default function AppLayout() {
   const { variant } = useDesignVariant();
   const isAurora = variant === 'aurora';
   const location = useLocation();
+  const navigate = useNavigate();
   // Desktop: eingeklappt? (schmale Icon-Leiste)
   const [collapsed, setCollapsed] = useState(false);
   // Mobile: Drawer offen?
@@ -904,6 +902,15 @@ export default function AppLayout() {
               title={collapsed ? "Menü erweitern" : "Menü einklappen"}
             >
               {collapsed ? <Menu className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+            </Button>
+            <Button
+              variant="ghost"
+              className="h-8 justify-start text-[14.5px] px-2 text-muted-foreground hover:text-foreground"
+              onClick={() => navigate('/hilfe')}
+              title="Hilfe"
+            >
+              <HelpCircle className="w-4 h-4" />
+              <span className="ml-1.5">Hilfe</span>
             </Button>
             <Button
               variant="ghost"
