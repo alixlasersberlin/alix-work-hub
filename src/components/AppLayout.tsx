@@ -13,6 +13,8 @@ import WelcomeDialog from '@/components/WelcomeDialog';
 import LeoWelcomeDialog from '@/components/LeoWelcomeDialog';
 import DesignVariantSwitcher from '@/components/DesignVariantSwitcher';
 import AuroraPrioTicker from '@/components/AuroraPrioTicker';
+import AuroraTopNav from '@/components/AuroraTopNav';
+import { useDesignVariant } from '@/hooks/useDesignVariant';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import alixLogo from '@/assets/alix-logo-gold.png';
 
