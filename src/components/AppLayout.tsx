@@ -13,6 +13,8 @@ import WelcomeDialog from '@/components/WelcomeDialog';
 import LeoWelcomeDialog from '@/components/LeoWelcomeDialog';
 import DesignVariantSwitcher from '@/components/DesignVariantSwitcher';
 import AuroraPrioTicker from '@/components/AuroraPrioTicker';
+import AuroraTopNav from '@/components/AuroraTopNav';
+import { useDesignVariant } from '@/hooks/useDesignVariant';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import alixLogo from '@/assets/alix-logo-gold.png';
 
@@ -187,6 +189,8 @@ const navItems: NavItem[] = [
 export default function AppLayout() {
   const { profile, roles, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { variant } = useDesignVariant();
+  const isAurora = variant === 'aurora';
   const location = useLocation();
   // Desktop: eingeklappt? (schmale Icon-Leiste)
   const [collapsed, setCollapsed] = useState(false);
@@ -564,7 +568,9 @@ export default function AppLayout() {
           "fixed inset-y-0 left-0 z-50 w-[260px] pt-safe pb-safe pl-safe md:static md:translate-x-0 md:z-auto",
           mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
           // Desktop: collapsible Breite (eingeklappt fix, sonst per CSS-Var/Drag)
-          collapsed ? "md:w-[60px]" : "md:w-[var(--sb-w)]"
+          collapsed ? "md:w-[60px]" : "md:w-[var(--sb-w)]",
+          // Aurora: linke Sidebar auf Desktop komplett ausblenden (Menü liegt im Header)
+          isAurora && "md:hidden"
         )}>
         {/* Brand */}
         <div className={cn(
@@ -947,18 +953,29 @@ export default function AppLayout() {
             >
               <Menu className="w-5 h-5" />
             </Button>
-            {/* Desktop Collapse-Toggle */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-foreground hidden md:inline-flex"
-              onClick={() => setCollapsed(!collapsed)}
-              title={collapsed ? "Menü erweitern" : "Menü einklappen"}
-              aria-label={collapsed ? "Menü erweitern" : "Menü einklappen"}
-            >
-              {collapsed ? <Menu className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-            </Button>
+            {/* Desktop Collapse-Toggle (nicht im Aurora-Modus) */}
+            {!isAurora && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground hover:text-foreground hidden md:inline-flex"
+                onClick={() => setCollapsed(!collapsed)}
+                title={collapsed ? "Menü erweitern" : "Menü einklappen"}
+                aria-label={collapsed ? "Menü erweitern" : "Menü einklappen"}
+              >
+                {collapsed ? <Menu className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+              </Button>
+            )}
+            {isAurora && (
+              <Link to="/" className="hidden md:flex items-center gap-2 pr-2 mr-1 border-r border-border/60">
+                <img src={alixLogo} alt="Alix" className="h-5 w-auto" />
+              </Link>
+            )}
           </div>
+          {/* Aurora Top-Navigation */}
+          {isAurora && (
+            <AuroraTopNav items={visibleItems} labelWithCount={labelWithCount} />
+          )}
           <div className="flex items-center gap-2 sm:gap-4">
             <AuroraPrioTicker />
             <DesignVariantSwitcher inline />
