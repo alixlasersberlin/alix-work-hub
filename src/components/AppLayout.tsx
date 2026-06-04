@@ -893,12 +893,12 @@ export default function AppLayout() {
             </Button>
             <Button
               variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              className="h-8 justify-start text-[14.5px] px-2 text-muted-foreground hover:text-foreground"
               onClick={() => navigate('/bug-capa')}
-              title="BUG & CAPA ISO13485"
+              title="BUGS"
             >
               <Shield className="w-4 h-4" />
+              <span className="ml-1.5">BUGS</span>
             </Button>
             <Button
               variant="ghost"
