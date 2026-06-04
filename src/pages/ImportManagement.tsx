@@ -255,6 +255,46 @@ export default function ImportManagement() {
   const [invoiceProgress, setInvoiceProgress] = useState<{ page: number; imported: number; updated: number; failed: number; profiles: number } | null>(null);
   const [invoiceImportError, setInvoiceImportError] = useState<{ title: string; message?: string; retryable?: boolean; retryAfterSeconds?: number } | null>(null);
 
+  // ALIX FLEX (Recurring Profile Stammdaten) import state
+  const [flexImporting, setFlexImporting] = useState(false);
+  const [flexResult, setFlexResult] = useState<{ de: { imported: number; updated: number; failed: number }; at: { imported: number; updated: number; failed: number } } | null>(null);
+
+  async function handleFlexImport() {
+    setFlexImporting(true);
+    setFlexResult(null);
+    const runImport = async (source: 'zoho_eu_1' | 'zoho_eu_2') => {
+      let page = 1;
+      const totals = { imported: 0, updated: 0, failed: 0 };
+      for (let i = 0; i < 50; i++) {
+        const { data, error } = await supabase.functions.invoke('sync-zoho-recurring-profiles', {
+          body: { source_system: source, page, max_pages: 5, per_page: 100 },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        totals.imported += data?.imported ?? 0;
+        totals.updated += data?.updated ?? 0;
+        totals.failed += data?.failed ?? 0;
+        if (!data?.has_more) break;
+        page = (data?.last_page ?? page) + 1;
+      }
+      return totals;
+    };
+    try {
+      toast({ title: 'ALIX FLEX Import gestartet', description: 'Periodische Rechnungs-Stammdaten aus Zoho' });
+      const de = await runImport('zoho_eu_1');
+      const at = await runImport('zoho_eu_2');
+      setFlexResult({ de, at });
+      toast({
+        title: 'ALIX FLEX Import abgeschlossen',
+        description: `DE: ${de.imported}+ / ${de.updated}~ • AT: ${at.imported}+ / ${at.updated}~ • Fehler: ${de.failed + at.failed}`,
+      });
+    } catch (e: any) {
+      toast({ title: 'ALIX FLEX Import fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
+    } finally {
+      setFlexImporting(false);
+    }
+  }
+
   function getInvoiceDateFrom(): string {
     const today = new Date();
     const fmt = (d: Date) => d.toISOString().slice(0, 10);
@@ -1611,6 +1651,49 @@ export default function ImportManagement() {
                 <div className="flex items-start gap-2 text-xs text-muted-foreground pt-2 border-t border-border">
                   <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
                   <p>Der automatische Import läuft täglich um 23:45 Uhr (UTC) und erfasst alle Rechnungen seit dem 01.01.2025.</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* ============ ALIX FLEX (Recurring Profiles / Stammdaten) ============ */}
+            <Card className="border-border">
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Zap className="w-5 h-5 text-primary" />
+                  ALIX FLEX – Periodische Rechnungs-Stammdaten
+                </CardTitle>
+                <CardDescription>
+                  Importiert alle wiederkehrenden Rechnungsprofile (Vorlagen) aus Zoho Books für Alix Deutschland und Alix Austria. Zusätzlich läuft automatisch alle 3 Stunden ein Sync.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <Button
+                    onClick={handleFlexImport}
+                    disabled={flexImporting}
+                    className="gold-gradient text-primary-foreground"
+                  >
+                    {flexImporting ? (
+                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Importiere…</>
+                    ) : (
+                      <><Play className="w-4 h-4 mr-2" /> ALIX FLEX importieren</>
+                    )}
+                  </Button>
+                  <span className="text-xs text-muted-foreground">
+                    Synct DE (zoho_eu_1) und AT (zoho_eu_2) nacheinander.
+                  </span>
+                </div>
+
+                {flexResult && (
+                  <div className="rounded-lg border border-border bg-secondary/40 p-4 space-y-2 text-sm">
+                    <div>🇩🇪 Alix Deutschland: <strong className="text-[hsl(var(--success))]">{flexResult.de.imported}</strong> neu • <strong>{flexResult.de.updated}</strong> aktualisiert • <strong className="text-destructive">{flexResult.de.failed}</strong> Fehler</div>
+                    <div>🇦🇹 Alix Austria: <strong className="text-[hsl(var(--success))]">{flexResult.at.imported}</strong> neu • <strong>{flexResult.at.updated}</strong> aktualisiert • <strong className="text-destructive">{flexResult.at.failed}</strong> Fehler</div>
+                  </div>
+                )}
+
+                <div className="flex items-start gap-2 text-xs text-muted-foreground pt-2 border-t border-border">
+                  <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <p>Automatischer Sync alle 3 Stunden über pg_cron. Daten werden in <code>zoho_recurring_profiles</code> gespeichert und unter Finance → ALIX FLEX angezeigt.</p>
                 </div>
               </CardContent>
             </Card>
