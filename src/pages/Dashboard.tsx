@@ -290,6 +290,7 @@ export default function Dashboard() {
         setFinanceRecords(financeRes.data ?? []);
         setActiveSessions((sessionsRes.data ?? []) as any);
         setSecurityIncidents((incidentsRes.data ?? []) as any);
+        setPrioOrders(vipFirst((prioRes.data ?? []) as any[], isOrderVip));
       } catch (e: any) {
         setError('Daten konnten nicht geladen werden. Bitte versuchen Sie es erneut.');
       } finally {
