@@ -167,9 +167,6 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    path: '/hilfe', label: 'HILFE', icon: HelpCircle, roles: null,
-  },
-  {
     path: '/operation', label: 'OPERATIONS', icon: Workflow, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Read Only Audit'],
     children: [
       { path: '/geraetetypen', label: 'Gerätetypen', icon: BarChart3, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance'] },
