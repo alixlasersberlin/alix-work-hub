@@ -67,6 +67,9 @@ export default function AlixFlex() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sourceFilter, setSourceFilter] = useState<string>('all');
   const [billingRunFilter, setBillingRunFilter] = useState<string>('all'); // 'all' | '1' | '15'
+  const [dateRangeFilter, setDateRangeFilter] = useState<string>('all'); // 'all'|'current_month'|'last_month'|'last_3_months'|'current_year'|'last_year'|'custom'
+  const [customFrom, setCustomFrom] = useState<string>('');
+  const [customTo, setCustomTo] = useState<string>('');
   const [importing, setImporting] = useState(false);
   const [sortKey, setSortKey] = useState<keyof Row>('created_at');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
