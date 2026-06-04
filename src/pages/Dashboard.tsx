@@ -347,12 +347,18 @@ export default function Dashboard() {
       {/* Prio-Liste */}
       {canSeeOrders && (
         <div className="rounded-xl border border-border bg-card card-glow overflow-hidden">
-          <div className="flex items-center justify-between p-5 border-b border-border">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between p-5">
+            <button
+              type="button"
+              onClick={() => setPrioOpen(o => !o)}
+              className="flex items-center gap-2 flex-1 text-left"
+              aria-expanded={prioOpen}
+            >
+              <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${prioOpen ? '' : '-rotate-90'}`} />
               <ListOrdered className="w-4 h-4 text-primary" />
               <h2 className="font-display font-semibold text-foreground">Prio-Liste</h2>
               <span className="text-xs text-muted-foreground">Top 5 nach Liefertermin</span>
-            </div>
+            </button>
             <button
               type="button"
               onClick={() => navigate('/prio-liste')}
@@ -361,51 +367,55 @@ export default function Dashboard() {
               Alle anzeigen →
             </button>
           </div>
-          {loading ? (
-            <TableSkeleton rows={5} />
-          ) : prioOrders.length === 0 ? (
-            <EmptyState icon={Inbox} message="Keine Aufträge in der Prio-Liste." />
-          ) : (
-            <div className="divide-y divide-border">
-              {prioOrders.map((o: any) => {
-                const days = o.expected_shipment_date
-                  ? Math.ceil((new Date(o.expected_shipment_date).setHours(0,0,0,0) - new Date().setHours(0,0,0,0)) / 86400000)
-                  : null;
-                const dayLabel = days === null ? '—'
-                  : days < 0 ? `${Math.abs(days)} T überfällig`
-                  : days === 0 ? 'Heute'
-                  : days === 1 ? 'Morgen'
-                  : `in ${days} T`;
-                const dayColor = days === null ? 'text-muted-foreground'
-                  : days < 0 ? 'text-destructive'
-                  : days <= 7 ? 'text-[hsl(var(--warning))]'
-                  : days <= 21 ? 'text-primary'
-                  : 'text-[hsl(var(--success))]';
-                const vip = isOrderVip(o);
-                const name = o.customers?.company_name || o.customers?.contact_name || '—';
-                const displayNumber = o.source_system === 'zoho_eu_2' ? `${o.order_number}-AT` : o.order_number;
-                return (
-                  <button
-                    key={o.id}
-                    type="button"
-                    onClick={() => navigate(`/auftraege/${o.id}`)}
-                    className="w-full text-left flex items-center justify-between gap-3 p-4 hover:bg-secondary/30 transition-colors"
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      {vip && <VipBadge size="sm" />}
-                      <div className="min-w-0">
-                        <div className="text-sm font-medium text-foreground truncate">{displayNumber}</div>
-                        <div className="text-xs text-muted-foreground truncate">{name}</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 flex-shrink-0">
-                      <span className="text-xs text-muted-foreground tabular-nums">{formatDate(o.expected_shipment_date)}</span>
-                      <span className={`text-xs font-semibold tabular-nums ${dayColor}`}>{dayLabel}</span>
-                      <StatusBadge status={o.order_status || '—'} />
-                    </div>
-                  </button>
-                );
-              })}
+          {prioOpen && (
+            <div className="border-t border-border">
+              {loading ? (
+                <TableSkeleton rows={5} />
+              ) : prioOrders.length === 0 ? (
+                <EmptyState icon={Inbox} message="Keine Aufträge in der Prio-Liste." />
+              ) : (
+                <div className="divide-y divide-border">
+                  {prioOrders.map((o: any) => {
+                    const days = o.expected_shipment_date
+                      ? Math.ceil((new Date(o.expected_shipment_date).setHours(0,0,0,0) - new Date().setHours(0,0,0,0)) / 86400000)
+                      : null;
+                    const dayLabel = days === null ? '—'
+                      : days < 0 ? `${Math.abs(days)} T überfällig`
+                      : days === 0 ? 'Heute'
+                      : days === 1 ? 'Morgen'
+                      : `in ${days} T`;
+                    const dayColor = days === null ? 'text-muted-foreground'
+                      : days < 0 ? 'text-destructive'
+                      : days <= 7 ? 'text-[hsl(var(--warning))]'
+                      : days <= 21 ? 'text-primary'
+                      : 'text-[hsl(var(--success))]';
+                    const vip = isOrderVip(o);
+                    const name = o.customers?.company_name || o.customers?.contact_name || '—';
+                    const displayNumber = o.source_system === 'zoho_eu_2' ? `${o.order_number}-AT` : o.order_number;
+                    return (
+                      <button
+                        key={o.id}
+                        type="button"
+                        onClick={() => navigate(`/auftraege/${o.id}`)}
+                        className="w-full text-left flex items-center justify-between gap-3 p-4 hover:bg-secondary/30 transition-colors"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          {vip && <VipBadge size="sm" />}
+                          <div className="min-w-0">
+                            <div className="text-sm font-medium text-foreground truncate">{displayNumber}</div>
+                            <div className="text-xs text-muted-foreground truncate">{name}</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 flex-shrink-0">
+                          <span className="text-xs text-muted-foreground tabular-nums">{formatDate(o.expected_shipment_date)}</span>
+                          <span className={`text-xs font-semibold tabular-nums ${dayColor}`}>{dayLabel}</span>
+                          <StatusBadge status={o.order_status || '—'} />
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
         </div>
