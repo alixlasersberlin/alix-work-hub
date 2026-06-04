@@ -26,6 +26,7 @@ type Row = {
   total: number | null;
   currency: string | null;
   device_name: string | null;
+  created_at: string | null;
 };
 
 type PageSize = 10 | 20 | 50 | 100 | 'all';
@@ -67,7 +68,7 @@ export default function AlixFlex() {
   const [sourceFilter, setSourceFilter] = useState<string>('all');
   const [billingRunFilter, setBillingRunFilter] = useState<string>('all'); // 'all' | '1' | '15'
   const [importing, setImporting] = useState(false);
-  const [sortKey, setSortKey] = useState<keyof Row>('start_date');
+  const [sortKey, setSortKey] = useState<keyof Row>('created_at');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [detailId, setDetailId] = useState<string | null>(null);
   const [detail, setDetail] = useState<any | null>(null);
@@ -100,8 +101,8 @@ export default function AlixFlex() {
     setError(null);
     const { data, error } = await supabase
       .from('zoho_recurring_profiles')
-      .select('id, source_system, recurrence_name, reference_number, status, customer_name, company_name, recurrence_frequency, repeat_every, start_date, next_invoice_date, last_sent_date, total, currency, device_name')
-      .order('start_date', { ascending: false, nullsFirst: false })
+      .select('id, source_system, recurrence_name, reference_number, status, customer_name, company_name, recurrence_frequency, repeat_every, start_date, next_invoice_date, last_sent_date, total, currency, device_name, created_at')
+      .order('created_at', { ascending: false, nullsFirst: false })
       .limit(5000);
     if (error) { setError(error.message); setRows([]); }
     else setRows((data ?? []) as Row[]);
@@ -136,7 +137,7 @@ export default function AlixFlex() {
   const sorted = useMemo(() => {
     const arr = [...filtered];
     const dir = sortDir === 'asc' ? 1 : -1;
-    const dateKeys = new Set(['start_date', 'next_invoice_date', 'last_sent_date']);
+    const dateKeys = new Set(['start_date', 'next_invoice_date', 'last_sent_date', 'created_at']);
     const numKeys = new Set(['total', 'repeat_every']);
     arr.sort((a, b) => {
       const av = a[sortKey] as any;
