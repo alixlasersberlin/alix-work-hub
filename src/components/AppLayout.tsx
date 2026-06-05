@@ -110,6 +110,9 @@ const navItems: NavItem[] = [
     ],
   },
   {
+    path: '/reparaturannahme', label: 'REPARATURANNAHME', icon: Wrench, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'Österreich'],
+  },
+  {
     path: '/tourenplanung', label: 'TOURENPLANUNG', icon: MapPin, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'Österreich'],
     children: [
       { path: '/tourenplanung', label: 'Übersicht', icon: MapPin, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'Österreich'] },
@@ -126,9 +129,7 @@ const navItems: NavItem[] = [
       },
     ],
   },
-  {
-    path: '/reparaturannahme', label: 'REPARATURANNAHME', icon: Wrench, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'Österreich'],
-  },
+
 
 
   {
