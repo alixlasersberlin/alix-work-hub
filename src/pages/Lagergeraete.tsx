@@ -1546,17 +1546,43 @@ export default function Lagergeraete({
                     />
                   </TableHead>
                 )}
-                <TableHead onClick={() => toggleSort('serial_number')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Seriennummer <SortIcon field="serial_number" /></span></TableHead>
-                <TableHead onClick={() => toggleSort('model_name')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Modell <SortIcon field="model_name" /></span></TableHead>
-                <TableHead onClick={() => toggleSort('entry_date')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Eingangsdatum <SortIcon field="entry_date" /></span></TableHead>
-                <TableHead onClick={() => toggleSort('order_number')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Reservierter Auftrag <SortIcon field="order_number" /></span></TableHead>
-                <TableHead onClick={() => toggleSort('status')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Status <SortIcon field="status" /></span></TableHead>
-                <TableHead onClick={() => toggleSort('notes')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Notizen (intern) <SortIcon field="notes" /></span></TableHead>
+                {filterType === 'Leihgerät' ? (
+                  <>
+                    <TableHead onClick={() => toggleSort('entry_date')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Datum <SortIcon field="entry_date" /></span></TableHead>
+                    <TableHead>Kunde</TableHead>
+                    <TableHead onClick={() => toggleSort('serial_number')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Seriennummer <SortIcon field="serial_number" /></span></TableHead>
+                    <TableHead onClick={() => toggleSort('model_name')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Modell <SortIcon field="model_name" /></span></TableHead>
+                    <TableHead onClick={() => toggleSort('status')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Status <SortIcon field="status" /></span></TableHead>
+                    <TableHead onClick={() => toggleSort('order_number')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Reservierter Auftrag <SortIcon field="order_number" /></span></TableHead>
+                    <TableHead>Notizen</TableHead>
+                  </>
+                ) : (
+                  <>
+                    <TableHead onClick={() => toggleSort('serial_number')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Seriennummer <SortIcon field="serial_number" /></span></TableHead>
+                    <TableHead onClick={() => toggleSort('model_name')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Modell <SortIcon field="model_name" /></span></TableHead>
+                    <TableHead onClick={() => toggleSort('entry_date')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Eingangsdatum <SortIcon field="entry_date" /></span></TableHead>
+                    <TableHead onClick={() => toggleSort('order_number')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Reservierter Auftrag <SortIcon field="order_number" /></span></TableHead>
+                    <TableHead onClick={() => toggleSort('status')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Status <SortIcon field="status" /></span></TableHead>
+                    <TableHead onClick={() => toggleSort('notes')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Notizen (intern) <SortIcon field="notes" /></span></TableHead>
+                  </>
+                )}
                 <TableHead className="w-24 text-right">Aktionen</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedDevices.map((d) => (
+              {sortedDevices.map((d) => {
+                const kunde = parseLeihKunde(d.notes);
+                const shots = parseSchusszahl(d.notes);
+                const leihStartVal = parseLeihStart(d.notes);
+                const cleanNotes = (d.notes ?? '')
+                  .replace(/\[Typ:\s*[^\]]+\]/g, '')
+                  .replace(/\[Status:\s*[^\]]+\]/g, '')
+                  .replace(/\[Kunde:\s*[^\]]+\]/g, '')
+                  .replace(/\[Schusszahl:\s*[^\]]+\]/g, '')
+                  .replace(/\[Leihstart:\s*[^\]]+\]/g, '')
+                  .replace(/\s+/g, ' ')
+                  .trim();
+                return (
                 <TableRow key={d.id} className={d.reserved_order_id ? 'bg-yellow-500/10 hover:bg-yellow-500/15' : (rowAccentClass ?? '')}>
                   {selectionMode && (
                     <TableCell>
@@ -1573,41 +1599,79 @@ export default function Lagergeraete({
                       />
                     </TableCell>
                   )}
-                  <TableCell className="font-mono">{d.serial_number}</TableCell>
-                  <TableCell>{d.model_name}</TableCell>
-                  <TableCell>
-                    {format(new Date(d.entry_date), 'dd.MM.yyyy', { locale: de })}
-                  </TableCell>
-                  <TableCell>
-                    {d.orders?.order_number ? (
-                      <div className="space-y-1">
-                        <Badge className="font-mono bg-yellow-500/20 text-yellow-600 dark:text-yellow-300 border border-yellow-500/40 hover:bg-yellow-500/25">
-                          {d.orders.order_number}
-                        </Badge>
-                        {d.orders.customer_name && (
-                          <div className="text-xs text-muted-foreground truncate max-w-[220px]">
-                            {d.orders.customer_name}
+                  {filterType === 'Leihgerät' ? (
+                    <>
+                      <TableCell>{format(new Date(d.entry_date), 'dd.MM.yyyy', { locale: de })}</TableCell>
+                      <TableCell>
+                        {kunde.name ? (
+                          <div className="space-y-0.5">
+                            <div className="font-medium text-sm truncate max-w-[220px]">{kunde.name}</div>
+                            {leihStartVal && (
+                              <div className="text-xs text-muted-foreground">seit {format(new Date(leihStartVal), 'dd.MM.yyyy', { locale: de })}</div>
+                            )}
                           </div>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
                         )}
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {(() => {
-                      const s = getStatusFromNotes(d.notes);
-                      return (
-                        <StatusBadge
-                          status={s}
-                          className={s === 'Transfer' ? 'bg-red-500/15 text-red-500 border-red-500/40 animate-pulse' : undefined}
-                        />
-                      );
-                    })()}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {d.notes ?? '—'}
-                  </TableCell>
+                      </TableCell>
+                      <TableCell className="font-mono">{d.serial_number}</TableCell>
+                      <TableCell>{d.model_name}</TableCell>
+                      <TableCell>
+                        {(() => {
+                          const s = getStatusFromNotes(d.notes);
+                          return <StatusBadge status={s} className={s === 'Transfer' ? 'bg-red-500/15 text-red-500 border-red-500/40 animate-pulse' : undefined} />;
+                        })()}
+                      </TableCell>
+                      <TableCell>
+                        {d.orders?.order_number ? (
+                          <div className="space-y-1">
+                            <Badge className="font-mono bg-yellow-500/20 text-yellow-600 dark:text-yellow-300 border border-yellow-500/40 hover:bg-yellow-500/25">
+                              {d.orders.order_number}
+                            </Badge>
+                            {d.orders.customer_name && (
+                              <div className="text-xs text-muted-foreground truncate max-w-[220px]">{d.orders.customer_name}</div>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground max-w-[260px]">
+                        <div className="space-y-0.5">
+                          {shots && <div className="text-xs"><span className="font-medium text-foreground">Schusszahl:</span> {shots}</div>}
+                          {cleanNotes && <div className="text-xs truncate">{cleanNotes}</div>}
+                          {!shots && !cleanNotes && <span>—</span>}
+                        </div>
+                      </TableCell>
+                    </>
+                  ) : (
+                    <>
+                      <TableCell className="font-mono">{d.serial_number}</TableCell>
+                      <TableCell>{d.model_name}</TableCell>
+                      <TableCell>{format(new Date(d.entry_date), 'dd.MM.yyyy', { locale: de })}</TableCell>
+                      <TableCell>
+                        {d.orders?.order_number ? (
+                          <div className="space-y-1">
+                            <Badge className="font-mono bg-yellow-500/20 text-yellow-600 dark:text-yellow-300 border border-yellow-500/40 hover:bg-yellow-500/25">
+                              {d.orders.order_number}
+                            </Badge>
+                            {d.orders.customer_name && (
+                              <div className="text-xs text-muted-foreground truncate max-w-[220px]">{d.orders.customer_name}</div>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {(() => {
+                          const s = getStatusFromNotes(d.notes);
+                          return <StatusBadge status={s} className={s === 'Transfer' ? 'bg-red-500/15 text-red-500 border-red-500/40 animate-pulse' : undefined} />;
+                        })()}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{d.notes ?? '—'}</TableCell>
+                    </>
+                  )}
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
                       {d.reserved_order_id && (
