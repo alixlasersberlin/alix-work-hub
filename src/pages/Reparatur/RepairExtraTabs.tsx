@@ -477,6 +477,7 @@ export function FinanceHandoverTab({ repairId, canEdit }: { repairId: string; ca
   const [actualCost, setActualCost] = useState<number | null>(null);
   const initial = { total_amount: '', currency: 'EUR', invoice_number: '', notes: '', confirm: false };
   const [n, setN] = useState<any>(initial);
+  const [docs, setDocs] = useState<UploadedDoc[]>([]);
 
   const load = useCallback(async () => {
     const [h, sp, ord] = await Promise.all([
