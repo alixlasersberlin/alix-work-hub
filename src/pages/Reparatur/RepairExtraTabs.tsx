@@ -348,6 +348,124 @@ function validateSignatureFile(file: File): string | null {
 }
 
 /* ------------------------------------------------------------------ */
+/* Belege-Checkliste (Pflicht-Uploads vor Statuswechsel)              */
+/* ------------------------------------------------------------------ */
+type ChecklistItem = { key: string; label: string; required: boolean; category: string };
+type UploadedDoc = { key: string; path: string; name: string; size: number; mime: string };
+
+const DOC_MIME = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'application/pdf'];
+const DOC_MAX_BYTES = 10 * 1024 * 1024;
+
+function validateDocFile(file: File): string | null {
+  if (!DOC_MIME.includes(file.type)) return 'Nur PNG, JPG, WEBP oder PDF erlaubt';
+  if (file.size > DOC_MAX_BYTES) return 'Datei zu groß (max. 10 MB)';
+  if (file.size < 200) return 'Datei scheint leer zu sein';
+  return null;
+}
+
+function DocChecklist({
+  items, repairId, folder, docs, setDocs, disabled,
+}: {
+  items: ChecklistItem[]; repairId: string; folder: string;
+  docs: UploadedDoc[]; setDocs: (d: UploadedDoc[]) => void; disabled?: boolean;
+}) {
+  const { toast } = useToast();
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const upload = async (item: ChecklistItem, file: File) => {
+    const err = validateDocFile(file);
+    if (err) return toast({ title: 'Validierung', description: `${item.label}: ${err}`, variant: 'destructive' });
+    setBusy(item.key);
+    const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const path = `${repairId}/${folder}/${Date.now()}-${item.key}-${safe}`;
+    const { error } = await supabase.storage.from('repair-files').upload(path, file, { contentType: file.type });
+    setBusy(null);
+    if (error) return toast({ title: 'Upload fehlgeschlagen', description: error.message, variant: 'destructive' });
+    const next = docs.filter((d) => d.key !== item.key);
+    next.push({ key: item.key, path, name: file.name, size: file.size, mime: file.type });
+    setDocs(next);
+  };
+
+  const remove = async (item: ChecklistItem) => {
+    const d = docs.find((x) => x.key === item.key);
+    if (!d) return;
+    await supabase.storage.from('repair-files').remove([d.path]);
+    setDocs(docs.filter((x) => x.key !== item.key));
+  };
+
+  return (
+    <div className="space-y-2 rounded-md border border-border p-3 bg-background/50">
+      <div className="text-xs font-semibold uppercase text-muted-foreground">Belege-Checkliste</div>
+      {items.map((it) => {
+        const got = docs.find((d) => d.key === it.key);
+        return (
+          <div key={it.key} className="flex items-center gap-2 text-xs flex-wrap">
+            <span className={`inline-block w-4 ${got ? 'text-emerald-400' : it.required ? 'text-destructive' : 'text-muted-foreground'}`}>
+              {got ? '✓' : it.required ? '●' : '○'}
+            </span>
+            <span className="min-w-[180px]">
+              {it.label} {it.required && <span className="text-destructive">*</span>}
+            </span>
+            {got ? (
+              <>
+                <span className="text-emerald-400 truncate max-w-[220px]">{got.name} ({Math.round(got.size / 1024)} KB)</span>
+                {!disabled && <Button size="sm" variant="ghost" className="h-6 px-2" onClick={() => remove(it)}><Trash2 className="w-3 h-3" /></Button>}
+              </>
+            ) : (
+              <label className="cursor-pointer">
+                <input
+                  type="file" className="hidden" accept="image/png,image/jpeg,image/webp,application/pdf"
+                  disabled={disabled || busy === it.key}
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(it, f); e.currentTarget.value = ''; }}
+                />
+                <span className="inline-flex items-center px-2 py-1 rounded bg-muted hover:bg-muted/70 text-xs">
+                  <Upload className="w-3 h-3 mr-1" /> {busy === it.key ? 'Lädt…' : 'Hochladen'}
+                </span>
+              </label>
+            )}
+          </div>
+        );
+      })}
+      <p className="text-[10px] text-muted-foreground">Pflichtbelege (*) müssen vor Bestätigung hochgeladen sein. Dateien werden zusätzlich unter „Anhänge" gespeichert.</p>
+    </div>
+  );
+}
+
+function missingRequiredDocs(items: ChecklistItem[], docs: UploadedDoc[]): string[] {
+  return items.filter((i) => i.required && !docs.find((d) => d.key === i.key)).map((i) => i.label);
+}
+
+async function persistChecklistAttachments(
+  repairId: string, docs: UploadedDoc[], items: ChecklistItem[],
+) {
+  if (!docs.length) return;
+  const { data: { user } } = await supabase.auth.getUser();
+  const rows = docs.map((d) => {
+    const it = items.find((i) => i.key === d.key);
+    return {
+      repair_order_id: repairId,
+      file_path: d.path, file_name: d.name,
+      mime_type: d.mime, size_bytes: d.size,
+      category: it?.category || d.key,
+      uploaded_by: user?.id,
+    };
+  });
+  await sbRepair.from('repair_attachments').insert(rows);
+}
+
+const FINANCE_CHECKLIST: ChecklistItem[] = [
+  { key: 'rechnung', label: 'Rechnung', required: true, category: 'rechnung' },
+  { key: 'lieferschein', label: 'Lieferschein', required: true, category: 'lieferschein' },
+  { key: 'zahlungsnachweis', label: 'Zahlungsnachweis', required: false, category: 'zahlungsnachweis' },
+];
+
+const DELIVERY_CHECKLIST: ChecklistItem[] = [
+  { key: 'lieferschein', label: 'Lieferschein', required: true, category: 'lieferschein' },
+  { key: 'uebergabeprotokoll', label: 'Übergabeprotokoll', required: true, category: 'uebergabeprotokoll' },
+  { key: 'foto', label: 'Foto Gerätezustand', required: false, category: 'foto' },
+];
+
+/* ------------------------------------------------------------------ */
 /* 4) Finance-Übergabe (strukturiert, validiert, mit Audit)           */
 /* ------------------------------------------------------------------ */
 export function FinanceHandoverTab({ repairId, canEdit }: { repairId: string; canEdit: boolean }) {
@@ -359,6 +477,7 @@ export function FinanceHandoverTab({ repairId, canEdit }: { repairId: string; ca
   const [actualCost, setActualCost] = useState<number | null>(null);
   const initial = { total_amount: '', currency: 'EUR', invoice_number: '', notes: '', confirm: false };
   const [n, setN] = useState<any>(initial);
+  const [docs, setDocs] = useState<UploadedDoc[]>([]);
 
   const load = useCallback(async () => {
     const [h, sp, ord] = await Promise.all([
@@ -375,10 +494,13 @@ export function FinanceHandoverTab({ repairId, canEdit }: { repairId: string; ca
 
   const suggested = (actualCost ?? 0) + partsTotal;
 
+  const missingDocs = missingRequiredDocs(FINANCE_CHECKLIST, docs);
+
   const validate = (): string | null => {
     const amt = Number(n.total_amount);
     if (!n.total_amount || isNaN(amt) || amt <= 0) return 'Gesamtbetrag muss > 0 sein';
     if (!n.invoice_number?.trim()) return 'Rechnungsnummer erforderlich';
+    if (missingDocs.length) return `Fehlende Pflichtbelege: ${missingDocs.join(', ')}`;
     if (!n.confirm) return 'Bitte Übergabe-Bestätigung ankreuzen';
     return null;
   };
@@ -396,14 +518,19 @@ export function FinanceHandoverTab({ repairId, canEdit }: { repairId: string; ca
     };
     const { data: ins, error } = await sbRepair.from('repair_finance_handover').insert(payload).select('id').single();
     if (error) { setSaving(false); return toast({ title: 'Fehler', description: error.message, variant: 'destructive' }); }
+    await persistChecklistAttachments(repairId, docs, FINANCE_CHECKLIST);
     await sbRepair.from('repair_orders').update({
       sent_to_finance: true, sent_to_finance_at: new Date().toISOString(),
       repair_status: 'An Finance übergeben',
     }).eq('id', repairId);
-    await logRepairAudit('repair_finance_handover', repairId, { handover_id: ins.id, ...payload });
+    await logRepairAudit('repair_finance_handover', repairId, {
+      handover_id: ins.id, ...payload,
+      documents: docs.map((d) => ({ key: d.key, path: d.path, name: d.name, size: d.size })),
+    });
     toast({ title: 'Finance-Übergabe protokolliert', description: `${amount.toFixed(2)} ${n.currency} · ${n.invoice_number}` });
-    setN(initial); setAdding(false); setSaving(false); load();
+    setN(initial); setDocs([]); setAdding(false); setSaving(false); load();
   };
+
 
   const del = async (id: string) => {
     await sbRepair.from('repair_finance_handover').delete().eq('id', id);
@@ -445,9 +572,12 @@ export function FinanceHandoverTab({ repairId, canEdit }: { repairId: string; ca
             <input type="checkbox" checked={n.confirm} onChange={(e) => setN({ ...n, confirm: e.target.checked })} className="mt-0.5" />
             <span>Ich bestätige, dass Betrag und Rechnungsnummer korrekt sind und die Reparatur tatsächlich an Finance übergeben wurde.</span>
           </label>
+          <DocChecklist items={FINANCE_CHECKLIST} repairId={repairId} folder="finance-docs" docs={docs} setDocs={setDocs} disabled={saving} />
           <div className="flex justify-end gap-2">
-            <Button variant="outline" size="sm" onClick={() => { setAdding(false); setN(initial); }}>Abbrechen</Button>
-            <Button size="sm" onClick={add} disabled={saving}>{saving ? 'Speichere…' : 'Übergabe bestätigen'}</Button>
+            <Button variant="outline" size="sm" onClick={() => { setAdding(false); setN(initial); setDocs([]); }}>Abbrechen</Button>
+            <Button size="sm" onClick={add} disabled={saving || missingDocs.length > 0}>
+              {saving ? 'Speichere…' : missingDocs.length ? `Belege fehlen (${missingDocs.length})` : 'Übergabe bestätigen'}
+            </Button>
           </div>
         </Card>
       )}
@@ -485,6 +615,8 @@ export function DeliveryHandoverTab({ repairId, canEdit }: { repairId: string; c
   const [n, setN] = useState<any>(initial);
   const [sigFile, setSigFile] = useState<File | null>(null);
   const [sigError, setSigError] = useState<string | null>(null);
+  const [docs, setDocs] = useState<UploadedDoc[]>([]);
+  const missingDocs = missingRequiredDocs(DELIVERY_CHECKLIST, docs);
 
   const load = useCallback(async () => {
     const { data } = await sbRepair.from('repair_delivery_handover').select('*').eq('repair_order_id', repairId).order('delivered_at', { ascending: false });
@@ -502,6 +634,7 @@ export function DeliveryHandoverTab({ repairId, canEdit }: { repairId: string; c
     if (!sigFile) return 'Signatur / Übergabebeleg erforderlich';
     const sigErr = validateSignatureFile(sigFile);
     if (sigErr) return sigErr;
+    if (missingDocs.length) return `Fehlende Pflichtbelege: ${missingDocs.join(', ')}`;
     if (!n.confirm) return 'Bitte Übergabe-Bestätigung ankreuzen';
     return null;
   };
@@ -529,12 +662,14 @@ export function DeliveryHandoverTab({ repairId, canEdit }: { repairId: string; c
     await sbRepair.from('repair_orders').update({
       repair_status: 'Ausgeliefert', handover_signature_path: path,
     }).eq('id', repairId);
+    await persistChecklistAttachments(repairId, docs, DELIVERY_CHECKLIST);
     await logRepairAudit('repair_delivery_handover', repairId, {
       handover_id: ins.id, recipient_name: payload.recipient_name,
       signature_size: sigFile!.size, signature_mime: sigFile!.type, signature_path: path,
+      documents: docs.map((d) => ({ key: d.key, path: d.path, name: d.name, size: d.size })),
     });
     toast({ title: 'Auslieferung erfasst', description: `Empfänger: ${payload.recipient_name}` });
-    setN(initial); setSigFile(null); setSigError(null); setAdding(false); setSaving(false); load();
+    setN(initial); setSigFile(null); setSigError(null); setDocs([]); setAdding(false); setSaving(false); load();
   };
 
   const viewSig = async (path: string) => {
@@ -576,9 +711,12 @@ export function DeliveryHandoverTab({ repairId, canEdit }: { repairId: string; c
             <input type="checkbox" checked={n.confirm} onChange={(e) => setN({ ...n, confirm: e.target.checked })} className="mt-0.5" />
             <span>Ich bestätige, dass das Gerät persönlich übergeben und die Signatur des Empfängers eingeholt wurde. Der Reparaturstatus wird auf „Ausgeliefert" gesetzt.</span>
           </label>
+          <DocChecklist items={DELIVERY_CHECKLIST} repairId={repairId} folder="delivery-docs" docs={docs} setDocs={setDocs} disabled={saving} />
           <div className="flex justify-end gap-2">
-            <Button variant="outline" size="sm" onClick={() => { setAdding(false); setN(initial); setSigFile(null); setSigError(null); }}>Abbrechen</Button>
-            <Button size="sm" onClick={add} disabled={saving || !!sigError}>{saving ? 'Speichere…' : 'Auslieferung bestätigen'}</Button>
+            <Button variant="outline" size="sm" onClick={() => { setAdding(false); setN(initial); setSigFile(null); setSigError(null); setDocs([]); }}>Abbrechen</Button>
+            <Button size="sm" onClick={add} disabled={saving || !!sigError || missingDocs.length > 0}>
+              {saving ? 'Speichere…' : missingDocs.length ? `Belege fehlen (${missingDocs.length})` : 'Auslieferung bestätigen'}
+            </Button>
           </div>
         </Card>
       )}
