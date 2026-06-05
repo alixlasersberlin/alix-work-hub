@@ -726,6 +726,8 @@ export function DeliveryHandoverTab({ repairId, canEdit }: { repairId: string; c
   const [sigFile, setSigFile] = useState<File | null>(null);
   const [sigError, setSigError] = useState<string | null>(null);
   const [docs, setDocs] = useState<UploadedDoc[]>([]);
+  const [pdfReload, setPdfReload] = useState(0);
+  const pdfs = useHandoverPdfs(repairId, 'delivery_handover_pdf', pdfReload);
   const missingDocs = missingRequiredDocs(DELIVERY_CHECKLIST, docs);
 
   const load = useCallback(async () => {
