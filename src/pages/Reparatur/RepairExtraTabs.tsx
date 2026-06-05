@@ -711,9 +711,12 @@ export function DeliveryHandoverTab({ repairId, canEdit }: { repairId: string; c
             <input type="checkbox" checked={n.confirm} onChange={(e) => setN({ ...n, confirm: e.target.checked })} className="mt-0.5" />
             <span>Ich bestätige, dass das Gerät persönlich übergeben und die Signatur des Empfängers eingeholt wurde. Der Reparaturstatus wird auf „Ausgeliefert" gesetzt.</span>
           </label>
+          <DocChecklist items={DELIVERY_CHECKLIST} repairId={repairId} folder="delivery-docs" docs={docs} setDocs={setDocs} disabled={saving} />
           <div className="flex justify-end gap-2">
-            <Button variant="outline" size="sm" onClick={() => { setAdding(false); setN(initial); setSigFile(null); setSigError(null); }}>Abbrechen</Button>
-            <Button size="sm" onClick={add} disabled={saving || !!sigError}>{saving ? 'Speichere…' : 'Auslieferung bestätigen'}</Button>
+            <Button variant="outline" size="sm" onClick={() => { setAdding(false); setN(initial); setSigFile(null); setSigError(null); setDocs([]); }}>Abbrechen</Button>
+            <Button size="sm" onClick={add} disabled={saving || !!sigError || missingDocs.length > 0}>
+              {saving ? 'Speichere…' : missingDocs.length ? `Belege fehlen (${missingDocs.length})` : 'Auslieferung bestätigen'}
+            </Button>
           </div>
         </Card>
       )}
