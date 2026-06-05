@@ -111,7 +111,18 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    path: '/reparaturannahme', label: 'REPARATURANNAHME', icon: Wrench, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'Österreich'],
+    path: '/reparatur', label: 'REPARATURANNAHME', icon: Wrench, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'Finance', 'QM', 'Österreich'],
+    children: [
+      { path: '/reparatur', label: 'Dashboard', icon: LayoutDashboard, roles: null },
+      { path: '/reparatur/neu', label: 'Neue Reparatur anlegen', icon: FilePlus, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Order', 'Finance', 'QM'] },
+      { path: '/reparatur/auftraege', label: 'Reparaturaufträge', icon: ClipboardList, roles: null },
+      { path: '/reparatur/werkstattannahme', label: 'Werkstattannahme', icon: PackageCheck, roles: null },
+      { path: '/reparatur/technik', label: 'Technik-Arbeitsaufträge', icon: Wrench, roles: null },
+      { path: '/reparatur/ersatzteile', label: 'Ersatzteilbedarf', icon: Package, roles: null },
+      { path: '/reparatur/finance', label: 'Übergabe Finance', icon: Receipt, roles: null },
+      { path: '/reparatur/tourenplanung', label: 'Übergabe Tourenplanung', icon: MapPin, roles: null },
+      { path: '/reparatur/archiv', label: 'Reparaturarchiv', icon: FileText, roles: null },
+    ],
   },
   {
     path: '/tourenplanung', label: 'TOURENPLANUNG', icon: MapPin, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'Österreich'],

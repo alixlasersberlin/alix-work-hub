@@ -34,6 +34,17 @@ const PriorityList = lazy(() => import("./pages/PriorityList"));
 const HoldList = lazy(() => import("./pages/HoldList"));
 const RoutePlanning = lazy(() => import("./pages/RoutePlanning"));
 const Reparaturannahme = lazy(() => import("./pages/Reparaturannahme"));
+const ReparaturLayout = lazy(() => import("./pages/Reparatur/Layout"));
+const ReparaturDashboard = lazy(() => import("./pages/Reparatur/Dashboard"));
+const ReparaturNew = lazy(() => import("./pages/Reparatur/New"));
+const ReparaturList = lazy(() => import("./pages/Reparatur/List"));
+const ReparaturDetail = lazy(() => import("./pages/Reparatur/Detail"));
+const ReparaturWerkstatt = lazy(() => import("./pages/Reparatur/Werkstattannahme"));
+const ReparaturTechnik = lazy(() => import("./pages/Reparatur/Technik"));
+const ReparaturErsatzteile = lazy(() => import("./pages/Reparatur/Ersatzteile"));
+const ReparaturFinance = lazy(() => import("./pages/Reparatur/FinanceUebergabe"));
+const ReparaturTouren = lazy(() => import("./pages/Reparatur/TourenplanungUebergabe"));
+const ReparaturArchiv = lazy(() => import("./pages/Reparatur/Archiv"));
 const RoutePlanDetail = lazy(() => import("./pages/RoutePlanDetail"));
 const RoutePlanForm = lazy(() => import("./pages/RoutePlanForm"));
 const RoutePlanningSettings = lazy(() => import("./pages/RoutePlanningSettings"));
@@ -271,6 +282,18 @@ function AppRoutes() {
           <Route path="/tourenplanung/einstellungen" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Tourenplanung']}><RoutePlanningSettings /></ProtectedRoute>} />
           <Route path="/reparaturannahme" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><Reparaturannahme /></ProtectedRoute>} />
           <Route path="/tourenplanung/reparaturannahme" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><Reparaturannahme /></ProtectedRoute>} />
+          <Route path="/reparatur" element={<ProtectedRoute><ReparaturLayout /></ProtectedRoute>}>
+            <Route index element={<ReparaturDashboard />} />
+            <Route path="neu" element={<ReparaturNew />} />
+            <Route path="auftraege" element={<ReparaturList />} />
+            <Route path="werkstattannahme" element={<ReparaturWerkstatt />} />
+            <Route path="technik" element={<ReparaturTechnik />} />
+            <Route path="ersatzteile" element={<ReparaturErsatzteile />} />
+            <Route path="finance" element={<ReparaturFinance />} />
+            <Route path="tourenplanung" element={<ReparaturTouren />} />
+            <Route path="archiv" element={<ReparaturArchiv />} />
+            <Route path=":id" element={<ReparaturDetail />} />
+          </Route>
 
           <Route path="/tourenplanung/neu" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Tourenplanung']}><RoutePlanForm /></ProtectedRoute>} />
           <Route path="/tourenplanung/:id" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><RoutePlanDetail /></ProtectedRoute>} />
