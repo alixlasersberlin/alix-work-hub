@@ -495,11 +495,13 @@ export default function AppLayout() {
     }
     const isProductionGroup = path === '/production' && label === 'PRODUCTION';
     const colorClass =
-      c === 0
-        ? 'text-red-500'
-        : path === '/lager' || path === '/tourenplanung' || isProductionGroup
-          ? 'text-green-500'
-          : undefined;
+      path === '/order/freigabe'
+        ? (c > 0 ? 'text-yellow-500' : 'text-muted-foreground')
+        : c === 0
+          ? 'text-red-500'
+          : path === '/lager' || path === '/tourenplanung' || isProductionGroup
+            ? 'text-green-500'
+            : undefined;
     return (
       <>
         {label} <span className={colorClass}>({c})</span>
