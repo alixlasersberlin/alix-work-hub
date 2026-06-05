@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { sbRepair } from '@/lib/repair/api';
 import { Card } from '@/components/ui/card';
-import { Wrench, Inbox, HardHat, Package, Receipt, MapPin, CheckCircle2, Clock } from 'lucide-react';
+import { Wrench, Inbox, HardHat, Package, Receipt, MapPin, CheckCircle2, Truck } from 'lucide-react';
 
 type Counts = Record<string, number>;
 
@@ -12,10 +12,10 @@ export default function ReparaturDashboard() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await sbRepair.from('repair_orders').select('status');
+      const { data } = await sbRepair.from('repair_orders').select('repair_status');
       const c: Counts = {};
       (data || []).forEach((r: any) => {
-        c[r.status] = (c[r.status] || 0) + 1;
+        c[r.repair_status] = (c[r.repair_status] || 0) + 1;
       });
       c.__total = (data || []).length;
       setCounts(c);
@@ -23,16 +23,17 @@ export default function ReparaturDashboard() {
     })();
   }, []);
 
+  const open = (counts.__total || 0) - (counts['Ausgeliefert'] || 0) - (counts['Storniert'] || 0);
   const kpis = [
-    { label: 'Offene Reparaturen', value: (counts.__total || 0) - (counts['Abgeschlossen'] || 0) - (counts['Storniert'] || 0), icon: Wrench, color: 'text-primary' },
-    { label: 'Neue Reparaturen', value: counts['Reparatur angelegt'] || 0, icon: Inbox, color: 'text-blue-400' },
-    { label: 'Geräte unterwegs', value: counts['Gerät / Teil wird eingeholt'] || 0, icon: Clock, color: 'text-cyan-400' },
-    { label: 'Geräte eingetroffen', value: counts['Gerät / Teil eingetroffen'] || 0, icon: Inbox, color: 'text-teal-400' },
-    { label: 'In Technik', value: (counts['In Prüfung'] || 0) + (counts['Reparatur in Arbeit'] || 0) + (counts['Arbeitsauftrag Technik erstellt'] || 0), icon: HardHat, color: 'text-indigo-400' },
-    { label: 'Ersatzteile offen', value: (counts['Ersatzteile benötigt'] || 0) + (counts['Ersatzteile bestellt'] || 0), icon: Package, color: 'text-orange-400' },
+    { label: 'Offene Reparaturen', value: open, icon: Wrench, color: 'text-primary' },
+    { label: 'Neu', value: counts['Neu'] || 0, icon: Inbox, color: 'text-blue-400' },
+    { label: 'In Werkstatt', value: counts['In Werkstatt'] || 0, icon: Inbox, color: 'text-amber-400' },
+    { label: 'In Diagnose / Reparatur', value: (counts['In Diagnose'] || 0) + (counts['In Reparatur'] || 0), icon: HardHat, color: 'text-indigo-400' },
+    { label: 'Warte auf Ersatzteile', value: counts['Warte auf Ersatzteile'] || 0, icon: Package, color: 'text-orange-400' },
     { label: 'Abgeschlossen', value: counts['Reparatur abgeschlossen'] || 0, icon: CheckCircle2, color: 'text-emerald-400' },
-    { label: 'Übergabe Finance', value: counts['Übergabe an Finance'] || 0, icon: Receipt, color: 'text-yellow-400' },
-    { label: 'Übergabe Tourenplanung', value: counts['Übergabe an Tourenplanung'] || 0, icon: MapPin, color: 'text-sky-400' },
+    { label: 'An Finance', value: counts['An Finance übergeben'] || 0, icon: Receipt, color: 'text-yellow-400' },
+    { label: 'An Tourenplanung', value: counts['An Tourenplanung übergeben'] || 0, icon: MapPin, color: 'text-sky-400' },
+    { label: 'Ausgeliefert', value: counts['Ausgeliefert'] || 0, icon: Truck, color: 'text-green-400' },
   ];
 
   return (

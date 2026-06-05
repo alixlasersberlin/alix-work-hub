@@ -9,13 +9,12 @@ import { Card } from '@/components/ui/card';
 type Row = {
   id: string;
   repair_number: string;
-  status: string;
-  priority: string;
-  customer_company: string | null;
-  customer_contact: string | null;
-  device_type: string | null;
-  serial_number: string | null;
-  acceptance_date: string | null;
+  repair_status: string;
+  customer_name: string | null;
+  device_category: string | null;
+  device_brand: string | null;
+  device_model: string | null;
+  device_serial_number: string | null;
   created_at: string;
 };
 
@@ -24,13 +23,12 @@ export default function ReparaturList({ archived = false }: { archived?: boolean
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
   const [status, setStatus] = useState<string>('all');
-  const [priority, setPriority] = useState<string>('all');
 
   useEffect(() => {
     (async () => {
       const { data } = await sbRepair
         .from('repair_orders')
-        .select('id,repair_number,status,priority,customer_company,customer_contact,device_type,serial_number,acceptance_date,created_at')
+        .select('id,repair_number,repair_status,customer_name,device_category,device_brand,device_model,device_serial_number,created_at')
         .order('created_at', { ascending: false })
         .limit(1000);
       setRows(data || []);
@@ -41,22 +39,21 @@ export default function ReparaturList({ archived = false }: { archived?: boolean
   const filtered = useMemo(() => {
     return rows.filter((r) => {
       if (archived) {
-        if (!['Abgeschlossen', 'Storniert', 'Ausgeliefert'].includes(r.status)) return false;
+        if (!['Ausgeliefert', 'Storniert'].includes(r.repair_status)) return false;
       } else {
-        if (['Abgeschlossen', 'Storniert'].includes(r.status)) return false;
+        if (['Ausgeliefert', 'Storniert'].includes(r.repair_status)) return false;
       }
-      if (status !== 'all' && r.status !== status) return false;
-      if (priority !== 'all' && r.priority !== priority) return false;
+      if (status !== 'all' && r.repair_status !== status) return false;
       if (q.trim()) {
         const s = q.toLowerCase();
-        const hay = [r.repair_number, r.customer_company, r.customer_contact, r.device_type, r.serial_number]
+        const hay = [r.repair_number, r.customer_name, r.device_category, r.device_brand, r.device_model, r.device_serial_number]
           .map((x) => (x || '').toLowerCase())
           .join(' ');
         if (!hay.includes(s)) return false;
       }
       return true;
     });
-  }, [rows, q, status, priority, archived]);
+  }, [rows, q, status, archived]);
 
   return (
     <div className="space-y-4">
@@ -67,13 +64,6 @@ export default function ReparaturList({ archived = false }: { archived?: boolean
           <SelectContent>
             <SelectItem value="all">Alle Status</SelectItem>
             {REPAIR_STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select value={priority} onValueChange={setPriority}>
-          <SelectTrigger className="md:w-48"><SelectValue placeholder="Priorität" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alle Prioritäten</SelectItem>
-            {['Normal','Eilig','Garantie','Kulanz','Kostenpflichtig'].map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
           </SelectContent>
         </Select>
         <div className="text-xs text-muted-foreground self-center ml-auto">{filtered.length} Einträge</div>
@@ -88,33 +78,34 @@ export default function ReparaturList({ archived = false }: { archived?: boolean
                 <th className="text-left px-3 py-2">Kunde</th>
                 <th className="text-left px-3 py-2">Gerät</th>
                 <th className="text-left px-3 py-2">Seriennr.</th>
-                <th className="text-left px-3 py-2">Priorität</th>
                 <th className="text-left px-3 py-2">Status</th>
-                <th className="text-left px-3 py-2">Annahme</th>
+                <th className="text-left px-3 py-2">Angelegt</th>
               </tr>
             </thead>
             <tbody>
-              {loading && <tr><td colSpan={7} className="p-6 text-center text-muted-foreground">Lade…</td></tr>}
+              {loading && <tr><td colSpan={6} className="p-6 text-center text-muted-foreground">Lade…</td></tr>}
               {!loading && filtered.length === 0 && (
-                <tr><td colSpan={7} className="p-6 text-center text-muted-foreground">Keine Einträge</td></tr>
+                <tr><td colSpan={6} className="p-6 text-center text-muted-foreground">Keine Einträge</td></tr>
               )}
-              {filtered.map((r) => (
-                <tr key={r.id} className="border-t border-border hover:bg-muted/30">
-                  <td className="px-3 py-2">
-                    <Link to={`/reparatur/${r.id}`} className="text-primary hover:underline font-mono">
-                      {r.repair_number || r.id.slice(0, 8)}
-                    </Link>
-                  </td>
-                  <td className="px-3 py-2">{r.customer_company || r.customer_contact || '–'}</td>
-                  <td className="px-3 py-2">{r.device_type || '–'}</td>
-                  <td className="px-3 py-2 font-mono text-xs">{r.serial_number || '–'}</td>
-                  <td className="px-3 py-2">{r.priority}</td>
-                  <td className="px-3 py-2">
-                    <span className={`px-2 py-0.5 rounded text-xs ${STATUS_BADGE_CLASS[r.status] || 'bg-muted text-foreground'}`}>{r.status}</span>
-                  </td>
-                  <td className="px-3 py-2 text-xs">{r.acceptance_date || '–'}</td>
-                </tr>
-              ))}
+              {filtered.map((r) => {
+                const device = [r.device_brand, r.device_model].filter(Boolean).join(' ') || r.device_category || '–';
+                return (
+                  <tr key={r.id} className="border-t border-border hover:bg-muted/30">
+                    <td className="px-3 py-2">
+                      <Link to={`/reparatur/${r.id}`} className="text-primary hover:underline font-mono">
+                        {r.repair_number || r.id.slice(0, 8)}
+                      </Link>
+                    </td>
+                    <td className="px-3 py-2">{r.customer_name || '–'}</td>
+                    <td className="px-3 py-2">{device}</td>
+                    <td className="px-3 py-2 font-mono text-xs">{r.device_serial_number || '–'}</td>
+                    <td className="px-3 py-2">
+                      <span className={`px-2 py-0.5 rounded text-xs ${STATUS_BADGE_CLASS[r.repair_status] || 'bg-muted text-foreground'}`}>{r.repair_status}</span>
+                    </td>
+                    <td className="px-3 py-2 text-xs">{new Date(r.created_at).toLocaleDateString('de-DE')}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
