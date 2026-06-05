@@ -176,18 +176,52 @@ export default function ReparaturNew() {
         </TabsContent>
       </Tabs>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6">
         <Field label="Kunde / Firma *"><Input value={form.customer_name} onChange={(e) => upd('customer_name', e.target.value)} /></Field>
+        <Field label="Firma (optional)"><Input value={form.customer_company} onChange={(e) => upd('customer_company', e.target.value)} /></Field>
+        <Field label="Ansprechpartner"><Input value={form.customer_contact} onChange={(e) => upd('customer_contact', e.target.value)} /></Field>
         <Field label="E-Mail"><Input value={form.customer_email} onChange={(e) => upd('customer_email', e.target.value)} /></Field>
         <Field label="Telefon"><Input value={form.customer_phone} onChange={(e) => upd('customer_phone', e.target.value)} /></Field>
-        <Field label="Gerätekategorie"><Input value={form.device_category} onChange={(e) => upd('device_category', e.target.value)} placeholder="z. B. Lasergerät, Handstück" /></Field>
+        <Field label="Priorität">
+          <select className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm" value={form.priority} onChange={(e) => upd('priority', e.target.value)}>
+            <option value="niedrig">Niedrig</option>
+            <option value="normal">Normal</option>
+            <option value="hoch">Hoch</option>
+            <option value="dringend">Dringend</option>
+          </select>
+        </Field>
+        <Field label="Straße / Nr." className="md:col-span-2"><Input value={form.address_street} onChange={(e) => upd('address_street', e.target.value)} /></Field>
+        <Field label="PLZ"><Input value={form.address_zip} onChange={(e) => upd('address_zip', e.target.value)} /></Field>
+        <Field label="Ort"><Input value={form.address_city} onChange={(e) => upd('address_city', e.target.value)} /></Field>
+        <Field label="Land"><Input value={form.address_country} onChange={(e) => upd('address_country', e.target.value)} placeholder="DE / AT / CH" /></Field>
+        <div />
+        <Field label="Gerätetyp"><Input value={form.device_type} onChange={(e) => upd('device_type', e.target.value)} placeholder="z. B. Diodenlaser" /></Field>
+        <Field label="Gerätekategorie"><Input value={form.device_category} onChange={(e) => upd('device_category', e.target.value)} placeholder="z. B. Lasergerät" /></Field>
+        <Field label="Seriennummer"><Input value={form.device_serial_number} onChange={(e) => upd('device_serial_number', e.target.value)} /></Field>
         <Field label="Marke"><Input value={form.device_brand} onChange={(e) => upd('device_brand', e.target.value)} /></Field>
         <Field label="Modell"><Input value={form.device_model} onChange={(e) => upd('device_model', e.target.value)} /></Field>
-        <Field label="Seriennummer"><Input value={form.device_serial_number} onChange={(e) => upd('device_serial_number', e.target.value)} /></Field>
-        <Field label="Zubehör mitgegeben"><Input value={form.accessories} onChange={(e) => upd('accessories', e.target.value)} /></Field>
-        <Field label="Fehlerbeschreibung Kunde *" className="md:col-span-2"><Textarea rows={3} value={form.issue_description} onChange={(e) => upd('issue_description', e.target.value)} /></Field>
-        <Field label="Interne Notizen" className="md:col-span-2"><Textarea rows={2} value={form.internal_notes} onChange={(e) => upd('internal_notes', e.target.value)} /></Field>
+        <Field label="Kaufdatum"><Input type="date" value={form.purchase_date} onChange={(e) => upd('purchase_date', e.target.value)} /></Field>
+        <Field label="Zubehör mitgegeben" className="md:col-span-3"><Input value={form.accessories} onChange={(e) => upd('accessories', e.target.value)} /></Field>
+        <Field label="Sichtbare Schäden" className="md:col-span-3"><Textarea rows={2} value={form.visible_damages} onChange={(e) => upd('visible_damages', e.target.value)} /></Field>
+        <Field label="Fehlerbeschreibung Kunde *" className="md:col-span-3"><Textarea rows={3} value={form.customer_error_description || form.issue_description} onChange={(e) => { upd('customer_error_description', e.target.value); upd('issue_description', e.target.value); }} /></Field>
+        <Field label="Gerät schaltet ein?">
+          <select className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm" value={form.powers_on === null ? '' : String(form.powers_on)} onChange={(e) => upd('powers_on', e.target.value === '' ? null : e.target.value === 'true')}>
+            <option value="">– unbekannt –</option>
+            <option value="true">Ja</option>
+            <option value="false">Nein</option>
+          </select>
+        </Field>
+        <Field label="Fehler permanent?">
+          <select className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm" value={form.error_permanent === null ? '' : String(form.error_permanent)} onChange={(e) => upd('error_permanent', e.target.value === '' ? null : e.target.value === 'true')}>
+            <option value="">– unbekannt –</option>
+            <option value="true">Ja, dauerhaft</option>
+            <option value="false">Sporadisch</option>
+          </select>
+        </Field>
+        <div />
+        <Field label="Interne Notizen" className="md:col-span-3"><Textarea rows={2} value={form.internal_notes} onChange={(e) => upd('internal_notes', e.target.value)} /></Field>
       </div>
+
 
       <div className="flex justify-end gap-2 pt-6">
         <Button variant="outline" onClick={() => nav('/reparatur/auftraege')}>Abbrechen</Button>
