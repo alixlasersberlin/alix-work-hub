@@ -39,8 +39,7 @@ export default function LeihgeraetReminder() {
 
   useEffect(() => {
     if (!user || !profile) return;
-    const first = (profile.full_name ?? '').trim().split(/\s+/)[0]?.toLowerCase() ?? '';
-    if (!TARGET_FIRST_NAMES.includes(first)) return;
+
 
     const storageKey = `leih_reminder_last_${user.id}`;
     const last = Number(localStorage.getItem(storageKey) || '0');
