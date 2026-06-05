@@ -45,7 +45,7 @@ export default function OrderApprovalQueue() {
     const { data, error } = await supabase
       .from('production_orders')
       .select(
-        'id, order_number, production_order_number, status, liefertermin, modellname, farbe, bearbeiter, pdf_path, supplier_id, approval_status, created_at, is_reclamation, customer_name_snapshot, supplier:suppliers(name)',
+        'id, order_id, order_number, production_order_number, status, liefertermin, modellname, farbe, bearbeiter, pdf_path, supplier_id, approval_status, created_at, is_reclamation, customer_name_snapshot, supplier:suppliers(name)',
       )
       .or('approval_status.is.null,approval_status.eq.pending')
       .order('created_at', { ascending: true });
