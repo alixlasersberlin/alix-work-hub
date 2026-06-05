@@ -1,101 +1,149 @@
-# Bewertungssystem für AlixWork
 
-Komplett neues, eigenständiges Modul. Keine Änderungen an bestehenden Tabellen, Rollen, Workflows oder Menüs (nur additiv: neuer Sidebar-Eintrag, neue Tabellen, neue Edge Function, neue Templates).
+# Plan: Modul „Reparaturannahme"
 
-## 1. Datenbank (neue Migration)
+Ein eigenständiges, klar abgegrenztes Modul unter dem bestehenden Menüpunkt **REPARATURANNAHME** (heute Platzhalter unter Tourenplanung). Keine bestehenden Tabellen, Policies oder Module werden verändert – nur neue Tabellen, neue Routen, neue Komponenten und eine optionale Lese-Anbindung an `orders`, `customers`, `finance_records`, `production_orders` (Bestellwesen) und `route_plans`.
 
-Zwei neue Tabellen im `public` Schema, plus Sequenz für Tokens. Kein Eingriff in `orders`, `customers`, etc.
+## 1. Datenmodell (alle Tabellen NEU, `repair_*` Präfix)
 
-**`reviews`**
-- order_id, customer_id, customer_name, customer_email, order_number, product_name, delivery_date
-- rating_delivery (1–5), rating_driver_friendliness (1–5), training_answer (enum: ja/teilweise/nein), rating_training_text, improvement_text
-- review_token (unique), token_expires_at, invitation_sent_at, invitation_sent_by, invitation_status, submitted_at, status (open/submitted/archived)
-- created_at, updated_at
-- Unique-Constraint: ein Datensatz pro `order_id`
+Migration im `public`-Schema, mit GRANTs + RLS gemäß Projekt-Konvention.
 
-**`review_email_logs`**
-- review_id, order_id, customer_email, sent_by, sent_type (automatic/manual), sent_at, delivery_status, error_message
+- **repair_orders** – Hauptauftrag
+  - `repair_number` (TEXT, UNIQUE, Format `REP-YYYY-NNNN`, via Sequenz `repair_order_seq` + Trigger)
+  - `source` (`existing_order` | `new_customer`)
+  - `order_id` (uuid, FK-soft auf `orders.id`, optional)
+  - `customer_id` (uuid, FK-soft auf `customers.id`, optional)
+  - Snapshot-Felder für Neukunden: `customer_company`, `customer_contact`, `customer_email`, `customer_phone`, `customer_street`, `customer_zip`, `customer_city`
+  - Geräte-Felder: `device_type`, `serial_number`, `purchase_date`, `accessories`
+  - Fehler-Felder: `customer_error_description`, `visible_damages`, `powers_on` (bool), `error_permanent` (bool)
+  - `priority` (`Normal` | `Eilig` | `Garantie` | `Kulanz` | `Kostenpflichtig`)
+  - `status` (enum-ähnlich text, Default `Reparatur angelegt`)
+  - `acceptance_date`, `handler` (uuid → user_profiles)
+  - Standard: `created_at`, `updated_at`, `created_by`, `updated_by`
 
-**RLS-Policies**
-- SELECT `reviews` + `review_email_logs`: alle authentifizierten Nutzer
-- INSERT/UPDATE/DELETE: nur `has_role('Super Admin')`
-- Öffentliche Bewertungsabgabe erfolgt ausschließlich über Edge Function mit Service-Role + Token-Prüfung (kein anon-Grant nötig).
-- DELETE konform zur bestehenden Regel: nur Super Admin.
+- **repair_status_history** – Protokoll jeder Statusänderung (`repair_id`, `old_status`, `new_status`, `changed_by`, `created_at`, `note`). Trigger schreibt automatisch bei Status-Update.
 
-Kein `ALTER TABLE orders`. Verknüpfung läuft über `reviews.order_id` ohne FK-Cascade-Eingriff.
+- **repair_workshop_intake** (1:1) – Werkstattannahme: `arrival_date`, `condition_on_arrival`, `serial_checked` (bool), `accessories_checked` (bool), `visual_check`, `matches_customer_description` (bool), `internal_note`.
 
-## 2. Edge Functions (neu)
+- **repair_work_orders** (1:1 zum Reparaturauftrag) – Technik-Arbeitsauftrag:
+  - `work_order_number` (`AA-REP-YYYY-NNNN`)
+  - `technician_id` (uuid), `task_description`
+  - `diagnosis`, `error_confirmed` (bool), `root_cause`
+  - `work_performed`, `work_time_minutes`
+  - `repair_successful` (bool), `test_run_done` (bool), `safety_check_done` (bool)
+  - `closing_note`, `technician_signature_name`, `signed_at`
+  - `pdf_path` (Storage), `printed_at`
 
-**`send-review-invitation`** (verify_jwt = true)
-Input: `{ order_id, manual?: boolean }`
-- Liest Auftrag (Service-Role, read-only): Kundenname, E-Mail, Auftragsnummer, Produkt, Lieferdatum
-- Prüft: E-Mail vorhanden, Auftrag „Geliefert", noch keine Einladung
-- Bei manuell: prüft Super-Admin-Rolle des Aufrufers
-- Erstellt/aktualisiert `reviews`-Eintrag, generiert Token (`crypto.randomUUID()` + Hash, 90 Tage gültig)
-- Ruft `send-transactional-email` mit Template `review-invitation` auf
-- Schreibt `review_email_logs`
+- **repair_spare_parts** (N:1) – pro Arbeitsauftrag:
+  - `name`, `sku`, `quantity`, `reason`, `in_stock` (bool), `urgency`, `supplier_name`, `ordered_via_production_order_id` (uuid, optional, FK-soft auf `production_orders.id`)
 
-**`submit-review`** (verify_jwt = false, öffentlich)
-Input: `{ token, answers }`
-- Validiert Token + Ablauf + noch nicht abgegeben
-- Schreibt Antworten in `reviews`, setzt `submitted_at`, `status='submitted'`
+- **repair_finance_handover** (1:1) – Übergabe Finance: Snapshot der Reparaturdaten, `handed_over_at`, `handed_over_by`, `invoice_proposal_amount`, `billing_mode` (Garantie/Kulanz/Kostenpflichtig), `invoice_created` (bool), `invoice_reference`, `notes`.
 
-**`get-review-context`** (verify_jwt = false)
-Input: `{ token }` → liefert nur: customer_name, order_number, product_name, delivery_date (keine internen IDs)
+- **repair_delivery_handover** (1:1) – Übergabe Tourenplanung: `desired_delivery_date`, `delivery_address` (jsonb), `delivery_notes`, `invoice_paid` (bool), `pickup_or_delivery` (enum), `route_plan_id` (uuid, FK-soft).
 
-## 3. E-Mail-Template
+- **repair_attachments** – Datei-Uploads je Phase (`repair_id`, `phase` = annahme|werkstatt|technik|abschluss, `file_path`, `file_name`, `file_type`, `uploaded_by`).
 
-`supabase/functions/_shared/transactional-email-templates/review-invitation.tsx`
-- Betreff: „Ihre Bewertung zu Ihrer Alix Lasers Lieferung"
-- Anrede + kurzer Text + Button „Jetzt Bewertung abgeben" → `https://alix-finance.de/bewertung/<token>`
-- Registrierung in `registry.ts`
+- **repair_notifications** – interne Benachrichtigungen (`repair_id`, `event_type`, `recipient_role`, `message`, `created_at`, `read_at`).
 
-## 4. Automatik bei Statuswechsel „Geliefert"
+- **repair_customer_emails** – geplante Kundenmails (`repair_id`, `event_type`, `subject`, `body`, `status` = draft|approved|sent, `approved_by`, `sent_at`). Nur Versand nach Freigabe durch Super Admin oder Finance.
 
-Nicht-invasiv: **kein** DB-Trigger auf `orders`. Stattdessen Hook in der bestehenden Status-Update-Logik im Frontend / vorhandenen Edge-Function-Stellen, an denen `order_status` auf `Geliefert` gesetzt wird → ruft `send-review-invitation` mit `manual=false` auf. Fehlschläge werden geloggt, brechen den Statuswechsel nicht ab.
+- **Storage-Bucket** `repair-files` (privat) für Fotos, Prüfprotokolle, generierte PDFs.
 
-Ergänzend kleiner Service-Helper `src/lib/review-invitation.ts` für einheitlichen Aufruf.
+### RLS-Policies (neue Rolle nicht nötig, bestehende Rollen werden verwendet)
+- SELECT: alle authentifizierten Benutzer (alle Rollen dürfen lesen) – per `to authenticated using (true)`.
+- INSERT/UPDATE auf `repair_orders`, `repair_workshop_intake`, `repair_work_orders`, `repair_spare_parts`: `is_admin() OR has_role('Order') OR has_role('Tourenplanung') OR has_role('Finance') OR has_role('QM')`. Werkstatt/Technik nutzen vorhandene Rollen (Order/QM).
+- `repair_finance_handover` Schreibrechte: `can_access_finance()`.
+- `repair_delivery_handover` Schreibrechte: `can_manage_planning()`.
+- DELETE überall: nur `has_role('Super Admin')`.
+- `repair_customer_emails.status` darf nur Super Admin / Finance auf `approved` setzen (Check via Trigger).
 
-## 5. Frontend – internes Modul
+## 2. Navigation & Routing
 
-**Sidebar (`AppLayout.tsx`)**: neuer Hauptpunkt „Bewertungen" → `/bewertungen`, sichtbar für alle Rollen.
+- Bestehendes Menü **REPARATURANNAHME** in `AppLayout.tsx` zu einer **Gruppe** mit Unterpunkten ausbauen (analog zu Tourenplanung). Keine Veränderung an anderen Menü-Gruppen.
+- Unterpunkte → Routen unter `/reparatur/*`:
+  - `/reparatur` – Dashboard (Default)
+  - `/reparatur/neu` – Neue Reparatur anlegen
+  - `/reparatur/auftraege` – Liste Reparaturaufträge
+  - `/reparatur/:id` – Detail-/Bearbeitungsseite (Tabs: Annahme · Werkstatt · Technik · Ersatzteile · Finance · Tourenplanung · Verlauf · Dateien)
+  - `/reparatur/werkstattannahme` – Liste offene Werkstattannahmen
+  - `/reparatur/technik` – Liste Technik-Arbeitsaufträge
+  - `/reparatur/ersatzteile` – Liste Ersatzteilbedarf
+  - `/reparatur/finance` – Übergaben Finance
+  - `/reparatur/tourenplanung` – Übergaben Tourenplanung
+  - `/reparatur/archiv` – Abgeschlossene/Stornierte
+- Alle Routen in `src/App.tsx` neu registrieren, ohne bestehende Routen anzufassen.
 
-**`src/pages/Reviews/ReviewsList.tsx`**
-- Tabelle: Auftragsnummer, Kunde, Produkt, Lieferdatum, Versandstatus, Bewertungsstatus, Lieferung ⭐, Fahrer ⭐, Einweisung, Verbesserungswunsch, Datum, Aktionen
-- Filter: alle / nicht versendet / versendet / erhalten / nicht erhalten / Lieferdatum / Produkt / Sterne
-- Aktionen (Super Admin): senden, erneut senden, bearbeiten, archivieren, löschen
-- Alle anderen Rollen: nur „Ansehen"
+## 3. UI-Komponenten (neu, unter `src/pages/Reparatur/` und `src/components/repair/`)
 
-**`src/pages/Reviews/ReviewDetail.tsx`** (Drawer/Dialog) – Anzeige + Edit-Form (Super Admin)
+- `RepairDashboard.tsx` – Kennzahlen-Kacheln (offen, eingetroffen, in Technik, Ersatzteile offen, Übergaben offen) + Filterleiste (Status, Kunde, Gerät, Techniker, Reparaturnummer, Zeitraum, Garantie/kostenpflichtig/Kulanz).
+- `RepairNew.tsx` – Wizard mit Tab „Option A – bestehender Auftrag" (Suche über Auftragsnr, Kundenname, Firma, PLZ, Telefon, E-Mail, Seriennummer, Gerätetyp – via Supabase-Queries auf `orders` + `customers`, inkl. gelieferter Aufträge) und Tab „Option B – Neukunde". Pflichtfeld-Validierung, Fehlerbeschreibung inkl. Datei-Upload.
+- `RepairList.tsx` – Liste mit Status-Badges, schnellem Statuswechsel, Verlinkung ins Detail.
+- `RepairDetail.tsx` – Tab-Layout, Statusleiste mit allen 18 Workflow-Schritten.
+- `RepairWorkshopForm.tsx` – Werkstattannahme-Formular inkl. Foto-Upload.
+- `RepairWorkOrderForm.tsx` – Technik-Bearbeitung (Diagnose, Arbeiten, Zeit, Prüfungen, Unterschrift).
+- `RepairSparePartsManager.tsx` – Ersatzteilliste, Knopf „Bestellvorschlag erzeugen" (siehe Punkt 4).
+- `RepairFinanceHandover.tsx`, `RepairDeliveryHandover.tsx`, `RepairAttachments.tsx`, `RepairHistory.tsx`.
+- Statusänderungen erfolgen ausschließlich über typisierte Helper, der parallel `repair_status_history` schreibt (per DB-Trigger – kein Doppel-Insert nötig).
 
-**Auftragsdetailseite (`OrderDetail.tsx`)**: nur ein additiver Button „Bewertung manuell senden" – ausschließlich für Super Admin, nur wenn `order_status='Geliefert'`. Kein Eingriff in bestehende Order-Logik.
+## 4. PDF Technik-Arbeitsauftrag
 
-## 6. Frontend – öffentliche Bewertungsseite
+- Neues Modul `src/lib/repair-work-order-pdf.ts` (orientiert sich an `src/lib/production-order-pdf.ts`, aber eigenständig).
+- Erzeugt PDF mit allen geforderten Feldern (Reparaturnummer, Auftragsnummer, Kunde, Gerät, Seriennummer, Fehler, Werkstattannahme, Schäden, Zubehör, Priorität, Techniker, Aufgabe, Diagnose, durchgeführte Arbeiten, Ersatzteile, Arbeitszeit, Abschluss, Unterschrift, Datum).
+- Speicherung im Bucket `repair-files` unter `work-orders/{repair_id}/{work_order_number}.pdf`, Pfad in `repair_work_orders.pdf_path`.
+- Buttons „PDF erzeugen", „Erneut herunterladen", „Drucken" (`window.print()` auf druckoptimierter HTML-Vorschau).
 
-Neue Routes außerhalb des Auth-Layouts:
-- `/bewertung/:token` → `src/pages/PublicReview/ReviewForm.tsx`
-- `/bewertung/danke` → `ReviewThanks.tsx`
-- Fehlerzustände: ungültig/abgelaufen, bereits abgegeben
+## 5. Anbindung an Bestellwesen (read-only Erweiterung)
 
-Design: hell, neutral, mobil-optimiert, Alix-Lasers-Logo oben, große Submit-Schaltfläche. Komplett ohne Login, ohne Sidebar/AppLayout. Holt Kontext über `get-review-context`, sendet über `submit-review`.
+- Kein Schema-Eingriff in `production_orders`. Stattdessen:
+  - Beim Knopf „Bestellvorschlag erzeugen" wird ein neuer `production_orders`-Datensatz mit `source = 'Reparaturbedarf'` (existierendes Textfeld nutzen oder neue Notiz) angelegt. Falls `production_orders.source` nicht existiert: stattdessen `anmerkungen` mit Header `[Quelle: Reparaturbedarf REP-…]` befüllen.
+  - Verweis wird in `repair_spare_parts.ordered_via_production_order_id` gespeichert.
+- Falls UI im bestehenden Bestellwesen einen Filter „Quelle = Reparaturbedarf" zeigen soll, wird das in einem späteren Schritt geprüft (nicht Teil dieses Plans, da keine Änderung am bestehenden Modul gewünscht).
 
-## 7. Sicherheit
-- Token = 32-Byte Random (hex), unique, Index, optional Ablauf
-- Keine internen IDs im Public-Endpoint sichtbar
-- Eine Bewertung pro Auftrag (DB-Unique)
-- Doppel-Submit verhindert via `submitted_at IS NULL`-Check serverseitig
-- DSGVO: keine Speicherung über das Notwendige hinaus
+## 6. Anbindung Finance & Tourenplanung
+
+- **Finance-Übergabe**: Button auf Detail → erstellt `repair_finance_handover`-Datensatz, Status wechselt zu „Übergabe an Finance". Finance-User sieht eigene Liste `/reparatur/finance`. Nach Eintrag `invoice_reference` → Status „Rechnung erstellt".
+- **Tourenplanungs-Übergabe**: Button → erstellt `repair_delivery_handover`, Status „Übergabe an Tourenplanung". Optionale Verknüpfung zu `route_plans.id` (nur Lese-Pick aus bestehender Tabelle, keine Pflicht).
+
+## 7. Benachrichtigungen & Kunden-E-Mails
+
+- DB-Trigger `repair_event_notify` schreibt bei definierten Statuswechseln einen Eintrag in `repair_notifications` (event_type je Phase, recipient_role passend zur Phase).
+- Globale Badge im Header (klein, nur sichtbar wenn ungelesen) → optional, einfache Implementierung über Polling alle 60 s.
+- Kunden-Mails: Vorlage wird im Modul als Entwurf erzeugt, sichtbar in `RepairDetail` Tab „Kommunikation". Versand-Button nur aktiv für Super Admin oder Finance, ruft bestehende `send-transactional-email` Edge Function. Keine Änderung an der Edge-Function nötig (generisches Template oder neues Template `repair-status-update` in `_shared/transactional-email-templates/`).
+
+## 8. Berechtigungen im UI
+
+- Sichtbarkeit „REPARATURANNAHME"-Menü: alle Rollen (Lesen).
+- Edit-Buttons in den Tabs werden je Rolle ausgeblendet (Helper `useRepairPermissions()`):
+  - Annahme/Werkstatt: Order, Tourenplanung, Admin, Super Admin
+  - Technik/Ersatzteile: Order, QM, Admin, Super Admin
+  - Finance-Tab: Finance, Admin, Super Admin
+  - Tourenplanung-Tab: Tourenplanung, Order, Admin, Super Admin
+  - Vertrieb-Rollen: nur Read
+
+## 9. Implementierungs-Reihenfolge
+
+1. Migration: Tabellen, Sequenz, Trigger (status history, repair_number, notifications), GRANT + RLS, Storage-Bucket-Policies.
+2. Menü-Ausbau (`AppLayout.tsx`) und Routen-Registrierung (`App.tsx`), Platzhalter-Komponenten.
+3. „Neue Reparatur anlegen" + Liste + Detail-Skelett.
+4. Werkstattannahme + Technik-Arbeitsauftrag (inkl. PDF).
+5. Ersatzteile + Bestellvorschlag-Brücke.
+6. Finance- und Tourenplanungs-Übergabe.
+7. Dashboard, Filter, Benachrichtigungen.
+8. Kunden-Mail-Entwürfe + Freigabe-Workflow.
+9. Smoke-Test über alle 18 Statusschritte.
 
 ## Technische Details
 
-- Migration legt Tabellen + GRANTs + RLS + Policies + Trigger `set_updated_at` an.
-- Edge Functions verwenden Service-Role-Client für DB-Zugriff, validieren JWT/Rolle manuell wo nötig.
-- E-Mail-Versand strikt über bestehende `send-transactional-email`-Pipeline (Queue, Suppression, Unsubscribe-Footer automatisch).
-- Public-URL-Basis: aktuelle Custom Domain `https://alix-finance.de`.
-- Kein Eintrag von Reviews-Tabellen in `audit_trigger_fn`-Bindungen, um bestehendes Audit-Verhalten nicht zu verändern.
+- Reparaturnummer per Postgres-Sequenz `repair_order_seq` + Trigger `assign_repair_number`. Jahr aus `to_char(now(),'YYYY')`. Sequenz wird jährlich nicht automatisch zurückgesetzt – Format bleibt eindeutig (`REP-2026-00001`).
+- Status als TEXT mit CHECK-Constraint auf erlaubte Werte (Liste der 18 Schritte). Validierungs-Trigger (kein CHECK auf zeitabhängiges) prüft Übergänge erlaubt (z. B. nur vorwärts oder explizit „Storniert").
+- Status-History via Trigger `log_repair_status_change` (analog zu `log_order_status_change`).
+- Soft-Foreign-Keys auf `orders`, `customers`, `production_orders`, `route_plans` ohne `REFERENCES` – damit kein Cascade-Risiko bei bestehenden Daten.
+- Storage-Bucket `repair-files` mit Policies analog `bug-capa-attachments` (nur authentifizierte Schreiber mit passenden Rollen, Lesen für alle authentifizierten).
+- TypeScript-Helpers in `src/lib/repair/` (Statusliste, Übergangsregeln, Berechtigungs-Hook, PDF-Helper).
+- Keine Änderungen an: `orders`, `customers`, `finance_records`, `production_orders`, `route_plans`, `user_profiles`, `roles`, `user_roles`, bestehenden Edge Functions, bestehenden Email-Templates, bestehenden RLS-Policies.
 
-## Offene Punkte zur Bestätigung
+## Offene Punkte zur Bestätigung (vor Build)
 
-1. Public-URL-Basis = `https://alix-finance.de` ok? (Alternativ Published-URL.)
-2. Token-Ablauf: Vorschlag **90 Tage**, danach „abgelaufen". Ok?
-3. Auto-Versand-Trigger: an welcher Stelle wird `order_status` aktuell auf `Geliefert` gesetzt – zentral im Frontend (OrderEditDialog/OrderDetail) oder auch in einer Edge Function? Bitte kurz bestätigen, damit der Hook genau dort und nirgendwo sonst eingebaut wird.
+1. **Techniker-Unterschrift**: reicht getippter Name + Zeitstempel, oder ist Signatur-Pad (Canvas) gewünscht?
+2. **Rolle „Werkstatt" / „Technik" / „Vertrieb"** existieren aktuell nicht eigenständig – sollen diese als neue Rollen angelegt werden, oder mappen wir wie oben auf die bestehenden Rollen (Order, QM, Finance, Tourenplanung)?
+3. **Bestellwesen-Anbindung**: Quelle „Reparaturbedarf" als reine Notiz im `anmerkungen`-Feld eintragen (zero impact) – einverstanden?
+4. **Kunden-E-Mail-Template**: ein generisches Template mit Status-Variable, oder pro Event ein eigenes Template?
