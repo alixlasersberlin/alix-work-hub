@@ -130,7 +130,10 @@ export default function OrdersFreiBestellung() {
     ]);
     const usedOrderIds = new Set(((existing ?? []).map((p: any) => p.order_id)));
     const hiddenOrderIds = new Set(((hiddenNotes ?? []) as any[]).map(n => n.order_id));
-    const baseFiltered = (data ?? []).filter((o: any) => !usedOrderIds.has(o.id) && !pendingRestIds.has(o.id) && !hiddenOrderIds.has(o.id));
+    // Hinweis: Aufträge mit bereits angelegten Production-Orders bleiben sichtbar,
+    // damit weitere Positionen (z. B. zusätzliche Geräte) nachbestellt werden können.
+    // Ausblenden erfolgt manuell über „Zuordnung löschen".
+    const baseFiltered = (data ?? []).filter((o: any) => !pendingRestIds.has(o.id) && !hiddenOrderIds.has(o.id));
     const restMapped = (restData ?? []).map((o: any) => ({ ...o, _isRestbestellung: true })).filter((o: any) => !hiddenOrderIds.has(o.id));
     const combined = [...restMapped, ...baseFiltered];
 
@@ -502,20 +505,20 @@ export default function OrdersFreiBestellung() {
                       </td>
                       <td className="px-4 py-3"><StatusBadge status={o.order_status} /></td>
                       <td className="px-4 py-3 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          {(reservedByOrder[o.id]?.length ?? 0) > 0 ? (
+                        <div className="flex items-center justify-end gap-2 flex-wrap">
+                          {(reservedByOrder[o.id]?.length ?? 0) > 0 && (
                             <span className="inline-flex items-center gap-1 text-xs text-amber-500 font-medium">
-                              <CheckCircle2 className="w-4 h-4" /> Aus Lager reserviert
+                              <CheckCircle2 className="w-4 h-4" /> {reservedByOrder[o.id].length}× reserviert
                             </span>
-                          ) : inStock ? (
+                          )}
+                          {inStock && (
                             <Button size="sm" variant="default" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => openReserve(o)}>
                               <Warehouse className="w-4 h-4 mr-1" /> Aus Lager reservieren
                             </Button>
-                          ) : (
-                            <Button size="sm" onClick={() => navigate(`/order/neu?order_id=${o.id}`)}>
-                              <Factory className="w-4 h-4 mr-1" /> Bestellung
-                            </Button>
                           )}
+                          <Button size="sm" onClick={() => navigate(`/order/neu?order_id=${o.id}`)}>
+                            <Factory className="w-4 h-4 mr-1" /> Bestellung
+                          </Button>
                           {isSuperAdmin && (
                             <Button
                               size="sm"
