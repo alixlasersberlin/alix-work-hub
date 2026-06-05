@@ -405,6 +405,9 @@ export default function AppLayout() {
       const pendingProd = atOnly
         ? supabase.from('production_orders').select('*, orders!inner(source_system)', { count: 'exact', head: true }).eq('orders.source_system', 'zoho_eu_2').or('approval_status.is.null,approval_status.eq.pending')
         : supabase.from('production_orders').select('*', { count: 'exact', head: true }).or('approval_status.is.null,approval_status.eq.pending');
+      const freiOrdersQ = atOnly
+        ? supabase.from('orders').select('id').eq('source_system', 'zoho_eu_2').eq('deposit_ok', true).not('deposit_ok_by', 'is', null).neq('deposit_ok_by', '').limit(2000)
+        : supabase.from('orders').select('id').eq('deposit_ok', true).not('deposit_ok_by', 'is', null).neq('deposit_ok_by', '').limit(2000);
       const [allRes, reklaRes, factoryRes, freiOrdersRes, prodOrderIdsRes, reservedDevsRes, approvedRes, pendingRes] = await Promise.all([
         baseProdSel,
         reklaProd,
@@ -425,6 +428,7 @@ export default function AppLayout() {
       ]);
       const frei = (freiOrdersRes.data ?? []).filter((o: any) => !usedOrderIds.has(o.id)).length;
       const approved = approvedRes.count ?? 0;
+      const pending = pendingRes.count ?? 0;
       const fertig = 0;
       setLagerCounts((prev) => ({
         ...prev,
@@ -433,6 +437,7 @@ export default function AppLayout() {
         '/order/reklamation': rekla,
         '/order': factory,
         '/order/frei-bestellung': frei,
+        '/order/freigabe': pending,
         '/production/order-in': approved,
         '/production/fertig': fertig,
         '/production': approved + factory + fertig,
