@@ -2,15 +2,12 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { sbRepair } from '@/lib/repair/api';
-import { REPAIR_PRIORITIES } from '@/lib/repair/constants';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { Search } from 'lucide-react';
 
@@ -18,7 +15,7 @@ type OrderSearchRow = {
   id: string;
   order_number: string;
   customer_id: string;
-  customers?: { company_name: string | null; contact_name: string | null; email: string | null; phone: string | null; billing_address: any };
+  customers?: { company_name: string | null; contact_name: string | null; email: string | null; phone: string | null };
 };
 
 export default function ReparaturNew() {
@@ -27,30 +24,22 @@ export default function ReparaturNew() {
   const [mode, setMode] = useState<'existing' | 'new'>('existing');
   const [saving, setSaving] = useState(false);
 
-  // Option A
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<OrderSearchRow[]>([]);
   const [searching, setSearching] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<OrderSearchRow | null>(null);
 
-  // Form fields (shared)
   const [form, setForm] = useState({
-    customer_company: '',
-    customer_contact: '',
+    customer_name: '',
     customer_email: '',
     customer_phone: '',
-    customer_street: '',
-    customer_zip: '',
-    customer_city: '',
-    device_type: '',
-    serial_number: '',
-    purchase_date: '',
+    device_category: '',
+    device_brand: '',
+    device_model: '',
+    device_serial_number: '',
     accessories: '',
-    customer_error_description: '',
-    visible_damages: '',
-    powers_on: true,
-    error_permanent: true,
-    priority: 'Normal' as (typeof REPAIR_PRIORITIES)[number],
+    issue_description: '',
+    internal_notes: '',
   });
 
   const upd = (k: keyof typeof form, v: any) => setForm((f) => ({ ...f, [k]: v }));
@@ -59,16 +48,14 @@ export default function ReparaturNew() {
     if (!searchQuery.trim()) return;
     setSearching(true);
     const q = searchQuery.trim();
-    // Search orders by order_number
     const { data: byOrder } = await supabase
       .from('orders')
-      .select('id,order_number,customer_id,customers:customer_id(company_name,contact_name,email,phone,billing_address)')
+      .select('id,order_number,customer_id,customers:customer_id(company_name,contact_name,email,phone)')
       .or(`order_number.ilike.%${q}%,external_order_id.ilike.%${q}%`)
       .limit(20);
-    // Search customers, then their orders
     const { data: byCust } = await supabase
       .from('customers')
-      .select('id,company_name,contact_name,email,phone,billing_address')
+      .select('id,company_name,contact_name,email,phone')
       .or(`company_name.ilike.%${q}%,contact_name.ilike.%${q}%,email.ilike.%${q}%,phone.ilike.%${q}%`)
       .limit(20);
     let custOrders: any[] = [];
@@ -76,7 +63,7 @@ export default function ReparaturNew() {
       const ids = byCust.map((c: any) => c.id);
       const { data: ord } = await supabase
         .from('orders')
-        .select('id,order_number,customer_id,customers:customer_id(company_name,contact_name,email,phone,billing_address)')
+        .select('id,order_number,customer_id,customers:customer_id(company_name,contact_name,email,phone)')
         .in('customer_id', ids)
         .limit(50);
       custOrders = ord || [];
@@ -90,26 +77,21 @@ export default function ReparaturNew() {
   const pickOrder = (o: OrderSearchRow) => {
     setSelectedOrder(o);
     const c = o.customers as any;
-    const addr = (c?.billing_address || {}) as any;
-    upd('customer_company', c?.company_name || '');
-    upd('customer_contact', c?.contact_name || '');
+    upd('customer_name', c?.company_name || c?.contact_name || '');
     upd('customer_email', c?.email || '');
     upd('customer_phone', c?.phone || '');
-    upd('customer_street', addr.street || addr.address || '');
-    upd('customer_zip', addr.zip || addr.postal_code || '');
-    upd('customer_city', addr.city || '');
   };
 
   const submit = async () => {
-    if (!form.customer_company && !form.customer_contact) {
-      toast({ title: 'Pflichtfeld fehlt', description: 'Kunde / Firma oder Ansprechpartner erforderlich', variant: 'destructive' });
+    if (!form.customer_name) {
+      toast({ title: 'Pflichtfeld fehlt', description: 'Kunde / Firma erforderlich', variant: 'destructive' });
       return;
     }
-    if (!form.device_type) {
-      toast({ title: 'Pflichtfeld fehlt', description: 'Gerätetyp erforderlich', variant: 'destructive' });
+    if (!form.device_category && !form.device_brand && !form.device_model) {
+      toast({ title: 'Pflichtfeld fehlt', description: 'Mindestens ein Gerätefeld erforderlich', variant: 'destructive' });
       return;
     }
-    if (!form.customer_error_description) {
+    if (!form.issue_description) {
       toast({ title: 'Pflichtfeld fehlt', description: 'Fehlerbeschreibung erforderlich', variant: 'destructive' });
       return;
     }
@@ -117,9 +99,9 @@ export default function ReparaturNew() {
     const { data: { user } } = await supabase.auth.getUser();
     const payload: any = {
       ...form,
-      purchase_date: form.purchase_date || null,
-      source: mode === 'existing' ? 'existing_order' : 'new_customer',
+      repair_status: 'Neu',
       order_id: selectedOrder?.id || null,
+      order_number: selectedOrder?.order_number || null,
       customer_id: selectedOrder?.customer_id || null,
       created_by: user?.id,
       updated_by: user?.id,
@@ -145,7 +127,7 @@ export default function ReparaturNew() {
         <TabsContent value="existing" className="space-y-3 pt-4">
           <div className="flex gap-2">
             <Input
-              placeholder="Auftragsnr., Kunde, Firma, PLZ, Telefon, E-Mail, Seriennr., Gerätetyp"
+              placeholder="Auftragsnr., Kunde, Firma, Telefon, E-Mail"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && runSearch()}
@@ -179,35 +161,16 @@ export default function ReparaturNew() {
       </Tabs>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-6">
-        <Field label="Kunde / Firma *"><Input value={form.customer_company} onChange={(e) => upd('customer_company', e.target.value)} /></Field>
-        <Field label="Ansprechpartner"><Input value={form.customer_contact} onChange={(e) => upd('customer_contact', e.target.value)} /></Field>
+        <Field label="Kunde / Firma *"><Input value={form.customer_name} onChange={(e) => upd('customer_name', e.target.value)} /></Field>
         <Field label="E-Mail"><Input value={form.customer_email} onChange={(e) => upd('customer_email', e.target.value)} /></Field>
         <Field label="Telefon"><Input value={form.customer_phone} onChange={(e) => upd('customer_phone', e.target.value)} /></Field>
-        <Field label="Straße"><Input value={form.customer_street} onChange={(e) => upd('customer_street', e.target.value)} /></Field>
-        <div className="grid grid-cols-3 gap-2">
-          <Field label="PLZ"><Input value={form.customer_zip} onChange={(e) => upd('customer_zip', e.target.value)} /></Field>
-          <Field label="Ort" className="col-span-2"><Input value={form.customer_city} onChange={(e) => upd('customer_city', e.target.value)} /></Field>
-        </div>
-        <Field label="Gerätetyp *"><Input value={form.device_type} onChange={(e) => upd('device_type', e.target.value)} /></Field>
-        <Field label="Seriennummer"><Input value={form.serial_number} onChange={(e) => upd('serial_number', e.target.value)} /></Field>
-        <Field label="Kaufdatum"><Input type="date" value={form.purchase_date} onChange={(e) => upd('purchase_date', e.target.value)} /></Field>
+        <Field label="Gerätekategorie"><Input value={form.device_category} onChange={(e) => upd('device_category', e.target.value)} placeholder="z. B. Lasergerät, Handstück" /></Field>
+        <Field label="Marke"><Input value={form.device_brand} onChange={(e) => upd('device_brand', e.target.value)} /></Field>
+        <Field label="Modell"><Input value={form.device_model} onChange={(e) => upd('device_model', e.target.value)} /></Field>
+        <Field label="Seriennummer"><Input value={form.device_serial_number} onChange={(e) => upd('device_serial_number', e.target.value)} /></Field>
         <Field label="Zubehör mitgegeben"><Input value={form.accessories} onChange={(e) => upd('accessories', e.target.value)} /></Field>
-        <Field label="Fehlerbeschreibung Kunde *" className="md:col-span-2"><Textarea rows={3} value={form.customer_error_description} onChange={(e) => upd('customer_error_description', e.target.value)} /></Field>
-        <Field label="Sichtbare Beschädigungen" className="md:col-span-2"><Textarea rows={2} value={form.visible_damages} onChange={(e) => upd('visible_damages', e.target.value)} /></Field>
-        <Field label="Gerät lässt sich einschalten">
-          <div className="flex items-center gap-2 h-10"><Switch checked={form.powers_on} onCheckedChange={(v) => upd('powers_on', v)} /><span className="text-sm text-muted-foreground">{form.powers_on ? 'Ja' : 'Nein'}</span></div>
-        </Field>
-        <Field label="Fehler tritt dauerhaft auf">
-          <div className="flex items-center gap-2 h-10"><Switch checked={form.error_permanent} onCheckedChange={(v) => upd('error_permanent', v)} /><span className="text-sm text-muted-foreground">{form.error_permanent ? 'Ja' : 'Nein'}</span></div>
-        </Field>
-        <Field label="Priorität">
-          <Select value={form.priority} onValueChange={(v) => upd('priority', v)}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {REPAIR_PRIORITIES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </Field>
+        <Field label="Fehlerbeschreibung Kunde *" className="md:col-span-2"><Textarea rows={3} value={form.issue_description} onChange={(e) => upd('issue_description', e.target.value)} /></Field>
+        <Field label="Interne Notizen" className="md:col-span-2"><Textarea rows={2} value={form.internal_notes} onChange={(e) => upd('internal_notes', e.target.value)} /></Field>
       </div>
 
       <div className="flex justify-end gap-2 pt-6">

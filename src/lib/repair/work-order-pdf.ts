@@ -1,11 +1,9 @@
 /**
  * Repair Work Order PDF – HTML-basiert, druckt via window.print()
- * oder lädt als HTML-Datei (kein zusätzlicher PDF-Library-Aufwand).
+ * oder lädt als HTML-Datei.
  */
 type RenderInput = {
   repair: any;
-  intake: any;
-  workOrder: any;
   parts: any[];
 };
 
@@ -14,8 +12,9 @@ function escape(s: any): string {
   return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
 }
 
-function buildHtml({ repair, intake, workOrder, parts }: RenderInput): string {
+function buildHtml({ repair, parts }: RenderInput): string {
   const today = new Date().toLocaleDateString('de-DE');
+  const device = [repair.device_brand, repair.device_model].filter(Boolean).join(' ') || repair.device_category || '';
   return `<!doctype html><html><head><meta charset="utf-8"><title>Arbeitsauftrag ${escape(repair.repair_number)}</title>
   <style>
     body { font-family: -apple-system, system-ui, sans-serif; color: #111; padding: 24px; font-size: 12px; }
@@ -36,62 +35,46 @@ function buildHtml({ repair, intake, workOrder, parts }: RenderInput): string {
     <div class="col">
       <h1>Technik-Arbeitsauftrag</h1>
       <div>Reparaturnummer: <span class="val">${escape(repair.repair_number)}</span></div>
-      ${repair.order_id ? `<div>Auftrag: ${escape(repair.order_id)}</div>` : ''}
+      ${repair.order_number ? `<div>Zoho-Auftrag: ${escape(repair.order_number)}</div>` : ''}
       <div>Datum: ${today}</div>
     </div>
     <div class="col" style="text-align:right">
-      <div class="label">Priorität</div>
-      <div class="val">${escape(repair.priority)}</div>
+      <div class="label">Status</div>
+      <div class="val">${escape(repair.repair_status)}</div>
     </div>
   </div>
 
   <h2>Kunde</h2>
   <table>
-    <tr><th>Firma / Kunde</th><td>${escape(repair.customer_company)}</td><th>Ansprechpartner</th><td>${escape(repair.customer_contact)}</td></tr>
-    <tr><th>Telefon</th><td>${escape(repair.customer_phone)}</td><th>E-Mail</th><td>${escape(repair.customer_email)}</td></tr>
-    <tr><th>Adresse</th><td colspan="3">${escape(repair.customer_street)}, ${escape(repair.customer_zip)} ${escape(repair.customer_city)}</td></tr>
+    <tr><th>Kunde / Firma</th><td>${escape(repair.customer_name)}</td></tr>
+    <tr><th>E-Mail</th><td>${escape(repair.customer_email)}</td></tr>
+    <tr><th>Telefon</th><td>${escape(repair.customer_phone)}</td></tr>
   </table>
 
   <h2>Gerät</h2>
   <table>
-    <tr><th>Gerätetyp</th><td>${escape(repair.device_type)}</td><th>Seriennummer</th><td>${escape(repair.serial_number)}</td></tr>
-    <tr><th>Zubehör</th><td colspan="3">${escape(repair.accessories)}</td></tr>
+    <tr><th>Kategorie</th><td>${escape(repair.device_category)}</td><th>Marke / Modell</th><td>${escape(device)}</td></tr>
+    <tr><th>Seriennummer</th><td>${escape(repair.device_serial_number)}</td><th>Zubehör</th><td>${escape(repair.accessories)}</td></tr>
   </table>
 
-  <h2>Fehler (Kunde)</h2>
-  <div class="box">${escape(repair.customer_error_description)}</div>
-  <div class="row" style="margin-top:6px">
-    <div class="col"><span class="label">Einschaltbar:</span> <b>${repair.powers_on ? 'Ja' : 'Nein'}</b></div>
-    <div class="col"><span class="label">Dauerhaft:</span> <b>${repair.error_permanent ? 'Ja' : 'Nein'}</b></div>
-    <div class="col"><span class="label">Sichtbare Schäden:</span> ${escape(repair.visible_damages)}</div>
-  </div>
+  <h2>Fehlerbeschreibung Kunde</h2>
+  <div class="box">${escape(repair.issue_description)}</div>
 
-  ${intake ? `
-  <h2>Werkstattannahme</h2>
-  <table>
-    <tr><th>Eingang</th><td>${escape(intake.arrival_date)}</td><th>Zustand</th><td>${escape(intake.condition_on_arrival)}</td></tr>
-    <tr><th>Seriennr. geprüft</th><td>${intake.serial_checked ? 'Ja' : 'Nein'}</td><th>Zubehör geprüft</th><td>${intake.accessories_checked ? 'Ja' : 'Nein'}</td></tr>
-    <tr><th>Sichtprüfung</th><td colspan="3">${escape(intake.visual_check)}</td></tr>
-  </table>` : ''}
-
-  <h2>Aufgabe</h2><div class="box">${escape(workOrder?.task_description)}</div>
-  <h2>Diagnose</h2><div class="box">${escape(workOrder?.diagnosis)}</div>
-  <h2>Durchgeführte Arbeiten</h2><div class="box">${escape(workOrder?.work_performed)}</div>
+  <h2>Diagnose</h2>
+  <div class="box">${escape(repair.diagnosis)}</div>
 
   <h2>Ersatzteile</h2>
-  <table><thead><tr><th>Name</th><th>SKU</th><th>Menge</th><th>Grund</th></tr></thead>
-  <tbody>${parts.length ? parts.map((p) => `<tr><td>${escape(p.name)}</td><td>${escape(p.sku)}</td><td>${escape(p.quantity)}</td><td>${escape(p.reason)}</td></tr>`).join('') : '<tr><td colspan="4" style="text-align:center;color:#999">–</td></tr>'}</tbody></table>
+  <table><thead><tr><th>Bezeichnung</th><th>SKU</th><th>Menge</th><th>Lieferant</th><th>Status</th></tr></thead>
+  <tbody>${parts.length ? parts.map((p) => `<tr><td>${escape(p.item_name)}</td><td>${escape(p.sku)}</td><td>${escape(p.quantity)}</td><td>${escape(p.supplier_name)}</td><td>${escape(p.order_status)}</td></tr>`).join('') : '<tr><td colspan="5" style="text-align:center;color:#999">–</td></tr>'}</tbody></table>
 
   <div class="row" style="margin-top:8px">
-    <div class="col"><span class="label">Arbeitszeit:</span> <b>${escape(workOrder?.work_time_minutes)} Min.</b></div>
-    <div class="col"><span class="label">Testlauf:</span> ${workOrder?.test_run_done ? 'Ja' : 'Nein'}</div>
-    <div class="col"><span class="label">Sicherheitsprüfung:</span> ${workOrder?.safety_check_done ? 'Ja' : 'Nein'}</div>
-    <div class="col"><span class="label">Erfolgreich:</span> ${workOrder?.repair_successful ? 'Ja' : 'Nein'}</div>
+    <div class="col"><span class="label">Kostenvoranschlag:</span> <b>${escape(repair.estimated_cost)} ${escape(repair.currency || 'EUR')}</b></div>
+    <div class="col"><span class="label">Tatsächliche Kosten:</span> <b>${escape(repair.actual_cost)} ${escape(repair.currency || 'EUR')}</b></div>
   </div>
 
-  <h2>Abschlussbemerkung</h2><div class="box">${escape(workOrder?.closing_note)}</div>
+  <h2>Interne Notizen</h2><div class="box">${escape(repair.internal_notes)}</div>
 
-  <div class="sig">Unterschrift Techniker: ${escape(workOrder?.technician_signature_name)} ${workOrder?.signed_at ? '· ' + new Date(workOrder.signed_at).toLocaleString('de-DE') : ''}</div>
+  <div class="sig">Unterschrift Techniker: _______________________________ &nbsp; Datum: _____________</div>
   </body></html>`;
 }
 
