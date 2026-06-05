@@ -165,8 +165,8 @@ function FullscreenLoader() {
   );
 }
 
-function ProtectedRoute({ children, requiredRoles }: { children: React.ReactNode; requiredRoles?: string[] }) {
-  const { user, roles, loading, blockReason, mfaState } = useAuth();
+function ProtectedRoute({ children, requiredRoles, allowEmails }: { children: React.ReactNode; requiredRoles?: string[]; allowEmails?: string[] }) {
+  const { user, profile, roles, loading, blockReason, mfaState } = useAuth();
 
   if (loading) return <FullscreenLoader />;
   if (!user) return <Navigate to="/login" replace />;
@@ -176,13 +176,15 @@ function ProtectedRoute({ children, requiredRoles }: { children: React.ReactNode
   if (mfaState === 'challenge_required') return <Navigate to="/mfa-challenge" replace />;
   if (mfaState !== 'verified') return <FullscreenLoader />;
 
+  const emailAllowed = !!allowEmails && allowEmails.map(e => e.toLowerCase()).includes((profile?.email || '').toLowerCase());
+
   if (isSupplierOnly(roles)) {
-    if (requiredRoles && !requiredRoles.includes('Lieferant')) {
+    if (requiredRoles && !requiredRoles.includes('Lieferant') && !emailAllowed) {
       return <Navigate to="/production" replace />;
     }
   }
 
-  if (requiredRoles && !requiredRoles.some(r => roles.includes(r))) return <AccessDenied />;
+  if (requiredRoles && !requiredRoles.some(r => roles.includes(r)) && !emailAllowed) return <AccessDenied />;
 
   return <>{children}</>;
 }
