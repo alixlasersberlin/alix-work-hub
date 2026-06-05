@@ -113,12 +113,29 @@ export default function PriorityList() {
       if (atOnly) qb = qb.eq('source_system', 'zoho_eu_2');
       const { data, error: err } = await qb;
       if (err) setError(err.message);
-      const loaded = (data ?? []) as any as PrioOrder[];
+      let loaded = (data ?? []) as any as PrioOrder[];
+
+      // Bestellte Aufträge ausblenden: Aufträge mit genehmigter & gesendeter Produktionsbestellung entfernen
+      if (loaded.length > 0) {
+        const ids = loaded.map(o => o.id);
+        const { data: prod } = await supabase
+          .from('production_orders')
+          .select('order_id, approval_status, status')
+          .in('order_id', ids);
+        const orderedIds = new Set(
+          (prod ?? [])
+            .filter((p: any) => p.approval_status === 'approved' && p.status && p.status !== 'entwurf')
+            .map((p: any) => p.order_id)
+        );
+        loaded = loaded.filter(o => !orderedIds.has(o.id));
+      }
+
       setOrders(loaded);
       setLoading(false);
     }
     load();
   }, [sortField, sortDir, atOnly]);
+
 
   const statuses = [...new Set(orders.map(o => o.order_status).filter(Boolean))];
 
