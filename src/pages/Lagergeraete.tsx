@@ -423,6 +423,37 @@ export default function Lagergeraete({
     return () => { cancelled = true; };
   }, [open, modelName, reservedOrderId, reservedOrderIdsSet]);
 
+  // Kunden-Suche für Leihgerät-Vorgang
+  useEffect(() => {
+    if (!customerPickerOpen) return;
+    const q = customerSearch.trim();
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      setLoadingCustomers(true);
+      let query = supabase
+        .from('customers')
+        .select('id, company_name, contact_name, billing_city')
+        .order('company_name', { ascending: true })
+        .limit(30);
+      if (q.length >= 1) {
+        query = query.or(
+          `company_name.ilike.%${q}%,contact_name.ilike.%${q}%,billing_city.ilike.%${q}%`,
+        );
+      }
+      const { data } = await query;
+      if (cancelled) return;
+      const opts = (data ?? []).map((c: any) => ({
+        id: c.id,
+        label: [c.company_name || c.contact_name || '—', c.billing_city].filter(Boolean).join(' · '),
+      }));
+      setCustomerOptions(opts);
+      setLoadingCustomers(false);
+    }, 200);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [customerPickerOpen, customerSearch]);
+
+
+
   const loadDevices = async () => {
     setLoading(true);
     const { data, error } = await supabase
