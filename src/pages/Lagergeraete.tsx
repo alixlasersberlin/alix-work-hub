@@ -432,20 +432,25 @@ export default function Lagergeraete({
       setLoadingCustomers(true);
       let query = supabase
         .from('customers')
-        .select('id, company_name, contact_name, billing_city')
+        .select('id, company_name, contact_name, email, source_system')
+        .in('source_system', ['zoho_eu_1', 'zoho_eu_2'])
         .order('company_name', { ascending: true })
-        .limit(30);
+        .limit(50);
       if (q.length >= 1) {
         query = query.or(
-          `company_name.ilike.%${q}%,contact_name.ilike.%${q}%,billing_city.ilike.%${q}%`,
+          `company_name.ilike.%${q}%,contact_name.ilike.%${q}%,email.ilike.%${q}%`,
         );
       }
       const { data } = await query;
       if (cancelled) return;
-      const opts = (data ?? []).map((c: any) => ({
-        id: c.id,
-        label: [c.company_name || c.contact_name || '—', c.billing_city].filter(Boolean).join(' · '),
-      }));
+      const opts = (data ?? []).map((c: any) => {
+        const flag = c.source_system === 'zoho_eu_2' ? '🇦🇹' : c.source_system === 'zoho_eu_1' ? '🇩🇪' : '';
+        const name = c.company_name || c.contact_name || '—';
+        return {
+          id: c.id,
+          label: `${flag} ${name}${c.contact_name && c.company_name ? ' · ' + c.contact_name : ''}`.trim(),
+        };
+      });
       setCustomerOptions(opts);
       setLoadingCustomers(false);
     }, 200);
