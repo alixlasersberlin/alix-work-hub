@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Printer, FileDown, Plus, Trash2, Upload, Receipt, MapPin, FileText } from 'lucide-react';
 import { renderRepairWorkOrderPdf } from '@/lib/repair/work-order-pdf';
+import { WerkstattAnnahmeTab, WerkstattauftraegeTab, SparePartsTab, FinanceHandoverTab, DeliveryHandoverTab, AttachmentsTab } from './RepairExtraTabs';
 
 export default function ReparaturDetail() {
   const { id } = useParams<{ id: string }>();
