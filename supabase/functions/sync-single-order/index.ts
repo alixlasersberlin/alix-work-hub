@@ -271,8 +271,36 @@ Deno.serve(async (req: Request) => {
     }
 
     const orderDateIso = salesOrder.date ? new Date(salesOrder.date).toISOString() : null;
+
+    // Alix Austria (zoho_eu_2): prefer custom field "cf_liefertermin_kundenwunsch"
+    // for the expected shipment date (displayed as "Erw. Versanddatum").
+    let cfLiefertermin: string | null = null;
+    if (source_system === "zoho_eu_2") {
+      const direct = (salesOrder as any).cf_liefertermin_kundenwunsch
+        ?? (salesOrder as any).cf_liefertermin_kundenwunsch_unformatted
+        ?? null;
+      if (direct) {
+        cfLiefertermin = String(direct);
+      } else {
+        const cfArr = Array.isArray((salesOrder as any).custom_fields) ? (salesOrder as any).custom_fields : [];
+        const hit = cfArr.find((c: any) =>
+          c?.api_name === "cf_liefertermin_kundenwunsch"
+          || c?.placeholder === "cf_liefertermin_kundenwunsch"
+          || c?.label === "Liefertermin Kundenwunsch"
+        );
+        const v = hit?.value_formatted ?? hit?.value ?? null;
+        if (v) cfLiefertermin = String(v);
+      }
+    }
+
     let expectedShipmentDate: string | null = null;
-    if (salesOrder.shipment_date) {
+    const parseToIso = (s: string): string | null => {
+      const d = new Date(s);
+      return isNaN(d.getTime()) ? null : d.toISOString();
+    };
+    if (cfLiefertermin) {
+      expectedShipmentDate = parseToIso(cfLiefertermin) ?? cfLiefertermin;
+    } else if (salesOrder.shipment_date) {
       expectedShipmentDate = new Date(salesOrder.shipment_date).toISOString();
     } else {
       const fallback = new Date();

@@ -275,13 +275,37 @@ Deno.serve(async (req: Request) => {
           } catch (_) { /* ignore */ }
 
           const nullIfEmpty = (v: any) => (v == null || v === "" ? null : v);
+
+          // Alix Austria (zoho_eu_2): prefer custom field "cf_liefertermin_kundenwunsch"
+          // for the expected shipment date (displayed as "Erw. Versanddatum").
+          const readCfLiefertermin = (src: any): string | null => {
+            if (!src) return null;
+            const direct = src.cf_liefertermin_kundenwunsch
+              ?? src.cf_liefertermin_kundenwunsch_unformatted
+              ?? null;
+            if (direct) return String(direct);
+            const cfArr = Array.isArray(src.custom_fields) ? src.custom_fields : [];
+            const hit = cfArr.find((c: any) =>
+              c?.api_name === "cf_liefertermin_kundenwunsch"
+              || c?.placeholder === "cf_liefertermin_kundenwunsch"
+              || c?.label === "Liefertermin Kundenwunsch"
+            );
+            return hit?.value_formatted ?? hit?.value ?? null;
+          };
+
+          let expectedShipment = nullIfEmpty(detail.shipment_date ?? so.shipment_date);
+          if (sourceSystem === "zoho_eu_2") {
+            const cf = readCfLiefertermin(detail) ?? readCfLiefertermin(so);
+            if (cf) expectedShipment = cf;
+          }
+
           const orderPayload = {
             external_order_id: externalOrderId,
             source_system: sourceSystem,
             customer_id: customer.id,
             order_number: detail.salesorder_number ?? so.salesorder_number ?? externalOrderId,
             order_date: nullIfEmpty(detail.date ?? so.date),
-            expected_shipment_date: nullIfEmpty(detail.shipment_date ?? so.shipment_date),
+            expected_shipment_date: expectedShipment,
             order_status: detail.status ?? so.status ?? "offen",
             total_amount: detail.total ?? so.total ?? null,
             currency: detail.currency_code ?? so.currency_code ?? null,
