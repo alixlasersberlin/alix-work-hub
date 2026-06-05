@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Trash2, Upload, FileText } from 'lucide-react';
+import { generateHandoverPdf, type HandoverDoc } from '@/lib/repair/handover-pdf';
 
 const F = ({ label, children, className = '' }: any) => (
   <div className={className}><Label className="text-xs">{label}</Label><div className="mt-1">{children}</div></div>
