@@ -71,6 +71,7 @@ export default function OrderApprovalQueue() {
 
   const approve = async (id: string) => {
     if (!isSuperAdmin) return;
+    const row = rows.find((r) => r.id === id);
     setApprovingId(id);
     const { error } = await supabase
       .from('production_orders')
@@ -81,9 +82,56 @@ export default function OrderApprovalQueue() {
         approval_note: null,
       } as any)
       .eq('id', id);
+    if (error) {
+      setApprovingId(null);
+      return toast.error(error.message);
+    }
+
+    // Nach Freigabe: passendes Gerät automatisch reservieren — bevorzugt Lagergeräte (Bestand),
+    // ansonsten Shell Warehouse. Bereits reservierte Geräte werden ignoriert.
+    let reservedInfo: { department: string; serial: string; model: string } | null = null;
+    try {
+      if (row?.order_id && row?.modellname) {
+        const { findLagerMatch, deviceDepartment } = await import('@/lib/lager-match');
+        const { data: freeDevs } = await supabase
+          .from('lager_devices')
+          .select('id, serial_number, model_name, notes, reserved_order_id')
+          .is('reserved_order_id', null);
+        const all = (freeDevs || []) as any[];
+        // Lagergeräte zuerst, dann Warehouse
+        const bestand = all.filter((d) => deviceDepartment(d) === 'Lagergeräte');
+        const warehouse = all.filter((d) => /warehouse/i.test((/\[Status:\s*([^\]]+)\]/.exec(d.notes ?? '')?.[1] ?? '')));
+        const ordered = [...bestand, ...warehouse];
+        const match = findLagerMatch(row.modellname, row.farbe, ordered);
+        if (match) {
+          const { error: resErr } = await supabase
+            .from('lager_devices')
+            .update({ reserved_order_id: row.order_id })
+            .eq('id', match.device.id)
+            .is('reserved_order_id', null);
+          if (!resErr) {
+            reservedInfo = {
+              department: match.department,
+              serial: match.device.serial_number,
+              model: match.device.model_name,
+            };
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Auto-Reservierung fehlgeschlagen', e);
+    }
+
     setApprovingId(null);
-    if (error) return toast.error(error.message);
-    toast.success('Bestellung freigegeben');
+    if (reservedInfo) {
+      toast.success(
+        `Freigegeben — Gerät ${reservedInfo.model} (SN ${reservedInfo.serial}) aus ${reservedInfo.department} vergeben`,
+      );
+    } else if (row?.modellname) {
+      toast.success('Bestellung freigegeben — kein passendes Gerät in Lager/Warehouse gefunden');
+    } else {
+      toast.success('Bestellung freigegeben');
+    }
     setRows((prev) => prev.filter((r) => r.id !== id));
     window.dispatchEvent(new Event('einkauf-counts-refresh'));
   };
