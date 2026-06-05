@@ -80,28 +80,53 @@ export default function ReparaturDetail() {
       <Tabs defaultValue="annahme">
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="annahme">Stammdaten</TabsTrigger>
+          <TabsTrigger value="werkstatt">Werkstattannahme</TabsTrigger>
           <TabsTrigger value="technik">Diagnose & Kosten</TabsTrigger>
+          <TabsTrigger value="auftraege">Werkstattaufträge</TabsTrigger>
           <TabsTrigger value="ersatzteile">Ersatzteile ({parts.length})</TabsTrigger>
+          <TabsTrigger value="spareparts">Bestellungen</TabsTrigger>
+          <TabsTrigger value="finance">Finance</TabsTrigger>
+          <TabsTrigger value="delivery">Auslieferung</TabsTrigger>
           <TabsTrigger value="uebergabe">Übergaben</TabsTrigger>
-          <TabsTrigger value="dateien">Dateien & Signaturen</TabsTrigger>
+          <TabsTrigger value="anhaenge">Anhänge</TabsTrigger>
+          <TabsTrigger value="dateien">Signaturen</TabsTrigger>
           <TabsTrigger value="verlauf">Verlauf</TabsTrigger>
         </TabsList>
 
         <TabsContent value="annahme">
           <AnnahmeTab repair={repair} canEdit={perms.canEditAnnahme} onSave={updateRepair} />
         </TabsContent>
+        <TabsContent value="werkstatt">
+          <WerkstattAnnahmeTab repairId={id!} canEdit={perms.canEditWerkstatt} />
+        </TabsContent>
         <TabsContent value="technik">
           <TechnikTab repair={repair} parts={parts} canEdit={perms.canEditTechnik} onSave={updateRepair} />
+        </TabsContent>
+        <TabsContent value="auftraege">
+          <WerkstattauftraegeTab repairId={id!} canEdit={perms.canEditTechnik} />
         </TabsContent>
         <TabsContent value="ersatzteile">
           <ErsatzteileTab repairId={id!} parts={parts} canEdit={perms.canEditErsatzteile} onChanged={load} />
         </TabsContent>
+        <TabsContent value="spareparts">
+          <SparePartsTab repairId={id!} canEdit={perms.canEditErsatzteile} />
+        </TabsContent>
+        <TabsContent value="finance">
+          <FinanceHandoverTab repairId={id!} canEdit={perms.canEditFinance} />
+        </TabsContent>
+        <TabsContent value="delivery">
+          <DeliveryHandoverTab repairId={id!} canEdit={perms.canEditTouren} />
+        </TabsContent>
         <TabsContent value="uebergabe">
           <UebergabeTab repair={repair} canEditFinance={perms.canEditFinance} canEditTouren={perms.canEditTouren} onSave={updateRepair} />
+        </TabsContent>
+        <TabsContent value="anhaenge">
+          <AttachmentsTab repairId={id!} canEdit={perms.canEditAnnahme} />
         </TabsContent>
         <TabsContent value="dateien">
           <DateienTab repairId={id!} files={files} signatures={signatures} canEdit={perms.canEditAnnahme} onChanged={load} />
         </TabsContent>
+
         <TabsContent value="verlauf">
           <Card className="p-4">
             <table className="w-full text-sm">
