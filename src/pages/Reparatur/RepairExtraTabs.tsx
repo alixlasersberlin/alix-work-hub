@@ -348,6 +348,124 @@ function validateSignatureFile(file: File): string | null {
 }
 
 /* ------------------------------------------------------------------ */
+/* Belege-Checkliste (Pflicht-Uploads vor Statuswechsel)              */
+/* ------------------------------------------------------------------ */
+type ChecklistItem = { key: string; label: string; required: boolean; category: string };
+type UploadedDoc = { key: string; path: string; name: string; size: number; mime: string };
+
+const DOC_MIME = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'application/pdf'];
+const DOC_MAX_BYTES = 10 * 1024 * 1024;
+
+function validateDocFile(file: File): string | null {
+  if (!DOC_MIME.includes(file.type)) return 'Nur PNG, JPG, WEBP oder PDF erlaubt';
+  if (file.size > DOC_MAX_BYTES) return 'Datei zu groß (max. 10 MB)';
+  if (file.size < 200) return 'Datei scheint leer zu sein';
+  return null;
+}
+
+function DocChecklist({
+  items, repairId, folder, docs, setDocs, disabled,
+}: {
+  items: ChecklistItem[]; repairId: string; folder: string;
+  docs: UploadedDoc[]; setDocs: (d: UploadedDoc[]) => void; disabled?: boolean;
+}) {
+  const { toast } = useToast();
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const upload = async (item: ChecklistItem, file: File) => {
+    const err = validateDocFile(file);
+    if (err) return toast({ title: 'Validierung', description: `${item.label}: ${err}`, variant: 'destructive' });
+    setBusy(item.key);
+    const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const path = `${repairId}/${folder}/${Date.now()}-${item.key}-${safe}`;
+    const { error } = await supabase.storage.from('repair-files').upload(path, file, { contentType: file.type });
+    setBusy(null);
+    if (error) return toast({ title: 'Upload fehlgeschlagen', description: error.message, variant: 'destructive' });
+    const next = docs.filter((d) => d.key !== item.key);
+    next.push({ key: item.key, path, name: file.name, size: file.size, mime: file.type });
+    setDocs(next);
+  };
+
+  const remove = async (item: ChecklistItem) => {
+    const d = docs.find((x) => x.key === item.key);
+    if (!d) return;
+    await supabase.storage.from('repair-files').remove([d.path]);
+    setDocs(docs.filter((x) => x.key !== item.key));
+  };
+
+  return (
+    <div className="space-y-2 rounded-md border border-border p-3 bg-background/50">
+      <div className="text-xs font-semibold uppercase text-muted-foreground">Belege-Checkliste</div>
+      {items.map((it) => {
+        const got = docs.find((d) => d.key === it.key);
+        return (
+          <div key={it.key} className="flex items-center gap-2 text-xs flex-wrap">
+            <span className={`inline-block w-4 ${got ? 'text-emerald-400' : it.required ? 'text-destructive' : 'text-muted-foreground'}`}>
+              {got ? '✓' : it.required ? '●' : '○'}
+            </span>
+            <span className="min-w-[180px]">
+              {it.label} {it.required && <span className="text-destructive">*</span>}
+            </span>
+            {got ? (
+              <>
+                <span className="text-emerald-400 truncate max-w-[220px]">{got.name} ({Math.round(got.size / 1024)} KB)</span>
+                {!disabled && <Button size="sm" variant="ghost" className="h-6 px-2" onClick={() => remove(it)}><Trash2 className="w-3 h-3" /></Button>}
+              </>
+            ) : (
+              <label className="cursor-pointer">
+                <input
+                  type="file" className="hidden" accept="image/png,image/jpeg,image/webp,application/pdf"
+                  disabled={disabled || busy === it.key}
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(it, f); e.currentTarget.value = ''; }}
+                />
+                <span className="inline-flex items-center px-2 py-1 rounded bg-muted hover:bg-muted/70 text-xs">
+                  <Upload className="w-3 h-3 mr-1" /> {busy === it.key ? 'Lädt…' : 'Hochladen'}
+                </span>
+              </label>
+            )}
+          </div>
+        );
+      })}
+      <p className="text-[10px] text-muted-foreground">Pflichtbelege (*) müssen vor Bestätigung hochgeladen sein. Dateien werden zusätzlich unter „Anhänge" gespeichert.</p>
+    </div>
+  );
+}
+
+function missingRequiredDocs(items: ChecklistItem[], docs: UploadedDoc[]): string[] {
+  return items.filter((i) => i.required && !docs.find((d) => d.key === i.key)).map((i) => i.label);
+}
+
+async function persistChecklistAttachments(
+  repairId: string, docs: UploadedDoc[], items: ChecklistItem[],
+) {
+  if (!docs.length) return;
+  const { data: { user } } = await supabase.auth.getUser();
+  const rows = docs.map((d) => {
+    const it = items.find((i) => i.key === d.key);
+    return {
+      repair_order_id: repairId,
+      file_path: d.path, file_name: d.name,
+      mime_type: d.mime, size_bytes: d.size,
+      category: it?.category || d.key,
+      uploaded_by: user?.id,
+    };
+  });
+  await sbRepair.from('repair_attachments').insert(rows);
+}
+
+const FINANCE_CHECKLIST: ChecklistItem[] = [
+  { key: 'rechnung', label: 'Rechnung', required: true, category: 'rechnung' },
+  { key: 'lieferschein', label: 'Lieferschein', required: true, category: 'lieferschein' },
+  { key: 'zahlungsnachweis', label: 'Zahlungsnachweis', required: false, category: 'zahlungsnachweis' },
+];
+
+const DELIVERY_CHECKLIST: ChecklistItem[] = [
+  { key: 'lieferschein', label: 'Lieferschein', required: true, category: 'lieferschein' },
+  { key: 'uebergabeprotokoll', label: 'Übergabeprotokoll', required: true, category: 'uebergabeprotokoll' },
+  { key: 'foto', label: 'Foto Gerätezustand', required: false, category: 'foto' },
+];
+
+/* ------------------------------------------------------------------ */
 /* 4) Finance-Übergabe (strukturiert, validiert, mit Audit)           */
 /* ------------------------------------------------------------------ */
 export function FinanceHandoverTab({ repairId, canEdit }: { repairId: string; canEdit: boolean }) {
