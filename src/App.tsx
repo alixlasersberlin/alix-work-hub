@@ -246,6 +246,7 @@ function AppRoutes() {
           <Route path="/operation/logfiles" element={<ProtectedRoute requiredRoles={SYSTEM_ROLES}><Logfiles /></ProtectedRoute>} />
           <Route path="/operation/email-vorlagen" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><EmailTemplates /></ProtectedRoute>} />
           <Route path="/operation/systemwartung" element={<ProtectedRoute requiredRoles={['Super Admin']}><Systemwartung /></ProtectedRoute>} />
+          <Route path="/portal-admin" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><PortalAdmin /></ProtectedRoute>} />
           <Route path="/hilfe" element={<ProtectedRoute><Hilfe /></ProtectedRoute>} />
           <Route path="/hilfe/dokumentation" element={<ProtectedRoute><Dokumentation /></ProtectedRoute>} />
           <Route path="/hilfe/arbeitsanleitung" element={<ProtectedRoute><Arbeitsanleitung /></ProtectedRoute>} />
