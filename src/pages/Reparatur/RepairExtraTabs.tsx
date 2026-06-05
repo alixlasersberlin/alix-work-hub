@@ -494,10 +494,13 @@ export function FinanceHandoverTab({ repairId, canEdit }: { repairId: string; ca
 
   const suggested = (actualCost ?? 0) + partsTotal;
 
+  const missingDocs = missingRequiredDocs(FINANCE_CHECKLIST, docs);
+
   const validate = (): string | null => {
     const amt = Number(n.total_amount);
     if (!n.total_amount || isNaN(amt) || amt <= 0) return 'Gesamtbetrag muss > 0 sein';
     if (!n.invoice_number?.trim()) return 'Rechnungsnummer erforderlich';
+    if (missingDocs.length) return `Fehlende Pflichtbelege: ${missingDocs.join(', ')}`;
     if (!n.confirm) return 'Bitte Übergabe-Bestätigung ankreuzen';
     return null;
   };
@@ -515,14 +518,19 @@ export function FinanceHandoverTab({ repairId, canEdit }: { repairId: string; ca
     };
     const { data: ins, error } = await sbRepair.from('repair_finance_handover').insert(payload).select('id').single();
     if (error) { setSaving(false); return toast({ title: 'Fehler', description: error.message, variant: 'destructive' }); }
+    await persistChecklistAttachments(repairId, docs, FINANCE_CHECKLIST);
     await sbRepair.from('repair_orders').update({
       sent_to_finance: true, sent_to_finance_at: new Date().toISOString(),
       repair_status: 'An Finance übergeben',
     }).eq('id', repairId);
-    await logRepairAudit('repair_finance_handover', repairId, { handover_id: ins.id, ...payload });
+    await logRepairAudit('repair_finance_handover', repairId, {
+      handover_id: ins.id, ...payload,
+      documents: docs.map((d) => ({ key: d.key, path: d.path, name: d.name, size: d.size })),
+    });
     toast({ title: 'Finance-Übergabe protokolliert', description: `${amount.toFixed(2)} ${n.currency} · ${n.invoice_number}` });
-    setN(initial); setAdding(false); setSaving(false); load();
+    setN(initial); setDocs([]); setAdding(false); setSaving(false); load();
   };
+
 
   const del = async (id: string) => {
     await sbRepair.from('repair_finance_handover').delete().eq('id', id);
