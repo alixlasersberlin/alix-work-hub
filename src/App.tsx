@@ -125,6 +125,7 @@ const PortalLookup = lazy(() => import("./pages/Portal/Lookup"));
 const PortalStatus = lazy(() => import("./pages/Portal/Status"));
 const PortalAdmin = lazy(() => import("./pages/PortalAdmin"));
 import MaintenanceGate from "./components/MaintenanceGate";
+import LeihgeraetReminder from "./components/LeihgeraetReminder";
 
 const queryClient = new QueryClient({
   defaultOptions: {
