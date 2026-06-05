@@ -529,6 +529,10 @@ export default function Lagergeraete({
     setReservedOrderNumber(null);
     setOriginalReservedOrderId(null);
     setReservationWeek('');
+    setLeihCustomerId(null);
+    setLeihCustomerName('');
+    setLeihShotCount('');
+    setLeihStart('');
   };
 
   const openEdit = (d: LagerDevice) => {
@@ -543,6 +547,11 @@ export default function Lagergeraete({
     setReservedOrderNumber(d.orders?.order_number ?? null);
     setOriginalReservedOrderId(d.reserved_order_id);
     setReservationWeek(d.reservation_week ?? '');
+    const k = parseLeihKunde(d.notes);
+    setLeihCustomerId(k.id);
+    setLeihCustomerName(k.name);
+    setLeihShotCount(parseSchusszahl(d.notes));
+    setLeihStart(parseLeihStart(d.notes));
     setOpen(true);
   };
 
