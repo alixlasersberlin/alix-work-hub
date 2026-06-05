@@ -218,7 +218,7 @@ export default function Detailsuche() {
             .select('id, order_id, production_order_number, modellname, status, approval_status, liefertermin, is_reclamation')
             .in('order_id', orderIds),
           supabase.from('lager_devices')
-            .select('id, model_name, serial_number, reserved_order_id')
+            .select('id, model_name, serial_number, reserved_order_id, notes')
             .in('reserved_order_id', orderIds),
           supabase.from('route_plans')
             .select('id, order_id, planned_date, planning_status, assigned_employee')
