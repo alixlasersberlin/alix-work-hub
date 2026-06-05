@@ -1722,6 +1722,50 @@ export type Database = {
         }
         Relationships: []
       }
+      repair_attachments: {
+        Row: {
+          category: string | null
+          created_at: string
+          file_name: string
+          file_path: string
+          id: string
+          mime_type: string | null
+          repair_order_id: string
+          size_bytes: number | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          file_name: string
+          file_path: string
+          id?: string
+          mime_type?: string | null
+          repair_order_id: string
+          size_bytes?: number | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          id?: string
+          mime_type?: string | null
+          repair_order_id?: string
+          size_bytes?: number | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repair_attachments_repair_order_id_fkey"
+            columns: ["repair_order_id"]
+            isOneToOne: false
+            referencedRelation: "repair_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       repair_communications: {
         Row: {
           approval_required: boolean
@@ -1793,15 +1837,113 @@ export type Database = {
           },
         ]
       }
+      repair_delivery_handover: {
+        Row: {
+          created_at: string
+          delivered_at: string
+          delivered_by: string | null
+          id: string
+          notes: string | null
+          recipient_name: string | null
+          repair_order_id: string
+          signature_path: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          delivered_at?: string
+          delivered_by?: string | null
+          id?: string
+          notes?: string | null
+          recipient_name?: string | null
+          repair_order_id: string
+          signature_path?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          delivered_at?: string
+          delivered_by?: string | null
+          id?: string
+          notes?: string | null
+          recipient_name?: string | null
+          repair_order_id?: string
+          signature_path?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repair_delivery_handover_repair_order_id_fkey"
+            columns: ["repair_order_id"]
+            isOneToOne: false
+            referencedRelation: "repair_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      repair_finance_handover: {
+        Row: {
+          created_at: string
+          currency: string
+          handed_over_at: string
+          handed_over_by: string | null
+          id: string
+          invoice_number: string | null
+          notes: string | null
+          repair_order_id: string
+          total_amount: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          handed_over_at?: string
+          handed_over_by?: string | null
+          id?: string
+          invoice_number?: string | null
+          notes?: string | null
+          repair_order_id: string
+          total_amount?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          handed_over_at?: string
+          handed_over_by?: string | null
+          id?: string
+          invoice_number?: string | null
+          notes?: string | null
+          repair_order_id?: string
+          total_amount?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repair_finance_handover_repair_order_id_fkey"
+            columns: ["repair_order_id"]
+            isOneToOne: false
+            referencedRelation: "repair_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       repair_orders: {
         Row: {
           accessories: string | null
           actual_cost: number | null
+          address_city: string | null
+          address_country: string | null
+          address_street: string | null
+          address_zip: string | null
           assigned_supplier_id: string | null
           created_at: string
           created_by: string | null
           currency: string
+          customer_company: string | null
+          customer_contact: string | null
           customer_email: string | null
+          customer_error_description: string | null
           customer_id: string | null
           customer_name: string
           customer_phone: string | null
@@ -1809,7 +1951,9 @@ export type Database = {
           device_category: string | null
           device_model: string | null
           device_serial_number: string | null
+          device_type: string | null
           diagnosis: string | null
+          error_permanent: boolean | null
           estimated_cost: number | null
           handover_signature_path: string | null
           id: string
@@ -1818,6 +1962,9 @@ export type Database = {
           issue_description: string | null
           order_id: string | null
           order_number: string | null
+          powers_on: boolean | null
+          priority: string
+          purchase_date: string | null
           repair_number: string | null
           repair_status: string
           sent_to_finance: boolean
@@ -1826,16 +1973,24 @@ export type Database = {
           sent_to_route_planning_at: string | null
           updated_at: string
           updated_by: string | null
+          visible_damages: string | null
           work_order_pdf_path: string | null
         }
         Insert: {
           accessories?: string | null
           actual_cost?: number | null
+          address_city?: string | null
+          address_country?: string | null
+          address_street?: string | null
+          address_zip?: string | null
           assigned_supplier_id?: string | null
           created_at?: string
           created_by?: string | null
           currency?: string
+          customer_company?: string | null
+          customer_contact?: string | null
           customer_email?: string | null
+          customer_error_description?: string | null
           customer_id?: string | null
           customer_name: string
           customer_phone?: string | null
@@ -1843,7 +1998,9 @@ export type Database = {
           device_category?: string | null
           device_model?: string | null
           device_serial_number?: string | null
+          device_type?: string | null
           diagnosis?: string | null
+          error_permanent?: boolean | null
           estimated_cost?: number | null
           handover_signature_path?: string | null
           id?: string
@@ -1852,6 +2009,9 @@ export type Database = {
           issue_description?: string | null
           order_id?: string | null
           order_number?: string | null
+          powers_on?: boolean | null
+          priority?: string
+          purchase_date?: string | null
           repair_number?: string | null
           repair_status?: string
           sent_to_finance?: boolean
@@ -1860,16 +2020,24 @@ export type Database = {
           sent_to_route_planning_at?: string | null
           updated_at?: string
           updated_by?: string | null
+          visible_damages?: string | null
           work_order_pdf_path?: string | null
         }
         Update: {
           accessories?: string | null
           actual_cost?: number | null
+          address_city?: string | null
+          address_country?: string | null
+          address_street?: string | null
+          address_zip?: string | null
           assigned_supplier_id?: string | null
           created_at?: string
           created_by?: string | null
           currency?: string
+          customer_company?: string | null
+          customer_contact?: string | null
           customer_email?: string | null
+          customer_error_description?: string | null
           customer_id?: string | null
           customer_name?: string
           customer_phone?: string | null
@@ -1877,7 +2045,9 @@ export type Database = {
           device_category?: string | null
           device_model?: string | null
           device_serial_number?: string | null
+          device_type?: string | null
           diagnosis?: string | null
+          error_permanent?: boolean | null
           estimated_cost?: number | null
           handover_signature_path?: string | null
           id?: string
@@ -1886,6 +2056,9 @@ export type Database = {
           issue_description?: string | null
           order_id?: string | null
           order_number?: string | null
+          powers_on?: boolean | null
+          priority?: string
+          purchase_date?: string | null
           repair_number?: string | null
           repair_status?: string
           sent_to_finance?: boolean
@@ -1894,6 +2067,7 @@ export type Database = {
           sent_to_route_planning_at?: string | null
           updated_at?: string
           updated_by?: string | null
+          visible_damages?: string | null
           work_order_pdf_path?: string | null
         }
         Relationships: []
@@ -2007,6 +2181,65 @@ export type Database = {
           },
         ]
       }
+      repair_spare_parts: {
+        Row: {
+          created_at: string
+          currency: string
+          id: string
+          notes: string | null
+          ordered_at: string | null
+          part_name: string
+          part_number: string | null
+          quantity: number
+          received_at: string | null
+          repair_order_id: string
+          status: string
+          supplier: string | null
+          unit_price: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          id?: string
+          notes?: string | null
+          ordered_at?: string | null
+          part_name: string
+          part_number?: string | null
+          quantity?: number
+          received_at?: string | null
+          repair_order_id: string
+          status?: string
+          supplier?: string | null
+          unit_price?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          id?: string
+          notes?: string | null
+          ordered_at?: string | null
+          part_name?: string
+          part_number?: string | null
+          quantity?: number
+          received_at?: string | null
+          repair_order_id?: string
+          status?: string
+          supplier?: string | null
+          unit_price?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repair_spare_parts_repair_order_id_fkey"
+            columns: ["repair_order_id"]
+            isOneToOne: false
+            referencedRelation: "repair_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       repair_status_history: {
         Row: {
           change_note: string | null
@@ -2038,6 +2271,106 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "repair_status_history_repair_order_id_fkey"
+            columns: ["repair_order_id"]
+            isOneToOne: false
+            referencedRelation: "repair_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      repair_work_orders: {
+        Row: {
+          created_at: string
+          diagnosis: string | null
+          finished_at: string | null
+          id: string
+          labor_hours: number | null
+          labor_rate: number | null
+          repair_order_id: string
+          started_at: string | null
+          status: string
+          technician_id: string | null
+          updated_at: string
+          work_performed: string | null
+        }
+        Insert: {
+          created_at?: string
+          diagnosis?: string | null
+          finished_at?: string | null
+          id?: string
+          labor_hours?: number | null
+          labor_rate?: number | null
+          repair_order_id: string
+          started_at?: string | null
+          status?: string
+          technician_id?: string | null
+          updated_at?: string
+          work_performed?: string | null
+        }
+        Update: {
+          created_at?: string
+          diagnosis?: string | null
+          finished_at?: string | null
+          id?: string
+          labor_hours?: number | null
+          labor_rate?: number | null
+          repair_order_id?: string
+          started_at?: string | null
+          status?: string
+          technician_id?: string | null
+          updated_at?: string
+          work_performed?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repair_work_orders_repair_order_id_fkey"
+            columns: ["repair_order_id"]
+            isOneToOne: false
+            referencedRelation: "repair_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      repair_workshop_intake: {
+        Row: {
+          accessories_received: string | null
+          condition_notes: string | null
+          created_at: string
+          id: string
+          intake_signature_path: string | null
+          photos_paths: string[] | null
+          received_at: string
+          received_by: string | null
+          repair_order_id: string
+          updated_at: string
+        }
+        Insert: {
+          accessories_received?: string | null
+          condition_notes?: string | null
+          created_at?: string
+          id?: string
+          intake_signature_path?: string | null
+          photos_paths?: string[] | null
+          received_at?: string
+          received_by?: string | null
+          repair_order_id: string
+          updated_at?: string
+        }
+        Update: {
+          accessories_received?: string | null
+          condition_notes?: string | null
+          created_at?: string
+          id?: string
+          intake_signature_path?: string | null
+          photos_paths?: string[] | null
+          received_at?: string
+          received_by?: string | null
+          repair_order_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repair_workshop_intake_repair_order_id_fkey"
             columns: ["repair_order_id"]
             isOneToOne: false
             referencedRelation: "repair_orders"

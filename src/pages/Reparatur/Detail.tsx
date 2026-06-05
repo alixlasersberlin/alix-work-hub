@@ -127,37 +127,69 @@ export default function ReparaturDetail() {
 }
 
 function AnnahmeTab({ repair, canEdit, onSave }: any) {
-  const [f, setF] = useState(repair);
+  const [f, setF] = useState<any>(repair);
   useEffect(() => setF(repair), [repair]);
   const upd = (k: string, v: any) => setF({ ...f, [k]: v });
   return (
     <Card className="p-4 space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <Field label="Kunde / Firma"><Input value={f.customer_name || ''} onChange={(e) => upd('customer_name', e.target.value)} disabled={!canEdit} /></Field>
-        <Field label="Zoho-Auftragsnr."><Input value={f.order_number || ''} disabled /></Field>
+        <Field label="Firma"><Input value={f.customer_company || ''} onChange={(e) => upd('customer_company', e.target.value)} disabled={!canEdit} /></Field>
+        <Field label="Ansprechpartner"><Input value={f.customer_contact || ''} onChange={(e) => upd('customer_contact', e.target.value)} disabled={!canEdit} /></Field>
         <Field label="E-Mail"><Input value={f.customer_email || ''} onChange={(e) => upd('customer_email', e.target.value)} disabled={!canEdit} /></Field>
         <Field label="Telefon"><Input value={f.customer_phone || ''} onChange={(e) => upd('customer_phone', e.target.value)} disabled={!canEdit} /></Field>
+        <Field label="Zoho-Auftragsnr."><Input value={f.order_number || ''} disabled /></Field>
+        <Field label="Priorität">
+          <select className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm" value={f.priority || 'normal'} onChange={(e) => upd('priority', e.target.value)} disabled={!canEdit}>
+            <option value="niedrig">Niedrig</option><option value="normal">Normal</option><option value="hoch">Hoch</option><option value="dringend">Dringend</option>
+          </select>
+        </Field>
+        <Field label="Straße / Nr." className="md:col-span-2"><Input value={f.address_street || ''} onChange={(e) => upd('address_street', e.target.value)} disabled={!canEdit} /></Field>
+        <Field label="PLZ"><Input value={f.address_zip || ''} onChange={(e) => upd('address_zip', e.target.value)} disabled={!canEdit} /></Field>
+        <Field label="Ort"><Input value={f.address_city || ''} onChange={(e) => upd('address_city', e.target.value)} disabled={!canEdit} /></Field>
+        <Field label="Land"><Input value={f.address_country || ''} onChange={(e) => upd('address_country', e.target.value)} disabled={!canEdit} /></Field>
+        <Field label="Gerätetyp"><Input value={f.device_type || ''} onChange={(e) => upd('device_type', e.target.value)} disabled={!canEdit} /></Field>
         <Field label="Gerätekategorie"><Input value={f.device_category || ''} onChange={(e) => upd('device_category', e.target.value)} disabled={!canEdit} /></Field>
         <Field label="Marke"><Input value={f.device_brand || ''} onChange={(e) => upd('device_brand', e.target.value)} disabled={!canEdit} /></Field>
         <Field label="Modell"><Input value={f.device_model || ''} onChange={(e) => upd('device_model', e.target.value)} disabled={!canEdit} /></Field>
         <Field label="Seriennummer"><Input value={f.device_serial_number || ''} onChange={(e) => upd('device_serial_number', e.target.value)} disabled={!canEdit} /></Field>
-        <Field label="Zubehör" className="md:col-span-2"><Input value={f.accessories || ''} onChange={(e) => upd('accessories', e.target.value)} disabled={!canEdit} /></Field>
-        <Field label="Fehlerbeschreibung Kunde" className="md:col-span-2"><Textarea rows={3} value={f.issue_description || ''} onChange={(e) => upd('issue_description', e.target.value)} disabled={!canEdit} /></Field>
-        <Field label="Interne Notizen" className="md:col-span-2"><Textarea rows={2} value={f.internal_notes || ''} onChange={(e) => upd('internal_notes', e.target.value)} disabled={!canEdit} /></Field>
+        <Field label="Kaufdatum"><Input type="date" value={f.purchase_date || ''} onChange={(e) => upd('purchase_date', e.target.value)} disabled={!canEdit} /></Field>
+        <Field label="Gerät schaltet ein?">
+          <select className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm" value={f.powers_on === null || f.powers_on === undefined ? '' : String(f.powers_on)} onChange={(e) => upd('powers_on', e.target.value === '' ? null : e.target.value === 'true')} disabled={!canEdit}>
+            <option value="">– unbekannt –</option><option value="true">Ja</option><option value="false">Nein</option>
+          </select>
+        </Field>
+        <Field label="Fehler permanent?">
+          <select className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm" value={f.error_permanent === null || f.error_permanent === undefined ? '' : String(f.error_permanent)} onChange={(e) => upd('error_permanent', e.target.value === '' ? null : e.target.value === 'true')} disabled={!canEdit}>
+            <option value="">– unbekannt –</option><option value="true">Ja, dauerhaft</option><option value="false">Sporadisch</option>
+          </select>
+        </Field>
+        <Field label="Zubehör" className="md:col-span-3"><Input value={f.accessories || ''} onChange={(e) => upd('accessories', e.target.value)} disabled={!canEdit} /></Field>
+        <Field label="Sichtbare Schäden" className="md:col-span-3"><Textarea rows={2} value={f.visible_damages || ''} onChange={(e) => upd('visible_damages', e.target.value)} disabled={!canEdit} /></Field>
+        <Field label="Fehlerbeschreibung Kunde" className="md:col-span-3"><Textarea rows={3} value={f.customer_error_description || f.issue_description || ''} onChange={(e) => upd('customer_error_description', e.target.value)} disabled={!canEdit} /></Field>
+        <Field label="Interne Notizen" className="md:col-span-3"><Textarea rows={2} value={f.internal_notes || ''} onChange={(e) => upd('internal_notes', e.target.value)} disabled={!canEdit} /></Field>
       </div>
       {canEdit && (
         <div className="flex justify-end">
           <Button onClick={() => onSave({
-            customer_name: f.customer_name, customer_email: f.customer_email, customer_phone: f.customer_phone,
-            device_category: f.device_category, device_brand: f.device_brand, device_model: f.device_model,
-            device_serial_number: f.device_serial_number, accessories: f.accessories,
-            issue_description: f.issue_description, internal_notes: f.internal_notes,
+            customer_name: f.customer_name, customer_company: f.customer_company, customer_contact: f.customer_contact,
+            customer_email: f.customer_email, customer_phone: f.customer_phone,
+            address_street: f.address_street, address_zip: f.address_zip, address_city: f.address_city, address_country: f.address_country,
+            priority: f.priority,
+            device_type: f.device_type, device_category: f.device_category, device_brand: f.device_brand, device_model: f.device_model,
+            device_serial_number: f.device_serial_number, purchase_date: f.purchase_date || null,
+            accessories: f.accessories, visible_damages: f.visible_damages,
+            powers_on: f.powers_on, error_permanent: f.error_permanent,
+            customer_error_description: f.customer_error_description,
+            issue_description: f.customer_error_description || f.issue_description,
+            internal_notes: f.internal_notes,
           })}>Speichern</Button>
         </div>
       )}
     </Card>
   );
 }
+
 
 function TechnikTab({ repair, parts, canEdit, onSave }: any) {
   const [f, setF] = useState(repair);
