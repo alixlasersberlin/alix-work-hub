@@ -110,14 +110,16 @@ Deno.serve(async (req: Request) => {
 
     const authHeader = req.headers.get("Authorization") ?? "";
     const apiKeyHeader = req.headers.get("apikey") ?? "";
+    const cronSecretHeader = req.headers.get("x-cron-secret") ?? "";
+    const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
     const isServiceCall = authHeader === `Bearer ${serviceRoleKey}` || apiKeyHeader === serviceRoleKey;
+    const isCronCall = !!cronSecret && cronSecretHeader === cronSecret;
 
-    // Allow either service role OR a valid anon-key call (cron uses anon key)
-    if (!isServiceCall) {
-      const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-      const isAnonCall = apiKeyHeader === anonKey;
+    // Allow service role, cron secret, valid anon-key call, or authenticated admin user
+    if (!isServiceCall && !isCronCall) {
+      const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? "";
+      const isAnonCall = !!anonKey && (apiKeyHeader === anonKey || authHeader === `Bearer ${anonKey}`);
       if (!isAnonCall) {
-        // Try authenticated admin user
         const userClient = createClient(supabaseUrl, anonKey, {
           global: { headers: { Authorization: authHeader } },
           auth: { autoRefreshToken: false, persistSession: false },
@@ -126,6 +128,7 @@ Deno.serve(async (req: Request) => {
         const { data, error } = await userClient.auth.getUser(token);
         const user = data?.user;
         if (error || !user) {
+          console.error("[scheduled-order-sync] Unauthorized", { hasAuth: !!authHeader, hasApiKey: !!apiKeyHeader, hasCron: !!cronSecretHeader });
           return new Response(JSON.stringify({ error: "Unauthorized" }), {
             status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
@@ -140,6 +143,7 @@ Deno.serve(async (req: Request) => {
         }
       }
     }
+
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey, {
       auth: { autoRefreshToken: false, persistSession: false },
