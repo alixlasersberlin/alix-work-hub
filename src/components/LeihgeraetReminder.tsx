@@ -40,11 +40,16 @@ export default function LeihgeraetReminder() {
   useEffect(() => {
     if (!user || !profile) return;
 
+    // Erzwungener Test-Trigger beim nächsten Login für Justin & Natalia (einmalig)
+    const first = (profile.full_name ?? '').trim().split(/\s+/)[0]?.toLowerCase() ?? '';
+    const isForceTarget = first === 'justin' || first === 'natalia';
+    const forceKey = `leih_reminder_force_test_v1_${user.id}`;
+    const forceTest = isForceTarget && !localStorage.getItem(forceKey);
 
     const storageKey = `leih_reminder_last_${user.id}`;
     const last = Number(localStorage.getItem(storageKey) || '0');
     const now = Date.now();
-    if (last && now - last < REMINDER_INTERVAL_MS) return;
+    if (!forceTest && last && now - last < REMINDER_INTERVAL_MS) return;
 
     (async () => {
       const { data } = await supabase
@@ -62,7 +67,7 @@ export default function LeihgeraetReminder() {
         const start = new Date(startStr).getTime();
         if (!Number.isFinite(start)) continue;
         const diff = now - start;
-        if (diff < TRIGGER_AFTER_MS) continue;
+        if (!forceTest && diff < TRIGGER_AFTER_MS) continue;
         overdue.push({
           id: d.id,
           serial_number: d.serial_number,
@@ -74,11 +79,13 @@ export default function LeihgeraetReminder() {
       }
 
       if (overdue.length > 0) {
+        if (forceTest) localStorage.setItem(forceKey, String(now));
         setDevices(overdue);
         setOpen(true);
       }
     })();
   }, [user, profile]);
+
 
   if (!open) return null;
 
