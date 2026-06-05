@@ -113,6 +113,7 @@ export default function ReparaturNew() {
     const { data: { user } } = await supabase.auth.getUser();
     const payload: any = {
       ...form,
+      purchase_date: form.purchase_date || null,
       repair_status: 'Neu',
       order_id: selectedOrder?.id || null,
       order_number: selectedOrder?.order_number || null,
@@ -129,6 +130,7 @@ export default function ReparaturNew() {
     toast({ title: 'Reparatur angelegt', description: data.repair_number });
     nav(`/reparatur/${data.id}`);
   };
+
 
   return (
     <Card className="p-4">
