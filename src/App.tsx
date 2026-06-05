@@ -121,6 +121,9 @@ const ReviewsClosedWithReview = lazy(() => import("./pages/Reviews/Closed/WithRe
 const ReviewsFrontendPreview = lazy(() => import("./pages/Reviews/FrontendPreview"));
 const PublicReviewForm = lazy(() => import("./pages/PublicReview/ReviewForm"));
 const ReviewThanks = lazy(() => import("./pages/PublicReview/ReviewThanks"));
+const PortalLookup = lazy(() => import("./pages/Portal/Lookup"));
+const PortalStatus = lazy(() => import("./pages/Portal/Status"));
+const PortalAdmin = lazy(() => import("./pages/PortalAdmin"));
 import MaintenanceGate from "./components/MaintenanceGate";
 
 const queryClient = new QueryClient({
@@ -339,6 +342,8 @@ function AppRoutes() {
         <Route path="/unsubscribe" element={<Unsubscribe />} />
         <Route path="/bewertung/danke" element={<ReviewThanks />} />
         <Route path="/bewertung/:token" element={<PublicReviewForm />} />
+        <Route path="/portal" element={<PortalLookup />} />
+        <Route path="/portal/status" element={<PortalStatus />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
