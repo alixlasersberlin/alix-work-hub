@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import WelcomeDialog from '@/components/WelcomeDialog';
 import LeoWelcomeDialog from '@/components/LeoWelcomeDialog';
+import NataliaWelcomeOverlay from '@/components/NataliaWelcomeOverlay';
 import DesignVariantSwitcher from '@/components/DesignVariantSwitcher';
 import AuroraPrioTicker from '@/components/AuroraPrioTicker';
 import AuroraTopNav from '@/components/AuroraTopNav';
@@ -1040,6 +1041,7 @@ export default function AppLayout() {
       </div>
       <WelcomeDialog />
       <LeoWelcomeDialog />
+      <NataliaWelcomeOverlay />
     </div>
   );
 }
