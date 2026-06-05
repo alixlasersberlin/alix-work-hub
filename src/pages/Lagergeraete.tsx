@@ -152,6 +152,14 @@ export default function Lagergeraete({
   const [reservedOrderNumber, setReservedOrderNumber] = useState<string | null>(null);
   const [originalReservedOrderId, setOriginalReservedOrderId] = useState<string | null>(null);
   const [reservationWeek, setReservationWeek] = useState<string>('');
+  const [leihCustomerId, setLeihCustomerId] = useState<string | null>(null);
+  const [leihCustomerName, setLeihCustomerName] = useState<string>('');
+  const [leihShotCount, setLeihShotCount] = useState<string>('');
+  const [leihStart, setLeihStart] = useState<string>('');
+  const [customerPickerOpen, setCustomerPickerOpen] = useState(false);
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [customerOptions, setCustomerOptions] = useState<Array<{ id: string; label: string }>>([]);
+  const [loadingCustomers, setLoadingCustomers] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectionMode, setSelectionMode] = useState(false);
   const [bulkStatus, setBulkStatus] = useState<DeviceStatus>('Bestand');
