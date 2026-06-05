@@ -1003,6 +1003,88 @@ export default function Lagergeraete({
                 </div>
               )}
 
+              {deviceType === 'Leihgerät' && (
+                <div className="space-y-4 rounded-lg border border-amber-500/40 bg-amber-500/5 p-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="leih-customer">Kunde (Standort des Leihgeräts)</Label>
+                    <Popover open={customerPickerOpen} onOpenChange={(v) => { setCustomerPickerOpen(v); if (v) setCustomerSearch(''); }}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          id="leih-customer"
+                          type="button"
+                          variant="outline"
+                          role="combobox"
+                          className="w-full justify-between font-normal"
+                        >
+                          <span className="truncate">{leihCustomerName || 'Kunde auswählen…'}</span>
+                          <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                        <Command shouldFilter={false}>
+                          <CommandInput
+                            placeholder="Kunde suchen (Firma, Name, Stadt)…"
+                            value={customerSearch}
+                            onValueChange={setCustomerSearch}
+                          />
+                          <CommandList className="max-h-72">
+                            {loadingCustomers && (
+                              <div className="flex items-center justify-center py-4 text-xs text-muted-foreground">
+                                <Loader2 className="w-3 h-3 mr-2 animate-spin" /> Lade…
+                              </div>
+                            )}
+                            {!loadingCustomers && customerOptions.length === 0 && (
+                              <CommandEmpty>Keine Treffer.</CommandEmpty>
+                            )}
+                            <CommandGroup>
+                              {customerOptions.map((c) => (
+                                <CommandItem
+                                  key={c.id}
+                                  value={c.id}
+                                  onSelect={() => {
+                                    setLeihCustomerId(c.id);
+                                    setLeihCustomerName(c.label);
+                                    if (!leihStart) setLeihStart(today);
+                                    setCustomerPickerOpen(false);
+                                  }}
+                                >
+                                  {c.label}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    {leihCustomerName && (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>Leihstart: {leihStart || today}</span>
+                        <button
+                          type="button"
+                          onClick={() => { setLeihCustomerId(null); setLeihCustomerName(''); setLeihStart(''); }}
+                          className="text-destructive hover:underline"
+                        >
+                          entfernen
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="leih-shots">Schusszahl</Label>
+                    <Input
+                      id="leih-shots"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={leihShotCount}
+                      onChange={(e) => setLeihShotCount(e.target.value.replace(/[^0-9]/g, ''))}
+                      placeholder="z. B. 12500"
+                      maxLength={12}
+                    />
+                  </div>
+                </div>
+              )}
+
+
               <div className="space-y-2">
                 <Label htmlFor="notes">Notizen (intern)</Label>
                 <p className="text-xs text-muted-foreground">Nur intern sichtbar – wird nirgendwo sonst angezeigt.</p>
