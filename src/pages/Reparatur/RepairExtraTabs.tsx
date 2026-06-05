@@ -634,6 +634,7 @@ export function DeliveryHandoverTab({ repairId, canEdit }: { repairId: string; c
     if (!sigFile) return 'Signatur / Übergabebeleg erforderlich';
     const sigErr = validateSignatureFile(sigFile);
     if (sigErr) return sigErr;
+    if (missingDocs.length) return `Fehlende Pflichtbelege: ${missingDocs.join(', ')}`;
     if (!n.confirm) return 'Bitte Übergabe-Bestätigung ankreuzen';
     return null;
   };
