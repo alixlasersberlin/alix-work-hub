@@ -852,16 +852,17 @@ export function DeliveryHandoverTab({ repairId, canEdit }: { repairId: string; c
 
       <table className="w-full text-sm">
         <thead className="text-xs text-muted-foreground uppercase">
-          <tr><th className="text-left py-2">Datum</th><th className="text-left">Empfänger</th><th className="text-left">Notiz</th><th className="text-left">Beleg</th><th></th></tr>
+          <tr><th className="text-left py-2">Datum</th><th className="text-left">Empfänger</th><th className="text-left">Notiz</th><th className="text-left">Beleg</th><th className="text-right">PDF</th><th></th></tr>
         </thead>
         <tbody>
-          {rows.length === 0 && <tr><td colSpan={5} className="text-center py-4 text-muted-foreground text-xs">Keine Auslieferungen</td></tr>}
+          {rows.length === 0 && <tr><td colSpan={6} className="text-center py-4 text-muted-foreground text-xs">Keine Auslieferungen</td></tr>}
           {rows.map((r) => (
             <tr key={r.id} className="border-t border-border">
               <td className="py-2 text-xs">{new Date(r.delivered_at).toLocaleString('de-DE')}</td>
               <td className="text-xs font-semibold">{r.recipient_name || '–'}</td>
               <td className="text-xs">{r.notes || '–'}</td>
               <td>{r.signature_path ? <Button size="sm" variant="outline" onClick={() => viewSig(r.signature_path)}>Signatur</Button> : <span className="text-xs text-destructive">fehlt</span>}</td>
+              <td className="text-right"><HandoverPdfActions pdf={matchPdfForHandover(pdfs, r.delivered_at)} /></td>
               <td className="text-right">{canEdit && <Button size="sm" variant="ghost" onClick={() => del(r)}><Trash2 className="w-3 h-3" /></Button>}</td>
             </tr>
           ))}
