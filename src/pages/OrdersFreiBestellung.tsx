@@ -130,7 +130,10 @@ export default function OrdersFreiBestellung() {
     ]);
     const usedOrderIds = new Set(((existing ?? []).map((p: any) => p.order_id)));
     const hiddenOrderIds = new Set(((hiddenNotes ?? []) as any[]).map(n => n.order_id));
-    const baseFiltered = (data ?? []).filter((o: any) => !usedOrderIds.has(o.id) && !pendingRestIds.has(o.id) && !hiddenOrderIds.has(o.id));
+    // Hinweis: Aufträge mit bereits angelegten Production-Orders bleiben sichtbar,
+    // damit weitere Positionen (z. B. zusätzliche Geräte) nachbestellt werden können.
+    // Ausblenden erfolgt manuell über „Zuordnung löschen".
+    const baseFiltered = (data ?? []).filter((o: any) => !pendingRestIds.has(o.id) && !hiddenOrderIds.has(o.id));
     const restMapped = (restData ?? []).map((o: any) => ({ ...o, _isRestbestellung: true })).filter((o: any) => !hiddenOrderIds.has(o.id));
     const combined = [...restMapped, ...baseFiltered];
 
