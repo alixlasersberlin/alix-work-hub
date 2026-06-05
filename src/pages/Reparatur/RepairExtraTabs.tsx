@@ -798,7 +798,7 @@ export function DeliveryHandoverTab({ repairId, canEdit }: { repairId: string; c
       });
     } catch (e: any) { console.warn('PDF gen failed', e); toast({ title: 'PDF konnte nicht erzeugt werden', description: e?.message, variant: 'destructive' }); }
     toast({ title: 'Auslieferung erfasst', description: `Empfänger: ${payload.recipient_name} · PDF heruntergeladen` });
-    setN(initial); setSigFile(null); setSigError(null); setDocs([]); setAdding(false); setSaving(false); load();
+    setN(initial); setSigFile(null); setSigError(null); setDocs([]); setAdding(false); setSaving(false); load(); setPdfReload((k) => k + 1);
   };
 
   const viewSig = async (path: string) => {
