@@ -320,57 +320,138 @@ export function SparePartsTab({ repairId, canEdit }: { repairId: string; canEdit
 }
 
 /* ------------------------------------------------------------------ */
-/* 4) Finance-Übergabe (strukturiert, n)                              */
+/* Audit helper                                                       */
+/* ------------------------------------------------------------------ */
+async function logRepairAudit(action: string, repairId: string, details: any) {
+  try {
+    await supabase.rpc('log_audit_event', {
+      _action: action,
+      _module: 'repair',
+      _record_id: repairId,
+      _details: details,
+      _ip_address: null,
+      _user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
+    });
+  } catch (e) {
+    console.warn('audit log failed', e);
+  }
+}
+
+const SIG_MIME = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'application/pdf'];
+const SIG_MAX_BYTES = 5 * 1024 * 1024;
+
+function validateSignatureFile(file: File): string | null {
+  if (!SIG_MIME.includes(file.type)) return 'Nur PNG, JPG, WEBP oder PDF erlaubt';
+  if (file.size > SIG_MAX_BYTES) return 'Datei zu groß (max. 5 MB)';
+  if (file.size < 200) return 'Signatur scheint leer zu sein';
+  return null;
+}
+
+/* ------------------------------------------------------------------ */
+/* 4) Finance-Übergabe (strukturiert, validiert, mit Audit)           */
 /* ------------------------------------------------------------------ */
 export function FinanceHandoverTab({ repairId, canEdit }: { repairId: string; canEdit: boolean }) {
   const { toast } = useToast();
   const [rows, setRows] = useState<any[]>([]);
   const [adding, setAdding] = useState(false);
-  const [n, setN] = useState<any>({ total_amount: '', currency: 'EUR', invoice_number: '', notes: '' });
+  const [saving, setSaving] = useState(false);
+  const [partsTotal, setPartsTotal] = useState(0);
+  const [actualCost, setActualCost] = useState<number | null>(null);
+  const initial = { total_amount: '', currency: 'EUR', invoice_number: '', notes: '', confirm: false };
+  const [n, setN] = useState<any>(initial);
 
   const load = useCallback(async () => {
-    const { data } = await sbRepair.from('repair_finance_handover').select('*').eq('repair_order_id', repairId).order('handed_over_at', { ascending: false });
-    setRows(data || []);
+    const [h, sp, ord] = await Promise.all([
+      sbRepair.from('repair_finance_handover').select('*').eq('repair_order_id', repairId).order('handed_over_at', { ascending: false }),
+      sbRepair.from('repair_spare_parts').select('quantity,unit_price,status').eq('repair_order_id', repairId),
+      sbRepair.from('repair_orders').select('actual_cost,currency').eq('id', repairId).maybeSingle(),
+    ]);
+    setRows(h.data || []);
+    const sum = (sp.data || []).filter((p: any) => p.status !== 'storniert').reduce((s: number, p: any) => s + Number(p.unit_price || 0) * Number(p.quantity || 0), 0);
+    setPartsTotal(sum);
+    setActualCost(ord.data?.actual_cost ?? null);
   }, [repairId]);
   useEffect(() => { load(); }, [load]);
 
-  const add = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    const { error } = await sbRepair.from('repair_finance_handover').insert({
-      repair_order_id: repairId, handed_over_by: user?.id,
-      total_amount: n.total_amount ? Number(n.total_amount) : null,
-      currency: n.currency, invoice_number: n.invoice_number || null, notes: n.notes || null,
-    });
-    if (error) return toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
-    await sbRepair.from('repair_orders').update({ sent_to_finance: true, sent_to_finance_at: new Date().toISOString() }).eq('id', repairId);
-    setN({ total_amount: '', currency: 'EUR', invoice_number: '', notes: '' }); setAdding(false); load();
+  const suggested = (actualCost ?? 0) + partsTotal;
+
+  const validate = (): string | null => {
+    const amt = Number(n.total_amount);
+    if (!n.total_amount || isNaN(amt) || amt <= 0) return 'Gesamtbetrag muss > 0 sein';
+    if (!n.invoice_number?.trim()) return 'Rechnungsnummer erforderlich';
+    if (!n.confirm) return 'Bitte Übergabe-Bestätigung ankreuzen';
+    return null;
   };
 
-  const del = async (id: string) => { await sbRepair.from('repair_finance_handover').delete().eq('id', id); load(); };
+  const add = async () => {
+    const err = validate();
+    if (err) return toast({ title: 'Validierung', description: err, variant: 'destructive' });
+    setSaving(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    const amount = Number(n.total_amount);
+    const payload = {
+      repair_order_id: repairId, handed_over_by: user?.id,
+      total_amount: amount, currency: n.currency,
+      invoice_number: n.invoice_number.trim(), notes: n.notes?.trim() || null,
+    };
+    const { data: ins, error } = await sbRepair.from('repair_finance_handover').insert(payload).select('id').single();
+    if (error) { setSaving(false); return toast({ title: 'Fehler', description: error.message, variant: 'destructive' }); }
+    await sbRepair.from('repair_orders').update({
+      sent_to_finance: true, sent_to_finance_at: new Date().toISOString(),
+      repair_status: 'An Finance übergeben',
+    }).eq('id', repairId);
+    await logRepairAudit('repair_finance_handover', repairId, { handover_id: ins.id, ...payload });
+    toast({ title: 'Finance-Übergabe protokolliert', description: `${amount.toFixed(2)} ${n.currency} · ${n.invoice_number}` });
+    setN(initial); setAdding(false); setSaving(false); load();
+  };
+
+  const del = async (id: string) => {
+    await sbRepair.from('repair_finance_handover').delete().eq('id', id);
+    await logRepairAudit('repair_finance_handover_delete', repairId, { handover_id: id });
+    load();
+  };
 
   return (
     <Card className="p-4 space-y-3">
       <div className="flex justify-between items-center">
-        <h3 className="font-semibold">Finance-Übergaben</h3>
+        <div>
+          <h3 className="font-semibold">Finance-Übergaben</h3>
+          <p className="text-xs text-muted-foreground">Strukturierte Protokollierung · jede Übergabe wird im Audit-Log gespeichert.</p>
+        </div>
         {canEdit && <Button size="sm" onClick={() => setAdding((s) => !s)}><Plus className="w-4 h-4 mr-1" /> Übergabe protokollieren</Button>}
       </div>
+
       {adding && (
-        <Card className="p-3 bg-muted/30">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-            <Input type="number" step="0.01" placeholder="Gesamtbetrag" value={n.total_amount} onChange={(e) => setN({ ...n, total_amount: e.target.value })} />
-            <Select value={n.currency} onValueChange={(v) => setN({ ...n, currency: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{['EUR','USD','CHF'].map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-            </Select>
-            <Input placeholder="Rechnungsnr." value={n.invoice_number} onChange={(e) => setN({ ...n, invoice_number: e.target.value })} />
-            <Input placeholder="Notiz" value={n.notes} onChange={(e) => setN({ ...n, notes: e.target.value })} />
+        <Card className="p-4 bg-muted/30 space-y-3 border-yellow-500/30">
+          <div className="text-xs text-muted-foreground">
+            Vorschlag aus Diagnose & Ersatzteilen: <b>{suggested.toFixed(2)} €</b>
+            {actualCost !== null && <> (Tatsächliche Kosten: {Number(actualCost).toFixed(2)} € · Ersatzteile: {partsTotal.toFixed(2)} €)</>}
+            {suggested > 0 && (
+              <Button size="sm" variant="ghost" className="ml-2 h-6 text-xs" onClick={() => setN({ ...n, total_amount: suggested.toFixed(2) })}>übernehmen</Button>
+            )}
           </div>
-          <div className="flex justify-end gap-2 mt-2">
-            <Button variant="outline" size="sm" onClick={() => setAdding(false)}>Abbrechen</Button>
-            <Button size="sm" onClick={add}>Speichern</Button>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+            <F label="Gesamtbetrag *"><Input type="number" step="0.01" min="0.01" value={n.total_amount} onChange={(e) => setN({ ...n, total_amount: e.target.value })} /></F>
+            <F label="Währung">
+              <Select value={n.currency} onValueChange={(v) => setN({ ...n, currency: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{['EUR','USD','CHF'].map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+              </Select>
+            </F>
+            <F label="Rechnungsnummer *"><Input value={n.invoice_number} onChange={(e) => setN({ ...n, invoice_number: e.target.value })} placeholder="z. B. RE-2026-0001" /></F>
+            <F label="Notiz"><Input value={n.notes} onChange={(e) => setN({ ...n, notes: e.target.value })} /></F>
+          </div>
+          <label className="flex items-start gap-2 text-xs cursor-pointer">
+            <input type="checkbox" checked={n.confirm} onChange={(e) => setN({ ...n, confirm: e.target.checked })} className="mt-0.5" />
+            <span>Ich bestätige, dass Betrag und Rechnungsnummer korrekt sind und die Reparatur tatsächlich an Finance übergeben wurde.</span>
+          </label>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" size="sm" onClick={() => { setAdding(false); setN(initial); }}>Abbrechen</Button>
+            <Button size="sm" onClick={add} disabled={saving}>{saving ? 'Speichere…' : 'Übergabe bestätigen'}</Button>
           </div>
         </Card>
       )}
+
       <table className="w-full text-sm">
         <thead className="text-xs text-muted-foreground uppercase">
           <tr><th className="text-left py-2">Datum</th><th className="text-left">Betrag</th><th className="text-left">Rechnung</th><th className="text-left">Notiz</th><th></th></tr>
@@ -380,7 +461,7 @@ export function FinanceHandoverTab({ repairId, canEdit }: { repairId: string; ca
           {rows.map((r) => (
             <tr key={r.id} className="border-t border-border">
               <td className="py-2 text-xs">{new Date(r.handed_over_at).toLocaleString('de-DE')}</td>
-              <td className="text-xs">{r.total_amount ? `${r.total_amount} ${r.currency}` : '–'}</td>
+              <td className="text-xs font-semibold">{r.total_amount ? `${Number(r.total_amount).toFixed(2)} ${r.currency}` : '–'}</td>
               <td className="text-xs font-mono">{r.invoice_number || '–'}</td>
               <td className="text-xs">{r.notes || '–'}</td>
               <td className="text-right">{canEdit && <Button size="sm" variant="ghost" onClick={() => del(r.id)}><Trash2 className="w-3 h-3" /></Button>}</td>
@@ -393,14 +474,17 @@ export function FinanceHandoverTab({ repairId, canEdit }: { repairId: string; ca
 }
 
 /* ------------------------------------------------------------------ */
-/* 5) Auslieferung (n)                                                */
+/* 5) Auslieferung (validiert, Signatur Pflicht, mit Audit)           */
 /* ------------------------------------------------------------------ */
 export function DeliveryHandoverTab({ repairId, canEdit }: { repairId: string; canEdit: boolean }) {
   const { toast } = useToast();
   const [rows, setRows] = useState<any[]>([]);
   const [adding, setAdding] = useState(false);
-  const [n, setN] = useState<any>({ recipient_name: '', notes: '' });
+  const [saving, setSaving] = useState(false);
+  const initial = { recipient_name: '', notes: '', confirm: false };
+  const [n, setN] = useState<any>(initial);
   const [sigFile, setSigFile] = useState<File | null>(null);
+  const [sigError, setSigError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const { data } = await sbRepair.from('repair_delivery_handover').select('*').eq('repair_order_id', repairId).order('delivered_at', { ascending: false });
@@ -408,22 +492,49 @@ export function DeliveryHandoverTab({ repairId, canEdit }: { repairId: string; c
   }, [repairId]);
   useEffect(() => { load(); }, [load]);
 
+  const onPickSig = (file: File | null) => {
+    setSigFile(file);
+    setSigError(file ? validateSignatureFile(file) : null);
+  };
+
+  const validate = (): string | null => {
+    if (!n.recipient_name?.trim()) return 'Empfänger erforderlich';
+    if (!sigFile) return 'Signatur / Übergabebeleg erforderlich';
+    const sigErr = validateSignatureFile(sigFile);
+    if (sigErr) return sigErr;
+    if (!n.confirm) return 'Bitte Übergabe-Bestätigung ankreuzen';
+    return null;
+  };
+
   const add = async () => {
+    const err = validate();
+    if (err) return toast({ title: 'Validierung', description: err, variant: 'destructive' });
+    setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
-    let sigPath: string | null = null;
-    if (sigFile) {
-      const path = `${repairId}/delivery-signatures/${Date.now()}-${sigFile.name}`;
-      const { error: upErr } = await supabase.storage.from('repair-files').upload(path, sigFile);
-      if (upErr) return toast({ title: 'Signatur-Upload fehlgeschlagen', description: upErr.message, variant: 'destructive' });
-      sigPath = path;
-    }
-    const { error } = await sbRepair.from('repair_delivery_handover').insert({
+    const path = `${repairId}/delivery-signatures/${Date.now()}-${sigFile!.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+    const { error: upErr } = await supabase.storage.from('repair-files').upload(path, sigFile!, { contentType: sigFile!.type });
+    if (upErr) { setSaving(false); return toast({ title: 'Signatur-Upload fehlgeschlagen', description: upErr.message, variant: 'destructive' }); }
+
+    const payload = {
       repair_order_id: repairId, delivered_by: user?.id,
-      recipient_name: n.recipient_name || null, notes: n.notes || null, signature_path: sigPath,
+      recipient_name: n.recipient_name.trim(), notes: n.notes?.trim() || null, signature_path: path,
+    };
+    const { data: ins, error } = await sbRepair.from('repair_delivery_handover').insert(payload).select('id').single();
+    if (error) { setSaving(false); return toast({ title: 'Fehler', description: error.message, variant: 'destructive' }); }
+
+    await sbRepair.from('repair_signatures').insert({
+      repair_order_id: repairId, kind: 'delivery', signer_name: n.recipient_name.trim(),
+      storage_path: path, signed_at: new Date().toISOString(),
     });
-    if (error) return toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
-    await sbRepair.from('repair_orders').update({ repair_status: 'Ausgeliefert' }).eq('id', repairId);
-    setN({ recipient_name: '', notes: '' }); setSigFile(null); setAdding(false); load();
+    await sbRepair.from('repair_orders').update({
+      repair_status: 'Ausgeliefert', handover_signature_path: path,
+    }).eq('id', repairId);
+    await logRepairAudit('repair_delivery_handover', repairId, {
+      handover_id: ins.id, recipient_name: payload.recipient_name,
+      signature_size: sigFile!.size, signature_mime: sigFile!.type, signature_path: path,
+    });
+    toast({ title: 'Auslieferung erfasst', description: `Empfänger: ${payload.recipient_name}` });
+    setN(initial); setSigFile(null); setSigError(null); setAdding(false); setSaving(false); load();
   };
 
   const viewSig = async (path: string) => {
@@ -431,30 +542,47 @@ export function DeliveryHandoverTab({ repairId, canEdit }: { repairId: string; c
     if (data?.signedUrl) window.open(data.signedUrl, '_blank');
   };
 
-  const del = async (id: string) => { await sbRepair.from('repair_delivery_handover').delete().eq('id', id); load(); };
+  const del = async (r: any) => {
+    if (r.signature_path) await supabase.storage.from('repair-files').remove([r.signature_path]);
+    await sbRepair.from('repair_delivery_handover').delete().eq('id', r.id);
+    await logRepairAudit('repair_delivery_handover_delete', repairId, { handover_id: r.id });
+    load();
+  };
 
   return (
     <Card className="p-4 space-y-3">
       <div className="flex justify-between items-center">
-        <h3 className="font-semibold">Auslieferungen</h3>
+        <div>
+          <h3 className="font-semibold">Auslieferungen</h3>
+          <p className="text-xs text-muted-foreground">Signatur des Empfängers ist Pflicht · Übergabe wird im Audit-Log protokolliert.</p>
+        </div>
         {canEdit && <Button size="sm" onClick={() => setAdding((s) => !s)}><Plus className="w-4 h-4 mr-1" /> Auslieferung erfassen</Button>}
       </div>
+
       {adding && (
-        <Card className="p-3 bg-muted/30 space-y-2">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            <Input placeholder="Empfänger / Übernehmer" value={n.recipient_name} onChange={(e) => setN({ ...n, recipient_name: e.target.value })} />
-            <Input placeholder="Notiz" value={n.notes} onChange={(e) => setN({ ...n, notes: e.target.value })} />
+        <Card className="p-4 bg-muted/30 space-y-3 border-sky-500/30">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <F label="Empfänger / Übernehmer *"><Input value={n.recipient_name} onChange={(e) => setN({ ...n, recipient_name: e.target.value })} placeholder="Vor- und Nachname" /></F>
+            <F label="Notiz"><Input value={n.notes} onChange={(e) => setN({ ...n, notes: e.target.value })} /></F>
           </div>
-          <div>
-            <Label className="text-xs">Signatur / Übergabebeleg (Bild/PDF)</Label>
-            <Input type="file" accept="image/*,application/pdf" onChange={(e) => setSigFile(e.target.files?.[0] || null)} />
-          </div>
+          <F label="Signatur / Übergabebeleg * (PNG, JPG, WEBP, PDF · max. 5 MB)">
+            <Input type="file" accept="image/png,image/jpeg,image/webp,application/pdf" onChange={(e) => onPickSig(e.target.files?.[0] || null)} />
+            {sigFile && !sigError && (
+              <p className="text-xs text-emerald-400 mt-1">✓ {sigFile.name} ({Math.round(sigFile.size / 1024)} KB)</p>
+            )}
+            {sigError && <p className="text-xs text-destructive mt-1">{sigError}</p>}
+          </F>
+          <label className="flex items-start gap-2 text-xs cursor-pointer">
+            <input type="checkbox" checked={n.confirm} onChange={(e) => setN({ ...n, confirm: e.target.checked })} className="mt-0.5" />
+            <span>Ich bestätige, dass das Gerät persönlich übergeben und die Signatur des Empfängers eingeholt wurde. Der Reparaturstatus wird auf „Ausgeliefert" gesetzt.</span>
+          </label>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" size="sm" onClick={() => { setAdding(false); setSigFile(null); }}>Abbrechen</Button>
-            <Button size="sm" onClick={add}>Speichern</Button>
+            <Button variant="outline" size="sm" onClick={() => { setAdding(false); setN(initial); setSigFile(null); setSigError(null); }}>Abbrechen</Button>
+            <Button size="sm" onClick={add} disabled={saving || !!sigError}>{saving ? 'Speichere…' : 'Auslieferung bestätigen'}</Button>
           </div>
         </Card>
       )}
+
       <table className="w-full text-sm">
         <thead className="text-xs text-muted-foreground uppercase">
           <tr><th className="text-left py-2">Datum</th><th className="text-left">Empfänger</th><th className="text-left">Notiz</th><th className="text-left">Beleg</th><th></th></tr>
@@ -464,10 +592,10 @@ export function DeliveryHandoverTab({ repairId, canEdit }: { repairId: string; c
           {rows.map((r) => (
             <tr key={r.id} className="border-t border-border">
               <td className="py-2 text-xs">{new Date(r.delivered_at).toLocaleString('de-DE')}</td>
-              <td className="text-xs">{r.recipient_name || '–'}</td>
+              <td className="text-xs font-semibold">{r.recipient_name || '–'}</td>
               <td className="text-xs">{r.notes || '–'}</td>
-              <td>{r.signature_path ? <Button size="sm" variant="outline" onClick={() => viewSig(r.signature_path)}>Öffnen</Button> : <span className="text-xs">–</span>}</td>
-              <td className="text-right">{canEdit && <Button size="sm" variant="ghost" onClick={() => del(r.id)}><Trash2 className="w-3 h-3" /></Button>}</td>
+              <td>{r.signature_path ? <Button size="sm" variant="outline" onClick={() => viewSig(r.signature_path)}>Signatur</Button> : <span className="text-xs text-destructive">fehlt</span>}</td>
+              <td className="text-right">{canEdit && <Button size="sm" variant="ghost" onClick={() => del(r)}><Trash2 className="w-3 h-3" /></Button>}</td>
             </tr>
           ))}
         </tbody>
@@ -475,6 +603,7 @@ export function DeliveryHandoverTab({ repairId, canEdit }: { repairId: string; c
     </Card>
   );
 }
+
 
 /* ------------------------------------------------------------------ */
 /* 6) Anhänge (Metadaten in DB + Storage)                             */
