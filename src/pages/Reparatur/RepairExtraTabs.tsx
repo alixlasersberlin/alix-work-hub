@@ -615,6 +615,8 @@ export function DeliveryHandoverTab({ repairId, canEdit }: { repairId: string; c
   const [n, setN] = useState<any>(initial);
   const [sigFile, setSigFile] = useState<File | null>(null);
   const [sigError, setSigError] = useState<string | null>(null);
+  const [docs, setDocs] = useState<UploadedDoc[]>([]);
+  const missingDocs = missingRequiredDocs(DELIVERY_CHECKLIST, docs);
 
   const load = useCallback(async () => {
     const { data } = await sbRepair.from('repair_delivery_handover').select('*').eq('repair_order_id', repairId).order('delivered_at', { ascending: false });
