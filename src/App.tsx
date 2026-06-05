@@ -121,6 +121,9 @@ const ReviewsClosedWithReview = lazy(() => import("./pages/Reviews/Closed/WithRe
 const ReviewsFrontendPreview = lazy(() => import("./pages/Reviews/FrontendPreview"));
 const PublicReviewForm = lazy(() => import("./pages/PublicReview/ReviewForm"));
 const ReviewThanks = lazy(() => import("./pages/PublicReview/ReviewThanks"));
+const PortalLookup = lazy(() => import("./pages/Portal/Lookup"));
+const PortalStatus = lazy(() => import("./pages/Portal/Status"));
+const PortalAdmin = lazy(() => import("./pages/PortalAdmin"));
 import MaintenanceGate from "./components/MaintenanceGate";
 
 const queryClient = new QueryClient({
@@ -243,6 +246,7 @@ function AppRoutes() {
           <Route path="/operation/logfiles" element={<ProtectedRoute requiredRoles={SYSTEM_ROLES}><Logfiles /></ProtectedRoute>} />
           <Route path="/operation/email-vorlagen" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><EmailTemplates /></ProtectedRoute>} />
           <Route path="/operation/systemwartung" element={<ProtectedRoute requiredRoles={['Super Admin']}><Systemwartung /></ProtectedRoute>} />
+          <Route path="/portal-admin" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><PortalAdmin /></ProtectedRoute>} />
           <Route path="/hilfe" element={<ProtectedRoute><Hilfe /></ProtectedRoute>} />
           <Route path="/hilfe/dokumentation" element={<ProtectedRoute><Dokumentation /></ProtectedRoute>} />
           <Route path="/hilfe/arbeitsanleitung" element={<ProtectedRoute><Arbeitsanleitung /></ProtectedRoute>} />
@@ -339,6 +343,8 @@ function AppRoutes() {
         <Route path="/unsubscribe" element={<Unsubscribe />} />
         <Route path="/bewertung/danke" element={<ReviewThanks />} />
         <Route path="/bewertung/:token" element={<PublicReviewForm />} />
+        <Route path="/portal" element={<PortalLookup />} />
+        <Route path="/portal/status" element={<PortalStatus />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
