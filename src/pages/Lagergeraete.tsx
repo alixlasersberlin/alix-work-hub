@@ -120,6 +120,24 @@ function getStatusFromNotes(notes: string | null | undefined): DeviceStatus {
   return (DEVICE_STATUS_OPTIONS as readonly string[]).includes(v ?? '') ? (v as DeviceStatus) : 'Bestand';
 }
 
+function parseLeihKunde(notes: string | null | undefined): { id: string | null; name: string } {
+  const m = /\[Kunde:\s*([^\]]+)\]/.exec(notes ?? '');
+  if (!m) return { id: null, name: '' };
+  const raw = m[1].trim();
+  const parts = raw.split('|');
+  return { name: parts[0]?.trim() ?? '', id: parts[1]?.trim() || null };
+}
+
+function parseSchusszahl(notes: string | null | undefined): string {
+  const m = /\[Schusszahl:\s*([^\]]+)\]/.exec(notes ?? '');
+  return m?.[1]?.trim() ?? '';
+}
+
+function parseLeihStart(notes: string | null | undefined): string {
+  const m = /\[Leihstart:\s*([^\]]+)\]/.exec(notes ?? '');
+  return m?.[1]?.trim() ?? '';
+}
+
 export default function Lagergeraete({
   filterType,
   filterStatuses,
