@@ -412,7 +412,7 @@ export default function FactoryInvoice() {
                       {r.payment_status === 'Ja' ? t.paymentReceived : t.paymentOk}
                     </Button>
                   )}
-                  {r.invoice_pdf_path && (
+                  {r.invoice_pdf_path && canDownloadPdf && (
                     <Button variant="outline" size="sm" onClick={() => downloadInvoice(r)}>
                       <Download className="w-3.5 h-3.5 mr-1.5" /> {t.pdf}
                     </Button>
