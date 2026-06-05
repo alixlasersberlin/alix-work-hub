@@ -95,7 +95,7 @@ export default function PortalLookup() {
               </div>
             )}
 
-            <Button type="submit" disabled={loading} className="w-full bg-slate-900 hover:bg-slate-800 text-white h-11">
+            <Button type="submit" disabled={loading} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white h-11">
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Search className="w-4 h-4 mr-2" /> Status abfragen</>}
             </Button>
           </form>
