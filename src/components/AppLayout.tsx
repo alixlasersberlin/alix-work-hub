@@ -113,7 +113,6 @@ const navItems: NavItem[] = [
     path: '/tourenplanung', label: 'TOURENPLANUNG', icon: MapPin, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'Österreich'],
     children: [
       { path: '/tourenplanung', label: 'Übersicht', icon: MapPin, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'Österreich'] },
-      { path: '/tourenplanung/reparaturannahme', label: 'REPARATURANNAHME', icon: Wrench, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'Österreich'] },
       { path: '/tourenplanung/einstellungen', label: 'Einstellungen', icon: Settings, roles: ['Admin', 'Super Admin', 'Tourenplanung'] },
       {
         path: '/papiere', label: 'VERSAND', icon: FileText, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich'],
@@ -127,6 +126,10 @@ const navItems: NavItem[] = [
       },
     ],
   },
+  {
+    path: '/reparaturannahme', label: 'REPARATURANNAHME', icon: Wrench, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'Österreich'],
+  },
+
 
   {
     path: '/finance', label: 'FINANCE', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance', 'Finanzierungen', 'Order'],
