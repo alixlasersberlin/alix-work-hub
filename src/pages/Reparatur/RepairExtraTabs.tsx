@@ -467,6 +467,95 @@ const DELIVERY_CHECKLIST: ChecklistItem[] = [
 ];
 
 /* ------------------------------------------------------------------ */
+/* Handover-PDF Preview + Re-Download                                 */
+/* ------------------------------------------------------------------ */
+function useHandoverPdfs(repairId: string, category: string, reloadKey: number) {
+  const [list, setList] = useState<any[]>([]);
+  useEffect(() => {
+    let cancel = false;
+    (async () => {
+      const { data } = await sbRepair
+        .from('repair_attachments').select('*')
+        .eq('repair_order_id', repairId).eq('category', category)
+        .order('created_at', { ascending: false });
+      if (!cancel) setList(data || []);
+    })();
+    return () => { cancel = true; };
+  }, [repairId, category, reloadKey]);
+  return list;
+}
+
+function matchPdfForHandover(pdfs: any[], handoverAt: string | null) {
+  if (!pdfs.length || !handoverAt) return null;
+  const t = new Date(handoverAt).getTime();
+  let best: any = null; let bestDiff = Infinity;
+  for (const p of pdfs) {
+    const diff = Math.abs(new Date(p.created_at).getTime() - t);
+    if (diff < bestDiff) { bestDiff = diff; best = p; }
+  }
+  // accept only when uploaded within 10 min of handover
+  return bestDiff <= 10 * 60 * 1000 ? best : null;
+}
+
+function HandoverPdfActions({ pdf, onMissing }: { pdf: any | null; onMissing?: () => void }) {
+  const { toast } = useToast();
+  const [open, setOpen] = useState(false);
+  const [url, setUrl] = useState<string | null>(null);
+
+  const ensureUrl = async () => {
+    if (url) return url;
+    if (!pdf?.file_path) return null;
+    const { data, error } = await supabase.storage.from('repair-files').createSignedUrl(pdf.file_path, 600);
+    if (error || !data?.signedUrl) { toast({ title: 'Signed URL Fehler', description: error?.message, variant: 'destructive' }); return null; }
+    setUrl(data.signedUrl); return data.signedUrl;
+  };
+
+  const download = async () => {
+    const u = await ensureUrl(); if (!u) return;
+    const a = document.createElement('a');
+    a.href = u; a.download = pdf.file_name || 'handover.pdf';
+    document.body.appendChild(a); a.click(); a.remove();
+  };
+
+  const preview = async () => {
+    const u = await ensureUrl(); if (!u) return;
+    setOpen(true);
+  };
+
+  if (!pdf) {
+    return (
+      <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={onMissing} disabled={!onMissing}>
+        <FileText className="w-3 h-3 mr-1" /> kein PDF
+      </Button>
+    );
+  }
+
+  return (
+    <>
+      <div className="flex justify-end gap-1">
+        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={preview}>
+          <FileText className="w-3 h-3 mr-1" /> Vorschau
+        </Button>
+        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={download}>
+          <Upload className="w-3 h-3 mr-1 rotate-180" /> PDF erneut
+        </Button>
+      </div>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-5xl w-[95vw] h-[85vh] flex flex-col p-0">
+          <DialogHeader className="px-4 py-2 border-b border-border">
+            <DialogTitle className="text-sm flex items-center justify-between">
+              <span className="truncate">{pdf.file_name}</span>
+              <Button size="sm" variant="outline" className="h-7 ml-2" onClick={download}>Herunterladen</Button>
+            </DialogTitle>
+          </DialogHeader>
+          {url && <iframe src={url} className="flex-1 w-full" title="PDF Vorschau" />}
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* 4) Finance-Übergabe (strukturiert, validiert, mit Audit)           */
 /* ------------------------------------------------------------------ */
 export function FinanceHandoverTab({ repairId, canEdit }: { repairId: string; canEdit: boolean }) {
