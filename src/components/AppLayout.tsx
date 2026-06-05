@@ -99,7 +99,7 @@ const navItems: NavItem[] = [
   {
     path: '/lagerverwaltung', label: 'LAGERVERWALTUNG', icon: Warehouse, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich'],
     children: [
-      { path: '/lager/leihgeraete', label: 'Leihgeräte', icon: PackageCheck, roles: ['Admin', 'Super Admin', 'Order', 'Österreich'] },
+      { path: '/lager/leihgeraete', label: 'Leihgeräte', icon: PackageCheck, roles: null },
       { path: '/lager/lagergeraete', label: 'Lagergeräte', icon: Warehouse, roles: ['Admin', 'Super Admin', 'Order', 'Österreich'] },
       { path: '/lager/equipment-area/unterwegs', label: 'Unterwegs', icon: Truck, roles: ['Admin', 'Super Admin', 'Order', 'Österreich'] },
       { path: '/lager/equipment-area/produktion', label: 'Produktion', icon: Factory, roles: ['Admin', 'Super Admin', 'Order', 'Österreich'] },
