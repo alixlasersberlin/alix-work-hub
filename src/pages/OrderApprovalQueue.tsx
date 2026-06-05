@@ -15,6 +15,7 @@ import { de } from 'date-fns/locale';
 
 interface Row {
   id: string;
+  order_id: string | null;
   order_number: string;
   production_order_number: string | null;
   status: string;
