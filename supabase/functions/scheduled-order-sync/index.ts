@@ -115,10 +115,25 @@ Deno.serve(async (req: Request) => {
     const isServiceCall = authHeader === `Bearer ${serviceRoleKey}` || apiKeyHeader === serviceRoleKey;
     const isCronCall = !!cronSecret && cronSecretHeader === cronSecret;
 
+    // Accept any JWT issued by Supabase for this project (anon or service)
+    function isProjectJwt(jwt: string): boolean {
+      try {
+        const part = jwt.replace(/^Bearer\s+/i, "").split(".")[1];
+        if (!part) return false;
+        const padded = part.replace(/-/g, "+").replace(/_/g, "/").padEnd(part.length + ((4 - (part.length % 4)) % 4), "=");
+        const payload = JSON.parse(atob(padded));
+        const projectRef = (supabaseUrl.match(/https?:\/\/([^.]+)\./) || [])[1] ?? "";
+        return payload?.iss === "supabase" && payload?.ref === projectRef && (payload?.role === "anon" || payload?.role === "service_role");
+      } catch { return false; }
+    }
+
     // Allow service role, cron secret, valid anon-key call, or authenticated admin user
     if (!isServiceCall && !isCronCall) {
       const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? "";
-      const isAnonCall = !!anonKey && (apiKeyHeader === anonKey || authHeader === `Bearer ${anonKey}`);
+      const isAnonCall =
+        (!!anonKey && (apiKeyHeader === anonKey || authHeader === `Bearer ${anonKey}`)) ||
+        isProjectJwt(apiKeyHeader) || isProjectJwt(authHeader);
+
       if (!isAnonCall) {
         const userClient = createClient(supabaseUrl, anonKey, {
           global: { headers: { Authorization: authHeader } },
