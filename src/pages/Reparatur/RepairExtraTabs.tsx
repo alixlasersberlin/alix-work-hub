@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Trash2, Upload, FileText } from 'lucide-react';
 import { generateHandoverPdf, type HandoverDoc } from '@/lib/repair/handover-pdf';
@@ -467,6 +468,95 @@ const DELIVERY_CHECKLIST: ChecklistItem[] = [
 ];
 
 /* ------------------------------------------------------------------ */
+/* Handover-PDF Preview + Re-Download                                 */
+/* ------------------------------------------------------------------ */
+function useHandoverPdfs(repairId: string, category: string, reloadKey: number) {
+  const [list, setList] = useState<any[]>([]);
+  useEffect(() => {
+    let cancel = false;
+    (async () => {
+      const { data } = await sbRepair
+        .from('repair_attachments').select('*')
+        .eq('repair_order_id', repairId).eq('category', category)
+        .order('created_at', { ascending: false });
+      if (!cancel) setList(data || []);
+    })();
+    return () => { cancel = true; };
+  }, [repairId, category, reloadKey]);
+  return list;
+}
+
+function matchPdfForHandover(pdfs: any[], handoverAt: string | null) {
+  if (!pdfs.length || !handoverAt) return null;
+  const t = new Date(handoverAt).getTime();
+  let best: any = null; let bestDiff = Infinity;
+  for (const p of pdfs) {
+    const diff = Math.abs(new Date(p.created_at).getTime() - t);
+    if (diff < bestDiff) { bestDiff = diff; best = p; }
+  }
+  // accept only when uploaded within 10 min of handover
+  return bestDiff <= 10 * 60 * 1000 ? best : null;
+}
+
+function HandoverPdfActions({ pdf, onMissing }: { pdf: any | null; onMissing?: () => void }) {
+  const { toast } = useToast();
+  const [open, setOpen] = useState(false);
+  const [url, setUrl] = useState<string | null>(null);
+
+  const ensureUrl = async () => {
+    if (url) return url;
+    if (!pdf?.file_path) return null;
+    const { data, error } = await supabase.storage.from('repair-files').createSignedUrl(pdf.file_path, 600);
+    if (error || !data?.signedUrl) { toast({ title: 'Signed URL Fehler', description: error?.message, variant: 'destructive' }); return null; }
+    setUrl(data.signedUrl); return data.signedUrl;
+  };
+
+  const download = async () => {
+    const u = await ensureUrl(); if (!u) return;
+    const a = document.createElement('a');
+    a.href = u; a.download = pdf.file_name || 'handover.pdf';
+    document.body.appendChild(a); a.click(); a.remove();
+  };
+
+  const preview = async () => {
+    const u = await ensureUrl(); if (!u) return;
+    setOpen(true);
+  };
+
+  if (!pdf) {
+    return (
+      <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={onMissing} disabled={!onMissing}>
+        <FileText className="w-3 h-3 mr-1" /> kein PDF
+      </Button>
+    );
+  }
+
+  return (
+    <>
+      <div className="flex justify-end gap-1">
+        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={preview}>
+          <FileText className="w-3 h-3 mr-1" /> Vorschau
+        </Button>
+        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={download}>
+          <Upload className="w-3 h-3 mr-1 rotate-180" /> PDF erneut
+        </Button>
+      </div>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-5xl w-[95vw] h-[85vh] flex flex-col p-0">
+          <DialogHeader className="px-4 py-2 border-b border-border">
+            <DialogTitle className="text-sm flex items-center justify-between">
+              <span className="truncate">{pdf.file_name}</span>
+              <Button size="sm" variant="outline" className="h-7 ml-2" onClick={download}>Herunterladen</Button>
+            </DialogTitle>
+          </DialogHeader>
+          {url && <iframe src={url} className="flex-1 w-full" title="PDF Vorschau" />}
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* 4) Finance-Übergabe (strukturiert, validiert, mit Audit)           */
 /* ------------------------------------------------------------------ */
 export function FinanceHandoverTab({ repairId, canEdit }: { repairId: string; canEdit: boolean }) {
@@ -479,6 +569,8 @@ export function FinanceHandoverTab({ repairId, canEdit }: { repairId: string; ca
   const initial = { total_amount: '', currency: 'EUR', invoice_number: '', notes: '', confirm: false };
   const [n, setN] = useState<any>(initial);
   const [docs, setDocs] = useState<UploadedDoc[]>([]);
+  const [pdfReload, setPdfReload] = useState(0);
+  const pdfs = useHandoverPdfs(repairId, 'finance_handover_pdf', pdfReload);
 
   const load = useCallback(async () => {
     const [h, sp, ord] = await Promise.all([
@@ -545,7 +637,7 @@ export function FinanceHandoverTab({ repairId, canEdit }: { repairId: string; ca
       });
     } catch (e: any) { console.warn('PDF gen failed', e); toast({ title: 'PDF konnte nicht erzeugt werden', description: e?.message, variant: 'destructive' }); }
     toast({ title: 'Finance-Übergabe protokolliert', description: `${amount.toFixed(2)} ${n.currency} · ${n.invoice_number} · PDF heruntergeladen` });
-    setN(initial); setDocs([]); setAdding(false); setSaving(false); load();
+    setN(initial); setDocs([]); setAdding(false); setSaving(false); load(); setPdfReload((k) => k + 1);
   };
 
 
@@ -601,16 +693,17 @@ export function FinanceHandoverTab({ repairId, canEdit }: { repairId: string; ca
 
       <table className="w-full text-sm">
         <thead className="text-xs text-muted-foreground uppercase">
-          <tr><th className="text-left py-2">Datum</th><th className="text-left">Betrag</th><th className="text-left">Rechnung</th><th className="text-left">Notiz</th><th></th></tr>
+          <tr><th className="text-left py-2">Datum</th><th className="text-left">Betrag</th><th className="text-left">Rechnung</th><th className="text-left">Notiz</th><th className="text-right">PDF</th><th></th></tr>
         </thead>
         <tbody>
-          {rows.length === 0 && <tr><td colSpan={5} className="text-center py-4 text-muted-foreground text-xs">Keine Übergaben</td></tr>}
+          {rows.length === 0 && <tr><td colSpan={6} className="text-center py-4 text-muted-foreground text-xs">Keine Übergaben</td></tr>}
           {rows.map((r) => (
             <tr key={r.id} className="border-t border-border">
               <td className="py-2 text-xs">{new Date(r.handed_over_at).toLocaleString('de-DE')}</td>
               <td className="text-xs font-semibold">{r.total_amount ? `${Number(r.total_amount).toFixed(2)} ${r.currency}` : '–'}</td>
               <td className="text-xs font-mono">{r.invoice_number || '–'}</td>
               <td className="text-xs">{r.notes || '–'}</td>
+              <td className="text-right"><HandoverPdfActions pdf={matchPdfForHandover(pdfs, r.handed_over_at)} /></td>
               <td className="text-right">{canEdit && <Button size="sm" variant="ghost" onClick={() => del(r.id)}><Trash2 className="w-3 h-3" /></Button>}</td>
             </tr>
           ))}
@@ -633,6 +726,8 @@ export function DeliveryHandoverTab({ repairId, canEdit }: { repairId: string; c
   const [sigFile, setSigFile] = useState<File | null>(null);
   const [sigError, setSigError] = useState<string | null>(null);
   const [docs, setDocs] = useState<UploadedDoc[]>([]);
+  const [pdfReload, setPdfReload] = useState(0);
+  const pdfs = useHandoverPdfs(repairId, 'delivery_handover_pdf', pdfReload);
   const missingDocs = missingRequiredDocs(DELIVERY_CHECKLIST, docs);
 
   const load = useCallback(async () => {
@@ -703,7 +798,7 @@ export function DeliveryHandoverTab({ repairId, canEdit }: { repairId: string; c
       });
     } catch (e: any) { console.warn('PDF gen failed', e); toast({ title: 'PDF konnte nicht erzeugt werden', description: e?.message, variant: 'destructive' }); }
     toast({ title: 'Auslieferung erfasst', description: `Empfänger: ${payload.recipient_name} · PDF heruntergeladen` });
-    setN(initial); setSigFile(null); setSigError(null); setDocs([]); setAdding(false); setSaving(false); load();
+    setN(initial); setSigFile(null); setSigError(null); setDocs([]); setAdding(false); setSaving(false); load(); setPdfReload((k) => k + 1);
   };
 
   const viewSig = async (path: string) => {
@@ -757,16 +852,17 @@ export function DeliveryHandoverTab({ repairId, canEdit }: { repairId: string; c
 
       <table className="w-full text-sm">
         <thead className="text-xs text-muted-foreground uppercase">
-          <tr><th className="text-left py-2">Datum</th><th className="text-left">Empfänger</th><th className="text-left">Notiz</th><th className="text-left">Beleg</th><th></th></tr>
+          <tr><th className="text-left py-2">Datum</th><th className="text-left">Empfänger</th><th className="text-left">Notiz</th><th className="text-left">Beleg</th><th className="text-right">PDF</th><th></th></tr>
         </thead>
         <tbody>
-          {rows.length === 0 && <tr><td colSpan={5} className="text-center py-4 text-muted-foreground text-xs">Keine Auslieferungen</td></tr>}
+          {rows.length === 0 && <tr><td colSpan={6} className="text-center py-4 text-muted-foreground text-xs">Keine Auslieferungen</td></tr>}
           {rows.map((r) => (
             <tr key={r.id} className="border-t border-border">
               <td className="py-2 text-xs">{new Date(r.delivered_at).toLocaleString('de-DE')}</td>
               <td className="text-xs font-semibold">{r.recipient_name || '–'}</td>
               <td className="text-xs">{r.notes || '–'}</td>
               <td>{r.signature_path ? <Button size="sm" variant="outline" onClick={() => viewSig(r.signature_path)}>Signatur</Button> : <span className="text-xs text-destructive">fehlt</span>}</td>
+              <td className="text-right"><HandoverPdfActions pdf={matchPdfForHandover(pdfs, r.delivered_at)} /></td>
               <td className="text-right">{canEdit && <Button size="sm" variant="ghost" onClick={() => del(r)}><Trash2 className="w-3 h-3" /></Button>}</td>
             </tr>
           ))}
