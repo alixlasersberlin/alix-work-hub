@@ -4,9 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, X } from 'lucide-react';
 
-// Reminder erscheint nur für Justin und Natalia.
-// Übereinstimmung erfolgt anhand des Vornamens in `full_name` (case-insensitive).
-const TARGET_FIRST_NAMES = ['justin', 'natalia'];
+// Reminder erscheint für ALLE eingeloggten User.
 
 const REMINDER_INTERVAL_MS = 14 * 24 * 60 * 60 * 1000; // 14 Tage
 const TRIGGER_AFTER_MS = 30 * 24 * 60 * 60 * 1000; // 30 Tage
@@ -41,8 +39,7 @@ export default function LeihgeraetReminder() {
 
   useEffect(() => {
     if (!user || !profile) return;
-    const first = (profile.full_name ?? '').trim().split(/\s+/)[0]?.toLowerCase() ?? '';
-    if (!TARGET_FIRST_NAMES.includes(first)) return;
+
 
     const storageKey = `leih_reminder_last_${user.id}`;
     const last = Number(localStorage.getItem(storageKey) || '0');
