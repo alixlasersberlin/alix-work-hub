@@ -1,4 +1,4 @@
 import { RepairFilteredList } from './_FilteredList';
-export default function FinancePage() {
-  return <RepairFilteredList title="Übergaben Finance" statusFilter={['Reparatur abgeschlossen', 'Übergabe an Finance', 'Rechnung erstellt']} />;
+export default function FinanceUebergabePage() {
+  return <RepairFilteredList title="Übergabe Finance" statusFilter={['Reparatur abgeschlossen', 'An Finance übergeben']} />;
 }

@@ -17,8 +17,8 @@ export function RepairFilteredList({ title, emptyText, statusFilter }: Props) {
     (async () => {
       const { data } = await sbRepair
         .from('repair_orders')
-        .select('id,repair_number,status,priority,customer_company,customer_contact,device_type,serial_number,created_at')
-        .in('status', statusFilter)
+        .select('id,repair_number,repair_status,customer_name,device_category,device_brand,device_model,device_serial_number,created_at')
+        .in('repair_status', statusFilter)
         .order('created_at', { ascending: false })
         .limit(500);
       setRows(data || []);
@@ -29,32 +29,37 @@ export function RepairFilteredList({ title, emptyText, statusFilter }: Props) {
   return (
     <Card className="overflow-hidden">
       <div className="p-3 border-b border-border text-sm font-semibold">{title}</div>
-      <table className="w-full text-sm">
-        <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
-          <tr>
-            <th className="text-left px-3 py-2">Reparaturnr.</th>
-            <th className="text-left px-3 py-2">Kunde</th>
-            <th className="text-left px-3 py-2">Gerät</th>
-            <th className="text-left px-3 py-2">Seriennr.</th>
-            <th className="text-left px-3 py-2">Priorität</th>
-            <th className="text-left px-3 py-2">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {loading && <tr><td colSpan={6} className="p-6 text-center text-muted-foreground">Lade…</td></tr>}
-          {!loading && rows.length === 0 && <tr><td colSpan={6} className="p-6 text-center text-muted-foreground text-sm">{emptyText || 'Keine Einträge'}</td></tr>}
-          {rows.map((r) => (
-            <tr key={r.id} className="border-t border-border hover:bg-muted/30">
-              <td className="px-3 py-2"><Link to={`/reparatur/${r.id}`} className="text-primary hover:underline font-mono">{r.repair_number}</Link></td>
-              <td className="px-3 py-2">{r.customer_company || r.customer_contact || '–'}</td>
-              <td className="px-3 py-2">{r.device_type || '–'}</td>
-              <td className="px-3 py-2 text-xs font-mono">{r.serial_number || '–'}</td>
-              <td className="px-3 py-2">{r.priority}</td>
-              <td className="px-3 py-2"><span className={`px-2 py-0.5 rounded text-xs ${STATUS_BADGE_CLASS[r.status] || 'bg-muted'}`}>{r.status}</span></td>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
+            <tr>
+              <th className="text-left px-3 py-2">Reparaturnr.</th>
+              <th className="text-left px-3 py-2">Kunde</th>
+              <th className="text-left px-3 py-2">Gerät</th>
+              <th className="text-left px-3 py-2">Seriennr.</th>
+              <th className="text-left px-3 py-2">Status</th>
+              <th className="text-left px-3 py-2">Angelegt</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {loading && <tr><td colSpan={6} className="p-6 text-center text-muted-foreground">Lade…</td></tr>}
+            {!loading && rows.length === 0 && <tr><td colSpan={6} className="p-6 text-center text-muted-foreground text-sm">{emptyText || 'Keine Einträge'}</td></tr>}
+            {rows.map((r) => {
+              const device = [r.device_brand, r.device_model].filter(Boolean).join(' ') || r.device_category || '–';
+              return (
+                <tr key={r.id} className="border-t border-border hover:bg-muted/30">
+                  <td className="px-3 py-2"><Link to={`/reparatur/${r.id}`} className="text-primary hover:underline font-mono">{r.repair_number}</Link></td>
+                  <td className="px-3 py-2">{r.customer_name || '–'}</td>
+                  <td className="px-3 py-2">{device}</td>
+                  <td className="px-3 py-2 text-xs font-mono">{r.device_serial_number || '–'}</td>
+                  <td className="px-3 py-2"><span className={`px-2 py-0.5 rounded text-xs ${STATUS_BADGE_CLASS[r.repair_status] || 'bg-muted'}`}>{r.repair_status}</span></td>
+                  <td className="px-3 py-2 text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString('de-DE')}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </Card>
   );
 }
