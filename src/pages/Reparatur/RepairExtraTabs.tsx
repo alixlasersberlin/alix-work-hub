@@ -662,12 +662,14 @@ export function DeliveryHandoverTab({ repairId, canEdit }: { repairId: string; c
     await sbRepair.from('repair_orders').update({
       repair_status: 'Ausgeliefert', handover_signature_path: path,
     }).eq('id', repairId);
+    await persistChecklistAttachments(repairId, docs, DELIVERY_CHECKLIST);
     await logRepairAudit('repair_delivery_handover', repairId, {
       handover_id: ins.id, recipient_name: payload.recipient_name,
       signature_size: sigFile!.size, signature_mime: sigFile!.type, signature_path: path,
+      documents: docs.map((d) => ({ key: d.key, path: d.path, name: d.name, size: d.size })),
     });
     toast({ title: 'Auslieferung erfasst', description: `Empfänger: ${payload.recipient_name}` });
-    setN(initial); setSigFile(null); setSigError(null); setAdding(false); setSaving(false); load();
+    setN(initial); setSigFile(null); setSigError(null); setDocs([]); setAdding(false); setSaving(false); load();
   };
 
   const viewSig = async (path: string) => {
