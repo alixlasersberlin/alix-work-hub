@@ -33,6 +33,7 @@ const OrdersInClarification = lazy(() => import("./pages/OrdersInClarification")
 const PriorityList = lazy(() => import("./pages/PriorityList"));
 const HoldList = lazy(() => import("./pages/HoldList"));
 const RoutePlanning = lazy(() => import("./pages/RoutePlanning"));
+const Reparaturannahme = lazy(() => import("./pages/Reparaturannahme"));
 const RoutePlanDetail = lazy(() => import("./pages/RoutePlanDetail"));
 const RoutePlanForm = lazy(() => import("./pages/RoutePlanForm"));
 const RoutePlanningSettings = lazy(() => import("./pages/RoutePlanningSettings"));
@@ -268,6 +269,7 @@ function AppRoutes() {
           <Route path="/geraetetypen" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><DeviceStatistics /></ProtectedRoute>} />
           <Route path="/tourenplanung" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><RoutePlanning /></ProtectedRoute>} />
           <Route path="/tourenplanung/einstellungen" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Tourenplanung']}><RoutePlanningSettings /></ProtectedRoute>} />
+          <Route path="/tourenplanung/reparaturannahme" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><Reparaturannahme /></ProtectedRoute>} />
           <Route path="/tourenplanung/neu" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Tourenplanung']}><RoutePlanForm /></ProtectedRoute>} />
           <Route path="/tourenplanung/:id" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><RoutePlanDetail /></ProtectedRoute>} />
           <Route path="/tourenplanung/:id/bearbeiten" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Tourenplanung']}><RoutePlanForm /></ProtectedRoute>} />
