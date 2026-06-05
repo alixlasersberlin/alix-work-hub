@@ -572,9 +572,12 @@ export function FinanceHandoverTab({ repairId, canEdit }: { repairId: string; ca
             <input type="checkbox" checked={n.confirm} onChange={(e) => setN({ ...n, confirm: e.target.checked })} className="mt-0.5" />
             <span>Ich bestätige, dass Betrag und Rechnungsnummer korrekt sind und die Reparatur tatsächlich an Finance übergeben wurde.</span>
           </label>
+          <DocChecklist items={FINANCE_CHECKLIST} repairId={repairId} folder="finance-docs" docs={docs} setDocs={setDocs} disabled={saving} />
           <div className="flex justify-end gap-2">
-            <Button variant="outline" size="sm" onClick={() => { setAdding(false); setN(initial); }}>Abbrechen</Button>
-            <Button size="sm" onClick={add} disabled={saving}>{saving ? 'Speichere…' : 'Übergabe bestätigen'}</Button>
+            <Button variant="outline" size="sm" onClick={() => { setAdding(false); setN(initial); setDocs([]); }}>Abbrechen</Button>
+            <Button size="sm" onClick={add} disabled={saving || missingDocs.length > 0}>
+              {saving ? 'Speichere…' : missingDocs.length ? `Belege fehlen (${missingDocs.length})` : 'Übergabe bestätigen'}
+            </Button>
           </div>
         </Card>
       )}
