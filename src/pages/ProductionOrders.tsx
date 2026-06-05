@@ -135,26 +135,36 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
 
   const load = async () => {
     setLoading(true);
-    let qb = supabase
+    const { data, error } = await supabase
       .from('production_orders')
-      .select(atOnly
-        ? '*, supplier:suppliers(name, email), orders!inner(source_system, order_status)'
-        : '*, supplier:suppliers(name, email), orders(order_status)')
+      .select('*, supplier:suppliers(name, email)')
       .eq('is_reclamation', isReclamation)
       .order('created_at', { ascending: false });
-    if (atOnly) qb = qb.eq('orders.source_system', 'zoho_eu_2');
-    const { data, error } = await qb;
-    if (error) toast.error(error.message);
-    else {
-      const list = (data || []).map((r: any) => ({
+    if (error) { toast.error(error.message); setLoading(false); return; }
+    let list = (data || []).map((r: any) => ({
+      ...r,
+      display_order_number: r.production_order_number || r.order_number,
+      related_order_status: null as string | null,
+    }));
+
+    // Fetch related order statuses (and filter to AT if needed) separately,
+    // since there is no FK relationship between production_orders and orders.
+    const orderIds = Array.from(new Set(list.map((r: any) => r.order_id).filter(Boolean)));
+    if (orderIds.length > 0) {
+      let oq = supabase.from('orders').select('id, order_status, source_system').in('id', orderIds);
+      if (atOnly) oq = oq.eq('source_system', 'zoho_eu_2');
+      const { data: ords } = await oq;
+      const map = new Map<string, any>((ords || []).map((o: any) => [o.id, o]));
+      if (atOnly) list = list.filter((r: any) => !r.order_id || map.has(r.order_id));
+      list = list.map((r: any) => ({
         ...r,
-        display_order_number: r.production_order_number || r.order_number,
-        related_order_status: r.orders?.order_status ?? null,
+        related_order_status: r.order_id ? (map.get(r.order_id)?.order_status ?? null) : null,
       }));
-      setRows(list);
     }
+    setRows(list);
     setLoading(false);
   };
+
 
 
   useEffect(() => { load(); }, [isReclamation, atOnly]);
