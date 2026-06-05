@@ -85,6 +85,7 @@ const navItems: NavItem[] = [
       { path: '/order/frei-bestellung', label: 'Bestellung möglich', icon: CheckCircle2, roles: ['Admin', 'Super Admin', 'Order'] },
       { path: '/order/reklamation', label: 'Bestellung Reklamation', icon: AlertTriangle, roles: ['Admin', 'Super Admin', 'Order'] },
       { path: '/order', label: 'Factory Orders', icon: Factory, roles: ['Admin', 'Super Admin', 'Order'] },
+      { path: '/order/freigabe', label: 'Freigabe', icon: ShieldCheck, roles: ['Admin', 'Super Admin', 'Order'] },
       {
         path: '/production', label: 'PRODUCTION', icon: Factory, roles: ['Admin', 'Super Admin', 'Lieferant', 'FACTORY INVOICE', 'Order'],
         children: [
@@ -401,10 +402,13 @@ export default function AppLayout() {
       const approvedProd = atOnly
         ? supabase.from('production_orders').select('*, orders!inner(source_system)', { count: 'exact', head: true }).eq('orders.source_system', 'zoho_eu_2').eq('approval_status', 'approved')
         : supabase.from('production_orders').select('*', { count: 'exact', head: true }).eq('approval_status', 'approved');
+      const pendingProd = atOnly
+        ? supabase.from('production_orders').select('*, orders!inner(source_system)', { count: 'exact', head: true }).eq('orders.source_system', 'zoho_eu_2').or('approval_status.is.null,approval_status.eq.pending')
+        : supabase.from('production_orders').select('*', { count: 'exact', head: true }).or('approval_status.is.null,approval_status.eq.pending');
       const freiOrdersQ = atOnly
         ? supabase.from('orders').select('id').eq('source_system', 'zoho_eu_2').eq('deposit_ok', true).not('deposit_ok_by', 'is', null).neq('deposit_ok_by', '').limit(2000)
         : supabase.from('orders').select('id').eq('deposit_ok', true).not('deposit_ok_by', 'is', null).neq('deposit_ok_by', '').limit(2000);
-      const [allRes, reklaRes, factoryRes, freiOrdersRes, prodOrderIdsRes, reservedDevsRes, approvedRes] = await Promise.all([
+      const [allRes, reklaRes, factoryRes, freiOrdersRes, prodOrderIdsRes, reservedDevsRes, approvedRes, pendingRes] = await Promise.all([
         baseProdSel,
         reklaProd,
         factoryProd,
@@ -412,6 +416,7 @@ export default function AppLayout() {
         supabase.from('production_orders').select('order_id').limit(2000),
         supabase.from('lager_devices').select('reserved_order_id').not('reserved_order_id', 'is', null).limit(2000),
         approvedProd,
+        pendingProd,
       ]);
       if (cancelled) return;
       const all = allRes.count ?? 0;
@@ -423,6 +428,7 @@ export default function AppLayout() {
       ]);
       const frei = (freiOrdersRes.data ?? []).filter((o: any) => !usedOrderIds.has(o.id)).length;
       const approved = approvedRes.count ?? 0;
+      const pending = pendingRes.count ?? 0;
       const fertig = 0;
       setLagerCounts((prev) => ({
         ...prev,
@@ -431,6 +437,7 @@ export default function AppLayout() {
         '/order/reklamation': rekla,
         '/order': factory,
         '/order/frei-bestellung': frei,
+        '/order/freigabe': pending,
         '/production/order-in': approved,
         '/production/fertig': fertig,
         '/production': approved + factory + fertig,
@@ -488,11 +495,13 @@ export default function AppLayout() {
     }
     const isProductionGroup = path === '/production' && label === 'PRODUCTION';
     const colorClass =
-      c === 0
-        ? 'text-red-500'
-        : path === '/lager' || path === '/tourenplanung' || isProductionGroup
-          ? 'text-green-500'
-          : undefined;
+      path === '/order/freigabe'
+        ? (c > 0 ? 'text-yellow-500' : 'text-muted-foreground')
+        : c === 0
+          ? 'text-red-500'
+          : path === '/lager' || path === '/tourenplanung' || isProductionGroup
+            ? 'text-green-500'
+            : undefined;
     return (
       <>
         {label} <span className={colorClass}>({c})</span>
