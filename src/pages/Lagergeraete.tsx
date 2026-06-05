@@ -293,7 +293,7 @@ export default function Lagergeraete({
     }
     if (!q) return base;
     return base.filter((d) => {
-      const hay = `${d.serial_number ?? ''} ${d.model_name ?? ''} ${d.notes ?? ''} ${d.orders?.order_number ?? ''} ${d.reservation_week ?? ''}`.toLowerCase();
+      const hay = `${d.serial_number ?? ''} ${d.model_name ?? ''} ${d.notes ?? ''} ${d.orders?.order_number ?? ''} ${(d.orders as any)?.customer_name ?? ''} ${d.reservation_week ?? ''}`.toLowerCase();
       return hay.includes(q);
     });
   }, [typeFilteredDevices, searchQuery, datePeriod, filterStatuses]);
