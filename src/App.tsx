@@ -364,6 +364,7 @@ const App = () => (
               <MaintenanceGate>
                 <AppRoutes />
                 <AuroraSpotlight />
+                <LeihgeraetReminder />
               </MaintenanceGate>
             </AuthProvider>
           </BrowserRouter>
