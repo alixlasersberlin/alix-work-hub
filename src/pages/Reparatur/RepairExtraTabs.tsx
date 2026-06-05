@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Trash2, Upload, FileText } from 'lucide-react';
+import { generateHandoverPdf, type HandoverDoc } from '@/lib/repair/handover-pdf';
 
 const F = ({ label, children, className = '' }: any) => (
   <div className={className}><Label className="text-xs">{label}</Label><div className="mt-1">{children}</div></div>
@@ -527,7 +528,23 @@ export function FinanceHandoverTab({ repairId, canEdit }: { repairId: string; ca
       handover_id: ins.id, ...payload,
       documents: docs.map((d) => ({ key: d.key, path: d.path, name: d.name, size: d.size })),
     });
-    toast({ title: 'Finance-Übergabe protokolliert', description: `${amount.toFixed(2)} ${n.currency} · ${n.invoice_number}` });
+    try {
+      await generateHandoverPdf({
+        kind: 'finance', repairId, handoverId: ins.id, newStatus: 'An Finance übergeben',
+        signaturePath: null, handedOverBy: user?.id,
+        metadata: {
+          'Gesamtbetrag': `${amount.toFixed(2)} ${n.currency}`,
+          'Rechnungsnummer': n.invoice_number.trim(),
+          'Notiz': n.notes?.trim() || '',
+          'Übergeben am': new Date().toLocaleString('de-DE'),
+        },
+        checklist: FINANCE_CHECKLIST.map((it) => {
+          const d = docs.find((x) => x.key === it.key);
+          return { key: it.key, label: it.label, required: it.required, uploaded: !!d, fileName: d?.name, path: d?.path, sizeBytes: d?.size };
+        }),
+      });
+    } catch (e: any) { console.warn('PDF gen failed', e); toast({ title: 'PDF konnte nicht erzeugt werden', description: e?.message, variant: 'destructive' }); }
+    toast({ title: 'Finance-Übergabe protokolliert', description: `${amount.toFixed(2)} ${n.currency} · ${n.invoice_number} · PDF heruntergeladen` });
     setN(initial); setDocs([]); setAdding(false); setSaving(false); load();
   };
 
@@ -668,7 +685,24 @@ export function DeliveryHandoverTab({ repairId, canEdit }: { repairId: string; c
       signature_size: sigFile!.size, signature_mime: sigFile!.type, signature_path: path,
       documents: docs.map((d) => ({ key: d.key, path: d.path, name: d.name, size: d.size })),
     });
-    toast({ title: 'Auslieferung erfasst', description: `Empfänger: ${payload.recipient_name}` });
+    try {
+      await generateHandoverPdf({
+        kind: 'delivery', repairId, handoverId: ins.id, newStatus: 'Ausgeliefert',
+        signaturePath: path, handedOverBy: user?.id,
+        metadata: {
+          'Empfänger': payload.recipient_name,
+          'Notiz': n.notes?.trim() || '',
+          'Signatur-Mime': sigFile!.type,
+          'Signatur-Größe': `${Math.round(sigFile!.size / 1024)} KB`,
+          'Übergeben am': new Date().toLocaleString('de-DE'),
+        },
+        checklist: DELIVERY_CHECKLIST.map((it) => {
+          const d = docs.find((x) => x.key === it.key);
+          return { key: it.key, label: it.label, required: it.required, uploaded: !!d, fileName: d?.name, path: d?.path, sizeBytes: d?.size };
+        }),
+      });
+    } catch (e: any) { console.warn('PDF gen failed', e); toast({ title: 'PDF konnte nicht erzeugt werden', description: e?.message, variant: 'destructive' }); }
+    toast({ title: 'Auslieferung erfasst', description: `Empfänger: ${payload.recipient_name} · PDF heruntergeladen` });
     setN(initial); setSigFile(null); setSigError(null); setDocs([]); setAdding(false); setSaving(false); load();
   };
 
