@@ -29,20 +29,34 @@ export default function ReparaturNew() {
   const [searching, setSearching] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<OrderSearchRow | null>(null);
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<any>({
     customer_name: '',
+    customer_company: '',
+    customer_contact: '',
     customer_email: '',
     customer_phone: '',
+    address_street: '',
+    address_zip: '',
+    address_city: '',
+    address_country: '',
+    priority: 'normal',
+    device_type: '',
     device_category: '',
     device_brand: '',
     device_model: '',
     device_serial_number: '',
+    purchase_date: '',
     accessories: '',
     issue_description: '',
+    customer_error_description: '',
+    visible_damages: '',
+    powers_on: null as boolean | null,
+    error_permanent: null as boolean | null,
     internal_notes: '',
   });
 
-  const upd = (k: keyof typeof form, v: any) => setForm((f) => ({ ...f, [k]: v }));
+  const upd = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
+
 
   const runSearch = async () => {
     if (!searchQuery.trim()) return;
