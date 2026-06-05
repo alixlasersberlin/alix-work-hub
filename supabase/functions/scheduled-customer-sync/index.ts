@@ -101,35 +101,55 @@ Deno.serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Auth: service role key, or authenticated admin user
+    // Auth: service role key, cron secret, valid anon-key, or authenticated admin user
     const authHeader = req.headers.get("Authorization") ?? "";
     const apiKeyHeader = req.headers.get("apikey") ?? "";
+    const cronSecretHeader = req.headers.get("x-cron-secret") ?? "";
+    const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
     const isServiceCall = authHeader === `Bearer ${serviceRoleKey}` || apiKeyHeader === serviceRoleKey;
+    const isCronCall = !!cronSecret && cronSecretHeader === cronSecret;
 
-    if (!isServiceCall) {
-      const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-      const userClient = createClient(supabaseUrl, anonKey, {
-        global: { headers: { Authorization: authHeader } },
-        auth: { autoRefreshToken: false, persistSession: false },
-      });
-      const token = authHeader.replace("Bearer ", "");
-      const { data, error } = await userClient.auth.getUser(token);
-      const user = data?.user;
-      console.log("[scheduled-sync] Auth check:", { hasToken: !!token, userId: user?.id, error: error?.message });
-      if (error || !user) {
-        return new Response(JSON.stringify({ error: "Unauthorized" }), {
-          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    function isProjectJwt(jwt: string): boolean {
+      try {
+        const part = jwt.replace(/^Bearer\s+/i, "").split(".")[1];
+        if (!part) return false;
+        const padded = part.replace(/-/g, "+").replace(/_/g, "/").padEnd(part.length + ((4 - (part.length % 4)) % 4), "=");
+        const payload = JSON.parse(atob(padded));
+        const projectRef = (supabaseUrl.match(/https?:\/\/([^.]+)\./) || [])[1] ?? "";
+        return payload?.iss === "supabase" && payload?.ref === projectRef && (payload?.role === "anon" || payload?.role === "service_role");
+      } catch { return false; }
+    }
+
+    if (!isServiceCall && !isCronCall) {
+      const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? "";
+      const isAnonCall =
+        (!!anonKey && (apiKeyHeader === anonKey || authHeader === `Bearer ${anonKey}`)) ||
+        isProjectJwt(apiKeyHeader) || isProjectJwt(authHeader);
+      if (!isAnonCall) {
+        const userClient = createClient(supabaseUrl, anonKey, {
+          global: { headers: { Authorization: authHeader } },
+          auth: { autoRefreshToken: false, persistSession: false },
         });
-      }
-      const adminClient = createClient(supabaseUrl, serviceRoleKey, { auth: { autoRefreshToken: false, persistSession: false } });
-      const { data: roles } = await adminClient.from("user_roles").select("roles!inner(name)").eq("user_id", user.id);
-      const roleNames = (roles ?? []).map((r: any) => r.roles?.name).filter(Boolean);
-      if (!roleNames.includes("Admin") && !roleNames.includes("Super Admin")) {
-        return new Response(JSON.stringify({ error: "Forbidden" }), {
-          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        const token = authHeader.replace("Bearer ", "");
+        const { data, error } = await userClient.auth.getUser(token);
+        const user = data?.user;
+        console.log("[scheduled-sync] Auth check:", { hasToken: !!token, userId: user?.id, error: error?.message });
+        if (error || !user) {
+          return new Response(JSON.stringify({ error: "Unauthorized" }), {
+            status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const adminClient = createClient(supabaseUrl, serviceRoleKey, { auth: { autoRefreshToken: false, persistSession: false } });
+        const { data: roles } = await adminClient.from("user_roles").select("roles!inner(name)").eq("user_id", user.id);
+        const roleNames = (roles ?? []).map((r: any) => r.roles?.name).filter(Boolean);
+        if (!roleNames.includes("Admin") && !roleNames.includes("Super Admin")) {
+          return new Response(JSON.stringify({ error: "Forbidden" }), {
+            status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
       }
     }
+
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey, {
       auth: { autoRefreshToken: false, persistSession: false },
