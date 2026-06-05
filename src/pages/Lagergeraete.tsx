@@ -1703,7 +1703,8 @@ export default function Lagergeraete({
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
+                );
+              })}
             </TableBody>
           </Table>
         )}
