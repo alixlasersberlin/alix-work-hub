@@ -47,8 +47,13 @@ export default function DoppelteReservierungen() {
         .not('reserved_order_id', 'is', null);
       if (devErr) throw devErr;
 
+      const isLeih = (notes: string | null) =>
+        /\[Typ:\s*Leihgerät\]|\[Leihgerät\]/.test(notes ?? '');
+
       const byOrder = new Map<string, DeviceRow[]>();
       for (const d of (devices ?? []) as DeviceRow[]) {
+        // Leihgeräte sind nur temporär verliehen — nicht als doppelte Reservierung zählen
+        if (isLeih(d.notes)) continue;
         const arr = byOrder.get(d.reserved_order_id) ?? [];
         arr.push(d);
         byOrder.set(d.reserved_order_id, arr);
