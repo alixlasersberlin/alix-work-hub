@@ -518,7 +518,15 @@ export default function AppLayout() {
     }
   }, [mobileOpen]);
 
-  const filterByRoles = (item: { roles: string[] | null }) => {
+  const isNatalia = (profile?.email || '').toLowerCase() === 'natalia.p@alix-operation.de';
+  const nataliaAllowedPaths = new Set<string>([
+    '/auftragsverwaltung/bestellungen',
+    '/production',
+    '/production/factory-invoice',
+  ]);
+
+  const filterByRoles = (item: { path: string; roles: string[] | null }) => {
+    if (isNatalia && nataliaAllowedPaths.has(item.path)) return true;
     if (!item.roles) return true;
     return item.roles.some(r => roles.includes(r));
   };
@@ -536,7 +544,12 @@ export default function AppLayout() {
       ...item,
       children: item.children
         ?.filter(filterByRoles)
-        .filter(c => !atOnly || !atHiddenPaths.has(c.path)),
+        .filter(c => !atOnly || !atHiddenPaths.has(c.path))
+        .map(c => ({
+          ...c,
+          children: c.children?.filter(filterByRoles),
+        }))
+        .filter(c => !c.children || c.children.length > 0),
     }))
     // Hide groups whose children are all hidden by role
     .filter(item => !item.children || item.children.length > 0);
