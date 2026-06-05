@@ -306,7 +306,7 @@ function AppRoutes() {
           <Route path="/production/factory-invoice" element={<ProtectedRoute requiredRoles={FACTORY_INVOICE_ROLES}><FactoryInvoice /></ProtectedRoute>} />
           <Route path="/lager" element={<ProtectedRoute requiredRoles={WAREHOUSE_ROLES}><Lager /></ProtectedRoute>} />
           <Route path="/lager/lagergeraete" element={<ProtectedRoute requiredRoles={WAREHOUSE_ROLES}><Lagergeraete filterType="Neugerät" pageTitle="Lagergeräte" pageSubtitle="Erfassung und Übersicht aller Neugeräte im Lager" addLabel="Neues Lagergerät" dialogTitle="Lagergerät" emptyLabel="Noch keine Lagergeräte erfasst." rowAccentClass="bg-emerald-500/10 hover:bg-emerald-500/15" /></ProtectedRoute>} />
-          <Route path="/lager/leihgeraete" element={<ProtectedRoute requiredRoles={WAREHOUSE_ROLES}><Leihgeraete /></ProtectedRoute>} />
+          <Route path="/lager/leihgeraete" element={<ProtectedRoute><Leihgeraete /></ProtectedRoute>} />
           <Route path="/lager/doppelte-reservierungen" element={<ProtectedRoute requiredRoles={WAREHOUSE_ROLES}><DoppelteReservierungen /></ProtectedRoute>} />
           <Route path="/lager/equipment-area" element={<ProtectedRoute requiredRoles={WAREHOUSE_ROLES}><EquipmentArea /></ProtectedRoute>} />
           <Route path="/lager/equipment-area/warehouse" element={<ProtectedRoute requiredRoles={WAREHOUSE_ROLES}><EquipmentWarehouse /></ProtectedRoute>} />
