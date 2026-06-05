@@ -402,10 +402,10 @@ export default function AppLayout() {
       const approvedProd = atOnly
         ? supabase.from('production_orders').select('*, orders!inner(source_system)', { count: 'exact', head: true }).eq('orders.source_system', 'zoho_eu_2').eq('approval_status', 'approved')
         : supabase.from('production_orders').select('*', { count: 'exact', head: true }).eq('approval_status', 'approved');
-      const freiOrdersQ = atOnly
-        ? supabase.from('orders').select('id').eq('source_system', 'zoho_eu_2').eq('deposit_ok', true).not('deposit_ok_by', 'is', null).neq('deposit_ok_by', '').limit(2000)
-        : supabase.from('orders').select('id').eq('deposit_ok', true).not('deposit_ok_by', 'is', null).neq('deposit_ok_by', '').limit(2000);
-      const [allRes, reklaRes, factoryRes, freiOrdersRes, prodOrderIdsRes, reservedDevsRes, approvedRes] = await Promise.all([
+      const pendingProd = atOnly
+        ? supabase.from('production_orders').select('*, orders!inner(source_system)', { count: 'exact', head: true }).eq('orders.source_system', 'zoho_eu_2').or('approval_status.is.null,approval_status.eq.pending')
+        : supabase.from('production_orders').select('*', { count: 'exact', head: true }).or('approval_status.is.null,approval_status.eq.pending');
+      const [allRes, reklaRes, factoryRes, freiOrdersRes, prodOrderIdsRes, reservedDevsRes, approvedRes, pendingRes] = await Promise.all([
         baseProdSel,
         reklaProd,
         factoryProd,
@@ -413,6 +413,7 @@ export default function AppLayout() {
         supabase.from('production_orders').select('order_id').limit(2000),
         supabase.from('lager_devices').select('reserved_order_id').not('reserved_order_id', 'is', null).limit(2000),
         approvedProd,
+        pendingProd,
       ]);
       if (cancelled) return;
       const all = allRes.count ?? 0;
