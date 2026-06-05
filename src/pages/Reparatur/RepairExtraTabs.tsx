@@ -528,7 +528,23 @@ export function FinanceHandoverTab({ repairId, canEdit }: { repairId: string; ca
       handover_id: ins.id, ...payload,
       documents: docs.map((d) => ({ key: d.key, path: d.path, name: d.name, size: d.size })),
     });
-    toast({ title: 'Finance-Übergabe protokolliert', description: `${amount.toFixed(2)} ${n.currency} · ${n.invoice_number}` });
+    try {
+      await generateHandoverPdf({
+        kind: 'finance', repairId, handoverId: ins.id, newStatus: 'An Finance übergeben',
+        signaturePath: null, handedOverBy: user?.id,
+        metadata: {
+          'Gesamtbetrag': `${amount.toFixed(2)} ${n.currency}`,
+          'Rechnungsnummer': n.invoice_number.trim(),
+          'Notiz': n.notes?.trim() || '',
+          'Übergeben am': new Date().toLocaleString('de-DE'),
+        },
+        checklist: FINANCE_CHECKLIST.map((it) => {
+          const d = docs.find((x) => x.key === it.key);
+          return { key: it.key, label: it.label, required: it.required, uploaded: !!d, fileName: d?.name, path: d?.path, sizeBytes: d?.size };
+        }),
+      });
+    } catch (e: any) { console.warn('PDF gen failed', e); toast({ title: 'PDF konnte nicht erzeugt werden', description: e?.message, variant: 'destructive' }); }
+    toast({ title: 'Finance-Übergabe protokolliert', description: `${amount.toFixed(2)} ${n.currency} · ${n.invoice_number} · PDF heruntergeladen` });
     setN(initial); setDocs([]); setAdding(false); setSaving(false); load();
   };
 
