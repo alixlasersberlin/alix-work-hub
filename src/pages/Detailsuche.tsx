@@ -144,11 +144,16 @@ export default function Detailsuche() {
         for (const r of (poSer || []) as any[]) if (r.order_id) serialOrderIds.add(r.order_id);
         const { data: lagSer } = await supabase
           .from('lager_devices')
-          .select('reserved_order_id')
+          .select('reserved_order_id, notes')
           .ilike('serial_number', `%${trimmed.serial}%`)
           .not('reserved_order_id', 'is', null)
           .limit(2000);
-        for (const r of (lagSer || []) as any[]) if (r.reserved_order_id) serialOrderIds.add(r.reserved_order_id);
+        for (const r of (lagSer || []) as any[]) {
+          // Leihgeräte explizit ausschließen — sie sind nur temporär verliehen
+          // und gehören NICHT in Bestellwesen / Reservierungen / Vorschläge.
+          const isLeih = /\[Typ:\s*Leihgerät\]|\[Leihgerät\]/.test(r.notes ?? '');
+          if (!isLeih && r.reserved_order_id) serialOrderIds.add(r.reserved_order_id);
+        }
         if (serialOrderIds.size === 0) { setHits([]); setLoading(false); return; }
       }
 
