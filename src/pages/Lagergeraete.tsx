@@ -120,6 +120,24 @@ function getStatusFromNotes(notes: string | null | undefined): DeviceStatus {
   return (DEVICE_STATUS_OPTIONS as readonly string[]).includes(v ?? '') ? (v as DeviceStatus) : 'Bestand';
 }
 
+function parseLeihKunde(notes: string | null | undefined): { id: string | null; name: string } {
+  const m = /\[Kunde:\s*([^\]]+)\]/.exec(notes ?? '');
+  if (!m) return { id: null, name: '' };
+  const raw = m[1].trim();
+  const parts = raw.split('|');
+  return { name: parts[0]?.trim() ?? '', id: parts[1]?.trim() || null };
+}
+
+function parseSchusszahl(notes: string | null | undefined): string {
+  const m = /\[Schusszahl:\s*([^\]]+)\]/.exec(notes ?? '');
+  return m?.[1]?.trim() ?? '';
+}
+
+function parseLeihStart(notes: string | null | undefined): string {
+  const m = /\[Leihstart:\s*([^\]]+)\]/.exec(notes ?? '');
+  return m?.[1]?.trim() ?? '';
+}
+
 export default function Lagergeraete({
   filterType,
   filterStatuses,
@@ -152,6 +170,14 @@ export default function Lagergeraete({
   const [reservedOrderNumber, setReservedOrderNumber] = useState<string | null>(null);
   const [originalReservedOrderId, setOriginalReservedOrderId] = useState<string | null>(null);
   const [reservationWeek, setReservationWeek] = useState<string>('');
+  const [leihCustomerId, setLeihCustomerId] = useState<string | null>(null);
+  const [leihCustomerName, setLeihCustomerName] = useState<string>('');
+  const [leihShotCount, setLeihShotCount] = useState<string>('');
+  const [leihStart, setLeihStart] = useState<string>('');
+  const [customerPickerOpen, setCustomerPickerOpen] = useState(false);
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [customerOptions, setCustomerOptions] = useState<Array<{ id: string; label: string }>>([]);
+  const [loadingCustomers, setLoadingCustomers] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectionMode, setSelectionMode] = useState(false);
   const [bulkStatus, setBulkStatus] = useState<DeviceStatus>('Bestand');
@@ -397,6 +423,37 @@ export default function Lagergeraete({
     return () => { cancelled = true; };
   }, [open, modelName, reservedOrderId, reservedOrderIdsSet]);
 
+  // Kunden-Suche für Leihgerät-Vorgang
+  useEffect(() => {
+    if (!customerPickerOpen) return;
+    const q = customerSearch.trim();
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      setLoadingCustomers(true);
+      let query = supabase
+        .from('customers')
+        .select('id, company_name, contact_name, billing_city')
+        .order('company_name', { ascending: true })
+        .limit(30);
+      if (q.length >= 1) {
+        query = query.or(
+          `company_name.ilike.%${q}%,contact_name.ilike.%${q}%,billing_city.ilike.%${q}%`,
+        );
+      }
+      const { data } = await query;
+      if (cancelled) return;
+      const opts = (data ?? []).map((c: any) => ({
+        id: c.id,
+        label: [c.company_name || c.contact_name || '—', c.billing_city].filter(Boolean).join(' · '),
+      }));
+      setCustomerOptions(opts);
+      setLoadingCustomers(false);
+    }, 200);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [customerPickerOpen, customerSearch]);
+
+
+
   const loadDevices = async () => {
     setLoading(true);
     const { data, error } = await supabase
@@ -503,6 +560,10 @@ export default function Lagergeraete({
     setReservedOrderNumber(null);
     setOriginalReservedOrderId(null);
     setReservationWeek('');
+    setLeihCustomerId(null);
+    setLeihCustomerName('');
+    setLeihShotCount('');
+    setLeihStart('');
   };
 
   const openEdit = (d: LagerDevice) => {
@@ -517,6 +578,11 @@ export default function Lagergeraete({
     setReservedOrderNumber(d.orders?.order_number ?? null);
     setOriginalReservedOrderId(d.reserved_order_id);
     setReservationWeek(d.reservation_week ?? '');
+    const k = parseLeihKunde(d.notes);
+    setLeihCustomerId(k.id);
+    setLeihCustomerName(k.name);
+    setLeihShotCount(parseSchusszahl(d.notes));
+    setLeihStart(parseLeihStart(d.notes));
     setOpen(true);
   };
 
@@ -579,9 +645,24 @@ export default function Lagergeraete({
     const cleanedNotes = (parsed.data.notes ?? '')
       .replace(/\s*\[Typ:\s*(Neugerät|Leihgerät)\]\s*/g, ' ')
       .replace(/\s*\[Status:\s*[^\]]+\]\s*/g, ' ')
+      .replace(/\s*\[Kunde:\s*[^\]]+\]\s*/g, ' ')
+      .replace(/\s*\[Schusszahl:\s*[^\]]+\]\s*/g, ' ')
+      .replace(/\s*\[Leihstart:\s*[^\]]+\]\s*/g, ' ')
       .trim();
     const effectiveStatus = deviceType === 'Leihgerät' ? 'Bestand' : deviceStatus;
-    const notesWithType = `[Typ: ${deviceType}] [Status: ${effectiveStatus}]${cleanedNotes ? ' ' + cleanedNotes : ''}`;
+    const leihTags: string[] = [];
+    if (deviceType === 'Leihgerät') {
+      const trimmedCustomer = leihCustomerName.trim();
+      if (trimmedCustomer) {
+        leihTags.push(`[Kunde: ${trimmedCustomer}${leihCustomerId ? '|' + leihCustomerId : ''}]`);
+        const startDate = leihStart || today;
+        leihTags.push(`[Leihstart: ${startDate}]`);
+      }
+      const shot = leihShotCount.trim();
+      if (shot) leihTags.push(`[Schusszahl: ${shot}]`);
+    }
+    const tagPrefix = `[Typ: ${deviceType}] [Status: ${effectiveStatus}]${leihTags.length ? ' ' + leihTags.join(' ') : ''}`;
+    const notesWithType = `${tagPrefix}${cleanedNotes ? ' ' + cleanedNotes : ''}`;
     const payload = {
       serial_number: parsed.data.serial_number,
       model_name: parsed.data.model_name,
@@ -921,6 +1002,88 @@ export default function Lagergeraete({
                   )}
                 </div>
               )}
+
+              {deviceType === 'Leihgerät' && (
+                <div className="space-y-4 rounded-lg border border-amber-500/40 bg-amber-500/5 p-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="leih-customer">Kunde (Standort des Leihgeräts)</Label>
+                    <Popover open={customerPickerOpen} onOpenChange={(v) => { setCustomerPickerOpen(v); if (v) setCustomerSearch(''); }}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          id="leih-customer"
+                          type="button"
+                          variant="outline"
+                          role="combobox"
+                          className="w-full justify-between font-normal"
+                        >
+                          <span className="truncate">{leihCustomerName || 'Kunde auswählen…'}</span>
+                          <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                        <Command shouldFilter={false}>
+                          <CommandInput
+                            placeholder="Kunde suchen (Firma, Name, Stadt)…"
+                            value={customerSearch}
+                            onValueChange={setCustomerSearch}
+                          />
+                          <CommandList className="max-h-72">
+                            {loadingCustomers && (
+                              <div className="flex items-center justify-center py-4 text-xs text-muted-foreground">
+                                <Loader2 className="w-3 h-3 mr-2 animate-spin" /> Lade…
+                              </div>
+                            )}
+                            {!loadingCustomers && customerOptions.length === 0 && (
+                              <CommandEmpty>Keine Treffer.</CommandEmpty>
+                            )}
+                            <CommandGroup>
+                              {customerOptions.map((c) => (
+                                <CommandItem
+                                  key={c.id}
+                                  value={c.id}
+                                  onSelect={() => {
+                                    setLeihCustomerId(c.id);
+                                    setLeihCustomerName(c.label);
+                                    if (!leihStart) setLeihStart(today);
+                                    setCustomerPickerOpen(false);
+                                  }}
+                                >
+                                  {c.label}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    {leihCustomerName && (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>Leihstart: {leihStart || today}</span>
+                        <button
+                          type="button"
+                          onClick={() => { setLeihCustomerId(null); setLeihCustomerName(''); setLeihStart(''); }}
+                          className="text-destructive hover:underline"
+                        >
+                          entfernen
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="leih-shots">Schusszahl</Label>
+                    <Input
+                      id="leih-shots"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={leihShotCount}
+                      onChange={(e) => setLeihShotCount(e.target.value.replace(/[^0-9]/g, ''))}
+                      placeholder="z. B. 12500"
+                      maxLength={12}
+                    />
+                  </div>
+                </div>
+              )}
+
 
               <div className="space-y-2">
                 <Label htmlFor="notes">Notizen (intern)</Label>
