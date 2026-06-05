@@ -693,16 +693,17 @@ export function FinanceHandoverTab({ repairId, canEdit }: { repairId: string; ca
 
       <table className="w-full text-sm">
         <thead className="text-xs text-muted-foreground uppercase">
-          <tr><th className="text-left py-2">Datum</th><th className="text-left">Betrag</th><th className="text-left">Rechnung</th><th className="text-left">Notiz</th><th></th></tr>
+          <tr><th className="text-left py-2">Datum</th><th className="text-left">Betrag</th><th className="text-left">Rechnung</th><th className="text-left">Notiz</th><th className="text-right">PDF</th><th></th></tr>
         </thead>
         <tbody>
-          {rows.length === 0 && <tr><td colSpan={5} className="text-center py-4 text-muted-foreground text-xs">Keine Übergaben</td></tr>}
+          {rows.length === 0 && <tr><td colSpan={6} className="text-center py-4 text-muted-foreground text-xs">Keine Übergaben</td></tr>}
           {rows.map((r) => (
             <tr key={r.id} className="border-t border-border">
               <td className="py-2 text-xs">{new Date(r.handed_over_at).toLocaleString('de-DE')}</td>
               <td className="text-xs font-semibold">{r.total_amount ? `${Number(r.total_amount).toFixed(2)} ${r.currency}` : '–'}</td>
               <td className="text-xs font-mono">{r.invoice_number || '–'}</td>
               <td className="text-xs">{r.notes || '–'}</td>
+              <td className="text-right"><HandoverPdfActions pdf={matchPdfForHandover(pdfs, r.handed_over_at)} /></td>
               <td className="text-right">{canEdit && <Button size="sm" variant="ghost" onClick={() => del(r.id)}><Trash2 className="w-3 h-3" /></Button>}</td>
             </tr>
           ))}
