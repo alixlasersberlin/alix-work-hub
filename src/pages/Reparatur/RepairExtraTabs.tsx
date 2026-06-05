@@ -637,7 +637,7 @@ export function FinanceHandoverTab({ repairId, canEdit }: { repairId: string; ca
       });
     } catch (e: any) { console.warn('PDF gen failed', e); toast({ title: 'PDF konnte nicht erzeugt werden', description: e?.message, variant: 'destructive' }); }
     toast({ title: 'Finance-Übergabe protokolliert', description: `${amount.toFixed(2)} ${n.currency} · ${n.invoice_number} · PDF heruntergeladen` });
-    setN(initial); setDocs([]); setAdding(false); setSaving(false); load();
+    setN(initial); setDocs([]); setAdding(false); setSaving(false); load(); setPdfReload((k) => k + 1);
   };
 
 
