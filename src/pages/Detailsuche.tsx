@@ -241,6 +241,9 @@ export default function Detailsuche() {
           relatedByOrder[p.order_id]?.production.push(p);
         }
         for (const d of (lager || []) as any[]) {
+          // Leihgeräte aus den verknüpften Lager-Treffern ausblenden
+          const isLeih = /\[Typ:\s*Leihgerät\]|\[Leihgerät\]/.test(d.notes ?? '');
+          if (isLeih) continue;
           relatedByOrder[d.reserved_order_id]?.lager.push(d);
         }
         for (const r of (routes || []) as any[]) {
