@@ -139,8 +139,10 @@ interface Row {
 }
 
 export default function FactoryInvoice() {
-  const { roles } = useAuth();
+  const { roles, profile } = useAuth();
   const canUpload = roles.includes('Super Admin') || roles.includes('FACTORY INVOICE');
+  const isNatalia = (profile?.email || '').toLowerCase() === 'natalia.p@alix-operation.de';
+  const canDownloadPdf = !isNatalia;
   const atOnly = useAtOnly();
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
