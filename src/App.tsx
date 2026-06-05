@@ -165,8 +165,8 @@ function FullscreenLoader() {
   );
 }
 
-function ProtectedRoute({ children, requiredRoles }: { children: React.ReactNode; requiredRoles?: string[] }) {
-  const { user, roles, loading, blockReason, mfaState } = useAuth();
+function ProtectedRoute({ children, requiredRoles, allowEmails }: { children: React.ReactNode; requiredRoles?: string[]; allowEmails?: string[] }) {
+  const { user, profile, roles, loading, blockReason, mfaState } = useAuth();
 
   if (loading) return <FullscreenLoader />;
   if (!user) return <Navigate to="/login" replace />;
@@ -176,13 +176,15 @@ function ProtectedRoute({ children, requiredRoles }: { children: React.ReactNode
   if (mfaState === 'challenge_required') return <Navigate to="/mfa-challenge" replace />;
   if (mfaState !== 'verified') return <FullscreenLoader />;
 
+  const emailAllowed = !!allowEmails && allowEmails.map(e => e.toLowerCase()).includes((profile?.email || '').toLowerCase());
+
   if (isSupplierOnly(roles)) {
-    if (requiredRoles && !requiredRoles.includes('Lieferant')) {
+    if (requiredRoles && !requiredRoles.includes('Lieferant') && !emailAllowed) {
       return <Navigate to="/production" replace />;
     }
   }
 
-  if (requiredRoles && !requiredRoles.some(r => roles.includes(r))) return <AccessDenied />;
+  if (requiredRoles && !requiredRoles.some(r => roles.includes(r)) && !emailAllowed) return <AccessDenied />;
 
   return <>{children}</>;
 }
@@ -306,7 +308,7 @@ function AppRoutes() {
           <Route path="/production" element={<ProtectedRoute requiredRoles={PRODUCTION_ROLES}><ProductionPortal /></ProtectedRoute>} />
           <Route path="/production/fertig" element={<ProtectedRoute requiredRoles={PRODUCTION_ROLES}><ProductionFertig /></ProtectedRoute>} />
           <Route path="/production/order-in" element={<ProtectedRoute requiredRoles={PRODUCTION_ROLES}><ProductionOrderIn /></ProtectedRoute>} />
-          <Route path="/production/factory-invoice" element={<ProtectedRoute requiredRoles={FACTORY_INVOICE_ROLES}><FactoryInvoice /></ProtectedRoute>} />
+          <Route path="/production/factory-invoice" element={<ProtectedRoute requiredRoles={FACTORY_INVOICE_ROLES} allowEmails={["natalia.p@alix-operation.de"]}><FactoryInvoice /></ProtectedRoute>} />
           <Route path="/lager" element={<ProtectedRoute requiredRoles={WAREHOUSE_ROLES}><Lager /></ProtectedRoute>} />
           <Route path="/lager/lagergeraete" element={<ProtectedRoute requiredRoles={WAREHOUSE_ROLES}><Lagergeraete filterType="Neugerät" pageTitle="Lagergeräte" pageSubtitle="Erfassung und Übersicht aller Neugeräte im Lager" addLabel="Neues Lagergerät" dialogTitle="Lagergerät" emptyLabel="Noch keine Lagergeräte erfasst." rowAccentClass="bg-emerald-500/10 hover:bg-emerald-500/15" /></ProtectedRoute>} />
           <Route path="/lager/leihgeraete" element={<ProtectedRoute><Leihgeraete /></ProtectedRoute>} />
