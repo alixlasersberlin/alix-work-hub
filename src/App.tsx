@@ -436,6 +436,10 @@ function AppRoutes() {
             <Route path="produktivfreigabe" element={<MailCenterProduktivfreigabe />} />
             <Route path="executive" element={<MailCenterExecutive />} />
             <Route path="telefonie" element={<MailCenterTelefonie />} />
+            <Route path="backup" element={<MailCenterBackup />} />
+            <Route path="import" element={<MailCenterImport />} />
+            <Route path="export" element={<MailCenterExport />} />
+            <Route path="spam" element={<MailCenterSpam />} />
           </Route>
 
           <Route path="/mdr-ce" element={<ProtectedRoute requiredRoles={['Super Admin']}><MdrCe /></ProtectedRoute>} />
