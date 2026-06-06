@@ -1139,10 +1139,12 @@ export default function AppLayout() {
             </Button>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
             <AuroraPrioTicker />
-            <DesignVariantSwitcher inline />
-            <div className="flex items-center gap-2 text-sm">
+            <div className="hidden md:block min-w-0 flex-1">
+              <SidebarInfoBar />
+            </div>
+            <div className="flex items-center gap-2 text-sm flex-shrink-0">
               <span className="font-display font-bold gold-text">AlixWork</span>
               <span className="text-muted-foreground font-mono text-xs hidden sm:inline">v{APP_VERSION}</span>
           </div>
