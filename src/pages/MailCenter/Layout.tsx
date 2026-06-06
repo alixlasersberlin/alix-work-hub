@@ -10,6 +10,7 @@ import { NotificationBell } from '@/components/NotificationBell';
 
 const tabs = [
   { to: '/mailcenter', label: 'Dashboard', icon: LayoutDashboard, end: true },
+  { to: '/mailcenter/executive', label: 'Executive Dashboard', icon: TrendingUp },
   { to: '/mailcenter/posteingang', label: 'Posteingang', icon: Inbox },
   { to: '/mailcenter/gesendet', label: 'Gesendet', icon: Send },
   { to: '/mailcenter/entwuerfe', label: 'Entwürfe', icon: FileEdit },
