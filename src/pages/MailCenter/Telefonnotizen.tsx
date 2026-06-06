@@ -254,11 +254,19 @@ export default function Telefonnotizen() {
           <div key={n.id} className="p-4 hover:bg-muted/30">
             <div className="flex items-center justify-between gap-3">
               <div className="flex-1">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-medium">{n.topic || '—'}</span>
                   <Badge variant="outline">{CALL_TYPES.find(([k]) => k === n.call_type)?.[1] || n.call_type}</Badge>
                   {n.priority !== 'normal' && <Badge variant={n.priority === 'urgent' ? 'destructive' : 'secondary'}>{n.priority}</Badge>}
                   {n.has_followup && <Badge className="bg-primary/20 text-primary">Wiedervorlage {n.followup_date}</Badge>}
+                  {n.customer_id && customerMap[n.customer_id] && (
+                    <Link to={`/customers/${n.customer_id}`} onClick={e => e.stopPropagation()}>
+                      <Badge variant="outline" className="border-primary/40 text-primary hover:bg-primary/10 gap-1">
+                        <User className="w-3 h-3" />
+                        {customerMap[n.customer_id].company_name || customerMap[n.customer_id].contact_name || 'Kunde'}
+                      </Badge>
+                    </Link>
+                  )}
                 </div>
                 <div className="text-sm text-muted-foreground mt-1">
                   {n.contact_name && <>{n.contact_name} · </>}{n.phone_number} · {n.call_date} {n.call_time || ''}
