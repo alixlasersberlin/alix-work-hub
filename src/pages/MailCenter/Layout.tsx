@@ -33,6 +33,11 @@ const tabs = [
   { to: '/mailcenter/berichte', label: 'Berichte', icon: BarChart3 },
   { to: '/mailcenter/berechtigungen', label: 'Berechtigungen', icon: ShieldCheck },
   { to: '/mailcenter/einstellungen', label: 'Einstellungen', icon: Settings },
+  { to: '/mailcenter/systemstatus', label: 'Systemstatus', icon: HeartPulse },
+  { to: '/mailcenter/audit-log', label: 'Audit-Log', icon: ScrollText },
+  { to: '/mailcenter/fehlerprotokoll', label: 'Fehlerprotokoll', icon: AlertTriangle },
+  { to: '/mailcenter/testcenter', label: 'Testcenter', icon: TestTube2 },
+  { to: '/mailcenter/produktivfreigabe', label: 'Produktivfreigabe', icon: Rocket },
 ];
 
 export default function MailCenterLayout() {
