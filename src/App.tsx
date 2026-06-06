@@ -420,6 +420,9 @@ function AppRoutes() {
             <Route path="berichte" element={<BugCapaBerichte />} />
           </Route>
 
+          <Route path="/tickets" element={<ProtectedRoute requiredRoles={TICKETS_ROLES}><TicketsList /></ProtectedRoute>} />
+          <Route path="/tickets/:id" element={<ProtectedRoute requiredRoles={TICKETS_ROLES}><TicketDetail /></ProtectedRoute>} />
+
           <Route path="/aic" element={<ProtectedRoute requiredRoles={['Super Admin']}><AicLayout /></ProtectedRoute>}>
             <Route index element={<AicDashboard />} />
             <Route path="unternehmen" element={<AicUnternehmen />} />
