@@ -91,6 +91,17 @@ export default function TicketDetail() {
   const [outboundLogs, setOutboundLogs] = useState<OutboundLog[]>([]);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [linkedRepair, setLinkedRepair] = useState<LinkedRepair | null>(null);
+
+  async function loadLinkedRepair(repairId: string | null) {
+    if (!repairId) { setLinkedRepair(null); return; }
+    const { data } = await sbRepair
+      .from('repair_orders')
+      .select('id, repair_number, repair_status')
+      .eq('id', repairId)
+      .maybeSingle();
+    setLinkedRepair((data as LinkedRepair) || null);
+  }
 
   async function loadOutboundLogs() {
     if (!id) return;
