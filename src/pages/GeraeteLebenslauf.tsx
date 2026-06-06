@@ -118,6 +118,16 @@ export default function GeraeteLebenslauf() {
       .eq('serial_number', s)
       .order('event_date', { ascending: true });
     setEvents((data || []) as DLRow[]);
+
+    const { data: ai } = await (supabase as any)
+      .from('ai_service_analyses')
+      .select('id, probable_cause, recommended_repair, recommended_parts, recommended_steps, confidence_score, created_at')
+      .eq('serial_number', s)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    setAiAnalysis(ai || null);
+
     setLoading(false);
   }
 
