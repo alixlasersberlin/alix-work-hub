@@ -414,6 +414,64 @@ export default function TicketDetail() {
               <Truck className="w-4 h-4 mr-2" /> Tourenplanung übergeben
             </Button>
           </div>
+
+          <div className="rounded-xl border border-border bg-card p-6 space-y-3">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+              <RefreshCw className="w-4 h-4" /> AlixSmart Sync
+            </h2>
+            <div className="text-xs text-muted-foreground">
+              {ticket.external_ticket_id
+                ? <>External ID: <span className="font-mono text-foreground">{ticket.external_ticket_id}</span></>
+                : 'Keine externe Ticket-ID vorhanden — Sync nicht möglich.'}
+            </div>
+            <div className="text-xs text-muted-foreground flex items-center gap-1">
+              {ticket.last_outbound_sync_at
+                ? <><CheckCircle2 className="w-3 h-3 text-green-500" /> Letzte erfolgreiche Übertragung: {new Date(ticket.last_outbound_sync_at).toLocaleString('de-DE')}</>
+                : <><AlertCircle className="w-3 h-3 text-amber-500" /> Noch keine Übertragung</>}
+            </div>
+            <Button variant="outline" className="w-full justify-start"
+              disabled={!canEdit || syncing || !ticket.external_ticket_id}
+              onClick={() => syncToAlixSmart('manual')}>
+              {syncing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+              Jetzt synchronisieren
+            </Button>
+            <Dialog open={historyOpen} onOpenChange={(o) => { setHistoryOpen(o); if (o) loadOutboundLogs(); }}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="w-full justify-start">
+                  <History className="w-4 h-4 mr-2" /> Sync-Historie anzeigen ({outboundLogs.length})
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[80vh] overflow-auto">
+                <DialogHeader>
+                  <DialogTitle>AlixSmart Sync-Historie</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-2">
+                  {outboundLogs.length === 0 && <div className="text-sm text-muted-foreground p-4">Noch keine Synchronisationen.</div>}
+                  {outboundLogs.map(l => (
+                    <div key={l.id} className={`rounded-lg border p-3 text-xs ${l.status === 'success' ? 'border-green-500/30 bg-green-500/5' : l.status === 'skipped' ? 'border-amber-500/30 bg-amber-500/5' : 'border-destructive/30 bg-destructive/5'}`}>
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                          {l.status === 'success'
+                            ? <CheckCircle2 className="w-3 h-3 text-green-500" />
+                            : <AlertCircle className="w-3 h-3 text-destructive" />}
+                          <span className="font-medium text-foreground">{l.action}</span>
+                          <Badge variant="outline">{l.status}</Badge>
+                        </div>
+                        <span className="text-muted-foreground">{new Date(l.created_at).toLocaleString('de-DE')}</span>
+                      </div>
+                      {l.error_message && <div className="text-destructive mt-1">{l.error_message}</div>}
+                      {l.payload && (
+                        <details className="mt-1">
+                          <summary className="cursor-pointer text-muted-foreground">Payload</summary>
+                          <pre className="mt-1 p-2 rounded bg-background overflow-auto text-[10px]">{JSON.stringify(l.payload, null, 2)}</pre>
+                        </details>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
       </div>
 
