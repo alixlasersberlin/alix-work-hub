@@ -284,14 +284,21 @@ export default function OrderDetail() {
             <>
               {order.order_status !== 'geliefert' && (
                 <Button variant="outline" size="sm" className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10" onClick={async () => {
+                  // Reservierte Geräte VOR dem Status-Update einlesen (Trigger löscht reserved_order_id bei "geliefert")
+                  const { data: devs } = await supabase
+                    .from('lager_devices')
+                    .select('model_name, serial_number')
+                    .eq('reserved_order_id', order.id);
+                  const prefetchedDevices = devs || [];
                   const { error } = await supabase.from('orders').update({ order_status: 'geliefert' }).eq('id', order.id);
                   if (error) { toast.error('Fehler: ' + error.message); return; }
                   toast.success('Auftrag als geliefert markiert');
-                  const mail = await sendCustomerShippingNotice(order.id, undefined, 'automatisch', 'customer_delivered');
+                  const mail = await sendCustomerShippingNotice(order.id, undefined, 'automatisch', 'customer_delivered', prefetchedDevices);
                   if (mail.ok) toast.success(mail.message); else toast.error('E-Mail nicht versendet: ' + mail.message);
                   sendReviewInvitation(order.id, { manual: false }).catch(() => {});
                   loadAll();
                 }}>
+
                   <Truck className="w-3.5 h-3.5 mr-1.5" /> Als geliefert markieren
                 </Button>
               )}
