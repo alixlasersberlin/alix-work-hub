@@ -310,6 +310,18 @@ export default function ServiceCockpit() {
                 </BarChart>
               </ResponsiveContainer>
             </ChartCard>
+
+            <ChartCard title="Top Kunden" icon={Users} full>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={customerData} layout="vertical" margin={{ left: 80 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
+                  <XAxis type="number" stroke="#888" fontSize={11} />
+                  <YAxis type="category" dataKey="name" stroke="#888" fontSize={11} width={220} />
+                  <Tooltip contentStyle={{ background: '#0f172a', border: '1px solid #334155' }} />
+                  <Bar dataKey="count" fill="#a855f7" />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartCard>
           </div>
         </>
       )}
