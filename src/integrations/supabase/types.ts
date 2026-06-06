@@ -917,6 +917,423 @@ export type Database = {
           },
         ]
       }
+      mail_audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          created_by: string | null
+          entity_id: string | null
+          entity_type: string
+          id: string
+          new_data: Json | null
+          old_data: Json | null
+          status: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          created_by?: string | null
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          created_by?: string | null
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      mail_automations: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          delay_minutes: number
+          department: string | null
+          id: string
+          is_active: boolean
+          name: string
+          status: string
+          template_id: string | null
+          trigger_config: Json
+          trigger_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          delay_minutes?: number
+          department?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          status?: string
+          template_id?: string | null
+          trigger_config?: Json
+          trigger_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          delay_minutes?: number
+          department?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          status?: string
+          template_id?: string | null
+          trigger_config?: Json
+          trigger_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mail_automations_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "mail_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mail_campaigns: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          reply_to: string | null
+          scheduled_at: string | null
+          segment_id: string | null
+          sender_email: string | null
+          sender_name: string | null
+          sent_at: string | null
+          status: string
+          subject: string
+          template_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          reply_to?: string | null
+          scheduled_at?: string | null
+          segment_id?: string | null
+          sender_email?: string | null
+          sender_name?: string | null
+          sent_at?: string | null
+          status?: string
+          subject: string
+          template_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          reply_to?: string | null
+          scheduled_at?: string | null
+          segment_id?: string | null
+          sender_email?: string | null
+          sender_name?: string | null
+          sent_at?: string | null
+          status?: string
+          subject?: string
+          template_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mail_campaigns_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "mail_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mail_domains: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          dkim_status: string | null
+          dmarc_status: string | null
+          domain: string
+          id: string
+          is_active: boolean
+          sender_email: string | null
+          sender_name: string | null
+          smtp_host: string | null
+          smtp_password_encrypted: string | null
+          smtp_port: number | null
+          smtp_username: string | null
+          spf_status: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          dkim_status?: string | null
+          dmarc_status?: string | null
+          domain: string
+          id?: string
+          is_active?: boolean
+          sender_email?: string | null
+          sender_name?: string | null
+          smtp_host?: string | null
+          smtp_password_encrypted?: string | null
+          smtp_port?: number | null
+          smtp_username?: string | null
+          spf_status?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          dkim_status?: string | null
+          dmarc_status?: string | null
+          domain?: string
+          id?: string
+          is_active?: boolean
+          sender_email?: string | null
+          sender_name?: string | null
+          smtp_host?: string | null
+          smtp_password_encrypted?: string | null
+          smtp_port?: number | null
+          smtp_username?: string | null
+          spf_status?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      mail_events: {
+        Row: {
+          campaign_id: string | null
+          created_at: string
+          created_by: string | null
+          event_data: Json
+          event_type: string
+          id: string
+          ip_address: string | null
+          recipient_id: string | null
+          status: string | null
+          updated_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          event_data?: Json
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          recipient_id?: string | null
+          status?: string | null
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          event_data?: Json
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          recipient_id?: string | null
+          status?: string | null
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mail_events_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "mail_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_events_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "mail_recipients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mail_recipients: {
+        Row: {
+          bounced_at: string | null
+          campaign_id: string
+          clicked_at: string | null
+          company: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          delivered_at: string | null
+          email: string
+          id: string
+          name: string | null
+          opened_at: string | null
+          sent_at: string | null
+          status: string
+          unsubscribed_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          bounced_at?: string | null
+          campaign_id: string
+          clicked_at?: string | null
+          company?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          delivered_at?: string | null
+          email: string
+          id?: string
+          name?: string | null
+          opened_at?: string | null
+          sent_at?: string | null
+          status?: string
+          unsubscribed_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bounced_at?: string | null
+          campaign_id?: string
+          clicked_at?: string | null
+          company?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          delivered_at?: string | null
+          email?: string
+          id?: string
+          name?: string | null
+          opened_at?: string | null
+          sent_at?: string | null
+          status?: string
+          unsubscribed_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mail_recipients_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "mail_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mail_templates: {
+        Row: {
+          body_html: string | null
+          body_text: string | null
+          category: string | null
+          created_at: string
+          created_by: string | null
+          department: string | null
+          id: string
+          is_active: boolean
+          language: string
+          name: string
+          status: string
+          subject: string
+          updated_at: string
+          variables: Json
+        }
+        Insert: {
+          body_html?: string | null
+          body_text?: string | null
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          id?: string
+          is_active?: boolean
+          language?: string
+          name: string
+          status?: string
+          subject: string
+          updated_at?: string
+          variables?: Json
+        }
+        Update: {
+          body_html?: string | null
+          body_text?: string | null
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          id?: string
+          is_active?: boolean
+          language?: string
+          name?: string
+          status?: string
+          subject?: string
+          updated_at?: string
+          variables?: Json
+        }
+        Relationships: []
+      }
+      mail_unsubscribes: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          email: string
+          id: string
+          reason: string | null
+          source: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          email: string
+          id?: string
+          reason?: string | null
+          source?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          email?: string
+          id?: string
+          reason?: string | null
+          source?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       order_additional_deposits: {
         Row: {
           amount: number
@@ -3226,14 +3643,19 @@ export type Database = {
       can_access_finance: { Args: never; Returns: boolean }
       can_access_financing: { Args: never; Returns: boolean }
       can_access_import_logs: { Args: never; Returns: boolean }
+      can_access_mail: { Args: never; Returns: boolean }
       can_access_orders: { Args: never; Returns: boolean }
       can_access_planning: { Args: never; Returns: boolean }
       can_access_qm: { Args: never; Returns: boolean }
       can_access_repair: { Args: never; Returns: boolean }
+      can_manage_mail_campaigns: { Args: never; Returns: boolean }
+      can_manage_mail_domains: { Args: never; Returns: boolean }
+      can_manage_mail_templates: { Args: never; Returns: boolean }
       can_manage_orders: { Args: never; Returns: boolean }
       can_manage_planning: { Args: never; Returns: boolean }
       can_manage_repair: { Args: never; Returns: boolean }
       can_upload_factory_invoice: { Args: never; Returns: boolean }
+      can_view_mail_audit: { Args: never; Returns: boolean }
       clear_factory_invoice_pdf: {
         Args: { _production_order_id: string }
         Returns: undefined
