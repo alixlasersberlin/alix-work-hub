@@ -109,6 +109,14 @@ const navItems: NavItem[] = [
           { path: '/mailcenter/produktivfreigabe', label: 'Produktivfreigabe', icon: Rocket, roles: ['Super Admin'] },
         ],
       },
+      {
+        path: '/tickets', label: 'Tickets aus AlixSmart', icon: Ticket,
+        roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung'],
+        children: [
+          { path: '/tickets', label: 'Ticketliste', icon: Ticket, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung'] },
+          { path: '/tickets/api-sync', label: 'API Sync Einstellungen', icon: Settings, roles: ['Admin', 'Super Admin'] },
+        ],
+      },
     ],
   },
   {
