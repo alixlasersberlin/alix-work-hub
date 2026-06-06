@@ -199,6 +199,7 @@ const MailCenterSchulung = lazy(() => import("./pages/MailCenter/Schulungscenter
 const MailCenterValidierung = lazy(() => import("./pages/MailCenter/Systemvalidierung"));
 const TicketsList = lazy(() => import("./pages/Tickets/TicketsList"));
 const TicketDetail = lazy(() => import("./pages/Tickets/TicketDetail"));
+const TicketsApiSync = lazy(() => import("./pages/Tickets/ApiSyncSettings"));
 import MaintenanceGate from "./components/MaintenanceGate";
 import LeihgeraetReminder from "./components/LeihgeraetReminder";
 
@@ -421,6 +422,7 @@ function AppRoutes() {
           </Route>
 
           <Route path="/tickets" element={<ProtectedRoute requiredRoles={TICKETS_ROLES}><TicketsList /></ProtectedRoute>} />
+          <Route path="/tickets/api-sync" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><TicketsApiSync /></ProtectedRoute>} />
           <Route path="/tickets/:id" element={<ProtectedRoute requiredRoles={TICKETS_ROLES}><TicketDetail /></ProtectedRoute>} />
 
           <Route path="/aic" element={<ProtectedRoute requiredRoles={['Super Admin']}><AicLayout /></ProtectedRoute>}>
