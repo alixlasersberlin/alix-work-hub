@@ -38,6 +38,80 @@ const navItems: NavItem[] = [
   },
   { path: '/geraetesperren', label: 'GERÄTESPERREN', icon: Lock, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Read Only Audit'] },
   {
+    path: '/mailcenter', label: 'KOMMUNIKATION', icon: Mail,
+    roles: ['Admin', 'Super Admin', 'Geschäftsführung', 'Marketing', 'Finance', 'Technik', 'Kundenservice', 'Vertrieb', 'Reparaturannahme', 'Tourenplanung', 'Bestellwesen', 'Order', 'Read Only', 'Read Only Audit'],
+    children: [
+      { path: '/mailcenter', label: 'Dashboard', icon: LayoutDashboard, roles: null },
+      {
+        path: '/mailcenter/gesendet', label: 'E-Mail', icon: Mail, roles: null,
+        children: [
+          { path: '/mailcenter/gesendet', label: 'Gesendet', icon: Send, roles: null },
+          { path: '/mailcenter/entwuerfe', label: 'Entwürfe', icon: FileEdit, roles: null },
+          { path: '/mailcenter/intern', label: 'Interne Nachrichten', icon: MessageSquare, roles: null },
+          { path: '/mailcenter/schreiben', label: 'E-Mail schreiben', icon: PenSquare, roles: null },
+          { path: '/mailcenter/kampagnen', label: 'Kampagnen', icon: Megaphone, roles: null },
+          { path: '/mailcenter/vorlagen', label: 'Vorlagen', icon: FileText, roles: null },
+          { path: '/mailcenter/automationen', label: 'Automationen', icon: Workflow, roles: null },
+          { path: '/mailcenter/ki-assistent', label: 'KI-Assistent', icon: Sparkles, roles: null },
+          { path: '/mailcenter/tracking', label: 'Tracking', icon: Activity, roles: null },
+          { path: '/mailcenter/abmeldungen', label: 'Abmeldungen', icon: MailX, roles: null },
+          { path: '/mailcenter/domains', label: 'Domains', icon: Globe, roles: null },
+          { path: '/mailcenter/spam', label: 'Spam & Zustellbarkeit', icon: Shield, roles: null },
+        ],
+      },
+      {
+        path: '/mailcenter/telefonie', label: 'Telefon', icon: PhoneCall, roles: null,
+        children: [
+          { path: '/mailcenter/telefonie', label: 'Telefonie (3CX)', icon: PhoneCall, roles: null },
+          { path: '/mailcenter/telefonnotizen', label: 'Telefonnotizen', icon: Phone, roles: null },
+          { path: '/mailcenter/gespraechsprotokolle', label: 'Gesprächsprotokolle', icon: ClipboardList, roles: null },
+        ],
+      },
+      {
+        path: '/mailcenter/aufgaben', label: 'Aufgaben', icon: CheckSquare, roles: null,
+        children: [
+          { path: '/mailcenter/aufgaben', label: 'Aufgaben', icon: CheckSquare, roles: null },
+          { path: '/mailcenter/wiedervorlagen', label: 'Wiedervorlagen', icon: CalendarClock, roles: null },
+        ],
+      },
+      {
+        path: '/mailcenter/dokumente', label: 'Dokumente', icon: Files, roles: null,
+        children: [
+          { path: '/mailcenter/dokumente', label: 'Dokumenten-Center', icon: Files, roles: null },
+          { path: '/mailcenter/versandnachweise', label: 'Versandnachweise', icon: FileCheck2, roles: null },
+          { path: '/mailcenter/dokumente-vorlagen', label: 'Dok.-Vorlagen', icon: FileText, roles: null },
+          { path: '/mailcenter/dokumente-automationen', label: 'Dok.-Automationen', icon: Workflow, roles: null },
+        ],
+      },
+      {
+        path: '/mailcenter/systemstatus', label: 'Status & Logs', icon: HeartPulse, roles: null,
+        children: [
+          { path: '/mailcenter/systemstatus', label: 'Systemstatus', icon: HeartPulse, roles: null },
+          { path: '/mailcenter/audit-log', label: 'Audit-Log', icon: ScrollText, roles: null },
+          { path: '/mailcenter/fehlerprotokoll', label: 'Fehlerprotokoll', icon: AlertTriangle, roles: null },
+          { path: '/mailcenter/tracking', label: 'Tracking', icon: Activity, roles: null },
+          { path: '/mailcenter/berichte', label: 'Berichte', icon: BarChart3, roles: null },
+        ],
+      },
+      {
+        path: '/mailcenter/einstellungen', label: 'Setup', icon: Settings, roles: null,
+        children: [
+          { path: '/mailcenter/einstellungen', label: 'Einstellungen', icon: Settings, roles: null },
+          { path: '/mailcenter/berechtigungen', label: 'Berechtigungen', icon: ShieldCheck, roles: null },
+          { path: '/mailcenter/domains', label: 'Domains', icon: Globe, roles: null },
+          { path: '/mailcenter/backup', label: 'Backup Center', icon: Database, roles: null },
+          { path: '/mailcenter/import', label: 'Import', icon: Upload, roles: null },
+          { path: '/mailcenter/export', label: 'Export', icon: FileDown, roles: null },
+          { path: '/mailcenter/spam', label: 'Spam & Zustellbarkeit', icon: Shield, roles: null },
+          { path: '/mailcenter/testcenter', label: 'Testcenter', icon: TestTube2, roles: null },
+          { path: '/mailcenter/qualitaetssicherung', label: 'Qualitätssicherung', icon: BadgeCheck, roles: null },
+          { path: '/mailcenter/systemvalidierung', label: 'Systemvalidierung', icon: FileSignature, roles: null },
+          { path: '/mailcenter/produktivfreigabe', label: 'Produktivfreigabe', icon: Rocket, roles: null },
+        ],
+      },
+    ],
+  },
+  {
     path: '/auftragsverwaltung', label: 'AUFTRAGSVERWALTUNG', icon: ClipboardList, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich'],
     children: [
       {
@@ -196,89 +270,6 @@ const navItems: NavItem[] = [
     path: '/mdr-ce', label: 'MDR CE', icon: ShieldCheck, roles: null,
     children: [
       { path: '/mdr-ce/iso-13485', label: 'ISO 13485', icon: ShieldCheck, roles: null },
-    ],
-  },
-  {
-    path: '/mailcenter', label: 'KOMMUNIKATION', icon: Mail,
-    roles: ['Admin', 'Super Admin', 'Geschäftsführung', 'Marketing', 'Finance', 'Technik', 'Kundenservice', 'Vertrieb', 'Reparaturannahme', 'Tourenplanung', 'Bestellwesen', 'Order', 'Read Only', 'Read Only Audit'],
-    children: [
-      // Übersicht
-      { path: '/mailcenter', label: 'Dashboard', icon: LayoutDashboard, roles: null },
-      
-      
-      // E-Mail Submenu
-      {
-        path: '/mailcenter/gesendet', label: 'E-Mail', icon: Mail, roles: null,
-        children: [
-          { path: '/mailcenter/gesendet', label: 'Gesendet', icon: Send, roles: null },
-          { path: '/mailcenter/entwuerfe', label: 'Entwürfe', icon: FileEdit, roles: null },
-          { path: '/mailcenter/intern', label: 'Interne Nachrichten', icon: MessageSquare, roles: null },
-          { path: '/mailcenter/schreiben', label: 'E-Mail schreiben', icon: PenSquare, roles: null },
-          { path: '/mailcenter/kampagnen', label: 'Kampagnen', icon: Megaphone, roles: null },
-          { path: '/mailcenter/vorlagen', label: 'Vorlagen', icon: FileText, roles: null },
-          { path: '/mailcenter/automationen', label: 'Automationen', icon: Workflow, roles: null },
-          { path: '/mailcenter/ki-assistent', label: 'KI-Assistent', icon: Sparkles, roles: null },
-          { path: '/mailcenter/tracking', label: 'Tracking', icon: Activity, roles: null },
-          { path: '/mailcenter/abmeldungen', label: 'Abmeldungen', icon: MailX, roles: null },
-          { path: '/mailcenter/domains', label: 'Domains', icon: Globe, roles: null },
-          { path: '/mailcenter/spam', label: 'Spam & Zustellbarkeit', icon: Shield, roles: null },
-        ],
-      },
-      // Telefon Submenu
-      {
-        path: '/mailcenter/telefonie', label: 'Telefon', icon: PhoneCall, roles: null,
-        children: [
-          { path: '/mailcenter/telefonie', label: 'Telefonie (3CX)', icon: PhoneCall, roles: null },
-          { path: '/mailcenter/telefonnotizen', label: 'Telefonnotizen', icon: Phone, roles: null },
-          { path: '/mailcenter/gespraechsprotokolle', label: 'Gesprächsprotokolle', icon: ClipboardList, roles: null },
-        ],
-      },
-      // Aufgaben Submenu
-      {
-        path: '/mailcenter/aufgaben', label: 'Aufgaben', icon: CheckSquare, roles: null,
-        children: [
-          { path: '/mailcenter/aufgaben', label: 'Aufgaben', icon: CheckSquare, roles: null },
-          { path: '/mailcenter/wiedervorlagen', label: 'Wiedervorlagen', icon: CalendarClock, roles: null },
-        ],
-      },
-      // Dokumente Submenu
-      {
-        path: '/mailcenter/dokumente', label: 'Dokumente', icon: Files, roles: null,
-        children: [
-          { path: '/mailcenter/dokumente', label: 'Dokumenten-Center', icon: Files, roles: null },
-          { path: '/mailcenter/versandnachweise', label: 'Versandnachweise', icon: FileCheck2, roles: null },
-          { path: '/mailcenter/dokumente-vorlagen', label: 'Dok.-Vorlagen', icon: FileText, roles: null },
-          { path: '/mailcenter/dokumente-automationen', label: 'Dok.-Automationen', icon: Workflow, roles: null },
-        ],
-      },
-      // Status & Logs Submenu
-      {
-        path: '/mailcenter/systemstatus', label: 'Status & Logs', icon: HeartPulse, roles: null,
-        children: [
-          { path: '/mailcenter/systemstatus', label: 'Systemstatus', icon: HeartPulse, roles: null },
-          { path: '/mailcenter/audit-log', label: 'Audit-Log', icon: ScrollText, roles: null },
-          { path: '/mailcenter/fehlerprotokoll', label: 'Fehlerprotokoll', icon: AlertTriangle, roles: null },
-          { path: '/mailcenter/tracking', label: 'Tracking', icon: Activity, roles: null },
-          { path: '/mailcenter/berichte', label: 'Berichte', icon: BarChart3, roles: null },
-        ],
-      },
-      // Setup Submenu
-      {
-        path: '/mailcenter/einstellungen', label: 'Setup', icon: Settings, roles: null,
-        children: [
-          { path: '/mailcenter/einstellungen', label: 'Einstellungen', icon: Settings, roles: null },
-          { path: '/mailcenter/berechtigungen', label: 'Berechtigungen', icon: ShieldCheck, roles: null },
-          { path: '/mailcenter/domains', label: 'Domains', icon: Globe, roles: null },
-          { path: '/mailcenter/backup', label: 'Backup Center', icon: Database, roles: null },
-          { path: '/mailcenter/import', label: 'Import', icon: Upload, roles: null },
-          { path: '/mailcenter/export', label: 'Export', icon: FileDown, roles: null },
-          { path: '/mailcenter/spam', label: 'Spam & Zustellbarkeit', icon: Shield, roles: null },
-          { path: '/mailcenter/testcenter', label: 'Testcenter', icon: TestTube2, roles: null },
-          { path: '/mailcenter/qualitaetssicherung', label: 'Qualitätssicherung', icon: BadgeCheck, roles: null },
-          { path: '/mailcenter/systemvalidierung', label: 'Systemvalidierung', icon: FileSignature, roles: null },
-          { path: '/mailcenter/produktivfreigabe', label: 'Produktivfreigabe', icon: Rocket, roles: null },
-        ],
-      },
     ],
   },
 
