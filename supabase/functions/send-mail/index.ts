@@ -88,6 +88,7 @@ serve(async (req) => {
       body_text: rawText = null,
       // mode
       is_test = false,
+      attachments = [],
     } = body ?? {};
 
     if (!to_email || !from_email) {
@@ -253,6 +254,13 @@ serve(async (req) => {
         subject: finalSubject,
         html: finalHtml || undefined,
         text: finalText || undefined,
+        attachments: Array.isArray(attachments) && attachments.length
+          ? attachments.map((a: any) => ({
+              filename: a.filename,
+              content: a.content,
+              content_type: a.contentType || a.content_type || undefined,
+            }))
+          : undefined,
       }),
     });
 
