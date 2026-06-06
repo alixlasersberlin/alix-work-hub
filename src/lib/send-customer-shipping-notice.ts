@@ -20,6 +20,7 @@ export async function sendCustomerShippingNotice(
   deviceId?: string,
   trigger: ShippingNoticeTrigger = 'automatisch',
   templateKey: 'customer_warehouse_received' | 'customer_shipping_notice' | 'customer_in_transit' | 'customer_in_production' | 'customer_warehouse_prepared' | 'customer_delivered' = 'customer_warehouse_received',
+  prefetchedDevices?: Array<{ model_name: string | null; serial_number: string | null }>,
 ): Promise<{ ok: boolean; message: string }> {
   try {
     const { data: order, error: oErr } = await supabase
@@ -43,9 +44,11 @@ export async function sendCustomerShippingNotice(
       .maybeSingle();
     if (!tpl) return { ok: false, message: `E-Mail Vorlage '${templateKey}' nicht gefunden` };
 
-    // Geräte-Infos zusammenstellen: konkretes Gerät (deviceId) oder alle reservierten Geräte des Auftrags
+    // Geräte-Infos: vom Aufrufer übergeben, konkretes Gerät, oder reservierte Geräte des Auftrags.
     let devices: Array<{ model_name: string | null; serial_number: string | null }> = [];
-    if (deviceId) {
+    if (prefetchedDevices && prefetchedDevices.length > 0) {
+      devices = prefetchedDevices;
+    } else if (deviceId) {
       const { data: dev } = await supabase
         .from('lager_devices')
         .select('model_name, serial_number')
@@ -59,6 +62,19 @@ export async function sendCustomerShippingNotice(
         .select('model_name, serial_number')
         .eq('reserved_order_id', orderId);
       devices = devs || [];
+    }
+    // Fallback (z. B. nach Statuswechsel auf "geliefert", da Reservierungen per
+    // DB-Trigger gelöscht wurden): Geräte-Infos aus order_items rekonstruieren.
+    if (devices.length === 0) {
+      const { data: items } = await supabase
+        .from('order_items')
+        .select('item_name, sku')
+        .eq('order_id', orderId)
+        .order('item_order', { ascending: true });
+      devices = (items || []).map((it: any) => ({
+        model_name: it.item_name || null,
+        serial_number: it.sku || null,
+      }));
     }
     const deviceInfo = devices.length > 0
       ? devices
