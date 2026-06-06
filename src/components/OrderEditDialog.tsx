@@ -74,11 +74,18 @@ export default function OrderEditDialog({ order, open, onClose, onSaved }: Props
     if (error) { toast.error('Fehler beim Speichern: ' + error.message); return; }
     toast.success('Auftrag aktualisiert');
     if (form.order_status === 'geliefert' && order?.order_status !== 'geliefert') {
-      const mail = await sendCustomerShippingNotice(order.id, undefined, 'automatisch', 'customer_delivered');
+      // Reservierte Geräte VOR dem Status-Update einlesen — der DB-Trigger
+      // clear_lager_reservation_on_delivery setzt reserved_order_id=NULL bei "geliefert".
+      const { data: devs } = await supabase
+        .from('lager_devices')
+        .select('model_name, serial_number')
+        .eq('reserved_order_id', order.id);
+      const mail = await sendCustomerShippingNotice(order.id, undefined, 'automatisch', 'customer_delivered', devs || []);
       if (mail.ok) toast.success(mail.message); else toast.error('E-Mail nicht versendet: ' + mail.message);
       // Automatische Bewertungseinladung (fehlerresistent)
       sendReviewInvitation(order.id, { manual: false }).catch(() => {});
     }
+
     onSaved();
     onClose();
   }
