@@ -137,6 +137,16 @@ const ReviewThanks = lazy(() => import("./pages/PublicReview/ReviewThanks"));
 const PortalLookup = lazy(() => import("./pages/Portal/Lookup"));
 const PortalStatus = lazy(() => import("./pages/Portal/Status"));
 const PortalAdmin = lazy(() => import("./pages/PortalAdmin"));
+const MailCenterLayout = lazy(() => import("./pages/MailCenter/Layout"));
+const MailCenterDashboard = lazy(() => import("./pages/MailCenter/Dashboard"));
+const MailCenterCompose = lazy(() => import("./pages/MailCenter/Compose"));
+const MailCenterVorlagen = lazy(() => import("./pages/MailCenter/Vorlagen"));
+const MailCenterKampagnen = lazy(() => import("./pages/MailCenter/Kampagnen"));
+const MailCenterAutomationen = lazy(() => import("./pages/MailCenter/Automationen"));
+const MailCenterTracking = lazy(() => import("./pages/MailCenter/Tracking"));
+const MailCenterDomains = lazy(() => import("./pages/MailCenter/Domains"));
+const MailCenterBerichte = lazy(() => import("./pages/MailCenter/Berichte"));
+const MailCenterEinstellungen = lazy(() => import("./pages/MailCenter/Einstellungen"));
 import MaintenanceGate from "./components/MaintenanceGate";
 import LeihgeraetReminder from "./components/LeihgeraetReminder";
 
