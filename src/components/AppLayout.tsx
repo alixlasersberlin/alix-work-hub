@@ -233,30 +233,51 @@ const navItems: NavItem[] = [
           { path: '/mailcenter/gespraechsprotokolle', label: 'Gesprächsprotokolle', icon: ClipboardList, roles: null },
         ],
       },
-      // Aufgaben
-      { path: '/mailcenter/aufgaben', label: 'Aufgaben', icon: CheckSquare, roles: null },
-      { path: '/mailcenter/wiedervorlagen', label: 'Wiedervorlagen', icon: CalendarClock, roles: null },
-      // Dokumente
-      { path: '/mailcenter/dokumente', label: 'Dokumenten-Center', icon: Files, roles: null },
-      { path: '/mailcenter/versandnachweise', label: 'Versandnachweise', icon: FileCheck2, roles: null },
-      { path: '/mailcenter/dokumente-vorlagen', label: 'Dok.-Vorlagen', icon: FileText, roles: null },
-      { path: '/mailcenter/dokumente-automationen', label: 'Dok.-Automationen', icon: Workflow, roles: null },
-      // Administration
-      { path: '/mailcenter/berechtigungen', label: 'Berechtigungen', icon: ShieldCheck, roles: null },
-      { path: '/mailcenter/einstellungen', label: 'Einstellungen', icon: Settings, roles: null },
-      // Betrieb & Monitoring
-      { path: '/mailcenter/systemstatus', label: 'Systemstatus', icon: HeartPulse, roles: null },
-      { path: '/mailcenter/audit-log', label: 'Audit-Log', icon: ScrollText, roles: null },
-      { path: '/mailcenter/fehlerprotokoll', label: 'Fehlerprotokoll', icon: AlertTriangle, roles: null },
-      { path: '/mailcenter/backup', label: 'Backup Center', icon: Database, roles: null },
-      { path: '/mailcenter/import', label: 'Import', icon: Upload, roles: null },
-      { path: '/mailcenter/export', label: 'Export', icon: FileDown, roles: null },
-      // Qualität & Rollout
-      { path: '/mailcenter/testcenter', label: 'Testcenter', icon: TestTube2, roles: null },
-      { path: '/mailcenter/qualitaetssicherung', label: 'Qualitätssicherung', icon: BadgeCheck, roles: null },
-      { path: '/mailcenter/systemvalidierung', label: 'Systemvalidierung', icon: FileSignature, roles: null },
-      
-      { path: '/mailcenter/produktivfreigabe', label: 'Produktivfreigabe', icon: Rocket, roles: null },
+      // Aufgaben Submenu
+      {
+        path: '/mailcenter/aufgaben', label: 'Aufgaben', icon: CheckSquare, roles: null,
+        children: [
+          { path: '/mailcenter/aufgaben', label: 'Aufgaben', icon: CheckSquare, roles: null },
+          { path: '/mailcenter/wiedervorlagen', label: 'Wiedervorlagen', icon: CalendarClock, roles: null },
+        ],
+      },
+      // Dokumente Submenu
+      {
+        path: '/mailcenter/dokumente', label: 'Dokumente', icon: Files, roles: null,
+        children: [
+          { path: '/mailcenter/dokumente', label: 'Dokumenten-Center', icon: Files, roles: null },
+          { path: '/mailcenter/versandnachweise', label: 'Versandnachweise', icon: FileCheck2, roles: null },
+          { path: '/mailcenter/dokumente-vorlagen', label: 'Dok.-Vorlagen', icon: FileText, roles: null },
+          { path: '/mailcenter/dokumente-automationen', label: 'Dok.-Automationen', icon: Workflow, roles: null },
+        ],
+      },
+      // Status & Logs Submenu
+      {
+        path: '/mailcenter/systemstatus', label: 'Status & Logs', icon: HeartPulse, roles: null,
+        children: [
+          { path: '/mailcenter/systemstatus', label: 'Systemstatus', icon: HeartPulse, roles: null },
+          { path: '/mailcenter/audit-log', label: 'Audit-Log', icon: ScrollText, roles: null },
+          { path: '/mailcenter/fehlerprotokoll', label: 'Fehlerprotokoll', icon: AlertTriangle, roles: null },
+          { path: '/mailcenter/tracking', label: 'Tracking', icon: Activity, roles: null },
+        ],
+      },
+      // Setup Submenu
+      {
+        path: '/mailcenter/einstellungen', label: 'Setup', icon: Settings, roles: null,
+        children: [
+          { path: '/mailcenter/einstellungen', label: 'Einstellungen', icon: Settings, roles: null },
+          { path: '/mailcenter/berechtigungen', label: 'Berechtigungen', icon: ShieldCheck, roles: null },
+          { path: '/mailcenter/domains', label: 'Domains', icon: Globe, roles: null },
+          { path: '/mailcenter/backup', label: 'Backup Center', icon: Database, roles: null },
+          { path: '/mailcenter/import', label: 'Import', icon: Upload, roles: null },
+          { path: '/mailcenter/export', label: 'Export', icon: FileDown, roles: null },
+          { path: '/mailcenter/spam', label: 'Spam & Zustellbarkeit', icon: Shield, roles: null },
+          { path: '/mailcenter/testcenter', label: 'Testcenter', icon: TestTube2, roles: null },
+          { path: '/mailcenter/qualitaetssicherung', label: 'Qualitätssicherung', icon: BadgeCheck, roles: null },
+          { path: '/mailcenter/systemvalidierung', label: 'Systemvalidierung', icon: FileSignature, roles: null },
+          { path: '/mailcenter/produktivfreigabe', label: 'Produktivfreigabe', icon: Rocket, roles: null },
+        ],
+      },
     ],
   },
 
