@@ -15,6 +15,14 @@ const SENDER_ROLE_MAP: Record<string, string[]> = {
   "news@alixwork.de": ["Marketing"],
 };
 
+// Reply-To Mapping pro Absenderadresse (eingehende Antworten gehen NICHT an die Absenderadresse)
+const REPLY_TO_MAP: Record<string, string> = {
+  "finance@alixwork.de": "k.trinh@alix-operation.de",
+  "vertrieb@alixwork.de": "rde@alix-lasers.com",
+  "service@alixwork.de": "support@alix-lasers.com",
+  "news@alixwork.de": "support@alix-operation.de",
+};
+
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -224,6 +232,7 @@ serve(async (req) => {
       body: JSON.stringify({
         from: `Alix Lasers | ${String(from_email).split("@")[0]} <${from_email}>`,
         to: [to_name ? `${to_name} <${to_email}>` : to_email],
+        reply_to: REPLY_TO_MAP[String(from_email).toLowerCase()] || undefined,
         subject: finalSubject,
         html: finalHtml || undefined,
         text: finalText || undefined,
