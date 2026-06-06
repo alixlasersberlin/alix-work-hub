@@ -448,11 +448,29 @@ export default function TicketDetail() {
             </div>
           </div>
 
+          {linkedRepair && (
+            <div className="rounded-xl border border-primary/40 bg-primary/5 p-6 space-y-2">
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                <Wrench className="w-4 h-4" /> Verknüpfter Reparaturauftrag
+              </h2>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex flex-col">
+                  <span className="font-mono text-base font-semibold text-foreground">{linkedRepair.repair_number || '—'}</span>
+                  <span className="text-xs text-muted-foreground">Status: <Badge variant="outline">{linkedRepair.repair_status || '—'}</Badge></span>
+                </div>
+                <Button size="sm" variant="outline" asChild>
+                  <Link to={`/reparatur/${linkedRepair.id}`}>Öffnen</Link>
+                </Button>
+              </div>
+            </div>
+          )}
+
           <div className="rounded-xl border border-border bg-card p-6 space-y-3">
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Übergaben</h2>
             <Button variant="outline" className="w-full justify-start" disabled={!canEdit || saving}
               onClick={createRepairFromTicket}>
-              <Wrench className="w-4 h-4 mr-2" /> Arbeitsauftrag erstellen
+              <Wrench className="w-4 h-4 mr-2" />
+              {linkedRepair ? `Reparaturauftrag öffnen (${linkedRepair.repair_number || ''})` : 'Reparaturauftrag erstellen'}
             </Button>
             <Button variant="outline" className="w-full justify-start" disabled={!canEdit} asChild>
               <Link to="/reparatur/neu"><ClipboardList className="w-4 h-4 mr-2" /> Reparaturannahme erstellen</Link>
