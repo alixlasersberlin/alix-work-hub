@@ -12,6 +12,13 @@ const SENDER_ROLE_MAP: Record<string, string[]> = {
   "vertrieb@alixwork.de": ["Vertrieb", "Order"],
 };
 
+const REPLY_TO_MAP: Record<string, string> = {
+  "finance@alixwork.de": "k.trinh@alix-operation.de",
+  "vertrieb@alixwork.de": "rde@alix-lasers.com",
+  "service@alixwork.de": "support@alix-lasers.com",
+  "news@alixwork.de": "support@alix-operation.de",
+};
+
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -155,7 +162,7 @@ serve(async (req) => {
             subject: subj,
             html: html || undefined,
             text: text || undefined,
-            reply_to: campaign.reply_to || undefined,
+            reply_to: REPLY_TO_MAP[String(campaign.sender_email).toLowerCase()] || campaign.reply_to || undefined,
             headers: {
               "List-Unsubscribe": `<https://alix-finance.de/unsubscribe?email=${encodeURIComponent(rec.email)}>`,
             },
