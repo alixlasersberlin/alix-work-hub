@@ -25,6 +25,7 @@ const PRIORITIES = ['low', 'normal', 'high', 'urgent'];
 
 export default function Telefonnotizen() {
   const [items, setItems] = useState<any[]>([]);
+  const [customerMap, setCustomerMap] = useState<Record<string, CustomerHit>>({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState(false);
@@ -37,13 +38,65 @@ export default function Telefonnotizen() {
     has_followup: false,
   });
 
+  // Customer search state
+  const [custQuery, setCustQuery] = useState('');
+  const [custResults, setCustResults] = useState<CustomerHit[]>([]);
+  const [custSearching, setCustSearching] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerHit | null>(null);
+  const custTimer = useRef<any>(null);
+
   const load = async () => {
     setLoading(true);
     const { data } = await supabase.from('mail_phone_notes').select('*').order('call_date', { ascending: false }).limit(200);
-    setItems(data || []);
+    const list = data || [];
+    setItems(list);
+    const ids = Array.from(new Set(list.map((n: any) => n.customer_id).filter(Boolean))) as string[];
+    if (ids.length) {
+      const { data: cust } = await supabase.from('customers').select('id, company_name, contact_name, email, phone').in('id', ids);
+      const map: Record<string, CustomerHit> = {};
+      (cust || []).forEach((c: any) => { map[c.id] = c; });
+      setCustomerMap(map);
+    } else {
+      setCustomerMap({});
+    }
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
+
+  // Debounced customer search
+  useEffect(() => {
+    if (custTimer.current) clearTimeout(custTimer.current);
+    const q = custQuery.trim();
+    if (q.length < 2) { setCustResults([]); return; }
+    custTimer.current = setTimeout(async () => {
+      setCustSearching(true);
+      const { data } = await supabase
+        .from('customers')
+        .select('id, company_name, contact_name, email, phone')
+        .or(`company_name.ilike.%${q}%,contact_name.ilike.%${q}%,email.ilike.%${q}%,phone.ilike.%${q}%`)
+        .limit(10);
+      setCustResults((data as CustomerHit[]) || []);
+      setCustSearching(false);
+    }, 250);
+  }, [custQuery]);
+
+  const pickCustomer = (c: CustomerHit) => {
+    setSelectedCustomer(c);
+    setForm((f: any) => ({
+      ...f,
+      customer_id: c.id,
+      contact_name: f.contact_name || c.contact_name || c.company_name || '',
+      phone_number: f.phone_number || c.phone || '',
+    }));
+    setCustQuery('');
+    setCustResults([]);
+  };
+
+  const clearCustomer = () => {
+    setSelectedCustomer(null);
+    setForm((f: any) => ({ ...f, customer_id: null }));
+  };
+
 
   const save = async () => {
     const payload = { ...form };
