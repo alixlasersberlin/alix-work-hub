@@ -78,6 +78,7 @@ export default function ReparaturDetail() {
           </Link>
         )}
         {perms.canEditTechnik && <SparePartRequestDialog repair={repair} onCreated={load} />}
+        {(perms.canEditTechnik || perms.canEditFinance) && <InvoiceProposalDialog repair={repair} onCreated={load} />}
         <div className="ml-auto flex items-center gap-2">
           <Label className="text-xs">Status:</Label>
           <Select value={repair.repair_status} onValueChange={(v) => updateRepair({ repair_status: v })} disabled={!perms.canEditAnnahme}>
