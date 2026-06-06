@@ -191,8 +191,8 @@ Deno.serve(async (req) => {
         .eq("id", conv.id);
     }
 
-    // Store WhatsApp message
-    const { data: storedMsg } = await supabase
+    // Store WhatsApp message (race-safe gegen Unique-Index uq_whatsapp_sc_messages_twilio_sid)
+    const { data: storedMsg, error: insertErr } = await supabase
       .from("whatsapp_sc_messages")
       .insert({
         conversation_id: conv.id,
@@ -211,28 +211,63 @@ Deno.serve(async (req) => {
       .select("id")
       .single();
 
-    // Mirror to ticket_messages
+    if (insertErr) {
+      // 23505 = unique_violation → parallele Zustellung derselben MessageSid
+      if ((insertErr as any).code === "23505") {
+        await supabase.from("whatsapp_sync_logs").insert({
+          event_type: "inbound_duplicate",
+          status: "skipped",
+          conversation_id: conv.id,
+          ticket_id: ticketId,
+          error_message: "duplicate twilio_message_sid (race)",
+          payload: { messageSid },
+        });
+        return twiml();
+      }
+      throw insertErr;
+    }
+
+    // Mirror to ticket_messages (idempotent über external_message_id)
     if (ticketId) {
-      await supabase.from("ticket_messages").insert({
-        ticket_id: ticketId,
-        external_message_id: messageSid,
-        sender_type: "customer",
-        sender_name: profileName ?? customerPhone,
-        message: body || (firstMedia ? `[${firstMedia.type}]` : "(leer)"),
-        is_internal: false,
-        source_system: "twilio_whatsapp",
-      });
+      if (messageSid) {
+        const { data: existingTm } = await supabase
+          .from("ticket_messages")
+          .select("id")
+          .eq("ticket_id", ticketId)
+          .eq("external_message_id", messageSid)
+          .maybeSingle();
+        if (!existingTm) {
+          await supabase.from("ticket_messages").insert({
+            ticket_id: ticketId,
+            external_message_id: messageSid,
+            sender_type: "customer",
+            sender_name: profileName ?? customerPhone,
+            message: body || (firstMedia ? `[${firstMedia.type}]` : "(leer)"),
+            is_internal: false,
+            source_system: "twilio_whatsapp",
+          });
+        }
+      }
 
       for (const m of media) {
-        await supabase.from("ticket_attachments").insert({
-          ticket_id: ticketId,
-          file_url: m.url,
-          file_name: m.url.split("/").pop() ?? "anhang",
-          file_type: m.type,
-          source_system: "twilio_whatsapp",
-        });
+        const { data: existingAtt } = await supabase
+          .from("ticket_attachments")
+          .select("id")
+          .eq("ticket_id", ticketId)
+          .eq("file_url", m.url)
+          .maybeSingle();
+        if (!existingAtt) {
+          await supabase.from("ticket_attachments").insert({
+            ticket_id: ticketId,
+            file_url: m.url,
+            file_name: m.url.split("/").pop() ?? "anhang",
+            file_type: m.type,
+            source_system: "twilio_whatsapp",
+          });
+        }
       }
     }
+
 
     await supabase.from("whatsapp_sync_logs").insert({
       event_type: "inbound",
