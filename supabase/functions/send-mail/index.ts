@@ -222,7 +222,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: `${from_name || "Alix MailCenter"} <${from_email}>`,
+        from: `Alix Lasers | ${String(from_email).split("@")[0]} <${from_email}>`,
         to: [to_name ? `${to_name} <${to_email}>` : to_email],
         subject: finalSubject,
         html: finalHtml || undefined,

@@ -262,7 +262,7 @@ serve(async (req) => {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              from: `${a.sender_name || "Alix"} <${a.sender_email || "news@alixwork.de"}>`,
+              from: (() => { const e = a.sender_email || "news@alixwork.de"; return `Alix Lasers | ${e.split("@")[0]} <${e}>`; })(),
               to: [cust.contact_name ? `${cust.contact_name} <${cust.email}>` : cust.email],
               subject: subj,
               html: html || undefined,
