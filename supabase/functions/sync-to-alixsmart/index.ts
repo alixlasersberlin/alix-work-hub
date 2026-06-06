@@ -103,6 +103,7 @@ Deno.serve(async (req) => {
       }),
     };
 
+    const { url: ALIXSMART_API_URL, key: ALIXSMART_API_KEY } = getAlixSmartConfig();
     if (!ALIXSMART_API_URL || !ALIXSMART_API_KEY) {
       await logSync(supabase, body.ticket_id, ticket.external_ticket_id, action, "error", "ALIXSMART_API_URL / KEY not configured", payload);
       return json({ error: "AlixSmart endpoint not configured" }, 500);
