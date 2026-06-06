@@ -2,7 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useUiTemplate, type UiTemplate } from "@/hooks/useUiTemplate";
-import { Sparkles, Layers, Check } from "lucide-react";
+import { useDesignVariant, type DesignVariant } from "@/hooks/useDesignVariant";
+import { Sparkles, Layers, Check, Monitor, Wand2 } from "lucide-react";
 
 const OPTIONS: { id: UiTemplate; name: string; description: string; preview: React.ReactNode }[] = [
   {
@@ -92,6 +93,8 @@ export default function DesignTemplate() {
         })}
       </div>
 
+      <DesignVariantSection />
+
       <Card>
         <CardHeader><CardTitle>Hinweise</CardTitle></CardHeader>
         <CardContent className="text-sm text-muted-foreground space-y-1">
@@ -101,5 +104,48 @@ export default function DesignTemplate() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+const VARIANT_OPTIONS: { value: DesignVariant; label: string; description: string; icon: typeof Monitor; badge?: string }[] = [
+  { value: 'classic', label: 'Classic Design', description: 'Aktuelles AlixWork Design', icon: Monitor },
+  { value: 'beta3d', label: 'AlixWork 3D Beta', description: '3D Command Center · Glas · Gold', icon: Sparkles, badge: 'Beta' },
+  { value: 'aurora', label: 'AlixWork Aurora Ultra', description: 'Liquid Glass · Aurora · AI Light', icon: Wand2, badge: 'Ultra' },
+];
+
+function DesignVariantSection() {
+  const { variant, setVariant } = useDesignVariant();
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-primary" /> Design-Variante
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {VARIANT_OPTIONS.map(opt => {
+          const Icon = opt.icon;
+          const active = variant === opt.value;
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setVariant(opt.value)}
+              className={`text-left rounded-lg border p-4 transition-all hover:border-primary/60 ${active ? 'border-primary ring-2 ring-primary/40 bg-primary/5' : 'border-border'}`}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <Icon className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">{opt.label}</span>
+                {opt.badge && (
+                  <Badge variant="outline" className="h-4 border-primary/60 px-1 text-[10px] text-primary">{opt.badge}</Badge>
+                )}
+                {active && <Check className="h-4 w-4 text-primary ml-auto" />}
+              </div>
+              <p className="text-xs text-muted-foreground">{opt.description}</p>
+            </button>
+          );
+        })}
+      </CardContent>
+    </Card>
   );
 }
