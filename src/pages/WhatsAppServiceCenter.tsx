@@ -570,12 +570,3 @@ export default function WhatsAppServiceCenter() {
     </div>
   );
 }
-
-            <li>Interne Notizen werden niemals an den Kunden gesendet.</li>
-            <li>Opt-out blockiert jeden ausgehenden Versand.</li>
-          </ul>
-        </Card>
-      </div>
-    </div>
-  );
-}
