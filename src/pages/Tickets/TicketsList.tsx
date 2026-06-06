@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -50,6 +50,7 @@ function priorityColor(p: string) {
 }
 
 export default function TicketsList() {
+  const navigate = useNavigate();
   const [rows, setRows] = useState<TicketRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -157,7 +158,11 @@ export default function TicketsList() {
             </TableHeader>
             <TableBody>
               {filtered.map(r => (
-                <TableRow key={r.id}>
+                <TableRow
+                  key={r.id}
+                  onClick={() => navigate(`/tickets/${r.id}`)}
+                  className="cursor-pointer hover:bg-muted/40"
+                >
                   <TableCell>
                     <div className="font-medium text-foreground">{r.title || r.external_ticket_id || r.id.slice(0, 8)}</div>
                     <div className="text-xs text-muted-foreground">{r.external_ticket_id || r.source_system}</div>
@@ -174,7 +179,7 @@ export default function TicketsList() {
                   <TableCell className="text-xs text-muted-foreground">
                     {r.last_synced_at ? new Date(r.last_synced_at).toLocaleString('de-DE') : '—'}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                     <Button size="sm" variant="outline" asChild>
                       <Link to={`/tickets/${r.id}`}>Details <ArrowRight className="w-3 h-3 ml-1" /></Link>
                     </Button>
