@@ -162,8 +162,8 @@ export default function Dashboard() {
     recent: true,
     routes: true,
     finance: true,
-    sessions: false,
-    security: false,
+    sessions: true,
+    security: true,
   });
   const toggle = (k: string) => setCollapsed(p => ({ ...p, [k]: !p[k] }));
 
