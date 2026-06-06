@@ -45,6 +45,7 @@ const ReparaturErsatzteile = lazy(() => import("./pages/Reparatur/Ersatzteile"))
 const ReparaturFinance = lazy(() => import("./pages/Reparatur/FinanceUebergabe"));
 const ReparaturTouren = lazy(() => import("./pages/Reparatur/TourenplanungUebergabe"));
 const ReparaturArchiv = lazy(() => import("./pages/Reparatur/Archiv"));
+const BestellwesenErsatzteile = lazy(() => import("./pages/Bestellwesen/Ersatzteile"));
 const RoutePlanDetail = lazy(() => import("./pages/RoutePlanDetail"));
 const RoutePlanForm = lazy(() => import("./pages/RoutePlanForm"));
 const RoutePlanningSettings = lazy(() => import("./pages/RoutePlanningSettings"));
