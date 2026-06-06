@@ -1,6 +1,11 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
+import "./styles/theme-neo.css";
+import { bootUiTemplate } from "./hooks/useUiTemplate";
+
+bootUiTemplate();
+
 
 // Workaround for React bug with browser translation extensions (Google Translate, etc.)
 // See: https://github.com/facebook/react/issues/11538
