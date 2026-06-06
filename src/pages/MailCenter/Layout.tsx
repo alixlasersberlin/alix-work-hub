@@ -45,6 +45,7 @@ const tabs = [
   { to: '/mailcenter/import', label: 'Import', icon: Upload },
   { to: '/mailcenter/export', label: 'Export', icon: FileDown },
   { to: '/mailcenter/spam', label: 'Spam & Zustellbarkeit', icon: Shield },
+  { to: '/mailcenter/qualitaetssicherung', label: 'Qualitätssicherung', icon: BadgeCheck },
 ];
 
 export default function MailCenterLayout() {
