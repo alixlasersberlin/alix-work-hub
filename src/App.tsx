@@ -367,6 +367,18 @@ function AppRoutes() {
             <Route path="berichte" element={<BugCapaBerichte />} />
           </Route>
 
+          <Route path="/mailcenter" element={<ProtectedRoute><MailCenterLayout /></ProtectedRoute>}>
+            <Route index element={<MailCenterDashboard />} />
+            <Route path="schreiben" element={<MailCenterCompose />} />
+            <Route path="vorlagen" element={<MailCenterVorlagen />} />
+            <Route path="kampagnen" element={<MailCenterKampagnen />} />
+            <Route path="automationen" element={<MailCenterAutomationen />} />
+            <Route path="tracking" element={<MailCenterTracking />} />
+            <Route path="domains" element={<MailCenterDomains />} />
+            <Route path="berichte" element={<MailCenterBerichte />} />
+            <Route path="einstellungen" element={<MailCenterEinstellungen />} />
+          </Route>
+
           <Route path="/mdr-ce" element={<ProtectedRoute requiredRoles={['Super Admin']}><MdrCe /></ProtectedRoute>} />
           <Route path="/mdr-ce/iso-13485" element={<ProtectedRoute requiredRoles={['Super Admin']}><Iso13485 /></ProtectedRoute>} />
 
