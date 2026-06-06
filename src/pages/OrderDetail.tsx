@@ -263,8 +263,8 @@ export default function OrderDetail() {
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
-      <Button variant="ghost" className="mb-4 text-muted-foreground hover:text-foreground" onClick={() => navigate('/auftraege')}>
-        <ArrowLeft className="w-4 h-4 mr-2" /> Zurück zur Auftragsliste
+      <Button variant="ghost" className="mb-4 text-muted-foreground hover:text-foreground" onClick={() => navigate(order.source_system === 'zoho_eu_2' ? '/auftraege-at' : '/auftraege')}>
+        <ArrowLeft className="w-4 h-4 mr-2" /> {order.source_system === 'zoho_eu_2' ? 'Zurück zu Aufträge AT' : 'Zurück zur Auftragsliste'}
       </Button>
 
       {/* Header */}
