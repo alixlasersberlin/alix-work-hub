@@ -56,6 +56,7 @@ const Invoices = lazy(() => import("./pages/Invoices"));
 const OffenePosten = lazy(() => import("./pages/OffenePosten"));
 const ZohoUnpaidInvoices = lazy(() => import("./pages/ZohoUnpaidInvoices"));
 const FinanceDetail = lazy(() => import("./pages/FinanceDetail"));
+const Rechnungsvorschlaege = lazy(() => import("./pages/Rechnungsvorschlaege"));
 const FinanceForm = lazy(() => import("./pages/FinanceForm"));
 const UserManagement = lazy(() => import("./pages/UserManagement"));
 const ImportManagement = lazy(() => import("./pages/ImportManagement"));
