@@ -1239,6 +1239,51 @@ export type Database = {
         }
         Relationships: []
       }
+      device_lifecycle: {
+        Row: {
+          created_at: string
+          customer_id: string | null
+          customer_name: string | null
+          description: string | null
+          device_name: string | null
+          event_date: string
+          event_source: string
+          event_type: string
+          id: string
+          meta: Json | null
+          reference_id: string | null
+          serial_number: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          description?: string | null
+          device_name?: string | null
+          event_date?: string
+          event_source: string
+          event_type: string
+          id?: string
+          meta?: Json | null
+          reference_id?: string | null
+          serial_number: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          description?: string | null
+          device_name?: string | null
+          event_date?: string
+          event_source?: string
+          event_type?: string
+          id?: string
+          meta?: Json | null
+          reference_id?: string | null
+          serial_number?: string
+        }
+        Relationships: []
+      }
       email_templates: {
         Row: {
           body: string
@@ -6021,6 +6066,21 @@ export type Database = {
       complete_password_setup: { Args: never; Returns: undefined }
       current_portal_customer_id: { Args: never; Returns: string }
       current_supplier_id: { Args: never; Returns: string }
+      dl_upsert: {
+        Args: {
+          _customer_id: string
+          _customer_name: string
+          _description: string
+          _device: string
+          _event_date: string
+          _event_source: string
+          _event_type: string
+          _meta?: Json
+          _reference_id: string
+          _serial: string
+        }
+        Returns: undefined
+      }
       has_role: { Args: { check_role: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
       is_portal_customer: { Args: never; Returns: boolean }
