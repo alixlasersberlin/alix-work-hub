@@ -179,40 +179,55 @@ html.theme-neo [class*="border-b"][class*="bg-"] {
   color: hsl(var(--foreground));
 }
 
-/* ---------- Cards & Panels — luminous glass ---------- */
+/* ---------- Cards & Panels — luminous 3D glass ---------- */
 html.theme-neo [data-slot="card"],
 html.theme-neo .card,
 html.theme-neo [class*="bg-card"] {
   position: relative;
   background:
-    linear-gradient(180deg, hsla(0,0%,100%,0.85), hsla(220,30%,98%,0.65)) !important;
-  backdrop-filter: blur(var(--neo-glass-blur)) saturate(160%);
-  -webkit-backdrop-filter: blur(var(--neo-glass-blur)) saturate(160%);
+    linear-gradient(180deg, hsla(0,0%,100%,0.92) 0%, hsla(220,40%,98%,0.72) 55%, hsla(220,40%,96%,0.6) 100%) !important;
+  backdrop-filter: blur(var(--neo-glass-blur)) saturate(170%);
+  -webkit-backdrop-filter: blur(var(--neo-glass-blur)) saturate(170%);
   border: 1px solid var(--neo-glass-border) !important;
   border-radius: var(--radius) !important;
-  box-shadow: var(--neo-shadow-soft);
+  box-shadow: var(--neo-shadow-lift);
   color: hsl(var(--foreground));
-  transition: transform .25s cubic-bezier(.2,.7,.2,1),
-              box-shadow .25s ease,
-              border-color .25s ease;
+  transform: translateZ(0);
+  transform-style: preserve-3d;
+  transition: transform .35s cubic-bezier(.2,.7,.2,1),
+              box-shadow .35s ease,
+              border-color .35s ease;
   animation: neo-fade-up .35s ease-out both;
   overflow: hidden;
 }
+/* top edge bright highlight */
 html.theme-neo [data-slot="card"]::before,
 html.theme-neo .card::before {
-  /* hairline highlight on top edge */
   content: '';
   position: absolute;
   inset: 0 0 auto 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, hsla(0,0%,100%,0.95), transparent);
+  background: linear-gradient(90deg, transparent, hsla(0,0%,100%,1), transparent);
   pointer-events: none;
+}
+/* bottom inner ambient shadow — gives depth from below */
+html.theme-neo [data-slot="card"]::after,
+html.theme-neo .card::after {
+  content: '';
+  position: absolute;
+  inset: auto 8% -14px 8%;
+  height: 28px;
+  border-radius: 50%;
+  background: radial-gradient(50% 100% at 50% 0%, hsla(222, 50%, 22%, 0.22), transparent 70%);
+  filter: blur(10px);
+  pointer-events: none;
+  z-index: -1;
 }
 html.theme-neo [data-slot="card"]:hover,
 html.theme-neo .card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-4px) scale(1.005);
   border-color: var(--neo-glass-border-hi) !important;
-  box-shadow: var(--neo-shadow-lift);
+  box-shadow: var(--neo-shadow-float);
 }
 
 /* ---------- Buttons ---------- */
