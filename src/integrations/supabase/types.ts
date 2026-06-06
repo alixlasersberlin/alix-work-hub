@@ -1003,10 +1003,16 @@ export type Database = {
       }
       mail_campaigns: {
         Row: {
+          audience_label: string | null
+          category: string | null
           created_at: string
           created_by: string | null
+          description: string | null
+          error_message: string | null
           id: string
+          language: string | null
           name: string
+          recipient_count: number | null
           reply_to: string | null
           scheduled_at: string | null
           segment_id: string | null
@@ -1015,14 +1021,21 @@ export type Database = {
           sent_at: string | null
           status: string
           subject: string
+          target_filter: Json | null
           template_id: string | null
           updated_at: string
         }
         Insert: {
+          audience_label?: string | null
+          category?: string | null
           created_at?: string
           created_by?: string | null
+          description?: string | null
+          error_message?: string | null
           id?: string
+          language?: string | null
           name: string
+          recipient_count?: number | null
           reply_to?: string | null
           scheduled_at?: string | null
           segment_id?: string | null
@@ -1031,14 +1044,21 @@ export type Database = {
           sent_at?: string | null
           status?: string
           subject: string
+          target_filter?: Json | null
           template_id?: string | null
           updated_at?: string
         }
         Update: {
+          audience_label?: string | null
+          category?: string | null
           created_at?: string
           created_by?: string | null
+          description?: string | null
+          error_message?: string | null
           id?: string
+          language?: string | null
           name?: string
+          recipient_count?: number | null
           reply_to?: string | null
           scheduled_at?: string | null
           segment_id?: string | null
@@ -1047,6 +1067,7 @@ export type Database = {
           sent_at?: string | null
           status?: string
           subject?: string
+          target_filter?: Json | null
           template_id?: string | null
           updated_at?: string
         }
