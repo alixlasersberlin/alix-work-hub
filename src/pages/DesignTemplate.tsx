@@ -2,7 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useUiTemplate, type UiTemplate } from "@/hooks/useUiTemplate";
-import { Sparkles, Layers, Check } from "lucide-react";
+import { useDesignVariant, type DesignVariant } from "@/hooks/useDesignVariant";
+import { Sparkles, Layers, Check, Monitor, Wand2 } from "lucide-react";
 
 const OPTIONS: { id: UiTemplate; name: string; description: string; preview: React.ReactNode }[] = [
   {
