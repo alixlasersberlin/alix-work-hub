@@ -23,7 +23,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   Plus, Search, Pencil, Trash2, Copy, Eye, Power, FileText, Loader2,
   Bold, Italic, Heading1, Heading2, List, ListOrdered, Link as LinkIcon,
-  Table as TableIcon, Image as ImageIcon, MousePointerSquare, PenLine,
+  Table as TableIcon, Image as ImageIcon, MousePointer as MousePointerSquare, PenLine,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
