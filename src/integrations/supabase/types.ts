@@ -4291,6 +4291,202 @@ export type Database = {
         }
         Relationships: []
       }
+      ticket_attachments: {
+        Row: {
+          created_at: string
+          file_name: string | null
+          file_size: number | null
+          file_type: string | null
+          file_url: string | null
+          id: string
+          source_system: string
+          ticket_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_name?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          source_system?: string
+          ticket_id: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          source_system?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_attachments_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_messages: {
+        Row: {
+          created_at: string
+          external_message_id: string | null
+          id: string
+          is_internal: boolean
+          message: string | null
+          sender_email: string | null
+          sender_name: string | null
+          sender_type: string | null
+          source_system: string
+          ticket_id: string
+        }
+        Insert: {
+          created_at?: string
+          external_message_id?: string | null
+          id?: string
+          is_internal?: boolean
+          message?: string | null
+          sender_email?: string | null
+          sender_name?: string | null
+          sender_type?: string | null
+          source_system?: string
+          ticket_id: string
+        }
+        Update: {
+          created_at?: string
+          external_message_id?: string | null
+          id?: string
+          is_internal?: boolean
+          message?: string | null
+          sender_email?: string | null
+          sender_name?: string | null
+          sender_type?: string | null
+          source_system?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_sync_logs: {
+        Row: {
+          action: string | null
+          created_at: string
+          direction: string | null
+          error_message: string | null
+          external_ticket_id: string | null
+          id: string
+          payload: Json | null
+          status: string | null
+        }
+        Insert: {
+          action?: string | null
+          created_at?: string
+          direction?: string | null
+          error_message?: string | null
+          external_ticket_id?: string | null
+          id?: string
+          payload?: Json | null
+          status?: string | null
+        }
+        Update: {
+          action?: string | null
+          created_at?: string
+          direction?: string | null
+          error_message?: string | null
+          external_ticket_id?: string | null
+          id?: string
+          payload?: Json | null
+          status?: string | null
+        }
+        Relationships: []
+      }
+      tickets: {
+        Row: {
+          assigned_to: string | null
+          company_name: string | null
+          created_at: string
+          customer_address: string | null
+          customer_email: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          customer_visible_status: string
+          department: string
+          description: string | null
+          device_name: string | null
+          external_ticket_id: string | null
+          id: string
+          internal_note: string | null
+          last_synced_at: string | null
+          order_number: string | null
+          priority: string
+          serial_number: string | null
+          source_system: string
+          status: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          company_name?: string | null
+          created_at?: string
+          customer_address?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          customer_visible_status?: string
+          department?: string
+          description?: string | null
+          device_name?: string | null
+          external_ticket_id?: string | null
+          id?: string
+          internal_note?: string | null
+          last_synced_at?: string | null
+          order_number?: string | null
+          priority?: string
+          serial_number?: string | null
+          source_system?: string
+          status?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          company_name?: string | null
+          created_at?: string
+          customer_address?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          customer_visible_status?: string
+          department?: string
+          description?: string | null
+          device_name?: string | null
+          external_ticket_id?: string | null
+          id?: string
+          internal_note?: string | null
+          last_synced_at?: string | null
+          order_number?: string | null
+          priority?: string
+          serial_number?: string | null
+          source_system?: string
+          status?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_invitations: {
         Row: {
           accepted_at: string | null
@@ -5088,12 +5284,14 @@ export type Database = {
       can_access_planning: { Args: never; Returns: boolean }
       can_access_qm: { Args: never; Returns: boolean }
       can_access_repair: { Args: never; Returns: boolean }
+      can_access_tickets: { Args: never; Returns: boolean }
       can_manage_mail_campaigns: { Args: never; Returns: boolean }
       can_manage_mail_domains: { Args: never; Returns: boolean }
       can_manage_mail_templates: { Args: never; Returns: boolean }
       can_manage_orders: { Args: never; Returns: boolean }
       can_manage_planning: { Args: never; Returns: boolean }
       can_manage_repair: { Args: never; Returns: boolean }
+      can_manage_tickets: { Args: never; Returns: boolean }
       can_manage_whatsapp_automation: { Args: never; Returns: boolean }
       can_send_whatsapp: { Args: never; Returns: boolean }
       can_upload_factory_invoice: { Args: never; Returns: boolean }
