@@ -999,15 +999,7 @@ export type Database = {
           trigger_type?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "mail_automations_template_id_fkey"
-            columns: ["template_id"]
-            isOneToOne: false
-            referencedRelation: "mail_templates"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       mail_campaigns: {
         Row: {
@@ -1058,126 +1050,186 @@ export type Database = {
           template_id?: string | null
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "mail_campaigns_template_id_fkey"
-            columns: ["template_id"]
-            isOneToOne: false
-            referencedRelation: "mail_templates"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       mail_domains: {
         Row: {
-          created_at: string
-          created_by: string | null
-          dkim_status: string | null
-          dmarc_status: string | null
+          api_key_encrypted: string | null
+          created_at: string | null
           domain: string
           id: string
-          is_active: boolean
-          sender_email: string | null
+          is_active: boolean | null
+          provider: string | null
+          sender_email: string
           sender_name: string | null
-          smtp_host: string | null
-          smtp_password_encrypted: string | null
-          smtp_port: number | null
-          smtp_username: string | null
-          spf_status: string | null
-          status: string
-          updated_at: string
+          updated_at: string | null
         }
         Insert: {
-          created_at?: string
-          created_by?: string | null
-          dkim_status?: string | null
-          dmarc_status?: string | null
+          api_key_encrypted?: string | null
+          created_at?: string | null
           domain: string
           id?: string
-          is_active?: boolean
-          sender_email?: string | null
+          is_active?: boolean | null
+          provider?: string | null
+          sender_email: string
           sender_name?: string | null
-          smtp_host?: string | null
-          smtp_password_encrypted?: string | null
-          smtp_port?: number | null
-          smtp_username?: string | null
-          spf_status?: string | null
-          status?: string
-          updated_at?: string
+          updated_at?: string | null
         }
         Update: {
-          created_at?: string
-          created_by?: string | null
-          dkim_status?: string | null
-          dmarc_status?: string | null
+          api_key_encrypted?: string | null
+          created_at?: string | null
           domain?: string
           id?: string
-          is_active?: boolean
-          sender_email?: string | null
+          is_active?: boolean | null
+          provider?: string | null
+          sender_email?: string
           sender_name?: string | null
-          smtp_host?: string | null
-          smtp_password_encrypted?: string | null
-          smtp_port?: number | null
-          smtp_username?: string | null
-          spf_status?: string | null
-          status?: string
-          updated_at?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
       mail_events: {
         Row: {
-          campaign_id: string | null
-          created_at: string
-          created_by: string | null
-          event_data: Json
+          created_at: string | null
+          event_data: Json | null
           event_type: string
           id: string
           ip_address: string | null
-          recipient_id: string | null
-          status: string | null
-          updated_at: string
+          message_id: string | null
           user_agent: string | null
         }
         Insert: {
-          campaign_id?: string | null
-          created_at?: string
-          created_by?: string | null
-          event_data?: Json
+          created_at?: string | null
+          event_data?: Json | null
           event_type: string
           id?: string
           ip_address?: string | null
-          recipient_id?: string | null
-          status?: string | null
-          updated_at?: string
+          message_id?: string | null
           user_agent?: string | null
         }
         Update: {
-          campaign_id?: string | null
-          created_at?: string
-          created_by?: string | null
-          event_data?: Json
+          created_at?: string | null
+          event_data?: Json | null
           event_type?: string
           id?: string
           ip_address?: string | null
-          recipient_id?: string | null
-          status?: string | null
-          updated_at?: string
+          message_id?: string | null
           user_agent?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "mail_events_campaign_id_fkey"
-            columns: ["campaign_id"]
+            foreignKeyName: "mail_events_message_id_fkey"
+            columns: ["message_id"]
             isOneToOne: false
-            referencedRelation: "mail_campaigns"
+            referencedRelation: "mail_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mail_messages: {
+        Row: {
+          body_html: string | null
+          body_text: string | null
+          bounced_at: string | null
+          clicked_at: string | null
+          created_at: string | null
+          created_by: string | null
+          customer_id: string | null
+          delivered_at: string | null
+          domain_id: string | null
+          error_message: string | null
+          from_email: string
+          from_name: string | null
+          id: string
+          invoice_id: string | null
+          opened_at: string | null
+          order_id: string | null
+          provider_message_id: string | null
+          repair_id: string | null
+          reply_to: string | null
+          sent_at: string | null
+          status: string | null
+          subject: string
+          template_id: string | null
+          ticket_id: string | null
+          to_email: string
+          to_name: string | null
+          unsubscribed_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          body_html?: string | null
+          body_text?: string | null
+          bounced_at?: string | null
+          clicked_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          customer_id?: string | null
+          delivered_at?: string | null
+          domain_id?: string | null
+          error_message?: string | null
+          from_email: string
+          from_name?: string | null
+          id?: string
+          invoice_id?: string | null
+          opened_at?: string | null
+          order_id?: string | null
+          provider_message_id?: string | null
+          repair_id?: string | null
+          reply_to?: string | null
+          sent_at?: string | null
+          status?: string | null
+          subject: string
+          template_id?: string | null
+          ticket_id?: string | null
+          to_email: string
+          to_name?: string | null
+          unsubscribed_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          body_html?: string | null
+          body_text?: string | null
+          bounced_at?: string | null
+          clicked_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          customer_id?: string | null
+          delivered_at?: string | null
+          domain_id?: string | null
+          error_message?: string | null
+          from_email?: string
+          from_name?: string | null
+          id?: string
+          invoice_id?: string | null
+          opened_at?: string | null
+          order_id?: string | null
+          provider_message_id?: string | null
+          repair_id?: string | null
+          reply_to?: string | null
+          sent_at?: string | null
+          status?: string | null
+          subject?: string
+          template_id?: string | null
+          ticket_id?: string | null
+          to_email?: string
+          to_name?: string | null
+          unsubscribed_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mail_messages_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "mail_domains"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "mail_events_recipient_id_fkey"
-            columns: ["recipient_id"]
+            foreignKeyName: "mail_messages_template_id_fkey"
+            columns: ["template_id"]
             isOneToOne: false
-            referencedRelation: "mail_recipients"
+            referencedRelation: "mail_templates"
             referencedColumns: ["id"]
           },
         ]
@@ -1252,49 +1304,46 @@ export type Database = {
           body_html: string | null
           body_text: string | null
           category: string | null
-          created_at: string
+          created_at: string | null
           created_by: string | null
           department: string | null
           id: string
-          is_active: boolean
-          language: string
+          is_active: boolean | null
+          language: string | null
           name: string
-          status: string
           subject: string
-          updated_at: string
-          variables: Json
+          updated_at: string | null
+          variables: Json | null
         }
         Insert: {
           body_html?: string | null
           body_text?: string | null
           category?: string | null
-          created_at?: string
+          created_at?: string | null
           created_by?: string | null
           department?: string | null
           id?: string
-          is_active?: boolean
-          language?: string
+          is_active?: boolean | null
+          language?: string | null
           name: string
-          status?: string
           subject: string
-          updated_at?: string
-          variables?: Json
+          updated_at?: string | null
+          variables?: Json | null
         }
         Update: {
           body_html?: string | null
           body_text?: string | null
           category?: string | null
-          created_at?: string
+          created_at?: string | null
           created_by?: string | null
           department?: string | null
           id?: string
-          is_active?: boolean
-          language?: string
+          is_active?: boolean | null
+          language?: string | null
           name?: string
-          status?: string
           subject?: string
-          updated_at?: string
-          variables?: Json
+          updated_at?: string | null
+          variables?: Json | null
         }
         Relationships: []
       }
