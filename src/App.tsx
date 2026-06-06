@@ -121,6 +121,7 @@ const Geraeteakte = lazy(() => import("./pages/Geraeteakte"));
 const GeraeteLebenslauf = lazy(() => import("./pages/GeraeteLebenslauf"));
 const Wartungscenter = lazy(() => import("./pages/Wartungscenter"));
 const Garantiecenter = lazy(() => import("./pages/Garantiecenter"));
+const DesignTemplate = lazy(() => import("./pages/DesignTemplate"));
 const WhatsAppServiceCenter = lazy(() => import("./pages/WhatsAppServiceCenter"));
 const BugCapaLayoutLazy = lazy(() => import("./pages/BugCapa/_shared").then(m => ({ default: m.BugCapaLayout })));
 const BugCapaDashboard = lazy(() => import("./pages/BugCapa/BugCapaDashboard"));
