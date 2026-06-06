@@ -1,12 +1,17 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import {
   Mail, LayoutDashboard, PenSquare, FileText, Megaphone, Workflow,
-  Activity, Globe, BarChart3, Settings, MailX,
+  Activity, Globe, BarChart3, Settings, MailX, Inbox, Send, FileEdit, MessageSquare,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { NotificationBell } from '@/components/NotificationBell';
 
 const tabs = [
   { to: '/mailcenter', label: 'Dashboard', icon: LayoutDashboard, end: true },
+  { to: '/mailcenter/posteingang', label: 'Posteingang', icon: Inbox },
+  { to: '/mailcenter/gesendet', label: 'Gesendet', icon: Send },
+  { to: '/mailcenter/entwuerfe', label: 'Entwürfe', icon: FileEdit },
+  { to: '/mailcenter/intern', label: 'Interne Nachrichten', icon: MessageSquare },
   { to: '/mailcenter/schreiben', label: 'E-Mail schreiben', icon: PenSquare },
   { to: '/mailcenter/vorlagen', label: 'Vorlagen', icon: FileText },
   { to: '/mailcenter/kampagnen', label: 'Kampagnen', icon: Megaphone },
@@ -21,9 +26,12 @@ const tabs = [
 export default function MailCenterLayout() {
   return (
     <div className="p-4 lg:p-6 animate-fade-in">
-      <div className="flex items-center gap-3 mb-4">
-        <Mail className="w-6 h-6 text-primary" />
-        <h1 className="text-2xl font-display font-bold text-foreground">Alix MailCenter</h1>
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <div className="flex items-center gap-3">
+          <Mail className="w-6 h-6 text-primary" />
+          <h1 className="text-2xl font-display font-bold text-foreground">Alix MailCenter</h1>
+        </div>
+        <NotificationBell />
       </div>
       <div className="flex gap-2 overflow-x-auto mb-6 border-b border-border pb-1">
         {tabs.map((t) => {
