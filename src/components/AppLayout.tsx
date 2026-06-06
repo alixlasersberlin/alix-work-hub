@@ -204,7 +204,7 @@ const navItems: NavItem[] = [
       // Übersicht
       { path: '/mailcenter', label: 'Dashboard', icon: LayoutDashboard, roles: null },
       { path: '/mailcenter/executive', label: 'Executive Dashboard', icon: TrendingUp, roles: null },
-      { path: '/mailcenter/berichte', label: 'Berichte', icon: BarChart3, roles: null },
+      
       // E-Mail Submenu
       {
         path: '/mailcenter/posteingang', label: 'E-Mail', icon: Mail, roles: null,
