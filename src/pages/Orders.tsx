@@ -618,6 +618,21 @@ export default function Orders() {
                 const newlyDeliveredIds = bulkStatus === 'geliefert'
                   ? orders.filter(o => ids.includes(o.id) && o.order_status !== 'geliefert').map(o => o.id)
                   : [];
+                // Reservierte Geräte je Auftrag VOR dem Status-Update einlesen
+                // (Trigger löscht reserved_order_id bei "geliefert").
+                const devicesByOrder = new Map<string, Array<{ model_name: string | null; serial_number: string | null }>>();
+                if (newlyDeliveredIds.length > 0) {
+                  const { data: devs } = await supabase
+                    .from('lager_devices')
+                    .select('model_name, serial_number, reserved_order_id')
+                    .in('reserved_order_id', newlyDeliveredIds);
+                  for (const d of devs || []) {
+                    const oid = (d as any).reserved_order_id as string;
+                    const arr = devicesByOrder.get(oid) || [];
+                    arr.push({ model_name: d.model_name, serial_number: d.serial_number });
+                    devicesByOrder.set(oid, arr);
+                  }
+                }
                 const { error: err } = await supabase
                   .from('orders')
                   .update({ order_status: bulkStatus })
@@ -630,12 +645,13 @@ export default function Orders() {
                 if (newlyDeliveredIds.length > 0) {
                   let ok = 0, fail = 0;
                   for (const oid of newlyDeliveredIds) {
-                    const r = await sendCustomerShippingNotice(oid, undefined, 'automatisch', 'customer_delivered');
+                    const r = await sendCustomerShippingNotice(oid, undefined, 'automatisch', 'customer_delivered', devicesByOrder.get(oid) || []);
                     if (r.ok) ok++; else fail++;
                     await new Promise(res => setTimeout(res, 1200));
                   }
                   toast.success(`Liefer-E-Mails versendet: ${ok} · Fehler: ${fail}`);
                 }
+
                 setBulkSaving(false);
                 toast.success(`${ids.length} Auftrag/Aufträge auf "${bulkStatus}" gesetzt.`);
                 setBulkOpen(false);
