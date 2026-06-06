@@ -57,6 +57,17 @@ export default function OrderEditDialog({ order, open, onClose, onSaved }: Props
     }
     setSaving(true);
     const depositChanged = !!order?.deposit_ok !== form.deposit_ok || (order?.deposit_ok_by || '') !== form.deposit_ok_by.trim();
+    const willBecomeDelivered = form.order_status === 'geliefert' && order?.order_status !== 'geliefert';
+    // Reservierte Geräte VOR dem Status-Update einlesen — der DB-Trigger
+    // clear_lager_reservation_on_delivery setzt reserved_order_id=NULL bei "geliefert".
+    let prefetchedDevices: Array<{ model_name: string | null; serial_number: string | null }> = [];
+    if (willBecomeDelivered) {
+      const { data: devs } = await supabase
+        .from('lager_devices')
+        .select('model_name, serial_number')
+        .eq('reserved_order_id', order.id);
+      prefetchedDevices = devs || [];
+    }
     const { error } = await supabase.from('orders').update({
       order_status: form.order_status,
       total_amount: form.total_amount ? parseFloat(form.total_amount) : null,
@@ -73,18 +84,13 @@ export default function OrderEditDialog({ order, open, onClose, onSaved }: Props
     setSaving(false);
     if (error) { toast.error('Fehler beim Speichern: ' + error.message); return; }
     toast.success('Auftrag aktualisiert');
-    if (form.order_status === 'geliefert' && order?.order_status !== 'geliefert') {
-      // Reservierte Geräte VOR dem Status-Update einlesen — der DB-Trigger
-      // clear_lager_reservation_on_delivery setzt reserved_order_id=NULL bei "geliefert".
-      const { data: devs } = await supabase
-        .from('lager_devices')
-        .select('model_name, serial_number')
-        .eq('reserved_order_id', order.id);
-      const mail = await sendCustomerShippingNotice(order.id, undefined, 'automatisch', 'customer_delivered', devs || []);
+    if (willBecomeDelivered) {
+      const mail = await sendCustomerShippingNotice(order.id, undefined, 'automatisch', 'customer_delivered', prefetchedDevices);
       if (mail.ok) toast.success(mail.message); else toast.error('E-Mail nicht versendet: ' + mail.message);
       // Automatische Bewertungseinladung (fehlerresistent)
       sendReviewInvitation(order.id, { manual: false }).catch(() => {});
     }
+
 
     onSaved();
     onClose();
