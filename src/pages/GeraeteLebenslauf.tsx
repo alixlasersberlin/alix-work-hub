@@ -130,6 +130,13 @@ export default function GeraeteLebenslauf() {
       .maybeSingle();
     setAiAnalysis(ai || null);
 
+    const [{ data: w }, { data: m }] = await Promise.all([
+      (supabase as any).from('warranty_records').select('*').eq('serial_number', s).maybeSingle(),
+      (supabase as any).from('device_maintenance').select('*').eq('serial_number', s).order('next_maintenance_date', { ascending: true }),
+    ]);
+    setWarranty(w || null);
+    setMaintenance((m as any[]) || []);
+
     setLoading(false);
   }
 
