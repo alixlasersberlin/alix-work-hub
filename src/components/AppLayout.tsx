@@ -309,6 +309,8 @@ const navItems: NavItem[] = [
 export default function AppLayout() {
   const { profile, roles, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { template: uiTemplate } = useUiTemplate();
+  const isNeo = uiTemplate === 'neo';
   const { variant } = useDesignVariant();
   const isAurora = variant === 'aurora';
   const location = useLocation();
