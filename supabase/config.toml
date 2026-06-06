@@ -84,3 +84,10 @@ verify_jwt = false
 [functions.aic-send-report]
 verify_jwt = false
 
+[functions.ticket-sla-check]
+verify_jwt = false
+
+[functions.ticket-customer-notify]
+verify_jwt = true
+
+
