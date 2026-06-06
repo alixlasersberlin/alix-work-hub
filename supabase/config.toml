@@ -66,6 +66,9 @@ verify_jwt = false
 [functions.run-automations]
 verify_jwt = false
 
+[functions.inbound-mail]
+verify_jwt = false
+
 
 
 

@@ -254,6 +254,13 @@ serve(async (req) => {
       return jsonResponse({ error: resendData }, 500);
     }
 
+    const fromLc = String(from_email).toLowerCase();
+    const mailbox =
+      fromLc.startsWith("news@") ? "marketing" :
+      fromLc.startsWith("finance@") ? "finance" :
+      fromLc.startsWith("vertrieb@") ? "vertrieb" :
+      fromLc.startsWith("service@") ? "service" : "personal";
+
     const { data: message, error: insertError } = await supabase
       .from("mail_messages")
       .insert({
@@ -271,6 +278,9 @@ serve(async (req) => {
         body_html: finalHtml,
         body_text: finalText,
         status: is_test ? "test_sent" : "sent",
+        direction: "outbound",
+        mailbox,
+        is_read: true,
         provider_message_id: resendData.id,
         sent_at: new Date().toISOString(),
         created_by: userData.user.id,
