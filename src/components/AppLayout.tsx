@@ -259,6 +259,7 @@ const navItems: NavItem[] = [
           { path: '/mailcenter/audit-log', label: 'Audit-Log', icon: ScrollText, roles: null },
           { path: '/mailcenter/fehlerprotokoll', label: 'Fehlerprotokoll', icon: AlertTriangle, roles: null },
           { path: '/mailcenter/tracking', label: 'Tracking', icon: Activity, roles: null },
+          { path: '/mailcenter/berichte', label: 'Berichte', icon: BarChart3, roles: null },
         ],
       },
       // Setup Submenu
