@@ -173,6 +173,11 @@ const MailCenterGespraechsprotokolle = lazy(() => import("./pages/MailCenter/Ges
 const MailCenterAufgaben = lazy(() => import("./pages/MailCenter/Aufgaben"));
 const MailCenterWiedervorlagen = lazy(() => import("./pages/MailCenter/Wiedervorlagen"));
 const MailCenterBerechtigungen = lazy(() => import("./pages/MailCenter/Berechtigungen"));
+const MailCenterSystemstatus = lazy(() => import("./pages/MailCenter/Systemstatus"));
+const MailCenterAuditLog = lazy(() => import("./pages/MailCenter/AuditLog"));
+const MailCenterFehlerprotokoll = lazy(() => import("./pages/MailCenter/Fehlerprotokoll"));
+const MailCenterTestcenter = lazy(() => import("./pages/MailCenter/Testcenter"));
+const MailCenterProduktivfreigabe = lazy(() => import("./pages/MailCenter/Produktivfreigabe"));
 import MaintenanceGate from "./components/MaintenanceGate";
 import LeihgeraetReminder from "./components/LeihgeraetReminder";
 
@@ -418,6 +423,11 @@ function AppRoutes() {
             <Route path="wiedervorlagen" element={<MailCenterWiedervorlagen />} />
             <Route path="berechtigungen" element={<MailCenterBerechtigungen />} />
             <Route path="einstellungen" element={<MailCenterEinstellungen />} />
+            <Route path="systemstatus" element={<MailCenterSystemstatus />} />
+            <Route path="audit-log" element={<MailCenterAuditLog />} />
+            <Route path="fehlerprotokoll" element={<MailCenterFehlerprotokoll />} />
+            <Route path="testcenter" element={<MailCenterTestcenter />} />
+            <Route path="produktivfreigabe" element={<MailCenterProduktivfreigabe />} />
           </Route>
 
           <Route path="/mdr-ce" element={<ProtectedRoute requiredRoles={['Super Admin']}><MdrCe /></ProtectedRoute>} />
