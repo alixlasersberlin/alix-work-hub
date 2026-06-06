@@ -261,7 +261,9 @@ serve(async (req) => {
         const subj = replaceVars(tpl.subject ?? "", vars);
         let html = replaceVars(tpl.body_html ?? "", vars);
         let text = replaceVars(tpl.body_text ?? "", vars);
-        const sigName = a.sender_name || `Alix Lasers | ${String(a.sender_email || "news@alixwork.de").split("@")[0]}`;
+        const senderEmail = a.sender_email || "news@alixwork.de";
+        const senderLp = (() => { const lp = String(senderEmail).split("@")[0]; return lp.charAt(0).toUpperCase() + lp.slice(1); })();
+        const sigName = a.sender_name || `Alix Lasers | ${senderLp}`;
         const sig = appendSignature(html, text, sigName);
         html = sig.html; text = sig.text;
 
@@ -273,7 +275,7 @@ serve(async (req) => {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              from: (() => { const e = a.sender_email || "news@alixwork.de"; return `Alix Lasers | ${e.split("@")[0]} <${e}>`; })(),
+              from: `Alix Lasers | ${senderLp} <${senderEmail}>`,
               to: [cust.contact_name ? `${cust.contact_name} <${cust.email}>` : cust.email],
               reply_to: REPLY_TO_MAP[String(a.sender_email || "news@alixwork.de").toLowerCase()] || undefined,
               subject: subj,
