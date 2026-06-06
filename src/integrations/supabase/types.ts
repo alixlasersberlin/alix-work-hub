@@ -1630,6 +1630,75 @@ export type Database = {
           },
         ]
       }
+      mail_followups: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          department: string | null
+          due_date: string
+          id: string
+          note: string | null
+          phone_note_id: string | null
+          priority: string
+          status: string
+          task_id: string | null
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          department?: string | null
+          due_date: string
+          id?: string
+          note?: string | null
+          phone_note_id?: string | null
+          priority?: string
+          status?: string
+          task_id?: string | null
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          department?: string | null
+          due_date?: string
+          id?: string
+          note?: string | null
+          phone_note_id?: string | null
+          priority?: string
+          status?: string
+          task_id?: string | null
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mail_followups_phone_note_id_fkey"
+            columns: ["phone_note_id"]
+            isOneToOne: false
+            referencedRelation: "mail_phone_notes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_followups_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "mail_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mail_internal_messages: {
         Row: {
           body: string
@@ -1876,6 +1945,78 @@ export type Database = {
         }
         Relationships: []
       }
+      mail_phone_notes: {
+        Row: {
+          call_date: string
+          call_time: string | null
+          call_type: string
+          contact_name: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          department: string | null
+          followup_date: string | null
+          has_followup: boolean
+          id: string
+          note: string | null
+          order_id: string | null
+          phone_number: string | null
+          priority: string
+          repair_order_id: string | null
+          result: string | null
+          staff_user_id: string | null
+          topic: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          call_date?: string
+          call_time?: string | null
+          call_type?: string
+          contact_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          department?: string | null
+          followup_date?: string | null
+          has_followup?: boolean
+          id?: string
+          note?: string | null
+          order_id?: string | null
+          phone_number?: string | null
+          priority?: string
+          repair_order_id?: string | null
+          result?: string | null
+          staff_user_id?: string | null
+          topic?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          call_date?: string
+          call_time?: string | null
+          call_type?: string
+          contact_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          department?: string | null
+          followup_date?: string | null
+          has_followup?: boolean
+          id?: string
+          note?: string | null
+          order_id?: string | null
+          phone_number?: string | null
+          priority?: string
+          repair_order_id?: string | null
+          result?: string | null
+          staff_user_id?: string | null
+          topic?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       mail_recipients: {
         Row: {
           bounced_at: string | null
@@ -1937,6 +2078,80 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "mail_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mail_tasks: {
+        Row: {
+          assigned_to: string | null
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          department: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          order_id: string | null
+          phone_note_id: string | null
+          priority: string
+          repair_order_id: string | null
+          status: string
+          ticket_id: string | null
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          department?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          order_id?: string | null
+          phone_note_id?: string | null
+          priority?: string
+          repair_order_id?: string | null
+          status?: string
+          ticket_id?: string | null
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          department?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          order_id?: string | null
+          phone_note_id?: string | null
+          priority?: string
+          repair_order_id?: string | null
+          status?: string
+          ticket_id?: string | null
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mail_tasks_phone_note_id_fkey"
+            columns: ["phone_note_id"]
+            isOneToOne: false
+            referencedRelation: "mail_phone_notes"
             referencedColumns: ["id"]
           },
         ]
