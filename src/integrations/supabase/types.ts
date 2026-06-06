@@ -956,15 +956,73 @@ export type Database = {
         }
         Relationships: []
       }
+      mail_automation_runs: {
+        Row: {
+          automation_id: string
+          created_at: string
+          customer_id: string | null
+          error_message: string | null
+          executed_at: string
+          id: string
+          invoice_id: string | null
+          message_id: string | null
+          order_id: string | null
+          repair_id: string | null
+          status: string
+          ticket_id: string | null
+        }
+        Insert: {
+          automation_id: string
+          created_at?: string
+          customer_id?: string | null
+          error_message?: string | null
+          executed_at?: string
+          id?: string
+          invoice_id?: string | null
+          message_id?: string | null
+          order_id?: string | null
+          repair_id?: string | null
+          status?: string
+          ticket_id?: string | null
+        }
+        Update: {
+          automation_id?: string
+          created_at?: string
+          customer_id?: string | null
+          error_message?: string | null
+          executed_at?: string
+          id?: string
+          invoice_id?: string | null
+          message_id?: string | null
+          order_id?: string | null
+          repair_id?: string | null
+          status?: string
+          ticket_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mail_automation_runs_automation_id_fkey"
+            columns: ["automation_id"]
+            isOneToOne: false
+            referencedRelation: "mail_automations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mail_automations: {
         Row: {
           created_at: string
           created_by: string | null
           delay_minutes: number
           department: string | null
+          description: string | null
           id: string
           is_active: boolean
+          last_error: string | null
+          last_run_at: string | null
           name: string
+          sender_email: string | null
+          sender_name: string | null
           status: string
           template_id: string | null
           trigger_config: Json
@@ -976,9 +1034,14 @@ export type Database = {
           created_by?: string | null
           delay_minutes?: number
           department?: string | null
+          description?: string | null
           id?: string
           is_active?: boolean
+          last_error?: string | null
+          last_run_at?: string | null
           name: string
+          sender_email?: string | null
+          sender_name?: string | null
           status?: string
           template_id?: string | null
           trigger_config?: Json
@@ -990,9 +1053,14 @@ export type Database = {
           created_by?: string | null
           delay_minutes?: number
           department?: string | null
+          description?: string | null
           id?: string
           is_active?: boolean
+          last_error?: string | null
+          last_run_at?: string | null
           name?: string
+          sender_email?: string | null
+          sender_name?: string | null
           status?: string
           template_id?: string | null
           trigger_config?: Json

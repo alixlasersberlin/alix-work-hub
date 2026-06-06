@@ -63,6 +63,9 @@ verify_jwt = false
 [functions.mail-unsubscribe]
 verify_jwt = false
 
+[functions.run-automations]
+verify_jwt = false
+
 
 
 
