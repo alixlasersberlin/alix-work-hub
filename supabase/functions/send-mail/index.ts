@@ -1,219 +1,207 @@
-import { createClient } from 'npm:@supabase/supabase-js@2'
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-}
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
 
-interface SendMailRequest {
-  to: string | string[]
-  subject: string
-  html?: string
-  text?: string
-  from?: string
-  cc?: string | string[]
-  bcc?: string | string[]
-  reply_to?: string
-  campaign_id?: string
-  template_id?: string
-  customer_id?: string
-}
-
-function isValidEmail(email: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-}
-
-function normalizeRecipients(value: string | string[] | undefined): string[] {
-  if (!value) return []
-  const arr = Array.isArray(value) ? value : [value]
-  return arr.map((e) => e.trim()).filter((e) => e.length > 0 && isValidEmail(e))
-}
-
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
   }
 
-  if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
-  }
-
-  // Require authenticated caller (JWT) to prevent open relay
-  const authHeader = req.headers.get('Authorization') ?? ''
-  if (!authHeader.startsWith('Bearer ')) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
-  }
-
-  const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
-  const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!
-  const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-  const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
-
-  let userId: string | null = null
   try {
+    const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    if (!RESEND_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !SUPABASE_ANON_KEY) {
+      return new Response(JSON.stringify({ error: "Missing environment secrets" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Auth: require logged-in user with MailCenter access
+    const authHeader = req.headers.get("Authorization") ?? "";
+    if (!authHeader.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const authClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: { headers: { Authorization: authHeader } },
       auth: { autoRefreshToken: false, persistSession: false },
-    })
-    const token = authHeader.replace('Bearer ', '')
-    const { data, error } = await authClient.auth.getUser(token)
-    if (error || !data?.user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+    });
+    const { data: userData, error: userErr } = await authClient.auth.getUser(
+      authHeader.replace("Bearer ", ""),
+    );
+    if (userErr || !userData?.user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
-    userId = data.user.id
-
-    // Authorization: only mail-capable roles may send via MailCenter
-    const { data: canMail } = await authClient.rpc('can_access_mail')
+    const { data: canMail } = await authClient.rpc("can_access_mail");
     if (!canMail) {
-      return new Response(JSON.stringify({ error: 'Forbidden' }), {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
         status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
-  } catch {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
-  }
 
-  // Parse + validate body
-  let body: SendMailRequest
-  try {
-    body = await req.json()
-  } catch {
-    return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
-      status: 400,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
-  }
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
 
-  const to = normalizeRecipients(body.to)
-  const cc = normalizeRecipients(body.cc)
-  const bcc = normalizeRecipients(body.bcc)
-  const subject = (body.subject ?? '').toString().trim()
-  const html = body.html?.toString()
-  const text = body.text?.toString()
-  const from = (body.from ?? 'Alix MailCenter <noreply@notify.alixlasers.ai>').toString()
+    const {
+      template_id,
+      customer_id,
+      order_id,
+      invoice_id,
+      ticket_id,
+      repair_id,
+      to_email,
+      to_name,
+      from_email,
+      from_name,
+      subject_variables = {},
+      body_variables = {},
+    } = await req.json();
 
-  if (to.length === 0) {
-    return new Response(JSON.stringify({ error: 'At least one valid "to" recipient is required' }), {
-      status: 400,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
-  }
-  if (subject.length === 0 || subject.length > 998) {
-    return new Response(JSON.stringify({ error: 'Subject is required (max 998 chars)' }), {
-      status: 400,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
-  }
-  if (!html && !text) {
-    return new Response(JSON.stringify({ error: 'Either html or text body is required' }), {
-      status: 400,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
-  }
+    if (!template_id || !to_email || !from_email) {
+      return new Response(
+        JSON.stringify({ error: "template_id, to_email and from_email are required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
-  if (!RESEND_API_KEY) {
-    return new Response(JSON.stringify({ error: 'RESEND_API_KEY not configured' }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
-  }
+    const { data: template, error: templateError } = await supabase
+      .from("mail_templates")
+      .select("*")
+      .eq("id", template_id)
+      .single();
 
-  const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  })
+    if (templateError || !template) {
+      return new Response(JSON.stringify({ error: "Template not found" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
-  // Check suppression list
-  const allRecipients = [...to, ...cc, ...bcc]
-  const { data: unsubs } = await admin
-    .from('mail_unsubscribes')
-    .select('email')
-    .in('email', allRecipients.map((e) => e.toLowerCase()))
-  const suppressed = new Set((unsubs ?? []).map((u: any) => (u.email as string).toLowerCase()))
-  const toFinal = to.filter((e) => !suppressed.has(e.toLowerCase()))
-  if (toFinal.length === 0) {
-    return new Response(
-      JSON.stringify({ error: 'All primary recipients are on the unsubscribe list' }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-    )
-  }
+    const variables: Record<string, string> = {
+      ...subject_variables,
+      ...body_variables,
+      kunde: to_name || "",
+      email: to_email,
+    };
 
-  // Send via Resend
-  let providerId: string | null = null
-  let providerError: string | null = null
-  try {
-    const resp = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
+    const replaceVariables = (text: string | null) => {
+      if (!text) return "";
+      return text.replace(/\{\{(.*?)\}\}/g, (_, key) => {
+        const cleanKey = key.trim();
+        return variables[cleanKey] ?? "";
+      });
+    };
+
+    const finalSubject = replaceVariables(template.subject);
+    const finalHtml = replaceVariables(template.body_html);
+    const finalText = replaceVariables(template.body_text);
+
+    const resendResponse = await fetch("https://api.resend.com/emails", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
         Authorization: `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from,
-        to: toFinal,
-        cc: cc.length > 0 ? cc.filter((e) => !suppressed.has(e.toLowerCase())) : undefined,
-        bcc: bcc.length > 0 ? bcc.filter((e) => !suppressed.has(e.toLowerCase())) : undefined,
-        reply_to: body.reply_to,
-        subject,
-        html,
-        text,
+        from: `${from_name || "Alix MailCenter"} <${from_email}>`,
+        to: [to_name ? `${to_name} <${to_email}>` : to_email],
+        subject: finalSubject,
+        html: finalHtml,
+        text: finalText || undefined,
       }),
-    })
-    const json = await resp.json()
-    if (!resp.ok) {
-      providerError = json?.message || `Provider error ${resp.status}`
-    } else {
-      providerId = json?.id ?? null
+    });
+
+    const resendData = await resendResponse.json();
+
+    if (!resendResponse.ok) {
+      await supabase.from("mail_messages").insert({
+        customer_id,
+        order_id,
+        invoice_id,
+        ticket_id,
+        repair_id,
+        template_id,
+        to_email,
+        to_name,
+        from_email,
+        from_name,
+        subject: finalSubject,
+        body_html: finalHtml,
+        body_text: finalText,
+        status: "failed",
+        error_message: JSON.stringify(resendData),
+      });
+
+      return new Response(JSON.stringify({ error: resendData }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
-  } catch (e: any) {
-    providerError = e?.message || 'Unknown provider error'
-  }
 
-  // Persist recipient tracking rows
-  const status = providerError ? 'failed' : 'sent'
-  const sentAt = providerError ? null : new Date().toISOString()
-  const recipientRows = toFinal.map((email) => ({
-    email,
-    campaign_id: body.campaign_id ?? null,
-    customer_id: body.customer_id ?? null,
-    status,
-    sent_at: sentAt,
-    provider_message_id: providerId,
-    error_message: providerError,
-  }))
+    const { data: message, error: insertError } = await supabase
+      .from("mail_messages")
+      .insert({
+        customer_id,
+        order_id,
+        invoice_id,
+        ticket_id,
+        repair_id,
+        template_id,
+        to_email,
+        to_name,
+        from_email,
+        from_name,
+        subject: finalSubject,
+        body_html: finalHtml,
+        body_text: finalText,
+        status: "sent",
+        provider_message_id: resendData.id,
+        sent_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
 
-  const { error: insErr } = await admin.from('mail_recipients').insert(recipientRows)
-  if (insErr) {
-    console.error('mail_recipients insert failed', insErr.message)
-  }
+    if (insertError) {
+      return new Response(JSON.stringify({ error: insertError.message }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
-  if (providerError) {
+    await supabase.from("mail_events").insert({
+      message_id: message.id,
+      event_type: "sent",
+      event_data: resendData,
+    });
+
     return new Response(
-      JSON.stringify({ ok: false, error: providerError }),
-      { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-    )
+      JSON.stringify({
+        success: true,
+        message_id: message.id,
+        resend_id: resendData.id,
+      }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  } catch (error) {
+    return new Response(JSON.stringify({ error: String(error) }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
-
-  return new Response(
-    JSON.stringify({
-      ok: true,
-      provider_message_id: providerId,
-      sent_to: toFinal,
-      suppressed: allRecipients.filter((e) => suppressed.has(e.toLowerCase())),
-    }),
-    { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-  )
-})
+});
