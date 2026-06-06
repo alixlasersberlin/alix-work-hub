@@ -60,10 +60,10 @@ const navItems: NavItem[] = [
         ],
       },
       {
-        path: '/mailcenter/telefonie', label: 'Telefon', icon: PhoneCall, roles: null,
+        path: '/mailcenter/telefonie', label: 'Telefon', icon: PhoneCall, roles: ['Super Admin'],
         children: [
-          { path: '/mailcenter/telefonie', label: 'Telefonie (3CX)', icon: PhoneCall, roles: null },
-          { path: '/mailcenter/telefonnotizen', label: 'Telefonnotizen', icon: Phone, roles: null },
+          { path: '/mailcenter/telefonie', label: 'Telefonie (3CX)', icon: PhoneCall, roles: ['Super Admin'] },
+          { path: '/mailcenter/telefonnotizen', label: 'Telefonnotizen', icon: Phone, roles: ['Super Admin'] },
           { path: '/mailcenter/gespraechsprotokolle', label: 'Gesprächsprotokolle', icon: ClipboardList, roles: ['Super Admin'] },
         ],
       },
