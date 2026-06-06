@@ -197,6 +197,8 @@ const MailCenterSpam = lazy(() => import("./pages/MailCenter/SpamCheck"));
 const MailCenterQS = lazy(() => import("./pages/MailCenter/Qualitaetssicherung"));
 const MailCenterSchulung = lazy(() => import("./pages/MailCenter/Schulungscenter"));
 const MailCenterValidierung = lazy(() => import("./pages/MailCenter/Systemvalidierung"));
+const TicketsList = lazy(() => import("./pages/Tickets/TicketsList"));
+const TicketDetail = lazy(() => import("./pages/Tickets/TicketDetail"));
 import MaintenanceGate from "./components/MaintenanceGate";
 import LeihgeraetReminder from "./components/LeihgeraetReminder";
 
@@ -224,6 +226,7 @@ const PRODUCTION_VIEW_ROLES = ['Admin', 'Super Admin', 'FACTORY INVOICE', 'Order
 const ORDER_MGMT_ROLES = ['Admin', 'Super Admin', 'Order', 'Österreich'];
 const WAREHOUSE_ROLES = ['Admin', 'Super Admin', 'Order', 'Österreich'];
 const QM_ROLES = ['Admin', 'Super Admin', 'QM'];
+const TICKETS_ROLES = ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung'];
 
 function isSupplierOnly(roles: string[]) {
   return roles.includes('Lieferant') && !roles.some(r => ['Admin', 'Super Admin'].includes(r));
@@ -416,6 +419,9 @@ function AppRoutes() {
             <Route path="massnahmen" element={<BugCapaMassnahmen />} />
             <Route path="berichte" element={<BugCapaBerichte />} />
           </Route>
+
+          <Route path="/tickets" element={<ProtectedRoute requiredRoles={TICKETS_ROLES}><TicketsList /></ProtectedRoute>} />
+          <Route path="/tickets/:id" element={<ProtectedRoute requiredRoles={TICKETS_ROLES}><TicketDetail /></ProtectedRoute>} />
 
           <Route path="/aic" element={<ProtectedRoute requiredRoles={['Super Admin']}><AicLayout /></ProtectedRoute>}>
             <Route index element={<AicDashboard />} />
