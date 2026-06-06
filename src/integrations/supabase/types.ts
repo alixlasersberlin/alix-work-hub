@@ -5218,10 +5218,12 @@ export type Database = {
           media_type: string | null
           media_url: string | null
           message_text: string | null
+          receiver_phone: string | null
           sender_name: string | null
           sender_phone: string | null
           status: string
           ticket_id: string | null
+          twilio_message_sid: string | null
           whatsapp_message_id: string | null
         }
         Insert: {
@@ -5232,10 +5234,12 @@ export type Database = {
           media_type?: string | null
           media_url?: string | null
           message_text?: string | null
+          receiver_phone?: string | null
           sender_name?: string | null
           sender_phone?: string | null
           status?: string
           ticket_id?: string | null
+          twilio_message_sid?: string | null
           whatsapp_message_id?: string | null
         }
         Update: {
@@ -5246,10 +5250,12 @@ export type Database = {
           media_type?: string | null
           media_url?: string | null
           message_text?: string | null
+          receiver_phone?: string | null
           sender_name?: string | null
           sender_phone?: string | null
           status?: string
           ticket_id?: string | null
+          twilio_message_sid?: string | null
           whatsapp_message_id?: string | null
         }
         Relationships: [

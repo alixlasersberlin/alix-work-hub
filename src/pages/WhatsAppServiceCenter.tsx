@@ -42,7 +42,10 @@ type Message = {
   media_type: string | null;
   status: string;
   created_at: string;
+  twilio_message_sid?: string | null;
+  whatsapp_message_id?: string | null;
 };
+
 
 type Template = { id: string; key: string; title: string; body: string };
 
@@ -133,24 +136,75 @@ export default function WhatsAppServiceCenter() {
     if (!selected || !text.trim()) return;
     if (selected.opt_out) { toast.error("Opt-out aktiv"); return; }
     setSending(true);
-    const { error } = await supabase.functions.invoke("whatsapp-send", {
-      body: { conversation_id: selected.id, text },
+    const { data, error } = await supabase.functions.invoke("twilio-send-whatsapp-message", {
+      body: {
+        conversation_id: selected.id,
+        ticket_id: selected.linked_ticket_id,
+        to: `whatsapp:${selected.customer_phone.startsWith("+") ? selected.customer_phone : "+" + selected.customer_phone}`,
+        message: text,
+      },
     });
     setSending(false);
-    if (error) { toast.error(error.message); return; }
+    if (error || (data && (data as any).error)) {
+      toast.error(error?.message ?? (data as any)?.error ?? "Sendefehler");
+      return;
+    }
     setText("");
-    toast.success("Gesendet");
+    toast.success(`Gesendet (SID: ${(data as any)?.sid ?? "—"})`);
+    loadMessages(selected.id);
   };
 
   const sendTemplate = async (tplKey: string) => {
     if (!selected) return;
     if (selected.opt_out) { toast.error("Opt-out aktiv"); return; }
-    const { error } = await supabase.functions.invoke("whatsapp-send", {
-      body: { conversation_id: selected.id, template_key: tplKey },
+    const tpl = templates.find(t => t.key === tplKey);
+    if (!tpl) return;
+    const { data, error } = await supabase.functions.invoke("twilio-send-whatsapp-message", {
+      body: {
+        conversation_id: selected.id,
+        ticket_id: selected.linked_ticket_id,
+        to: `whatsapp:${selected.customer_phone.startsWith("+") ? selected.customer_phone : "+" + selected.customer_phone}`,
+        message: tpl.body,
+      },
+    });
+    if (error || (data && (data as any).error)) {
+      toast.error(error?.message ?? (data as any)?.error ?? "Sendefehler");
+      return;
+    }
+    toast.success("Vorlage gesendet");
+    loadMessages(selected.id);
+  };
+
+  const testConnection = async () => {
+    const { data, error } = await supabase.functions.invoke("twilio-send-whatsapp-message", {
+      body: { action: "test_connection" },
     });
     if (error) { toast.error(error.message); return; }
-    toast.success("Vorlage gesendet");
+    const d = data as any;
+    if (d?.ok) {
+      toast.success(`Twilio OK · ${d.friendly_name ?? ""} (${d.account_status ?? ""}) · From ${d.from_number ?? "—"}`);
+    } else {
+      toast.error(`Twilio Fehler: ${d?.error ?? "unbekannt"}`);
+    }
   };
+
+  const sendTestMessage = async () => {
+    if (!selected) { toast.error("Kein Gespräch ausgewählt"); return; }
+    const { data, error } = await supabase.functions.invoke("twilio-send-whatsapp-message", {
+      body: {
+        conversation_id: selected.id,
+        to: `whatsapp:${selected.customer_phone.startsWith("+") ? selected.customer_phone : "+" + selected.customer_phone}`,
+        message: "✅ AlixWork WhatsApp Testnachricht (Twilio).",
+      },
+    });
+    if (error || (data && (data as any).error)) {
+      toast.error(error?.message ?? (data as any)?.error ?? "Sendefehler");
+      return;
+    }
+    toast.success(`Testnachricht gesendet (SID: ${(data as any)?.sid ?? "—"})`);
+    loadMessages(selected.id);
+  };
+
 
   const saveInternalNote = async () => {
     if (!selected?.linked_ticket_id || !internalNote.trim()) {
@@ -249,19 +303,29 @@ export default function WhatsAppServiceCenter() {
 
   return (
     <div className="h-[calc(100vh-4rem)] flex flex-col p-4 gap-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <MessageSquare className="h-6 w-6 text-primary" /> WhatsApp Service Center
+            <Badge variant="secondary" className="ml-2">Anbieter: Twilio</Badge>
           </h1>
           <p className="text-sm text-muted-foreground">
-            Eingehende WhatsApp-Nachrichten als Tickets verwalten
+            Eingehende WhatsApp-Nachrichten als Tickets verwalten (Twilio Programmable Messaging)
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={loadConversations}>
-          <RefreshCw className="h-4 w-4 mr-1" /> Aktualisieren
-        </Button>
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" size="sm" onClick={testConnection}>
+            Twilio Verbindung testen
+          </Button>
+          <Button variant="outline" size="sm" onClick={sendTestMessage} disabled={!selected}>
+            WhatsApp Testnachricht senden
+          </Button>
+          <Button variant="outline" size="sm" onClick={loadConversations}>
+            <RefreshCw className="h-4 w-4 mr-1" /> Aktualisieren
+          </Button>
+        </div>
       </div>
+
 
       <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr_320px] gap-4 flex-1 min-h-0">
         {/* Conversation list */}
@@ -405,10 +469,19 @@ export default function WhatsAppServiceCenter() {
                           {m.media_type ?? "Anhang"} öffnen
                         </a>
                       )}
-                      <div className="text-[10px] opacity-70 mt-1">
-                        {new Date(m.created_at).toLocaleString("de-DE")}
+                      <div className="text-[10px] opacity-70 mt-1 flex items-center justify-between gap-2">
+                        <span>{new Date(m.created_at).toLocaleString("de-DE")}</span>
+                        <span className="flex items-center gap-1">
+                          {m.status && <span>· {m.status}</span>}
+                          {(m.twilio_message_sid ?? m.whatsapp_message_id) && (
+                            <span title="Twilio Message SID" className="font-mono">
+                              SID: {String(m.twilio_message_sid ?? m.whatsapp_message_id).slice(0, 10)}…
+                            </span>
+                          )}
+                        </span>
                       </div>
                     </div>
+
                   ))}
                   {messages.length === 0 && (
                     <div className="text-center text-sm text-muted-foreground py-8">
@@ -488,7 +561,7 @@ export default function WhatsAppServiceCenter() {
           )}
           <div className="font-semibold pt-3">Hinweise</div>
           <ul className="text-xs text-muted-foreground space-y-1 list-disc pl-4">
-            <li>Antworten gehen serverseitig über WhatsApp Cloud API.</li>
+            <li>Versand serverseitig über <strong>Twilio Programmable Messaging</strong>.</li>
             <li>Interne Notizen werden niemals an den Kunden gesendet.</li>
             <li>Opt-out blockiert jeden ausgehenden Versand.</li>
           </ul>

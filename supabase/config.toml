@@ -96,4 +96,9 @@ verify_jwt = false
 [functions.whatsapp-send]
 verify_jwt = true
 
+[functions.twilio-send-whatsapp-message]
+verify_jwt = true
+
+
+
 
