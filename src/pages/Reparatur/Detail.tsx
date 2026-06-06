@@ -16,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Printer, FileDown, Plus, Trash2, Upload, Receipt, MapPin, FileText, MessageSquare } from 'lucide-react';
 import { renderRepairWorkOrderPdf } from '@/lib/repair/work-order-pdf';
 import { WerkstattAnnahmeTab, WerkstattauftraegeTab, SparePartsTab, FinanceHandoverTab, DeliveryHandoverTab, AttachmentsTab } from './RepairExtraTabs';
+import { SparePartRequestDialog } from './SparePartRequestDialog';
 
 export default function ReparaturDetail() {
   const { id } = useParams<{ id: string }>();
@@ -75,6 +76,7 @@ export default function ReparaturDetail() {
             </Button>
           </Link>
         )}
+        {perms.canEditTechnik && <SparePartRequestDialog repair={repair} onCreated={load} />}
         <div className="ml-auto flex items-center gap-2">
           <Label className="text-xs">Status:</Label>
           <Select value={repair.repair_status} onValueChange={(v) => updateRepair({ repair_status: v })} disabled={!perms.canEditAnnahme}>
