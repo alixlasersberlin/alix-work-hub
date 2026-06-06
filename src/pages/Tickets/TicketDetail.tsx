@@ -38,6 +38,10 @@ interface Ticket {
   created_at: string;
   updated_at: string;
   repair_order_id: string | null;
+  auto_category?: string | null;
+  auto_priority?: string | null;
+  suggested_technician_id?: string | null;
+  sla_status?: string | null;
 }
 interface LinkedRepair {
   id: string;
@@ -326,6 +330,23 @@ export default function TicketDetail() {
           </h1>
           <Badge variant="outline">{ticket.external_ticket_id || ticket.id.slice(0, 8)}</Badge>
           <Badge variant="outline">{ticket.source_system}</Badge>
+          {ticket.auto_category && (
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/40">
+              Auto: {ticket.auto_category}
+            </Badge>
+          )}
+          {ticket.auto_priority === 'Hoch' && (
+            <Badge variant="outline" className="bg-red-500/15 text-red-300 border-red-500/40">
+              Prio Hoch (Auto)
+            </Badge>
+          )}
+          {ticket.sla_status && ticket.sla_status !== 'ok' && (
+            <Badge variant="outline" className={ticket.sla_status === 'breach'
+              ? 'bg-red-500/15 text-red-300 border-red-500/40'
+              : 'bg-amber-500/15 text-amber-300 border-amber-500/40'}>
+              SLA: {ticket.sla_status}
+            </Badge>
+          )}
         </div>
         <div className="flex flex-col items-end gap-1 text-xs text-muted-foreground">
           <div>Letzter Inbound-Sync: {ticket.last_synced_at ? new Date(ticket.last_synced_at).toLocaleString('de-DE') : '—'}</div>

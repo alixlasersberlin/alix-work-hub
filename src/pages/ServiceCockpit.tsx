@@ -131,6 +131,26 @@ export default function ServiceCockpit() {
     return Array.from(m, ([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 10);
   }, [filteredTickets]);
 
+  // Erweiterungen: Top Kunden, Garantiequote, Ø Reparaturdauer
+  const customerData = useMemo(() => {
+    const m = new Map<string, number>();
+    filteredTickets.forEach((t) => { const k = t.customer_name || '–'; m.set(k, (m.get(k) || 0) + 1); });
+    return Array.from(m, ([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 10);
+  }, [filteredTickets]);
+
+  const warrantyPct = useMemo(() => {
+    if (!filteredTickets.length) return 0;
+    const w = filteredTickets.filter((t: any) => (t.auto_category || '').toLowerCase() === 'garantie').length;
+    return (w / filteredTickets.length) * 100;
+  }, [filteredTickets]);
+
+  const avgRepairDays = useMemo(() => {
+    const done = repairs.filter((r: any) => r.repair_status === 'Ausgeliefert' || r.repair_status === 'Reparatur abgeschlossen');
+    if (!done.length) return 0;
+    const sum = done.reduce((acc: number, r: any) => acc + (new Date(r.updated_at || r.created_at).getTime() - new Date(r.created_at).getTime()), 0);
+    return sum / done.length / 86400000;
+  }, [repairs]);
+
   // Filter options
   const techOptions = useMemo(() => {
     const ids = Array.from(new Set(tickets.map((t) => t.assigned_to).filter(Boolean)));
@@ -152,19 +172,23 @@ export default function ServiceCockpit() {
       ['Ersatzteilquote (%)', sparePartQuote.toFixed(1)],
       ['Offene Rechnungsvorschläge', openInvoiceCount],
       ['Offene Rechnungssumme (EUR)', openInvoiceSum.toFixed(2)],
+      ['Garantiequote (%)', warrantyPct.toFixed(1)],
+      ['Ø Reparaturdauer (Tage)', avgRepairDays.toFixed(1)],
     ],
     techniker: [['Techniker', 'Tickets'], ...techData.map((d) => [d.name, d.count])],
     geraete: [['Gerät', 'Tickets'], ...deviceData.map((d) => [d.name, d.count])],
     fehler: [['Fehler / Titel', 'Anzahl'], ...errorData.map((d) => [d.name, d.count])],
+    kunden: [['Kunde', 'Tickets'], ...customerData.map((d) => [d.name, d.count])],
   });
 
   const exportExcel = () => {
-    const { kpis, techniker, geraete, fehler } = buildExportRows();
+    const { kpis, techniker, geraete, fehler, kunden } = buildExportRows();
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(kpis), 'KPIs');
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(techniker), 'Techniker');
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(geraete), 'Geräte');
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(fehler), 'Fehler');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(kunden), 'Kunden');
     XLSX.writeFile(wb, `service-cockpit_${from}_${to}.xlsx`);
   };
 
@@ -247,6 +271,8 @@ export default function ServiceCockpit() {
             <Kpi icon={CheckCircle2} color="text-emerald-400" label="Reparaturquote" value={`${repairQuote.toFixed(0)} %`} />
             <Kpi icon={Package} color="text-purple-400" label="Ersatzteilquote" value={`${sparePartQuote.toFixed(0)} %`} />
             <Kpi icon={Receipt} color="text-pink-400" label="Rechnungen offen" value={openInvoiceCount} sub={`${openInvoiceSum.toFixed(0)} €`} />
+            <Kpi icon={CheckCircle2} color="text-yellow-400" label="Garantiequote" value={`${warrantyPct.toFixed(0)} %`} />
+            <Kpi icon={Clock} color="text-indigo-400" label="Ø Reparaturdauer" value={`${avgRepairDays.toFixed(1)} Tage`} />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -282,6 +308,18 @@ export default function ServiceCockpit() {
                   <YAxis type="category" dataKey="name" stroke="#888" fontSize={11} width={220} />
                   <Tooltip contentStyle={{ background: '#0f172a', border: '1px solid #334155' }} />
                   <Bar dataKey="count" fill="#ef4444" />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartCard>
+
+            <ChartCard title="Top Kunden" icon={Users} full>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={customerData} layout="vertical" margin={{ left: 80 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
+                  <XAxis type="number" stroke="#888" fontSize={11} />
+                  <YAxis type="category" dataKey="name" stroke="#888" fontSize={11} width={220} />
+                  <Tooltip contentStyle={{ background: '#0f172a', border: '1px solid #334155' }} />
+                  <Bar dataKey="count" fill="#a855f7" />
                 </BarChart>
               </ResponsiveContainer>
             </ChartCard>

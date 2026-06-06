@@ -4369,6 +4369,39 @@ export type Database = {
           },
         ]
       }
+      service_communication_log: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          payload: Json | null
+          recipient_email: string | null
+          repair_order_id: string | null
+          status: string
+          ticket_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          payload?: Json | null
+          recipient_email?: string | null
+          repair_order_id?: string | null
+          status?: string
+          ticket_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          payload?: Json | null
+          recipient_email?: string | null
+          repair_order_id?: string | null
+          status?: string
+          ticket_id?: string | null
+        }
+        Relationships: []
+      }
       suppliers: {
         Row: {
           address: string | null
@@ -4438,6 +4471,30 @@ export type Database = {
         }
         Relationships: []
       }
+      technician_skills: {
+        Row: {
+          active: boolean
+          category: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          category: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          category?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ticket_attachments: {
         Row: {
           created_at: string
@@ -4478,6 +4535,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ticket_category_rules: {
+        Row: {
+          active: boolean
+          category: string
+          created_at: string
+          id: string
+          keyword: string
+          priority_override: string | null
+        }
+        Insert: {
+          active?: boolean
+          category: string
+          created_at?: string
+          id?: string
+          keyword: string
+          priority_override?: string | null
+        }
+        Update: {
+          active?: boolean
+          category?: string
+          created_at?: string
+          id?: string
+          keyword?: string
+          priority_override?: string | null
+        }
+        Relationships: []
       }
       ticket_messages: {
         Row: {
@@ -4603,6 +4687,10 @@ export type Database = {
       tickets: {
         Row: {
           assigned_to: string | null
+          auto_category: string | null
+          auto_notify_customer: boolean | null
+          auto_priority: string | null
+          classified_at: string | null
           company_name: string | null
           created_at: string
           customer_address: string | null
@@ -4622,13 +4710,20 @@ export type Database = {
           priority: string
           repair_order_id: string | null
           serial_number: string | null
+          sla_last_check: string | null
+          sla_status: string | null
           source_system: string
           status: string
+          suggested_technician_id: string | null
           title: string | null
           updated_at: string
         }
         Insert: {
           assigned_to?: string | null
+          auto_category?: string | null
+          auto_notify_customer?: boolean | null
+          auto_priority?: string | null
+          classified_at?: string | null
           company_name?: string | null
           created_at?: string
           customer_address?: string | null
@@ -4648,13 +4743,20 @@ export type Database = {
           priority?: string
           repair_order_id?: string | null
           serial_number?: string | null
+          sla_last_check?: string | null
+          sla_status?: string | null
           source_system?: string
           status?: string
+          suggested_technician_id?: string | null
           title?: string | null
           updated_at?: string
         }
         Update: {
           assigned_to?: string | null
+          auto_category?: string | null
+          auto_notify_customer?: boolean | null
+          auto_priority?: string | null
+          classified_at?: string | null
           company_name?: string | null
           created_at?: string
           customer_address?: string | null
@@ -4674,8 +4776,11 @@ export type Database = {
           priority?: string
           repair_order_id?: string | null
           serial_number?: string | null
+          sla_last_check?: string | null
+          sla_status?: string | null
           source_system?: string
           status?: string
+          suggested_technician_id?: string | null
           title?: string | null
           updated_at?: string
         }

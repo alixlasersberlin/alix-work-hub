@@ -1,140 +1,79 @@
-## Ziel
+# Service-Automatisierung – Plan
 
-MailCenter wird zur zentralen Kommunikationszentrale: Posteingang pro Abteilung, interne Nachrichten, Notizen, Ticket-Verknüpfungen, Zuweisungen, Benachrichtigungen und Kunden-Timeline.
+Ziel: Tickets, Reparaturen, Bestellungen, Finance und Tourenplanung automatisch verknüpfen. **Nur ergänzen, keine bestehende Logik verändern.**
 
-## Wichtige Vorab-Entscheidung: Eingehende E-Mails
+## 1. Datenbank-Migration (additiv)
 
-Aktuell sendet das System nur ausgehend über Resend. Für einen echten **Posteingang** mit eingehenden Mails an `finance@`, `vertrieb@`, `service@`, `news@alixwork.de` braucht es Resend Inbound (oder einen MX/IMAP-Bridge-Dienst).
+Neue Felder & Tabellen, alle bestehenden Spalten bleiben unverändert:
 
-Vorschlag für diesen Schritt:
-- Eine neue Edge Function `inbound-mail` wird angelegt, die Resend-Inbound-Webhooks entgegennimmt und Einträge als `direction='inbound'` in `mail_messages` schreibt.
-- Du kannst die Funktion später in Resend hinterlegen, sobald Inbound bei euch aktiviert ist. Bis dahin ist der Posteingang sichtbar, aber leer (oder zeigt eingehende Antworten, sobald aktiviert).
+- `tickets`: + `auto_category` (text), `auto_priority` (text), `suggested_technician_id` (uuid), `sla_status` (text: ok/warn/breach), `sla_last_check` (timestamptz), `classified_at` (timestamptz)
+- Neue Tabelle `ticket_category_rules` (Keyword→Kategorie, seedbar, editierbar durch Admin)
+- Neue Tabelle `technician_skills` (user_id, category) – für Techniker-Vorschlag
+- Neue Tabelle `device_files` (Geräteakte-Cache; optional – wir können auch live aggregieren). Entscheidung: **live aggregieren** über Views/Queries, keine neue Tabelle nötig.
+- Neue Tabelle `service_communication_log` (ticket_id, type, sent_at, recipient) – für die automatischen Mails
 
-Falls du stattdessen eine andere Quelle (IMAP, Zoho Mail, MS365) nutzen willst, sag bitte Bescheid — dann passen wir die Schnittstelle an.
+RLS: alle neuen Felder/Tabellen folgen bestehender `can_access_tickets()` / `is_admin()` Logik. Delete nur Super Admin.
 
-## Schema-Erweiterungen (additiv, keine bestehenden Spalten ändern)
+## 2. Auto-Klassifizierung & Priorität
 
-`mail_messages`: ergänzen
-- `direction` (`inbound` | `outbound`)
-- `mailbox` (`finance` | `vertrieb` | `service` | `marketing` | `personal`)
-- `is_read` boolean
-- `assigned_to` uuid (user)
-- `priority` (`Niedrig` | `Normal` | `Hoch` | `Kritisch`)
-- `due_date` timestamptz
-- `in_reply_to` text, `thread_id` text
+- DB-Trigger `classify_ticket_on_insert` auf `tickets`:
+  - Setzt `auto_category` durch Keyword-Match (aus `ticket_category_rules`)
+  - Setzt `auto_priority='Hoch'` bei Schlüsselwörtern: Totalausfall, startet nicht, Brandgeruch, Überspannung, Wasserschaden
+  - Setzt `suggested_technician_id` aus `technician_skills` (erster passender aktiver Techniker)
+- Seed-Daten für die 12 Kategorien mit deutschen Keywords.
 
-Neue Tabellen:
-- `mail_internal_messages` — interne Chat-Nachrichten (sender, recipient_user/recipient_department, body, customer_id?, order_id?, is_read)
-- `mail_notes` — interne Notizen an Mail- oder Kunden-Bezug (message_id?, customer_id?, body, created_by)
-- `mail_notifications` — In-App Notifications (user_id, type, title, body, link, is_read)
+## 3. SLA-System
 
-RLS:
-- `mail_messages` zusätzliche Policy: Benutzer sieht nur Nachrichten mit `mailbox` seiner Abteilung; Super Admin sieht alles
-- Interne Nachrichten/Notizen lesbar für Empfänger/Abteilung/Sender; Super Admin alles
-- Benachrichtigungen nur für eigenen User
+- Edge Function `ticket-sla-check` (Cronjob, stündlich via pg_cron):
+  - 24h unbeantwortet → `sla_status='warn_response'`
+  - 72h unbearbeitet → `sla_status='warn_progress'`
+  - 7 Tage offen → `sla_status='breach'`
+  - Schreibt Notification in `mail_internal_messages` an zugewiesene Techniker + Serviceleitung.
+- Anzeige als Badge im Ticket.
 
-## Neue MailCenter-Seiten
+## 4. Kundenkommunikation
 
-```text
-MailCenter
-├─ Dashboard (erweitert)
-├─ Posteingang        (neu)
-├─ Gesendet           (neu)
-├─ Entwürfe           (neu, gefiltert aus mail_messages mit status='draft')
-├─ Interne Nachrichten (neu)
-├─ E-Mail schreiben
-├─ Vorlagen
-├─ Kampagnen
-├─ Automationen
-├─ Tracking
-├─ Abmeldungen
-├─ Domains
-├─ Berichte
-└─ Einstellungen
-```
+- Edge Function `ticket-customer-notify` mit Events:
+  - `ticket_received` (Trigger nach Insert)
+  - `ticket_in_progress` (Status→in Bearbeitung)
+  - `spare_part_ordered` (repair_spare_parts status→bestellt)
+  - `repair_completed` (repair_status→Reparatur abgeschlossen)
+  - `shipment_sent` (repair_status→Ausgeliefert)
+- Nutzt bestehendes Resend-Setup; loggt in `service_communication_log`.
+- Frontend-Toggle pro Ticket "Kunde automatisch benachrichtigen".
 
-### Posteingang
-- Tabelle mit Datum, Absender, Betreff, Kunde, Status, Abteilung, Priorität, Zuständig
-- Filter: Ungelesen / Heute / Diese Woche / Mit Kunde verknüpft / Mit Auftrag verknüpft
-- Klick öffnet Detail-Dialog mit:
-  - E-Mail-Inhalt
-  - Verknüpfungen (Auftrag/Reparatur/Rechnung/Ticket — automatisch erkannt anhand Kunden-ID)
-  - Zuweisung (Mitarbeiter, Priorität, Fälligkeit)
-  - Interne Notizen
-  - Antworten-Button (öffnet Compose vorausgefüllt)
+## 5. Geräteakte (neue Seite)
 
-### Gesendet
-- Filter `direction='outbound'` aus `mail_messages`, nach Abteilung gescoped
+Route `/geraeteakte` (lazy):
+- Suchfeld: Seriennummer / Kunde / Auftrag / Gerät
+- Ergebnisliste → Detailansicht mit Tabs:
+  - Tickets (aus `tickets` wo `device_serial`)
+  - Reparaturen (aus `repair_orders`)
+  - Ersatzteile (`repair_spare_parts`)
+  - Rechnungen (`repair_invoice_proposals` + ggf. `orders`)
+  - Wartungen (Repairs mit Kategorie=Wartung)
+- **Service-Ampel** oben: grün/gelb/rot anhand offener Vorgänge.
+- Zugriff: Admin, Super Admin, Technik, Kundenservice, Serviceleitung.
 
-### Entwürfe
-- `status='draft'` aus `mail_messages`; Compose-Page erhält neuen "Als Entwurf speichern"-Button
+## 6. Dashboard-Erweiterung (Service Cockpit)
 
-### Interne Nachrichten
-- Zwei-Spalten-Layout: links Liste, rechts Konversation
-- Adressaten: einzelner Benutzer oder ganze Abteilung
-- Optional verknüpft mit Kunde/Auftrag
-- Erscheint nicht als E-Mail, sondern als In-App-Eintrag + Benachrichtigung
+Bestehendes `ServiceCockpit.tsx` **ergänzen** (nicht ersetzen) um:
+- Top Fehler (bereits da → behalten)
+- Top Geräte, Top Techniker, Top Kunden (neue Bar-Charts)
+- Garantiequote (Tickets mit Kategorie „Garantie" / total)
+- Ø Reparaturdauer (aus `repair_orders.created_at` → Status=Ausgeliefert)
 
-## Kundenakte – Kommunikations-Timeline
+## 7. Navigation
 
-Bestehendes `CustomerCommunication`-Tab erweitern: zeigt zusätzlich
-- Interne Nachrichten (zu diesem Kunden)
-- Notizen
-- Verknüpfte Tickets/Reparaturen/Aufträge als Timeline-Einträge
-- Bestehendes Verhalten bleibt unverändert (nur additive Sektion)
+`AppLayout.tsx`: Eintrag „Geräteakte" unter Reparaturannahme. Service Cockpit bleibt.
 
-## Zuweisungen
+## Technisches Detail
 
-Im Posteingang-Detail:
-- Dropdown "Zuständig" (User-Picker aus `user_profiles`)
-- Dropdown Priorität
-- Datepicker Fälligkeit
-- Beim Speichern: Benachrichtigung an den zugewiesenen User
+- Migration: 1 Datei mit allen neuen Tabellen, Spalten, Triggern, Seeds, RLS + GRANTs.
+- Edge Functions: `ticket-sla-check`, `ticket-customer-notify`. Beide mit CORS + Resend.
+- Cronjob via `pg_cron` für SLA stündlich.
+- Frontend: neue Komponenten `GeraeteAkte.tsx`, `ServiceAmpel.tsx`, kleine Erweiterungen in `TicketDetail.tsx` (Badges), `ServiceCockpit.tsx` (neue Charts).
 
-## Benachrichtigungen
+Bestehende Funktionen werden nicht verändert – nur additive Trigger, Spalten, Routen, Charts.
 
-- `useNotifications`-Hook (Realtime via Supabase Channel auf `mail_notifications`)
-- Glocke im Header (sofern vorhanden) bzw. Badge im MailCenter-Layout
-- Trigger:
-  - Neue eingehende Mail an Abteilung
-  - Zuweisung an mich
-  - Neue interne Nachricht an mich/meine Abteilung
-
-## Dashboard-Erweiterungen
-
-Neue Kacheln in MailCenter-Dashboard:
-- Neue Nachrichten (ungelesen, eigene Abteilung)
-- Offene Kundenanfragen (inbound, unzugewiesen)
-- Offene Reparaturen (aus `repair_orders` mit Status ≠ abgeschlossen)
-- Offene Tickets (Hinweis: derzeit keine Tickets-Tabelle vorhanden → Kachel zeigt 0 bis Tickets-Modul existiert)
-- Kritische Vorgänge (`priority='Kritisch'`)
-
-## Rechte (Mailbox-Sichtbarkeit)
-
-| Rolle              | Mailboxen                                  |
-|--------------------|--------------------------------------------|
-| Super Admin / Admin | alle                                       |
-| Geschäftsführung   | alle (Lesezugriff)                         |
-| Finance            | `finance`                                  |
-| Vertrieb / Order   | `vertrieb`                                 |
-| Technik / Kundenservice / Reparaturannahme | `service`               |
-| Marketing          | `marketing`                                |
-| Read Only          | nur Lesen (alle die er sehen darf)         |
-
-Umgesetzt via neue SECURITY-DEFINER-Funktion `user_mailboxes()` und Policy `mailbox = ANY(user_mailboxes())`.
-
-## Edge Functions (neu)
-
-- `inbound-mail` (verify_jwt = false) — empfängt Resend-Inbound-Webhook, sucht Kunde per `to`-Domain → `mailbox`, per `from`-Email → `customer_id`, legt `mail_messages` an, erstellt Benachrichtigung für Abteilung.
-- `send-internal-message` — nicht zwingend nötig; Insert kann direkt aus dem Client erfolgen (RLS schützt). Wir nehmen die Client-Insert-Variante, um Komplexität gering zu halten.
-
-## Was sich nicht ändert
-
-- `orders`, `customers`, `repair_orders`, `production_orders`, `user_profiles`, `roles`, `user_roles` werden nicht angefasst.
-- Bestehende MailCenter-Funktionen (Compose, Vorlagen, Kampagnen, Automationen, Tracking, Abmeldungen) bleiben unverändert; sie bekommen nur additive Querverweise (z.B. Compose erhält "Als Entwurf speichern", Detail-Dialog kann von Posteingang aus aufgerufen werden).
-
-## Offene Frage vor Umsetzung
-
-Eingehende Mails: ist **Resend Inbound** für eure Domain aktiviert/geplant, oder soll der Posteingang vorerst nur intern gesendete + manuell erfasste Einträge zeigen?
-
-Wenn du grünes Licht gibst (auch ohne sofortiges Inbound-Setup), baue ich alles oben aufgeführte in einem Rutsch.
+OK, dann implementiere ich in dieser Reihenfolge?
