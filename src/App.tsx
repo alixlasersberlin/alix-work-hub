@@ -137,6 +137,16 @@ const ReviewThanks = lazy(() => import("./pages/PublicReview/ReviewThanks"));
 const PortalLookup = lazy(() => import("./pages/Portal/Lookup"));
 const PortalStatus = lazy(() => import("./pages/Portal/Status"));
 const PortalAdmin = lazy(() => import("./pages/PortalAdmin"));
+const MailCenterLayout = lazy(() => import("./pages/MailCenter/Layout"));
+const MailCenterDashboard = lazy(() => import("./pages/MailCenter/Dashboard"));
+const MailCenterCompose = lazy(() => import("./pages/MailCenter/Compose"));
+const MailCenterVorlagen = lazy(() => import("./pages/MailCenter/Vorlagen"));
+const MailCenterKampagnen = lazy(() => import("./pages/MailCenter/Kampagnen"));
+const MailCenterAutomationen = lazy(() => import("./pages/MailCenter/Automationen"));
+const MailCenterTracking = lazy(() => import("./pages/MailCenter/Tracking"));
+const MailCenterDomains = lazy(() => import("./pages/MailCenter/Domains"));
+const MailCenterBerichte = lazy(() => import("./pages/MailCenter/Berichte"));
+const MailCenterEinstellungen = lazy(() => import("./pages/MailCenter/Einstellungen"));
 import MaintenanceGate from "./components/MaintenanceGate";
 import LeihgeraetReminder from "./components/LeihgeraetReminder";
 
@@ -355,6 +365,18 @@ function AppRoutes() {
             <Route path="audit" element={<BugCapaAudit />} />
             <Route path="massnahmen" element={<BugCapaMassnahmen />} />
             <Route path="berichte" element={<BugCapaBerichte />} />
+          </Route>
+
+          <Route path="/mailcenter" element={<ProtectedRoute><MailCenterLayout /></ProtectedRoute>}>
+            <Route index element={<MailCenterDashboard />} />
+            <Route path="schreiben" element={<MailCenterCompose />} />
+            <Route path="vorlagen" element={<MailCenterVorlagen />} />
+            <Route path="kampagnen" element={<MailCenterKampagnen />} />
+            <Route path="automationen" element={<MailCenterAutomationen />} />
+            <Route path="tracking" element={<MailCenterTracking />} />
+            <Route path="domains" element={<MailCenterDomains />} />
+            <Route path="berichte" element={<MailCenterBerichte />} />
+            <Route path="einstellungen" element={<MailCenterEinstellungen />} />
           </Route>
 
           <Route path="/mdr-ce" element={<ProtectedRoute requiredRoles={['Super Admin']}><MdrCe /></ProtectedRoute>} />

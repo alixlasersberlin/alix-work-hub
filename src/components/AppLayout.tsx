@@ -196,6 +196,21 @@ const navItems: NavItem[] = [
       { path: '/mdr-ce/iso-13485', label: 'ISO 13485', icon: ShieldCheck, roles: null },
     ],
   },
+  {
+    path: '/mailcenter', label: 'MAILCENTER', icon: Mail,
+    roles: ['Admin', 'Super Admin', 'Geschäftsführung', 'Marketing', 'Finance', 'Technik', 'Kundenservice', 'Vertrieb', 'Reparaturannahme', 'Tourenplanung', 'Bestellwesen', 'Order', 'Read Only', 'Read Only Audit'],
+    children: [
+      { path: '/mailcenter', label: 'Dashboard', icon: LayoutDashboard, roles: null },
+      { path: '/mailcenter/schreiben', label: 'E-Mail schreiben', icon: Mail, roles: null },
+      { path: '/mailcenter/vorlagen', label: 'Vorlagen', icon: FileText, roles: null },
+      { path: '/mailcenter/kampagnen', label: 'Kampagnen', icon: Star, roles: null },
+      { path: '/mailcenter/automationen', label: 'Automationen', icon: Workflow, roles: null },
+      { path: '/mailcenter/tracking', label: 'Tracking', icon: BarChart3, roles: null },
+      { path: '/mailcenter/domains', label: 'Domains', icon: Globe, roles: null },
+      { path: '/mailcenter/berichte', label: 'Berichte', icon: BarChart3, roles: null },
+      { path: '/mailcenter/einstellungen', label: 'Einstellungen', icon: Settings, roles: null },
+    ],
+  },
 
 ];
 
