@@ -60,6 +60,8 @@ export default function GeraeteLebenslauf() {
   const [leasingDevices, setLeasingDevices] = useState<{ serial: string; device?: string; customer?: string }[]>([]);
   const [redDevices, setRedDevices] = useState<{ serial: string; device?: string; customer?: string; score: number }[]>([]);
   const [aiAnalysis, setAiAnalysis] = useState<any | null>(null);
+  const [warranty, setWarranty] = useState<any | null>(null);
+  const [maintenance, setMaintenance] = useState<any[]>([]);
 
   useEffect(() => { loadDashboard(); }, []);
 
