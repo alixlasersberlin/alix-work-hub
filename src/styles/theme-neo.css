@@ -1,7 +1,8 @@
 /* ============================================================
-   ALIXWORK NEO — Premium Glassmorphism SaaS 2026 Template
-   Wird über <html class="theme-neo"> aktiviert.
-   Verändert KEINE bestehenden Komponenten – nur Styling-Overlay.
+   ALIXWORK NEO — Luminous Light Edition 2026
+   Activated via <html class="theme-neo">.
+   Ultra-premium light glassmorphism. Overlay only —
+   never modifies existing components or data structures.
    ============================================================ */
 
 @keyframes neo-aurora-drift {
@@ -18,44 +19,62 @@
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+@keyframes neo-sheen {
+  0%   { transform: translateX(-120%) skewX(-12deg); }
+  100% { transform: translateX(220%)  skewX(-12deg); }
+}
 
 html.theme-neo {
-  /* ---------- NEO Design Tokens (HSL) ---------- */
-  --background: 240 10% 4%;        /* #09090B */
-  --foreground: 210 40% 98%;       /* #F8FAFC */
-  --card: 220 26% 8%;              /* deep panel */
-  --card-foreground: 210 40% 98%;
-  --popover: 220 26% 8%;
-  --popover-foreground: 210 40% 98%;
-  --primary: 217 91% 60%;          /* electric blue #3B82F6 */
-  --primary-foreground: 210 40% 98%;
-  --secondary: 188 94% 43%;        /* cyan #06B6D4 */
-  --secondary-foreground: 222 47% 11%;
-  --accent: 217 91% 60%;
-  --accent-foreground: 210 40% 98%;
-  --muted: 222 24% 12%;
-  --muted-foreground: 215 20% 70%;
-  --destructive: 0 84% 60%;        /* #EF4444 */
-  --destructive-foreground: 210 40% 98%;
-  --border: 217 33% 22% / 0.35;    /* translucent */
-  --input: 220 26% 14%;
-  --ring: 217 91% 60%;
-  --radius: 1.1rem;
+  /* ---------- NEO Light Design Tokens (HSL) ---------- */
+  --background: 220 30% 98%;            /* pearl */
+  --foreground: 222 32% 12%;            /* ink */
+  --card: 0 0% 100%;
+  --card-foreground: 222 32% 12%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 32% 12%;
+  --primary: 222 65% 22%;               /* deep midnight indigo */
+  --primary-foreground: 40 60% 96%;
+  --secondary: 220 18% 94%;
+  --secondary-foreground: 222 32% 12%;
+  --accent: 39 70% 52%;                 /* refined gold */
+  --accent-foreground: 222 32% 12%;
+  --muted: 220 20% 96%;
+  --muted-foreground: 222 14% 42%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 222 20% 88% / 0.7;
+  --input: 220 20% 96%;
+  --ring: 222 65% 30%;
+  --radius: 1.15rem;
 
-  --neo-glass-bg: hsl(220 30% 10% / 0.55);
-  --neo-glass-border: hsl(217 91% 70% / 0.18);
-  --neo-glass-blur: 28px;
-  --neo-glow: 0 0 0 1px hsl(217 91% 60% / 0.15), 0 10px 40px -10px hsl(217 91% 60% / 0.35);
-  --neo-shadow-soft: 0 8px 30px -10px hsl(240 10% 0% / 0.55), 0 2px 8px -2px hsl(240 10% 0% / 0.4);
+  --neo-glass-bg: hsla(0, 0%, 100%, 0.62);
+  --neo-glass-bg-strong: hsla(0, 0%, 100%, 0.78);
+  --neo-glass-border: hsla(222, 30%, 80%, 0.45);
+  --neo-glass-border-hi: hsla(222, 40%, 60%, 0.35);
+  --neo-glass-blur: 26px;
+  --neo-shadow-soft:
+    0 1px 0 hsla(0, 0%, 100%, 0.9) inset,
+    0 8px 28px -14px hsla(222, 40%, 20%, 0.18),
+    0 2px 6px -2px hsla(222, 40%, 20%, 0.08);
+  --neo-shadow-lift:
+    0 1px 0 hsla(0, 0%, 100%, 0.95) inset,
+    0 20px 50px -22px hsla(222, 50%, 18%, 0.28),
+    0 6px 16px -8px hsla(222, 40%, 20%, 0.14);
+  --neo-glow-gold: 0 0 0 1px hsla(39, 70%, 52%, 0.35), 0 14px 40px -16px hsla(39, 70%, 52%, 0.5);
+  --neo-hairline: hsla(222, 30%, 70%, 0.25);
 }
 
 html.theme-neo body {
-  background: hsl(240 10% 4%);
+  background:
+    radial-gradient(120% 80% at 50% -10%, hsla(222, 80%, 96%, 0.9), transparent 60%),
+    linear-gradient(180deg, hsl(220 40% 99%) 0%, hsl(220 30% 96%) 100%);
+  background-attachment: fixed;
   color: hsl(var(--foreground));
-  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  font-feature-settings: "ss01", "cv02", "cv11";
+  -webkit-font-smoothing: antialiased;
 }
 
-/* ---------- Aurora Hintergrund (fixed, hinter allem) ---------- */
+/* ---------- Aurora — light, dreamy pastels ---------- */
 html.theme-neo body::before,
 html.theme-neo body::after {
   content: '';
@@ -63,26 +82,26 @@ html.theme-neo body::after {
   inset: -20%;
   z-index: 0;
   pointer-events: none;
-  filter: blur(120px);
-  opacity: 0.55;
+  filter: blur(110px);
   will-change: transform;
 }
 html.theme-neo body::before {
   background:
-    radial-gradient(50% 50% at 20% 25%, #3B82F6 0%, transparent 60%),
-    radial-gradient(40% 40% at 80% 20%, #7C3AED 0%, transparent 70%),
-    radial-gradient(45% 45% at 70% 80%, #06B6D4 0%, transparent 65%);
-  animation: neo-aurora-drift 22s ease-in-out infinite;
+    radial-gradient(42% 42% at 18% 22%, hsla(222, 90%, 70%, 0.30) 0%, transparent 65%),
+    radial-gradient(36% 36% at 82% 18%, hsla(280, 80%, 75%, 0.22) 0%, transparent 70%),
+    radial-gradient(40% 40% at 68% 82%, hsla(39, 90%, 70%, 0.22) 0%, transparent 65%);
+  animation: neo-aurora-drift 24s ease-in-out infinite;
+  opacity: 0.9;
 }
 html.theme-neo body::after {
   background:
-    radial-gradient(35% 35% at 10% 80%, #1E3A8A 0%, transparent 70%),
-    radial-gradient(35% 35% at 90% 60%, #0EA5E9 0%, transparent 65%);
-  animation: neo-aurora-drift-2 28s ease-in-out infinite;
-  opacity: 0.4;
+    radial-gradient(34% 34% at 10% 80%, hsla(200, 90%, 75%, 0.18) 0%, transparent 70%),
+    radial-gradient(36% 36% at 92% 55%, hsla(160, 70%, 75%, 0.16) 0%, transparent 65%);
+  animation: neo-aurora-drift-2 32s ease-in-out infinite;
+  opacity: 0.85;
 }
 
-/* Inhalte über Aurora bringen */
+/* Lift content above aurora */
 html.theme-neo #root,
 html.theme-neo main,
 html.theme-neo aside,
@@ -92,135 +111,231 @@ html.theme-neo nav {
   z-index: 1;
 }
 
-/* ---------- Sidebar als Floating Glass Panel ---------- */
+/* ---------- Sidebar — floating crystal panel ---------- */
 html.theme-neo aside {
-  background: var(--neo-glass-bg) !important;
+  background:
+    linear-gradient(180deg, hsla(0,0%,100%,0.85), hsla(220,30%,98%,0.65)) !important;
   backdrop-filter: blur(var(--neo-glass-blur)) saturate(160%);
   -webkit-backdrop-filter: blur(var(--neo-glass-blur)) saturate(160%);
   border: 1px solid var(--neo-glass-border) !important;
-  border-radius: 28px !important;
+  border-radius: 26px !important;
   margin: 12px 0 12px 12px !important;
-  box-shadow: var(--neo-shadow-soft);
+  box-shadow: var(--neo-shadow-lift);
   overflow: hidden;
+  color: hsl(var(--foreground));
 }
 html.theme-neo aside a,
 html.theme-neo aside button {
-  border-radius: 14px !important;
-  transition: background-color .18s ease, transform .18s ease, box-shadow .18s ease, color .18s ease;
+  border-radius: 12px !important;
+  color: hsl(222 22% 24%) !important;
+  transition: background-color .2s ease, color .2s ease, transform .2s ease, box-shadow .2s ease;
 }
 html.theme-neo aside a:hover,
 html.theme-neo aside button:hover {
-  background: hsl(217 91% 60% / 0.12) !important;
-  color: hsl(210 40% 98%) !important;
-  box-shadow: 0 0 0 1px hsl(217 91% 60% / 0.35), 0 6px 20px -6px hsl(217 91% 60% / 0.55);
+  background: hsla(222, 65%, 22%, 0.06) !important;
+  color: hsl(var(--primary)) !important;
+  box-shadow: inset 0 0 0 1px hsla(222, 65%, 22%, 0.12);
   transform: translateX(2px);
 }
 html.theme-neo aside [data-active="true"],
 html.theme-neo aside .bg-primary,
 html.theme-neo aside [aria-current="page"] {
-  background: linear-gradient(135deg, hsl(217 91% 60% / 0.25), hsl(188 94% 43% / 0.18)) !important;
-  color: hsl(210 40% 98%) !important;
-  box-shadow: inset 0 0 0 1px hsl(217 91% 70% / 0.35);
+  background: linear-gradient(135deg, hsla(222, 65%, 22%, 0.95), hsla(222, 50%, 30%, 0.92)) !important;
+  color: hsl(40 60% 96%) !important;
+  box-shadow:
+    inset 0 1px 0 hsla(255, 100%, 100%, 0.18),
+    0 8px 20px -10px hsla(222, 65%, 22%, 0.55);
+}
+html.theme-neo aside [data-active="true"] svg,
+html.theme-neo aside [aria-current="page"] svg {
+  color: hsl(39 80% 65%) !important;
 }
 
-/* ---------- Header / Topbar als Floating Glass ---------- */
+/* ---------- Header / Topbar ---------- */
 html.theme-neo header,
 html.theme-neo [class*="border-b"][class*="bg-"] {
-  background: var(--neo-glass-bg) !important;
+  background: var(--neo-glass-bg-strong) !important;
   backdrop-filter: blur(var(--neo-glass-blur)) saturate(160%);
   -webkit-backdrop-filter: blur(var(--neo-glass-blur)) saturate(160%);
   border: 1px solid var(--neo-glass-border) !important;
-  border-radius: 20px !important;
+  border-radius: 18px !important;
   margin: 12px 12px 0 12px;
   box-shadow: var(--neo-shadow-soft);
+  color: hsl(var(--foreground));
 }
 
-/* ---------- Cards & Panels → Glassmorphism ---------- */
+/* ---------- Cards & Panels — luminous glass ---------- */
 html.theme-neo [data-slot="card"],
 html.theme-neo .card,
 html.theme-neo [class*="bg-card"] {
-  background: var(--neo-glass-bg) !important;
+  position: relative;
+  background:
+    linear-gradient(180deg, hsla(0,0%,100%,0.85), hsla(220,30%,98%,0.65)) !important;
   backdrop-filter: blur(var(--neo-glass-blur)) saturate(160%);
   -webkit-backdrop-filter: blur(var(--neo-glass-blur)) saturate(160%);
   border: 1px solid var(--neo-glass-border) !important;
   border-radius: var(--radius) !important;
   box-shadow: var(--neo-shadow-soft);
-  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+  color: hsl(var(--foreground));
+  transition: transform .25s cubic-bezier(.2,.7,.2,1),
+              box-shadow .25s ease,
+              border-color .25s ease;
   animation: neo-fade-up .35s ease-out both;
+  overflow: hidden;
+}
+html.theme-neo [data-slot="card"]::before,
+html.theme-neo .card::before {
+  /* hairline highlight on top edge */
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, hsla(0,0%,100%,0.95), transparent);
+  pointer-events: none;
 }
 html.theme-neo [data-slot="card"]:hover,
 html.theme-neo .card:hover {
   transform: translateY(-2px);
-  border-color: hsl(217 91% 70% / 0.35) !important;
-  box-shadow: var(--neo-glow), var(--neo-shadow-soft);
+  border-color: var(--neo-glass-border-hi) !important;
+  box-shadow: var(--neo-shadow-lift);
 }
 
-/* ---------- Buttons (primär) glowy ---------- */
+/* ---------- Buttons ---------- */
 html.theme-neo button.bg-primary,
 html.theme-neo [data-variant="default"].bg-primary {
-  background: linear-gradient(135deg, #3B82F6, #06B6D4) !important;
-  color: #F8FAFC !important;
-  box-shadow: 0 8px 24px -8px hsl(217 91% 60% / 0.65);
-  border: none;
+  position: relative;
+  background: linear-gradient(135deg, hsl(222 65% 22%), hsl(222 55% 30%)) !important;
+  color: hsl(40 60% 96%) !important;
+  border: 1px solid hsla(222, 65%, 18%, 0.4);
+  box-shadow:
+    inset 0 1px 0 hsla(255,100%,100%,0.18),
+    0 10px 24px -12px hsla(222, 65%, 22%, 0.6);
+  overflow: hidden;
+}
+html.theme-neo button.bg-primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 30%, hsla(255,100%,100%,0.35) 50%, transparent 70%);
+  transform: translateX(-120%) skewX(-12deg);
+  transition: transform .8s ease;
+  pointer-events: none;
+}
+html.theme-neo button.bg-primary:hover::after {
+  animation: neo-sheen 1s ease forwards;
 }
 html.theme-neo button.bg-primary:hover {
-  filter: brightness(1.08);
-  box-shadow: 0 12px 32px -8px hsl(217 91% 60% / 0.8);
+  box-shadow:
+    inset 0 1px 0 hsla(255,100%,100%,0.25),
+    0 14px 32px -12px hsla(222, 65%, 22%, 0.7),
+    var(--neo-glow-gold);
 }
 
-/* ---------- Inputs / Select Trigger ---------- */
+html.theme-neo button[data-variant="outline"],
+html.theme-neo .border.bg-background {
+  background: hsla(0,0%,100%,0.7) !important;
+  border: 1px solid var(--neo-glass-border) !important;
+  color: hsl(var(--foreground)) !important;
+  backdrop-filter: blur(10px);
+}
+
+/* ---------- Inputs / Selects ---------- */
 html.theme-neo input,
 html.theme-neo textarea,
 html.theme-neo [role="combobox"],
 html.theme-neo [data-slot="select-trigger"] {
-  background: hsl(220 26% 10% / 0.6) !important;
+  background: hsla(0, 0%, 100%, 0.78) !important;
   border: 1px solid var(--neo-glass-border) !important;
   border-radius: 12px !important;
   color: hsl(var(--foreground)) !important;
   backdrop-filter: blur(12px);
+  box-shadow: inset 0 1px 2px hsla(222, 20%, 50%, 0.06);
+}
+html.theme-neo input::placeholder,
+html.theme-neo textarea::placeholder {
+  color: hsl(222 12% 55%) !important;
 }
 html.theme-neo input:focus,
-html.theme-neo textarea:focus {
-  border-color: hsl(217 91% 60% / 0.6) !important;
-  box-shadow: 0 0 0 4px hsl(217 91% 60% / 0.18);
+html.theme-neo textarea:focus,
+html.theme-neo [data-slot="select-trigger"]:focus {
+  border-color: hsla(222, 65%, 30%, 0.5) !important;
+  box-shadow: 0 0 0 4px hsla(222, 65%, 30%, 0.12);
   outline: none;
 }
 
-/* ---------- Tables – Glass, keine harten Linien ---------- */
+/* ---------- Tables ---------- */
 html.theme-neo table {
   border-collapse: separate;
   border-spacing: 0 6px;
 }
 html.theme-neo tbody tr {
-  background: hsl(220 30% 10% / 0.45);
-  backdrop-filter: blur(12px);
+  background: hsla(0, 0%, 100%, 0.72);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 1px 0 var(--neo-hairline);
 }
 html.theme-neo tbody tr:hover {
-  background: hsl(217 91% 60% / 0.08);
+  background: hsla(222, 80%, 96%, 0.95);
+  box-shadow: 0 4px 16px -8px hsla(222, 40%, 30%, 0.18);
 }
 html.theme-neo th {
-  color: hsl(215 20% 70%);
+  color: hsl(222 14% 38%);
   font-weight: 500;
-  letter-spacing: .02em;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
 }
 
-/* ---------- Badges glow ---------- */
+/* ---------- Badges ---------- */
 html.theme-neo [data-slot="badge"] {
   backdrop-filter: blur(8px);
   border-radius: 999px !important;
+  border: 1px solid var(--neo-glass-border) !important;
+  background: hsla(0,0%,100%,0.7);
+  color: hsl(var(--foreground));
+  letter-spacing: .02em;
+}
+
+/* ---------- Accent — refined gold for KPIs / icons ---------- */
+html.theme-neo .text-primary {
+  color: hsl(var(--primary)) !important;
+}
+html.theme-neo .text-accent,
+html.theme-neo .text-yellow-500,
+html.theme-neo .text-amber-500 {
+  color: hsl(var(--accent)) !important;
 }
 
 /* ---------- Scrollbar ---------- */
 html.theme-neo *::-webkit-scrollbar { width: 10px; height: 10px; }
 html.theme-neo *::-webkit-scrollbar-thumb {
-  background: hsl(217 91% 60% / 0.35);
+  background: hsla(222, 30%, 60%, 0.35);
   border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+html.theme-neo *::-webkit-scrollbar-thumb:hover {
+  background: hsla(222, 50%, 40%, 0.55);
+  background-clip: padding-box;
 }
 html.theme-neo *::-webkit-scrollbar-track { background: transparent; }
+
+/* ---------- Typography polish ---------- */
+html.theme-neo h1, html.theme-neo h2, html.theme-neo h3 {
+  letter-spacing: -0.02em;
+  color: hsl(222 36% 10%);
+}
+html.theme-neo h1 {
+  background: linear-gradient(180deg, hsl(222 40% 14%), hsl(222 30% 28%));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
 
 /* ---------- Reduced motion ---------- */
 @media (prefers-reduced-motion: reduce) {
   html.theme-neo body::before,
   html.theme-neo body::after { animation: none; }
-  html.theme-neo [data-slot="card"], html.theme-neo .card { animation: none; }
+  html.theme-neo [data-slot="card"],
+  html.theme-neo .card { animation: none; }
+  html.theme-neo button.bg-primary:hover::after { animation: none; }
 }
