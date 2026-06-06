@@ -1142,15 +1142,17 @@ export default function AppLayout() {
               <span className="font-display font-bold gold-text">AlixWork</span>
               <span className="text-muted-foreground font-mono text-xs hidden sm:inline">v{APP_VERSION}</span>
           </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
-              onClick={toggleTheme}
-              title={theme === 'dark' ? 'Helles Design' : 'Dunkles Design'}
-            >
-              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </Button>
+            {!document.documentElement.classList.contains('theme-neo') && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                onClick={toggleTheme}
+                title={theme === 'dark' ? 'Helles Design' : 'Dunkles Design'}
+              >
+                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </Button>
+            )}
           </div>
         </header>
         <main className="flex-1 overflow-y-auto overflow-x-hidden scroll-touch pb-safe">
