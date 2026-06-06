@@ -34,8 +34,17 @@ interface Ticket {
   customer_visible_status: string;
   internal_note: string | null;
   last_synced_at: string | null;
+  last_outbound_sync_at: string | null;
   created_at: string;
   updated_at: string;
+}
+interface OutboundLog {
+  id: string;
+  action: string;
+  status: string;
+  error_message: string | null;
+  payload: any;
+  created_at: string;
 }
 interface Msg {
   id: string;
