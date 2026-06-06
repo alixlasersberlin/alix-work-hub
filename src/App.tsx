@@ -149,6 +149,10 @@ const MailCenterDomains = lazy(() => import("./pages/MailCenter/Domains"));
 const MailCenterBerichte = lazy(() => import("./pages/MailCenter/Berichte"));
 const MailCenterEinstellungen = lazy(() => import("./pages/MailCenter/Einstellungen"));
 const MailCenterKIAssistent = lazy(() => import("./pages/MailCenter/KIAssistent"));
+const MailCenterDokumentenCenter = lazy(() => import("./pages/MailCenter/DokumentenCenter"));
+const MailCenterVersandnachweise = lazy(() => import("./pages/MailCenter/Versandnachweise"));
+const MailCenterDokumentenVorlagen = lazy(() => import("./pages/MailCenter/DokumentenVorlagen"));
+const MailCenterDokumentenAutomationen = lazy(() => import("./pages/MailCenter/DokumentenAutomationen"));
 const MailCenterPosteingang = lazy(() => import("./pages/MailCenter/Posteingang"));
 const MailCenterGesendet = lazy(() => import("./pages/MailCenter/Gesendet"));
 const MailCenterEntwuerfe = lazy(() => import("./pages/MailCenter/Entwuerfe"));
@@ -388,6 +392,10 @@ function AppRoutes() {
             <Route path="domains" element={<MailCenterDomains />} />
             <Route path="berichte" element={<MailCenterBerichte />} />
             <Route path="ki-assistent" element={<MailCenterKIAssistent />} />
+            <Route path="dokumente" element={<MailCenterDokumentenCenter />} />
+            <Route path="versandnachweise" element={<MailCenterVersandnachweise />} />
+            <Route path="dokumente-vorlagen" element={<MailCenterDokumentenVorlagen />} />
+            <Route path="dokumente-automationen" element={<MailCenterDokumentenAutomationen />} />
             <Route path="einstellungen" element={<MailCenterEinstellungen />} />
           </Route>
 

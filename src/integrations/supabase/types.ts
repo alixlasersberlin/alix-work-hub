@@ -917,6 +917,117 @@ export type Database = {
           },
         ]
       }
+      mail_attachments: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          document_type: string
+          download_count: number
+          downloaded_at: string | null
+          file_name: string
+          file_size: number | null
+          id: string
+          is_signed: boolean
+          message_id: string | null
+          mime_type: string | null
+          opened_at: string | null
+          order_id: string | null
+          production_order_id: string | null
+          repair_order_id: string | null
+          sent_at: string | null
+          signed_at: string | null
+          status: string
+          storage_bucket: string
+          storage_path: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          document_type: string
+          download_count?: number
+          downloaded_at?: string | null
+          file_name: string
+          file_size?: number | null
+          id?: string
+          is_signed?: boolean
+          message_id?: string | null
+          mime_type?: string | null
+          opened_at?: string | null
+          order_id?: string | null
+          production_order_id?: string | null
+          repair_order_id?: string | null
+          sent_at?: string | null
+          signed_at?: string | null
+          status?: string
+          storage_bucket: string
+          storage_path: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          document_type?: string
+          download_count?: number
+          downloaded_at?: string | null
+          file_name?: string
+          file_size?: number | null
+          id?: string
+          is_signed?: boolean
+          message_id?: string | null
+          mime_type?: string | null
+          opened_at?: string | null
+          order_id?: string | null
+          production_order_id?: string | null
+          repair_order_id?: string | null
+          sent_at?: string | null
+          signed_at?: string | null
+          status?: string
+          storage_bucket?: string
+          storage_path?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mail_attachments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_attachments_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "mail_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_attachments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_attachments_production_order_id_fkey"
+            columns: ["production_order_id"]
+            isOneToOne: false
+            referencedRelation: "production_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_attachments_repair_order_id_fkey"
+            columns: ["repair_order_id"]
+            isOneToOne: false
+            referencedRelation: "repair_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mail_audit_logs: {
         Row: {
           action: string
