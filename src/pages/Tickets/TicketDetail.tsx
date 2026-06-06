@@ -38,6 +38,10 @@ interface Ticket {
   created_at: string;
   updated_at: string;
   repair_order_id: string | null;
+  auto_category?: string | null;
+  auto_priority?: string | null;
+  suggested_technician_id?: string | null;
+  sla_status?: string | null;
 }
 interface LinkedRepair {
   id: string;
