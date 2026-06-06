@@ -6,7 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ShieldCheck, CheckCircle2, XCircle, AlertCircle, Loader2, Play, FileDown, Rocket } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useMailPermissions } from '@/hooks/useMailPermissions';
+import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
 type Status = 'pending' | 'running' | 'pass' | 'warn' | 'fail';
