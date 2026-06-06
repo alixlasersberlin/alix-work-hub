@@ -148,6 +148,7 @@ const MailCenterAbmeldungen = lazy(() => import("./pages/MailCenter/Abmeldungen"
 const MailCenterDomains = lazy(() => import("./pages/MailCenter/Domains"));
 const MailCenterBerichte = lazy(() => import("./pages/MailCenter/Berichte"));
 const MailCenterEinstellungen = lazy(() => import("./pages/MailCenter/Einstellungen"));
+const MailCenterKIAssistent = lazy(() => import("./pages/MailCenter/KIAssistent"));
 const MailCenterPosteingang = lazy(() => import("./pages/MailCenter/Posteingang"));
 const MailCenterGesendet = lazy(() => import("./pages/MailCenter/Gesendet"));
 const MailCenterEntwuerfe = lazy(() => import("./pages/MailCenter/Entwuerfe"));
@@ -386,6 +387,7 @@ function AppRoutes() {
             <Route path="abmeldungen" element={<MailCenterAbmeldungen />} />
             <Route path="domains" element={<MailCenterDomains />} />
             <Route path="berichte" element={<MailCenterBerichte />} />
+            <Route path="ki-assistent" element={<MailCenterKIAssistent />} />
             <Route path="einstellungen" element={<MailCenterEinstellungen />} />
           </Route>
 

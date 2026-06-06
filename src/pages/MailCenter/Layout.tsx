@@ -1,7 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import {
   Mail, LayoutDashboard, PenSquare, FileText, Megaphone, Workflow,
-  Activity, Globe, BarChart3, Settings, MailX, Inbox, Send, FileEdit, MessageSquare,
+  Activity, Globe, BarChart3, Settings, MailX, Inbox, Send, FileEdit, MessageSquare, Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NotificationBell } from '@/components/NotificationBell';
@@ -16,6 +16,7 @@ const tabs = [
   { to: '/mailcenter/vorlagen', label: 'Vorlagen', icon: FileText },
   { to: '/mailcenter/kampagnen', label: 'Kampagnen', icon: Megaphone },
   { to: '/mailcenter/automationen', label: 'Automationen', icon: Workflow },
+  { to: '/mailcenter/ki-assistent', label: 'KI-Assistent', icon: Sparkles },
   { to: '/mailcenter/tracking', label: 'Tracking', icon: Activity },
   { to: '/mailcenter/abmeldungen', label: 'Abmeldungen', icon: MailX },
   { to: '/mailcenter/domains', label: 'Domains', icon: Globe },
