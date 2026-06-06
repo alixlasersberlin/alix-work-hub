@@ -178,6 +178,7 @@ const navItems: NavItem[] = [
   {
     path: '/operation', label: 'OPERATIONS', icon: Workflow, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Read Only Audit'],
     children: [
+      { path: '/mailcenter/executive', label: 'Executive Dashboard', icon: TrendingUp, roles: ['Admin', 'Super Admin', 'Geschäftsführung'] },
       { path: '/geraetetypen', label: 'Gerätetypen', icon: BarChart3, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance'] },
       { path: '/import', label: 'Import', icon: Cloud, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Read Only Audit'] },
       { path: '/system', label: 'Monitoring', icon: Server, roles: ['Admin', 'Super Admin', 'Read Only Audit'] },
@@ -203,7 +204,7 @@ const navItems: NavItem[] = [
     children: [
       // Übersicht
       { path: '/mailcenter', label: 'Dashboard', icon: LayoutDashboard, roles: null },
-      { path: '/mailcenter/executive', label: 'Executive Dashboard', icon: TrendingUp, roles: null },
+      
       
       // E-Mail Submenu
       {
