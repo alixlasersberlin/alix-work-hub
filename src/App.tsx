@@ -122,6 +122,16 @@ const BugCapaReklamationen = lazy(() => import("./pages/BugCapa/Reklamationen"))
 const BugCapaAudit = lazy(() => import("./pages/BugCapa/AuditFindings"));
 const BugCapaMassnahmen = lazy(() => import("./pages/BugCapa/Massnahmen"));
 const BugCapaBerichte = lazy(() => import("./pages/BugCapa/Berichte"));
+const AicLayout = lazy(() => import("./pages/AIC/Layout"));
+const AicDashboard = lazy(() => import("./pages/AIC/Dashboard"));
+const AicUnternehmen = lazy(() => import("./pages/AIC/Unternehmen"));
+const AicForderungen = lazy(() => import("./pages/AIC/Forderungen"));
+const AicVertrieb = lazy(() => import("./pages/AIC/Vertrieb"));
+const AicService = lazy(() => import("./pages/AIC/Service"));
+const AicMitarbeiter = lazy(() => import("./pages/AIC/Mitarbeiter"));
+const AicForecasts = lazy(() => import("./pages/AIC/Forecasts"));
+const AicTasks = lazy(() => import("./pages/AIC/Tasks"));
+const AicBerichte = lazy(() => import("./pages/AIC/Berichte"));
 const MdrCe = lazy(() => import("./pages/MdrCe"));
 const Iso13485 = lazy(() => import("./pages/Iso13485"));
 const ReviewsLayout = lazy(() => import("./pages/Reviews/_layout"));
@@ -406,6 +416,19 @@ function AppRoutes() {
             <Route path="massnahmen" element={<BugCapaMassnahmen />} />
             <Route path="berichte" element={<BugCapaBerichte />} />
           </Route>
+
+          <Route path="/aic" element={<ProtectedRoute requiredRoles={['Super Admin']}><AicLayout /></ProtectedRoute>}>
+            <Route index element={<AicDashboard />} />
+            <Route path="unternehmen" element={<AicUnternehmen />} />
+            <Route path="forderungen" element={<AicForderungen />} />
+            <Route path="vertrieb" element={<AicVertrieb />} />
+            <Route path="service" element={<AicService />} />
+            <Route path="mitarbeiter" element={<AicMitarbeiter />} />
+            <Route path="forecasts" element={<AicForecasts />} />
+            <Route path="tasks" element={<AicTasks />} />
+            <Route path="berichte" element={<AicBerichte />} />
+          </Route>
+
 
           <Route path="/mailcenter" element={<ProtectedRoute><MailCenterLayout /></ProtectedRoute>}>
             <Route index element={<MailCenterDashboard />} />
