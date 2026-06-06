@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { appendSignature } from "../_shared/mail-signature.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -149,6 +150,9 @@ serve(async (req) => {
         let text = replaceVars(baseText, vars);
         const withFooter = appendFooter(html, text, rec.email);
         html = withFooter.html; text = withFooter.text;
+        const sigName = campaign.sender_name || `Alix Lasers | ${String(campaign.sender_email).split("@")[0]}`;
+        const withSig = appendSignature(html, text, sigName);
+        html = withSig.html; text = withSig.text;
 
         const resp = await fetch("https://api.resend.com/emails", {
           method: "POST",
