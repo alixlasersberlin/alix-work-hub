@@ -121,6 +121,76 @@ export default function TicketDetail() {
     await patch({ department: dept, customer_visible_status: statusLabel });
   }
 
+  async function createRepairFromTicket() {
+    if (!ticket) return;
+    setSaving(true);
+    try {
+      // Versuche Auftrag/Kunde anhand der Auftragsnummer aufzulösen
+      let orderRow: { id: string; order_number: string; customer_id: string } | null = null;
+      if (ticket.order_number) {
+        const { data } = await supabase
+          .from('orders')
+          .select('id, order_number, customer_id')
+          .eq('order_number', ticket.order_number)
+          .maybeSingle();
+        if (data) orderRow = data as any;
+      }
+
+      const payload: any = {
+        customer_name: ticket.customer_name || ticket.company_name || 'Unbekannt',
+        customer_company: ticket.company_name || '',
+        customer_email: ticket.customer_email || '',
+        customer_phone: ticket.customer_phone || '',
+        address_street: ticket.customer_address || '',
+        priority: ticket.priority === 'kritisch' ? 'dringend'
+                 : ticket.priority === 'hoch' ? 'hoch'
+                 : ticket.priority === 'niedrig' ? 'niedrig' : 'normal',
+        device_model: ticket.device_name || '',
+        device_serial_number: ticket.serial_number || '',
+        issue_description: ticket.description || ticket.title || 'Ticket übernommen',
+        customer_error_description: ticket.description || '',
+        internal_notes: `Aus Ticket übernommen: ${ticket.external_ticket_id || ticket.id}`,
+        repair_status: 'Neu',
+        order_id: orderRow?.id || null,
+        order_number: orderRow?.order_number || ticket.order_number || null,
+        customer_id: orderRow?.customer_id || null,
+        created_by: user?.id,
+        updated_by: user?.id,
+      };
+
+      const { data: repair, error } = await sbRepair
+        .from('repair_orders')
+        .insert(payload)
+        .select('id, repair_number')
+        .single();
+      if (error) throw error;
+
+      // Ticket aktualisieren + interne Notiz
+      await supabase.from('tickets').update({
+        department: 'technik',
+        status: 'in_bearbeitung',
+        customer_visible_status: `Arbeitsauftrag ${repair.repair_number} erstellt`,
+      }).eq('id', ticket.id);
+
+      await supabase.from('ticket_messages').insert({
+        ticket_id: ticket.id,
+        sender_type: 'agent',
+        sender_name: user?.email || 'Mitarbeiter',
+        sender_email: user?.email || null,
+        message: `Arbeitsauftrag ${repair.repair_number} in Reparaturannahme erstellt.`,
+        is_internal: true,
+        source_system: 'alixwork',
+      });
+
+      toast.success(`Arbeitsauftrag ${repair.repair_number} angelegt`);
+      navigate(`/reparatur/${repair.id}`);
+    } catch (e: any) {
+      toast.error('Fehler: ' + (e?.message || e));
+    } finally {
+      setSaving(false);
+    }
+  }
+
   if (loading) return <div className="p-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
   if (!ticket) return <div className="p-8">Ticket nicht gefunden. <Link to="/tickets" className="underline">Zurück</Link></div>;
 
