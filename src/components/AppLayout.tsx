@@ -200,7 +200,7 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    path: '/tickets', label: 'TICKETS', icon: Ticket,
+    path: '/tickets', label: 'TICKETS AUS ALIXSMART', icon: Ticket,
     roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung'],
     children: [
       { path: '/tickets', label: 'Ticketliste', icon: Ticket, roles: null },
