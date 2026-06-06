@@ -417,6 +417,19 @@ function AppRoutes() {
             <Route path="berichte" element={<BugCapaBerichte />} />
           </Route>
 
+          <Route path="/aic" element={<ProtectedRoute requiredRoles={['Super Admin']}><AicLayout /></ProtectedRoute>}>
+            <Route index element={<AicDashboard />} />
+            <Route path="unternehmen" element={<AicUnternehmen />} />
+            <Route path="forderungen" element={<AicForderungen />} />
+            <Route path="vertrieb" element={<AicVertrieb />} />
+            <Route path="service" element={<AicService />} />
+            <Route path="mitarbeiter" element={<AicMitarbeiter />} />
+            <Route path="forecasts" element={<AicForecasts />} />
+            <Route path="tasks" element={<AicTasks />} />
+            <Route path="berichte" element={<AicBerichte />} />
+          </Route>
+
+
           <Route path="/mailcenter" element={<ProtectedRoute><MailCenterLayout /></ProtectedRoute>}>
             <Route index element={<MailCenterDashboard />} />
             <Route path="schreiben" element={<MailCenterCompose />} />
