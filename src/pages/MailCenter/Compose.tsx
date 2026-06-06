@@ -14,6 +14,9 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from '@/components/ui/dialog';
 
 const SENDERS: Record<string, { label: string; email: string }> = {
   finance: { label: 'Finance', email: 'finance@alixwork.de' },
@@ -101,6 +104,9 @@ export default function MailCenterCompose() {
   const [templatesLoading, setTemplatesLoading] = useState(false);
 
   const [saving, setSaving] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const senderEmail = useMemo(() => SENDERS[sender]?.email ?? '', [sender]);
 
@@ -275,6 +281,92 @@ export default function MailCenterCompose() {
       toast.error('Entwurf konnte nicht gespeichert werden');
     } finally {
       setSaving(false);
+    }
+  }
+
+  function validateForSend(toEmailOverride?: string): string | null {
+    const toMail = toEmailOverride ?? customer?.email ?? '';
+    if (!toMail) return 'Empfänger-E-Mail fehlt';
+    if (!senderEmail) return 'Absender-E-Mail fehlt';
+    if (!subject.trim()) return 'Betreff fehlt';
+    if (!body.trim() && !bodyHtml.trim()) return 'E-Mail-Inhalt fehlt';
+    return null;
+  }
+
+  function buildSendPayload(opts?: { toEmail?: string; toName?: string | null; isTest?: boolean }) {
+    const vars = buildVars();
+    return {
+      template_id: templateId || null,
+      customer_id: customer?.id ?? null,
+      order_id: order?.id ?? null,
+      invoice_id: null,
+      ticket_id: null,
+      repair_id: null,
+      to_email: opts?.toEmail ?? customer?.email ?? '',
+      to_name: opts?.toName ?? (customer?.contact_name || customer?.company_name || null),
+      from_email: senderEmail,
+      from_name: SENDERS[sender]?.label || null,
+      subject_variables: vars,
+      body_variables: vars,
+      subject,
+      body_html: bodyHtml || body,
+      body_text: body,
+      is_test: !!opts?.isTest,
+    };
+  }
+
+  async function sendMail() {
+    const err = validateForSend();
+    if (err) {
+      toast.error(err);
+      return;
+    }
+    setSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-mail', {
+        body: buildSendPayload(),
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error(JSON.stringify((data as any).error));
+      toast.success('E-Mail wurde erfolgreich versendet');
+      // optional reset of subject/body
+      setSubject('');
+      setBody('');
+      setBodyHtml('');
+      setTemplateId('');
+    } catch (e: any) {
+      console.error('send-mail failed', e);
+      toast.error('E-Mail konnte nicht versendet werden');
+    } finally {
+      setSending(false);
+    }
+  }
+
+  async function sendTestMail() {
+    const { data: userData } = await supabase.auth.getUser();
+    const myEmail = userData.user?.email;
+    if (!myEmail) {
+      toast.error('Keine Benutzer-E-Mail gefunden');
+      return;
+    }
+    const err = validateForSend(myEmail);
+    if (err) {
+      toast.error(err);
+      return;
+    }
+    setTesting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-mail', {
+        body: buildSendPayload({ toEmail: myEmail, toName: userData.user?.user_metadata?.full_name || null, isTest: true }),
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error(JSON.stringify((data as any).error));
+      toast.success(`Testmail wurde an ${myEmail} gesendet`);
+    } catch (e: any) {
+      console.error('test send-mail failed', e);
+      toast.error('Testmail konnte nicht versendet werden');
+    } finally {
+      setTesting(false);
     }
   }
 
@@ -499,13 +591,60 @@ export default function MailCenterCompose() {
 
       {/* Aktionen */}
       <div className="flex flex-wrap items-center justify-end gap-2">
-        <Button variant="outline" disabled><Eye className="w-4 h-4 mr-2" /> Vorschau</Button>
-        <Button variant="outline" disabled><Beaker className="w-4 h-4 mr-2" /> Testmail</Button>
-        <Button variant="outline" onClick={saveDraft} disabled={saving}>
+        <Button variant="outline" onClick={() => setPreviewOpen(true)}>
+          <Eye className="w-4 h-4 mr-2" /> Vorschau
+        </Button>
+        <Button variant="outline" onClick={sendTestMail} disabled={testing || sending}>
+          {testing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Beaker className="w-4 h-4 mr-2" />} Testmail
+        </Button>
+        <Button variant="outline" onClick={saveDraft} disabled={saving || sending}>
           {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />} Speichern
         </Button>
-        <Button disabled><Send className="w-4 h-4 mr-2" /> Senden</Button>
+        <Button onClick={sendMail} disabled={sending || testing}>
+          {sending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
+          {sending ? 'E-Mail wird gesendet…' : 'Senden'}
+        </Button>
       </div>
+
+      {/* Vorschau Modal */}
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Vorschau</DialogTitle>
+            <DialogDescription>So sieht die E-Mail aus – sie wird noch nicht gesendet.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <div className="grid grid-cols-[100px_1fr] gap-2">
+              <span className="text-muted-foreground">Absender:</span>
+              <span className="font-mono">{SENDERS[sender]?.label} &lt;{senderEmail}&gt;</span>
+              <span className="text-muted-foreground">Empfänger:</span>
+              <span className="font-mono">
+                {customer?.contact_name || customer?.company_name || '—'} &lt;{customer?.email || '—'}&gt;
+              </span>
+              <span className="text-muted-foreground">Betreff:</span>
+              <span className="font-medium">{subject || '—'}</span>
+            </div>
+            <div className="rounded-md border border-border bg-muted/30 p-3 max-h-[300px] overflow-auto">
+              {bodyHtml ? (
+                <div className="prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
+              ) : (
+                <pre className="whitespace-pre-wrap text-sm font-sans">{body || '—'}</pre>
+              )}
+            </div>
+            {files.length > 0 && (
+              <div>
+                <div className="text-xs text-muted-foreground mb-1">Anhänge:</div>
+                <ul className="text-xs space-y-0.5">
+                  {files.map((f, i) => <li key={i}>· {f.name}</li>)}
+                </ul>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPreviewOpen(false)}>Schließen</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

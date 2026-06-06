@@ -7,6 +7,21 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+// Map from-email -> allowed roles (Super Admin/Admin always allowed)
+const SENDER_ROLE_MAP: Record<string, string[]> = {
+  "finance@alixwork.de": ["Finance"],
+  "vertrieb@alixwork.de": ["Vertrieb", "Order"],
+  "service@alixwork.de": ["Technik", "Kundenservice", "Reparaturannahme"],
+  "news@alixwork.de": ["Marketing"],
+};
+
+function jsonResponse(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -19,98 +34,130 @@ serve(async (req) => {
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
     if (!RESEND_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !SUPABASE_ANON_KEY) {
-      return new Response(JSON.stringify({ error: "Missing environment secrets" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "Missing environment secrets" }, 500);
     }
 
-    // Auth: require logged-in user with MailCenter access
     const authHeader = req.headers.get("Authorization") ?? "";
     if (!authHeader.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "Unauthorized" }, 401);
     }
+
     const authClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: { headers: { Authorization: authHeader } },
       auth: { autoRefreshToken: false, persistSession: false },
     });
+
     const { data: userData, error: userErr } = await authClient.auth.getUser(
       authHeader.replace("Bearer ", ""),
     );
     if (userErr || !userData?.user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "Unauthorized" }, 401);
     }
+
     const { data: canMail } = await authClient.rpc("can_access_mail");
     if (!canMail) {
-      return new Response(JSON.stringify({ error: "Forbidden" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "Forbidden" }, 403);
+    }
+
+    const body = await req.json().catch(() => ({}));
+    const {
+      template_id = null,
+      customer_id = null,
+      order_id = null,
+      invoice_id = null,
+      ticket_id = null,
+      repair_id = null,
+      to_email,
+      to_name = null,
+      from_email,
+      from_name = null,
+      subject_variables = {},
+      body_variables = {},
+      // free-message fields
+      subject: rawSubject = null,
+      body_html: rawHtml = null,
+      body_text: rawText = null,
+      // mode
+      is_test = false,
+    } = body ?? {};
+
+    if (!to_email || !from_email) {
+      return jsonResponse({ error: "to_email and from_email are required" }, 400);
+    }
+    if (!template_id && !rawSubject && !rawHtml && !rawText) {
+      return jsonResponse(
+        { error: "Either template_id or subject/body must be provided" },
+        400,
+      );
+    }
+
+    // Sender allow-list per role (Super Admin/Admin bypass)
+    const { data: isAdminRpc } = await authClient.rpc("is_admin");
+    if (!isAdminRpc) {
+      const allowedRoles = SENDER_ROLE_MAP[String(from_email).toLowerCase()];
+      if (!allowedRoles) {
+        return jsonResponse({ error: "Sender address not allowed" }, 403);
+      }
+      let granted = false;
+      for (const role of allowedRoles) {
+        const { data: hasIt } = await authClient.rpc("has_role", { check_role: role });
+        if (hasIt) {
+          granted = true;
+          break;
+        }
+      }
+      if (!granted) {
+        return jsonResponse(
+          { error: "You are not allowed to send from this address" },
+          403,
+        );
+      }
     }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    const {
-      template_id,
-      customer_id,
-      order_id,
-      invoice_id,
-      ticket_id,
-      repair_id,
-      to_email,
-      to_name,
-      from_email,
-      from_name,
-      subject_variables = {},
-      body_variables = {},
-    } = await req.json();
+    let baseSubject = rawSubject ?? "";
+    let baseHtml = rawHtml ?? "";
+    let baseText = rawText ?? "";
 
-    if (!template_id || !to_email || !from_email) {
-      return new Response(
-        JSON.stringify({ error: "template_id, to_email and from_email are required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    const { data: template, error: templateError } = await supabase
-      .from("mail_templates")
-      .select("*")
-      .eq("id", template_id)
-      .single();
-
-    if (templateError || !template) {
-      return new Response(JSON.stringify({ error: "Template not found" }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (template_id) {
+      const { data: template, error: templateError } = await supabase
+        .from("mail_templates")
+        .select("*")
+        .eq("id", template_id)
+        .single();
+      if (templateError || !template) {
+        return jsonResponse({ error: "Template not found" }, 404);
+      }
+      baseSubject = rawSubject ?? template.subject ?? "";
+      baseHtml = rawHtml ?? template.body_html ?? "";
+      baseText = rawText ?? template.body_text ?? "";
     }
 
     const variables: Record<string, string> = {
-      ...subject_variables,
       ...body_variables,
-      kunde: to_name || "",
+      ...subject_variables,
+      kunde: (body_variables as any)?.kunde ?? to_name ?? "",
       email: to_email,
     };
 
     const replaceVariables = (text: string | null) => {
       if (!text) return "";
-      return text.replace(/\{\{(.*?)\}\}/g, (_, key) => {
-        const cleanKey = key.trim();
-        return variables[cleanKey] ?? "";
+      return text.replace(/\{\{(.*?)\}\}/g, (_m, key) => {
+        const cleanKey = String(key).trim();
+        return variables[cleanKey] ?? `{{${cleanKey}}}`;
       });
     };
 
-    const finalSubject = replaceVariables(template.subject);
-    const finalHtml = replaceVariables(template.body_html);
-    const finalText = replaceVariables(template.body_text);
+    const finalSubject = replaceVariables(baseSubject);
+    const finalHtml = replaceVariables(baseHtml);
+    const finalText = replaceVariables(baseText);
+
+    if (!finalSubject || (!finalHtml && !finalText)) {
+      return jsonResponse({ error: "Subject and body are required" }, 400);
+    }
 
     const resendResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -122,7 +169,7 @@ serve(async (req) => {
         from: `${from_name || "Alix MailCenter"} <${from_email}>`,
         to: [to_name ? `${to_name} <${to_email}>` : to_email],
         subject: finalSubject,
-        html: finalHtml,
+        html: finalHtml || undefined,
         text: finalText || undefined,
       }),
     });
@@ -146,12 +193,9 @@ serve(async (req) => {
         body_text: finalText,
         status: "failed",
         error_message: JSON.stringify(resendData),
+        created_by: userData.user.id,
       });
-
-      return new Response(JSON.stringify({ error: resendData }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: resendData }, 500);
     }
 
     const { data: message, error: insertError } = await supabase
@@ -170,38 +214,31 @@ serve(async (req) => {
         subject: finalSubject,
         body_html: finalHtml,
         body_text: finalText,
-        status: "sent",
+        status: is_test ? "test_sent" : "sent",
         provider_message_id: resendData.id,
         sent_at: new Date().toISOString(),
+        created_by: userData.user.id,
       })
       .select()
       .single();
 
     if (insertError) {
-      return new Response(JSON.stringify({ error: insertError.message }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: insertError.message }, 500);
     }
 
     await supabase.from("mail_events").insert({
       message_id: message.id,
-      event_type: "sent",
+      event_type: is_test ? "test_sent" : "sent",
       event_data: resendData,
     });
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message_id: message.id,
-        resend_id: resendData.id,
-      }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
-  } catch (error) {
-    return new Response(JSON.stringify({ error: String(error) }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    return jsonResponse({
+      success: true,
+      message_id: message.id,
+      resend_id: resendData.id,
     });
+  } catch (error) {
+    console.error("send-mail error", error);
+    return jsonResponse({ error: String(error) }, 500);
   }
 });
