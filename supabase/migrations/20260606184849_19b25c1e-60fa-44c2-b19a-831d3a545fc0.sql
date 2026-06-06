@@ -1,0 +1,2 @@
+DROP POLICY IF EXISTS scl_insert ON public.service_communication_log;
+CREATE POLICY scl_insert ON public.service_communication_log FOR INSERT TO authenticated WITH CHECK (public.is_admin() OR public.has_role('Kundenservice') OR public.has_role('Technik') OR public.has_role('Finance') OR public.has_role('Tourenplanung'));
