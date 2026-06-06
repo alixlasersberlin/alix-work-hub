@@ -48,29 +48,25 @@ export function SidebarInfoBar() {
   const timeMiami = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', timeZone: 'America/New_York' });
 
   return (
-    <div className="px-4 py-2.5 border-b border-border bg-sidebar-accent/30 text-[11.5px] text-muted-foreground space-y-1">
-      <div className="flex items-center justify-between gap-2">
-        <span className="inline-flex items-center gap-1.5">
+    <div className="px-3 py-2 border-b border-border bg-sidebar-accent/30 text-[11px] text-muted-foreground">
+      <div className="flex items-center justify-between gap-2 flex-wrap tabular-nums">
+        <span className="inline-flex items-center gap-1">
           <Hash className="w-3 h-3 text-primary/80" /> KW {kw}
         </span>
-        <span className="inline-flex items-center gap-1.5">
-          <Thermometer className="w-3 h-3 text-primary/80" />
-          {temp !== null ? `${Math.round(temp)}°C Berlin` : '— Berlin'}
-        </span>
-      </div>
-      <div className="flex items-center justify-between gap-2">
-        <span className="inline-flex items-center gap-1.5">
+        <span className="inline-flex items-center gap-1">
           <CalendarDays className="w-3 h-3 text-primary/80" /> {date}
         </span>
-        <span className="inline-flex items-center gap-1.5 tabular-nums">
+        <span className="inline-flex items-center gap-1">
           <Clock className="w-3 h-3 text-primary/80" /> {time}
         </span>
-      </div>
-      <div className="flex items-center justify-between gap-2 pt-0.5 border-t border-border/40">
-        <span className="inline-flex items-center gap-1.5 tabular-nums">
+        <span className="inline-flex items-center gap-1">
+          <Thermometer className="w-3 h-3 text-primary/80" />
+          {temp !== null ? `${Math.round(temp)}°` : '—'} Berlin
+        </span>
+        <span className="inline-flex items-center gap-1">
           <Globe2 className="w-3 h-3 text-primary/80" /> Peking {timePeking}
         </span>
-        <span className="inline-flex items-center gap-1.5 tabular-nums">
+        <span className="inline-flex items-center gap-1">
           <Globe2 className="w-3 h-3 text-primary/80" /> Miami {timeMiami}
         </span>
       </div>
