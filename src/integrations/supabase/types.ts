@@ -1443,6 +1443,62 @@ export type Database = {
         }
         Relationships: []
       }
+      device_maintenance: {
+        Row: {
+          assigned_technician: string | null
+          created_at: string
+          customer_id: string | null
+          customer_name: string | null
+          device_name: string | null
+          id: string
+          last_maintenance_date: string | null
+          maintenance_plan_id: string | null
+          maintenance_status: string
+          next_maintenance_date: string | null
+          notes: string | null
+          serial_number: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_technician?: string | null
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          device_name?: string | null
+          id?: string
+          last_maintenance_date?: string | null
+          maintenance_plan_id?: string | null
+          maintenance_status?: string
+          next_maintenance_date?: string | null
+          notes?: string | null
+          serial_number: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_technician?: string | null
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          device_name?: string | null
+          id?: string
+          last_maintenance_date?: string | null
+          maintenance_plan_id?: string | null
+          maintenance_status?: string
+          next_maintenance_date?: string | null
+          notes?: string | null
+          serial_number?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_maintenance_maintenance_plan_id_fkey"
+            columns: ["maintenance_plan_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_templates: {
         Row: {
           body: string
@@ -2733,6 +2789,36 @@ export type Database = {
           reason?: string | null
           source?: string | null
           status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      maintenance_plans: {
+        Row: {
+          created_at: string
+          device_name: string
+          id: string
+          maintenance_description: string | null
+          maintenance_interval_hours: number | null
+          maintenance_interval_months: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          device_name: string
+          id?: string
+          maintenance_description?: string | null
+          maintenance_interval_hours?: number | null
+          maintenance_interval_months?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          device_name?: string
+          id?: string
+          maintenance_description?: string | null
+          maintenance_interval_hours?: number | null
+          maintenance_interval_months?: number | null
           updated_at?: string
         }
         Relationships: []
@@ -5407,6 +5493,90 @@ export type Database = {
           },
         ]
       }
+      warranty_claims: {
+        Row: {
+          approval_status: string
+          approved_by: string | null
+          claim_date: string
+          claim_reason: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          repair_id: string | null
+          serial_number: string
+          ticket_id: string | null
+        }
+        Insert: {
+          approval_status?: string
+          approved_by?: string | null
+          claim_date?: string
+          claim_reason?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          repair_id?: string | null
+          serial_number: string
+          ticket_id?: string | null
+        }
+        Update: {
+          approval_status?: string
+          approved_by?: string | null
+          claim_date?: string
+          claim_reason?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          repair_id?: string | null
+          serial_number?: string
+          ticket_id?: string | null
+        }
+        Relationships: []
+      }
+      warranty_records: {
+        Row: {
+          created_at: string
+          customer_id: string | null
+          customer_name: string | null
+          device_name: string | null
+          id: string
+          serial_number: string
+          updated_at: string
+          warranty_end: string | null
+          warranty_notes: string | null
+          warranty_start: string | null
+          warranty_status: string
+          warranty_type: string | null
+        }
+        Insert: {
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          device_name?: string | null
+          id?: string
+          serial_number: string
+          updated_at?: string
+          warranty_end?: string | null
+          warranty_notes?: string | null
+          warranty_start?: string | null
+          warranty_status?: string
+          warranty_type?: string | null
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          device_name?: string | null
+          id?: string
+          serial_number?: string
+          updated_at?: string
+          warranty_end?: string | null
+          warranty_notes?: string | null
+          warranty_start?: string | null
+          warranty_status?: string
+          warranty_type?: string | null
+        }
+        Relationships: []
+      }
       whatsapp_automations: {
         Row: {
           created_at: string
@@ -6228,6 +6398,7 @@ export type Database = {
       can_access_financing: { Args: never; Returns: boolean }
       can_access_import_logs: { Args: never; Returns: boolean }
       can_access_mail: { Args: never; Returns: boolean }
+      can_access_maintenance: { Args: never; Returns: boolean }
       can_access_orders: { Args: never; Returns: boolean }
       can_access_planning: { Args: never; Returns: boolean }
       can_access_qm: { Args: never; Returns: boolean }
@@ -6236,6 +6407,7 @@ export type Database = {
       can_manage_mail_campaigns: { Args: never; Returns: boolean }
       can_manage_mail_domains: { Args: never; Returns: boolean }
       can_manage_mail_templates: { Args: never; Returns: boolean }
+      can_manage_maintenance: { Args: never; Returns: boolean }
       can_manage_orders: { Args: never; Returns: boolean }
       can_manage_planning: { Args: never; Returns: boolean }
       can_manage_repair: { Args: never; Returns: boolean }
@@ -6296,6 +6468,10 @@ export type Database = {
         Returns: undefined
       }
       recompute_device_health: { Args: { _serial: string }; Returns: undefined }
+      refresh_warranty_and_maintenance_status: {
+        Args: never
+        Returns: undefined
+      }
       requires_reauth: { Args: never; Returns: boolean }
       session_requires_reauth: { Args: never; Returns: boolean }
       set_factory_invoice_payment_ok: {
