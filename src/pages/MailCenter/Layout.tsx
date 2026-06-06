@@ -41,6 +41,10 @@ const tabs = [
   { to: '/mailcenter/fehlerprotokoll', label: 'Fehlerprotokoll', icon: AlertTriangle },
   { to: '/mailcenter/testcenter', label: 'Testcenter', icon: TestTube2 },
   { to: '/mailcenter/produktivfreigabe', label: 'Produktivfreigabe', icon: Rocket },
+  { to: '/mailcenter/backup', label: 'Backup Center', icon: Database },
+  { to: '/mailcenter/import', label: 'Import', icon: Upload },
+  { to: '/mailcenter/export', label: 'Export', icon: FileDown },
+  { to: '/mailcenter/spam', label: 'Spam & Zustellbarkeit', icon: Shield },
 ];
 
 export default function MailCenterLayout() {
