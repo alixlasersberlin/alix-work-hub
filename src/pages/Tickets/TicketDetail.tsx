@@ -147,9 +147,11 @@ export default function TicketDetail() {
       supabase.from('ticket_attachments').select('*').eq('ticket_id', id).order('created_at', { ascending: false }),
     ]);
     if (t.error) { console.error(t.error); toast.error('Ticket nicht gefunden'); }
-    setTicket((t.data as Ticket) || null);
+    const tk = (t.data as Ticket) || null;
+    setTicket(tk);
     setMessages((m.data as Msg[]) || []);
     setAttachments((a.data as Att[]) || []);
+    loadLinkedRepair(tk?.repair_order_id || null);
     setLoading(false);
   }
 
