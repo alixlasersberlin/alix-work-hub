@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { ArrowLeft, Loader2, MessageSquare, Paperclip, Save, Send, Wrench, Truck, Banknote, ClipboardList, RefreshCw, History, CheckCircle2, AlertCircle } from 'lucide-react';
 import { sbRepair } from '@/lib/repair/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AiAnalysisPanel } from '@/components/ai-service/AiAnalysisPanel';
 
 interface Ticket {
   id: string;
@@ -348,11 +349,14 @@ export default function TicketDetail() {
             </Badge>
           )}
         </div>
-        <div className="flex flex-col items-end gap-1 text-xs text-muted-foreground">
-          <div>Letzter Inbound-Sync: {ticket.last_synced_at ? new Date(ticket.last_synced_at).toLocaleString('de-DE') : '—'}</div>
-          <div className="flex items-center gap-1">
-            {ticket.last_outbound_sync_at && <CheckCircle2 className="w-3 h-3 text-green-500" />}
-            An AlixSmart: {ticket.last_outbound_sync_at ? new Date(ticket.last_outbound_sync_at).toLocaleString('de-DE') : '—'}
+        <div className="flex items-center gap-3">
+          <AiAnalysisPanel sourceKind="ticket" recordId={ticket.id} />
+          <div className="flex flex-col items-end gap-1 text-xs text-muted-foreground">
+            <div>Letzter Inbound-Sync: {ticket.last_synced_at ? new Date(ticket.last_synced_at).toLocaleString('de-DE') : '—'}</div>
+            <div className="flex items-center gap-1">
+              {ticket.last_outbound_sync_at && <CheckCircle2 className="w-3 h-3 text-green-500" />}
+              An AlixSmart: {ticket.last_outbound_sync_at ? new Date(ticket.last_outbound_sync_at).toLocaleString('de-DE') : '—'}
+            </div>
           </div>
         </div>
       </div>

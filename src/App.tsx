@@ -205,6 +205,7 @@ const MailCenterValidierung = lazy(() => import("./pages/MailCenter/Systemvalidi
 const TicketsList = lazy(() => import("./pages/Tickets/TicketsList"));
 const TicketDetail = lazy(() => import("./pages/Tickets/TicketDetail"));
 const TicketsApiSync = lazy(() => import("./pages/Tickets/ApiSyncSettings"));
+const AiServiceCenter = lazy(() => import("./pages/AiServiceCenter"));
 import MaintenanceGate from "./components/MaintenanceGate";
 import LeihgeraetReminder from "./components/LeihgeraetReminder";
 
@@ -233,6 +234,7 @@ const ORDER_MGMT_ROLES = ['Admin', 'Super Admin', 'Order', 'Österreich'];
 const WAREHOUSE_ROLES = ['Admin', 'Super Admin', 'Order', 'Österreich'];
 const QM_ROLES = ['Admin', 'Super Admin', 'QM'];
 const TICKETS_ROLES = ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung'];
+const AI_SERVICE_ROLES = ['Admin', 'Super Admin', 'Service', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance'];
 
 function isSupplierOnly(roles: string[]) {
   return roles.includes('Lieferant') && !roles.some(r => ['Admin', 'Super Admin'].includes(r));
@@ -435,6 +437,7 @@ function AppRoutes() {
           <Route path="/tickets/api-sync" element={<ProtectedRoute requiredRoles={['Super Admin']}><TicketsApiSync /></ProtectedRoute>} />
           <Route path="/tickets/:id" element={<ProtectedRoute requiredRoles={TICKETS_ROLES}><TicketDetail /></ProtectedRoute>} />
           <Route path="/whatsapp" element={<ProtectedRoute requiredRoles={TICKETS_ROLES}><WhatsAppServiceCenter /></ProtectedRoute>} />
+          <Route path="/ai-service-center" element={<ProtectedRoute requiredRoles={AI_SERVICE_ROLES}><AiServiceCenter /></ProtectedRoute>} />
 
           <Route path="/aic" element={<ProtectedRoute requiredRoles={['Super Admin']}><AicLayout /></ProtectedRoute>}>
             <Route index element={<AicDashboard />} />
