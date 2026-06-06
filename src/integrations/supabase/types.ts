@@ -14,6 +14,299 @@ export type Database = {
   }
   public: {
     Tables: {
+      aic_analysis_runs: {
+        Row: {
+          created_at: string
+          duration_ms: number | null
+          error: string | null
+          finished_at: string | null
+          id: string
+          modules: string[]
+          started_at: string
+          stats: Json
+          status: string
+          trigger: string
+          triggered_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          modules?: string[]
+          started_at?: string
+          stats?: Json
+          status?: string
+          trigger?: string
+          triggered_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          modules?: string[]
+          started_at?: string
+          stats?: Json
+          status?: string
+          trigger?: string
+          triggered_by?: string | null
+        }
+        Relationships: []
+      }
+      aic_forecasts: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          generated_at: string
+          id: string
+          kind: string
+          payload: Json
+          rationale: string | null
+          run_id: string | null
+          unit: string | null
+          updated_at: string
+          valid_until: string | null
+          value: number | null
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          generated_at?: string
+          id?: string
+          kind: string
+          payload?: Json
+          rationale?: string | null
+          run_id?: string | null
+          unit?: string | null
+          updated_at?: string
+          valid_until?: string | null
+          value?: number | null
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          generated_at?: string
+          id?: string
+          kind?: string
+          payload?: Json
+          rationale?: string | null
+          run_id?: string | null
+          unit?: string | null
+          updated_at?: string
+          valid_until?: string | null
+          value?: number | null
+        }
+        Relationships: []
+      }
+      aic_insights: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          module: string
+          payload: Json
+          run_id: string | null
+          severity: number
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          module: string
+          payload?: Json
+          run_id?: string | null
+          severity?: number
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          module?: string
+          payload?: Json
+          run_id?: string | null
+          severity?: number
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      aic_report_schedules: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          kind: string
+          last_run_at: string | null
+          monthday: number | null
+          next_run_at: string | null
+          recipients: string[]
+          send_hour: number
+          updated_at: string
+          weekday: number | null
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          kind: string
+          last_run_at?: string | null
+          monthday?: number | null
+          next_run_at?: string | null
+          recipients?: string[]
+          send_hour?: number
+          updated_at?: string
+          weekday?: number | null
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          kind?: string
+          last_run_at?: string | null
+          monthday?: number | null
+          next_run_at?: string | null
+          recipients?: string[]
+          send_hour?: number
+          updated_at?: string
+          weekday?: number | null
+        }
+        Relationships: []
+      }
+      aic_reports: {
+        Row: {
+          content_html: string | null
+          created_at: string
+          id: string
+          kind: string
+          payload: Json
+          period_end: string | null
+          period_start: string | null
+          recipients: string[]
+          send_error: string | null
+          send_status: string
+          sent_at: string | null
+          summary: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content_html?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          payload?: Json
+          period_end?: string | null
+          period_start?: string | null
+          recipients?: string[]
+          send_error?: string | null
+          send_status?: string
+          sent_at?: string | null
+          summary?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content_html?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          payload?: Json
+          period_end?: string | null
+          period_start?: string | null
+          recipients?: string[]
+          send_error?: string | null
+          send_status?: string
+          sent_at?: string | null
+          summary?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      aic_tasks: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          customer_id: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          order_id: string | null
+          payload: Json
+          priority: number
+          related_insight_id: string | null
+          run_id: string | null
+          status: string
+          task_type: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          customer_id?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          order_id?: string | null
+          payload?: Json
+          priority?: number
+          related_insight_id?: string | null
+          run_id?: string | null
+          status?: string
+          task_type: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          customer_id?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          order_id?: string | null
+          payload?: Json
+          priority?: number
+          related_insight_id?: string | null
+          run_id?: string | null
+          status?: string
+          task_type?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aic_tasks_related_insight_id_fkey"
+            columns: ["related_insight_id"]
+            isOneToOne: false
+            referencedRelation: "aic_insights"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_settings: {
         Row: {
           id: string
