@@ -2,6 +2,7 @@ import { NavLink, Outlet } from 'react-router-dom';
 import {
   Mail, LayoutDashboard, PenSquare, FileText, Megaphone, Workflow,
   Activity, Globe, BarChart3, Settings, MailX, Inbox, Send, FileEdit, MessageSquare, Sparkles, FileCheck2, Files,
+  Phone, ClipboardList, CheckSquare, CalendarClock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NotificationBell } from '@/components/NotificationBell';
@@ -13,6 +14,10 @@ const tabs = [
   { to: '/mailcenter/entwuerfe', label: 'Entwürfe', icon: FileEdit },
   { to: '/mailcenter/intern', label: 'Interne Nachrichten', icon: MessageSquare },
   { to: '/mailcenter/schreiben', label: 'E-Mail schreiben', icon: PenSquare },
+  { to: '/mailcenter/telefonnotizen', label: 'Telefonnotizen', icon: Phone },
+  { to: '/mailcenter/gespraechsprotokolle', label: 'Gesprächsprotokolle', icon: ClipboardList },
+  { to: '/mailcenter/aufgaben', label: 'Aufgaben', icon: CheckSquare },
+  { to: '/mailcenter/wiedervorlagen', label: 'Wiedervorlagen', icon: CalendarClock },
   { to: '/mailcenter/vorlagen', label: 'Vorlagen', icon: FileText },
   { to: '/mailcenter/kampagnen', label: 'Kampagnen', icon: Megaphone },
   { to: '/mailcenter/automationen', label: 'Automationen', icon: Workflow },
