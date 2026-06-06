@@ -441,6 +441,7 @@ function AppRoutes() {
             <Route path="import" element={<MailCenterImport />} />
             <Route path="export" element={<MailCenterExport />} />
             <Route path="spam" element={<MailCenterSpam />} />
+            <Route path="qualitaetssicherung" element={<MailCenterQS />} />
           </Route>
 
           <Route path="/mdr-ce" element={<ProtectedRoute requiredRoles={['Super Admin']}><MdrCe /></ProtectedRoute>} />
