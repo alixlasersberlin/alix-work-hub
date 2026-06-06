@@ -1,79 +1,78 @@
-# Service-Automatisierung – Plan
+## WhatsApp Service Center – Umsetzungsplan
 
-Ziel: Tickets, Reparaturen, Bestellungen, Finance und Tourenplanung automatisch verknüpfen. **Nur ergänzen, keine bestehende Logik verändern.**
+Modulares Add-on, keine bestehenden Funktionen/Tabellen verändert. Bindet WhatsApp Cloud API über eine Edge Function an das bestehende Ticket-Modul + AlixSmart-Sync an.
 
-## 1. Datenbank-Migration (additiv)
+### 1. Datenbank (Migration)
 
-Neue Felder & Tabellen, alle bestehenden Spalten bleiben unverändert:
+Neue Tabellen im `public`-Schema (mit GRANTs + RLS):
 
-- `tickets`: + `auto_category` (text), `auto_priority` (text), `suggested_technician_id` (uuid), `sla_status` (text: ok/warn/breach), `sla_last_check` (timestamptz), `classified_at` (timestamptz)
-- Neue Tabelle `ticket_category_rules` (Keyword→Kategorie, seedbar, editierbar durch Admin)
-- Neue Tabelle `technician_skills` (user_id, category) – für Techniker-Vorschlag
-- Neue Tabelle `device_files` (Geräteakte-Cache; optional – wir können auch live aggregieren). Entscheidung: **live aggregieren** über Views/Queries, keine neue Tabelle nötig.
-- Neue Tabelle `service_communication_log` (ticket_id, type, sent_at, recipient) – für die automatischen Mails
+- **`whatsapp_conversations`** – `customer_phone`, `customer_name`, `linked_customer_id` → `customers.id`, `linked_ticket_id` → `tickets.id`, `status` (open/closed/archived), `assigned_department` (service/technik/finance/tourenplanung), `assigned_to`, `unread_count`, `opt_out`, `last_message_at`.
+- **`whatsapp_messages`** – `conversation_id`, `ticket_id`, `direction` (in/out), `sender_name`, `sender_phone`, `message_text`, `media_url`, `media_type`, `whatsapp_message_id` (unique), `status` (sent/delivered/read/failed/received), `is_internal_note` (immer false für WhatsApp – nur interne Notizen leben weiterhin in `tickets`/`ticket_messages`).
+- **`whatsapp_sync_logs`** – `action`, `status`, `error_message`, `payload`, `created_at`.
+- **`whatsapp_templates`** – vorgefertigte Standardantworten (`key`, `title`, `body`, `language`, `active`). Wird mit den 7 geforderten Vorlagen geseedet.
 
-RLS: alle neuen Felder/Tabellen folgen bestehender `can_access_tickets()` / `is_admin()` Logik. Delete nur Super Admin.
+Storage-Bucket **`whatsapp-media`** (privat) für Bilder/PDFs/Videos vom Kunden + ausgehende Anhänge.
 
-## 2. Auto-Klassifizierung & Priorität
+RLS / Rollenrechte über bestehende Helper:
+- Lesen: Admin, `Kundenservice`, `Technik` (Department=technik), `Finance` (Department=finance), `Tourenplanung` (Department=tourenplanung).
+- Schreiben/Antworten: Admin, `Kundenservice`. Technik darf interne Notizen am verknüpften Ticket setzen.
+- Delete/Archivieren: nur Super Admin (folgt globaler Regel).
+- Opt-out-Flag pro Konversation, blockiert ausgehenden Versand.
 
-- DB-Trigger `classify_ticket_on_insert` auf `tickets`:
-  - Setzt `auto_category` durch Keyword-Match (aus `ticket_category_rules`)
-  - Setzt `auto_priority='Hoch'` bei Schlüsselwörtern: Totalausfall, startet nicht, Brandgeruch, Überspannung, Wasserschaden
-  - Setzt `suggested_technician_id` aus `technician_skills` (erster passender aktiver Techniker)
-- Seed-Daten für die 12 Kategorien mit deutschen Keywords.
+### 2. Edge Functions
 
-## 3. SLA-System
+- **`whatsapp-webhook`** (`verify_jwt=false`, public) – GET: Meta-Verify (`hub.challenge`); POST:
+  1. Signatur via `WHATSAPP_APP_SECRET` (HMAC SHA256) prüfen.
+  2. Nachricht parsen (Text/Media), Media-File von Meta laden und in `whatsapp-media` ablegen.
+  3. Konversation per `customer_phone` upsert; Kunde via `customers.phone`/`mobile` mappen.
+  4. Auto-Erkennung: Regex auf Seriennummer (`SN…`), Auftragsnummer (Zoho-Format), Fehlercodes → Ticket-Match.
+  5. Offenes Ticket finden (`tickets.customer_id` + `status≠closed`) oder neues Ticket anlegen (`source='whatsapp'`, `priority='Normal'`, `department='service'`).
+  6. Message persistieren, an `ticket_messages` spiegeln (öffentlich).
+  7. `whatsapp_sync_logs` Eintrag + Aufruf des bestehenden AlixSmart-Sync-Pfads (analog zu Tickets-Modul) via interner RPC/Function.
 
-- Edge Function `ticket-sla-check` (Cronjob, stündlich via pg_cron):
-  - 24h unbeantwortet → `sla_status='warn_response'`
-  - 72h unbearbeitet → `sla_status='warn_progress'`
-  - 7 Tage offen → `sla_status='breach'`
-  - Schreibt Notification in `mail_internal_messages` an zugewiesene Techniker + Serviceleitung.
-- Anzeige als Badge im Ticket.
+- **`whatsapp-send`** (`verify_jwt=true`) – sendet Text/Template/Media über Cloud API (`/messages`). Prüft Auth + Rolle, Opt-out, internal-note-Flag (Block), schreibt `whatsapp_messages` (direction=out, status=sent) und mirror in `ticket_messages`.
 
-## 4. Kundenkommunikation
+Secrets: `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_APP_SECRET`, `WHATSAPP_VERIFY_TOKEN`. Werden via Secret-Prompt angefordert, sobald der Plan freigegeben ist.
 
-- Edge Function `ticket-customer-notify` mit Events:
-  - `ticket_received` (Trigger nach Insert)
-  - `ticket_in_progress` (Status→in Bearbeitung)
-  - `spare_part_ordered` (repair_spare_parts status→bestellt)
-  - `repair_completed` (repair_status→Reparatur abgeschlossen)
-  - `shipment_sent` (repair_status→Ausgeliefert)
-- Nutzt bestehendes Resend-Setup; loggt in `service_communication_log`.
-- Frontend-Toggle pro Ticket "Kunde automatisch benachrichtigen".
+### 3. Frontend
 
-## 5. Geräteakte (neue Seite)
+Route `/whatsapp` (lazy, Sidebar unter „Tickets"):
 
-Route `/geraeteakte` (lazy):
-- Suchfeld: Seriennummer / Kunde / Auftrag / Gerät
-- Ergebnisliste → Detailansicht mit Tabs:
-  - Tickets (aus `tickets` wo `device_serial`)
-  - Reparaturen (aus `repair_orders`)
-  - Ersatzteile (`repair_spare_parts`)
-  - Rechnungen (`repair_invoice_proposals` + ggf. `orders`)
-  - Wartungen (Repairs mit Kategorie=Wartung)
-- **Service-Ampel** oben: grün/gelb/rot anhand offener Vorgänge.
-- Zugriff: Admin, Super Admin, Technik, Kundenservice, Serviceleitung.
+- **`WhatsAppInbox.tsx`** – Liste offener Gespräche (Kunde, Telefon, letztes Datum, Ticket-Nr., Status, ungelesen-Badge), Filter nach Department + Suche.
+- **`WhatsAppChat.tsx`** – Detailansicht: Chronologischer Verlauf, Realtime-Subscribe auf `whatsapp_messages`, Kundenkarte (inkl. Gerät/Seriennummer aus erkanntem Ticket), Aktionen-Bar:
+  - Antworten (Text + Anhang + Template-Picker)
+  - Interne Notiz (geht in `ticket_messages`, **nicht** an WhatsApp)
+  - Ticket erstellen / verknüpfen (`OrderPickerDialog`-Pattern)
+  - Kunde zuordnen (Customer-Search-Dialog)
+  - An Technik übergeben (setzt `assigned_department='technik'`, Ticket-Department-Update)
+  - Opt-out / Archivieren (rolle-geprüft)
 
-## 6. Dashboard-Erweiterung (Service Cockpit)
+Zugriffsschutz im Router via `requiredRoles=['Super Admin','Admin','Kundenservice','Technik','Finance','Tourenplanung']`; UI-Aktionen pro Rolle gegated.
 
-Bestehendes `ServiceCockpit.tsx` **ergänzen** (nicht ersetzen) um:
-- Top Fehler (bereits da → behalten)
-- Top Geräte, Top Techniker, Top Kunden (neue Bar-Charts)
-- Garantiequote (Tickets mit Kategorie „Garantie" / total)
-- Ø Reparaturdauer (aus `repair_orders.created_at` → Status=Ausgeliefert)
+### 4. Standardantworten
 
-## 7. Navigation
+`whatsapp_templates` wird mit den 7 Items geseedet (key/title/body), Template-Picker im Chat füllt das Eingabefeld vor; bei Verwendung eines Meta-zertifizierten Templates wird der Cloud-API-Template-Endpoint genutzt, sonst freier Text.
 
-`AppLayout.tsx`: Eintrag „Geräteakte" unter Reparaturannahme. Service Cockpit bleibt.
+### 5. Sicherheit & Datenschutz
 
-## Technisches Detail
+- Webhook-Signaturprüfung Pflicht.
+- Tokens ausschließlich serverseitig (`Deno.env.get`); Frontend ruft nur `whatsapp-send`.
+- Interne Notizen technisch getrennt (`ticket_messages.is_internal=true`) und nie an `whatsapp-send` übergeben.
+- Opt-out-Konversationen blocken jeden Outbound mit 403.
+- Volles Audit über `whatsapp_sync_logs` + bestehende `audit_logs`.
 
-- Migration: 1 Datei mit allen neuen Tabellen, Spalten, Triggern, Seeds, RLS + GRANTs.
-- Edge Functions: `ticket-sla-check`, `ticket-customer-notify`. Beide mit CORS + Resend.
-- Cronjob via `pg_cron` für SLA stündlich.
-- Frontend: neue Komponenten `GeraeteAkte.tsx`, `ServiceAmpel.tsx`, kleine Erweiterungen in `TicketDetail.tsx` (Badges), `ServiceCockpit.tsx` (neue Charts).
+### Nicht enthalten / Annahmen
 
-Bestehende Funktionen werden nicht verändert – nur additive Trigger, Spalten, Routen, Charts.
+- Provider = WhatsApp Cloud API (Meta). Falls 360dialog/Twilio gewünscht: separater Adapter, gleiche Tabellen.
+- AlixSmart-Sync nutzt den bereits bestehenden Ticket-Sync; keine neue externe API.
+- Realtime nur auf `whatsapp_messages` (Supabase Realtime), kein zusätzliches Push.
 
-OK, dann implementiere ich in dieser Reihenfolge?
+### Reihenfolge
+
+1. Migration + Storage-Bucket + Seed-Templates.
+2. Secrets-Prompt (4 Stück).
+3. Edge Functions `whatsapp-webhook` + `whatsapp-send`.
+4. Frontend `WhatsAppInbox` + `WhatsAppChat` + Route + Sidebar.
+5. Memory-Eintrag.
+
+OK so umsetzen?
