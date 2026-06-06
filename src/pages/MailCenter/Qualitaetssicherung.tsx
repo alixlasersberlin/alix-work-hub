@@ -99,7 +99,8 @@ const STATUS_META: Record<Status, { color: string; icon: any; label: string }> =
 };
 
 export default function Qualitaetssicherung() {
-  const { isSuperAdmin } = useMailPermissions();
+  const { roles } = useAuth();
+  const isSuperAdmin = roles.includes('Super Admin');
   const [sections, setSections] = useState<Section[]>(INITIAL);
   const [running, setRunning] = useState(false);
 
