@@ -553,6 +553,7 @@ const App = () => (
                 <AppRoutes />
                 <AuroraSpotlight />
                 <LeihgeraetReminder />
+                <TemplateSwitcher />
               </MaintenanceGate>
             </AuthProvider>
           </BrowserRouter>
