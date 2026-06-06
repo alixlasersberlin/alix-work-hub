@@ -17,6 +17,7 @@ import { ArrowLeft, Printer, FileDown, Plus, Trash2, Upload, Receipt, MapPin, Fi
 import { renderRepairWorkOrderPdf } from '@/lib/repair/work-order-pdf';
 import { WerkstattAnnahmeTab, WerkstattauftraegeTab, SparePartsTab, FinanceHandoverTab, DeliveryHandoverTab, AttachmentsTab } from './RepairExtraTabs';
 import { SparePartRequestDialog } from './SparePartRequestDialog';
+import { InvoiceProposalDialog } from './InvoiceProposalDialog';
 
 export default function ReparaturDetail() {
   const { id } = useParams<{ id: string }>();
