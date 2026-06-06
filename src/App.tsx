@@ -422,7 +422,7 @@ function AppRoutes() {
           </Route>
 
           <Route path="/tickets" element={<ProtectedRoute requiredRoles={TICKETS_ROLES}><TicketsList /></ProtectedRoute>} />
-          <Route path="/tickets/api-sync" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><TicketsApiSync /></ProtectedRoute>} />
+          <Route path="/tickets/api-sync" element={<ProtectedRoute requiredRoles={['Super Admin']}><TicketsApiSync /></ProtectedRoute>} />
           <Route path="/tickets/:id" element={<ProtectedRoute requiredRoles={TICKETS_ROLES}><TicketDetail /></ProtectedRoute>} />
 
           <Route path="/aic" element={<ProtectedRoute requiredRoles={['Super Admin']}><AicLayout /></ProtectedRoute>}>

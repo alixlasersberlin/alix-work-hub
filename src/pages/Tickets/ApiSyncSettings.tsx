@@ -21,7 +21,8 @@ interface SyncLog {
 }
 
 export default function ApiSyncSettings() {
-  const { isAdmin } = useAuth();
+  const { hasRole } = useAuth();
+  const isSuperAdmin = hasRole('Super Admin');
   const [lastSuccess, setLastSuccess] = useState<SyncLog | null>(null);
   const [lastError, setLastError] = useState<SyncLog | null>(null);
   const [loading, setLoading] = useState(true);
@@ -68,7 +69,7 @@ export default function ApiSyncSettings() {
     toast.success('In Zwischenablage kopiert');
   }
 
-  if (!isAdmin) {
+  if (!isSuperAdmin) {
     return <div className="p-8">Nur für Administratoren sichtbar.</div>;
   }
 
