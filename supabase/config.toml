@@ -77,3 +77,10 @@ verify_jwt = false
 
 [functions.mail-ai-assistant]
 verify_jwt = true
+
+[functions.aic-analyze]
+verify_jwt = false
+
+[functions.aic-send-report]
+verify_jwt = false
+
