@@ -443,6 +443,7 @@ function AppRoutes() {
             <Route path="export" element={<MailCenterExport />} />
             <Route path="spam" element={<MailCenterSpam />} />
             <Route path="qualitaetssicherung" element={<MailCenterQS />} />
+            <Route path="schulungscenter" element={<MailCenterSchulung />} />
           </Route>
 
           <Route path="/mdr-ce" element={<ProtectedRoute requiredRoles={['Super Admin']}><MdrCe /></ProtectedRoute>} />
