@@ -117,8 +117,9 @@ export default function Telefonnotizen() {
         assigned_to: user.user?.id,
       });
     }
-    toast.success('Telefonnotiz gespeichert');
+    toast.success(payload.customer_id ? 'Telefonnotiz gespeichert und Kunde zugeordnet' : 'Telefonnotiz gespeichert');
     setOpen(false);
+    setSelectedCustomer(null);
     setForm({ call_date: format(new Date(), 'yyyy-MM-dd'), call_type: 'inbound', priority: 'normal', department: 'vertrieb', has_followup: false });
     load();
   };
