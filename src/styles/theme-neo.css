@@ -1,0 +1,226 @@
+/* ============================================================
+   ALIXWORK NEO — Premium Glassmorphism SaaS 2026 Template
+   Wird über <html class="theme-neo"> aktiviert.
+   Verändert KEINE bestehenden Komponenten – nur Styling-Overlay.
+   ============================================================ */
+
+@keyframes neo-aurora-drift {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  50%  { transform: translate3d(3%, -2%, 0) scale(1.08); }
+  100% { transform: translate3d(0, 0, 0) scale(1); }
+}
+@keyframes neo-aurora-drift-2 {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  50%  { transform: translate3d(-4%, 3%, 0) scale(1.12); }
+  100% { transform: translate3d(0, 0, 0) scale(1); }
+}
+@keyframes neo-fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+html.theme-neo {
+  /* ---------- NEO Design Tokens (HSL) ---------- */
+  --background: 240 10% 4%;        /* #09090B */
+  --foreground: 210 40% 98%;       /* #F8FAFC */
+  --card: 220 26% 8%;              /* deep panel */
+  --card-foreground: 210 40% 98%;
+  --popover: 220 26% 8%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 217 91% 60%;          /* electric blue #3B82F6 */
+  --primary-foreground: 210 40% 98%;
+  --secondary: 188 94% 43%;        /* cyan #06B6D4 */
+  --secondary-foreground: 222 47% 11%;
+  --accent: 217 91% 60%;
+  --accent-foreground: 210 40% 98%;
+  --muted: 222 24% 12%;
+  --muted-foreground: 215 20% 70%;
+  --destructive: 0 84% 60%;        /* #EF4444 */
+  --destructive-foreground: 210 40% 98%;
+  --border: 217 33% 22% / 0.35;    /* translucent */
+  --input: 220 26% 14%;
+  --ring: 217 91% 60%;
+  --radius: 1.1rem;
+
+  --neo-glass-bg: hsl(220 30% 10% / 0.55);
+  --neo-glass-border: hsl(217 91% 70% / 0.18);
+  --neo-glass-blur: 28px;
+  --neo-glow: 0 0 0 1px hsl(217 91% 60% / 0.15), 0 10px 40px -10px hsl(217 91% 60% / 0.35);
+  --neo-shadow-soft: 0 8px 30px -10px hsl(240 10% 0% / 0.55), 0 2px 8px -2px hsl(240 10% 0% / 0.4);
+}
+
+html.theme-neo body {
+  background: hsl(240 10% 4%);
+  color: hsl(var(--foreground));
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+/* ---------- Aurora Hintergrund (fixed, hinter allem) ---------- */
+html.theme-neo body::before,
+html.theme-neo body::after {
+  content: '';
+  position: fixed;
+  inset: -20%;
+  z-index: 0;
+  pointer-events: none;
+  filter: blur(120px);
+  opacity: 0.55;
+  will-change: transform;
+}
+html.theme-neo body::before {
+  background:
+    radial-gradient(50% 50% at 20% 25%, #3B82F6 0%, transparent 60%),
+    radial-gradient(40% 40% at 80% 20%, #7C3AED 0%, transparent 70%),
+    radial-gradient(45% 45% at 70% 80%, #06B6D4 0%, transparent 65%);
+  animation: neo-aurora-drift 22s ease-in-out infinite;
+}
+html.theme-neo body::after {
+  background:
+    radial-gradient(35% 35% at 10% 80%, #1E3A8A 0%, transparent 70%),
+    radial-gradient(35% 35% at 90% 60%, #0EA5E9 0%, transparent 65%);
+  animation: neo-aurora-drift-2 28s ease-in-out infinite;
+  opacity: 0.4;
+}
+
+/* Inhalte über Aurora bringen */
+html.theme-neo #root,
+html.theme-neo main,
+html.theme-neo aside,
+html.theme-neo header,
+html.theme-neo nav {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---------- Sidebar als Floating Glass Panel ---------- */
+html.theme-neo aside {
+  background: var(--neo-glass-bg) !important;
+  backdrop-filter: blur(var(--neo-glass-blur)) saturate(160%);
+  -webkit-backdrop-filter: blur(var(--neo-glass-blur)) saturate(160%);
+  border: 1px solid var(--neo-glass-border) !important;
+  border-radius: 28px !important;
+  margin: 12px 0 12px 12px !important;
+  box-shadow: var(--neo-shadow-soft);
+  overflow: hidden;
+}
+html.theme-neo aside a,
+html.theme-neo aside button {
+  border-radius: 14px !important;
+  transition: background-color .18s ease, transform .18s ease, box-shadow .18s ease, color .18s ease;
+}
+html.theme-neo aside a:hover,
+html.theme-neo aside button:hover {
+  background: hsl(217 91% 60% / 0.12) !important;
+  color: hsl(210 40% 98%) !important;
+  box-shadow: 0 0 0 1px hsl(217 91% 60% / 0.35), 0 6px 20px -6px hsl(217 91% 60% / 0.55);
+  transform: translateX(2px);
+}
+html.theme-neo aside [data-active="true"],
+html.theme-neo aside .bg-primary,
+html.theme-neo aside [aria-current="page"] {
+  background: linear-gradient(135deg, hsl(217 91% 60% / 0.25), hsl(188 94% 43% / 0.18)) !important;
+  color: hsl(210 40% 98%) !important;
+  box-shadow: inset 0 0 0 1px hsl(217 91% 70% / 0.35);
+}
+
+/* ---------- Header / Topbar als Floating Glass ---------- */
+html.theme-neo header,
+html.theme-neo [class*="border-b"][class*="bg-"] {
+  background: var(--neo-glass-bg) !important;
+  backdrop-filter: blur(var(--neo-glass-blur)) saturate(160%);
+  -webkit-backdrop-filter: blur(var(--neo-glass-blur)) saturate(160%);
+  border: 1px solid var(--neo-glass-border) !important;
+  border-radius: 20px !important;
+  margin: 12px 12px 0 12px;
+  box-shadow: var(--neo-shadow-soft);
+}
+
+/* ---------- Cards & Panels → Glassmorphism ---------- */
+html.theme-neo [data-slot="card"],
+html.theme-neo .card,
+html.theme-neo [class*="bg-card"] {
+  background: var(--neo-glass-bg) !important;
+  backdrop-filter: blur(var(--neo-glass-blur)) saturate(160%);
+  -webkit-backdrop-filter: blur(var(--neo-glass-blur)) saturate(160%);
+  border: 1px solid var(--neo-glass-border) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--neo-shadow-soft);
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+  animation: neo-fade-up .35s ease-out both;
+}
+html.theme-neo [data-slot="card"]:hover,
+html.theme-neo .card:hover {
+  transform: translateY(-2px);
+  border-color: hsl(217 91% 70% / 0.35) !important;
+  box-shadow: var(--neo-glow), var(--neo-shadow-soft);
+}
+
+/* ---------- Buttons (primär) glowy ---------- */
+html.theme-neo button.bg-primary,
+html.theme-neo [data-variant="default"].bg-primary {
+  background: linear-gradient(135deg, #3B82F6, #06B6D4) !important;
+  color: #F8FAFC !important;
+  box-shadow: 0 8px 24px -8px hsl(217 91% 60% / 0.65);
+  border: none;
+}
+html.theme-neo button.bg-primary:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 12px 32px -8px hsl(217 91% 60% / 0.8);
+}
+
+/* ---------- Inputs / Select Trigger ---------- */
+html.theme-neo input,
+html.theme-neo textarea,
+html.theme-neo [role="combobox"],
+html.theme-neo [data-slot="select-trigger"] {
+  background: hsl(220 26% 10% / 0.6) !important;
+  border: 1px solid var(--neo-glass-border) !important;
+  border-radius: 12px !important;
+  color: hsl(var(--foreground)) !important;
+  backdrop-filter: blur(12px);
+}
+html.theme-neo input:focus,
+html.theme-neo textarea:focus {
+  border-color: hsl(217 91% 60% / 0.6) !important;
+  box-shadow: 0 0 0 4px hsl(217 91% 60% / 0.18);
+  outline: none;
+}
+
+/* ---------- Tables – Glass, keine harten Linien ---------- */
+html.theme-neo table {
+  border-collapse: separate;
+  border-spacing: 0 6px;
+}
+html.theme-neo tbody tr {
+  background: hsl(220 30% 10% / 0.45);
+  backdrop-filter: blur(12px);
+}
+html.theme-neo tbody tr:hover {
+  background: hsl(217 91% 60% / 0.08);
+}
+html.theme-neo th {
+  color: hsl(215 20% 70%);
+  font-weight: 500;
+  letter-spacing: .02em;
+}
+
+/* ---------- Badges glow ---------- */
+html.theme-neo [data-slot="badge"] {
+  backdrop-filter: blur(8px);
+  border-radius: 999px !important;
+}
+
+/* ---------- Scrollbar ---------- */
+html.theme-neo *::-webkit-scrollbar { width: 10px; height: 10px; }
+html.theme-neo *::-webkit-scrollbar-thumb {
+  background: hsl(217 91% 60% / 0.35);
+  border-radius: 999px;
+}
+html.theme-neo *::-webkit-scrollbar-track { background: transparent; }
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  html.theme-neo body::before,
+  html.theme-neo body::after { animation: none; }
+  html.theme-neo [data-slot="card"], html.theme-neo .card { animation: none; }
+}

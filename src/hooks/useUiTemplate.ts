@@ -1,0 +1,45 @@
+import { useCallback, useEffect, useState } from "react";
+
+export type UiTemplate = "standard" | "neo";
+const KEY = "alixwork.ui_template";
+
+function apply(t: UiTemplate) {
+  const el = document.documentElement;
+  if (t === "neo") el.classList.add("theme-neo");
+  else el.classList.remove("theme-neo");
+}
+
+export function getCurrentUiTemplate(): UiTemplate {
+  if (typeof window === "undefined") return "standard";
+  return (localStorage.getItem(KEY) as UiTemplate) || "standard";
+}
+
+/** Globaler Live-Switch zwischen Standard und ALIXWORK NEO. */
+export function useUiTemplate() {
+  const [template, setTemplateState] = useState<UiTemplate>(() => getCurrentUiTemplate());
+
+  useEffect(() => { apply(template); }, [template]);
+
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === KEY && e.newValue) setTemplateState(e.newValue as UiTemplate);
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  const setTemplate = useCallback((t: UiTemplate) => {
+    localStorage.setItem(KEY, t);
+    apply(t);
+    setTemplateState(t);
+    // Inform same-tab listeners
+    window.dispatchEvent(new CustomEvent("alixwork:ui-template", { detail: t }));
+  }, []);
+
+  return { template, setTemplate };
+}
+
+/** Boot-time apply so first paint has the right theme. */
+export function bootUiTemplate() {
+  apply(getCurrentUiTemplate());
+}
