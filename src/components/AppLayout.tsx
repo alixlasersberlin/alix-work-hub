@@ -208,9 +208,8 @@ const navItems: NavItem[] = [
       
       // E-Mail Submenu
       {
-        path: '/mailcenter/posteingang', label: 'E-Mail', icon: Mail, roles: null,
+        path: '/mailcenter/gesendet', label: 'E-Mail', icon: Mail, roles: null,
         children: [
-          { path: '/mailcenter/posteingang', label: 'Posteingang', icon: Inbox, roles: null },
           { path: '/mailcenter/gesendet', label: 'Gesendet', icon: Send, roles: null },
           { path: '/mailcenter/entwuerfe', label: 'Entwürfe', icon: FileEdit, roles: null },
           { path: '/mailcenter/intern', label: 'Interne Nachrichten', icon: MessageSquare, roles: null },
