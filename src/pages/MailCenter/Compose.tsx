@@ -104,6 +104,9 @@ export default function MailCenterCompose() {
   const [templatesLoading, setTemplatesLoading] = useState(false);
 
   const [saving, setSaving] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const senderEmail = useMemo(() => SENDERS[sender]?.email ?? '', [sender]);
 
