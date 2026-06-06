@@ -255,7 +255,7 @@ const navItems: NavItem[] = [
       { path: '/mailcenter/testcenter', label: 'Testcenter', icon: TestTube2, roles: null },
       { path: '/mailcenter/qualitaetssicherung', label: 'Qualitätssicherung', icon: BadgeCheck, roles: null },
       { path: '/mailcenter/systemvalidierung', label: 'Systemvalidierung', icon: FileSignature, roles: null },
-      { path: '/mailcenter/schulungscenter', label: 'Schulungscenter', icon: GraduationCap, roles: null },
+      
       { path: '/mailcenter/produktivfreigabe', label: 'Produktivfreigabe', icon: Rocket, roles: null },
     ],
   },
