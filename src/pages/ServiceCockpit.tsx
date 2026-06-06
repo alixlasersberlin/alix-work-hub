@@ -270,6 +270,8 @@ export default function ServiceCockpit() {
             <Kpi icon={CheckCircle2} color="text-emerald-400" label="Reparaturquote" value={`${repairQuote.toFixed(0)} %`} />
             <Kpi icon={Package} color="text-purple-400" label="Ersatzteilquote" value={`${sparePartQuote.toFixed(0)} %`} />
             <Kpi icon={Receipt} color="text-pink-400" label="Rechnungen offen" value={openInvoiceCount} sub={`${openInvoiceSum.toFixed(0)} €`} />
+            <Kpi icon={CheckCircle2} color="text-yellow-400" label="Garantiequote" value={`${warrantyPct.toFixed(0)} %`} />
+            <Kpi icon={Clock} color="text-indigo-400" label="Ø Reparaturdauer" value={`${avgRepairDays.toFixed(1)} Tage`} />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
