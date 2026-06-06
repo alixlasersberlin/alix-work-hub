@@ -172,6 +172,7 @@ const MailCenterTelefonnotizen = lazy(() => import("./pages/MailCenter/Telefonno
 const MailCenterGespraechsprotokolle = lazy(() => import("./pages/MailCenter/Gespraechsprotokolle"));
 const MailCenterAufgaben = lazy(() => import("./pages/MailCenter/Aufgaben"));
 const MailCenterWiedervorlagen = lazy(() => import("./pages/MailCenter/Wiedervorlagen"));
+const MailCenterBerechtigungen = lazy(() => import("./pages/MailCenter/Berechtigungen"));
 import MaintenanceGate from "./components/MaintenanceGate";
 import LeihgeraetReminder from "./components/LeihgeraetReminder";
 

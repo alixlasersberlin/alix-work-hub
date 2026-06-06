@@ -2,7 +2,7 @@ import { NavLink, Outlet } from 'react-router-dom';
 import {
   Mail, LayoutDashboard, PenSquare, FileText, Megaphone, Workflow,
   Activity, Globe, BarChart3, Settings, MailX, Inbox, Send, FileEdit, MessageSquare, Sparkles, FileCheck2, Files,
-  Phone, ClipboardList, CheckSquare, CalendarClock,
+  Phone, ClipboardList, CheckSquare, CalendarClock, ShieldCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NotificationBell } from '@/components/NotificationBell';
@@ -30,6 +30,7 @@ const tabs = [
   { to: '/mailcenter/dokumente-automationen', label: 'Dok.-Automationen', icon: Workflow },
   { to: '/mailcenter/domains', label: 'Domains', icon: Globe },
   { to: '/mailcenter/berichte', label: 'Berichte', icon: BarChart3 },
+  { to: '/mailcenter/berechtigungen', label: 'Berechtigungen', icon: ShieldCheck },
   { to: '/mailcenter/einstellungen', label: 'Einstellungen', icon: Settings },
 ];
 
