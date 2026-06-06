@@ -523,6 +523,60 @@ export type Database = {
           },
         ]
       }
+      customer_communication_log: {
+        Row: {
+          channel: string
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          department: string | null
+          direction: string | null
+          id: string
+          metadata: Json | null
+          occurred_at: string
+          order_id: string | null
+          preview: string | null
+          reference_id: string | null
+          reference_table: string | null
+          repair_order_id: string | null
+          subject: string | null
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          department?: string | null
+          direction?: string | null
+          id?: string
+          metadata?: Json | null
+          occurred_at?: string
+          order_id?: string | null
+          preview?: string | null
+          reference_id?: string | null
+          reference_table?: string | null
+          repair_order_id?: string | null
+          subject?: string | null
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          department?: string | null
+          direction?: string | null
+          id?: string
+          metadata?: Json | null
+          occurred_at?: string
+          order_id?: string | null
+          preview?: string | null
+          reference_id?: string | null
+          reference_table?: string | null
+          repair_order_id?: string | null
+          subject?: string | null
+        }
+        Relationships: []
+      }
       customer_portal_document_downloads: {
         Row: {
           attachment_id: string | null
@@ -3891,6 +3945,247 @@ export type Database = {
           },
         ]
       }
+      whatsapp_automations: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          department: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          requires_consent: string
+          template_id: string | null
+          trigger_event: string
+          trigger_value: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          requires_consent?: string
+          template_id?: string | null
+          trigger_event: string
+          trigger_value?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          requires_consent?: string
+          template_id?: string | null
+          trigger_event?: string
+          trigger_value?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_automations_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_consents: {
+        Row: {
+          consent_marketing: boolean
+          consent_service: boolean
+          consent_transactional: boolean
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          granted_at: string
+          id: string
+          ip_address: string | null
+          notes: string | null
+          phone_number: string
+          revoked_at: string | null
+          source: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          consent_marketing?: boolean
+          consent_service?: boolean
+          consent_transactional?: boolean
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          granted_at?: string
+          id?: string
+          ip_address?: string | null
+          notes?: string | null
+          phone_number: string
+          revoked_at?: string | null
+          source?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          consent_marketing?: boolean
+          consent_service?: boolean
+          consent_transactional?: boolean
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          granted_at?: string
+          id?: string
+          ip_address?: string | null
+          notes?: string | null
+          phone_number?: string
+          revoked_at?: string | null
+          source?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      whatsapp_messages: {
+        Row: {
+          body: string | null
+          created_at: string
+          customer_id: string | null
+          delivered_at: string | null
+          department: string | null
+          direction: string
+          error_message: string | null
+          id: string
+          media_type: string | null
+          media_url: string | null
+          meta_message_id: string | null
+          order_id: string | null
+          phone_number: string
+          read_at: string | null
+          received_at: string | null
+          repair_order_id: string | null
+          sent_at: string | null
+          sent_by: string | null
+          status: string
+          template_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          customer_id?: string | null
+          delivered_at?: string | null
+          department?: string | null
+          direction: string
+          error_message?: string | null
+          id?: string
+          media_type?: string | null
+          media_url?: string | null
+          meta_message_id?: string | null
+          order_id?: string | null
+          phone_number: string
+          read_at?: string | null
+          received_at?: string | null
+          repair_order_id?: string | null
+          sent_at?: string | null
+          sent_by?: string | null
+          status?: string
+          template_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          customer_id?: string | null
+          delivered_at?: string | null
+          department?: string | null
+          direction?: string
+          error_message?: string | null
+          id?: string
+          media_type?: string | null
+          media_url?: string | null
+          meta_message_id?: string | null
+          order_id?: string | null
+          phone_number?: string
+          read_at?: string | null
+          received_at?: string | null
+          repair_order_id?: string | null
+          sent_at?: string | null
+          sent_by?: string | null
+          status?: string
+          template_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_messages_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_templates: {
+        Row: {
+          body: string
+          category: string
+          created_at: string
+          created_by: string | null
+          department: string | null
+          id: string
+          language: string
+          meta_template_name: string | null
+          meta_template_status: string | null
+          name: string
+          status: string
+          updated_at: string
+          updated_by: string | null
+          variables: Json
+        }
+        Insert: {
+          body: string
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          id?: string
+          language?: string
+          meta_template_name?: string | null
+          meta_template_status?: string | null
+          name: string
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          variables?: Json
+        }
+        Update: {
+          body?: string
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          id?: string
+          language?: string
+          meta_template_name?: string | null
+          meta_template_status?: string | null
+          name?: string
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          variables?: Json
+        }
+        Relationships: []
+      }
       zoho_invoices: {
         Row: {
           balance: number | null
@@ -4291,6 +4586,8 @@ export type Database = {
       can_manage_orders: { Args: never; Returns: boolean }
       can_manage_planning: { Args: never; Returns: boolean }
       can_manage_repair: { Args: never; Returns: boolean }
+      can_manage_whatsapp_automation: { Args: never; Returns: boolean }
+      can_send_whatsapp: { Args: never; Returns: boolean }
       can_upload_factory_invoice: { Args: never; Returns: boolean }
       can_view_mail_audit: { Args: never; Returns: boolean }
       clear_factory_invoice_pdf: {
