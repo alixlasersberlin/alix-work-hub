@@ -109,6 +109,14 @@ const navItems: NavItem[] = [
           { path: '/mailcenter/produktivfreigabe', label: 'Produktivfreigabe', icon: Rocket, roles: ['Super Admin'] },
         ],
       },
+      {
+        path: '/tickets', label: 'Tickets aus AlixSmart', icon: Ticket,
+        roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung'],
+        children: [
+          { path: '/tickets', label: 'Ticketliste', icon: Ticket, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung'] },
+          { path: '/tickets/api-sync', label: 'API Sync Einstellungen', icon: Settings, roles: ['Admin', 'Super Admin'] },
+        ],
+      },
     ],
   },
   {
@@ -197,14 +205,6 @@ const navItems: NavItem[] = [
       { path: '/reparatur/finance', label: 'Übergabe Finance', icon: Receipt, roles: null },
       { path: '/reparatur/tourenplanung', label: 'Übergabe Tourenplanung', icon: MapPin, roles: null },
       { path: '/reparatur/archiv', label: 'Reparaturarchiv', icon: FileText, roles: null },
-    ],
-  },
-  {
-    path: '/tickets', label: 'TICKETS AUS ALIXSMART', icon: Ticket,
-    roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung'],
-    children: [
-      { path: '/tickets', label: 'Ticketliste', icon: Ticket, roles: null },
-      { path: '/tickets/api-sync', label: 'API Sync Einstellungen', icon: Settings, roles: ['Admin', 'Super Admin'] },
     ],
   },
   {
