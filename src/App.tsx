@@ -184,6 +184,7 @@ const MailCenterBackup = lazy(() => import("./pages/MailCenter/BackupCenter"));
 const MailCenterImport = lazy(() => import("./pages/MailCenter/ImportCenter"));
 const MailCenterExport = lazy(() => import("./pages/MailCenter/ExportCenter"));
 const MailCenterSpam = lazy(() => import("./pages/MailCenter/SpamCheck"));
+const MailCenterQS = lazy(() => import("./pages/MailCenter/Qualitaetssicherung"));
 import MaintenanceGate from "./components/MaintenanceGate";
 import LeihgeraetReminder from "./components/LeihgeraetReminder";
 
@@ -440,6 +441,7 @@ function AppRoutes() {
             <Route path="import" element={<MailCenterImport />} />
             <Route path="export" element={<MailCenterExport />} />
             <Route path="spam" element={<MailCenterSpam />} />
+            <Route path="qualitaetssicherung" element={<MailCenterQS />} />
           </Route>
 
           <Route path="/mdr-ce" element={<ProtectedRoute requiredRoles={['Super Admin']}><MdrCe /></ProtectedRoute>} />
