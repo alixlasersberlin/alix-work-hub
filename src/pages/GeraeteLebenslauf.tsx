@@ -233,8 +233,43 @@ export default function GeraeteLebenslauf() {
               </ol>
             )}
           </div>
+
+          {aiAnalysis && (
+            <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
+              <div className="flex items-center gap-2">
+                <Award className="w-4 h-4 text-primary" />
+                <h3 className="text-sm font-semibold">AI Service Analyse</h3>
+                {typeof aiAnalysis.confidence_score === 'number' && (
+                  <Badge variant="outline">Konfidenz: {Math.round(aiAnalysis.confidence_score * 100)}%</Badge>
+                )}
+                <span className="text-xs text-muted-foreground ml-auto">
+                  {new Date(aiAnalysis.created_at).toLocaleString('de-DE')}
+                </span>
+              </div>
+              {aiAnalysis.probable_cause && (
+                <div className="text-sm"><span className="text-muted-foreground">Häufigste Ursache:</span> {aiAnalysis.probable_cause}</div>
+              )}
+              {aiAnalysis.recommended_repair && (
+                <div className="text-sm"><span className="text-muted-foreground">Empfohlene Wartung/Reparatur:</span> {aiAnalysis.recommended_repair}</div>
+              )}
+              {Array.isArray(aiAnalysis.recommended_parts) && aiAnalysis.recommended_parts.length > 0 && (
+                <div className="text-sm">
+                  <span className="text-muted-foreground">Empfohlene Ersatzteile:</span>{' '}
+                  {aiAnalysis.recommended_parts.map((p: any) => p?.name || p).filter(Boolean).join(', ')}
+                </div>
+              )}
+              {Array.isArray(aiAnalysis.recommended_steps) && aiAnalysis.recommended_steps.length > 0 && (
+                <div className="text-sm">
+                  <span className="text-muted-foreground">Nächste empfohlene Prüfung:</span>{' '}
+                  {(aiAnalysis.recommended_steps[0]?.text || aiAnalysis.recommended_steps[0]) as string}
+                </div>
+              )}
+            </div>
+          )}
         </Card>
       )}
+
+
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="p-4">
