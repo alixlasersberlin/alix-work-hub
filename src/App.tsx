@@ -180,6 +180,10 @@ const MailCenterTestcenter = lazy(() => import("./pages/MailCenter/Testcenter"))
 const MailCenterProduktivfreigabe = lazy(() => import("./pages/MailCenter/Produktivfreigabe"));
 const MailCenterExecutive = lazy(() => import("./pages/MailCenter/ExecutiveDashboard"));
 const MailCenterTelefonie = lazy(() => import("./pages/MailCenter/Telefonie"));
+const MailCenterBackup = lazy(() => import("./pages/MailCenter/BackupCenter"));
+const MailCenterImport = lazy(() => import("./pages/MailCenter/ImportCenter"));
+const MailCenterExport = lazy(() => import("./pages/MailCenter/ExportCenter"));
+const MailCenterSpam = lazy(() => import("./pages/MailCenter/SpamCheck"));
 import MaintenanceGate from "./components/MaintenanceGate";
 import LeihgeraetReminder from "./components/LeihgeraetReminder";
 
