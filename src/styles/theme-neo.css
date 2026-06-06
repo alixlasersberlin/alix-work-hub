@@ -175,7 +175,7 @@ html.theme-neo [class*="border-b"][class*="bg-"] {
   border: 1px solid var(--neo-glass-border) !important;
   border-radius: 18px !important;
   margin: 12px 12px 0 12px;
-  box-shadow: var(--neo-shadow-soft);
+  box-shadow: var(--neo-shadow-lift);
   color: hsl(var(--foreground));
 }
 
