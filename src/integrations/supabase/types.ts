@@ -4379,6 +4379,47 @@ export type Database = {
           },
         ]
       }
+      ticket_outbound_sync_logs: {
+        Row: {
+          action: string
+          created_at: string
+          error_message: string | null
+          external_ticket_id: string | null
+          id: string
+          payload: Json | null
+          status: string
+          ticket_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          error_message?: string | null
+          external_ticket_id?: string | null
+          id?: string
+          payload?: Json | null
+          status: string
+          ticket_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          error_message?: string | null
+          external_ticket_id?: string | null
+          id?: string
+          payload?: Json | null
+          status?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_outbound_sync_logs_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ticket_sync_logs: {
         Row: {
           action: string | null
@@ -4428,6 +4469,7 @@ export type Database = {
           external_ticket_id: string | null
           id: string
           internal_note: string | null
+          last_outbound_sync_at: string | null
           last_synced_at: string | null
           order_number: string | null
           priority: string
@@ -4452,6 +4494,7 @@ export type Database = {
           external_ticket_id?: string | null
           id?: string
           internal_note?: string | null
+          last_outbound_sync_at?: string | null
           last_synced_at?: string | null
           order_number?: string | null
           priority?: string
@@ -4476,6 +4519,7 @@ export type Database = {
           external_ticket_id?: string | null
           id?: string
           internal_note?: string | null
+          last_outbound_sync_at?: string | null
           last_synced_at?: string | null
           order_number?: string | null
           priority?: string

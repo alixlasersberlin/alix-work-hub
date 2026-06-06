@@ -9,8 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { ArrowLeft, Loader2, MessageSquare, Paperclip, Save, Send, Wrench, Truck, Banknote, ClipboardList } from 'lucide-react';
+import { ArrowLeft, Loader2, MessageSquare, Paperclip, Save, Send, Wrench, Truck, Banknote, ClipboardList, RefreshCw, History, CheckCircle2, AlertCircle } from 'lucide-react';
 import { sbRepair } from '@/lib/repair/api';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 interface Ticket {
   id: string;
@@ -33,8 +34,17 @@ interface Ticket {
   customer_visible_status: string;
   internal_note: string | null;
   last_synced_at: string | null;
+  last_outbound_sync_at: string | null;
   created_at: string;
   updated_at: string;
+}
+interface OutboundLog {
+  id: string;
+  action: string;
+  status: string;
+  error_message: string | null;
+  payload: any;
+  created_at: string;
 }
 interface Msg {
   id: string;
@@ -72,6 +82,44 @@ export default function TicketDetail() {
   const [saving, setSaving] = useState(false);
   const [newMsg, setNewMsg] = useState('');
   const [msgInternal, setMsgInternal] = useState(true);
+  const [outboundLogs, setOutboundLogs] = useState<OutboundLog[]>([]);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+
+  async function loadOutboundLogs() {
+    if (!id) return;
+    const { data } = await supabase
+      .from('ticket_outbound_sync_logs')
+      .select('*')
+      .eq('ticket_id', id)
+      .order('created_at', { ascending: false })
+      .limit(50);
+    setOutboundLogs((data as OutboundLog[]) || []);
+  }
+
+  async function syncToAlixSmart(action: string, message_id?: string | null) {
+    if (!ticket?.external_ticket_id) return;
+    setSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-to-alixsmart', {
+        body: { ticket_id: ticket.id, action, message_id: message_id || null },
+      });
+      if (error) throw error;
+      if (data?.ok) {
+        toast.success('An AlixSmart übertragen');
+        setTicket(t => t ? { ...t, last_outbound_sync_at: new Date().toISOString() } : t);
+      } else if (data?.skipped) {
+        toast.info('Sync übersprungen: ' + data.skipped);
+      } else {
+        toast.error('Sync-Fehler: ' + (data?.error || 'unbekannt'));
+      }
+    } catch (e: any) {
+      toast.error('Sync-Fehler: ' + (e?.message || e));
+    } finally {
+      setSyncing(false);
+      loadOutboundLogs();
+    }
+  }
 
   async function load() {
     if (!id) return;
@@ -88,7 +136,7 @@ export default function TicketDetail() {
     setLoading(false);
   }
 
-  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [id]);
+  useEffect(() => { load(); loadOutboundLogs(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [id]);
 
   async function patch(updates: Partial<Ticket>) {
     if (!ticket) return;
@@ -96,13 +144,29 @@ export default function TicketDetail() {
     const { error } = await supabase.from('tickets').update(updates).eq('id', ticket.id);
     setSaving(false);
     if (error) { toast.error('Speichern fehlgeschlagen: ' + error.message); return; }
-    setTicket({ ...ticket, ...updates });
+    const merged = { ...ticket, ...updates };
+    setTicket(merged);
     toast.success('Gespeichert');
+
+    // Auto-sync to AlixSmart on customer-relevant changes
+    let action: string | null = null;
+    if ('status' in updates && updates.status !== ticket.status) {
+      action = (updates.status === 'geschlossen' || updates.status === 'gelöst') ? 'ticket_closed' : 'status_change';
+    } else if ('priority' in updates && updates.priority !== ticket.priority) {
+      action = 'priority_change';
+    } else if ('assigned_to' in updates && updates.assigned_to !== ticket.assigned_to) {
+      action = 'assignment_change';
+    } else if ('customer_visible_status' in updates && updates.customer_visible_status !== ticket.customer_visible_status) {
+      action = 'customer_status_change';
+    }
+    if (action && merged.external_ticket_id) {
+      syncToAlixSmart(action);
+    }
   }
 
   async function addMessage() {
     if (!ticket || !newMsg.trim()) return;
-    const { error } = await supabase.from('ticket_messages').insert({
+    const { data, error } = await supabase.from('ticket_messages').insert({
       ticket_id: ticket.id,
       sender_type: 'agent',
       sender_name: user?.email || 'Mitarbeiter',
@@ -110,10 +174,14 @@ export default function TicketDetail() {
       message: newMsg.trim(),
       is_internal: msgInternal,
       source_system: 'alixwork',
-    });
+    }).select('id').single();
     if (error) { toast.error(error.message); return; }
     setNewMsg('');
     toast.success(msgInternal ? 'Interne Notiz hinzugefügt' : 'Nachricht hinzugefügt');
+    // Only sync public messages to AlixSmart
+    if (!msgInternal && ticket.external_ticket_id && data?.id) {
+      syncToAlixSmart('new_public_message', data.id);
+    }
     load();
   }
 
@@ -207,8 +275,12 @@ export default function TicketDetail() {
           <Badge variant="outline">{ticket.external_ticket_id || ticket.id.slice(0, 8)}</Badge>
           <Badge variant="outline">{ticket.source_system}</Badge>
         </div>
-        <div className="text-xs text-muted-foreground">
-          Letzter Sync: {ticket.last_synced_at ? new Date(ticket.last_synced_at).toLocaleString('de-DE') : '—'}
+        <div className="flex flex-col items-end gap-1 text-xs text-muted-foreground">
+          <div>Letzter Inbound-Sync: {ticket.last_synced_at ? new Date(ticket.last_synced_at).toLocaleString('de-DE') : '—'}</div>
+          <div className="flex items-center gap-1">
+            {ticket.last_outbound_sync_at && <CheckCircle2 className="w-3 h-3 text-green-500" />}
+            An AlixSmart: {ticket.last_outbound_sync_at ? new Date(ticket.last_outbound_sync_at).toLocaleString('de-DE') : '—'}
+          </div>
         </div>
       </div>
 
@@ -341,6 +413,64 @@ export default function TicketDetail() {
               onClick={() => handover('tourenplanung', 'An Tourenplanung übergeben')}>
               <Truck className="w-4 h-4 mr-2" /> Tourenplanung übergeben
             </Button>
+          </div>
+
+          <div className="rounded-xl border border-border bg-card p-6 space-y-3">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+              <RefreshCw className="w-4 h-4" /> AlixSmart Sync
+            </h2>
+            <div className="text-xs text-muted-foreground">
+              {ticket.external_ticket_id
+                ? <>External ID: <span className="font-mono text-foreground">{ticket.external_ticket_id}</span></>
+                : 'Keine externe Ticket-ID vorhanden — Sync nicht möglich.'}
+            </div>
+            <div className="text-xs text-muted-foreground flex items-center gap-1">
+              {ticket.last_outbound_sync_at
+                ? <><CheckCircle2 className="w-3 h-3 text-green-500" /> Letzte erfolgreiche Übertragung: {new Date(ticket.last_outbound_sync_at).toLocaleString('de-DE')}</>
+                : <><AlertCircle className="w-3 h-3 text-amber-500" /> Noch keine Übertragung</>}
+            </div>
+            <Button variant="outline" className="w-full justify-start"
+              disabled={!canEdit || syncing || !ticket.external_ticket_id}
+              onClick={() => syncToAlixSmart('manual')}>
+              {syncing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+              Jetzt synchronisieren
+            </Button>
+            <Dialog open={historyOpen} onOpenChange={(o) => { setHistoryOpen(o); if (o) loadOutboundLogs(); }}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="w-full justify-start">
+                  <History className="w-4 h-4 mr-2" /> Sync-Historie anzeigen ({outboundLogs.length})
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[80vh] overflow-auto">
+                <DialogHeader>
+                  <DialogTitle>AlixSmart Sync-Historie</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-2">
+                  {outboundLogs.length === 0 && <div className="text-sm text-muted-foreground p-4">Noch keine Synchronisationen.</div>}
+                  {outboundLogs.map(l => (
+                    <div key={l.id} className={`rounded-lg border p-3 text-xs ${l.status === 'success' ? 'border-green-500/30 bg-green-500/5' : l.status === 'skipped' ? 'border-amber-500/30 bg-amber-500/5' : 'border-destructive/30 bg-destructive/5'}`}>
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                          {l.status === 'success'
+                            ? <CheckCircle2 className="w-3 h-3 text-green-500" />
+                            : <AlertCircle className="w-3 h-3 text-destructive" />}
+                          <span className="font-medium text-foreground">{l.action}</span>
+                          <Badge variant="outline">{l.status}</Badge>
+                        </div>
+                        <span className="text-muted-foreground">{new Date(l.created_at).toLocaleString('de-DE')}</span>
+                      </div>
+                      {l.error_message && <div className="text-destructive mt-1">{l.error_message}</div>}
+                      {l.payload && (
+                        <details className="mt-1">
+                          <summary className="cursor-pointer text-muted-foreground">Payload</summary>
+                          <pre className="mt-1 p-2 rounded bg-background overflow-auto text-[10px]">{JSON.stringify(l.payload, null, 2)}</pre>
+                        </details>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </div>
