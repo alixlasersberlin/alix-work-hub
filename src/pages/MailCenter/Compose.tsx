@@ -81,6 +81,10 @@ function applyVars(input: string, vars: Record<string, string>): string {
 }
 
 export default function MailCenterCompose() {
+  // Prefill from navigation state (e.g. from CustomerCommunication "Neue E-Mail")
+  const navState = (typeof window !== 'undefined' ? (window.history.state?.usr ?? null) : null) as
+    | { customer?: CustomerRow } | null;
+  const prefillCustomer = navState?.customer ?? null;
   const [sender, setSender] = useState<SenderKey>('finance');
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
