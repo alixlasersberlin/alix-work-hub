@@ -72,6 +72,27 @@ Deno.serve(async (req) => {
       return twiml();
     }
 
+    // ---- Idempotenz-Check: gleiche Twilio MessageSid nie zweimal verarbeiten ----
+    if (messageSid) {
+      const { data: existing } = await supabase
+        .from("whatsapp_sc_messages")
+        .select("id, conversation_id, ticket_id")
+        .eq("twilio_message_sid", messageSid)
+        .maybeSingle();
+      if (existing) {
+        await supabase.from("whatsapp_sync_logs").insert({
+          event_type: "inbound_duplicate",
+          status: "skipped",
+          conversation_id: existing.conversation_id,
+          ticket_id: existing.ticket_id,
+          message_id: existing.id,
+          payload: { messageSid, from: fromRaw, to: toRaw },
+        });
+        return twiml();
+      }
+    }
+
+
     // Collect media
     const media: { url: string; type: string }[] = [];
     for (let i = 0; i < numMedia; i++) {
