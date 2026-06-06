@@ -82,6 +82,44 @@ export default function TicketDetail() {
   const [saving, setSaving] = useState(false);
   const [newMsg, setNewMsg] = useState('');
   const [msgInternal, setMsgInternal] = useState(true);
+  const [outboundLogs, setOutboundLogs] = useState<OutboundLog[]>([]);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+
+  async function loadOutboundLogs() {
+    if (!id) return;
+    const { data } = await supabase
+      .from('ticket_outbound_sync_logs')
+      .select('*')
+      .eq('ticket_id', id)
+      .order('created_at', { ascending: false })
+      .limit(50);
+    setOutboundLogs((data as OutboundLog[]) || []);
+  }
+
+  async function syncToAlixSmart(action: string, message_id?: string | null) {
+    if (!ticket?.external_ticket_id) return;
+    setSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-to-alixsmart', {
+        body: { ticket_id: ticket.id, action, message_id: message_id || null },
+      });
+      if (error) throw error;
+      if (data?.ok) {
+        toast.success('An AlixSmart übertragen');
+        setTicket(t => t ? { ...t, last_outbound_sync_at: new Date().toISOString() } : t);
+      } else if (data?.skipped) {
+        toast.info('Sync übersprungen: ' + data.skipped);
+      } else {
+        toast.error('Sync-Fehler: ' + (data?.error || 'unbekannt'));
+      }
+    } catch (e: any) {
+      toast.error('Sync-Fehler: ' + (e?.message || e));
+    } finally {
+      setSyncing(false);
+      loadOutboundLogs();
+    }
+  }
 
   async function load() {
     if (!id) return;
