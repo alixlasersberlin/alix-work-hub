@@ -88,6 +88,6 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.ticket-customer-notify]
-verify_jwt = true
+verify_jwt = false
 
 
