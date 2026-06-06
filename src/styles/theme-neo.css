@@ -135,7 +135,7 @@ html.theme-neo aside {
   border: 1px solid var(--neo-glass-border) !important;
   border-radius: 26px !important;
   margin: 12px 0 12px 12px !important;
-  box-shadow: var(--neo-shadow-lift);
+  box-shadow: var(--neo-shadow-float);
   overflow: hidden;
   color: hsl(var(--foreground));
 }
