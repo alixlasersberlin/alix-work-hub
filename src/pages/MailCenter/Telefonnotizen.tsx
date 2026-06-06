@@ -146,6 +146,56 @@ export default function Telefonnotizen() {
           <DialogContent className="max-w-2xl">
             <DialogHeader><DialogTitle>Telefonnotiz erfassen</DialogTitle></DialogHeader>
             <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2">
+                <Label>Kunde zuordnen</Label>
+                {selectedCustomer ? (
+                  <div className="flex items-center justify-between gap-2 mt-1 p-2 rounded-md border border-primary/30 bg-primary/5">
+                    <div className="flex items-center gap-2 text-sm">
+                      <User className="w-4 h-4 text-primary" />
+                      <div>
+                        <div className="font-medium">{selectedCustomer.company_name || selectedCustomer.contact_name || '—'}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {selectedCustomer.contact_name && selectedCustomer.company_name ? selectedCustomer.contact_name + ' · ' : ''}
+                          {selectedCustomer.email || ''} {selectedCustomer.phone ? '· ' + selectedCustomer.phone : ''}
+                        </div>
+                      </div>
+                    </div>
+                    <Button size="sm" variant="ghost" onClick={clearCustomer}><X className="w-4 h-4" /></Button>
+                  </div>
+                ) : (
+                  <div className="relative mt-1">
+                    <Search className="w-4 h-4 absolute left-3 top-3 text-muted-foreground" />
+                    <Input
+                      className="pl-9"
+                      placeholder="Kunde suchen (Firma, Name, E-Mail, Telefon)..."
+                      value={custQuery}
+                      onChange={e => setCustQuery(e.target.value)}
+                    />
+                    {custQuery.trim().length >= 2 && (
+                      <div className="absolute z-50 left-0 right-0 mt-1 bg-popover border border-border rounded-md shadow-lg max-h-64 overflow-auto">
+                        {custSearching && <div className="p-3 text-sm text-muted-foreground">Suche...</div>}
+                        {!custSearching && custResults.length === 0 && (
+                          <div className="p-3 text-sm text-muted-foreground">Keine Kunden gefunden</div>
+                        )}
+                        {custResults.map(c => (
+                          <button
+                            key={c.id}
+                            type="button"
+                            onClick={() => pickCustomer(c)}
+                            className="w-full text-left px-3 py-2 hover:bg-accent text-sm border-b border-border last:border-0"
+                          >
+                            <div className="font-medium">{c.company_name || c.contact_name || '—'}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {c.contact_name && c.company_name ? c.contact_name + ' · ' : ''}
+                              {c.email || ''} {c.phone ? '· ' + c.phone : ''}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
               <div><Label>Ansprechpartner</Label><Input value={form.contact_name || ''} onChange={e => setForm({ ...form, contact_name: e.target.value })} /></div>
               <div><Label>Telefonnummer</Label><Input value={form.phone_number || ''} onChange={e => setForm({ ...form, phone_number: e.target.value })} /></div>
               <div><Label>Datum</Label><Input type="date" value={form.call_date} onChange={e => setForm({ ...form, call_date: e.target.value })} /></div>
