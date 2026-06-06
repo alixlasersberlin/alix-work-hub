@@ -3544,6 +3544,114 @@ export type Database = {
           },
         ]
       }
+      repair_invoice_proposals: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          currency: string | null
+          customer_company: string | null
+          customer_email: string | null
+          customer_id: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          device_label: string | null
+          device_serial: string | null
+          id: string
+          invoice_id: string | null
+          labor_cost: number | null
+          labor_hours: number | null
+          labor_rate: number | null
+          notes: string | null
+          parts: Json
+          parts_total: number | null
+          processed_at: string | null
+          processed_by: string | null
+          repair_number: string | null
+          repair_order_id: string
+          shipping_cost: number | null
+          status: string
+          ticket_id: string | null
+          ticket_number: string | null
+          total_amount: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          customer_company?: string | null
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          device_label?: string | null
+          device_serial?: string | null
+          id?: string
+          invoice_id?: string | null
+          labor_cost?: number | null
+          labor_hours?: number | null
+          labor_rate?: number | null
+          notes?: string | null
+          parts?: Json
+          parts_total?: number | null
+          processed_at?: string | null
+          processed_by?: string | null
+          repair_number?: string | null
+          repair_order_id: string
+          shipping_cost?: number | null
+          status?: string
+          ticket_id?: string | null
+          ticket_number?: string | null
+          total_amount?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          customer_company?: string | null
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          device_label?: string | null
+          device_serial?: string | null
+          id?: string
+          invoice_id?: string | null
+          labor_cost?: number | null
+          labor_hours?: number | null
+          labor_rate?: number | null
+          notes?: string | null
+          parts?: Json
+          parts_total?: number | null
+          processed_at?: string | null
+          processed_by?: string | null
+          repair_number?: string | null
+          repair_order_id?: string
+          shipping_cost?: number | null
+          status?: string
+          ticket_id?: string | null
+          ticket_number?: string | null
+          total_amount?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repair_invoice_proposals_repair_order_id_fkey"
+            columns: ["repair_order_id"]
+            isOneToOne: false
+            referencedRelation: "repair_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "repair_invoice_proposals_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       repair_orders: {
         Row: {
           accessories: string | null
