@@ -249,23 +249,9 @@ const navItems: NavItem[] = [
       { path: '/bewertungen/frontend', label: 'Frontend', icon: Cloud, roles: null },
     ],
   },
-      {
+  {
     path: '/operation', label: 'OPERATIONS', icon: Workflow, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Read Only Audit'],
     children: [
-      {
-        path: '/aic', label: 'ALIX INTELLIGENCE', icon: Brain, roles: ['Super Admin'],
-        children: [
-          { path: '/aic', label: 'Dashboard', icon: LayoutDashboard, roles: ['Super Admin'] },
-          { path: '/aic/unternehmen', label: 'Unternehmen', icon: Building2, roles: ['Super Admin'] },
-          { path: '/aic/forderungen', label: 'Forderungen', icon: AlertOctagon, roles: ['Super Admin'] },
-          { path: '/aic/vertrieb', label: 'Vertrieb', icon: TrendingUp, roles: ['Super Admin'] },
-          { path: '/aic/service', label: 'Service', icon: Wrench, roles: ['Super Admin'] },
-          { path: '/aic/mitarbeiter', label: 'Mitarbeiter', icon: Users, roles: ['Super Admin'] },
-          { path: '/aic/forecasts', label: 'Forecasts', icon: LineChart, roles: ['Super Admin'] },
-          { path: '/aic/tasks', label: 'KI-Aufgaben', icon: ListChecks, roles: ['Super Admin'] },
-          { path: '/aic/berichte', label: 'Berichte', icon: FileText, roles: ['Super Admin'] },
-        ],
-      },
       { path: '/mailcenter/executive', label: 'Executive Dashboard', icon: TrendingUp, roles: ['Admin', 'Super Admin', 'Geschäftsführung'] },
       { path: '/geraetetypen', label: 'Gerätetypen', icon: BarChart3, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance'] },
       { path: '/import', label: 'Import', icon: Cloud, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Read Only Audit'] },
@@ -278,6 +264,20 @@ const navItems: NavItem[] = [
       { path: '/operation/email-vorlagen', label: 'E-Mail Vorlagen', icon: Mail, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order'] },
       { path: '/portal-admin', label: 'Kundenportal', icon: Globe, roles: ['Admin', 'Super Admin', 'Order'] },
       { path: '/operation/systemwartung', label: 'Systemwartung', icon: AlertTriangle, roles: ['Super Admin'] },
+    ],
+  },
+  {
+    path: '/aic', label: 'ALIX INTELLIGENCE', icon: Brain, roles: ['Super Admin'],
+    children: [
+      { path: '/aic', label: 'Dashboard', icon: LayoutDashboard, roles: ['Super Admin'] },
+      { path: '/aic/unternehmen', label: 'Unternehmen', icon: Building2, roles: ['Super Admin'] },
+      { path: '/aic/forderungen', label: 'Forderungen', icon: AlertOctagon, roles: ['Super Admin'] },
+      { path: '/aic/vertrieb', label: 'Vertrieb', icon: TrendingUp, roles: ['Super Admin'] },
+      { path: '/aic/service', label: 'Service', icon: Wrench, roles: ['Super Admin'] },
+      { path: '/aic/mitarbeiter', label: 'Mitarbeiter', icon: Users, roles: ['Super Admin'] },
+      { path: '/aic/forecasts', label: 'Forecasts', icon: LineChart, roles: ['Super Admin'] },
+      { path: '/aic/tasks', label: 'KI-Aufgaben', icon: ListChecks, roles: ['Super Admin'] },
+      { path: '/aic/berichte', label: 'Berichte', icon: FileText, roles: ['Super Admin'] },
     ],
   },
   {
