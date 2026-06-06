@@ -126,19 +126,50 @@ html.theme-neo nav {
   z-index: 1;
 }
 
-/* ---------- Sidebar — floating crystal panel ---------- */
+/* ---------- Sidebar — floating crystal panel with 3D depth ---------- */
 html.theme-neo aside {
+  position: relative;
   background:
-    linear-gradient(180deg, hsla(0,0%,100%,0.85), hsla(220,30%,98%,0.65)) !important;
-  backdrop-filter: blur(var(--neo-glass-blur)) saturate(160%);
-  -webkit-backdrop-filter: blur(var(--neo-glass-blur)) saturate(160%);
+    linear-gradient(180deg, hsla(0,0%,100%,0.92) 0%, hsla(220,40%,98%,0.78) 60%, hsla(220,40%,95%,0.7) 100%) !important;
+  backdrop-filter: blur(var(--neo-glass-blur)) saturate(170%);
+  -webkit-backdrop-filter: blur(var(--neo-glass-blur)) saturate(170%);
   border: 1px solid var(--neo-glass-border) !important;
   border-radius: 26px !important;
   margin: 12px 0 12px 12px !important;
-  box-shadow: var(--neo-shadow-float);
+  box-shadow:
+    inset 0 1px 0 hsla(0, 0%, 100%, 1),
+    inset 1px 0 0 hsla(0, 0%, 100%, 0.85),
+    inset -1px 0 0 hsla(222, 30%, 60%, 0.10),
+    inset 0 -1px 0 hsla(222, 30%, 55%, 0.12),
+    0 4px 10px -4px hsla(222, 40%, 22%, 0.12),
+    0 22px 44px -18px hsla(222, 55%, 22%, 0.32),
+    0 50px 100px -40px hsla(222, 60%, 24%, 0.42),
+    18px 0 60px -30px hsla(222, 55%, 22%, 0.28);
   overflow: hidden;
   color: hsl(var(--foreground));
 }
+/* bright top edge highlight on the sidebar */
+html.theme-neo aside::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, hsla(0,0%,100%,1), transparent);
+  pointer-events: none;
+}
+/* soft contact shadow under the sidebar */
+html.theme-neo aside::after {
+  content: '';
+  position: absolute;
+  inset: auto 6% -20px 6%;
+  height: 32px;
+  border-radius: 50%;
+  background: radial-gradient(50% 100% at 50% 0%, hsla(222, 55%, 22%, 0.28), transparent 70%);
+  filter: blur(14px);
+  pointer-events: none;
+  z-index: -1;
+}
+
 html.theme-neo aside a,
 html.theme-neo aside button {
   border-radius: 12px !important;
@@ -147,23 +178,33 @@ html.theme-neo aside button {
 }
 html.theme-neo aside a:hover,
 html.theme-neo aside button:hover {
-  background: hsla(222, 65%, 22%, 0.06) !important;
+  background: linear-gradient(180deg, hsla(0,0%,100%,0.95), hsla(220,40%,96%,0.85)) !important;
   color: hsl(var(--primary)) !important;
-  box-shadow: inset 0 0 0 1px hsla(222, 65%, 22%, 0.12);
-  transform: translateX(2px);
+  box-shadow:
+    inset 0 1px 0 hsla(0, 0%, 100%, 1),
+    inset 0 -1px 0 hsla(222, 30%, 55%, 0.10),
+    0 1px 2px hsla(222, 40%, 22%, 0.05),
+    0 8px 18px -8px hsla(222, 50%, 22%, 0.25),
+    0 0 0 1px hsla(222, 65%, 30%, 0.10);
+  transform: translateX(2px) translateY(-1px);
 }
 html.theme-neo aside [data-active="true"],
 html.theme-neo aside .bg-primary,
 html.theme-neo aside [aria-current="page"] {
-  background: linear-gradient(135deg, hsla(222, 65%, 22%, 0.95), hsla(222, 50%, 30%, 0.92)) !important;
+  background: linear-gradient(135deg, hsla(222, 70%, 20%, 0.98), hsla(222, 55%, 32%, 0.95)) !important;
   color: hsl(40 60% 96%) !important;
   box-shadow:
-    inset 0 1px 0 hsla(255, 100%, 100%, 0.18),
-    0 8px 20px -10px hsla(222, 65%, 22%, 0.55);
+    inset 0 1px 0 hsla(255, 100%, 100%, 0.28),
+    inset 0 -1px 0 hsla(222, 80%, 8%, 0.45),
+    0 2px 4px -1px hsla(222, 65%, 18%, 0.25),
+    0 10px 22px -8px hsla(222, 70%, 22%, 0.55),
+    0 18px 40px -14px hsla(222, 70%, 22%, 0.45);
+  transform: translateY(-1px);
 }
 html.theme-neo aside [data-active="true"] svg,
 html.theme-neo aside [aria-current="page"] svg {
   color: hsl(39 80% 65%) !important;
+  filter: drop-shadow(0 1px 2px hsla(39, 80%, 40%, 0.4));
 }
 
 /* ---------- Header / Topbar ---------- */
