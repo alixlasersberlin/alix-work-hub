@@ -5625,6 +5625,19 @@ export type Database = {
         }
         Returns: string
       }
+      notify_customer_event: {
+        Args: {
+          _customer_name: string
+          _event: string
+          _message?: string
+          _recipient_email: string
+          _repair_number: string
+          _repair_order_id: string
+          _ticket_id: string
+          _ticket_number: string
+        }
+        Returns: undefined
+      }
       requires_reauth: { Args: never; Returns: boolean }
       session_requires_reauth: { Args: never; Returns: boolean }
       set_factory_invoice_payment_ok: {
