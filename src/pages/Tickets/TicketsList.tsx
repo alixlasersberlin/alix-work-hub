@@ -25,7 +25,7 @@ interface TicketRow {
   created_at: string;
 }
 
-const STATUS_OPTIONS = ['offen', 'in_bearbeitung', 'wartet_kunde', 'gelöst', 'geschlossen'];
+const STATUS_OPTIONS = ['open', 'in-progress', 'wartet_Kunde', 'offen', 'in_bearbeitung', 'wartet_kunde', 'gelöst', 'geschlossen'];
 const PRIORITY_OPTIONS = ['niedrig', 'normal', 'hoch', 'kritisch'];
 const DEPARTMENT_OPTIONS = ['service', 'technik', 'finance', 'tourenplanung', 'lieferung', 'abholung', 'austausch'];
 
