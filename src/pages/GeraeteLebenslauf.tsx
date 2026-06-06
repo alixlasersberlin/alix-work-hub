@@ -56,23 +56,43 @@ export default function GeraeteLebenslauf() {
   const [loading, setLoading] = useState(false);
   const [topDevices, setTopDevices] = useState<{ serial: string; count: number; device?: string }[]>([]);
   const [topCustomers, setTopCustomers] = useState<{ name: string; count: number }[]>([]);
+  const [warrantyCases, setWarrantyCases] = useState<{ serial: string; device?: string; date: string }[]>([]);
+  const [leasingDevices, setLeasingDevices] = useState<{ serial: string; device?: string; customer?: string }[]>([]);
+  const [redDevices, setRedDevices] = useState<{ serial: string; device?: string; customer?: string; score: number }[]>([]);
+  const [aiAnalysis, setAiAnalysis] = useState<any | null>(null);
 
   useEffect(() => { loadDashboard(); }, []);
 
   async function loadDashboard() {
     const { data } = await supabase
       .from('device_lifecycle')
-      .select('serial_number, device_name, customer_name, event_type')
-      .in('event_type', ['Reparatur', 'Reklamation', 'Ersatzteil']);
+      .select('serial_number, device_name, customer_name, event_type, event_date, reference_id')
+      .in('event_type', ['Reparatur', 'Reklamation', 'Ersatzteil', 'Garantie', 'Leasing']);
     const dev = new Map<string, { count: number; device?: string }>();
     const cust = new Map<string, number>();
+    const warr: { serial: string; device?: string; date: string }[] = [];
+    const leas = new Map<string, { serial: string; device?: string; customer?: string }>();
     (data || []).forEach((r: any) => {
-      const d = dev.get(r.serial_number) || { count: 0, device: r.device_name || undefined };
-      d.count += 1; dev.set(r.serial_number, d);
-      if (r.customer_name) cust.set(r.customer_name, (cust.get(r.customer_name) || 0) + 1);
+      if (['Reparatur', 'Reklamation', 'Ersatzteil'].includes(r.event_type)) {
+        const d = dev.get(r.serial_number) || { count: 0, device: r.device_name || undefined };
+        d.count += 1; dev.set(r.serial_number, d);
+        if (r.customer_name) cust.set(r.customer_name, (cust.get(r.customer_name) || 0) + 1);
+      }
+      if (r.event_type === 'Garantie') warr.push({ serial: r.serial_number, device: r.device_name, date: r.event_date });
+      if (r.event_type === 'Leasing' && !leas.has(r.serial_number)) leas.set(r.serial_number, { serial: r.serial_number, device: r.device_name, customer: r.customer_name });
     });
     setTopDevices(Array.from(dev.entries()).map(([s, v]) => ({ serial: s, count: v.count, device: v.device })).sort((a, b) => b.count - a.count).slice(0, 8));
     setTopCustomers(Array.from(cust.entries()).map(([n, c]) => ({ name: n, count: c })).sort((a, b) => b.count - a.count).slice(0, 8));
+    setWarrantyCases(warr.slice(0, 8));
+    setLeasingDevices(Array.from(leas.values()).slice(0, 8));
+
+    const { data: health } = await (supabase as any)
+      .from('device_health_scores')
+      .select('serial_number, device_name, customer_name, health_score, health_status')
+      .eq('health_status', 'rot')
+      .order('health_score', { ascending: false })
+      .limit(8);
+    setRedDevices((health || []).map((h: any) => ({ serial: h.serial_number, device: h.device_name, customer: h.customer_name, score: Number(h.health_score) || 0 })));
   }
 
   async function search() {
@@ -98,6 +118,16 @@ export default function GeraeteLebenslauf() {
       .eq('serial_number', s)
       .order('event_date', { ascending: true });
     setEvents((data || []) as DLRow[]);
+
+    const { data: ai } = await (supabase as any)
+      .from('ai_service_analyses')
+      .select('id, probable_cause, recommended_repair, recommended_parts, recommended_steps, confidence_score, created_at')
+      .eq('serial_number', s)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    setAiAnalysis(ai || null);
+
     setLoading(false);
   }
 
@@ -203,8 +233,43 @@ export default function GeraeteLebenslauf() {
               </ol>
             )}
           </div>
+
+          {aiAnalysis && (
+            <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
+              <div className="flex items-center gap-2">
+                <Award className="w-4 h-4 text-primary" />
+                <h3 className="text-sm font-semibold">AI Service Analyse</h3>
+                {typeof aiAnalysis.confidence_score === 'number' && (
+                  <Badge variant="outline">Konfidenz: {Math.round(aiAnalysis.confidence_score * 100)}%</Badge>
+                )}
+                <span className="text-xs text-muted-foreground ml-auto">
+                  {new Date(aiAnalysis.created_at).toLocaleString('de-DE')}
+                </span>
+              </div>
+              {aiAnalysis.probable_cause && (
+                <div className="text-sm"><span className="text-muted-foreground">Häufigste Ursache:</span> {aiAnalysis.probable_cause}</div>
+              )}
+              {aiAnalysis.recommended_repair && (
+                <div className="text-sm"><span className="text-muted-foreground">Empfohlene Wartung/Reparatur:</span> {aiAnalysis.recommended_repair}</div>
+              )}
+              {Array.isArray(aiAnalysis.recommended_parts) && aiAnalysis.recommended_parts.length > 0 && (
+                <div className="text-sm">
+                  <span className="text-muted-foreground">Empfohlene Ersatzteile:</span>{' '}
+                  {aiAnalysis.recommended_parts.map((p: any) => p?.name || p).filter(Boolean).join(', ')}
+                </div>
+              )}
+              {Array.isArray(aiAnalysis.recommended_steps) && aiAnalysis.recommended_steps.length > 0 && (
+                <div className="text-sm">
+                  <span className="text-muted-foreground">Nächste empfohlene Prüfung:</span>{' '}
+                  {(aiAnalysis.recommended_steps[0]?.text || aiAnalysis.recommended_steps[0]) as string}
+                </div>
+              )}
+            </div>
+          )}
         </Card>
       )}
+
+
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="p-4">
@@ -229,6 +294,50 @@ export default function GeraeteLebenslauf() {
                 <li key={c.name} className="flex items-center justify-between">
                   <span className="truncate">{c.name}</span>
                   <Badge variant="outline">{c.count}</Badge>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+
+        <Card className="p-4">
+          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-teal-400" /> Garantiefälle</h3>
+          {warrantyCases.length === 0 ? <div className="text-sm text-muted-foreground">Keine Garantiefälle.</div> : (
+            <ul className="space-y-1 text-sm">
+              {warrantyCases.map((w) => (
+                <li key={w.serial + w.date} className="flex items-center justify-between gap-2">
+                  <button className="font-mono text-left hover:text-primary" onClick={() => loadSerial(w.serial)}>{w.serial}</button>
+                  <span className="text-xs text-muted-foreground truncate flex-1 mx-2">{w.device || ''}</span>
+                  <Badge variant="outline">{new Date(w.date).toLocaleDateString('de-DE')}</Badge>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+
+        <Card className="p-4">
+          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><FileText className="w-4 h-4 text-indigo-400" /> Leasinggeräte</h3>
+          {leasingDevices.length === 0 ? <div className="text-sm text-muted-foreground">Keine Leasinggeräte.</div> : (
+            <ul className="space-y-1 text-sm">
+              {leasingDevices.map((l) => (
+                <li key={l.serial} className="flex items-center justify-between gap-2">
+                  <button className="font-mono text-left hover:text-primary" onClick={() => loadSerial(l.serial)}>{l.serial}</button>
+                  <span className="text-xs text-muted-foreground truncate flex-1 mx-2">{l.device || l.customer || ''}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+
+        <Card className="p-4 md:col-span-2">
+          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-red-400" /> Geräte im roten Status</h3>
+          {redDevices.length === 0 ? <div className="text-sm text-muted-foreground">Keine kritischen Geräte.</div> : (
+            <ul className="space-y-1 text-sm">
+              {redDevices.map((d) => (
+                <li key={d.serial} className="flex items-center justify-between gap-2">
+                  <button className="font-mono text-left hover:text-primary" onClick={() => loadSerial(d.serial)}>{d.serial}</button>
+                  <span className="text-xs text-muted-foreground truncate flex-1 mx-2">{d.device || ''} – {d.customer || ''}</span>
+                  <Badge variant="outline" className="bg-red-500/15 text-red-300 border-red-500/40">Score {d.score}</Badge>
                 </li>
               ))}
             </ul>
