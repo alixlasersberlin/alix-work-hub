@@ -205,6 +205,7 @@ const MailCenterValidierung = lazy(() => import("./pages/MailCenter/Systemvalidi
 const TicketsList = lazy(() => import("./pages/Tickets/TicketsList"));
 const TicketDetail = lazy(() => import("./pages/Tickets/TicketDetail"));
 const TicketsApiSync = lazy(() => import("./pages/Tickets/ApiSyncSettings"));
+const AiServiceCenter = lazy(() => import("./pages/AiServiceCenter"));
 import MaintenanceGate from "./components/MaintenanceGate";
 import LeihgeraetReminder from "./components/LeihgeraetReminder";
 
