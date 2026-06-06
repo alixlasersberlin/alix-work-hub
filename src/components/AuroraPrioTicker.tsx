@@ -31,9 +31,7 @@ const MODE_STORAGE_KEY = 'aurora-ticker-mode';
 
 const MODES: { value: Mode; label: string; icon: typeof Flame }[] = [
   { value: 'prio', label: 'PRIO Top 10', icon: Flame },
-  { value: 'timeline', label: 'Timeline Top 10', icon: GanttChart },
   { value: 'lager', label: 'Lagerbestand', icon: Package },
-  { value: 'cnn', label: 'CNN Live', icon: Radio },
 ];
 
 function daysUntil(date: string | null): number | null {
