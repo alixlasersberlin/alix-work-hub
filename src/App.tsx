@@ -430,6 +430,18 @@ function AppRoutes() {
         <Route path="/bewertung/:token" element={<PublicReviewForm />} />
         <Route path="/portal" element={<PortalLookup />} />
         <Route path="/portal/status" element={<PortalStatus />} />
+        <Route path="/kunde/login" element={<CustomerPortalLogin />} />
+        <Route path="/kunde" element={<CustomerPortalLayout />}>
+          <Route index element={<CustomerPortalDashboard />} />
+          <Route path="nachrichten" element={<CustomerPortalMessages />} />
+          <Route path="dokumente" element={<CustomerPortalDocuments />} />
+          <Route path="rechnungen" element={<CustomerPortalInvoices />} />
+          <Route path="angebote" element={<CustomerPortalQuotes />} />
+          <Route path="reparaturen" element={<CustomerPortalRepairs />} />
+          <Route path="support" element={<CustomerPortalSupport />} />
+          <Route path="bewertungen" element={<CustomerPortalReviews />} />
+          <Route path="verlauf" element={<CustomerPortalTimeline />} />
+        </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
