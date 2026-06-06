@@ -136,7 +136,7 @@ export default function TicketDetail() {
     setLoading(false);
   }
 
-  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [id]);
+  useEffect(() => { load(); loadOutboundLogs(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [id]);
 
   async function patch(updates: Partial<Ticket>) {
     if (!ticket) return;
@@ -144,13 +144,29 @@ export default function TicketDetail() {
     const { error } = await supabase.from('tickets').update(updates).eq('id', ticket.id);
     setSaving(false);
     if (error) { toast.error('Speichern fehlgeschlagen: ' + error.message); return; }
-    setTicket({ ...ticket, ...updates });
+    const merged = { ...ticket, ...updates };
+    setTicket(merged);
     toast.success('Gespeichert');
+
+    // Auto-sync to AlixSmart on customer-relevant changes
+    let action: string | null = null;
+    if ('status' in updates && updates.status !== ticket.status) {
+      action = (updates.status === 'geschlossen' || updates.status === 'gelöst') ? 'ticket_closed' : 'status_change';
+    } else if ('priority' in updates && updates.priority !== ticket.priority) {
+      action = 'priority_change';
+    } else if ('assigned_to' in updates && updates.assigned_to !== ticket.assigned_to) {
+      action = 'assignment_change';
+    } else if ('customer_visible_status' in updates && updates.customer_visible_status !== ticket.customer_visible_status) {
+      action = 'customer_status_change';
+    }
+    if (action && merged.external_ticket_id) {
+      syncToAlixSmart(action);
+    }
   }
 
   async function addMessage() {
     if (!ticket || !newMsg.trim()) return;
-    const { error } = await supabase.from('ticket_messages').insert({
+    const { data, error } = await supabase.from('ticket_messages').insert({
       ticket_id: ticket.id,
       sender_type: 'agent',
       sender_name: user?.email || 'Mitarbeiter',
@@ -158,10 +174,14 @@ export default function TicketDetail() {
       message: newMsg.trim(),
       is_internal: msgInternal,
       source_system: 'alixwork',
-    });
+    }).select('id').single();
     if (error) { toast.error(error.message); return; }
     setNewMsg('');
     toast.success(msgInternal ? 'Interne Notiz hinzugefügt' : 'Nachricht hinzugefügt');
+    // Only sync public messages to AlixSmart
+    if (!msgInternal && ticket.external_ticket_id && data?.id) {
+      syncToAlixSmart('new_public_message', data.id);
+    }
     load();
   }
 
