@@ -12,6 +12,13 @@ const corsHeaders = {
 
 const MARKETING = new Set(["marketing", "newsletter", "kampagne", "campaign"]);
 
+const REPLY_TO_MAP: Record<string, string> = {
+  "finance@alixwork.de": "k.trinh@alix-operation.de",
+  "vertrieb@alixwork.de": "rde@alix-lasers.com",
+  "service@alixwork.de": "support@alix-lasers.com",
+  "news@alixwork.de": "support@alix-operation.de",
+};
+
 interface TriggerRecord {
   id: string;
   customer_id?: string | null;
@@ -264,6 +271,7 @@ serve(async (req) => {
             body: JSON.stringify({
               from: (() => { const e = a.sender_email || "news@alixwork.de"; return `Alix Lasers | ${e.split("@")[0]} <${e}>`; })(),
               to: [cust.contact_name ? `${cust.contact_name} <${cust.email}>` : cust.email],
+              reply_to: REPLY_TO_MAP[String(a.sender_email || "news@alixwork.de").toLowerCase()] || undefined,
               subject: subj,
               html: html || undefined,
               text: text || undefined,
