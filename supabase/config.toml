@@ -90,4 +90,10 @@ verify_jwt = false
 [functions.ticket-customer-notify]
 verify_jwt = false
 
+[functions.whatsapp-webhook]
+verify_jwt = false
+
+[functions.whatsapp-send]
+verify_jwt = true
+
 
