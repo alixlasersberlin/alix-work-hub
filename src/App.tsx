@@ -234,6 +234,7 @@ const ORDER_MGMT_ROLES = ['Admin', 'Super Admin', 'Order', 'Österreich'];
 const WAREHOUSE_ROLES = ['Admin', 'Super Admin', 'Order', 'Österreich'];
 const QM_ROLES = ['Admin', 'Super Admin', 'QM'];
 const TICKETS_ROLES = ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung'];
+const AI_SERVICE_ROLES = ['Admin', 'Super Admin', 'Service', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance'];
 
 function isSupplierOnly(roles: string[]) {
   return roles.includes('Lieferant') && !roles.some(r => ['Admin', 'Super Admin'].includes(r));
