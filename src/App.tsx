@@ -416,6 +416,7 @@ function AppRoutes() {
             <Route path="gespraechsprotokolle" element={<MailCenterGespraechsprotokolle />} />
             <Route path="aufgaben" element={<MailCenterAufgaben />} />
             <Route path="wiedervorlagen" element={<MailCenterWiedervorlagen />} />
+            <Route path="berechtigungen" element={<MailCenterBerechtigungen />} />
             <Route path="einstellungen" element={<MailCenterEinstellungen />} />
           </Route>
 
