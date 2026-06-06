@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,9 +9,11 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Phone, Plus, Search } from 'lucide-react';
+import { Phone, Plus, Search, User, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+
+interface CustomerHit { id: string; company_name: string | null; contact_name: string | null; email: string | null; phone: string | null; }
 
 const CALL_TYPES = [
   ['inbound', 'Eingehender Anruf'], ['outbound', 'Ausgehender Anruf'], ['callback', 'Rückruf'],
