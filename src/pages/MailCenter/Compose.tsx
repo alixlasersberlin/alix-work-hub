@@ -81,6 +81,10 @@ function applyVars(input: string, vars: Record<string, string>): string {
 }
 
 export default function MailCenterCompose() {
+  // Prefill from navigation state (e.g. from CustomerCommunication "Neue E-Mail")
+  const navState = (typeof window !== 'undefined' ? (window.history.state?.usr ?? null) : null) as
+    | { customer?: CustomerRow } | null;
+  const prefillCustomer = navState?.customer ?? null;
   const [sender, setSender] = useState<SenderKey>('finance');
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
@@ -88,10 +92,12 @@ export default function MailCenterCompose() {
   const [files, setFiles] = useState<File[]>([]);
 
   // Customer search
-  const [customerQuery, setCustomerQuery] = useState('');
+  const [customerQuery, setCustomerQuery] = useState(
+    prefillCustomer?.company_name || prefillCustomer?.contact_name || prefillCustomer?.email || '',
+  );
   const [customerResults, setCustomerResults] = useState<CustomerRow[]>([]);
   const [customerLoading, setCustomerLoading] = useState(false);
-  const [customer, setCustomer] = useState<CustomerRow | null>(null);
+  const [customer, setCustomer] = useState<CustomerRow | null>(prefillCustomer);
   const [showCustomerResults, setShowCustomerResults] = useState(false);
 
   // Orders
