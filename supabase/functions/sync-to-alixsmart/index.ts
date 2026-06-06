@@ -3,8 +3,11 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const ALIXSMART_API_URL = Deno.env.get("ALIXSMART_API_URL") || "";
-const ALIXSMART_API_KEY = Deno.env.get("ALIXSMART_API_KEY") || "";
+// Read env on every invocation (not just at cold start) so secret rotations take effect immediately
+const getAlixSmartConfig = () => ({
+  url: Deno.env.get("ALIXSMART_API_URL") || "",
+  key: Deno.env.get("ALIXSMART_API_KEY") || "",
+});
 
 // Map AlixWork -> AlixSmart status (reverse of inbound STATUS_MAP)
 const STATUS_MAP: Record<string, string> = {
@@ -100,6 +103,7 @@ Deno.serve(async (req) => {
       }),
     };
 
+    const { url: ALIXSMART_API_URL, key: ALIXSMART_API_KEY } = getAlixSmartConfig();
     if (!ALIXSMART_API_URL || !ALIXSMART_API_KEY) {
       await logSync(supabase, body.ticket_id, ticket.external_ticket_id, action, "error", "ALIXSMART_API_URL / KEY not configured", payload);
       return json({ error: "AlixSmart endpoint not configured" }, 500);
