@@ -148,6 +148,10 @@ const MailCenterAbmeldungen = lazy(() => import("./pages/MailCenter/Abmeldungen"
 const MailCenterDomains = lazy(() => import("./pages/MailCenter/Domains"));
 const MailCenterBerichte = lazy(() => import("./pages/MailCenter/Berichte"));
 const MailCenterEinstellungen = lazy(() => import("./pages/MailCenter/Einstellungen"));
+const MailCenterPosteingang = lazy(() => import("./pages/MailCenter/Posteingang"));
+const MailCenterGesendet = lazy(() => import("./pages/MailCenter/Gesendet"));
+const MailCenterEntwuerfe = lazy(() => import("./pages/MailCenter/Entwuerfe"));
+const MailCenterInternal = lazy(() => import("./pages/MailCenter/InterneNachrichten"));
 import MaintenanceGate from "./components/MaintenanceGate";
 import LeihgeraetReminder from "./components/LeihgeraetReminder";
 
@@ -371,6 +375,10 @@ function AppRoutes() {
           <Route path="/mailcenter" element={<ProtectedRoute><MailCenterLayout /></ProtectedRoute>}>
             <Route index element={<MailCenterDashboard />} />
             <Route path="schreiben" element={<MailCenterCompose />} />
+            <Route path="posteingang" element={<MailCenterPosteingang />} />
+            <Route path="gesendet" element={<MailCenterGesendet />} />
+            <Route path="entwuerfe" element={<MailCenterEntwuerfe />} />
+            <Route path="intern" element={<MailCenterInternal />} />
             <Route path="vorlagen" element={<MailCenterVorlagen />} />
             <Route path="kampagnen" element={<MailCenterKampagnen />} />
             <Route path="automationen" element={<MailCenterAutomationen />} />
