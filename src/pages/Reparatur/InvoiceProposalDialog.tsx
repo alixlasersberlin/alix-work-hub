@@ -36,8 +36,8 @@ export function InvoiceProposalDialog({ repair, onCreated }: Props) {
       setExisting(ex?.[0] || null);
       setParts(pl || []);
       if (repair.ticket_id) {
-        const { data: t } = await supabase.from('tickets').select('ticket_number').eq('id', repair.ticket_id).maybeSingle();
-        setTicketNumber(t?.ticket_number || null);
+        const { data: t } = await supabase.from('tickets').select('external_ticket_id').eq('id', repair.ticket_id).maybeSingle();
+        setTicketNumber(t?.external_ticket_id || null);
       }
     })();
   }, [repair?.id, repair?.ticket_id, open]);
