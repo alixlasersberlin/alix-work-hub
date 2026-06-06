@@ -57,6 +57,7 @@ const OffenePosten = lazy(() => import("./pages/OffenePosten"));
 const ZohoUnpaidInvoices = lazy(() => import("./pages/ZohoUnpaidInvoices"));
 const FinanceDetail = lazy(() => import("./pages/FinanceDetail"));
 const Rechnungsvorschlaege = lazy(() => import("./pages/Rechnungsvorschlaege"));
+const ServiceCockpit = lazy(() => import("./pages/ServiceCockpit"));
 const FinanceForm = lazy(() => import("./pages/FinanceForm"));
 const UserManagement = lazy(() => import("./pages/UserManagement"));
 const ImportManagement = lazy(() => import("./pages/ImportManagement"));
@@ -373,6 +374,7 @@ function AppRoutes() {
           <Route path="/finance/offene-posten" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><OffenePosten /></ProtectedRoute>} />
           <Route path="/finance/unpaid-zoho" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><ZohoUnpaidInvoices /></ProtectedRoute>} />
           <Route path="/finance/rechnungsvorschlaege" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Rechnungsvorschlaege /></ProtectedRoute>} />
+          <Route path="/service-cockpit" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Serviceleitung']}><ServiceCockpit /></ProtectedRoute>} />
           <Route path="/finance/neu" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Finance']}><FinanceForm /></ProtectedRoute>} />
           <Route path="/finance/:id" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceDetail /></ProtectedRoute>} />
           <Route path="/finance/:id/bearbeiten" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Finance']}><FinanceForm /></ProtectedRoute>} />
