@@ -131,6 +131,26 @@ export default function ServiceCockpit() {
     return Array.from(m, ([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 10);
   }, [filteredTickets]);
 
+  // Erweiterungen: Top Kunden, Garantiequote, Ø Reparaturdauer
+  const customerData = useMemo(() => {
+    const m = new Map<string, number>();
+    filteredTickets.forEach((t) => { const k = t.customer_name || '–'; m.set(k, (m.get(k) || 0) + 1); });
+    return Array.from(m, ([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 10);
+  }, [filteredTickets]);
+
+  const warrantyPct = useMemo(() => {
+    if (!filteredTickets.length) return 0;
+    const w = filteredTickets.filter((t: any) => (t.auto_category || '').toLowerCase() === 'garantie').length;
+    return (w / filteredTickets.length) * 100;
+  }, [filteredTickets]);
+
+  const avgRepairDays = useMemo(() => {
+    const done = repairs.filter((r: any) => r.repair_status === 'Ausgeliefert' || r.repair_status === 'Reparatur abgeschlossen');
+    if (!done.length) return 0;
+    const sum = done.reduce((acc: number, r: any) => acc + (new Date(r.updated_at || r.created_at).getTime() - new Date(r.created_at).getTime()), 0);
+    return sum / done.length / 86400000;
+  }, [repairs]);
+
   // Filter options
   const techOptions = useMemo(() => {
     const ids = Array.from(new Set(tickets.map((t) => t.assigned_to).filter(Boolean)));
