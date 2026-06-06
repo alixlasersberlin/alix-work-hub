@@ -210,6 +210,44 @@ export default function GeraeteLebenslauf() {
 
           <HealthBar health={health} />
 
+          {(warranty || maintenance.length > 0) && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="rounded-lg border border-teal-500/30 bg-teal-500/5 p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <ShieldCheck className="w-4 h-4 text-teal-400" />
+                  <h3 className="text-sm font-semibold">Garantie</h3>
+                  {warranty?.warranty_status && <Badge variant="outline">{warranty.warranty_status}</Badge>}
+                </div>
+                {warranty ? (
+                  <div className="text-xs space-y-1">
+                    <div><span className="text-muted-foreground">Beginn:</span> {warranty.warranty_start || '–'}</div>
+                    <div><span className="text-muted-foreground">Ende:</span> {warranty.warranty_end || '–'}</div>
+                    <div><span className="text-muted-foreground">Typ:</span> {warranty.warranty_type || '–'}</div>
+                  </div>
+                ) : <div className="text-xs text-muted-foreground">Keine Garantieakte.</div>}
+              </div>
+              <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <Wrench className="w-4 h-4 text-emerald-400" />
+                  <h3 className="text-sm font-semibold">Wartung</h3>
+                </div>
+                {maintenance.length === 0 ? (
+                  <div className="text-xs text-muted-foreground">Kein Wartungsplan hinterlegt.</div>
+                ) : (
+                  <ul className="text-xs space-y-1">
+                    {maintenance.map((m) => (
+                      <li key={m.id} className="flex justify-between gap-2">
+                        <span>{m.next_maintenance_date || '–'}</span>
+                        <Badge variant="outline">{m.maintenance_status}</Badge>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          )}
+
+
           <div>
             <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><Award className="w-4 h-4" /> Zeitachse</h3>
             {loading ? (
