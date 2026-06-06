@@ -150,7 +150,7 @@ serve(async (req) => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            from: `${campaign.sender_name || "Alix"} <${campaign.sender_email}>`,
+            from: `Alix Lasers | ${String(campaign.sender_email).split("@")[0]} <${campaign.sender_email}>`,
             to: [rec.name ? `${rec.name} <${rec.email}>` : rec.email],
             subject: subj,
             html: html || undefined,
