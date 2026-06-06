@@ -121,6 +121,7 @@ serve(async (req) => {
     let baseSubject = rawSubject ?? "";
     let baseHtml = rawHtml ?? "";
     let baseText = rawText ?? "";
+    let templateCategory: string | null = (body?.category as string | undefined) ?? null;
 
     if (template_id) {
       const { data: template, error: templateError } = await supabase
@@ -134,6 +135,60 @@ serve(async (req) => {
       baseSubject = rawSubject ?? template.subject ?? "";
       baseHtml = rawHtml ?? template.body_html ?? "";
       baseText = rawText ?? template.body_text ?? "";
+      templateCategory = templateCategory ?? (template.category ?? null);
+    }
+
+    // DSGVO: marketing/newsletter must respect mail_unsubscribes
+    const MARKETING_CATEGORIES = new Set(["marketing", "newsletter", "kampagne", "campaign"]);
+    const isMarketing = !!templateCategory &&
+      MARKETING_CATEGORIES.has(String(templateCategory).toLowerCase());
+
+    if (isMarketing && !is_test) {
+      const { data: unsub } = await supabase
+        .from("mail_unsubscribes")
+        .select("id")
+        .ilike("email", String(to_email).toLowerCase())
+        .limit(1)
+        .maybeSingle();
+      if (unsub) {
+        const { data: skipped } = await supabase
+          .from("mail_messages")
+          .insert({
+            customer_id, order_id, invoice_id, ticket_id, repair_id, template_id,
+            to_email, to_name, from_email, from_name,
+            subject: baseSubject, body_html: baseHtml, body_text: baseText,
+            status: "skipped_unsubscribed",
+            created_by: userData.user.id,
+          })
+          .select()
+          .single();
+        if (skipped?.id) {
+          await supabase.from("mail_events").insert({
+            message_id: skipped.id,
+            event_type: "skipped_unsubscribed",
+            event_data: { reason: "recipient_unsubscribed" },
+          });
+        }
+        return jsonResponse({
+          success: true,
+          skipped: true,
+          reason: "recipient_unsubscribed",
+        });
+      }
+
+      // Auto-append unsubscribe footer for marketing/newsletter
+      const unsubUrl =
+        `https://alix-finance.de/unsubscribe?email=${encodeURIComponent(String(to_email))}`;
+      const htmlFooter =
+        `<hr style="margin-top:24px;border:none;border-top:1px solid #e5e5e5"/>` +
+        `<p style="font-size:11px;color:#888;margin-top:12px">` +
+        `Sie möchten keine Werbung mehr erhalten? ` +
+        `<a href="${unsubUrl}" style="color:#888;text-decoration:underline">Hier abmelden</a>.` +
+        `</p>`;
+      const textFooter =
+        `\n\n--\nSie möchten keine Werbung mehr erhalten? Hier abmelden: ${unsubUrl}`;
+      if (baseHtml && !baseHtml.includes("/unsubscribe?email=")) baseHtml += htmlFooter;
+      if (baseText && !baseText.includes("/unsubscribe?email=")) baseText += textFooter;
     }
 
     const variables: Record<string, string> = {
@@ -158,6 +213,7 @@ serve(async (req) => {
     if (!finalSubject || (!finalHtml && !finalText)) {
       return jsonResponse({ error: "Subject and body are required" }, 400);
     }
+
 
     const resendResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",

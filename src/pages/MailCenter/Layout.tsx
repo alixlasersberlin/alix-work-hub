@@ -1,7 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import {
   Mail, LayoutDashboard, PenSquare, FileText, Megaphone, Workflow,
-  Activity, Globe, BarChart3, Settings,
+  Activity, Globe, BarChart3, Settings, MailX,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -12,6 +12,7 @@ const tabs = [
   { to: '/mailcenter/kampagnen', label: 'Kampagnen', icon: Megaphone },
   { to: '/mailcenter/automationen', label: 'Automationen', icon: Workflow },
   { to: '/mailcenter/tracking', label: 'Tracking', icon: Activity },
+  { to: '/mailcenter/abmeldungen', label: 'Abmeldungen', icon: MailX },
   { to: '/mailcenter/domains', label: 'Domains', icon: Globe },
   { to: '/mailcenter/berichte', label: 'Berichte', icon: BarChart3 },
   { to: '/mailcenter/einstellungen', label: 'Einstellungen', icon: Settings },
