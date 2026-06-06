@@ -204,7 +204,7 @@ const navItems: NavItem[] = [
       // Übersicht
       { path: '/mailcenter', label: 'Dashboard', icon: LayoutDashboard, roles: null },
       { path: '/mailcenter/executive', label: 'Executive Dashboard', icon: TrendingUp, roles: null },
-      { path: '/mailcenter/berichte', label: 'Berichte', icon: BarChart3, roles: null },
+      
       // E-Mail Submenu
       {
         path: '/mailcenter/posteingang', label: 'E-Mail', icon: Mail, roles: null,
@@ -259,6 +259,7 @@ const navItems: NavItem[] = [
           { path: '/mailcenter/audit-log', label: 'Audit-Log', icon: ScrollText, roles: null },
           { path: '/mailcenter/fehlerprotokoll', label: 'Fehlerprotokoll', icon: AlertTriangle, roles: null },
           { path: '/mailcenter/tracking', label: 'Tracking', icon: Activity, roles: null },
+          { path: '/mailcenter/berichte', label: 'Berichte', icon: BarChart3, roles: null },
         ],
       },
       // Setup Submenu
