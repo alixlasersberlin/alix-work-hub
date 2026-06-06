@@ -69,7 +69,7 @@ export default function ApiSyncSettings() {
     toast.success('In Zwischenablage kopiert');
   }
 
-  if (!isAdmin) {
+  if (!isSuperAdmin) {
     return <div className="p-8">Nur für Administratoren sichtbar.</div>;
   }
 
