@@ -92,10 +92,12 @@ export default function MailCenterCompose() {
   const [files, setFiles] = useState<File[]>([]);
 
   // Customer search
-  const [customerQuery, setCustomerQuery] = useState('');
+  const [customerQuery, setCustomerQuery] = useState(
+    prefillCustomer?.company_name || prefillCustomer?.contact_name || prefillCustomer?.email || '',
+  );
   const [customerResults, setCustomerResults] = useState<CustomerRow[]>([]);
   const [customerLoading, setCustomerLoading] = useState(false);
-  const [customer, setCustomer] = useState<CustomerRow | null>(null);
+  const [customer, setCustomer] = useState<CustomerRow | null>(prefillCustomer);
   const [showCustomerResults, setShowCustomerResults] = useState(false);
 
   // Orders
