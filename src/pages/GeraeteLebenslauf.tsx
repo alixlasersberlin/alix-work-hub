@@ -299,6 +299,50 @@ export default function GeraeteLebenslauf() {
             </ul>
           )}
         </Card>
+
+        <Card className="p-4">
+          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-teal-400" /> Garantiefälle</h3>
+          {warrantyCases.length === 0 ? <div className="text-sm text-muted-foreground">Keine Garantiefälle.</div> : (
+            <ul className="space-y-1 text-sm">
+              {warrantyCases.map((w) => (
+                <li key={w.serial + w.date} className="flex items-center justify-between gap-2">
+                  <button className="font-mono text-left hover:text-primary" onClick={() => loadSerial(w.serial)}>{w.serial}</button>
+                  <span className="text-xs text-muted-foreground truncate flex-1 mx-2">{w.device || ''}</span>
+                  <Badge variant="outline">{new Date(w.date).toLocaleDateString('de-DE')}</Badge>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+
+        <Card className="p-4">
+          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><FileText className="w-4 h-4 text-indigo-400" /> Leasinggeräte</h3>
+          {leasingDevices.length === 0 ? <div className="text-sm text-muted-foreground">Keine Leasinggeräte.</div> : (
+            <ul className="space-y-1 text-sm">
+              {leasingDevices.map((l) => (
+                <li key={l.serial} className="flex items-center justify-between gap-2">
+                  <button className="font-mono text-left hover:text-primary" onClick={() => loadSerial(l.serial)}>{l.serial}</button>
+                  <span className="text-xs text-muted-foreground truncate flex-1 mx-2">{l.device || l.customer || ''}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+
+        <Card className="p-4 md:col-span-2">
+          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-red-400" /> Geräte im roten Status</h3>
+          {redDevices.length === 0 ? <div className="text-sm text-muted-foreground">Keine kritischen Geräte.</div> : (
+            <ul className="space-y-1 text-sm">
+              {redDevices.map((d) => (
+                <li key={d.serial} className="flex items-center justify-between gap-2">
+                  <button className="font-mono text-left hover:text-primary" onClick={() => loadSerial(d.serial)}>{d.serial}</button>
+                  <span className="text-xs text-muted-foreground truncate flex-1 mx-2">{d.device || ''} – {d.customer || ''}</span>
+                  <Badge variant="outline" className="bg-red-500/15 text-red-300 border-red-500/40">Score {d.score}</Badge>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
       </div>
     </div>
   );
