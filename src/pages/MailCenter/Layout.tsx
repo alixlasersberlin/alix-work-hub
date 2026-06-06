@@ -47,6 +47,7 @@ const tabs = [
   { to: '/mailcenter/spam', label: 'Spam & Zustellbarkeit', icon: Shield },
   { to: '/mailcenter/qualitaetssicherung', label: 'Qualitätssicherung', icon: BadgeCheck },
   { to: '/mailcenter/schulungscenter', label: 'Schulungscenter', icon: GraduationCap },
+  { to: '/mailcenter/systemvalidierung', label: 'Systemvalidierung', icon: FileSignature },
 ];
 
 export default function MailCenterLayout() {
