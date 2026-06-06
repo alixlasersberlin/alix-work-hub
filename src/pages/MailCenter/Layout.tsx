@@ -3,13 +3,14 @@ import {
   Mail, LayoutDashboard, PenSquare, FileText, Megaphone, Workflow,
   Activity, Globe, BarChart3, Settings, MailX, Inbox, Send, FileEdit, MessageSquare, Sparkles, FileCheck2, Files,
   Phone, ClipboardList, CheckSquare, CalendarClock, ShieldCheck,
-  HeartPulse, ScrollText, AlertTriangle, TestTube2, Rocket,
+  HeartPulse, ScrollText, AlertTriangle, TestTube2, Rocket, TrendingUp,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NotificationBell } from '@/components/NotificationBell';
 
 const tabs = [
   { to: '/mailcenter', label: 'Dashboard', icon: LayoutDashboard, end: true },
+  { to: '/mailcenter/executive', label: 'Executive Dashboard', icon: TrendingUp },
   { to: '/mailcenter/posteingang', label: 'Posteingang', icon: Inbox },
   { to: '/mailcenter/gesendet', label: 'Gesendet', icon: Send },
   { to: '/mailcenter/entwuerfe', label: 'Entwürfe', icon: FileEdit },
