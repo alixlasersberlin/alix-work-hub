@@ -284,6 +284,92 @@ export default function MailCenterCompose() {
     }
   }
 
+  function validateForSend(toEmailOverride?: string): string | null {
+    const toMail = toEmailOverride ?? customer?.email ?? '';
+    if (!toMail) return 'Empfänger-E-Mail fehlt';
+    if (!senderEmail) return 'Absender-E-Mail fehlt';
+    if (!subject.trim()) return 'Betreff fehlt';
+    if (!body.trim() && !bodyHtml.trim()) return 'E-Mail-Inhalt fehlt';
+    return null;
+  }
+
+  function buildSendPayload(opts?: { toEmail?: string; toName?: string | null; isTest?: boolean }) {
+    const vars = buildVars();
+    return {
+      template_id: templateId || null,
+      customer_id: customer?.id ?? null,
+      order_id: order?.id ?? null,
+      invoice_id: null,
+      ticket_id: null,
+      repair_id: null,
+      to_email: opts?.toEmail ?? customer?.email ?? '',
+      to_name: opts?.toName ?? (customer?.contact_name || customer?.company_name || null),
+      from_email: senderEmail,
+      from_name: SENDERS[sender]?.label || null,
+      subject_variables: vars,
+      body_variables: vars,
+      subject,
+      body_html: bodyHtml || body,
+      body_text: body,
+      is_test: !!opts?.isTest,
+    };
+  }
+
+  async function sendMail() {
+    const err = validateForSend();
+    if (err) {
+      toast.error(err);
+      return;
+    }
+    setSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-mail', {
+        body: buildSendPayload(),
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error(JSON.stringify((data as any).error));
+      toast.success('E-Mail wurde erfolgreich versendet');
+      // optional reset of subject/body
+      setSubject('');
+      setBody('');
+      setBodyHtml('');
+      setTemplateId('');
+    } catch (e: any) {
+      console.error('send-mail failed', e);
+      toast.error('E-Mail konnte nicht versendet werden');
+    } finally {
+      setSending(false);
+    }
+  }
+
+  async function sendTestMail() {
+    const { data: userData } = await supabase.auth.getUser();
+    const myEmail = userData.user?.email;
+    if (!myEmail) {
+      toast.error('Keine Benutzer-E-Mail gefunden');
+      return;
+    }
+    const err = validateForSend(myEmail);
+    if (err) {
+      toast.error(err);
+      return;
+    }
+    setTesting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-mail', {
+        body: buildSendPayload({ toEmail: myEmail, toName: userData.user?.user_metadata?.full_name || null, isTest: true }),
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error(JSON.stringify((data as any).error));
+      toast.success(`Testmail wurde an ${myEmail} gesendet`);
+    } catch (e: any) {
+      console.error('test send-mail failed', e);
+      toast.error('Testmail konnte nicht versendet werden');
+    } finally {
+      setTesting(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Empfänger */}
