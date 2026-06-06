@@ -299,8 +299,22 @@ export default function MailCenterCompose() {
     return null;
   }
 
-  function buildSendPayload(opts?: { toEmail?: string; toName?: string | null; isTest?: boolean }) {
+  async function filesToAttachments() {
+    if (!files.length) return [];
+    const out: { filename: string; content: string; contentType?: string }[] = [];
+    for (const f of files) {
+      const buf = await f.arrayBuffer();
+      let bin = '';
+      const bytes = new Uint8Array(buf);
+      for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+      out.push({ filename: f.name, content: btoa(bin), contentType: f.type || undefined });
+    }
+    return out;
+  }
+
+  async function buildSendPayload(opts?: { toEmail?: string; toName?: string | null; isTest?: boolean }) {
     const vars = buildVars();
+    const attachments = await filesToAttachments();
     return {
       template_id: templateId || null,
       customer_id: customer?.id ?? null,
@@ -317,6 +331,7 @@ export default function MailCenterCompose() {
       subject,
       body_html: bodyHtml || body,
       body_text: body,
+      attachments,
       is_test: !!opts?.isTest,
     };
   }
@@ -330,7 +345,7 @@ export default function MailCenterCompose() {
     setSending(true);
     try {
       const { data, error } = await supabase.functions.invoke('send-mail', {
-        body: buildSendPayload(),
+        body: await buildSendPayload(),
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error(JSON.stringify((data as any).error));
@@ -363,7 +378,7 @@ export default function MailCenterCompose() {
     setTesting(true);
     try {
       const { data, error } = await supabase.functions.invoke('send-mail', {
-        body: buildSendPayload({ toEmail: myEmail, toName: userData.user?.user_metadata?.full_name || null, isTest: true }),
+        body: await buildSendPayload({ toEmail: myEmail, toName: userData.user?.user_metadata?.full_name || null, isTest: true }),
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error(JSON.stringify((data as any).error));
