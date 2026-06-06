@@ -42,7 +42,10 @@ type Message = {
   media_type: string | null;
   status: string;
   created_at: string;
+  twilio_message_sid?: string | null;
+  whatsapp_message_id?: string | null;
 };
+
 
 type Template = { id: string; key: string; title: string; body: string };
 
@@ -133,24 +136,75 @@ export default function WhatsAppServiceCenter() {
     if (!selected || !text.trim()) return;
     if (selected.opt_out) { toast.error("Opt-out aktiv"); return; }
     setSending(true);
-    const { error } = await supabase.functions.invoke("whatsapp-send", {
-      body: { conversation_id: selected.id, text },
+    const { data, error } = await supabase.functions.invoke("twilio-send-whatsapp-message", {
+      body: {
+        conversation_id: selected.id,
+        ticket_id: selected.linked_ticket_id,
+        to: `whatsapp:${selected.customer_phone.startsWith("+") ? selected.customer_phone : "+" + selected.customer_phone}`,
+        message: text,
+      },
     });
     setSending(false);
-    if (error) { toast.error(error.message); return; }
+    if (error || (data && (data as any).error)) {
+      toast.error(error?.message ?? (data as any)?.error ?? "Sendefehler");
+      return;
+    }
     setText("");
-    toast.success("Gesendet");
+    toast.success(`Gesendet (SID: ${(data as any)?.sid ?? "—"})`);
+    loadMessages(selected.id);
   };
 
   const sendTemplate = async (tplKey: string) => {
     if (!selected) return;
     if (selected.opt_out) { toast.error("Opt-out aktiv"); return; }
-    const { error } = await supabase.functions.invoke("whatsapp-send", {
-      body: { conversation_id: selected.id, template_key: tplKey },
+    const tpl = templates.find(t => t.key === tplKey);
+    if (!tpl) return;
+    const { data, error } = await supabase.functions.invoke("twilio-send-whatsapp-message", {
+      body: {
+        conversation_id: selected.id,
+        ticket_id: selected.linked_ticket_id,
+        to: `whatsapp:${selected.customer_phone.startsWith("+") ? selected.customer_phone : "+" + selected.customer_phone}`,
+        message: tpl.body,
+      },
+    });
+    if (error || (data && (data as any).error)) {
+      toast.error(error?.message ?? (data as any)?.error ?? "Sendefehler");
+      return;
+    }
+    toast.success("Vorlage gesendet");
+    loadMessages(selected.id);
+  };
+
+  const testConnection = async () => {
+    const { data, error } = await supabase.functions.invoke("twilio-send-whatsapp-message", {
+      body: { action: "test_connection" },
     });
     if (error) { toast.error(error.message); return; }
-    toast.success("Vorlage gesendet");
+    const d = data as any;
+    if (d?.ok) {
+      toast.success(`Twilio OK · ${d.friendly_name ?? ""} (${d.account_status ?? ""}) · From ${d.from_number ?? "—"}`);
+    } else {
+      toast.error(`Twilio Fehler: ${d?.error ?? "unbekannt"}`);
+    }
   };
+
+  const sendTestMessage = async () => {
+    if (!selected) { toast.error("Kein Gespräch ausgewählt"); return; }
+    const { data, error } = await supabase.functions.invoke("twilio-send-whatsapp-message", {
+      body: {
+        conversation_id: selected.id,
+        to: `whatsapp:${selected.customer_phone.startsWith("+") ? selected.customer_phone : "+" + selected.customer_phone}`,
+        message: "✅ AlixWork WhatsApp Testnachricht (Twilio).",
+      },
+    });
+    if (error || (data && (data as any).error)) {
+      toast.error(error?.message ?? (data as any)?.error ?? "Sendefehler");
+      return;
+    }
+    toast.success(`Testnachricht gesendet (SID: ${(data as any)?.sid ?? "—"})`);
+    loadMessages(selected.id);
+  };
+
 
   const saveInternalNote = async () => {
     if (!selected?.linked_ticket_id || !internalNote.trim()) {
