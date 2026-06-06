@@ -57,6 +57,20 @@ export default function Hilfe() {
           </Card>
         </Link>
 
+        <Link to="/mailcenter/schulungscenter" className="block">
+          <Card className="hover:border-primary/60 transition-colors h-full">
+            <CardHeader className="flex flex-row items-center gap-3 space-y-0">
+              <GraduationCap className="h-6 w-6 text-primary" />
+              <CardTitle className="text-lg">Schulungscenter</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              <p>Handbücher, SOPs, FAQ und Rollout-Status für das MailCenter.</p>
+            </CardContent>
+          </Card>
+        </Link>
+
+
+
 
         <Card>
           <CardHeader className="flex flex-row items-center gap-3 space-y-0">
