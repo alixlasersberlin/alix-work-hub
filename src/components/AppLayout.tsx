@@ -203,7 +203,7 @@ const navItems: NavItem[] = [
     children: [
       // Übersicht
       { path: '/mailcenter', label: 'Dashboard', icon: LayoutDashboard, roles: null },
-      { path: '/mailcenter/executive', label: 'Executive Dashboard', icon: TrendingUp, roles: null },
+      
       
       // E-Mail Submenu
       {
