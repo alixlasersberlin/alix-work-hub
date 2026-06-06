@@ -112,20 +112,6 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    path: '/aic', label: 'ALIX INTELLIGENCE', icon: Brain, roles: ['Super Admin'],
-    children: [
-      { path: '/aic', label: 'Dashboard', icon: LayoutDashboard, roles: ['Super Admin'] },
-      { path: '/aic/unternehmen', label: 'Unternehmen', icon: Building2, roles: ['Super Admin'] },
-      { path: '/aic/forderungen', label: 'Forderungen', icon: AlertOctagon, roles: ['Super Admin'] },
-      { path: '/aic/vertrieb', label: 'Vertrieb', icon: TrendingUp, roles: ['Super Admin'] },
-      { path: '/aic/service', label: 'Service', icon: Wrench, roles: ['Super Admin'] },
-      { path: '/aic/mitarbeiter', label: 'Mitarbeiter', icon: Users, roles: ['Super Admin'] },
-      { path: '/aic/forecasts', label: 'Forecasts', icon: LineChart, roles: ['Super Admin'] },
-      { path: '/aic/tasks', label: 'KI-Aufgaben', icon: ListChecks, roles: ['Super Admin'] },
-      { path: '/aic/berichte', label: 'Berichte', icon: FileText, roles: ['Super Admin'] },
-    ],
-  },
-  {
     path: '/auftragsverwaltung', label: 'AUFTRAGSVERWALTUNG', icon: ClipboardList, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich'],
     children: [
       {
