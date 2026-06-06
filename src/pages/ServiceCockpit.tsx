@@ -182,12 +182,13 @@ export default function ServiceCockpit() {
   });
 
   const exportExcel = () => {
-    const { kpis, techniker, geraete, fehler } = buildExportRows();
+    const { kpis, techniker, geraete, fehler, kunden } = buildExportRows();
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(kpis), 'KPIs');
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(techniker), 'Techniker');
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(geraete), 'Geräte');
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(fehler), 'Fehler');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(kunden), 'Kunden');
     XLSX.writeFile(wb, `service-cockpit_${from}_${to}.xlsx`);
   };
 
