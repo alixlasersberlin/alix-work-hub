@@ -172,6 +172,7 @@ const MailCenterTelefonnotizen = lazy(() => import("./pages/MailCenter/Telefonno
 const MailCenterGespraechsprotokolle = lazy(() => import("./pages/MailCenter/Gespraechsprotokolle"));
 const MailCenterAufgaben = lazy(() => import("./pages/MailCenter/Aufgaben"));
 const MailCenterWiedervorlagen = lazy(() => import("./pages/MailCenter/Wiedervorlagen"));
+const MailCenterBerechtigungen = lazy(() => import("./pages/MailCenter/Berechtigungen"));
 import MaintenanceGate from "./components/MaintenanceGate";
 import LeihgeraetReminder from "./components/LeihgeraetReminder";
 
@@ -415,6 +416,7 @@ function AppRoutes() {
             <Route path="gespraechsprotokolle" element={<MailCenterGespraechsprotokolle />} />
             <Route path="aufgaben" element={<MailCenterAufgaben />} />
             <Route path="wiedervorlagen" element={<MailCenterWiedervorlagen />} />
+            <Route path="berechtigungen" element={<MailCenterBerechtigungen />} />
             <Route path="einstellungen" element={<MailCenterEinstellungen />} />
           </Route>
 
