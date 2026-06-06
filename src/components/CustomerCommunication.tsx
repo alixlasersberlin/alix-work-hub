@@ -158,7 +158,7 @@ export default function CustomerCommunication({ customer }: { customer: any }) {
   }
 
   function goToCompose(extra?: Record<string, any>) {
-    navigate('/mailcenter/compose', {
+    navigate('/mailcenter/schreiben', {
       state: {
         customer: {
           id: customer.id,
