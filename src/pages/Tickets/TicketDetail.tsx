@@ -326,8 +326,8 @@ export default function TicketDetail() {
 
           <div className="rounded-xl border border-border bg-card p-6 space-y-3">
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Übergaben</h2>
-            <Button variant="outline" className="w-full justify-start" disabled={!canEdit}
-              onClick={() => handover('technik', 'Arbeitsauftrag erstellt')}>
+            <Button variant="outline" className="w-full justify-start" disabled={!canEdit || saving}
+              onClick={createRepairFromTicket}>
               <Wrench className="w-4 h-4 mr-2" /> Arbeitsauftrag erstellen
             </Button>
             <Button variant="outline" className="w-full justify-start" disabled={!canEdit} asChild>
