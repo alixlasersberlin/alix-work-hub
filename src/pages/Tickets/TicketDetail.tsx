@@ -37,6 +37,12 @@ interface Ticket {
   last_outbound_sync_at: string | null;
   created_at: string;
   updated_at: string;
+  repair_order_id: string | null;
+}
+interface LinkedRepair {
+  id: string;
+  repair_number: string | null;
+  repair_status: string | null;
 }
 interface OutboundLog {
   id: string;
