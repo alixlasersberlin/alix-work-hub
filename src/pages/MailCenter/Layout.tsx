@@ -4,7 +4,7 @@ import {
   Activity, Globe, BarChart3, Settings, MailX, Inbox, Send, FileEdit, MessageSquare, Sparkles, FileCheck2, Files,
   Phone, ClipboardList, CheckSquare, CalendarClock, ShieldCheck,
   HeartPulse, ScrollText, AlertTriangle, TestTube2, Rocket, TrendingUp, PhoneCall,
-  Database, Upload, FileDown, Shield, BadgeCheck, GraduationCap,
+  Database, Upload, FileDown, Shield, BadgeCheck, GraduationCap, FileSignature,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NotificationBell } from '@/components/NotificationBell';
@@ -47,6 +47,7 @@ const tabs = [
   { to: '/mailcenter/spam', label: 'Spam & Zustellbarkeit', icon: Shield },
   { to: '/mailcenter/qualitaetssicherung', label: 'Qualitätssicherung', icon: BadgeCheck },
   { to: '/mailcenter/schulungscenter', label: 'Schulungscenter', icon: GraduationCap },
+  { to: '/mailcenter/systemvalidierung', label: 'Systemvalidierung', icon: FileSignature },
 ];
 
 export default function MailCenterLayout() {
