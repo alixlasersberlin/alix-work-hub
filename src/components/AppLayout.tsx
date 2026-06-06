@@ -15,6 +15,7 @@ import WelcomeDialog from '@/components/WelcomeDialog';
 import LeoWelcomeDialog from '@/components/LeoWelcomeDialog';
 import NataliaWelcomeOverlay from '@/components/NataliaWelcomeOverlay';
 import DesignVariantSwitcher from '@/components/DesignVariantSwitcher';
+import { SidebarInfoBar } from '@/components/SidebarInfoBar';
 import AuroraPrioTicker from '@/components/AuroraPrioTicker';
 import AuroraTopNav from '@/components/AuroraTopNav';
 import { useDesignVariant } from '@/hooks/useDesignVariant';
@@ -1049,7 +1050,7 @@ export default function AppLayout() {
               <p className="text-[11px] text-muted-foreground truncate">{profile?.email}</p>
             </div>
           )}
-          <div className="flex gap-1">
+          <div className="flex gap-1 items-center">
             <Button
               variant="ghost"
               size="icon"
@@ -1086,6 +1087,7 @@ export default function AppLayout() {
               <LogOut className="w-4 h-4" />
               <span className="ml-1.5">Abmelden</span>
             </Button>
+            <DesignVariantSwitcher inline />
           </div>
         </div>
         {/* Resize-Handle (nur Desktop, wenn nicht eingeklappt) */}
@@ -1138,10 +1140,12 @@ export default function AppLayout() {
             </Button>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
             <AuroraPrioTicker />
-            <DesignVariantSwitcher inline />
-            <div className="flex items-center gap-2 text-sm">
+            <div className="hidden md:block min-w-0 flex-1">
+              <SidebarInfoBar />
+            </div>
+            <div className="flex items-center gap-2 text-sm flex-shrink-0">
               <span className="font-display font-bold gold-text">AlixWork</span>
               <span className="text-muted-foreground font-mono text-xs hidden sm:inline">v{APP_VERSION}</span>
           </div>

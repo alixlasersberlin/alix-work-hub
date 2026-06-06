@@ -319,10 +319,6 @@ export default function Dashboard() {
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in space-y-8">
-      {/* Info-Leiste (KW, Datum, Uhrzeiten, Wetter) */}
-      <div className="rounded-xl border border-border overflow-hidden">
-        <SidebarInfoBar />
-      </div>
 
 
 
