@@ -201,6 +201,8 @@ const navItems: NavItem[] = [
       { path: '/service-cockpit', label: 'Service Cockpit', icon: BarChart3, roles: ['Admin', 'Super Admin', 'Serviceleitung'] },
       { path: '/geraeteakte', label: 'Geräteakte', icon: FileText, roles: ['Admin', 'Super Admin', 'Technik', 'Kundenservice', 'Serviceleitung'] },
       { path: '/geraete-lebenslauf', label: 'Geräte-Lebenslauf', icon: Activity, roles: ['Admin', 'Super Admin', 'Technik', 'Kundenservice', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Finance'] },
+      { path: '/wartungscenter', label: 'Wartungscenter', icon: Wrench, roles: ['Admin', 'Super Admin', 'Service', 'Serviceleitung', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance', 'Tourenplanung'] },
+      { path: '/garantiecenter', label: 'Garantiecenter', icon: ShieldCheck, roles: ['Admin', 'Super Admin', 'Service', 'Serviceleitung', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance', 'Vertrieb'] },
       { path: '/whatsapp', label: 'WhatsApp Service Center', icon: MessageSquare, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung'] },
       { path: '/ai-service-center', label: 'AI Service Center', icon: Sparkles, roles: ['Admin', 'Super Admin', 'Service', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance'] },
       { path: '/reparatur/neu', label: 'Neue Reparatur anlegen', icon: FilePlus, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Order', 'Finance', 'QM'] },
