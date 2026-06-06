@@ -1049,7 +1049,7 @@ export default function AppLayout() {
               <p className="text-[11px] text-muted-foreground truncate">{profile?.email}</p>
             </div>
           )}
-          <div className="flex gap-1">
+          <div className="flex gap-1 items-center">
             <Button
               variant="ghost"
               size="icon"
@@ -1086,6 +1086,7 @@ export default function AppLayout() {
               <LogOut className="w-4 h-4" />
               <span className="ml-1.5">Abmelden</span>
             </Button>
+            <DesignVariantSwitcher inline />
           </div>
         </div>
         {/* Resize-Handle (nur Desktop, wenn nicht eingeklappt) */}
