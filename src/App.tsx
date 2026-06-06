@@ -118,6 +118,7 @@ const Detailsuche = lazy(() => import("./pages/Detailsuche"));
 const Geraetesperren = lazy(() => import("./pages/Geraetesperren"));
 const Systemwartung = lazy(() => import("./pages/Systemwartung"));
 const Geraeteakte = lazy(() => import("./pages/Geraeteakte"));
+const WhatsAppServiceCenter = lazy(() => import("./pages/WhatsAppServiceCenter"));
 const BugCapaLayoutLazy = lazy(() => import("./pages/BugCapa/_shared").then(m => ({ default: m.BugCapaLayout })));
 const BugCapaDashboard = lazy(() => import("./pages/BugCapa/BugCapaDashboard"));
 const BugCapaBugs = lazy(() => import("./pages/BugCapa/Bugs"));
@@ -433,6 +434,7 @@ function AppRoutes() {
           <Route path="/tickets" element={<ProtectedRoute requiredRoles={TICKETS_ROLES}><TicketsList /></ProtectedRoute>} />
           <Route path="/tickets/api-sync" element={<ProtectedRoute requiredRoles={['Super Admin']}><TicketsApiSync /></ProtectedRoute>} />
           <Route path="/tickets/:id" element={<ProtectedRoute requiredRoles={TICKETS_ROLES}><TicketDetail /></ProtectedRoute>} />
+          <Route path="/whatsapp" element={<ProtectedRoute requiredRoles={TICKETS_ROLES}><WhatsAppServiceCenter /></ProtectedRoute>} />
 
           <Route path="/aic" element={<ProtectedRoute requiredRoles={['Super Admin']}><AicLayout /></ProtectedRoute>}>
             <Route index element={<AicDashboard />} />
