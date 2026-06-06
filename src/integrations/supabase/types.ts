@@ -1215,8 +1215,57 @@ export type Database = {
           },
         ]
       }
+      mail_internal_messages: {
+        Row: {
+          body: string
+          created_at: string
+          customer_id: string | null
+          id: string
+          is_read: boolean | null
+          message_id: string | null
+          order_id: string | null
+          read_at: string | null
+          recipient_department: string | null
+          recipient_user_id: string | null
+          sender_id: string
+          subject: string | null
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          is_read?: boolean | null
+          message_id?: string | null
+          order_id?: string | null
+          read_at?: string | null
+          recipient_department?: string | null
+          recipient_user_id?: string | null
+          sender_id: string
+          subject?: string | null
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          is_read?: boolean | null
+          message_id?: string | null
+          order_id?: string | null
+          read_at?: string | null
+          recipient_department?: string | null
+          recipient_user_id?: string | null
+          sender_id?: string
+          subject?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       mail_messages: {
         Row: {
+          assigned_to: string | null
           body_html: string | null
           body_text: string | null
           bounced_at: string | null
@@ -1225,14 +1274,20 @@ export type Database = {
           created_by: string | null
           customer_id: string | null
           delivered_at: string | null
+          direction: string | null
           domain_id: string | null
+          due_date: string | null
           error_message: string | null
           from_email: string
           from_name: string | null
           id: string
+          in_reply_to: string | null
           invoice_id: string | null
+          is_read: boolean | null
+          mailbox: string | null
           opened_at: string | null
           order_id: string | null
+          priority: string | null
           provider_message_id: string | null
           repair_id: string | null
           reply_to: string | null
@@ -1240,6 +1295,7 @@ export type Database = {
           status: string | null
           subject: string
           template_id: string | null
+          thread_id: string | null
           ticket_id: string | null
           to_email: string
           to_name: string | null
@@ -1247,6 +1303,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          assigned_to?: string | null
           body_html?: string | null
           body_text?: string | null
           bounced_at?: string | null
@@ -1255,14 +1312,20 @@ export type Database = {
           created_by?: string | null
           customer_id?: string | null
           delivered_at?: string | null
+          direction?: string | null
           domain_id?: string | null
+          due_date?: string | null
           error_message?: string | null
           from_email: string
           from_name?: string | null
           id?: string
+          in_reply_to?: string | null
           invoice_id?: string | null
+          is_read?: boolean | null
+          mailbox?: string | null
           opened_at?: string | null
           order_id?: string | null
+          priority?: string | null
           provider_message_id?: string | null
           repair_id?: string | null
           reply_to?: string | null
@@ -1270,6 +1333,7 @@ export type Database = {
           status?: string | null
           subject: string
           template_id?: string | null
+          thread_id?: string | null
           ticket_id?: string | null
           to_email: string
           to_name?: string | null
@@ -1277,6 +1341,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          assigned_to?: string | null
           body_html?: string | null
           body_text?: string | null
           bounced_at?: string | null
@@ -1285,14 +1350,20 @@ export type Database = {
           created_by?: string | null
           customer_id?: string | null
           delivered_at?: string | null
+          direction?: string | null
           domain_id?: string | null
+          due_date?: string | null
           error_message?: string | null
           from_email?: string
           from_name?: string | null
           id?: string
+          in_reply_to?: string | null
           invoice_id?: string | null
+          is_read?: boolean | null
+          mailbox?: string | null
           opened_at?: string | null
           order_id?: string | null
+          priority?: string | null
           provider_message_id?: string | null
           repair_id?: string | null
           reply_to?: string | null
@@ -1300,6 +1371,7 @@ export type Database = {
           status?: string | null
           subject?: string
           template_id?: string | null
+          thread_id?: string | null
           ticket_id?: string | null
           to_email?: string
           to_name?: string | null
@@ -1322,6 +1394,72 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      mail_notes: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string
+          customer_id: string | null
+          id: string
+          message_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          created_by: string
+          customer_id?: string | null
+          id?: string
+          message_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string
+          customer_id?: string | null
+          id?: string
+          message_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      mail_notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          is_read: boolean | null
+          link: string | null
+          read_at: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          link?: string | null
+          read_at?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          link?: string | null
+          read_at?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       mail_recipients: {
         Row: {
@@ -3824,6 +3962,7 @@ export type Database = {
         Args: { _path: string; _production_order_id: string }
         Returns: undefined
       }
+      user_mailboxes: { Args: never; Returns: string[] }
     }
     Enums: {
       [_ in never]: never
