@@ -50,6 +50,7 @@ function priorityColor(p: string) {
 }
 
 export default function TicketsList() {
+  const navigate = useNavigate();
   const [rows, setRows] = useState<TicketRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
