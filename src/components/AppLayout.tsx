@@ -38,7 +38,7 @@ const navItems: NavItem[] = [
   },
   { path: '/geraetesperren', label: 'GERÄTESPERREN', icon: Lock, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Read Only Audit'] },
   {
-    path: '/mailcenter', label: 'ALIX I-COM', icon: Mail,
+    path: '/mailcenter', label: 'ALIX i-COM', icon: Mail,
     roles: ['Admin', 'Super Admin', 'Geschäftsführung', 'Marketing', 'Finance', 'Technik', 'Kundenservice', 'Vertrieb', 'Reparaturannahme', 'Tourenplanung', 'Bestellwesen', 'Order', 'Read Only', 'Read Only Audit'],
     children: [
       { path: '/mailcenter', label: 'Dashboard', icon: LayoutDashboard, roles: null },
