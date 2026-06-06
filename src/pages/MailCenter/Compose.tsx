@@ -591,13 +591,60 @@ export default function MailCenterCompose() {
 
       {/* Aktionen */}
       <div className="flex flex-wrap items-center justify-end gap-2">
-        <Button variant="outline" disabled><Eye className="w-4 h-4 mr-2" /> Vorschau</Button>
-        <Button variant="outline" disabled><Beaker className="w-4 h-4 mr-2" /> Testmail</Button>
-        <Button variant="outline" onClick={saveDraft} disabled={saving}>
+        <Button variant="outline" onClick={() => setPreviewOpen(true)}>
+          <Eye className="w-4 h-4 mr-2" /> Vorschau
+        </Button>
+        <Button variant="outline" onClick={sendTestMail} disabled={testing || sending}>
+          {testing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Beaker className="w-4 h-4 mr-2" />} Testmail
+        </Button>
+        <Button variant="outline" onClick={saveDraft} disabled={saving || sending}>
           {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />} Speichern
         </Button>
-        <Button disabled><Send className="w-4 h-4 mr-2" /> Senden</Button>
+        <Button onClick={sendMail} disabled={sending || testing}>
+          {sending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
+          {sending ? 'E-Mail wird gesendet…' : 'Senden'}
+        </Button>
       </div>
+
+      {/* Vorschau Modal */}
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Vorschau</DialogTitle>
+            <DialogDescription>So sieht die E-Mail aus – sie wird noch nicht gesendet.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <div className="grid grid-cols-[100px_1fr] gap-2">
+              <span className="text-muted-foreground">Absender:</span>
+              <span className="font-mono">{SENDERS[sender]?.label} &lt;{senderEmail}&gt;</span>
+              <span className="text-muted-foreground">Empfänger:</span>
+              <span className="font-mono">
+                {customer?.contact_name || customer?.company_name || '—'} &lt;{customer?.email || '—'}&gt;
+              </span>
+              <span className="text-muted-foreground">Betreff:</span>
+              <span className="font-medium">{subject || '—'}</span>
+            </div>
+            <div className="rounded-md border border-border bg-muted/30 p-3 max-h-[300px] overflow-auto">
+              {bodyHtml ? (
+                <div className="prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
+              ) : (
+                <pre className="whitespace-pre-wrap text-sm font-sans">{body || '—'}</pre>
+              )}
+            </div>
+            {files.length > 0 && (
+              <div>
+                <div className="text-xs text-muted-foreground mb-1">Anhänge:</div>
+                <ul className="text-xs space-y-0.5">
+                  {files.map((f, i) => <li key={i}>· {f.name}</li>)}
+                </ul>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPreviewOpen(false)}>Schließen</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
