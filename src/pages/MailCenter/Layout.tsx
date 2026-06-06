@@ -4,7 +4,7 @@ import {
   Activity, Globe, BarChart3, Settings, MailX, Inbox, Send, FileEdit, MessageSquare, Sparkles, FileCheck2, Files,
   Phone, ClipboardList, CheckSquare, CalendarClock, ShieldCheck,
   HeartPulse, ScrollText, AlertTriangle, TestTube2, Rocket, TrendingUp, PhoneCall,
-  Database, Upload, FileDown, Shield,
+  Database, Upload, FileDown, Shield, BadgeCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NotificationBell } from '@/components/NotificationBell';
