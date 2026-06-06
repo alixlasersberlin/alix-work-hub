@@ -179,6 +179,7 @@ const MailCenterFehlerprotokoll = lazy(() => import("./pages/MailCenter/Fehlerpr
 const MailCenterTestcenter = lazy(() => import("./pages/MailCenter/Testcenter"));
 const MailCenterProduktivfreigabe = lazy(() => import("./pages/MailCenter/Produktivfreigabe"));
 const MailCenterExecutive = lazy(() => import("./pages/MailCenter/ExecutiveDashboard"));
+const MailCenterTelefonie = lazy(() => import("./pages/MailCenter/Telefonie"));
 import MaintenanceGate from "./components/MaintenanceGate";
 import LeihgeraetReminder from "./components/LeihgeraetReminder";
 
