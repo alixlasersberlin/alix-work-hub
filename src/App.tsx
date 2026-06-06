@@ -144,6 +144,7 @@ const MailCenterVorlagen = lazy(() => import("./pages/MailCenter/Vorlagen"));
 const MailCenterKampagnen = lazy(() => import("./pages/MailCenter/Kampagnen"));
 const MailCenterAutomationen = lazy(() => import("./pages/MailCenter/Automationen"));
 const MailCenterTracking = lazy(() => import("./pages/MailCenter/Tracking"));
+const MailCenterAbmeldungen = lazy(() => import("./pages/MailCenter/Abmeldungen"));
 const MailCenterDomains = lazy(() => import("./pages/MailCenter/Domains"));
 const MailCenterBerichte = lazy(() => import("./pages/MailCenter/Berichte"));
 const MailCenterEinstellungen = lazy(() => import("./pages/MailCenter/Einstellungen"));
@@ -374,6 +375,7 @@ function AppRoutes() {
             <Route path="kampagnen" element={<MailCenterKampagnen />} />
             <Route path="automationen" element={<MailCenterAutomationen />} />
             <Route path="tracking" element={<MailCenterTracking />} />
+            <Route path="abmeldungen" element={<MailCenterAbmeldungen />} />
             <Route path="domains" element={<MailCenterDomains />} />
             <Route path="berichte" element={<MailCenterBerichte />} />
             <Route path="einstellungen" element={<MailCenterEinstellungen />} />
