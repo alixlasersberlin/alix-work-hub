@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,8 +10,10 @@ import {
 import {
   Search, UserRound, Building2, Phone, Mail, Hash, Paperclip, Upload,
   Bold, Italic, Underline as UnderlineIcon, List, Table as TableIcon, Link as LinkIcon,
-  Image as ImageIcon, MousePointer, Eye, Beaker, Save, Send,
+  Image as ImageIcon, MousePointer, Eye, Beaker, Save, Send, Loader2, Package,
 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const SENDERS: Record<string, { label: string; email: string }> = {
   finance: { label: 'Finance', email: 'finance@alixwork.de' },
@@ -20,44 +22,226 @@ const SENDERS: Record<string, { label: string; email: string }> = {
   marketing: { label: 'Marketing', email: 'news@alixwork.de' },
 };
 
-const TEMPLATES = [
-  'Auftragsbestätigung',
-  'Angebot',
-  'Rechnung',
-  'Mahnung',
-  'Reparaturannahme',
-  'Reparatur abgeschlossen',
-  'Lieferbestätigung',
-  'Bewertungseinladung',
-  'Newsletter',
-  'Freie Nachricht',
-];
+type SenderKey = keyof typeof SENDERS;
 
 const ACCEPTED_TYPES = '.pdf,.docx,.xlsx,.png,.jpg,.jpeg,.zip';
 
+type CustomerRow = {
+  id: string;
+  company_name: string | null;
+  contact_name: string | null;
+  email: string | null;
+  phone: string | null;
+  external_customer_id: string | null;
+};
+
+type OrderRow = {
+  id: string;
+  order_number: string | null;
+  order_status: string | null;
+  raw_data: any;
+};
+
+type TemplateRow = {
+  id: string;
+  name: string;
+  subject: string | null;
+  body_html: string | null;
+  body_text: string | null;
+  category: string | null;
+  department: string | null;
+};
+
 function ToolbarButton({ icon: Icon, label }: { icon: typeof Bold; label: string }) {
   return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="sm"
-      title={label}
-      className="h-8 w-8 p-0"
-      disabled
-    >
+    <Button type="button" variant="ghost" size="sm" title={label} className="h-8 w-8 p-0" disabled>
       <Icon className="w-4 h-4" />
     </Button>
   );
 }
 
+function categoryToSender(cat?: string | null, dept?: string | null): SenderKey | null {
+  const v = `${cat ?? ''} ${dept ?? ''}`.toLowerCase();
+  if (/(finance|finanz|rechnung|mahnung)/.test(v)) return 'finance';
+  if (/(market|news|newsletter)/.test(v)) return 'marketing';
+  if (/(service|repair|reparatur|support|technik)/.test(v)) return 'service';
+  if (/(order|sales|vertrieb|auftrag|angebot)/.test(v)) return 'vertrieb';
+  return null;
+}
+
+function applyVars(input: string, vars: Record<string, string>): string {
+  if (!input) return '';
+  return input.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_m, key) => {
+    const k = String(key).toLowerCase();
+    return vars[k] ?? `{{${key}}}`;
+  });
+}
+
 export default function MailCenterCompose() {
-  const [sender, setSender] = useState<keyof typeof SENDERS>('finance');
-  const [template, setTemplate] = useState<string>('Freie Nachricht');
+  const [sender, setSender] = useState<SenderKey>('finance');
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
+  const [bodyHtml, setBodyHtml] = useState('');
   const [files, setFiles] = useState<File[]>([]);
 
+  // Customer search
+  const [customerQuery, setCustomerQuery] = useState('');
+  const [customerResults, setCustomerResults] = useState<CustomerRow[]>([]);
+  const [customerLoading, setCustomerLoading] = useState(false);
+  const [customer, setCustomer] = useState<CustomerRow | null>(null);
+  const [showCustomerResults, setShowCustomerResults] = useState(false);
+
+  // Orders
+  const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [order, setOrder] = useState<OrderRow | null>(null);
+
+  // Templates
+  const [templates, setTemplates] = useState<TemplateRow[]>([]);
+  const [templateId, setTemplateId] = useState<string>('');
+  const [templatesLoading, setTemplatesLoading] = useState(false);
+
+  const [saving, setSaving] = useState(false);
+
   const senderEmail = useMemo(() => SENDERS[sender]?.email ?? '', [sender]);
+
+  // Load templates
+  useEffect(() => {
+    let alive = true;
+    setTemplatesLoading(true);
+    supabase
+      .from('mail_templates')
+      .select('id,name,subject,body_html,body_text,category,department')
+      .eq('is_active', true)
+      .order('name', { ascending: true })
+      .then(({ data, error }) => {
+        if (!alive) return;
+        setTemplatesLoading(false);
+        if (error) {
+          toast.error('Vorlagen konnten nicht geladen werden');
+          return;
+        }
+        setTemplates((data ?? []) as TemplateRow[]);
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // Live customer search (debounced)
+  const debounceRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    const q = customerQuery.trim();
+    if (q.length < 2) {
+      setCustomerResults([]);
+      return;
+    }
+    debounceRef.current = window.setTimeout(async () => {
+      setCustomerLoading(true);
+      const like = `%${q}%`;
+      const { data, error } = await supabase
+        .from('customers')
+        .select('id,company_name,contact_name,email,phone,external_customer_id')
+        .or(
+          [
+            `company_name.ilike.${like}`,
+            `contact_name.ilike.${like}`,
+            `email.ilike.${like}`,
+            `phone.ilike.${like}`,
+            `external_customer_id.ilike.${like}`,
+          ].join(','),
+        )
+        .limit(20);
+      setCustomerLoading(false);
+      if (error) {
+        toast.error('Kundensuche fehlgeschlagen');
+        return;
+      }
+      setCustomerResults((data ?? []) as CustomerRow[]);
+      setShowCustomerResults(true);
+    }, 250);
+    return () => {
+      if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    };
+  }, [customerQuery]);
+
+  // Load orders for selected customer
+  useEffect(() => {
+    setOrders([]);
+    setOrder(null);
+    if (!customer) return;
+    supabase
+      .from('orders')
+      .select('id,order_number,order_status,raw_data')
+      .eq('customer_id', customer.id)
+      .order('order_date', { ascending: false })
+      .limit(50)
+      .then(({ data, error }) => {
+        if (error) return;
+        setOrders((data ?? []) as OrderRow[]);
+      });
+  }, [customer]);
+
+  function selectCustomer(c: CustomerRow) {
+    setCustomer(c);
+    setCustomerQuery(c.company_name || c.contact_name || c.email || '');
+    setShowCustomerResults(false);
+  }
+
+  function clearCustomer() {
+    setCustomer(null);
+    setCustomerQuery('');
+    setCustomerResults([]);
+  }
+
+  // Extract device/product label from order raw_data heuristically
+  function extractGeraet(o: OrderRow | null): string {
+    if (!o?.raw_data) return '';
+    const r = o.raw_data;
+    const items = r.line_items || r.items;
+    if (Array.isArray(items) && items.length > 0) {
+      return items.map((it: any) => it?.name || it?.item_name || it?.description).filter(Boolean).join(', ');
+    }
+    return '';
+  }
+
+  function buildVars(): Record<string, string> {
+    return {
+      kunde: customer?.contact_name || customer?.company_name || '',
+      firma: customer?.company_name || '',
+      kundennummer: customer?.external_customer_id || '',
+      email: customer?.email || '',
+      telefon: customer?.phone || '',
+      auftragsnummer: order?.order_number || '',
+      geraet: extractGeraet(order),
+      betrag: '',
+      bearbeiter: SENDERS[sender]?.label || '',
+    };
+  }
+
+  function applyTemplate(id: string) {
+    setTemplateId(id);
+    const t = templates.find((x) => x.id === id);
+    if (!t) return;
+    const vars = buildVars();
+    setSubject(applyVars(t.subject || '', vars));
+    setBodyHtml(applyVars(t.body_html || '', vars));
+    setBody(applyVars(t.body_text || '', vars));
+    const suggested = categoryToSender(t.category, t.department);
+    if (suggested) setSender(suggested);
+  }
+
+  // Re-apply variables when customer/order changes and a template is active
+  useEffect(() => {
+    if (!templateId) return;
+    const t = templates.find((x) => x.id === templateId);
+    if (!t) return;
+    const vars = buildVars();
+    setSubject(applyVars(t.subject || '', vars));
+    setBodyHtml(applyVars(t.body_html || '', vars));
+    setBody(applyVars(t.body_text || '', vars));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customer?.id, order?.id]);
 
   function onFiles(e: React.ChangeEvent<HTMLInputElement>) {
     const list = Array.from(e.target.files ?? []);
@@ -65,9 +249,38 @@ export default function MailCenterCompose() {
     e.target.value = '';
   }
 
+  async function saveDraft() {
+    setSaving(true);
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const payload = {
+        customer_id: customer?.id ?? null,
+        order_id: order?.id ?? null,
+        template_id: templateId || null,
+        to_email: customer?.email ?? '',
+        to_name: customer?.contact_name || customer?.company_name || null,
+        from_email: senderEmail,
+        from_name: SENDERS[sender]?.label || null,
+        subject,
+        body_html: bodyHtml,
+        body_text: body,
+        status: 'draft',
+        created_by: userData.user?.id ?? null,
+      };
+      const { error } = await supabase.from('mail_messages').insert(payload);
+      if (error) throw error;
+      toast.success('Entwurf wurde gespeichert');
+    } catch (e: any) {
+      console.error(e);
+      toast.error('Entwurf konnte nicht gespeichert werden');
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
-      {/* Bereich 1 – Empfänger */}
+      {/* Empfänger */}
       <Card className="card-glow">
         <CardHeader>
           <CardTitle className="text-sm font-display flex items-center gap-2">
@@ -78,37 +291,88 @@ export default function MailCenterCompose() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Kunde suchen…"
+              placeholder="Kunde suchen… (Firma, Ansprechpartner, E-Mail, Telefon, Kundennr.)"
               className="pl-9"
-              disabled
+              value={customerQuery}
+              onChange={(e) => {
+                setCustomerQuery(e.target.value);
+                if (customer) setCustomer(null);
+              }}
+              onFocus={() => customerResults.length > 0 && setShowCustomerResults(true)}
             />
+            {customerLoading && (
+              <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-muted-foreground" />
+            )}
+            {showCustomerResults && customerQuery.trim().length >= 2 && (
+              <div className="absolute z-20 mt-1 w-full rounded-md border border-border bg-popover shadow-lg max-h-72 overflow-auto">
+                {customerResults.length === 0 && !customerLoading ? (
+                  <div className="px-3 py-2 text-sm text-muted-foreground">Kein Kunde gefunden</div>
+                ) : (
+                  customerResults.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => selectCustomer(c)}
+                      className="w-full text-left px-3 py-2 hover:bg-accent text-sm border-b border-border last:border-0"
+                    >
+                      <div className="font-medium">{c.company_name || c.contact_name || '—'}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {[c.contact_name, c.email, c.external_customer_id].filter(Boolean).join(' · ')}
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
           </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs flex items-center gap-1.5"><Building2 className="w-3.5 h-3.5" /> Firma</Label>
-              <Input placeholder="—" disabled />
+              <Input value={customer?.company_name ?? ''} readOnly placeholder="—" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs flex items-center gap-1.5"><UserRound className="w-3.5 h-3.5" /> Ansprechpartner</Label>
-              <Input placeholder="—" disabled />
+              <Input value={customer?.contact_name ?? ''} readOnly placeholder="—" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs flex items-center gap-1.5"><Mail className="w-3.5 h-3.5" /> E-Mail</Label>
-              <Input placeholder="—" disabled />
+              <Input value={customer?.email ?? ''} readOnly placeholder="—" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs flex items-center gap-1.5"><Phone className="w-3.5 h-3.5" /> Telefon</Label>
-              <Input placeholder="—" disabled />
+              <Input value={customer?.phone ?? ''} readOnly placeholder="—" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs flex items-center gap-1.5"><Hash className="w-3.5 h-3.5" /> Kundennummer</Label>
-              <Input placeholder="—" disabled />
+              <Input value={customer?.external_customer_id ?? ''} readOnly placeholder="—" />
             </div>
+            {customer && (
+              <div className="flex items-end">
+                <Button variant="outline" size="sm" onClick={clearCustomer}>Auswahl aufheben</Button>
+              </div>
+            )}
           </div>
+
+          {customer && orders.length > 0 && (
+            <div className="space-y-1.5">
+              <Label className="text-xs flex items-center gap-1.5"><Package className="w-3.5 h-3.5" /> Auftrag (optional)</Label>
+              <Select value={order?.id ?? ''} onValueChange={(v) => setOrder(orders.find((o) => o.id === v) ?? null)}>
+                <SelectTrigger><SelectValue placeholder="Auftrag wählen…" /></SelectTrigger>
+                <SelectContent>
+                  {orders.map((o) => (
+                    <SelectItem key={o.id} value={o.id}>
+                      {o.order_number || o.id.slice(0, 8)} {o.order_status ? `· ${o.order_status}` : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Bereich 2 + 3 – Absender & Vorlage */}
+      {/* Absender + Vorlage */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="card-glow">
           <CardHeader>
@@ -117,7 +381,7 @@ export default function MailCenterCompose() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Select value={sender} onValueChange={(v) => setSender(v as keyof typeof SENDERS)}>
+            <Select value={sender} onValueChange={(v) => setSender(v as SenderKey)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 {Object.entries(SENDERS).map(([key, val]) => (
@@ -139,19 +403,27 @@ export default function MailCenterCompose() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Select value={template} onValueChange={setTemplate}>
-              <SelectTrigger><SelectValue placeholder="Vorlage wählen…" /></SelectTrigger>
-              <SelectContent>
-                {TEMPLATES.map((t) => (
-                  <SelectItem key={t} value={t}>{t}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {templatesLoading ? (
+              <div className="text-sm text-muted-foreground flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" /> Lade Vorlagen…
+              </div>
+            ) : templates.length === 0 ? (
+              <div className="text-sm text-muted-foreground">Keine aktiven Vorlagen vorhanden</div>
+            ) : (
+              <Select value={templateId} onValueChange={applyTemplate}>
+                <SelectTrigger><SelectValue placeholder="Vorlage wählen…" /></SelectTrigger>
+                <SelectContent>
+                  {templates.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Bereich 4 – Betreff */}
+      {/* Betreff */}
       <Card className="card-glow">
         <CardHeader>
           <CardTitle className="text-sm font-display">Betreff</CardTitle>
@@ -166,7 +438,7 @@ export default function MailCenterCompose() {
         </CardContent>
       </Card>
 
-      {/* Bereich 5 – Editor */}
+      {/* Editor */}
       <Card className="card-glow">
         <CardHeader>
           <CardTitle className="text-sm font-display">E-Mail Inhalt</CardTitle>
@@ -190,13 +462,15 @@ export default function MailCenterCompose() {
             placeholder="Inhalt der E-Mail…"
             className="min-h-[300px] font-mono text-sm"
           />
-          <p className="text-xs text-muted-foreground">
-            Rich-Text-Editor (HTML) wird in einem späteren Schritt integriert.
-          </p>
+          {bodyHtml && (
+            <p className="text-xs text-muted-foreground">
+              HTML-Version aus Vorlage geladen ({bodyHtml.length} Zeichen) – wird mitgespeichert.
+            </p>
+          )}
         </CardContent>
       </Card>
 
-      {/* Bereich 6 – Anhänge */}
+      {/* Anhänge */}
       <Card className="card-glow">
         <CardHeader>
           <CardTitle className="text-sm font-display flex items-center gap-2">
@@ -207,28 +481,15 @@ export default function MailCenterCompose() {
           <label className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-muted/20 px-4 py-8 cursor-pointer hover:bg-muted/30 transition-colors">
             <Upload className="w-6 h-6 text-muted-foreground" />
             <span className="text-sm text-foreground">Dateien auswählen oder hierher ziehen</span>
-            <span className="text-xs text-muted-foreground">
-              Erlaubt: PDF, DOCX, XLSX, PNG, JPG, ZIP
-            </span>
-            <input
-              type="file"
-              multiple
-              accept={ACCEPTED_TYPES}
-              onChange={onFiles}
-              className="hidden"
-            />
+            <span className="text-xs text-muted-foreground">Erlaubt: PDF, DOCX, XLSX, PNG, JPG, ZIP</span>
+            <input type="file" multiple accept={ACCEPTED_TYPES} onChange={onFiles} className="hidden" />
           </label>
           {files.length > 0 && (
             <ul className="space-y-1 text-sm">
               {files.map((f, i) => (
-                <li
-                  key={`${f.name}-${i}`}
-                  className="flex items-center justify-between rounded-md border border-border bg-card px-3 py-1.5"
-                >
+                <li key={`${f.name}-${i}`} className="flex items-center justify-between rounded-md border border-border bg-card px-3 py-1.5">
                   <span className="truncate">{f.name}</span>
-                  <span className="text-xs text-muted-foreground ml-3">
-                    {(f.size / 1024).toFixed(0)} KB
-                  </span>
+                  <span className="text-xs text-muted-foreground ml-3">{(f.size / 1024).toFixed(0)} KB</span>
                 </li>
               ))}
             </ul>
@@ -236,11 +497,13 @@ export default function MailCenterCompose() {
         </CardContent>
       </Card>
 
-      {/* Bereich 7 – Aktionen */}
+      {/* Aktionen */}
       <div className="flex flex-wrap items-center justify-end gap-2">
         <Button variant="outline" disabled><Eye className="w-4 h-4 mr-2" /> Vorschau</Button>
         <Button variant="outline" disabled><Beaker className="w-4 h-4 mr-2" /> Testmail</Button>
-        <Button variant="outline" disabled><Save className="w-4 h-4 mr-2" /> Speichern</Button>
+        <Button variant="outline" onClick={saveDraft} disabled={saving}>
+          {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />} Speichern
+        </Button>
         <Button disabled><Send className="w-4 h-4 mr-2" /> Senden</Button>
       </div>
     </div>
