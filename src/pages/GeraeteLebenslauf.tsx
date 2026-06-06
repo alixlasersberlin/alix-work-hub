@@ -56,23 +56,43 @@ export default function GeraeteLebenslauf() {
   const [loading, setLoading] = useState(false);
   const [topDevices, setTopDevices] = useState<{ serial: string; count: number; device?: string }[]>([]);
   const [topCustomers, setTopCustomers] = useState<{ name: string; count: number }[]>([]);
+  const [warrantyCases, setWarrantyCases] = useState<{ serial: string; device?: string; date: string }[]>([]);
+  const [leasingDevices, setLeasingDevices] = useState<{ serial: string; device?: string; customer?: string }[]>([]);
+  const [redDevices, setRedDevices] = useState<{ serial: string; device?: string; customer?: string; score: number }[]>([]);
+  const [aiAnalysis, setAiAnalysis] = useState<any | null>(null);
 
   useEffect(() => { loadDashboard(); }, []);
 
   async function loadDashboard() {
     const { data } = await supabase
       .from('device_lifecycle')
-      .select('serial_number, device_name, customer_name, event_type')
-      .in('event_type', ['Reparatur', 'Reklamation', 'Ersatzteil']);
+      .select('serial_number, device_name, customer_name, event_type, event_date, reference_id')
+      .in('event_type', ['Reparatur', 'Reklamation', 'Ersatzteil', 'Garantie', 'Leasing']);
     const dev = new Map<string, { count: number; device?: string }>();
     const cust = new Map<string, number>();
+    const warr: { serial: string; device?: string; date: string }[] = [];
+    const leas = new Map<string, { serial: string; device?: string; customer?: string }>();
     (data || []).forEach((r: any) => {
-      const d = dev.get(r.serial_number) || { count: 0, device: r.device_name || undefined };
-      d.count += 1; dev.set(r.serial_number, d);
-      if (r.customer_name) cust.set(r.customer_name, (cust.get(r.customer_name) || 0) + 1);
+      if (['Reparatur', 'Reklamation', 'Ersatzteil'].includes(r.event_type)) {
+        const d = dev.get(r.serial_number) || { count: 0, device: r.device_name || undefined };
+        d.count += 1; dev.set(r.serial_number, d);
+        if (r.customer_name) cust.set(r.customer_name, (cust.get(r.customer_name) || 0) + 1);
+      }
+      if (r.event_type === 'Garantie') warr.push({ serial: r.serial_number, device: r.device_name, date: r.event_date });
+      if (r.event_type === 'Leasing' && !leas.has(r.serial_number)) leas.set(r.serial_number, { serial: r.serial_number, device: r.device_name, customer: r.customer_name });
     });
     setTopDevices(Array.from(dev.entries()).map(([s, v]) => ({ serial: s, count: v.count, device: v.device })).sort((a, b) => b.count - a.count).slice(0, 8));
     setTopCustomers(Array.from(cust.entries()).map(([n, c]) => ({ name: n, count: c })).sort((a, b) => b.count - a.count).slice(0, 8));
+    setWarrantyCases(warr.slice(0, 8));
+    setLeasingDevices(Array.from(leas.values()).slice(0, 8));
+
+    const { data: health } = await (supabase as any)
+      .from('device_health_scores')
+      .select('serial_number, device_name, customer_name, health_score, health_status')
+      .eq('health_status', 'rot')
+      .order('health_score', { ascending: false })
+      .limit(8);
+    setRedDevices((health || []).map((h: any) => ({ serial: h.serial_number, device: h.device_name, customer: h.customer_name, score: Number(h.health_score) || 0 })));
   }
 
   async function search() {
