@@ -14,6 +14,105 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_service_analyses: {
+        Row: {
+          ai_model: string | null
+          confidence_score: number | null
+          created_at: string
+          created_by: string | null
+          device_name: string | null
+          error_description: string | null
+          estimated_diagnosis_time_minutes: number | null
+          estimated_repair_time_minutes: number | null
+          estimated_total_time_minutes: number | null
+          id: string
+          probable_cause: string | null
+          recommended_parts: Json | null
+          recommended_repair: string | null
+          recommended_steps: Json | null
+          recommended_technician: string | null
+          repair_id: string | null
+          serial_number: string | null
+          status: string
+          ticket_id: string | null
+        }
+        Insert: {
+          ai_model?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          created_by?: string | null
+          device_name?: string | null
+          error_description?: string | null
+          estimated_diagnosis_time_minutes?: number | null
+          estimated_repair_time_minutes?: number | null
+          estimated_total_time_minutes?: number | null
+          id?: string
+          probable_cause?: string | null
+          recommended_parts?: Json | null
+          recommended_repair?: string | null
+          recommended_steps?: Json | null
+          recommended_technician?: string | null
+          repair_id?: string | null
+          serial_number?: string | null
+          status?: string
+          ticket_id?: string | null
+        }
+        Update: {
+          ai_model?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          created_by?: string | null
+          device_name?: string | null
+          error_description?: string | null
+          estimated_diagnosis_time_minutes?: number | null
+          estimated_repair_time_minutes?: number | null
+          estimated_total_time_minutes?: number | null
+          id?: string
+          probable_cause?: string | null
+          recommended_parts?: Json | null
+          recommended_repair?: string | null
+          recommended_steps?: Json | null
+          recommended_technician?: string | null
+          repair_id?: string | null
+          serial_number?: string | null
+          status?: string
+          ticket_id?: string | null
+        }
+        Relationships: []
+      }
+      ai_service_logs: {
+        Row: {
+          action: string
+          created_at: string
+          error_message: string | null
+          id: string
+          payload: Json | null
+          result: Json | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          payload?: Json | null
+          result?: Json | null
+          status: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          payload?: Json | null
+          result?: Json | null
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       aic_analysis_runs: {
         Row: {
           created_at: string
@@ -4620,13 +4719,22 @@ export type Database = {
           arbeitszeit_min: number | null
           created_at: string
           created_by: string | null
+          device_name: string | null
+          error_code: string | null
           ersatzteile: Json | null
+          estimated_work_time_minutes: number | null
           fehlercode: string | null
           geraetetyp: string | null
           id: string
           loesung: string | null
+          probable_cause: string | null
           quelle: string | null
+          recommended_parts: Json | null
+          solution: string | null
+          source_reference_id: string | null
+          source_type: string | null
           symptom: string
+          symptom_en: string | null
           tags: string[] | null
           updated_at: string
           ursache: string | null
@@ -4637,13 +4745,22 @@ export type Database = {
           arbeitszeit_min?: number | null
           created_at?: string
           created_by?: string | null
+          device_name?: string | null
+          error_code?: string | null
           ersatzteile?: Json | null
+          estimated_work_time_minutes?: number | null
           fehlercode?: string | null
           geraetetyp?: string | null
           id?: string
           loesung?: string | null
+          probable_cause?: string | null
           quelle?: string | null
+          recommended_parts?: Json | null
+          solution?: string | null
+          source_reference_id?: string | null
+          source_type?: string | null
           symptom: string
+          symptom_en?: string | null
           tags?: string[] | null
           updated_at?: string
           ursache?: string | null
@@ -4654,13 +4771,22 @@ export type Database = {
           arbeitszeit_min?: number | null
           created_at?: string
           created_by?: string | null
+          device_name?: string | null
+          error_code?: string | null
           ersatzteile?: Json | null
+          estimated_work_time_minutes?: number | null
           fehlercode?: string | null
           geraetetyp?: string | null
           id?: string
           loesung?: string | null
+          probable_cause?: string | null
           quelle?: string | null
+          recommended_parts?: Json | null
+          solution?: string | null
+          source_reference_id?: string | null
+          source_type?: string | null
           symptom?: string
+          symptom_en?: string | null
           tags?: string[] | null
           updated_at?: string
           ursache?: string | null
