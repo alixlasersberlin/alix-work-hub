@@ -25,14 +25,17 @@ interface TicketRow {
   created_at: string;
 }
 
-const STATUS_OPTIONS = ['offen', 'in_bearbeitung', 'wartet_kunde', 'gelöst', 'geschlossen'];
+const STATUS_OPTIONS = ['open', 'in-progress', 'wartet_Kunde', 'offen', 'in_bearbeitung', 'wartet_kunde', 'gelöst', 'geschlossen'];
 const PRIORITY_OPTIONS = ['niedrig', 'normal', 'hoch', 'kritisch'];
 const DEPARTMENT_OPTIONS = ['service', 'technik', 'finance', 'tourenplanung', 'lieferung', 'abholung', 'austausch'];
 
 function statusColor(s: string) {
   switch (s) {
+    case 'open':
     case 'offen': return 'bg-blue-500/15 text-blue-400 border-blue-500/30';
+    case 'in-progress':
     case 'in_bearbeitung': return 'bg-amber-500/15 text-amber-400 border-amber-500/30';
+    case 'wartet_Kunde':
     case 'wartet_kunde': return 'bg-purple-500/15 text-purple-400 border-purple-500/30';
     case 'gelöst': return 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30';
     case 'geschlossen': return 'bg-muted text-muted-foreground border-border';
