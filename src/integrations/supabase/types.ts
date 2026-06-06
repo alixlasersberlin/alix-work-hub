@@ -3812,48 +3812,69 @@ export type Database = {
         Row: {
           created_at: string
           currency: string
+          device_label: string | null
           id: string
           notes: string | null
           ordered_at: string | null
           part_name: string
           part_number: string | null
+          priority: string | null
           quantity: number
           received_at: string | null
           repair_order_id: string
+          requested_at: string | null
+          requested_by: string | null
+          serial_number: string | null
           status: string
           supplier: string | null
+          ticket_id: string | null
+          ticket_number: string | null
           unit_price: number | null
           updated_at: string
         }
         Insert: {
           created_at?: string
           currency?: string
+          device_label?: string | null
           id?: string
           notes?: string | null
           ordered_at?: string | null
           part_name: string
           part_number?: string | null
+          priority?: string | null
           quantity?: number
           received_at?: string | null
           repair_order_id: string
+          requested_at?: string | null
+          requested_by?: string | null
+          serial_number?: string | null
           status?: string
           supplier?: string | null
+          ticket_id?: string | null
+          ticket_number?: string | null
           unit_price?: number | null
           updated_at?: string
         }
         Update: {
           created_at?: string
           currency?: string
+          device_label?: string | null
           id?: string
           notes?: string | null
           ordered_at?: string | null
           part_name?: string
           part_number?: string | null
+          priority?: string | null
           quantity?: number
           received_at?: string | null
           repair_order_id?: string
+          requested_at?: string | null
+          requested_by?: string | null
+          serial_number?: string | null
           status?: string
           supplier?: string | null
+          ticket_id?: string | null
+          ticket_number?: string | null
           unit_price?: number | null
           updated_at?: string
         }
@@ -3863,6 +3884,13 @@ export type Database = {
             columns: ["repair_order_id"]
             isOneToOne: false
             referencedRelation: "repair_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "repair_spare_parts_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
             referencedColumns: ["id"]
           },
         ]
