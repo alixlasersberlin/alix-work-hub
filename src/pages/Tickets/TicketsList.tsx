@@ -160,7 +160,7 @@ export default function TicketsList() {
               {filtered.map(r => (
                 <TableRow
                   key={r.id}
-                  onClick={() => { window.location.href = `/tickets/${r.id}`; }}
+                  onClick={() => navigate(`/tickets/${r.id}`)}
                   className="cursor-pointer hover:bg-muted/40"
                 >
                   <TableCell>
