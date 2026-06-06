@@ -163,13 +163,14 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    path: '/auftragsverwaltung/bestellungen', label: 'BESTELLWESEN', icon: ShoppingCart, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'Lieferant', 'FACTORY INVOICE'],
+    path: '/auftragsverwaltung/bestellungen', label: 'BESTELLWESEN', icon: ShoppingCart, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'Lieferant', 'FACTORY INVOICE', 'Bestellwesen'],
     children: [
       { path: '/order/timeline', label: 'Timeline Bestellungen', icon: Calendar, roles: ['Admin', 'Super Admin', 'Order', 'Österreich'] },
       { path: '/order/frei-bestellung', label: 'Bestellung möglich', icon: CheckCircle2, roles: ['Admin', 'Super Admin', 'Order'] },
       { path: '/order/reklamation', label: 'Bestellung Reklamation', icon: AlertTriangle, roles: ['Admin', 'Super Admin', 'Order'] },
       { path: '/order', label: 'Factory Orders', icon: Factory, roles: ['Admin', 'Super Admin', 'Order'] },
       { path: '/order/freigabe', label: 'Freigabe', icon: ShieldCheck, roles: ['Admin', 'Super Admin', 'Order'] },
+      { path: '/bestellwesen/ersatzteile', label: 'Ersatzteil-Bestellvorschläge', icon: Package, roles: ['Admin', 'Super Admin', 'Bestellwesen', 'Order', 'Technik'] },
       {
         path: '/production', label: 'PRODUCTION', icon: Factory, roles: ['Admin', 'Super Admin', 'Lieferant', 'FACTORY INVOICE', 'Order'],
         children: [
