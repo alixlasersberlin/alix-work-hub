@@ -153,6 +153,17 @@ const MailCenterDokumentenCenter = lazy(() => import("./pages/MailCenter/Dokumen
 const MailCenterVersandnachweise = lazy(() => import("./pages/MailCenter/Versandnachweise"));
 const MailCenterDokumentenVorlagen = lazy(() => import("./pages/MailCenter/DokumentenVorlagen"));
 const MailCenterDokumentenAutomationen = lazy(() => import("./pages/MailCenter/DokumentenAutomationen"));
+const CustomerPortalLayout = lazy(() => import("./pages/CustomerPortal/Layout"));
+const CustomerPortalLogin = lazy(() => import("./pages/CustomerPortal/Login"));
+const CustomerPortalDashboard = lazy(() => import("./pages/CustomerPortal/Dashboard"));
+const CustomerPortalMessages = lazy(() => import("./pages/CustomerPortal/Messages"));
+const CustomerPortalDocuments = lazy(() => import("./pages/CustomerPortal/Documents"));
+const CustomerPortalInvoices = lazy(() => import("./pages/CustomerPortal/Invoices"));
+const CustomerPortalQuotes = lazy(() => import("./pages/CustomerPortal/Quotes"));
+const CustomerPortalRepairs = lazy(() => import("./pages/CustomerPortal/Repairs"));
+const CustomerPortalSupport = lazy(() => import("./pages/CustomerPortal/Support"));
+const CustomerPortalReviews = lazy(() => import("./pages/CustomerPortal/Reviews"));
+const CustomerPortalTimeline = lazy(() => import("./pages/CustomerPortal/Timeline"));
 const MailCenterPosteingang = lazy(() => import("./pages/MailCenter/Posteingang"));
 const MailCenterGesendet = lazy(() => import("./pages/MailCenter/Gesendet"));
 const MailCenterEntwuerfe = lazy(() => import("./pages/MailCenter/Entwuerfe"));
@@ -419,6 +430,18 @@ function AppRoutes() {
         <Route path="/bewertung/:token" element={<PublicReviewForm />} />
         <Route path="/portal" element={<PortalLookup />} />
         <Route path="/portal/status" element={<PortalStatus />} />
+        <Route path="/kunde/login" element={<CustomerPortalLogin />} />
+        <Route path="/kunde" element={<CustomerPortalLayout />}>
+          <Route index element={<CustomerPortalDashboard />} />
+          <Route path="nachrichten" element={<CustomerPortalMessages />} />
+          <Route path="dokumente" element={<CustomerPortalDocuments />} />
+          <Route path="rechnungen" element={<CustomerPortalInvoices />} />
+          <Route path="angebote" element={<CustomerPortalQuotes />} />
+          <Route path="reparaturen" element={<CustomerPortalRepairs />} />
+          <Route path="support" element={<CustomerPortalSupport />} />
+          <Route path="bewertungen" element={<CustomerPortalReviews />} />
+          <Route path="verlauf" element={<CustomerPortalTimeline />} />
+        </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>

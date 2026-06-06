@@ -523,6 +523,256 @@ export type Database = {
           },
         ]
       }
+      customer_portal_document_downloads: {
+        Row: {
+          attachment_id: string | null
+          customer_id: string
+          document_type: string | null
+          downloaded_at: string
+          id: string
+          ip_address: string | null
+          storage_bucket: string | null
+          storage_path: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          attachment_id?: string | null
+          customer_id: string
+          document_type?: string | null
+          downloaded_at?: string
+          id?: string
+          ip_address?: string | null
+          storage_bucket?: string | null
+          storage_path?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          attachment_id?: string | null
+          customer_id?: string
+          document_type?: string | null
+          downloaded_at?: string
+          id?: string
+          ip_address?: string | null
+          storage_bucket?: string | null
+          storage_path?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_portal_document_downloads_attachment_id_fkey"
+            columns: ["attachment_id"]
+            isOneToOne: false
+            referencedRelation: "mail_attachments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_portal_document_downloads_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_portal_quote_responses: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          id: string
+          ip_address: string | null
+          note: string | null
+          order_id: string | null
+          production_order_id: string | null
+          responded_at: string
+          response: string
+          signed_name: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          id?: string
+          ip_address?: string | null
+          note?: string | null
+          order_id?: string | null
+          production_order_id?: string | null
+          responded_at?: string
+          response: string
+          signed_name?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          id?: string
+          ip_address?: string | null
+          note?: string | null
+          order_id?: string | null
+          production_order_id?: string | null
+          responded_at?: string
+          response?: string
+          signed_name?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_portal_quote_responses_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_portal_quote_responses_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_portal_quote_responses_production_order_id_fkey"
+            columns: ["production_order_id"]
+            isOneToOne: false
+            referencedRelation: "production_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_portal_ticket_messages: {
+        Row: {
+          attachment_path: string | null
+          author_id: string | null
+          created_at: string
+          from_role: string
+          id: string
+          message: string
+          ticket_id: string
+        }
+        Insert: {
+          attachment_path?: string | null
+          author_id?: string | null
+          created_at?: string
+          from_role: string
+          id?: string
+          message: string
+          ticket_id: string
+        }
+        Update: {
+          attachment_path?: string | null
+          author_id?: string | null
+          created_at?: string
+          from_role?: string
+          id?: string
+          message?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_portal_ticket_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "customer_portal_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_portal_tickets: {
+        Row: {
+          assigned_to: string | null
+          category: string | null
+          closed_at: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          id: string
+          priority: string
+          status: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          category?: string | null
+          closed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          id?: string
+          priority?: string
+          status?: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          category?: string | null
+          closed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          id?: string
+          priority?: string
+          status?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_portal_tickets_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_portal_users: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          customer_id: string
+          id: string
+          invited_at: string | null
+          last_login_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          customer_id: string
+          id?: string
+          invited_at?: string | null
+          last_login_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          customer_id?: string
+          id?: string
+          invited_at?: string | null
+          last_login_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_portal_users_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           bank_name: string | null
@@ -4048,9 +4298,11 @@ export type Database = {
         Returns: undefined
       }
       complete_password_setup: { Args: never; Returns: undefined }
+      current_portal_customer_id: { Args: never; Returns: string }
       current_supplier_id: { Args: never; Returns: string }
       has_role: { Args: { check_role: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
+      is_portal_customer: { Args: never; Returns: boolean }
       is_supplier: { Args: never; Returns: boolean }
       log_audit_event: {
         Args: {
