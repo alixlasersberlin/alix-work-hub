@@ -1338,6 +1338,60 @@ export type Database = {
         }
         Relationships: []
       }
+      device_health_scores: {
+        Row: {
+          complaint_count: number
+          customer_name: string | null
+          device_name: string | null
+          downtime_days: number
+          health_score: number | null
+          health_status: string
+          id: string
+          leasing_status: string | null
+          repair_count: number
+          serial_number: string
+          spare_part_count: number
+          ticket_count: number
+          updated_at: string
+          warranty_cases: number
+          warranty_status: string | null
+        }
+        Insert: {
+          complaint_count?: number
+          customer_name?: string | null
+          device_name?: string | null
+          downtime_days?: number
+          health_score?: number | null
+          health_status?: string
+          id?: string
+          leasing_status?: string | null
+          repair_count?: number
+          serial_number: string
+          spare_part_count?: number
+          ticket_count?: number
+          updated_at?: string
+          warranty_cases?: number
+          warranty_status?: string | null
+        }
+        Update: {
+          complaint_count?: number
+          customer_name?: string | null
+          device_name?: string | null
+          downtime_days?: number
+          health_score?: number | null
+          health_status?: string
+          id?: string
+          leasing_status?: string | null
+          repair_count?: number
+          serial_number?: string
+          spare_part_count?: number
+          ticket_count?: number
+          updated_at?: string
+          warranty_cases?: number
+          warranty_status?: string | null
+        }
+        Relationships: []
+      }
       device_lifecycle: {
         Row: {
           created_at: string
@@ -1350,7 +1404,9 @@ export type Database = {
           event_type: string
           id: string
           meta: Json | null
+          metadata: Json | null
           reference_id: string | null
+          reference_table: string | null
           serial_number: string
         }
         Insert: {
@@ -1364,7 +1420,9 @@ export type Database = {
           event_type: string
           id?: string
           meta?: Json | null
+          metadata?: Json | null
           reference_id?: string | null
+          reference_table?: string | null
           serial_number: string
         }
         Update: {
@@ -1378,7 +1436,9 @@ export type Database = {
           event_type?: string
           id?: string
           meta?: Json | null
+          metadata?: Json | null
           reference_id?: string | null
+          reference_table?: string | null
           serial_number?: string
         }
         Relationships: []
@@ -6235,6 +6295,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      recompute_device_health: { Args: { _serial: string }; Returns: undefined }
       requires_reauth: { Args: never; Returns: boolean }
       session_requires_reauth: { Args: never; Returns: boolean }
       set_factory_invoice_payment_ok: {
