@@ -172,10 +172,13 @@ export default function ServiceCockpit() {
       ['Ersatzteilquote (%)', sparePartQuote.toFixed(1)],
       ['Offene Rechnungsvorschläge', openInvoiceCount],
       ['Offene Rechnungssumme (EUR)', openInvoiceSum.toFixed(2)],
+      ['Garantiequote (%)', warrantyPct.toFixed(1)],
+      ['Ø Reparaturdauer (Tage)', avgRepairDays.toFixed(1)],
     ],
     techniker: [['Techniker', 'Tickets'], ...techData.map((d) => [d.name, d.count])],
     geraete: [['Gerät', 'Tickets'], ...deviceData.map((d) => [d.name, d.count])],
     fehler: [['Fehler / Titel', 'Anzahl'], ...errorData.map((d) => [d.name, d.count])],
+    kunden: [['Kunde', 'Tickets'], ...customerData.map((d) => [d.name, d.count])],
   });
 
   const exportExcel = () => {
