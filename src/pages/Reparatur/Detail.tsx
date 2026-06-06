@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Printer, FileDown, Plus, Trash2, Upload, Receipt, MapPin, FileText } from 'lucide-react';
+import { ArrowLeft, Printer, FileDown, Plus, Trash2, Upload, Receipt, MapPin, FileText, MessageSquare } from 'lucide-react';
 import { renderRepairWorkOrderPdf } from '@/lib/repair/work-order-pdf';
 import { WerkstattAnnahmeTab, WerkstattauftraegeTab, SparePartsTab, FinanceHandoverTab, DeliveryHandoverTab, AttachmentsTab } from './RepairExtraTabs';
 
@@ -68,6 +68,13 @@ export default function ReparaturDetail() {
         <h2 className="text-xl font-bold font-mono">{repair.repair_number}</h2>
         <span className={`px-2 py-0.5 rounded text-xs ${STATUS_BADGE_CLASS[repair.repair_status] || 'bg-muted'}`}>{repair.repair_status}</span>
         <span className="text-xs text-muted-foreground">{repair.customer_name} · {device}</span>
+        {repair.ticket_id && (
+          <Link to={`/tickets/${repair.ticket_id}`}>
+            <Button variant="outline" size="sm" className="border-primary/40 text-primary hover:bg-primary/10">
+              <MessageSquare className="w-4 h-4 mr-1" /> Ursprüngliches Ticket
+            </Button>
+          </Link>
+        )}
         <div className="ml-auto flex items-center gap-2">
           <Label className="text-xs">Status:</Label>
           <Select value={repair.repair_status} onValueChange={(v) => updateRepair({ repair_status: v })} disabled={!perms.canEditAnnahme}>

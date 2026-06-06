@@ -3587,6 +3587,7 @@ export type Database = {
           sent_to_finance_at: string | null
           sent_to_route_planning: boolean
           sent_to_route_planning_at: string | null
+          ticket_id: string | null
           updated_at: string
           updated_by: string | null
           visible_damages: string | null
@@ -3634,6 +3635,7 @@ export type Database = {
           sent_to_finance_at?: string | null
           sent_to_route_planning?: boolean
           sent_to_route_planning_at?: string | null
+          ticket_id?: string | null
           updated_at?: string
           updated_by?: string | null
           visible_damages?: string | null
@@ -3681,12 +3683,21 @@ export type Database = {
           sent_to_finance_at?: string | null
           sent_to_route_planning?: boolean
           sent_to_route_planning_at?: string | null
+          ticket_id?: string | null
           updated_at?: string
           updated_by?: string | null
           visible_damages?: string | null
           work_order_pdf_path?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "repair_orders_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       repair_parts: {
         Row: {
@@ -4473,6 +4484,7 @@ export type Database = {
           last_synced_at: string | null
           order_number: string | null
           priority: string
+          repair_order_id: string | null
           serial_number: string | null
           source_system: string
           status: string
@@ -4498,6 +4510,7 @@ export type Database = {
           last_synced_at?: string | null
           order_number?: string | null
           priority?: string
+          repair_order_id?: string | null
           serial_number?: string | null
           source_system?: string
           status?: string
@@ -4523,13 +4536,22 @@ export type Database = {
           last_synced_at?: string | null
           order_number?: string | null
           priority?: string
+          repair_order_id?: string | null
           serial_number?: string | null
           source_system?: string
           status?: string
           title?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tickets_repair_order_id_fkey"
+            columns: ["repair_order_id"]
+            isOneToOne: false
+            referencedRelation: "repair_orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_invitations: {
         Row: {

@@ -37,6 +37,12 @@ interface Ticket {
   last_outbound_sync_at: string | null;
   created_at: string;
   updated_at: string;
+  repair_order_id: string | null;
+}
+interface LinkedRepair {
+  id: string;
+  repair_number: string | null;
+  repair_status: string | null;
 }
 interface OutboundLog {
   id: string;
@@ -85,6 +91,17 @@ export default function TicketDetail() {
   const [outboundLogs, setOutboundLogs] = useState<OutboundLog[]>([]);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [linkedRepair, setLinkedRepair] = useState<LinkedRepair | null>(null);
+
+  async function loadLinkedRepair(repairId: string | null) {
+    if (!repairId) { setLinkedRepair(null); return; }
+    const { data } = await sbRepair
+      .from('repair_orders')
+      .select('id, repair_number, repair_status')
+      .eq('id', repairId)
+      .maybeSingle();
+    setLinkedRepair((data as LinkedRepair) || null);
+  }
 
   async function loadOutboundLogs() {
     if (!id) return;
@@ -130,9 +147,11 @@ export default function TicketDetail() {
       supabase.from('ticket_attachments').select('*').eq('ticket_id', id).order('created_at', { ascending: false }),
     ]);
     if (t.error) { console.error(t.error); toast.error('Ticket nicht gefunden'); }
-    setTicket((t.data as Ticket) || null);
+    const tk = (t.data as Ticket) || null;
+    setTicket(tk);
     setMessages((m.data as Msg[]) || []);
     setAttachments((a.data as Att[]) || []);
+    loadLinkedRepair(tk?.repair_order_id || null);
     setLoading(false);
   }
 
@@ -189,8 +208,34 @@ export default function TicketDetail() {
     await patch({ department: dept, customer_visible_status: statusLabel });
   }
 
+  async function copyAttachmentsToRepair(repairId: string) {
+    if (!attachments.length) return;
+    let copied = 0;
+    for (const a of attachments) {
+      if (!a.file_url || !a.file_name) continue;
+      try {
+        const res = await fetch(a.file_url);
+        if (!res.ok) continue;
+        const blob = await res.blob();
+        const safeName = a.file_name.replace(/[^\w.\-]+/g, '_');
+        const path = `${repairId}/files/${Date.now()}_${safeName}`;
+        const { error: upErr } = await supabase.storage
+          .from('repair-files')
+          .upload(path, blob, { contentType: a.file_type || blob.type, upsert: false });
+        if (!upErr) copied++;
+      } catch (e) {
+        console.warn('Anhang konnte nicht übernommen werden', a.file_name, e);
+      }
+    }
+    if (copied > 0) toast.success(`${copied} Anhang/Anhänge übernommen`);
+  }
+
   async function createRepairFromTicket() {
     if (!ticket) return;
+    if (ticket.repair_order_id) {
+      navigate(`/reparatur/${ticket.repair_order_id}`);
+      return;
+    }
     setSaving(true);
     try {
       // Versuche Auftrag/Kunde anhand der Auftragsnummer aufzulösen
@@ -222,6 +267,7 @@ export default function TicketDetail() {
         order_id: orderRow?.id || null,
         order_number: orderRow?.order_number || ticket.order_number || null,
         customer_id: orderRow?.customer_id || null,
+        ticket_id: ticket.id,
         created_by: user?.id,
         updated_by: user?.id,
       };
@@ -229,15 +275,19 @@ export default function TicketDetail() {
       const { data: repair, error } = await sbRepair
         .from('repair_orders')
         .insert(payload)
-        .select('id, repair_number')
+        .select('id, repair_number, repair_status')
         .single();
       if (error) throw error;
 
-      // Ticket aktualisieren + interne Notiz
+      // Anhänge in repair-files Bucket übernehmen
+      await copyAttachmentsToRepair(repair.id);
+
+      // Ticket aktualisieren + interne Notiz + Verknüpfung speichern
       await supabase.from('tickets').update({
+        repair_order_id: repair.id,
         department: 'technik',
         status: 'in_bearbeitung',
-        customer_visible_status: `Arbeitsauftrag ${repair.repair_number} erstellt`,
+        customer_visible_status: `Reparaturauftrag ${repair.repair_number} erstellt`,
       }).eq('id', ticket.id);
 
       await supabase.from('ticket_messages').insert({
@@ -245,13 +295,15 @@ export default function TicketDetail() {
         sender_type: 'agent',
         sender_name: user?.email || 'Mitarbeiter',
         sender_email: user?.email || null,
-        message: `Arbeitsauftrag ${repair.repair_number} in Reparaturannahme erstellt.`,
+        message: `Reparaturauftrag ${repair.repair_number} aus Ticket erstellt.`,
         is_internal: true,
         source_system: 'alixwork',
       });
 
-      toast.success(`Arbeitsauftrag ${repair.repair_number} angelegt`);
-      navigate(`/reparatur/${repair.id}`);
+      toast.success(`Reparaturauftrag ${repair.repair_number} angelegt`);
+      setLinkedRepair(repair as LinkedRepair);
+      setTicket(t => t ? { ...t, repair_order_id: repair.id } : t);
+      load();
     } catch (e: any) {
       toast.error('Fehler: ' + (e?.message || e));
     } finally {
@@ -396,11 +448,29 @@ export default function TicketDetail() {
             </div>
           </div>
 
+          {linkedRepair && (
+            <div className="rounded-xl border border-primary/40 bg-primary/5 p-6 space-y-2">
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                <Wrench className="w-4 h-4" /> Verknüpfter Reparaturauftrag
+              </h2>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex flex-col">
+                  <span className="font-mono text-base font-semibold text-foreground">{linkedRepair.repair_number || '—'}</span>
+                  <span className="text-xs text-muted-foreground">Status: <Badge variant="outline">{linkedRepair.repair_status || '—'}</Badge></span>
+                </div>
+                <Button size="sm" variant="outline" asChild>
+                  <Link to={`/reparatur/${linkedRepair.id}`}>Öffnen</Link>
+                </Button>
+              </div>
+            </div>
+          )}
+
           <div className="rounded-xl border border-border bg-card p-6 space-y-3">
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Übergaben</h2>
             <Button variant="outline" className="w-full justify-start" disabled={!canEdit || saving}
               onClick={createRepairFromTicket}>
-              <Wrench className="w-4 h-4 mr-2" /> Arbeitsauftrag erstellen
+              <Wrench className="w-4 h-4 mr-2" />
+              {linkedRepair ? `Reparaturauftrag öffnen (${linkedRepair.repair_number || ''})` : 'Reparaturauftrag erstellen'}
             </Button>
             <Button variant="outline" className="w-full justify-start" disabled={!canEdit} asChild>
               <Link to="/reparatur/neu"><ClipboardList className="w-4 h-4 mr-2" /> Reparaturannahme erstellen</Link>
