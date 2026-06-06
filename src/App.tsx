@@ -392,6 +392,10 @@ function AppRoutes() {
             <Route path="domains" element={<MailCenterDomains />} />
             <Route path="berichte" element={<MailCenterBerichte />} />
             <Route path="ki-assistent" element={<MailCenterKIAssistent />} />
+            <Route path="dokumente" element={<MailCenterDokumentenCenter />} />
+            <Route path="versandnachweise" element={<MailCenterVersandnachweise />} />
+            <Route path="dokumente-vorlagen" element={<MailCenterDokumentenVorlagen />} />
+            <Route path="dokumente-automationen" element={<MailCenterDokumentenAutomationen />} />
             <Route path="einstellungen" element={<MailCenterEinstellungen />} />
           </Route>
 
