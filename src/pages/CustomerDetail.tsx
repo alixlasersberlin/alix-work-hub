@@ -72,69 +72,82 @@ export default function CustomerDetail() {
         )}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Customer Info */}
-        <div className="rounded-xl border border-border bg-card p-6 card-glow">
-          <h2 className="text-lg font-display font-bold text-foreground flex items-center gap-2 mb-4">
-            <Building2 className="w-5 h-5 text-primary" /> Kundendaten
-          </h2>
-          <dl className="space-y-3 text-sm">
-            {[
-              ['Firma', customer.company_name],
-              ['Kontakt', customer.contact_name],
-              ['E-Mail', customer.email],
-              ['Telefon', customer.phone],
-              ['Quelle', customer.source_system],
-              ['Ext. Kunden-ID', withAt(customer.external_customer_id, customer.source_system)],
-              ['IBAN', customer.iban],
-              ['BIC', customer.bic],
-              ['Bank', customer.bank_name],
-              ['Rechnungsadresse', addr(customer.billing_address)],
-              ['Lieferadresse', addr(customer.shipping_address)],
-              ['Erstellt', new Date(customer.created_at).toLocaleString('de-DE')],
-            ].map(([label, value]) => (
-              <div key={label as string} className="flex justify-between">
-                <dt className="text-muted-foreground">{label}</dt>
-                <dd className="text-foreground font-medium text-right max-w-[60%] truncate">{(value as string) || '—'}</dd>
-              </div>
-            ))}
-          </dl>
-        </div>
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList>
+          <TabsTrigger value="overview">Übersicht</TabsTrigger>
+          <TabsTrigger value="communication">Kommunikation</TabsTrigger>
+        </TabsList>
 
-        {/* Customer Orders */}
-        <div className="rounded-xl border border-border bg-card p-6 card-glow">
-          <h2 className="text-lg font-display font-bold text-foreground flex items-center gap-2 mb-4">
-            <ClipboardList className="w-5 h-5 text-primary" /> Aufträge ({orders.length})
-          </h2>
-          {orders.length === 0 ? (
-            <div className="text-center py-8">
-              <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
-              <p className="text-muted-foreground text-sm">Keine Aufträge vorhanden.</p>
+        <TabsContent value="overview" className="mt-4">
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Customer Info */}
+            <div className="rounded-xl border border-border bg-card p-6 card-glow">
+              <h2 className="text-lg font-display font-bold text-foreground flex items-center gap-2 mb-4">
+                <Building2 className="w-5 h-5 text-primary" /> Kundendaten
+              </h2>
+              <dl className="space-y-3 text-sm">
+                {[
+                  ['Firma', customer.company_name],
+                  ['Kontakt', customer.contact_name],
+                  ['E-Mail', customer.email],
+                  ['Telefon', customer.phone],
+                  ['Quelle', customer.source_system],
+                  ['Ext. Kunden-ID', withAt(customer.external_customer_id, customer.source_system)],
+                  ['IBAN', customer.iban],
+                  ['BIC', customer.bic],
+                  ['Bank', customer.bank_name],
+                  ['Rechnungsadresse', addr(customer.billing_address)],
+                  ['Lieferadresse', addr(customer.shipping_address)],
+                  ['Erstellt', new Date(customer.created_at).toLocaleString('de-DE')],
+                ].map(([label, value]) => (
+                  <div key={label as string} className="flex justify-between">
+                    <dt className="text-muted-foreground">{label}</dt>
+                    <dd className="text-foreground font-medium text-right max-w-[60%] truncate">{(value as string) || '—'}</dd>
+                  </div>
+                ))}
+              </dl>
             </div>
-          ) : (
-            <div className="space-y-2 max-h-96 overflow-auto">
-              {orders.map(o => (
-                <div
-                  key={o.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 cursor-pointer transition-colors"
-                  onClick={() => navigate(`/auftraege/${o.id}`)}
-                >
-                  <div>
-                    <p className="font-medium text-foreground text-sm">{withAt(o.order_number, o.source_system)}</p>
-                    <p className="text-xs text-muted-foreground">{o.order_date ? new Date(o.order_date).toLocaleDateString('de-DE') : '—'}</p>
-                  </div>
-                  <div className="text-right">
-                    <StatusBadge status={o.order_status || 'offen'} />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {o.total_amount != null ? Number(o.total_amount).toLocaleString('de-DE', { style: 'currency', currency: o.currency || 'EUR' }) : '—'}
-                    </p>
-                  </div>
+
+            {/* Customer Orders */}
+            <div className="rounded-xl border border-border bg-card p-6 card-glow">
+              <h2 className="text-lg font-display font-bold text-foreground flex items-center gap-2 mb-4">
+                <ClipboardList className="w-5 h-5 text-primary" /> Aufträge ({orders.length})
+              </h2>
+              {orders.length === 0 ? (
+                <div className="text-center py-8">
+                  <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
+                  <p className="text-muted-foreground text-sm">Keine Aufträge vorhanden.</p>
                 </div>
-              ))}
+              ) : (
+                <div className="space-y-2 max-h-96 overflow-auto">
+                  {orders.map(o => (
+                    <div
+                      key={o.id}
+                      className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 cursor-pointer transition-colors"
+                      onClick={() => navigate(`/auftraege/${o.id}`)}
+                    >
+                      <div>
+                        <p className="font-medium text-foreground text-sm">{withAt(o.order_number, o.source_system)}</p>
+                        <p className="text-xs text-muted-foreground">{o.order_date ? new Date(o.order_date).toLocaleDateString('de-DE') : '—'}</p>
+                      </div>
+                      <div className="text-right">
+                        <StatusBadge status={o.order_status || 'offen'} />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {o.total_amount != null ? Number(o.total_amount).toLocaleString('de-DE', { style: 'currency', currency: o.currency || 'EUR' }) : '—'}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="communication" className="mt-4">
+          <CustomerCommunication customer={customer} />
+        </TabsContent>
+      </Tabs>
 
       {/* Dialogs */}
       {editOpen && customer && (
