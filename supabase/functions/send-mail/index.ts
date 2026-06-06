@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { appendSignature } from "../_shared/mail-signature.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -215,8 +216,24 @@ serve(async (req) => {
     };
 
     const finalSubject = replaceVariables(baseSubject);
-    const finalHtml = replaceVariables(baseHtml);
-    const finalText = replaceVariables(baseText);
+    let finalHtml = replaceVariables(baseHtml);
+    let finalText = replaceVariables(baseText);
+
+    // Login-Name für die Signatur ermitteln
+    const { data: senderProfile } = await supabase
+      .from("user_profiles")
+      .select("full_name, first_name, last_name, email")
+      .eq("id", userData.user.id)
+      .maybeSingle();
+    const loginName =
+      senderProfile?.full_name ||
+      [senderProfile?.first_name, senderProfile?.last_name].filter(Boolean).join(" ") ||
+      senderProfile?.email ||
+      userData.user.email ||
+      "Alix Lasers Team";
+    const withSig = appendSignature(finalHtml, finalText, loginName);
+    finalHtml = withSig.html;
+    finalText = withSig.text;
 
     if (!finalSubject || (!finalHtml && !finalText)) {
       return jsonResponse({ error: "Subject and body are required" }, 400);

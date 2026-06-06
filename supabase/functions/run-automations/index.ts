@@ -3,6 +3,7 @@
 // sends via Resend, logs in mail_messages / mail_events / mail_automation_runs.
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { appendSignature } from "../_shared/mail-signature.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -258,8 +259,11 @@ serve(async (req) => {
           kundennummer: cust.external_customer_id ?? "",
         };
         const subj = replaceVars(tpl.subject ?? "", vars);
-        const html = replaceVars(tpl.body_html ?? "", vars);
-        const text = replaceVars(tpl.body_text ?? "", vars);
+        let html = replaceVars(tpl.body_html ?? "", vars);
+        let text = replaceVars(tpl.body_text ?? "", vars);
+        const sigName = a.sender_name || `Alix Lasers | ${String(a.sender_email || "news@alixwork.de").split("@")[0]}`;
+        const sig = appendSignature(html, text, sigName);
+        html = sig.html; text = sig.text;
 
         try {
           const resp = await fetch("https://api.resend.com/emails", {
