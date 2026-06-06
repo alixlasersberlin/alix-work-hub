@@ -303,19 +303,29 @@ export default function WhatsAppServiceCenter() {
 
   return (
     <div className="h-[calc(100vh-4rem)] flex flex-col p-4 gap-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <MessageSquare className="h-6 w-6 text-primary" /> WhatsApp Service Center
+            <Badge variant="secondary" className="ml-2">Anbieter: Twilio</Badge>
           </h1>
           <p className="text-sm text-muted-foreground">
-            Eingehende WhatsApp-Nachrichten als Tickets verwalten
+            Eingehende WhatsApp-Nachrichten als Tickets verwalten (Twilio Programmable Messaging)
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={loadConversations}>
-          <RefreshCw className="h-4 w-4 mr-1" /> Aktualisieren
-        </Button>
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" size="sm" onClick={testConnection}>
+            Twilio Verbindung testen
+          </Button>
+          <Button variant="outline" size="sm" onClick={sendTestMessage} disabled={!selected}>
+            WhatsApp Testnachricht senden
+          </Button>
+          <Button variant="outline" size="sm" onClick={loadConversations}>
+            <RefreshCw className="h-4 w-4 mr-1" /> Aktualisieren
+          </Button>
+        </div>
       </div>
+
 
       <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr_320px] gap-4 flex-1 min-h-0">
         {/* Conversation list */}
@@ -459,10 +469,19 @@ export default function WhatsAppServiceCenter() {
                           {m.media_type ?? "Anhang"} öffnen
                         </a>
                       )}
-                      <div className="text-[10px] opacity-70 mt-1">
-                        {new Date(m.created_at).toLocaleString("de-DE")}
+                      <div className="text-[10px] opacity-70 mt-1 flex items-center justify-between gap-2">
+                        <span>{new Date(m.created_at).toLocaleString("de-DE")}</span>
+                        <span className="flex items-center gap-1">
+                          {m.status && <span>· {m.status}</span>}
+                          {(m.twilio_message_sid ?? m.whatsapp_message_id) && (
+                            <span title="Twilio Message SID" className="font-mono">
+                              SID: {String(m.twilio_message_sid ?? m.whatsapp_message_id).slice(0, 10)}…
+                            </span>
+                          )}
+                        </span>
                       </div>
                     </div>
+
                   ))}
                   {messages.length === 0 && (
                     <div className="text-center text-sm text-muted-foreground py-8">
@@ -542,7 +561,16 @@ export default function WhatsAppServiceCenter() {
           )}
           <div className="font-semibold pt-3">Hinweise</div>
           <ul className="text-xs text-muted-foreground space-y-1 list-disc pl-4">
-            <li>Antworten gehen serverseitig über WhatsApp Cloud API.</li>
+            <li>Versand serverseitig über <strong>Twilio Programmable Messaging</strong>.</li>
+            <li>Interne Notizen werden niemals an den Kunden gesendet.</li>
+            <li>Opt-out blockiert jeden ausgehenden Versand.</li>
+          </ul>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
             <li>Interne Notizen werden niemals an den Kunden gesendet.</li>
             <li>Opt-out blockiert jeden ausgehenden Versand.</li>
           </ul>
