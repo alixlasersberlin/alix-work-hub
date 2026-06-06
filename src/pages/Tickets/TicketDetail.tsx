@@ -208,8 +208,34 @@ export default function TicketDetail() {
     await patch({ department: dept, customer_visible_status: statusLabel });
   }
 
+  async function copyAttachmentsToRepair(repairId: string) {
+    if (!attachments.length) return;
+    let copied = 0;
+    for (const a of attachments) {
+      if (!a.file_url || !a.file_name) continue;
+      try {
+        const res = await fetch(a.file_url);
+        if (!res.ok) continue;
+        const blob = await res.blob();
+        const safeName = a.file_name.replace(/[^\w.\-]+/g, '_');
+        const path = `${repairId}/files/${Date.now()}_${safeName}`;
+        const { error: upErr } = await supabase.storage
+          .from('repair-files')
+          .upload(path, blob, { contentType: a.file_type || blob.type, upsert: false });
+        if (!upErr) copied++;
+      } catch (e) {
+        console.warn('Anhang konnte nicht übernommen werden', a.file_name, e);
+      }
+    }
+    if (copied > 0) toast.success(`${copied} Anhang/Anhänge übernommen`);
+  }
+
   async function createRepairFromTicket() {
     if (!ticket) return;
+    if (ticket.repair_order_id) {
+      navigate(`/reparatur/${ticket.repair_order_id}`);
+      return;
+    }
     setSaving(true);
     try {
       // Versuche Auftrag/Kunde anhand der Auftragsnummer aufzulösen
@@ -241,6 +267,7 @@ export default function TicketDetail() {
         order_id: orderRow?.id || null,
         order_number: orderRow?.order_number || ticket.order_number || null,
         customer_id: orderRow?.customer_id || null,
+        ticket_id: ticket.id,
         created_by: user?.id,
         updated_by: user?.id,
       };
@@ -248,15 +275,19 @@ export default function TicketDetail() {
       const { data: repair, error } = await sbRepair
         .from('repair_orders')
         .insert(payload)
-        .select('id, repair_number')
+        .select('id, repair_number, repair_status')
         .single();
       if (error) throw error;
 
-      // Ticket aktualisieren + interne Notiz
+      // Anhänge in repair-files Bucket übernehmen
+      await copyAttachmentsToRepair(repair.id);
+
+      // Ticket aktualisieren + interne Notiz + Verknüpfung speichern
       await supabase.from('tickets').update({
+        repair_order_id: repair.id,
         department: 'technik',
         status: 'in_bearbeitung',
-        customer_visible_status: `Arbeitsauftrag ${repair.repair_number} erstellt`,
+        customer_visible_status: `Reparaturauftrag ${repair.repair_number} erstellt`,
       }).eq('id', ticket.id);
 
       await supabase.from('ticket_messages').insert({
@@ -264,13 +295,15 @@ export default function TicketDetail() {
         sender_type: 'agent',
         sender_name: user?.email || 'Mitarbeiter',
         sender_email: user?.email || null,
-        message: `Arbeitsauftrag ${repair.repair_number} in Reparaturannahme erstellt.`,
+        message: `Reparaturauftrag ${repair.repair_number} aus Ticket erstellt.`,
         is_internal: true,
         source_system: 'alixwork',
       });
 
-      toast.success(`Arbeitsauftrag ${repair.repair_number} angelegt`);
-      navigate(`/reparatur/${repair.id}`);
+      toast.success(`Reparaturauftrag ${repair.repair_number} angelegt`);
+      setLinkedRepair(repair as LinkedRepair);
+      setTicket(t => t ? { ...t, repair_order_id: repair.id } : t);
+      load();
     } catch (e: any) {
       toast.error('Fehler: ' + (e?.message || e));
     } finally {
