@@ -1,78 +1,81 @@
-## WhatsApp Service Center – Umsetzungsplan
+## AI Service Assistent
 
-Modulares Add-on, keine bestehenden Funktionen/Tabellen verändert. Bindet WhatsApp Cloud API über eine Edge Function an das bestehende Ticket-Modul + AlixSmart-Sync an.
+Neues, **rein additives** Modul. Bestehende Tabellen, Edge Functions und Komponenten werden nicht verändert — nur ergänzt.
 
-### 1. Datenbank (Migration)
+### 1. Datenbank (neu)
 
-Neue Tabellen im `public`-Schema (mit GRANTs + RLS):
+Vier neue Tabellen + RLS + Indizes:
 
-- **`whatsapp_conversations`** – `customer_phone`, `customer_name`, `linked_customer_id` → `customers.id`, `linked_ticket_id` → `tickets.id`, `status` (open/closed/archived), `assigned_department` (service/technik/finance/tourenplanung), `assigned_to`, `unread_count`, `opt_out`, `last_message_at`.
-- **`whatsapp_messages`** – `conversation_id`, `ticket_id`, `direction` (in/out), `sender_name`, `sender_phone`, `message_text`, `media_url`, `media_type`, `whatsapp_message_id` (unique), `status` (sent/delivered/read/failed/received), `is_internal_note` (immer false für WhatsApp – nur interne Notizen leben weiterhin in `tickets`/`ticket_messages`).
-- **`whatsapp_sync_logs`** – `action`, `status`, `error_message`, `payload`, `created_at`.
-- **`whatsapp_templates`** – vorgefertigte Standardantworten (`key`, `title`, `body`, `language`, `active`). Wird mit den 7 geforderten Vorlagen geseedet.
+- **`service_knowledge_base`** – Wissensquelle (Gerätetyp, Fehlercode, Symptom, Ursache, Lösung, Ersatzteile JSONB, Arbeitszeit Min/Erwartet/Max, Quelle/Tags).
+- **`service_ai_analyses`** – Cache aller AI-Analysen pro Ticket/Reparatur (Ursache, Confidence, Prüfungsschritte, Reparatur, Ersatzteile JSONB, Arbeitszeit JSONB, Technikerempfehlung, Raw-Response, Modell, Tokens, erstellt_von).
+- **`service_ai_repair_guides`** – Generierte Reparaturanleitungen (Prüfschritte, Reparaturschritte, Sicherheit, Abschlussprüfung, PDF-Pfad).
+- **`service_ai_feedback`** – Daumen-hoch/runter + Korrektur pro Analyse (für späteres KB-Lernen).
 
-Storage-Bucket **`whatsapp-media`** (privat) für Bilder/PDFs/Videos vom Kunden + ausgehende Anhänge.
+**Rollen-Policy (über vorhandene Helfer):**
+- Lesen: `is_admin()` OR `has_role('Service')` OR `has_role('Technik')` OR `has_role('Kundenservice')` OR `has_role('Finance')` (Finance read-only) OR `has_role('Reparaturannahme')`.
+- Schreiben (AI ausführen / Feedback): wie oben **ohne** Finance und **ohne** Tourenplanung.
+- KB schreiben: `is_admin()` OR `has_role('Technik')`.
+- Löschen: nur Super Admin (Projekt-Standard).
 
-RLS / Rollenrechte über bestehende Helper:
-- Lesen: Admin, `Kundenservice`, `Technik` (Department=technik), `Finance` (Department=finance), `Tourenplanung` (Department=tourenplanung).
-- Schreiben/Antworten: Admin, `Kundenservice`. Technik darf interne Notizen am verknüpften Ticket setzen.
-- Delete/Archivieren: nur Super Admin (folgt globaler Regel).
-- Opt-out-Flag pro Konversation, blockiert ausgehenden Versand.
+### 2. Edge Functions (neu, alle `verify_jwt=true`)
 
-### 2. Edge Functions
+Alle nutzen Lovable AI Gateway (`google/gemini-3-flash-preview`, `LOVABLE_API_KEY` schon vorhanden) via OpenAI-kompatiblem Endpoint.
 
-- **`whatsapp-webhook`** (`verify_jwt=false`, public) – GET: Meta-Verify (`hub.challenge`); POST:
-  1. Signatur via `WHATSAPP_APP_SECRET` (HMAC SHA256) prüfen.
-  2. Nachricht parsen (Text/Media), Media-File von Meta laden und in `whatsapp-media` ablegen.
-  3. Konversation per `customer_phone` upsert; Kunde via `customers.phone`/`mobile` mappen.
-  4. Auto-Erkennung: Regex auf Seriennummer (`SN…`), Auftragsnummer (Zoho-Format), Fehlercodes → Ticket-Match.
-  5. Offenes Ticket finden (`tickets.customer_id` + `status≠closed`) oder neues Ticket anlegen (`source='whatsapp'`, `priority='Normal'`, `department='service'`).
-  6. Message persistieren, an `ticket_messages` spiegeln (öffentlich).
-  7. `whatsapp_sync_logs` Eintrag + Aufruf des bestehenden AlixSmart-Sync-Pfads (analog zu Tickets-Modul) via interner RPC/Function.
+| Function | Zweck |
+|---|---|
+| `service-ai-analyze` | Fehleranalyse + Ersatzteilvorschlag + Arbeitszeit + Technikerempfehlung in einem strukturierten JSON-Call. Lädt Kontext (Ticket/Reparatur, Gerät, SN, bisherige Tickets/Reparaturen desselben Geräts, KB-Treffer per ILIKE). Speichert Ergebnis in `service_ai_analyses`. |
+| `service-ai-repair-guide` | Erzeugt Reparaturanleitung (Prüfschritte, Reparatur, Sicherheit, Abschluss). Speichert in `service_ai_repair_guides`. |
+| `service-ai-repair-guide-pdf` | Rendert vorhandenen Guide als PDF (jsPDF serverseitig) und liefert Bytes zurück (Client lädt herunter). |
+| `service-ai-suggest-technician` | Eigenständige Technikerempfehlung (nutzt `technician_skills` + Ticket-Historie). Wird zusätzlich auch von `service-ai-analyze` aufgerufen. |
+| `service-ai-cockpit-stats` | Aggregierte KPIs für das Cockpit (top Fehler, top Ersatzteile, offene kritische Tickets, Geräte mit hoher Fehlerquote, Techniker-Auslastung). |
 
-- **`whatsapp-send`** (`verify_jwt=true`) – sendet Text/Template/Media über Cloud API (`/messages`). Prüft Auth + Rolle, Opt-out, internal-note-Flag (Block), schreibt `whatsapp_messages` (direction=out, status=sent) und mirror in `ticket_messages`.
+429/402-Fehler werden sauber an die UI durchgereicht.
 
-Secrets: `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_APP_SECRET`, `WHATSAPP_VERIFY_TOKEN`. Werden via Secret-Prompt angefordert, sobald der Plan freigegeben ist.
+### 3. UI – additiv eingehängt
 
-### 3. Frontend
+- **Neuer „AI Fehleranalyse"-Button** auf bestehenden Detailseiten:
+  - `src/pages/TicketDetail.tsx` (bzw. äquivalente Ticket-Detailansicht)
+  - `src/pages/RepairOrderDetail.tsx`
+  
+  Klick öffnet ein neues Side-Panel **`AiAnalysisPanel`** mit Tabs: *Analyse · Ersatzteile · Anleitung · Arbeitszeit · Techniker*. Buttons: „Analyse starten", „Anleitung als PDF", „Bestellvorschlag erzeugen" (legt Entwurf in `production_orders` mit `is_reclamation=false` und `approval_status='pending'` — bestehender Genehmigungsflow greift).
+  
+- **Neue Seite `/ai-service-center`** (`src/pages/AiServiceCenter.tsx`)
+  - Cockpit-Kacheln: häufigste Fehler, Top-Ersatzteile, kritische offene Tickets, AI-Empfehlungen-Stream, Geräte mit hoher Fehlerquote, Techniker-Auslastung.
+  - Tabelle: zuletzt erstellte Analysen mit Direkt-Sprung ins Ticket/Reparatur.
+  - KB-Editor für Admin/Technik.
 
-Route `/whatsapp` (lazy, Sidebar unter „Tickets"):
+- **Sidebar-Eintrag** unter *Service/Tickets*: „AI Service Center" — sichtbar für Admin, Service, Technik, Kundenservice, Finance (read-only), Reparaturannahme.
 
-- **`WhatsAppInbox.tsx`** – Liste offener Gespräche (Kunde, Telefon, letztes Datum, Ticket-Nr., Status, ungelesen-Badge), Filter nach Department + Suche.
-- **`WhatsAppChat.tsx`** – Detailansicht: Chronologischer Verlauf, Realtime-Subscribe auf `whatsapp_messages`, Kundenkarte (inkl. Gerät/Seriennummer aus erkanntem Ticket), Aktionen-Bar:
-  - Antworten (Text + Anhang + Template-Picker)
-  - Interne Notiz (geht in `ticket_messages`, **nicht** an WhatsApp)
-  - Ticket erstellen / verknüpfen (`OrderPickerDialog`-Pattern)
-  - Kunde zuordnen (Customer-Search-Dialog)
-  - An Technik übergeben (setzt `assigned_department='technik'`, Ticket-Department-Update)
-  - Opt-out / Archivieren (rolle-geprüft)
+### 4. Rollen-Mapping in der UI
 
-Zugriffsschutz im Router via `requiredRoles=['Super Admin','Admin','Kundenservice','Technik','Finance','Tourenplanung']`; UI-Aktionen pro Rolle gegated.
+| Rolle | Buttons sichtbar | Aktionen |
+|---|---|---|
+| Super Admin / Admin | alle | alle, inkl. KB-Editor & Delete |
+| Service | „AI Fehleranalyse", Anleitung, PDF | ausführen, Feedback |
+| Technik | alle (außer Delete), KB-Editor | ausführen, KB editieren |
+| Kundenservice | Fehleranalyse, Anleitung anzeigen | ausführen |
+| Finance | Cockpit + Analysen lesen | nur lesen |
+| Tourenplanung | **nichts** (Modul ausgeblendet) | — |
 
-### 4. Standardantworten
+### 5. Was **nicht** angefasst wird
 
-`whatsapp_templates` wird mit den 7 Items geseedet (key/title/body), Template-Picker im Chat füllt das Eingabefeld vor; bei Verwendung eines Meta-zertifizierten Templates wird der Cloud-API-Template-Endpoint genutzt, sonst freier Text.
+- Keine Änderung an `tickets`, `repair_orders`, `production_orders`, `customers`, `whatsapp_*`, `mail_*`, `lager_devices`.
+- Keine bestehenden Edge Functions umgeschrieben.
+- Keine Sidebar-/Layout-Refactors außerhalb des einen neuen Menüpunkts.
+- Keine Auto-Trigger — AI läuft nur auf User-Klick (kostenkontrolliert).
 
-### 5. Sicherheit & Datenschutz
+### Lieferung in dieser Reihenfolge
 
-- Webhook-Signaturprüfung Pflicht.
-- Tokens ausschließlich serverseitig (`Deno.env.get`); Frontend ruft nur `whatsapp-send`.
-- Interne Notizen technisch getrennt (`ticket_messages.is_internal=true`) und nie an `whatsapp-send` übergeben.
-- Opt-out-Konversationen blocken jeden Outbound mit 403.
-- Volles Audit über `whatsapp_sync_logs` + bestehende `audit_logs`.
+1. Migration (Tabellen, Grants, RLS, Indizes, Seed-KB leer).
+2. 5 Edge Functions + `config.toml`.
+3. `AiAnalysisPanel`-Komponente + Buttons in Ticket-/Reparatur-Detail.
+4. `/ai-service-center`-Seite + Routing + Sidebar.
+5. Memory-Eintrag `mem://features/ai-service-assistent`.
 
-### Nicht enthalten / Annahmen
+---
 
-- Provider = WhatsApp Cloud API (Meta). Falls 360dialog/Twilio gewünscht: separater Adapter, gleiche Tabellen.
-- AlixSmart-Sync nutzt den bereits bestehenden Ticket-Sync; keine neue externe API.
-- Realtime nur auf `whatsapp_messages` (Supabase Realtime), kein zusätzliches Push.
+**Offene Punkte zur Bestätigung:**
+- Soll der „Bestellvorschlag erzeugen"-Button direkt einen `production_orders`-Entwurf (pending) anlegen, oder nur eine Vorschau ohne DB-Schreibvorgang anzeigen?
+- PDF-Anleitung: einfache jsPDF-Version (deutsche Texte, Logo-frei) reicht — okay so?
 
-### Reihenfolge
-
-1. Migration + Storage-Bucket + Seed-Templates.
-2. Secrets-Prompt (4 Stück).
-3. Edge Functions `whatsapp-webhook` + `whatsapp-send`.
-4. Frontend `WhatsAppInbox` + `WhatsAppChat` + Route + Sidebar.
-5. Memory-Eintrag.
-
-OK so umsetzen?
+Wenn du mit beidem „ja, los" antwortest oder einfach nur „los", baue ich Punkt 1–5 in einem Rutsch.
