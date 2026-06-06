@@ -4369,6 +4369,172 @@ export type Database = {
           },
         ]
       }
+      service_ai_analyses: {
+        Row: {
+          arbeitszeit: Json | null
+          confidence: number | null
+          created_at: string
+          created_by: string | null
+          device_model: string | null
+          device_type: string | null
+          ersatzteile: Json | null
+          fehlercode: string | null
+          id: string
+          model: string | null
+          prompt_summary: string | null
+          pruefschritte: Json | null
+          raw_response: Json | null
+          repair_order_id: string | null
+          reparatur_empfehlung: string | null
+          serial_number: string | null
+          source_kind: string
+          technikerempfehlung: Json | null
+          ticket_id: string | null
+          tokens_input: number | null
+          tokens_output: number | null
+          ursache: string | null
+        }
+        Insert: {
+          arbeitszeit?: Json | null
+          confidence?: number | null
+          created_at?: string
+          created_by?: string | null
+          device_model?: string | null
+          device_type?: string | null
+          ersatzteile?: Json | null
+          fehlercode?: string | null
+          id?: string
+          model?: string | null
+          prompt_summary?: string | null
+          pruefschritte?: Json | null
+          raw_response?: Json | null
+          repair_order_id?: string | null
+          reparatur_empfehlung?: string | null
+          serial_number?: string | null
+          source_kind: string
+          technikerempfehlung?: Json | null
+          ticket_id?: string | null
+          tokens_input?: number | null
+          tokens_output?: number | null
+          ursache?: string | null
+        }
+        Update: {
+          arbeitszeit?: Json | null
+          confidence?: number | null
+          created_at?: string
+          created_by?: string | null
+          device_model?: string | null
+          device_type?: string | null
+          ersatzteile?: Json | null
+          fehlercode?: string | null
+          id?: string
+          model?: string | null
+          prompt_summary?: string | null
+          pruefschritte?: Json | null
+          raw_response?: Json | null
+          repair_order_id?: string | null
+          reparatur_empfehlung?: string | null
+          serial_number?: string | null
+          source_kind?: string
+          technikerempfehlung?: Json | null
+          ticket_id?: string | null
+          tokens_input?: number | null
+          tokens_output?: number | null
+          ursache?: string | null
+        }
+        Relationships: []
+      }
+      service_ai_feedback: {
+        Row: {
+          analysis_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          korrektur: string | null
+          rating: number | null
+        }
+        Insert: {
+          analysis_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          korrektur?: string | null
+          rating?: number | null
+        }
+        Update: {
+          analysis_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          korrektur?: string | null
+          rating?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_ai_feedback_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "service_ai_analyses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_ai_repair_guides: {
+        Row: {
+          abschlusspruefung: Json | null
+          analysis_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          model: string | null
+          pdf_path: string | null
+          pruefschritte: Json | null
+          repair_order_id: string | null
+          reparaturschritte: Json | null
+          sicherheit: Json | null
+          ticket_id: string | null
+          titel: string | null
+        }
+        Insert: {
+          abschlusspruefung?: Json | null
+          analysis_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          model?: string | null
+          pdf_path?: string | null
+          pruefschritte?: Json | null
+          repair_order_id?: string | null
+          reparaturschritte?: Json | null
+          sicherheit?: Json | null
+          ticket_id?: string | null
+          titel?: string | null
+        }
+        Update: {
+          abschlusspruefung?: Json | null
+          analysis_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          model?: string | null
+          pdf_path?: string | null
+          pruefschritte?: Json | null
+          repair_order_id?: string | null
+          reparaturschritte?: Json | null
+          sicherheit?: Json | null
+          ticket_id?: string | null
+          titel?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_ai_repair_guides_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "service_ai_analyses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_communication_log: {
         Row: {
           created_at: string
@@ -4399,6 +4565,60 @@ export type Database = {
           repair_order_id?: string | null
           status?: string
           ticket_id?: string | null
+        }
+        Relationships: []
+      }
+      service_knowledge_base: {
+        Row: {
+          arbeitszeit_erwartet: number | null
+          arbeitszeit_max: number | null
+          arbeitszeit_min: number | null
+          created_at: string
+          created_by: string | null
+          ersatzteile: Json | null
+          fehlercode: string | null
+          geraetetyp: string | null
+          id: string
+          loesung: string | null
+          quelle: string | null
+          symptom: string
+          tags: string[] | null
+          updated_at: string
+          ursache: string | null
+        }
+        Insert: {
+          arbeitszeit_erwartet?: number | null
+          arbeitszeit_max?: number | null
+          arbeitszeit_min?: number | null
+          created_at?: string
+          created_by?: string | null
+          ersatzteile?: Json | null
+          fehlercode?: string | null
+          geraetetyp?: string | null
+          id?: string
+          loesung?: string | null
+          quelle?: string | null
+          symptom: string
+          tags?: string[] | null
+          updated_at?: string
+          ursache?: string | null
+        }
+        Update: {
+          arbeitszeit_erwartet?: number | null
+          arbeitszeit_max?: number | null
+          arbeitszeit_min?: number | null
+          created_at?: string
+          created_by?: string | null
+          ersatzteile?: Json | null
+          fehlercode?: string | null
+          geraetetyp?: string | null
+          id?: string
+          loesung?: string | null
+          quelle?: string | null
+          symptom?: string
+          tags?: string[] | null
+          updated_at?: string
+          ursache?: string | null
         }
         Relationships: []
       }
@@ -5772,6 +5992,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_ai_service: { Args: never; Returns: boolean }
       can_access_finance: { Args: never; Returns: boolean }
       can_access_financing: { Args: never; Returns: boolean }
       can_access_import_logs: { Args: never; Returns: boolean }
@@ -5789,6 +6010,7 @@ export type Database = {
       can_manage_repair: { Args: never; Returns: boolean }
       can_manage_tickets: { Args: never; Returns: boolean }
       can_manage_whatsapp_automation: { Args: never; Returns: boolean }
+      can_run_ai_service: { Args: never; Returns: boolean }
       can_send_whatsapp: { Args: never; Returns: boolean }
       can_upload_factory_invoice: { Args: never; Returns: boolean }
       can_view_mail_audit: { Args: never; Returns: boolean }
