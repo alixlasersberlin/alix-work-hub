@@ -150,7 +150,8 @@ serve(async (req) => {
         let text = replaceVars(baseText, vars);
         const withFooter = appendFooter(html, text, rec.email);
         html = withFooter.html; text = withFooter.text;
-        const sigName = campaign.sender_name || `Alix Lasers | ${String(campaign.sender_email).split("@")[0]}`;
+        const senderLp = (() => { const lp = String(campaign.sender_email).split("@")[0]; return lp.charAt(0).toUpperCase() + lp.slice(1); })();
+        const sigName = campaign.sender_name || `Alix Lasers | ${senderLp}`;
         const withSig = appendSignature(html, text, sigName);
         html = withSig.html; text = withSig.text;
 
@@ -161,7 +162,7 @@ serve(async (req) => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            from: `Alix Lasers | ${String(campaign.sender_email).split("@")[0]} <${campaign.sender_email}>`,
+            from: `Alix Lasers | ${senderLp} <${campaign.sender_email}>`,
             to: [rec.name ? `${rec.name} <${rec.email}>` : rec.email],
             subject: subj,
             html: html || undefined,

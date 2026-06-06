@@ -248,7 +248,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: `Alix Lasers | ${String(from_email).split("@")[0]} <${from_email}>`,
+        from: (() => { const lp = String(from_email).split("@")[0]; return `Alix Lasers | ${lp.charAt(0).toUpperCase() + lp.slice(1)} <${from_email}>`; })(),
         to: [to_name ? `${to_name} <${to_email}>` : to_email],
         reply_to: REPLY_TO_MAP[String(from_email).toLowerCase()] || undefined,
         subject: finalSubject,
