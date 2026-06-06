@@ -117,6 +117,7 @@ const AnfragenOffen = lazy(() => import("./pages/AnfragenOffen"));
 const Detailsuche = lazy(() => import("./pages/Detailsuche"));
 const Geraetesperren = lazy(() => import("./pages/Geraetesperren"));
 const Systemwartung = lazy(() => import("./pages/Systemwartung"));
+const Geraeteakte = lazy(() => import("./pages/Geraeteakte"));
 const BugCapaLayoutLazy = lazy(() => import("./pages/BugCapa/_shared").then(m => ({ default: m.BugCapaLayout })));
 const BugCapaDashboard = lazy(() => import("./pages/BugCapa/BugCapaDashboard"));
 const BugCapaBugs = lazy(() => import("./pages/BugCapa/Bugs"));
