@@ -786,7 +786,172 @@ async function discoverSchemas(ctx: Ctx) {
   return out;
 }
 
-// --- HTTP handler ---------------------------------------------------------
+/** Fetch all pages of a source table (capped) without importing. */
+async function fetchAllRows(sourceTable: string, max = 2000): Promise<{ rows: any[]; error?: string }> {
+  const out: any[] = [];
+  const limit = 100;
+  let offset = 0;
+  for (let i = 0; i < 50 && out.length < max; i++) {
+    const r = await fetchTable(sourceTable, limit, offset);
+    if (r.error) return { rows: out, error: r.error };
+    if (!r.rows.length) break;
+    out.push(...r.rows);
+    if (r.rows.length < limit) break;
+    offset += limit;
+  }
+  return { rows: out };
+}
+
+/** Read-only conflict analysis for Welle 1 (profiles, user_roles, devices). */
+async function analyzeWave1(ctx: Ctx) {
+  // ---- profiles
+  const profilesRes = await fetchAllRows("profiles");
+  const profileEmailCounts = new Map<string, number>();
+  for (const r of profilesRes.rows) {
+    const e = String(r.email || "").toLowerCase().trim();
+    if (e) profileEmailCounts.set(e, (profileEmailCounts.get(e) || 0) + 1);
+  }
+  const emails = [...profileEmailCounts.keys()];
+  const existingProfilesMap = new Map<string, { id: string; full_name: string | null }>();
+  // chunk lookups
+  for (let i = 0; i < emails.length; i += 100) {
+    const chunk = emails.slice(i, i + 100);
+    if (!chunk.length) continue;
+    const { data } = await ctx.admin
+      .from("user_profiles")
+      .select("id,email,full_name")
+      .in("email", chunk);
+    (data || []).forEach((p: any) => existingProfilesMap.set(String(p.email).toLowerCase(), { id: p.id, full_name: p.full_name }));
+  }
+
+  const profileItems: any[] = [];
+  const profileBuckets: Record<string, number> = {
+    missing_email: 0, duplicate_email_in_source: 0, no_match_target: 0,
+    match_found: 0, missing_required_field: 0,
+  };
+  for (const r of profilesRes.rows) {
+    const email = String(r.email || "").toLowerCase().trim();
+    const sourceId = String(r.id ?? r.source_id ?? email ?? "");
+    const target = email ? existingProfilesMap.get(email) : undefined;
+    let bucket = "importable";
+    let reason = "";
+    if (!email) { bucket = "missing_email"; reason = "E-Mail fehlt"; profileBuckets.missing_email++; }
+    else if ((profileEmailCounts.get(email) || 0) > 1) { bucket = "duplicate_email_in_source"; reason = "E-Mail mehrfach in Quelle"; profileBuckets.duplicate_email_in_source++; }
+    else if (target) { bucket = "match_found"; reason = "Bestehendes Zielprofil – Merge möglich"; profileBuckets.match_found++; }
+    else { bucket = "no_match_target"; reason = "Kein Zielprofil – auth user fehlt"; profileBuckets.no_match_target++; }
+    profileItems.push({
+      source_id: sourceId, email, full_name: r.full_name ?? null,
+      match_found: !!target, target_exists: !!target,
+      target_id: target?.id ?? null, bucket, reason,
+    });
+  }
+
+  // ---- user_roles
+  const rolesRes = await fetchAllRows("user_roles");
+  const { data: targetRoles } = await ctx.admin.from("roles").select("id,name");
+  const targetRoleNames = (targetRoles || []).map((r: any) => r.name as string);
+  const targetRoleSet = new Set(targetRoleNames.map((n) => n.toLowerCase()));
+
+  const sourceRoleCounts = new Map<string, number>();
+  const unmapped = new Set<string>();
+  const mappingSuggestion: Record<string, string | null> = {};
+  for (const r of rolesRes.rows) {
+    const raw = String(r.role || r.role_name || "").toLowerCase().trim();
+    if (!raw) continue;
+    sourceRoleCounts.set(raw, (sourceRoleCounts.get(raw) || 0) + 1);
+    const mapped = ROLE_MAP[raw] || null;
+    if (!mapped || !targetRoleSet.has(mapped.toLowerCase())) {
+      unmapped.add(raw);
+      mappingSuggestion[raw] = mapped && targetRoleSet.has(mapped.toLowerCase())
+        ? mapped
+        : (targetRoleNames.find((n) => n.toLowerCase() === raw) || null);
+    } else {
+      mappingSuggestion[raw] = mapped;
+    }
+  }
+
+  // ---- devices
+  const devicesRes = await fetchAllRows("devices");
+  const devSerialCounts = new Map<string, number>();
+  for (const r of devicesRes.rows) {
+    const s = String(r.serial_number || r.serial || "").trim();
+    if (s) devSerialCounts.set(s, (devSerialCounts.get(s) || 0) + 1);
+  }
+  const serials = [...devSerialCounts.keys()];
+  const existingDeviceMap = new Map<string, string>();
+  for (let i = 0; i < serials.length; i += 100) {
+    const chunk = serials.slice(i, i + 100);
+    if (!chunk.length) continue;
+    const { data } = await ctx.admin
+      .from("lager_devices").select("id,serial_number").in("serial_number", chunk);
+    (data || []).forEach((d: any) => existingDeviceMap.set(String(d.serial_number), d.id));
+  }
+  const deviceItems: any[] = [];
+  const deviceBuckets: Record<string, number> = {
+    missing_serial: 0, duplicate_serial_in_source: 0,
+    target_exists: 0, missing_customer: 0, importable: 0,
+  };
+  for (const r of devicesRes.rows) {
+    const serial = String(r.serial_number || r.serial || "").trim();
+    const sourceId = String(r.id ?? r.source_id ?? serial ?? "");
+    let bucket = "importable", reason = "";
+    if (!serial) { bucket = "missing_serial"; reason = "Seriennummer fehlt"; deviceBuckets.missing_serial++; }
+    else if ((devSerialCounts.get(serial) || 0) > 1) { bucket = "duplicate_serial_in_source"; reason = "Seriennummer mehrfach in Quelle"; deviceBuckets.duplicate_serial_in_source++; }
+    else if (existingDeviceMap.has(serial)) { bucket = "target_exists"; reason = "Zielgerät existiert bereits – Merge"; deviceBuckets.target_exists++; }
+    else if (!r.customer_email && !r.customer_name) { bucket = "missing_customer"; reason = "Kein Kundenbezug"; deviceBuckets.missing_customer++; }
+    else { deviceBuckets.importable++; }
+    deviceItems.push({
+      source_id: sourceId, serial_number: serial,
+      device: r.model_name ?? r.device_name ?? null,
+      customer_email: r.customer_email ?? null,
+      customer_name: r.customer_name ?? null,
+      target_exists: existingDeviceMap.has(serial),
+      target_id: existingDeviceMap.get(serial) ?? null,
+      bucket, reason,
+    });
+  }
+
+  const summary = {
+    profiles: {
+      total: profileItems.length,
+      importable_safe: profileBuckets.match_found,
+      manual_review: profileBuckets.duplicate_email_in_source + profileBuckets.no_match_target,
+      blocked: profileBuckets.missing_email,
+    },
+    user_roles: {
+      total: rolesRes.rows.length,
+      importable_safe: rolesRes.rows.length - [...unmapped].reduce((a, k) => a + (sourceRoleCounts.get(k) || 0), 0),
+      manual_review: 0,
+      blocked: [...unmapped].reduce((a, k) => a + (sourceRoleCounts.get(k) || 0), 0),
+    },
+    devices: {
+      total: deviceItems.length,
+      importable_safe: deviceBuckets.importable,
+      manual_review: deviceBuckets.target_exists + deviceBuckets.duplicate_serial_in_source + deviceBuckets.missing_customer,
+      blocked: deviceBuckets.missing_serial,
+    },
+  };
+
+  await logAction(ctx, null, "analyze_wave1", "success",
+    { processed: profileItems.length + rolesRes.rows.length + deviceItems.length, success: 0, failed: 0 },
+    profilesRes.error || rolesRes.error || devicesRes.error,
+    { profileBuckets, deviceBuckets, unmapped_roles: [...unmapped] });
+
+  return {
+    profiles: { items: profileItems, buckets: profileBuckets, fetch_error: profilesRes.error || null },
+    user_roles: {
+      source_roles: [...sourceRoleCounts.entries()].map(([name, count]) => ({ name, count })),
+      target_roles: targetRoleNames,
+      unmapped: [...unmapped],
+      mapping_suggestion: mappingSuggestion,
+      fetch_error: rolesRes.error || null,
+    },
+    devices: { items: deviceItems, buckets: deviceBuckets, fetch_error: devicesRes.error || null },
+    summary,
+  };
+}
+
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -853,6 +1018,12 @@ Deno.serve(async (req) => {
     if (action === "discover-schema") {
       const schemas = await discoverSchemas(ctx);
       return new Response(JSON.stringify({ batch_id: batchId, schemas }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if (action === "analyze-wave1") {
+      const result = await analyzeWave1(ctx);
+      return new Response(JSON.stringify({ batch_id: batchId, ...result }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 

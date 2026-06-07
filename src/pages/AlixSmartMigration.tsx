@@ -49,6 +49,8 @@ export default function AlixSmartMigration() {
   const [ticketAck, setTicketAck] = useState(false);
   const [waveResults, setWaveResults] = useState<Record<number, any>>({});
   const [schemas, setSchemas] = useState<Record<string, any> | null>(null);
+  const [wave1Analysis, setWave1Analysis] = useState<any | null>(null);
+
 
   async function loadAll() {
     setLoading(true);
@@ -148,6 +150,33 @@ export default function AlixSmartMigration() {
     } finally { setRunning(null); }
   }
 
+  async function analyseWave1() {
+    setRunning('wave1');
+    try {
+      const res = await callEngine('analyze-wave1');
+      setWave1Analysis(res);
+      toast.success('Welle 1 analysiert (keine Daten verändert).');
+      await loadAll();
+    } catch (e: any) {
+      toast.error('Welle-1-Analyse fehlgeschlagen: ' + e.message);
+    } finally { setRunning(null); }
+  }
+
+  function exportCsv(filename: string, rows: any[], columns: string[]) {
+    if (!rows.length) { toast.info('Keine Daten zum Export.'); return; }
+    const esc = (v: any) => {
+      const s = v == null ? '' : String(v);
+      return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const csv = [columns.join(';'), ...rows.map(r => columns.map(c => esc(r[c])).join(';'))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+
   async function importWave(wave: 1 | 2 | 3 | 4) {
     setRunning('wave-' + wave);
     try {
@@ -185,6 +214,9 @@ export default function AlixSmartMigration() {
           <Button size="sm" onClick={runDryRun} disabled={running === 'dryrun' || !schemaReady || !connectionOk}>
             <PlayCircle className={`w-4 h-4 mr-2 ${running === 'dryrun' ? 'animate-spin' : ''}`} />Dry-Run starten
           </Button>
+          <Button variant="outline" size="sm" onClick={analyseWave1} disabled={running === 'wave1' || !connectionOk}>
+            <AlertTriangle className={`w-4 h-4 mr-2 ${running === 'wave1' ? 'animate-spin' : ''}`} />Welle 1 analysieren
+          </Button>
         </div>
       </div>
 
@@ -214,7 +246,12 @@ export default function AlixSmartMigration() {
           <TabsTrigger value="logs">Logs ({logs.length})</TabsTrigger>
           <TabsTrigger value="conflicts">Konflikte ({conflicts.length})</TabsTrigger>
           <TabsTrigger value="schema">Schema-Analyse{schemas ? ` (${Object.keys(schemas).length})` : ''}</TabsTrigger>
+          <TabsTrigger value="w1-profiles">Profile-Konflikte{wave1Analysis ? ` (${wave1Analysis.profiles?.items?.length ?? 0})` : ''}</TabsTrigger>
+          <TabsTrigger value="w1-roles">Rollen-Konflikte{wave1Analysis ? ` (${wave1Analysis.user_roles?.unmapped?.length ?? 0})` : ''}</TabsTrigger>
+          <TabsTrigger value="w1-devices">Device-Konflikte{wave1Analysis ? ` (${wave1Analysis.devices?.items?.length ?? 0})` : ''}</TabsTrigger>
+          <TabsTrigger value="w1-summary">W1 Zusammenfassung</TabsTrigger>
         </TabsList>
+
 
         <TabsContent value="engine">
           <div className="grid md:grid-cols-2 gap-4">
@@ -450,7 +487,21 @@ export default function AlixSmartMigration() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="w1-profiles">
+          <Wave1ProfilesTab data={wave1Analysis?.profiles} onExport={exportCsv} />
+        </TabsContent>
+        <TabsContent value="w1-roles">
+          <Wave1RolesTab data={wave1Analysis?.user_roles} onExport={exportCsv} />
+        </TabsContent>
+        <TabsContent value="w1-devices">
+          <Wave1DevicesTab data={wave1Analysis?.devices} onExport={exportCsv} />
+        </TabsContent>
+        <TabsContent value="w1-summary">
+          <Wave1SummaryTab summary={wave1Analysis?.summary} />
+        </TabsContent>
       </Tabs>
+
     </div>
   );
 }
@@ -470,3 +521,187 @@ function StatusBadge({ label, ok }: { label: string; ok: boolean | null }) {
     </CardContent></Card>
   );
 }
+
+function BucketBadges({ buckets }: { buckets: Record<string, number> }) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {Object.entries(buckets).map(([k, v]) => (
+        <Badge key={k} variant="outline" className="font-mono text-xs">
+          {k}: {v}
+        </Badge>
+      ))}
+    </div>
+  );
+}
+
+function NotRunHint() {
+  return (
+    <p className="text-sm text-muted-foreground">
+      Noch nicht ausgeführt. Klicke oben auf „Welle 1 analysieren".
+    </p>
+  );
+}
+
+function Wave1ProfilesTab({ data, onExport }: { data: any; onExport: (f: string, r: any[], c: string[]) => void }) {
+  if (!data) return <Card><CardContent className="p-6"><NotRunHint /></CardContent></Card>;
+  const cols = ['source_id', 'email', 'full_name', 'bucket', 'reason', 'match_found', 'target_exists', 'target_id'];
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center justify-between flex-wrap gap-2">
+          <span>Profile – Konfliktanalyse ({data.items.length})</span>
+          <Button size="sm" variant="outline" onClick={() => onExport('profiles-konflikte.csv', data.items, cols)}>CSV Export</Button>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {data.fetch_error && <div className="text-xs text-red-500">Quell-Fehler: {data.fetch_error}</div>}
+        <BucketBadges buckets={data.buckets} />
+        <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
+          <table className="w-full text-xs">
+            <thead className="bg-muted/40 sticky top-0">
+              <tr className="text-left">
+                {cols.map(c => <th key={c} className="p-2 font-mono">{c}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {data.items.map((r: any, i: number) => (
+                <tr key={i} className="border-t border-border">
+                  {cols.map(c => <td key={c} className="p-2 font-mono">{String(r[c] ?? '—')}</td>)}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function Wave1RolesTab({ data, onExport }: { data: any; onExport: (f: string, r: any[], c: string[]) => void }) {
+  if (!data) return <Card><CardContent className="p-6"><NotRunHint /></CardContent></Card>;
+  const suggestionRows = Object.entries(data.mapping_suggestion || {}).map(([source, target]) => ({ source, target: target ?? '—' }));
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center justify-between flex-wrap gap-2">
+          <span>Rollen – Konfliktanalyse</span>
+          <Button size="sm" variant="outline" onClick={() => onExport('rollen-mapping.csv', suggestionRows, ['source', 'target'])}>CSV Export</Button>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4 text-sm">
+        {data.fetch_error && <div className="text-xs text-red-500">Quell-Fehler: {data.fetch_error}</div>}
+        <div>
+          <div className="text-muted-foreground mb-1">Vorhandene Rollen in AlixSmart ({data.source_roles.length})</div>
+          <div className="flex flex-wrap gap-1">
+            {data.source_roles.map((r: any) => (
+              <Badge key={r.name} variant="secondary" className="font-mono text-xs">{r.name} · {r.count}</Badge>
+            ))}
+          </div>
+        </div>
+        <div>
+          <div className="text-muted-foreground mb-1">Vorhandene Rollen in AlixWork ({data.target_roles.length})</div>
+          <div className="flex flex-wrap gap-1">
+            {data.target_roles.map((r: string) => (
+              <Badge key={r} variant="outline" className="font-mono text-xs">{r}</Badge>
+            ))}
+          </div>
+        </div>
+        <div>
+          <div className="text-red-500 mb-1">Nicht mappbar ({data.unmapped.length})</div>
+          <div className="flex flex-wrap gap-1">
+            {data.unmapped.length === 0 && <span className="text-muted-foreground text-xs">—</span>}
+            {data.unmapped.map((r: string) => (
+              <Badge key={r} variant="outline" className="bg-red-500/15 text-red-500 font-mono text-xs">{r}</Badge>
+            ))}
+          </div>
+        </div>
+        <div>
+          <div className="text-muted-foreground mb-1">Mapping-Vorschlag</div>
+          <table className="w-full text-xs">
+            <thead className="bg-muted/40"><tr className="text-left"><th className="p-2">Quelle</th><th className="p-2">Vorschlag Ziel</th></tr></thead>
+            <tbody>
+              {suggestionRows.map((r, i) => (
+                <tr key={i} className="border-t border-border">
+                  <td className="p-2 font-mono">{r.source}</td>
+                  <td className="p-2 font-mono">{String(r.target)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function Wave1DevicesTab({ data, onExport }: { data: any; onExport: (f: string, r: any[], c: string[]) => void }) {
+  if (!data) return <Card><CardContent className="p-6"><NotRunHint /></CardContent></Card>;
+  const cols = ['source_id', 'serial_number', 'device', 'customer_email', 'customer_name', 'bucket', 'reason', 'target_exists', 'target_id'];
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center justify-between flex-wrap gap-2">
+          <span>Devices – Konfliktanalyse ({data.items.length})</span>
+          <Button size="sm" variant="outline" onClick={() => onExport('devices-konflikte.csv', data.items, cols)}>CSV Export</Button>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {data.fetch_error && <div className="text-xs text-red-500">Quell-Fehler: {data.fetch_error}</div>}
+        <BucketBadges buckets={data.buckets} />
+        <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
+          <table className="w-full text-xs">
+            <thead className="bg-muted/40 sticky top-0">
+              <tr className="text-left">
+                {cols.map(c => <th key={c} className="p-2 font-mono">{c}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {data.items.map((r: any, i: number) => (
+                <tr key={i} className="border-t border-border">
+                  {cols.map(c => <td key={c} className="p-2 font-mono">{String(r[c] ?? '—')}</td>)}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function Wave1SummaryTab({ summary }: { summary: any }) {
+  if (!summary) return <Card><CardContent className="p-6"><NotRunHint /></CardContent></Card>;
+  const rows = [
+    { key: 'profiles', ...summary.profiles },
+    { key: 'user_roles', ...summary.user_roles },
+    { key: 'devices', ...summary.devices },
+  ];
+  return (
+    <Card>
+      <CardHeader><CardTitle>Welle 1 – Zusammenfassung</CardTitle></CardHeader>
+      <CardContent className="p-0">
+        <table className="w-full text-sm">
+          <thead className="bg-muted/40"><tr className="text-left">
+            <th className="p-3">Tabelle</th>
+            <th className="p-3">Gesamt</th>
+            <th className="p-3 text-emerald-500">Importierbar ohne Risiko</th>
+            <th className="p-3 text-amber-500">Manuelle Prüfung</th>
+            <th className="p-3 text-red-500">Blockiert</th>
+          </tr></thead>
+          <tbody>
+            {rows.map(r => (
+              <tr key={r.key} className="border-t border-border">
+                <td className="p-3 font-mono">{r.key}</td>
+                <td className="p-3">{r.total}</td>
+                <td className="p-3 text-emerald-500">{r.importable_safe}</td>
+                <td className="p-3 text-amber-500">{r.manual_review}</td>
+                <td className="p-3 text-red-500">{r.blocked}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </CardContent>
+    </Card>
+  );
+}
+
