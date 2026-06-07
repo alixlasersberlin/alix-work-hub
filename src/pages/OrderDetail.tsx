@@ -592,7 +592,7 @@ export default function OrderDetail() {
               <Checkbox
                 checked={depositOk}
                 onCheckedChange={v => setDepositOk(!!v)}
-                disabled={!canWrite}
+                disabled={!canWriteDeposit}
               />
               <span className="text-sm font-semibold tracking-wide">ANZAHLUNG OK</span>
             </label>
@@ -604,7 +604,7 @@ export default function OrderDetail() {
                     value={depositBy}
                     onChange={e => setDepositBy(e.target.value)}
                     placeholder="Name des Mitarbeiters"
-                    disabled={!canWrite}
+                    disabled={!canWriteDeposit}
                     className="bg-secondary border-border mt-1"
                   />
                 </div>
@@ -614,7 +614,7 @@ export default function OrderDetail() {
                     type="date"
                     value={depositBookingDate}
                     onChange={e => setDepositBookingDate(e.target.value)}
-                    disabled={!canWrite}
+                    disabled={!canWriteDeposit}
                     className="bg-secondary border-border mt-1"
                   />
                 </div>
@@ -628,7 +628,7 @@ export default function OrderDetail() {
                 value={depositAmount}
                 onChange={e => setDepositAmount(e.target.value)}
                 placeholder="0,00"
-                disabled={!canWrite}
+                disabled={!canWriteDeposit}
                 className="bg-secondary border-border mt-1 max-w-[240px]"
               />
             </div>
@@ -639,7 +639,7 @@ export default function OrderDetail() {
                 {order.deposit_ok_by ? ` · ${order.deposit_ok_by}` : ''}
               </p>
             )}
-            {canWrite && (
+            {canWriteDeposit && (
               <div className="flex justify-end pt-2">
                 <Button onClick={saveDeposit} disabled={savingDeposit} className="gold-gradient text-primary-foreground">
                   {savingDeposit && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
@@ -672,7 +672,7 @@ export default function OrderDetail() {
                         </div>
                         <div>
                           <div className="text-[10px] uppercase text-muted-foreground">Geleistet</div>
-                          {canWrite ? (
+                          {canWriteDeposit ? (
                             <Select value={d.geleistet ? 'ja' : 'nein'} onValueChange={v => toggleDepositGeleistet(d.id, v === 'ja')}>
                               <SelectTrigger className="h-8 bg-secondary border-border mt-1">
                                 <SelectValue />
@@ -701,7 +701,7 @@ export default function OrderDetail() {
                 </div>
               )}
 
-              {canWrite && (
+              {canWriteDeposit && (
                 <div className="rounded-md border border-dashed border-border p-3 space-y-3">
                   <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                     <div>
