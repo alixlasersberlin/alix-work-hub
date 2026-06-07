@@ -358,10 +358,12 @@ async function importUserRoles(ctx: Ctx, rows: any[], dryRun: boolean) {
       userId = up?.id ?? null;
     }
     if (!userId) {
+      // Orphan role assignment (user existed once in AlixSmart, profile gone).
+      // Skip cleanly instead of marking as conflict.
       await recordMap(ctx, "user_roles", sourceId, "user_roles", null,
-        "user_id+role", "conflict", "user_not_found",
-        "No matching user_profiles row by email", { email, srcRole });
-      f++;
+        "user_id+role", "skipped", "user_not_found",
+        "Verwaiste Rolle: kein passender User – übersprungen", { email, srcRole });
+      s++;
       continue;
     }
     if (dryRun) {
