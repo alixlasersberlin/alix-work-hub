@@ -196,6 +196,12 @@ const CustomerPortalRepairs = lazy(() => import("./pages/CustomerPortal/Repairs"
 const CustomerPortalSupport = lazy(() => import("./pages/CustomerPortal/Support"));
 const CustomerPortalReviews = lazy(() => import("./pages/CustomerPortal/Reviews"));
 const CustomerPortalTimeline = lazy(() => import("./pages/CustomerPortal/Timeline"));
+const CustomerPortalDevices = lazy(() => import("./pages/CustomerPortal/Devices"));
+const CustomerPortalMaintenance = lazy(() => import("./pages/CustomerPortal/Maintenance"));
+const CustomerPortalWarranty = lazy(() => import("./pages/CustomerPortal/Warranty"));
+const CustomerPortalTickets = lazy(() => import("./pages/CustomerPortal/Tickets"));
+const CustomerPortalAppointments = lazy(() => import("./pages/CustomerPortal/Appointments"));
+const CustomerPortalHealth = lazy(() => import("./pages/CustomerPortal/Health"));
 const MailCenterPosteingang = lazy(() => import("./pages/MailCenter/Posteingang"));
 const MailCenterGesendet = lazy(() => import("./pages/MailCenter/Gesendet"));
 const MailCenterEntwuerfe = lazy(() => import("./pages/MailCenter/Entwuerfe"));
@@ -565,6 +571,12 @@ function AppRoutes() {
           <Route path="support" element={<CustomerPortalSupport />} />
           <Route path="bewertungen" element={<CustomerPortalReviews />} />
           <Route path="verlauf" element={<CustomerPortalTimeline />} />
+          <Route path="geraete" element={<CustomerPortalDevices />} />
+          <Route path="wartungen" element={<CustomerPortalMaintenance />} />
+          <Route path="garantien" element={<CustomerPortalWarranty />} />
+          <Route path="tickets" element={<CustomerPortalTickets />} />
+          <Route path="termine" element={<CustomerPortalAppointments />} />
+          <Route path="gesundheit" element={<CustomerPortalHealth />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>
