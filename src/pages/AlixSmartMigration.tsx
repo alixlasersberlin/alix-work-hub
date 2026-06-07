@@ -150,6 +150,33 @@ export default function AlixSmartMigration() {
     } finally { setRunning(null); }
   }
 
+  async function analyseWave1() {
+    setRunning('wave1');
+    try {
+      const res = await callEngine('analyze-wave1');
+      setWave1Analysis(res);
+      toast.success('Welle 1 analysiert (keine Daten verändert).');
+      await loadAll();
+    } catch (e: any) {
+      toast.error('Welle-1-Analyse fehlgeschlagen: ' + e.message);
+    } finally { setRunning(null); }
+  }
+
+  function exportCsv(filename: string, rows: any[], columns: string[]) {
+    if (!rows.length) { toast.info('Keine Daten zum Export.'); return; }
+    const esc = (v: any) => {
+      const s = v == null ? '' : String(v);
+      return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const csv = [columns.join(';'), ...rows.map(r => columns.map(c => esc(r[c])).join(';'))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+
   async function importWave(wave: 1 | 2 | 3 | 4) {
     setRunning('wave-' + wave);
     try {
