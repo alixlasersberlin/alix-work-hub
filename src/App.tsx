@@ -50,6 +50,7 @@ const ReparaturQuoteDetail = lazy(() => import("./pages/Reparatur/QuoteDetail"))
 const ReparaturRueckversand = lazy(() => import("./pages/Reparatur/Rueckversand"));
 const PublicRepairQuoteDecision = lazy(() => import("./pages/PublicRepairQuote/Decision"));
 const BestellwesenErsatzteile = lazy(() => import("./pages/Bestellwesen/Ersatzteile"));
+const Ersatzteilmanagement = lazy(() => import("./pages/Ersatzteilmanagement"));
 const RoutePlanDetail = lazy(() => import("./pages/RoutePlanDetail"));
 const RoutePlanForm = lazy(() => import("./pages/RoutePlanForm"));
 const RoutePlanningSettings = lazy(() => import("./pages/RoutePlanningSettings"));
@@ -389,6 +390,7 @@ function AppRoutes() {
             <Route path=":id" element={<ReparaturDetail />} />
           </Route>
           <Route path="/bestellwesen/ersatzteile" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Bestellwesen', 'Order', 'Technik']}><BestellwesenErsatzteile /></ProtectedRoute>} />
+          <Route path="/ersatzteilmanagement" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Bestellwesen', 'Order', 'Technik', 'Reparaturannahme', 'Serviceleitung', 'Service', 'Finance']}><Ersatzteilmanagement /></ProtectedRoute>} />
 
 
           <Route path="/tourenplanung/kalender" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><TourenKalender /></ProtectedRoute>} />
