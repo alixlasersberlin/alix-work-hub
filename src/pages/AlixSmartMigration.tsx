@@ -172,6 +172,9 @@ export default function AlixSmartMigration() {
     } catch (e: any) {
       toast.error('Materialisierung fehlgeschlagen: ' + e.message);
     } finally { setRunning(null); }
+  }
+
+
 
   function exportCsv(filename: string, rows: any[], columns: string[]) {
     if (!rows.length) { toast.info('Keine Daten zum Export.'); return; }
