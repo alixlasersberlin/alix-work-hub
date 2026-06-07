@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Printer, FileDown, Plus, Trash2, Upload, Receipt, MapPin, FileText, MessageSquare } from 'lucide-react';
 import { renderRepairWorkOrderPdf } from '@/lib/repair/work-order-pdf';
-import { printRepairReport } from '@/lib/repair/report-pdf';
+import { printRepairReport, repairReportHtmlBlob } from '@/lib/repair/report-pdf';
 import { WerkstattAnnahmeTab, WerkstattauftraegeTab, SparePartsTab, FinanceHandoverTab, DeliveryHandoverTab, AttachmentsTab } from './RepairExtraTabs';
 import { SparePartRequestDialog } from './SparePartRequestDialog';
 import { InvoiceProposalDialog } from './InvoiceProposalDialog';
