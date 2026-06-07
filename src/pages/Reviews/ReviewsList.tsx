@@ -86,7 +86,7 @@ export default function ReviewsList() {
   }
 
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [atOnly]);
 
   const filtered = useMemo(() => {
     let list = rows;
