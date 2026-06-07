@@ -207,6 +207,10 @@ function SummaryCards({ counts, summary }: { counts: any; summary: any }) {
         <div className="rounded-md border border-red-500/30 bg-red-500/5 p-2">
           <div className="text-xl font-bold text-red-500">{c.no_match}</div><div className="text-muted-foreground">kein Match</div>
         </div>
+        <div className="rounded-md border border-primary/30 bg-primary/5 p-2 col-span-4">
+          <div className="text-xl font-bold text-primary">{c.new_record}</div>
+          <div className="text-muted-foreground">neu anlegen (importable_new_record)</div>
+        </div>
       </CardContent>
     </Card>
   );
