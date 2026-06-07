@@ -160,6 +160,9 @@ export default function ReparaturDetail() {
         <TabsContent value="spareparts">
           <SparePartsTab repairId={id!} canEdit={perms.canEditErsatzteile} />
         </TabsContent>
+        <TabsContent value="kv">
+          <KostenvoranschlagTab repair={repair} canEdit={perms.canEditQuotes} />
+        </TabsContent>
         <TabsContent value="finance">
           <FinanceHandoverTab repairId={id!} canEdit={perms.canEditFinance} />
         </TabsContent>
