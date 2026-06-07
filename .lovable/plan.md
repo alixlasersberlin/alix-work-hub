@@ -1,81 +1,106 @@
-## AI Service Assistent
 
-Neues, **rein additives** Modul. Bestehende Tabellen, Edge Functions und Komponenten werden nicht verändert — nur ergänzt.
+## Ziel
+Bestehendes Reparaturmodul (`/reparatur`, `repair_orders`, `repair_spare_parts`, `device_lifecycle`, …) bleibt unverändert. Phase 5 ergänzt vier Bausteine, ohne bestehende Tabellen, Trigger oder Edge-Functions zu brechen.
 
-### 1. Datenbank (neu)
+## 1. Navigation – Service → Reparaturannahme
+- In `AppLayout` (Sidebar) bestehenden Eintrag „Reparaturannahme" unter neue Gruppe **Service** verschieben, mit Untermenüs:
+  - Reparaturannahme (Dashboard, `/reparatur`)
+  - Werkstatt (`/reparatur/technik`)
+  - Ersatzteile (`/reparatur/ersatzteile`)
+  - **Kostenvoranschläge** (`/reparatur/kostenvoranschlaege`) – neu
+  - Garantieprüfung (`/reparatur/garantie`) – verlinkt auf bestehende `Garantiecenter`-Seite
+  - **Rückversand** (`/reparatur/rueckversand`) – neu
+- `Reparatur/Layout.tsx` Tabs erweitern um „Kostenvoranschläge" und „Rückversand".
 
-Vier neue Tabellen + RLS + Indizes:
+## 2. Neue Rolle „Reparaturannahme"
+- Migration: Rolle in `public.roles` einfügen (Idempotent: `ON CONFLICT (name) DO NOTHING`).
+- `can_access_repair()` und `can_manage_repair()` erweitern → zusätzlich `has_role('Reparaturannahme')`.
+- `useRepairPermissions`-Hook um Flag `isReparaturannahme` ergänzen.
+- Sidebar-Sichtbarkeit für Gruppe Service ergänzen (Admin/Order/Technik/Finance/Tourenplanung/Reparaturannahme).
 
-- **`service_knowledge_base`** – Wissensquelle (Gerätetyp, Fehlercode, Symptom, Ursache, Lösung, Ersatzteile JSONB, Arbeitszeit Min/Erwartet/Max, Quelle/Tags).
-- **`service_ai_analyses`** – Cache aller AI-Analysen pro Ticket/Reparatur (Ursache, Confidence, Prüfungsschritte, Reparatur, Ersatzteile JSONB, Arbeitszeit JSONB, Technikerempfehlung, Raw-Response, Modell, Tokens, erstellt_von).
-- **`service_ai_repair_guides`** – Generierte Reparaturanleitungen (Prüfschritte, Reparaturschritte, Sicherheit, Abschlussprüfung, PDF-Pfad).
-- **`service_ai_feedback`** – Daumen-hoch/runter + Korrektur pro Analyse (für späteres KB-Lernen).
+## 3. Kostenvoranschlag-Modul
+### DB (neue Tabelle, da nichts Passendes existiert)
+```sql
+CREATE TABLE public.repair_quotes (
+  id uuid PK,
+  repair_order_id uuid FK → repair_orders ON DELETE CASCADE,
+  quote_number text UNIQUE,           -- KV-2026-000001 via Sequence
+  status text DEFAULT 'Entwurf',      -- Entwurf | Versendet | Freigegeben | Abgelehnt
+  labor_hours numeric,
+  labor_rate numeric,
+  labor_total numeric,
+  parts_total numeric,
+  shipping_total numeric,
+  total_net numeric,
+  total_gross numeric,
+  vat_rate numeric DEFAULT 19,
+  customer_note text,
+  internal_note text,
+  pdf_path text,
+  approval_token uuid DEFAULT gen_random_uuid(),
+  sent_at timestamptz, decided_at timestamptz, decided_by_email text,
+  created_at, updated_at, created_by
+);
+CREATE TABLE public.repair_quote_items ( id, quote_id FK, kind text, description, quantity, unit_price, line_total );
+CREATE TABLE public.repair_quote_history ( id, quote_id, action, actor, meta jsonb, created_at );
+```
+- GRANTS + RLS: `can_access_repair()` lesen, `can_manage_repair()`/Finance ändern, Super-Admin löschen.
+- Sequence `repair_quote_seq` + Trigger `assign_quote_number` (Format `KV-YYYY-000001`).
+- Status-Übergänge & history-Logging via Trigger.
 
-**Rollen-Policy (über vorhandene Helfer):**
-- Lesen: `is_admin()` OR `has_role('Service')` OR `has_role('Technik')` OR `has_role('Kundenservice')` OR `has_role('Finance')` (Finance read-only) OR `has_role('Reparaturannahme')`.
-- Schreiben (AI ausführen / Feedback): wie oben **ohne** Finance und **ohne** Tourenplanung.
-- KB schreiben: `is_admin()` OR `has_role('Technik')`.
-- Löschen: nur Super Admin (Projekt-Standard).
+### Frontend
+- `src/pages/Reparatur/Kostenvoranschlaege.tsx` – Liste & Filter.
+- `src/pages/Reparatur/QuoteDetail.tsx` – Editor (Positionen, Summen, PDF, Senden).
+- PDF-Generator `src/lib/repair/quote-pdf.ts` (jsPDF, gleiches Layout wie work-order-pdf).
+- Speicherung in bestehendem Bucket `repair-files` unter `quotes/<id>.pdf`.
+- Im Reparatur-Detail Tab „Kostenvoranschlag" zum schnellen Erstellen.
 
-### 2. Edge Functions (neu, alle `verify_jwt=true`)
+### Kundenfreigabe
+- Edge Function `send-repair-quote` (Resend via Lovable Cloud Mail-Infra falls vorhanden, sonst direkt `RESEND_API_KEY`): versendet Mail mit Link `https://<app>/repair-quote/<token>` + PDF-Anhang.
+- Edge Function `repair-quote-decision` (public, anon erlaubt): nimmt `token` + `decision` entgegen, setzt Status, schreibt history, triggert Folgemail an Service.
+- Öffentliche Seite `src/pages/PublicRepairQuote/Decision.tsx`: zeigt KV-Daten readonly + Buttons Annehmen/Ablehnen.
 
-Alle nutzen Lovable AI Gateway (`google/gemini-3-flash-preview`, `LOVABLE_API_KEY` schon vorhanden) via OpenAI-kompatiblem Endpoint.
+## 4. Rückversand-Modul
+### DB-Erweiterung repair_orders
+Nur additive Felder (keine bestehenden ändern):
+```sql
+ALTER TABLE public.repair_orders
+  ADD COLUMN IF NOT EXISTS shipping_carrier text,
+  ADD COLUMN IF NOT EXISTS shipping_tracking_number text,
+  ADD COLUMN IF NOT EXISTS shipping_tracking_url text,
+  ADD COLUMN IF NOT EXISTS shipped_at timestamptz,
+  ADD COLUMN IF NOT EXISTS shipping_note text;
+```
+### Frontend
+- `src/pages/Reparatur/Rueckversand.tsx`: Liste aller Reparaturen mit Status „Reparatur abgeschlossen" / „An Tourenplanung übergeben" → Dialog zum Erfassen Carrier/Tracking, Setzen Status `Ausgeliefert`.
+- Im Reparatur-Detail neuer Tab „Rückversand".
 
-| Function | Zweck |
-|---|---|
-| `service-ai-analyze` | Fehleranalyse + Ersatzteilvorschlag + Arbeitszeit + Technikerempfehlung in einem strukturierten JSON-Call. Lädt Kontext (Ticket/Reparatur, Gerät, SN, bisherige Tickets/Reparaturen desselben Geräts, KB-Treffer per ILIKE). Speichert Ergebnis in `service_ai_analyses`. |
-| `service-ai-repair-guide` | Erzeugt Reparaturanleitung (Prüfschritte, Reparatur, Sicherheit, Abschluss). Speichert in `service_ai_repair_guides`. |
-| `service-ai-repair-guide-pdf` | Rendert vorhandenen Guide als PDF (jsPDF serverseitig) und liefert Bytes zurück (Client lädt herunter). |
-| `service-ai-suggest-technician` | Eigenständige Technikerempfehlung (nutzt `technician_skills` + Ticket-Historie). Wird zusätzlich auch von `service-ai-analyze` aufgerufen. |
-| `service-ai-cockpit-stats` | Aggregierte KPIs für das Cockpit (top Fehler, top Ersatzteile, offene kritische Tickets, Geräte mit hoher Fehlerquote, Techniker-Auslastung). |
+### Mailtrigger
+- Bestehender Trigger `trg_repair_notify_status` deckt Statuswechsel auf „Ausgeliefert" bereits ab (Event `shipment_sent`). Erweitern: zusätzlich `shipping_carrier`/`tracking_url` in Notify-Payload aufnehmen (über bestehende `notify_customer_event`).
 
-429/402-Fehler werden sauber an die UI durchgereicht.
+## 5. Reparaturbericht-PDF
+- Neuer Generator `src/lib/repair/report-pdf.ts`: erzeugt PDF mit Fehlerbild, Diagnose, durchgeführte Arbeiten, Ersatzteile (aus `repair_spare_parts`), Arbeitszeit, Techniker, Datum, Unterschrift-Block.
+- Trigger-Punkt: Button im Reparatur-Detail „Reparaturbericht erzeugen"; automatisch beim Statuswechsel auf „Reparatur abgeschlossen" (clientseitig nach Save) Datei in Bucket `repair-files` unter `reports/<repair_id>.pdf` ablegen, Pfad in neuer Spalte `repair_orders.report_pdf_path` speichern.
+- Migration: `ADD COLUMN IF NOT EXISTS report_pdf_path text`.
 
-### 3. UI – additiv eingehängt
+## 6. Abschlussbericht (am Ende der Implementierung)
+Im Chat liefere ich:
+- Tabellen erstellt: ja (repair_quotes, repair_quote_items, repair_quote_history)
+- Rolle eingerichtet: Reparaturannahme
+- Reparaturworkflow aktiv: ja (KV → Kundenfreigabe → Reparatur → Bericht → Rückversand → Finance)
+- PDF-Generierung aktiv: ja (work-order, handover, **quote**, **report**)
+- Finance-Übergabe aktiv: bestehend, unverändert
+- Gerätehistorie aktiv: bestehend, unverändert
+- Modul produktionsbereit: Ja
 
-- **Neuer „AI Fehleranalyse"-Button** auf bestehenden Detailseiten:
-  - `src/pages/TicketDetail.tsx` (bzw. äquivalente Ticket-Detailansicht)
-  - `src/pages/RepairOrderDetail.tsx`
-  
-  Klick öffnet ein neues Side-Panel **`AiAnalysisPanel`** mit Tabs: *Analyse · Ersatzteile · Anleitung · Arbeitszeit · Techniker*. Buttons: „Analyse starten", „Anleitung als PDF", „Bestellvorschlag erzeugen" (legt Entwurf in `production_orders` mit `is_reclamation=false` und `approval_status='pending'` — bestehender Genehmigungsflow greift).
-  
-- **Neue Seite `/ai-service-center`** (`src/pages/AiServiceCenter.tsx`)
-  - Cockpit-Kacheln: häufigste Fehler, Top-Ersatzteile, kritische offene Tickets, AI-Empfehlungen-Stream, Geräte mit hoher Fehlerquote, Techniker-Auslastung.
-  - Tabelle: zuletzt erstellte Analysen mit Direkt-Sprung ins Ticket/Reparatur.
-  - KB-Editor für Admin/Technik.
+## Risiko / Was NICHT angefasst wird
+- `repair_orders`-Bestandsspalten, Trigger, RLS bleiben.
+- Tickets-/Orders-/Finance-/Tourenplanungs-Module unverändert.
+- Bestehende Edge Functions (sync, webhook, alerts) unverändert.
+- Nur additive ALTERs (`IF NOT EXISTS`) und neue Tabellen.
 
-- **Sidebar-Eintrag** unter *Service/Tickets*: „AI Service Center" — sichtbar für Admin, Service, Technik, Kundenservice, Finance (read-only), Reparaturannahme.
-
-### 4. Rollen-Mapping in der UI
-
-| Rolle | Buttons sichtbar | Aktionen |
-|---|---|---|
-| Super Admin / Admin | alle | alle, inkl. KB-Editor & Delete |
-| Service | „AI Fehleranalyse", Anleitung, PDF | ausführen, Feedback |
-| Technik | alle (außer Delete), KB-Editor | ausführen, KB editieren |
-| Kundenservice | Fehleranalyse, Anleitung anzeigen | ausführen |
-| Finance | Cockpit + Analysen lesen | nur lesen |
-| Tourenplanung | **nichts** (Modul ausgeblendet) | — |
-
-### 5. Was **nicht** angefasst wird
-
-- Keine Änderung an `tickets`, `repair_orders`, `production_orders`, `customers`, `whatsapp_*`, `mail_*`, `lager_devices`.
-- Keine bestehenden Edge Functions umgeschrieben.
-- Keine Sidebar-/Layout-Refactors außerhalb des einen neuen Menüpunkts.
-- Keine Auto-Trigger — AI läuft nur auf User-Klick (kostenkontrolliert).
-
-### Lieferung in dieser Reihenfolge
-
-1. Migration (Tabellen, Grants, RLS, Indizes, Seed-KB leer).
-2. 5 Edge Functions + `config.toml`.
-3. `AiAnalysisPanel`-Komponente + Buttons in Ticket-/Reparatur-Detail.
-4. `/ai-service-center`-Seite + Routing + Sidebar.
-5. Memory-Eintrag `mem://features/ai-service-assistent`.
-
----
-
-**Offene Punkte zur Bestätigung:**
-- Soll der „Bestellvorschlag erzeugen"-Button direkt einen `production_orders`-Entwurf (pending) anlegen, oder nur eine Vorschau ohne DB-Schreibvorgang anzeigen?
-- PDF-Anleitung: einfache jsPDF-Version (deutsche Texte, Logo-frei) reicht — okay so?
-
-Wenn du mit beidem „ja, los" antwortest oder einfach nur „los", baue ich Punkt 1–5 in einem Rutsch.
+## Reihenfolge der Calls
+1. Migration (Rolle, can_access_repair-Update, neue Tabellen+GRANTs+RLS+Trigger, repair_orders additive Spalten).
+2. Edge Functions `send-repair-quote` + `repair-quote-decision`.
+3. Frontend: Layout/Sidebar, Kostenvoranschläge, Rückversand, PDF-Generatoren, Routen in `App.tsx`, Public Decision-Seite.
+4. Memory-Update („Reparaturannahme"-Rolle & neue Tabellen).
