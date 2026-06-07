@@ -2435,6 +2435,315 @@ export type Database = {
         }
         Relationships: []
       }
+      iso_audit_findings_ext: {
+        Row: {
+          audit_id: string
+          capa_id: string | null
+          clause: string | null
+          created_at: string
+          description: string
+          due_date: string | null
+          id: string
+          responsible: string | null
+          severity: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          audit_id: string
+          capa_id?: string | null
+          clause?: string | null
+          created_at?: string
+          description: string
+          due_date?: string | null
+          id?: string
+          responsible?: string | null
+          severity?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          audit_id?: string
+          capa_id?: string | null
+          clause?: string | null
+          created_at?: string
+          description?: string
+          due_date?: string | null
+          id?: string
+          responsible?: string | null
+          severity?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "iso_audit_findings_ext_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: false
+            referencedRelation: "iso_audits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      iso_audits: {
+        Row: {
+          audit_date: string | null
+          audit_number: string | null
+          audit_type: string
+          auditor: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          result: string | null
+          scope: string | null
+          standard: string
+          status: string
+          summary: string | null
+          tenant_id: string | null
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          audit_date?: string | null
+          audit_number?: string | null
+          audit_type?: string
+          auditor?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          result?: string | null
+          scope?: string | null
+          standard?: string
+          status?: string
+          summary?: string | null
+          tenant_id?: string | null
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          audit_date?: string | null
+          audit_number?: string | null
+          audit_type?: string
+          auditor?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          result?: string | null
+          scope?: string | null
+          standard?: string
+          status?: string
+          summary?: string | null
+          tenant_id?: string | null
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "iso_audits_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      iso_change_controls: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          area: string | null
+          change_number: string | null
+          created_at: string
+          description: string | null
+          effective_date: string | null
+          id: string
+          impact_assessment: string | null
+          reason: string | null
+          requested_by: string | null
+          risk_class: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          area?: string | null
+          change_number?: string | null
+          created_at?: string
+          description?: string | null
+          effective_date?: string | null
+          id?: string
+          impact_assessment?: string | null
+          reason?: string | null
+          requested_by?: string | null
+          risk_class?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          area?: string | null
+          change_number?: string | null
+          created_at?: string
+          description?: string | null
+          effective_date?: string | null
+          id?: string
+          impact_assessment?: string | null
+          reason?: string | null
+          requested_by?: string | null
+          risk_class?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      iso_supplier_evaluations: {
+        Row: {
+          classification: string | null
+          created_at: string
+          delivery_score: number | null
+          evaluated_at: string
+          evaluated_by: string | null
+          evaluation_year: number
+          id: string
+          overall_score: number | null
+          quality_score: number | null
+          remarks: string | null
+          service_score: number | null
+          supplier_id: string | null
+          supplier_name: string
+          updated_at: string
+        }
+        Insert: {
+          classification?: string | null
+          created_at?: string
+          delivery_score?: number | null
+          evaluated_at?: string
+          evaluated_by?: string | null
+          evaluation_year: number
+          id?: string
+          overall_score?: number | null
+          quality_score?: number | null
+          remarks?: string | null
+          service_score?: number | null
+          supplier_id?: string | null
+          supplier_name: string
+          updated_at?: string
+        }
+        Update: {
+          classification?: string | null
+          created_at?: string
+          delivery_score?: number | null
+          evaluated_at?: string
+          evaluated_by?: string | null
+          evaluation_year?: number
+          id?: string
+          overall_score?: number | null
+          quality_score?: number | null
+          remarks?: string | null
+          service_score?: number | null
+          supplier_id?: string | null
+          supplier_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      iso_training_records: {
+        Row: {
+          certificate_path: string | null
+          completed_at: string
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          note: string | null
+          score: number | null
+          training_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          certificate_path?: string | null
+          completed_at?: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          note?: string | null
+          score?: number | null
+          training_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          certificate_path?: string | null
+          completed_at?: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          note?: string | null
+          score?: number | null
+          training_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "iso_training_records_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "iso_trainings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      iso_trainings: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_mandatory: boolean
+          standard: string | null
+          target_roles: string[] | null
+          title: string
+          updated_at: string
+          validity_months: number | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_mandatory?: boolean
+          standard?: string | null
+          target_roles?: string[] | null
+          title: string
+          updated_at?: string
+          validity_months?: number | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_mandatory?: boolean
+          standard?: string | null
+          target_roles?: string[] | null
+          title?: string
+          updated_at?: string
+          validity_months?: number | null
+        }
+        Relationships: []
+      }
       item_category_assignments: {
         Row: {
           category_id: string
@@ -3869,6 +4178,77 @@ export type Database = {
             columns: ["device_maintenance_id"]
             isOneToOne: false
             referencedRelation: "device_maintenance"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mdr_vigilance_reports: {
+        Row: {
+          authority_reference: string | null
+          authority_status: string
+          created_at: string
+          device_name: string | null
+          id: string
+          immediate_action: string | null
+          incident_date: string | null
+          incident_description: string
+          patient_harm: boolean
+          report_number: string | null
+          reported_at: string
+          reported_by: string | null
+          root_cause: string | null
+          serial_number: string | null
+          severity: string
+          tenant_id: string | null
+          udi: string | null
+          updated_at: string
+        }
+        Insert: {
+          authority_reference?: string | null
+          authority_status?: string
+          created_at?: string
+          device_name?: string | null
+          id?: string
+          immediate_action?: string | null
+          incident_date?: string | null
+          incident_description: string
+          patient_harm?: boolean
+          report_number?: string | null
+          reported_at?: string
+          reported_by?: string | null
+          root_cause?: string | null
+          serial_number?: string | null
+          severity?: string
+          tenant_id?: string | null
+          udi?: string | null
+          updated_at?: string
+        }
+        Update: {
+          authority_reference?: string | null
+          authority_status?: string
+          created_at?: string
+          device_name?: string | null
+          id?: string
+          immediate_action?: string | null
+          incident_date?: string | null
+          incident_description?: string
+          patient_harm?: boolean
+          report_number?: string | null
+          reported_at?: string
+          reported_by?: string | null
+          root_cause?: string | null
+          serial_number?: string | null
+          severity?: string
+          tenant_id?: string | null
+          udi?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mdr_vigilance_reports_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
