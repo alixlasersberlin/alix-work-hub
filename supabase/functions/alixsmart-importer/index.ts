@@ -81,9 +81,12 @@ const ROLE_MAP: Record<string, string> = {
   technician: "Technik",
   service: "Service",
   finance: "Finance",
-  customer: "Kunde",
   user: "Order",
 };
+
+/** Source roles that intentionally do NOT receive a backend role assignment.
+ *  Users are imported as customer profile only (no user_roles row). */
+const CUSTOMER_ONLY_ROLES = new Set(["customer", "kunde", "client"]);
 
 interface Ctx {
   admin: ReturnType<typeof createClient>;
@@ -298,9 +301,16 @@ async function importUserRoles(ctx: Ctx, rows: any[], dryRun: boolean) {
   const { data: roles } = await ctx.admin.from("roles").select("id,name");
   const rolesByName = new Map((roles || []).map((r: any) => [r.name, r.id]));
   for (const r of rows) {
-    const srcRole = String(r.role || r.role_name || "").toLowerCase();
-    const targetRoleName = ROLE_MAP[srcRole] || null;
+    const srcRole = String(r.role || r.role_name || "").toLowerCase().trim();
     const sourceId = String(r.id ?? r.source_id ?? `${r.user_id}-${srcRole}`);
+    if (CUSTOMER_ONLY_ROLES.has(srcRole)) {
+      await recordMap(ctx, "user_roles", sourceId, "user_roles", null,
+        "user_id+role", "imported_customer_profile_only", null, null,
+        { srcRole, note: "Kein Backend-Rollen-Mapping – nur Kundenprofil" });
+      s++;
+      continue;
+    }
+    const targetRoleName = ROLE_MAP[srcRole] || null;
     if (!targetRoleName || !rolesByName.has(targetRoleName)) {
       await recordMap(ctx, "user_roles", sourceId, "user_roles", null,
         "user_id+role", "conflict", "role_not_found",
@@ -866,35 +876,44 @@ async function analyzeWave1(ctx: Ctx) {
 
   const roleMappings: Array<{
     source: string; user_count: number; assignment_count: number;
-    suggested_target: string | null; status: "auto" | "manual" | "blocked"; reason: string;
+    suggested_target: string | null;
+    status: "auto" | "customer_profile_only" | "manual" | "blocked";
+    reason: string;
   }> = [];
   const unmapped = new Set<string>();
   const mappingSuggestion: Record<string, string | null> = {};
   for (const [raw, count] of sourceRoleCounts.entries()) {
-    const mapHit = ROLE_MAP[raw];
-    const exactHit = targetByLower.get(raw);
     let suggested: string | null = null;
-    let status: "auto" | "manual" | "blocked" = "blocked";
+    let status: "auto" | "customer_profile_only" | "manual" | "blocked" = "blocked";
     let reason = "Kein Mapping – neue Zielrolle vorschlagen";
-    if (mapHit && targetByLower.has(mapHit.toLowerCase())) {
-      suggested = targetByLower.get(mapHit.toLowerCase())!;
-      status = "auto";
-      reason = `Automatisch über ROLE_MAP: ${raw} → ${suggested}`;
-    } else if (exactHit) {
-      suggested = exactHit;
-      status = "auto";
-      reason = "Exakter Namensmatch (case-insensitive)";
+
+    if (CUSTOMER_ONLY_ROLES.has(raw)) {
+      suggested = null;
+      status = "customer_profile_only";
+      reason = "Kundenprofil ohne Backend-Rolle (kein user_roles-Eintrag)";
     } else {
-      const fuzzy = targetRoleNames.find((n) =>
-        n.toLowerCase().includes(raw) || raw.includes(n.toLowerCase())
-      );
-      if (fuzzy) {
-        suggested = fuzzy;
-        status = "manual";
-        reason = `Fuzzy-Vorschlag: ${raw} ≈ ${fuzzy} – bitte prüfen`;
+      const mapHit = ROLE_MAP[raw];
+      const exactHit = targetByLower.get(raw);
+      if (mapHit && targetByLower.has(mapHit.toLowerCase())) {
+        suggested = targetByLower.get(mapHit.toLowerCase())!;
+        status = "auto";
+        reason = `Automatisch über ROLE_MAP: ${raw} → ${suggested}`;
+      } else if (exactHit) {
+        suggested = exactHit;
+        status = "auto";
+        reason = "Exakter Namensmatch (case-insensitive)";
       } else {
-        unmapped.add(raw);
-        status = "blocked";
+        const fuzzy = targetRoleNames.find((n) =>
+          n.toLowerCase().includes(raw) || raw.includes(n.toLowerCase())
+        );
+        if (fuzzy) {
+          suggested = fuzzy;
+          status = "manual";
+          reason = `Fuzzy-Vorschlag: ${raw} ≈ ${fuzzy} – bitte prüfen`;
+        } else {
+          unmapped.add(raw);
+          status = "blocked";
+        }
       }
     }
     mappingSuggestion[raw] = suggested;
@@ -910,8 +929,16 @@ async function analyzeWave1(ctx: Ctx) {
 
   const roleStatusCounts = {
     auto: roleMappings.filter((m) => m.status === "auto").length,
+    customer_profile_only: roleMappings.filter((m) => m.status === "customer_profile_only").length,
     manual: roleMappings.filter((m) => m.status === "manual").length,
     blocked: roleMappings.filter((m) => m.status === "blocked").length,
+  };
+
+  // Aggregated user counts for summary
+  const roleUserAggregates = {
+    customer_profiles: roleMappings.filter(m => m.status === 'customer_profile_only').reduce((a, m) => a + m.user_count, 0),
+    staff: roleMappings.filter(m => m.status === 'auto' && m.suggested_target && m.suggested_target !== 'Admin' && m.suggested_target !== 'Super Admin').reduce((a, m) => a + m.user_count, 0),
+    admins: roleMappings.filter(m => m.status === 'auto' && (m.suggested_target === 'Admin' || m.suggested_target === 'Super Admin')).reduce((a, m) => a + m.user_count, 0),
   };
 
   // ---- devices
@@ -964,7 +991,7 @@ async function analyzeWave1(ctx: Ctx) {
     },
     user_roles: {
       total: rolesRes.rows.length,
-      importable_safe: roleMappings.filter(m => m.status === 'auto').reduce((a, m) => a + m.assignment_count, 0),
+      importable_safe: roleMappings.filter(m => m.status === 'auto' || m.status === 'customer_profile_only').reduce((a, m) => a + m.assignment_count, 0),
       manual_review: roleMappings.filter(m => m.status === 'manual').reduce((a, m) => a + m.assignment_count, 0),
       blocked: roleMappings.filter(m => m.status === 'blocked').reduce((a, m) => a + m.assignment_count, 0),
     },
@@ -992,6 +1019,7 @@ async function analyzeWave1(ctx: Ctx) {
       unmapped: [...unmapped],
       mapping_suggestion: mappingSuggestion,
       status_counts: roleStatusCounts,
+      user_aggregates: roleUserAggregates,
       fetch_error: rolesRes.error || null,
     },
     devices: { items: deviceItems, buckets: deviceBuckets, fetch_error: devicesRes.error || null },
