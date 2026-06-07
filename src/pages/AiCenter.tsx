@@ -533,13 +533,13 @@ function ManagementTab() {
       const since = new Date(Date.now() - 365 * 86400000).toISOString();
       const [orders, invoices, repairs, maint, warr] = await Promise.all([
         supabase.from("orders").select("created_at,total_amount").gte("created_at", since).limit(2000),
-        supabase.from("invoices").select("created_at,total").gte("created_at", since).limit(2000),
+        supabase.from("zoho_invoices").select("invoice_date,total").gte("invoice_date", since.slice(0, 10)).limit(2000),
         supabase.from("repair_orders").select("created_at,repair_status").gte("created_at", since).limit(2000),
         supabase.from("device_maintenance").select("last_maintenance_date,maintenance_status").gte("last_maintenance_date", since.slice(0, 10)).limit(2000),
         supabase.from("warranty_decisions").select("created_at,decision").gte("created_at", since).limit(2000),
       ]);
-      const monthly = monthlyAggregate(invoices.data ?? [], "created_at", "total");
-      const orderM = monthlyAggregate(orders.data ?? [], "created_at", "total_amount");
+      const monthly = monthlyAggregate((invoices.data ?? []) as any[], "invoice_date", "total");
+      const orderM = monthlyAggregate((orders.data ?? []) as any[], "created_at", "total_amount");
       setData({ revenue: monthly, orders: orderM, repairs: (repairs.data ?? []).length, maint: (maint.data ?? []).length, warranty: (warr.data ?? []).length });
       setLoading(false);
     })();
