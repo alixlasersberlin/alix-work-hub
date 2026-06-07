@@ -814,47 +814,76 @@ async function fetchAllRows(sourceTable: string, max = 2000): Promise<{ rows: an
 
 /** Read-only conflict analysis for Welle 1 (profiles, user_roles, devices). */
 async function analyzeWave1(ctx: Ctx) {
-  // ---- profiles
+  // =================== profiles ===================
   const profilesRes = await fetchAllRows("profiles");
-  const profileEmailCounts = new Map<string, number>();
-  for (const r of profilesRes.rows) {
-    const e = String(r.email || "").toLowerCase().trim();
-    if (e) profileEmailCounts.set(e, (profileEmailCounts.get(e) || 0) + 1);
-  }
-  const emails = [...profileEmailCounts.keys()];
-  const existingProfilesMap = new Map<string, { id: string; full_name: string | null }>();
-  // chunk lookups
-  for (let i = 0; i < emails.length; i += 100) {
-    const chunk = emails.slice(i, i + 100);
-    if (!chunk.length) continue;
-    const { data } = await ctx.admin
-      .from("user_profiles")
-      .select("id,email,full_name")
-      .in("email", chunk);
-    (data || []).forEach((p: any) => existingProfilesMap.set(String(p.email).toLowerCase(), { id: p.id, full_name: p.full_name }));
-  }
+
+  // Load target customers (used for the 5 match rules)
+  const { data: allCustomers } = await ctx.admin
+    .from("customers")
+    .select("id,company_name,contact_name,email,phone,billing_address");
+
+  const norm = (s: any) => String(s ?? "").toLowerCase().trim();
+  const normPhone = (s: any) => String(s ?? "").replace(/[^\d+]/g, "");
+
+  const byEmail = new Map<string, any>();
+  const byPhone = new Map<string, any>();
+  const byCompanyZip = new Map<string, any>();
+  const byCompanyCity = new Map<string, any>();
+  (allCustomers || []).forEach((c: any) => {
+    if (c.email) byEmail.set(norm(c.email), c);
+    const p = normPhone(c.phone);
+    if (p) byPhone.set(p, c);
+    const zip = c.billing_address?.zip || c.billing_address?.postal_code;
+    const city = c.billing_address?.city;
+    const comp = norm(c.company_name);
+    if (comp && zip) byCompanyZip.set(`${comp}|${String(zip).trim()}`, c);
+    if (comp && city) byCompanyCity.set(`${comp}|${norm(city)}`, c);
+  });
 
   const profileItems: any[] = [];
   const profileBuckets: Record<string, number> = {
-    missing_email: 0, duplicate_email_in_source: 0, no_match_target: 0,
-    match_found: 0, missing_required_field: 0,
+    secure: 0, suggestion: 0, manual: 0, no_match: 0, missing_email: 0,
   };
+
   for (const r of profilesRes.rows) {
-    const email = String(r.email || "").toLowerCase().trim();
+    const email = norm(r.email);
+    const phone = normPhone(r.phone || r.phone_number);
+    const mobile = normPhone(r.mobile || r.mobile_number || r.mobile_phone);
+    const company = norm(r.company || r.company_name || r.organization);
+    const zip = String(r.zip || r.postal_code || r.plz || r.address?.zip || "").trim();
+    const city = norm(r.city || r.ort || r.address?.city);
     const sourceId = String(r.id ?? r.source_id ?? email ?? "");
-    const target = email ? existingProfilesMap.get(email) : undefined;
-    let bucket = "importable";
-    let reason = "";
-    if (!email) { bucket = "missing_email"; reason = "E-Mail fehlt"; profileBuckets.missing_email++; }
-    else if ((profileEmailCounts.get(email) || 0) > 1) { bucket = "duplicate_email_in_source"; reason = "E-Mail mehrfach in Quelle"; profileBuckets.duplicate_email_in_source++; }
-    else if (target) { bucket = "match_found"; reason = "Bestehendes Zielprofil – Merge möglich"; profileBuckets.match_found++; }
-    else { bucket = "no_match_target"; reason = "Kein Zielprofil – auth user fehlt"; profileBuckets.no_match_target++; }
+
+    let target: any = null;
+    let confidence = 0;
+    let match_rule = "no_match";
+    if (email && byEmail.has(email)) { target = byEmail.get(email); confidence = 100; match_rule = "email_exact"; }
+    else if (phone && byPhone.has(phone)) { target = byPhone.get(phone); confidence = 95; match_rule = "phone_exact"; }
+    else if (mobile && byPhone.has(mobile)) { target = byPhone.get(mobile); confidence = 95; match_rule = "mobile_exact"; }
+    else if (company && zip && byCompanyZip.has(`${company}|${zip}`)) { target = byCompanyZip.get(`${company}|${zip}`); confidence = 88; match_rule = "company_zip"; }
+    else if (company && city && byCompanyCity.has(`${company}|${city}`)) { target = byCompanyCity.get(`${company}|${city}`); confidence = 82; match_rule = "company_city"; }
+
+    let match_class: "secure" | "suggestion" | "manual" | "no_match";
+    if (confidence >= 95) match_class = "secure";
+    else if (confidence >= 80) match_class = "suggestion";
+    else if (confidence > 0) match_class = "manual";
+    else match_class = "no_match";
+    if (!email && !phone && !mobile && !company) { match_class = "no_match"; profileBuckets.missing_email++; }
+    profileBuckets[match_class]++;
+
     profileItems.push({
-      source_id: sourceId, email, full_name: r.full_name ?? null,
-      match_found: !!target, target_exists: !!target,
-      target_id: target?.id ?? null, bucket, reason,
+      source_id: sourceId,
+      email, phone, mobile, company, zip, city,
+      full_name: r.full_name ?? r.name ?? null,
+      target_id: target?.id ?? null,
+      target_company: target?.company_name ?? null,
+      target_contact: target?.contact_name ?? null,
+      target_email: target?.email ?? null,
+      target_phone: target?.phone ?? null,
+      confidence, match_rule, match_class,
     });
   }
+
 
   // ---- user_roles
   const rolesRes = await fetchAllRows("user_roles");
@@ -941,53 +970,78 @@ async function analyzeWave1(ctx: Ctx) {
     admins: roleMappings.filter(m => m.status === 'auto' && (m.suggested_target === 'Admin' || m.suggested_target === 'Super Admin')).reduce((a, m) => a + m.user_count, 0),
   };
 
-  // ---- devices
+  // =================== devices ===================
   const devicesRes = await fetchAllRows("devices");
-  const devSerialCounts = new Map<string, number>();
-  for (const r of devicesRes.rows) {
-    const s = String(r.serial_number || r.serial || "").trim();
-    if (s) devSerialCounts.set(s, (devSerialCounts.get(s) || 0) + 1);
-  }
-  const serials = [...devSerialCounts.keys()];
-  const existingDeviceMap = new Map<string, string>();
-  for (let i = 0; i < serials.length; i += 100) {
-    const chunk = serials.slice(i, i + 100);
-    if (!chunk.length) continue;
-    const { data } = await ctx.admin
-      .from("lager_devices").select("id,serial_number").in("serial_number", chunk);
-    (data || []).forEach((d: any) => existingDeviceMap.set(String(d.serial_number), d.id));
-  }
+  const normSerial = (s: any) => String(s ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+
+  const { data: allDevices } = await ctx.admin
+    .from("lager_devices")
+    .select("id,serial_number,model_name,customer_email,customer_name");
+
+  const devBySerial = new Map<string, any>();
+  const devBySerialNorm = new Map<string, any>();
+  const devBySerialModel = new Map<string, any>();
+  const devByCustomerModel = new Map<string, any>();
+  (allDevices || []).forEach((d: any) => {
+    const s = String(d.serial_number || "").trim();
+    if (s) devBySerial.set(s, d);
+    const sn = normSerial(s);
+    if (sn) devBySerialNorm.set(sn, d);
+    const mdl = norm(d.model_name);
+    if (sn && mdl) devBySerialModel.set(`${sn}|${mdl}`, d);
+    const cust = norm(d.customer_email || d.customer_name);
+    if (cust && mdl) devByCustomerModel.set(`${cust}|${mdl}`, d);
+  });
+
   const deviceItems: any[] = [];
-  const deviceBuckets: Record<string, number> = {
-    missing_serial: 0, duplicate_serial_in_source: 0,
-    target_exists: 0, missing_customer: 0, importable: 0,
-  };
+  const deviceBuckets: Record<string, number> = { secure: 0, suggestion: 0, manual: 0, no_match: 0 };
+
   for (const r of devicesRes.rows) {
     const serial = String(r.serial_number || r.serial || "").trim();
+    const sNorm = normSerial(serial);
+    const model = norm(r.model_name || r.device_name || r.model);
+    const customer = norm(r.customer_email || r.customer_name);
     const sourceId = String(r.id ?? r.source_id ?? serial ?? "");
-    let bucket = "importable", reason = "";
-    if (!serial) { bucket = "missing_serial"; reason = "Seriennummer fehlt"; deviceBuckets.missing_serial++; }
-    else if ((devSerialCounts.get(serial) || 0) > 1) { bucket = "duplicate_serial_in_source"; reason = "Seriennummer mehrfach in Quelle"; deviceBuckets.duplicate_serial_in_source++; }
-    else if (existingDeviceMap.has(serial)) { bucket = "target_exists"; reason = "Zielgerät existiert bereits – Merge"; deviceBuckets.target_exists++; }
-    else if (!r.customer_email && !r.customer_name) { bucket = "missing_customer"; reason = "Kein Kundenbezug"; deviceBuckets.missing_customer++; }
-    else { deviceBuckets.importable++; }
+
+    let target: any = null;
+    let confidence = 0;
+    let match_rule = "no_match";
+    if (serial && devBySerial.has(serial)) { target = devBySerial.get(serial); confidence = 100; match_rule = "serial_exact"; }
+    else if (sNorm && devBySerialNorm.has(sNorm)) { target = devBySerialNorm.get(sNorm); confidence = 95; match_rule = "serial_normalized"; }
+    else if (sNorm && model && devBySerialModel.has(`${sNorm}|${model}`)) { target = devBySerialModel.get(`${sNorm}|${model}`); confidence = 88; match_rule = "serial_model"; }
+    else if (customer && model && devByCustomerModel.has(`${customer}|${model}`)) { target = devByCustomerModel.get(`${customer}|${model}`); confidence = 75; match_rule = "customer_model"; }
+
+    let match_class: "secure" | "suggestion" | "manual" | "no_match";
+    if (confidence >= 95) match_class = "secure";
+    else if (confidence >= 80) match_class = "suggestion";
+    else if (confidence > 0) match_class = "manual";
+    else match_class = "no_match";
+    deviceBuckets[match_class]++;
+
     deviceItems.push({
-      source_id: sourceId, serial_number: serial,
-      device: r.model_name ?? r.device_name ?? null,
+      source_id: sourceId,
+      serial_number: serial,
+      model,
       customer_email: r.customer_email ?? null,
       customer_name: r.customer_name ?? null,
-      target_exists: existingDeviceMap.has(serial),
-      target_id: existingDeviceMap.get(serial) ?? null,
-      bucket, reason,
+      target_id: target?.id ?? null,
+      target_serial: target?.serial_number ?? null,
+      target_model: target?.model_name ?? null,
+      target_customer: target?.customer_name ?? target?.customer_email ?? null,
+      confidence, match_rule, match_class,
     });
   }
 
   const summary = {
     profiles: {
       total: profileItems.length,
-      importable_safe: profileBuckets.match_found,
-      manual_review: profileBuckets.duplicate_email_in_source + profileBuckets.no_match_target,
-      blocked: profileBuckets.missing_email,
+      secure: profileBuckets.secure,
+      suggestion: profileBuckets.suggestion,
+      manual: profileBuckets.manual,
+      no_match: profileBuckets.no_match,
+      importable_safe: profileBuckets.secure,
+      manual_review: profileBuckets.suggestion + profileBuckets.manual,
+      blocked: profileBuckets.no_match,
     },
     user_roles: {
       total: rolesRes.rows.length,
@@ -997,9 +1051,13 @@ async function analyzeWave1(ctx: Ctx) {
     },
     devices: {
       total: deviceItems.length,
-      importable_safe: deviceBuckets.importable,
-      manual_review: deviceBuckets.target_exists + deviceBuckets.duplicate_serial_in_source + deviceBuckets.missing_customer,
-      blocked: deviceBuckets.missing_serial,
+      secure: deviceBuckets.secure,
+      suggestion: deviceBuckets.suggestion,
+      manual: deviceBuckets.manual,
+      no_match: deviceBuckets.no_match,
+      importable_safe: deviceBuckets.secure,
+      manual_review: deviceBuckets.suggestion + deviceBuckets.manual,
+      blocked: deviceBuckets.no_match,
     },
   };
 
@@ -1102,6 +1160,50 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ batch_id: batchId, ...result }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
+
+    if (action === "resolve-wave1-conflict") {
+      // Record a human decision in alixsmart_migration_map.
+      // No business data is changed. decision ∈ confirm | reject | new_profile | new_device
+      const decision = String(body.decision || "");
+      const sourceTable = String(body.source_table || "");
+      const sourceId = String(body.source_id || "");
+      const targetTable = String(body.target_table || "");
+      const targetId = body.target_id ? String(body.target_id) : null;
+      const confidence = Number(body.confidence ?? 0);
+      const matchRule = String(body.match_rule || "");
+      const matchKey = sourceTable === "profiles" ? "profile_match" : "device_match";
+
+      if (!sourceTable || !sourceId || !decision) {
+        return new Response(JSON.stringify({ error: "missing_params" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const statusMap: Record<string, string> = {
+        confirm: "match_confirmed",
+        reject: "match_rejected",
+        new_profile: "pending_new_profile",
+        new_device: "pending_new_device",
+      };
+      const migration_status = statusMap[decision] || "unknown_decision";
+
+      const { error } = await ctx.admin.from("alixsmart_migration_map").upsert({
+        source_table: sourceTable,
+        source_id: sourceId,
+        target_table: targetTable || null,
+        target_id: decision === "confirm" ? targetId : null,
+        match_key: matchKey,
+        migration_status,
+        conflict_status: decision === "reject" || decision.startsWith("new_") ? "open" : "resolved",
+        metadata: { decision, confidence, match_rule: matchRule, by: userId, at: new Date().toISOString() },
+      }, { onConflict: "source_table,source_id" });
+
+      if (error) {
+        return new Response(JSON.stringify({ error: error.message }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      return new Response(JSON.stringify({ ok: true, migration_status }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
 
     if (action === "dry-run-import" || action === "import-wave") {
       const wave = Number(body.wave ?? 1) as 1 | 2 | 3 | 4;
