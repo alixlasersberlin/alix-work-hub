@@ -100,18 +100,66 @@ export default function TicketsList() {
 
   const sources = useMemo(() => Array.from(new Set(rows.map(r => r.source_system).filter(Boolean))) as string[], [rows]);
 
+  const [createOpen, setCreateOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [nt, setNt] = useState({
+    title: '', description: '', customer_name: '', company_name: '',
+    customer_email: '', customer_phone: '', order_number: '',
+    device_name: '', serial_number: '',
+    priority: 'normal', department: 'service',
+  });
+
+  async function reload() {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('tickets')
+      .select('id, external_ticket_id, source_system, customer_name, company_name, order_number, device_name, serial_number, title, status, priority, department, last_synced_at, created_at')
+      .order('created_at', { ascending: false })
+      .limit(500);
+    if (error) console.error(error);
+    setRows((data as TicketRow[]) || []);
+    setLoading(false);
+  }
+
+  async function createTicket() {
+    if (!nt.title.trim()) { toast.error('Titel ist erforderlich'); return; }
+    setCreating(true);
+    const { data, error } = await supabase
+      .from('tickets')
+      .insert({
+        ...nt,
+        title: nt.title.trim(),
+        source_system: 'alixwork',
+        status: 'offen',
+        customer_visible_status: 'Ticket eingegangen',
+      })
+      .select('id')
+      .single();
+    setCreating(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Ticket erstellt');
+    setCreateOpen(false);
+    setNt({ title: '', description: '', customer_name: '', company_name: '', customer_email: '', customer_phone: '', order_number: '', device_name: '', serial_number: '', priority: 'normal', department: 'service' });
+    if (data?.id) navigate(`/tickets/${data.id}`);
+  }
+
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex items-center gap-3 mb-6 flex-wrap">
         <Ticket className="w-6 h-6 text-primary" />
         <h1 className="text-2xl font-display font-bold text-foreground">Tickets</h1>
         <Badge variant="outline" className="ml-2">{filtered.length}</Badge>
-        <Link
-          to="/tickets/sync"
-          className="ml-auto text-xs px-3 py-1.5 rounded-md border border-border bg-card hover:border-primary/40 hover:text-primary transition-colors"
-        >
-          Synchronisation
-        </Link>
+        <div className="ml-auto flex items-center gap-2">
+          <Button size="sm" onClick={() => setCreateOpen(true)}>
+            <Plus className="w-4 h-4 mr-1" /> Neues Ticket
+          </Button>
+          <Link
+            to="/tickets/sync"
+            className="text-xs px-3 py-1.5 rounded-md border border-border bg-card hover:border-primary/40 hover:text-primary transition-colors"
+          >
+            Synchronisation
+          </Link>
+        </div>
       </div>
 
 
