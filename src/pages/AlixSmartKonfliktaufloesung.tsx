@@ -22,6 +22,7 @@ interface ProfileItem {
   confidence: number;
   match_rule: string;
   match_class: MatchClass;
+  import_status?: 'importable_new_record' | null;
 }
 
 interface DeviceItem {
@@ -37,6 +38,7 @@ interface DeviceItem {
   confidence: number;
   match_rule: string;
   match_class: MatchClass;
+  import_status?: 'importable_new_record' | null;
 }
 
 type Decision = 'confirm' | 'reject' | 'new_profile' | 'new_device';
@@ -106,20 +108,39 @@ export default function AlixSmartKonfliktaufloesung() {
     }
   }
 
-  const counts = useMemo(() => ({
-    profiles: {
-      secure: profiles.filter(p => p.match_class === 'secure').length,
-      suggestion: profiles.filter(p => p.match_class === 'suggestion').length,
-      manual: profiles.filter(p => p.match_class === 'manual').length,
-      no_match: profiles.filter(p => p.match_class === 'no_match').length,
-    },
-    devices: {
-      secure: devices.filter(d => d.match_class === 'secure').length,
-      suggestion: devices.filter(d => d.match_class === 'suggestion').length,
-      manual: devices.filter(d => d.match_class === 'manual').length,
-      no_match: devices.filter(d => d.match_class === 'no_match').length,
-    },
-  }), [profiles, devices]);
+  async function bulkApplyNewRecords(kind: 'profile' | 'device') {
+    const items = kind === 'profile'
+      ? profiles.filter(p => p.import_status === 'importable_new_record')
+      : devices.filter(d => d.import_status === 'importable_new_record');
+    if (!items.length) { toast.info('Keine Datensätze ohne Match.'); return; }
+    const decision: Decision = kind === 'profile' ? 'new_profile' : 'new_device';
+    let ok = 0, fail = 0;
+    for (const it of items) {
+      try { await decide(kind, it as any, decision); ok++; } catch { fail++; }
+    }
+    toast.success(`${ok} Datensätze als "neu anlegen" markiert${fail ? `, ${fail} Fehler` : ''}.`);
+  }
+
+  const counts = useMemo(() => {
+    const pNew = profiles.filter(p => p.import_status === 'importable_new_record').length;
+    const dNew = devices.filter(d => d.import_status === 'importable_new_record').length;
+    return {
+      profiles: {
+        secure: profiles.filter(p => p.match_class === 'secure').length,
+        suggestion: profiles.filter(p => p.match_class === 'suggestion').length,
+        manual: profiles.filter(p => p.match_class === 'manual').length,
+        no_match: profiles.filter(p => p.match_class === 'no_match').length,
+        new_record: pNew,
+      },
+      devices: {
+        secure: devices.filter(d => d.match_class === 'secure').length,
+        suggestion: devices.filter(d => d.match_class === 'suggestion').length,
+        manual: devices.filter(d => d.match_class === 'manual').length,
+        no_match: devices.filter(d => d.match_class === 'no_match').length,
+        new_record: dNew,
+      },
+    };
+  }, [profiles, devices]);
 
   return (
     <div className="container max-w-7xl py-6 space-y-6">
@@ -134,10 +155,20 @@ export default function AlixSmartKonfliktaufloesung() {
             </p>
           </div>
         </div>
-        <Button onClick={runAnalysis} disabled={loading} variant="outline">
-          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          Analyse neu laden
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={() => bulkApplyNewRecords('profile')} variant="secondary" size="sm" disabled={counts.profiles.new_record === 0}>
+            <UserPlus className="w-4 h-4 mr-2" />
+            Alle Kunden ohne Match übernehmen ({counts.profiles.new_record})
+          </Button>
+          <Button onClick={() => bulkApplyNewRecords('device')} variant="secondary" size="sm" disabled={counts.devices.new_record === 0}>
+            <PackagePlus className="w-4 h-4 mr-2" />
+            Alle Geräte ohne Match übernehmen ({counts.devices.new_record})
+          </Button>
+          <Button onClick={runAnalysis} disabled={loading} variant="outline" size="sm">
+            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Analyse neu laden
+          </Button>
+        </div>
       </div>
 
       <SummaryCards counts={counts} summary={summary} />
@@ -175,6 +206,10 @@ function SummaryCards({ counts, summary }: { counts: any; summary: any }) {
         </div>
         <div className="rounded-md border border-red-500/30 bg-red-500/5 p-2">
           <div className="text-xl font-bold text-red-500">{c.no_match}</div><div className="text-muted-foreground">kein Match</div>
+        </div>
+        <div className="rounded-md border border-primary/30 bg-primary/5 p-2 col-span-4">
+          <div className="text-xl font-bold text-primary">{c.new_record}</div>
+          <div className="text-muted-foreground">neu anlegen (importable_new_record)</div>
         </div>
       </CardContent>
     </Card>
@@ -250,7 +285,12 @@ function ProfilesTable({ items, decisions, onDecide }:
                   </td>
                   <td className="p-2 font-mono">{p.match_rule}</td>
                   <td className="p-2 font-bold">{p.confidence}%</td>
-                  <td className="p-2"><ClassBadge cls={p.match_class} /></td>
+                  <td className="p-2">
+                    <ClassBadge cls={p.match_class} />
+                    {p.import_status === 'importable_new_record' && (
+                      <Badge className="ml-1 border border-primary/30 bg-primary/10 text-primary">importable_new_record</Badge>
+                    )}
+                  </td>
                   <td className="p-2"><ActionButtons item={p} kind="profile" current={decisions[key]} onDecide={onDecide} /></td>
                   <td className="p-2 text-muted-foreground">{decisions[key] ?? '—'}</td>
                 </tr>
@@ -302,7 +342,12 @@ function DevicesTable({ items, decisions, onDecide }:
                   </td>
                   <td className="p-2 font-mono">{d.match_rule}</td>
                   <td className="p-2 font-bold">{d.confidence}%</td>
-                  <td className="p-2"><ClassBadge cls={d.match_class} /></td>
+                  <td className="p-2">
+                    <ClassBadge cls={d.match_class} />
+                    {d.import_status === 'importable_new_record' && (
+                      <Badge className="ml-1 border border-primary/30 bg-primary/10 text-primary">importable_new_record</Badge>
+                    )}
+                  </td>
                   <td className="p-2"><ActionButtons item={d} kind="device" current={decisions[key]} onDecide={onDecide} /></td>
                   <td className="p-2 text-muted-foreground">{decisions[key] ?? '—'}</td>
                 </tr>

@@ -871,6 +871,9 @@ async function analyzeWave1(ctx: Ctx) {
     if (!email && !phone && !mobile && !company) { match_class = "no_match"; profileBuckets.missing_email++; }
     profileBuckets[match_class]++;
 
+    const import_status =
+      match_class === "no_match" && confidence === 0 ? "importable_new_record" : null;
+
     profileItems.push({
       source_id: sourceId,
       email, phone, mobile, company, zip, city,
@@ -880,7 +883,7 @@ async function analyzeWave1(ctx: Ctx) {
       target_contact: target?.contact_name ?? null,
       target_email: target?.email ?? null,
       target_phone: target?.phone ?? null,
-      confidence, match_rule, match_class,
+      confidence, match_rule, match_class, import_status,
     });
   }
 
@@ -1018,6 +1021,9 @@ async function analyzeWave1(ctx: Ctx) {
     else match_class = "no_match";
     deviceBuckets[match_class]++;
 
+    const import_status =
+      match_class === "no_match" && confidence === 0 ? "importable_new_record" : null;
+
     deviceItems.push({
       source_id: sourceId,
       serial_number: serial,
@@ -1028,9 +1034,12 @@ async function analyzeWave1(ctx: Ctx) {
       target_serial: target?.serial_number ?? null,
       target_model: target?.model_name ?? null,
       target_customer: target?.customer_name ?? target?.customer_email ?? null,
-      confidence, match_rule, match_class,
+      confidence, match_rule, match_class, import_status,
     });
   }
+
+  const profileNewRecord = profileItems.filter((p) => p.import_status === "importable_new_record").length;
+  const deviceNewRecord = deviceItems.filter((d) => d.import_status === "importable_new_record").length;
 
   const summary = {
     profiles: {
@@ -1039,9 +1048,11 @@ async function analyzeWave1(ctx: Ctx) {
       suggestion: profileBuckets.suggestion,
       manual: profileBuckets.manual,
       no_match: profileBuckets.no_match,
+      new_record: profileNewRecord,
       importable_safe: profileBuckets.secure,
+      importable_new_record: profileNewRecord,
       manual_review: profileBuckets.suggestion + profileBuckets.manual,
-      blocked: profileBuckets.no_match,
+      blocked: Math.max(0, profileBuckets.no_match - profileNewRecord),
     },
     user_roles: {
       total: rolesRes.rows.length,
@@ -1055,9 +1066,11 @@ async function analyzeWave1(ctx: Ctx) {
       suggestion: deviceBuckets.suggestion,
       manual: deviceBuckets.manual,
       no_match: deviceBuckets.no_match,
+      new_record: deviceNewRecord,
       importable_safe: deviceBuckets.secure,
+      importable_new_record: deviceNewRecord,
       manual_review: deviceBuckets.suggestion + deviceBuckets.manual,
-      blocked: deviceBuckets.no_match,
+      blocked: Math.max(0, deviceBuckets.no_match - deviceNewRecord),
     },
   };
 
