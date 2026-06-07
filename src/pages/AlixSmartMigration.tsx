@@ -1,37 +1,34 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { CheckCircle2, XCircle, AlertTriangle, PlayCircle, Database, RefreshCw, Upload } from 'lucide-react';
+import {
+  CheckCircle2, XCircle, AlertTriangle, PlayCircle, Database, RefreshCw,
+  Upload, Wifi, ShieldAlert,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 const TARGET_TABLES = [
-  'model_manuals',
-  'support_videos',
-  'customer_notes',
-  'maintenance_confirmations',
-  'academy_sessions',
-  'academy_bookings',
-  'email_unsubscribe_tokens',
-  'suppressed_emails',
-  'alixsmart_migration_map',
-  'alixsmart_migration_logs',
+  'model_manuals', 'support_videos', 'customer_notes', 'maintenance_confirmations',
+  'academy_sessions', 'academy_bookings', 'email_unsubscribe_tokens', 'suppressed_emails',
+  'alixsmart_migration_map', 'alixsmart_migration_logs',
 ] as const;
 
 const LAGER_EXT_COLUMNS = [
-  'alixsmart_source_id',
-  'source_system',
-  'alixsmart_user_id',
-  'customer_email',
-  'customer_name',
-  'device_status',
-  'commissioning_date',
-  'last_service_date',
-  'next_service_date',
-  'alixsmart_metadata',
+  'alixsmart_source_id', 'source_system', 'alixsmart_user_id', 'customer_email',
+  'customer_name', 'device_status', 'commissioning_date', 'last_service_date',
+  'next_service_date', 'alixsmart_metadata',
+];
+
+const WAVES: { wave: 1 | 2 | 3 | 4; label: string; tables: string[]; optional?: boolean }[] = [
+  { wave: 1, label: 'Welle 1 – Stammdaten', tables: ['profiles', 'user_roles', 'products', 'devices'] },
+  { wave: 2, label: 'Welle 2 – Service-Inhalte', tables: ['model_manuals', 'support_videos', 'customer_notes', 'maintenance_confirmations'] },
+  { wave: 3, label: 'Welle 3 – Academy & Nachrichten', tables: ['academy_sessions', 'academy_bookings', 'internal_messages'] },
+  { wave: 4, label: 'Welle 4 – Optional', tables: ['email_unsubscribe_tokens', 'suppressed_emails', 'audit_logs', 'email_send_log'], optional: true },
 ];
 
 type TableStatus = { table: string; exists: boolean; rowCount: number | null; error?: string };
@@ -44,8 +41,13 @@ export default function AlixSmartMigration() {
   const [mapRows, setMapRows] = useState<MapRow[]>([]);
   const [logs, setLogs] = useState<LogRow[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // Import engine state
+  const [connectionOk, setConnectionOk] = useState<boolean | null>(null);
   const [dryRunOk, setDryRunOk] = useState<boolean | null>(null);
-  const [dryRunRunning, setDryRunRunning] = useState(false);
+  const [running, setRunning] = useState<string | null>(null);
+  const [ticketAck, setTicketAck] = useState(false);
+  const [waveResults, setWaveResults] = useState<Record<number, any>>({});
 
   async function loadAll() {
     setLoading(true);
@@ -53,88 +55,99 @@ export default function AlixSmartMigration() {
       const status: TableStatus[] = [];
       for (const t of TARGET_TABLES) {
         const { count, error } = await supabase.from(t as any).select('*', { count: 'exact', head: true });
-        status.push({
-          table: t,
-          exists: !error,
-          rowCount: count ?? null,
-          error: error?.message,
-        });
+        status.push({ table: t, exists: !error, rowCount: count ?? null, error: error?.message });
       }
       setTableStatus(status);
 
-      // Detect lager_devices extensions via probing a select; if column missing, error
-      const { data: lagerSample, error: lagerErr } = await supabase
-        .from('lager_devices')
-        .select(LAGER_EXT_COLUMNS.join(','))
-        .limit(1);
-      if (lagerErr) {
-        setLagerCols([]);
-      } else {
-        setLagerCols(LAGER_EXT_COLUMNS); // all queryable
-        void lagerSample;
-      }
+      const { error: lagerErr } = await supabase
+        .from('lager_devices').select(LAGER_EXT_COLUMNS.join(',')).limit(1);
+      setLagerCols(lagerErr ? [] : LAGER_EXT_COLUMNS);
 
       const { data: mapData } = await supabase
-        .from('alixsmart_migration_map')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(200);
+        .from('alixsmart_migration_map').select('*')
+        .order('created_at', { ascending: false }).limit(200);
       setMapRows((mapData as any) || []);
 
       const { data: logData } = await supabase
-        .from('alixsmart_migration_logs')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(200);
+        .from('alixsmart_migration_logs').select('*')
+        .order('created_at', { ascending: false }).limit(200);
       setLogs((logData as any) || []);
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   }
 
   useEffect(() => { loadAll(); }, []);
 
   const allTablesReady = tableStatus.length > 0 && tableStatus.every(t => t.exists);
   const schemaReady = allTablesReady && lagerCols.length === LAGER_EXT_COLUMNS.length;
-  const conflicts = mapRows.filter(r => r.conflict_status || r.migration_status === 'conflict' || r.error_message);
+  const conflicts = useMemo(
+    () => mapRows.filter(r => r.conflict_status || r.migration_status === 'conflict' || r.migration_status === 'error' || r.error_message),
+    [mapRows],
+  );
 
-  async function runDryRun() {
-    setDryRunRunning(true);
-    setDryRunOk(null);
+  async function callEngine(action: string, body: Record<string, any> = {}) {
+    const { data, error } = await supabase.functions.invoke('alixsmart-importer', {
+      body: { action, ...body },
+    });
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
+  async function testConnection() {
+    setRunning('test'); setConnectionOk(null);
     try {
-      // Pure local validation – no edge call yet (no real import in this milestone).
-      // The dry-run only verifies schema readiness and policy access.
-      const checks: { name: string; ok: boolean; detail?: string }[] = [];
-      checks.push({ name: 'Alle Zieltabellen vorhanden', ok: allTablesReady });
-      checks.push({ name: 'lager_devices Erweiterungen vorhanden', ok: lagerCols.length === LAGER_EXT_COLUMNS.length });
-
-      // probe insert/select rights on migration_logs
-      const { error: probeErr } = await supabase
-        .from('alixsmart_migration_logs')
-        .insert({
-          migration_batch_id: 'dryrun-' + Date.now(),
-          source_table: 'dryrun',
-          action: 'dry_run',
-          status: 'success',
-          rows_processed: 0,
-          rows_success: 0,
-          rows_failed: 0,
-          metadata: { note: 'schema readiness probe' },
-        });
-      checks.push({ name: 'Schreibzugriff auf alixsmart_migration_logs', ok: !probeErr, detail: probeErr?.message });
-
-      const ok = checks.every(c => c.ok);
-      setDryRunOk(ok);
-      if (ok) toast.success('Dry-Run erfolgreich – Schema ist bereit.');
-      else toast.error('Dry-Run hat Probleme gefunden – siehe Logs.');
+      const res = await callEngine('test-connection');
+      setConnectionOk(!!res?.ok);
+      if (res?.ok) toast.success(`AlixSmart erreichbar (${res.sample_count} Beispielzeilen).`);
+      else toast.error('Verbindung fehlgeschlagen: ' + (res?.error || 'unbekannt'));
       await loadAll();
     } catch (e: any) {
-      setDryRunOk(false);
-      toast.error('Dry-Run fehlgeschlagen: ' + e.message);
-    } finally {
-      setDryRunRunning(false);
-    }
+      setConnectionOk(false); toast.error('Verbindung fehlgeschlagen: ' + e.message);
+    } finally { setRunning(null); }
   }
+
+  async function runDryRun() {
+    setRunning('dryrun'); setDryRunOk(null);
+    try {
+      // Schema-Probe
+      const probe = await supabase
+        .from('alixsmart_migration_logs').insert({
+          migration_batch_id: 'dryrun-' + Date.now(), source_table: 'dryrun',
+          action: 'dry_run_probe', status: 'success',
+          rows_processed: 0, rows_success: 0, rows_failed: 0,
+          metadata: { note: 'schema readiness' },
+        });
+      if (probe.error) throw probe.error;
+
+      // Dry-Run aller Wellen 1-3 (Welle 4 optional)
+      const results: Record<number, any> = {};
+      for (const w of [1, 2, 3] as const) {
+        results[w] = await callEngine('dry-run-import', { wave: w });
+      }
+      setWaveResults((prev) => ({ ...prev, ...results }));
+      const allOk = Object.values(results).every((r: any) =>
+        Object.values(r.results || {}).every((x: any) => !x.error));
+      setDryRunOk(allOk);
+      if (allOk) toast.success('Dry-Run erfolgreich.');
+      else toast.warning('Dry-Run mit Hinweisen – siehe Konflikte/Logs.');
+      await loadAll();
+    } catch (e: any) {
+      setDryRunOk(false); toast.error('Dry-Run fehlgeschlagen: ' + e.message);
+    } finally { setRunning(null); }
+  }
+
+  async function importWave(wave: 1 | 2 | 3 | 4) {
+    setRunning('wave-' + wave);
+    try {
+      const res = await callEngine('import-wave', { wave });
+      setWaveResults((prev) => ({ ...prev, [wave]: res }));
+      toast.success(`Welle ${wave} importiert.`);
+      await loadAll();
+    } catch (e: any) {
+      toast.error(`Welle ${wave} fehlgeschlagen: ` + e.message);
+    } finally { setRunning(null); }
+  }
+
+  const canImport = schemaReady && connectionOk && dryRunOk && ticketAck;
 
   return (
     <div className="p-6 space-y-6">
@@ -144,62 +157,115 @@ export default function AlixSmartMigration() {
             <Database className="w-6 h-6 text-primary" />
             AlixSmart Migration
           </h1>
-          <p className="text-sm text-muted-foreground">Vorbereitung & Statusübersicht – kein echter Import.</p>
+          <p className="text-sm text-muted-foreground">Vorbereitung, Dry-Run und kontrollierter Import.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Button variant="outline" size="sm" onClick={loadAll} disabled={loading}>
             <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />Aktualisieren
           </Button>
-          <Button size="sm" onClick={runDryRun} disabled={dryRunRunning || !schemaReady}>
-            <PlayCircle className={`w-4 h-4 mr-2 ${dryRunRunning ? 'animate-spin' : ''}`} />Dry-Run starten
+          <Button variant="outline" size="sm" onClick={testConnection} disabled={running === 'test'}>
+            <Wifi className={`w-4 h-4 mr-2 ${running === 'test' ? 'animate-spin' : ''}`} />Verbindung testen
           </Button>
-          <Button size="sm" variant="default" disabled={!dryRunOk} title={!dryRunOk ? 'Erst Dry-Run erfolgreich abschließen' : 'Import starten'}>
-            <Upload className="w-4 h-4 mr-2" />Import starten
+          <Button size="sm" onClick={runDryRun} disabled={running === 'dryrun' || !schemaReady || !connectionOk}>
+            <PlayCircle className={`w-4 h-4 mr-2 ${running === 'dryrun' ? 'animate-spin' : ''}`} />Dry-Run starten
           </Button>
         </div>
       </div>
 
-      <Alert variant={schemaReady ? 'default' : 'destructive'}>
-        {schemaReady ? <CheckCircle2 className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}
-        <AlertTitle>Schema vorbereitet: {schemaReady ? 'Ja' : 'Nein'}</AlertTitle>
-        <AlertDescription>
-          {schemaReady
-            ? 'Alle Zieltabellen und Erweiterungen sind vorhanden. Sie können einen Dry-Run starten.'
-            : 'Es fehlen noch Tabellen oder Spalten. Migration prüfen.'}
+      <div className="grid md:grid-cols-3 gap-3">
+        <StatusBadge label="Schema bereit" ok={schemaReady} />
+        <StatusBadge label="AlixSmart Verbindung" ok={connectionOk} />
+        <StatusBadge label="Dry-Run OK" ok={dryRunOk} />
+      </div>
+
+      <Alert variant={canImport ? 'default' : 'destructive'}>
+        <ShieldAlert className="h-4 w-4" />
+        <AlertTitle>Sicherheitsbestätigung</AlertTitle>
+        <AlertDescription className="flex items-center gap-2 mt-2">
+          <Checkbox id="ack" checked={ticketAck} onCheckedChange={(v) => setTicketAck(!!v)} />
+          <label htmlFor="ack" className="text-sm cursor-pointer">
+            Ich bestätige, dass Tickets nicht importiert werden.
+          </label>
         </AlertDescription>
       </Alert>
 
-      <Tabs defaultValue="tables">
-        <TabsList>
+      <Tabs defaultValue="engine">
+        <TabsList className="flex-wrap h-auto">
+          <TabsTrigger value="engine">Import Engine</TabsTrigger>
           <TabsTrigger value="tables">Tabellenstatus</TabsTrigger>
-          <TabsTrigger value="lager">lager_devices Erweiterung</TabsTrigger>
+          <TabsTrigger value="lager">lager_devices</TabsTrigger>
           <TabsTrigger value="mapping">Mapping ({mapRows.length})</TabsTrigger>
-          <TabsTrigger value="logs">Import-Logs ({logs.length})</TabsTrigger>
+          <TabsTrigger value="logs">Logs ({logs.length})</TabsTrigger>
           <TabsTrigger value="conflicts">Konflikte ({conflicts.length})</TabsTrigger>
         </TabsList>
 
+        <TabsContent value="engine">
+          <div className="grid md:grid-cols-2 gap-4">
+            {WAVES.map((w) => {
+              const res = waveResults[w.wave];
+              const busy = running === 'wave-' + w.wave;
+              return (
+                <Card key={w.wave}>
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      <span>{w.label}</span>
+                      {w.optional && <Badge variant="outline">optional</Badge>}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex flex-wrap gap-1">
+                      {w.tables.map(t => <Badge key={t} variant="secondary" className="font-mono text-xs">{t}</Badge>)}
+                    </div>
+                    {res && (
+                      <div className="text-xs space-y-1">
+                        {Object.entries(res.results || {}).map(([t, r]: any) => (
+                          <div key={t} className="flex justify-between font-mono">
+                            <span>{t}</span>
+                            <span className={r.error ? 'text-red-500' : ''}>
+                              {r.error ? r.error : `${r.success}/${r.processed} ok, ${r.failed} fehler`}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <Button
+                      size="sm" className="w-full"
+                      disabled={busy || !canImport}
+                      onClick={() => importWave(w.wave)}
+                    >
+                      <Upload className={`w-4 h-4 mr-2 ${busy ? 'animate-spin' : ''}`} />
+                      Welle {w.wave} importieren
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+          {!canImport && (
+            <Alert variant="default" className="mt-4">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Import gesperrt</AlertTitle>
+              <AlertDescription>
+                Voraussetzungen: Schema bereit, Verbindung erfolgreich, Dry-Run erfolgreich, Ticket-Bestätigung.
+              </AlertDescription>
+            </Alert>
+          )}
+        </TabsContent>
+
         <TabsContent value="tables">
-          <Card>
-            <CardHeader><CardTitle>Zieltabellen</CardTitle></CardHeader>
+          <Card><CardHeader><CardTitle>Zieltabellen</CardTitle></CardHeader>
             <CardContent className="p-0">
               <table className="w-full text-sm">
-                <thead className="bg-muted/40">
-                  <tr className="text-left">
-                    <th className="p-3">Tabelle</th>
-                    <th className="p-3">Status</th>
-                    <th className="p-3">Zeilen</th>
-                    <th className="p-3">Hinweis</th>
-                  </tr>
-                </thead>
+                <thead className="bg-muted/40"><tr className="text-left">
+                  <th className="p-3">Tabelle</th><th className="p-3">Status</th><th className="p-3">Zeilen</th><th className="p-3">Hinweis</th>
+                </tr></thead>
                 <tbody>
                   {tableStatus.map(t => (
                     <tr key={t.table} className="border-t border-border">
                       <td className="p-3 font-mono">{t.table}</td>
-                      <td className="p-3">
-                        {t.exists
-                          ? <Badge variant="outline" className="bg-emerald-500/15 text-emerald-500"><CheckCircle2 className="w-3 h-3 mr-1" />vorhanden</Badge>
-                          : <Badge variant="outline" className="bg-red-500/15 text-red-500"><XCircle className="w-3 h-3 mr-1" />fehlt</Badge>}
-                      </td>
+                      <td className="p-3">{t.exists
+                        ? <Badge variant="outline" className="bg-emerald-500/15 text-emerald-500"><CheckCircle2 className="w-3 h-3 mr-1" />vorhanden</Badge>
+                        : <Badge variant="outline" className="bg-red-500/15 text-red-500"><XCircle className="w-3 h-3 mr-1" />fehlt</Badge>}</td>
                       <td className="p-3">{t.rowCount ?? '—'}</td>
                       <td className="p-3 text-muted-foreground text-xs">{t.error || ''}</td>
                     </tr>
@@ -211,39 +277,28 @@ export default function AlixSmartMigration() {
         </TabsContent>
 
         <TabsContent value="lager">
-          <Card>
-            <CardHeader><CardTitle>lager_devices – neue Spalten</CardTitle></CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {LAGER_EXT_COLUMNS.map(c => {
-                  const ok = lagerCols.includes(c);
-                  return (
-                    <Badge key={c} variant="outline" className={ok ? 'bg-emerald-500/15 text-emerald-500' : 'bg-red-500/15 text-red-500'}>
-                      {ok ? <CheckCircle2 className="w-3 h-3 mr-1" /> : <XCircle className="w-3 h-3 mr-1" />}
-                      {c}
-                    </Badge>
-                  );
-                })}
-              </div>
-            </CardContent>
+          <Card><CardHeader><CardTitle>lager_devices – neue Spalten</CardTitle></CardHeader>
+            <CardContent><div className="flex flex-wrap gap-2">
+              {LAGER_EXT_COLUMNS.map(c => {
+                const ok = lagerCols.includes(c);
+                return (
+                  <Badge key={c} variant="outline" className={ok ? 'bg-emerald-500/15 text-emerald-500' : 'bg-red-500/15 text-red-500'}>
+                    {ok ? <CheckCircle2 className="w-3 h-3 mr-1" /> : <XCircle className="w-3 h-3 mr-1" />}{c}
+                  </Badge>
+                );
+              })}
+            </div></CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="mapping">
-          <Card>
-            <CardHeader><CardTitle>Mapping</CardTitle></CardHeader>
+          <Card><CardHeader><CardTitle>Mapping</CardTitle></CardHeader>
             <CardContent className="p-0 overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-muted/40">
-                  <tr className="text-left">
-                    <th className="p-3">Quelle</th>
-                    <th className="p-3">Source-ID</th>
-                    <th className="p-3">Ziel</th>
-                    <th className="p-3">Status</th>
-                    <th className="p-3">Konflikt</th>
-                    <th className="p-3">Zeit</th>
-                  </tr>
-                </thead>
+                <thead className="bg-muted/40"><tr className="text-left">
+                  <th className="p-3">Quelle</th><th className="p-3">Source-ID</th><th className="p-3">Ziel</th>
+                  <th className="p-3">Status</th><th className="p-3">Konflikt</th><th className="p-3">Zeit</th>
+                </tr></thead>
                 <tbody>
                   {mapRows.map(r => (
                     <tr key={r.id} className="border-t border-border">
@@ -263,21 +318,13 @@ export default function AlixSmartMigration() {
         </TabsContent>
 
         <TabsContent value="logs">
-          <Card>
-            <CardHeader><CardTitle>Import-Logs</CardTitle></CardHeader>
+          <Card><CardHeader><CardTitle>Import-Logs</CardTitle></CardHeader>
             <CardContent className="p-0 overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-muted/40">
-                  <tr className="text-left">
-                    <th className="p-3">Zeit</th>
-                    <th className="p-3">Batch</th>
-                    <th className="p-3">Tabelle</th>
-                    <th className="p-3">Aktion</th>
-                    <th className="p-3">Status</th>
-                    <th className="p-3">P/E/F</th>
-                    <th className="p-3">Fehler</th>
-                  </tr>
-                </thead>
+                <thead className="bg-muted/40"><tr className="text-left">
+                  <th className="p-3">Zeit</th><th className="p-3">Batch</th><th className="p-3">Tabelle</th>
+                  <th className="p-3">Aktion</th><th className="p-3">Status</th><th className="p-3">P/E/F</th><th className="p-3">Fehler</th>
+                </tr></thead>
                 <tbody>
                   {logs.map(l => (
                     <tr key={l.id} className="border-t border-border">
@@ -298,18 +345,13 @@ export default function AlixSmartMigration() {
         </TabsContent>
 
         <TabsContent value="conflicts">
-          <Card>
-            <CardHeader><CardTitle>Konflikte</CardTitle></CardHeader>
+          <Card><CardHeader><CardTitle>Konflikte</CardTitle></CardHeader>
             <CardContent className="p-0 overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-muted/40">
-                  <tr className="text-left">
-                    <th className="p-3">Quelle</th>
-                    <th className="p-3">Source-ID</th>
-                    <th className="p-3">Konflikt</th>
-                    <th className="p-3">Fehler</th>
-                  </tr>
-                </thead>
+                <thead className="bg-muted/40"><tr className="text-left">
+                  <th className="p-3">Quelle</th><th className="p-3">Source-ID</th>
+                  <th className="p-3">Konflikt</th><th className="p-3">Fehler</th>
+                </tr></thead>
                 <tbody>
                   {conflicts.map(c => (
                     <tr key={c.id} className="border-t border-border">
@@ -327,5 +369,21 @@ export default function AlixSmartMigration() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+function StatusBadge({ label, ok }: { label: string; ok: boolean | null }) {
+  const cls = ok === true ? 'bg-emerald-500/15 text-emerald-500'
+    : ok === false ? 'bg-red-500/15 text-red-500'
+    : 'bg-muted text-muted-foreground';
+  return (
+    <Card><CardContent className="p-4 flex items-center justify-between">
+      <span className="text-sm">{label}</span>
+      <Badge variant="outline" className={cls}>
+        {ok === true && <><CheckCircle2 className="w-3 h-3 mr-1" />OK</>}
+        {ok === false && <><XCircle className="w-3 h-3 mr-1" />Fehler</>}
+        {ok === null && 'offen'}
+      </Badge>
+    </CardContent></Card>
   );
 }
