@@ -1161,6 +1161,50 @@ Deno.serve(async (req) => {
         { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    if (action === "resolve-wave1-conflict") {
+      // Record a human decision in alixsmart_migration_map.
+      // No business data is changed. decision ∈ confirm | reject | new_profile | new_device
+      const decision = String(body.decision || "");
+      const sourceTable = String(body.source_table || "");
+      const sourceId = String(body.source_id || "");
+      const targetTable = String(body.target_table || "");
+      const targetId = body.target_id ? String(body.target_id) : null;
+      const confidence = Number(body.confidence ?? 0);
+      const matchRule = String(body.match_rule || "");
+      const matchKey = sourceTable === "profiles" ? "profile_match" : "device_match";
+
+      if (!sourceTable || !sourceId || !decision) {
+        return new Response(JSON.stringify({ error: "missing_params" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const statusMap: Record<string, string> = {
+        confirm: "match_confirmed",
+        reject: "match_rejected",
+        new_profile: "pending_new_profile",
+        new_device: "pending_new_device",
+      };
+      const migration_status = statusMap[decision] || "unknown_decision";
+
+      const { error } = await ctx.admin.from("alixsmart_migration_map").upsert({
+        source_table: sourceTable,
+        source_id: sourceId,
+        target_table: targetTable || null,
+        target_id: decision === "confirm" ? targetId : null,
+        match_key: matchKey,
+        migration_status,
+        conflict_status: decision === "reject" || decision.startsWith("new_") ? "open" : "resolved",
+        metadata: { decision, confidence, match_rule: matchRule, by: userId, at: new Date().toISOString() },
+      }, { onConflict: "source_table,source_id,match_key" });
+
+      if (error) {
+        return new Response(JSON.stringify({ error: error.message }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      return new Response(JSON.stringify({ ok: true, migration_status }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+
     if (action === "dry-run-import" || action === "import-wave") {
       const wave = Number(body.wave ?? 1) as 1 | 2 | 3 | 4;
       const dryRun = action === "dry-run-import" || !!body.dry_run;
