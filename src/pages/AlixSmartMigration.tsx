@@ -487,7 +487,21 @@ export default function AlixSmartMigration() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="w1-profiles">
+          <Wave1ProfilesTab data={wave1Analysis?.profiles} onExport={exportCsv} />
+        </TabsContent>
+        <TabsContent value="w1-roles">
+          <Wave1RolesTab data={wave1Analysis?.user_roles} onExport={exportCsv} />
+        </TabsContent>
+        <TabsContent value="w1-devices">
+          <Wave1DevicesTab data={wave1Analysis?.devices} onExport={exportCsv} />
+        </TabsContent>
+        <TabsContent value="w1-summary">
+          <Wave1SummaryTab summary={wave1Analysis?.summary} />
+        </TabsContent>
       </Tabs>
+
     </div>
   );
 }
