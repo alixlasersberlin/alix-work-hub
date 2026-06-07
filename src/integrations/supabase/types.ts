@@ -7025,6 +7025,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      get_table_columns: { Args: { _table: string }; Returns: string[] }
       has_role: { Args: { check_role: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
       is_portal_customer: { Args: never; Returns: boolean }
