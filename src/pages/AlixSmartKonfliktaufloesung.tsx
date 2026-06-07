@@ -108,20 +108,39 @@ export default function AlixSmartKonfliktaufloesung() {
     }
   }
 
-  const counts = useMemo(() => ({
-    profiles: {
-      secure: profiles.filter(p => p.match_class === 'secure').length,
-      suggestion: profiles.filter(p => p.match_class === 'suggestion').length,
-      manual: profiles.filter(p => p.match_class === 'manual').length,
-      no_match: profiles.filter(p => p.match_class === 'no_match').length,
-    },
-    devices: {
-      secure: devices.filter(d => d.match_class === 'secure').length,
-      suggestion: devices.filter(d => d.match_class === 'suggestion').length,
-      manual: devices.filter(d => d.match_class === 'manual').length,
-      no_match: devices.filter(d => d.match_class === 'no_match').length,
-    },
-  }), [profiles, devices]);
+  async function bulkApplyNewRecords(kind: 'profile' | 'device') {
+    const items = kind === 'profile'
+      ? profiles.filter(p => p.import_status === 'importable_new_record')
+      : devices.filter(d => d.import_status === 'importable_new_record');
+    if (!items.length) { toast.info('Keine Datensätze ohne Match.'); return; }
+    const decision: Decision = kind === 'profile' ? 'new_profile' : 'new_device';
+    let ok = 0, fail = 0;
+    for (const it of items) {
+      try { await decide(kind, it as any, decision); ok++; } catch { fail++; }
+    }
+    toast.success(`${ok} Datensätze als "neu anlegen" markiert${fail ? `, ${fail} Fehler` : ''}.`);
+  }
+
+  const counts = useMemo(() => {
+    const pNew = profiles.filter(p => p.import_status === 'importable_new_record').length;
+    const dNew = devices.filter(d => d.import_status === 'importable_new_record').length;
+    return {
+      profiles: {
+        secure: profiles.filter(p => p.match_class === 'secure').length,
+        suggestion: profiles.filter(p => p.match_class === 'suggestion').length,
+        manual: profiles.filter(p => p.match_class === 'manual').length,
+        no_match: profiles.filter(p => p.match_class === 'no_match').length,
+        new_record: pNew,
+      },
+      devices: {
+        secure: devices.filter(d => d.match_class === 'secure').length,
+        suggestion: devices.filter(d => d.match_class === 'suggestion').length,
+        manual: devices.filter(d => d.match_class === 'manual').length,
+        no_match: devices.filter(d => d.match_class === 'no_match').length,
+        new_record: dNew,
+      },
+    };
+  }, [profiles, devices]);
 
   return (
     <div className="container max-w-7xl py-6 space-y-6">
