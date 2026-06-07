@@ -400,11 +400,11 @@ function TicketTab() {
   useEffect(() => {
     (async () => {
       const since = new Date(Date.now() - 180 * 86400000).toISOString();
-      const { data } = await supabase.from("tickets").select("status,serial_number,customer_name,auto_category,created_at,closed_at").gte("created_at", since).limit(2000);
-      const arr = data ?? [];
-      const byCat = aggregate(arr, (t) => t.auto_category ?? "Sonstiges");
-      const bySerial = aggregate(arr.filter((t) => t.serial_number), (t) => t.serial_number);
-      const byCust = aggregate(arr, (t) => t.customer_name ?? "—");
+      const { data } = await supabase.from("tickets").select("status,serial_number,customer_name,auto_category,created_at").gte("created_at", since).limit(2000);
+      const arr = (data ?? []) as any[];
+      const byCat = aggregate(arr, (t: any) => t.auto_category ?? "Sonstiges");
+      const bySerial = aggregate(arr.filter((t: any) => t.serial_number), (t: any) => t.serial_number);
+      const byCust = aggregate(arr, (t: any) => t.customer_name ?? "—");
       setStats({ total: arr.length, byCat, topSerials: top(bySerial, 10), topCust: top(byCust, 10) });
       setLoading(false);
     })();
@@ -552,8 +552,8 @@ function ManagementTab() {
         <CardContent>
           {loading ? <Loader2 className="animate-spin" /> : (
             <div className="grid grid-cols-2 gap-4">
-              <Stat label="Umsatz Jahr" value={`${Object.values(data.revenue || {}).reduce((s: number, v: any) => s + Number(v || 0), 0).toFixed(0)} €`} />
-              <Stat label="Aufträge Jahr" value={`${Object.values(data.orders || {}).reduce((s: number, v: any) => s + Number(v || 0), 0).toFixed(0)} €`} />
+              <Stat label="Umsatz Jahr" value={`${(Object.values(data.revenue || {}) as number[]).reduce((s: number, v) => s + Number(v || 0), 0).toFixed(0)} €`} />
+              <Stat label="Auftragsvolumen Jahr" value={`${(Object.values(data.orders || {}) as number[]).reduce((s: number, v) => s + Number(v || 0), 0).toFixed(0)} €`} />
               <Stat label="Reparaturen 12 M." value={String(data.repairs ?? 0)} />
               <Stat label="Wartungen 12 M." value={String(data.maint ?? 0)} />
               <Stat label="Garantie-Entsch." value={String(data.warranty ?? 0)} />
