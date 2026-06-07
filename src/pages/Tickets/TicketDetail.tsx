@@ -84,7 +84,7 @@ export default function TicketDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, isAdmin, hasAnyRole } = useAuth();
-  const canEdit = isAdmin || hasAnyRole(['Kundenservice', 'Technik']);
+  const canEdit = isAdmin || hasAnyRole(['Kundenservice', 'Technik', 'Service', 'Reparaturannahme', 'Order']);
 
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -97,6 +97,8 @@ export default function TicketDetail() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [linkedRepair, setLinkedRepair] = useState<LinkedRepair | null>(null);
+  const [users, setUsers] = useState<{ id: string; label: string }[]>([]);
+  const [uploading, setUploading] = useState(false);
 
   async function loadLinkedRepair(repairId: string | null) {
     if (!repairId) { setLinkedRepair(null); return; }
