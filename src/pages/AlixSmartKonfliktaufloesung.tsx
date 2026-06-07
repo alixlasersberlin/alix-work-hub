@@ -22,6 +22,19 @@ interface ProfileItem {
   confidence: number;
   match_rule: string;
   match_class: MatchClass;
+  import_status?: 'importable_new_record' | null;
+}
+
+interface ProfileItem extends BaseItem {
+  source_id: string;
+  email: string; phone: string; mobile: string;
+  company: string; zip: string; city: string;
+  full_name: string | null;
+  target_id: string | null;
+  target_company: string | null;
+  target_contact: string | null;
+  target_email: string | null;
+  target_phone: string | null;
 }
 
 interface DeviceItem {
