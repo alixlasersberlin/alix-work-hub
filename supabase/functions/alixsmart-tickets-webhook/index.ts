@@ -73,16 +73,16 @@ Deno.serve(async (req) => {
     });
   }
 
-  if (rateLimited(provided)) {
-    return new Response(JSON.stringify({ error: 'rate_limited', limit: RATE_MAX, window_s: 60 }), {
-      status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
-
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
   );
+
+  if (await rateLimited(supabase, provided)) {
+    return new Response(JSON.stringify({ error: 'rate_limited', limit: RATE_MAX, window_s: 60 }), {
+      status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
 
   let body: Payload;
   try { body = await req.json(); } catch {
