@@ -81,6 +81,13 @@ export default function ReparaturDetail() {
         )}
         {perms.canEditTechnik && <SparePartRequestDialog repair={repair} onCreated={load} />}
         {(perms.canEditTechnik || perms.canEditFinance) && <InvoiceProposalDialog repair={repair} onCreated={load} />}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => printRepairReport({ repair, parts, history })}
+        >
+          <FileText className="w-4 h-4 mr-1" /> Reparaturbericht
+        </Button>
         <AiAnalysisPanel sourceKind="repair" recordId={repair.id} />
         <div className="ml-auto flex items-center gap-2">
           <Label className="text-xs">Status:</Label>
