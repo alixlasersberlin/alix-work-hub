@@ -50,6 +50,7 @@ const ReparaturQuoteDetail = lazy(() => import("./pages/Reparatur/QuoteDetail"))
 const ReparaturRueckversand = lazy(() => import("./pages/Reparatur/Rueckversand"));
 const PublicRepairQuoteDecision = lazy(() => import("./pages/PublicRepairQuote/Decision"));
 const BestellwesenErsatzteile = lazy(() => import("./pages/Bestellwesen/Ersatzteile"));
+const Ersatzteilmanagement = lazy(() => import("./pages/Ersatzteilmanagement"));
 const RoutePlanDetail = lazy(() => import("./pages/RoutePlanDetail"));
 const RoutePlanForm = lazy(() => import("./pages/RoutePlanForm"));
 const RoutePlanningSettings = lazy(() => import("./pages/RoutePlanningSettings"));
