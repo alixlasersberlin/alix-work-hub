@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, MapPin, ClipboardList, Building2, Loader2, Pencil } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
+import { DispatchExecutionTabs } from '@/components/DispatchExecutionTabs';
 
 export default function RoutePlanDetail() {
   const { id } = useParams<{ id: string }>();
