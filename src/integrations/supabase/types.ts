@@ -14,6 +14,117 @@ export type Database = {
   }
   public: {
     Tables: {
+      academy_bookings: {
+        Row: {
+          academy_session_id: string | null
+          booking_status: string
+          created_at: string
+          customer_email: string | null
+          customer_id: string | null
+          customer_name: string | null
+          id: string
+          metadata: Json | null
+          notes: string | null
+          source_customer_id: string | null
+          source_id: string | null
+          source_session_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          academy_session_id?: string | null
+          booking_status?: string
+          created_at?: string
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          metadata?: Json | null
+          notes?: string | null
+          source_customer_id?: string | null
+          source_id?: string | null
+          source_session_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          academy_session_id?: string | null
+          booking_status?: string
+          created_at?: string
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          metadata?: Json | null
+          notes?: string | null
+          source_customer_id?: string | null
+          source_id?: string | null
+          source_session_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_bookings_academy_session_id_fkey"
+            columns: ["academy_session_id"]
+            isOneToOne: false
+            referencedRelation: "academy_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_bookings_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_sessions: {
+        Row: {
+          created_at: string
+          description: string | null
+          end_date: string | null
+          id: string
+          instructor: string | null
+          location: string | null
+          max_participants: number | null
+          metadata: Json | null
+          source_id: string | null
+          start_date: string | null
+          status: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          instructor?: string | null
+          location?: string | null
+          max_participants?: number | null
+          metadata?: Json | null
+          source_id?: string | null
+          start_date?: string | null
+          status?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          instructor?: string | null
+          location?: string | null
+          max_participants?: number | null
+          metadata?: Json | null
+          source_id?: string | null
+          start_date?: string | null
+          status?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ai_service_analyses: {
         Row: {
           ai_model: string | null
@@ -405,6 +516,93 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      alixsmart_migration_logs: {
+        Row: {
+          action: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          migration_batch_id: string | null
+          rows_failed: number
+          rows_processed: number
+          rows_success: number
+          source_table: string | null
+          status: string | null
+        }
+        Insert: {
+          action?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          migration_batch_id?: string | null
+          rows_failed?: number
+          rows_processed?: number
+          rows_success?: number
+          source_table?: string | null
+          status?: string | null
+        }
+        Update: {
+          action?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          migration_batch_id?: string | null
+          rows_failed?: number
+          rows_processed?: number
+          rows_success?: number
+          source_table?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
+      alixsmart_migration_map: {
+        Row: {
+          conflict_status: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          match_key: string | null
+          metadata: Json | null
+          migration_status: string
+          source_id: string
+          source_table: string
+          target_id: string | null
+          target_table: string
+          updated_at: string
+        }
+        Insert: {
+          conflict_status?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          match_key?: string | null
+          metadata?: Json | null
+          migration_status?: string
+          source_id: string
+          source_table: string
+          target_id?: string | null
+          target_table: string
+          updated_at?: string
+        }
+        Update: {
+          conflict_status?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          match_key?: string | null
+          metadata?: Json | null
+          migration_status?: string
+          source_id?: string
+          source_table?: string
+          target_id?: string | null
+          target_table?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       app_settings: {
         Row: {
@@ -969,6 +1167,59 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_notes: {
+        Row: {
+          author_id: string | null
+          created_at: string
+          customer_email: string | null
+          customer_id: string | null
+          customer_name: string | null
+          id: string
+          is_internal: boolean
+          metadata: Json | null
+          note: string | null
+          source_customer_id: string | null
+          source_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          is_internal?: boolean
+          metadata?: Json | null
+          note?: string | null
+          source_customer_id?: string | null
+          source_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          is_internal?: boolean
+          metadata?: Json | null
+          note?: string | null
+          source_customer_id?: string | null
+          source_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_notes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_portal_document_downloads: {
         Row: {
           attachment_id: string | null
@@ -1532,6 +1783,39 @@ export type Database = {
         }
         Relationships: []
       }
+      email_unsubscribe_tokens: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          metadata: Json | null
+          reason: string | null
+          source_id: string | null
+          token: string | null
+          unsubscribed_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          metadata?: Json | null
+          reason?: string | null
+          source_id?: string | null
+          token?: string | null
+          unsubscribed_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          metadata?: Json | null
+          reason?: string | null
+          source_id?: string | null
+          token?: string | null
+          unsubscribed_at?: string | null
+        }
+        Relationships: []
+      }
       finance_records: {
         Row: {
           amount_due: number | null
@@ -1679,43 +1963,73 @@ export type Database = {
       lager_devices: {
         Row: {
           airtable_record_id: string | null
+          alixsmart_metadata: Json | null
+          alixsmart_source_id: string | null
+          alixsmart_user_id: string | null
+          commissioning_date: string | null
           created_at: string
           created_by: string | null
+          customer_email: string | null
+          customer_name: string | null
+          device_status: string | null
           entry_date: string
           id: string
+          last_service_date: string | null
           model_name: string
+          next_service_date: string | null
           notes: string | null
           reservation_week: string | null
           reserved_order_id: string | null
           serial_number: string
+          source_system: string | null
           updated_at: string
           updated_by: string | null
         }
         Insert: {
           airtable_record_id?: string | null
+          alixsmart_metadata?: Json | null
+          alixsmart_source_id?: string | null
+          alixsmart_user_id?: string | null
+          commissioning_date?: string | null
           created_at?: string
           created_by?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          device_status?: string | null
           entry_date?: string
           id?: string
+          last_service_date?: string | null
           model_name: string
+          next_service_date?: string | null
           notes?: string | null
           reservation_week?: string | null
           reserved_order_id?: string | null
           serial_number: string
+          source_system?: string | null
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
           airtable_record_id?: string | null
+          alixsmart_metadata?: Json | null
+          alixsmart_source_id?: string | null
+          alixsmart_user_id?: string | null
+          commissioning_date?: string | null
           created_at?: string
           created_by?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          device_status?: string | null
           entry_date?: string
           id?: string
+          last_service_date?: string | null
           model_name?: string
+          next_service_date?: string | null
           notes?: string | null
           reservation_week?: string | null
           reserved_order_id?: string | null
           serial_number?: string
+          source_system?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -2793,6 +3107,68 @@ export type Database = {
         }
         Relationships: []
       }
+      maintenance_confirmations: {
+        Row: {
+          confirmation_date: string | null
+          confirmed_by: string | null
+          created_at: string
+          customer_id: string | null
+          customer_name: string | null
+          device_id: string | null
+          document_url: string | null
+          id: string
+          metadata: Json | null
+          notes: string | null
+          serial_number: string | null
+          signature_url: string | null
+          source_device_id: string | null
+          source_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          confirmation_date?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          device_id?: string | null
+          document_url?: string | null
+          id?: string
+          metadata?: Json | null
+          notes?: string | null
+          serial_number?: string | null
+          signature_url?: string | null
+          source_device_id?: string | null
+          source_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          confirmation_date?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          device_id?: string | null
+          document_url?: string | null
+          id?: string
+          metadata?: Json | null
+          notes?: string | null
+          serial_number?: string | null
+          signature_url?: string | null
+          source_device_id?: string | null
+          source_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_confirmations_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       maintenance_plans: {
         Row: {
           created_at: string
@@ -2820,6 +3196,51 @@ export type Database = {
           maintenance_interval_hours?: number | null
           maintenance_interval_months?: number | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      model_manuals: {
+        Row: {
+          created_at: string
+          file_path: string | null
+          file_type: string | null
+          file_url: string | null
+          id: string
+          is_active: boolean
+          metadata: Json | null
+          model_name: string | null
+          source_id: string | null
+          title: string | null
+          updated_at: string
+          version: string | null
+        }
+        Insert: {
+          created_at?: string
+          file_path?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          is_active?: boolean
+          metadata?: Json | null
+          model_name?: string | null
+          source_id?: string | null
+          title?: string | null
+          updated_at?: string
+          version?: string | null
+        }
+        Update: {
+          created_at?: string
+          file_path?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          is_active?: boolean
+          metadata?: Json | null
+          model_name?: string | null
+          source_id?: string | null
+          title?: string | null
+          updated_at?: string
+          version?: string | null
         }
         Relationships: []
       }
@@ -4981,6 +5402,81 @@ export type Database = {
           phone?: string | null
           updated_at?: string
           updated_by?: string | null
+        }
+        Relationships: []
+      }
+      support_videos: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          device_model: string | null
+          id: string
+          is_active: boolean
+          metadata: Json | null
+          source_id: string | null
+          thumbnail_url: string | null
+          title: string | null
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          device_model?: string | null
+          id?: string
+          is_active?: boolean
+          metadata?: Json | null
+          source_id?: string | null
+          thumbnail_url?: string | null
+          title?: string | null
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          device_model?: string | null
+          id?: string
+          is_active?: boolean
+          metadata?: Json | null
+          source_id?: string | null
+          thumbnail_url?: string | null
+          title?: string | null
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: []
+      }
+      suppressed_emails: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          metadata: Json | null
+          reason: string | null
+          source_id: string | null
+          source_system: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          metadata?: Json | null
+          reason?: string | null
+          source_id?: string | null
+          source_system?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          metadata?: Json | null
+          reason?: string | null
+          source_id?: string | null
+          source_system?: string
         }
         Relationships: []
       }
