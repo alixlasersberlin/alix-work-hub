@@ -34,13 +34,6 @@ const navItems: NavItem[] = [
   { path: '/', label: 'DASHBOARD', icon: LayoutDashboard, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Read Only Audit'] },
   { path: '/management-dashboard', label: 'MANAGEMENT DASHBOARD', icon: BarChart3, roles: ['Admin', 'Super Admin', 'Geschäftsführung', 'Finance', 'Serviceleitung'] },
   { path: '/ai-center', label: 'AI CENTER', icon: Sparkles, roles: ['Admin', 'Super Admin', 'Geschäftsführung', 'Serviceleitung', 'Service', 'Technik', 'Finance'] },
-  {
-    path: '/detailsuche', label: 'DETAILSUCHE', icon: SearchCheck, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Read Only Audit'],
-    children: [
-      { path: '/detailsuche', label: 'Suche', icon: SearchCheck, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Read Only Audit'] },
-      { path: '/lager/doppelte-reservierungen', label: 'Doppelte Reservierungen', icon: AlertTriangle, roles: ['Admin', 'Super Admin', 'Order'] },
-    ],
-  },
   { path: '/geraetesperren', label: 'GERÄTESPERREN', icon: Lock, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Read Only Audit'] },
   {
     path: '/mailcenter', label: 'ALIX i-COM', icon: Mail,
@@ -171,6 +164,8 @@ const navItems: NavItem[] = [
   {
     path: '/auftragsverwaltung/bestellungen', label: 'BESTELLWESEN', icon: ShoppingCart, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'Lieferant', 'FACTORY INVOICE', 'Bestellwesen'],
     children: [
+      { path: '/detailsuche', label: 'Detailsuche', icon: SearchCheck, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Read Only Audit'] },
+      { path: '/lager/doppelte-reservierungen', label: 'Doppelte Reservierungen', icon: AlertTriangle, roles: ['Admin', 'Super Admin', 'Order'] },
       { path: '/order/timeline', label: 'Timeline Bestellungen', icon: Calendar, roles: ['Admin', 'Super Admin', 'Order', 'Österreich'] },
       { path: '/order/frei-bestellung', label: 'Bestellung möglich', icon: CheckCircle2, roles: ['Admin', 'Super Admin', 'Order'] },
       { path: '/order/reklamation', label: 'Bestellung Reklamation', icon: AlertTriangle, roles: ['Admin', 'Super Admin', 'Order'] },
