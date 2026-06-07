@@ -1036,7 +1036,7 @@ export default function AppLayout() {
             const isRed = item.path === '/geraetesperren';
             return (
               <Link
-                key={item.path}
+                key={`${item.path}-${item.label}`}
                 to={item.path}
                 title={isCollapsedView ? item.label : undefined}
                 className={cn(
