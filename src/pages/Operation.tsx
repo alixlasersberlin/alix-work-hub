@@ -1,10 +1,11 @@
-import { Workflow, Mail, FileText, ChevronRight } from 'lucide-react';
+import { Workflow, Mail, FileText, ChevronRight, Database } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 
 const tiles = [
   { to: '/operation/email-vorlagen', icon: Mail, title: 'E-Mail Vorlagen', desc: 'Inhalte automatisch versendeter E-Mails bearbeiten.' },
   { to: '/operation/logfiles', icon: FileText, title: 'Logfiles', desc: 'System- und Audit-Logs einsehen.' },
+  { to: '/operation/alixsmart-migration', icon: Database, title: 'AlixSmart Migration', desc: 'Import Engine: Verbindung, Dry-Run und Wellen-Import.' },
 ];
 
 export default function Operation() {
