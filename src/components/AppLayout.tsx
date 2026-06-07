@@ -16,6 +16,7 @@ import LeoWelcomeDialog from '@/components/LeoWelcomeDialog';
 import NataliaWelcomeOverlay from '@/components/NataliaWelcomeOverlay';
 import DesignVariantSwitcher from '@/components/DesignVariantSwitcher';
 import { SidebarInfoBar } from '@/components/SidebarInfoBar';
+import TenantSwitcher from '@/components/TenantSwitcher';
 import AuroraPrioTicker from '@/components/AuroraPrioTicker';
 import AuroraTopNav from '@/components/AuroraTopNav';
 import { useDesignVariant } from '@/hooks/useDesignVariant';
@@ -1167,6 +1168,9 @@ export default function AppLayout() {
             <AuroraPrioTicker />
             <div className="hidden md:block min-w-0 flex-1">
               <SidebarInfoBar />
+            </div>
+            <div className="hidden lg:block flex-shrink-0">
+              <TenantSwitcher />
             </div>
             <div className="flex items-center gap-2 text-sm flex-shrink-0">
               <span className="font-display font-bold gold-text">AlixWork</span>
