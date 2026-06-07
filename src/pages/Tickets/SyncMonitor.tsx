@@ -236,13 +236,19 @@ export default function TicketsSyncMonitor() {
             AlixWork ⇄ AlixSmart · Push (outbound) und Polling (inbound) gemeinsam überwacht.
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={load} disabled={loading}>
-          <RefreshCw className={`w-4 h-4 mr-1.5 ${loading ? 'animate-spin' : ''}`} /> Aktualisieren
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={runAlertCheck} disabled={runningAlertCheck}>
+            <BellRing className={`w-4 h-4 mr-1.5 ${runningAlertCheck ? 'animate-pulse' : ''}`} />
+            Alert-Check ausführen
+          </Button>
+          <Button variant="outline" size="sm" onClick={load} disabled={loading}>
+            <RefreshCw className={`w-4 h-4 mr-1.5 ${loading ? 'animate-spin' : ''}`} /> Aktualisieren
+          </Button>
+        </div>
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
         <KpiCard label="Push erfolgreich" value={stats?.pushSuccess ?? 0} icon={<ArrowUpRight className="w-4 h-4 text-emerald-400" />} />
         <KpiCard label="Push fehlgeschlagen" value={stats?.pushError ?? 0} icon={<ArrowUpRight className="w-4 h-4 text-destructive" />} />
         <KpiCard label="Polling erfolgreich" value={stats?.pollSuccess ?? 0} icon={<ArrowDownLeft className="w-4 h-4 text-emerald-400" />} />
@@ -250,7 +256,57 @@ export default function TicketsSyncMonitor() {
         <KpiCard label="Blockiert (Konflikt)" value={stats?.blocked ?? 0} icon={<Ban className="w-4 h-4 text-amber-400" />} />
         <KpiCard label="Tickets gesamt" value={stats?.ticketsTotal ?? 0} icon={<RefreshCw className="w-4 h-4 text-primary" />} />
         <KpiCard label="Heute synchronisiert" value={stats?.ticketsSyncedToday ?? 0} icon={<Clock className="w-4 h-4 text-sky-400" />} />
+        <KpiCard label="Alerts gesendet" value={alertsTotal} icon={<BellRing className="w-4 h-4 text-rose-400" />} />
       </div>
+
+      {/* Alerts */}
+      <Card>
+        <div className="p-4 border-b border-border flex items-center gap-2">
+          <Mail className="w-4 h-4 text-rose-400" />
+          <h2 className="font-display font-semibold">Versandte Alerts</h2>
+          <Badge variant="outline" className="ml-2 text-xs">{alerts.length}</Badge>
+          <span className="ml-auto text-xs text-muted-foreground">Empfänger: rde@alix-lasers.com · Cooldown 30 min/Ticket</span>
+        </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Zeitpunkt</TableHead>
+              <TableHead>Fehlergruppe</TableHead>
+              <TableHead>Alert-Typ</TableHead>
+              <TableHead>Ticket-Nr.</TableHead>
+              <TableHead>External ID</TableHead>
+              <TableHead>Richtung</TableHead>
+              <TableHead>Code</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Empfänger</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {alerts.length === 0 && (
+              <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-6">
+                Keine Alerts im gewählten Zeitraum.
+              </TableCell></TableRow>
+            )}
+            {alerts.map((a) => (
+              <TableRow key={a.id}>
+                <TableCell className="font-mono text-xs whitespace-nowrap">{new Date(a.sent_at).toLocaleString('de-DE')}</TableCell>
+                <TableCell className="text-xs">{a.error_group || '—'}</TableCell>
+                <TableCell className="text-xs">{a.alert_type}</TableCell>
+                <TableCell className="font-mono text-xs">{a.ticket_number || '—'}</TableCell>
+                <TableCell className="font-mono text-xs">{a.external_ticket_id || '—'}</TableCell>
+                <TableCell><Badge variant="outline" className="text-xs">{a.direction || '—'}</Badge></TableCell>
+                <TableCell className="font-mono text-xs">{a.response_code ?? '—'}</TableCell>
+                <TableCell>
+                  <Badge variant="outline" className={`text-xs ${a.status === 'sent' ? STATUS_STYLE.success : STATUS_STYLE.error}`}>
+                    {a.status}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-xs">{a.sent_to}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
 
       {/* Last sync */}
       <Card className="p-4">
