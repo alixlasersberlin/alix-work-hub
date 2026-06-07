@@ -79,9 +79,12 @@ export default function ReviewsList() {
       .order('created_at', { ascending: false })
       .limit(1000);
     if (error) toast.error('Bewertungen laden fehlgeschlagen: ' + error.message);
-    setRows((data ?? []) as Review[]);
+    let list = (data ?? []) as Review[];
+    if (atOnly) list = await filterAtOnlyByOrderId(list);
+    setRows(list);
     setLoading(false);
   }
+
 
   useEffect(() => { load(); }, []);
 
