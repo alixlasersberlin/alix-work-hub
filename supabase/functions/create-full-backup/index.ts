@@ -2,7 +2,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 
 const BACKUP_TABLES = [
@@ -36,7 +37,11 @@ const BACKUP_TABLES = [
   "zoho_unpaid_invoices",
 ];
 
-const STORAGE_BUCKETS = ["production-orders", "production-photos", "order-invoices"];
+const STORAGE_BUCKETS = [
+  "production-orders",
+  "production-photos",
+  "order-invoices",
+];
 const DB_PAGE_SIZE = 50;
 const STORAGE_LIST_LIMIT = 250;
 const encoder = new TextEncoder();
@@ -59,10 +64,12 @@ async function uploadJson(
 ) {
   const bytes = encoder.encode(JSON.stringify(payload, null, 2));
   const size = bytes.byteLength;
-  const { error } = await adminClient.storage.from("backups").upload(path, bytes, {
-    contentType: "application/json",
-    upsert: false,
-  });
+  const { error } = await adminClient.storage
+    .from("backups")
+    .upload(path, bytes, {
+      contentType: "application/json",
+      upsert: false,
+    });
   if (error) throw new Error(`Upload ${path}: ${error.message}`);
   return size;
 }
@@ -78,10 +85,12 @@ async function uploadNdjsonPart(
   }
   const bytes = encoder.encode(`${lines.join("\n")}\n`);
   const size = bytes.byteLength;
-  const { error } = await adminClient.storage.from("backups").upload(path, bytes, {
-    contentType: "application/x-ndjson",
-    upsert: false,
-  });
+  const { error } = await adminClient.storage
+    .from("backups")
+    .upload(path, bytes, {
+      contentType: "application/x-ndjson",
+      upsert: false,
+    });
   if (error) throw new Error(`Upload ${path}: ${error.message}`);
   lines.length = 0;
   rows.length = 0;
@@ -97,11 +106,14 @@ async function listBucketEntries(
 
   while (stack.length > 0) {
     const current = stack.pop() ?? "";
-    const { data, error } = await adminClient.storage.from(bucket).list(current, {
-      limit: STORAGE_LIST_LIMIT,
-      sortBy: { column: "name", order: "asc" },
-    });
-    if (error) throw new Error(`Storage ${bucket}/${current}: ${error.message}`);
+    const { data, error } = await adminClient.storage
+      .from(bucket)
+      .list(current, {
+        limit: STORAGE_LIST_LIMIT,
+        sortBy: { column: "name", order: "asc" },
+      });
+    if (error)
+      throw new Error(`Storage ${bucket}/${current}: ${error.message}`);
     if (!data?.length) continue;
 
     for (const entry of data) {
@@ -154,14 +166,17 @@ async function runPostBackupTasks(params: {
   } = params;
 
   try {
-    const syncRes = await fetch(`${supabaseUrl}/functions/v1/sync-backup-to-hetzner`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${serviceRoleKey}`,
+    const syncRes = await fetch(
+      `${supabaseUrl}/functions/v1/sync-backup-to-hetzner`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${serviceRoleKey}`,
+        },
+        body: JSON.stringify({ folder_path: folderPath, backup_id: backupId }),
       },
-      body: JSON.stringify({ folder_path: folderPath, backup_id: backupId }),
-    });
+    );
     if (!syncRes.ok) {
       console.error("Hetzner sync failed:", await syncRes.text());
     } else {
@@ -173,28 +188,31 @@ async function runPostBackupTasks(params: {
 
   if (notify && notifyEmail && downloadUrl) {
     try {
-      const emailRes = await fetch(`${supabaseUrl}/functions/v1/send-transactional-email`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${serviceRoleKey}`,
-        },
-        body: JSON.stringify({
-          templateName: "backup-ready",
-          recipientEmail: notifyEmail,
-          idempotencyKey: `backup-${backupId}`,
-          templateData: {
-            backup_id: backupId,
-            download_url: downloadUrl,
-            expires_in_hours: 168,
-            size_mb: (sizeBytes / 1024 / 1024).toFixed(2),
-            table_count: BACKUP_TABLES.length,
-            storage_file_count: storageFileCount,
-            source,
-            created_at: startedAt,
+      const emailRes = await fetch(
+        `${supabaseUrl}/functions/v1/send-transactional-email`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${serviceRoleKey}`,
           },
-        }),
-      });
+          body: JSON.stringify({
+            templateName: "backup-ready",
+            recipientEmail: notifyEmail,
+            idempotencyKey: `backup-${backupId}`,
+            templateData: {
+              backup_id: backupId,
+              download_url: downloadUrl,
+              expires_in_hours: 168,
+              size_mb: (sizeBytes / 1024 / 1024).toFixed(2),
+              table_count: BACKUP_TABLES.length,
+              storage_file_count: storageFileCount,
+              source,
+              created_at: startedAt,
+            },
+          }),
+        },
+      );
       if (!emailRes.ok) {
         console.error("Email send failed:", await emailRes.text());
       } else {
@@ -215,7 +233,9 @@ Deno.serve(async (req) => {
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const cronSecret = Deno.env.get("CRON_SECRET");
   const authHeader = req.headers.get("Authorization") ?? "";
-  const isCronCall = Boolean(cronSecret && authHeader === `Bearer ${cronSecret}`);
+  const isCronCall = Boolean(
+    cronSecret && authHeader === `Bearer ${cronSecret}`,
+  );
 
   let callerUserId: string | null = null;
   let notifyEmail: string | null = null;
@@ -224,7 +244,8 @@ Deno.serve(async (req) => {
   let scope: "full" | "db_only" = "full";
 
   try {
-    const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
+    const body =
+      req.method === "POST" ? await req.json().catch(() => ({})) : {};
     source = body.source === "cron" ? "cron" : "manual";
     notify = body.notify === true;
     if (body.scope === "db_only") scope = "db_only";
@@ -241,15 +262,19 @@ Deno.serve(async (req) => {
     const token = authHeader.replace("Bearer ", "");
     if (!token) return json({ error: "Unauthorized" }, 401);
 
-    const { data: userData, error: userErr } = await adminClient.auth.getUser(token);
-    if (userErr || !userData.user) return json({ error: "Invalid session" }, 401);
+    const { data: userData, error: userErr } =
+      await adminClient.auth.getUser(token);
+    if (userErr || !userData.user)
+      return json({ error: "Invalid session" }, 401);
     callerUserId = userData.user.id;
 
     const { data: roleRows } = await adminClient
       .from("user_roles")
       .select("roles!inner(name)")
       .eq("user_id", callerUserId);
-    const roleNames = (roleRows ?? []).map((row: any) => row.roles?.name).filter(Boolean);
+    const roleNames = (roleRows ?? [])
+      .map((row: any) => row.roles?.name)
+      .filter(Boolean);
     if (!roleNames.includes("Admin") && !roleNames.includes("Super Admin")) {
       return json({ error: "Forbidden – Admin role required" }, 403);
     }
@@ -280,18 +305,27 @@ Deno.serve(async (req) => {
     storage_path: manifestPath,
     notify_email: notifyEmail,
     created_by: callerUserId,
-    message: source === "cron"
-      ? "Automatisches wöchentliches Backup gestartet"
-      : "Manuelles Backup gestartet",
+    message:
+      source === "cron"
+        ? "Automatisches wöchentliches Backup gestartet"
+        : "Manuelles Backup gestartet",
   });
   if (insErr) {
     console.error("backups_metadata insert failed:", insErr);
-    return json({ success: false, error: `Metadata-Insert: ${insErr.message}` }, 500);
+    return json(
+      { success: false, error: `Metadata-Insert: ${insErr.message}` },
+      500,
+    );
   }
 
   try {
     const counts: Record<string, number> = {};
-    const files: Array<{ table: string; path: string; rows: number; size_bytes: number }> = [];
+    const files: Array<{
+      table: string;
+      path: string;
+      rows: number;
+      size_bytes: number;
+    }> = [];
     const storageIndexFiles: string[] = [];
     let totalSize = 0;
     let storageFileCount = 0;
@@ -314,7 +348,11 @@ Deno.serve(async (req) => {
         const pageRows = data.length;
         const partName = `part-${String(partIndex).padStart(5, "0")}.ndjson`;
         const partPath = `${tableDir}/${partName}`;
-        const size = await uploadNdjsonPart(adminClient, partPath, data as Record<string, unknown>[]);
+        const size = await uploadNdjsonPart(
+          adminClient,
+          partPath,
+          data as Record<string, unknown>[],
+        );
 
         files.push({ table, path: partPath, rows: pageRows, size_bytes: size });
         rowCount += pageRows;
@@ -361,7 +399,9 @@ Deno.serve(async (req) => {
 
     const manifestSize = await uploadJson(adminClient, manifestPath, manifest);
     const expiresIn = 60 * 60 * 24 * 7;
-    const { data: signed } = await adminClient.storage.from("backups").createSignedUrl(manifestPath, expiresIn);
+    const { data: signed } = await adminClient.storage
+      .from("backups")
+      .createSignedUrl(manifestPath, expiresIn);
     const sizeBytes = totalSize + manifestSize;
     const completedAt = new Date().toISOString();
 
@@ -391,10 +431,15 @@ Deno.serve(async (req) => {
       startedAt,
     });
 
-    if (typeof EdgeRuntime !== "undefined" && typeof EdgeRuntime.waitUntil === "function") {
+    if (
+      typeof EdgeRuntime !== "undefined" &&
+      typeof EdgeRuntime.waitUntil === "function"
+    ) {
       EdgeRuntime.waitUntil(postBackupPromise);
     } else {
-      postBackupPromise.catch((error) => console.error("Post-backup task failed:", error));
+      postBackupPromise.catch((error) =>
+        console.error("Post-backup task failed:", error),
+      );
     }
 
     return json({
@@ -440,7 +485,10 @@ Deno.serve(async (req) => {
             integrity_status: "invalid",
             error_message: errorMsg,
             occurred_at: new Date().toISOString(),
-            source: source === "cron" ? "cron (create-full-backup)" : "manual (create-full-backup)",
+            source:
+              source === "cron"
+                ? "cron (create-full-backup)"
+                : "manual (create-full-backup)",
           },
         },
       });
