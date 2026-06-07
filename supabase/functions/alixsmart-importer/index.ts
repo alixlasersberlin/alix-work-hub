@@ -1019,6 +1019,7 @@ async function analyzeWave1(ctx: Ctx) {
       unmapped: [...unmapped],
       mapping_suggestion: mappingSuggestion,
       status_counts: roleStatusCounts,
+      user_aggregates: roleUserAggregates,
       fetch_error: rolesRes.error || null,
     },
     devices: { items: deviceItems, buckets: deviceBuckets, fetch_error: devicesRes.error || null },
