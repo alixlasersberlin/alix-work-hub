@@ -179,6 +179,9 @@ export default function AlixSmartMigration() {
           <Button variant="outline" size="sm" onClick={testConnection} disabled={running === 'test'}>
             <Wifi className={`w-4 h-4 mr-2 ${running === 'test' ? 'animate-spin' : ''}`} />Verbindung testen
           </Button>
+          <Button variant="outline" size="sm" onClick={analyseSchemas} disabled={running === 'schema' || !connectionOk}>
+            <Database className={`w-4 h-4 mr-2 ${running === 'schema' ? 'animate-spin' : ''}`} />Schema analysieren
+          </Button>
           <Button size="sm" onClick={runDryRun} disabled={running === 'dryrun' || !schemaReady || !connectionOk}>
             <PlayCircle className={`w-4 h-4 mr-2 ${running === 'dryrun' ? 'animate-spin' : ''}`} />Dry-Run starten
           </Button>
