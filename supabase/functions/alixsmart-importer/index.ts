@@ -871,6 +871,9 @@ async function analyzeWave1(ctx: Ctx) {
     if (!email && !phone && !mobile && !company) { match_class = "no_match"; profileBuckets.missing_email++; }
     profileBuckets[match_class]++;
 
+    const import_status =
+      match_class === "no_match" && confidence === 0 ? "importable_new_record" : null;
+
     profileItems.push({
       source_id: sourceId,
       email, phone, mobile, company, zip, city,
@@ -880,7 +883,7 @@ async function analyzeWave1(ctx: Ctx) {
       target_contact: target?.contact_name ?? null,
       target_email: target?.email ?? null,
       target_phone: target?.phone ?? null,
-      confidence, match_rule, match_class,
+      confidence, match_rule, match_class, import_status,
     });
   }
 
