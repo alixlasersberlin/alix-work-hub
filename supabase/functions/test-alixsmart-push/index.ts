@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
     });
   }
 
-  const extId = `diag-${Date.now()}`;
+  const extId = new URL(req.url).searchParams.get("ext") || `diag-${Date.now()}`;
   const actions = [
     { action: "status_change",     status: "in_progress" },
     { action: "new_public_message", status: "in_progress",
