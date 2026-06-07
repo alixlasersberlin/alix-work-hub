@@ -6683,6 +6683,48 @@ export type Database = {
           },
         ]
       }
+      tenants: {
+        Row: {
+          code: string
+          country: string | null
+          created_at: string
+          currency: string | null
+          flag_emoji: string | null
+          id: string
+          is_active: boolean
+          name: string
+          sort_order: number
+          updated_at: string
+          zoho_source_system: string | null
+        }
+        Insert: {
+          code: string
+          country?: string | null
+          created_at?: string
+          currency?: string | null
+          flag_emoji?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          sort_order?: number
+          updated_at?: string
+          zoho_source_system?: string | null
+        }
+        Update: {
+          code?: string
+          country?: string | null
+          created_at?: string
+          currency?: string | null
+          flag_emoji?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          sort_order?: number
+          updated_at?: string
+          zoho_source_system?: string | null
+        }
+        Relationships: []
+      }
       ticket_attachments: {
         Row: {
           created_at: string
@@ -7212,6 +7254,38 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_tenant_access: {
+        Row: {
+          created_at: string
+          id: string
+          role_scope: string | null
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role_scope?: string | null
+          tenant_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role_scope?: string | null
+          tenant_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_tenant_access_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -8481,6 +8555,8 @@ export type Database = {
         Args: { _path: string; _production_order_id: string }
         Returns: undefined
       }
+      tenant_id_for_source: { Args: { _source: string }; Returns: string }
+      user_has_tenant: { Args: { _tenant_id: string }; Returns: boolean }
       user_mailboxes: { Args: never; Returns: string[] }
     }
     Enums: {
