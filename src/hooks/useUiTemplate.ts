@@ -10,8 +10,9 @@ function apply(t: UiTemplate) {
 }
 
 export function getCurrentUiTemplate(): UiTemplate {
-  if (typeof window === "undefined") return "standard";
-  return (localStorage.getItem(KEY) as UiTemplate) || "standard";
+  if (typeof window === "undefined") return "neo";
+  const stored = localStorage.getItem(KEY) as UiTemplate | null;
+  return stored || "neo";
 }
 
 /** Globaler Live-Switch zwischen Standard und ALIXWORK NEO. */
