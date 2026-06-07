@@ -342,7 +342,12 @@ function DevicesTable({ items, decisions, onDecide }:
                   </td>
                   <td className="p-2 font-mono">{d.match_rule}</td>
                   <td className="p-2 font-bold">{d.confidence}%</td>
-                  <td className="p-2"><ClassBadge cls={d.match_class} /></td>
+                  <td className="p-2">
+                    <ClassBadge cls={d.match_class} />
+                    {d.import_status === 'importable_new_record' && (
+                      <Badge className="ml-1 border border-primary/30 bg-primary/10 text-primary">importable_new_record</Badge>
+                    )}
+                  </td>
                   <td className="p-2"><ActionButtons item={d} kind="device" current={decisions[key]} onDecide={onDecide} /></td>
                   <td className="p-2 text-muted-foreground">{decisions[key] ?? '—'}</td>
                 </tr>
