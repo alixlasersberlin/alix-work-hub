@@ -125,11 +125,13 @@ Deno.serve(async (req) => {
     const files: Array<{ table: string; path: string; rows: number; size_bytes: number }> = [];
     let totalSize = 0;
 
-    // Stream each table separately — upload as NDJSON, never hold all tables in memory.
+    // Stream each table page-by-page. Each page is uploaded as its own
+    // ndjson part file to avoid holding the full table in memory (OOM).
     for (const table of BACKUP_TABLES) {
-      const tablePath = `${folderPath}/tables/${table}.ndjson`;
-      const chunks: string[] = [];
+      const tableDir = `${folderPath}/tables/${table}`;
       let rowCount = 0;
+      let tableSize = 0;
+      let partIndex = 0;
       let from = 0;
 
       while (true) {
@@ -139,25 +141,35 @@ Deno.serve(async (req) => {
           .range(from, from + PAGE_SIZE - 1);
         if (error) throw new Error(`Tabelle ${table}: ${error.message}`);
         if (!data || data.length === 0) break;
-        for (const row of data) chunks.push(JSON.stringify(row));
-        rowCount += data.length;
-        if (data.length < PAGE_SIZE) break;
+
+        let ndjson = "";
+        for (const row of data) ndjson += JSON.stringify(row) + "\n";
+        const pageRows = data.length;
+        // free reference before upload
+        (data as any).length = 0;
+
+        const partName = `part-${String(partIndex).padStart(5, "0")}.ndjson`;
+        const partPath = `${tableDir}/${partName}`;
+        const blob = new Blob([ndjson], { type: "application/x-ndjson" });
+        const size = blob.size;
+        ndjson = "";
+
+        const { error: upErr } = await adminClient.storage
+          .from("backups")
+          .upload(partPath, blob, { contentType: "application/x-ndjson", upsert: false });
+        if (upErr) throw new Error(`Upload ${table} ${partName}: ${upErr.message}`);
+
+        files.push({ table, path: partPath, rows: pageRows, size_bytes: size });
+        rowCount += pageRows;
+        tableSize += size;
+        totalSize += size;
+        partIndex += 1;
+
+        if (pageRows < PAGE_SIZE) break;
         from += PAGE_SIZE;
       }
 
-      const content = chunks.join("\n");
-      chunks.length = 0; // free
-      const blob = new Blob([content], { type: "application/x-ndjson" });
-      const size = blob.size;
-
-      const { error: upErr } = await adminClient.storage
-        .from("backups")
-        .upload(tablePath, blob, { contentType: "application/x-ndjson", upsert: false });
-      if (upErr) throw new Error(`Upload ${table}: ${upErr.message}`);
-
       counts[table] = rowCount;
-      files.push({ table, path: tablePath, rows: rowCount, size_bytes: size });
-      totalSize += size;
     }
 
     // Storage inventory (lightweight)
