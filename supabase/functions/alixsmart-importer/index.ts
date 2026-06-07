@@ -313,12 +313,13 @@ async function importProfiles(ctx: Ctx, rows: any[], dryRun: boolean) {
         "email", "merged", "duplicate_email", null, { patch });
       s++;
     } else {
-      // We do not create auth users here – store as conflict
+      // No matching auth.users / user_profiles → mark as pending_new_profile.
+      // These rows will be created as customer-only records (no auth user needed).
       await recordMap(ctx, "profiles", sourceId, "user_profiles", null,
-        "email", "conflict", "needs_auth_user",
-        "user_profiles requires matching auth.users id – create user manually first",
-        { email, full_name: r.full_name });
-      f++;
+        "email", "pending_new_profile", "open",
+        null,
+        { email, full_name: r.full_name, note: "Wird als Kundenprofil angelegt (kein Auth-User nötig)" });
+      s++;
     }
   }
   return { s, f };
