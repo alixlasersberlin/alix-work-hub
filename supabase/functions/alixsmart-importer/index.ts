@@ -114,7 +114,14 @@ async function fetchTable(
     try {
       json = JSON.parse(txt);
     } catch {
-      return { rows: [], error: "Invalid JSON from AlixSmart" };
+      const compact = txt.replace(/\s+/g, " ").trim().slice(0, 300);
+      const hint = compact.toLowerCase().includes("<html")
+        ? "Remote endpoint returned HTML instead of JSON"
+        : "Remote endpoint returned non-JSON response";
+      return {
+        rows: [],
+        error: `${hint}: ${compact || "empty response"}`,
+      };
     }
     const rows = Array.isArray(json) ? json : json.rows || json.data || [];
     return { rows, total: json.total };
