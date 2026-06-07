@@ -301,9 +301,16 @@ async function importUserRoles(ctx: Ctx, rows: any[], dryRun: boolean) {
   const { data: roles } = await ctx.admin.from("roles").select("id,name");
   const rolesByName = new Map((roles || []).map((r: any) => [r.name, r.id]));
   for (const r of rows) {
-    const srcRole = String(r.role || r.role_name || "").toLowerCase();
-    const targetRoleName = ROLE_MAP[srcRole] || null;
+    const srcRole = String(r.role || r.role_name || "").toLowerCase().trim();
     const sourceId = String(r.id ?? r.source_id ?? `${r.user_id}-${srcRole}`);
+    if (CUSTOMER_ONLY_ROLES.has(srcRole)) {
+      await recordMap(ctx, "user_roles", sourceId, "user_roles", null,
+        "user_id+role", "imported_customer_profile_only", null, null,
+        { srcRole, note: "Kein Backend-Rollen-Mapping – nur Kundenprofil" });
+      s++;
+      continue;
+    }
+    const targetRoleName = ROLE_MAP[srcRole] || null;
     if (!targetRoleName || !rolesByName.has(targetRoleName)) {
       await recordMap(ctx, "user_roles", sourceId, "user_roles", null,
         "user_id+role", "conflict", "role_not_found",
