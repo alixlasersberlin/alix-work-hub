@@ -984,10 +984,14 @@ async function analyzeWave1(ctx: Ctx) {
   return {
     profiles: { items: profileItems, buckets: profileBuckets, fetch_error: profilesRes.error || null },
     user_roles: {
-      source_roles: [...sourceRoleCounts.entries()].map(([name, count]) => ({ name, count })),
-      target_roles: targetRoleNames,
+      source_roles: [...sourceRoleCounts.entries()].map(([name, count]) => ({
+        name, assignment_count: count, user_count: sourceRoleUsers.get(name)?.size || 0,
+      })),
+      target_roles: targetRoleList,
+      mappings: roleMappings,
       unmapped: [...unmapped],
       mapping_suggestion: mappingSuggestion,
+      status_counts: roleStatusCounts,
       fetch_error: rolesRes.error || null,
     },
     devices: { items: deviceItems, buckets: deviceBuckets, fetch_error: devicesRes.error || null },
