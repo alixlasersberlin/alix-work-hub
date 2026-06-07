@@ -213,6 +213,7 @@ export default function AlixSmartMigration() {
           <TabsTrigger value="mapping">Mapping ({mapRows.length})</TabsTrigger>
           <TabsTrigger value="logs">Logs ({logs.length})</TabsTrigger>
           <TabsTrigger value="conflicts">Konflikte ({conflicts.length})</TabsTrigger>
+          <TabsTrigger value="schema">Schema-Analyse{schemas ? ` (${Object.keys(schemas).length})` : ''}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="engine">
