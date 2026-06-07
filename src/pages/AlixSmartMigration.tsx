@@ -521,3 +521,187 @@ function StatusBadge({ label, ok }: { label: string; ok: boolean | null }) {
     </CardContent></Card>
   );
 }
+
+function BucketBadges({ buckets }: { buckets: Record<string, number> }) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {Object.entries(buckets).map(([k, v]) => (
+        <Badge key={k} variant="outline" className="font-mono text-xs">
+          {k}: {v}
+        </Badge>
+      ))}
+    </div>
+  );
+}
+
+function NotRunHint() {
+  return (
+    <p className="text-sm text-muted-foreground">
+      Noch nicht ausgeführt. Klicke oben auf „Welle 1 analysieren".
+    </p>
+  );
+}
+
+function Wave1ProfilesTab({ data, onExport }: { data: any; onExport: (f: string, r: any[], c: string[]) => void }) {
+  if (!data) return <Card><CardContent className="p-6"><NotRunHint /></CardContent></Card>;
+  const cols = ['source_id', 'email', 'full_name', 'bucket', 'reason', 'match_found', 'target_exists', 'target_id'];
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center justify-between flex-wrap gap-2">
+          <span>Profile – Konfliktanalyse ({data.items.length})</span>
+          <Button size="sm" variant="outline" onClick={() => onExport('profiles-konflikte.csv', data.items, cols)}>CSV Export</Button>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {data.fetch_error && <div className="text-xs text-red-500">Quell-Fehler: {data.fetch_error}</div>}
+        <BucketBadges buckets={data.buckets} />
+        <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
+          <table className="w-full text-xs">
+            <thead className="bg-muted/40 sticky top-0">
+              <tr className="text-left">
+                {cols.map(c => <th key={c} className="p-2 font-mono">{c}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {data.items.map((r: any, i: number) => (
+                <tr key={i} className="border-t border-border">
+                  {cols.map(c => <td key={c} className="p-2 font-mono">{String(r[c] ?? '—')}</td>)}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function Wave1RolesTab({ data, onExport }: { data: any; onExport: (f: string, r: any[], c: string[]) => void }) {
+  if (!data) return <Card><CardContent className="p-6"><NotRunHint /></CardContent></Card>;
+  const suggestionRows = Object.entries(data.mapping_suggestion || {}).map(([source, target]) => ({ source, target: target ?? '—' }));
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center justify-between flex-wrap gap-2">
+          <span>Rollen – Konfliktanalyse</span>
+          <Button size="sm" variant="outline" onClick={() => onExport('rollen-mapping.csv', suggestionRows, ['source', 'target'])}>CSV Export</Button>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4 text-sm">
+        {data.fetch_error && <div className="text-xs text-red-500">Quell-Fehler: {data.fetch_error}</div>}
+        <div>
+          <div className="text-muted-foreground mb-1">Vorhandene Rollen in AlixSmart ({data.source_roles.length})</div>
+          <div className="flex flex-wrap gap-1">
+            {data.source_roles.map((r: any) => (
+              <Badge key={r.name} variant="secondary" className="font-mono text-xs">{r.name} · {r.count}</Badge>
+            ))}
+          </div>
+        </div>
+        <div>
+          <div className="text-muted-foreground mb-1">Vorhandene Rollen in AlixWork ({data.target_roles.length})</div>
+          <div className="flex flex-wrap gap-1">
+            {data.target_roles.map((r: string) => (
+              <Badge key={r} variant="outline" className="font-mono text-xs">{r}</Badge>
+            ))}
+          </div>
+        </div>
+        <div>
+          <div className="text-red-500 mb-1">Nicht mappbar ({data.unmapped.length})</div>
+          <div className="flex flex-wrap gap-1">
+            {data.unmapped.length === 0 && <span className="text-muted-foreground text-xs">—</span>}
+            {data.unmapped.map((r: string) => (
+              <Badge key={r} variant="outline" className="bg-red-500/15 text-red-500 font-mono text-xs">{r}</Badge>
+            ))}
+          </div>
+        </div>
+        <div>
+          <div className="text-muted-foreground mb-1">Mapping-Vorschlag</div>
+          <table className="w-full text-xs">
+            <thead className="bg-muted/40"><tr className="text-left"><th className="p-2">Quelle</th><th className="p-2">Vorschlag Ziel</th></tr></thead>
+            <tbody>
+              {suggestionRows.map((r, i) => (
+                <tr key={i} className="border-t border-border">
+                  <td className="p-2 font-mono">{r.source}</td>
+                  <td className="p-2 font-mono">{String(r.target)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function Wave1DevicesTab({ data, onExport }: { data: any; onExport: (f: string, r: any[], c: string[]) => void }) {
+  if (!data) return <Card><CardContent className="p-6"><NotRunHint /></CardContent></Card>;
+  const cols = ['source_id', 'serial_number', 'device', 'customer_email', 'customer_name', 'bucket', 'reason', 'target_exists', 'target_id'];
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center justify-between flex-wrap gap-2">
+          <span>Devices – Konfliktanalyse ({data.items.length})</span>
+          <Button size="sm" variant="outline" onClick={() => onExport('devices-konflikte.csv', data.items, cols)}>CSV Export</Button>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {data.fetch_error && <div className="text-xs text-red-500">Quell-Fehler: {data.fetch_error}</div>}
+        <BucketBadges buckets={data.buckets} />
+        <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
+          <table className="w-full text-xs">
+            <thead className="bg-muted/40 sticky top-0">
+              <tr className="text-left">
+                {cols.map(c => <th key={c} className="p-2 font-mono">{c}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {data.items.map((r: any, i: number) => (
+                <tr key={i} className="border-t border-border">
+                  {cols.map(c => <td key={c} className="p-2 font-mono">{String(r[c] ?? '—')}</td>)}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function Wave1SummaryTab({ summary }: { summary: any }) {
+  if (!summary) return <Card><CardContent className="p-6"><NotRunHint /></CardContent></Card>;
+  const rows = [
+    { key: 'profiles', ...summary.profiles },
+    { key: 'user_roles', ...summary.user_roles },
+    { key: 'devices', ...summary.devices },
+  ];
+  return (
+    <Card>
+      <CardHeader><CardTitle>Welle 1 – Zusammenfassung</CardTitle></CardHeader>
+      <CardContent className="p-0">
+        <table className="w-full text-sm">
+          <thead className="bg-muted/40"><tr className="text-left">
+            <th className="p-3">Tabelle</th>
+            <th className="p-3">Gesamt</th>
+            <th className="p-3 text-emerald-500">Importierbar ohne Risiko</th>
+            <th className="p-3 text-amber-500">Manuelle Prüfung</th>
+            <th className="p-3 text-red-500">Blockiert</th>
+          </tr></thead>
+          <tbody>
+            {rows.map(r => (
+              <tr key={r.key} className="border-t border-border">
+                <td className="p-3 font-mono">{r.key}</td>
+                <td className="p-3">{r.total}</td>
+                <td className="p-3 text-emerald-500">{r.importable_safe}</td>
+                <td className="p-3 text-amber-500">{r.manual_review}</td>
+                <td className="p-3 text-red-500">{r.blocked}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </CardContent>
+    </Card>
+  );
+}
+
