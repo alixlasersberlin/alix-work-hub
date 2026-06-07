@@ -1,0 +1,3 @@
+CREATE UNIQUE INDEX IF NOT EXISTS academy_sessions_source_id_uidx ON public.academy_sessions(source_id) WHERE source_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS academy_bookings_source_id_uidx ON public.academy_bookings(source_id) WHERE source_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS mail_internal_messages_source_id_uidx ON public.mail_internal_messages(source_id) WHERE source_id IS NOT NULL;
