@@ -6,7 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Ticket, Search, ArrowRight, Loader2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Ticket, Search, ArrowRight, Loader2, Plus } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface TicketRow {
   id: string;
@@ -96,18 +100,55 @@ export default function TicketsList() {
 
   const sources = useMemo(() => Array.from(new Set(rows.map(r => r.source_system).filter(Boolean))) as string[], [rows]);
 
+  const [createOpen, setCreateOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [nt, setNt] = useState({
+    title: '', description: '', customer_name: '', company_name: '',
+    customer_email: '', customer_phone: '', order_number: '',
+    device_name: '', serial_number: '',
+    priority: 'normal', department: 'service',
+  });
+
+
+  async function createTicket() {
+    if (!nt.title.trim()) { toast.error('Titel ist erforderlich'); return; }
+    setCreating(true);
+    const { data, error } = await supabase
+      .from('tickets')
+      .insert({
+        ...nt,
+        title: nt.title.trim(),
+        source_system: 'alixwork',
+        status: 'offen',
+        customer_visible_status: 'Ticket eingegangen',
+      })
+      .select('id')
+      .single();
+    setCreating(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Ticket erstellt');
+    setCreateOpen(false);
+    setNt({ title: '', description: '', customer_name: '', company_name: '', customer_email: '', customer_phone: '', order_number: '', device_name: '', serial_number: '', priority: 'normal', department: 'service' });
+    if (data?.id) navigate(`/tickets/${data.id}`);
+  }
+
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex items-center gap-3 mb-6 flex-wrap">
         <Ticket className="w-6 h-6 text-primary" />
         <h1 className="text-2xl font-display font-bold text-foreground">Tickets</h1>
         <Badge variant="outline" className="ml-2">{filtered.length}</Badge>
-        <Link
-          to="/tickets/sync"
-          className="ml-auto text-xs px-3 py-1.5 rounded-md border border-border bg-card hover:border-primary/40 hover:text-primary transition-colors"
-        >
-          Synchronisation
-        </Link>
+        <div className="ml-auto flex items-center gap-2">
+          <Button size="sm" onClick={() => setCreateOpen(true)}>
+            <Plus className="w-4 h-4 mr-1" /> Neues Ticket
+          </Button>
+          <Link
+            to="/tickets/sync"
+            className="text-xs px-3 py-1.5 rounded-md border border-border bg-card hover:border-primary/40 hover:text-primary transition-colors"
+          >
+            Synchronisation
+          </Link>
+        </div>
       </div>
 
 
@@ -200,6 +241,77 @@ export default function TicketsList() {
           </Table>
         )}
       </div>
+
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Neues Ticket erstellen</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-3 md:grid-cols-2">
+            <div className="md:col-span-2">
+              <Label className="text-xs">Titel *</Label>
+              <Input value={nt.title} onChange={e => setNt({ ...nt, title: e.target.value })} placeholder="Kurze Zusammenfassung" />
+            </div>
+            <div className="md:col-span-2">
+              <Label className="text-xs">Beschreibung</Label>
+              <Textarea rows={4} value={nt.description} onChange={e => setNt({ ...nt, description: e.target.value })} />
+            </div>
+            <div>
+              <Label className="text-xs">Kunde</Label>
+              <Input value={nt.customer_name} onChange={e => setNt({ ...nt, customer_name: e.target.value })} />
+            </div>
+            <div>
+              <Label className="text-xs">Firma</Label>
+              <Input value={nt.company_name} onChange={e => setNt({ ...nt, company_name: e.target.value })} />
+            </div>
+            <div>
+              <Label className="text-xs">E-Mail</Label>
+              <Input type="email" value={nt.customer_email} onChange={e => setNt({ ...nt, customer_email: e.target.value })} />
+            </div>
+            <div>
+              <Label className="text-xs">Telefon</Label>
+              <Input value={nt.customer_phone} onChange={e => setNt({ ...nt, customer_phone: e.target.value })} />
+            </div>
+            <div>
+              <Label className="text-xs">Auftragsnr.</Label>
+              <Input value={nt.order_number} onChange={e => setNt({ ...nt, order_number: e.target.value })} />
+            </div>
+            <div>
+              <Label className="text-xs">Gerät</Label>
+              <Input value={nt.device_name} onChange={e => setNt({ ...nt, device_name: e.target.value })} />
+            </div>
+            <div>
+              <Label className="text-xs">Seriennummer</Label>
+              <Input value={nt.serial_number} onChange={e => setNt({ ...nt, serial_number: e.target.value })} />
+            </div>
+            <div>
+              <Label className="text-xs">Abteilung</Label>
+              <Select value={nt.department} onValueChange={(v) => setNt({ ...nt, department: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {DEPARTMENT_OPTIONS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">Priorität</Label>
+              <Select value={nt.priority} onValueChange={(v) => setNt({ ...nt, priority: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {PRIORITY_OPTIONS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateOpen(false)} disabled={creating}>Abbrechen</Button>
+            <Button onClick={createTicket} disabled={creating}>
+              {creating ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Plus className="w-4 h-4 mr-1" />}
+              Ticket erstellen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
