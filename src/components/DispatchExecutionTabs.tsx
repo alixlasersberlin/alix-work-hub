@@ -55,7 +55,8 @@ export function DispatchExecutionTabs({ tour, onReload, canWrite }: { tour: any;
   }
 
   async function setTimestamp(field: 'check_in_at' | 'check_out_at' | 'work_started_at' | 'work_ended_at') {
-    const { error } = await supabase.from('route_plans').update({ [field]: new Date().toISOString() }).eq('id', tour.id);
+    const patch: any = { [field]: new Date().toISOString() };
+    const { error } = await supabase.from('route_plans').update(patch).eq('id', tour.id);
     if (error) { toast.error(error.message); return; }
     toast.success('Zeit erfasst');
     onReload();
