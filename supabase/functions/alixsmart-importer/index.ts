@@ -214,6 +214,18 @@ async function logAction(
   });
 }
 
+// Statuses that represent a final/explicit decision (user-resolved or already imported)
+// and must NOT be overwritten by re-runs of analyze / dry-run / import.
+const PROTECTED_STATUSES = new Set([
+  "pending_new_profile",
+  "pending_new_device",
+  "match_confirmed",
+  "match_rejected",
+  "imported",
+  "merged",
+  "imported_customer_profile_only",
+]);
+
 async function recordMap(
   ctx: Ctx,
   source_table: string,
@@ -226,6 +238,24 @@ async function recordMap(
   error?: string | null,
   metadata?: any,
 ) {
+  // Preserve protected (user-decided / final) rows: skip overwrite unless the new
+  // status is itself protected (e.g. import promoting pending → imported).
+  try {
+    const { data: existing } = await ctx.admin
+      .from("alixsmart_migration_map")
+      .select("migration_status")
+      .eq("source_table", source_table)
+      .eq("source_id", source_id)
+      .maybeSingle();
+    if (
+      existing &&
+      PROTECTED_STATUSES.has(existing.migration_status) &&
+      !PROTECTED_STATUSES.has(status)
+    ) {
+      return; // keep prior user/import decision
+    }
+  } catch { /* fall through to upsert */ }
+
   await ctx.admin.from("alixsmart_migration_map").upsert(
     {
       source_table,
