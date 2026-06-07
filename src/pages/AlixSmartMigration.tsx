@@ -246,7 +246,12 @@ export default function AlixSmartMigration() {
           <TabsTrigger value="logs">Logs ({logs.length})</TabsTrigger>
           <TabsTrigger value="conflicts">Konflikte ({conflicts.length})</TabsTrigger>
           <TabsTrigger value="schema">Schema-Analyse{schemas ? ` (${Object.keys(schemas).length})` : ''}</TabsTrigger>
+          <TabsTrigger value="w1-profiles">Profile-Konflikte{wave1Analysis ? ` (${wave1Analysis.profiles?.items?.length ?? 0})` : ''}</TabsTrigger>
+          <TabsTrigger value="w1-roles">Rollen-Konflikte{wave1Analysis ? ` (${wave1Analysis.user_roles?.unmapped?.length ?? 0})` : ''}</TabsTrigger>
+          <TabsTrigger value="w1-devices">Device-Konflikte{wave1Analysis ? ` (${wave1Analysis.devices?.items?.length ?? 0})` : ''}</TabsTrigger>
+          <TabsTrigger value="w1-summary">W1 Zusammenfassung</TabsTrigger>
         </TabsList>
+
 
         <TabsContent value="engine">
           <div className="grid md:grid-cols-2 gap-4">
