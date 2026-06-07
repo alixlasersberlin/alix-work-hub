@@ -604,6 +604,51 @@ export type Database = {
         }
         Relationships: []
       }
+      alixsmart_products: {
+        Row: {
+          category: string | null
+          created_at: string
+          currency: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          metadata: Json | null
+          name: string | null
+          price: number | null
+          sku: string | null
+          source_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          name?: string | null
+          price?: number | null
+          sku?: string | null
+          source_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          name?: string | null
+          price?: number | null
+          sku?: string | null
+          source_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       app_settings: {
         Row: {
           id: string
@@ -1750,6 +1795,48 @@ export type Database = {
           },
         ]
       }
+      email_send_log: {
+        Row: {
+          created_at: string
+          id: string
+          metadata: Json | null
+          provider_message_id: string | null
+          recipient_email: string | null
+          sent_at: string | null
+          source_id: string | null
+          source_system: string | null
+          status: string | null
+          subject: string | null
+          template: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          provider_message_id?: string | null
+          recipient_email?: string | null
+          sent_at?: string | null
+          source_id?: string | null
+          source_system?: string | null
+          status?: string | null
+          subject?: string | null
+          template?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          provider_message_id?: string | null
+          recipient_email?: string | null
+          sent_at?: string | null
+          source_id?: string | null
+          source_system?: string | null
+          status?: string | null
+          subject?: string | null
+          template?: string | null
+        }
+        Relationships: []
+      }
       email_templates: {
         Row: {
           body: string
@@ -2579,6 +2666,7 @@ export type Database = {
           recipient_department: string | null
           recipient_user_id: string | null
           sender_id: string
+          source_id: string | null
           subject: string | null
           updated_at: string
         }
@@ -2594,6 +2682,7 @@ export type Database = {
           recipient_department?: string | null
           recipient_user_id?: string | null
           sender_id: string
+          source_id?: string | null
           subject?: string | null
           updated_at?: string
         }
@@ -2609,6 +2698,7 @@ export type Database = {
           recipient_department?: string | null
           recipient_user_id?: string | null
           sender_id?: string
+          source_id?: string | null
           subject?: string | null
           updated_at?: string
         }
