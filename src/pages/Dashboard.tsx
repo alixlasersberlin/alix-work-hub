@@ -304,6 +304,7 @@ export default function Dashboard() {
   const kpiCards = [
     { label: 'Freie Geräte (Pool)', value: stats.freePoolDevices, icon: PackageCheck, visible: isAdmin, onClick: () => navigate('/lager/equipment-area') },
     { label: 'Leihgeräte', value: stats.leihgeraete, icon: Warehouse, visible: isAdmin, onClick: () => navigate('/lager/leihgeraete') },
+    { label: 'VIP-Aufträge', value: stats.vipOrders, icon: Crown, visible: canSeeOrders, onClick: () => navigate('/auftraege') },
     { label: 'Offene Aufträge', value: stats.openOrders, icon: AlertCircle, visible: canSeeOrders, onClick: () => navigate('/auftraege') },
     { label: 'Geplante Touren', value: stats.routes, icon: MapPin, visible: canSeeRoutes, onClick: () => navigate('/tourenplanung') },
     { label: 'Offene Zahlungen', value: stats.openFinance, icon: Banknote, visible: canSeeFinance, onClick: () => navigate('/finance') },
@@ -419,28 +420,6 @@ export default function Dashboard() {
 
 
 
-      {/* VIP Status */}
-      {canSeeCustomers && canSeeOrders && (
-        <div className="grid grid-cols-1 gap-4">
-          <button
-            type="button"
-            onClick={() => navigate('/auftraege')}
-            className="text-left rounded-xl border border-amber-400/40 bg-gradient-to-br from-amber-500/[0.12] via-amber-500/[0.04] to-transparent p-5 shadow-[0_0_30px_-12px_hsl(45_100%_50%/0.55)] hover:border-amber-300/70 hover:shadow-[0_0_40px_-10px_hsl(45_100%_50%/0.7)] transition-all group"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <VipBadge size="md" />
-                <span className="text-sm font-medium text-foreground/90">VIP-Aufträge</span>
-              </div>
-              <Crown className="w-5 h-5 fill-amber-400 text-amber-400 group-hover:scale-110 transition-transform" />
-            </div>
-            <p className="text-4xl font-display font-bold text-foreground tabular-nums">
-              {loading ? <Skeleton className="h-10 w-16 inline-block" /> : stats.vipOrders}
-            </p>
-            <p className="text-xs text-muted-foreground mt-2">Als VIP markierte Aufträge mit höchster Priorität</p>
-          </button>
-        </div>
-      )}
 
 
 
