@@ -1875,6 +1875,134 @@ export type Database = {
           },
         ]
       }
+      dispatch_checklist_runs: {
+        Row: {
+          answers: Json
+          checklist_id: string | null
+          completed_at: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          result: string | null
+          route_plan_id: string | null
+          technician_user_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          answers?: Json
+          checklist_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          result?: string | null
+          route_plan_id?: string | null
+          technician_user_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          answers?: Json
+          checklist_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          result?: string | null
+          route_plan_id?: string | null
+          technician_user_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispatch_checklist_runs_checklist_id_fkey"
+            columns: ["checklist_id"]
+            isOneToOne: false
+            referencedRelation: "dispatch_checklists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dispatch_checklist_runs_route_plan_id_fkey"
+            columns: ["route_plan_id"]
+            isOneToOne: false
+            referencedRelation: "route_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dispatch_checklists: {
+        Row: {
+          checklist_type: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          items: Json
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          checklist_type?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          items?: Json
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          checklist_type?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          items?: Json
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      dispatch_signatures: {
+        Row: {
+          created_at: string
+          id: string
+          role: string
+          route_plan_id: string | null
+          signed_at: string
+          signer_name: string | null
+          storage_path: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: string
+          route_plan_id?: string | null
+          signed_at?: string
+          signer_name?: string | null
+          storage_path: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: string
+          route_plan_id?: string | null
+          signed_at?: string
+          signer_name?: string | null
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispatch_signatures_route_plan_id_fkey"
+            columns: ["route_plan_id"]
+            isOneToOne: false
+            referencedRelation: "route_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dispatch_used_parts: {
         Row: {
           created_at: string
@@ -3796,6 +3924,39 @@ export type Database = {
           tables?: Json
           total_rows?: number
           wave?: number
+        }
+        Relationships: []
+      }
+      mobile_push_subscriptions: {
+        Row: {
+          auth_key: string
+          created_at: string
+          endpoint: string
+          id: string
+          last_seen_at: string
+          p256dh: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth_key: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          last_seen_at?: string
+          p256dh: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth_key?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          last_seen_at?: string
+          p256dh?: string
+          user_agent?: string | null
+          user_id?: string
         }
         Relationships: []
       }
