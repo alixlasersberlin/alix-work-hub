@@ -136,6 +136,18 @@ export default function AlixSmartMigration() {
     } finally { setRunning(null); }
   }
 
+  async function analyseSchemas() {
+    setRunning('schema');
+    try {
+      const res = await callEngine('discover-schema');
+      setSchemas(res?.schemas || {});
+      toast.success('Schema-Analyse abgeschlossen.');
+      await loadAll();
+    } catch (e: any) {
+      toast.error('Schema-Analyse fehlgeschlagen: ' + e.message);
+    } finally { setRunning(null); }
+  }
+
   async function importWave(wave: 1 | 2 | 3 | 4) {
     setRunning('wave-' + wave);
     try {
