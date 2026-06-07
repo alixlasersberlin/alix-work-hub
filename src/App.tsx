@@ -45,6 +45,10 @@ const ReparaturErsatzteile = lazy(() => import("./pages/Reparatur/Ersatzteile"))
 const ReparaturFinance = lazy(() => import("./pages/Reparatur/FinanceUebergabe"));
 const ReparaturTouren = lazy(() => import("./pages/Reparatur/TourenplanungUebergabe"));
 const ReparaturArchiv = lazy(() => import("./pages/Reparatur/Archiv"));
+const ReparaturKostenvoranschlaege = lazy(() => import("./pages/Reparatur/Kostenvoranschlaege"));
+const ReparaturQuoteDetail = lazy(() => import("./pages/Reparatur/QuoteDetail"));
+const ReparaturRueckversand = lazy(() => import("./pages/Reparatur/Rueckversand"));
+const PublicRepairQuoteDecision = lazy(() => import("./pages/PublicRepairQuote/Decision"));
 const BestellwesenErsatzteile = lazy(() => import("./pages/Bestellwesen/Ersatzteile"));
 const RoutePlanDetail = lazy(() => import("./pages/RoutePlanDetail"));
 const RoutePlanForm = lazy(() => import("./pages/RoutePlanForm"));
@@ -374,6 +378,9 @@ function AppRoutes() {
             <Route path="finance" element={<ReparaturFinance />} />
             <Route path="tourenplanung" element={<ReparaturTouren />} />
             <Route path="archiv" element={<ReparaturArchiv />} />
+            <Route path="kostenvoranschlaege" element={<ReparaturKostenvoranschlaege />} />
+            <Route path="kostenvoranschlaege/:id" element={<ReparaturQuoteDetail />} />
+            <Route path="rueckversand" element={<ReparaturRueckversand />} />
             <Route path=":id" element={<ReparaturDetail />} />
           </Route>
           <Route path="/bestellwesen/ersatzteile" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Bestellwesen', 'Order', 'Technik']}><BestellwesenErsatzteile /></ProtectedRoute>} />
@@ -527,6 +534,7 @@ function AppRoutes() {
 
         </Route>
         <Route path="/unsubscribe" element={<Unsubscribe />} />
+        <Route path="/repair-quote/:token" element={<PublicRepairQuoteDecision />} />
         <Route path="/bewertung/danke" element={<ReviewThanks />} />
         <Route path="/bewertung/:token" element={<PublicReviewForm />} />
         <Route path="/portal" element={<PortalLookup />} />
