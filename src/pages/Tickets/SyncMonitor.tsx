@@ -141,7 +141,15 @@ export default function TicketsSyncMonitor() {
 
     const lastSyncRow = enriched.find((r) => r.status === 'success') ?? null;
 
+    // Alerts
+    const alertsQ = supabase.from('ticket_sync_alerts').select('*', { count: 'exact' })
+      .order('sent_at', { ascending: false }).limit(50);
+    if (sinceIso) alertsQ.gte('sent_at', sinceIso);
+    const { data: alertRows, count: alertCount } = await alertsQ;
+
     setLogs(enriched);
+    setAlerts((alertRows as any) || []);
+    setAlertsTotal(alertCount ?? 0);
     setStats({
       pushSuccess: pushOk.count ?? 0,
       pushError: pushErr.count ?? 0,
@@ -155,6 +163,24 @@ export default function TicketsSyncMonitor() {
     setLoading(false);
   }
 
+  async function runAlertCheck() {
+    setRunningAlertCheck(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('ticket-sync-alert', {
+        body: { lookback_minutes: 60 },
+      });
+      if (error) throw error;
+      const sentCount = (data as any)?.sent_count ?? 0;
+      const skipped = (data as any)?.skipped_count ?? 0;
+      toast.success(`Alert-Check fertig: ${sentCount} gesendet, ${skipped} übersprungen`);
+      await load();
+    } catch (e: any) {
+      toast.error(`Alert-Check fehlgeschlagen: ${e.message}`);
+    } finally {
+      setRunningAlertCheck(false);
+    }
+  }
+
   useEffect(() => {
     load();
     const t = setInterval(load, 30_000);
@@ -166,6 +192,17 @@ export default function TicketsSyncMonitor() {
     () => Array.from(new Set(logs.map((l) => l.action).filter(Boolean) as string[])).sort(),
     [logs],
   );
+
+  // Map ticket_key -> latest alert (for join into logs)
+  const alertByTicket = useMemo(() => {
+    const m = new Map<string, AlertRow>();
+    for (const a of alerts) {
+      const k = a.ticket_id || a.external_ticket_id;
+      if (!k) continue;
+      if (!m.has(k)) m.set(k, a);
+    }
+    return m;
+  }, [alerts]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
