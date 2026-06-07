@@ -162,7 +162,53 @@ export default function TicketDetail() {
     setLoading(false);
   }
 
-  useEffect(() => { load(); loadOutboundLogs(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [id]);
+  async function loadUsers() {
+    const { data } = await supabase
+      .from('user_profiles')
+      .select('id, full_name, email')
+      .eq('is_active', true)
+      .order('full_name', { ascending: true })
+      .limit(500);
+    setUsers(((data as any[]) || []).map(u => ({ id: u.id, label: u.full_name || u.email || u.id.slice(0, 8) })));
+  }
+
+  async function uploadAttachment(file: File) {
+    if (!ticket || !file) return;
+    setUploading(true);
+    try {
+      const safeName = file.name.replace(/[^\w.\-]+/g, '_');
+      const path = `tickets/${ticket.id}/${Date.now()}_${safeName}`;
+      const { error: upErr } = await supabase.storage
+        .from('repair-files')
+        .upload(path, file, { contentType: file.type, upsert: false });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from('repair-files').getPublicUrl(path);
+      const { error: insErr } = await supabase.from('ticket_attachments').insert({
+        ticket_id: ticket.id,
+        file_url: pub.publicUrl,
+        file_name: file.name,
+        file_type: file.type,
+        file_size: file.size,
+        source_system: 'alixwork',
+      });
+      if (insErr) throw insErr;
+      toast.success('Anhang hochgeladen');
+      load();
+      if (ticket.external_ticket_id) syncToAlixSmart('manual');
+    } catch (e: any) {
+      toast.error('Upload fehlgeschlagen: ' + (e?.message || e));
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function toggleClose() {
+    if (!ticket) return;
+    const isClosed = ticket.status === 'geschlossen' || ticket.status === 'gelöst';
+    await patch({ status: isClosed ? 'offen' : 'geschlossen' });
+  }
+
+  useEffect(() => { load(); loadOutboundLogs(); loadUsers(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [id]);
 
   async function patch(updates: Partial<Ticket>) {
     if (!ticket) return;
