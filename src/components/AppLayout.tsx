@@ -198,6 +198,16 @@ const navItems: NavItem[] = [
     ],
   },
   {
+    path: '/reparatur', label: 'SERVICE', icon: Wrench, roles: ['Admin', 'Super Admin', 'Reparaturannahme', 'Technik', 'Service'],
+    children: [
+      { path: '/reparatur/neu', label: 'Reparaturannahme', icon: FilePlus, roles: ['Admin', 'Super Admin', 'Reparaturannahme', 'Technik', 'Service'] },
+      { path: '/reparatur/werkstattannahme', label: 'Werkstatt', icon: PackageCheck, roles: ['Admin', 'Super Admin', 'Reparaturannahme', 'Technik', 'Service'] },
+      { path: '/reparatur/kostenvoranschlaege', label: 'Kostenvoranschläge', icon: Receipt, roles: ['Admin', 'Super Admin', 'Reparaturannahme', 'Technik', 'Service'] },
+      { path: '/garantiecenter', label: 'Garantieprüfung', icon: ShieldCheck, roles: ['Admin', 'Super Admin', 'Reparaturannahme', 'Technik', 'Service'] },
+      { path: '/reparatur/rueckversand', label: 'Rückversand', icon: PackageCheck, roles: ['Admin', 'Super Admin', 'Reparaturannahme', 'Technik', 'Service'] },
+    ],
+  },
+  {
     path: '/reparatur', label: 'REPARATURANNAHME', icon: Wrench, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'Finance', 'QM', 'Österreich', 'Reparaturannahme'],
     children: [
       { path: '/reparatur', label: 'Dashboard', icon: LayoutDashboard, roles: null },
