@@ -79,18 +79,14 @@ export default function TicketsSyncMonitor() {
       outboundQ.gte('created_at', sinceIso);
     }
 
-    const countIn = (filters: Record<string, string>) => {
-      let q = supabase.from('ticket_sync_logs').select('id', { count: 'exact', head: true });
-      if (sinceIso) q = q.gte('created_at', sinceIso);
-      for (const [k, v] of Object.entries(filters)) q = q.eq(k, v);
-      return q;
-    };
-    const countOut = (filters: Record<string, string>) => {
-      let q = supabase.from('ticket_outbound_sync_logs').select('id', { count: 'exact', head: true });
-      if (sinceIso) q = q.gte('created_at', sinceIso);
-      for (const [k, v] of Object.entries(filters)) q = q.eq(k, v);
-      return q;
-    };
+    const sinceFilter = sinceIso ?? '1970-01-01T00:00:00Z';
+    const countInbound = (st: string) =>
+      supabase.from('ticket_sync_logs').select('id', { count: 'exact', head: true })
+        .gte('created_at', sinceFilter).eq('status', st);
+    const countOutbound = (st: string) =>
+      supabase.from('ticket_outbound_sync_logs').select('id', { count: 'exact', head: true })
+        .gte('created_at', sinceFilter).eq('status', st);
+
 
     const [
       { data: inboundRows },
