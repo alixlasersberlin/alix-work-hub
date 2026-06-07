@@ -198,7 +198,7 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    path: '/reparatur', label: 'REPARATURANNAHME', icon: Wrench, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'Finance', 'QM', 'Österreich'],
+    path: '/reparatur', label: 'REPARATURANNAHME', icon: Wrench, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'Finance', 'QM', 'Österreich', 'Reparaturannahme'],
     children: [
       { path: '/reparatur', label: 'Dashboard', icon: LayoutDashboard, roles: null },
       { path: '/service-cockpit', label: 'Service Cockpit', icon: BarChart3, roles: ['Admin', 'Super Admin', 'Serviceleitung'] },
@@ -208,11 +208,13 @@ const navItems: NavItem[] = [
       { path: '/garantiecenter', label: 'Garantiecenter', icon: ShieldCheck, roles: ['Admin', 'Super Admin', 'Service', 'Serviceleitung', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance', 'Vertrieb'] },
       { path: '/whatsapp', label: 'WhatsApp Service Center', icon: MessageSquare, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung'] },
       { path: '/ai-service-center', label: 'AI Service Center', icon: Sparkles, roles: ['Admin', 'Super Admin', 'Service', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance'] },
-      { path: '/reparatur/neu', label: 'Neue Reparatur anlegen', icon: FilePlus, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Order', 'Finance', 'QM'] },
+      { path: '/reparatur/neu', label: 'Neue Reparatur anlegen', icon: FilePlus, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Order', 'Finance', 'QM', 'Reparaturannahme'] },
       { path: '/reparatur/auftraege', label: 'Reparaturaufträge', icon: ClipboardList, roles: null },
       { path: '/reparatur/werkstattannahme', label: 'Werkstattannahme', icon: PackageCheck, roles: null },
       { path: '/reparatur/technik', label: 'Technik-Arbeitsaufträge', icon: Wrench, roles: null },
       { path: '/reparatur/ersatzteile', label: 'Ersatzteilbedarf', icon: Package, roles: null },
+      { path: '/reparatur/kostenvoranschlaege', label: 'Kostenvoranschläge', icon: Receipt, roles: ['Admin', 'Super Admin', 'Finance', 'Reparaturannahme'] },
+      { path: '/reparatur/rueckversand', label: 'Rückversand', icon: PackageCheck, roles: ['Admin', 'Super Admin', 'Reparaturannahme', 'Tourenplanung'] },
       { path: '/reparatur/finance', label: 'Übergabe Finance', icon: Receipt, roles: null },
       { path: '/reparatur/tourenplanung', label: 'Übergabe Tourenplanung', icon: MapPin, roles: null },
       { path: '/reparatur/archiv', label: 'Reparaturarchiv', icon: FileText, roles: null },
