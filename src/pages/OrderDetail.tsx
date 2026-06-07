@@ -38,10 +38,10 @@ export default function OrderDetail() {
   const { user, isAdmin, hasRole, hasAnyRole } = useAuth();
 
   const canWrite = isAdmin || hasRole('Auftragsverwaltung');
-  // Österreich darf Anzahlungen nur bei -AT-Aufträgen (zoho_eu_2) erfassen
-  const canWriteDeposit = canWrite || (order?.source_system === 'zoho_eu_2' && hasRole('Österreich'));
 
   const [order, setOrder] = useState<any>(null);
+  // Österreich darf Anzahlungen nur bei -AT-Aufträgen (zoho_eu_2) erfassen
+  const canWriteDeposit = canWrite || (order?.source_system === 'zoho_eu_2' && hasRole('Österreich'));
   const [customer, setCustomer] = useState<any>(null);
   const [notes, setNotes] = useState<any[]>([]);
   const [items, setItems] = useState<any[]>([]);
