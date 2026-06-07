@@ -3289,6 +3289,60 @@ export type Database = {
         }
         Relationships: []
       }
+      migration_backup_logs: {
+        Row: {
+          batch_id: string
+          created_at: string
+          created_by: string | null
+          duration_ms: number | null
+          error_message: string | null
+          finished_at: string | null
+          id: string
+          row_counts: Json
+          size_bytes: number
+          started_at: string
+          status: string
+          storage_path: string | null
+          tables: Json
+          total_rows: number
+          wave: number
+        }
+        Insert: {
+          batch_id: string
+          created_at?: string
+          created_by?: string | null
+          duration_ms?: number | null
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          row_counts?: Json
+          size_bytes?: number
+          started_at?: string
+          status?: string
+          storage_path?: string | null
+          tables?: Json
+          total_rows?: number
+          wave: number
+        }
+        Update: {
+          batch_id?: string
+          created_at?: string
+          created_by?: string | null
+          duration_ms?: number | null
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          row_counts?: Json
+          size_bytes?: number
+          started_at?: string
+          status?: string
+          storage_path?: string | null
+          tables?: Json
+          total_rows?: number
+          wave?: number
+        }
+        Relationships: []
+      }
       model_manuals: {
         Row: {
           created_at: string
