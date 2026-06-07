@@ -89,6 +89,52 @@ interface Ctx {
   admin: ReturnType<typeof createClient>;
   userId: string;
   batchId: string;
+  /** target table -> cached column list */
+  schemaCache: Map<string, string[]>;
+}
+
+/** Read public table columns via SECURITY DEFINER helper. Returns []
+ *  on error so the importer can continue without exploding. */
+async function getTargetColumns(ctx: Ctx, table: string): Promise<string[]> {
+  if (ctx.schemaCache.has(table)) return ctx.schemaCache.get(table)!;
+  try {
+    const { data, error } = await ctx.admin.rpc("get_table_columns", {
+      _table: table,
+    });
+    const cols = !error && Array.isArray(data) ? (data as string[]) : [];
+    ctx.schemaCache.set(table, cols);
+    return cols;
+  } catch {
+    ctx.schemaCache.set(table, []);
+    return [];
+  }
+}
+
+/** Drop keys that don't exist in the target table. Returns sanitized
+ *  payload + the names of skipped keys. */
+function sanitizePayload<T extends Record<string, any>>(
+  payload: T,
+  allowed: string[],
+): { clean: Partial<T>; skipped: string[] } {
+  if (!allowed.length) return { clean: payload, skipped: [] };
+  const set = new Set(allowed);
+  const clean: Record<string, any> = {};
+  const skipped: string[] = [];
+  for (const [k, v] of Object.entries(payload)) {
+    if (set.has(k)) clean[k] = v;
+    else skipped.push(k);
+  }
+  return { clean: clean as Partial<T>, skipped };
+}
+
+/** Collect every unique key from a sample of source rows. */
+function sourceColumns(rows: any[], sampleSize = 25): string[] {
+  const set = new Set<string>();
+  for (const r of rows.slice(0, sampleSize)) {
+    if (r && typeof r === "object")
+      Object.keys(r).forEach((k) => set.add(k));
+  }
+  return [...set].sort();
 }
 
 async function fetchTable(
