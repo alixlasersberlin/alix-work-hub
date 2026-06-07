@@ -49,6 +49,8 @@ export default function AlixSmartMigration() {
   const [ticketAck, setTicketAck] = useState(false);
   const [waveResults, setWaveResults] = useState<Record<number, any>>({});
   const [schemas, setSchemas] = useState<Record<string, any> | null>(null);
+  const [wave1Analysis, setWave1Analysis] = useState<any | null>(null);
+
 
   async function loadAll() {
     setLoading(true);
