@@ -50,10 +50,28 @@ const RANGE_HOURS: Record<string, number | null> = {
   '1h': 1, '24h': 24, '7d': 24 * 7, '30d': 24 * 30, all: null,
 };
 
+interface AlertRow {
+  id: string;
+  alert_type: string;
+  error_group: string | null;
+  ticket_id: string | null;
+  external_ticket_id: string | null;
+  ticket_number: string | null;
+  direction: string | null;
+  response_code: number | null;
+  error_message: string | null;
+  sent_to: string;
+  sent_at: string;
+  status: string;
+}
+
 export default function TicketsSyncMonitor() {
   const [logs, setLogs] = useState<LogRow[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [alerts, setAlerts] = useState<AlertRow[]>([]);
+  const [alertsTotal, setAlertsTotal] = useState(0);
+  const [runningAlertCheck, setRunningAlertCheck] = useState(false);
 
   // filters
   const [range, setRange] = useState<keyof typeof RANGE_HOURS>('24h');
