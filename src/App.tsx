@@ -130,6 +130,14 @@ const Geraetesperren = lazy(() => import("./pages/Geraetesperren"));
 const Systemwartung = lazy(() => import("./pages/Systemwartung"));
 const Mandanten = lazy(() => import("./pages/Mandanten"));
 const KonzernDashboard = lazy(() => import("./pages/KonzernDashboard"));
+const MobileLayout = lazy(() => import("./pages/Mobile/Layout"));
+const MobileHome = lazy(() => import("./pages/Mobile/Home"));
+const MobileEinsatz = lazy(() => import("./pages/Mobile/Einsatz"));
+const MobileFotos = lazy(() => import("./pages/Mobile/Fotos"));
+const MobileSignatur = lazy(() => import("./pages/Mobile/Signatur"));
+const MobileChecklist = lazy(() => import("./pages/Mobile/Checkliste"));
+const MobileSync = lazy(() => import("./pages/Mobile/Sync"));
+const MobileProfil = lazy(() => import("./pages/Mobile/Profil"));
 const AlixSmartMigration = lazy(() => import("./pages/AlixSmartMigration"));
 const AlixSmartKonfliktaufloesung = lazy(() => import("./pages/AlixSmartKonfliktaufloesung"));
 const Geraeteakte = lazy(() => import("./pages/Geraeteakte"));
@@ -587,6 +595,19 @@ function AppRoutes() {
           <Route path="termine" element={<CustomerPortalAppointments />} />
           <Route path="gesundheit" element={<CustomerPortalHealth />} />
         </Route>
+
+        {/* Mobile Techniker-App – eigenes Layout (kein AppLayout) */}
+        <Route path="/m" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Technik','Tourenplanung','Service','Reparaturannahme']}><MobileLayout /></ProtectedRoute>}>
+          <Route index element={<MobileHome />} />
+          <Route path="heute" element={<MobileHome />} />
+          <Route path="sync" element={<MobileSync />} />
+          <Route path="profil" element={<MobileProfil />} />
+          <Route path="einsatz/:id" element={<MobileEinsatz />} />
+          <Route path="einsatz/:id/fotos" element={<MobileFotos />} />
+          <Route path="einsatz/:id/signatur" element={<MobileSignatur />} />
+          <Route path="einsatz/:id/checkliste" element={<MobileChecklist />} />
+        </Route>
+
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
