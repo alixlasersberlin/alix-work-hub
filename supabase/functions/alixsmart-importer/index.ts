@@ -814,47 +814,76 @@ async function fetchAllRows(sourceTable: string, max = 2000): Promise<{ rows: an
 
 /** Read-only conflict analysis for Welle 1 (profiles, user_roles, devices). */
 async function analyzeWave1(ctx: Ctx) {
-  // ---- profiles
+  // =================== profiles ===================
   const profilesRes = await fetchAllRows("profiles");
-  const profileEmailCounts = new Map<string, number>();
-  for (const r of profilesRes.rows) {
-    const e = String(r.email || "").toLowerCase().trim();
-    if (e) profileEmailCounts.set(e, (profileEmailCounts.get(e) || 0) + 1);
-  }
-  const emails = [...profileEmailCounts.keys()];
-  const existingProfilesMap = new Map<string, { id: string; full_name: string | null }>();
-  // chunk lookups
-  for (let i = 0; i < emails.length; i += 100) {
-    const chunk = emails.slice(i, i + 100);
-    if (!chunk.length) continue;
-    const { data } = await ctx.admin
-      .from("user_profiles")
-      .select("id,email,full_name")
-      .in("email", chunk);
-    (data || []).forEach((p: any) => existingProfilesMap.set(String(p.email).toLowerCase(), { id: p.id, full_name: p.full_name }));
-  }
+
+  // Load target customers (used for the 5 match rules)
+  const { data: allCustomers } = await ctx.admin
+    .from("customers")
+    .select("id,company_name,contact_name,email,phone,billing_address");
+
+  const norm = (s: any) => String(s ?? "").toLowerCase().trim();
+  const normPhone = (s: any) => String(s ?? "").replace(/[^\d+]/g, "");
+
+  const byEmail = new Map<string, any>();
+  const byPhone = new Map<string, any>();
+  const byCompanyZip = new Map<string, any>();
+  const byCompanyCity = new Map<string, any>();
+  (allCustomers || []).forEach((c: any) => {
+    if (c.email) byEmail.set(norm(c.email), c);
+    const p = normPhone(c.phone);
+    if (p) byPhone.set(p, c);
+    const zip = c.billing_address?.zip || c.billing_address?.postal_code;
+    const city = c.billing_address?.city;
+    const comp = norm(c.company_name);
+    if (comp && zip) byCompanyZip.set(`${comp}|${String(zip).trim()}`, c);
+    if (comp && city) byCompanyCity.set(`${comp}|${norm(city)}`, c);
+  });
 
   const profileItems: any[] = [];
   const profileBuckets: Record<string, number> = {
-    missing_email: 0, duplicate_email_in_source: 0, no_match_target: 0,
-    match_found: 0, missing_required_field: 0,
+    secure: 0, suggestion: 0, manual: 0, no_match: 0, missing_email: 0,
   };
+
   for (const r of profilesRes.rows) {
-    const email = String(r.email || "").toLowerCase().trim();
+    const email = norm(r.email);
+    const phone = normPhone(r.phone || r.phone_number);
+    const mobile = normPhone(r.mobile || r.mobile_number || r.mobile_phone);
+    const company = norm(r.company || r.company_name || r.organization);
+    const zip = String(r.zip || r.postal_code || r.plz || r.address?.zip || "").trim();
+    const city = norm(r.city || r.ort || r.address?.city);
     const sourceId = String(r.id ?? r.source_id ?? email ?? "");
-    const target = email ? existingProfilesMap.get(email) : undefined;
-    let bucket = "importable";
-    let reason = "";
-    if (!email) { bucket = "missing_email"; reason = "E-Mail fehlt"; profileBuckets.missing_email++; }
-    else if ((profileEmailCounts.get(email) || 0) > 1) { bucket = "duplicate_email_in_source"; reason = "E-Mail mehrfach in Quelle"; profileBuckets.duplicate_email_in_source++; }
-    else if (target) { bucket = "match_found"; reason = "Bestehendes Zielprofil – Merge möglich"; profileBuckets.match_found++; }
-    else { bucket = "no_match_target"; reason = "Kein Zielprofil – auth user fehlt"; profileBuckets.no_match_target++; }
+
+    let target: any = null;
+    let confidence = 0;
+    let match_rule = "no_match";
+    if (email && byEmail.has(email)) { target = byEmail.get(email); confidence = 100; match_rule = "email_exact"; }
+    else if (phone && byPhone.has(phone)) { target = byPhone.get(phone); confidence = 95; match_rule = "phone_exact"; }
+    else if (mobile && byPhone.has(mobile)) { target = byPhone.get(mobile); confidence = 95; match_rule = "mobile_exact"; }
+    else if (company && zip && byCompanyZip.has(`${company}|${zip}`)) { target = byCompanyZip.get(`${company}|${zip}`); confidence = 88; match_rule = "company_zip"; }
+    else if (company && city && byCompanyCity.has(`${company}|${city}`)) { target = byCompanyCity.get(`${company}|${city}`); confidence = 82; match_rule = "company_city"; }
+
+    let match_class: "secure" | "suggestion" | "manual" | "no_match";
+    if (confidence >= 95) match_class = "secure";
+    else if (confidence >= 80) match_class = "suggestion";
+    else if (confidence > 0) match_class = "manual";
+    else match_class = "no_match";
+    if (!email && !phone && !mobile && !company) { match_class = "no_match"; profileBuckets.missing_email++; }
+    profileBuckets[match_class]++;
+
     profileItems.push({
-      source_id: sourceId, email, full_name: r.full_name ?? null,
-      match_found: !!target, target_exists: !!target,
-      target_id: target?.id ?? null, bucket, reason,
+      source_id: sourceId,
+      email, phone, mobile, company, zip, city,
+      full_name: r.full_name ?? r.name ?? null,
+      target_id: target?.id ?? null,
+      target_company: target?.company_name ?? null,
+      target_contact: target?.contact_name ?? null,
+      target_email: target?.email ?? null,
+      target_phone: target?.phone ?? null,
+      confidence, match_rule, match_class,
     });
   }
+
 
   // ---- user_roles
   const rolesRes = await fetchAllRows("user_roles");
