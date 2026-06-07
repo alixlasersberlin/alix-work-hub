@@ -89,6 +89,52 @@ interface Ctx {
   admin: ReturnType<typeof createClient>;
   userId: string;
   batchId: string;
+  /** target table -> cached column list */
+  schemaCache: Map<string, string[]>;
+}
+
+/** Read public table columns via SECURITY DEFINER helper. Returns []
+ *  on error so the importer can continue without exploding. */
+async function getTargetColumns(ctx: Ctx, table: string): Promise<string[]> {
+  if (ctx.schemaCache.has(table)) return ctx.schemaCache.get(table)!;
+  try {
+    const { data, error } = await ctx.admin.rpc("get_table_columns", {
+      _table: table,
+    });
+    const cols = !error && Array.isArray(data) ? (data as string[]) : [];
+    ctx.schemaCache.set(table, cols);
+    return cols;
+  } catch {
+    ctx.schemaCache.set(table, []);
+    return [];
+  }
+}
+
+/** Drop keys that don't exist in the target table. Returns sanitized
+ *  payload + the names of skipped keys. */
+function sanitizePayload<T extends Record<string, any>>(
+  payload: T,
+  allowed: string[],
+): { clean: Partial<T>; skipped: string[] } {
+  if (!allowed.length) return { clean: payload, skipped: [] };
+  const set = new Set(allowed);
+  const clean: Record<string, any> = {};
+  const skipped: string[] = [];
+  for (const [k, v] of Object.entries(payload)) {
+    if (set.has(k)) clean[k] = v;
+    else skipped.push(k);
+  }
+  return { clean: clean as Partial<T>, skipped };
+}
+
+/** Collect every unique key from a sample of source rows. */
+function sourceColumns(rows: any[], sampleSize = 25): string[] {
+  const set = new Set<string>();
+  for (const r of rows.slice(0, sampleSize)) {
+    if (r && typeof r === "object")
+      Object.keys(r).forEach((k) => set.add(k));
+  }
+  return [...set].sort();
 }
 
 async function fetchTable(
@@ -382,6 +428,9 @@ async function importGeneric(
 ) {
   let s = 0,
     f = 0;
+  const targetCols = await getTargetColumns(ctx, targetTable);
+  const hasSourceId = targetCols.length === 0 || targetCols.includes("source_id");
+  const skippedAll = new Set<string>();
   for (const r of rows) {
     const sourceId = String(r.id ?? r.source_id ?? "");
     if (!sourceId) {
@@ -391,34 +440,49 @@ async function importGeneric(
       continue;
     }
     if (dryRun) {
-      const { data: existing } = await ctx.admin
-        .from(targetTable as any).select("id").eq("source_id", sourceId).maybeSingle();
+      let existing: any = null;
+      if (hasSourceId) {
+        const res = await ctx.admin
+          .from(targetTable as any).select("id").eq("source_id", sourceId).maybeSingle();
+        existing = res.data;
+      }
       await recordMap(ctx, sourceTable, sourceId, targetTable,
         existing?.id ?? null, "source_id",
         existing ? "dry_run_match" : "dry_run_new");
       s++;
       continue;
     }
-    const payload = shape
+    const rawPayload = shape
       ? shape(r)
       : { ...r, source_id: sourceId, metadata: { source: r } };
-    // Drop fields that probably don't exist in target
-    delete (payload as any).id;
-    const { data, error } = await ctx.admin
-      .from(targetTable as any)
-      .upsert(payload, { onConflict: "source_id" })
-      .select("id").maybeSingle();
+    delete (rawPayload as any).id;
+    const { clean: payload, skipped } = sanitizePayload(rawPayload, targetCols);
+    skipped.forEach((k) => skippedAll.add(k));
+    if (!Object.keys(payload).length) {
+      f++;
+      await recordMap(ctx, sourceTable, sourceId, targetTable, null,
+        "source_id", "error", null, "no_matching_target_columns",
+        { skipped });
+      continue;
+    }
+    const upsertOpts: any = hasSourceId ? { onConflict: "source_id" } : undefined;
+    const q = ctx.admin.from(targetTable as any);
+    const op = hasSourceId
+      ? q.upsert(payload, upsertOpts).select("id").maybeSingle()
+      : q.insert(payload).select("id").maybeSingle();
+    const { data, error } = await op;
     if (error) {
       f++;
       await recordMap(ctx, sourceTable, sourceId, targetTable, null,
-        "source_id", "error", null, error.message);
+        "source_id", "error", null, error.message, { skipped });
     } else {
       s++;
       await recordMap(ctx, sourceTable, sourceId, targetTable,
-        data?.id ?? null, "source_id", "imported");
+        data?.id ?? null, "source_id", "imported", null, null,
+        skipped.length ? { skipped } : undefined);
     }
   }
-  return { s, f };
+  return { s, f, skippedCols: [...skippedAll] };
 }
 
 async function importSuppressed(ctx: Ctx, rows: any[], dryRun: boolean) {
@@ -593,26 +657,59 @@ async function importTablePaged(
   ctx: Ctx,
   sourceTable: string,
   dryRun: boolean,
-): Promise<{ processed: number; success: number; failed: number; error?: string }> {
+): Promise<{
+  processed: number; success: number; failed: number; error?: string;
+  schema?: {
+    target_table: string;
+    source_columns: string[];
+    target_columns: string[];
+    matched_columns: string[];
+    skipped_columns: string[];
+  };
+  error_details?: any;
+}> {
   if (FORBIDDEN.has(sourceTable))
     return { processed: 0, success: 0, failed: 0, error: "table_forbidden" };
-  if (!TABLE_MAP[sourceTable])
+  const mapEntry = TABLE_MAP[sourceTable];
+  if (!mapEntry)
     return { processed: 0, success: 0, failed: 0, error: "table_not_mapped" };
 
+  const targetTable = mapEntry.target;
+  const targetColumns = await getTargetColumns(ctx, targetTable);
+  const allSourceCols = new Set<string>();
   let offset = 0;
   const limit = 100;
-  let processed = 0,
-    success = 0,
-    failed = 0;
-  // hard cap: 50 pages = 5000 rows per call
+  let processed = 0, success = 0, failed = 0;
+
   for (let page = 0; page < 50; page++) {
     const { rows, error } = await fetchTable(sourceTable, limit, offset);
     if (error) {
+      const m = error.match(/column\s+([\w."]+)\s+does not exist/i);
+      const error_details = {
+        kind: m ? "upstream_missing_column" : "upstream_fetch_error",
+        missing_column: m?.[1] ?? null,
+        message: error,
+      };
+      const src = [...allSourceCols].sort();
+      const matched = src.filter((c) => targetColumns.includes(c));
+      const skippedCols = src.filter((c) => !targetColumns.includes(c));
       await logAction(ctx, sourceTable, dryRun ? "dry_run" : "import",
-        "error", { processed, success, failed }, error);
-      return { processed, success, failed, error };
+        "error", { processed, success, failed }, error, {
+          target_table: targetTable, source_columns: src,
+          target_columns: targetColumns, matched_columns: matched,
+          skipped_columns: skippedCols, error_details,
+        });
+      return {
+        processed, success, failed, error, error_details,
+        schema: {
+          target_table: targetTable, source_columns: src,
+          target_columns: targetColumns, matched_columns: matched,
+          skipped_columns: skippedCols,
+        },
+      };
     }
     if (!rows.length) break;
+    sourceColumns(rows).forEach((c) => allSourceCols.add(c));
     const { s, f } = await importOne(ctx, sourceTable, rows, dryRun);
     processed += rows.length;
     success += s;
@@ -620,10 +717,60 @@ async function importTablePaged(
     if (rows.length < limit) break;
     offset += limit;
   }
+
+  const src = [...allSourceCols].sort();
+  const matched = src.filter((c) => targetColumns.includes(c));
+  const skippedCols = src.filter((c) => !targetColumns.includes(c));
   await logAction(ctx, sourceTable, dryRun ? "dry_run" : "import",
     failed === 0 ? "success" : "partial",
-    { processed, success, failed });
-  return { processed, success, failed };
+    { processed, success, failed }, undefined, {
+      target_table: targetTable, source_columns: src,
+      target_columns: targetColumns, matched_columns: matched,
+      skipped_columns: skippedCols,
+    });
+
+  return {
+    processed, success, failed,
+    schema: {
+      target_table: targetTable, source_columns: src,
+      target_columns: targetColumns, matched_columns: matched,
+      skipped_columns: skippedCols,
+    },
+  };
+}
+
+/** Inspect schema for every mapped source table without importing. */
+async function discoverSchemas(ctx: Ctx) {
+  const out: Record<string, any> = {};
+  for (const [src, m] of Object.entries(TABLE_MAP)) {
+    const targetColumns = await getTargetColumns(ctx, m.target);
+    const probe = await fetchTable(src, 25, 0);
+    if (probe.error) {
+      const em = probe.error.match(/column\s+([\w."]+)\s+does not exist/i);
+      out[src] = {
+        target_table: m.target, target_columns: targetColumns,
+        source_columns: [], matched_columns: [], skipped_columns: [],
+        fetch_error: probe.error,
+        error_details: {
+          kind: em ? "upstream_missing_column" : "upstream_fetch_error",
+          missing_column: em?.[1] ?? null,
+        },
+      };
+      continue;
+    }
+    const cols = sourceColumns(probe.rows);
+    out[src] = {
+      target_table: m.target,
+      target_columns: targetColumns,
+      source_columns: cols,
+      matched_columns: cols.filter((c) => targetColumns.includes(c)),
+      skipped_columns: cols.filter((c) => !targetColumns.includes(c)),
+      sample_rows: probe.rows.length,
+    };
+  }
+  await logAction(ctx, null, "discover_schema", "success",
+    { processed: 0, success: 0, failed: 0 }, undefined, out);
+  return out;
 }
 
 // --- HTTP handler ---------------------------------------------------------
@@ -665,7 +812,7 @@ Deno.serve(async (req) => {
     const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
     const action: string = body.action || "test-connection";
     const batchId: string = body.batch_id || `${action}-${Date.now()}`;
-    const ctx: Ctx = { admin, userId, batchId };
+    const ctx: Ctx = { admin, userId, batchId, schemaCache: new Map() };
 
     if (action === "test-connection") {
       const r = await fetchTable("profiles", 1, 0);
@@ -687,6 +834,12 @@ Deno.serve(async (req) => {
       }
       const r = await fetchTable(table, limit, offset);
       return new Response(JSON.stringify(r),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if (action === "discover-schema") {
+      const schemas = await discoverSchemas(ctx);
+      return new Response(JSON.stringify({ batch_id: batchId, schemas }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
