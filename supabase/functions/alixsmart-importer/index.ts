@@ -1044,10 +1044,21 @@ async function analyzeWave1(ctx: Ctx) {
       secure: profileBuckets.secure,
       suggestion: profileBuckets.suggestion,
       manual: profileBuckets.manual,
+  const profileNewRecord = profileItems.filter((p) => p.import_status === "importable_new_record").length;
+  const deviceNewRecord = deviceItems.filter((d) => d.import_status === "importable_new_record").length;
+
+  const summary = {
+    profiles: {
+      total: profileItems.length,
+      secure: profileBuckets.secure,
+      suggestion: profileBuckets.suggestion,
+      manual: profileBuckets.manual,
       no_match: profileBuckets.no_match,
+      new_record: profileNewRecord,
       importable_safe: profileBuckets.secure,
+      importable_new_record: profileNewRecord,
       manual_review: profileBuckets.suggestion + profileBuckets.manual,
-      blocked: profileBuckets.no_match,
+      blocked: Math.max(0, profileBuckets.no_match - profileNewRecord),
     },
     user_roles: {
       total: rolesRes.rows.length,
@@ -1061,9 +1072,11 @@ async function analyzeWave1(ctx: Ctx) {
       suggestion: deviceBuckets.suggestion,
       manual: deviceBuckets.manual,
       no_match: deviceBuckets.no_match,
+      new_record: deviceNewRecord,
       importable_safe: deviceBuckets.secure,
+      importable_new_record: deviceNewRecord,
       manual_review: deviceBuckets.suggestion + deviceBuckets.manual,
-      blocked: deviceBuckets.no_match,
+      blocked: Math.max(0, deviceBuckets.no_match - deviceNewRecord),
     },
   };
 
