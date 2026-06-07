@@ -1758,6 +1758,7 @@ export type Database = {
         Row: {
           assigned_technician: string | null
           created_at: string
+          customer_email: string | null
           customer_id: string | null
           customer_name: string | null
           device_name: string | null
@@ -1767,12 +1768,21 @@ export type Database = {
           maintenance_status: string
           next_maintenance_date: string | null
           notes: string | null
+          postponed_until: string | null
+          reminder_14d_sent_at: string | null
+          reminder_30d_sent_at: string | null
+          reminder_due_sent_at: string | null
+          reminder_overdue_sent_at: string | null
+          route_plan_id: string | null
           serial_number: string
+          service_address: Json | null
+          ticket_id: string | null
           updated_at: string
         }
         Insert: {
           assigned_technician?: string | null
           created_at?: string
+          customer_email?: string | null
           customer_id?: string | null
           customer_name?: string | null
           device_name?: string | null
@@ -1782,12 +1792,21 @@ export type Database = {
           maintenance_status?: string
           next_maintenance_date?: string | null
           notes?: string | null
+          postponed_until?: string | null
+          reminder_14d_sent_at?: string | null
+          reminder_30d_sent_at?: string | null
+          reminder_due_sent_at?: string | null
+          reminder_overdue_sent_at?: string | null
+          route_plan_id?: string | null
           serial_number: string
+          service_address?: Json | null
+          ticket_id?: string | null
           updated_at?: string
         }
         Update: {
           assigned_technician?: string | null
           created_at?: string
+          customer_email?: string | null
           customer_id?: string | null
           customer_name?: string | null
           device_name?: string | null
@@ -1797,7 +1816,15 @@ export type Database = {
           maintenance_status?: string
           next_maintenance_date?: string | null
           notes?: string | null
+          postponed_until?: string | null
+          reminder_14d_sent_at?: string | null
+          reminder_30d_sent_at?: string | null
+          reminder_due_sent_at?: string | null
+          reminder_overdue_sent_at?: string | null
+          route_plan_id?: string | null
           serial_number?: string
+          service_address?: Json | null
+          ticket_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -3387,31 +3414,117 @@ export type Database = {
         Row: {
           created_at: string
           device_name: string
+          estimated_duration_min: number | null
           id: string
           maintenance_description: string | null
           maintenance_interval_hours: number | null
           maintenance_interval_months: number | null
+          mandatory: boolean | null
+          model: string | null
+          on_site: boolean | null
+          required_parts: Json | null
+          responsible_role: string | null
+          serial_number: string | null
           updated_at: string
+          warranty_terms: string | null
+          work_scope: string | null
         }
         Insert: {
           created_at?: string
           device_name: string
+          estimated_duration_min?: number | null
           id?: string
           maintenance_description?: string | null
           maintenance_interval_hours?: number | null
           maintenance_interval_months?: number | null
+          mandatory?: boolean | null
+          model?: string | null
+          on_site?: boolean | null
+          required_parts?: Json | null
+          responsible_role?: string | null
+          serial_number?: string | null
           updated_at?: string
+          warranty_terms?: string | null
+          work_scope?: string | null
         }
         Update: {
           created_at?: string
           device_name?: string
+          estimated_duration_min?: number | null
           id?: string
           maintenance_description?: string | null
           maintenance_interval_hours?: number | null
           maintenance_interval_months?: number | null
+          mandatory?: boolean | null
+          model?: string | null
+          on_site?: boolean | null
+          required_parts?: Json | null
+          responsible_role?: string | null
+          serial_number?: string | null
           updated_at?: string
+          warranty_terms?: string | null
+          work_scope?: string | null
         }
         Relationships: []
+      }
+      maintenance_reminder_log: {
+        Row: {
+          customer_id: string | null
+          customer_name: string | null
+          device_maintenance_id: string | null
+          device_name: string | null
+          due_date: string | null
+          error: string | null
+          id: string
+          payload: Json | null
+          recipient_email: string
+          reminder_type: string
+          sent_at: string
+          sent_on: string
+          serial_number: string | null
+          status: string
+        }
+        Insert: {
+          customer_id?: string | null
+          customer_name?: string | null
+          device_maintenance_id?: string | null
+          device_name?: string | null
+          due_date?: string | null
+          error?: string | null
+          id?: string
+          payload?: Json | null
+          recipient_email: string
+          reminder_type: string
+          sent_at?: string
+          sent_on?: string
+          serial_number?: string | null
+          status?: string
+        }
+        Update: {
+          customer_id?: string | null
+          customer_name?: string | null
+          device_maintenance_id?: string | null
+          device_name?: string | null
+          due_date?: string | null
+          error?: string | null
+          id?: string
+          payload?: Json | null
+          recipient_email?: string
+          reminder_type?: string
+          sent_at?: string
+          sent_on?: string
+          serial_number?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_reminder_log_device_maintenance_id_fkey"
+            columns: ["device_maintenance_id"]
+            isOneToOne: false
+            referencedRelation: "device_maintenance"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       migration_backup_logs: {
         Row: {
