@@ -1038,12 +1038,6 @@ async function analyzeWave1(ctx: Ctx) {
     });
   }
 
-  const summary = {
-    profiles: {
-      total: profileItems.length,
-      secure: profileBuckets.secure,
-      suggestion: profileBuckets.suggestion,
-      manual: profileBuckets.manual,
   const profileNewRecord = profileItems.filter((p) => p.import_status === "importable_new_record").length;
   const deviceNewRecord = deviceItems.filter((d) => d.import_status === "importable_new_record").length;
 
