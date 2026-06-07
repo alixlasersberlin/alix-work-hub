@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { ArrowLeft, Loader2, MessageSquare, Paperclip, Save, Send, Wrench, Truck, Banknote, ClipboardList, RefreshCw, History, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Loader2, MessageSquare, Paperclip, Save, Send, Wrench, Truck, Banknote, ClipboardList, RefreshCw, History, CheckCircle2, AlertCircle, Lock, Unlock, Upload, UserPlus, Flag, Activity } from 'lucide-react';
 import { sbRepair } from '@/lib/repair/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AiAnalysisPanel } from '@/components/ai-service/AiAnalysisPanel';
@@ -84,7 +84,7 @@ export default function TicketDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, isAdmin, hasAnyRole } = useAuth();
-  const canEdit = isAdmin || hasAnyRole(['Kundenservice', 'Technik']);
+  const canEdit = isAdmin || hasAnyRole(['Kundenservice', 'Technik', 'Service', 'Reparaturannahme', 'Order']);
 
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -97,6 +97,8 @@ export default function TicketDetail() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [linkedRepair, setLinkedRepair] = useState<LinkedRepair | null>(null);
+  const [users, setUsers] = useState<{ id: string; label: string }[]>([]);
+  const [uploading, setUploading] = useState(false);
 
   async function loadLinkedRepair(repairId: string | null) {
     if (!repairId) { setLinkedRepair(null); return; }
@@ -160,7 +162,53 @@ export default function TicketDetail() {
     setLoading(false);
   }
 
-  useEffect(() => { load(); loadOutboundLogs(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [id]);
+  async function loadUsers() {
+    const { data } = await supabase
+      .from('user_profiles')
+      .select('id, full_name, email')
+      .eq('is_active', true)
+      .order('full_name', { ascending: true })
+      .limit(500);
+    setUsers(((data as any[]) || []).map(u => ({ id: u.id, label: u.full_name || u.email || u.id.slice(0, 8) })));
+  }
+
+  async function uploadAttachment(file: File) {
+    if (!ticket || !file) return;
+    setUploading(true);
+    try {
+      const safeName = file.name.replace(/[^\w.\-]+/g, '_');
+      const path = `tickets/${ticket.id}/${Date.now()}_${safeName}`;
+      const { error: upErr } = await supabase.storage
+        .from('repair-files')
+        .upload(path, file, { contentType: file.type, upsert: false });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from('repair-files').getPublicUrl(path);
+      const { error: insErr } = await supabase.from('ticket_attachments').insert({
+        ticket_id: ticket.id,
+        file_url: pub.publicUrl,
+        file_name: file.name,
+        file_type: file.type,
+        file_size: file.size,
+        source_system: 'alixwork',
+      });
+      if (insErr) throw insErr;
+      toast.success('Anhang hochgeladen');
+      load();
+      if (ticket.external_ticket_id) syncToAlixSmart('manual');
+    } catch (e: any) {
+      toast.error('Upload fehlgeschlagen: ' + (e?.message || e));
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function toggleClose() {
+    if (!ticket) return;
+    const isClosed = ticket.status === 'geschlossen' || ticket.status === 'gelöst';
+    await patch({ status: isClosed ? 'offen' : 'geschlossen' });
+  }
+
+  useEffect(() => { load(); loadOutboundLogs(); loadUsers(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [id]);
 
   async function patch(updates: Partial<Ticket>) {
     if (!ticket) return;
@@ -361,6 +409,97 @@ export default function TicketDetail() {
         </div>
       </div>
 
+      {/* Sichtbare Aktionsleiste */}
+      {canEdit && (
+        <div className="rounded-xl border border-primary/30 bg-gradient-to-br from-primary/5 to-card p-4 flex items-center gap-2 flex-wrap shadow-sm">
+          <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mr-1 flex items-center gap-1">
+            <Activity className="w-3.5 h-3.5" /> Aktionen
+          </span>
+
+          <div className="flex items-center gap-1.5">
+            <Flag className="w-3.5 h-3.5 text-muted-foreground" />
+            <Select value={ticket.status} onValueChange={v => patch({ status: v })} disabled={saving}>
+              <SelectTrigger className="h-9 w-[170px]"><SelectValue placeholder="Status" /></SelectTrigger>
+              <SelectContent>{STATUS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <Select value={ticket.priority} onValueChange={v => patch({ priority: v })} disabled={saving}>
+              <SelectTrigger className="h-9 w-[140px]"><SelectValue placeholder="Priorität" /></SelectTrigger>
+              <SelectContent>{PRIORITY.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <UserPlus className="w-3.5 h-3.5 text-muted-foreground" />
+            <Select
+              value={ticket.assigned_to || 'none'}
+              onValueChange={v => patch({ assigned_to: v === 'none' ? null : v })}
+              disabled={saving}
+            >
+              <SelectTrigger className="h-9 w-[200px]"><SelectValue placeholder="Mitarbeiter zuweisen" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">— nicht zugewiesen —</SelectItem>
+                {users.map(u => <SelectItem key={u.id} value={u.id}>{u.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {(() => {
+            const isClosed = ticket.status === 'geschlossen' || ticket.status === 'gelöst';
+            return (
+              <Button
+                size="sm"
+                variant={isClosed ? 'outline' : 'default'}
+                onClick={toggleClose}
+                disabled={saving}
+              >
+                {isClosed ? <><Unlock className="w-4 h-4 mr-1" /> Ticket wieder öffnen</> : <><Lock className="w-4 h-4 mr-1" /> Ticket schließen</>}
+              </Button>
+            );
+          })()}
+
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              const el = document.getElementById('ticket-new-message');
+              el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              setTimeout(() => (el as HTMLTextAreaElement | null)?.focus(), 350);
+            }}
+          >
+            <MessageSquare className="w-4 h-4 mr-1" /> Kommentar
+          </Button>
+
+          <label className="inline-flex">
+            <input
+              type="file"
+              className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAttachment(f); e.currentTarget.value = ''; }}
+            />
+            <span className={`inline-flex items-center h-9 px-3 rounded-md text-sm cursor-pointer border border-input bg-background hover:bg-muted/40 ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
+              {uploading ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Upload className="w-4 h-4 mr-1" />}
+              Anhang hochladen
+            </span>
+          </label>
+
+          {ticket.external_ticket_id && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => syncToAlixSmart('manual')}
+              disabled={syncing}
+              title="Manuell an AlixSmart übertragen"
+            >
+              {syncing ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-1" />}
+              Sync
+            </Button>
+          )}
+        </div>
+      )}
+
+
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Linke Spalte */}
         <div className="lg:col-span-2 space-y-6">
@@ -404,7 +543,7 @@ export default function TicketDetail() {
               ))}
               {canEdit && (
                 <div className="rounded-lg border border-border bg-background p-3 space-y-2">
-                  <Textarea value={newMsg} onChange={e => setNewMsg(e.target.value)} placeholder="Nachricht oder interne Notiz..." rows={3} />
+                  <Textarea id="ticket-new-message" value={newMsg} onChange={e => setNewMsg(e.target.value)} placeholder="Nachricht oder interne Notiz..." rows={3} />
                   <div className="flex items-center justify-between gap-2">
                     <label className="flex items-center gap-2 text-xs text-muted-foreground">
                       <input type="checkbox" checked={msgInternal} onChange={e => setMsgInternal(e.target.checked)} />
