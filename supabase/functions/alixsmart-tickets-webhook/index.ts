@@ -45,16 +45,20 @@ interface Payload {
   }>;
 }
 
-// Simple in-memory rate limit per API-key (60 req / 60 s, per edge worker instance).
-const rateBucket = new Map<string, number[]>();
-const RATE_WINDOW_MS = 60_000;
+// DB-backed rate limit (cross-worker): 60 requests / 60 s per API key.
+const RATE_WINDOW_S = 60;
 const RATE_MAX = 60;
-function rateLimited(key: string): boolean {
-  const now = Date.now();
-  const arr = (rateBucket.get(key) ?? []).filter((t) => now - t < RATE_WINDOW_MS);
-  arr.push(now);
-  rateBucket.set(key, arr);
-  return arr.length > RATE_MAX;
+async function rateLimited(supabase: ReturnType<typeof createClient>, key: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc('check_rate_limit', {
+    _bucket: `alixsmart-webhook:${key.slice(0, 32)}`,
+    _max: RATE_MAX,
+    _window_seconds: RATE_WINDOW_S,
+  });
+  if (error) {
+    console.error('rate_limit_check_failed', error);
+    return false; // fail open
+  }
+  return data === true;
 }
 
 Deno.serve(async (req) => {
