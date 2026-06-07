@@ -5852,6 +5852,63 @@ export type Database = {
           },
         ]
       }
+      ticket_sync_alerts: {
+        Row: {
+          action: string | null
+          alert_type: string
+          created_at: string
+          direction: string | null
+          error_group: string | null
+          error_message: string | null
+          external_ticket_id: string | null
+          id: string
+          payload_excerpt: Json | null
+          provider_response: Json | null
+          response_code: number | null
+          sent_at: string
+          sent_to: string
+          status: string
+          ticket_id: string | null
+          ticket_number: string | null
+        }
+        Insert: {
+          action?: string | null
+          alert_type: string
+          created_at?: string
+          direction?: string | null
+          error_group?: string | null
+          error_message?: string | null
+          external_ticket_id?: string | null
+          id?: string
+          payload_excerpt?: Json | null
+          provider_response?: Json | null
+          response_code?: number | null
+          sent_at?: string
+          sent_to: string
+          status?: string
+          ticket_id?: string | null
+          ticket_number?: string | null
+        }
+        Update: {
+          action?: string | null
+          alert_type?: string
+          created_at?: string
+          direction?: string | null
+          error_group?: string | null
+          error_message?: string | null
+          external_ticket_id?: string | null
+          id?: string
+          payload_excerpt?: Json | null
+          provider_response?: Json | null
+          response_code?: number | null
+          sent_at?: string
+          sent_to?: string
+          status?: string
+          ticket_id?: string | null
+          ticket_number?: string | null
+        }
+        Relationships: []
+      }
       ticket_sync_logs: {
         Row: {
           action: string | null

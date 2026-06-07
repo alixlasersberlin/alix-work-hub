@@ -9,8 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   ArrowLeft, RefreshCw, CheckCircle2, AlertTriangle, Ban, Clock,
-  ArrowUpRight, ArrowDownLeft,
+  ArrowUpRight, ArrowDownLeft, BellRing, Mail,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface LogRow {
   id: string;
@@ -49,10 +50,28 @@ const RANGE_HOURS: Record<string, number | null> = {
   '1h': 1, '24h': 24, '7d': 24 * 7, '30d': 24 * 30, all: null,
 };
 
+interface AlertRow {
+  id: string;
+  alert_type: string;
+  error_group: string | null;
+  ticket_id: string | null;
+  external_ticket_id: string | null;
+  ticket_number: string | null;
+  direction: string | null;
+  response_code: number | null;
+  error_message: string | null;
+  sent_to: string;
+  sent_at: string;
+  status: string;
+}
+
 export default function TicketsSyncMonitor() {
   const [logs, setLogs] = useState<LogRow[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [alerts, setAlerts] = useState<AlertRow[]>([]);
+  const [alertsTotal, setAlertsTotal] = useState(0);
+  const [runningAlertCheck, setRunningAlertCheck] = useState(false);
 
   // filters
   const [range, setRange] = useState<keyof typeof RANGE_HOURS>('24h');
@@ -122,7 +141,15 @@ export default function TicketsSyncMonitor() {
 
     const lastSyncRow = enriched.find((r) => r.status === 'success') ?? null;
 
+    // Alerts
+    const alertsQ = supabase.from('ticket_sync_alerts').select('*', { count: 'exact' })
+      .order('sent_at', { ascending: false }).limit(50);
+    if (sinceIso) alertsQ.gte('sent_at', sinceIso);
+    const { data: alertRows, count: alertCount } = await alertsQ;
+
     setLogs(enriched);
+    setAlerts((alertRows as any) || []);
+    setAlertsTotal(alertCount ?? 0);
     setStats({
       pushSuccess: pushOk.count ?? 0,
       pushError: pushErr.count ?? 0,
@@ -136,6 +163,24 @@ export default function TicketsSyncMonitor() {
     setLoading(false);
   }
 
+  async function runAlertCheck() {
+    setRunningAlertCheck(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('ticket-sync-alert', {
+        body: { lookback_minutes: 60 },
+      });
+      if (error) throw error;
+      const sentCount = (data as any)?.sent_count ?? 0;
+      const skipped = (data as any)?.skipped_count ?? 0;
+      toast.success(`Alert-Check fertig: ${sentCount} gesendet, ${skipped} übersprungen`);
+      await load();
+    } catch (e: any) {
+      toast.error(`Alert-Check fehlgeschlagen: ${e.message}`);
+    } finally {
+      setRunningAlertCheck(false);
+    }
+  }
+
   useEffect(() => {
     load();
     const t = setInterval(load, 30_000);
@@ -147,6 +192,17 @@ export default function TicketsSyncMonitor() {
     () => Array.from(new Set(logs.map((l) => l.action).filter(Boolean) as string[])).sort(),
     [logs],
   );
+
+  // Map ticket_key -> latest alert (for join into logs)
+  const alertByTicket = useMemo(() => {
+    const m = new Map<string, AlertRow>();
+    for (const a of alerts) {
+      const k = a.ticket_id || a.external_ticket_id;
+      if (!k) continue;
+      if (!m.has(k)) m.set(k, a);
+    }
+    return m;
+  }, [alerts]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -180,13 +236,19 @@ export default function TicketsSyncMonitor() {
             AlixWork ⇄ AlixSmart · Push (outbound) und Polling (inbound) gemeinsam überwacht.
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={load} disabled={loading}>
-          <RefreshCw className={`w-4 h-4 mr-1.5 ${loading ? 'animate-spin' : ''}`} /> Aktualisieren
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={runAlertCheck} disabled={runningAlertCheck}>
+            <BellRing className={`w-4 h-4 mr-1.5 ${runningAlertCheck ? 'animate-pulse' : ''}`} />
+            Alert-Check ausführen
+          </Button>
+          <Button variant="outline" size="sm" onClick={load} disabled={loading}>
+            <RefreshCw className={`w-4 h-4 mr-1.5 ${loading ? 'animate-spin' : ''}`} /> Aktualisieren
+          </Button>
+        </div>
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
         <KpiCard label="Push erfolgreich" value={stats?.pushSuccess ?? 0} icon={<ArrowUpRight className="w-4 h-4 text-emerald-400" />} />
         <KpiCard label="Push fehlgeschlagen" value={stats?.pushError ?? 0} icon={<ArrowUpRight className="w-4 h-4 text-destructive" />} />
         <KpiCard label="Polling erfolgreich" value={stats?.pollSuccess ?? 0} icon={<ArrowDownLeft className="w-4 h-4 text-emerald-400" />} />
@@ -194,7 +256,57 @@ export default function TicketsSyncMonitor() {
         <KpiCard label="Blockiert (Konflikt)" value={stats?.blocked ?? 0} icon={<Ban className="w-4 h-4 text-amber-400" />} />
         <KpiCard label="Tickets gesamt" value={stats?.ticketsTotal ?? 0} icon={<RefreshCw className="w-4 h-4 text-primary" />} />
         <KpiCard label="Heute synchronisiert" value={stats?.ticketsSyncedToday ?? 0} icon={<Clock className="w-4 h-4 text-sky-400" />} />
+        <KpiCard label="Alerts gesendet" value={alertsTotal} icon={<BellRing className="w-4 h-4 text-rose-400" />} />
       </div>
+
+      {/* Alerts */}
+      <Card>
+        <div className="p-4 border-b border-border flex items-center gap-2">
+          <Mail className="w-4 h-4 text-rose-400" />
+          <h2 className="font-display font-semibold">Versandte Alerts</h2>
+          <Badge variant="outline" className="ml-2 text-xs">{alerts.length}</Badge>
+          <span className="ml-auto text-xs text-muted-foreground">Empfänger: rde@alix-lasers.com · Cooldown 30 min/Ticket</span>
+        </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Zeitpunkt</TableHead>
+              <TableHead>Fehlergruppe</TableHead>
+              <TableHead>Alert-Typ</TableHead>
+              <TableHead>Ticket-Nr.</TableHead>
+              <TableHead>External ID</TableHead>
+              <TableHead>Richtung</TableHead>
+              <TableHead>Code</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Empfänger</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {alerts.length === 0 && (
+              <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-6">
+                Keine Alerts im gewählten Zeitraum.
+              </TableCell></TableRow>
+            )}
+            {alerts.map((a) => (
+              <TableRow key={a.id}>
+                <TableCell className="font-mono text-xs whitespace-nowrap">{new Date(a.sent_at).toLocaleString('de-DE')}</TableCell>
+                <TableCell className="text-xs">{a.error_group || '—'}</TableCell>
+                <TableCell className="text-xs">{a.alert_type}</TableCell>
+                <TableCell className="font-mono text-xs">{a.ticket_number || '—'}</TableCell>
+                <TableCell className="font-mono text-xs">{a.external_ticket_id || '—'}</TableCell>
+                <TableCell><Badge variant="outline" className="text-xs">{a.direction || '—'}</Badge></TableCell>
+                <TableCell className="font-mono text-xs">{a.response_code ?? '—'}</TableCell>
+                <TableCell>
+                  <Badge variant="outline" className={`text-xs ${a.status === 'sent' ? STATUS_STYLE.success : STATUS_STYLE.error}`}>
+                    {a.status}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-xs">{a.sent_to}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
 
       {/* Last sync */}
       <Card className="p-4">
@@ -293,17 +405,21 @@ export default function TicketsSyncMonitor() {
               <TableHead>Code</TableHead>
               <TableHead>Versuch</TableHead>
               <TableHead>Fehler</TableHead>
+              <TableHead>Alert</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {errorLogs.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground py-6">
+                <TableCell colSpan={9} className="text-center text-muted-foreground py-6">
                   Keine Fehler im gewählten Zeitraum.
                 </TableCell>
               </TableRow>
             )}
-            {errorLogs.map((l) => (
+            {errorLogs.map((l) => {
+              const key = l.ticket_id || l.external_ticket_id || '';
+              const a = key ? alertByTicket.get(key) : null;
+              return (
               <TableRow key={l.id}>
                 <TableCell className="font-mono text-xs whitespace-nowrap">{new Date(l.created_at).toLocaleString('de-DE')}</TableCell>
                 <TableCell><Badge variant="outline" className="text-xs">{l.direction || '—'}</Badge></TableCell>
@@ -313,8 +429,21 @@ export default function TicketsSyncMonitor() {
                 <TableCell className="font-mono text-xs">{l.response_code ?? '—'}</TableCell>
                 <TableCell className="text-xs">{l.attempt ?? '—'}</TableCell>
                 <TableCell className="text-xs text-destructive max-w-md truncate" title={l.error_message || ''}>{l.error_message || '—'}</TableCell>
+                <TableCell className="text-xs">
+                  {a ? (
+                    <div className="flex flex-col">
+                      <Badge variant="outline" className={`text-xs w-fit ${a.status === 'sent' ? STATUS_STYLE.success : STATUS_STYLE.error}`}>
+                        Ja · {a.error_group || a.alert_type}
+                      </Badge>
+                      <span className="text-[10px] text-muted-foreground mt-0.5">{new Date(a.sent_at).toLocaleString('de-DE')}</span>
+                    </div>
+                  ) : (
+                    <Badge variant="outline" className="text-xs">Nein</Badge>
+                  )}
+                </TableCell>
               </TableRow>
-            ))}
+              );
+            })}
           </TableBody>
         </Table>
       </Card>
