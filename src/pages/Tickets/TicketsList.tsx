@@ -109,17 +109,6 @@ export default function TicketsList() {
     priority: 'normal', department: 'service',
   });
 
-  async function reload() {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('tickets')
-      .select('id, external_ticket_id, source_system, customer_name, company_name, order_number, device_name, serial_number, title, status, priority, department, last_synced_at, created_at')
-      .order('created_at', { ascending: false })
-      .limit(500);
-    if (error) console.error(error);
-    setRows((data as TicketRow[]) || []);
-    setLoading(false);
-  }
 
   async function createTicket() {
     if (!nt.title.trim()) { toast.error('Titel ist erforderlich'); return; }
