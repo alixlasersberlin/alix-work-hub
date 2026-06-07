@@ -501,6 +501,15 @@ function AppRoutes() {
             <Route path="berichte" element={<BugCapaBerichte />} />
           </Route>
 
+          <Route path="/iso" element={<ProtectedRoute requiredRoles={['Super Admin', 'Admin', 'QM']}><IsoLayoutLazy /></ProtectedRoute>}>
+            <Route index element={<IsoDashboard />} />
+            <Route path="audits" element={<IsoAudits />} />
+            <Route path="trainings" element={<IsoTrainings />} />
+            <Route path="suppliers" element={<IsoSuppliers />} />
+            <Route path="changes" element={<IsoChanges />} />
+            <Route path="vigilance" element={<IsoVigilance />} />
+          </Route>
+
           <Route path="/tickets" element={<ProtectedRoute requiredRoles={TICKETS_ROLES}><TicketsList /></ProtectedRoute>} />
           <Route path="/tickets/api-sync" element={<ProtectedRoute requiredRoles={['Super Admin']}><TicketsApiSync /></ProtectedRoute>} />
           <Route path="/tickets/sync" element={<ProtectedRoute requiredRoles={['Super Admin', 'Admin']}><TicketsSyncMonitor /></ProtectedRoute>} />
