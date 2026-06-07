@@ -122,3 +122,9 @@ verify_jwt = false
 verify_jwt = false
 
 
+
+[functions.send-repair-quote]
+verify_jwt = true
+
+[functions.repair-quote-decision]
+verify_jwt = false

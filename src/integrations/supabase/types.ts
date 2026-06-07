@@ -4561,10 +4561,16 @@ export type Database = {
           purchase_date: string | null
           repair_number: string | null
           repair_status: string
+          report_pdf_path: string | null
           sent_to_finance: boolean
           sent_to_finance_at: string | null
           sent_to_route_planning: boolean
           sent_to_route_planning_at: string | null
+          shipped_at: string | null
+          shipping_carrier: string | null
+          shipping_note: string | null
+          shipping_tracking_number: string | null
+          shipping_tracking_url: string | null
           ticket_id: string | null
           updated_at: string
           updated_by: string | null
@@ -4609,10 +4615,16 @@ export type Database = {
           purchase_date?: string | null
           repair_number?: string | null
           repair_status?: string
+          report_pdf_path?: string | null
           sent_to_finance?: boolean
           sent_to_finance_at?: string | null
           sent_to_route_planning?: boolean
           sent_to_route_planning_at?: string | null
+          shipped_at?: string | null
+          shipping_carrier?: string | null
+          shipping_note?: string | null
+          shipping_tracking_number?: string | null
+          shipping_tracking_url?: string | null
           ticket_id?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -4657,10 +4669,16 @@ export type Database = {
           purchase_date?: string | null
           repair_number?: string | null
           repair_status?: string
+          report_pdf_path?: string | null
           sent_to_finance?: boolean
           sent_to_finance_at?: string | null
           sent_to_route_planning?: boolean
           sent_to_route_planning_at?: string | null
+          shipped_at?: string | null
+          shipping_carrier?: string | null
+          shipping_note?: string | null
+          shipping_tracking_number?: string | null
+          shipping_tracking_url?: string | null
           ticket_id?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -4732,6 +4750,171 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "repair_parts_repair_order_id_fkey"
+            columns: ["repair_order_id"]
+            isOneToOne: false
+            referencedRelation: "repair_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      repair_quote_history: {
+        Row: {
+          action: string
+          actor_email: string | null
+          actor_user: string | null
+          created_at: string
+          id: string
+          meta: Json | null
+          quote_id: string
+        }
+        Insert: {
+          action: string
+          actor_email?: string | null
+          actor_user?: string | null
+          created_at?: string
+          id?: string
+          meta?: Json | null
+          quote_id: string
+        }
+        Update: {
+          action?: string
+          actor_email?: string | null
+          actor_user?: string | null
+          created_at?: string
+          id?: string
+          meta?: Json | null
+          quote_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repair_quote_history_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "repair_quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      repair_quote_items: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          kind: string
+          line_total: number | null
+          quantity: number | null
+          quote_id: string
+          sort_order: number | null
+          unit_price: number | null
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          kind?: string
+          line_total?: number | null
+          quantity?: number | null
+          quote_id: string
+          sort_order?: number | null
+          unit_price?: number | null
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          kind?: string
+          line_total?: number | null
+          quantity?: number | null
+          quote_id?: string
+          sort_order?: number | null
+          unit_price?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repair_quote_items_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "repair_quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      repair_quotes: {
+        Row: {
+          approval_token: string
+          created_at: string
+          created_by: string | null
+          customer_note: string | null
+          decided_at: string | null
+          decided_by_email: string | null
+          id: string
+          internal_note: string | null
+          labor_hours: number | null
+          labor_rate: number | null
+          labor_total: number | null
+          parts_total: number | null
+          pdf_path: string | null
+          quote_number: string | null
+          repair_order_id: string
+          sent_at: string | null
+          shipping_total: number | null
+          status: string
+          total_gross: number | null
+          total_net: number | null
+          updated_at: string
+          vat_rate: number | null
+        }
+        Insert: {
+          approval_token?: string
+          created_at?: string
+          created_by?: string | null
+          customer_note?: string | null
+          decided_at?: string | null
+          decided_by_email?: string | null
+          id?: string
+          internal_note?: string | null
+          labor_hours?: number | null
+          labor_rate?: number | null
+          labor_total?: number | null
+          parts_total?: number | null
+          pdf_path?: string | null
+          quote_number?: string | null
+          repair_order_id: string
+          sent_at?: string | null
+          shipping_total?: number | null
+          status?: string
+          total_gross?: number | null
+          total_net?: number | null
+          updated_at?: string
+          vat_rate?: number | null
+        }
+        Update: {
+          approval_token?: string
+          created_at?: string
+          created_by?: string | null
+          customer_note?: string | null
+          decided_at?: string | null
+          decided_by_email?: string | null
+          id?: string
+          internal_note?: string | null
+          labor_hours?: number | null
+          labor_rate?: number | null
+          labor_total?: number | null
+          parts_total?: number | null
+          pdf_path?: string | null
+          quote_number?: string | null
+          repair_order_id?: string
+          sent_at?: string | null
+          shipping_total?: number | null
+          status?: string
+          total_gross?: number | null
+          total_net?: number | null
+          updated_at?: string
+          vat_rate?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repair_quotes_repair_order_id_fkey"
             columns: ["repair_order_id"]
             isOneToOne: false
             referencedRelation: "repair_orders"
