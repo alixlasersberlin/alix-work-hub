@@ -84,10 +84,37 @@ export default function ReparaturDetail() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => printRepairReport({ repair, parts, history })}
+          onClick={async () => {
+            try {
+              const blob = repairReportHtmlBlob({ repair, parts, history });
+              const path = `${repair.id}/reports/repair-report-${Date.now()}.html`;
+              const { error: upErr } = await supabase.storage
+                .from('repair-files')
+                .upload(path, blob, { contentType: 'text/html', upsert: true });
+              if (upErr) throw upErr;
+              await sbRepair.from('repair_orders').update({ report_pdf_path: path }).eq('id', repair.id);
+              toast({ title: 'Reparaturbericht erzeugt', description: 'PDF wurde gespeichert.' });
+              printRepairReport({ repair, parts, history });
+              load();
+            } catch (e: any) {
+              toast({ title: 'Fehler', description: e.message, variant: 'destructive' });
+            }
+          }}
         >
-          <FileText className="w-4 h-4 mr-1" /> Reparaturbericht
+          <FileText className="w-4 h-4 mr-1" /> Reparaturbericht erzeugen
         </Button>
+        {repair.report_pdf_path && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={async () => {
+              const { data } = await supabase.storage.from('repair-files').createSignedUrl(repair.report_pdf_path, 600);
+              if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+            }}
+          >
+            <FileDown className="w-4 h-4 mr-1" /> Bericht öffnen
+          </Button>
+        )}
         <AiAnalysisPanel sourceKind="repair" recordId={repair.id} />
         <div className="ml-auto flex items-center gap-2">
           <Label className="text-xs">Status:</Label>
