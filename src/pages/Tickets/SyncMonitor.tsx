@@ -405,17 +405,21 @@ export default function TicketsSyncMonitor() {
               <TableHead>Code</TableHead>
               <TableHead>Versuch</TableHead>
               <TableHead>Fehler</TableHead>
+              <TableHead>Alert</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {errorLogs.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground py-6">
+                <TableCell colSpan={9} className="text-center text-muted-foreground py-6">
                   Keine Fehler im gewählten Zeitraum.
                 </TableCell>
               </TableRow>
             )}
-            {errorLogs.map((l) => (
+            {errorLogs.map((l) => {
+              const key = l.ticket_id || l.external_ticket_id || '';
+              const a = key ? alertByTicket.get(key) : null;
+              return (
               <TableRow key={l.id}>
                 <TableCell className="font-mono text-xs whitespace-nowrap">{new Date(l.created_at).toLocaleString('de-DE')}</TableCell>
                 <TableCell><Badge variant="outline" className="text-xs">{l.direction || '—'}</Badge></TableCell>
@@ -425,8 +429,21 @@ export default function TicketsSyncMonitor() {
                 <TableCell className="font-mono text-xs">{l.response_code ?? '—'}</TableCell>
                 <TableCell className="text-xs">{l.attempt ?? '—'}</TableCell>
                 <TableCell className="text-xs text-destructive max-w-md truncate" title={l.error_message || ''}>{l.error_message || '—'}</TableCell>
+                <TableCell className="text-xs">
+                  {a ? (
+                    <div className="flex flex-col">
+                      <Badge variant="outline" className={`text-xs w-fit ${a.status === 'sent' ? STATUS_STYLE.success : STATUS_STYLE.error}`}>
+                        Ja · {a.error_group || a.alert_type}
+                      </Badge>
+                      <span className="text-[10px] text-muted-foreground mt-0.5">{new Date(a.sent_at).toLocaleString('de-DE')}</span>
+                    </div>
+                  ) : (
+                    <Badge variant="outline" className="text-xs">Nein</Badge>
+                  )}
+                </TableCell>
               </TableRow>
-            ))}
+              );
+            })}
           </TableBody>
         </Table>
       </Card>
