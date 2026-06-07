@@ -35,7 +35,7 @@ export function BugCapaLayout() {
       <div className="flex items-center gap-3">
         <Shield className="h-7 w-7 text-primary" />
         <div>
-          <h1 className="text-3xl font-bold">Bug &amp; CAPA ISO13485</h1>
+          <h1 className="text-3xl font-bold">Bugs</h1>
           <p className="text-muted-foreground text-sm">Qualitätsmanagement – Bugs, Reklamationen, Audits und CAPA nach ISO 13485.</p>
         </div>
       </div>
