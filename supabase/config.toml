@@ -117,3 +117,7 @@ verify_jwt = false
 
 [functions.alixsmart-readapi]
 verify_jwt = false
+
+[functions.test-alixsmart-push]
+verify_jwt = false
+
