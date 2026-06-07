@@ -194,6 +194,7 @@ async function queueNextStep(params: {
 }) {
   const res = await fetch(`${params.supabaseUrl}/functions/v1/create-full-backup`, {
     method: "POST",
+    keepalive: true,
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${params.serviceRoleKey}`,
@@ -217,6 +218,34 @@ async function queueNextStep(params: {
   }
 
   await res.text();
+}
+
+function triggerNextStep(
+  adminClient: BackupAdminClient,
+  params: {
+    supabaseUrl: string;
+    serviceRoleKey: string;
+    backupId: string;
+    folderPath: string;
+    manifestPath: string;
+    notify: boolean;
+    notifyEmail: string | null;
+    source: string;
+    scope: "full" | "db_only";
+    startedAt: string;
+  },
+) {
+  queueNextStep(params).catch(async (error) => {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error("Failed to queue next backup step:", errorMsg);
+    await failBackup({
+      adminClient,
+      backupId: params.backupId,
+      source: params.source,
+      scope: params.scope,
+      errorMsg,
+    });
+  });
 }
 
 async function sendFailureAlert(params: {
@@ -395,7 +424,7 @@ async function processBackupStep(params: {
       if (state.tableIndex >= BACKUP_TABLES.length) {
         state.phase = scope === "full" ? "storage" : "finalizing";
         await uploadJson(adminClient, statePath, state, true);
-        await queueNextStep(params);
+        triggerNextStep(adminClient, params);
         return { success: true, accepted: true, backup_id: backupId, backup_status: "running" };
       }
 
@@ -443,7 +472,7 @@ async function processBackupStep(params: {
 
       await uploadJson(adminClient, statePath, state, true);
       await tick();
-      await queueNextStep(params);
+      triggerNextStep(adminClient, params);
       return { success: true, accepted: true, backup_id: backupId, backup_status: "running" };
     }
 
@@ -451,7 +480,7 @@ async function processBackupStep(params: {
       if (state.bucketIndex >= STORAGE_BUCKETS.length) {
         state.phase = "finalizing";
         await uploadJson(adminClient, statePath, state, true);
-        await queueNextStep(params);
+        triggerNextStep(adminClient, params);
         return { success: true, accepted: true, backup_id: backupId, backup_status: "running" };
       }
 
@@ -471,7 +500,7 @@ async function processBackupStep(params: {
 
       await uploadJson(adminClient, statePath, state, true);
       await tick();
-      await queueNextStep(params);
+      triggerNextStep(adminClient, params);
       return { success: true, accepted: true, backup_id: backupId, backup_status: "running" };
     }
 
@@ -512,7 +541,7 @@ async function processBackupStep(params: {
       })
       .eq("id", backupId);
 
-    await runPostBackupTasks({
+    runPostBackupTasks({
       supabaseUrl,
       serviceRoleKey,
       backupId,
@@ -524,7 +553,7 @@ async function processBackupStep(params: {
       storageFileCount: state.storageFileCount,
       source,
       startedAt,
-    });
+    }).catch((error) => console.error("Post-backup task failed:", error));
 
     return {
       success: true,
@@ -679,8 +708,7 @@ Deno.serve(async (req) => {
     };
 
     await uploadJson(adminClient, statePath, initialState, false);
-    await queueNextStep({
-      adminClient,
+    triggerNextStep(adminClient, {
       supabaseUrl,
       serviceRoleKey,
       backupId,
@@ -691,7 +719,7 @@ Deno.serve(async (req) => {
       source,
       scope,
       startedAt,
-    } as any);
+    });
 
     return json({
       success: true,
