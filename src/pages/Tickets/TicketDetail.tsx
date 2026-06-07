@@ -543,7 +543,7 @@ export default function TicketDetail() {
               ))}
               {canEdit && (
                 <div className="rounded-lg border border-border bg-background p-3 space-y-2">
-                  <Textarea value={newMsg} onChange={e => setNewMsg(e.target.value)} placeholder="Nachricht oder interne Notiz..." rows={3} />
+                  <Textarea id="ticket-new-message" value={newMsg} onChange={e => setNewMsg(e.target.value)} placeholder="Nachricht oder interne Notiz..." rows={3} />
                   <div className="flex items-center justify-between gap-2">
                     <label className="flex items-center gap-2 text-xs text-muted-foreground">
                       <input type="checkbox" checked={msgInternal} onChange={e => setMsgInternal(e.target.checked)} />
