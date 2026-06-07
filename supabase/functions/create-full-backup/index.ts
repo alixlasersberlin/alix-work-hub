@@ -435,11 +435,8 @@ Deno.serve(async (req) => {
       startedAt,
     });
 
-    if (
-      typeof EdgeRuntime !== "undefined" &&
-      typeof EdgeRuntime.waitUntil === "function"
-    ) {
-      EdgeRuntime.waitUntil(postBackupPromise);
+    if (typeof edgeRuntime?.waitUntil === "function") {
+      edgeRuntime.waitUntil(postBackupPromise);
     } else {
       postBackupPromise.catch((error) =>
         console.error("Post-backup task failed:", error),
