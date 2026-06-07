@@ -1021,6 +1021,9 @@ async function analyzeWave1(ctx: Ctx) {
     else match_class = "no_match";
     deviceBuckets[match_class]++;
 
+    const import_status =
+      match_class === "no_match" && confidence === 0 ? "importable_new_record" : null;
+
     deviceItems.push({
       source_id: sourceId,
       serial_number: serial,
@@ -1031,7 +1034,7 @@ async function analyzeWave1(ctx: Ctx) {
       target_serial: target?.serial_number ?? null,
       target_model: target?.model_name ?? null,
       target_customer: target?.customer_name ?? target?.customer_email ?? null,
-      confidence, match_rule, match_class,
+      confidence, match_rule, match_class, import_status,
     });
   }
 
