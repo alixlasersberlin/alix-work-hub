@@ -204,13 +204,13 @@ const navItems: NavItem[] = [
 
   },
   {
-    path: '/reparatur', label: 'SERVICE', icon: Wrench, roles: ['Admin', 'Super Admin', 'Reparaturannahme', 'Technik', 'Service'],
+    path: '/reparatur', label: 'SERVICE', icon: Wrench, roles: ['Admin', 'Super Admin', 'Reparaturannahme', 'Technik', 'Service', 'Österreich'],
     children: [
-      { path: '/reparatur/neu', label: 'Reparaturannahme', icon: FilePlus, roles: ['Admin', 'Super Admin', 'Reparaturannahme', 'Technik', 'Service'] },
-      { path: '/reparatur/werkstattannahme', label: 'Werkstatt', icon: PackageCheck, roles: ['Admin', 'Super Admin', 'Reparaturannahme', 'Technik', 'Service'] },
-      { path: '/reparatur/kostenvoranschlaege', label: 'Kostenvoranschläge', icon: Receipt, roles: ['Admin', 'Super Admin', 'Reparaturannahme', 'Technik', 'Service'] },
-      { path: '/garantiecenter', label: 'Garantieprüfung', icon: ShieldCheck, roles: ['Admin', 'Super Admin', 'Reparaturannahme', 'Technik', 'Service'] },
-      { path: '/reparatur/rueckversand', label: 'Rückversand', icon: PackageCheck, roles: ['Admin', 'Super Admin', 'Reparaturannahme', 'Technik', 'Service'] },
+      { path: '/reparatur/neu', label: 'Reparaturannahme', icon: FilePlus, roles: ['Admin', 'Super Admin', 'Reparaturannahme', 'Technik', 'Service', 'Österreich'] },
+      { path: '/reparatur/werkstattannahme', label: 'Werkstatt', icon: PackageCheck, roles: ['Admin', 'Super Admin', 'Reparaturannahme', 'Technik', 'Service', 'Österreich'] },
+      { path: '/reparatur/kostenvoranschlaege', label: 'Kostenvoranschläge', icon: Receipt, roles: ['Admin', 'Super Admin', 'Reparaturannahme', 'Technik', 'Service', 'Österreich'] },
+      { path: '/garantiecenter', label: 'Garantieprüfung', icon: ShieldCheck, roles: ['Admin', 'Super Admin', 'Reparaturannahme', 'Technik', 'Service', 'Österreich'] },
+      { path: '/reparatur/rueckversand', label: 'Rückversand', icon: PackageCheck, roles: ['Admin', 'Super Admin', 'Reparaturannahme', 'Technik', 'Service', 'Österreich'] },
     ],
   },
   {
