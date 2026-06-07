@@ -60,6 +60,8 @@ const STAR_FILTERS = ['', '1', '2', '3', '4', '5'] as const;
 export default function ReviewsList() {
   const { hasRole } = useAuth();
   const isSuperAdmin = hasRole('Super Admin');
+  const atOnly = useAtOnly();
+
   const [rows, setRows] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
