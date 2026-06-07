@@ -1,17 +1,20 @@
 import { NavLink, Outlet } from 'react-router-dom';
-import { Wrench, LayoutDashboard, FilePlus, ClipboardList, PackageCheck, HardHat, Package, Receipt, MapPin, Archive } from 'lucide-react';
+import { Wrench, LayoutDashboard, FilePlus, ClipboardList, PackageCheck, HardHat, Package, Receipt, MapPin, Archive, FileText, Truck, ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const tabs = [
   { to: '/reparatur', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/reparatur/neu', label: 'Neue Reparatur', icon: FilePlus },
   { to: '/reparatur/auftraege', label: 'Reparaturaufträge', icon: ClipboardList },
-  { to: '/reparatur/werkstattannahme', label: 'Werkstattannahme', icon: PackageCheck },
-  { to: '/reparatur/technik', label: 'Technik-Arbeitsaufträge', icon: HardHat },
-  { to: '/reparatur/ersatzteile', label: 'Ersatzteilbedarf', icon: Package },
+  { to: '/reparatur/werkstattannahme', label: 'Werkstatt', icon: PackageCheck },
+  { to: '/reparatur/technik', label: 'Technik', icon: HardHat },
+  { to: '/reparatur/ersatzteile', label: 'Ersatzteile', icon: Package },
+  { to: '/reparatur/kostenvoranschlaege', label: 'Kostenvoranschläge', icon: FileText },
+  { to: '/garantiecenter', label: 'Garantieprüfung', icon: ShieldCheck },
+  { to: '/reparatur/rueckversand', label: 'Rückversand', icon: Truck },
   { to: '/reparatur/finance', label: 'Übergabe Finance', icon: Receipt },
   { to: '/reparatur/tourenplanung', label: 'Übergabe Tourenplanung', icon: MapPin },
-  { to: '/reparatur/archiv', label: 'Reparaturarchiv', icon: Archive },
+  { to: '/reparatur/archiv', label: 'Archiv', icon: Archive },
 ];
 
 export default function ReparaturLayout() {
@@ -19,7 +22,7 @@ export default function ReparaturLayout() {
     <div className="p-4 lg:p-6 animate-fade-in">
       <div className="flex items-center gap-3 mb-4">
         <Wrench className="w-6 h-6 text-primary" />
-        <h1 className="text-2xl font-display font-bold text-foreground">Reparaturannahme</h1>
+        <h1 className="text-2xl font-display font-bold text-foreground">Service · Reparaturannahme</h1>
       </div>
       <div className="flex gap-2 overflow-x-auto mb-6 border-b border-border pb-1">
         {tabs.map((t) => {
