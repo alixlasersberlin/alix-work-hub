@@ -53,6 +53,9 @@ const BestellwesenErsatzteile = lazy(() => import("./pages/Bestellwesen/Ersatzte
 const RoutePlanDetail = lazy(() => import("./pages/RoutePlanDetail"));
 const RoutePlanForm = lazy(() => import("./pages/RoutePlanForm"));
 const RoutePlanningSettings = lazy(() => import("./pages/RoutePlanningSettings"));
+const TourenKalender = lazy(() => import("./pages/Tourenplanung/Kalender"));
+const TourenKarte = lazy(() => import("./pages/Tourenplanung/Karte"));
+const TourenDashboard = lazy(() => import("./pages/Tourenplanung/Dashboard"));
 const Finance = lazy(() => import("./pages/Finance"));
 const Ratenzahler = lazy(() => import("./pages/Ratenzahler"));
 const AlixFlex = lazy(() => import("./pages/AlixFlex"));
