@@ -1,106 +1,63 @@
+## Bestandsaufnahme (vorhanden, wird wiederverwendet)
 
-## Ziel
-Bestehendes Reparaturmodul (`/reparatur`, `repair_orders`, `repair_spare_parts`, `device_lifecycle`, …) bleibt unverändert. Phase 5 ergänzt vier Bausteine, ohne bestehende Tabellen, Trigger oder Edge-Functions zu brechen.
+- `route_plans` – Touren je Auftrag (Datum, Zeitfenster, Mitarbeiter, Team, Fahrzeug, Adresse, Status, Priorität, Notiz). **Pflichtfeld `order_id` ist heute NOT NULL** – muss additiv nullable werden, damit Touren auch aus Ticket/Reparatur/Kunde/Gerät entstehen können.
+- `technician_skills` – Skill-Zuordnung User→Kategorie (bleibt unverändert).
+- `RoutePlanning.tsx`, `RoutePlanDetail.tsx`, `RoutePlanForm.tsx`, `RoutePlanningSettings.tsx`, `DrivingTimeCell.tsx`, `useDrivingTimes` – bestehende Listen-, Detail-, Formular-, Fahrzeit-Logik (Google Maps / ORS bereits integriert).
+- Rollen `Tourenplanung`, `Technik`, `Reparaturannahme`, `Finance`, `Order`, `Admin`, `Super Admin` – alle bereits vorhanden; `can_access_planning()`, `can_manage_planning()` ebenfalls.
+- Storage-Bucket `repair-files` – wird für Servicebericht-PDFs mitgenutzt.
+- Mail-Infra `notify_customer_event` + Edge Function `ticket-customer-notify` + Resend – wird für neue Tour-Events wiederverwendet.
 
-## 1. Navigation – Service → Reparaturannahme
-- In `AppLayout` (Sidebar) bestehenden Eintrag „Reparaturannahme" unter neue Gruppe **Service** verschieben, mit Untermenüs:
-  - Reparaturannahme (Dashboard, `/reparatur`)
-  - Werkstatt (`/reparatur/technik`)
-  - Ersatzteile (`/reparatur/ersatzteile`)
-  - **Kostenvoranschläge** (`/reparatur/kostenvoranschlaege`) – neu
-  - Garantieprüfung (`/reparatur/garantie`) – verlinkt auf bestehende `Garantiecenter`-Seite
-  - **Rückversand** (`/reparatur/rueckversand`) – neu
-- `Reparatur/Layout.tsx` Tabs erweitern um „Kostenvoranschläge" und „Rückversand".
+## Was wirklich fehlt (neu)
 
-## 2. Neue Rolle „Reparaturannahme"
-- Migration: Rolle in `public.roles` einfügen (Idempotent: `ON CONFLICT (name) DO NOTHING`).
-- `can_access_repair()` und `can_manage_repair()` erweitern → zusätzlich `has_role('Reparaturannahme')`.
-- `useRepairPermissions`-Hook um Flag `isReparaturannahme` ergänzen.
-- Sidebar-Sichtbarkeit für Gruppe Service ergänzen (Admin/Order/Technik/Finance/Tourenplanung/Reparaturannahme).
+1. `route_plans` additiv erweitern (alles `ADD COLUMN IF NOT EXISTS`, keine Drops):
+   - `order_id` → nullable
+   - `tour_type` text  (Lieferung | Abholung | Rückversand | Vor-Ort-Reparatur | Wartung | Schulung | Gerätetausch | Ersatzteillieferung)
+   - `ticket_id`, `repair_order_id`, `customer_id`, `device_serial_number`, `finance_id`
+   - `technician_user_id` uuid, `vehicle_id` uuid
+   - `contact_name`, `contact_phone`, `contact_email`
+   - `device_model`, `requested_date` date
+   - `check_in_at`, `check_out_at`, `work_started_at`, `work_ended_at` timestamptz
+   - `signature_path`, `report_pdf_path`, `result_outcome`, `next_step` text
+   - Status-Wertebereich (kein CHECK, nur Default): `Entwurf|Geplant|Bestätigt|Unterwegs|Vor Ort|Erledigt|Fehlgeschlagen|Verschoben|Storniert` (alte Werte „offen/geplant/…" bleiben gültig).
 
-## 3. Kostenvoranschlag-Modul
-### DB (neue Tabelle, da nichts Passendes existiert)
-```sql
-CREATE TABLE public.repair_quotes (
-  id uuid PK,
-  repair_order_id uuid FK → repair_orders ON DELETE CASCADE,
-  quote_number text UNIQUE,           -- KV-2026-000001 via Sequence
-  status text DEFAULT 'Entwurf',      -- Entwurf | Versendet | Freigegeben | Abgelehnt
-  labor_hours numeric,
-  labor_rate numeric,
-  labor_total numeric,
-  parts_total numeric,
-  shipping_total numeric,
-  total_net numeric,
-  total_gross numeric,
-  vat_rate numeric DEFAULT 19,
-  customer_note text,
-  internal_note text,
-  pdf_path text,
-  approval_token uuid DEFAULT gen_random_uuid(),
-  sent_at timestamptz, decided_at timestamptz, decided_by_email text,
-  created_at, updated_at, created_by
-);
-CREATE TABLE public.repair_quote_items ( id, quote_id FK, kind text, description, quantity, unit_price, line_total );
-CREATE TABLE public.repair_quote_history ( id, quote_id, action, actor, meta jsonb, created_at );
-```
-- GRANTS + RLS: `can_access_repair()` lesen, `can_manage_repair()`/Finance ändern, Super-Admin löschen.
-- Sequence `repair_quote_seq` + Trigger `assign_quote_number` (Format `KV-YYYY-000001`).
-- Status-Übergänge & history-Logging via Trigger.
+2. Neue Tabelle `dispatch_vehicles` (Fahrzeugstamm, fehlte bisher).
+3. Neue Tabelle `dispatch_attachments` (Foto/Anhänge je Tour, fehlte bisher).
+4. Neue Tabelle `dispatch_used_parts` (verwendete Ersatzteile je Einsatz – optional zu `repair_spare_parts`, damit auch Nicht-Reparatur-Touren Teile erfassen können).
+5. Neuer Mail-Event-Typ in `ticket-customer-notify`: `tour_scheduled`, `tour_confirmed`, `tour_enroute`, `tour_postponed`, `tour_completed` (Edge Function additiv erweitern, bestehende Events bleiben).
+6. Servicebericht-PDF-Generator `src/lib/dispatch/service-report-pdf.ts` (HTML/Print, gleiches Muster wie `report-pdf.ts`).
+7. Sidebar/Routes ergänzen unter bestehender Gruppe Tourenplanung:
+   - `/tourenplanung/kalender` (Tag/Woche, Drag&Drop, Konfliktwarnung)
+   - `/tourenplanung/karte` (Kartenansicht, Route je Techniker, ORS-Reihenfolge)
+   - `/tourenplanung/dashboard` (KPIs)
+   - Im bestehenden Detail-View: Tabs „Einsatz", „Servicebericht", „Anhänge", „Ersatzteile".
+8. Neue, schlanke RLS-Policies für die neuen Tabellen via `can_access_planning()`/`can_manage_planning()` + Super Admin Delete.
 
-### Frontend
-- `src/pages/Reparatur/Kostenvoranschlaege.tsx` – Liste & Filter.
-- `src/pages/Reparatur/QuoteDetail.tsx` – Editor (Positionen, Summen, PDF, Senden).
-- PDF-Generator `src/lib/repair/quote-pdf.ts` (jsPDF, gleiches Layout wie work-order-pdf).
-- Speicherung in bestehendem Bucket `repair-files` unter `quotes/<id>.pdf`.
-- Im Reparatur-Detail Tab „Kostenvoranschlag" zum schnellen Erstellen.
+## Was NICHT angefasst wird
 
-### Kundenfreigabe
-- Edge Function `send-repair-quote` (Resend via Lovable Cloud Mail-Infra falls vorhanden, sonst direkt `RESEND_API_KEY`): versendet Mail mit Link `https://<app>/repair-quote/<token>` + PDF-Anhang.
-- Edge Function `repair-quote-decision` (public, anon erlaubt): nimmt `token` + `decision` entgegen, setzt Status, schreibt history, triggert Folgemail an Service.
-- Öffentliche Seite `src/pages/PublicRepairQuote/Decision.tsx`: zeigt KV-Daten readonly + Buttons Annehmen/Ablehnen.
+- Bestehende `route_plans`-Spalten, Trigger, RLS-Policies, bestehende Seiten.
+- Tickets-/Orders-/Reparatur-/Finance-Module, Synchronisationen, Edge Functions außer additiver Erweiterung von `ticket-customer-notify`.
+- Keine neuen Rollen (alle benötigten existieren bereits).
 
-## 4. Rückversand-Modul
-### DB-Erweiterung repair_orders
-Nur additive Felder (keine bestehenden ändern):
-```sql
-ALTER TABLE public.repair_orders
-  ADD COLUMN IF NOT EXISTS shipping_carrier text,
-  ADD COLUMN IF NOT EXISTS shipping_tracking_number text,
-  ADD COLUMN IF NOT EXISTS shipping_tracking_url text,
-  ADD COLUMN IF NOT EXISTS shipped_at timestamptz,
-  ADD COLUMN IF NOT EXISTS shipping_note text;
-```
-### Frontend
-- `src/pages/Reparatur/Rueckversand.tsx`: Liste aller Reparaturen mit Status „Reparatur abgeschlossen" / „An Tourenplanung übergeben" → Dialog zum Erfassen Carrier/Tracking, Setzen Status `Ausgeliefert`.
-- Im Reparatur-Detail neuer Tab „Rückversand".
+## Reihenfolge
 
-### Mailtrigger
-- Bestehender Trigger `trg_repair_notify_status` deckt Statuswechsel auf „Ausgeliefert" bereits ab (Event `shipment_sent`). Erweitern: zusätzlich `shipping_carrier`/`tracking_url` in Notify-Payload aufnehmen (über bestehende `notify_customer_event`).
+1. Migration (route_plans additiv, neue Tabellen + GRANTs + RLS).
+2. Edge Function `ticket-customer-notify` um Tour-Events erweitern.
+3. Frontend:
+   - Service-Report-PDF-Generator
+   - Kalender-Seite (react-big-calendar oder eigenes Grid mit dnd-kit, Konfliktcheck)
+   - Karten-Seite (Google Maps JS API über vorhandenen Browser-Key, ORS für Reihenfolge)
+   - Dashboard-KPIs
+   - Detail-Tabs Check-in/out, Anhänge (repair-files Bucket), Ersatzteile, Signatur (Canvas), PDF-Erzeugung
+   - „Neue Tour aus …" Buttons in Ticket/Reparatur/Kunde/Gerät/Finance
+   - Sidebar-Einträge in `AppLayout.tsx` ergänzen.
+4. Memory-Update.
 
-## 5. Reparaturbericht-PDF
-- Neuer Generator `src/lib/repair/report-pdf.ts`: erzeugt PDF mit Fehlerbild, Diagnose, durchgeführte Arbeiten, Ersatzteile (aus `repair_spare_parts`), Arbeitszeit, Techniker, Datum, Unterschrift-Block.
-- Trigger-Punkt: Button im Reparatur-Detail „Reparaturbericht erzeugen"; automatisch beim Statuswechsel auf „Reparatur abgeschlossen" (clientseitig nach Save) Datei in Bucket `repair-files` unter `reports/<repair_id>.pdf` ablegen, Pfad in neuer Spalte `repair_orders.report_pdf_path` speichern.
-- Migration: `ADD COLUMN IF NOT EXISTS report_pdf_path text`.
+## Abschlussbericht (Format am Ende)
 
-## 6. Abschlussbericht (am Ende der Implementierung)
-Im Chat liefere ich:
-- Tabellen erstellt: ja (repair_quotes, repair_quote_items, repair_quote_history)
-- Rolle eingerichtet: Reparaturannahme
-- Reparaturworkflow aktiv: ja (KV → Kundenfreigabe → Reparatur → Bericht → Rückversand → Finance)
-- PDF-Generierung aktiv: ja (work-order, handover, **quote**, **report**)
-- Finance-Übergabe aktiv: bestehend, unverändert
-- Gerätehistorie aktiv: bestehend, unverändert
-- Modul produktionsbereit: Ja
-
-## Risiko / Was NICHT angefasst wird
-- `repair_orders`-Bestandsspalten, Trigger, RLS bleiben.
-- Tickets-/Orders-/Finance-/Tourenplanungs-Module unverändert.
-- Bestehende Edge Functions (sync, webhook, alerts) unverändert.
-- Nur additive ALTERs (`IF NOT EXISTS`) und neue Tabellen.
-
-## Reihenfolge der Calls
-1. Migration (Rolle, can_access_repair-Update, neue Tabellen+GRANTs+RLS+Trigger, repair_orders additive Spalten).
-2. Edge Functions `send-repair-quote` + `repair-quote-decision`.
-3. Frontend: Layout/Sidebar, Kostenvoranschläge, Rückversand, PDF-Generatoren, Routen in `App.tsx`, Public Decision-Seite.
-4. Memory-Update („Reparaturannahme"-Rolle & neue Tabellen).
+- Wiederverwendete Tabellen: route_plans, technician_skills, customers, orders, tickets, repair_orders, repair_spare_parts, lager_devices, finance, user_roles, roles
+- Neue Tabellen: dispatch_vehicles, dispatch_attachments, dispatch_used_parts
+- Neue Rollen: keine (Wiederverwendung)
+- Neue APIs/Edge Functions: ticket-customer-notify (erweitert, additiv)
+- Neue Seiten: /tourenplanung/kalender, /tourenplanung/karte, /tourenplanung/dashboard, Detail-Tabs
+- Kalender aktiv: ja  ·  Kartenansicht aktiv: ja  ·  Servicebericht aktiv: ja  ·  Kundenmails aktiv: ja
+- Produktivstatus: Ja
