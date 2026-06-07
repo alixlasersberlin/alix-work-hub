@@ -164,6 +164,8 @@ const navItems: NavItem[] = [
   {
     path: '/auftragsverwaltung/bestellungen', label: 'BESTELLWESEN', icon: ShoppingCart, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'Lieferant', 'FACTORY INVOICE', 'Bestellwesen'],
     children: [
+      { path: '/detailsuche', label: 'Detailsuche', icon: SearchCheck, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Read Only Audit'] },
+      { path: '/lager/doppelte-reservierungen', label: 'Doppelte Reservierungen', icon: AlertTriangle, roles: ['Admin', 'Super Admin', 'Order'] },
       { path: '/order/timeline', label: 'Timeline Bestellungen', icon: Calendar, roles: ['Admin', 'Super Admin', 'Order', 'Österreich'] },
       { path: '/order/frei-bestellung', label: 'Bestellung möglich', icon: CheckCircle2, roles: ['Admin', 'Super Admin', 'Order'] },
       { path: '/order/reklamation', label: 'Bestellung Reklamation', icon: AlertTriangle, roles: ['Admin', 'Super Admin', 'Order'] },
