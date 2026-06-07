@@ -549,7 +549,7 @@ async function processBackupStep(params: {
       })
       .eq("id", backupId);
 
-    runPostBackupTasks({
+    const postPromise = runPostBackupTasks({
       supabaseUrl,
       serviceRoleKey,
       backupId,
@@ -562,6 +562,10 @@ async function processBackupStep(params: {
       source,
       startedAt,
     }).catch((error) => console.error("Post-backup task failed:", error));
+    try {
+      // @ts-ignore EdgeRuntime is provided by Supabase Edge Runtime
+      EdgeRuntime.waitUntil(postPromise);
+    } catch (_) { /* ignore */ }
 
     return {
       success: true,
