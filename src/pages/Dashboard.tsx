@@ -158,6 +158,14 @@ export default function Dashboard() {
   const [shipmentSearch, setShipmentSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const isSuperAdmin = hasRole('Super Admin');
+  const [view, setView] = useState<'hoo' | 'super'>(() => {
+    if (typeof window === 'undefined') return 'hoo';
+    return (localStorage.getItem('dashboardView') as 'hoo' | 'super') || 'hoo';
+  });
+  useEffect(() => {
+    if (typeof window !== 'undefined') localStorage.setItem('dashboardView', view);
+  }, [view]);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({
     shipment: true,
     recent: true,
