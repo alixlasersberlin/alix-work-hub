@@ -235,7 +235,7 @@ function triggerNextStep(
     startedAt: string;
   },
 ) {
-  queueNextStep(params).catch(async (error) => {
+  const promise = queueNextStep(params).catch(async (error) => {
     const errorMsg = error instanceof Error ? error.message : String(error);
     console.error("Failed to queue next backup step:", errorMsg);
     await failBackup({
@@ -246,6 +246,14 @@ function triggerNextStep(
       errorMsg,
     });
   });
+  // Keep the background fetch alive after the parent returns 202 — cron /
+  // pg_net close the connection immediately and would otherwise cancel it.
+  try {
+    // @ts-ignore EdgeRuntime is provided by Supabase Edge Runtime
+    EdgeRuntime.waitUntil(promise);
+  } catch (_) {
+    // no-op when EdgeRuntime is unavailable
+  }
 }
 
 async function sendFailureAlert(params: {
