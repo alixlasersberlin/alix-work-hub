@@ -214,6 +214,9 @@ export default function AlixSmartMigration() {
           <Button size="sm" onClick={runDryRun} disabled={running === 'dryrun' || !schemaReady || !connectionOk}>
             <PlayCircle className={`w-4 h-4 mr-2 ${running === 'dryrun' ? 'animate-spin' : ''}`} />Dry-Run starten
           </Button>
+          <Button variant="outline" size="sm" onClick={analyseWave1} disabled={running === 'wave1' || !connectionOk}>
+            <AlertTriangle className={`w-4 h-4 mr-2 ${running === 'wave1' ? 'animate-spin' : ''}`} />Welle 1 analysieren
+          </Button>
         </div>
       </div>
 
