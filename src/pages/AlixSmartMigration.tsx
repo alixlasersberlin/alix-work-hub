@@ -580,11 +580,13 @@ function Wave1ProfilesTab({ data, onExport }: { data: any; onExport: (f: string,
 function Wave1RolesTab({ data, onExport }: { data: any; onExport: (f: string, r: any[], c: string[]) => void }) {
   if (!data) return <Card><CardContent className="p-6"><NotRunHint /></CardContent></Card>;
   const mappings: any[] = data.mappings || [];
-  const status = data.status_counts || { auto: 0, manual: 0, blocked: 0 };
+  const status = data.status_counts || { auto: 0, customer_profile_only: 0, manual: 0, blocked: 0 };
+  const aggregates = data.user_aggregates || { customer_profiles: 0, staff: 0, admins: 0 };
   const targetRoles: { name: string; description: string | null }[] = data.target_roles || [];
   const sourceRoles: { name: string; assignment_count: number; user_count: number }[] = data.source_roles || [];
   const statusBadge = (s: string) => {
     if (s === 'auto') return <Badge className="bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">automatisch mappbar</Badge>;
+    if (s === 'customer_profile_only') return <Badge className="bg-sky-500/15 text-sky-500 border border-sky-500/30">Kundenprofil ohne Backend-Rolle</Badge>;
     if (s === 'manual') return <Badge className="bg-amber-500/15 text-amber-500 border border-amber-500/30">manuell prüfen</Badge>;
     return <Badge className="bg-red-500/15 text-red-500 border border-red-500/30">blockiert</Badge>;
   };
@@ -599,10 +601,14 @@ function Wave1RolesTab({ data, onExport }: { data: any; onExport: (f: string, r:
       <CardContent className="space-y-6 text-sm">
         {data.fetch_error && <div className="text-xs text-red-500">Quell-Fehler: {data.fetch_error}</div>}
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div className="rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3">
             <div className="text-2xl font-bold text-emerald-500">{status.auto}</div>
             <div className="text-xs text-muted-foreground">automatisch mappbar</div>
+          </div>
+          <div className="rounded-md border border-sky-500/30 bg-sky-500/5 p-3">
+            <div className="text-2xl font-bold text-sky-500">{status.customer_profile_only}</div>
+            <div className="text-xs text-muted-foreground">Kundenprofil ohne Backend-Rolle</div>
           </div>
           <div className="rounded-md border border-amber-500/30 bg-amber-500/5 p-3">
             <div className="text-2xl font-bold text-amber-500">{status.manual}</div>
@@ -610,7 +616,22 @@ function Wave1RolesTab({ data, onExport }: { data: any; onExport: (f: string, r:
           </div>
           <div className="rounded-md border border-red-500/30 bg-red-500/5 p-3">
             <div className="text-2xl font-bold text-red-500">{status.blocked}</div>
-            <div className="text-xs text-muted-foreground">blockiert (neue Zielrolle vorschlagen)</div>
+            <div className="text-xs text-muted-foreground">blockiert</div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3">
+          <div className="rounded-md border border-border bg-muted/30 p-3">
+            <div className="text-xl font-bold">{aggregates.customer_profiles}</div>
+            <div className="text-xs text-muted-foreground">Kundenprofile importierbar</div>
+          </div>
+          <div className="rounded-md border border-border bg-muted/30 p-3">
+            <div className="text-xl font-bold">{aggregates.staff}</div>
+            <div className="text-xs text-muted-foreground">Mitarbeiter importierbar</div>
+          </div>
+          <div className="rounded-md border border-border bg-muted/30 p-3">
+            <div className="text-xl font-bold">{aggregates.admins}</div>
+            <div className="text-xs text-muted-foreground">Admins importierbar</div>
           </div>
         </div>
 
