@@ -824,7 +824,7 @@ export default function AppLayout() {
                 </div>
               );
               return (
-                <div key={item.path}>
+                <div key={`${item.path}-${item.label}`}>
                   {item.path === '/lager' ? (
                     <HoverCard openDelay={150} closeDelay={100}>
                       <HoverCardTrigger asChild>{rowEl}</HoverCardTrigger>
@@ -1036,7 +1036,7 @@ export default function AppLayout() {
             const isRed = item.path === '/geraetesperren';
             return (
               <Link
-                key={item.path}
+                key={`${item.path}-${item.label}`}
                 to={item.path}
                 title={isCollapsedView ? item.label : undefined}
                 className={cn(
