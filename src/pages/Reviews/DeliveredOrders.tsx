@@ -83,7 +83,7 @@ export default function DeliveredOrders() {
     setLoading(false);
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [atOnly]);
 
   const filtered = useMemo(() => {
     // Geschlossene Aufträge erscheinen ausschließlich im Tab "Geschlossen"
