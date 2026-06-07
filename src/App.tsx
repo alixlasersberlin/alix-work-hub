@@ -51,6 +51,7 @@ const ReparaturRueckversand = lazy(() => import("./pages/Reparatur/Rueckversand"
 const PublicRepairQuoteDecision = lazy(() => import("./pages/PublicRepairQuote/Decision"));
 const BestellwesenErsatzteile = lazy(() => import("./pages/Bestellwesen/Ersatzteile"));
 const Ersatzteilmanagement = lazy(() => import("./pages/Ersatzteilmanagement"));
+const ManagementDashboard = lazy(() => import("./pages/ManagementDashboard"));
 const RoutePlanDetail = lazy(() => import("./pages/RoutePlanDetail"));
 const RoutePlanForm = lazy(() => import("./pages/RoutePlanForm"));
 const RoutePlanningSettings = lazy(() => import("./pages/RoutePlanningSettings"));
@@ -421,6 +422,7 @@ function AppRoutes() {
           <Route path="/garantiecenter" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Service', 'Serviceleitung', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance', 'Vertrieb']}><Garantiecenter /></ProtectedRoute>} />
           <Route path="/garantie-kulanz" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Service', 'Serviceleitung', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance', 'Tourenplanung']}><GarantieKulanz /></ProtectedRoute>} />
           <Route path="/service/garantie-kulanz" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Service', 'Serviceleitung', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance', 'Tourenplanung']}><GarantieKulanz /></ProtectedRoute>} />
+          <Route path="/management-dashboard" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Geschäftsführung', 'Finance', 'Serviceleitung']}><ManagementDashboard /></ProtectedRoute>} />
 
           <Route path="/design-template" element={<ProtectedRoute><DesignTemplate /></ProtectedRoute>} />
 
