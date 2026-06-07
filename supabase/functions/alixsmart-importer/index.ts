@@ -1099,8 +1099,136 @@ async function analyzeWave1(ctx: Ctx) {
 }
 
 
+/** Target AlixWork tables that must be snapshotted before a wave runs.
+ *  Order matters only for display — every table is sampled in parallel. */
+const BACKUP_TABLES = [
+  "user_profiles",
+  "user_roles",
+  "lager_devices",
+  "alixsmart_products",
+  "model_manuals",
+  "support_videos",
+  "customer_notes",
+  "maintenance_confirmations",
+  "academy_sessions",
+  "academy_bookings",
+  "mail_internal_messages",
+];
+const BACKUP_ROW_LIMIT = 50000;
+
+async function backupBeforeWave(
+  ctx: Ctx,
+  wave: number,
+): Promise<{
+  ok: boolean;
+  log_id: string | null;
+  storage_path: string | null;
+  total_rows: number;
+  size_bytes: number;
+  row_counts: Record<string, number>;
+  duration_ms: number;
+  error?: string;
+}> {
+  const startedAt = Date.now();
+  const { data: logRow, error: logErr } = await ctx.admin
+    .from("migration_backup_logs")
+    .insert({
+      batch_id: ctx.batchId,
+      wave,
+      status: "running",
+      tables: BACKUP_TABLES,
+      created_by: ctx.userId,
+    })
+    .select("id")
+    .single();
+
+  if (logErr || !logRow) {
+    return {
+      ok: false, log_id: null, storage_path: null,
+      total_rows: 0, size_bytes: 0, row_counts: {},
+      duration_ms: Date.now() - startedAt,
+      error: `backup log insert failed: ${logErr?.message ?? "unknown"}`,
+    };
+  }
+  const logId = (logRow as any).id as string;
+
+  const dump: Record<string, any[]> = {};
+  const counts: Record<string, number> = {};
+  let totalRows = 0;
+  try {
+    for (const t of BACKUP_TABLES) {
+      const { data, error } = await ctx.admin
+        .from(t as any)
+        .select("*")
+        .limit(BACKUP_ROW_LIMIT);
+      if (error) {
+        // Table missing or denied → record 0 and continue, don't abort backup
+        dump[t] = [];
+        counts[t] = 0;
+        continue;
+      }
+      dump[t] = data || [];
+      counts[t] = (data || []).length;
+      totalRows += counts[t];
+    }
+
+    const payload = JSON.stringify({
+      version: 1,
+      batch_id: ctx.batchId,
+      wave,
+      created_at: new Date().toISOString(),
+      row_counts: counts,
+      tables: dump,
+    });
+    const sizeBytes = new TextEncoder().encode(payload).byteLength;
+    const path = `alixsmart-migration/wave-${wave}/${ctx.batchId}.json`;
+
+    const { error: upErr } = await ctx.admin.storage
+      .from("backups")
+      .upload(path, new Blob([payload], { type: "application/json" }), {
+        contentType: "application/json",
+        upsert: false,
+      });
+    if (upErr) throw new Error(`storage upload failed: ${upErr.message}`);
+
+    const durationMs = Date.now() - startedAt;
+    await ctx.admin.from("migration_backup_logs").update({
+      status: "success",
+      finished_at: new Date().toISOString(),
+      duration_ms: durationMs,
+      storage_path: path,
+      row_counts: counts,
+      total_rows: totalRows,
+      size_bytes: sizeBytes,
+    }).eq("id", logId);
+
+    return {
+      ok: true, log_id: logId, storage_path: path,
+      total_rows: totalRows, size_bytes: sizeBytes,
+      row_counts: counts, duration_ms: durationMs,
+    };
+  } catch (e) {
+    const msg = (e as Error).message;
+    const durationMs = Date.now() - startedAt;
+    await ctx.admin.from("migration_backup_logs").update({
+      status: "failed",
+      finished_at: new Date().toISOString(),
+      duration_ms: durationMs,
+      row_counts: counts,
+      total_rows: totalRows,
+      error_message: msg,
+    }).eq("id", logId);
+    return {
+      ok: false, log_id: logId, storage_path: null,
+      total_rows: totalRows, size_bytes: 0, row_counts: counts,
+      duration_ms: durationMs, error: msg,
+    };
+  }
+}
+
 
 Deno.serve(async (req) => {
+
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     const authHeader = req.headers.get("Authorization");
