@@ -304,6 +304,7 @@ export default function Dashboard() {
   const kpiCards = [
     { label: 'Freie Geräte (Pool)', value: stats.freePoolDevices, icon: PackageCheck, visible: isAdmin, onClick: () => navigate('/lager/equipment-area') },
     { label: 'Leihgeräte', value: stats.leihgeraete, icon: Warehouse, visible: isAdmin, onClick: () => navigate('/lager/leihgeraete') },
+    { label: 'VIP-Aufträge', value: stats.vipOrders, icon: Crown, visible: canSeeOrders, onClick: () => navigate('/auftraege') },
     { label: 'Offene Aufträge', value: stats.openOrders, icon: AlertCircle, visible: canSeeOrders, onClick: () => navigate('/auftraege') },
     { label: 'Geplante Touren', value: stats.routes, icon: MapPin, visible: canSeeRoutes, onClick: () => navigate('/tourenplanung') },
     { label: 'Offene Zahlungen', value: stats.openFinance, icon: Banknote, visible: canSeeFinance, onClick: () => navigate('/finance') },
