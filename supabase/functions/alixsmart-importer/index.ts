@@ -848,27 +848,71 @@ async function analyzeWave1(ctx: Ctx) {
 
   // ---- user_roles
   const rolesRes = await fetchAllRows("user_roles");
-  const { data: targetRoles } = await ctx.admin.from("roles").select("id,name");
-  const targetRoleNames = (targetRoles || []).map((r: any) => r.name as string);
-  const targetRoleSet = new Set(targetRoleNames.map((n) => n.toLowerCase()));
+  const { data: targetRoles } = await ctx.admin.from("roles").select("id,name,description");
+  const targetRoleList = (targetRoles || []).map((r: any) => ({ name: String(r.name), description: r.description ?? null }));
+  const targetRoleNames = targetRoleList.map((r) => r.name);
+  const targetByLower = new Map(targetRoleList.map((r) => [r.name.toLowerCase(), r.name]));
 
+  const sourceRoleUsers = new Map<string, Set<string>>();
   const sourceRoleCounts = new Map<string, number>();
-  const unmapped = new Set<string>();
-  const mappingSuggestion: Record<string, string | null> = {};
   for (const r of rolesRes.rows) {
     const raw = String(r.role || r.role_name || "").toLowerCase().trim();
     if (!raw) continue;
     sourceRoleCounts.set(raw, (sourceRoleCounts.get(raw) || 0) + 1);
-    const mapped = ROLE_MAP[raw] || null;
-    if (!mapped || !targetRoleSet.has(mapped.toLowerCase())) {
-      unmapped.add(raw);
-      mappingSuggestion[raw] = mapped && targetRoleSet.has(mapped.toLowerCase())
-        ? mapped
-        : (targetRoleNames.find((n) => n.toLowerCase() === raw) || null);
-    } else {
-      mappingSuggestion[raw] = mapped;
-    }
+    const uid = String(r.user_id ?? r.id ?? "");
+    if (!sourceRoleUsers.has(raw)) sourceRoleUsers.set(raw, new Set());
+    if (uid) sourceRoleUsers.get(raw)!.add(uid);
   }
+
+  const roleMappings: Array<{
+    source: string; user_count: number; assignment_count: number;
+    suggested_target: string | null; status: "auto" | "manual" | "blocked"; reason: string;
+  }> = [];
+  const unmapped = new Set<string>();
+  const mappingSuggestion: Record<string, string | null> = {};
+  for (const [raw, count] of sourceRoleCounts.entries()) {
+    const mapHit = ROLE_MAP[raw];
+    const exactHit = targetByLower.get(raw);
+    let suggested: string | null = null;
+    let status: "auto" | "manual" | "blocked" = "blocked";
+    let reason = "Kein Mapping – neue Zielrolle vorschlagen";
+    if (mapHit && targetByLower.has(mapHit.toLowerCase())) {
+      suggested = targetByLower.get(mapHit.toLowerCase())!;
+      status = "auto";
+      reason = `Automatisch über ROLE_MAP: ${raw} → ${suggested}`;
+    } else if (exactHit) {
+      suggested = exactHit;
+      status = "auto";
+      reason = "Exakter Namensmatch (case-insensitive)";
+    } else {
+      const fuzzy = targetRoleNames.find((n) =>
+        n.toLowerCase().includes(raw) || raw.includes(n.toLowerCase())
+      );
+      if (fuzzy) {
+        suggested = fuzzy;
+        status = "manual";
+        reason = `Fuzzy-Vorschlag: ${raw} ≈ ${fuzzy} – bitte prüfen`;
+      } else {
+        unmapped.add(raw);
+        status = "blocked";
+      }
+    }
+    mappingSuggestion[raw] = suggested;
+    roleMappings.push({
+      source: raw,
+      user_count: sourceRoleUsers.get(raw)?.size || 0,
+      assignment_count: count,
+      suggested_target: suggested,
+      status,
+      reason,
+    });
+  }
+
+  const roleStatusCounts = {
+    auto: roleMappings.filter((m) => m.status === "auto").length,
+    manual: roleMappings.filter((m) => m.status === "manual").length,
+    blocked: roleMappings.filter((m) => m.status === "blocked").length,
+  };
 
   // ---- devices
   const devicesRes = await fetchAllRows("devices");
