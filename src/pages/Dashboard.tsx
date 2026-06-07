@@ -13,6 +13,7 @@ import { isOrderVip, vipFirst } from '@/lib/vip';
 
 import { SidebarInfoBar } from '@/components/SidebarInfoBar';
 import { useAtOnly } from '@/hooks/useAtOnly';
+import HeadOfOperationDashboard from './HeadOfOperationDashboard';
 
 interface Stats {
   freePoolDevices: number;
