@@ -970,44 +970,65 @@ async function analyzeWave1(ctx: Ctx) {
     admins: roleMappings.filter(m => m.status === 'auto' && (m.suggested_target === 'Admin' || m.suggested_target === 'Super Admin')).reduce((a, m) => a + m.user_count, 0),
   };
 
-  // ---- devices
+  // =================== devices ===================
   const devicesRes = await fetchAllRows("devices");
-  const devSerialCounts = new Map<string, number>();
-  for (const r of devicesRes.rows) {
-    const s = String(r.serial_number || r.serial || "").trim();
-    if (s) devSerialCounts.set(s, (devSerialCounts.get(s) || 0) + 1);
-  }
-  const serials = [...devSerialCounts.keys()];
-  const existingDeviceMap = new Map<string, string>();
-  for (let i = 0; i < serials.length; i += 100) {
-    const chunk = serials.slice(i, i + 100);
-    if (!chunk.length) continue;
-    const { data } = await ctx.admin
-      .from("lager_devices").select("id,serial_number").in("serial_number", chunk);
-    (data || []).forEach((d: any) => existingDeviceMap.set(String(d.serial_number), d.id));
-  }
+  const normSerial = (s: any) => String(s ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+
+  const { data: allDevices } = await ctx.admin
+    .from("lager_devices")
+    .select("id,serial_number,model_name,customer_email,customer_name");
+
+  const devBySerial = new Map<string, any>();
+  const devBySerialNorm = new Map<string, any>();
+  const devBySerialModel = new Map<string, any>();
+  const devByCustomerModel = new Map<string, any>();
+  (allDevices || []).forEach((d: any) => {
+    const s = String(d.serial_number || "").trim();
+    if (s) devBySerial.set(s, d);
+    const sn = normSerial(s);
+    if (sn) devBySerialNorm.set(sn, d);
+    const mdl = norm(d.model_name);
+    if (sn && mdl) devBySerialModel.set(`${sn}|${mdl}`, d);
+    const cust = norm(d.customer_email || d.customer_name);
+    if (cust && mdl) devByCustomerModel.set(`${cust}|${mdl}`, d);
+  });
+
   const deviceItems: any[] = [];
-  const deviceBuckets: Record<string, number> = {
-    missing_serial: 0, duplicate_serial_in_source: 0,
-    target_exists: 0, missing_customer: 0, importable: 0,
-  };
+  const deviceBuckets: Record<string, number> = { secure: 0, suggestion: 0, manual: 0, no_match: 0 };
+
   for (const r of devicesRes.rows) {
     const serial = String(r.serial_number || r.serial || "").trim();
+    const sNorm = normSerial(serial);
+    const model = norm(r.model_name || r.device_name || r.model);
+    const customer = norm(r.customer_email || r.customer_name);
     const sourceId = String(r.id ?? r.source_id ?? serial ?? "");
-    let bucket = "importable", reason = "";
-    if (!serial) { bucket = "missing_serial"; reason = "Seriennummer fehlt"; deviceBuckets.missing_serial++; }
-    else if ((devSerialCounts.get(serial) || 0) > 1) { bucket = "duplicate_serial_in_source"; reason = "Seriennummer mehrfach in Quelle"; deviceBuckets.duplicate_serial_in_source++; }
-    else if (existingDeviceMap.has(serial)) { bucket = "target_exists"; reason = "Zielgerät existiert bereits – Merge"; deviceBuckets.target_exists++; }
-    else if (!r.customer_email && !r.customer_name) { bucket = "missing_customer"; reason = "Kein Kundenbezug"; deviceBuckets.missing_customer++; }
-    else { deviceBuckets.importable++; }
+
+    let target: any = null;
+    let confidence = 0;
+    let match_rule = "no_match";
+    if (serial && devBySerial.has(serial)) { target = devBySerial.get(serial); confidence = 100; match_rule = "serial_exact"; }
+    else if (sNorm && devBySerialNorm.has(sNorm)) { target = devBySerialNorm.get(sNorm); confidence = 95; match_rule = "serial_normalized"; }
+    else if (sNorm && model && devBySerialModel.has(`${sNorm}|${model}`)) { target = devBySerialModel.get(`${sNorm}|${model}`); confidence = 88; match_rule = "serial_model"; }
+    else if (customer && model && devByCustomerModel.has(`${customer}|${model}`)) { target = devByCustomerModel.get(`${customer}|${model}`); confidence = 75; match_rule = "customer_model"; }
+
+    let match_class: "secure" | "suggestion" | "manual" | "no_match";
+    if (confidence >= 95) match_class = "secure";
+    else if (confidence >= 80) match_class = "suggestion";
+    else if (confidence > 0) match_class = "manual";
+    else match_class = "no_match";
+    deviceBuckets[match_class]++;
+
     deviceItems.push({
-      source_id: sourceId, serial_number: serial,
-      device: r.model_name ?? r.device_name ?? null,
+      source_id: sourceId,
+      serial_number: serial,
+      model,
       customer_email: r.customer_email ?? null,
       customer_name: r.customer_name ?? null,
-      target_exists: existingDeviceMap.has(serial),
-      target_id: existingDeviceMap.get(serial) ?? null,
-      bucket, reason,
+      target_id: target?.id ?? null,
+      target_serial: target?.serial_number ?? null,
+      target_model: target?.model_name ?? null,
+      target_customer: target?.customer_name ?? target?.customer_email ?? null,
+      confidence, match_rule, match_class,
     });
   }
 
