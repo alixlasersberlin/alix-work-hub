@@ -129,6 +129,7 @@ const AlixSmartKonfliktaufloesung = lazy(() => import("./pages/AlixSmartKonflikt
 const Geraeteakte = lazy(() => import("./pages/Geraeteakte"));
 const GeraeteLebenslauf = lazy(() => import("./pages/GeraeteLebenslauf"));
 const Wartungscenter = lazy(() => import("./pages/Wartungscenter"));
+const Wartungsmanagement = lazy(() => import("./pages/Wartungsmanagement"));
 const Garantiecenter = lazy(() => import("./pages/Garantiecenter"));
 const DesignTemplate = lazy(() => import("./pages/DesignTemplate"));
 import TemplateSwitcher from "./components/TemplateSwitcher";
