@@ -1,5 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
+type BackupAdminClient = any;
+
+const edgeRuntime = (globalThis as { EdgeRuntime?: { waitUntil?: (promise: Promise<unknown>) => void } }).EdgeRuntime;
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -58,7 +62,7 @@ async function tick() {
 }
 
 async function uploadJson(
-  adminClient: ReturnType<typeof createClient>,
+  adminClient: BackupAdminClient,
   path: string,
   payload: unknown,
 ) {
@@ -75,7 +79,7 @@ async function uploadJson(
 }
 
 async function uploadNdjsonPart(
-  adminClient: ReturnType<typeof createClient>,
+  adminClient: BackupAdminClient,
   path: string,
   rows: Record<string, unknown>[],
 ) {
@@ -98,7 +102,7 @@ async function uploadNdjsonPart(
 }
 
 async function listBucketEntries(
-  adminClient: ReturnType<typeof createClient>,
+  adminClient: BackupAdminClient,
   bucket: string,
 ) {
   const entries: Array<Record<string, unknown>> = [];
