@@ -706,7 +706,7 @@ function Wave1RolesTab({ data, onExport }: { data: any; onExport: (f: string, r:
 
 function Wave1DevicesTab({ data, onExport }: { data: any; onExport: (f: string, r: any[], c: string[]) => void }) {
   if (!data) return <Card><CardContent className="p-6"><NotRunHint /></CardContent></Card>;
-  const cols = ['source_id', 'serial_number', 'device', 'customer_email', 'customer_name', 'bucket', 'reason', 'target_exists', 'target_id'];
+  const cols = ['source_id', 'serial_number', 'model', 'customer_email', 'customer_name', 'match_rule', 'confidence', 'match_class', 'target_id'];
   return (
     <Card>
       <CardHeader>
