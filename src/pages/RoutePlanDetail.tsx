@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, MapPin, ClipboardList, Building2, Loader2, Pencil } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
+import { DispatchExecutionTabs } from '@/components/DispatchExecutionTabs';
 
 export default function RoutePlanDetail() {
   const { id } = useParams<{ id: string }>();
@@ -17,27 +18,26 @@ export default function RoutePlanDetail() {
   const [orderItems, setOrderItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const load = useCallback(async () => {
     if (!id) return;
-    async function load() {
-      const { data } = await supabase
-        .from('route_plans')
-        .select('*, orders(order_number, order_status, total_amount, currency, customers(company_name, contact_name, email, phone))')
-        .eq('id', id)
-        .maybeSingle();
-      setPlan(data);
-      if (data?.order_id) {
-        const [{ data: devs }, { data: items }] = await Promise.all([
-          supabase.from('lager_devices').select('id, model_name, serial_number').eq('reserved_order_id', data.order_id),
-          supabase.from('order_items').select('id, item_name, description, sku, quantity, unit, rate, amount, item_order').eq('order_id', data.order_id).order('item_order', { ascending: true }),
-        ]);
-        setReservedDevices(devs ?? []);
-        setOrderItems(items ?? []);
-      }
-      setLoading(false);
+    const { data } = await supabase
+      .from('route_plans')
+      .select('*, orders(order_number, order_status, total_amount, currency, customers(company_name, contact_name, email, phone))')
+      .eq('id', id!)
+      .maybeSingle();
+    setPlan(data);
+    if (data?.order_id) {
+      const [{ data: devs }, { data: items }] = await Promise.all([
+        supabase.from('lager_devices').select('id, model_name, serial_number').eq('reserved_order_id', data.order_id),
+        supabase.from('order_items').select('id, item_name, description, sku, quantity, unit, rate, amount, item_order').eq('order_id', data.order_id).order('item_order', { ascending: true }),
+      ]);
+      setReservedDevices(devs ?? []);
+      setOrderItems(items ?? []);
     }
-    load();
+    setLoading(false);
   }, [id]);
+
+  useEffect(() => { if (id) load(); }, [id, load]);
 
   if (loading) return <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   if (!plan) return <div className="p-8 text-center text-muted-foreground">Tour nicht gefunden.</div>;
@@ -204,6 +204,8 @@ export default function RoutePlanDetail() {
           </div>
         </div>
       </div>
+
+      <DispatchExecutionTabs tour={plan} canWrite={canWrite} onReload={load} />
     </div>
   );
 }
