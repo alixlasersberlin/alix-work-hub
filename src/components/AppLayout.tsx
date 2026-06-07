@@ -217,6 +217,7 @@ const navItems: NavItem[] = [
       { path: '/wartungscenter', label: 'Wartungscenter', icon: Wrench, roles: ['Admin', 'Super Admin', 'Service', 'Serviceleitung', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance', 'Tourenplanung'] },
       { path: '/wartungsmanagement', label: 'Wartungsmanagement', icon: Cog, roles: ['Admin', 'Super Admin', 'Service', 'Serviceleitung', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance', 'Tourenplanung'] },
       { path: '/garantiecenter', label: 'Garantiecenter', icon: ShieldCheck, roles: ['Admin', 'Super Admin', 'Service', 'Serviceleitung', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance', 'Vertrieb'] },
+      { path: '/garantie-kulanz', label: 'Garantie & Kulanz', icon: ShieldCheck, roles: ['Admin', 'Super Admin', 'Service', 'Serviceleitung', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance', 'Tourenplanung'] },
       { path: '/whatsapp', label: 'WhatsApp Service Center', icon: MessageSquare, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung'] },
       { path: '/ai-service-center', label: 'AI Service Center', icon: Sparkles, roles: ['Admin', 'Super Admin', 'Service', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance'] },
       { path: '/reparatur/neu', label: 'Neue Reparatur anlegen', icon: FilePlus, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Order', 'Finance', 'QM', 'Reparaturannahme'] },

@@ -2127,6 +2127,74 @@ export type Database = {
           },
         ]
       }
+      goodwill_cases: {
+        Row: {
+          approval_note: string | null
+          approval_status: string | null
+          approved_at: string | null
+          approved_by: string | null
+          cost_share_company: number | null
+          cost_share_customer: number | null
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          customer_name: string | null
+          id: string
+          reason: string | null
+          requires_approval: boolean | null
+          responsible_user: string | null
+          serial_number: string | null
+          updated_at: string
+          warranty_decision_id: string | null
+        }
+        Insert: {
+          approval_note?: string | null
+          approval_status?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          cost_share_company?: number | null
+          cost_share_customer?: number | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          reason?: string | null
+          requires_approval?: boolean | null
+          responsible_user?: string | null
+          serial_number?: string | null
+          updated_at?: string
+          warranty_decision_id?: string | null
+        }
+        Update: {
+          approval_note?: string | null
+          approval_status?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          cost_share_company?: number | null
+          cost_share_customer?: number | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          reason?: string | null
+          requires_approval?: boolean | null
+          responsible_user?: string | null
+          serial_number?: string | null
+          updated_at?: string
+          warranty_decision_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goodwill_cases_warranty_decision_id_fkey"
+            columns: ["warranty_decision_id"]
+            isOneToOne: false
+            referencedRelation: "warranty_decisions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoice_workflow_states: {
         Row: {
           created_at: string
@@ -2272,6 +2340,84 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: []
+      }
+      loaner_device_assignments: {
+        Row: {
+          condition_in: string | null
+          condition_out: string | null
+          created_at: string
+          customer_id: string | null
+          customer_name: string | null
+          id: string
+          issued_at: string | null
+          issued_by: string | null
+          lager_device_id: string | null
+          model_name: string | null
+          notes: string | null
+          repair_order_id: string | null
+          returned_at: string | null
+          returned_by: string | null
+          serial_number: string | null
+          status: string | null
+          updated_at: string
+          warranty_decision_id: string | null
+        }
+        Insert: {
+          condition_in?: string | null
+          condition_out?: string | null
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          issued_at?: string | null
+          issued_by?: string | null
+          lager_device_id?: string | null
+          model_name?: string | null
+          notes?: string | null
+          repair_order_id?: string | null
+          returned_at?: string | null
+          returned_by?: string | null
+          serial_number?: string | null
+          status?: string | null
+          updated_at?: string
+          warranty_decision_id?: string | null
+        }
+        Update: {
+          condition_in?: string | null
+          condition_out?: string | null
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          issued_at?: string | null
+          issued_by?: string | null
+          lager_device_id?: string | null
+          model_name?: string | null
+          notes?: string | null
+          repair_order_id?: string | null
+          returned_at?: string | null
+          returned_by?: string | null
+          serial_number?: string | null
+          status?: string | null
+          updated_at?: string
+          warranty_decision_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loaner_device_assignments_lager_device_id_fkey"
+            columns: ["lager_device_id"]
+            isOneToOne: false
+            referencedRelation: "lager_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loaner_device_assignments_warranty_decision_id_fkey"
+            columns: ["warranty_decision_id"]
+            isOneToOne: false
+            referencedRelation: "warranty_decisions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       login_sessions: {
         Row: {
@@ -6733,6 +6879,151 @@ export type Database = {
         }
         Relationships: []
       }
+      warranty_cost_items: {
+        Row: {
+          billing_target: string | null
+          cost_date: string | null
+          cost_type: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          quantity: number | null
+          serial_number: string | null
+          total_amount: number | null
+          unit_price: number | null
+          updated_at: string
+          warranty_decision_id: string | null
+        }
+        Insert: {
+          billing_target?: string | null
+          cost_date?: string | null
+          cost_type: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          quantity?: number | null
+          serial_number?: string | null
+          total_amount?: number | null
+          unit_price?: number | null
+          updated_at?: string
+          warranty_decision_id?: string | null
+        }
+        Update: {
+          billing_target?: string | null
+          cost_date?: string | null
+          cost_type?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          quantity?: number | null
+          serial_number?: string | null
+          total_amount?: number | null
+          unit_price?: number | null
+          updated_at?: string
+          warranty_decision_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "warranty_cost_items_warranty_decision_id_fkey"
+            columns: ["warranty_decision_id"]
+            isOneToOne: false
+            referencedRelation: "warranty_decisions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      warranty_decisions: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          check_result: string | null
+          cost_coverage_company: number | null
+          cost_coverage_customer: number | null
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          customer_name: string | null
+          decided_at: string | null
+          decided_by: string | null
+          decision: string | null
+          decision_reason: string | null
+          device_name: string | null
+          id: string
+          maintenance_id: string | null
+          notes: string | null
+          repair_order_id: string | null
+          serial_number: string | null
+          source_type: string
+          ticket_id: string | null
+          total_cost: number | null
+          updated_at: string
+          warranty_record_id: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          check_result?: string | null
+          cost_coverage_company?: number | null
+          cost_coverage_customer?: number | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          decision?: string | null
+          decision_reason?: string | null
+          device_name?: string | null
+          id?: string
+          maintenance_id?: string | null
+          notes?: string | null
+          repair_order_id?: string | null
+          serial_number?: string | null
+          source_type: string
+          ticket_id?: string | null
+          total_cost?: number | null
+          updated_at?: string
+          warranty_record_id?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          check_result?: string | null
+          cost_coverage_company?: number | null
+          cost_coverage_customer?: number | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          decision?: string | null
+          decision_reason?: string | null
+          device_name?: string | null
+          id?: string
+          maintenance_id?: string | null
+          notes?: string | null
+          repair_order_id?: string | null
+          serial_number?: string | null
+          source_type?: string
+          ticket_id?: string | null
+          total_cost?: number | null
+          updated_at?: string
+          warranty_record_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "warranty_decisions_warranty_record_id_fkey"
+            columns: ["warranty_record_id"]
+            isOneToOne: false
+            referencedRelation: "warranty_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       warranty_records: {
         Row: {
           created_at: string
@@ -6740,12 +7031,14 @@ export type Database = {
           customer_name: string | null
           device_name: string | null
           id: string
+          manufacturer: string | null
           serial_number: string
           updated_at: string
           warranty_end: string | null
           warranty_notes: string | null
           warranty_start: string | null
           warranty_status: string
+          warranty_terms: string | null
           warranty_type: string | null
         }
         Insert: {
@@ -6754,12 +7047,14 @@ export type Database = {
           customer_name?: string | null
           device_name?: string | null
           id?: string
+          manufacturer?: string | null
           serial_number: string
           updated_at?: string
           warranty_end?: string | null
           warranty_notes?: string | null
           warranty_start?: string | null
           warranty_status?: string
+          warranty_terms?: string | null
           warranty_type?: string | null
         }
         Update: {
@@ -6768,12 +7063,14 @@ export type Database = {
           customer_name?: string | null
           device_name?: string | null
           id?: string
+          manufacturer?: string | null
           serial_number?: string
           updated_at?: string
           warranty_end?: string | null
           warranty_notes?: string | null
           warranty_start?: string | null
           warranty_status?: string
+          warranty_terms?: string | null
           warranty_type?: string | null
         }
         Relationships: []
@@ -7605,6 +7902,8 @@ export type Database = {
       can_access_qm: { Args: never; Returns: boolean }
       can_access_repair: { Args: never; Returns: boolean }
       can_access_tickets: { Args: never; Returns: boolean }
+      can_access_warranty: { Args: never; Returns: boolean }
+      can_approve_warranty: { Args: never; Returns: boolean }
       can_manage_mail_campaigns: { Args: never; Returns: boolean }
       can_manage_mail_domains: { Args: never; Returns: boolean }
       can_manage_mail_templates: { Args: never; Returns: boolean }
@@ -7613,6 +7912,7 @@ export type Database = {
       can_manage_planning: { Args: never; Returns: boolean }
       can_manage_repair: { Args: never; Returns: boolean }
       can_manage_tickets: { Args: never; Returns: boolean }
+      can_manage_warranty: { Args: never; Returns: boolean }
       can_manage_whatsapp_automation: { Args: never; Returns: boolean }
       can_run_ai_service: { Args: never; Returns: boolean }
       can_send_whatsapp: { Args: never; Returns: boolean }
