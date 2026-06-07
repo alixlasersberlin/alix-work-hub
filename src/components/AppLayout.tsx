@@ -327,7 +327,7 @@ const navItems: NavItem[] = [
   {
     path: '/mdr-ce', label: 'MDR CE', icon: ShieldCheck, roles: null,
     children: [
-      { path: '/mdr-ce/iso-13485', label: 'ISO 13485', icon: ShieldCheck, roles: null },
+      
       { path: '/iso', label: 'ISO Audit Center', icon: ShieldCheck, roles: ['Super Admin', 'Admin', 'QM'] },
     ],
   },
