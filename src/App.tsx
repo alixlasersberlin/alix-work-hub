@@ -25,6 +25,7 @@ import NotFound from "./pages/NotFound";
 // Lazy: alle Hauptseiten → Route-basiertes Code-Splitting
 const SetPassword = lazy(() => import("./pages/SetPassword"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
+const AtDashboard = lazy(() => import("./pages/AtDashboard"));
 const Customers = lazy(() => import("./pages/Customers"));
 const CustomerDetail = lazy(() => import("./pages/CustomerDetail"));
 const Orders = lazy(() => import("./pages/Orders"));
@@ -337,6 +338,10 @@ function HomeRoute() {
   if (roles.length > 0 && roles.every((r) => r === 'Finanzierungen', 'Order')) {
     return <Navigate to="/finanzierungen" replace />;
   }
+  // Rolle Österreich (ohne Admin) bekommt dediziertes AT-Dashboard
+  if (roles.includes('Österreich') && !roles.includes('Super Admin') && !roles.includes('Admin')) {
+    return <Navigate to="/at-dashboard" replace />;
+  }
   return <Dashboard />;
 }
 
@@ -355,6 +360,8 @@ function AppRoutes() {
         <Route path="/mfa-recovery" element={<MfaGate expect="any"><MfaRecovery /></MfaGate>} />
         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route path="/" element={<HomeRoute />} />
+          <Route path="/at-dashboard" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Österreich']}><AtDashboard /></ProtectedRoute>} />
+
           <Route path="/detailsuche" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Detailsuche /></ProtectedRoute>} />
           <Route path="/geraetesperren" element={<ProtectedRoute><Geraetesperren /></ProtectedRoute>} />
           <Route path="/kunden" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Customers /></ProtectedRoute>} />
