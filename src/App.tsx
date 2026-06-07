@@ -5,6 +5,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { TenantProvider } from "@/contexts/TenantContext";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { DesignVariantProvider } from "@/hooks/useDesignVariant";
 import DesignVariantSwitcher from "@/components/DesignVariantSwitcher";
@@ -127,6 +128,8 @@ const AnfragenOffen = lazy(() => import("./pages/AnfragenOffen"));
 const Detailsuche = lazy(() => import("./pages/Detailsuche"));
 const Geraetesperren = lazy(() => import("./pages/Geraetesperren"));
 const Systemwartung = lazy(() => import("./pages/Systemwartung"));
+const Mandanten = lazy(() => import("./pages/Mandanten"));
+const KonzernDashboard = lazy(() => import("./pages/KonzernDashboard"));
 const AlixSmartMigration = lazy(() => import("./pages/AlixSmartMigration"));
 const AlixSmartKonfliktaufloesung = lazy(() => import("./pages/AlixSmartKonfliktaufloesung"));
 const Geraeteakte = lazy(() => import("./pages/Geraeteakte"));
@@ -360,6 +363,8 @@ function AppRoutes() {
           <Route path="/operation/logfiles" element={<ProtectedRoute requiredRoles={SYSTEM_ROLES}><Logfiles /></ProtectedRoute>} />
           <Route path="/operation/email-vorlagen" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><EmailTemplates /></ProtectedRoute>} />
           <Route path="/operation/systemwartung" element={<ProtectedRoute requiredRoles={['Super Admin']}><Systemwartung /></ProtectedRoute>} />
+          <Route path="/mandanten" element={<ProtectedRoute requiredRoles={['Super Admin']}><Mandanten /></ProtectedRoute>} />
+          <Route path="/konzern/dashboard" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><KonzernDashboard /></ProtectedRoute>} />
           <Route path="/operation/alixsmart-migration" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><AlixSmartMigration /></ProtectedRoute>} />
           <Route path="/operation/alixsmart-konfliktaufloesung" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><AlixSmartKonfliktaufloesung /></ProtectedRoute>} />
           <Route path="/portal-admin" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><PortalAdmin /></ProtectedRoute>} />
@@ -597,12 +602,14 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <AuthProvider>
-              <MaintenanceGate>
-                <AppRoutes />
-                <AuroraSpotlight />
-                <LeihgeraetReminder />
-                <TemplateSwitcher />
-              </MaintenanceGate>
+              <TenantProvider>
+                <MaintenanceGate>
+                  <AppRoutes />
+                  <AuroraSpotlight />
+                  <LeihgeraetReminder />
+                  <TemplateSwitcher />
+                </MaintenanceGate>
+              </TenantProvider>
             </AuthProvider>
           </BrowserRouter>
         </TooltipProvider>

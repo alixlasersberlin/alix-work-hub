@@ -16,6 +16,7 @@ import LeoWelcomeDialog from '@/components/LeoWelcomeDialog';
 import NataliaWelcomeOverlay from '@/components/NataliaWelcomeOverlay';
 import DesignVariantSwitcher from '@/components/DesignVariantSwitcher';
 import { SidebarInfoBar } from '@/components/SidebarInfoBar';
+import TenantSwitcher from '@/components/TenantSwitcher';
 import AuroraPrioTicker from '@/components/AuroraPrioTicker';
 import AuroraTopNav from '@/components/AuroraTopNav';
 import { useDesignVariant } from '@/hooks/useDesignVariant';
@@ -304,6 +305,8 @@ const navItems: NavItem[] = [
       { path: '/operation/email-vorlagen', label: 'E-Mail Vorlagen', icon: Mail, roles: ['Super Admin'] },
       { path: '/portal-admin', label: 'Kundenportal', icon: Globe, roles: ['Super Admin'] },
       { path: '/operation/systemwartung', label: 'Systemwartung', icon: AlertTriangle, roles: ['Super Admin'] },
+      { path: '/mandanten', label: 'Mandanten', icon: Building2, roles: ['Super Admin'] },
+      { path: '/konzern/dashboard', label: 'Konzern-Dashboard', icon: TrendingUp, roles: ['Super Admin'] },
     ],
   },
   {
@@ -1165,6 +1168,9 @@ export default function AppLayout() {
             <AuroraPrioTicker />
             <div className="hidden md:block min-w-0 flex-1">
               <SidebarInfoBar />
+            </div>
+            <div className="hidden lg:block flex-shrink-0">
+              <TenantSwitcher />
             </div>
             <div className="flex items-center gap-2 text-sm flex-shrink-0">
               <span className="font-display font-bold gold-text">AlixWork</span>
