@@ -169,7 +169,20 @@ async function fetchTable(
         error: `${hint}: ${compact || "empty response"}`,
       };
     }
-    const rows = Array.isArray(json) ? json : json.rows || json.data || [];
+    const rawRows = Array.isArray(json) ? json : json.rows || json.data || [];
+    // The remote export wraps every row in an envelope
+    // { source_table, source_id, payload, created_at, updated_at }.
+    // Unwrap it so downstream importers see the flat record.
+    const rows = rawRows.map((r: any) => {
+      if (r && typeof r === "object" && "payload" in r && r.payload && typeof r.payload === "object") {
+        return {
+          ...r.payload,
+          source_id: r.source_id ?? r.payload.id ?? null,
+          _envelope: { source_table: r.source_table, created_at: r.created_at, updated_at: r.updated_at },
+        };
+      }
+      return r;
+    });
     return { rows, total: json.total };
   } catch (e) {
     return { rows: [], error: (e as Error).message };
