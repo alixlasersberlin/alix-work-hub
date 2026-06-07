@@ -40,6 +40,8 @@ type Review = {
 export default function DeliveredOrders() {
   const { hasRole, user } = useAuth();
   const isSuperAdmin = hasRole('Super Admin');
+  const atOnly = useAtOnly();
+
   const [orders, setOrders] = useState<Order[]>([]);
   const [reviews, setReviews] = useState<Record<string, Review>>({});
   const [loading, setLoading] = useState(true);
