@@ -6,6 +6,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Loader2, Search, RotateCcw, Lock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
+import { useAtOnly } from '@/hooks/useAtOnly';
+import { filterAtOnlyByOrderId } from '@/lib/at-review-filter';
+
 
 type Row = {
   id: string;
@@ -26,6 +29,7 @@ export default function ClosedReviews({ withReview = false }: { withReview?: boo
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
+  const atOnly = useAtOnly();
 
   const load = async () => {
     setLoading(true);
@@ -35,11 +39,14 @@ export default function ClosedReviews({ withReview = false }: { withReview?: boo
       .not('closed_at', 'is', null);
     q = withReview ? q.not('submitted_at', 'is', null) : q.is('submitted_at', null);
     const { data } = await q.order('closed_at', { ascending: false }).limit(1000);
-    setRows((data ?? []) as Row[]);
+    let list = (data ?? []) as Row[];
+    if (atOnly) list = await filterAtOnlyByOrderId(list);
+    setRows(list);
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, [withReview]);
+  useEffect(() => { load(); }, [withReview, atOnly]);
+
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();

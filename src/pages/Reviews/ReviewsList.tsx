@@ -11,6 +11,9 @@ import { Send, RotateCw, Eye, Archive, Trash2, Star, Loader2, Pencil, Search } f
 import { toast } from 'sonner';
 import { sendReviewInvitation } from '@/lib/review-invitation';
 import { Link } from 'react-router-dom';
+import { useAtOnly } from '@/hooks/useAtOnly';
+import { filterAtOnlyByOrderId } from '@/lib/at-review-filter';
+
 
 type Review = {
   id: string;
@@ -57,6 +60,8 @@ const STAR_FILTERS = ['', '1', '2', '3', '4', '5'] as const;
 export default function ReviewsList() {
   const { hasRole } = useAuth();
   const isSuperAdmin = hasRole('Super Admin');
+  const atOnly = useAtOnly();
+
   const [rows, setRows] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
@@ -74,11 +79,14 @@ export default function ReviewsList() {
       .order('created_at', { ascending: false })
       .limit(1000);
     if (error) toast.error('Bewertungen laden fehlgeschlagen: ' + error.message);
-    setRows((data ?? []) as Review[]);
+    let list = (data ?? []) as Review[];
+    if (atOnly) list = await filterAtOnlyByOrderId(list);
+    setRows(list);
     setLoading(false);
   }
 
-  useEffect(() => { load(); }, []);
+
+  useEffect(() => { load(); }, [atOnly]);
 
   const filtered = useMemo(() => {
     let list = rows;

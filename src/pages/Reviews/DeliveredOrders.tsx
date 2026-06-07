@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useAtOnly } from '@/hooks/useAtOnly';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -38,6 +40,8 @@ type Review = {
 export default function DeliveredOrders() {
   const { hasRole, user } = useAuth();
   const isSuperAdmin = hasRole('Super Admin');
+  const atOnly = useAtOnly();
+
   const [orders, setOrders] = useState<Order[]>([]);
   const [reviews, setReviews] = useState<Record<string, Review>>({});
   const [loading, setLoading] = useState(true);
@@ -53,13 +57,16 @@ export default function DeliveredOrders() {
 
   async function load() {
     setLoading(true);
-    const { data: ordersData, error } = await (supabase as any)
+    let query = (supabase as any)
       .from('orders')
       .select('id, order_number, order_date, total_amount, customer_id, customers(company_name, contact_name, email)')
-      .eq('order_status', 'geliefert')
+      .eq('order_status', 'geliefert');
+    if (atOnly) query = query.eq('source_system', 'zoho_eu_2');
+    const { data: ordersData, error } = await query
       .order('order_date', { ascending: false })
       .limit(1000);
     if (error) toast.error('Aufträge laden fehlgeschlagen: ' + error.message);
+
     const list = (ordersData ?? []) as Order[];
     setOrders(list);
 
@@ -76,7 +83,7 @@ export default function DeliveredOrders() {
     setLoading(false);
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [atOnly]);
 
   const filtered = useMemo(() => {
     // Geschlossene Aufträge erscheinen ausschließlich im Tab "Geschlossen"

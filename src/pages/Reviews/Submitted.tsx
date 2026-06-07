@@ -5,6 +5,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Star, Loader2, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAtOnly } from '@/hooks/useAtOnly';
+import { filterAtOnlyByOrderId } from '@/lib/at-review-filter';
+
 
 type Review = {
   id: string;
@@ -37,19 +40,24 @@ export default function SubmittedReviews() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [starFilter, setStarFilter] = useState<string>('any');
+  const atOnly = useAtOnly();
 
   useEffect(() => {
     (async () => {
+      setLoading(true);
       const { data } = await (supabase as any)
         .from('reviews')
         .select('id, order_id, customer_id, customer_name, customer_email, order_number, product_name, delivery_date, rating_delivery, rating_driver_friendliness, training_answer, rating_training_text, improvement_text, token_expires_at, invitation_sent_at, invitation_sent_by, invitation_status, submitted_at, status, created_at, updated_at, closed_at, closed_by, closed_reason')
         .not('submitted_at', 'is', null)
         .order('submitted_at', { ascending: false })
         .limit(1000);
-      setRows((data ?? []) as Review[]);
+      let list = (data ?? []) as Review[];
+      if (atOnly) list = await filterAtOnlyByOrderId(list);
+      setRows(list);
       setLoading(false);
     })();
-  }, []);
+  }, [atOnly]);
+
 
   const filtered = useMemo(() => {
     let list = rows;
