@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Star, Loader2, MessageSquare, Send, CheckCircle2 } from 'lucide-react';
+import { useAtOnly } from '@/hooks/useAtOnly';
+import { filterAtOnlyByOrderId } from '@/lib/at-review-filter';
 
 type Row = {
+  order_id: string;
   status: string;
   invitation_sent_at: string | null;
   submitted_at: string | null;
@@ -13,17 +16,22 @@ type Row = {
 export default function ReviewsOverview() {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
+  const atOnly = useAtOnly();
 
   useEffect(() => {
     (async () => {
+      setLoading(true);
       const { data } = await (supabase as any)
         .from('reviews')
-        .select('status, invitation_sent_at, submitted_at, rating_delivery, rating_driver_friendliness')
+        .select('order_id, status, invitation_sent_at, submitted_at, rating_delivery, rating_driver_friendliness')
         .limit(5000);
-      setRows((data ?? []) as Row[]);
+      let list = (data ?? []) as Row[];
+      if (atOnly) list = await filterAtOnlyByOrderId(list);
+      setRows(list);
       setLoading(false);
     })();
-  }, []);
+  }, [atOnly]);
+
 
   if (loading) {
     return <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div>;
