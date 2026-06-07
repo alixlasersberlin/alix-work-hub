@@ -1346,26 +1346,84 @@ Deno.serve(async (req) => {
     }
 
 
+    if (action === "backup-before-wave") {
+      const wave = Number(body.wave ?? 1);
+      const r = await backupBeforeWave(ctx, wave);
+      return new Response(JSON.stringify({ batch_id: batchId, wave, backup: r }),
+        { status: r.ok ? 200 : 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     if (action === "dry-run-import" || action === "import-wave") {
+      const startedAt = Date.now();
       const wave = Number(body.wave ?? 1) as 1 | 2 | 3 | 4;
       const dryRun = action === "dry-run-import" || !!body.dry_run;
+      const skipBackup = !!body.skip_backup || dryRun;
+
+      // 1) Mandatory backup before live wave 1–3
+      let backup: any = null;
+      if (!skipBackup && wave >= 1 && wave <= 3) {
+        backup = await backupBeforeWave(ctx, wave);
+        if (!backup.ok) {
+          await logAction(ctx, null, action, "aborted",
+            { processed: 0, success: 0, failed: 0 },
+            `backup_failed: ${backup.error}`, { wave, backup });
+          return new Response(JSON.stringify({
+            batch_id: batchId, wave, dryRun, aborted: true,
+            reason: "backup_failed", backup, results: {},
+            summary: { imported: 0, skipped: 0, conflicts: 0, duration_ms: Date.now() - startedAt },
+          }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+      }
+
+      // 2) Transactional wave import: abort on first table error
       const tables = Object.entries(TABLE_MAP)
         .filter(([, v]) => v.wave === wave)
         .map(([k]) => k);
       const results: Record<string, any> = {};
+      let aborted = false;
+      let abortReason: string | null = null;
       for (const t of tables) {
-        results[t] = await importTablePaged(ctx, t, dryRun);
+        const res = await importTablePaged(ctx, t, dryRun);
+        results[t] = res;
+        if (res.error) {
+          aborted = true;
+          abortReason = `table_failed:${t}:${res.error}`;
+          break;
+        }
       }
+
+      const imported = Object.values(results).reduce((a: number, r: any) => a + (r.success || 0), 0);
+      const failedRows = Object.values(results).reduce((a: number, r: any) => a + (r.failed || 0), 0);
+      const processed = Object.values(results).reduce((a: number, r: any) => a + (r.processed || 0), 0);
+      const skipped = Math.max(0, processed - imported - failedRows);
+
+      // Count conflicts from migration map for this batch
+      let conflicts = 0;
+      try {
+        const { count } = await ctx.admin
+          .from("alixsmart_migration_map")
+          .select("*", { count: "exact", head: true })
+          .eq("conflict_status", "open");
+        conflicts = count ?? 0;
+      } catch { /* ignore */ }
+
       await logAction(ctx, null, action,
-        Object.values(results).every((r: any) => !r.error) ? "success" : "partial",
-        {
-          processed: Object.values(results).reduce((a: number, r: any) => a + r.processed, 0),
-          success: Object.values(results).reduce((a: number, r: any) => a + r.success, 0),
-          failed: Object.values(results).reduce((a: number, r: any) => a + r.failed, 0),
-        }, undefined, { wave, dryRun, tables });
-      return new Response(JSON.stringify({ batch_id: batchId, wave, dryRun, results }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        aborted ? "aborted" : (failedRows === 0 ? "success" : "partial"),
+        { processed, success: imported, failed: failedRows },
+        abortReason ?? undefined, { wave, dryRun, tables, backup });
+
+      return new Response(JSON.stringify({
+        batch_id: batchId, wave, dryRun, aborted, reason: abortReason,
+        backup, results,
+        summary: {
+          imported, skipped, conflicts,
+          failed: failedRows,
+          duration_ms: Date.now() - startedAt,
+          batch_id: batchId,
+        },
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
+
 
     if (action === "import-table") {
       const table = String(body.table || "");
