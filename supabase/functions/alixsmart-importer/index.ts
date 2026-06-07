@@ -991,7 +991,7 @@ async function analyzeWave1(ctx: Ctx) {
     },
     user_roles: {
       total: rolesRes.rows.length,
-      importable_safe: roleMappings.filter(m => m.status === 'auto').reduce((a, m) => a + m.assignment_count, 0),
+      importable_safe: roleMappings.filter(m => m.status === 'auto' || m.status === 'customer_profile_only').reduce((a, m) => a + m.assignment_count, 0),
       manual_review: roleMappings.filter(m => m.status === 'manual').reduce((a, m) => a + m.assignment_count, 0),
       blocked: roleMappings.filter(m => m.status === 'blocked').reduce((a, m) => a + m.assignment_count, 0),
     },
