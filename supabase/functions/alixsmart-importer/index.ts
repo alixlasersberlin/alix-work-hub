@@ -657,26 +657,59 @@ async function importTablePaged(
   ctx: Ctx,
   sourceTable: string,
   dryRun: boolean,
-): Promise<{ processed: number; success: number; failed: number; error?: string }> {
+): Promise<{
+  processed: number; success: number; failed: number; error?: string;
+  schema?: {
+    target_table: string;
+    source_columns: string[];
+    target_columns: string[];
+    matched_columns: string[];
+    skipped_columns: string[];
+  };
+  error_details?: any;
+}> {
   if (FORBIDDEN.has(sourceTable))
     return { processed: 0, success: 0, failed: 0, error: "table_forbidden" };
-  if (!TABLE_MAP[sourceTable])
+  const mapEntry = TABLE_MAP[sourceTable];
+  if (!mapEntry)
     return { processed: 0, success: 0, failed: 0, error: "table_not_mapped" };
 
+  const targetTable = mapEntry.target;
+  const targetColumns = await getTargetColumns(ctx, targetTable);
+  const allSourceCols = new Set<string>();
   let offset = 0;
   const limit = 100;
-  let processed = 0,
-    success = 0,
-    failed = 0;
-  // hard cap: 50 pages = 5000 rows per call
+  let processed = 0, success = 0, failed = 0;
+
   for (let page = 0; page < 50; page++) {
     const { rows, error } = await fetchTable(sourceTable, limit, offset);
     if (error) {
+      const m = error.match(/column\s+([\w."]+)\s+does not exist/i);
+      const error_details = {
+        kind: m ? "upstream_missing_column" : "upstream_fetch_error",
+        missing_column: m?.[1] ?? null,
+        message: error,
+      };
+      const src = [...allSourceCols].sort();
+      const matched = src.filter((c) => targetColumns.includes(c));
+      const skippedCols = src.filter((c) => !targetColumns.includes(c));
       await logAction(ctx, sourceTable, dryRun ? "dry_run" : "import",
-        "error", { processed, success, failed }, error);
-      return { processed, success, failed, error };
+        "error", { processed, success, failed }, error, {
+          target_table: targetTable, source_columns: src,
+          target_columns: targetColumns, matched_columns: matched,
+          skipped_columns: skippedCols, error_details,
+        });
+      return {
+        processed, success, failed, error, error_details,
+        schema: {
+          target_table: targetTable, source_columns: src,
+          target_columns: targetColumns, matched_columns: matched,
+          skipped_columns: skippedCols,
+        },
+      };
     }
     if (!rows.length) break;
+    sourceColumns(rows).forEach((c) => allSourceCols.add(c));
     const { s, f } = await importOne(ctx, sourceTable, rows, dryRun);
     processed += rows.length;
     success += s;
@@ -684,10 +717,60 @@ async function importTablePaged(
     if (rows.length < limit) break;
     offset += limit;
   }
+
+  const src = [...allSourceCols].sort();
+  const matched = src.filter((c) => targetColumns.includes(c));
+  const skippedCols = src.filter((c) => !targetColumns.includes(c));
   await logAction(ctx, sourceTable, dryRun ? "dry_run" : "import",
     failed === 0 ? "success" : "partial",
-    { processed, success, failed });
-  return { processed, success, failed };
+    { processed, success, failed }, undefined, {
+      target_table: targetTable, source_columns: src,
+      target_columns: targetColumns, matched_columns: matched,
+      skipped_columns: skippedCols,
+    });
+
+  return {
+    processed, success, failed,
+    schema: {
+      target_table: targetTable, source_columns: src,
+      target_columns: targetColumns, matched_columns: matched,
+      skipped_columns: skippedCols,
+    },
+  };
+}
+
+/** Inspect schema for every mapped source table without importing. */
+async function discoverSchemas(ctx: Ctx) {
+  const out: Record<string, any> = {};
+  for (const [src, m] of Object.entries(TABLE_MAP)) {
+    const targetColumns = await getTargetColumns(ctx, m.target);
+    const probe = await fetchTable(src, 25, 0);
+    if (probe.error) {
+      const em = probe.error.match(/column\s+([\w."]+)\s+does not exist/i);
+      out[src] = {
+        target_table: m.target, target_columns: targetColumns,
+        source_columns: [], matched_columns: [], skipped_columns: [],
+        fetch_error: probe.error,
+        error_details: {
+          kind: em ? "upstream_missing_column" : "upstream_fetch_error",
+          missing_column: em?.[1] ?? null,
+        },
+      };
+      continue;
+    }
+    const cols = sourceColumns(probe.rows);
+    out[src] = {
+      target_table: m.target,
+      target_columns: targetColumns,
+      source_columns: cols,
+      matched_columns: cols.filter((c) => targetColumns.includes(c)),
+      skipped_columns: cols.filter((c) => !targetColumns.includes(c)),
+      sample_rows: probe.rows.length,
+    };
+  }
+  await logAction(ctx, null, "discover_schema", "success",
+    { processed: 0, success: 0, failed: 0 }, undefined, out);
+  return out;
 }
 
 // --- HTTP handler ---------------------------------------------------------
