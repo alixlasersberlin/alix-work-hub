@@ -824,7 +824,7 @@ export default function AppLayout() {
                 </div>
               );
               return (
-                <div key={item.path}>
+                <div key={`${item.path}-${item.label}`}>
                   {item.path === '/lager' ? (
                     <HoverCard openDelay={150} closeDelay={100}>
                       <HoverCardTrigger asChild>{rowEl}</HoverCardTrigger>
