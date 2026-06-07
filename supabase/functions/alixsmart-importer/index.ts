@@ -214,6 +214,18 @@ async function logAction(
   });
 }
 
+// Statuses that represent a final/explicit decision (user-resolved or already imported)
+// and must NOT be overwritten by re-runs of analyze / dry-run / import.
+const PROTECTED_STATUSES = new Set([
+  "pending_new_profile",
+  "pending_new_device",
+  "match_confirmed",
+  "match_rejected",
+  "imported",
+  "merged",
+  "imported_customer_profile_only",
+]);
+
 async function recordMap(
   ctx: Ctx,
   source_table: string,
@@ -226,6 +238,24 @@ async function recordMap(
   error?: string | null,
   metadata?: any,
 ) {
+  // Preserve protected (user-decided / final) rows: skip overwrite unless the new
+  // status is itself protected (e.g. import promoting pending → imported).
+  try {
+    const { data: existing } = await ctx.admin
+      .from("alixsmart_migration_map")
+      .select("migration_status")
+      .eq("source_table", source_table)
+      .eq("source_id", source_id)
+      .maybeSingle();
+    if (
+      existing &&
+      PROTECTED_STATUSES.has(existing.migration_status) &&
+      !PROTECTED_STATUSES.has(status)
+    ) {
+      return; // keep prior user/import decision
+    }
+  } catch { /* fall through to upsert */ }
+
   await ctx.admin.from("alixsmart_migration_map").upsert(
     {
       source_table,
@@ -283,12 +313,13 @@ async function importProfiles(ctx: Ctx, rows: any[], dryRun: boolean) {
         "email", "merged", "duplicate_email", null, { patch });
       s++;
     } else {
-      // We do not create auth users here – store as conflict
+      // No matching auth.users / user_profiles → mark as pending_new_profile.
+      // These rows will be created as customer-only records (no auth user needed).
       await recordMap(ctx, "profiles", sourceId, "user_profiles", null,
-        "email", "conflict", "needs_auth_user",
-        "user_profiles requires matching auth.users id – create user manually first",
-        { email, full_name: r.full_name });
-      f++;
+        "email", "pending_new_profile", "open",
+        null,
+        { email, full_name: r.full_name, note: "Wird als Kundenprofil angelegt (kein Auth-User nötig)" });
+      s++;
     }
   }
   return { s, f };
@@ -327,10 +358,12 @@ async function importUserRoles(ctx: Ctx, rows: any[], dryRun: boolean) {
       userId = up?.id ?? null;
     }
     if (!userId) {
+      // Orphan role assignment (user existed once in AlixSmart, profile gone).
+      // Skip cleanly instead of marking as conflict.
       await recordMap(ctx, "user_roles", sourceId, "user_roles", null,
-        "user_id+role", "conflict", "user_not_found",
-        "No matching user_profiles row by email", { email, srcRole });
-      f++;
+        "user_id+role", "skipped", "user_not_found",
+        "Verwaiste Rolle: kein passender User – übersprungen", { email, srcRole });
+      s++;
       continue;
     }
     if (dryRun) {
@@ -412,10 +445,17 @@ async function importDevices(ctx: Ctx, rows: any[], dryRun: boolean) {
           "serial_number", "merged", "duplicate_serial", null, { patch });
       }
     } else {
+      // Ensure NOT NULL fields in lager_devices have a fallback
+      const fallbackModel =
+        r.model_name ||
+        r.device_name ||
+        r.model ||
+        r.product_name ||
+        "Unbekanntes Gerät";
       const { data: ins, error } = await ctx.admin
         .from("lager_devices").insert({
           serial_number: serial,
-          model_name: r.model_name ?? null,
+          model_name: fallbackModel,
           customer_email: r.customer_email ?? null,
           customer_name: r.customer_name ?? null,
           device_status: r.status ?? null,
@@ -439,6 +479,7 @@ async function importDevices(ctx: Ctx, rows: any[], dryRun: boolean) {
   }
   return { s, f };
 }
+
 
 // Generic upsert by `source_id`
 async function importGeneric(
