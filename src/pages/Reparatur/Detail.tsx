@@ -133,6 +133,7 @@ export default function ReparaturDetail() {
           <TabsTrigger value="auftraege">Werkstattaufträge</TabsTrigger>
           <TabsTrigger value="ersatzteile">Ersatzteile ({parts.length})</TabsTrigger>
           <TabsTrigger value="spareparts">Bestellungen</TabsTrigger>
+          <TabsTrigger value="kv">Kostenvoranschlag</TabsTrigger>
           <TabsTrigger value="finance">Finance</TabsTrigger>
           <TabsTrigger value="delivery">Auslieferung</TabsTrigger>
           <TabsTrigger value="uebergabe">Übergaben</TabsTrigger>
