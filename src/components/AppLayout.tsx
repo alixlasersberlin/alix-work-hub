@@ -244,6 +244,7 @@ const navItems: NavItem[] = [
       { path: '/tourenplanung/kalender', label: 'Kalender', icon: Calendar, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Order', 'Technik'] },
       { path: '/tourenplanung/karte', label: 'Karte', icon: MapPin, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Order', 'Technik'] },
       { path: '/tourenplanung/einstellungen', label: 'Einstellungen', icon: Settings, roles: ['Admin', 'Super Admin', 'Tourenplanung'] },
+      { path: '/m', label: 'Mobile Techniker-App', icon: Truck, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Technik', 'Service', 'Reparaturannahme'] },
       {
         path: '/papiere', label: 'VERSAND', icon: FileText, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich'],
         children: [
