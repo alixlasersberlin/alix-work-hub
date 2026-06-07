@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import {
   LayoutDashboard, Mail, FileText, Receipt, FileCheck2, Wrench,
   LifeBuoy, Star, History, LogOut, Loader2,
+  Cpu, ShieldCheck, MessageSquare, Calendar, Activity,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -43,11 +44,17 @@ export function useCustomerPortal() {
 
 const tabs = [
   { to: '/kunde', label: 'Übersicht', icon: LayoutDashboard, end: true },
-  { to: '/kunde/nachrichten', label: 'Nachrichten', icon: Mail },
+  { to: '/kunde/geraete', label: 'Geräte', icon: Cpu },
+  { to: '/kunde/wartungen', label: 'Wartungen', icon: Wrench },
+  { to: '/kunde/reparaturen', label: 'Reparaturen', icon: Wrench },
+  { to: '/kunde/garantien', label: 'Garantien', icon: ShieldCheck },
+  { to: '/kunde/gesundheit', label: 'Gerätegesundheit', icon: Activity },
+  { to: '/kunde/tickets', label: 'Tickets', icon: MessageSquare },
+  { to: '/kunde/termine', label: 'Termine', icon: Calendar },
   { to: '/kunde/dokumente', label: 'Dokumente', icon: FileText },
   { to: '/kunde/rechnungen', label: 'Rechnungen', icon: Receipt },
   { to: '/kunde/angebote', label: 'Angebote', icon: FileCheck2 },
-  { to: '/kunde/reparaturen', label: 'Reparaturen', icon: Wrench },
+  { to: '/kunde/nachrichten', label: 'Nachrichten', icon: Mail },
   { to: '/kunde/support', label: 'Support', icon: LifeBuoy },
   { to: '/kunde/bewertungen', label: 'Bewertungen', icon: Star },
   { to: '/kunde/verlauf', label: 'Verlauf', icon: History },
