@@ -2127,6 +2127,79 @@ export type Database = {
           },
         ]
       }
+      goods_receipts: {
+        Row: {
+          created_at: string
+          delivery_note: string | null
+          id: string
+          item_id: string | null
+          item_name: string | null
+          notes: string | null
+          order_id: string | null
+          quantity: number
+          receipt_number: string | null
+          received_at: string
+          received_by: string | null
+          serial_numbers: string[] | null
+          sku: string | null
+          supplier: string | null
+        }
+        Insert: {
+          created_at?: string
+          delivery_note?: string | null
+          id?: string
+          item_id?: string | null
+          item_name?: string | null
+          notes?: string | null
+          order_id?: string | null
+          quantity: number
+          receipt_number?: string | null
+          received_at?: string
+          received_by?: string | null
+          serial_numbers?: string[] | null
+          sku?: string | null
+          supplier?: string | null
+        }
+        Update: {
+          created_at?: string
+          delivery_note?: string | null
+          id?: string
+          item_id?: string | null
+          item_name?: string | null
+          notes?: string | null
+          order_id?: string | null
+          quantity?: number
+          receipt_number?: string | null
+          received_at?: string
+          received_by?: string | null
+          serial_numbers?: string[] | null
+          sku?: string | null
+          supplier?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goods_receipts_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "spare_part_stock_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "goods_receipts_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "zoho_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "goods_receipts_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "spare_part_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       goodwill_cases: {
         Row: {
           approval_note: string | null
@@ -6139,6 +6212,195 @@ export type Database = {
         }
         Relationships: []
       }
+      spare_part_consumption: {
+        Row: {
+          consumed_at: string
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          customer_name: string | null
+          device_serial: string | null
+          id: string
+          item_id: string | null
+          item_name: string
+          notes: string | null
+          quantity: number
+          sku: string | null
+          source_id: string | null
+          source_type: string
+          technician_id: string | null
+          warranty_case: boolean | null
+        }
+        Insert: {
+          consumed_at?: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          device_serial?: string | null
+          id?: string
+          item_id?: string | null
+          item_name: string
+          notes?: string | null
+          quantity?: number
+          sku?: string | null
+          source_id?: string | null
+          source_type: string
+          technician_id?: string | null
+          warranty_case?: boolean | null
+        }
+        Update: {
+          consumed_at?: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          device_serial?: string | null
+          id?: string
+          item_id?: string | null
+          item_name?: string
+          notes?: string | null
+          quantity?: number
+          sku?: string | null
+          source_id?: string | null
+          source_type?: string
+          technician_id?: string | null
+          warranty_case?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spare_part_consumption_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "spare_part_stock_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spare_part_consumption_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "zoho_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      spare_part_order_items: {
+        Row: {
+          created_at: string
+          id: string
+          item_id: string | null
+          item_name: string
+          notes: string | null
+          order_id: string
+          quantity: number
+          received_quantity: number
+          sku: string | null
+          unit_price: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_id?: string | null
+          item_name: string
+          notes?: string | null
+          order_id: string
+          quantity?: number
+          received_quantity?: number
+          sku?: string | null
+          unit_price?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_id?: string | null
+          item_name?: string
+          notes?: string | null
+          order_id?: string
+          quantity?: number
+          received_quantity?: number
+          sku?: string | null
+          unit_price?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spare_part_order_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "spare_part_stock_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spare_part_order_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "zoho_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spare_part_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "spare_part_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      spare_part_orders: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          currency: string | null
+          expected_at: string | null
+          id: string
+          notes: string | null
+          order_number: string | null
+          ordered_at: string | null
+          status: string
+          supplier_id: string | null
+          supplier_name: string | null
+          total_amount: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          expected_at?: string | null
+          id?: string
+          notes?: string | null
+          order_number?: string | null
+          ordered_at?: string | null
+          status?: string
+          supplier_id?: string | null
+          supplier_name?: string | null
+          total_amount?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          expected_at?: string | null
+          id?: string
+          notes?: string | null
+          order_number?: string | null
+          ordered_at?: string | null
+          status?: string
+          supplier_id?: string | null
+          supplier_name?: string | null
+          total_amount?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spare_part_orders_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppliers: {
         Row: {
           address: string | null
@@ -6306,6 +6568,120 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      technician_stock: {
+        Row: {
+          created_at: string
+          id: string
+          item_id: string | null
+          item_name: string
+          min_quantity: number | null
+          quantity: number
+          sku: string | null
+          technician_id: string
+          updated_at: string
+          vehicle_label: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_id?: string | null
+          item_name: string
+          min_quantity?: number | null
+          quantity?: number
+          sku?: string | null
+          technician_id: string
+          updated_at?: string
+          vehicle_label?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_id?: string | null
+          item_name?: string
+          min_quantity?: number | null
+          quantity?: number
+          sku?: string | null
+          technician_id?: string
+          updated_at?: string
+          vehicle_label?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "technician_stock_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "spare_part_stock_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "technician_stock_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "zoho_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      technician_stock_movements: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          item_id: string | null
+          item_name: string
+          movement_type: string
+          notes: string | null
+          quantity: number
+          reference_id: string | null
+          reference_type: string | null
+          sku: string | null
+          technician_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          item_id?: string | null
+          item_name: string
+          movement_type: string
+          notes?: string | null
+          quantity: number
+          reference_id?: string | null
+          reference_type?: string | null
+          sku?: string | null
+          technician_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          item_id?: string | null
+          item_name?: string
+          movement_type?: string
+          notes?: string | null
+          quantity?: number
+          reference_id?: string | null
+          reference_type?: string | null
+          sku?: string | null
+          technician_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "technician_stock_movements_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "spare_part_stock_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "technician_stock_movements_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "zoho_items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ticket_attachments: {
         Row: {
@@ -7589,17 +7965,27 @@ export type Database = {
           id: string
           image_name: string | null
           image_type: string | null
+          is_spare_part: boolean | null
           item_type: string | null
+          lead_time_days: number | null
           manufacturer: string | null
+          min_stock: number | null
           name: string | null
+          primary_supplier_id: string | null
+          primary_supplier_name: string | null
           product_type: string | null
           purchase_rate: number | null
           rate: number | null
           raw_data: Json | null
+          reorder_level: number | null
+          serial_required: boolean | null
           sku: string | null
           source_system: string
           status: string | null
           stock_on_hand: number | null
+          stock_on_order: number | null
+          stock_reserved: number | null
+          storage_location: string | null
           synced_at: string
           tax_id: string | null
           tax_name: string | null
@@ -7621,17 +8007,27 @@ export type Database = {
           id?: string
           image_name?: string | null
           image_type?: string | null
+          is_spare_part?: boolean | null
           item_type?: string | null
+          lead_time_days?: number | null
           manufacturer?: string | null
+          min_stock?: number | null
           name?: string | null
+          primary_supplier_id?: string | null
+          primary_supplier_name?: string | null
           product_type?: string | null
           purchase_rate?: number | null
           rate?: number | null
           raw_data?: Json | null
+          reorder_level?: number | null
+          serial_required?: boolean | null
           sku?: string | null
           source_system?: string
           status?: string | null
           stock_on_hand?: number | null
+          stock_on_order?: number | null
+          stock_reserved?: number | null
+          storage_location?: string | null
           synced_at?: string
           tax_id?: string | null
           tax_name?: string | null
@@ -7653,17 +8049,27 @@ export type Database = {
           id?: string
           image_name?: string | null
           image_type?: string | null
+          is_spare_part?: boolean | null
           item_type?: string | null
+          lead_time_days?: number | null
           manufacturer?: string | null
+          min_stock?: number | null
           name?: string | null
+          primary_supplier_id?: string | null
+          primary_supplier_name?: string | null
           product_type?: string | null
           purchase_rate?: number | null
           rate?: number | null
           raw_data?: Json | null
+          reorder_level?: number | null
+          serial_required?: boolean | null
           sku?: string | null
           source_system?: string
           status?: string | null
           stock_on_hand?: number | null
+          stock_on_order?: number | null
+          stock_reserved?: number | null
+          storage_location?: string | null
           synced_at?: string
           tax_id?: string | null
           tax_name?: string | null
@@ -7674,7 +8080,15 @@ export type Database = {
           zoho_item_id?: string
           zoho_last_modified_time?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "zoho_items_primary_supplier_id_fkey"
+            columns: ["primary_supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       zoho_recurring_invoices: {
         Row: {
@@ -7888,7 +8302,86 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      spare_part_stock_overview: {
+        Row: {
+          brand: string | null
+          category_name: string | null
+          ek: number | null
+          id: string | null
+          is_spare_part: boolean | null
+          lead_time_days: number | null
+          manufacturer: string | null
+          min_stock: number | null
+          name: string | null
+          primary_supplier_id: string | null
+          primary_supplier_name: string | null
+          reorder_level: number | null
+          serial_required: boolean | null
+          sku: string | null
+          stock_available: number | null
+          stock_on_hand: number | null
+          stock_on_order: number | null
+          stock_reserved: number | null
+          stock_status: string | null
+          storage_location: string | null
+          vk: number | null
+        }
+        Insert: {
+          brand?: string | null
+          category_name?: string | null
+          ek?: number | null
+          id?: string | null
+          is_spare_part?: boolean | null
+          lead_time_days?: number | null
+          manufacturer?: string | null
+          min_stock?: number | null
+          name?: string | null
+          primary_supplier_id?: string | null
+          primary_supplier_name?: string | null
+          reorder_level?: number | null
+          serial_required?: boolean | null
+          sku?: string | null
+          stock_available?: never
+          stock_on_hand?: never
+          stock_on_order?: never
+          stock_reserved?: never
+          stock_status?: never
+          storage_location?: string | null
+          vk?: number | null
+        }
+        Update: {
+          brand?: string | null
+          category_name?: string | null
+          ek?: number | null
+          id?: string | null
+          is_spare_part?: boolean | null
+          lead_time_days?: number | null
+          manufacturer?: string | null
+          min_stock?: number | null
+          name?: string | null
+          primary_supplier_id?: string | null
+          primary_supplier_name?: string | null
+          reorder_level?: number | null
+          serial_required?: boolean | null
+          sku?: string | null
+          stock_available?: never
+          stock_on_hand?: never
+          stock_on_order?: never
+          stock_reserved?: never
+          stock_status?: never
+          storage_location?: string | null
+          vk?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "zoho_items_primary_supplier_id_fkey"
+            columns: ["primary_supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       can_access_ai_service: { Args: never; Returns: boolean }
