@@ -649,6 +649,21 @@ export type Database = {
         }
         Relationships: []
       }
+      api_rate_limits: {
+        Row: {
+          bucket_key: string
+          request_at: string
+        }
+        Insert: {
+          bucket_key: string
+          request_at?: string
+        }
+        Update: {
+          bucket_key?: string
+          request_at?: string
+        }
+        Relationships: []
+      }
       app_settings: {
         Row: {
           id: string
@@ -7057,6 +7072,10 @@ export type Database = {
       can_send_whatsapp: { Args: never; Returns: boolean }
       can_upload_factory_invoice: { Args: never; Returns: boolean }
       can_view_mail_audit: { Args: never; Returns: boolean }
+      check_rate_limit: {
+        Args: { _bucket: string; _max: number; _window_seconds: number }
+        Returns: boolean
+      }
       clear_factory_invoice_pdf: {
         Args: { _production_order_id: string }
         Returns: undefined

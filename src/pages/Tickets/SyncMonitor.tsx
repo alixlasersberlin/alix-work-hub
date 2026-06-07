@@ -44,22 +44,47 @@ export default function TicketsSyncMonitor() {
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
 
-    const [{ data: logRows }, totalCount, successCount, errorCount, blockedCount, last, ticketsCount, syncedToday] = await Promise.all([
+    const [
+      { data: inboundRows },
+      { data: outboundRows },
+      totalIn, totalOut,
+      successIn, successOut,
+      errorIn, errorOut,
+      blockedCount, last, ticketsCount, syncedToday,
+    ] = await Promise.all([
       supabase.from('ticket_sync_logs').select('*').order('created_at', { ascending: false }).limit(100),
+      supabase.from('ticket_outbound_sync_logs').select('*').order('created_at', { ascending: false }).limit(100),
       supabase.from('ticket_sync_logs').select('id', { count: 'exact', head: true }),
+      supabase.from('ticket_outbound_sync_logs').select('id', { count: 'exact', head: true }),
       supabase.from('ticket_sync_logs').select('id', { count: 'exact', head: true }).eq('status', 'success'),
+      supabase.from('ticket_outbound_sync_logs').select('id', { count: 'exact', head: true }).eq('status', 'success'),
       supabase.from('ticket_sync_logs').select('id', { count: 'exact', head: true }).eq('status', 'error'),
+      supabase.from('ticket_outbound_sync_logs').select('id', { count: 'exact', head: true }).eq('status', 'error'),
       supabase.from('ticket_sync_logs').select('id', { count: 'exact', head: true }).eq('status', 'blocked'),
       supabase.from('ticket_sync_logs').select('created_at').order('created_at', { ascending: false }).limit(1).maybeSingle(),
       supabase.from('tickets').select('id', { count: 'exact', head: true }),
       supabase.from('tickets').select('id', { count: 'exact', head: true }).gte('last_outbound_sync_at', startOfDay.toISOString()),
     ]);
 
-    setLogs((logRows as LogRow[]) ?? []);
+    const inbound: LogRow[] = ((inboundRows as any[]) ?? []).map((r) => ({ ...r, direction: r.direction || 'inbound' }));
+    const outbound: LogRow[] = ((outboundRows as any[]) ?? []).map((r) => ({
+      id: r.id,
+      external_ticket_id: r.external_ticket_id,
+      direction: 'outbound',
+      action: r.action,
+      status: r.status,
+      error_message: r.error_message,
+      created_at: r.created_at,
+    }));
+    const merged = [...inbound, ...outbound]
+      .sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at))
+      .slice(0, 100);
+
+    setLogs(merged);
     setStats({
-      total: totalCount.count ?? 0,
-      success: successCount.count ?? 0,
-      errors: errorCount.count ?? 0,
+      total: (totalIn.count ?? 0) + (totalOut.count ?? 0),
+      success: (successIn.count ?? 0) + (successOut.count ?? 0),
+      errors: (errorIn.count ?? 0) + (errorOut.count ?? 0),
       blocked: blockedCount.count ?? 0,
       lastSync: last.data?.created_at ?? null,
       ticketsTotal: ticketsCount.count ?? 0,

@@ -45,32 +45,31 @@ interface Payload {
   }>;
 }
 
-// Simple in-memory rate limit per API-key (60 req / 60 s, per edge worker instance).
-const rateBucket = new Map<string, number[]>();
-const RATE_WINDOW_MS = 60_000;
+// DB-backed rate limit (cross-worker): 60 requests / 60 s per API key.
+const RATE_WINDOW_S = 60;
 const RATE_MAX = 60;
-function rateLimited(key: string): boolean {
-  const now = Date.now();
-  const arr = (rateBucket.get(key) ?? []).filter((t) => now - t < RATE_WINDOW_MS);
-  arr.push(now);
-  rateBucket.set(key, arr);
-  return arr.length > RATE_MAX;
+async function rateLimited(supabase: ReturnType<typeof createClient>, key: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc('check_rate_limit', {
+    _bucket: `alixsmart-webhook:${key.slice(0, 32)}`,
+    _max: RATE_MAX,
+    _window_seconds: RATE_WINDOW_S,
+  });
+  if (error) {
+    console.error('rate_limit_check_failed', error);
+    return false; // fail open
+  }
+  return data === true;
 }
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
-  const expectedSecret = Deno.env.get('ALIXSMART_WEBHOOK_SECRET');
-  const provided = req.headers.get('x-alixsmart-secret');
+  // Accept either ALIX_SYNC_KEY (preferred, unified) or legacy ALIXSMART_WEBHOOK_SECRET.
+  const expectedSecret = Deno.env.get('ALIX_SYNC_KEY') || Deno.env.get('ALIXSMART_WEBHOOK_SECRET');
+  const provided = req.headers.get('x-alixsmart-secret') || req.headers.get('x-alix-sync-key');
   if (!expectedSecret || provided !== expectedSecret) {
     return new Response(JSON.stringify({ error: 'unauthorized' }), {
       status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
-
-  if (rateLimited(provided)) {
-    return new Response(JSON.stringify({ error: 'rate_limited', limit: RATE_MAX, window_s: 60 }), {
-      status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 
@@ -78,6 +77,12 @@ Deno.serve(async (req) => {
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
   );
+
+  if (await rateLimited(supabase, provided)) {
+    return new Response(JSON.stringify({ error: 'rate_limited', limit: RATE_MAX, window_s: 60 }), {
+      status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
 
   let body: Payload;
   try { body = await req.json(); } catch {
