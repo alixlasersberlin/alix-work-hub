@@ -1035,9 +1035,13 @@ async function analyzeWave1(ctx: Ctx) {
   const summary = {
     profiles: {
       total: profileItems.length,
-      importable_safe: profileBuckets.match_found,
-      manual_review: profileBuckets.duplicate_email_in_source + profileBuckets.no_match_target,
-      blocked: profileBuckets.missing_email,
+      secure: profileBuckets.secure,
+      suggestion: profileBuckets.suggestion,
+      manual: profileBuckets.manual,
+      no_match: profileBuckets.no_match,
+      importable_safe: profileBuckets.secure,
+      manual_review: profileBuckets.suggestion + profileBuckets.manual,
+      blocked: profileBuckets.no_match,
     },
     user_roles: {
       total: rolesRes.rows.length,
@@ -1047,9 +1051,13 @@ async function analyzeWave1(ctx: Ctx) {
     },
     devices: {
       total: deviceItems.length,
-      importable_safe: deviceBuckets.importable,
-      manual_review: deviceBuckets.target_exists + deviceBuckets.duplicate_serial_in_source + deviceBuckets.missing_customer,
-      blocked: deviceBuckets.missing_serial,
+      secure: deviceBuckets.secure,
+      suggestion: deviceBuckets.suggestion,
+      manual: deviceBuckets.manual,
+      no_match: deviceBuckets.no_match,
+      importable_safe: deviceBuckets.secure,
+      manual_review: deviceBuckets.suggestion + deviceBuckets.manual,
+      blocked: deviceBuckets.no_match,
     },
   };
 
