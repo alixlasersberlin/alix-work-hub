@@ -109,28 +109,47 @@ Deno.serve(async (req) => {
       return json({ error: "AlixSmart endpoint not configured" }, 500);
     }
 
+    // Retry up to 2 attempts (initial + 1 retry) with backoff. Final attempt is logged.
     let status = "success";
     let errorMessage: string | null = null;
-    try {
-      const res = await fetch(ALIXSMART_API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${ALIXSMART_API_KEY}`,
-          "x-api-key": ALIXSMART_API_KEY,
-        },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
+    let responseCode: number | null = null;
+    const MAX_ATTEMPTS = 2;
+    let attempt = 0;
+    while (attempt < MAX_ATTEMPTS) {
+      attempt++;
+      status = "success";
+      errorMessage = null;
+      responseCode = null;
+      try {
+        const res = await fetch(ALIXSMART_API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${ALIXSMART_API_KEY}`,
+            "x-api-key": ALIXSMART_API_KEY,
+          },
+          body: JSON.stringify(payload),
+        });
+        responseCode = res.status;
+        if (!res.ok) {
+          status = "error";
+          errorMessage = `HTTP ${res.status}: ${(await res.text()).slice(0, 500)}`;
+        } else {
+          await res.text();
+        }
+      } catch (e) {
         status = "error";
-        errorMessage = `HTTP ${res.status}: ${(await res.text()).slice(0, 500)}`;
+        errorMessage = (e as Error).message;
       }
-    } catch (e) {
-      status = "error";
-      errorMessage = (e as Error).message;
+      if (status === "success") break;
+      // Log retry attempt (not final)
+      if (attempt < MAX_ATTEMPTS) {
+        await logSync(supabase, body.ticket_id, ticket.external_ticket_id, action, "retry", errorMessage, payload, responseCode, attempt);
+        await new Promise((r) => setTimeout(r, 500 * attempt));
+      }
     }
 
-    await logSync(supabase, body.ticket_id, ticket.external_ticket_id, action, status, errorMessage, payload);
+    await logSync(supabase, body.ticket_id, ticket.external_ticket_id, action, status, errorMessage, payload, responseCode, attempt);
 
     if (status === "success") {
       await supabase
@@ -139,7 +158,7 @@ Deno.serve(async (req) => {
         .eq("id", body.ticket_id);
     }
 
-    return json({ ok: status === "success", status, error: errorMessage });
+    return json({ ok: status === "success", status, response_code: responseCode, attempt, error: errorMessage, fallback: "polling_via_readapi" });
   } catch (e) {
     console.error("sync-to-alixsmart fatal", e);
     return json({ error: (e as Error).message }, 500);
@@ -154,6 +173,8 @@ async function logSync(
   status: string,
   error_message: string | null,
   payload: unknown,
+  response_code: number | null = null,
+  attempt: number = 1,
 ) {
   await supabase.from("ticket_outbound_sync_logs").insert({
     ticket_id,
@@ -162,6 +183,9 @@ async function logSync(
     status,
     error_message,
     payload,
+    response_code,
+    attempt,
+    direction: "outbound",
   });
 }
 
