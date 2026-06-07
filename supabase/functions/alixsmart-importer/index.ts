@@ -428,6 +428,9 @@ async function importGeneric(
 ) {
   let s = 0,
     f = 0;
+  const targetCols = await getTargetColumns(ctx, targetTable);
+  const hasSourceId = targetCols.length === 0 || targetCols.includes("source_id");
+  const skippedAll = new Set<string>();
   for (const r of rows) {
     const sourceId = String(r.id ?? r.source_id ?? "");
     if (!sourceId) {
@@ -437,34 +440,49 @@ async function importGeneric(
       continue;
     }
     if (dryRun) {
-      const { data: existing } = await ctx.admin
-        .from(targetTable as any).select("id").eq("source_id", sourceId).maybeSingle();
+      let existing: any = null;
+      if (hasSourceId) {
+        const res = await ctx.admin
+          .from(targetTable as any).select("id").eq("source_id", sourceId).maybeSingle();
+        existing = res.data;
+      }
       await recordMap(ctx, sourceTable, sourceId, targetTable,
         existing?.id ?? null, "source_id",
         existing ? "dry_run_match" : "dry_run_new");
       s++;
       continue;
     }
-    const payload = shape
+    const rawPayload = shape
       ? shape(r)
       : { ...r, source_id: sourceId, metadata: { source: r } };
-    // Drop fields that probably don't exist in target
-    delete (payload as any).id;
-    const { data, error } = await ctx.admin
-      .from(targetTable as any)
-      .upsert(payload, { onConflict: "source_id" })
-      .select("id").maybeSingle();
+    delete (rawPayload as any).id;
+    const { clean: payload, skipped } = sanitizePayload(rawPayload, targetCols);
+    skipped.forEach((k) => skippedAll.add(k));
+    if (!Object.keys(payload).length) {
+      f++;
+      await recordMap(ctx, sourceTable, sourceId, targetTable, null,
+        "source_id", "error", null, "no_matching_target_columns",
+        { skipped });
+      continue;
+    }
+    const upsertOpts: any = hasSourceId ? { onConflict: "source_id" } : undefined;
+    const q = ctx.admin.from(targetTable as any);
+    const op = hasSourceId
+      ? q.upsert(payload, upsertOpts).select("id").maybeSingle()
+      : q.insert(payload).select("id").maybeSingle();
+    const { data, error } = await op;
     if (error) {
       f++;
       await recordMap(ctx, sourceTable, sourceId, targetTable, null,
-        "source_id", "error", null, error.message);
+        "source_id", "error", null, error.message, { skipped });
     } else {
       s++;
       await recordMap(ctx, sourceTable, sourceId, targetTable,
-        data?.id ?? null, "source_id", "imported");
+        data?.id ?? null, "source_id", "imported", null, null,
+        skipped.length ? { skipped } : undefined);
     }
   }
-  return { s, f };
+  return { s, f, skippedCols: [...skippedAll] };
 }
 
 async function importSuppressed(ctx: Ctx, rows: any[], dryRun: boolean) {
