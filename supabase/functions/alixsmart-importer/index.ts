@@ -692,16 +692,39 @@ async function importOne(
       const profileMap = new Map<string, string>(
         (pmap ?? []).map((p: any) => [String(p.source_id), p.target_id]),
       );
+      const { data: targetUsers } = await ctx.admin
+        .from("user_profiles")
+        .select("id");
+      const targetUserIds = new Set<string>(
+        (targetUsers ?? []).map((u: any) => String(u.id)),
+      );
       return importGeneric(ctx, sourceTable, "mail_internal_messages", rows,
         dryRun, (r) => {
           const senderSrc = String(r.sender_id ?? r.from_user_id ?? r.user_id ?? "");
           const recipientSrc = String(r.recipient_id ?? r.to_user_id ?? "");
+          const mappedSenderId = profileMap.get(senderSrc)
+            ?? (senderSrc && targetUserIds.has(senderSrc) ? senderSrc : null)
+            ?? ctx.userId;
+          const mappedRecipientId = profileMap.get(recipientSrc)
+            ?? (recipientSrc && targetUserIds.has(recipientSrc) ? recipientSrc : null)
+            ?? null;
+          const importHints: string[] = [];
+          if (!senderSrc) importHints.push("Original sender_id fehlte");
+          else if (mappedSenderId === ctx.userId && !profileMap.has(senderSrc) && !targetUserIds.has(senderSrc)) {
+            importHints.push(`Original sender_id: ${senderSrc}`);
+          }
+          if (recipientSrc && !mappedRecipientId) {
+            importHints.push(`Original recipient_id: ${recipientSrc}`);
+          }
+          const originalBody = String(r.body ?? r.message ?? "");
           return {
             source_id: String(r.id ?? r.source_id),
-            sender_id: profileMap.get(senderSrc) ?? null,
-            recipient_user_id: profileMap.get(recipientSrc) ?? null,
+            sender_id: mappedSenderId,
+            recipient_user_id: mappedRecipientId,
             subject: r.subject ?? "",
-            body: r.body ?? r.message ?? "",
+            body: importHints.length
+              ? `[AlixSmart-Importhinweis] ${importHints.join(" · ")}\n\n${originalBody}`
+              : originalBody,
             is_read: r.is_read ?? false,
             read_at: r.read_at ?? null,
             created_at: r.created_at ?? undefined,
