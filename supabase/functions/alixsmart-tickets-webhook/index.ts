@@ -159,6 +159,7 @@ Deno.serve(async (req) => {
       direction: 'inbound',
       action: 'create_ticket',
       status: 'error',
+      response_code: 500,
       error_message: insertErr?.message || 'unknown',
       payload: body as unknown as Record<string, unknown>,
     });
