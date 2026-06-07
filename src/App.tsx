@@ -356,7 +356,7 @@ function AppRoutes() {
         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route path="/" element={<HomeRoute />} />
           <Route path="/detailsuche" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Detailsuche /></ProtectedRoute>} />
-          <Route path="/geraetesperren" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Geraetesperren /></ProtectedRoute>} />
+          <Route path="/geraetesperren" element={<ProtectedRoute><Geraetesperren /></ProtectedRoute>} />
           <Route path="/kunden" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Customers /></ProtectedRoute>} />
           <Route path="/kunden/:id" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><CustomerDetail /></ProtectedRoute>} />
           <Route path="/auftraege" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Orders /></ProtectedRoute>} />
