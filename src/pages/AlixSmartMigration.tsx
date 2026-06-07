@@ -279,6 +279,33 @@ export default function AlixSmartMigration() {
                     </div>
                     {res && (
                       <div className="text-xs space-y-1">
+                        {res.backup && (
+                          <div className={`rounded border px-2 py-1 mb-1 ${res.backup.ok ? 'border-emerald-500/40 bg-emerald-500/5' : 'border-red-500/40 bg-red-500/5'}`}>
+                            <div className="font-medium">
+                              {res.backup.ok ? '✓ Backup erstellt' : '✗ Backup fehlgeschlagen'}
+                            </div>
+                            {res.backup.ok && (
+                              <div className="text-muted-foreground font-mono">
+                                {res.backup.total_rows} Zeilen · {(res.backup.size_bytes/1024).toFixed(1)} KB · {res.backup.duration_ms} ms
+                              </div>
+                            )}
+                            {res.backup.error && <div className="text-red-500">{res.backup.error}</div>}
+                          </div>
+                        )}
+                        {res.aborted && (
+                          <div className="rounded border border-red-500/40 bg-red-500/5 px-2 py-1 text-red-500">
+                            Welle abgebrochen: {res.reason}
+                          </div>
+                        )}
+                        {res.summary && (
+                          <div className="grid grid-cols-2 gap-1 font-mono">
+                            <span>importiert</span><span className="text-right">{res.summary.imported}</span>
+                            <span>übersprungen</span><span className="text-right">{res.summary.skipped}</span>
+                            <span>Konflikte</span><span className="text-right">{res.summary.conflicts}</span>
+                            <span>Dauer</span><span className="text-right">{res.summary.duration_ms} ms</span>
+                            <span>Batch-ID</span><span className="text-right truncate">{res.summary.batch_id}</span>
+                          </div>
+                        )}
                         {Object.entries(res.results || {}).map(([t, r]: any) => (
                           <div key={t} className="flex justify-between font-mono">
                             <span>{t}</span>
@@ -295,8 +322,9 @@ export default function AlixSmartMigration() {
                       onClick={() => importWave(w.wave)}
                     >
                       <Upload className={`w-4 h-4 mr-2 ${busy ? 'animate-spin' : ''}`} />
-                      Welle {w.wave} importieren
+                      {busy ? 'Backup + Import …' : `Welle ${w.wave} mit Backup importieren`}
                     </Button>
+
                   </CardContent>
                 </Card>
               );
