@@ -38,7 +38,7 @@ const BACKUP_TABLES = [
 ];
 
 const STORAGE_BUCKETS = ["production-orders", "production-photos", "order-invoices"];
-const PAGE_SIZE = 500;
+const PAGE_SIZE = 200;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
