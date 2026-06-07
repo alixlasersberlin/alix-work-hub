@@ -113,7 +113,8 @@ Deno.serve(async (req) => {
       direction: 'inbound',
       action: 'update_blocked',
       status: 'blocked',
-      error_message: 'Phase 1: AlixSmart is read-only for existing tickets. Edit in AlixWork.',
+      response_code: 409,
+      error_message: 'Write-protected: AlixSmart is read-only for existing tickets. Edit in AlixWork.',
       payload: body as unknown as Record<string, unknown>,
     });
     return new Response(JSON.stringify({
@@ -158,6 +159,7 @@ Deno.serve(async (req) => {
       direction: 'inbound',
       action: 'create_ticket',
       status: 'error',
+      response_code: 500,
       error_message: insertErr?.message || 'unknown',
       payload: body as unknown as Record<string, unknown>,
     });
@@ -200,6 +202,7 @@ Deno.serve(async (req) => {
     direction: 'inbound',
     action: 'create_ticket',
     status: 'success',
+    response_code: 200,
     payload: body as unknown as Record<string, unknown>,
   });
 
