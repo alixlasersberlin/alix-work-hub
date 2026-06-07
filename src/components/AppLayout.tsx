@@ -238,9 +238,10 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    path: '/tourenplanung', label: 'TOURENPLANUNG', icon: MapPin, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'Österreich'],
+    path: '/tourenplanung', label: 'TOURENPLANUNG', icon: MapPin, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order'],
     children: [
-      { path: '/tourenplanung', label: 'Übersicht', icon: MapPin, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'Österreich'] },
+      { path: '/tourenplanung', label: 'Übersicht', icon: MapPin, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order'] },
+
       { path: '/tourenplanung/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Order'] },
       { path: '/tourenplanung/kalender', label: 'Kalender', icon: Calendar, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Order', 'Technik'] },
       { path: '/tourenplanung/karte', label: 'Karte', icon: MapPin, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Order', 'Technik'] },
