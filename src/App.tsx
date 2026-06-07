@@ -411,6 +411,9 @@ function AppRoutes() {
           <Route path="/wartungsmanagement" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Service', 'Serviceleitung', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance', 'Tourenplanung']}><Wartungsmanagement /></ProtectedRoute>} />
           <Route path="/service/wartungsmanagement" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Service', 'Serviceleitung', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance', 'Tourenplanung']}><Wartungsmanagement /></ProtectedRoute>} />
           <Route path="/garantiecenter" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Service', 'Serviceleitung', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance', 'Vertrieb']}><Garantiecenter /></ProtectedRoute>} />
+          <Route path="/garantie-kulanz" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Service', 'Serviceleitung', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance', 'Tourenplanung']}><GarantieKulanz /></ProtectedRoute>} />
+          <Route path="/service/garantie-kulanz" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Service', 'Serviceleitung', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance', 'Tourenplanung']}><GarantieKulanz /></ProtectedRoute>} />
+
           <Route path="/design-template" element={<ProtectedRoute><DesignTemplate /></ProtectedRoute>} />
 
           <Route path="/finance/neu" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Finance']}><FinanceForm /></ProtectedRoute>} />
