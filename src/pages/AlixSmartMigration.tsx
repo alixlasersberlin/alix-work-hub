@@ -384,6 +384,72 @@ export default function AlixSmartMigration() {
             </CardContent>
           </Card>
         </TabsContent>
+        <TabsContent value="schema">
+          <Card>
+            <CardHeader>
+              <CardTitle>Schema-Analyse (Quelle ↔ Ziel)</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {!schemas && (
+                <p className="text-sm text-muted-foreground">
+                  Noch nicht ausgeführt. Klicke oben auf „Schema analysieren".
+                </p>
+              )}
+              {schemas && Object.entries(schemas).map(([src, info]: any) => (
+                <div key={src} className="border border-border rounded-md p-3 space-y-2">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="font-mono text-sm">
+                      {src} <span className="text-muted-foreground">→</span> {info.target_table}
+                    </div>
+                    {info.fetch_error
+                      ? <Badge variant="outline" className="bg-red-500/15 text-red-500"><XCircle className="w-3 h-3 mr-1" />Fetch-Fehler</Badge>
+                      : <Badge variant="outline" className="bg-emerald-500/15 text-emerald-500"><CheckCircle2 className="w-3 h-3 mr-1" />{info.sample_rows} Beispiele</Badge>}
+                  </div>
+                  {info.fetch_error && (
+                    <div className="text-xs text-red-500 font-mono break-all">
+                      {info.error_details?.kind === 'upstream_missing_column'
+                        ? `Quell-Endpoint nutzt fehlende Spalte ${info.error_details.missing_column}. ${info.fetch_error}`
+                        : info.fetch_error}
+                    </div>
+                  )}
+                  <div className="grid md:grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <div className="text-muted-foreground mb-1">Quellspalten ({info.source_columns.length})</div>
+                      <div className="flex flex-wrap gap-1">
+                        {info.source_columns.map((c: string) => (
+                          <Badge key={c} variant="secondary" className={
+                            'font-mono text-[10px] ' +
+                            (info.matched_columns.includes(c) ? 'bg-emerald-500/15 text-emerald-500' : 'bg-amber-500/15 text-amber-500')
+                          }>{c}</Badge>
+                        ))}
+                        {!info.source_columns.length && <span className="text-muted-foreground">—</span>}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-muted-foreground mb-1">Zielspalten ({info.target_columns.length})</div>
+                      <div className="flex flex-wrap gap-1 max-h-32 overflow-auto">
+                        {info.target_columns.map((c: string) => (
+                          <Badge key={c} variant="outline" className="font-mono text-[10px]">{c}</Badge>
+                        ))}
+                        {!info.target_columns.length && <span className="text-muted-foreground">—</span>}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-xs grid md:grid-cols-2 gap-2">
+                    <div>
+                      <span className="text-emerald-500">Matched:</span>{' '}
+                      <span className="font-mono">{info.matched_columns.join(', ') || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-amber-500">Ignoriert (nicht in Ziel):</span>{' '}
+                      <span className="font-mono">{info.skipped_columns.join(', ') || '—'}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
     </div>
   );
