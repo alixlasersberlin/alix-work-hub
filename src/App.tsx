@@ -390,6 +390,7 @@ function AppRoutes() {
             <Route path=":id" element={<ReparaturDetail />} />
           </Route>
           <Route path="/bestellwesen/ersatzteile" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Bestellwesen', 'Order', 'Technik']}><BestellwesenErsatzteile /></ProtectedRoute>} />
+          <Route path="/ersatzteilmanagement" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Bestellwesen', 'Order', 'Technik', 'Reparaturannahme', 'Serviceleitung', 'Service', 'Finance']}><Ersatzteilmanagement /></ProtectedRoute>} />
 
 
           <Route path="/tourenplanung/kalender" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><TourenKalender /></ProtectedRoute>} />
