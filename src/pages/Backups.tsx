@@ -75,7 +75,7 @@ export default function Backups() {
       });
       if (error) throw error;
       if (!data?.success) throw new Error(data?.error || 'Unbekannter Fehler');
-      toast.success(`Backup erstellt (${fmtSize(data.size_bytes)})${data.email_sent ? ' • E-Mail versendet' : ''}`);
+      toast.success(data.accepted ? 'Backup gestartet und wird im Hintergrund verarbeitet.' : `Backup erstellt (${fmtSize(data.size_bytes)})${data.email_sent ? ' • E-Mail versendet' : ''}`);
       await load();
     } catch (e: any) {
       toast.error('Backup fehlgeschlagen: ' + (e?.message ?? String(e)));
