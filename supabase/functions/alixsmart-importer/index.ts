@@ -678,16 +678,36 @@ async function importOne(
           source_customer_id: r.customer_id ? String(r.customer_id) : null,
           customer_name: r.customer_name ?? null,
           customer_email: r.customer_email ?? null,
-          booking_status: r.booking_status ?? r.status ?? null,
+          booking_status: r.booking_status ?? r.status ?? "booked",
           notes: r.notes ?? null, metadata: { source: r },
         }));
-    case "internal_messages":
+    case "internal_messages": {
+      // Preload profile-id mapping (alixsmart_id -> user_profiles.id)
+      const { data: pmap } = await ctx.admin
+        .from("alixsmart_migration_map")
+        .select("source_id,target_id")
+        .eq("source_table", "profiles")
+        .in("migration_status", ["imported", "merged"])
+        .not("target_id", "is", null);
+      const profileMap = new Map<string, string>(
+        (pmap ?? []).map((p: any) => [String(p.source_id), p.target_id]),
+      );
       return importGeneric(ctx, sourceTable, "mail_internal_messages", rows,
-        dryRun, (r) => ({
-          source_id: String(r.id ?? r.source_id),
-          subject: r.subject ?? "", body: r.body ?? r.message ?? "",
-          is_read: r.is_read ?? false,
-        }));
+        dryRun, (r) => {
+          const senderSrc = String(r.sender_id ?? r.from_user_id ?? r.user_id ?? "");
+          const recipientSrc = String(r.recipient_id ?? r.to_user_id ?? "");
+          return {
+            source_id: String(r.id ?? r.source_id),
+            sender_id: profileMap.get(senderSrc) ?? null,
+            recipient_user_id: profileMap.get(recipientSrc) ?? null,
+            subject: r.subject ?? "",
+            body: r.body ?? r.message ?? "",
+            is_read: r.is_read ?? false,
+            read_at: r.read_at ?? null,
+            created_at: r.created_at ?? undefined,
+          };
+        });
+    }
     case "email_unsubscribe_tokens":
       return importGeneric(ctx, sourceTable, "email_unsubscribe_tokens", rows,
         dryRun);
