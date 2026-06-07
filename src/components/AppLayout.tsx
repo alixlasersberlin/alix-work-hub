@@ -41,6 +41,8 @@ const navItems: NavItem[] = [
     roles: ['Admin', 'Super Admin', 'Geschäftsführung', 'Marketing', 'Finance', 'Technik', 'Kundenservice', 'Vertrieb', 'Reparaturannahme', 'Tourenplanung', 'Bestellwesen', 'Order', 'Read Only', 'Read Only Audit'],
     children: [
       { path: '/mailcenter', label: 'Dashboard', icon: LayoutDashboard, roles: null },
+      { path: '/mailcenter/schreiben', label: 'E-Mail schreiben', icon: PenSquare, roles: null },
+      { path: '/mailcenter/intern', label: 'Interne Nachrichten', icon: MessageSquare, roles: null },
       { path: '/tickets?new=1', label: 'Neues Ticket', icon: Ticket, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Service', 'Reparaturannahme', 'Order'] },
       {
         path: '/mailcenter/schreiben', label: 'E-Mail', icon: Mail, roles: null,
