@@ -204,6 +204,8 @@ export default function RoutePlanDetail() {
           </div>
         </div>
       </div>
+
+      <DispatchExecutionTabs tour={plan} canWrite={canWrite} onReload={load} />
     </div>
   );
 }
