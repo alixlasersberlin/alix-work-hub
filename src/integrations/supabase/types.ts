@@ -5805,31 +5805,40 @@ export type Database = {
       ticket_outbound_sync_logs: {
         Row: {
           action: string
+          attempt: number | null
           created_at: string
+          direction: string | null
           error_message: string | null
           external_ticket_id: string | null
           id: string
           payload: Json | null
+          response_code: number | null
           status: string
           ticket_id: string
         }
         Insert: {
           action: string
+          attempt?: number | null
           created_at?: string
+          direction?: string | null
           error_message?: string | null
           external_ticket_id?: string | null
           id?: string
           payload?: Json | null
+          response_code?: number | null
           status: string
           ticket_id: string
         }
         Update: {
           action?: string
+          attempt?: number | null
           created_at?: string
+          direction?: string | null
           error_message?: string | null
           external_ticket_id?: string | null
           id?: string
           payload?: Json | null
+          response_code?: number | null
           status?: string
           ticket_id?: string
         }
@@ -5846,32 +5855,38 @@ export type Database = {
       ticket_sync_logs: {
         Row: {
           action: string | null
+          attempt: number | null
           created_at: string
           direction: string | null
           error_message: string | null
           external_ticket_id: string | null
           id: string
           payload: Json | null
+          response_code: number | null
           status: string | null
         }
         Insert: {
           action?: string | null
+          attempt?: number | null
           created_at?: string
           direction?: string | null
           error_message?: string | null
           external_ticket_id?: string | null
           id?: string
           payload?: Json | null
+          response_code?: number | null
           status?: string | null
         }
         Update: {
           action?: string | null
+          attempt?: number | null
           created_at?: string
           direction?: string | null
           error_message?: string | null
           external_ticket_id?: string | null
           id?: string
           payload?: Json | null
+          response_code?: number | null
           status?: string | null
         }
         Relationships: []
