@@ -241,6 +241,77 @@ export default function TicketsList() {
           </Table>
         )}
       </div>
+
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Neues Ticket erstellen</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-3 md:grid-cols-2">
+            <div className="md:col-span-2">
+              <Label className="text-xs">Titel *</Label>
+              <Input value={nt.title} onChange={e => setNt({ ...nt, title: e.target.value })} placeholder="Kurze Zusammenfassung" />
+            </div>
+            <div className="md:col-span-2">
+              <Label className="text-xs">Beschreibung</Label>
+              <Textarea rows={4} value={nt.description} onChange={e => setNt({ ...nt, description: e.target.value })} />
+            </div>
+            <div>
+              <Label className="text-xs">Kunde</Label>
+              <Input value={nt.customer_name} onChange={e => setNt({ ...nt, customer_name: e.target.value })} />
+            </div>
+            <div>
+              <Label className="text-xs">Firma</Label>
+              <Input value={nt.company_name} onChange={e => setNt({ ...nt, company_name: e.target.value })} />
+            </div>
+            <div>
+              <Label className="text-xs">E-Mail</Label>
+              <Input type="email" value={nt.customer_email} onChange={e => setNt({ ...nt, customer_email: e.target.value })} />
+            </div>
+            <div>
+              <Label className="text-xs">Telefon</Label>
+              <Input value={nt.customer_phone} onChange={e => setNt({ ...nt, customer_phone: e.target.value })} />
+            </div>
+            <div>
+              <Label className="text-xs">Auftragsnr.</Label>
+              <Input value={nt.order_number} onChange={e => setNt({ ...nt, order_number: e.target.value })} />
+            </div>
+            <div>
+              <Label className="text-xs">Gerät</Label>
+              <Input value={nt.device_name} onChange={e => setNt({ ...nt, device_name: e.target.value })} />
+            </div>
+            <div>
+              <Label className="text-xs">Seriennummer</Label>
+              <Input value={nt.serial_number} onChange={e => setNt({ ...nt, serial_number: e.target.value })} />
+            </div>
+            <div>
+              <Label className="text-xs">Abteilung</Label>
+              <Select value={nt.department} onValueChange={(v) => setNt({ ...nt, department: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {DEPARTMENT_OPTIONS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">Priorität</Label>
+              <Select value={nt.priority} onValueChange={(v) => setNt({ ...nt, priority: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {PRIORITY_OPTIONS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateOpen(false)} disabled={creating}>Abbrechen</Button>
+            <Button onClick={createTicket} disabled={creating}>
+              {creating ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Plus className="w-4 h-4 mr-1" />}
+              Ticket erstellen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
