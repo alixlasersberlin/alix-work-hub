@@ -131,6 +131,7 @@ const GeraeteLebenslauf = lazy(() => import("./pages/GeraeteLebenslauf"));
 const Wartungscenter = lazy(() => import("./pages/Wartungscenter"));
 const Wartungsmanagement = lazy(() => import("./pages/Wartungsmanagement"));
 const Garantiecenter = lazy(() => import("./pages/Garantiecenter"));
+const GarantieKulanz = lazy(() => import("./pages/GarantieKulanz"));
 const DesignTemplate = lazy(() => import("./pages/DesignTemplate"));
 import TemplateSwitcher from "./components/TemplateSwitcher";
 const WhatsAppServiceCenter = lazy(() => import("./pages/WhatsAppServiceCenter"));
