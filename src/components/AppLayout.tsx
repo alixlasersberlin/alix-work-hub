@@ -207,6 +207,7 @@ const navItems: NavItem[] = [
       { path: '/reparatur/rueckversand', label: 'Rückversand', icon: PackageCheck, roles: ['Admin', 'Super Admin', 'Reparaturannahme', 'Technik', 'Service'] },
     ],
   },
+  {
     path: '/reparatur', label: 'REPARATURANNAHME', icon: Wrench, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'Finance', 'QM', 'Österreich', 'Reparaturannahme'],
     children: [
       { path: '/reparatur', label: 'Dashboard', icon: LayoutDashboard, roles: null },
