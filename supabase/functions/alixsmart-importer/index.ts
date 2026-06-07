@@ -1387,6 +1387,112 @@ Deno.serve(async (req) => {
     }
 
 
+    if (action === "materialize-pending-profiles") {
+      // Create customers rows for all profiles flagged as pending_new_profile.
+      // Fetches fresh upstream profile data to fill name/phone/address.
+      const upstream = await fetchAllRows("profiles");
+      const bySource = new Map<string, any>();
+      for (const r of upstream.rows) {
+        const sid = String(r.id ?? r.source_id ?? "");
+        if (sid) bySource.set(sid, r);
+      }
+
+      const { data: pending, error: pendErr } = await ctx.admin
+        .from("alixsmart_migration_map")
+        .select("source_id, metadata")
+        .eq("source_table", "profiles")
+        .eq("migration_status", "pending_new_profile");
+      if (pendErr) {
+        return new Response(JSON.stringify({ error: pendErr.message }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      let created = 0, skipped = 0, failed = 0;
+      const errors: any[] = [];
+      for (const row of (pending || [])) {
+        const sourceId = String(row.source_id);
+        const src = bySource.get(sourceId) || {};
+        const meta = (row.metadata as any) || {};
+        const email = String(src.email || meta.email || "").toLowerCase().trim();
+        const full_name = src.full_name || src.name || meta.full_name || null;
+
+        // Skip if a customer with this email already exists
+        if (email) {
+          const { data: dup } = await ctx.admin
+            .from("customers").select("id").ilike("email", email).maybeSingle();
+          if (dup) {
+            await ctx.admin.from("alixsmart_migration_map").update({
+              migration_status: "merged",
+              target_table: "customers",
+              target_id: dup.id,
+              conflict_status: "resolved",
+              error_message: null,
+              metadata: { ...meta, materialized_to: "customers", reason: "email_already_in_customers" },
+              updated_at: new Date().toISOString(),
+            }).eq("source_table", "profiles").eq("source_id", sourceId);
+            skipped++;
+            continue;
+          }
+        }
+
+        const billing = (src.address && typeof src.address === "object")
+          ? src.address
+          : (src.zip || src.city || src.street)
+            ? { zip: src.zip ?? src.postal_code ?? null, city: src.city ?? src.ort ?? null, street: src.street ?? null }
+            : null;
+
+        const { data: ins, error } = await ctx.admin
+          .from("customers")
+          .insert({
+            source_system: "alixsmart",
+            external_customer_id: sourceId,
+            email: email || null,
+            contact_name: full_name,
+            company_name: src.company || src.company_name || src.organization || null,
+            phone: src.phone || src.phone_number || src.mobile || null,
+            billing_address: billing,
+            raw_data: { source: src, materialized_from: "alixsmart_profiles", at: new Date().toISOString() },
+          })
+          .select("id")
+          .maybeSingle();
+
+        if (error) {
+          failed++;
+          errors.push({ sourceId, email, message: error.message });
+          await ctx.admin.from("alixsmart_migration_map").update({
+            migration_status: "error",
+            error_message: error.message,
+            updated_at: new Date().toISOString(),
+          }).eq("source_table", "profiles").eq("source_id", sourceId);
+          continue;
+        }
+
+        await ctx.admin.from("alixsmart_migration_map").update({
+          migration_status: "imported",
+          target_table: "customers",
+          target_id: ins?.id ?? null,
+          conflict_status: "resolved",
+          error_message: null,
+          metadata: { ...meta, materialized_to: "customers", at: new Date().toISOString() },
+          updated_at: new Date().toISOString(),
+        }).eq("source_table", "profiles").eq("source_id", sourceId);
+        created++;
+      }
+
+      await logAction(ctx, "profiles", "materialize_pending_profiles",
+        failed === 0 ? "success" : "partial",
+        { processed: (pending?.length || 0), success: created + skipped, failed },
+        failed ? `${failed} insert errors` : undefined,
+        { created, skipped, failed, errors: errors.slice(0, 20) });
+
+      return new Response(JSON.stringify({
+        ok: failed === 0, processed: pending?.length || 0,
+        created, skipped, failed, errors: errors.slice(0, 20),
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+
+
     if (action === "backup-before-wave") {
       const wave = Number(body.wave ?? 1);
       const r = await backupBeforeWave(ctx, wave);

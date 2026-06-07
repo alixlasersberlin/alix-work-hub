@@ -162,6 +162,20 @@ export default function AlixSmartMigration() {
     } finally { setRunning(null); }
   }
 
+  async function materializePending() {
+    if (!confirm('144 pending Profile als Kunden in der Tabelle "customers" anlegen?\n\nEs werden nur Profile angelegt, deren Email noch nicht als Kunde existiert.')) return;
+    setRunning('materialize');
+    try {
+      const res = await callEngine('materialize-pending-profiles');
+      toast.success(`Materialisierung: ${res.created ?? 0} angelegt, ${res.skipped ?? 0} bereits vorhanden, ${res.failed ?? 0} Fehler`);
+      await loadAll();
+    } catch (e: any) {
+      toast.error('Materialisierung fehlgeschlagen: ' + e.message);
+    } finally { setRunning(null); }
+  }
+
+
+
   function exportCsv(filename: string, rows: any[], columns: string[]) {
     if (!rows.length) { toast.info('Keine Daten zum Export.'); return; }
     const esc = (v: any) => {
@@ -223,6 +237,9 @@ export default function AlixSmartMigration() {
           </Button>
           <Button variant="outline" size="sm" onClick={analyseWave1} disabled={running === 'wave1' || !connectionOk}>
             <AlertTriangle className={`w-4 h-4 mr-2 ${running === 'wave1' ? 'animate-spin' : ''}`} />Welle 1 analysieren
+          </Button>
+          <Button size="sm" variant="default" onClick={materializePending} disabled={running === 'materialize' || !connectionOk}>
+            <Database className={`w-4 h-4 mr-2 ${running === 'materialize' ? 'animate-spin' : ''}`} />Pending Profile → Kunden
           </Button>
         </div>
       </div>
