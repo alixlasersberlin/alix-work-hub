@@ -452,6 +452,7 @@ function AppRoutes() {
           <Route path="/tickets" element={<ProtectedRoute requiredRoles={TICKETS_ROLES}><TicketsList /></ProtectedRoute>} />
           <Route path="/tickets/api-sync" element={<ProtectedRoute requiredRoles={['Super Admin']}><TicketsApiSync /></ProtectedRoute>} />
           <Route path="/tickets/sync" element={<ProtectedRoute requiredRoles={['Super Admin', 'Admin']}><TicketsSyncMonitor /></ProtectedRoute>} />
+          <Route path="/tickets/by-external/:externalId" element={<ProtectedRoute requiredRoles={TICKETS_ROLES}><TicketByExternal /></ProtectedRoute>} />
           <Route path="/tickets/:id" element={<ProtectedRoute requiredRoles={TICKETS_ROLES}><TicketDetail /></ProtectedRoute>} />
           <Route path="/whatsapp" element={<ProtectedRoute requiredRoles={TICKETS_ROLES}><WhatsAppServiceCenter /></ProtectedRoute>} />
           <Route path="/ai-service-center" element={<ProtectedRoute requiredRoles={AI_SERVICE_ROLES}><AiServiceCenter /></ProtectedRoute>} />
