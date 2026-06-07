@@ -519,3 +519,99 @@ function DateienTab({ repairId, files, signatures, canEdit, onChanged }: any) {
 function Field({ label, children, className = '' }: { label: string; children: React.ReactNode; className?: string }) {
   return <div className={className}><Label className="text-xs">{label}</Label><div className="mt-1">{children}</div></div>;
 }
+
+function KostenvoranschlagTab({ repair, canEdit }: any) {
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const [quotes, setQuotes] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const { data } = await sbRepair
+      .from('repair_quotes')
+      .select('id, quote_number, status, total_gross, created_at, sent_at, decided_at')
+      .eq('repair_order_id', repair.id)
+      .order('created_at', { ascending: false });
+    setQuotes(data || []);
+    setLoading(false);
+  }, [repair.id]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const createQuote = async () => {
+    setCreating(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data, error } = await sbRepair
+      .from('repair_quotes')
+      .insert({
+        repair_order_id: repair.id,
+        status: 'Entwurf',
+        currency: repair.currency || 'EUR',
+        vat_rate: 19,
+        created_by: user?.id,
+      })
+      .select('id')
+      .single();
+    setCreating(false);
+    if (error) return toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
+    navigate(`/reparatur/kostenvoranschlaege/${data.id}`);
+  };
+
+  const STATUS: Record<string, string> = {
+    'Entwurf': 'bg-muted text-muted-foreground',
+    'Versendet': 'bg-blue-500/20 text-blue-300 border border-blue-500/40',
+    'Freigegeben': 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40',
+    'Abgelehnt': 'bg-red-500/20 text-red-300 border border-red-500/40',
+  };
+
+  return (
+    <Card className="p-4 space-y-3">
+      <div className="flex justify-between items-center">
+        <h3 className="font-semibold flex items-center gap-2"><Receipt className="w-4 h-4" /> Kostenvoranschläge</h3>
+        {canEdit && (
+          <Button size="sm" onClick={createQuote} disabled={creating}>
+            <Plus className="w-4 h-4 mr-1" /> Neuer KV
+          </Button>
+        )}
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="text-xs text-muted-foreground uppercase">
+            <tr>
+              <th className="text-left py-2">KV-Nr.</th>
+              <th className="text-left">Status</th>
+              <th className="text-right">Brutto</th>
+              <th className="text-left">Erstellt</th>
+              <th className="text-left">Versendet</th>
+              <th className="text-left">Entschieden</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading && <tr><td colSpan={7} className="text-center py-4 text-muted-foreground text-xs">Lädt…</td></tr>}
+            {!loading && quotes.length === 0 && (
+              <tr><td colSpan={7} className="text-center py-4 text-muted-foreground text-xs">Noch keine Kostenvoranschläge</td></tr>
+            )}
+            {quotes.map((q) => (
+              <tr key={q.id} className="border-t border-border">
+                <td className="py-2 font-mono text-xs">{q.quote_number}</td>
+                <td><span className={`px-2 py-0.5 rounded text-xs ${STATUS[q.status] || 'bg-muted'}`}>{q.status}</span></td>
+                <td className="text-right tabular-nums">{Number(q.total_gross || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</td>
+                <td className="text-xs">{new Date(q.created_at).toLocaleDateString('de-DE')}</td>
+                <td className="text-xs">{q.sent_at ? new Date(q.sent_at).toLocaleDateString('de-DE') : '–'}</td>
+                <td className="text-xs">{q.decided_at ? new Date(q.decided_at).toLocaleDateString('de-DE') : '–'}</td>
+                <td className="text-right">
+                  <Link to={`/reparatur/kostenvoranschlaege/${q.id}`}>
+                    <Button size="sm" variant="outline"><FileText className="w-4 h-4 mr-1" /> Öffnen</Button>
+                  </Link>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Card>
+  );
+}
