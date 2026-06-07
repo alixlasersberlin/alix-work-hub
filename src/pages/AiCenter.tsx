@@ -465,7 +465,7 @@ function WarrantyTab() {
         <CardContent>{loading ? <Loader2 className="animate-spin" /> : <List items={rows.byModel} fmt={(r) => `${r.key} – ${r.value}`} />}</CardContent>
       </Card>
       <Card><CardHeader><CardTitle className="text-base">Aktuelle Kulanzfälle</CardTitle></CardHeader>
-        <CardContent>{loading ? <Loader2 className="animate-spin" /> : <List items={(rows.goodwill || []).slice(0, 10)} fmt={(r) => `${r.device_name ?? "—"} · ${r.status} · Anteil Kunde ${Number(r.customer_share || 0).toFixed(0)}€`} />}</CardContent>
+        <CardContent>{loading ? <Loader2 className="animate-spin" /> : <List items={(rows.goodwill || []).slice(0, 10)} fmt={(r: any) => `${r.customer_name ?? r.serial_number ?? "—"} · ${r.approval_status ?? "—"} · Anteil Kunde ${Number(r.cost_share_customer || 0).toFixed(0)}€`} />}</CardContent>
       </Card>
       <Card>
         <CardHeader><CardTitle className="text-base flex items-center gap-2"><Sparkles className="h-4 w-4" /> Auswertung</CardTitle></CardHeader>
@@ -494,9 +494,9 @@ function RouteTab() {
       const next7 = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
       const { data } = await supabase
         .from("route_plans")
-        .select("id,plan_date,planning_status,driver,stops_count,duration_minutes,address")
-        .gte("plan_date", today).lte("plan_date", next7)
-        .order("plan_date").limit(100);
+        .select("id,planned_date,planning_status,assigned_employee,tour_type,priority,device_model")
+        .gte("planned_date", today).lte("planned_date", next7)
+        .order("planned_date").limit(100);
       setPlans(data ?? []); setLoading(false);
     })();
   }, []);
@@ -505,7 +505,7 @@ function RouteTab() {
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
       <Card className="lg:col-span-2">
         <CardHeader><CardTitle className="text-base flex items-center gap-2"><MapIcon className="h-4 w-4" /> Geplante Touren (7 Tage)</CardTitle></CardHeader>
-        <CardContent>{loading ? <Loader2 className="animate-spin" /> : <List items={plans} fmt={(r) => `${r.plan_date} · ${r.driver ?? "—"} · ${r.planning_status ?? "—"} · ${r.stops_count ?? 0} Stops`} />}</CardContent>
+        <CardContent>{loading ? <Loader2 className="animate-spin" /> : <List items={plans} fmt={(r: any) => `${r.planned_date} · ${r.assigned_employee ?? "—"} · ${r.planning_status ?? "—"} · ${r.tour_type ?? ""}`} />}</CardContent>
       </Card>
       <Card>
         <CardHeader><CardTitle className="text-base flex items-center gap-2"><Sparkles className="h-4 w-4" /> Optimierungs-Vorschläge</CardTitle></CardHeader>
