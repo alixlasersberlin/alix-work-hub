@@ -69,7 +69,14 @@ const RESOURCES: Record<string, Resource> = {
       "id, source_id, academy_session_id, source_session_id, customer_id, source_customer_id, customer_name, customer_email, booking_status, notes, metadata, created_at, updated_at",
     orderBy: "updated_at",
   },
+  tickets: {
+    table: "tickets",
+    columns:
+      "id, external_ticket_id, source_system, customer_name, company_name, customer_email, order_number, device_name, serial_number, title, description, status, priority, department, customer_visible_status, last_synced_at, last_outbound_sync_at, created_at, updated_at",
+    orderBy: "updated_at",
+  },
 };
+
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers });

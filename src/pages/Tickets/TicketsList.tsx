@@ -102,7 +102,14 @@ export default function TicketsList() {
         <Ticket className="w-6 h-6 text-primary" />
         <h1 className="text-2xl font-display font-bold text-foreground">Tickets</h1>
         <Badge variant="outline" className="ml-2">{filtered.length}</Badge>
+        <Link
+          to="/tickets/sync"
+          className="ml-auto text-xs px-3 py-1.5 rounded-md border border-border bg-card hover:border-primary/40 hover:text-primary transition-colors"
+        >
+          Synchronisation
+        </Link>
       </div>
+
 
       <div className="rounded-xl border border-border bg-card p-4 mb-4 grid gap-3 md:grid-cols-5">
         <div className="relative md:col-span-2">

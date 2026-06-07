@@ -1,6 +1,7 @@
-// AlixSmart → AlixWork inbound webhook
-// POST a ticket payload to create or update a ticket plus messages/attachments.
-// Auth: shared secret in `x-alixsmart-secret` header (Supabase secret ALIXSMART_WEBHOOK_SECRET).
+// AlixSmart → AlixWork inbound webhook (Phase 1: write-protected)
+// POST a ticket payload. Only NEW tickets are accepted; updates to existing
+// tickets are rejected with 409 and logged as conflicts. AlixWork is master.
+// Auth: shared secret in `x-alixsmart-secret` header (ALIXSMART_WEBHOOK_SECRET).
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
@@ -44,6 +45,18 @@ interface Payload {
   }>;
 }
 
+// Simple in-memory rate limit per API-key (60 req / 60 s, per edge worker instance).
+const rateBucket = new Map<string, number[]>();
+const RATE_WINDOW_MS = 60_000;
+const RATE_MAX = 60;
+function rateLimited(key: string): boolean {
+  const now = Date.now();
+  const arr = (rateBucket.get(key) ?? []).filter((t) => now - t < RATE_WINDOW_MS);
+  arr.push(now);
+  rateBucket.set(key, arr);
+  return arr.length > RATE_MAX;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
@@ -52,6 +65,12 @@ Deno.serve(async (req) => {
   if (!expectedSecret || provided !== expectedSecret) {
     return new Response(JSON.stringify({ error: 'unauthorized' }), {
       status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  if (rateLimited(provided)) {
+    return new Response(JSON.stringify({ error: 'rate_limited', limit: RATE_MAX, window_s: 60 }), {
+      status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 
@@ -74,6 +93,33 @@ Deno.serve(async (req) => {
   }
 
   const now = new Date().toISOString();
+
+  // Phase 1 write-protection: existing tickets are immutable from AlixSmart.
+  // Only the initial creation is allowed — subsequent edits must happen in AlixWork.
+  const { data: existing } = await supabase
+    .from('tickets')
+    .select('id')
+    .eq('external_ticket_id', body.external_ticket_id)
+    .maybeSingle();
+
+  if (existing) {
+    await supabase.from('ticket_sync_logs').insert({
+      external_ticket_id: body.external_ticket_id,
+      direction: 'inbound',
+      action: 'update_blocked',
+      status: 'blocked',
+      error_message: 'Phase 1: AlixSmart is read-only for existing tickets. Edit in AlixWork.',
+      payload: body as unknown as Record<string, unknown>,
+    });
+    return new Response(JSON.stringify({
+      error: 'write_protected',
+      message: 'Existing tickets are read-only from AlixSmart. Edit in AlixWork.',
+      ticket_id: existing.id,
+    }), {
+      status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
   const ticketRow = {
     external_ticket_id: body.external_ticket_id,
     source_system: body.source_system || 'alixsmart',
@@ -95,27 +141,27 @@ Deno.serve(async (req) => {
     last_synced_at: now,
   };
 
-  const { data: ticket, error: upsertErr } = await supabase
+  const { data: ticket, error: insertErr } = await supabase
     .from('tickets')
-    .upsert(ticketRow, { onConflict: 'external_ticket_id' })
+    .insert(ticketRow)
     .select('id')
     .single();
 
-  if (upsertErr || !ticket) {
+  if (insertErr || !ticket) {
     await supabase.from('ticket_sync_logs').insert({
       external_ticket_id: body.external_ticket_id,
       direction: 'inbound',
-      action: 'upsert_ticket',
+      action: 'create_ticket',
       status: 'error',
-      error_message: upsertErr?.message || 'unknown',
+      error_message: insertErr?.message || 'unknown',
       payload: body as unknown as Record<string, unknown>,
     });
-    return new Response(JSON.stringify({ error: upsertErr?.message || 'upsert_failed' }), {
+    return new Response(JSON.stringify({ error: insertErr?.message || 'insert_failed' }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 
-  // Messages
+  // Initial messages (only for the newly created ticket)
   if (Array.isArray(body.messages) && body.messages.length > 0) {
     const rows = body.messages.map(m => ({
       ticket_id: ticket.id,
@@ -131,7 +177,7 @@ Deno.serve(async (req) => {
     await supabase.from('ticket_messages').insert(rows);
   }
 
-  // Attachments
+  // Initial attachments
   if (Array.isArray(body.attachments) && body.attachments.length > 0) {
     const rows = body.attachments.map(a => ({
       ticket_id: ticket.id,
@@ -147,7 +193,7 @@ Deno.serve(async (req) => {
   await supabase.from('ticket_sync_logs').insert({
     external_ticket_id: body.external_ticket_id,
     direction: 'inbound',
-    action: 'upsert_ticket',
+    action: 'create_ticket',
     status: 'success',
     payload: body as unknown as Record<string, unknown>,
   });

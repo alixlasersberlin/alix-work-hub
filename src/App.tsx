@@ -212,6 +212,7 @@ const MailCenterValidierung = lazy(() => import("./pages/MailCenter/Systemvalidi
 const TicketsList = lazy(() => import("./pages/Tickets/TicketsList"));
 const TicketDetail = lazy(() => import("./pages/Tickets/TicketDetail"));
 const TicketsApiSync = lazy(() => import("./pages/Tickets/ApiSyncSettings"));
+const TicketsSyncMonitor = lazy(() => import("./pages/Tickets/SyncMonitor"));
 const AiServiceCenter = lazy(() => import("./pages/AiServiceCenter"));
 import MaintenanceGate from "./components/MaintenanceGate";
 import LeihgeraetReminder from "./components/LeihgeraetReminder";
@@ -449,6 +450,7 @@ function AppRoutes() {
 
           <Route path="/tickets" element={<ProtectedRoute requiredRoles={TICKETS_ROLES}><TicketsList /></ProtectedRoute>} />
           <Route path="/tickets/api-sync" element={<ProtectedRoute requiredRoles={['Super Admin']}><TicketsApiSync /></ProtectedRoute>} />
+          <Route path="/tickets/sync" element={<ProtectedRoute requiredRoles={['Super Admin', 'Admin']}><TicketsSyncMonitor /></ProtectedRoute>} />
           <Route path="/tickets/:id" element={<ProtectedRoute requiredRoles={TICKETS_ROLES}><TicketDetail /></ProtectedRoute>} />
           <Route path="/whatsapp" element={<ProtectedRoute requiredRoles={TICKETS_ROLES}><WhatsAppServiceCenter /></ProtectedRoute>} />
           <Route path="/ai-service-center" element={<ProtectedRoute requiredRoles={AI_SERVICE_ROLES}><AiServiceCenter /></ProtectedRoute>} />
