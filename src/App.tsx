@@ -389,6 +389,9 @@ function AppRoutes() {
           <Route path="/bestellwesen/ersatzteile" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Bestellwesen', 'Order', 'Technik']}><BestellwesenErsatzteile /></ProtectedRoute>} />
 
 
+          <Route path="/tourenplanung/kalender" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><TourenKalender /></ProtectedRoute>} />
+          <Route path="/tourenplanung/karte" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><TourenKarte /></ProtectedRoute>} />
+          <Route path="/tourenplanung/dashboard" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><TourenDashboard /></ProtectedRoute>} />
           <Route path="/tourenplanung/neu" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Tourenplanung']}><RoutePlanForm /></ProtectedRoute>} />
           <Route path="/tourenplanung/:id" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><RoutePlanDetail /></ProtectedRoute>} />
           <Route path="/tourenplanung/:id/bearbeiten" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Tourenplanung']}><RoutePlanForm /></ProtectedRoute>} />
