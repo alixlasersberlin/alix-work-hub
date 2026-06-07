@@ -13,6 +13,7 @@ import { isOrderVip, vipFirst } from '@/lib/vip';
 
 import { SidebarInfoBar } from '@/components/SidebarInfoBar';
 import { useAtOnly } from '@/hooks/useAtOnly';
+import HeadOfOperationDashboard from './HeadOfOperationDashboard';
 
 interface Stats {
   freePoolDevices: number;
@@ -157,6 +158,14 @@ export default function Dashboard() {
   const [shipmentSearch, setShipmentSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const isSuperAdmin = hasRole('Super Admin');
+  const [view, setView] = useState<'hoo' | 'super'>(() => {
+    if (typeof window === 'undefined') return 'hoo';
+    return (localStorage.getItem('dashboardView') as 'hoo' | 'super') || 'hoo';
+  });
+  useEffect(() => {
+    if (typeof window !== 'undefined') localStorage.setItem('dashboardView', view);
+  }, [view]);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({
     shipment: true,
     recent: true,
@@ -320,18 +329,44 @@ export default function Dashboard() {
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in space-y-8">
-
-
-
-
-
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-display font-bold text-foreground">
-          Willkommen zurück, <span className="gold-text">{profile?.full_name || 'Benutzer'}</span>
-        </h1>
-        <p className="text-muted-foreground text-sm mt-1">Ihre aktuelle Übersicht</p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-display font-bold text-foreground">
+            Willkommen zurück, <span className="gold-text">{profile?.full_name || 'Benutzer'}</span>
+          </h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            {isSuperAdmin
+              ? (view === 'hoo' ? 'Head of Operation – Gesamtsystem-Übersicht' : 'Superadmin – Klassische Ansicht')
+              : 'Ihre aktuelle Übersicht'}
+          </p>
+        </div>
+        {isSuperAdmin && (
+          <div className="inline-flex rounded-lg border border-border bg-card p-1">
+            <button
+              type="button"
+              onClick={() => setView('hoo')}
+              className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                view === 'hoo' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              Head of Operation
+            </button>
+            <button
+              type="button"
+              onClick={() => setView('super')}
+              className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                view === 'super' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              Superadmin
+            </button>
+          </div>
+        )}
       </div>
+
+      {isSuperAdmin && view === 'hoo' ? <HeadOfOperationDashboard /> : (<>
+
 
       {/* Error */}
       {error && (
@@ -814,6 +849,7 @@ export default function Dashboard() {
           )}
         </div>
       )}
+      </>)}
     </div>
   );
 }
