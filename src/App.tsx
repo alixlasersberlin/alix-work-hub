@@ -25,6 +25,7 @@ import NotFound from "./pages/NotFound";
 // Lazy: alle Hauptseiten → Route-basiertes Code-Splitting
 const SetPassword = lazy(() => import("./pages/SetPassword"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
+const AtDashboard = lazy(() => import("./pages/AtDashboard"));
 const Customers = lazy(() => import("./pages/Customers"));
 const CustomerDetail = lazy(() => import("./pages/CustomerDetail"));
 const Orders = lazy(() => import("./pages/Orders"));
