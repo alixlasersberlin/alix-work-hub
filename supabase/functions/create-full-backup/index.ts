@@ -232,6 +232,205 @@ async function runPostBackupTasks(params: {
   }
 }
 
+async function executeBackup(params: {
+  adminClient: BackupAdminClient;
+  supabaseUrl: string;
+  serviceRoleKey: string;
+  backupId: string;
+  folderPath: string;
+  manifestPath: string;
+  notify: boolean;
+  notifyEmail: string | null;
+  source: string;
+  scope: "full" | "db_only";
+  startedAt: string;
+}) {
+  const {
+    adminClient,
+    supabaseUrl,
+    serviceRoleKey,
+    backupId,
+    folderPath,
+    manifestPath,
+    notify,
+    notifyEmail,
+    source,
+    scope,
+    startedAt,
+  } = params;
+
+  try {
+    const counts: Record<string, number> = {};
+    const files: Array<{
+      table: string;
+      path: string;
+      rows: number;
+      size_bytes: number;
+    }> = [];
+    const storageIndexFiles: string[] = [];
+    let totalSize = 0;
+    let storageFileCount = 0;
+
+    for (const table of BACKUP_TABLES) {
+      console.log(`Backing up table: ${table}`);
+      const tableDir = `${folderPath}/tables/${table}`;
+      let rowCount = 0;
+      let partIndex = 0;
+      let from = 0;
+
+      while (true) {
+        const { data, error } = await adminClient
+          .from(table)
+          .select("*")
+          .range(from, from + DB_PAGE_SIZE - 1);
+        if (error) throw new Error(`Tabelle ${table}: ${error.message}`);
+        if (!data?.length) break;
+
+        const pageRows = data.length;
+        const partName = `part-${String(partIndex).padStart(5, "0")}.ndjson`;
+        const partPath = `${tableDir}/${partName}`;
+        const size = await uploadNdjsonPart(
+          adminClient,
+          partPath,
+          data as Record<string, unknown>[],
+        );
+
+        files.push({ table, path: partPath, rows: pageRows, size_bytes: size });
+        rowCount += pageRows;
+        totalSize += size;
+        partIndex += 1;
+
+        await tick();
+
+        if (pageRows < DB_PAGE_SIZE) break;
+        from += DB_PAGE_SIZE;
+      }
+
+      counts[table] = rowCount;
+      await tick();
+    }
+
+    if (scope === "full") {
+      for (const bucket of STORAGE_BUCKETS) {
+        console.log(`Indexing storage bucket: ${bucket}`);
+        const entries = await listBucketEntries(adminClient, bucket);
+        storageFileCount += entries.length;
+        const inventoryPath = `${folderPath}/storage/${bucket}.json`;
+        await uploadJson(adminClient, inventoryPath, entries);
+        storageIndexFiles.push(inventoryPath);
+        entries.length = 0;
+        await tick();
+      }
+    }
+
+    const manifest = {
+      meta: {
+        backup_id: backupId,
+        created_at: startedAt,
+        source,
+        scope,
+        project_ref: "xmrmkgfgpoundfwhnxfs",
+        version: 3,
+      },
+      counts,
+      files,
+      storage_index_files: storageIndexFiles,
+      storage_file_count: storageFileCount,
+      total_db_size_bytes: totalSize,
+    };
+
+    const manifestSize = await uploadJson(adminClient, manifestPath, manifest);
+    const expiresIn = 60 * 60 * 24 * 7;
+    const { data: signed } = await adminClient.storage
+      .from("backups")
+      .createSignedUrl(manifestPath, expiresIn);
+    const sizeBytes = totalSize + manifestSize;
+    const completedAt = new Date().toISOString();
+
+    await adminClient
+      .from("backups_metadata")
+      .update({
+        backup_status: "success",
+        completed_at: completedAt,
+        backup_size_bytes: sizeBytes,
+        file_count: storageFileCount,
+        integrity_status: "valid",
+        message: `Backup erfolgreich. ${BACKUP_TABLES.length} Tabellen (NDJSON), ${storageFileCount} Storage-Dateien indexiert.`,
+      })
+      .eq("id", backupId);
+
+    await runPostBackupTasks({
+      supabaseUrl,
+      serviceRoleKey,
+      backupId,
+      folderPath,
+      notify,
+      notifyEmail,
+      downloadUrl: signed?.signedUrl ?? null,
+      sizeBytes,
+      storageFileCount,
+      source,
+      startedAt,
+    });
+
+    return {
+      success: true,
+      backup_id: backupId,
+      storage_path: manifestPath,
+      folder_path: folderPath,
+      size_bytes: sizeBytes,
+      counts,
+      storage_file_count: storageFileCount,
+      download_url: signed?.signedUrl ?? null,
+      expires_in_seconds: expiresIn,
+      email_sent: false,
+      notify_email: notifyEmail,
+      hetzner_sync: { queued: true },
+    };
+  } catch (err) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    console.error("Backup failed:", errorMsg);
+
+    await adminClient
+      .from("backups_metadata")
+      .update({
+        backup_status: "failed",
+        completed_at: new Date().toISOString(),
+        integrity_status: "invalid",
+        message: `Backup fehlgeschlagen: ${errorMsg}`,
+      })
+      .eq("id", backupId);
+
+    try {
+      await adminClient.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "backup-failure-alert",
+          recipientEmail: "rde@alix-lasers.com",
+          idempotencyKey: `backup-fail-${backupId}`,
+          templateData: {
+            backup_id: backupId,
+            backup_type: source === "cron" ? "automated" : "manual",
+            backup_scope: scope,
+            failure_kind: "Backup fehlgeschlagen",
+            backup_status: "failed",
+            integrity_status: "invalid",
+            error_message: errorMsg,
+            occurred_at: new Date().toISOString(),
+            source:
+              source === "cron"
+                ? "cron (create-full-backup)"
+                : "manual (create-full-backup)",
+          },
+        },
+      });
+    } catch (alertErr) {
+      console.error("Failed to send backup failure alert:", alertErr);
+    }
+
+    throw err;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -326,181 +525,43 @@ Deno.serve(async (req) => {
     );
   }
 
-  try {
-    const counts: Record<string, number> = {};
-    const files: Array<{
-      table: string;
-      path: string;
-      rows: number;
-      size_bytes: number;
-    }> = [];
-    const storageIndexFiles: string[] = [];
-    let totalSize = 0;
-    let storageFileCount = 0;
+  const backupPromise = executeBackup({
+    adminClient,
+    supabaseUrl,
+    serviceRoleKey,
+    backupId,
+    folderPath,
+    manifestPath,
+    notify,
+    notifyEmail,
+    source,
+    scope,
+    startedAt,
+  });
 
-    for (const table of BACKUP_TABLES) {
-      console.log(`Backing up table: ${table}`);
-      const tableDir = `${folderPath}/tables/${table}`;
-      let rowCount = 0;
-      let partIndex = 0;
-      let from = 0;
-
-      while (true) {
-        const { data, error } = await adminClient
-          .from(table)
-          .select("*")
-          .range(from, from + DB_PAGE_SIZE - 1);
-        if (error) throw new Error(`Tabelle ${table}: ${error.message}`);
-        if (!data?.length) break;
-
-        const pageRows = data.length;
-        const partName = `part-${String(partIndex).padStart(5, "0")}.ndjson`;
-        const partPath = `${tableDir}/${partName}`;
-        const size = await uploadNdjsonPart(
-          adminClient,
-          partPath,
-          data as Record<string, unknown>[],
-        );
-
-        files.push({ table, path: partPath, rows: pageRows, size_bytes: size });
-        rowCount += pageRows;
-        totalSize += size;
-        partIndex += 1;
-
-        await tick();
-
-        if (pageRows < DB_PAGE_SIZE) break;
-        from += DB_PAGE_SIZE;
-      }
-
-      counts[table] = rowCount;
-    }
-
-    if (scope === "full") {
-      for (const bucket of STORAGE_BUCKETS) {
-        console.log(`Indexing storage bucket: ${bucket}`);
-        const entries = await listBucketEntries(adminClient, bucket);
-        storageFileCount += entries.length;
-        const inventoryPath = `${folderPath}/storage/${bucket}.json`;
-        await uploadJson(adminClient, inventoryPath, entries);
-        storageIndexFiles.push(inventoryPath);
-        entries.length = 0;
-        await tick();
-      }
-    }
-
-    const manifest = {
-      meta: {
-        backup_id: backupId,
-        created_at: startedAt,
-        source,
-        scope,
-        project_ref: "xmrmkgfgpoundfwhnxfs",
-        version: 3,
-      },
-      counts,
-      files,
-      storage_index_files: storageIndexFiles,
-      storage_file_count: storageFileCount,
-      total_db_size_bytes: totalSize,
-    };
-
-    const manifestSize = await uploadJson(adminClient, manifestPath, manifest);
-    const expiresIn = 60 * 60 * 24 * 7;
-    const { data: signed } = await adminClient.storage
-      .from("backups")
-      .createSignedUrl(manifestPath, expiresIn);
-    const sizeBytes = totalSize + manifestSize;
-    const completedAt = new Date().toISOString();
-
-    await adminClient
-      .from("backups_metadata")
-      .update({
-        backup_status: "success",
-        completed_at: completedAt,
-        backup_size_bytes: sizeBytes,
-        file_count: storageFileCount,
-        integrity_status: "valid",
-        message: `Backup erfolgreich. ${BACKUP_TABLES.length} Tabellen (NDJSON), ${storageFileCount} Storage-Dateien indexiert.`,
-      })
-      .eq("id", backupId);
-
-    const postBackupPromise = runPostBackupTasks({
-      supabaseUrl,
-      serviceRoleKey,
-      backupId,
-      folderPath,
-      notify,
-      notifyEmail,
-      downloadUrl: signed?.signedUrl ?? null,
-      sizeBytes,
-      storageFileCount,
-      source,
-      startedAt,
-    });
-
-    if (typeof edgeRuntime?.waitUntil === "function") {
-      edgeRuntime.waitUntil(postBackupPromise);
-    } else {
-      postBackupPromise.catch((error) =>
-        console.error("Post-backup task failed:", error),
-      );
-    }
-
+  if (typeof edgeRuntime?.waitUntil === "function") {
+    edgeRuntime.waitUntil(
+      backupPromise.catch((error) => {
+        console.error("Async backup execution failed:", error);
+      }),
+    );
     return json({
       success: true,
+      accepted: true,
       backup_id: backupId,
       storage_path: manifestPath,
       folder_path: folderPath,
-      size_bytes: sizeBytes,
-      counts,
-      storage_file_count: storageFileCount,
-      download_url: signed?.signedUrl ?? null,
-      expires_in_seconds: expiresIn,
-      email_sent: false,
+      backup_status: "running",
       notify_email: notifyEmail,
-      hetzner_sync: { queued: true },
-    });
+      message: "Backup gestartet. Verarbeitung läuft im Hintergrund.",
+    }, 202);
+  }
+
+  try {
+    const result = await backupPromise;
+    return json(result);
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : String(err);
-    console.error("Backup failed:", errorMsg);
-
-    await adminClient
-      .from("backups_metadata")
-      .update({
-        backup_status: "failed",
-        completed_at: new Date().toISOString(),
-        integrity_status: "invalid",
-        message: `Backup fehlgeschlagen: ${errorMsg}`,
-      })
-      .eq("id", backupId);
-
-    try {
-      await adminClient.functions.invoke("send-transactional-email", {
-        body: {
-          templateName: "backup-failure-alert",
-          recipientEmail: "rde@alix-lasers.com",
-          idempotencyKey: `backup-fail-${backupId}`,
-          templateData: {
-            backup_id: backupId,
-            backup_type: source === "cron" ? "automated" : "manual",
-            backup_scope: scope,
-            failure_kind: "Backup fehlgeschlagen",
-            backup_status: "failed",
-            integrity_status: "invalid",
-            error_message: errorMsg,
-            occurred_at: new Date().toISOString(),
-            source:
-              source === "cron"
-                ? "cron (create-full-backup)"
-                : "manual (create-full-backup)",
-          },
-        },
-      });
-    } catch (alertErr) {
-      console.error("Failed to send backup failure alert:", alertErr);
-    }
-
     return json({ success: false, error: errorMsg }, 500);
   }
 });
