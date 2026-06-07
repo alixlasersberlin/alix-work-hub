@@ -98,11 +98,11 @@ export default function TicketsSyncMonitor() {
     ] = await Promise.all([
       inboundQ,
       outboundQ,
-      countOut({ status: 'success' }),
-      countOut({ status: 'error' }),
-      countIn({ status: 'success' }),
-      countIn({ status: 'error' }),
-      countIn({ status: 'blocked' }),
+      countOutbound('success'),
+      countOutbound('error'),
+      countInbound('success'),
+      countInbound('error'),
+      countInbound('blocked'),
       supabase.from('tickets').select('id', { count: 'exact', head: true }),
       supabase.from('tickets').select('id', { count: 'exact', head: true }).gte('last_outbound_sync_at', startOfDay.toISOString()),
     ]);
