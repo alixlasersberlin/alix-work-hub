@@ -81,9 +81,12 @@ const ROLE_MAP: Record<string, string> = {
   technician: "Technik",
   service: "Service",
   finance: "Finance",
-  customer: "Kunde",
   user: "Order",
 };
+
+/** Source roles that intentionally do NOT receive a backend role assignment.
+ *  Users are imported as customer profile only (no user_roles row). */
+const CUSTOMER_ONLY_ROLES = new Set(["customer", "kunde", "client"]);
 
 interface Ctx {
   admin: ReturnType<typeof createClient>;
