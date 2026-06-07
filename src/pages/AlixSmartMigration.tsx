@@ -224,6 +224,9 @@ export default function AlixSmartMigration() {
           <Button variant="outline" size="sm" onClick={analyseWave1} disabled={running === 'wave1' || !connectionOk}>
             <AlertTriangle className={`w-4 h-4 mr-2 ${running === 'wave1' ? 'animate-spin' : ''}`} />Welle 1 analysieren
           </Button>
+          <Button size="sm" variant="default" onClick={materializePending} disabled={running === 'materialize' || !connectionOk}>
+            <Database className={`w-4 h-4 mr-2 ${running === 'materialize' ? 'animate-spin' : ''}`} />Pending Profile → Kunden
+          </Button>
         </div>
       </div>
 
