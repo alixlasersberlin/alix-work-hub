@@ -9,8 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   ArrowLeft, RefreshCw, CheckCircle2, AlertTriangle, Ban, Clock,
-  ArrowUpRight, ArrowDownLeft,
+  ArrowUpRight, ArrowDownLeft, BellRing, Mail,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface LogRow {
   id: string;
