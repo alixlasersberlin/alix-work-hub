@@ -202,6 +202,7 @@ Deno.serve(async (req) => {
     direction: 'inbound',
     action: 'create_ticket',
     status: 'success',
+    response_code: 200,
     payload: body as unknown as Record<string, unknown>,
   });
 
