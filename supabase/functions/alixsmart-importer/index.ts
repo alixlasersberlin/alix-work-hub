@@ -1194,7 +1194,7 @@ Deno.serve(async (req) => {
         migration_status,
         conflict_status: decision === "reject" || decision.startsWith("new_") ? "open" : "resolved",
         metadata: { decision, confidence, match_rule: matchRule, by: userId, at: new Date().toISOString() },
-      }, { onConflict: "source_table,source_id,match_key" });
+      }, { onConflict: "source_table,source_id" });
 
       if (error) {
         return new Response(JSON.stringify({ error: error.message }),
