@@ -445,10 +445,17 @@ async function importDevices(ctx: Ctx, rows: any[], dryRun: boolean) {
           "serial_number", "merged", "duplicate_serial", null, { patch });
       }
     } else {
+      // Ensure NOT NULL fields in lager_devices have a fallback
+      const fallbackModel =
+        r.model_name ||
+        r.device_name ||
+        r.model ||
+        r.product_name ||
+        "Unbekanntes Gerät";
       const { data: ins, error } = await ctx.admin
         .from("lager_devices").insert({
           serial_number: serial,
-          model_name: r.model_name ?? null,
+          model_name: fallbackModel,
           customer_email: r.customer_email ?? null,
           customer_name: r.customer_name ?? null,
           device_status: r.status ?? null,
@@ -472,6 +479,7 @@ async function importDevices(ctx: Ctx, rows: any[], dryRun: boolean) {
   }
   return { s, f };
 }
+
 
 // Generic upsert by `source_id`
 async function importGeneric(
