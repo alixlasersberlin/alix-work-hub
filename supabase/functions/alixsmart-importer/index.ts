@@ -812,7 +812,7 @@ Deno.serve(async (req) => {
     const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
     const action: string = body.action || "test-connection";
     const batchId: string = body.batch_id || `${action}-${Date.now()}`;
-    const ctx: Ctx = { admin, userId, batchId };
+    const ctx: Ctx = { admin, userId, batchId, schemaCache: new Map() };
 
     if (action === "test-connection") {
       const r = await fetchTable("profiles", 1, 0);
