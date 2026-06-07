@@ -451,7 +451,7 @@ function AppRoutes() {
           <Route path="/garantie-kulanz" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Service', 'Serviceleitung', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance', 'Tourenplanung']}><GarantieKulanz /></ProtectedRoute>} />
           <Route path="/service/garantie-kulanz" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Service', 'Serviceleitung', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance', 'Tourenplanung']}><GarantieKulanz /></ProtectedRoute>} />
           <Route path="/management-dashboard" element={<ProtectedRoute requiredRoles={['Super Admin']}><ManagementDashboard /></ProtectedRoute>} />
-          <Route path="/ai-center" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Geschäftsführung', 'Serviceleitung', 'Service', 'Technik', 'Finance']}><AiCenter /></ProtectedRoute>} />
+          <Route path="/ai-center" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Geschäftsführung', 'Serviceleitung', 'Service', 'Technik', 'Finance', 'Österreich']}><AiCenter /></ProtectedRoute>} />
 
           <Route path="/design-template" element={<ProtectedRoute><DesignTemplate /></ProtectedRoute>} />
 
