@@ -18,9 +18,8 @@ export default function RoutePlanDetail() {
   const [orderItems, setOrderItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!id) return;
   const load = useCallback(async () => {
+    if (!id) return;
     const { data } = await supabase
       .from('route_plans')
       .select('*, orders(order_number, order_status, total_amount, currency, customers(company_name, contact_name, email, phone))')
