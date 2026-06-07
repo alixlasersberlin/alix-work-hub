@@ -180,14 +180,21 @@ export default function AlixSmartMigration() {
   async function importWave(wave: 1 | 2 | 3 | 4) {
     setRunning('wave-' + wave);
     try {
+      toast.info(`Welle ${wave}: erstelle Backup …`);
       const res = await callEngine('import-wave', { wave });
       setWaveResults((prev) => ({ ...prev, [wave]: res }));
-      toast.success(`Welle ${wave} importiert.`);
+      if (res.aborted) {
+        toast.error(`Welle ${wave} abgebrochen: ${res.reason || 'unbekannt'}`);
+      } else {
+        const s = res.summary || {};
+        toast.success(`Welle ${wave}: ${s.imported ?? 0} importiert, ${s.skipped ?? 0} übersprungen, ${s.conflicts ?? 0} Konflikte (${s.duration_ms ?? 0} ms)`);
+      }
       await loadAll();
     } catch (e: any) {
       toast.error(`Welle ${wave} fehlgeschlagen: ` + e.message);
     } finally { setRunning(null); }
   }
+
 
   const canImport = schemaReady && connectionOk && dryRunOk && ticketAck;
 
