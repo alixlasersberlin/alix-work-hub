@@ -60,8 +60,9 @@ function rateLimited(key: string): boolean {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
-  const expectedSecret = Deno.env.get('ALIXSMART_WEBHOOK_SECRET');
-  const provided = req.headers.get('x-alixsmart-secret');
+  // Accept either ALIX_SYNC_KEY (preferred, unified) or legacy ALIXSMART_WEBHOOK_SECRET.
+  const expectedSecret = Deno.env.get('ALIX_SYNC_KEY') || Deno.env.get('ALIXSMART_WEBHOOK_SECRET');
+  const provided = req.headers.get('x-alixsmart-secret') || req.headers.get('x-alix-sync-key');
   if (!expectedSecret || provided !== expectedSecret) {
     return new Response(JSON.stringify({ error: 'unauthorized' }), {
       status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
