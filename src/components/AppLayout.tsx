@@ -174,6 +174,7 @@ const navItems: NavItem[] = [
       { path: '/order', label: 'Factory Orders', icon: Factory, roles: ['Admin', 'Super Admin', 'Order'] },
       { path: '/order/freigabe', label: 'Freigabe', icon: ShieldCheck, roles: ['Admin', 'Super Admin', 'Order'] },
       { path: '/bestellwesen/ersatzteile', label: 'Ersatzteil-Bestellvorschläge', icon: Package, roles: ['Admin', 'Super Admin', 'Bestellwesen', 'Order', 'Technik'] },
+      { path: '/ersatzteilmanagement', label: 'Ersatzteilmanagement', icon: Boxes, roles: ['Admin', 'Super Admin', 'Bestellwesen', 'Order', 'Technik', 'Reparaturannahme', 'Serviceleitung', 'Service', 'Finance'] },
       {
         path: '/production', label: 'PRODUCTION', icon: Factory, roles: ['Admin', 'Super Admin', 'Lieferant', 'FACTORY INVOICE', 'Order'],
         children: [
