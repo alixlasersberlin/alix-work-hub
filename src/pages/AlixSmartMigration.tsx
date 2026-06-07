@@ -579,55 +579,104 @@ function Wave1ProfilesTab({ data, onExport }: { data: any; onExport: (f: string,
 
 function Wave1RolesTab({ data, onExport }: { data: any; onExport: (f: string, r: any[], c: string[]) => void }) {
   if (!data) return <Card><CardContent className="p-6"><NotRunHint /></CardContent></Card>;
-  const suggestionRows = Object.entries(data.mapping_suggestion || {}).map(([source, target]) => ({ source, target: target ?? '—' }));
+  const mappings: any[] = data.mappings || [];
+  const status = data.status_counts || { auto: 0, manual: 0, blocked: 0 };
+  const targetRoles: { name: string; description: string | null }[] = data.target_roles || [];
+  const sourceRoles: { name: string; assignment_count: number; user_count: number }[] = data.source_roles || [];
+  const statusBadge = (s: string) => {
+    if (s === 'auto') return <Badge className="bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">automatisch mappbar</Badge>;
+    if (s === 'manual') return <Badge className="bg-amber-500/15 text-amber-500 border border-amber-500/30">manuell prüfen</Badge>;
+    return <Badge className="bg-red-500/15 text-red-500 border border-red-500/30">blockiert</Badge>;
+  };
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between flex-wrap gap-2">
-          <span>Rollen – Konfliktanalyse</span>
-          <Button size="sm" variant="outline" onClick={() => onExport('rollen-mapping.csv', suggestionRows, ['source', 'target'])}>CSV Export</Button>
+          <span>Rollen – vollständige Konfliktanalyse</span>
+          <Button size="sm" variant="outline" onClick={() => onExport('rollen-mapping.csv', mappings, ['source', 'user_count', 'assignment_count', 'suggested_target', 'status', 'reason'])}>CSV Export</Button>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4 text-sm">
+      <CardContent className="space-y-6 text-sm">
         {data.fetch_error && <div className="text-xs text-red-500">Quell-Fehler: {data.fetch_error}</div>}
-        <div>
-          <div className="text-muted-foreground mb-1">Vorhandene Rollen in AlixSmart ({data.source_roles.length})</div>
-          <div className="flex flex-wrap gap-1">
-            {data.source_roles.map((r: any) => (
-              <Badge key={r.name} variant="secondary" className="font-mono text-xs">{r.name} · {r.count}</Badge>
-            ))}
+
+        <div className="grid grid-cols-3 gap-3">
+          <div className="rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3">
+            <div className="text-2xl font-bold text-emerald-500">{status.auto}</div>
+            <div className="text-xs text-muted-foreground">automatisch mappbar</div>
+          </div>
+          <div className="rounded-md border border-amber-500/30 bg-amber-500/5 p-3">
+            <div className="text-2xl font-bold text-amber-500">{status.manual}</div>
+            <div className="text-xs text-muted-foreground">manuell prüfen</div>
+          </div>
+          <div className="rounded-md border border-red-500/30 bg-red-500/5 p-3">
+            <div className="text-2xl font-bold text-red-500">{status.blocked}</div>
+            <div className="text-xs text-muted-foreground">blockiert (neue Zielrolle vorschlagen)</div>
           </div>
         </div>
+
         <div>
-          <div className="text-muted-foreground mb-1">Vorhandene Rollen in AlixWork ({data.target_roles.length})</div>
-          <div className="flex flex-wrap gap-1">
-            {data.target_roles.map((r: string) => (
-              <Badge key={r} variant="outline" className="font-mono text-xs">{r}</Badge>
-            ))}
+          <div className="text-muted-foreground mb-2 font-medium">1. Rollen aus AlixSmart ({sourceRoles.length})</div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead className="bg-muted/40"><tr className="text-left">
+                <th className="p-2">Rolle</th><th className="p-2">Benutzer</th><th className="p-2">Zuweisungen</th>
+              </tr></thead>
+              <tbody>
+                {sourceRoles.map((r) => (
+                  <tr key={r.name} className="border-t border-border">
+                    <td className="p-2 font-mono">{r.name}</td>
+                    <td className="p-2">{r.user_count}</td>
+                    <td className="p-2">{r.assignment_count}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
+
         <div>
-          <div className="text-red-500 mb-1">Nicht mappbar ({data.unmapped.length})</div>
-          <div className="flex flex-wrap gap-1">
-            {data.unmapped.length === 0 && <span className="text-muted-foreground text-xs">—</span>}
-            {data.unmapped.map((r: string) => (
-              <Badge key={r} variant="outline" className="bg-red-500/15 text-red-500 font-mono text-xs">{r}</Badge>
-            ))}
+          <div className="text-muted-foreground mb-2 font-medium">2. Rollen aus AlixWork ({targetRoles.length})</div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead className="bg-muted/40"><tr className="text-left">
+                <th className="p-2">Rolle</th><th className="p-2">Beschreibung</th>
+              </tr></thead>
+              <tbody>
+                {targetRoles.map((r) => (
+                  <tr key={r.name} className="border-t border-border">
+                    <td className="p-2 font-mono">{r.name}</td>
+                    <td className="p-2 text-muted-foreground">{r.description ?? '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
+
         <div>
-          <div className="text-muted-foreground mb-1">Mapping-Vorschlag</div>
-          <table className="w-full text-xs">
-            <thead className="bg-muted/40"><tr className="text-left"><th className="p-2">Quelle</th><th className="p-2">Vorschlag Ziel</th></tr></thead>
-            <tbody>
-              {suggestionRows.map((r, i) => (
-                <tr key={i} className="border-t border-border">
-                  <td className="p-2 font-mono">{r.source}</td>
-                  <td className="p-2 font-mono">{String(r.target)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="text-muted-foreground mb-2 font-medium">3. Mapping-Vorschlag (keine Änderung – nur Vorschlag)</div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead className="bg-muted/40"><tr className="text-left">
+                <th className="p-2">AlixSmart</th>
+                <th className="p-2">Benutzer</th>
+                <th className="p-2">Vorschlag AlixWork</th>
+                <th className="p-2">Status</th>
+                <th className="p-2">Begründung</th>
+              </tr></thead>
+              <tbody>
+                {mappings.map((m, i) => (
+                  <tr key={i} className="border-t border-border">
+                    <td className="p-2 font-mono">{m.source}</td>
+                    <td className="p-2">{m.user_count}</td>
+                    <td className="p-2 font-mono">{m.suggested_target ?? <span className="text-red-500">— (neue Rolle nötig)</span>}</td>
+                    <td className="p-2">{statusBadge(m.status)}</td>
+                    <td className="p-2 text-muted-foreground">{m.reason}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </CardContent>
     </Card>
