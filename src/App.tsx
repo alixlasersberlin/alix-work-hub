@@ -129,6 +129,7 @@ const AlixSmartKonfliktaufloesung = lazy(() => import("./pages/AlixSmartKonflikt
 const Geraeteakte = lazy(() => import("./pages/Geraeteakte"));
 const GeraeteLebenslauf = lazy(() => import("./pages/GeraeteLebenslauf"));
 const Wartungscenter = lazy(() => import("./pages/Wartungscenter"));
+const Wartungsmanagement = lazy(() => import("./pages/Wartungsmanagement"));
 const Garantiecenter = lazy(() => import("./pages/Garantiecenter"));
 const DesignTemplate = lazy(() => import("./pages/DesignTemplate"));
 import TemplateSwitcher from "./components/TemplateSwitcher";
@@ -406,6 +407,8 @@ function AppRoutes() {
           <Route path="/geraeteakte" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Technik', 'Kundenservice', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Tourenplanung', 'Finance']}><Geraeteakte /></ProtectedRoute>} />
           <Route path="/geraete-lebenslauf" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Technik', 'Kundenservice', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Finance']}><GeraeteLebenslauf /></ProtectedRoute>} />
           <Route path="/wartungscenter" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Service', 'Serviceleitung', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance', 'Tourenplanung']}><Wartungscenter /></ProtectedRoute>} />
+          <Route path="/wartungsmanagement" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Service', 'Serviceleitung', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance', 'Tourenplanung']}><Wartungsmanagement /></ProtectedRoute>} />
+          <Route path="/service/wartungsmanagement" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Service', 'Serviceleitung', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance', 'Tourenplanung']}><Wartungsmanagement /></ProtectedRoute>} />
           <Route path="/garantiecenter" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Service', 'Serviceleitung', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance', 'Vertrieb']}><Garantiecenter /></ProtectedRoute>} />
           <Route path="/design-template" element={<ProtectedRoute><DesignTemplate /></ProtectedRoute>} />
 
