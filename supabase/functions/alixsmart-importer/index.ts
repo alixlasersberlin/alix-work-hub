@@ -837,6 +837,12 @@ Deno.serve(async (req) => {
         { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    if (action === "discover-schema") {
+      const schemas = await discoverSchemas(ctx);
+      return new Response(JSON.stringify({ batch_id: batchId, schemas }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     if (action === "dry-run-import" || action === "import-wave") {
       const wave = Number(body.wave ?? 1) as 1 | 2 | 3 | 4;
       const dryRun = action === "dry-run-import" || !!body.dry_run;
