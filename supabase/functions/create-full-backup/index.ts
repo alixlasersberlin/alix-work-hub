@@ -2,7 +2,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 type BackupAdminClient = any;
 
-const edgeRuntime = (globalThis as { EdgeRuntime?: { waitUntil?: (promise: Promise<unknown>) => void } }).EdgeRuntime;
+const edgeRuntime = (
+  globalThis as {
+    EdgeRuntime?: { waitUntil?: (promise: Promise<unknown>) => void };
+  }
+).EdgeRuntime;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
