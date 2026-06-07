@@ -1810,6 +1810,115 @@ export type Database = {
           },
         ]
       }
+      dispatch_attachments: {
+        Row: {
+          created_at: string
+          file_name: string | null
+          file_path: string
+          id: string
+          mime_type: string | null
+          route_plan_id: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          file_name?: string | null
+          file_path: string
+          id?: string
+          mime_type?: string | null
+          route_plan_id: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          file_name?: string | null
+          file_path?: string
+          id?: string
+          mime_type?: string | null
+          route_plan_id?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispatch_attachments_route_plan_id_fkey"
+            columns: ["route_plan_id"]
+            isOneToOne: false
+            referencedRelation: "route_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dispatch_used_parts: {
+        Row: {
+          created_at: string
+          id: string
+          note: string | null
+          part_name: string
+          part_sku: string | null
+          quantity: number
+          route_plan_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          part_name: string
+          part_sku?: string | null
+          quantity?: number
+          route_plan_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          part_name?: string
+          part_sku?: string | null
+          quantity?: number
+          route_plan_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispatch_used_parts_route_plan_id_fkey"
+            columns: ["route_plan_id"]
+            isOneToOne: false
+            referencedRelation: "route_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dispatch_vehicles: {
+        Row: {
+          active: boolean
+          created_at: string
+          driver_user_id: string | null
+          id: string
+          license_plate: string | null
+          name: string
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          driver_user_id?: string | null
+          id?: string
+          license_plate?: string | null
+          name: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          driver_user_id?: string | null
+          id?: string
+          license_plate?: string | null
+          name?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
@@ -5347,56 +5456,125 @@ export type Database = {
         Row: {
           assigned_employee: string | null
           assigned_team: string | null
+          check_in_at: string | null
+          check_out_at: string | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
           created_at: string
           created_by: string | null
+          customer_id: string | null
+          device_model: string | null
+          device_serial_number: string | null
+          fault_description: string | null
+          finance_id: string | null
           id: string
           location_address: Json | null
-          order_id: string
+          next_step: string | null
+          order_id: string | null
           planned_date: string | null
           planning_note: string | null
           planning_status: string
           priority: string | null
+          repair_order_id: string | null
+          report_pdf_path: string | null
+          requested_date: string | null
+          result_outcome: string | null
+          signature_path: string | null
+          technician_user_id: string | null
+          ticket_id: string | null
           time_window_end: string | null
           time_window_start: string | null
+          tour_type: string | null
           updated_at: string
           updated_by: string | null
+          vehicle_id: string | null
           vehicle_info: string | null
+          work_ended_at: string | null
+          work_performed: string | null
+          work_started_at: string | null
         }
         Insert: {
           assigned_employee?: string | null
           assigned_team?: string | null
+          check_in_at?: string | null
+          check_out_at?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
           created_at?: string
           created_by?: string | null
+          customer_id?: string | null
+          device_model?: string | null
+          device_serial_number?: string | null
+          fault_description?: string | null
+          finance_id?: string | null
           id?: string
           location_address?: Json | null
-          order_id: string
+          next_step?: string | null
+          order_id?: string | null
           planned_date?: string | null
           planning_note?: string | null
           planning_status?: string
           priority?: string | null
+          repair_order_id?: string | null
+          report_pdf_path?: string | null
+          requested_date?: string | null
+          result_outcome?: string | null
+          signature_path?: string | null
+          technician_user_id?: string | null
+          ticket_id?: string | null
           time_window_end?: string | null
           time_window_start?: string | null
+          tour_type?: string | null
           updated_at?: string
           updated_by?: string | null
+          vehicle_id?: string | null
           vehicle_info?: string | null
+          work_ended_at?: string | null
+          work_performed?: string | null
+          work_started_at?: string | null
         }
         Update: {
           assigned_employee?: string | null
           assigned_team?: string | null
+          check_in_at?: string | null
+          check_out_at?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
           created_at?: string
           created_by?: string | null
+          customer_id?: string | null
+          device_model?: string | null
+          device_serial_number?: string | null
+          fault_description?: string | null
+          finance_id?: string | null
           id?: string
           location_address?: Json | null
-          order_id?: string
+          next_step?: string | null
+          order_id?: string | null
           planned_date?: string | null
           planning_note?: string | null
           planning_status?: string
           priority?: string | null
+          repair_order_id?: string | null
+          report_pdf_path?: string | null
+          requested_date?: string | null
+          result_outcome?: string | null
+          signature_path?: string | null
+          technician_user_id?: string | null
+          ticket_id?: string | null
           time_window_end?: string | null
           time_window_start?: string | null
+          tour_type?: string | null
           updated_at?: string
           updated_by?: string | null
+          vehicle_id?: string | null
           vehicle_info?: string | null
+          work_ended_at?: string | null
+          work_performed?: string | null
+          work_started_at?: string | null
         }
         Relationships: [
           {
