@@ -43,6 +43,8 @@ const navItems: NavItem[] = [
       { path: '/mailcenter', label: 'Dashboard', icon: LayoutDashboard, roles: null },
       { path: '/mailcenter/schreiben', label: 'E-Mail schreiben', icon: PenSquare, roles: null },
       { path: '/mailcenter/intern', label: 'Interne Nachrichten', icon: MessageSquare, roles: null },
+      { path: '/mailcenter/telefonnotizen', label: 'Telefonnotizen', icon: Phone, roles: null },
+      { path: '/mailcenter/aufgaben', label: 'Aufgaben', icon: CheckSquare, roles: null },
       { path: '/tickets?new=1', label: 'Neues Ticket', icon: Ticket, roles: null },
       {
         path: '/mailcenter/schreiben', label: 'E-Mail', icon: Mail, roles: ['Super Admin'],
