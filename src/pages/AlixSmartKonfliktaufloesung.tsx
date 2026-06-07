@@ -155,10 +155,20 @@ export default function AlixSmartKonfliktaufloesung() {
             </p>
           </div>
         </div>
-        <Button onClick={runAnalysis} disabled={loading} variant="outline">
-          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          Analyse neu laden
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={() => bulkApplyNewRecords('profile')} variant="secondary" size="sm" disabled={counts.profiles.new_record === 0}>
+            <UserPlus className="w-4 h-4 mr-2" />
+            Alle Kunden ohne Match übernehmen ({counts.profiles.new_record})
+          </Button>
+          <Button onClick={() => bulkApplyNewRecords('device')} variant="secondary" size="sm" disabled={counts.devices.new_record === 0}>
+            <PackagePlus className="w-4 h-4 mr-2" />
+            Alle Geräte ohne Match übernehmen ({counts.devices.new_record})
+          </Button>
+          <Button onClick={runAnalysis} disabled={loading} variant="outline" size="sm">
+            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Analyse neu laden
+          </Button>
+        </div>
       </div>
 
       <SummaryCards counts={counts} summary={summary} />
