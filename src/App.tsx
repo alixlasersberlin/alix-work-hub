@@ -211,6 +211,7 @@ const MailCenterSchulung = lazy(() => import("./pages/MailCenter/Schulungscenter
 const MailCenterValidierung = lazy(() => import("./pages/MailCenter/Systemvalidierung"));
 const TicketsList = lazy(() => import("./pages/Tickets/TicketsList"));
 const TicketDetail = lazy(() => import("./pages/Tickets/TicketDetail"));
+const TicketByExternal = lazy(() => import("./pages/Tickets/TicketByExternal"));
 const TicketsApiSync = lazy(() => import("./pages/Tickets/ApiSyncSettings"));
 const TicketsSyncMonitor = lazy(() => import("./pages/Tickets/SyncMonitor"));
 const AiServiceCenter = lazy(() => import("./pages/AiServiceCenter"));
