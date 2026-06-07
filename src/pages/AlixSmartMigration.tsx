@@ -162,6 +162,17 @@ export default function AlixSmartMigration() {
     } finally { setRunning(null); }
   }
 
+  async function materializePending() {
+    if (!confirm('144 pending Profile als Kunden in der Tabelle "customers" anlegen?\n\nEs werden nur Profile angelegt, deren Email noch nicht als Kunde existiert.')) return;
+    setRunning('materialize');
+    try {
+      const res = await callEngine('materialize-pending-profiles');
+      toast.success(`Materialisierung: ${res.created ?? 0} angelegt, ${res.skipped ?? 0} bereits vorhanden, ${res.failed ?? 0} Fehler`);
+      await loadAll();
+    } catch (e: any) {
+      toast.error('Materialisierung fehlgeschlagen: ' + e.message);
+    } finally { setRunning(null); }
+
   function exportCsv(filename: string, rows: any[], columns: string[]) {
     if (!rows.length) { toast.info('Keine Daten zum Export.'); return; }
     const esc = (v: any) => {
