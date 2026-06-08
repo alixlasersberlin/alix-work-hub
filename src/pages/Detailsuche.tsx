@@ -335,8 +335,36 @@ export default function Detailsuche() {
         {error && <div className="text-sm text-destructive">{error}</div>}
       </div>
 
+      {unassignedLager.length > 0 && (
+        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 overflow-hidden">
+          <div className="px-4 py-3 border-b border-emerald-500/20 flex items-center gap-2">
+            <Warehouse className="w-4 h-4 text-emerald-500" />
+            <h3 className="text-sm font-semibold">Lagergeräte ohne Auftrag</h3>
+            <span className="text-xs text-muted-foreground">({unassignedLager.length})</span>
+          </div>
+          <div className="divide-y divide-border">
+            {unassignedLager.map(d => {
+              const archived = /\[Status:\s*Archiviert\]/i.test(d.notes ?? '');
+              return (
+                <button
+                  key={d.id}
+                  onClick={() => navigate(`/lager/lagergeraete?serial=${encodeURIComponent(d.serial_number)}`)}
+                  className="w-full text-left px-4 py-3 hover:bg-emerald-500/10 flex flex-wrap items-center gap-x-3 gap-y-1"
+                >
+                  <span className="font-medium">{d.model_name || '—'}</span>
+                  <span className="font-mono text-xs text-muted-foreground">SN {d.serial_number}</span>
+                  {archived && <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded bg-muted text-muted-foreground">Archiviert</span>}
+                  <span className="text-xs text-muted-foreground ml-auto">Keinem Auftrag zugewiesen</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {hits !== null && (
         <div className="rounded-xl border border-border bg-card overflow-hidden">
+
           <div className="px-4 py-3 border-b border-border flex items-center justify-between">
             <h3 className="text-sm font-semibold">Ergebnisse</h3>
             <span className="text-xs text-muted-foreground">{hits.length} Treffer</span>
