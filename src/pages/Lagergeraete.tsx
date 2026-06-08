@@ -647,6 +647,23 @@ export default function Lagergeraete({
     const { data: userData } = await supabase.auth.getUser();
     const finalReservedOrderId = reservedOrderId;
 
+    // Sperre: Pro Auftrag entweder Lager-Reservierung ODER Produktions-Bestellung.
+    if (finalReservedOrderId && finalReservedOrderId !== originalReservedOrderId) {
+      const { data: existingPo } = await supabase
+        .from('production_orders')
+        .select('production_order_number')
+        .eq('order_id', finalReservedOrderId)
+        .limit(1)
+        .maybeSingle();
+      if (existingPo) {
+        setSaving(false);
+        toast.error(
+          `Reservierung nicht möglich: Für diesen Auftrag existiert bereits die Bestellung ${existingPo.production_order_number ?? ''}. Pro Auftrag ist entweder eine Lager-Reservierung ODER eine Bestellung zulässig.`,
+        );
+        return;
+      }
+    }
+
     const cleanedNotes = (parsed.data.notes ?? '')
       .replace(/\s*\[Typ:\s*(Neugerät|Leihgerät)\]\s*/g, ' ')
       .replace(/\s*\[Status:\s*[^\]]+\]\s*/g, ' ')
