@@ -127,6 +127,7 @@ const ZusagenBank = lazy(() => import("./pages/ZusagenBank"));
 const AbsagenBank = lazy(() => import("./pages/AbsagenBank"));
 const AnfragenOffen = lazy(() => import("./pages/AnfragenOffen"));
 const Detailsuche = lazy(() => import("./pages/Detailsuche"));
+const AuftragStatus = lazy(() => import("./pages/AuftragStatus"));
 const Geraetesperren = lazy(() => import("./pages/Geraetesperren"));
 const Systemwartung = lazy(() => import("./pages/Systemwartung"));
 const Mandanten = lazy(() => import("./pages/Mandanten"));
