@@ -188,12 +188,12 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    path: '/production', label: 'PRODUCTION', icon: Factory, roles: ['Admin', 'Super Admin', 'Lieferant', 'FACTORY INVOICE', 'Order', 'SACHBEARBEITUNG'],
+    path: '/production', label: 'PRODUCTION', icon: Factory, roles: ['Super Admin', 'Lieferant', 'FACTORY INVOICE'],
     children: [
-      { path: '/production/order-in', label: 'Order In', icon: Inbox, roles: ['Admin', 'Super Admin', 'Lieferant', 'FACTORY INVOICE', 'Order', 'SACHBEARBEITUNG'] },
-      { path: '/production', label: 'Liste', icon: ListOrdered, roles: ['Admin', 'Super Admin', 'Lieferant', 'FACTORY INVOICE', 'Order', 'SACHBEARBEITUNG'] },
-      { path: '/production/fertig', label: 'Fertig', icon: CheckCircle2, roles: ['Admin', 'Super Admin', 'Lieferant', 'FACTORY INVOICE', 'Order', 'SACHBEARBEITUNG'] },
-      { path: '/production/factory-invoice', label: 'Factory Invoice', icon: Receipt, roles: ['Admin', 'Super Admin', 'FACTORY INVOICE'] },
+      { path: '/production/order-in', label: 'Order In', icon: Inbox, roles: ['Super Admin', 'Lieferant', 'FACTORY INVOICE'] },
+      { path: '/production', label: 'Liste', icon: ListOrdered, roles: ['Super Admin', 'Lieferant', 'FACTORY INVOICE'] },
+      { path: '/production/fertig', label: 'Fertig', icon: CheckCircle2, roles: ['Super Admin', 'Lieferant', 'FACTORY INVOICE'] },
+      { path: '/production/factory-invoice', label: 'Factory Invoice', icon: Receipt, roles: ['Super Admin', 'FACTORY INVOICE'] },
     ],
   },
 
