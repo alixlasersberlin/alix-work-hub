@@ -244,6 +244,7 @@ export default function OrderDetail() {
       tabs: [
         { key: 'overview', label: 'Übersicht', icon: ClipboardList },
         { key: 'items', label: 'Artikel', icon: Package, count: items.length },
+        { key: 'serials', label: 'Seriennummer', icon: Hash, count: serialDevices.length },
         { key: 'packages', label: 'Pakete', icon: Truck, count: packages.length },
       ],
     },
