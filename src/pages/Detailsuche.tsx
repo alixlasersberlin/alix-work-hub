@@ -133,6 +133,7 @@ export default function Detailsuche() {
 
       // 1b) Order-IDs via Seriennummer (production_orders + lager_devices)
       let serialOrderIds: Set<string> | null = null;
+      let standaloneLager: Array<{ id: string; serial_number: string; model_name: string | null; notes: string | null }> = [];
       if (trimmed.serial) {
         serialOrderIds = new Set<string>();
         const { data: poSer, error: poSerErr } = await supabase
@@ -145,18 +146,24 @@ export default function Detailsuche() {
         for (const r of (poSer || []) as any[]) if (r.order_id) serialOrderIds.add(r.order_id);
         const { data: lagSer } = await supabase
           .from('lager_devices')
-          .select('reserved_order_id, notes')
+          .select('id, serial_number, model_name, reserved_order_id, notes')
           .ilike('serial_number', `%${trimmed.serial}%`)
-          .not('reserved_order_id', 'is', null)
           .limit(2000);
         for (const r of (lagSer || []) as any[]) {
           // Leihgeräte explizit ausschließen — sie sind nur temporär verliehen
           // und gehören NICHT in Bestellwesen / Reservierungen / Vorschläge.
           const isLeih = /\[Typ:\s*Leihgerät\]|\[Leihgerät\]/.test(r.notes ?? '');
-          if (!isLeih && r.reserved_order_id) serialOrderIds.add(r.reserved_order_id);
+          if (isLeih) continue;
+          if (r.reserved_order_id) {
+            serialOrderIds.add(r.reserved_order_id);
+          } else {
+            standaloneLager.push({ id: r.id, serial_number: r.serial_number, model_name: r.model_name, notes: r.notes });
+          }
         }
+        setUnassignedLager(standaloneLager);
         if (serialOrderIds.size === 0) { setHits([]); setLoading(false); return; }
       }
+
 
       // 2) Kunden-IDs nach Name / Telefon
       let customerIds: Set<string> | null = null;
