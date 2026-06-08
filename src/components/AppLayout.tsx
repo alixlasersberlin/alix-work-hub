@@ -672,15 +672,7 @@ export default function AppLayout() {
     }
   }, [mobileOpen]);
 
-  const isNatalia = (profile?.email || '').toLowerCase() === 'natalia.p@alix-operation.de';
-  const nataliaAllowedPaths = new Set<string>([
-    '/auftragsverwaltung/bestellungen',
-    '/production',
-    '/production/factory-invoice',
-  ]);
-
   const filterByRoles = (item: { path: string; roles: string[] | null }) => {
-    if (isNatalia && nataliaAllowedPaths.has(item.path)) return true;
     if (!item.roles) return true;
     return item.roles.some(r => roles.includes(r));
   };
