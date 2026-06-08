@@ -2787,6 +2787,7 @@ export type Database = {
           created_by: string | null
           customer_email: string | null
           customer_name: string | null
+          delivered_order_id: string | null
           device_status: string | null
           entry_date: string
           id: string
@@ -2811,6 +2812,7 @@ export type Database = {
           created_by?: string | null
           customer_email?: string | null
           customer_name?: string | null
+          delivered_order_id?: string | null
           device_status?: string | null
           entry_date?: string
           id?: string
@@ -2835,6 +2837,7 @@ export type Database = {
           created_by?: string | null
           customer_email?: string | null
           customer_name?: string | null
+          delivered_order_id?: string | null
           device_status?: string | null
           entry_date?: string
           id?: string

@@ -123,8 +123,8 @@ export default function OrderDetail() {
     // Seriennummern: alle Lager-Geräte, die diesem Auftrag (aktuell oder historisch) zugeordnet sind/waren
     const { data: serialsData } = await supabase
       .from('lager_devices')
-      .select('id, serial_number, model_name, notes, updated_at')
-      .eq('reserved_order_id', id!)
+      .select('id, serial_number, model_name, notes, updated_at, reserved_order_id, delivered_order_id')
+      .or(`reserved_order_id.eq.${id},delivered_order_id.eq.${id}`)
       .order('updated_at', { ascending: false });
     setSerialDevices((serialsData as any) ?? []);
 
