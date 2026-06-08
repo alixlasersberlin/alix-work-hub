@@ -179,8 +179,6 @@ const navItems: NavItem[] = [
     children: [
       
       
-      { path: '/lager/doppelte-reservierungen', label: 'Doppelte Reservierungen', icon: AlertTriangle, roles: ['Admin', 'Super Admin', 'Order', 'SACHBEARBEITUNG'] },
-      { path: '/order/timeline', label: 'Timeline Bestellungen', icon: Calendar, roles: ['Admin', 'Super Admin', 'Order', 'Österreich', 'SACHBEARBEITUNG'] },
       { path: '/order/frei-bestellung', label: 'Bestellung möglich', icon: CheckCircle2, roles: ['Admin', 'Super Admin', 'Order', 'SACHBEARBEITUNG'] },
       { path: '/order/reklamation', label: 'Bestellung Reklamation', icon: AlertTriangle, roles: ['Admin', 'Super Admin', 'Order', 'SACHBEARBEITUNG'] },
       { path: '/order', label: 'Factory Orders', icon: Factory, roles: ['Admin', 'Super Admin', 'Order', 'SACHBEARBEITUNG'] },
