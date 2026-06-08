@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
-  ArrowLeft, ClipboardList, Building2, FileText, History, Loader2, Inbox, Send, Pencil, X, Check, Shield, Package, CalendarIcon, CalendarClock, Truck, Euro, Mail, Landmark, Plus, Trash2, ShoppingCart, ShoppingBag, CheckCircle2
+  ArrowLeft, ClipboardList, Building2, FileText, History, Loader2, Inbox, Send, Pencil, X, Check, Shield, Package, CalendarIcon, CalendarClock, Truck, Euro, Mail, Landmark, Plus, Trash2, ShoppingCart, ShoppingBag, CheckCircle2, Hash
 } from 'lucide-react';
 import { createRestbestellungMarker, hasPendingRestbestellung } from '@/lib/restbestellung';
 import BankFinancingTab from '@/components/BankFinancingTab';
@@ -48,7 +48,8 @@ export default function OrderDetail() {
   const [history, setHistory] = useState<any[]>([]);
   const [poCount, setPoCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'items' | 'deposit' | 'financing' | 'at_purchase' | 'at_approval' | 'packages' | 'notes' | 'emails' | 'history' | 'raw'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'items' | 'serials' | 'deposit' | 'financing' | 'at_purchase' | 'at_approval' | 'packages' | 'notes' | 'emails' | 'history' | 'raw'>('overview');
+  const [serialDevices, setSerialDevices] = useState<Array<{ id: string; serial_number: string; model_name: string; notes: string | null; updated_at: string | null }>>([]);
   const [sendingEmail, setSendingEmail] = useState(false);
   const [depositOk, setDepositOk] = useState(false);
   const [depositBy, setDepositBy] = useState('');
@@ -118,6 +119,14 @@ export default function OrderDetail() {
     } else {
       setPoCount(0);
     }
+
+    // Seriennummern: alle Lager-Geräte, die diesem Auftrag (aktuell oder historisch) zugeordnet sind/waren
+    const { data: serialsData } = await supabase
+      .from('lager_devices')
+      .select('id, serial_number, model_name, notes, updated_at')
+      .eq('reserved_order_id', id!)
+      .order('updated_at', { ascending: false });
+    setSerialDevices((serialsData as any) ?? []);
 
     setLoading(false);
   }
@@ -235,6 +244,7 @@ export default function OrderDetail() {
       tabs: [
         { key: 'overview', label: 'Übersicht', icon: ClipboardList },
         { key: 'items', label: 'Artikel', icon: Package, count: items.length },
+        { key: 'serials', label: 'Seriennummer', icon: Hash, count: serialDevices.length },
         { key: 'packages', label: 'Pakete', icon: Truck, count: packages.length },
       ],
     },
@@ -577,6 +587,52 @@ export default function OrderDetail() {
                 </div>
               </div>
             </div>
+          )}
+        </div>
+      )}
+
+      {/* Seriennummer Tab */}
+      {activeTab === 'serials' && (
+        <div className="rounded-xl border border-border bg-card p-6 card-glow">
+          <h2 className="text-base font-display font-bold text-foreground flex items-center gap-2 mb-4">
+            <Hash className="w-4 h-4 text-primary" /> Gelieferte Geräte · Seriennummern
+            <span className="text-xs font-normal text-muted-foreground ml-2">({serialDevices.length})</span>
+          </h2>
+          {serialDevices.length === 0 ? (
+            <div className="text-sm text-muted-foreground">
+              Diesem Auftrag sind aktuell keine Geräte mit Seriennummer zugeordnet.
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Seriennummer</TableHead>
+                  <TableHead>Modell</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Zuordnung</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {serialDevices.map((d) => {
+                  const statusMatch = /\[Status:\s*([^\]]+)\]/.exec(d.notes ?? '');
+                  const status = statusMatch?.[1]?.trim() || '—';
+                  return (
+                    <TableRow key={d.id}>
+                      <TableCell className="font-mono text-sm">{d.serial_number}</TableCell>
+                      <TableCell>{d.model_name}</TableCell>
+                      <TableCell>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs border border-border bg-secondary/50">
+                          {status}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right text-xs text-muted-foreground">
+                        {d.updated_at ? new Date(d.updated_at).toLocaleDateString('de-DE') : '—'}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
           )}
         </div>
       )}
