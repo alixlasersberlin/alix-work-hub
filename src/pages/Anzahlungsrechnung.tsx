@@ -55,17 +55,22 @@ export default function Anzahlungsrechnung() {
       return;
     }
 
-    // 2) Exclude orders that already have a production order
+    // 2) Exclude orders that already have a production order OR a reserved/delivered device OR a route plan
     const orderIds = (orders ?? []).map(o => o.id);
-    let withProd = new Set<string>();
+    const excluded = new Set<string>();
     if (orderIds.length) {
-      const { data: prod } = await supabase
-        .from('production_orders')
-        .select('order_id')
-        .in('order_id', orderIds);
-      withProd = new Set((prod ?? []).map((p: any) => p.order_id).filter(Boolean));
+      const [prodRes, resRes, delRes, rpRes] = await Promise.all([
+        supabase.from('production_orders').select('order_id').in('order_id', orderIds),
+        supabase.from('lager_devices').select('reserved_order_id').in('reserved_order_id', orderIds),
+        supabase.from('lager_devices').select('delivered_order_id').in('delivered_order_id', orderIds),
+        supabase.from('route_plans').select('order_id').in('order_id', orderIds),
+      ]);
+      (prodRes.data ?? []).forEach((p: any) => p.order_id && excluded.add(p.order_id));
+      (resRes.data ?? []).forEach((p: any) => p.reserved_order_id && excluded.add(p.reserved_order_id));
+      (delRes.data ?? []).forEach((p: any) => p.delivered_order_id && excluded.add(p.delivered_order_id));
+      (rpRes.data ?? []).forEach((p: any) => p.order_id && excluded.add(p.order_id));
     }
-    const filtered = (orders ?? []).filter(o => !withProd.has(o.id)) as Row[];
+    const filtered = (orders ?? []).filter(o => !excluded.has(o.id)) as Row[];
 
     // 3) Load customer names
     const custIds = Array.from(new Set(filtered.map(o => o.customer_id).filter(Boolean) as string[]));
