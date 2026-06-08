@@ -100,7 +100,7 @@ export default function Detailsuche() {
   const update = (k: keyof typeof EMPTY) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm(f => ({ ...f, [k]: e.target.value }));
 
-  const reset = () => { setForm({ ...EMPTY }); setHits(null); setError(null); setExpanded(new Set()); };
+  const reset = () => { setForm({ ...EMPTY }); setHits(null); setUnassignedLager([]); setError(null); setExpanded(new Set()); };
 
   const runSearch = async () => {
     const trimmed = Object.fromEntries(Object.entries(form).map(([k, v]) => [k, v.trim()])) as typeof EMPTY;
@@ -108,7 +108,7 @@ export default function Detailsuche() {
       toast.error('Bitte mindestens ein Suchkriterium angeben');
       return;
     }
-    setLoading(true); setError(null); setHits(null); setExpanded(new Set());
+    setLoading(true); setError(null); setHits(null); setUnassignedLager([]); setExpanded(new Set());
 
     try {
       // 1) Order-IDs aus production_orders via Modellname
