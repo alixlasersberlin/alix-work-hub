@@ -118,14 +118,6 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    path: '/tickets', label: 'TICKETS AUS ALIXSMART', icon: Ticket,
-    roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'SACHBEARBEITUNG'],
-    children: [
-      { path: '/tickets', label: 'Ticketliste', icon: Ticket, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'SACHBEARBEITUNG'] },
-      { path: '/tickets/api-sync', label: 'API Sync Einstellungen', icon: Settings, roles: ['Super Admin'] },
-    ],
-  },
-  {
     path: '/auftragsverwaltung', label: 'AUFTRAGSVERWALTUNG', icon: ClipboardList, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'SACHBEARBEITUNG'],
     children: [
       {
