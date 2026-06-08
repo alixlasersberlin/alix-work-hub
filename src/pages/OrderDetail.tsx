@@ -591,6 +591,52 @@ export default function OrderDetail() {
         </div>
       )}
 
+      {/* Seriennummer Tab */}
+      {activeTab === 'serials' && (
+        <div className="rounded-xl border border-border bg-card p-6 card-glow">
+          <h2 className="text-base font-display font-bold text-foreground flex items-center gap-2 mb-4">
+            <Hash className="w-4 h-4 text-primary" /> Gelieferte Geräte · Seriennummern
+            <span className="text-xs font-normal text-muted-foreground ml-2">({serialDevices.length})</span>
+          </h2>
+          {serialDevices.length === 0 ? (
+            <div className="text-sm text-muted-foreground">
+              Diesem Auftrag sind aktuell keine Geräte mit Seriennummer zugeordnet.
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Seriennummer</TableHead>
+                  <TableHead>Modell</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Zuordnung</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {serialDevices.map((d) => {
+                  const statusMatch = /\[Status:\s*([^\]]+)\]/.exec(d.notes ?? '');
+                  const status = statusMatch?.[1]?.trim() || '—';
+                  return (
+                    <TableRow key={d.id}>
+                      <TableCell className="font-mono text-sm">{d.serial_number}</TableCell>
+                      <TableCell>{d.model_name}</TableCell>
+                      <TableCell>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs border border-border bg-secondary/50">
+                          {status}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right text-xs text-muted-foreground">
+                        {d.updated_at ? new Date(d.updated_at).toLocaleDateString('de-DE') : '—'}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </div>
+      )}
+
       {/* Anzahlung Tab */}
       {activeTab === 'deposit' && (
         <div className="rounded-xl border border-border bg-card p-6 card-glow max-w-3xl">
