@@ -297,29 +297,44 @@ export default function UserManagement() {
     setSavingRoles(true);
     try {
       // Delete existing roles
-      await supabase.from('user_roles').delete().eq('user_id', selectedUser.id);
+      const { error: delErr, count: delCount } = await supabase
+        .from('user_roles')
+        .delete({ count: 'exact' })
+        .eq('user_id', selectedUser.id);
+      if (delErr) throw delErr;
+
+      // Sanity check: if the user previously had roles but nothing was deleted,
+      // RLS silently blocked the delete (e.g. acting user is not Super Admin).
+      if ((selectedUser.roleIds?.length ?? 0) > 0 && (delCount ?? 0) === 0) {
+        throw new Error('Bestehende Rollen konnten nicht entfernt werden (fehlende Berechtigung). Nur Super Admin darf Rollen löschen.');
+      }
+
       // Insert new
       if (editRoleIds.length > 0) {
-        await supabase.from('user_roles').insert(
-          editRoleIds.map(role_id => ({ user_id: selectedUser.id, role_id }))
-        );
+        const { error: insErr } = await supabase
+          .from('user_roles')
+          .insert(editRoleIds.map(role_id => ({ user_id: selectedUser.id, role_id })));
+        if (insErr) throw insErr;
       }
+
       // Update department + supplier
       const lieferantRoleId = roles.find(r => r.name === 'Lieferant')?.id;
       const isLieferant = lieferantRoleId ? editRoleIds.includes(lieferantRoleId) : false;
-      await supabase.from('user_profiles').update({
+      const { error: profErr } = await supabase.from('user_profiles').update({
         department_id: editDeptId && editDeptId !== 'none' ? editDeptId : null,
         supplier_id: isLieferant && editSupplierId !== 'none' ? editSupplierId : null,
       }).eq('id', selectedUser.id);
+      if (profErr) throw profErr;
 
       toast.success('Rollen, Abteilung und Lieferant gespeichert');
       setShowEditRoles(false);
       loadData();
     } catch (e: any) {
-      toast.error(`Fehler: ${e.message}`);
+      toast.error(`Fehler beim Speichern: ${e.message}`);
     }
     setSavingRoles(false);
   };
+
 
   const openEditRoles = (user: EnrichedUser) => {
     setEditRoleIds([...user.roleIds]);
