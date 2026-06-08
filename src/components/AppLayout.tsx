@@ -118,14 +118,6 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    path: '/tickets', label: 'TICKETS AUS ALIXSMART', icon: Ticket,
-    roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'SACHBEARBEITUNG'],
-    children: [
-      { path: '/tickets', label: 'Ticketliste', icon: Ticket, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'SACHBEARBEITUNG'] },
-      { path: '/tickets/api-sync', label: 'API Sync Einstellungen', icon: Settings, roles: ['Super Admin'] },
-    ],
-  },
-  {
     path: '/auftragsverwaltung', label: 'AUFTRAGSVERWALTUNG', icon: ClipboardList, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'SACHBEARBEITUNG'],
     children: [
       {
@@ -312,6 +304,8 @@ const navItems: NavItem[] = [
       { path: '/operation/email-vorlagen', label: 'E-Mail Vorlagen', icon: Mail, roles: ['Super Admin'] },
       { path: '/portal-admin', label: 'Kundenportal', icon: Globe, roles: ['Super Admin'] },
       { path: '/operation/systemwartung', label: 'Systemwartung', icon: AlertTriangle, roles: ['Super Admin'] },
+      { path: '/tickets', label: 'Ticketliste', icon: Ticket, roles: ['Super Admin'] },
+      { path: '/tickets/api-sync', label: 'API Sync Einstellungen', icon: Settings, roles: ['Super Admin'] },
       { path: '/mandanten', label: 'Mandanten', icon: Building2, roles: ['Super Admin'] },
       { path: '/konzern/dashboard', label: 'Konzern-Dashboard', icon: TrendingUp, roles: ['Super Admin'] },
     ],
