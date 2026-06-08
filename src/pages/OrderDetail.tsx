@@ -120,6 +120,14 @@ export default function OrderDetail() {
       setPoCount(0);
     }
 
+    // Seriennummern: alle Lager-Geräte, die diesem Auftrag (aktuell oder historisch) zugeordnet sind/waren
+    const { data: serialsData } = await supabase
+      .from('lager_devices')
+      .select('id, serial_number, model_name, notes, updated_at')
+      .eq('reserved_order_id', id!)
+      .order('updated_at', { ascending: false });
+    setSerialDevices((serialsData as any) ?? []);
+
     setLoading(false);
   }
 
