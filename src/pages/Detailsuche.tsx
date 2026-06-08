@@ -85,6 +85,7 @@ export default function Detailsuche() {
   const [form, setForm] = useState({ ...EMPTY });
   const [loading, setLoading] = useState(false);
   const [hits, setHits] = useState<Hit[] | null>(null);
+  const [unassignedLager, setUnassignedLager] = useState<Array<{ id: string; serial_number: string; model_name: string | null; notes: string | null }>>([]);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
