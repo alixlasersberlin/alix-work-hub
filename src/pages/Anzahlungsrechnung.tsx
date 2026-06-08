@@ -45,6 +45,7 @@ export default function Anzahlungsrechnung() {
       .select('id, order_number, order_status, order_date, deposit_ok_at, deposit_amount, total_amount, source_system, salesperson_name, customer_id')
       .in('order_status', ['open', 'offen'])
       .eq('deposit_ok', true)
+      .neq('source_system', 'zoho_eu_2')
       .order('order_date', { ascending: false });
 
     if (error) {
