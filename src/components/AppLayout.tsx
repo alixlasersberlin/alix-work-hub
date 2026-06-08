@@ -32,7 +32,7 @@ type NavItem = NavChild & { children?: NavChild[] };
 
 const navItems: NavItem[] = [
   { path: '/', label: 'DASHBOARD', icon: LayoutDashboard, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Read Only Audit', 'Österreich'] },
-  { path: '/verkauf/anzahlungsrechnung', label: 'NEUE ANZAHLUNGEN', icon: Receipt, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
+  { path: '/verkauf/anzahlungsrechnung', label: 'NEUE ANZAHLUNGEN', icon: Receipt, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Tourenplanung', 'Read Only Audit', 'Read Only', 'Geschäftsführung', 'Marketing', 'Technik', 'Kundenservice', 'Vertrieb', 'Reparaturannahme', 'Bestellwesen', 'Serviceleitung', 'Service', 'QM', 'SACHBEARBEITUNG'] },
   { path: '/detailsuche', label: 'DETAILSUCHE', icon: SearchCheck, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Read Only Audit', 'SACHBEARBEITUNG'] },
   { path: '/management-dashboard', label: 'MANAGEMENT DASHBOARD', icon: BarChart3, roles: ['Super Admin'] },
   { path: '/ai-center', label: 'AI CENTER', icon: Sparkles, roles: ['Admin', 'Super Admin', 'Geschäftsführung', 'Serviceleitung', 'Service', 'Technik', 'Finance', 'Österreich'] },
