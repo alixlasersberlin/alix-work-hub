@@ -225,6 +225,7 @@ const navItems: NavItem[] = [
   {
     path: '/reparatur', label: 'REPARATURANNAHME', icon: Wrench, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'Finance', 'QM', 'Österreich', 'Reparaturannahme', 'SACHBEARBEITUNG'],
     children: [
+      { path: '/reparatur/neu', label: 'Neue Reparatur anlegen', icon: FilePlus, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Order', 'Finance', 'QM', 'Reparaturannahme', 'SACHBEARBEITUNG'] },
       { path: '/reparatur', label: 'Dashboard', icon: LayoutDashboard, roles: null },
       { path: '/service-cockpit', label: 'Service Cockpit', icon: BarChart3, roles: ['Admin', 'Super Admin', 'Serviceleitung'] },
       { path: '/geraeteakte', label: 'Geräteakte', icon: FileText, roles: ['Admin', 'Super Admin', 'Technik', 'Kundenservice', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Tourenplanung', 'Finance', 'SACHBEARBEITUNG'] },
@@ -235,7 +236,6 @@ const navItems: NavItem[] = [
       { path: '/garantie-kulanz', label: 'Garantie & Kulanz', icon: ShieldCheck, roles: ['Admin', 'Super Admin', 'Service', 'Serviceleitung', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance', 'Tourenplanung', 'SACHBEARBEITUNG'] },
       { path: '/whatsapp', label: 'WhatsApp Service Center', icon: MessageSquare, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'SACHBEARBEITUNG'] },
       { path: '/ai-service-center', label: 'AI Service Center', icon: Sparkles, roles: ['Admin', 'Super Admin', 'Service', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance', 'SACHBEARBEITUNG'] },
-      { path: '/reparatur/neu', label: 'Neue Reparatur anlegen', icon: FilePlus, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Order', 'Finance', 'QM', 'Reparaturannahme', 'SACHBEARBEITUNG'] },
       { path: '/reparatur/auftraege', label: 'Reparaturaufträge', icon: ClipboardList, roles: null },
       { path: '/reparatur/werkstattannahme', label: 'Werkstattannahme', icon: PackageCheck, roles: null },
       { path: '/reparatur/technik', label: 'Technik-Arbeitsaufträge', icon: Wrench, roles: null },
