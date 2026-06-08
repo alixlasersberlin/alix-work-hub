@@ -85,6 +85,7 @@ export default function Detailsuche() {
   const [form, setForm] = useState({ ...EMPTY });
   const [loading, setLoading] = useState(false);
   const [hits, setHits] = useState<Hit[] | null>(null);
+  const [unassignedLager, setUnassignedLager] = useState<Array<{ id: string; serial_number: string; model_name: string | null; notes: string | null }>>([]);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
@@ -99,7 +100,7 @@ export default function Detailsuche() {
   const update = (k: keyof typeof EMPTY) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm(f => ({ ...f, [k]: e.target.value }));
 
-  const reset = () => { setForm({ ...EMPTY }); setHits(null); setError(null); setExpanded(new Set()); };
+  const reset = () => { setForm({ ...EMPTY }); setHits(null); setUnassignedLager([]); setError(null); setExpanded(new Set()); };
 
   const runSearch = async () => {
     const trimmed = Object.fromEntries(Object.entries(form).map(([k, v]) => [k, v.trim()])) as typeof EMPTY;
@@ -107,7 +108,7 @@ export default function Detailsuche() {
       toast.error('Bitte mindestens ein Suchkriterium angeben');
       return;
     }
-    setLoading(true); setError(null); setHits(null); setExpanded(new Set());
+    setLoading(true); setError(null); setHits(null); setUnassignedLager([]); setExpanded(new Set());
 
     try {
       // 1) Order-IDs aus production_orders via Modellname
@@ -132,6 +133,7 @@ export default function Detailsuche() {
 
       // 1b) Order-IDs via Seriennummer (production_orders + lager_devices)
       let serialOrderIds: Set<string> | null = null;
+      let standaloneLager: Array<{ id: string; serial_number: string; model_name: string | null; notes: string | null }> = [];
       if (trimmed.serial) {
         serialOrderIds = new Set<string>();
         const { data: poSer, error: poSerErr } = await supabase
@@ -144,18 +146,24 @@ export default function Detailsuche() {
         for (const r of (poSer || []) as any[]) if (r.order_id) serialOrderIds.add(r.order_id);
         const { data: lagSer } = await supabase
           .from('lager_devices')
-          .select('reserved_order_id, notes')
+          .select('id, serial_number, model_name, reserved_order_id, notes')
           .ilike('serial_number', `%${trimmed.serial}%`)
-          .not('reserved_order_id', 'is', null)
           .limit(2000);
         for (const r of (lagSer || []) as any[]) {
           // Leihgeräte explizit ausschließen — sie sind nur temporär verliehen
           // und gehören NICHT in Bestellwesen / Reservierungen / Vorschläge.
           const isLeih = /\[Typ:\s*Leihgerät\]|\[Leihgerät\]/.test(r.notes ?? '');
-          if (!isLeih && r.reserved_order_id) serialOrderIds.add(r.reserved_order_id);
+          if (isLeih) continue;
+          if (r.reserved_order_id) {
+            serialOrderIds.add(r.reserved_order_id);
+          } else {
+            standaloneLager.push({ id: r.id, serial_number: r.serial_number, model_name: r.model_name, notes: r.notes });
+          }
         }
+        setUnassignedLager(standaloneLager);
         if (serialOrderIds.size === 0) { setHits([]); setLoading(false); return; }
       }
+
 
       // 2) Kunden-IDs nach Name / Telefon
       let customerIds: Set<string> | null = null;
@@ -327,8 +335,36 @@ export default function Detailsuche() {
         {error && <div className="text-sm text-destructive">{error}</div>}
       </div>
 
+      {unassignedLager.length > 0 && (
+        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 overflow-hidden">
+          <div className="px-4 py-3 border-b border-emerald-500/20 flex items-center gap-2">
+            <Warehouse className="w-4 h-4 text-emerald-500" />
+            <h3 className="text-sm font-semibold">Lagergeräte ohne Auftrag</h3>
+            <span className="text-xs text-muted-foreground">({unassignedLager.length})</span>
+          </div>
+          <div className="divide-y divide-border">
+            {unassignedLager.map(d => {
+              const archived = /\[Status:\s*Archiviert\]/i.test(d.notes ?? '');
+              return (
+                <button
+                  key={d.id}
+                  onClick={() => navigate(`/lager/lagergeraete?serial=${encodeURIComponent(d.serial_number)}`)}
+                  className="w-full text-left px-4 py-3 hover:bg-emerald-500/10 flex flex-wrap items-center gap-x-3 gap-y-1"
+                >
+                  <span className="font-medium">{d.model_name || '—'}</span>
+                  <span className="font-mono text-xs text-muted-foreground">SN {d.serial_number}</span>
+                  {archived && <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded bg-muted text-muted-foreground">Archiviert</span>}
+                  <span className="text-xs text-muted-foreground ml-auto">Keinem Auftrag zugewiesen</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {hits !== null && (
         <div className="rounded-xl border border-border bg-card overflow-hidden">
+
           <div className="px-4 py-3 border-b border-border flex items-center justify-between">
             <h3 className="text-sm font-semibold">Ergebnisse</h3>
             <span className="text-xs text-muted-foreground">{hits.length} Treffer</span>
