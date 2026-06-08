@@ -199,9 +199,10 @@ export default function Anzahlungsrechnung() {
                         <TableCell className="text-right">{fmtMoney(r.total_amount)}</TableCell>
                         <TableCell className="text-xs text-muted-foreground">{r.salesperson_name || '–'}</TableCell>
                         <TableCell>
-                          <Button asChild size="sm" variant="ghost">
+                          <Button asChild size="sm" className="gold-gradient text-primary-foreground">
                             <Link to={`/auftraege/${r.id}`}>
-                              <ExternalLink className="h-4 w-4" />
+                              <ExternalLink className="h-4 w-4 mr-2" />
+                              BEARBEITUNG
                             </Link>
                           </Button>
                         </TableCell>
