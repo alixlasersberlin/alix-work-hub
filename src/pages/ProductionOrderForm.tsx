@@ -406,6 +406,22 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
       if (error) { toast.error(error.message); setSaving(false); return null; }
       await supabase.from('production_order_items').delete().eq('production_order_id', id);
     } else {
+      // Sperre: Pro Auftrag entweder Lager-Reservierung ODER Bestellung.
+      if (selectedOrder?.id) {
+        const { data: reservedDev } = await supabase
+          .from('lager_devices')
+          .select('serial_number, model_name')
+          .eq('reserved_order_id', selectedOrder.id)
+          .limit(1)
+          .maybeSingle();
+        if (reservedDev) {
+          setSaving(false);
+          toast.error(
+            `Bestellung nicht möglich: Für Auftrag ${selectedOrder.order_number} ist bereits ein Lagergerät reserviert (${reservedDev.model_name} · SN ${reservedDev.serial_number}). Bitte zuerst die Reservierung im Lager aufheben.`,
+          );
+          return null;
+        }
+      }
       const { data, error } = await supabase.from('production_orders').insert(payload).select('id').single();
       if (error || !data) { toast.error(error?.message || 'Fehler'); setSaving(false); return null; }
       poId = data.id;
