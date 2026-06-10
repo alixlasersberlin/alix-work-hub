@@ -20,7 +20,7 @@ export default function FinanceBilanz() {
         supabase.from('finance_assets').select('book_value, acquisition_value, status, acquisition_date').lte('acquisition_date', stichtag),
         supabase.from('finance_accounts').select('current_balance, overdue_balance'),
         supabase.from('finance_bank_lines').select('amount, value_date, statement_id').lte('value_date', stichtag),
-        supabase.from('finance_incoming_invoices').select('total_amount, payment_status, invoice_date').lte('invoice_date', stichtag),
+        supabase.from('finance_incoming_invoices').select('amount_gross, paid_at, invoice_date').lte('invoice_date', stichtag),
       ]);
       setAssets(a.data ?? []);
       setAccounts(ac.data ?? []);
