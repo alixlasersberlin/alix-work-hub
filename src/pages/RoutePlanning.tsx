@@ -73,7 +73,10 @@ export default function RoutePlanning() {
     let itemsByOrder: Record<string, any[]> = {};
     if (orderIds.length > 0) {
       const [{ data: devs }, { data: items }] = await Promise.all([
-        supabase.from('lager_devices').select('id, model_name, serial_number, reserved_order_id').in('reserved_order_id', orderIds),
+        supabase.from('lager_devices')
+          .select('id, model_name, serial_number, reserved_order_id, notes')
+          .in('reserved_order_id', orderIds)
+          .not('notes', 'ilike', '%[Typ: Leihgerät]%'),
         supabase.from('order_items').select('id, order_id, item_name, quantity, item_order').in('order_id', orderIds).order('item_order', { ascending: true }),
       ]);
       (devs ?? []).forEach((d: any) => {
