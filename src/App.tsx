@@ -109,6 +109,10 @@ const FinanceReportSchedules = lazy(() => import("./pages/Finance/ReportSchedule
 const FinanceManagementPack = lazy(() => import("./pages/Finance/ManagementPack"));
 const FinanceStakeholders = lazy(() => import("./pages/Finance/Stakeholders"));
 const StakeholderPortal = lazy(() => import("./pages/StakeholderPortal"));
+const FinanceKonsolidierung = lazy(() => import("./pages/Finance/Konsolidierung"));
+const FinanceKonsolidierungDetail = lazy(() => import("./pages/Finance/KonsolidierungDetail"));
+const FinanceIntercompany = lazy(() => import("./pages/Finance/Intercompany"));
+const FinanceFxRates = lazy(() => import("./pages/Finance/FxRates"));
 const UserManagement = lazy(() => import("./pages/UserManagement"));
 const ImportManagement = lazy(() => import("./pages/ImportManagement"));
 const Backups = lazy(() => import("./pages/Backups"));
@@ -519,6 +523,10 @@ function AppRoutes() {
           <Route path="/finance/schedules" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceReportSchedules /></ProtectedRoute>} />
           <Route path="/finance/management-pack" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceManagementPack /></ProtectedRoute>} />
           <Route path="/finance/stakeholders" element={<ProtectedRoute requiredRoles={['Super Admin','Geschäftsführung']}><FinanceStakeholders /></ProtectedRoute>} />
+          <Route path="/finance/konsolidierung" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceKonsolidierung /></ProtectedRoute>} />
+          <Route path="/finance/konsolidierung/:id" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceKonsolidierungDetail /></ProtectedRoute>} />
+          <Route path="/finance/intercompany" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceIntercompany /></ProtectedRoute>} />
+          <Route path="/finance/fx" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceFxRates /></ProtectedRoute>} />
           <Route path="/service-cockpit" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Serviceleitung']}><ServiceCockpit /></ProtectedRoute>} />
           <Route path="/geraeteakte" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Technik', 'Kundenservice', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Tourenplanung', 'Finance']}><Geraeteakte /></ProtectedRoute>} />
           <Route path="/geraete-lebenslauf" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Technik', 'Kundenservice', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Finance']}><GeraeteLebenslauf /></ProtectedRoute>} />
