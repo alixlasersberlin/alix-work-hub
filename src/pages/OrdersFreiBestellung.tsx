@@ -124,7 +124,7 @@ export default function OrdersFreiBestellung() {
     // Exclude orders that already have a production order — außer für teilgelieferte Rest-Aufträge.
     const [{ data: existing }, { data: reservedDevs }, { data: freeDevs }, { data: hiddenNotes }] = await Promise.all([
       supabase.from('production_orders').select('order_id'),
-      supabase.from('lager_devices').select('id, serial_number, model_name, reserved_order_id').not('reserved_order_id', 'is', null),
+      supabase.from('lager_devices').select('id, serial_number, model_name, notes, reserved_order_id').not('reserved_order_id', 'is', null),
       supabase.from('lager_devices').select('id, serial_number, model_name, notes').is('reserved_order_id', null),
       supabase.from('order_notes').select('order_id').eq('note_type', FREI_HIDDEN_NOTE),
     ]);
