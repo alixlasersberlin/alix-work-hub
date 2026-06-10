@@ -2459,6 +2459,94 @@ export type Database = {
           },
         ]
       }
+      finance_documents: {
+        Row: {
+          amount: number | null
+          created_at: string
+          created_by: string | null
+          currency: string | null
+          customer_id: string | null
+          document_date: string
+          document_type: string
+          file_name: string
+          file_path: string
+          file_size: number | null
+          hash_sha256: string | null
+          id: string
+          meta: Json | null
+          mime_type: string | null
+          reference: string | null
+          retention_until: string
+          source_system: string | null
+          supplier_id: string | null
+          tenant_id: string | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          customer_id?: string | null
+          document_date?: string
+          document_type: string
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          hash_sha256?: string | null
+          id?: string
+          meta?: Json | null
+          mime_type?: string | null
+          reference?: string | null
+          retention_until?: string
+          source_system?: string | null
+          supplier_id?: string | null
+          tenant_id?: string | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          customer_id?: string | null
+          document_date?: string
+          document_type?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          hash_sha256?: string | null
+          id?: string
+          meta?: Json | null
+          mime_type?: string | null
+          reference?: string | null
+          retention_until?: string
+          source_system?: string | null
+          supplier_id?: string | null
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_documents_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_documents_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_documents_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       finance_history: {
         Row: {
           action: string
@@ -2491,6 +2579,126 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      finance_incoming_invoices: {
+        Row: {
+          amount_gross: number
+          amount_net: number | null
+          amount_tax: number | null
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          created_by: string | null
+          currency: string | null
+          description: string | null
+          due_date: string | null
+          einvoice_format: string | null
+          file_path: string | null
+          id: string
+          internal_number: string
+          invoice_date: string
+          invoice_number: string
+          is_einvoice: boolean
+          notes: string | null
+          paid_at: string | null
+          parsed_data: Json | null
+          payment_reference: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          supplier_iban: string | null
+          supplier_id: string | null
+          supplier_name: string
+          supplier_vat_id: string | null
+          tax_rate: number | null
+          tenant_id: string | null
+          updated_at: string
+          xml_path: string | null
+        }
+        Insert: {
+          amount_gross: number
+          amount_net?: number | null
+          amount_tax?: number | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          description?: string | null
+          due_date?: string | null
+          einvoice_format?: string | null
+          file_path?: string | null
+          id?: string
+          internal_number: string
+          invoice_date: string
+          invoice_number: string
+          is_einvoice?: boolean
+          notes?: string | null
+          paid_at?: string | null
+          parsed_data?: Json | null
+          payment_reference?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          supplier_iban?: string | null
+          supplier_id?: string | null
+          supplier_name: string
+          supplier_vat_id?: string | null
+          tax_rate?: number | null
+          tenant_id?: string | null
+          updated_at?: string
+          xml_path?: string | null
+        }
+        Update: {
+          amount_gross?: number
+          amount_net?: number | null
+          amount_tax?: number | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          description?: string | null
+          due_date?: string | null
+          einvoice_format?: string | null
+          file_path?: string | null
+          id?: string
+          internal_number?: string
+          invoice_date?: string
+          invoice_number?: string
+          is_einvoice?: boolean
+          notes?: string | null
+          paid_at?: string | null
+          parsed_data?: Json | null
+          payment_reference?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          supplier_iban?: string | null
+          supplier_id?: string | null
+          supplier_name?: string
+          supplier_vat_id?: string | null
+          tax_rate?: number | null
+          tenant_id?: string | null
+          updated_at?: string
+          xml_path?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_incoming_invoices_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_incoming_invoices_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       finance_records: {
         Row: {
