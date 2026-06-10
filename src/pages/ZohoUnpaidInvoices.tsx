@@ -108,12 +108,11 @@ export default function ZohoUnpaidInvoices() {
   }, [rows]);
 
   const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
     const from = dateFrom ? new Date(dateFrom.getFullYear(), dateFrom.getMonth(), dateFrom.getDate()).getTime() : null;
     const to = dateTo ? new Date(dateTo.getFullYear(), dateTo.getMonth(), dateTo.getDate(), 23, 59, 59).getTime() : null;
 
     let list = rows.filter((r) => {
-      if (q && ![r.invoice_number, r.customer_name].some((v) => (v ?? "").toLowerCase().includes(q))) return false;
+      if (!matchesQuery(r, search)) return false;
       if (customer !== "__all__" && r.customer_name !== customer) return false;
       if (from || to) {
         const v = r[dateField];
