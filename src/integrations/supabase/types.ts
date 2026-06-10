@@ -2241,6 +2241,151 @@ export type Database = {
           },
         ]
       }
+      finance_bank_lines: {
+        Row: {
+          amount: number
+          booking_date: string | null
+          counterparty_iban: string | null
+          counterparty_name: string | null
+          created_at: string
+          currency: string | null
+          end_to_end_id: string | null
+          id: string
+          line_hash: string | null
+          match_confidence: number | null
+          match_method: string | null
+          matched_at: string | null
+          matched_by: string | null
+          matched_customer_id: string | null
+          matched_transaction_id: string | null
+          purpose: string | null
+          statement_id: string
+          status: string
+          updated_at: string
+          value_date: string | null
+        }
+        Insert: {
+          amount: number
+          booking_date?: string | null
+          counterparty_iban?: string | null
+          counterparty_name?: string | null
+          created_at?: string
+          currency?: string | null
+          end_to_end_id?: string | null
+          id?: string
+          line_hash?: string | null
+          match_confidence?: number | null
+          match_method?: string | null
+          matched_at?: string | null
+          matched_by?: string | null
+          matched_customer_id?: string | null
+          matched_transaction_id?: string | null
+          purpose?: string | null
+          statement_id: string
+          status?: string
+          updated_at?: string
+          value_date?: string | null
+        }
+        Update: {
+          amount?: number
+          booking_date?: string | null
+          counterparty_iban?: string | null
+          counterparty_name?: string | null
+          created_at?: string
+          currency?: string | null
+          end_to_end_id?: string | null
+          id?: string
+          line_hash?: string | null
+          match_confidence?: number | null
+          match_method?: string | null
+          matched_at?: string | null
+          matched_by?: string | null
+          matched_customer_id?: string | null
+          matched_transaction_id?: string | null
+          purpose?: string | null
+          statement_id?: string
+          status?: string
+          updated_at?: string
+          value_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_bank_lines_matched_customer_id_fkey"
+            columns: ["matched_customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_bank_lines_matched_transaction_id_fkey"
+            columns: ["matched_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "finance_transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_bank_lines_statement_id_fkey"
+            columns: ["statement_id"]
+            isOneToOne: false
+            referencedRelation: "finance_bank_statements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_bank_statements: {
+        Row: {
+          account_name: string | null
+          closing_balance: number | null
+          created_at: string
+          currency: string | null
+          file_hash: string | null
+          filename: string | null
+          format: string
+          iban: string | null
+          id: string
+          line_count: number
+          matched_count: number
+          opening_balance: number | null
+          period_from: string | null
+          period_to: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          account_name?: string | null
+          closing_balance?: number | null
+          created_at?: string
+          currency?: string | null
+          file_hash?: string | null
+          filename?: string | null
+          format: string
+          iban?: string | null
+          id?: string
+          line_count?: number
+          matched_count?: number
+          opening_balance?: number | null
+          period_from?: string | null
+          period_to?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          account_name?: string | null
+          closing_balance?: number | null
+          created_at?: string
+          currency?: string | null
+          file_hash?: string | null
+          filename?: string | null
+          format?: string
+          iban?: string | null
+          id?: string
+          line_count?: number
+          matched_count?: number
+          opening_balance?: number | null
+          period_from?: string | null
+          period_to?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: []
+      }
       finance_contracts: {
         Row: {
           contract_number: string | null
