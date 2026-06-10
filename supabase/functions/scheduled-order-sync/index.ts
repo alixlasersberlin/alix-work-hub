@@ -390,6 +390,13 @@ Deno.serve(async (req: Request) => {
       },
     });
 
+    // Also write to order_import_logs so the Import Übersicht reflects scheduled runs
+    await adminClient.from("order_import_logs").insert({
+      source_system: sourceSystem,
+      import_status: totalFailed > 0 ? (totalImported + totalUpdated > 0 ? "partial" : "failed") : "success",
+      message: `Aufträge (Cron) · ${totalFetched} geladen · ${totalImported} neu · ${totalUpdated} aktualisiert · ${totalSkipped} übersprungen · ${totalFailed} Fehler · ${Math.round(durationMs/1000)}s`,
+    });
+
     const result = {
       success: true,
       source_system: sourceSystem,
