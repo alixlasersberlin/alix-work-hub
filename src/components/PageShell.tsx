@@ -10,14 +10,18 @@ interface PageHeaderProps {
 
 function renderIcon(icon: React.ReactNode | React.ElementType | undefined, cls: string): React.ReactNode {
   if (!icon) return null;
-  // ElementType (lucide component) — function or forwardRef object
   if (typeof icon === 'function') {
     const IconComp = icon as React.ElementType;
     return <IconComp className={cls} />;
   }
-  if (typeof icon === 'object' && icon !== null && !(icon as any).$$typeof) {
-    const IconComp = icon as React.ElementType;
-    return <IconComp className={cls} />;
+  // forwardRef/memo components: { $$typeof, render } — NOT React elements (those also have .props)
+  if (typeof icon === 'object' && icon !== null) {
+    const a = icon as any;
+    const isReactElement = a.$$typeof && 'props' in a && 'type' in a;
+    if (!isReactElement && (typeof a.render === 'function' || typeof a.type === 'function' || a.$$typeof)) {
+      const IconComp = icon as React.ElementType;
+      return <IconComp className={cls} />;
+    }
   }
   return icon as React.ReactNode;
 }
