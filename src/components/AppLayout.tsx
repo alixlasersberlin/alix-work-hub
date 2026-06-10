@@ -281,6 +281,7 @@ const navItems: NavItem[] = [
       { path: '/finance/zahlungen', label: 'Zahlungen', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'] },
       { path: '/finance/mahnwesen', label: 'Mahnwesen', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
       { path: '/finance/datev', label: 'DATEV', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
+      { path: '/finance/bank', label: 'Bankimport', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'] },
       { path: '/finance/einstellungen/systemstatus', label: 'Systemstatus', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
       // { path: '/finance/ratenzahler', label: 'Ratenzahler', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'] },
       { path: '/finance/alix-flex', label: 'ALIX FLEX', icon: Banknote, roles: ['Admin', 'Super Admin'] },
