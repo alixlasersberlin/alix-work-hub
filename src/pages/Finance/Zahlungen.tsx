@@ -1,0 +1,41 @@
+import { useEffect, useState } from 'react';
+import { ArrowDownToLine, Loader2, Inbox } from 'lucide-react';
+import { PageHeader } from '@/components/PageShell';
+import { getTransactions } from '@/lib/finance/api';
+
+export default function FinanceZahlungen() {
+  const [rows, setRows] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    getTransactions({ transaction_type: 'Zahlung' }).then(r => { setRows(r); setLoading(false); }).catch(() => setLoading(false));
+  }, []);
+  const fmt = (n: number) => Number(n || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <PageHeader icon={<ArrowDownToLine className="w-6 h-6 text-success" />} title="Zahlungen" subtitle={`${rows.length} Zahlungseingänge`} />
+      <div className="rounded-xl border border-border bg-card card-glow overflow-hidden">
+        {loading ? (
+          <div className="p-12 text-center"><Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" /></div>
+        ) : rows.length === 0 ? (
+          <div className="p-12 text-center text-muted-foreground"><Inbox className="w-8 h-8 mx-auto mb-2 opacity-50" />Keine Zahlungen erfasst.</div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead className="bg-secondary/50 text-muted-foreground">
+              <tr><th className="text-left px-4 py-3">Datum</th><th className="text-left px-4 py-3">Referenz</th><th className="text-right px-4 py-3">Betrag</th><th className="text-left px-4 py-3">Notiz</th></tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {rows.map(r => (
+                <tr key={r.id} className="hover:bg-secondary/30">
+                  <td className="px-4 py-2">{r.booking_date ? new Date(r.booking_date + 'T00:00:00').toLocaleDateString('de-DE') : '—'}</td>
+                  <td className="px-4 py-2">{r.reference || '—'}</td>
+                  <td className="px-4 py-2 text-right font-medium text-success">{fmt(r.amount)}</td>
+                  <td className="px-4 py-2 text-muted-foreground">{r.notes || '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+}

@@ -9,6 +9,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 import CustomerEditDialog from '@/components/CustomerEditDialog';
 import CustomerDeleteDialog from '@/components/CustomerDeleteDialog';
 import CustomerCommunication from '@/components/CustomerCommunication';
+import FinanceAccountTab from '@/components/finance/FinanceAccountTab';
 import { withAt } from '@/lib/atSuffix';
 
 export default function CustomerDetail() {
@@ -76,6 +77,7 @@ export default function CustomerDetail() {
         <TabsList>
           <TabsTrigger value="overview">Übersicht</TabsTrigger>
           <TabsTrigger value="communication">Kommunikation</TabsTrigger>
+          <TabsTrigger value="finance">Finanzakte</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="mt-4">
@@ -146,6 +148,10 @@ export default function CustomerDetail() {
 
         <TabsContent value="communication" className="mt-4">
           <CustomerCommunication customer={customer} />
+        </TabsContent>
+
+        <TabsContent value="finance" className="mt-4">
+          <FinanceAccountTab customerId={customer.id} />
         </TabsContent>
       </Tabs>
 

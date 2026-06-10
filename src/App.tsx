@@ -71,6 +71,13 @@ const FinanceDetail = lazy(() => import("./pages/FinanceDetail"));
 const Rechnungsvorschlaege = lazy(() => import("./pages/Rechnungsvorschlaege"));
 const ServiceCockpit = lazy(() => import("./pages/ServiceCockpit"));
 const FinanceForm = lazy(() => import("./pages/FinanceForm"));
+const FinanceDashboardPhase1 = lazy(() => import("./pages/Finance/Dashboard"));
+const FinanceAnzahlungen = lazy(() => import("./pages/Finance/Anzahlungen"));
+const FinanceZahlungen = lazy(() => import("./pages/Finance/Zahlungen"));
+const FinanceVertraege = lazy(() => import("./pages/Finance/Vertraege"));
+const FinanceMahnwesen = lazy(() => import("./pages/Finance/Mahnwesen"));
+const FinanceDatev = lazy(() => import("./pages/Finance/Datev"));
+const FinanceSystemstatus = lazy(() => import("./pages/Finance/Systemstatus"));
 const UserManagement = lazy(() => import("./pages/UserManagement"));
 const ImportManagement = lazy(() => import("./pages/ImportManagement"));
 const Backups = lazy(() => import("./pages/Backups"));
@@ -443,6 +450,13 @@ function AppRoutes() {
           <Route path="/finance/offene-posten" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><OffenePosten /></ProtectedRoute>} />
           <Route path="/finance/unpaid-zoho" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><ZohoUnpaidInvoices /></ProtectedRoute>} />
           <Route path="/finance/rechnungsvorschlaege" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Rechnungsvorschlaege /></ProtectedRoute>} />
+          <Route path="/finance/dashboard" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceDashboardPhase1 /></ProtectedRoute>} />
+          <Route path="/finance/anzahlungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceAnzahlungen /></ProtectedRoute>} />
+          <Route path="/finance/zahlungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceZahlungen /></ProtectedRoute>} />
+          <Route path="/finance/vertraege" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceVertraege /></ProtectedRoute>} />
+          <Route path="/finance/mahnwesen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceMahnwesen /></ProtectedRoute>} />
+          <Route path="/finance/datev" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceDatev /></ProtectedRoute>} />
+          <Route path="/finance/einstellungen/systemstatus" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceSystemstatus /></ProtectedRoute>} />
           <Route path="/service-cockpit" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Serviceleitung']}><ServiceCockpit /></ProtectedRoute>} />
           <Route path="/geraeteakte" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Technik', 'Kundenservice', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Tourenplanung', 'Finance']}><Geraeteakte /></ProtectedRoute>} />
           <Route path="/geraete-lebenslauf" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Technik', 'Kundenservice', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Finance']}><GeraeteLebenslauf /></ProtectedRoute>} />
