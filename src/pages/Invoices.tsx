@@ -72,6 +72,7 @@ export default function Invoices() {
   const [importing, setImporting] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [pageSize, setPageSize] = useState<PageSize>(20);
 
   const fetchRows = async () => {
     setLoading(true);
