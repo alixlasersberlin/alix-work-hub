@@ -17,6 +17,7 @@ import { template as backupFailureAlert } from './backup-failure-alert.tsx'
 import { template as bankFinancingRequest } from './bank-financing-request.tsx'
 import { template as bugCapaNotification } from './bug-capa-notification.tsx'
 import { template as reviewInvitation } from './review-invitation.tsx'
+import { template as financeReminder } from './finance-reminder.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'otp-code': otpCode,
@@ -27,4 +28,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'bank-financing-request': bankFinancingRequest,
   'bug-capa-notification': bugCapaNotification,
   'review-invitation': reviewInvitation,
+  'finance-reminder': financeReminder,
 }
