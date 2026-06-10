@@ -2182,6 +2182,171 @@ export type Database = {
         }
         Relationships: []
       }
+      finance_accounts: {
+        Row: {
+          blocked: boolean
+          created_at: string
+          credit_limit: number | null
+          current_balance: number
+          customer_id: string
+          debtor_number: string | null
+          id: string
+          last_payment_at: string | null
+          last_reminder_at: string | null
+          notes: string | null
+          overdue_balance: number
+          payment_terms: string | null
+          reminder_level: number
+          updated_at: string
+        }
+        Insert: {
+          blocked?: boolean
+          created_at?: string
+          credit_limit?: number | null
+          current_balance?: number
+          customer_id: string
+          debtor_number?: string | null
+          id?: string
+          last_payment_at?: string | null
+          last_reminder_at?: string | null
+          notes?: string | null
+          overdue_balance?: number
+          payment_terms?: string | null
+          reminder_level?: number
+          updated_at?: string
+        }
+        Update: {
+          blocked?: boolean
+          created_at?: string
+          credit_limit?: number | null
+          current_balance?: number
+          customer_id?: string
+          debtor_number?: string | null
+          id?: string
+          last_payment_at?: string | null
+          last_reminder_at?: string | null
+          notes?: string | null
+          overdue_balance?: number
+          payment_terms?: string | null
+          reminder_level?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_accounts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: true
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_contracts: {
+        Row: {
+          contract_number: string | null
+          contract_type: string
+          created_at: string
+          customer_id: string
+          device_id: string | null
+          end_date: string | null
+          id: string
+          monthly_rate: number | null
+          notes: string | null
+          order_id: string | null
+          remaining_amount: number | null
+          start_date: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          contract_number?: string | null
+          contract_type?: string
+          created_at?: string
+          customer_id: string
+          device_id?: string | null
+          end_date?: string | null
+          id?: string
+          monthly_rate?: number | null
+          notes?: string | null
+          order_id?: string | null
+          remaining_amount?: number | null
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          contract_number?: string | null
+          contract_type?: string
+          created_at?: string
+          customer_id?: string
+          device_id?: string | null
+          end_date?: string | null
+          id?: string
+          monthly_rate?: number | null
+          notes?: string | null
+          order_id?: string | null
+          remaining_amount?: number | null
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_contracts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_contracts_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "lager_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_contracts_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_history: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          new_value: Json | null
+          old_value: Json | null
+          record_id: string | null
+          table_name: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          record_id?: string | null
+          table_name: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          record_id?: string | null
+          table_name?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       finance_records: {
         Row: {
           amount_due: number | null
@@ -2251,6 +2416,80 @@ export type Database = {
             columns: ["updated_by"]
             isOneToOne: false
             referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_transactions: {
+        Row: {
+          amount: number
+          booking_date: string
+          contract_id: string | null
+          created_at: string
+          currency: string
+          customer_id: string | null
+          device_id: string | null
+          id: string
+          notes: string | null
+          order_id: string | null
+          reference: string | null
+          transaction_type: string
+        }
+        Insert: {
+          amount?: number
+          booking_date?: string
+          contract_id?: string | null
+          created_at?: string
+          currency?: string
+          customer_id?: string | null
+          device_id?: string | null
+          id?: string
+          notes?: string | null
+          order_id?: string | null
+          reference?: string | null
+          transaction_type?: string
+        }
+        Update: {
+          amount?: number
+          booking_date?: string
+          contract_id?: string | null
+          created_at?: string
+          currency?: string
+          customer_id?: string | null
+          device_id?: string | null
+          id?: string
+          notes?: string | null
+          order_id?: string | null
+          reference?: string | null
+          transaction_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_transactions_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "finance_contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_transactions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_transactions_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "lager_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
             referencedColumns: ["id"]
           },
         ]
@@ -2790,6 +3029,12 @@ export type Database = {
           delivered_order_id: string | null
           device_status: string | null
           entry_date: string
+          finance_block_status: string | null
+          finance_contract_number: string | null
+          finance_invoice_status: string | null
+          finance_open_amount: number | null
+          finance_payment_status: string | null
+          finance_status: string | null
           id: string
           last_service_date: string | null
           model_name: string
@@ -2815,6 +3060,12 @@ export type Database = {
           delivered_order_id?: string | null
           device_status?: string | null
           entry_date?: string
+          finance_block_status?: string | null
+          finance_contract_number?: string | null
+          finance_invoice_status?: string | null
+          finance_open_amount?: number | null
+          finance_payment_status?: string | null
+          finance_status?: string | null
           id?: string
           last_service_date?: string | null
           model_name: string
@@ -2840,6 +3091,12 @@ export type Database = {
           delivered_order_id?: string | null
           device_status?: string | null
           entry_date?: string
+          finance_block_status?: string | null
+          finance_contract_number?: string | null
+          finance_invoice_status?: string | null
+          finance_open_amount?: number | null
+          finance_payment_status?: string | null
+          finance_status?: string | null
           id?: string
           last_service_date?: string | null
           model_name?: string
@@ -4783,6 +5040,13 @@ export type Database = {
           deposit_ok_by: string | null
           expected_shipment_date: string | null
           external_order_id: string | null
+          finance_deposit_amount: number | null
+          finance_open_amount: number | null
+          finance_overdue_amount: number | null
+          finance_paid_amount: number | null
+          finance_payment_status: string | null
+          finance_remaining_amount: number | null
+          finance_total_amount: number | null
           id: string
           internal_number: string | null
           is_vip: boolean
@@ -4810,6 +5074,13 @@ export type Database = {
           deposit_ok_by?: string | null
           expected_shipment_date?: string | null
           external_order_id?: string | null
+          finance_deposit_amount?: number | null
+          finance_open_amount?: number | null
+          finance_overdue_amount?: number | null
+          finance_paid_amount?: number | null
+          finance_payment_status?: string | null
+          finance_remaining_amount?: number | null
+          finance_total_amount?: number | null
           id?: string
           internal_number?: string | null
           is_vip?: boolean
@@ -4837,6 +5108,13 @@ export type Database = {
           deposit_ok_by?: string | null
           expected_shipment_date?: string | null
           external_order_id?: string | null
+          finance_deposit_amount?: number | null
+          finance_open_amount?: number | null
+          finance_overdue_amount?: number | null
+          finance_paid_amount?: number | null
+          finance_payment_status?: string | null
+          finance_remaining_amount?: number | null
+          finance_total_amount?: number | null
           id?: string
           internal_number?: string | null
           is_vip?: boolean
@@ -9004,6 +9282,7 @@ export type Database = {
     Functions: {
       can_access_ai_service: { Args: never; Returns: boolean }
       can_access_finance: { Args: never; Returns: boolean }
+      can_access_finance_module: { Args: never; Returns: boolean }
       can_access_financing: { Args: never; Returns: boolean }
       can_access_import_logs: { Args: never; Returns: boolean }
       can_access_mail: { Args: never; Returns: boolean }
@@ -9028,6 +9307,7 @@ export type Database = {
       can_run_ai_service: { Args: never; Returns: boolean }
       can_send_whatsapp: { Args: never; Returns: boolean }
       can_upload_factory_invoice: { Args: never; Returns: boolean }
+      can_view_finance_module: { Args: never; Returns: boolean }
       can_view_mail_audit: { Args: never; Returns: boolean }
       check_rate_limit: {
         Args: { _bucket: string; _max: number; _window_seconds: number }
