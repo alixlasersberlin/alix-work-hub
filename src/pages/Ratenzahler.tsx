@@ -88,24 +88,14 @@ export default function Ratenzahler() {
   }, []);
 
   const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
     let res = rows;
     if (statusFilter !== 'all') {
       res = res.filter((r) => (r.payment_status ?? '').toLowerCase() === statusFilter.toLowerCase());
     }
-    if (q) {
-      res = res.filter((r) =>
-        [r.customer_name, r.device_name, r.city, r.reference_number, r.invoice_number]
-          .some((v) => (v ?? '').toLowerCase().includes(q))
-      );
-    }
-    return res;
+    return res.filter((r) => matchesQuery(r, search));
   }, [rows, search, statusFilter]);
 
-  const visible = useMemo(() => {
-    if (pageSize === 'all') return filtered;
-    return filtered.slice(0, pageSize);
-  }, [filtered, pageSize]);
+  const visible = useMemo(() => paginate(filtered, pageSize), [filtered, pageSize]);
 
   const handleMove = async (r: Row) => {
     if (!isAdmin) return;
