@@ -90,10 +90,10 @@ export default function FinanceAutomations() {
   if (loading) return <PageLoading />;
   return (
     <div className="space-y-6">
-      <PageHeader title="Finance Automations" subtitle="Regel-basierte Workflow-Engine" icon={Workflow}>
+      <PageHeader title="Finance Automations" subtitle={"Regel-basierte Workflow-Engine"} icon={Workflow} actions={<>
         <Button variant="outline" onClick={runNow} disabled={busy}><Play className="h-4 w-4 mr-2" />Jetzt ausführen</Button>
         {canEdit && <Button onClick={() => setShow(true)}><Plus className="h-4 w-4 mr-2" />Neue Regel</Button>}
-      </PageHeader>
+      </>} />
 
       <DataCard title={`${rows.length} Regeln`}>
         <div className="space-y-2">

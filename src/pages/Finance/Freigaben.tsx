@@ -58,7 +58,7 @@ export default function FinanceFreigaben() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Finance Freigaben" subtitle={`${pending} offene Genehmigungen`} icon={CheckSquare}>
+      <PageHeader title="Finance Freigaben" subtitle={`${pending} offene Genehmigungen`} icon={CheckSquare} actions={<>
         <Select value={filter} onValueChange={setFilter}>
           <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -68,7 +68,7 @@ export default function FinanceFreigaben() {
             <SelectItem value="alle">Alle</SelectItem>
           </SelectContent>
         </Select>
-      </PageHeader>
+      </>} />
 
       <DataCard title="Inbox">
         <div className="space-y-2">

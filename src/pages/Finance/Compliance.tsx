@@ -59,11 +59,11 @@ export default function FinanceCompliance() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Finance Compliance" subtitle="Audit-Trail für GoBD / ISO 13485" icon={ShieldCheck}>
+      <PageHeader title="Finance Compliance" subtitle={"Audit-Trail für GoBD / ISO 13485"} icon={ShieldCheck} actions={<>
         <Input type="date" value={from} onChange={e => setFrom(e.target.value)} className="w-40" />
         <Input type="date" value={to} onChange={e => setTo(e.target.value)} className="w-40" />
         <Button onClick={exportCsv} disabled={busy}><Download className="h-4 w-4 mr-2" />CSV-Export</Button>
-      </PageHeader>
+      </>} />
 
       <DataCard title={`${logs.length} Einträge (max. 500 angezeigt)`}>
         <div className="overflow-x-auto">
