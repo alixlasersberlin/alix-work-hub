@@ -26,7 +26,7 @@ type Row = {
   payment_status: string | null;
 };
 
-type PageSize = 10 | 20 | 50 | 'all';
+
 
 function statusVariant(s: string | null) {
   const v = (s ?? '').toLowerCase();
