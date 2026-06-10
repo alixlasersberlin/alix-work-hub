@@ -9,6 +9,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 import CustomerEditDialog from '@/components/CustomerEditDialog';
 import CustomerDeleteDialog from '@/components/CustomerDeleteDialog';
 import CustomerCommunication from '@/components/CustomerCommunication';
+import FinanceAccountTab from '@/components/finance/FinanceAccountTab';
 import { withAt } from '@/lib/atSuffix';
 
 export default function CustomerDetail() {
