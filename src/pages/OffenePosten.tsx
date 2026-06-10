@@ -104,6 +104,7 @@ export default function OffenePosten() {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [search, setSearch] = useState('');
+  const [pageSize, setPageSize] = useState<PageSize>(50);
   const [dateFrom, setDateFrom] = useState<Date>(new Date(new Date().getFullYear(), 0, 1));
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
 
