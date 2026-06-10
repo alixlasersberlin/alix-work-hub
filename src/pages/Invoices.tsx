@@ -98,17 +98,11 @@ export default function Invoices() {
   useEffect(() => { fetchRows(); }, []);
 
   const accounts = useMemo<Account[]>(() => {
-    const q = search.trim().toLowerCase();
     let res = rows;
     if (statusFilter !== 'all') {
       res = res.filter((r) => (r.payment_status ?? '').toLowerCase() === statusFilter.toLowerCase());
     }
-    if (q) {
-      res = res.filter((r) =>
-        [r.customer_name, r.city, r.reference_number, r.invoice_number, r.customer_id]
-          .some((v) => (v ?? '').toLowerCase().includes(q))
-      );
-    }
+    res = res.filter((r) => matchesQuery(r, search));
     const map = new Map<string, Account>();
     const today = new Date().toISOString().slice(0, 10);
     for (const r of res) {
