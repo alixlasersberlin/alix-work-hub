@@ -80,6 +80,9 @@ const FinanceMahnwesenDetail = lazy(() => import("./pages/Finance/MahnwesenDetai
 const FinanceMahnwesenSettings = lazy(() => import("./pages/Finance/MahnwesenSettings"));
 const FinanceDatev = lazy(() => import("./pages/Finance/Datev"));
 const FinanceBank = lazy(() => import("./pages/Finance/Bank"));
+const FinanceSepa = lazy(() => import("./pages/Finance/Sepa"));
+const FinanceSteuer = lazy(() => import("./pages/Finance/Steuer"));
+const FinanceCockpit = lazy(() => import("./pages/Finance/Cockpit"));
 const FinanceSystemstatus = lazy(() => import("./pages/Finance/Systemstatus"));
 const FinanceRaten = lazy(() => import("./pages/Finance/Raten"));
 const UserManagement = lazy(() => import("./pages/UserManagement"));
@@ -463,6 +466,9 @@ function AppRoutes() {
           <Route path="/finance/mahnwesen/:customerId" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceMahnwesenDetail /></ProtectedRoute>} />
           <Route path="/finance/datev" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceDatev /></ProtectedRoute>} />
           <Route path="/finance/bank" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceBank /></ProtectedRoute>} />
+          <Route path="/finance/sepa" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceSepa /></ProtectedRoute>} />
+          <Route path="/finance/steuer" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceSteuer /></ProtectedRoute>} />
+          <Route path="/finance/cockpit" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCockpit /></ProtectedRoute>} />
           <Route path="/finance/einstellungen/systemstatus" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceSystemstatus /></ProtectedRoute>} />
           <Route path="/finance/raten" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceRaten /></ProtectedRoute>} />
           <Route path="/service-cockpit" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Serviceleitung']}><ServiceCockpit /></ProtectedRoute>} />

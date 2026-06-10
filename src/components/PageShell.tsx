@@ -2,10 +2,24 @@ import { cn } from '@/lib/utils';
 import { Loader2, Inbox, AlertTriangle } from 'lucide-react';
 
 interface PageHeaderProps {
-  icon?: React.ReactNode;
+  icon?: React.ReactNode | React.ElementType;
   title: string;
   subtitle?: string;
   actions?: React.ReactNode;
+}
+
+function renderIcon(icon: React.ReactNode | React.ElementType | undefined, cls: string): React.ReactNode {
+  if (!icon) return null;
+  // ElementType (lucide component) — function or forwardRef object
+  if (typeof icon === 'function') {
+    const IconComp = icon as React.ElementType;
+    return <IconComp className={cls} />;
+  }
+  if (typeof icon === 'object' && icon !== null && !(icon as any).$$typeof) {
+    const IconComp = icon as React.ElementType;
+    return <IconComp className={cls} />;
+  }
+  return icon as React.ReactNode;
 }
 
 export function PageHeader({ icon, title, subtitle, actions }: PageHeaderProps) {
@@ -13,7 +27,7 @@ export function PageHeader({ icon, title, subtitle, actions }: PageHeaderProps) 
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
       <div className="min-w-0">
         <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2.5">
-          {icon}
+          {renderIcon(icon, 'w-6 h-6 text-primary')}
           {title}
         </h1>
         {subtitle && <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>}
@@ -60,10 +74,11 @@ export function PageError({ message, onRetry }: { message: string; onRetry?: () 
   );
 }
 
-export function DataCard({ children, className }: { children: React.ReactNode; className?: string }) {
+export function DataCard({ children, className, title, icon, actions }: { children: React.ReactNode; className?: string; title?: string; icon?: React.ReactNode; actions?: React.ReactNode }) {
   return (
     <div className={cn('rounded-xl border border-border bg-card card-glow', className)}>
-      {children}
+      {title && <DataCardHeader title={title} icon={icon} actions={actions} />}
+      <div className="p-5">{children}</div>
     </div>
   );
 }

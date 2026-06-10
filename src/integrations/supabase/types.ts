@@ -2678,6 +2678,223 @@ export type Database = {
           },
         ]
       }
+      finance_sepa_mandates: {
+        Row: {
+          account_holder: string | null
+          bic: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          iban: string
+          id: string
+          last_used_at: string | null
+          mandate_reference: string
+          notes: string | null
+          scheme: string
+          sequence_type: string
+          signed_at: string
+          status: string
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_holder?: string | null
+          bic?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          iban: string
+          id?: string
+          last_used_at?: string | null
+          mandate_reference: string
+          notes?: string | null
+          scheme?: string
+          sequence_type?: string
+          signed_at: string
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_holder?: string | null
+          bic?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          iban?: string
+          id?: string
+          last_used_at?: string | null
+          mandate_reference?: string
+          notes?: string | null
+          scheme?: string
+          sequence_type?: string
+          signed_at?: string
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_sepa_mandates_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_sepa_mandates_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_sepa_run_items: {
+        Row: {
+          amount: number
+          created_at: string
+          customer_id: string
+          end_to_end_id: string | null
+          id: string
+          mandate_id: string
+          reference: string | null
+          remittance_info: string | null
+          run_id: string
+          status: string
+          transaction_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          customer_id: string
+          end_to_end_id?: string | null
+          id?: string
+          mandate_id: string
+          reference?: string | null
+          remittance_info?: string | null
+          run_id: string
+          status?: string
+          transaction_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          customer_id?: string
+          end_to_end_id?: string | null
+          id?: string
+          mandate_id?: string
+          reference?: string | null
+          remittance_info?: string | null
+          run_id?: string
+          status?: string
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_sepa_run_items_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_sepa_run_items_mandate_id_fkey"
+            columns: ["mandate_id"]
+            isOneToOne: false
+            referencedRelation: "finance_sepa_mandates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_sepa_run_items_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "finance_sepa_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_sepa_run_items_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "finance_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_sepa_runs: {
+        Row: {
+          collection_date: string
+          created_at: string
+          created_by: string | null
+          creditor_bic: string | null
+          creditor_iban: string
+          creditor_id: string
+          creditor_name: string
+          execution_date: string
+          exported_at: string | null
+          id: string
+          item_count: number
+          notes: string | null
+          run_number: string
+          source_system: string | null
+          status: string
+          tenant_id: string | null
+          total_amount: number
+          updated_at: string
+          xml_path: string | null
+        }
+        Insert: {
+          collection_date: string
+          created_at?: string
+          created_by?: string | null
+          creditor_bic?: string | null
+          creditor_iban: string
+          creditor_id: string
+          creditor_name: string
+          execution_date: string
+          exported_at?: string | null
+          id?: string
+          item_count?: number
+          notes?: string | null
+          run_number: string
+          source_system?: string | null
+          status?: string
+          tenant_id?: string | null
+          total_amount?: number
+          updated_at?: string
+          xml_path?: string | null
+        }
+        Update: {
+          collection_date?: string
+          created_at?: string
+          created_by?: string | null
+          creditor_bic?: string | null
+          creditor_iban?: string
+          creditor_id?: string
+          creditor_name?: string
+          execution_date?: string
+          exported_at?: string | null
+          id?: string
+          item_count?: number
+          notes?: string | null
+          run_number?: string
+          source_system?: string | null
+          status?: string
+          tenant_id?: string | null
+          total_amount?: number
+          updated_at?: string
+          xml_path?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_sepa_runs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       finance_transactions: {
         Row: {
           amount: number
