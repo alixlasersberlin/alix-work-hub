@@ -338,7 +338,7 @@ export default function OffenePosten() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((i) => {
+              {visible.map((i) => {
                 const b = bucketFor(i.due_date);
                 const style = bucketStyles[b];
                 const days = i.due_date ? differenceInCalendarDays(parseISO(i.due_date), new Date()) : null;
