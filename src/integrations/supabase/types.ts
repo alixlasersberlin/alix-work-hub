@@ -2241,6 +2241,194 @@ export type Database = {
           },
         ]
       }
+      finance_asset_depreciations: {
+        Row: {
+          amount: number
+          asset_id: string
+          book_value_after: number
+          created_at: string
+          created_by: string | null
+          datev_account: string | null
+          finance_transaction_id: string | null
+          id: string
+          is_posted: boolean
+          method: string
+          period: string
+          posted_at: string | null
+          posting_text: string | null
+        }
+        Insert: {
+          amount: number
+          asset_id: string
+          book_value_after?: number
+          created_at?: string
+          created_by?: string | null
+          datev_account?: string | null
+          finance_transaction_id?: string | null
+          id?: string
+          is_posted?: boolean
+          method: string
+          period: string
+          posted_at?: string | null
+          posting_text?: string | null
+        }
+        Update: {
+          amount?: number
+          asset_id?: string
+          book_value_after?: number
+          created_at?: string
+          created_by?: string | null
+          datev_account?: string | null
+          finance_transaction_id?: string | null
+          id?: string
+          is_posted?: boolean
+          method?: string
+          period?: string
+          posted_at?: string | null
+          posting_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_asset_depreciations_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "finance_assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_asset_depreciations_finance_transaction_id_fkey"
+            columns: ["finance_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "finance_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_assets: {
+        Row: {
+          accumulated_depreciation: number
+          acquisition_date: string
+          acquisition_value: number
+          book_value: number
+          category: string
+          created_at: string
+          created_by: string | null
+          datev_account: string | null
+          degressive_rate: number | null
+          depreciation_method: string
+          description: string | null
+          disposal_date: string | null
+          disposal_reason: string | null
+          disposal_value: number | null
+          document_id: string | null
+          id: string
+          incoming_invoice_id: string | null
+          inventory_number: string | null
+          location: string | null
+          meta: Json | null
+          name: string
+          notes: string | null
+          status: string
+          supplier_id: string | null
+          supplier_name: string | null
+          tenant_id: string | null
+          updated_at: string
+          updated_by: string | null
+          useful_life_months: number
+        }
+        Insert: {
+          accumulated_depreciation?: number
+          acquisition_date: string
+          acquisition_value: number
+          book_value?: number
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          datev_account?: string | null
+          degressive_rate?: number | null
+          depreciation_method?: string
+          description?: string | null
+          disposal_date?: string | null
+          disposal_reason?: string | null
+          disposal_value?: number | null
+          document_id?: string | null
+          id?: string
+          incoming_invoice_id?: string | null
+          inventory_number?: string | null
+          location?: string | null
+          meta?: Json | null
+          name: string
+          notes?: string | null
+          status?: string
+          supplier_id?: string | null
+          supplier_name?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          useful_life_months?: number
+        }
+        Update: {
+          accumulated_depreciation?: number
+          acquisition_date?: string
+          acquisition_value?: number
+          book_value?: number
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          datev_account?: string | null
+          degressive_rate?: number | null
+          depreciation_method?: string
+          description?: string | null
+          disposal_date?: string | null
+          disposal_reason?: string | null
+          disposal_value?: number | null
+          document_id?: string | null
+          id?: string
+          incoming_invoice_id?: string | null
+          inventory_number?: string | null
+          location?: string | null
+          meta?: Json | null
+          name?: string
+          notes?: string | null
+          status?: string
+          supplier_id?: string | null
+          supplier_name?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          useful_life_months?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_assets_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "finance_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_assets_incoming_invoice_id_fkey"
+            columns: ["incoming_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "finance_incoming_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_assets_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_assets_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       finance_bank_lines: {
         Row: {
           amount: number
@@ -2385,6 +2573,112 @@ export type Database = {
           uploaded_by?: string | null
         }
         Relationships: []
+      }
+      finance_cashflow_items: {
+        Row: {
+          actual_amount: number
+          category: string
+          created_at: string
+          description: string | null
+          flow_type: string
+          id: string
+          meta: Json | null
+          month: string
+          origin_ref: string | null
+          plan_id: string
+          planned_amount: number
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          actual_amount?: number
+          category: string
+          created_at?: string
+          description?: string | null
+          flow_type: string
+          id?: string
+          meta?: Json | null
+          month: string
+          origin_ref?: string | null
+          plan_id: string
+          planned_amount?: number
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          actual_amount?: number
+          category?: string
+          created_at?: string
+          description?: string | null
+          flow_type?: string
+          id?: string
+          meta?: Json | null
+          month?: string
+          origin_ref?: string | null
+          plan_id?: string
+          planned_amount?: number
+          source?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_cashflow_items_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "finance_cashflow_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_cashflow_plans: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          notes: string | null
+          opening_balance: number
+          period_end: string
+          period_start: string
+          status: string
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          opening_balance?: number
+          period_end: string
+          period_start: string
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          opening_balance?: number
+          period_end?: string
+          period_start?: string
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_cashflow_plans_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       finance_contracts: {
         Row: {
