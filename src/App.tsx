@@ -76,6 +76,8 @@ const FinanceAnzahlungen = lazy(() => import("./pages/Finance/Anzahlungen"));
 const FinanceZahlungen = lazy(() => import("./pages/Finance/Zahlungen"));
 const FinanceVertraege = lazy(() => import("./pages/Finance/Vertraege"));
 const FinanceMahnwesen = lazy(() => import("./pages/Finance/Mahnwesen"));
+const FinanceMahnwesenDetail = lazy(() => import("./pages/Finance/MahnwesenDetail"));
+const FinanceMahnwesenSettings = lazy(() => import("./pages/Finance/MahnwesenSettings"));
 const FinanceDatev = lazy(() => import("./pages/Finance/Datev"));
 const FinanceSystemstatus = lazy(() => import("./pages/Finance/Systemstatus"));
 const FinanceRaten = lazy(() => import("./pages/Finance/Raten"));
