@@ -2359,6 +2359,86 @@ export type Database = {
           },
         ]
       }
+      finance_approvals: {
+        Row: {
+          amount: number | null
+          approved_at: string | null
+          approved_by: string | null
+          assigned_to: string | null
+          comment: string | null
+          created_at: string
+          currency: string | null
+          description: string | null
+          entity_id: string
+          entity_type: string
+          id: string
+          rejection_reason: string | null
+          requested_by: string | null
+          requires_dual_approval: boolean
+          second_approved_at: string | null
+          second_approver_id: string | null
+          status: string
+          tenant_id: string | null
+          threshold_amount: number | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number | null
+          approved_at?: string | null
+          approved_by?: string | null
+          assigned_to?: string | null
+          comment?: string | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          entity_id: string
+          entity_type: string
+          id?: string
+          rejection_reason?: string | null
+          requested_by?: string | null
+          requires_dual_approval?: boolean
+          second_approved_at?: string | null
+          second_approver_id?: string | null
+          status?: string
+          tenant_id?: string | null
+          threshold_amount?: number | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number | null
+          approved_at?: string | null
+          approved_by?: string | null
+          assigned_to?: string | null
+          comment?: string | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          rejection_reason?: string | null
+          requested_by?: string | null
+          requires_dual_approval?: boolean
+          second_approved_at?: string | null
+          second_approver_id?: string | null
+          status?: string
+          tenant_id?: string | null
+          threshold_amount?: number | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_approvals_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       finance_asset_depreciations: {
         Row: {
           amount: number
@@ -2540,6 +2620,106 @@ export type Database = {
           },
           {
             foreignKeyName: "finance_assets_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_automation_runs: {
+        Row: {
+          automation_id: string | null
+          executed_at: string
+          id: string
+          message: string | null
+          payload: Json | null
+          status: string
+          target_entity: string | null
+          target_id: string | null
+          trigger_event: string
+        }
+        Insert: {
+          automation_id?: string | null
+          executed_at?: string
+          id?: string
+          message?: string | null
+          payload?: Json | null
+          status?: string
+          target_entity?: string | null
+          target_id?: string | null
+          trigger_event: string
+        }
+        Update: {
+          automation_id?: string | null
+          executed_at?: string
+          id?: string
+          message?: string | null
+          payload?: Json | null
+          status?: string
+          target_entity?: string | null
+          target_id?: string | null
+          trigger_event?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_automation_runs_automation_id_fkey"
+            columns: ["automation_id"]
+            isOneToOne: false
+            referencedRelation: "finance_automations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_automations: {
+        Row: {
+          action_config: Json
+          action_type: string
+          active: boolean
+          condition_json: Json
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          last_run_at: string | null
+          name: string
+          tenant_id: string | null
+          trigger_type: string
+          updated_at: string
+        }
+        Insert: {
+          action_config?: Json
+          action_type: string
+          active?: boolean
+          condition_json?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          last_run_at?: string | null
+          name: string
+          tenant_id?: string | null
+          trigger_type: string
+          updated_at?: string
+        }
+        Update: {
+          action_config?: Json
+          action_type?: string
+          active?: boolean
+          condition_json?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          last_run_at?: string | null
+          name?: string
+          tenant_id?: string | null
+          trigger_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_automations_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
