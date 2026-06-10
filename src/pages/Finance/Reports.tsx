@@ -97,7 +97,7 @@ export default function FinanceReports() {
     setForm((f: any) => ({ ...f, [key]: f[key].includes(v) ? f[key].filter((x: string) => x !== v) : [...f[key], v] }));
   };
 
-  if (loading) return <PageLoading label="Berichte werden geladen…" />;
+  if (loading) return <PageLoading />;
 
   return (
     <div className="space-y-6">

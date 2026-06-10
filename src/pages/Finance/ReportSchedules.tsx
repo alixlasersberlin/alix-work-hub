@@ -70,7 +70,7 @@ export default function FinanceReportSchedules() {
     load();
   };
 
-  if (loading) return <PageLoading label="Zeitpläne werden geladen…" />;
+  if (loading) return <PageLoading />;
 
   return (
     <div className="space-y-6">

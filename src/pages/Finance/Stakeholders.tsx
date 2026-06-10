@@ -72,7 +72,7 @@ export default function FinanceStakeholders() {
     setForm((f: any) => ({ ...f, allowed_reports: f.allowed_reports.includes(id) ? f.allowed_reports.filter((x: string) => x !== id) : [...f.allowed_reports, id] }));
   };
 
-  if (loading) return <PageLoading label="Stakeholder werden geladen…" />;
+  if (loading) return <PageLoading />;
 
   return (
     <div className="space-y-6">
