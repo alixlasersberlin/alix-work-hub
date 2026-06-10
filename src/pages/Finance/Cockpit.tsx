@@ -125,10 +125,14 @@ export default function FinanceCockpit() {
       </div>
 
       <div className="grid md:grid-cols-4 gap-4">
+        <Button variant="outline" onClick={() => nav('/finance/bwa')}><TrendingUp className="h-4 w-4 mr-2" />BWA</Button>
+        <Button variant="outline" onClick={() => nav('/finance/guv')}>GuV</Button>
+        <Button variant="outline" onClick={() => nav('/finance/bilanz')}>Bilanz</Button>
+        <Button variant="outline" onClick={() => nav('/finance/jahresabschluss')}>Jahresabschluss</Button>
         <Button variant="outline" onClick={() => nav('/finance/mahnwesen')}><AlertTriangle className="h-4 w-4 mr-2" />Mahnwesen</Button>
         <Button variant="outline" onClick={() => nav('/finance/bank')}><Banknote className="h-4 w-4 mr-2" />Bankimport</Button>
         <Button variant="outline" onClick={() => nav('/finance/sepa')}><Users className="h-4 w-4 mr-2" />SEPA-Läufe</Button>
-        <Button variant="outline" onClick={() => nav('/finance/steuer')}>Steuer-Auswertung</Button>
+        <Button variant="outline" onClick={() => nav('/finance/liquiditaet')}>Liquidität</Button>
       </div>
     </div>
   );
