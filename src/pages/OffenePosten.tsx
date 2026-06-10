@@ -301,13 +301,19 @@ export default function OffenePosten() {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <Input placeholder="Suche Rechnung oder Kunde…" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-sm" />
-        <div className="flex flex-wrap gap-2 ml-auto text-xs">
-          {(Object.keys(bucketStyles) as Bucket[]).map((b) => (
-            <span key={b} className={cn('px-2 py-1 rounded', bucketStyles[b].badge)}>{bucketStyles[b].label}</span>
-          ))}
-        </div>
+      <ListToolbar
+        search={search}
+        onSearchChange={setSearch}
+        pageSize={pageSize}
+        onPageSizeChange={setPageSize}
+        total={filtered.length}
+        visible={visible.length}
+      />
+
+      <div className="flex flex-wrap gap-2 text-xs">
+        {(Object.keys(bucketStyles) as Bucket[]).map((b) => (
+          <span key={b} className={cn('px-2 py-1 rounded', bucketStyles[b].badge)}>{bucketStyles[b].label}</span>
+        ))}
       </div>
 
       <div className="rounded-lg border border-border bg-card overflow-hidden">
