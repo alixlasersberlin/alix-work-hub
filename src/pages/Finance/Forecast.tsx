@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from 'recharts';
 import { BUDGET_CATEGORIES, MONTH_NAMES, fmt, classifyTx, mapIncomingCategory } from './_controlling';
 
-type Scenario = 'base' | 'best' | 'worst';
+type Scenario = 'base' | 'best' | 'worst' | 'ai';
 
 export default function FinanceForecast() {
   const [loading, setLoading] = useState(true);
