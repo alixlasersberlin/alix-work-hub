@@ -134,7 +134,7 @@ export default function FinanceBwa() {
 
   return (
     <div className="p-6 space-y-6">
-      <PageHeader title="BWA – Betriebswirtschaftliche Auswertung" description={`Geschäftsjahr ${year}`} />
+      <PageHeader title="BWA – Betriebswirtschaftliche Auswertung" subtitle={`Geschäftsjahr ${year}`} />
 
       <div className="flex items-center gap-3">
         <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
@@ -147,9 +147,9 @@ export default function FinanceBwa() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <DataCard title="Ergebnis YTD" value={fmt(ergebnis)} icon="trending-up" />
-        <DataCard title="Vorjahres-Ergebnis" value={fmt(prevTotal)} icon="bar-chart" />
-        <DataCard title="Veränderung" value={fmt(ergebnis - prevTotal)} icon="activity" />
+        <DataCard title="Ergebnis YTD"><div className="text-2xl font-bold">{fmt(ergebnis)}</div></DataCard>
+        <DataCard title="Vorjahres-Ergebnis"><div className="text-2xl font-bold">{fmt(prevTotal)}</div></DataCard>
+        <DataCard title="Veränderung"><div className="text-2xl font-bold">{fmt(ergebnis - prevTotal)}</div></DataCard>
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-border bg-card">
