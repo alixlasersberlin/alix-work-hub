@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { PageHeader, PageLoading, PageError, DataCard } from '@/components/PageShell';
-import { FileText, RefreshCw, Search, ArrowRightLeft, ChevronDown, ChevronRight, Users, Wallet, AlertTriangle, Repeat } from 'lucide-react';
+import { FileText, RefreshCw, ArrowRightLeft, ChevronDown, ChevronRight, Users, Wallet, AlertTriangle, Repeat } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { ListToolbar } from '@/components/finance/ListToolbar';
+import { matchesQuery, paginate, type PageSize } from '@/lib/finance/list-filter';
 
 type Row = {
   id: string;
@@ -71,6 +72,7 @@ export default function Invoices() {
   const [importing, setImporting] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [pageSize, setPageSize] = useState<PageSize>(20);
 
   const fetchRows = async () => {
     setLoading(true);
@@ -96,17 +98,11 @@ export default function Invoices() {
   useEffect(() => { fetchRows(); }, []);
 
   const accounts = useMemo<Account[]>(() => {
-    const q = search.trim().toLowerCase();
     let res = rows;
     if (statusFilter !== 'all') {
       res = res.filter((r) => (r.payment_status ?? '').toLowerCase() === statusFilter.toLowerCase());
     }
-    if (q) {
-      res = res.filter((r) =>
-        [r.customer_name, r.city, r.reference_number, r.invoice_number, r.customer_id]
-          .some((v) => (v ?? '').toLowerCase().includes(q))
-      );
-    }
+    res = res.filter((r) => matchesQuery(r, search));
     const map = new Map<string, Account>();
     const today = new Date().toISOString().slice(0, 10);
     for (const r of res) {
@@ -243,36 +239,34 @@ export default function Invoices() {
         </DataCard>
       </div>
 
-      <DataCard className="p-4 mb-4">
-        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input value={search} onChange={(e) => setSearch(e.target.value)}
-              placeholder="Suche: Kunde, Ort, Rechnungs-/Referenznr.…" className="pl-9" />
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground whitespace-nowrap">Zahlungsstatus:</span>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Alle</SelectItem>
-                <SelectItem value="Bezahlt">Bezahlt</SelectItem>
-                <SelectItem value="Offen">Unbezahlt / Offen</SelectItem>
-                <SelectItem value="Überfällig">Überfällig</SelectItem>
-                <SelectItem value="Teilweise bezahlt">Teilweise bezahlt</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex gap-2">
-            <Button size="sm" variant="outline" onClick={expandAll}>Alle öffnen</Button>
-            <Button size="sm" variant="outline" onClick={collapseAll}>Alle schließen</Button>
-          </div>
+      <ListToolbar
+        search={search}
+        onSearchChange={setSearch}
+        pageSize={pageSize}
+        onPageSizeChange={setPageSize}
+        total={accounts.length}
+        visible={Math.min(accounts.length, pageSize === 'all' ? accounts.length : pageSize)}
+        placeholder="Suche: Rechnungsnr., Auftragsnr., Name, Stadt, PLZ, Betrag…"
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">Zahlungsstatus:</span>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle</SelectItem>
+              <SelectItem value="Bezahlt">Bezahlt</SelectItem>
+              <SelectItem value="Offen">Unbezahlt / Offen</SelectItem>
+              <SelectItem value="Überfällig">Überfällig</SelectItem>
+              <SelectItem value="Teilweise bezahlt">Teilweise bezahlt</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-        <div className="mt-2 text-xs text-muted-foreground">
-          {accounts.length} Kundenkonten{search ? ` für "${search}"` : ''}
-          {progress && <> • <span className="text-primary">{progress}</span></>}
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={expandAll}>Alle öffnen</Button>
+          <Button size="sm" variant="outline" onClick={collapseAll}>Alle schließen</Button>
         </div>
-      </DataCard>
+      </ListToolbar>
+      {progress && <div className="text-xs text-primary mb-3">{progress}</div>}
 
       {error && <PageError message={error} onRetry={fetchRows} />}
 
@@ -282,7 +276,7 @@ export default function Invoices() {
             <DataCard className="p-12 text-center text-muted-foreground">
               Keine Daten gefunden.
             </DataCard>
-          ) : accounts.map((a) => {
+          ) : paginate(accounts, pageSize).map((a) => {
             const open = !!expanded[a.key];
             return (
               <DataCard key={a.key} className="overflow-hidden">

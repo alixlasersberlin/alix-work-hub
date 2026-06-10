@@ -36,6 +36,8 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { ListToolbar } from '@/components/finance/ListToolbar';
+import { matchesQuery, paginate, type PageSize } from '@/lib/finance/list-filter';
 
 type WorkflowStatus = 'offen' | 'rueckstellung' | 'in_klaerung' | 'inkasso' | 'erledigt';
 
@@ -43,7 +45,10 @@ type OpenItem = {
   id: string;
   source: 'invoice' | 'recurring';
   invoice_number: string | null;
+  reference_number: string | null;
   customer_name: string | null;
+  city: string | null;
+  billing_address: string | null;
   due_date: string | null;
   total: number | null;
   balance: number | null;
@@ -99,6 +104,7 @@ export default function OffenePosten() {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [search, setSearch] = useState('');
+  const [pageSize, setPageSize] = useState<PageSize>(50);
   const [dateFrom, setDateFrom] = useState<Date>(new Date(new Date().getFullYear(), 0, 1));
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
 
@@ -113,16 +119,16 @@ export default function OffenePosten() {
       await Promise.all([
         supabase
           .from('zoho_invoices')
-          .select('id, invoice_number, customer_name, due_date, total, balance, currency, status')
+          .select('id, invoice_number, reference_number, customer_name, city, billing_address, due_date, total, balance, currency, status')
           .gt('balance', 0)
           .order('due_date', { ascending: true })
-          .limit(1000),
+          .limit(2000),
         supabase
           .from('zoho_recurring_invoices')
-          .select('id, invoice_number, customer_name, due_date, total, balance, currency, status')
+          .select('id, invoice_number, reference_number, customer_name, city, billing_address, due_date, total, balance, currency, status')
           .gt('balance', 0)
           .order('due_date', { ascending: true })
-          .limit(1000),
+          .limit(2000),
         supabase
           .from('invoice_workflow_states')
           .select('source, invoice_key, workflow_status, note, updated_at')
@@ -217,13 +223,11 @@ export default function OffenePosten() {
     setEditItem(null);
   };
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return items;
-    return items.filter(
-      (i) => i.invoice_number?.toLowerCase().includes(q) || i.customer_name?.toLowerCase().includes(q),
-    );
-  }, [items, search]);
+  const filtered = useMemo(
+    () => items.filter((i) => matchesQuery(i, search)),
+    [items, search],
+  );
+  const visible = useMemo(() => paginate(filtered, pageSize), [filtered, pageSize]);
 
   const totals = useMemo(() => {
     const sum = filtered.reduce((acc, i) => acc + (Number(i.balance) || 0), 0);
@@ -297,13 +301,19 @@ export default function OffenePosten() {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <Input placeholder="Suche Rechnung oder Kunde…" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-sm" />
-        <div className="flex flex-wrap gap-2 ml-auto text-xs">
-          {(Object.keys(bucketStyles) as Bucket[]).map((b) => (
-            <span key={b} className={cn('px-2 py-1 rounded', bucketStyles[b].badge)}>{bucketStyles[b].label}</span>
-          ))}
-        </div>
+      <ListToolbar
+        search={search}
+        onSearchChange={setSearch}
+        pageSize={pageSize}
+        onPageSizeChange={setPageSize}
+        total={filtered.length}
+        visible={visible.length}
+      />
+
+      <div className="flex flex-wrap gap-2 text-xs">
+        {(Object.keys(bucketStyles) as Bucket[]).map((b) => (
+          <span key={b} className={cn('px-2 py-1 rounded', bucketStyles[b].badge)}>{bucketStyles[b].label}</span>
+        ))}
       </div>
 
       <div className="rounded-lg border border-border bg-card overflow-hidden">
@@ -328,7 +338,7 @@ export default function OffenePosten() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((i) => {
+              {visible.map((i) => {
                 const b = bucketFor(i.due_date);
                 const style = bucketStyles[b];
                 const days = i.due_date ? differenceInCalendarDays(parseISO(i.due_date), new Date()) : null;

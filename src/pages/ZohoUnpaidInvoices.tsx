@@ -19,6 +19,7 @@ import { PageHeader } from "@/components/PageShell";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { matchesQuery, paginate, PAGE_SIZE_OPTIONS, pageSizeLabel, type PageSize } from "@/lib/finance/list-filter";
 
 type Row = {
   id: string;
@@ -64,6 +65,7 @@ export default function ZohoUnpaidInvoices() {
   const [dateTo, setDateTo] = useState<Date | undefined>();
   const [groupByCustomer, setGroupByCustomer] = useState(false);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [pageSize, setPageSize] = useState<PageSize>(50);
 
   const load = async () => {
     setLoading(true);
@@ -106,12 +108,11 @@ export default function ZohoUnpaidInvoices() {
   }, [rows]);
 
   const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
     const from = dateFrom ? new Date(dateFrom.getFullYear(), dateFrom.getMonth(), dateFrom.getDate()).getTime() : null;
     const to = dateTo ? new Date(dateTo.getFullYear(), dateTo.getMonth(), dateTo.getDate(), 23, 59, 59).getTime() : null;
 
     let list = rows.filter((r) => {
-      if (q && ![r.invoice_number, r.customer_name].some((v) => (v ?? "").toLowerCase().includes(q))) return false;
+      if (!matchesQuery(r, search)) return false;
       if (customer !== "__all__" && r.customer_name !== customer) return false;
       if (from || to) {
         const v = r[dateField];
@@ -185,11 +186,19 @@ export default function ZohoUnpaidInvoices() {
             </div>
             <div className="flex items-center gap-2">
               <Input
-                placeholder="Suche Rechnungs-Nr. oder Kunde…"
+                placeholder="Suche: Rechnungsnr., Auftragsnr., Name, Stadt, PLZ, Betrag…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-72"
+                className="w-96"
               />
+              <Select value={String(pageSize)} onValueChange={(v) => setPageSize(v === 'all' ? 'all' : (Number(v) as PageSize))}>
+                <SelectTrigger className="w-[110px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {PAGE_SIZE_OPTIONS.map((p) => (
+                    <SelectItem key={String(p)} value={String(p)}>{pageSizeLabel(p)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Button onClick={handleSync} disabled={syncing}>
                 {syncing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
                 Jetzt synchronisieren
@@ -365,7 +374,7 @@ export default function ZohoUnpaidInvoices() {
                     ];
                   })
                 ) : (
-                  filtered.map((r) => {
+                  paginate(filtered, pageSize).map((r) => {
                     const age = ageDays(r.invoice_date);
                     return (
                       <TableRow key={r.id}>

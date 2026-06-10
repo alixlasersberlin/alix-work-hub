@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Banknote, ExternalLink, CheckCircle2, X } from 'lucide-react';
+import { ListToolbar } from '@/components/finance/ListToolbar';
+import { matchesQuery, paginate, type PageSize } from '@/lib/finance/list-filter';
 
 const STATUS_LABEL: Record<string, string> = {
   offen: 'Offen',
@@ -19,6 +21,19 @@ export default function Rechnungsvorschlaege() {
   const [filter, setFilter] = useState<'offen' | 'alle' | 'übernommen' | 'abgelehnt'>('offen');
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [pageSize, setPageSize] = useState<PageSize>(20);
+
+  const filtered = useMemo(
+    () => rows.filter((r) => matchesQuery({
+      ...r,
+      invoice_number: r.repair_number,
+      reference_number: r.ticket_number,
+      total: r.total_amount,
+    }, search)),
+    [rows, search],
+  );
+  const visible = useMemo(() => paginate(filtered, pageSize), [filtered, pageSize]);
 
   const load = async () => {
     setLoading(true);
@@ -45,6 +60,7 @@ export default function Rechnungsvorschlaege() {
 
   return (
     <div className="space-y-4">
+
       <div className="flex items-center gap-3">
         <Banknote className="w-6 h-6 text-emerald-400" />
         <h1 className="text-2xl font-bold">Rechnungsvorschläge (Reparaturen)</h1>
@@ -61,10 +77,19 @@ export default function Rechnungsvorschlaege() {
         </div>
       </div>
 
+      <ListToolbar
+        search={search}
+        onSearchChange={setSearch}
+        pageSize={pageSize}
+        onPageSizeChange={setPageSize}
+        total={filtered.length}
+        visible={visible.length}
+      />
+
       <Card className="overflow-hidden">
         {loading ? (
           <div className="p-8 text-center text-muted-foreground">Lade…</div>
-        ) : rows.length === 0 ? (
+        ) : visible.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground">Keine Vorschläge.</div>
         ) : (
           <div className="overflow-x-auto">
@@ -85,7 +110,7 @@ export default function Rechnungsvorschlaege() {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r) => (
+                {visible.map((r) => (
                   <tr key={r.id} className="border-t border-border/50 hover:bg-muted/20">
                     <td className="px-3 py-2 font-mono">
                       <Link to={`/reparatur/${r.repair_order_id}`} className="text-primary hover:underline inline-flex items-center gap-1">

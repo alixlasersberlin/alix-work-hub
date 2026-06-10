@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { PageHeader, PageLoading, PageError, DataCard } from '@/components/PageShell';
-import { Banknote, RefreshCw, Search, ArrowRightLeft } from 'lucide-react';
+import { Banknote, RefreshCw, ArrowRightLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { ListToolbar } from '@/components/finance/ListToolbar';
+import { matchesQuery, paginate, type PageSize } from '@/lib/finance/list-filter';
 
 type Row = {
   id: string;
@@ -25,7 +26,7 @@ type Row = {
   payment_status: string | null;
 };
 
-type PageSize = 10 | 20 | 50 | 'all';
+
 
 function statusVariant(s: string | null) {
   const v = (s ?? '').toLowerCase();
@@ -87,24 +88,14 @@ export default function Ratenzahler() {
   }, []);
 
   const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
     let res = rows;
     if (statusFilter !== 'all') {
       res = res.filter((r) => (r.payment_status ?? '').toLowerCase() === statusFilter.toLowerCase());
     }
-    if (q) {
-      res = res.filter((r) =>
-        [r.customer_name, r.device_name, r.city, r.reference_number, r.invoice_number]
-          .some((v) => (v ?? '').toLowerCase().includes(q))
-      );
-    }
-    return res;
+    return res.filter((r) => matchesQuery(r, search));
   }, [rows, search, statusFilter]);
 
-  const visible = useMemo(() => {
-    if (pageSize === 'all') return filtered;
-    return filtered.slice(0, pageSize);
-  }, [filtered, pageSize]);
+  const visible = useMemo(() => paginate(filtered, pageSize), [filtered, pageSize]);
 
   const handleMove = async (r: Row) => {
     if (!isAdmin) return;
@@ -174,53 +165,30 @@ export default function Ratenzahler() {
         }
       />
 
-      <DataCard className="p-4 mb-4">
-        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Suche: Name, Gerät, Ort, Auftragsnummer…"
-              className="pl-9"
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground whitespace-nowrap">Status:</span>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Alle</SelectItem>
-                <SelectItem value="Bezahlt">Bezahlt</SelectItem>
-                <SelectItem value="Offen">Unbezahlt / Offen</SelectItem>
-                <SelectItem value="Überfällig">Überfällig</SelectItem>
-                <SelectItem value="Teilweise bezahlt">Teilweise bezahlt</SelectItem>
-                <SelectItem value="sent">Gesendet</SelectItem>
-                <SelectItem value="pending">Ausstehend</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground whitespace-nowrap">Anzeige:</span>
-            <Select value={String(pageSize)} onValueChange={(v) => setPageSize(v === 'all' ? 'all' : (Number(v) as PageSize))}>
-              <SelectTrigger className="w-[110px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="10">10</SelectItem>
-                <SelectItem value="20">20</SelectItem>
-                <SelectItem value="50">50</SelectItem>
-                <SelectItem value="all">Alle</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+      <ListToolbar
+        search={search}
+        onSearchChange={setSearch}
+        pageSize={pageSize}
+        onPageSizeChange={setPageSize}
+        total={filtered.length}
+        visible={visible.length}
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">Status:</span>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle</SelectItem>
+              <SelectItem value="Bezahlt">Bezahlt</SelectItem>
+              <SelectItem value="Offen">Unbezahlt / Offen</SelectItem>
+              <SelectItem value="Überfällig">Überfällig</SelectItem>
+              <SelectItem value="Teilweise bezahlt">Teilweise bezahlt</SelectItem>
+              <SelectItem value="sent">Gesendet</SelectItem>
+              <SelectItem value="pending">Ausstehend</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-        <div className="mt-2 text-xs text-muted-foreground">
-          {filtered.length} Treffer{search ? ` für "${search}"` : ''} • angezeigt: {visible.length}
-        </div>
-      </DataCard>
+      </ListToolbar>
 
       {error && <PageError message={error} onRetry={fetchRows} />}
 
