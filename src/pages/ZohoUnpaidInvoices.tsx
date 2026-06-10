@@ -374,7 +374,7 @@ export default function ZohoUnpaidInvoices() {
                     ];
                   })
                 ) : (
-                  filtered.map((r) => {
+                  paginate(filtered, pageSize).map((r) => {
                     const age = ageDays(r.invoice_date);
                     return (
                       <TableRow key={r.id}>
