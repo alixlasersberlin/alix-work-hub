@@ -3392,6 +3392,65 @@ export type Database = {
           },
         ]
       }
+      finance_management_packs: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          generated_at: string | null
+          id: string
+          name: string
+          pdf_url: string | null
+          period_end: string
+          period_start: string
+          sections: Json
+          sent_at: string | null
+          sent_to: Json
+          status: string
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          generated_at?: string | null
+          id?: string
+          name: string
+          pdf_url?: string | null
+          period_end: string
+          period_start: string
+          sections?: Json
+          sent_at?: string | null
+          sent_to?: Json
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          generated_at?: string | null
+          id?: string
+          name?: string
+          pdf_url?: string | null
+          period_end?: string
+          period_start?: string
+          sections?: Json
+          sent_at?: string | null
+          sent_to?: Json
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_management_packs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       finance_records: {
         Row: {
           amount_due: number | null
@@ -3574,6 +3633,131 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_report_schedules: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          cron_expression: string
+          enabled: boolean
+          id: string
+          last_run_at: string | null
+          last_status: string | null
+          name: string
+          next_run_at: string | null
+          output_format: string
+          recipients: Json
+          report_id: string | null
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          cron_expression: string
+          enabled?: boolean
+          id?: string
+          last_run_at?: string | null
+          last_status?: string | null
+          name: string
+          next_run_at?: string | null
+          output_format?: string
+          recipients?: Json
+          report_id?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          cron_expression?: string
+          enabled?: boolean
+          id?: string
+          last_run_at?: string | null
+          last_status?: string | null
+          name?: string
+          next_run_at?: string | null
+          output_format?: string
+          recipients?: Json
+          report_id?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_report_schedules_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "finance_reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_report_schedules_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_reports: {
+        Row: {
+          config: Json
+          created_at: string
+          created_by: string | null
+          description: string | null
+          dimensions: Json
+          filters: Json
+          id: string
+          is_shared: boolean
+          metrics: Json
+          name: string
+          report_type: string
+          tenant_id: string | null
+          updated_at: string
+          visualization: string | null
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          dimensions?: Json
+          filters?: Json
+          id?: string
+          is_shared?: boolean
+          metrics?: Json
+          name: string
+          report_type?: string
+          tenant_id?: string | null
+          updated_at?: string
+          visualization?: string | null
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          dimensions?: Json
+          filters?: Json
+          id?: string
+          is_shared?: boolean
+          metrics?: Json
+          name?: string
+          report_type?: string
+          tenant_id?: string | null
+          updated_at?: string
+          visualization?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_reports_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -3788,6 +3972,103 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "finance_sepa_runs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_stakeholder_access_logs: {
+        Row: {
+          accessed_at: string
+          id: string
+          ip_address: string | null
+          resource_id: string | null
+          resource_type: string
+          stakeholder_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          accessed_at?: string
+          id?: string
+          ip_address?: string | null
+          resource_id?: string | null
+          resource_type: string
+          stakeholder_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          accessed_at?: string
+          id?: string
+          ip_address?: string | null
+          resource_id?: string | null
+          resource_type?: string
+          stakeholder_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_stakeholder_access_logs_stakeholder_id_fkey"
+            columns: ["stakeholder_id"]
+            isOneToOne: false
+            referencedRelation: "finance_stakeholders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_stakeholders: {
+        Row: {
+          access_count: number
+          access_token: string
+          allowed_reports: Json
+          created_at: string
+          created_by: string | null
+          email: string
+          enabled: boolean
+          expires_at: string | null
+          id: string
+          last_access_at: string | null
+          name: string
+          role: string
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_count?: number
+          access_token?: string
+          allowed_reports?: Json
+          created_at?: string
+          created_by?: string | null
+          email: string
+          enabled?: boolean
+          expires_at?: string | null
+          id?: string
+          last_access_at?: string | null
+          name: string
+          role?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_count?: number
+          access_token?: string
+          allowed_reports?: Json
+          created_at?: string
+          created_by?: string | null
+          email?: string
+          enabled?: boolean
+          expires_at?: string | null
+          id?: string
+          last_access_at?: string | null
+          name?: string
+          role?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_stakeholders_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
