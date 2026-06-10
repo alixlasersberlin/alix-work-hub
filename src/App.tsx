@@ -85,6 +85,8 @@ const FinanceSteuer = lazy(() => import("./pages/Finance/Steuer"));
 const FinanceCockpit = lazy(() => import("./pages/Finance/Cockpit"));
 const FinanceSystemstatus = lazy(() => import("./pages/Finance/Systemstatus"));
 const FinanceRaten = lazy(() => import("./pages/Finance/Raten"));
+const FinanceBelege = lazy(() => import("./pages/Finance/Belege"));
+const FinanceEingangsrechnungen = lazy(() => import("./pages/Finance/Eingangsrechnungen"));
 const UserManagement = lazy(() => import("./pages/UserManagement"));
 const ImportManagement = lazy(() => import("./pages/ImportManagement"));
 const Backups = lazy(() => import("./pages/Backups"));
@@ -471,6 +473,8 @@ function AppRoutes() {
           <Route path="/finance/cockpit" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCockpit /></ProtectedRoute>} />
           <Route path="/finance/einstellungen/systemstatus" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceSystemstatus /></ProtectedRoute>} />
           <Route path="/finance/raten" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceRaten /></ProtectedRoute>} />
+          <Route path="/finance/belege" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceBelege /></ProtectedRoute>} />
+          <Route path="/finance/eingangsrechnungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceEingangsrechnungen /></ProtectedRoute>} />
           <Route path="/service-cockpit" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Serviceleitung']}><ServiceCockpit /></ProtectedRoute>} />
           <Route path="/geraeteakte" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Technik', 'Kundenservice', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Tourenplanung', 'Finance']}><Geraeteakte /></ProtectedRoute>} />
           <Route path="/geraete-lebenslauf" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Technik', 'Kundenservice', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Finance']}><GeraeteLebenslauf /></ProtectedRoute>} />
