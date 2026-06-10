@@ -94,6 +94,10 @@ const FinanceBwa = lazy(() => import("./pages/Finance/Bwa"));
 const FinanceGuV = lazy(() => import("./pages/Finance/GuV"));
 const FinanceBilanz = lazy(() => import("./pages/Finance/Bilanz"));
 const FinanceJahresabschluss = lazy(() => import("./pages/Finance/Jahresabschluss"));
+const FinanceBudget = lazy(() => import("./pages/Finance/Budget"));
+const FinanceSollIst = lazy(() => import("./pages/Finance/SollIst"));
+const FinanceForecast = lazy(() => import("./pages/Finance/Forecast"));
+const FinanceControlling = lazy(() => import("./pages/Finance/Controlling"));
 const UserManagement = lazy(() => import("./pages/UserManagement"));
 const ImportManagement = lazy(() => import("./pages/ImportManagement"));
 const Backups = lazy(() => import("./pages/Backups"));
@@ -489,6 +493,10 @@ function AppRoutes() {
           <Route path="/finance/guv" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceGuV /></ProtectedRoute>} />
           <Route path="/finance/bilanz" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceBilanz /></ProtectedRoute>} />
           <Route path="/finance/jahresabschluss" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceJahresabschluss /></ProtectedRoute>} />
+          <Route path="/finance/budget" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceBudget /></ProtectedRoute>} />
+          <Route path="/finance/soll-ist" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceSollIst /></ProtectedRoute>} />
+          <Route path="/finance/forecast" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceForecast /></ProtectedRoute>} />
+          <Route path="/finance/controlling" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceControlling /></ProtectedRoute>} />
           <Route path="/service-cockpit" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Serviceleitung']}><ServiceCockpit /></ProtectedRoute>} />
           <Route path="/geraeteakte" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Technik', 'Kundenservice', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Tourenplanung', 'Finance']}><Geraeteakte /></ProtectedRoute>} />
           <Route path="/geraete-lebenslauf" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Technik', 'Kundenservice', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Finance']}><GeraeteLebenslauf /></ProtectedRoute>} />

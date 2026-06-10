@@ -40,7 +40,7 @@ export default function FinanceBwa() {
         supabase.from('finance_transactions').select('amount, transaction_type, booking_date').gte('booking_date', start).lte('booking_date', end),
         supabase.from('finance_transactions').select('amount, transaction_type, booking_date').gte('booking_date', startPrev).lte('booking_date', endPrev),
         supabase.from('finance_asset_depreciations').select('amount, period').gte('period', start).lte('period', end),
-        supabase.from('finance_incoming_invoices').select('total_amount, net_amount, invoice_date, category').gte('invoice_date', start).lte('invoice_date', end),
+        supabase.from('finance_incoming_invoices').select('amount_gross, amount_net, invoice_date, description').gte('invoice_date', start).lte('invoice_date', end),
       ]);
       setTx(t.data ?? []);
       setTxPrev(tp.data ?? []);
@@ -67,11 +67,16 @@ export default function FinanceBwa() {
       const m = new Date(r.period).getMonth();
       monthAfa[m] += Number(r.amount) || 0;
     }
-    for (const r of incoming) {
+    for (const r of incoming as any[]) {
       const m = new Date(r.invoice_date).getMonth();
-      const cat = r.category || 'Sonstige Aufwendungen';
+      const desc = (r.description || '').toLowerCase();
+      const cat = desc.includes('warenein') ? 'Wareneinkauf'
+        : desc.includes('personal') || desc.includes('lohn') || desc.includes('gehalt') ? 'Personal'
+        : desc.includes('miete') ? 'Miete'
+        : desc.includes('marketing') || desc.includes('werbung') ? 'Marketing'
+        : 'Sonstige Aufwendungen';
       if (!monthIncomingByCat[cat]) monthIncomingByCat[cat] = Array(12).fill(0);
-      monthIncomingByCat[cat][m] += Number(r.net_amount || r.total_amount) || 0;
+      monthIncomingByCat[cat][m] += Number(r.amount_net || r.amount_gross) || 0;
     }
 
     const sum = (a: number[]) => a.reduce((s, x) => s + x, 0);

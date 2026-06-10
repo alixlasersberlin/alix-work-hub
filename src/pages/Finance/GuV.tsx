@@ -19,7 +19,7 @@ export default function FinanceGuV() {
       const [t, a, ii] = await Promise.all([
         supabase.from('finance_transactions').select('amount, transaction_type, booking_date').gte('booking_date', s).lte('booking_date', e),
         supabase.from('finance_asset_depreciations').select('amount, period').gte('period', s).lte('period', e),
-        supabase.from('finance_incoming_invoices').select('total_amount, net_amount, category').gte('invoice_date', s).lte('invoice_date', e),
+        supabase.from('finance_incoming_invoices').select('amount_gross, amount_net, description').gte('invoice_date', s).lte('invoice_date', e),
       ]);
       setTx(t.data ?? []);
       setAfa(a.data ?? []);
@@ -31,8 +31,8 @@ export default function FinanceGuV() {
   const data = useMemo(() => {
     const lower = (s: string) => (s || '').toLowerCase();
     const umsatz = tx.filter(r => ['rechnung', 'einnahme', 'erlös', 'erloes'].some(x => lower(r.transaction_type).includes(x))).reduce((s, r) => s + Math.abs(Number(r.amount) || 0), 0);
-    const wareneinsatz = incoming.filter(r => r.category === 'Wareneinkauf').reduce((s, r) => s + Number(r.net_amount || r.total_amount) || 0, 0);
-    const sbA = incoming.filter(r => r.category && r.category !== 'Wareneinkauf').reduce((s, r) => s + Number(r.net_amount || r.total_amount) || 0, 0);
+    const wareneinsatz = (incoming as any[]).filter(r => (r.description || '').toLowerCase().includes('warenein')).reduce((s, r) => s + (Number(r.amount_net || r.amount_gross) || 0), 0);
+    const sbA = (incoming as any[]).filter(r => !(r.description || '').toLowerCase().includes('warenein')).reduce((s, r) => s + (Number(r.amount_net || r.amount_gross) || 0), 0);
     const sonstigeAufw = tx.filter(r => ['ausgabe', 'aufwand'].some(x => lower(r.transaction_type).includes(x))).reduce((s, r) => s + Math.abs(Number(r.amount) || 0), 0);
     const abschr = afa.reduce((s, r) => s + Number(r.amount) || 0, 0);
     const zinsen = tx.filter(r => lower(r.transaction_type).includes('zins')).reduce((s, r) => s + Math.abs(Number(r.amount) || 0), 0);
