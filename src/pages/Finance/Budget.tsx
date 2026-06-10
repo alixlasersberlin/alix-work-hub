@@ -55,7 +55,7 @@ export default function FinanceBudget() {
     const s = `${year - 1}-01-01`, e = `${year - 1}-12-31`;
     const [tx, ii] = await Promise.all([
       supabase.from('finance_transactions').select('amount, transaction_type, booking_date').gte('booking_date', s).lte('booking_date', e),
-      supabase.from('finance_incoming_invoices').select('total_amount, net_amount, invoice_date, category').gte('invoice_date', s).lte('invoice_date', e),
+      supabase.from('finance_incoming_invoices').select('amount_net, amount_gross, invoice_date, description').gte('invoice_date', s).lte('invoice_date', e),
     ]);
     const map: BudgetMap = {};
     for (const cat of BUDGET_CATEGORIES) map[cat] = {};
@@ -65,10 +65,10 @@ export default function FinanceBudget() {
       const m = new Date(r.booking_date).getMonth() + 1;
       map[cat][m] = (map[cat][m] || 0) + Math.abs(Number(r.amount) || 0);
     }
-    for (const r of ii.data ?? []) {
-      const cat = mapIncomingCategory(r.category);
+    for (const r of (ii.data ?? []) as any[]) {
+      const cat = mapIncomingCategory(r.description);
       const m = new Date(r.invoice_date).getMonth() + 1;
-      map[cat][m] = (map[cat][m] || 0) + (Number(r.net_amount || r.total_amount) || 0);
+      map[cat][m] = (map[cat][m] || 0) + (Number(r.amount_net || r.amount_gross) || 0);
     }
     setData(map);
     setDirty(true);
