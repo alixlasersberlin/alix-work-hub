@@ -31,7 +31,8 @@ const CHECKLIST_ITEMS = [
 ];
 
 export default function FinanceJahresabschluss() {
-  const { isSuperAdmin } = useAuth() as any;
+  const { hasRole } = useAuth() as any;
+  const isSuperAdmin = !!hasRole?.('Super Admin');
   const [loading, setLoading] = useState(true);
   const [runs, setRuns] = useState<Run[]>([]);
   const [selected, setSelected] = useState<Run | null>(null);
