@@ -285,7 +285,7 @@ const navItems: NavItem[] = [
       { path: '/finance/rechnungen', label: 'Rechnungen', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
       { path: '/finance/rechnungsvorschlaege', label: 'Rechnungsvorschläge (Reparaturen)', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'] },
       { path: '/finance/offene-posten', label: 'Offene Posten', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
-      { path: '/finance/unpaid-zoho', label: 'Unbezahlte Rechnungen (Zoho)', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
+      
       { path: '/finance/anzahlungen', label: 'Anzahlungen', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'] },
       { path: '/finance/zahlungen', label: 'Zahlungen', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'] },
       { path: '/finance/mahnwesen', label: 'Mahnwesen', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
