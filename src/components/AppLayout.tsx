@@ -285,6 +285,8 @@ const navItems: NavItem[] = [
       { path: '/finance/sepa', label: 'SEPA Lastschriften', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'] },
       { path: '/finance/steuer', label: 'Steuer-Auswertung', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
       { path: '/finance/cockpit', label: 'Finance Cockpit', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'] },
+      { path: '/finance/eingangsrechnungen', label: 'Eingangsrechnungen', icon: Inbox, roles: ['Admin', 'Super Admin', 'Finance'] },
+      { path: '/finance/belege', label: 'Belegarchiv', icon: Files, roles: ['Admin', 'Super Admin', 'Finance'] },
       { path: '/finance/einstellungen/systemstatus', label: 'Systemstatus', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
       // { path: '/finance/ratenzahler', label: 'Ratenzahler', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'] },
       { path: '/finance/alix-flex', label: 'ALIX FLEX', icon: Banknote, roles: ['Admin', 'Super Admin'] },
