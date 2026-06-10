@@ -2727,6 +2727,65 @@ export type Database = {
           },
         ]
       }
+      finance_bank_accounts: {
+        Row: {
+          account_name: string
+          available_balance: number | null
+          bank_name: string | null
+          bic: string | null
+          created_at: string
+          currency: string
+          current_balance: number | null
+          iban: string | null
+          id: string
+          is_active: boolean
+          last_synced_at: string | null
+          notes: string | null
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_name: string
+          available_balance?: number | null
+          bank_name?: string | null
+          bic?: string | null
+          created_at?: string
+          currency?: string
+          current_balance?: number | null
+          iban?: string | null
+          id?: string
+          is_active?: boolean
+          last_synced_at?: string | null
+          notes?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_name?: string
+          available_balance?: number | null
+          bank_name?: string | null
+          bic?: string | null
+          created_at?: string
+          currency?: string
+          current_balance?: number | null
+          iban?: string | null
+          id?: string
+          is_active?: boolean
+          last_synced_at?: string | null
+          notes?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_bank_accounts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       finance_bank_lines: {
         Row: {
           amount: number
@@ -3368,6 +3427,54 @@ export type Database = {
         }
         Relationships: []
       }
+      finance_goods_receipts: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          po_id: string
+          po_item_id: string | null
+          quantity: number
+          received_at: string
+          received_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          po_id: string
+          po_item_id?: string | null
+          quantity?: number
+          received_at?: string
+          received_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          po_id?: string
+          po_item_id?: string | null
+          quantity?: number
+          received_at?: string
+          received_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_goods_receipts_po_id_fkey"
+            columns: ["po_id"]
+            isOneToOne: false
+            referencedRelation: "finance_purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_goods_receipts_po_item_id_fkey"
+            columns: ["po_item_id"]
+            isOneToOne: false
+            referencedRelation: "finance_purchase_order_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       finance_history: {
         Row: {
           action: string
@@ -3643,6 +3750,66 @@ export type Database = {
           },
         ]
       }
+      finance_liquidity_entries: {
+        Row: {
+          bank_account_id: string | null
+          closing_balance: number | null
+          created_at: string
+          currency: string
+          entry_date: string
+          expected_inflow: number | null
+          expected_outflow: number | null
+          id: string
+          notes: string | null
+          opening_balance: number | null
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          bank_account_id?: string | null
+          closing_balance?: number | null
+          created_at?: string
+          currency?: string
+          entry_date: string
+          expected_inflow?: number | null
+          expected_outflow?: number | null
+          id?: string
+          notes?: string | null
+          opening_balance?: number | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bank_account_id?: string | null
+          closing_balance?: number | null
+          created_at?: string
+          currency?: string
+          entry_date?: string
+          expected_inflow?: number | null
+          expected_outflow?: number | null
+          id?: string
+          notes?: string | null
+          opening_balance?: number | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_liquidity_entries_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "finance_bank_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_liquidity_entries_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       finance_management_packs: {
         Row: {
           created_at: string
@@ -3695,6 +3862,305 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "finance_management_packs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_payment_approvals: {
+        Row: {
+          amount: number
+          approved_at: string | null
+          approved_by: string | null
+          bank_account_id: string | null
+          created_at: string
+          currency: string
+          due_date: string | null
+          id: string
+          paid_at: string | null
+          payee_iban: string | null
+          payee_name: string
+          purpose: string | null
+          reference: string | null
+          rejection_reason: string | null
+          requested_by: string | null
+          status: string
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          approved_at?: string | null
+          approved_by?: string | null
+          bank_account_id?: string | null
+          created_at?: string
+          currency?: string
+          due_date?: string | null
+          id?: string
+          paid_at?: string | null
+          payee_iban?: string | null
+          payee_name: string
+          purpose?: string | null
+          reference?: string | null
+          rejection_reason?: string | null
+          requested_by?: string | null
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          bank_account_id?: string | null
+          created_at?: string
+          currency?: string
+          due_date?: string | null
+          id?: string
+          paid_at?: string | null
+          payee_iban?: string | null
+          payee_name?: string
+          purpose?: string | null
+          reference?: string | null
+          rejection_reason?: string | null
+          requested_by?: string | null
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_payment_approvals_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "finance_bank_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_payment_approvals_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_purchase_order_items: {
+        Row: {
+          account_code: string | null
+          created_at: string
+          description: string
+          id: string
+          po_id: string
+          quantity: number
+          received_quantity: number
+          total_amount: number | null
+          unit_price: number
+        }
+        Insert: {
+          account_code?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          po_id: string
+          quantity?: number
+          received_quantity?: number
+          total_amount?: number | null
+          unit_price?: number
+        }
+        Update: {
+          account_code?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          po_id?: string
+          quantity?: number
+          received_quantity?: number
+          total_amount?: number | null
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_purchase_order_items_po_id_fkey"
+            columns: ["po_id"]
+            isOneToOne: false
+            referencedRelation: "finance_purchase_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_purchase_orders: {
+        Row: {
+          created_at: string
+          currency: string
+          expected_delivery: string | null
+          id: string
+          notes: string | null
+          ordered_at: string | null
+          po_number: string | null
+          requisition_id: string | null
+          status: string
+          supplier_id: string | null
+          tenant_id: string | null
+          total_amount: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          expected_delivery?: string | null
+          id?: string
+          notes?: string | null
+          ordered_at?: string | null
+          po_number?: string | null
+          requisition_id?: string | null
+          status?: string
+          supplier_id?: string | null
+          tenant_id?: string | null
+          total_amount?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          expected_delivery?: string | null
+          id?: string
+          notes?: string | null
+          ordered_at?: string | null
+          po_number?: string | null
+          requisition_id?: string | null
+          status?: string
+          supplier_id?: string | null
+          tenant_id?: string | null
+          total_amount?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_purchase_orders_requisition_id_fkey"
+            columns: ["requisition_id"]
+            isOneToOne: false
+            referencedRelation: "finance_purchase_requisitions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_purchase_orders_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_purchase_orders_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_purchase_requisition_items: {
+        Row: {
+          account_code: string | null
+          created_at: string
+          description: string
+          id: string
+          quantity: number
+          requisition_id: string
+          total_amount: number | null
+          unit_price: number
+        }
+        Insert: {
+          account_code?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          quantity?: number
+          requisition_id: string
+          total_amount?: number | null
+          unit_price?: number
+        }
+        Update: {
+          account_code?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          quantity?: number
+          requisition_id?: string
+          total_amount?: number | null
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_purchase_requisition_items_requisition_id_fkey"
+            columns: ["requisition_id"]
+            isOneToOne: false
+            referencedRelation: "finance_purchase_requisitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_purchase_requisitions: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          currency: string
+          id: string
+          needed_by: string | null
+          notes: string | null
+          requester_id: string | null
+          requisition_number: string | null
+          status: string
+          supplier_id: string | null
+          tenant_id: string | null
+          total_amount: number | null
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          needed_by?: string | null
+          notes?: string | null
+          requester_id?: string | null
+          requisition_number?: string | null
+          status?: string
+          supplier_id?: string | null
+          tenant_id?: string | null
+          total_amount?: number | null
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          needed_by?: string | null
+          notes?: string | null
+          requester_id?: string | null
+          requisition_number?: string | null
+          status?: string
+          supplier_id?: string | null
+          tenant_id?: string | null
+          total_amount?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_purchase_requisitions_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_purchase_requisitions_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -4323,6 +4789,190 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_tax_filing_lines: {
+        Row: {
+          amount: number
+          base_amount: number | null
+          country_code: string | null
+          created_at: string
+          filing_id: string
+          id: string
+          line_code: string
+          line_label: string | null
+          meta: Json | null
+          tax_rate: number | null
+          vat_id: string | null
+        }
+        Insert: {
+          amount?: number
+          base_amount?: number | null
+          country_code?: string | null
+          created_at?: string
+          filing_id: string
+          id?: string
+          line_code: string
+          line_label?: string | null
+          meta?: Json | null
+          tax_rate?: number | null
+          vat_id?: string | null
+        }
+        Update: {
+          amount?: number
+          base_amount?: number | null
+          country_code?: string | null
+          created_at?: string
+          filing_id?: string
+          id?: string
+          line_code?: string
+          line_label?: string | null
+          meta?: Json | null
+          tax_rate?: number | null
+          vat_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_tax_filing_lines_filing_id_fkey"
+            columns: ["filing_id"]
+            isOneToOne: false
+            referencedRelation: "finance_tax_filings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_tax_filings: {
+        Row: {
+          created_at: string
+          currency: string
+          export_content: string | null
+          export_format: string | null
+          filing_type: string
+          id: string
+          notes: string | null
+          payload: Json | null
+          period_value: string
+          period_year: number
+          prepared_at: string | null
+          prepared_by: string | null
+          status: string
+          submitted_at: string | null
+          tenant_id: string | null
+          total_amount: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          export_content?: string | null
+          export_format?: string | null
+          filing_type: string
+          id?: string
+          notes?: string | null
+          payload?: Json | null
+          period_value: string
+          period_year: number
+          prepared_at?: string | null
+          prepared_by?: string | null
+          status?: string
+          submitted_at?: string | null
+          tenant_id?: string | null
+          total_amount?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          export_content?: string | null
+          export_format?: string | null
+          filing_type?: string
+          id?: string
+          notes?: string | null
+          payload?: Json | null
+          period_value?: string
+          period_year?: number
+          prepared_at?: string | null
+          prepared_by?: string | null
+          status?: string
+          submitted_at?: string | null
+          tenant_id?: string | null
+          total_amount?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_tax_filings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_three_way_matches: {
+        Row: {
+          created_at: string
+          currency: string
+          id: string
+          invoice_id: string | null
+          invoiced_amount: number | null
+          match_status: string
+          matched_at: string | null
+          matched_by: string | null
+          notes: string | null
+          po_amount: number | null
+          po_id: string | null
+          received_amount: number | null
+          updated_at: string
+          variance_amount: number | null
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          id?: string
+          invoice_id?: string | null
+          invoiced_amount?: number | null
+          match_status?: string
+          matched_at?: string | null
+          matched_by?: string | null
+          notes?: string | null
+          po_amount?: number | null
+          po_id?: string | null
+          received_amount?: number | null
+          updated_at?: string
+          variance_amount?: number | null
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          id?: string
+          invoice_id?: string | null
+          invoiced_amount?: number | null
+          match_status?: string
+          matched_at?: string | null
+          matched_by?: string | null
+          notes?: string | null
+          po_amount?: number | null
+          po_id?: string | null
+          received_amount?: number | null
+          updated_at?: string
+          variance_amount?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_three_way_matches_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "finance_incoming_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_three_way_matches_po_id_fkey"
+            columns: ["po_id"]
+            isOneToOne: false
+            referencedRelation: "finance_purchase_orders"
             referencedColumns: ["id"]
           },
         ]

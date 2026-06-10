@@ -113,6 +113,9 @@ const FinanceKonsolidierung = lazy(() => import("./pages/Finance/Konsolidierung"
 const FinanceKonsolidierungDetail = lazy(() => import("./pages/Finance/KonsolidierungDetail"));
 const FinanceIntercompany = lazy(() => import("./pages/Finance/Intercompany"));
 const FinanceFxRates = lazy(() => import("./pages/Finance/FxRates"));
+const FinanceTreasury = lazy(() => import("./pages/Finance/Treasury"));
+const FinanceP2P = lazy(() => import("./pages/Finance/P2P"));
+const FinanceMeldewesen = lazy(() => import("./pages/Finance/Meldewesen"));
 const UserManagement = lazy(() => import("./pages/UserManagement"));
 const ImportManagement = lazy(() => import("./pages/ImportManagement"));
 const Backups = lazy(() => import("./pages/Backups"));
@@ -527,6 +530,9 @@ function AppRoutes() {
           <Route path="/finance/konsolidierung/:id" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceKonsolidierungDetail /></ProtectedRoute>} />
           <Route path="/finance/intercompany" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceIntercompany /></ProtectedRoute>} />
           <Route path="/finance/fx" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceFxRates /></ProtectedRoute>} />
+          <Route path="/finance/treasury" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceTreasury /></ProtectedRoute>} />
+          <Route path="/finance/p2p" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceP2P /></ProtectedRoute>} />
+          <Route path="/finance/meldewesen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceMeldewesen /></ProtectedRoute>} />
           <Route path="/service-cockpit" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Serviceleitung']}><ServiceCockpit /></ProtectedRoute>} />
           <Route path="/geraeteakte" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Technik', 'Kundenservice', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Tourenplanung', 'Finance']}><Geraeteakte /></ProtectedRoute>} />
           <Route path="/geraete-lebenslauf" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Technik', 'Kundenservice', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Finance']}><GeraeteLebenslauf /></ProtectedRoute>} />
