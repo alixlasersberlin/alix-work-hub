@@ -175,53 +175,30 @@ export default function Ratenzahler() {
         }
       />
 
-      <DataCard className="p-4 mb-4">
-        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Suche: Name, Gerät, Ort, Auftragsnummer…"
-              className="pl-9"
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground whitespace-nowrap">Status:</span>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Alle</SelectItem>
-                <SelectItem value="Bezahlt">Bezahlt</SelectItem>
-                <SelectItem value="Offen">Unbezahlt / Offen</SelectItem>
-                <SelectItem value="Überfällig">Überfällig</SelectItem>
-                <SelectItem value="Teilweise bezahlt">Teilweise bezahlt</SelectItem>
-                <SelectItem value="sent">Gesendet</SelectItem>
-                <SelectItem value="pending">Ausstehend</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground whitespace-nowrap">Anzeige:</span>
-            <Select value={String(pageSize)} onValueChange={(v) => setPageSize(v === 'all' ? 'all' : (Number(v) as PageSize))}>
-              <SelectTrigger className="w-[110px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="10">10</SelectItem>
-                <SelectItem value="20">20</SelectItem>
-                <SelectItem value="50">50</SelectItem>
-                <SelectItem value="all">Alle</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+      <ListToolbar
+        search={search}
+        onSearchChange={setSearch}
+        pageSize={pageSize}
+        onPageSizeChange={setPageSize}
+        total={filtered.length}
+        visible={visible.length}
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">Status:</span>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle</SelectItem>
+              <SelectItem value="Bezahlt">Bezahlt</SelectItem>
+              <SelectItem value="Offen">Unbezahlt / Offen</SelectItem>
+              <SelectItem value="Überfällig">Überfällig</SelectItem>
+              <SelectItem value="Teilweise bezahlt">Teilweise bezahlt</SelectItem>
+              <SelectItem value="sent">Gesendet</SelectItem>
+              <SelectItem value="pending">Ausstehend</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-        <div className="mt-2 text-xs text-muted-foreground">
-          {filtered.length} Treffer{search ? ` für "${search}"` : ''} • angezeigt: {visible.length}
-        </div>
-      </DataCard>
+      </ListToolbar>
 
       {error && <PageError message={error} onRetry={fetchRows} />}
 
