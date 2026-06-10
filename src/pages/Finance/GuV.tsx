@@ -19,7 +19,7 @@ export default function FinanceGuV() {
       const [t, a, ii] = await Promise.all([
         supabase.from('finance_transactions').select('amount, transaction_type, booking_date').gte('booking_date', s).lte('booking_date', e),
         supabase.from('finance_asset_depreciations').select('amount, period').gte('period', s).lte('period', e),
-        supabase.from('finance_incoming_invoices').select('total_amount, net_amount, category').gte('invoice_date', s).lte('invoice_date', e),
+        supabase.from('finance_incoming_invoices').select('amount_gross, amount_net, description').gte('invoice_date', s).lte('invoice_date', e),
       ]);
       setTx(t.data ?? []);
       setAfa(a.data ?? []);
