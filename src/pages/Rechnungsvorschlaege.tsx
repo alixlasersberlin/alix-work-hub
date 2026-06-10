@@ -76,10 +76,35 @@ export default function Rechnungsvorschlaege() {
         </div>
       </div>
 
+      <div className="flex items-center gap-3">
+        <Banknote className="w-6 h-6 text-emerald-400" />
+        <h1 className="text-2xl font-bold">Rechnungsvorschläge (Reparaturen)</h1>
+        <div className="ml-auto">
+          <Select value={filter} onValueChange={(v) => setFilter(v as any)}>
+            <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="offen">Offen</SelectItem>
+              <SelectItem value="übernommen">Übernommen</SelectItem>
+              <SelectItem value="abgelehnt">Abgelehnt</SelectItem>
+              <SelectItem value="alle">Alle</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <ListToolbar
+        search={search}
+        onSearchChange={setSearch}
+        pageSize={pageSize}
+        onPageSizeChange={setPageSize}
+        total={filtered.length}
+        visible={visible.length}
+      />
+
       <Card className="overflow-hidden">
         {loading ? (
           <div className="p-8 text-center text-muted-foreground">Lade…</div>
-        ) : rows.length === 0 ? (
+        ) : visible.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground">Keine Vorschläge.</div>
         ) : (
           <div className="overflow-x-auto">
