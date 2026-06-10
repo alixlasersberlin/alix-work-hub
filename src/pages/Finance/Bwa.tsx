@@ -40,7 +40,7 @@ export default function FinanceBwa() {
         supabase.from('finance_transactions').select('amount, transaction_type, booking_date').gte('booking_date', start).lte('booking_date', end),
         supabase.from('finance_transactions').select('amount, transaction_type, booking_date').gte('booking_date', startPrev).lte('booking_date', endPrev),
         supabase.from('finance_asset_depreciations').select('amount, period').gte('period', start).lte('period', end),
-        supabase.from('finance_incoming_invoices').select('total_amount, net_amount, invoice_date, category').gte('invoice_date', start).lte('invoice_date', end),
+        supabase.from('finance_incoming_invoices').select('amount_gross, amount_net, invoice_date, description').gte('invoice_date', start).lte('invoice_date', end),
       ]);
       setTx(t.data ?? []);
       setTxPrev(tp.data ?? []);
