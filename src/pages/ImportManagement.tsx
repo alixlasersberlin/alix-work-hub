@@ -1787,7 +1787,7 @@ export default function ImportManagement() {
                     Einzelnen Auftrag synchronisieren
                   </CardTitle>
                   <CardDescription>
-                    Lädt einen einzelnen Auftrag aus Zoho Books nach. Der verknüpfte Kunde muss bereits synchronisiert sein.
+                    Lädt einen einzelnen Auftrag aus Zoho Books nach. Akzeptiert die <strong>Auftragsnummer</strong> (z.B. <code>SO-4197</code>) oder die externe Zoho-ID. Der verknüpfte Kunde wird bei Bedarf automatisch mit synchronisiert.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -1805,13 +1805,16 @@ export default function ImportManagement() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs text-muted-foreground">Externe Auftrags-ID (Zoho salesorder_id)</Label>
+                    <Label className="text-xs text-muted-foreground">Auftragsnummer oder externe Zoho-ID</Label>
                     <Input
-                      placeholder="z.B. 4600000067890"
+                      placeholder="z.B. SO-4197 oder 4600000067890"
                       value={syncOrderId}
                       onChange={e => setSyncOrderId(e.target.value)}
                       className="bg-secondary border-border font-mono"
                     />
+                    <p className="text-[11px] text-muted-foreground">
+                      Bei Alix Austria wird das Suffix <code>-AT</code> automatisch entfernt für die Zoho-Suche.
+                    </p>
                   </div>
                   <Button
                     className="w-full"
