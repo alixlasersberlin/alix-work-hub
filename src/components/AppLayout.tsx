@@ -274,6 +274,13 @@ const navItems: NavItem[] = [
   {
     path: '/finance', label: 'FINANCE', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance', 'Finanzierungen', 'Order'],
     children: [
+      { path: '/finance/dashboard', label: 'Dashboard', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'] },
+      { path: '/finance/vertraege', label: 'Verträge', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
+      { path: '/finance/anzahlungen', label: 'Anzahlungen', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'] },
+      { path: '/finance/zahlungen', label: 'Zahlungen', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'] },
+      { path: '/finance/mahnwesen', label: 'Mahnwesen', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
+      { path: '/finance/datev', label: 'DATEV', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
+      { path: '/finance/einstellungen/systemstatus', label: 'Systemstatus', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
       // { path: '/finance/ratenzahler', label: 'Ratenzahler', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'] },
       { path: '/finance/alix-flex', label: 'ALIX FLEX', icon: Banknote, roles: ['Admin', 'Super Admin'] },
       { path: '/finance/rechnungen', label: 'Rechnungen', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
