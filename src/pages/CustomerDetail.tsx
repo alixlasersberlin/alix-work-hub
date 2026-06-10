@@ -149,6 +149,10 @@ export default function CustomerDetail() {
         <TabsContent value="communication" className="mt-4">
           <CustomerCommunication customer={customer} />
         </TabsContent>
+
+        <TabsContent value="finance" className="mt-4">
+          <FinanceAccountTab customerId={customer.id} />
+        </TabsContent>
       </Tabs>
 
       {/* Dialogs */}
