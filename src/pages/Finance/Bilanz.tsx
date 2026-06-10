@@ -34,7 +34,7 @@ export default function FinanceBilanz() {
     const anlagevermoegen = assets.filter(a => a.status !== 'abgegangen' && a.status !== 'verkauft' && a.status !== 'verschrottet').reduce((s, a) => s + Number(a.book_value || 0), 0);
     const forderungen = accounts.reduce((s, a) => s + Number(a.current_balance || 0), 0);
     const bank = bankLines.reduce((s, l) => s + Number(l.amount || 0), 0);
-    const verbindlichkeiten = incoming.filter(i => (i.payment_status || 'offen') !== 'bezahlt').reduce((s, i) => s + Number(i.total_amount || 0), 0);
+    const verbindlichkeiten = (incoming as any[]).filter(i => !i.paid_at).reduce((s, i) => s + Number(i.amount_gross || 0), 0);
     const aktivaSumme = anlagevermoegen + forderungen + Math.max(bank, 0);
     const eigenkapital = aktivaSumme - verbindlichkeiten;
     return { anlagevermoegen, forderungen, bank, verbindlichkeiten, aktivaSumme, eigenkapital };
