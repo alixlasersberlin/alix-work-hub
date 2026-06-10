@@ -36,6 +36,8 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { ListToolbar } from '@/components/finance/ListToolbar';
+import { matchesQuery, paginate, type PageSize } from '@/lib/finance/list-filter';
 
 type WorkflowStatus = 'offen' | 'rueckstellung' | 'in_klaerung' | 'inkasso' | 'erledigt';
 
@@ -43,7 +45,10 @@ type OpenItem = {
   id: string;
   source: 'invoice' | 'recurring';
   invoice_number: string | null;
+  reference_number: string | null;
   customer_name: string | null;
+  city: string | null;
+  billing_address: string | null;
   due_date: string | null;
   total: number | null;
   balance: number | null;
