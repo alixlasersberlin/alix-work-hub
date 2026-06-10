@@ -279,6 +279,7 @@ const navItems: NavItem[] = [
       { path: '/finance/dashboard', label: 'Dashboard', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'] },
       { path: '/finance/cockpit', label: 'Finance Cockpit', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'] },
       { path: '/finance/controlling', label: 'Controlling-Cockpit', icon: Activity, roles: ['Admin', 'Super Admin', 'Finance'] },
+      { path: '/finance/wiederkehrende-zahler', label: 'Wiederkehrende Zahler', icon: Repeat, roles: ['Admin', 'Super Admin', 'Finance'] },
 
       // ── Debitoren (Forderungen) ───────────────────────────────
       { path: '/finance/rechnungen', label: 'Rechnungen', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
