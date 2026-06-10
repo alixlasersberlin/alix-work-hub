@@ -506,6 +506,9 @@ function AppRoutes() {
           <Route path="/finance/ai-insights" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceAiInsights /></ProtectedRoute>} />
           <Route path="/finance/anomalien" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceAnomalien /></ProtectedRoute>} />
           <Route path="/finance/ask" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceAsk /></ProtectedRoute>} />
+          <Route path="/finance/automations" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceAutomations /></ProtectedRoute>} />
+          <Route path="/finance/freigaben" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceFreigaben /></ProtectedRoute>} />
+          <Route path="/finance/compliance" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Geschäftsführung']}><FinanceCompliance /></ProtectedRoute>} />
           <Route path="/service-cockpit" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Serviceleitung']}><ServiceCockpit /></ProtectedRoute>} />
           <Route path="/geraeteakte" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Technik', 'Kundenservice', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Tourenplanung', 'Finance']}><Geraeteakte /></ProtectedRoute>} />
           <Route path="/geraete-lebenslauf" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Technik', 'Kundenservice', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Finance']}><GeraeteLebenslauf /></ProtectedRoute>} />
