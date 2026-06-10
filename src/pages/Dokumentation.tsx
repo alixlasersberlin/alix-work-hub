@@ -119,7 +119,7 @@ const sections: Section[] = [
       { path: '/finance/ratenzahler', label: 'Ratenzahler', desc: 'Übersicht aller Ratenzahler.', roles: ['Admin', 'Super Admin', 'Finance'] },
       { path: '/finance/rechnungen', label: 'Rechnungen', desc: 'Alle ausgestellten Rechnungen.', roles: ['Admin', 'Super Admin', 'Finance'] },
       { path: '/finance/offene-posten', label: 'Offene Posten', desc: 'Unbezahlte Rechnungen.', roles: ['Admin', 'Super Admin', 'Finance'] },
-      { path: '/finance/unpaid-zoho', label: 'Unbezahlte Rechnungen (Zoho)', desc: 'Offene Posten aus Zoho Books.', roles: ['Admin', 'Super Admin', 'Finance'] },
+      
     ],
   },
   {
