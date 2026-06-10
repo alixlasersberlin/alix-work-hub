@@ -123,10 +123,10 @@ export default function FinanceAnlagen() {
       />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <DataCard title="Aktive Anlagen" value={String(stats.count)} icon={Archive} />
-        <DataCard title="Anschaffungswerte" value={fmtEUR(stats.ahk)} icon={Wallet} />
-        <DataCard title="Restbuchwert gesamt" value={fmtEUR(stats.book)} icon={Wallet} />
-        <DataCard title="Kumulierte AfA" value={fmtEUR(stats.depr)} icon={TrendingDown} />
+        <DataCard title="Aktive Anlagen"><div className="text-2xl font-semibold">{String(stats.count)}</div></DataCard>
+        <DataCard title="Anschaffungswerte"><div className="text-2xl font-semibold">{fmtEUR(stats.ahk)}</div></DataCard>
+        <DataCard title="Restbuchwert gesamt"><div className="text-2xl font-semibold">{fmtEUR(stats.book)}</div></DataCard>
+        <DataCard title="Kumulierte AfA"><div className="text-2xl font-semibold">{fmtEUR(stats.depr)}</div></DataCard>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
