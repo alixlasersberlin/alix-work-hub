@@ -64,6 +64,7 @@ const TourenKarte = lazy(() => import("./pages/Tourenplanung/Karte"));
 const TourenDashboard = lazy(() => import("./pages/Tourenplanung/Dashboard"));
 const Finance = lazy(() => import("./pages/Finance"));
 const Ratenzahler = lazy(() => import("./pages/Ratenzahler"));
+const WiederkehrendeZahler = lazy(() => import("./pages/Finance/WiederkehrendeZahler"));
 const AlixFlex = lazy(() => import("./pages/AlixFlex"));
 const Invoices = lazy(() => import("./pages/Invoices"));
 const OffenePosten = lazy(() => import("./pages/OffenePosten"));
@@ -503,6 +504,7 @@ function AppRoutes() {
           <Route path="/finance/sepa" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceSepa /></ProtectedRoute>} />
           <Route path="/finance/steuer" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceSteuer /></ProtectedRoute>} />
           <Route path="/finance/cockpit" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCockpit /></ProtectedRoute>} />
+          <Route path="/finance/wiederkehrende-zahler" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><WiederkehrendeZahler /></ProtectedRoute>} />
           <Route path="/finance/einstellungen/systemstatus" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceSystemstatus /></ProtectedRoute>} />
           <Route path="/finance/raten" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceRaten /></ProtectedRoute>} />
           <Route path="/finance/belege" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceBelege /></ProtectedRoute>} />
