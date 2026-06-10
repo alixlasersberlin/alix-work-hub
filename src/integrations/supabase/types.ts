@@ -2574,6 +2574,56 @@ export type Database = {
         }
         Relationships: []
       }
+      finance_budgets: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string | null
+          fiscal_year: number
+          id: string
+          month: number
+          notes: string | null
+          planned_amount: number
+          tenant_id: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          created_by?: string | null
+          fiscal_year: number
+          id?: string
+          month: number
+          notes?: string | null
+          planned_amount?: number
+          tenant_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          fiscal_year?: number
+          id?: string
+          month?: number
+          notes?: string | null
+          planned_amount?: number
+          tenant_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_budgets_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       finance_cashflow_items: {
         Row: {
           actual_amount: number
@@ -2834,6 +2884,56 @@ export type Database = {
           },
           {
             foreignKeyName: "finance_documents_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_forecasts: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string | null
+          forecast_amount: number
+          id: string
+          notes: string | null
+          period_date: string
+          scenario: string
+          tenant_id: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          created_by?: string | null
+          forecast_amount?: number
+          id?: string
+          notes?: string | null
+          period_date: string
+          scenario?: string
+          tenant_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          forecast_amount?: number
+          id?: string
+          notes?: string | null
+          period_date?: string
+          scenario?: string
+          tenant_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_forecasts_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
