@@ -21,6 +21,19 @@ export default function Rechnungsvorschlaege() {
   const [filter, setFilter] = useState<'offen' | 'alle' | 'übernommen' | 'abgelehnt'>('offen');
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [pageSize, setPageSize] = useState<PageSize>(20);
+
+  const filtered = useMemo(
+    () => rows.filter((r) => matchesQuery({
+      ...r,
+      invoice_number: r.repair_number,
+      reference_number: r.ticket_number,
+      total: r.total_amount,
+    }, search)),
+    [rows, search],
+  );
+  const visible = useMemo(() => paginate(filtered, pageSize), [filtered, pageSize]);
 
   const load = async () => {
     setLoading(true);
