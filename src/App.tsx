@@ -104,6 +104,11 @@ const FinanceAsk = lazy(() => import("./pages/Finance/Ask"));
 const FinanceAutomations = lazy(() => import("./pages/Finance/Automations"));
 const FinanceFreigaben = lazy(() => import("./pages/Finance/Freigaben"));
 const FinanceCompliance = lazy(() => import("./pages/Finance/Compliance"));
+const FinanceReports = lazy(() => import("./pages/Finance/Reports"));
+const FinanceReportSchedules = lazy(() => import("./pages/Finance/ReportSchedules"));
+const FinanceManagementPack = lazy(() => import("./pages/Finance/ManagementPack"));
+const FinanceStakeholders = lazy(() => import("./pages/Finance/Stakeholders"));
+const StakeholderPortal = lazy(() => import("./pages/StakeholderPortal"));
 const UserManagement = lazy(() => import("./pages/UserManagement"));
 const ImportManagement = lazy(() => import("./pages/ImportManagement"));
 const Backups = lazy(() => import("./pages/Backups"));
@@ -389,6 +394,7 @@ function AppRoutes() {
       <Routes>
         <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
         <Route path="/passwort-setzen" element={<SetPassword />} />
+        <Route path="/stakeholder/:token" element={<StakeholderPortal />} />
         <Route path="/mfa-setup" element={<MfaGate expect="not_enrolled"><MfaSetup /></MfaGate>} />
         <Route path="/mfa-challenge" element={<MfaGate expect="challenge_required"><MfaChallenge /></MfaGate>} />
         <Route path="/mfa-recovery" element={<MfaGate expect="any"><MfaRecovery /></MfaGate>} />
@@ -509,6 +515,10 @@ function AppRoutes() {
           <Route path="/finance/automations" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceAutomations /></ProtectedRoute>} />
           <Route path="/finance/freigaben" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceFreigaben /></ProtectedRoute>} />
           <Route path="/finance/compliance" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Geschäftsführung']}><FinanceCompliance /></ProtectedRoute>} />
+          <Route path="/finance/reports" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceReports /></ProtectedRoute>} />
+          <Route path="/finance/schedules" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceReportSchedules /></ProtectedRoute>} />
+          <Route path="/finance/management-pack" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceManagementPack /></ProtectedRoute>} />
+          <Route path="/finance/stakeholders" element={<ProtectedRoute requiredRoles={['Super Admin','Geschäftsführung']}><FinanceStakeholders /></ProtectedRoute>} />
           <Route path="/service-cockpit" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Serviceleitung']}><ServiceCockpit /></ProtectedRoute>} />
           <Route path="/geraeteakte" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Technik', 'Kundenservice', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Tourenplanung', 'Finance']}><Geraeteakte /></ProtectedRoute>} />
           <Route path="/geraete-lebenslauf" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Technik', 'Kundenservice', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Finance']}><GeraeteLebenslauf /></ProtectedRoute>} />
