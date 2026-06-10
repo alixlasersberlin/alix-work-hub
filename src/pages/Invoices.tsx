@@ -276,7 +276,7 @@ export default function Invoices() {
             <DataCard className="p-12 text-center text-muted-foreground">
               Keine Daten gefunden.
             </DataCard>
-          ) : accounts.map((a) => {
+          ) : paginate(accounts, pageSize).map((a) => {
             const open = !!expanded[a.key];
             return (
               <DataCard key={a.key} className="overflow-hidden">
