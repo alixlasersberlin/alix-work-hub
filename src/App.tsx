@@ -493,6 +493,10 @@ function AppRoutes() {
           <Route path="/finance/guv" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceGuV /></ProtectedRoute>} />
           <Route path="/finance/bilanz" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceBilanz /></ProtectedRoute>} />
           <Route path="/finance/jahresabschluss" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceJahresabschluss /></ProtectedRoute>} />
+          <Route path="/finance/budget" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceBudget /></ProtectedRoute>} />
+          <Route path="/finance/soll-ist" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceSollIst /></ProtectedRoute>} />
+          <Route path="/finance/forecast" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceForecast /></ProtectedRoute>} />
+          <Route path="/finance/controlling" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceControlling /></ProtectedRoute>} />
           <Route path="/service-cockpit" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Serviceleitung']}><ServiceCockpit /></ProtectedRoute>} />
           <Route path="/geraeteakte" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Technik', 'Kundenservice', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Tourenplanung', 'Finance']}><Geraeteakte /></ProtectedRoute>} />
           <Route path="/geraete-lebenslauf" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Technik', 'Kundenservice', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Finance']}><GeraeteLebenslauf /></ProtectedRoute>} />
