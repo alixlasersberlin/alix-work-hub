@@ -3,12 +3,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { PageHeader, PageLoading, DataCard } from '@/components/PageShell';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sparkles, Save } from 'lucide-react';
+import { Sparkles, Save, Bot, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from 'recharts';
 import { BUDGET_CATEGORIES, MONTH_NAMES, fmt, classifyTx, mapIncomingCategory } from './_controlling';
 
-type Scenario = 'base' | 'best' | 'worst';
+type Scenario = 'base' | 'best' | 'worst' | 'ai';
 
 export default function FinanceForecast() {
   const [loading, setLoading] = useState(true);
@@ -16,6 +16,19 @@ export default function FinanceForecast() {
   const [scenario, setScenario] = useState<Scenario>('base');
   const [forecast, setForecast] = useState<Record<string, number[]>>({});
   const [actual, setActual] = useState<Record<string, number[]>>({});
+  const [aiLoading, setAiLoading] = useState(false);
+
+  async function aiGenerate() {
+    setAiLoading(true);
+    try {
+      const months = 12 - new Date().getMonth();
+      const { data, error } = await supabase.functions.invoke('finance-ai-forecast', { body: { category: 'Umsatz', months } });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast.success(`KI-Forecast erstellt (${(data as any)?.written ?? 0} Monate, Szenario "ai")`);
+    } catch (e: any) { toast.error(e.message || 'Fehler'); }
+    finally { setAiLoading(false); }
+  }
 
   async function load() {
     setLoading(true);
@@ -113,12 +126,17 @@ export default function FinanceForecast() {
         <Select value={scenario} onValueChange={v => setScenario(v as Scenario)}>
           <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
           <SelectContent>
+            <SelectItem value="ai">KI</SelectItem>
             <SelectItem value="base">Base</SelectItem>
             <SelectItem value="best">Best Case (+15%)</SelectItem>
             <SelectItem value="worst">Worst Case (-15%)</SelectItem>
           </SelectContent>
         </Select>
         <Button variant="outline" onClick={autoInit}><Sparkles className="h-4 w-4 mr-2" />Auto-Init</Button>
+        <Button variant="outline" onClick={aiGenerate} disabled={aiLoading}>
+          {aiLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Bot className="h-4 w-4 mr-2" />}
+          KI-Forecast
+        </Button>
         <Button onClick={save}><Save className="h-4 w-4 mr-2" />Speichern</Button>
       </div>
 

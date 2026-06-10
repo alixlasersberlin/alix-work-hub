@@ -2241,6 +2241,124 @@ export type Database = {
           },
         ]
       }
+      finance_ai_insights: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          meta: Json | null
+          model: string | null
+          period_end: string | null
+          period_start: string | null
+          prompt: string | null
+          prompt_hash: string | null
+          response: string
+          scope: string
+          tenant_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          meta?: Json | null
+          model?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          prompt?: string | null
+          prompt_hash?: string | null
+          response: string
+          scope: string
+          tenant_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          meta?: Json | null
+          model?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          prompt?: string | null
+          prompt_hash?: string | null
+          response?: string
+          scope?: string
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_ai_insights_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_anomalies: {
+        Row: {
+          amount: number | null
+          category: string | null
+          created_at: string
+          description: string | null
+          detected_at: string
+          id: string
+          meta: Json | null
+          reason: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          severity: string
+          source_id: string | null
+          source_type: string
+          status: string
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount?: number | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          detected_at?: string
+          id?: string
+          meta?: Json | null
+          reason: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          severity?: string
+          source_id?: string | null
+          source_type: string
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          detected_at?: string
+          id?: string
+          meta?: Json | null
+          reason?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          severity?: string
+          source_id?: string | null
+          source_type?: string
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_anomalies_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       finance_asset_depreciations: {
         Row: {
           amount: number

@@ -98,6 +98,9 @@ const FinanceBudget = lazy(() => import("./pages/Finance/Budget"));
 const FinanceSollIst = lazy(() => import("./pages/Finance/SollIst"));
 const FinanceForecast = lazy(() => import("./pages/Finance/Forecast"));
 const FinanceControlling = lazy(() => import("./pages/Finance/Controlling"));
+const FinanceAiInsights = lazy(() => import("./pages/Finance/AiInsights"));
+const FinanceAnomalien = lazy(() => import("./pages/Finance/Anomalien"));
+const FinanceAsk = lazy(() => import("./pages/Finance/Ask"));
 const UserManagement = lazy(() => import("./pages/UserManagement"));
 const ImportManagement = lazy(() => import("./pages/ImportManagement"));
 const Backups = lazy(() => import("./pages/Backups"));
@@ -497,6 +500,9 @@ function AppRoutes() {
           <Route path="/finance/soll-ist" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceSollIst /></ProtectedRoute>} />
           <Route path="/finance/forecast" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceForecast /></ProtectedRoute>} />
           <Route path="/finance/controlling" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceControlling /></ProtectedRoute>} />
+          <Route path="/finance/ai-insights" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceAiInsights /></ProtectedRoute>} />
+          <Route path="/finance/anomalien" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceAnomalien /></ProtectedRoute>} />
+          <Route path="/finance/ask" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceAsk /></ProtectedRoute>} />
           <Route path="/service-cockpit" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Serviceleitung']}><ServiceCockpit /></ProtectedRoute>} />
           <Route path="/geraeteakte" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Technik', 'Kundenservice', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Tourenplanung', 'Finance']}><Geraeteakte /></ProtectedRoute>} />
           <Route path="/geraete-lebenslauf" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Technik', 'Kundenservice', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Finance']}><GeraeteLebenslauf /></ProtectedRoute>} />

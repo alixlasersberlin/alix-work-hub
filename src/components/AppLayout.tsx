@@ -7,7 +7,7 @@ import { useUiTemplate } from '@/hooks/useUiTemplate';
 import { supabase } from '@/integrations/supabase/client';
 import {
   LayoutDashboard, ClipboardList, MapPin, Banknote, Users, LogOut, Shield, ShieldCheck, Menu, X, ChevronLeft, Building2, Cloud, Server, ListOrdered, Sun, Moon, Gavel, Truck, PackageCheck, BarChart3, Factory, ShoppingCart, ChevronDown, TrendingUp, Workflow, AlertTriangle, Calendar, FileText, FileSignature, Warehouse, Settings, Package, FilePlus, BookOpen, Receipt, Undo2, CreditCard, CheckCircle2, FolderTree, ScrollText, Inbox, Mail, Landmark, SearchCheck, Pause, Clock, HelpCircle, Star, Lock, Globe, Wrench, Ticket,
-  PenSquare, Send, FileEdit, MessageSquare, Sparkles, FileCheck2, Files, Phone, PhoneCall, CheckSquare, CalendarClock, Megaphone, Activity, MailX, HeartPulse, TestTube2, Rocket, Database, Upload, FileDown, BadgeCheck, GraduationCap, Brain, AlertOctagon, LineChart, ListChecks, Cog, Boxes
+  PenSquare, Send, FileEdit, MessageSquare, MessageCircle, Sparkles, FileCheck2, Files, Phone, PhoneCall, CheckSquare, CalendarClock, Megaphone, Activity, MailX, HeartPulse, TestTube2, Rocket, Database, Upload, FileDown, BadgeCheck, GraduationCap, Brain, AlertOctagon, LineChart, ListChecks, Cog, Boxes
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -298,6 +298,9 @@ const navItems: NavItem[] = [
       { path: '/finance/soll-ist', label: 'Soll-Ist-Vergleich', icon: TrendingUp, roles: ['Admin', 'Super Admin', 'Finance'] },
       { path: '/finance/forecast', label: 'Rolling Forecast', icon: LineChart, roles: ['Admin', 'Super Admin', 'Finance'] },
       { path: '/finance/controlling', label: 'Controlling-Cockpit', icon: Activity, roles: ['Admin', 'Super Admin', 'Finance'] },
+      { path: '/finance/ai-insights', label: 'KI-Analyse', icon: Sparkles, roles: ['Admin', 'Super Admin', 'Finance', 'Geschäftsführung'] },
+      { path: '/finance/anomalien', label: 'Anomalien', icon: AlertTriangle, roles: ['Admin', 'Super Admin', 'Finance', 'Geschäftsführung'] },
+      { path: '/finance/ask', label: 'KI-Assistent (Fragen)', icon: MessageCircle, roles: ['Admin', 'Super Admin', 'Finance', 'Geschäftsführung'] },
       { path: '/finance/einstellungen/systemstatus', label: 'Systemstatus', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
       // { path: '/finance/ratenzahler', label: 'Ratenzahler', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'] },
       { path: '/finance/alix-flex', label: 'ALIX FLEX', icon: Banknote, roles: ['Admin', 'Super Admin'] },
