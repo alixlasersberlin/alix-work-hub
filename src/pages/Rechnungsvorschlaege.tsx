@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Banknote, ExternalLink, CheckCircle2, X } from 'lucide-react';
+import { ListToolbar } from '@/components/finance/ListToolbar';
+import { matchesQuery, paginate, type PageSize } from '@/lib/finance/list-filter';
 
 const STATUS_LABEL: Record<string, string> = {
   offen: 'Offen',
