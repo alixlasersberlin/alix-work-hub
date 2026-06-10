@@ -195,6 +195,35 @@ export default function ImportManagement() {
   const [weeklyLoading, setWeeklyLoading] = useState(false);
   const [weeklyResult, setWeeklyResult] = useState<any>(null);
 
+  // Schweiz (Alix Lasers ® Schweiz, branch_id 598077000000065075) — uses ZOHO EU 1 creds
+  const [chLoading, setChLoading] = useState(false);
+  const [chResult, setChResult] = useState<any>(null);
+  async function runChImport() {
+    setChLoading(true);
+    setChResult(null);
+    try {
+      toast({ title: 'Schweiz-Import gestartet', description: 'Lädt alle Aufträge der Niederlassung Schweiz aus Zoho EU 1' });
+      const { data, error } = await supabase.functions.invoke('import-all-orders-ch', { body: {} });
+      if (error) throw error;
+      setChResult(data);
+      const t = data?.totals ?? {};
+      toast({
+        title: data?.success ? 'Schweiz-Import abgeschlossen' : 'Schweiz-Import fehlgeschlagen',
+        description: data?.success
+          ? `Geladen: ${t.fetched ?? 0} · Neu: ${t.imported ?? 0} · Aktualisiert: ${t.updated ?? 0} · Übersprungen: ${t.skipped ?? 0} · Fehler: ${t.failed ?? 0}`
+          : (data?.error ?? 'Unbekannter Fehler'),
+        variant: data?.success ? 'default' : 'destructive',
+      });
+      fetchSourceStats();
+      fetchLogs();
+    } catch (e: any) {
+      toast({ title: 'Schweiz-Import fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
+    } finally {
+      setChLoading(false);
+    }
+  }
+
+
   async function runWeeklyImport() {
     setWeeklyLoading(true);
     setWeeklyResult(null);
@@ -884,7 +913,53 @@ export default function ImportManagement() {
         {/* ============ ACTIONS TAB ============ */}
         {canWrite && (
           <TabsContent value="actions" className="space-y-6">
-            {/* WEEKLY Job */}
+            {/* Operations – Schweiz Import */}
+            <Card className="border-red-500/40">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Cloud className="w-4 h-4 text-red-500" />
+                  🇨🇭 Schweiz – Alle Aufträge importieren (Zoho EU 1, Niederlassung Schweiz)
+                </CardTitle>
+                <CardDescription>
+                  Lädt sämtliche Verkaufsaufträge der Niederlassung <strong>Alix Lasers ® Schweiz</strong> (branch_id&nbsp;
+                  <code>598077000000065075</code>) aus dem bestehenden Zoho EU 1 Zugang. Kunden werden bei Bedarf
+                  automatisch nachgezogen. Bereits vorhandene Aufträge werden aktualisiert (kein Duplikat).
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Button
+                  onClick={runChImport}
+                  disabled={chLoading}
+                  className="bg-red-500 text-white hover:bg-red-500/90"
+                >
+                  {chLoading ? (
+                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Läuft …</>
+                  ) : (
+                    <><Play className="w-4 h-4 mr-2" /> Schweiz-Aufträge jetzt importieren</>
+                  )}
+                </Button>
+                {chResult && (
+                  <div className="rounded-md border border-border bg-secondary/30 p-4 text-sm space-y-1">
+                    <div className="font-medium text-foreground">
+                      Ergebnis ({chResult.duration_ms ? `${Math.round(chResult.duration_ms / 1000)}s` : '–'})
+                    </div>
+                    <div>Geladen: <span className="font-medium">{chResult.totals?.fetched ?? 0}</span></div>
+                    <div>Neu: <span className="font-medium text-[hsl(var(--success))]">{chResult.totals?.imported ?? 0}</span></div>
+                    <div>Aktualisiert: <span className="font-medium">{chResult.totals?.updated ?? 0}</span></div>
+                    <div>Übersprungen: <span className="font-medium text-muted-foreground">{chResult.totals?.skipped ?? 0}</span></div>
+                    <div>Fehler: <span className="font-medium text-destructive">{chResult.totals?.failed ?? 0}</span></div>
+                    {Array.isArray(chResult.errors) && chResult.errors.length > 0 && (
+                      <details className="mt-2">
+                        <summary className="cursor-pointer text-xs text-muted-foreground">Erste Fehler anzeigen</summary>
+                        <pre className="text-xs mt-1 overflow-auto max-h-48">{JSON.stringify(chResult.errors, null, 2)}</pre>
+                      </details>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+
             <Card className="border-primary/40">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
