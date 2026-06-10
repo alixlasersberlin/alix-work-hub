@@ -150,18 +150,20 @@ export default function FinanceLiquiditaet() {
       const inserts: any[] = [];
       const monthKey = (d: string) => d.slice(0, 7) + '-01';
 
-      for (const i of invs ?? []) {
+      for (const i of (invs ?? []) as any[]) {
+        if (!i.due_date) continue;
         inserts.push({ plan_id: selectedPlan.id, month: monthKey(i.due_date), category: 'Forderungen Zoho', flow_type: 'einnahme', planned_amount: Number(i.balance), source: 'auto_zoho', description: i.customer_name });
       }
-      for (const r of rec ?? []) {
+      for (const r of (rec ?? []) as any[]) {
+        if (!r.next_invoice_date) continue;
         inserts.push({ plan_id: selectedPlan.id, month: monthKey(r.next_invoice_date), category: 'Wiederkehrend', flow_type: 'einnahme', planned_amount: Number(r.amount), source: 'auto_recurring', description: r.customer_name });
       }
-      for (const x of incoming ?? []) {
+      for (const x of (incoming ?? []) as any[]) {
         if (!x.due_date) continue;
         inserts.push({ plan_id: selectedPlan.id, month: monthKey(x.due_date), category: 'Eingangsrechnungen', flow_type: 'ausgabe', planned_amount: Number(x.amount_gross || 0), source: 'auto_incoming', description: x.supplier_name });
       }
       // AfA monatlich (informativ) – über alle Planmonate verteilen
-      const afaMonthly = (assets ?? []).reduce((sum, a) => {
+      const afaMonthly = ((assets ?? []) as any[]).reduce((sum: number, a: any) => {
         if (a.depreciation_method === 'gwg_sofort') return sum;
         const m = a.depreciation_method === 'gwg_pool' ? Number(a.acquisition_value) / 60 : Number(a.acquisition_value) / Math.max(a.useful_life_months || 36, 1);
         return sum + Math.min(m, Number(a.book_value || 0));
