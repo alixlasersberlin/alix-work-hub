@@ -171,11 +171,11 @@ Deno.serve(async (req: Request) => {
         return jsonResponse({
           success: false,
           error: "Order not found in Zoho",
-          message: `Kein Auftrag mit Nummer "${rawOrderInput}" in ${source_system} gefunden.`,
+          message: `Kein Auftrag mit Nummer "${lookupInput}" in ${source_system} gefunden.`,
         }, 200);
       }
       resolvedSalesOrderId = String(matches[0].salesorder_id);
-      console.log(`[sync-single-order] Resolved ${rawOrderInput} -> salesorder_id ${resolvedSalesOrderId}`);
+      console.log(`[sync-single-order] Resolved ${lookupInput} -> salesorder_id ${resolvedSalesOrderId}`);
     }
 
     const orderRes = await fetch(
