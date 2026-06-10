@@ -311,7 +311,7 @@ const navItems: NavItem[] = [
       { path: '/system', label: 'Monitoring', icon: Server, roles: ['Super Admin'] },
       { path: '/benutzer', label: 'Benutzer', icon: Users, roles: ['Super Admin'] },
       { path: '/order/zulieferer', label: 'Lieferanten', icon: Users, roles: ['Super Admin'] },
-      { path: '/rollen', label: 'Rollen', icon: Shield, roles: ['Super Admin'] },
+      { path: '/rollen', label: 'Rollen', icon: Shield, roles: ['Super Admin', 'Admin'] },
       { path: '/datensicherung', label: 'Datensicherung', icon: Shield, roles: ['Super Admin'] },
       { path: '/operation/logfiles', label: 'Logfiles', icon: ScrollText, roles: ['Super Admin'] },
       { path: '/operation/email-vorlagen', label: 'E-Mail Vorlagen', icon: Mail, roles: ['Super Admin'] },
