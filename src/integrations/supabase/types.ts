@@ -3028,6 +3028,108 @@ export type Database = {
           },
         ]
       }
+      finance_consolidation_items: {
+        Row: {
+          account_code: string | null
+          account_label: string | null
+          consolidated_amount: number
+          created_at: string
+          currency: string
+          eliminated_amount: number
+          gross_amount: number
+          id: string
+          run_id: string
+          tenant_id: string | null
+          transaction_type: string | null
+        }
+        Insert: {
+          account_code?: string | null
+          account_label?: string | null
+          consolidated_amount?: number
+          created_at?: string
+          currency?: string
+          eliminated_amount?: number
+          gross_amount?: number
+          id?: string
+          run_id: string
+          tenant_id?: string | null
+          transaction_type?: string | null
+        }
+        Update: {
+          account_code?: string | null
+          account_label?: string | null
+          consolidated_amount?: number
+          created_at?: string
+          currency?: string
+          eliminated_amount?: number
+          gross_amount?: number
+          id?: string
+          run_id?: string
+          tenant_id?: string | null
+          transaction_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_consolidation_items_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "finance_consolidation_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_consolidation_items_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_consolidation_runs: {
+        Row: {
+          consolidated_total: number
+          created_at: string
+          eliminated_total: number
+          gross_total: number
+          id: string
+          notes: string | null
+          period_month: string
+          prepared_by: string | null
+          status: string
+          tenant_count: number
+          totals: Json
+          updated_at: string
+        }
+        Insert: {
+          consolidated_total?: number
+          created_at?: string
+          eliminated_total?: number
+          gross_total?: number
+          id?: string
+          notes?: string | null
+          period_month: string
+          prepared_by?: string | null
+          status?: string
+          tenant_count?: number
+          totals?: Json
+          updated_at?: string
+        }
+        Update: {
+          consolidated_total?: number
+          created_at?: string
+          eliminated_total?: number
+          gross_total?: number
+          id?: string
+          notes?: string | null
+          period_month?: string
+          prepared_by?: string | null
+          status?: string
+          tenant_count?: number
+          totals?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       finance_contracts: {
         Row: {
           contract_number: string | null
@@ -3239,6 +3341,33 @@ export type Database = {
           },
         ]
       }
+      finance_fx_rates: {
+        Row: {
+          created_at: string
+          currency: string
+          id: string
+          rate_date: string
+          rate_to_eur: number
+          source: string | null
+        }
+        Insert: {
+          created_at?: string
+          currency: string
+          id?: string
+          rate_date: string
+          rate_to_eur: number
+          source?: string | null
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          id?: string
+          rate_date?: string
+          rate_to_eur?: number
+          source?: string | null
+        }
+        Relationships: []
+      }
       finance_history: {
         Row: {
           action: string
@@ -3386,6 +3515,128 @@ export type Database = {
           {
             foreignKeyName: "finance_incoming_invoices_tenant_id_fkey"
             columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_intercompany_matches: {
+        Row: {
+          amount: number
+          currency: string
+          id: string
+          matched_at: string
+          matched_by: string | null
+          notes: string | null
+          period_month: string | null
+          source_tenant_id: string | null
+          source_tx_id: string
+          status: string
+          target_tenant_id: string | null
+          target_tx_id: string
+        }
+        Insert: {
+          amount?: number
+          currency?: string
+          id?: string
+          matched_at?: string
+          matched_by?: string | null
+          notes?: string | null
+          period_month?: string | null
+          source_tenant_id?: string | null
+          source_tx_id: string
+          status?: string
+          target_tenant_id?: string | null
+          target_tx_id: string
+        }
+        Update: {
+          amount?: number
+          currency?: string
+          id?: string
+          matched_at?: string
+          matched_by?: string | null
+          notes?: string | null
+          period_month?: string | null
+          source_tenant_id?: string | null
+          source_tx_id?: string
+          status?: string
+          target_tenant_id?: string | null
+          target_tx_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_intercompany_matches_source_tenant_id_fkey"
+            columns: ["source_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_intercompany_matches_source_tx_id_fkey"
+            columns: ["source_tx_id"]
+            isOneToOne: false
+            referencedRelation: "finance_transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_intercompany_matches_target_tenant_id_fkey"
+            columns: ["target_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_intercompany_matches_target_tx_id_fkey"
+            columns: ["target_tx_id"]
+            isOneToOne: false
+            referencedRelation: "finance_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_intercompany_relations: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          label: string | null
+          notes: string | null
+          source_tenant_id: string
+          target_tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          label?: string | null
+          notes?: string | null
+          source_tenant_id: string
+          target_tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          label?: string | null
+          notes?: string | null
+          source_tenant_id?: string
+          target_tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_intercompany_relations_source_tenant_id_fkey"
+            columns: ["source_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_intercompany_relations_target_tenant_id_fkey"
+            columns: ["target_tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
@@ -4081,42 +4332,51 @@ export type Database = {
           amount: number
           booking_date: string
           contract_id: string | null
+          counterparty_tenant_id: string | null
           created_at: string
           currency: string
           customer_id: string | null
           device_id: string | null
           id: string
+          is_intercompany: boolean
           notes: string | null
           order_id: string | null
           reference: string | null
+          tenant_id: string | null
           transaction_type: string
         }
         Insert: {
           amount?: number
           booking_date?: string
           contract_id?: string | null
+          counterparty_tenant_id?: string | null
           created_at?: string
           currency?: string
           customer_id?: string | null
           device_id?: string | null
           id?: string
+          is_intercompany?: boolean
           notes?: string | null
           order_id?: string | null
           reference?: string | null
+          tenant_id?: string | null
           transaction_type?: string
         }
         Update: {
           amount?: number
           booking_date?: string
           contract_id?: string | null
+          counterparty_tenant_id?: string | null
           created_at?: string
           currency?: string
           customer_id?: string | null
           device_id?: string | null
           id?: string
+          is_intercompany?: boolean
           notes?: string | null
           order_id?: string | null
           reference?: string | null
+          tenant_id?: string | null
           transaction_type?: string
         }
         Relationships: [
@@ -4125,6 +4385,13 @@ export type Database = {
             columns: ["contract_id"]
             isOneToOne: false
             referencedRelation: "finance_contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_transactions_counterparty_tenant_id_fkey"
+            columns: ["counterparty_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
           {
@@ -4146,6 +4413,13 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_transactions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
