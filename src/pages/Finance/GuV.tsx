@@ -31,8 +31,8 @@ export default function FinanceGuV() {
   const data = useMemo(() => {
     const lower = (s: string) => (s || '').toLowerCase();
     const umsatz = tx.filter(r => ['rechnung', 'einnahme', 'erlös', 'erloes'].some(x => lower(r.transaction_type).includes(x))).reduce((s, r) => s + Math.abs(Number(r.amount) || 0), 0);
-    const wareneinsatz = incoming.filter(r => r.category === 'Wareneinkauf').reduce((s, r) => s + Number(r.net_amount || r.total_amount) || 0, 0);
-    const sbA = incoming.filter(r => r.category && r.category !== 'Wareneinkauf').reduce((s, r) => s + Number(r.net_amount || r.total_amount) || 0, 0);
+    const wareneinsatz = (incoming as any[]).filter(r => (r.description || '').toLowerCase().includes('warenein')).reduce((s, r) => s + (Number(r.amount_net || r.amount_gross) || 0), 0);
+    const sbA = (incoming as any[]).filter(r => !(r.description || '').toLowerCase().includes('warenein')).reduce((s, r) => s + (Number(r.amount_net || r.amount_gross) || 0), 0);
     const sonstigeAufw = tx.filter(r => ['ausgabe', 'aufwand'].some(x => lower(r.transaction_type).includes(x))).reduce((s, r) => s + Math.abs(Number(r.amount) || 0), 0);
     const abschr = afa.reduce((s, r) => s + Number(r.amount) || 0, 0);
     const zinsen = tx.filter(r => lower(r.transaction_type).includes('zins')).reduce((s, r) => s + Math.abs(Number(r.amount) || 0), 0);
