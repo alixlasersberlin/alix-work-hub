@@ -94,8 +94,9 @@ export default function FinanceP2P() {
     const { data: items } = await supabase.from('finance_purchase_order_items' as any)
       .select('id, unit_price').eq('po_id', po.id);
     let received_amount = 0;
+    const itemsArr = (items ?? []) as any[];
     for (const r of (receipts ?? []) as any[]) {
-      const it = (items ?? []).find((x: any) => x.id === r.po_item_id);
+      const it = itemsArr.find((x) => x.id === r.po_item_id);
       received_amount += Number(r.quantity ?? 0) * Number(it?.unit_price ?? 0);
     }
     const { error } = await supabase.from('finance_three_way_matches' as any).insert({
