@@ -186,11 +186,19 @@ export default function ZohoUnpaidInvoices() {
             </div>
             <div className="flex items-center gap-2">
               <Input
-                placeholder="Suche Rechnungs-Nr. oder Kunde…"
+                placeholder="Suche: Rechnungsnr., Auftragsnr., Name, Stadt, PLZ, Betrag…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-72"
+                className="w-96"
               />
+              <Select value={String(pageSize)} onValueChange={(v) => setPageSize(v === 'all' ? 'all' : (Number(v) as PageSize))}>
+                <SelectTrigger className="w-[110px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {PAGE_SIZE_OPTIONS.map((p) => (
+                    <SelectItem key={String(p)} value={String(p)}>{pageSizeLabel(p)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Button onClick={handleSync} disabled={syncing}>
                 {syncing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
                 Jetzt synchronisieren
