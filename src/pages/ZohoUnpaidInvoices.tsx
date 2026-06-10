@@ -65,6 +65,7 @@ export default function ZohoUnpaidInvoices() {
   const [dateTo, setDateTo] = useState<Date | undefined>();
   const [groupByCustomer, setGroupByCustomer] = useState(false);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [pageSize, setPageSize] = useState<PageSize>(50);
 
   const load = async () => {
     setLoading(true);
