@@ -223,13 +223,11 @@ export default function OffenePosten() {
     setEditItem(null);
   };
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return items;
-    return items.filter(
-      (i) => i.invoice_number?.toLowerCase().includes(q) || i.customer_name?.toLowerCase().includes(q),
-    );
-  }, [items, search]);
+  const filtered = useMemo(
+    () => items.filter((i) => matchesQuery(i, search)),
+    [items, search],
+  );
+  const visible = useMemo(() => paginate(filtered, pageSize), [filtered, pageSize]);
 
   const totals = useMemo(() => {
     const sum = filtered.reduce((acc, i) => acc + (Number(i.balance) || 0), 0);
