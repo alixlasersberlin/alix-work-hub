@@ -203,7 +203,7 @@ export default function FinanceLiquiditaet() {
     <div className="space-y-6">
       <PageHeader
         title="Liquiditätsplanung"
-        description="12-Monats-Forecast: Cashflow & Saldo"
+        subtitle="12-Monats-Forecast: Cashflow & Saldo"
         actions={canEdit ? <Button onClick={() => setDialogOpen(true)} className="gap-2"><Plus className="h-4 w-4" /> Neuer Plan</Button> : undefined}
       />
 

@@ -118,7 +118,7 @@ export default function FinanceAnlagen() {
     <div className="space-y-6">
       <PageHeader
         title="Anlagenbuchhaltung"
-        description="Anlagevermögen, AfA und Restbuchwerte"
+        subtitle="Anlagevermögen, AfA und Restbuchwerte"
         actions={canEdit ? <Button onClick={openNew} className="gap-2"><Plus className="h-4 w-4" /> Neue Anlage</Button> : undefined}
       />
 

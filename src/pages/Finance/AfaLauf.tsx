@@ -39,7 +39,7 @@ export default function FinanceAfaLauf() {
     <div className="space-y-6">
       <PageHeader
         title="AfA-Lauf"
-        description="Monatliche Abschreibungsbuchungen erzeugen"
+        subtitle="Monatliche Abschreibungsbuchungen erzeugen"
         actions={<Button variant="outline" onClick={() => nav('/finance/anlagen')}>Zur Anlagenliste</Button>}
       />
 
