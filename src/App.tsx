@@ -68,7 +68,7 @@ const WiederkehrendeZahler = lazy(() => import("./pages/Finance/WiederkehrendeZa
 const AlixFlex = lazy(() => import("./pages/AlixFlex"));
 const Invoices = lazy(() => import("./pages/Invoices"));
 const OffenePosten = lazy(() => import("./pages/OffenePosten"));
-const ZohoUnpaidInvoices = lazy(() => import("./pages/ZohoUnpaidInvoices"));
+// const ZohoUnpaidInvoices = lazy(() => import("./pages/ZohoUnpaidInvoices")); // deaktiviert
 const FinanceDetail = lazy(() => import("./pages/FinanceDetail"));
 const Rechnungsvorschlaege = lazy(() => import("./pages/Rechnungsvorschlaege"));
 const ServiceCockpit = lazy(() => import("./pages/ServiceCockpit"));
