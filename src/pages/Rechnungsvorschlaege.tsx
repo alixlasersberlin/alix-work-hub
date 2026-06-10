@@ -60,21 +60,6 @@ export default function Rechnungsvorschlaege() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <Banknote className="w-6 h-6 text-emerald-400" />
-        <h1 className="text-2xl font-bold">Rechnungsvorschläge (Reparaturen)</h1>
-        <div className="ml-auto">
-          <Select value={filter} onValueChange={(v) => setFilter(v as any)}>
-            <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="offen">Offen</SelectItem>
-              <SelectItem value="übernommen">Übernommen</SelectItem>
-              <SelectItem value="abgelehnt">Abgelehnt</SelectItem>
-              <SelectItem value="alle">Alle</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
 
       <div className="flex items-center gap-3">
         <Banknote className="w-6 h-6 text-emerald-400" />
