@@ -2420,6 +2420,119 @@ export type Database = {
           },
         ]
       }
+      finance_reminder_items: {
+        Row: {
+          amount: number
+          created_at: string
+          days_overdue: number | null
+          due_date: string | null
+          id: string
+          invoice_number: string | null
+          reminder_id: string
+          transaction_id: string | null
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          days_overdue?: number | null
+          due_date?: string | null
+          id?: string
+          invoice_number?: string | null
+          reminder_id: string
+          transaction_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          days_overdue?: number | null
+          due_date?: string | null
+          id?: string
+          invoice_number?: string | null
+          reminder_id?: string
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_reminder_items_reminder_id_fkey"
+            columns: ["reminder_id"]
+            isOneToOne: false
+            referencedRelation: "finance_reminders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_reminder_items_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "finance_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_reminders: {
+        Row: {
+          amount: number
+          created_at: string
+          customer_id: string
+          due_date: string | null
+          email_message_id: string | null
+          fee: number
+          id: string
+          interest: number
+          level: number
+          notes: string | null
+          pdf_url: string | null
+          sent_at: string | null
+          sent_by: string | null
+          status: string
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          customer_id: string
+          due_date?: string | null
+          email_message_id?: string | null
+          fee?: number
+          id?: string
+          interest?: number
+          level: number
+          notes?: string | null
+          pdf_url?: string | null
+          sent_at?: string | null
+          sent_by?: string | null
+          status?: string
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          customer_id?: string
+          due_date?: string | null
+          email_message_id?: string | null
+          fee?: number
+          id?: string
+          interest?: number
+          level?: number
+          notes?: string | null
+          pdf_url?: string | null
+          sent_at?: string | null
+          sent_by?: string | null
+          status?: string
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_reminders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       finance_transactions: {
         Row: {
           amount: number
