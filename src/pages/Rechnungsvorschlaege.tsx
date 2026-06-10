@@ -110,7 +110,7 @@ export default function Rechnungsvorschlaege() {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r) => (
+                {visible.map((r) => (
                   <tr key={r.id} className="border-t border-border/50 hover:bg-muted/20">
                     <td className="px-3 py-2 font-mono">
                       <Link to={`/reparatur/${r.repair_order_id}`} className="text-primary hover:underline inline-flex items-center gap-1">
