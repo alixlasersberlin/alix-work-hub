@@ -90,6 +90,10 @@ const FinanceEingangsrechnungen = lazy(() => import("./pages/Finance/Eingangsrec
 const FinanceAnlagen = lazy(() => import("./pages/Finance/Anlagen"));
 const FinanceAfaLauf = lazy(() => import("./pages/Finance/AfaLauf"));
 const FinanceLiquiditaet = lazy(() => import("./pages/Finance/Liquiditaet"));
+const FinanceBwa = lazy(() => import("./pages/Finance/Bwa"));
+const FinanceGuV = lazy(() => import("./pages/Finance/GuV"));
+const FinanceBilanz = lazy(() => import("./pages/Finance/Bilanz"));
+const FinanceJahresabschluss = lazy(() => import("./pages/Finance/Jahresabschluss"));
 const UserManagement = lazy(() => import("./pages/UserManagement"));
 const ImportManagement = lazy(() => import("./pages/ImportManagement"));
 const Backups = lazy(() => import("./pages/Backups"));
