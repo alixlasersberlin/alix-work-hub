@@ -155,10 +155,11 @@ export default function OrdersFreiBestellung() {
     );
     setOrders(filteredOrders);
 
-    // Map reserved devices by order id
+    // Map reserved devices by order id (Leihgeräte ausschließen)
     const resMap: Record<string, { id: string; serial_number: string; model_name: string }[]> = {};
     for (const d of (reservedDevs ?? []) as any[]) {
       if (!d.reserved_order_id) continue;
+      if (/leihger[äa]t/i.test(d.notes || '')) continue;
       (resMap[d.reserved_order_id] ??= []).push({ id: d.id, serial_number: d.serial_number, model_name: d.model_name });
     }
     setReservedByOrder(resMap);
