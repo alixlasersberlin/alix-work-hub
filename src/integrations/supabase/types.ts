@@ -3471,6 +3471,65 @@ export type Database = {
           },
         ]
       }
+      finance_year_end_runs: {
+        Row: {
+          checklist: Json
+          closed_at: string | null
+          closed_by: string | null
+          closing_date: string | null
+          created_at: string
+          created_by: string | null
+          fiscal_year: number
+          id: string
+          notes: string | null
+          reopened_at: string | null
+          reopened_by: string | null
+          status: string
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          checklist?: Json
+          closed_at?: string | null
+          closed_by?: string | null
+          closing_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          fiscal_year: number
+          id?: string
+          notes?: string | null
+          reopened_at?: string | null
+          reopened_by?: string | null
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          checklist?: Json
+          closed_at?: string | null
+          closed_by?: string | null
+          closing_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          fiscal_year?: number
+          id?: string
+          notes?: string | null
+          reopened_at?: string | null
+          reopened_by?: string | null
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_year_end_runs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       goods_receipts: {
         Row: {
           created_at: string
