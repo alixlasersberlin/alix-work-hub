@@ -147,13 +147,17 @@ Deno.serve(async (req: Request) => {
 
     const accessToken = await getAccessToken(zohoConfig);
 
-    // Resolve salesorder_id: accept either numeric Zoho ID OR order number (e.g. "SO-4190")
+    // Resolve salesorder_id: accept either numeric Zoho ID OR order number (e.g. "SO-4190" / "SO-4190-AT")
     const rawOrderInput = String(external_order_id).trim();
-    let resolvedSalesOrderId = rawOrderInput;
-    const isNumericOrderId = /^\d+$/.test(rawOrderInput);
+    // Strip "-AT" suffix for zoho_eu_2 lookups (UI display only — Zoho itself has no -AT)
+    const lookupInput = source_system === "zoho_eu_2"
+      ? rawOrderInput.replace(/-AT$/i, "")
+      : rawOrderInput;
+    let resolvedSalesOrderId = lookupInput;
+    const isNumericOrderId = /^\d+$/.test(lookupInput);
 
     if (!isNumericOrderId) {
-      const lookupUrl = `${zohoConfig.booksApiBaseUrl}/salesorders?organization_id=${zohoConfig.organizationId}&salesorder_number=${encodeURIComponent(rawOrderInput)}`;
+      const lookupUrl = `${zohoConfig.booksApiBaseUrl}/salesorders?organization_id=${zohoConfig.organizationId}&salesorder_number=${encodeURIComponent(lookupInput)}`;
       const lookupRes = await fetch(lookupUrl, {
         headers: { Authorization: `Zoho-oauthtoken ${accessToken}` },
       });
