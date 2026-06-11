@@ -1780,13 +1780,6 @@ export default function Lagergeraete({
                   )}
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
-                      {d.reserved_order_id && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="gap-1 text-primary hover:text-primary"
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
                       {filterType === 'Leihgerät' && (
                         <Button
                           variant="ghost"
