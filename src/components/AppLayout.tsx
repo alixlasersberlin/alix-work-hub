@@ -21,6 +21,8 @@ import AuroraPrioTicker from '@/components/AuroraPrioTicker';
 import AuroraTopNav from '@/components/AuroraTopNav';
 import { useDesignVariant } from '@/hooks/useDesignVariant';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
+import { useFavorites, type FavoriteEntry } from '@/hooks/useFavorites';
+import { Briefcase } from 'lucide-react';
 import alixLogo from '@/assets/alix-logo-gold.png';
 
 
