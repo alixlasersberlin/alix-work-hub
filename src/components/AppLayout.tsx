@@ -380,16 +380,8 @@ const navItems: NavItem[] = [
       // { path: '/finance/ratenzahler', label: 'Ratenzahler', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'] },
     ],
   },
-  {
-    path: '/bewertungen', label: 'BEWERTUNGEN', icon: Star, roles: null,
-    children: [
-      { path: '/bewertungen', label: 'Übersicht', icon: LayoutDashboard, roles: null },
-      { path: '/bewertungen/geliefert', label: 'Aufträge geliefert', icon: Truck, roles: null },
-      { path: '/bewertungen/abgegeben', label: 'Abgegebene Bewertungen', icon: Star, roles: null },
-      { path: '/bewertungen/geschlossen', label: 'Geschlossen', icon: Lock, roles: null },
-      { path: '/bewertungen/frontend', label: 'Frontend', icon: Cloud, roles: null },
-    ],
-  },
+
+
   {
     path: '/operation', label: 'OPERATIONS', icon: Workflow, roles: ['Super Admin'],
     children: [
