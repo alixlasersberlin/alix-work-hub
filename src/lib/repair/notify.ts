@@ -1,10 +1,11 @@
 import { supabase } from '@/integrations/supabase/client';
 
+const REPAIR_NOTIFY_BLOCKLIST = new Set(['homebln@icloud.com']);
 const REPAIR_NOTIFY_RECIPIENTS = [
   'jh@alix-operation.de',
   's.galushchak@alix-operation.de',
   'k.trinh@alix-operation.de',
-];
+].filter((e) => !REPAIR_NOTIFY_BLOCKLIST.has(e.toLowerCase()));
 
 export async function notifyNewRepairOrder(args: {
   repair_id: string;
@@ -15,8 +16,7 @@ export async function notifyNewRepairOrder(args: {
   issue_description?: string | null;
 }) {
   const subject = `Neue Reparatur ${args.repair_number ?? ''} angelegt`.trim();
-  const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-  const link = `${baseUrl}/reparatur/${args.repair_id}`;
+  const link = `https://www.alixwork.de/reparatur/${args.repair_id}`;
   const html = `
     <p>Es wurde ein neuer Reparaturauftrag angelegt.</p>
     <table style="border-collapse:collapse;font-size:14px">
