@@ -65,12 +65,75 @@ const navItems: NavItem[] = [
     ],
   },
 
-  
-  { path: '/verkauf/anzahlungsrechnung', label: 'NEUE ANZAHLUNGEN', icon: Receipt, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Tourenplanung', 'Read Only Audit', 'Read Only', 'Geschäftsführung', 'Marketing', 'Technik', 'Kundenservice', 'Vertrieb', 'Reparaturannahme', 'Bestellwesen', 'Serviceleitung', 'Service', 'QM', 'SACHBEARBEITUNG'] },
-  { path: '/detailsuche', label: 'DETAILSUCHE', icon: SearchCheck, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Read Only Audit', 'SACHBEARBEITUNG'] },
-  { path: '/auftragsstatus', label: 'AUFTRAGSSTATUS', icon: Activity, roles: null },
-  
-  { path: '/geraetesperren', label: 'GERÄTESPERREN', icon: Lock, roles: null },
+  {
+    path: '/auftragsverwaltung', label: 'ORDER MANAGEMENT', icon: ClipboardList,
+    roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'Lieferant', 'FACTORY INVOICE', 'Bestellwesen', 'Read Only Audit', 'Read Only', 'Geschäftsführung', 'Marketing', 'Technik', 'Kundenservice', 'Vertrieb', 'Reparaturannahme', 'Serviceleitung', 'Service', 'QM', 'SACHBEARBEITUNG'],
+    children: [
+      { path: '/verkauf/anzahlungsrechnung', label: 'Neue Anzahlungen', icon: Receipt, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Tourenplanung', 'Read Only Audit', 'Read Only', 'Geschäftsführung', 'Marketing', 'Technik', 'Kundenservice', 'Vertrieb', 'Reparaturannahme', 'Bestellwesen', 'Serviceleitung', 'Service', 'QM', 'SACHBEARBEITUNG'] },
+      { path: '/detailsuche', label: 'Detailsuche', icon: SearchCheck, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Read Only Audit', 'SACHBEARBEITUNG'] },
+      { path: '/auftragsstatus', label: 'Auftragsstatus', icon: Activity, roles: null },
+      { path: '/geraetesperren', label: 'Gerätesperren', icon: Lock, roles: null },
+      {
+        path: '/kunden', label: 'KUNDEN', icon: Building2, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'SACHBEARBEITUNG'],
+        children: [
+          { path: '/kunden', label: 'Kunden', icon: Building2, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
+        ],
+      },
+      {
+        path: '/verkauf/artikel-uebersicht', label: 'ARTIKEL', icon: Package, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'SACHBEARBEITUNG'],
+        children: [
+          { path: '/verkauf/artikel', label: 'Alle Artikel', icon: Package, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'SACHBEARBEITUNG'] },
+          { path: '/verkauf/artikel/kategorie', label: 'Kategorie', icon: FolderTree, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'SACHBEARBEITUNG'] },
+          { path: '/verkauf/artikel/katalog', label: 'Katalog', icon: BookOpen, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'SACHBEARBEITUNG'] },
+          { path: '/verkauf/artikel/wareneingang', label: 'Wareneingang', icon: PackageCheck, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'SACHBEARBEITUNG'] },
+        ],
+      },
+      {
+        path: '/verkauf', label: 'VERKÄUFE', icon: TrendingUp, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'SACHBEARBEITUNG'],
+        children: [
+          { path: '/verkauf/angebot/neu', label: 'Angebot erstellen', icon: FilePlus, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
+          { path: '/verkauf/angebote', label: 'Angebote', icon: FileText, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
+          { path: '/verkauf/freigabe', label: 'Freigabe', icon: CheckCircle2, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
+          { path: '/auftraege', label: 'Aufträge', icon: ClipboardList, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
+          { path: '/auftraege-at', label: 'Aufträge AT', icon: ClipboardList, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'Finanzierungen', 'FACTORY INVOICE', 'Lieferant', 'Read Only Audit', 'SACHBEARBEITUNG'] },
+          { path: '/auftraege-ch', label: 'Aufträge CH', icon: ClipboardList, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Finanzierungen', 'FACTORY INVOICE', 'Lieferant', 'Read Only Audit', 'SACHBEARBEITUNG', 'Österreich'] },
+          { path: '/verkauf/anzahlungsrechnung', label: 'Anzahlungsrechnung', icon: Receipt, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
+          { path: '/finance/rechnungen', label: 'Rechnung', icon: FileText, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
+          { path: '/verkauf/gutschriften', label: 'Gutschriften', icon: Undo2, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
+        ],
+      },
+      {
+        path: '/auftraege-gruppe', label: 'AUFTRAGS STATUS', icon: ClipboardList, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'SACHBEARBEITUNG'],
+        children: [
+          { path: '/prio-liste', label: 'Prio-Liste', icon: ListOrdered, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
+          { path: '/prio-liste/hold', label: 'Hold', icon: Pause, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
+          { path: '/anwaltsliste', label: 'Anwaltsliste', icon: Gavel, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
+          { path: '/geliefert', label: 'Auftrag geliefert', icon: Truck, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
+          { path: '/teilgeliefert', label: 'Teilgeliefert', icon: PackageCheck, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
+        ],
+      },
+      {
+        path: '/auftragsverwaltung/bestellungen', label: 'BESTELLWESEN', icon: ShoppingCart, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'Lieferant', 'FACTORY INVOICE', 'Bestellwesen', 'SACHBEARBEITUNG'],
+        children: [
+          { path: '/order/frei-bestellung', label: 'Bestellung möglich', icon: CheckCircle2, roles: ['Admin', 'Super Admin', 'Order', 'SACHBEARBEITUNG'] },
+          { path: '/order/reklamation', label: 'Bestellung Reklamation', icon: AlertTriangle, roles: ['Admin', 'Super Admin', 'Order', 'SACHBEARBEITUNG'] },
+          { path: '/order', label: 'Factory Orders', icon: Factory, roles: ['Admin', 'Super Admin', 'Order', 'SACHBEARBEITUNG'] },
+          { path: '/order/freigabe', label: 'Freigabe', icon: ShieldCheck, roles: ['Admin', 'Super Admin', 'Order', 'SACHBEARBEITUNG'] },
+          { path: '/bestellwesen/ersatzteile', label: 'Ersatzteil-Bestellvorschläge', icon: Package, roles: ['Admin', 'Super Admin', 'Bestellwesen', 'Order', 'Technik', 'SACHBEARBEITUNG'] },
+          { path: '/ersatzteilmanagement', label: 'Ersatzteilmanagement', icon: Boxes, roles: ['Admin', 'Super Admin', 'Bestellwesen', 'Order', 'Technik', 'Reparaturannahme', 'Serviceleitung', 'Service', 'Finance', 'SACHBEARBEITUNG'] },
+        ],
+      },
+      {
+        path: '/production', label: 'PRODUCTION', icon: Factory, roles: ['Super Admin', 'Lieferant', 'FACTORY INVOICE'],
+        children: [
+          { path: '/production/order-in', label: 'Order In', icon: Inbox, roles: ['Super Admin', 'Lieferant', 'FACTORY INVOICE'] },
+          { path: '/production', label: 'Liste', icon: ListOrdered, roles: ['Super Admin', 'Lieferant', 'FACTORY INVOICE'] },
+          { path: '/production/fertig', label: 'Fertig', icon: CheckCircle2, roles: ['Super Admin', 'Lieferant', 'FACTORY INVOICE'] },
+          { path: '/production/factory-invoice', label: 'Factory Invoice', icon: Receipt, roles: ['Super Admin', 'FACTORY INVOICE'] },
+        ],
+      },
+    ],
+  },
   {
     path: '/mailcenter', label: 'ALIX i-COM', icon: Mail,
     roles: ['Admin', 'Super Admin', 'Geschäftsführung', 'Marketing', 'Finance', 'Technik', 'Kundenservice', 'Vertrieb', 'Reparaturannahme', 'Tourenplanung', 'Bestellwesen', 'Order', 'Read Only', 'Read Only Audit', 'Österreich', 'SACHBEARBEITUNG'],
@@ -151,72 +214,7 @@ const navItems: NavItem[] = [
       },
     ],
   },
-  {
-    path: '/auftragsverwaltung', label: 'AUFTRAGSVERWALTUNG', icon: ClipboardList, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'SACHBEARBEITUNG'],
-    children: [
-      {
-        path: '/kunden', label: 'KUNDEN', icon: Building2, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'SACHBEARBEITUNG'],
-        children: [
-          { path: '/kunden', label: 'Kunden', icon: Building2, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
-        ],
-      },
-      {
-        path: '/verkauf/artikel-uebersicht', label: 'ARTIKEL', icon: Package, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'SACHBEARBEITUNG'],
-        children: [
-          { path: '/verkauf/artikel', label: 'Alle Artikel', icon: Package, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'SACHBEARBEITUNG'] },
-          { path: '/verkauf/artikel/kategorie', label: 'Kategorie', icon: FolderTree, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'SACHBEARBEITUNG'] },
-          { path: '/verkauf/artikel/katalog', label: 'Katalog', icon: BookOpen, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'SACHBEARBEITUNG'] },
-          { path: '/verkauf/artikel/wareneingang', label: 'Wareneingang', icon: PackageCheck, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'SACHBEARBEITUNG'] },
-        ],
-      },
-      {
-        path: '/verkauf', label: 'VERKÄUFE', icon: TrendingUp, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'SACHBEARBEITUNG'],
-        children: [
-          { path: '/verkauf/angebot/neu', label: 'Angebot erstellen', icon: FilePlus, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
-          { path: '/verkauf/angebote', label: 'Angebote', icon: FileText, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
-          { path: '/verkauf/freigabe', label: 'Freigabe', icon: CheckCircle2, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
-          { path: '/auftraege', label: 'Aufträge', icon: ClipboardList, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
-          { path: '/auftraege-at', label: 'Aufträge AT', icon: ClipboardList, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'Finanzierungen', 'FACTORY INVOICE', 'Lieferant', 'Read Only Audit', 'SACHBEARBEITUNG'] },
-          { path: '/auftraege-ch', label: 'Aufträge CH', icon: ClipboardList, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Finanzierungen', 'FACTORY INVOICE', 'Lieferant', 'Read Only Audit', 'SACHBEARBEITUNG', 'Österreich'] },
-          { path: '/verkauf/anzahlungsrechnung', label: 'Anzahlungsrechnung', icon: Receipt, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
-          { path: '/finance/rechnungen', label: 'Rechnung', icon: FileText, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
-          { path: '/verkauf/gutschriften', label: 'Gutschriften', icon: Undo2, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
-        ],
-      },
-      {
-        path: '/auftraege-gruppe', label: 'AUFTRAGS STATUS', icon: ClipboardList, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'SACHBEARBEITUNG'],
-        children: [
-          { path: '/prio-liste', label: 'Prio-Liste', icon: ListOrdered, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
-          { path: '/prio-liste/hold', label: 'Hold', icon: Pause, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
-          { path: '/anwaltsliste', label: 'Anwaltsliste', icon: Gavel, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
-          { path: '/geliefert', label: 'Auftrag geliefert', icon: Truck, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
-          { path: '/teilgeliefert', label: 'Teilgeliefert', icon: PackageCheck, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
-        ],
-      },
-    ],
-  },
-  {
-    path: '/auftragsverwaltung/bestellungen', label: 'BESTELLWESEN', icon: ShoppingCart, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'Lieferant', 'FACTORY INVOICE', 'Bestellwesen', 'SACHBEARBEITUNG'],
-    children: [
-      
-      
-      { path: '/order/frei-bestellung', label: 'Bestellung möglich', icon: CheckCircle2, roles: ['Admin', 'Super Admin', 'Order', 'SACHBEARBEITUNG'] },
-      { path: '/order/reklamation', label: 'Bestellung Reklamation', icon: AlertTriangle, roles: ['Admin', 'Super Admin', 'Order', 'SACHBEARBEITUNG'] },
-      { path: '/order', label: 'Factory Orders', icon: Factory, roles: ['Admin', 'Super Admin', 'Order', 'SACHBEARBEITUNG'] },
-      { path: '/order/freigabe', label: 'Freigabe', icon: ShieldCheck, roles: ['Admin', 'Super Admin', 'Order', 'SACHBEARBEITUNG'] },
-      { path: '/bestellwesen/ersatzteile', label: 'Ersatzteil-Bestellvorschläge', icon: Package, roles: ['Admin', 'Super Admin', 'Bestellwesen', 'Order', 'Technik', 'SACHBEARBEITUNG'] },
-      { path: '/ersatzteilmanagement', label: 'Ersatzteilmanagement', icon: Boxes, roles: ['Admin', 'Super Admin', 'Bestellwesen', 'Order', 'Technik', 'Reparaturannahme', 'Serviceleitung', 'Service', 'Finance', 'SACHBEARBEITUNG'] },
-    ],
-  },
-  {
-    path: '/production', label: 'PRODUCTION', icon: Factory, roles: ['Super Admin', 'Lieferant', 'FACTORY INVOICE'],
-    children: [
-      { path: '/production/order-in', label: 'Order In', icon: Inbox, roles: ['Super Admin', 'Lieferant', 'FACTORY INVOICE'] },
-      { path: '/production', label: 'Liste', icon: ListOrdered, roles: ['Super Admin', 'Lieferant', 'FACTORY INVOICE'] },
-      { path: '/production/fertig', label: 'Fertig', icon: CheckCircle2, roles: ['Super Admin', 'Lieferant', 'FACTORY INVOICE'] },
-      { path: '/production/factory-invoice', label: 'Factory Invoice', icon: Receipt, roles: ['Super Admin', 'FACTORY INVOICE'] },
-    ],
-  },
+
 
   {
     path: '/lagerverwaltung', label: 'LAGERVERWALTUNG', icon: Warehouse, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'SACHBEARBEITUNG'],
