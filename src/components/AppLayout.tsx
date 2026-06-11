@@ -1264,25 +1264,27 @@ export default function AppLayout() {
 
             const isRed = item.path === '/geraetesperren';
             return (
-              <Link
-                key={`${item.path}-${item.label}`}
-                to={item.path}
-                title={isCollapsedView ? item.label : undefined}
-                className={cn(
-                  "flex items-center gap-2.5 rounded-lg text-[14.5px] font-medium transition-all duration-150",
-                  isCollapsedView ? "md:px-0 md:py-2.5 md:justify-center px-3.5 py-3" : "px-3.5 py-3 md:py-2.5",
-                  isRed
-                    ? (active
-                        ? "bg-red-500/15 text-red-500 shadow-[inset_0_0_0_1px_hsl(0_84%_60%/0.4)]"
-                        : "text-red-500 hover:text-red-500 hover:bg-red-500/10")
-                    : (active
-                        ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
-                        : "text-sidebar-foreground hover:text-primary hover:bg-primary/15")
-                )}
-              >
-                <item.icon className={cn("w-5 h-5 flex-shrink-0", isRed ? "text-red-500" : (active && "text-primary"))} />
-                {!isCollapsedView && <span className="truncate">{item.label}</span>}
-              </Link>
+              <div key={`${item.path}-${item.label}`} className="group flex items-center gap-1">
+                <Link
+                  to={item.path}
+                  title={isCollapsedView ? item.label : undefined}
+                  className={cn(
+                    "flex items-center gap-2.5 rounded-lg text-[14.5px] font-medium transition-all duration-150 flex-1 min-w-0",
+                    isCollapsedView ? "md:px-0 md:py-2.5 md:justify-center px-3.5 py-3" : "px-3.5 py-3 md:py-2.5",
+                    isRed
+                      ? (active
+                          ? "bg-red-500/15 text-red-500 shadow-[inset_0_0_0_1px_hsl(0_84%_60%/0.4)]"
+                          : "text-red-500 hover:text-red-500 hover:bg-red-500/10")
+                      : (active
+                          ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
+                          : "text-sidebar-foreground hover:text-primary hover:bg-primary/15")
+                  )}
+                >
+                  <item.icon className={cn("w-5 h-5 flex-shrink-0", isRed ? "text-red-500" : (active && "text-primary"))} />
+                  {!isCollapsedView && <span className="truncate">{item.label}</span>}
+                </Link>
+                {!isCollapsedView && <FavStar path={item.path} label={item.label} />}
+              </div>
             );
           })}
         </nav>
