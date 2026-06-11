@@ -642,9 +642,8 @@ table tbody tr:hover {
 /* Liquid Glass für Karten, Popover, Dropdowns */
 .design-aurora .bg-card,
 .design-aurora [data-radix-popper-content-wrapper] > * {
-  background: linear-gradient(180deg, hsl(0 0% 100% / 0.78), hsl(220 30% 99% / 0.72)) !important;
-  backdrop-filter: blur(22px) saturate(160%);
-  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  background: linear-gradient(180deg, hsl(0 0% 100% / 0.96), hsl(220 30% 99% / 0.94)) !important;
+  /* backdrop-filter entfernt — Karten kommen pro Liste vielfach vor (Scroll-Performance) */
   border: 1px solid hsl(220 20% 100% / 0.7);
   box-shadow: var(--shadow-card);
   border-radius: calc(var(--radius) + 4px);
@@ -699,9 +698,9 @@ table tbody tr:hover {
 .design-aurora input,
 .design-aurora textarea,
 .design-aurora select {
-  background-color: hsl(0 0% 100% / 0.75);
+  background-color: hsl(0 0% 100% / 0.95);
   border-color: hsl(220 20% 88% / 0.9);
-  backdrop-filter: blur(8px);
+  /* backdrop-filter entfernt — Inputs treten pro Seite vielfach auf */
   transition: border-color 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
 }
 .design-aurora input:focus,
@@ -1035,9 +1034,8 @@ table tbody tr:hover {
   position: sticky;
   top: 0;
   z-index: 5;
-  background: linear-gradient(180deg, hsl(var(--card)) 0%, hsl(var(--card) / 0.95) 100%);
-  backdrop-filter: blur(14px) saturate(160%);
-  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  background: hsl(var(--card));
+  /* backdrop-filter entfernt — Sticky-Header trigger sonst Re-Compose bei jedem Scroll-Frame */
   box-shadow: 0 1px 0 0 hsl(var(--border));
 }
 .design-aurora.dark table thead th {
