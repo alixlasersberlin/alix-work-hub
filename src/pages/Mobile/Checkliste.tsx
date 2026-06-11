@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, ClipboardCheck, Save, Loader2 } from 'lucide-react';
 import { enqueue, flush } from '@/lib/mobile/outbox';
@@ -31,7 +32,30 @@ export default function MobileChecklist() {
     })();
   }, []);
 
+  // localStorage Draft pro Einsatz+Checkliste
+  const draftKey = selected && id ? `m_check_${id}_${selected}` : '';
+  useEffect(() => {
+    if (!draftKey) return;
+    try {
+      const raw = localStorage.getItem(draftKey);
+      if (raw) setAnswers(JSON.parse(raw));
+    } catch { /* noop */ }
+  }, [draftKey]);
+  useEffect(() => {
+    if (!draftKey) return;
+    try { localStorage.setItem(draftKey, JSON.stringify(answers)); } catch { /* noop */ }
+  }, [answers, draftKey]);
+
   const current = lists.find(l => l.id === selected);
+
+  const progress = useMemo(() => {
+    if (!current?.items?.length) return 0;
+    const filled = current.items.filter((it: any) => {
+      const v = answers[it.id];
+      return it.type === 'bool' ? v === true : (v !== undefined && String(v).trim() !== '');
+    }).length;
+    return Math.round((filled / current.items.length) * 100);
+  }, [answers, current]);
 
   const save = async () => {
     if (!current || !id) return;
@@ -50,6 +74,7 @@ export default function MobileChecklist() {
       const r = await flush();
       toast.success(`${r.ok} gespeichert`);
     } else toast.info('Offline – wird synchronisiert.');
+    if (draftKey) localStorage.removeItem(draftKey);
     setAnswers({});
     setBusy(false);
   };
@@ -76,22 +101,35 @@ export default function MobileChecklist() {
           </div>
 
           {current && (
-            <div className="space-y-3 pt-2">
-              {(current.items || []).map((it: any) => (
-                <div key={it.id} className="flex items-center justify-between gap-3">
-                  <Label className="flex-1">{it.label}</Label>
-                  {it.type === 'bool' ? (
-                    <Switch checked={!!answers[it.id]} onCheckedChange={(v) => setAnswers(a => ({ ...a, [it.id]: v }))} />
-                  ) : (
-                    <Input value={answers[it.id] ?? ''} onChange={(e) => setAnswers(a => ({ ...a, [it.id]: e.target.value }))} className="max-w-[60%]" />
-                  )}
+            <>
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Fortschritt</span><span>{progress}%</span>
                 </div>
-              ))}
-              <Button onClick={save} disabled={busy} className="w-full gold-gradient">
-                {busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                Checkliste speichern
-              </Button>
-            </div>
+                <Progress value={progress} className="h-2" />
+              </div>
+
+              <div className="space-y-3 pt-1">
+                {(current.items || []).map((it: any) => (
+                  <div key={it.id} className="flex items-center justify-between gap-3 border-b border-border pb-2">
+                    <Label className="flex-1 text-sm">{it.label}</Label>
+                    {it.type === 'bool' ? (
+                      <Switch checked={!!answers[it.id]} onCheckedChange={(v) => setAnswers(a => ({ ...a, [it.id]: v }))} />
+                    ) : (
+                      <Input
+                        value={answers[it.id] ?? ''}
+                        onChange={(e) => setAnswers(a => ({ ...a, [it.id]: e.target.value }))}
+                        className="max-w-[55%] h-9"
+                      />
+                    )}
+                  </div>
+                ))}
+                <Button onClick={save} disabled={busy} className="w-full h-12 gold-gradient">
+                  {busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-5 h-5 mr-2" />}
+                  Checkliste speichern
+                </Button>
+              </div>
+            </>
           )}
         </Card>
       )}
