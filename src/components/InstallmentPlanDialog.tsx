@@ -246,12 +246,17 @@ export default function InstallmentPlanDialog({ order }: Props) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="border-primary/30 text-primary hover:bg-primary/10">
-          <FileText className="w-4 h-4 mr-2" /> Ratenplan
-        </Button>
-      </DialogTrigger>
+    <>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="border-primary/30 text-primary hover:bg-primary/10"
+        onClick={() => setOpen(true)}
+      >
+        <FileText className="w-4 h-4 mr-2" /> Ratenplan
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="max-w-lg bg-card border-border">
         <DialogHeader>
           <DialogTitle className="font-display">Ratenplan erstellen</DialogTitle>
