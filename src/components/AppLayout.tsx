@@ -42,14 +42,6 @@ const navItems: NavItem[] = [
   },
 
   {
-    path: '/alix-smart-search', label: 'ALIX SMART SEARCH', icon: SearchCheck,
-    roles: null,
-    children: [],
-  },
-
-
-
-  {
     path: '/ai-center', label: 'ALIX AI DIENSTE', icon: Sparkles,
     roles: ['Admin', 'Super Admin', 'Geschäftsführung', 'Serviceleitung', 'Service', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance', 'Österreich', 'SACHBEARBEITUNG'],
     children: [
