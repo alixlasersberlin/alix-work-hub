@@ -931,6 +931,68 @@ export default function AppLayout() {
 
         {/* Navigation */}
         <nav className="flex-1 py-2 px-2 space-y-0.5 overflow-y-auto scroll-touch">
+          {/* Mein Arbeitsplatz – persönliche Favoriten */}
+          {(() => {
+            const isCollapsedView = collapsed && !mobileOpen;
+            const favOpen = openGroups['__favorites'] ?? true;
+            return (
+              <div className="mb-2">
+                <div
+                  className={cn(
+                    "w-full flex items-center gap-2.5 rounded-lg text-[14.5px] font-medium transition-all duration-150 bg-primary/5 text-primary",
+                    isCollapsedView ? "md:px-0 md:py-2.5 md:justify-center px-3.5 py-3" : "px-3.5 py-3 md:py-2.5"
+                  )}
+                >
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup('__favorites')}
+                    title={isCollapsedView ? 'Mein Arbeitsplatz' : undefined}
+                    className="flex items-center gap-2.5 flex-1 min-w-0"
+                  >
+                    <Briefcase className="w-5 h-5 flex-shrink-0 text-primary" />
+                    {!isCollapsedView && (
+                      <span className="truncate flex-1 text-left">
+                        MEIN ARBEITSPLATZ <span className="text-muted-foreground">({visibleFavorites.length})</span>
+                      </span>
+                    )}
+                  </button>
+                  {!isCollapsedView && (
+                    <ChevronDown className={cn("w-4 h-4 transition-transform", favOpen && "rotate-180")} />
+                  )}
+                </div>
+                {!isCollapsedView && favOpen && (
+                  <div className="mt-0.5 ml-3 pl-3 border-l border-primary/30 space-y-0.5">
+                    {visibleFavorites.length === 0 ? (
+                      <p className="px-3.5 py-2 text-[12px] text-muted-foreground italic">
+                        Markiere Menüpunkte mit dem Stern, um sie hier abzulegen.
+                      </p>
+                    ) : visibleFavorites.map(f => {
+                      const meta = allowedLeafMap.get(f.path)!;
+                      const Icon = meta.icon;
+                      const fActive = isActive(f.path);
+                      return (
+                        <div key={f.path} className="group flex items-center gap-1">
+                          <Link
+                            to={f.path}
+                            className={cn(
+                              "flex items-center gap-2.5 rounded-lg text-[14.5px] font-medium transition-all duration-150 px-3.5 py-2.5 flex-1 min-w-0",
+                              fActive
+                                ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
+                                : "text-sidebar-foreground hover:text-primary hover:bg-primary/15"
+                            )}
+                          >
+                            <Icon className={cn("w-5 h-5 flex-shrink-0", fActive && "text-primary")} />
+                            <span className="truncate">{meta.label}</span>
+                          </Link>
+                          <FavStar path={f.path} label={meta.label} />
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
           {visibleItems.map(item => {
             const active = isActive(item.path);
             const hasChildren = item.children && item.children.length > 0;
