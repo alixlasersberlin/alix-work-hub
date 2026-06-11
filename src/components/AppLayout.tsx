@@ -1237,21 +1237,23 @@ export default function AppLayout() {
                         };
                         const cColored = lagerColorMap[child.path];
                         return (
-                          <Link
-                            key={child.path}
-                            to={child.path}
-                            className={cn(
-                              "flex items-center gap-2.5 rounded-lg text-[14.5px] font-medium transition-all duration-150 px-3.5 py-3 md:py-2.5",
-                              cColored
-                                ? cActive ? cColored.active : cColored.inactive
-                                : cActive
-                                  ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
-                                  : "text-sidebar-foreground hover:text-primary hover:bg-primary/15"
-                            )}
-                          >
-                            <child.icon className={cn("w-5 h-5 flex-shrink-0", cColored ? cColored.icon : (cActive && "text-primary"))} />
-                            <span className="truncate">{labelWithCount(child.path, child.label)}</span>
-                          </Link>
+                          <div key={child.path} className="group flex items-center gap-1">
+                            <Link
+                              to={child.path}
+                              className={cn(
+                                "flex items-center gap-2.5 rounded-lg text-[14.5px] font-medium transition-all duration-150 px-3.5 py-3 md:py-2.5 flex-1 min-w-0",
+                                cColored
+                                  ? cActive ? cColored.active : cColored.inactive
+                                  : cActive
+                                    ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
+                                    : "text-sidebar-foreground hover:text-primary hover:bg-primary/15"
+                              )}
+                            >
+                              <child.icon className={cn("w-5 h-5 flex-shrink-0", cColored ? cColored.icon : (cActive && "text-primary"))} />
+                              <span className="truncate">{labelWithCount(child.path, child.label)}</span>
+                            </Link>
+                            <FavStar path={child.path} label={child.label} />
+                          </div>
                         );
                       })}
                     </div>
