@@ -9,9 +9,16 @@ import { toast } from 'sonner';
 
 export default function MobileLayout({ children }: { children?: ReactNode }) {
   const { profile, signOut } = useAuth();
+  const { template, setTemplate } = useUiTemplate();
   const [online, setOnline] = useState(navigator.onLine);
   const [pending, setPending] = useState(0);
   const [syncing, setSyncing] = useState(false);
+
+  // Mobile-Bereich ist fest auf NEO – nicht umschaltbar.
+  useEffect(() => {
+    if (template !== 'neo') setTemplate('neo');
+    document.documentElement.classList.add('theme-neo');
+  }, [template, setTemplate]);
 
   useEffect(() => {
     startAutoSync();
