@@ -70,6 +70,7 @@ const navItems: NavItem[] = [
     roles: null,
     children: [
       { path: '/detailsuche', label: 'Detailsuche', icon: SearchCheck, roles: null },
+      { path: '/auftragsstatus', label: 'Auftragsstatus', icon: Activity, roles: null },
     ],
   },
 
