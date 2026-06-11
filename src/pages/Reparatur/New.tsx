@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { notifyNewRepairOrder } from '@/lib/repair/notify';
 import { useToast } from '@/hooks/use-toast';
 import { Search } from 'lucide-react';
 
@@ -128,6 +129,14 @@ export default function ReparaturNew() {
       return;
     }
     toast({ title: 'Reparatur angelegt', description: data.repair_number });
+    notifyNewRepairOrder({
+      repair_id: data.id,
+      repair_number: data.repair_number,
+      customer_name: form.customer_name,
+      device_model: form.device_model,
+      device_serial_number: form.device_serial_number,
+      issue_description: form.issue_description,
+    }).catch(() => {});
     nav(`/reparatur/${data.id}`);
   };
 

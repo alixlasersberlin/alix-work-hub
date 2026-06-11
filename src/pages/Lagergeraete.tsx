@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Loader2, Pencil, Plus, Warehouse, Link2, X, Sparkles, Package, Search, ArrowUpDown, ArrowUp, ArrowDown, Mail, Send, PackageCheck, FileDown, FileText, Wrench } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { sbRepair } from '@/lib/repair/api';
+import { notifyNewRepairOrder } from '@/lib/repair/notify';
 import { createPDF } from '@/lib/pdf-utils';
 import autoTable from 'jspdf-autotable';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -214,6 +215,14 @@ export default function Lagergeraete({
         .eq('id', d.id);
       if (uErr) throw uErr;
       setDevices((prev) => prev.map((x) => (x.id === d.id ? { ...x, notes: newNotes } : x)));
+      notifyNewRepairOrder({
+        repair_id: rep.id,
+        repair_number: rep.repair_number,
+        customer_name: payload.customer_name,
+        device_model: payload.device_model,
+        device_serial_number: payload.device_serial_number,
+        issue_description: payload.issue_description,
+      }).catch(() => {});
       toast.success(`Reparatur ${rep.repair_number} angelegt`);
       navigate(`/reparatur/${rep.id}`);
     } catch (e: any) {
