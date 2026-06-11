@@ -1203,6 +1203,43 @@ export default function Lagergeraete({
                   rows={3}
                 />
               </div>
+              {reservedOrderId && (
+                <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-muted/30 p-3">
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <Checkbox
+                      checked={sendCustomerEmailOnSave}
+                      onCheckedChange={(v) => setSendCustomerEmailOnSave(!!v)}
+                    />
+                    Kunden-E-Mail beim Speichern senden (Status: {deviceStatus})
+                  </label>
+                  {editingId && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={sendingManualEmail}
+                      onClick={async () => {
+                        if (!reservedOrderId) return;
+                        setSendingManualEmail(true);
+                        const tplKey = deviceStatus === 'Transfer'
+                          ? 'customer_in_transit'
+                          : deviceStatus === 'Produktion'
+                            ? 'customer_in_production'
+                            : deviceStatus === 'Shell Warehouse'
+                              ? 'customer_warehouse_prepared'
+                              : 'customer_warehouse_received';
+                        const res = await sendCustomerShippingNotice(reservedOrderId, editingId, 'manuell', tplKey);
+                        setSendingManualEmail(false);
+                        if (res.ok) toast.success('Kunden-E-Mail versendet');
+                        else toast.warning('Kunden-E-Mail nicht versendet: ' + res.message);
+                      }}
+                    >
+                      {sendingManualEmail ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
+                      Jetzt senden
+                    </Button>
+                  )}
+                </div>
+              )}
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                   Abbrechen
