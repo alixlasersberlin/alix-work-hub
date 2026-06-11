@@ -15,8 +15,7 @@ export async function notifyNewRepairOrder(args: {
   issue_description?: string | null;
 }) {
   const subject = `Neue Reparatur ${args.repair_number ?? ''} angelegt`.trim();
-  const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-  const link = `${baseUrl}/reparatur/${args.repair_id}`;
+  const link = `https://www.alixwork.de/reparatur/${args.repair_id}`;
   const html = `
     <p>Es wurde ein neuer Reparaturauftrag angelegt.</p>
     <table style="border-collapse:collapse;font-size:14px">
