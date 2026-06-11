@@ -21,6 +21,8 @@ import AuroraPrioTicker from '@/components/AuroraPrioTicker';
 import AuroraTopNav from '@/components/AuroraTopNav';
 import { useDesignVariant } from '@/hooks/useDesignVariant';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
+import { useFavorites, type FavoriteEntry } from '@/hooks/useFavorites';
+import { Briefcase } from 'lucide-react';
 import alixLogo from '@/assets/alix-logo-gold.png';
 
 
@@ -468,9 +470,10 @@ export default function AppLayout() {
   const [collapsed, setCollapsed] = useState(false);
   // Mobile: Drawer offen?
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ '__favorites': true });
   const [lagerCounts, setLagerCounts] = useState<Record<string, number>>({});
   const atOnly = useAtOnly();
+  const { favorites, isFavorite, toggle: toggleFavorite } = useFavorites();
   // Desktop: flexible Sidebar-Breite (px), per Drag anpassbar, in localStorage gespeichert
   const SIDEBAR_MIN = 180;
   const SIDEBAR_MAX = 480;
@@ -821,6 +824,43 @@ export default function AppLayout() {
     // Hide groups whose children are all hidden by role
     .filter(item => !item.children || item.children.length > 0);
 
+  // Sammle alle erlaubten Leaf-Pfade (für "Mein Arbeitsplatz")
+  const allowedLeafMap = useMemo(() => {
+    const map = new Map<string, { label: string; icon: typeof LayoutDashboard }>();
+    const walk = (items: NavChild[]) => {
+      for (const it of items) {
+        if (it.children && it.children.length > 0) walk(it.children);
+        else map.set(it.path, { label: it.label, icon: it.icon });
+      }
+    };
+    walk(visibleItems as any);
+    // Auch Top-Level Leafs (ohne children) sind bereits in walk enthalten.
+    return map;
+  }, [visibleItems]);
+
+  const visibleFavorites = useMemo(
+    () => favorites.filter(f => allowedLeafMap.has(f.path)),
+    [favorites, allowedLeafMap],
+  );
+
+  const FavStar = ({ path, label }: { path: string; label: string }) => {
+    const fav = isFavorite(path);
+    return (
+      <button
+        type="button"
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite({ path, label }); }}
+        title={fav ? 'Aus „Mein Arbeitsplatz" entfernen' : 'Zu „Mein Arbeitsplatz" hinzufügen'}
+        aria-label={fav ? 'Favorit entfernen' : 'Als Favorit markieren'}
+        className={cn(
+          "shrink-0 p-1 rounded hover:bg-primary/20 transition-opacity",
+          fav ? "opacity-100 text-primary" : "opacity-0 group-hover:opacity-70 text-muted-foreground hover:text-primary"
+        )}
+      >
+        <Star className={cn("w-3.5 h-3.5", fav && "fill-primary")} />
+      </button>
+    );
+  };
+
   const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/';
     if (path === '/order') {
@@ -891,6 +931,68 @@ export default function AppLayout() {
 
         {/* Navigation */}
         <nav className="flex-1 py-2 px-2 space-y-0.5 overflow-y-auto scroll-touch">
+          {/* Mein Arbeitsplatz – persönliche Favoriten */}
+          {(() => {
+            const isCollapsedView = collapsed && !mobileOpen;
+            const favOpen = openGroups['__favorites'] ?? true;
+            return (
+              <div className="mb-2">
+                <div
+                  className={cn(
+                    "w-full flex items-center gap-2.5 rounded-lg text-[14.5px] font-medium transition-all duration-150 bg-primary/5 text-primary",
+                    isCollapsedView ? "md:px-0 md:py-2.5 md:justify-center px-3.5 py-3" : "px-3.5 py-3 md:py-2.5"
+                  )}
+                >
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup('__favorites')}
+                    title={isCollapsedView ? 'Mein Arbeitsplatz' : undefined}
+                    className="flex items-center gap-2.5 flex-1 min-w-0"
+                  >
+                    <Briefcase className="w-5 h-5 flex-shrink-0 text-primary" />
+                    {!isCollapsedView && (
+                      <span className="truncate flex-1 text-left">
+                        MEIN ARBEITSPLATZ <span className="text-muted-foreground">({visibleFavorites.length})</span>
+                      </span>
+                    )}
+                  </button>
+                  {!isCollapsedView && (
+                    <ChevronDown className={cn("w-4 h-4 transition-transform", favOpen && "rotate-180")} />
+                  )}
+                </div>
+                {!isCollapsedView && favOpen && (
+                  <div className="mt-0.5 ml-3 pl-3 border-l border-primary/30 space-y-0.5">
+                    {visibleFavorites.length === 0 ? (
+                      <p className="px-3.5 py-2 text-[12px] text-muted-foreground italic">
+                        Markiere Menüpunkte mit dem Stern, um sie hier abzulegen.
+                      </p>
+                    ) : visibleFavorites.map(f => {
+                      const meta = allowedLeafMap.get(f.path)!;
+                      const Icon = meta.icon;
+                      const fActive = isActive(f.path);
+                      return (
+                        <div key={f.path} className="group flex items-center gap-1">
+                          <Link
+                            to={f.path}
+                            className={cn(
+                              "flex items-center gap-2.5 rounded-lg text-[14.5px] font-medium transition-all duration-150 px-3.5 py-2.5 flex-1 min-w-0",
+                              fActive
+                                ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
+                                : "text-sidebar-foreground hover:text-primary hover:bg-primary/15"
+                            )}
+                          >
+                            <Icon className={cn("w-5 h-5 flex-shrink-0", fActive && "text-primary")} />
+                            <span className="truncate">{meta.label}</span>
+                          </Link>
+                          <FavStar path={f.path} label={meta.label} />
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
           {visibleItems.map(item => {
             const active = isActive(item.path);
             const hasChildren = item.children && item.children.length > 0;
@@ -1056,21 +1158,23 @@ export default function AppLayout() {
                                     };
                                     const colored = colorMap[grand.path];
                                     return (
-                                      <Link
-                                        key={grand.path}
-                                        to={grand.path}
-                                        className={cn(
-                                          "flex items-center gap-2.5 rounded-lg text-[14.5px] font-medium transition-all duration-150 px-3.5 py-3 md:py-2.5",
-                                          colored
-                                            ? gActive ? colored.active : colored.inactive
-                                            : gActive
-                                              ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
-                                              : "text-sidebar-foreground hover:text-primary hover:bg-primary/15"
-                                        )}
-                                      >
-                                        <grand.icon className={cn("w-5 h-5 flex-shrink-0", colored ? colored.icon : gActive && "text-primary")} />
-                                        <span className="truncate">{labelWithCount(grand.path, grand.label)}</span>
-                                      </Link>
+                                      <div key={grand.path} className="group flex items-center gap-1">
+                                        <Link
+                                          to={grand.path}
+                                          className={cn(
+                                            "flex items-center gap-2.5 rounded-lg text-[14.5px] font-medium transition-all duration-150 px-3.5 py-3 md:py-2.5 flex-1 min-w-0",
+                                            colored
+                                              ? gActive ? colored.active : colored.inactive
+                                              : gActive
+                                                ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
+                                                : "text-sidebar-foreground hover:text-primary hover:bg-primary/15"
+                                          )}
+                                        >
+                                          <grand.icon className={cn("w-5 h-5 flex-shrink-0", colored ? colored.icon : gActive && "text-primary")} />
+                                          <span className="truncate">{labelWithCount(grand.path, grand.label)}</span>
+                                        </Link>
+                                        <FavStar path={grand.path} label={grand.label} />
+                                      </div>
                                     );
                                   })}
                                 </div>
@@ -1133,21 +1237,23 @@ export default function AppLayout() {
                         };
                         const cColored = lagerColorMap[child.path];
                         return (
-                          <Link
-                            key={child.path}
-                            to={child.path}
-                            className={cn(
-                              "flex items-center gap-2.5 rounded-lg text-[14.5px] font-medium transition-all duration-150 px-3.5 py-3 md:py-2.5",
-                              cColored
-                                ? cActive ? cColored.active : cColored.inactive
-                                : cActive
-                                  ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
-                                  : "text-sidebar-foreground hover:text-primary hover:bg-primary/15"
-                            )}
-                          >
-                            <child.icon className={cn("w-5 h-5 flex-shrink-0", cColored ? cColored.icon : (cActive && "text-primary"))} />
-                            <span className="truncate">{labelWithCount(child.path, child.label)}</span>
-                          </Link>
+                          <div key={child.path} className="group flex items-center gap-1">
+                            <Link
+                              to={child.path}
+                              className={cn(
+                                "flex items-center gap-2.5 rounded-lg text-[14.5px] font-medium transition-all duration-150 px-3.5 py-3 md:py-2.5 flex-1 min-w-0",
+                                cColored
+                                  ? cActive ? cColored.active : cColored.inactive
+                                  : cActive
+                                    ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
+                                    : "text-sidebar-foreground hover:text-primary hover:bg-primary/15"
+                              )}
+                            >
+                              <child.icon className={cn("w-5 h-5 flex-shrink-0", cColored ? cColored.icon : (cActive && "text-primary"))} />
+                              <span className="truncate">{labelWithCount(child.path, child.label)}</span>
+                            </Link>
+                            <FavStar path={child.path} label={child.label} />
+                          </div>
                         );
                       })}
                     </div>
@@ -1158,25 +1264,27 @@ export default function AppLayout() {
 
             const isRed = item.path === '/geraetesperren';
             return (
-              <Link
-                key={`${item.path}-${item.label}`}
-                to={item.path}
-                title={isCollapsedView ? item.label : undefined}
-                className={cn(
-                  "flex items-center gap-2.5 rounded-lg text-[14.5px] font-medium transition-all duration-150",
-                  isCollapsedView ? "md:px-0 md:py-2.5 md:justify-center px-3.5 py-3" : "px-3.5 py-3 md:py-2.5",
-                  isRed
-                    ? (active
-                        ? "bg-red-500/15 text-red-500 shadow-[inset_0_0_0_1px_hsl(0_84%_60%/0.4)]"
-                        : "text-red-500 hover:text-red-500 hover:bg-red-500/10")
-                    : (active
-                        ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
-                        : "text-sidebar-foreground hover:text-primary hover:bg-primary/15")
-                )}
-              >
-                <item.icon className={cn("w-5 h-5 flex-shrink-0", isRed ? "text-red-500" : (active && "text-primary"))} />
-                {!isCollapsedView && <span className="truncate">{item.label}</span>}
-              </Link>
+              <div key={`${item.path}-${item.label}`} className="group flex items-center gap-1">
+                <Link
+                  to={item.path}
+                  title={isCollapsedView ? item.label : undefined}
+                  className={cn(
+                    "flex items-center gap-2.5 rounded-lg text-[14.5px] font-medium transition-all duration-150 flex-1 min-w-0",
+                    isCollapsedView ? "md:px-0 md:py-2.5 md:justify-center px-3.5 py-3" : "px-3.5 py-3 md:py-2.5",
+                    isRed
+                      ? (active
+                          ? "bg-red-500/15 text-red-500 shadow-[inset_0_0_0_1px_hsl(0_84%_60%/0.4)]"
+                          : "text-red-500 hover:text-red-500 hover:bg-red-500/10")
+                      : (active
+                          ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
+                          : "text-sidebar-foreground hover:text-primary hover:bg-primary/15")
+                  )}
+                >
+                  <item.icon className={cn("w-5 h-5 flex-shrink-0", isRed ? "text-red-500" : (active && "text-primary"))} />
+                  {!isCollapsedView && <span className="truncate">{item.label}</span>}
+                </Link>
+                {!isCollapsedView && <FavStar path={item.path} label={item.label} />}
+              </div>
             );
           })}
         </nav>
