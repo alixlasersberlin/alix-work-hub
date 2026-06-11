@@ -1654,6 +1654,16 @@ export default function Lagergeraete({
                     <div className="text-xs text-muted-foreground line-clamp-2 border-t border-border/50 pt-2">{d.notes}</div>
                   )}
                   <div className="flex flex-wrap justify-end gap-1 pt-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleSendToRepair(d)}
+                      disabled={sendingRepair === d.id}
+                      className={`gap-1 h-8 ${inRepair ? 'text-red-500 hover:text-red-600' : 'text-orange-500 hover:text-orange-600'}`}
+                      title={inRepair ? 'Reparatur öffnen' : 'An Reparaturannahme übergeben'}
+                    >
+                      <Wrench className="w-4 h-4" /> {inRepair ? 'Reparatur öffnen' : 'An Reparatur'}
+                    </Button>
                     {d.reserved_order_id && (
                       <Button
                         variant="ghost"
