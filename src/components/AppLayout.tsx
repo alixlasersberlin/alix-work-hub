@@ -66,6 +66,12 @@ const navItems: NavItem[] = [
   },
 
   {
+    path: '/alix-global-search', label: 'ALIX GLOBAL SEARCH', icon: Sparkles,
+    roles: null,
+    children: [],
+  },
+
+  {
     path: '/customer-care', label: 'CUSTOMER CARE', icon: HeartPulse,
     roles: null,
     children: [],
