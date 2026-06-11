@@ -55,7 +55,7 @@ const navItems: NavItem[] = [
       { path: '/aic/berichte', label: 'Berichte', icon: FileText, roles: ['Super Admin'] },
     ],
   },
-  { path: '/management-dashboard', label: 'MANAGEMENT DASHBOARD', icon: BarChart3, roles: ['Super Admin'] },
+  
   { path: '/verkauf/anzahlungsrechnung', label: 'NEUE ANZAHLUNGEN', icon: Receipt, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Tourenplanung', 'Read Only Audit', 'Read Only', 'Geschäftsführung', 'Marketing', 'Technik', 'Kundenservice', 'Vertrieb', 'Reparaturannahme', 'Bestellwesen', 'Serviceleitung', 'Service', 'QM', 'SACHBEARBEITUNG'] },
   { path: '/detailsuche', label: 'DETAILSUCHE', icon: SearchCheck, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Read Only Audit', 'SACHBEARBEITUNG'] },
   { path: '/auftragsstatus', label: 'AUFTRAGSSTATUS', icon: Activity, roles: null },
