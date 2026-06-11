@@ -1158,21 +1158,23 @@ export default function AppLayout() {
                                     };
                                     const colored = colorMap[grand.path];
                                     return (
-                                      <Link
-                                        key={grand.path}
-                                        to={grand.path}
-                                        className={cn(
-                                          "flex items-center gap-2.5 rounded-lg text-[14.5px] font-medium transition-all duration-150 px-3.5 py-3 md:py-2.5",
-                                          colored
-                                            ? gActive ? colored.active : colored.inactive
-                                            : gActive
-                                              ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
-                                              : "text-sidebar-foreground hover:text-primary hover:bg-primary/15"
-                                        )}
-                                      >
-                                        <grand.icon className={cn("w-5 h-5 flex-shrink-0", colored ? colored.icon : gActive && "text-primary")} />
-                                        <span className="truncate">{labelWithCount(grand.path, grand.label)}</span>
-                                      </Link>
+                                      <div key={grand.path} className="group flex items-center gap-1">
+                                        <Link
+                                          to={grand.path}
+                                          className={cn(
+                                            "flex items-center gap-2.5 rounded-lg text-[14.5px] font-medium transition-all duration-150 px-3.5 py-3 md:py-2.5 flex-1 min-w-0",
+                                            colored
+                                              ? gActive ? colored.active : colored.inactive
+                                              : gActive
+                                                ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
+                                                : "text-sidebar-foreground hover:text-primary hover:bg-primary/15"
+                                          )}
+                                        >
+                                          <grand.icon className={cn("w-5 h-5 flex-shrink-0", colored ? colored.icon : gActive && "text-primary")} />
+                                          <span className="truncate">{labelWithCount(grand.path, grand.label)}</span>
+                                        </Link>
+                                        <FavStar path={grand.path} label={grand.label} />
+                                      </div>
                                     );
                                   })}
                                 </div>
