@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Pencil, Plus, Warehouse, Link2, X, Sparkles, Package, Search, ArrowUpDown, ArrowUp, ArrowDown, Mail, Send, PackageCheck, FileDown, FileText } from 'lucide-react';
+import { Loader2, Pencil, Plus, Warehouse, Link2, X, Sparkles, Package, Search, ArrowUpDown, ArrowUp, ArrowDown, Mail, Send, PackageCheck, FileDown, FileText, Wrench } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { sbRepair } from '@/lib/repair/api';
 import { createPDF } from '@/lib/pdf-utils';
 import autoTable from 'jspdf-autotable';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -138,6 +140,11 @@ function parseLeihStart(notes: string | null | undefined): string {
   return m?.[1]?.trim() ?? '';
 }
 
+function parseRepairId(notes: string | null | undefined): string | null {
+  const m = /\[Reparatur:\s*([^\]]+)\]/.exec(notes ?? '');
+  return m?.[1]?.trim() ?? null;
+}
+
 export default function Lagergeraete({
   filterType,
   filterStatuses,
@@ -149,7 +156,73 @@ export default function Lagergeraete({
   pageIcon,
   rowAccentClass,
 }: LagerDevicesPageProps = {}) {
-  const { isAdmin, hasRole } = useAuth();
+  const { isAdmin, hasRole, user } = useAuth();
+  const navigate = useNavigate();
+  const [sendingRepair, setSendingRepair] = useState<string | null>(null);
+
+  const handleSendToRepair = async (d: LagerDevice) => {
+    if (parseRepairId(d.notes)) {
+      const rid = parseRepairId(d.notes)!;
+      navigate(`/reparatur/${rid}`);
+      return;
+    }
+    if (!confirm(`Gerät ${d.serial_number} an Reparaturannahme übergeben und neue Reparatur anlegen?`)) return;
+    setSendingRepair(d.id);
+    try {
+      const kunde = parseLeihKunde(d.notes);
+      let customer: any = null;
+      if (kunde.id) {
+        const { data: c } = await supabase
+          .from('customers')
+          .select('id,company_name,contact_name,email,phone,billing_street,billing_zip,billing_city,billing_country')
+          .eq('id', kunde.id)
+          .maybeSingle();
+        customer = c;
+      }
+      const payload: any = {
+        customer_id: customer?.id ?? null,
+        customer_name: customer?.company_name || customer?.contact_name || kunde.name || 'Leihgerät-Kunde',
+        customer_company: customer?.company_name ?? null,
+        customer_contact: customer?.contact_name ?? null,
+        customer_email: customer?.email ?? null,
+        customer_phone: customer?.phone ?? null,
+        address_street: customer?.billing_street ?? null,
+        address_zip: customer?.billing_zip ?? null,
+        address_city: customer?.billing_city ?? null,
+        address_country: customer?.billing_country ?? null,
+        priority: 'normal',
+        device_model: d.model_name,
+        device_serial_number: d.serial_number,
+        issue_description: `Übergabe von Leihgerät ${d.serial_number} (${d.model_name}) an Reparaturannahme.`,
+        customer_error_description: `Übergabe von Leihgerät ${d.serial_number} (${d.model_name}) an Reparaturannahme.`,
+        internal_notes: `Quelle: Leihgerät · Lager-ID ${d.id}`,
+        repair_status: 'Neu',
+        created_by: user?.id,
+        updated_by: user?.id,
+      };
+      const { data: rep, error } = await sbRepair
+        .from('repair_orders')
+        .insert(payload)
+        .select('id,repair_number')
+        .single();
+      if (error) throw error;
+      const cleaned = (d.notes ?? '').replace(/\[Reparatur:\s*[^\]]+\]/g, '').trim();
+      const newNotes = `${cleaned} [Reparatur: ${rep.id}]`.trim();
+      const { error: uErr } = await supabase
+        .from('lager_devices')
+        .update({ notes: newNotes })
+        .eq('id', d.id);
+      if (uErr) throw uErr;
+      setDevices((prev) => prev.map((x) => (x.id === d.id ? { ...x, notes: newNotes } : x)));
+      toast.success(`Reparatur ${rep.repair_number} angelegt`);
+      navigate(`/reparatur/${rep.id}`);
+    } catch (e: any) {
+      toast.error('Übergabe fehlgeschlagen: ' + (e?.message || 'Unbekannter Fehler'));
+    } finally {
+      setSendingRepair(null);
+    }
+  };
+
   const canReserve = isAdmin || hasRole('Order');
   const [devices, setDevices] = useState<LagerDevice[]>([]);
   const [loading, setLoading] = useState(true);
