@@ -31,7 +31,16 @@ type NavChild = { path: string; label: string; icon: typeof LayoutDashboard; rol
 type NavItem = NavChild & { children?: NavChild[] };
 
 const navItems: NavItem[] = [
-  { path: '/', label: 'DASHBOARD', icon: LayoutDashboard, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Read Only Audit', 'Österreich'] },
+  {
+    path: '/', label: 'DASHBOARDS', icon: LayoutDashboard,
+    roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Read Only Audit', 'Österreich'],
+    children: [
+      { path: '/', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Read Only Audit', 'Österreich'] },
+      { path: '/management-dashboard', label: 'Management Dashboard', icon: BarChart3, roles: ['Super Admin'] },
+      { path: '/konzern/dashboard', label: 'Konzern-Dashboard', icon: TrendingUp, roles: ['Super Admin'] },
+    ],
+  },
+
   {
     path: '/aic', label: 'ALIX INTELLIGENCE', icon: Brain, roles: ['Super Admin'],
     children: [
