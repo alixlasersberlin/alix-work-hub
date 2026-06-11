@@ -834,8 +834,8 @@ export default function Lagergeraete({
       }
     }
 
-    // Notify customer when an order is freshly assigned to a device
-    if (finalReservedOrderId && finalReservedOrderId !== originalReservedOrderId) {
+    // Manueller Kunden-E-Mail-Versand (nur wenn explizit angehakt)
+    if (sendCustomerEmailOnSave && finalReservedOrderId) {
       const tplKey = deviceStatus === 'Transfer'
         ? 'customer_in_transit'
         : deviceStatus === 'Produktion'
@@ -843,7 +843,7 @@ export default function Lagergeraete({
           : deviceStatus === 'Shell Warehouse'
             ? 'customer_warehouse_prepared'
             : 'customer_warehouse_received';
-      const res = await sendCustomerShippingNotice(finalReservedOrderId, editingId ?? undefined, 'automatisch', tplKey);
+      const res = await sendCustomerShippingNotice(finalReservedOrderId, editingId ?? undefined, 'manuell', tplKey);
       if (res.ok) toast.success('Kunden-E-Mail versendet');
       else toast.warning('Kunden-E-Mail nicht versendet: ' + res.message);
     }
