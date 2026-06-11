@@ -824,6 +824,43 @@ export default function AppLayout() {
     // Hide groups whose children are all hidden by role
     .filter(item => !item.children || item.children.length > 0);
 
+  // Sammle alle erlaubten Leaf-Pfade (für "Mein Arbeitsplatz")
+  const allowedLeafMap = useMemo(() => {
+    const map = new Map<string, { label: string; icon: typeof LayoutDashboard }>();
+    const walk = (items: NavChild[]) => {
+      for (const it of items) {
+        if (it.children && it.children.length > 0) walk(it.children);
+        else map.set(it.path, { label: it.label, icon: it.icon });
+      }
+    };
+    walk(visibleItems as any);
+    // Auch Top-Level Leafs (ohne children) sind bereits in walk enthalten.
+    return map;
+  }, [visibleItems]);
+
+  const visibleFavorites = useMemo(
+    () => favorites.filter(f => allowedLeafMap.has(f.path)),
+    [favorites, allowedLeafMap],
+  );
+
+  const FavStar = ({ path, label }: { path: string; label: string }) => {
+    const fav = isFavorite(path);
+    return (
+      <button
+        type="button"
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite({ path, label }); }}
+        title={fav ? 'Aus „Mein Arbeitsplatz" entfernen' : 'Zu „Mein Arbeitsplatz" hinzufügen'}
+        aria-label={fav ? 'Favorit entfernen' : 'Als Favorit markieren'}
+        className={cn(
+          "shrink-0 p-1 rounded hover:bg-primary/20 transition-opacity",
+          fav ? "opacity-100 text-primary" : "opacity-0 group-hover:opacity-70 text-muted-foreground hover:text-primary"
+        )}
+      >
+        <Star className={cn("w-3.5 h-3.5", fav && "fill-primary")} />
+      </button>
+    );
+  };
+
   const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/';
     if (path === '/order') {
