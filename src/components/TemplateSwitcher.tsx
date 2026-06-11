@@ -1,11 +1,16 @@
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import { useUiTemplate } from "@/hooks/useUiTemplate";
 import { Sparkles, Check } from "lucide-react";
 
 /** Schwebender Live-Switch für das Design-Template (sichtbar in jeder Seite). */
 export default function TemplateSwitcher() {
   const { template, setTemplate } = useUiTemplate();
+  const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
+
+  // Mobile-Bereich (/m/*) ist fest auf NEO — kein Switcher.
+  if (pathname === "/m" || pathname.startsWith("/m/")) return null;
 
   return (
     <div className="fixed bottom-5 right-5 z-[100] print:hidden">

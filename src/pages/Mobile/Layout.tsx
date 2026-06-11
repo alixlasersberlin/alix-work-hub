@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet } from 'react-router-dom';
 import { Home, CalendarDays, RefreshCw, Wifi, WifiOff, LogOut, User } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { startAutoSync, flush, list as outboxList } from '@/lib/mobile/outbox';
+import { useUiTemplate } from '@/hooks/useUiTemplate';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
