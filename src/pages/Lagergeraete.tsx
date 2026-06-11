@@ -214,6 +214,14 @@ export default function Lagergeraete({
         .eq('id', d.id);
       if (uErr) throw uErr;
       setDevices((prev) => prev.map((x) => (x.id === d.id ? { ...x, notes: newNotes } : x)));
+      notifyNewRepairOrder({
+        repair_id: rep.id,
+        repair_number: rep.repair_number,
+        customer_name: payload.customer_name,
+        device_model: payload.device_model,
+        device_serial_number: payload.device_serial_number,
+        issue_description: payload.issue_description,
+      }).catch(() => {});
       toast.success(`Reparatur ${rep.repair_number} angelegt`);
       navigate(`/reparatur/${rep.id}`);
     } catch (e: any) {
