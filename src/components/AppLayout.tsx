@@ -423,6 +423,13 @@ const navItems: NavItem[] = [
 
 
   {
+    path: '/mdr-ce', label: 'MDR CE & ISO 13485', icon: ShieldCheck, roles: null,
+    children: [
+      
+      { path: '/iso', label: 'ISO Audit Center', icon: ShieldCheck, roles: ['Super Admin', 'Admin', 'QM'] },
+    ],
+  },
+  {
     path: '/operation', label: 'OPERATIONS', icon: Workflow, roles: ['Super Admin'],
     children: [
       { path: '/mailcenter/executive', label: 'Executive Dashboard', icon: TrendingUp, roles: ['Super Admin'] },
@@ -443,13 +450,6 @@ const navItems: NavItem[] = [
       { path: '/tickets/api-sync', label: 'API Sync Einstellungen', icon: Settings, roles: ['Super Admin'] },
       { path: '/mandanten', label: 'Mandanten', icon: Building2, roles: ['Super Admin'] },
       { path: '/konzern/dashboard', label: 'Konzern-Dashboard', icon: TrendingUp, roles: ['Super Admin'] },
-    ],
-  },
-  {
-    path: '/mdr-ce', label: 'MDR CE & ISO 13485', icon: ShieldCheck, roles: null,
-    children: [
-      
-      { path: '/iso', label: 'ISO Audit Center', icon: ShieldCheck, roles: ['Super Admin', 'Admin', 'QM'] },
     ],
   },
 
