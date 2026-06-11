@@ -66,6 +66,14 @@ const navItems: NavItem[] = [
   },
 
   {
+    path: '/customer-care', label: 'CUSTOMER CARE', icon: HeartPulse,
+    roles: null,
+    children: [],
+  },
+
+
+
+  {
     path: '/auftragsverwaltung', label: 'ORDER MANAGEMENT', icon: ClipboardList,
     roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'Lieferant', 'FACTORY INVOICE', 'Bestellwesen', 'Read Only Audit', 'Read Only', 'Geschäftsführung', 'Marketing', 'Technik', 'Kundenservice', 'Vertrieb', 'Reparaturannahme', 'Serviceleitung', 'Service', 'QM', 'SACHBEARBEITUNG'],
     children: [
