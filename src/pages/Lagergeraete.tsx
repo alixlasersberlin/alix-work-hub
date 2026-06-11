@@ -1596,11 +1596,22 @@ export default function Lagergeraete({
           <div className="grid gap-3 p-3 sm:grid-cols-2 xl:grid-cols-3">
             {filteredDevices.map((d) => {
               const s = getStatusFromNotes(d.notes);
+              const inRepair = parseRepairId(d.notes);
+              const cardClass = inRepair
+                ? 'bg-red-500/15 border-red-500/60'
+                : d.reserved_order_id
+                  ? 'bg-yellow-500/10'
+                  : 'bg-card';
               return (
                 <div
                   key={d.id}
-                  className={`rounded-lg border border-border p-3 space-y-2 hover:border-primary/40 transition-colors ${d.reserved_order_id ? 'bg-yellow-500/10' : 'bg-card'}`}
+                  className={`rounded-lg border border-border p-3 space-y-2 hover:border-primary/40 transition-colors ${cardClass}`}
                 >
+                  {inRepair && (
+                    <div className="-mx-3 -mt-3 mb-1 px-3 py-1.5 bg-red-600 text-white text-xs font-bold tracking-wide rounded-t-lg flex items-center gap-1.5 animate-pulse">
+                      <Wrench className="w-3.5 h-3.5" /> IN REPARATUR
+                    </div>
+                  )}
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <div className="font-mono text-sm font-semibold truncate">{d.serial_number}</div>
