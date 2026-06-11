@@ -42,24 +42,34 @@ const navItems: NavItem[] = [
   },
 
   {
-    path: '/aic', label: 'ALIX INTELLIGENCE', icon: Brain, roles: ['Super Admin'],
+    path: '/ai-center', label: 'ALIX AI DIENSTE', icon: Sparkles,
+    roles: ['Admin', 'Super Admin', 'Geschäftsführung', 'Serviceleitung', 'Service', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance', 'Österreich', 'SACHBEARBEITUNG'],
     children: [
-      { path: '/aic', label: 'Dashboard', icon: LayoutDashboard, roles: ['Super Admin'] },
-      { path: '/aic/unternehmen', label: 'Unternehmen', icon: Building2, roles: ['Super Admin'] },
-      { path: '/aic/forderungen', label: 'Forderungen', icon: AlertOctagon, roles: ['Super Admin'] },
-      { path: '/aic/vertrieb', label: 'Vertrieb', icon: TrendingUp, roles: ['Super Admin'] },
-      { path: '/aic/service', label: 'Service', icon: Wrench, roles: ['Super Admin'] },
-      { path: '/aic/mitarbeiter', label: 'Mitarbeiter', icon: Users, roles: ['Super Admin'] },
-      { path: '/aic/forecasts', label: 'Forecasts', icon: LineChart, roles: ['Super Admin'] },
-      { path: '/aic/tasks', label: 'KI-Aufgaben', icon: ListChecks, roles: ['Super Admin'] },
-      { path: '/aic/berichte', label: 'Berichte', icon: FileText, roles: ['Super Admin'] },
+      { path: '/ai-center', label: 'AI Center', icon: Sparkles, roles: ['Admin', 'Super Admin', 'Geschäftsführung', 'Serviceleitung', 'Service', 'Technik', 'Finance', 'Österreich'] },
+      { path: '/ai-service-center', label: 'AI Service Center', icon: Sparkles, roles: ['Admin', 'Super Admin', 'Service', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance', 'SACHBEARBEITUNG'] },
+      { path: '/finance/ai-insights', label: 'KI-Analyse (Finance)', icon: Sparkles, roles: ['Admin', 'Super Admin', 'Finance', 'Geschäftsführung'] },
+      {
+        path: '/aic', label: 'Alix Intelligence', icon: Brain, roles: ['Super Admin'],
+        children: [
+          { path: '/aic', label: 'Dashboard', icon: LayoutDashboard, roles: ['Super Admin'] },
+          { path: '/aic/unternehmen', label: 'Unternehmen', icon: Building2, roles: ['Super Admin'] },
+          { path: '/aic/forderungen', label: 'Forderungen', icon: AlertOctagon, roles: ['Super Admin'] },
+          { path: '/aic/vertrieb', label: 'Vertrieb', icon: TrendingUp, roles: ['Super Admin'] },
+          { path: '/aic/service', label: 'Service', icon: Wrench, roles: ['Super Admin'] },
+          { path: '/aic/mitarbeiter', label: 'Mitarbeiter', icon: Users, roles: ['Super Admin'] },
+          { path: '/aic/forecasts', label: 'Forecasts', icon: LineChart, roles: ['Super Admin'] },
+          { path: '/aic/tasks', label: 'KI-Aufgaben', icon: ListChecks, roles: ['Super Admin'] },
+          { path: '/aic/berichte', label: 'Berichte', icon: FileText, roles: ['Super Admin'] },
+        ],
+      },
     ],
   },
+
   
   { path: '/verkauf/anzahlungsrechnung', label: 'NEUE ANZAHLUNGEN', icon: Receipt, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Tourenplanung', 'Read Only Audit', 'Read Only', 'Geschäftsführung', 'Marketing', 'Technik', 'Kundenservice', 'Vertrieb', 'Reparaturannahme', 'Bestellwesen', 'Serviceleitung', 'Service', 'QM', 'SACHBEARBEITUNG'] },
   { path: '/detailsuche', label: 'DETAILSUCHE', icon: SearchCheck, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Read Only Audit', 'SACHBEARBEITUNG'] },
   { path: '/auftragsstatus', label: 'AUFTRAGSSTATUS', icon: Activity, roles: null },
-  { path: '/ai-center', label: 'AI CENTER', icon: Sparkles, roles: ['Admin', 'Super Admin', 'Geschäftsführung', 'Serviceleitung', 'Service', 'Technik', 'Finance', 'Österreich'] },
+  
   { path: '/geraetesperren', label: 'GERÄTESPERREN', icon: Lock, roles: null },
   {
     path: '/mailcenter', label: 'ALIX i-COM', icon: Mail,
