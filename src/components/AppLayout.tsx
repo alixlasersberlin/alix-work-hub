@@ -287,6 +287,12 @@ const navItems: NavItem[] = [
   },
 
   {
+    path: '/warehouse-logistics', label: 'WAREHOUSE & LOGISTICS', icon: Warehouse,
+    roles: null,
+    children: [],
+  },
+
+  {
     path: '/finance', label: 'FINANCE & CONTROLLING', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance', 'Finanzierungen', 'Order'],
     children: [
       // ── Übersicht ─────────────────────────────────────────────
