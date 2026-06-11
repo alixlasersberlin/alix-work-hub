@@ -17,6 +17,7 @@ export default function MobileSignatur() {
   const [role, setRole] = useState('customer');
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
+  const [hasInk, setHasInk] = useState(false);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -27,14 +28,16 @@ export default function MobileSignatur() {
       c.height = c.offsetHeight * ratio;
       c.getContext('2d')?.scale(ratio, ratio);
       padRef.current?.clear();
+      setHasInk(false);
     };
-    padRef.current = new SignaturePad(c, { backgroundColor: 'rgba(255,255,255,0)', penColor: '#fff' });
+    padRef.current = new SignaturePad(c, { backgroundColor: 'rgba(255,255,255,0)', penColor: 'hsl(var(--foreground))' });
+    padRef.current.addEventListener('endStroke', () => setHasInk(!padRef.current?.isEmpty()));
     resize();
     window.addEventListener('resize', resize);
     return () => window.removeEventListener('resize', resize);
   }, []);
 
-  const clear = () => padRef.current?.clear();
+  const clear = () => { padRef.current?.clear(); setHasInk(false); };
 
   const save = async () => {
     if (!padRef.current || padRef.current.isEmpty()) { toast.error('Bitte unterschreiben.'); return; }
@@ -53,9 +56,10 @@ export default function MobileSignatur() {
       const r = await flush();
       toast.success(`${r.ok} gespeichert`);
     } else {
-      toast.info('Offline: wird beim nächsten Sync übermittelt.');
+      toast.info('Offline – wird beim nächsten Sync übermittelt.');
     }
     padRef.current.clear();
+    setHasInk(false);
     setName('');
     setBusy(false);
   };
@@ -84,12 +88,19 @@ export default function MobileSignatur() {
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Unterzeichner" />
           </div>
         </div>
-        <div className="rounded-md border border-border bg-secondary/40">
+        <div className="rounded-md border border-border bg-secondary/40 relative">
           <canvas ref={canvasRef} className="w-full h-56 touch-none" />
+          {!hasInk && (
+            <div className="absolute inset-0 grid place-items-center pointer-events-none text-xs text-muted-foreground">
+              hier unterschreiben
+            </div>
+          )}
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={clear} className="flex-1"><Eraser className="w-4 h-4 mr-1" /> löschen</Button>
-          <Button onClick={save} disabled={busy} className="flex-1 gold-gradient">
+          <Button variant="outline" onClick={clear} disabled={!hasInk} className="flex-1 h-11">
+            <Eraser className="w-4 h-4 mr-1" /> löschen
+          </Button>
+          <Button onClick={save} disabled={busy || !hasInk} className="flex-1 h-11 gold-gradient">
             {busy ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
             speichern
           </Button>
