@@ -653,6 +653,7 @@ export default function Lagergeraete({
     setLeihCustomerName('');
     setLeihShotCount('');
     setLeihStart('');
+    setSendCustomerEmailOnSave(false);
   };
 
   const openEdit = (d: LagerDevice) => {
