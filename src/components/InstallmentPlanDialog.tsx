@@ -324,5 +324,6 @@ export default function InstallmentPlanDialog({ order }: Props) {
         </div>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
