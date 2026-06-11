@@ -129,6 +129,14 @@ export default function ReparaturNew() {
       return;
     }
     toast({ title: 'Reparatur angelegt', description: data.repair_number });
+    notifyNewRepairOrder({
+      repair_id: data.id,
+      repair_number: data.repair_number,
+      customer_name: form.customer_name,
+      device_model: form.device_model,
+      device_serial_number: form.device_serial_number,
+      issue_description: form.issue_description,
+    }).catch(() => {});
     nav(`/reparatur/${data.id}`);
   };
 
