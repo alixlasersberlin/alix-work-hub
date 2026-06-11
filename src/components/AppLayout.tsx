@@ -31,7 +31,16 @@ type NavChild = { path: string; label: string; icon: typeof LayoutDashboard; rol
 type NavItem = NavChild & { children?: NavChild[] };
 
 const navItems: NavItem[] = [
-  { path: '/', label: 'DASHBOARD', icon: LayoutDashboard, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Read Only Audit', 'Österreich'] },
+  {
+    path: '/', label: 'DASHBOARDS', icon: LayoutDashboard,
+    roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Read Only Audit', 'Österreich'],
+    children: [
+      { path: '/', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Read Only Audit', 'Österreich'] },
+      { path: '/management-dashboard', label: 'Management Dashboard', icon: BarChart3, roles: ['Super Admin'] },
+      { path: '/konzern/dashboard', label: 'Konzern-Dashboard', icon: TrendingUp, roles: ['Super Admin'] },
+    ],
+  },
+
   {
     path: '/aic', label: 'ALIX INTELLIGENCE', icon: Brain, roles: ['Super Admin'],
     children: [
@@ -46,7 +55,7 @@ const navItems: NavItem[] = [
       { path: '/aic/berichte', label: 'Berichte', icon: FileText, roles: ['Super Admin'] },
     ],
   },
-  { path: '/management-dashboard', label: 'MANAGEMENT DASHBOARD', icon: BarChart3, roles: ['Super Admin'] },
+  
   { path: '/verkauf/anzahlungsrechnung', label: 'NEUE ANZAHLUNGEN', icon: Receipt, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Tourenplanung', 'Read Only Audit', 'Read Only', 'Geschäftsführung', 'Marketing', 'Technik', 'Kundenservice', 'Vertrieb', 'Reparaturannahme', 'Bestellwesen', 'Serviceleitung', 'Service', 'QM', 'SACHBEARBEITUNG'] },
   { path: '/detailsuche', label: 'DETAILSUCHE', icon: SearchCheck, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Read Only Audit', 'SACHBEARBEITUNG'] },
   { path: '/auftragsstatus', label: 'AUFTRAGSSTATUS', icon: Activity, roles: null },
