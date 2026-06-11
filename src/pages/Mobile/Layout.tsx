@@ -3,14 +3,22 @@ import { Link, NavLink, Outlet } from 'react-router-dom';
 import { Home, CalendarDays, RefreshCw, Wifi, WifiOff, LogOut, User } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { startAutoSync, flush, list as outboxList } from '@/lib/mobile/outbox';
+import { useUiTemplate } from '@/hooks/useUiTemplate';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
 export default function MobileLayout({ children }: { children?: ReactNode }) {
   const { profile, signOut } = useAuth();
+  const { template, setTemplate } = useUiTemplate();
   const [online, setOnline] = useState(navigator.onLine);
   const [pending, setPending] = useState(0);
   const [syncing, setSyncing] = useState(false);
+
+  // Mobile-Bereich ist fest auf NEO – nicht umschaltbar.
+  useEffect(() => {
+    if (template !== 'neo') setTemplate('neo');
+    document.documentElement.classList.add('theme-neo');
+  }, [template, setTemplate]);
 
   useEffect(() => {
     startAutoSync();
