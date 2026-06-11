@@ -289,7 +289,10 @@ const navItems: NavItem[] = [
   {
     path: '/warehouse-logistics', label: 'WAREHOUSE & LOGISTICS', icon: Warehouse,
     roles: null,
-    children: [],
+    children: [
+      { path: '/lagerverwaltung', label: 'Lagerverwaltung', icon: Warehouse, roles: null },
+      { path: '/tourenplanung', label: 'Tourenplanung', icon: MapPin, roles: null },
+    ],
   },
 
   {
