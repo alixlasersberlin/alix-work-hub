@@ -1840,7 +1840,11 @@ export default function Lagergeraete({
                         )}
                       </TableCell>
                       <TableCell>
-                        {(() => {
+                        {inRepair ? (
+                          <Badge className="bg-red-600 text-white border border-red-700 hover:bg-red-600 animate-pulse font-bold tracking-wide">
+                            <Wrench className="w-3 h-3 mr-1" /> IN REPARATUR
+                          </Badge>
+                        ) : (() => {
                           const s = getStatusFromNotes(d.notes);
                           return <StatusBadge status={s} className={s === 'Transfer' ? 'bg-red-500/15 text-red-500 border-red-500/40 animate-pulse' : undefined} />;
                         })()}
@@ -1850,18 +1854,16 @@ export default function Lagergeraete({
                   )}
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
-                      {filterType === 'Leihgerät' && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleSendToRepair(d)}
-                          disabled={sendingRepair === d.id}
-                          className={`gap-1 ${inRepair ? 'text-red-500 hover:text-red-600' : 'text-orange-500 hover:text-orange-600'}`}
-                          title={inRepair ? 'Reparatur öffnen' : 'An Reparaturannahme übergeben'}
-                        >
-                          <Wrench className="w-4 h-4" /> {inRepair ? 'Reparatur öffnen' : 'An Reparatur'}
-                        </Button>
-                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleSendToRepair(d)}
+                        disabled={sendingRepair === d.id}
+                        className={`gap-1 ${inRepair ? 'text-red-500 hover:text-red-600' : 'text-orange-500 hover:text-orange-600'}`}
+                        title={inRepair ? 'Reparatur öffnen' : 'An Reparaturannahme übergeben'}
+                      >
+                        <Wrench className="w-4 h-4" /> {inRepair ? 'Reparatur öffnen' : 'An Reparatur'}
+                      </Button>
                       {d.reserved_order_id && (
                         <Button
                           variant="ghost"
