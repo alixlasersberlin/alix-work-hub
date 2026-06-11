@@ -470,9 +470,10 @@ export default function AppLayout() {
   const [collapsed, setCollapsed] = useState(false);
   // Mobile: Drawer offen?
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ '__favorites': true });
   const [lagerCounts, setLagerCounts] = useState<Record<string, number>>({});
   const atOnly = useAtOnly();
+  const { favorites, isFavorite, toggle: toggleFavorite } = useFavorites();
   // Desktop: flexible Sidebar-Breite (px), per Drag anpassbar, in localStorage gespeichert
   const SIDEBAR_MIN = 180;
   const SIDEBAR_MAX = 480;
