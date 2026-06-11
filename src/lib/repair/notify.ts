@@ -1,10 +1,11 @@
 import { supabase } from '@/integrations/supabase/client';
 
+const REPAIR_NOTIFY_BLOCKLIST = new Set(['homebln@icloud.com']);
 const REPAIR_NOTIFY_RECIPIENTS = [
   'jh@alix-operation.de',
   's.galushchak@alix-operation.de',
   'k.trinh@alix-operation.de',
-];
+].filter((e) => !REPAIR_NOTIFY_BLOCKLIST.has(e.toLowerCase()));
 
 export async function notifyNewRepairOrder(args: {
   repair_id: string;
