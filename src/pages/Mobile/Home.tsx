@@ -22,7 +22,7 @@ interface Tour {
   check_out_at?: string | null;
 }
 
-function isSameDay(a?: string | null, b?: Date = new Date()) {
+function isSameDay(a?: string | null, b: Date = new Date()) {
   if (!a) return false;
   const d = new Date(a);
   return d.getFullYear() === b.getFullYear() && d.getMonth() === b.getMonth() && d.getDate() === b.getDate();
