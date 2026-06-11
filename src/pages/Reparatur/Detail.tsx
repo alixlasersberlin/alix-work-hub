@@ -270,7 +270,7 @@ function AnnahmeTab({ repair, canEdit, onSave }: any) {
             customer_error_description: f.customer_error_description,
             issue_description: f.customer_error_description || f.issue_description,
             internal_notes: f.internal_notes,
-          })}>Speichern</Button>
+          }, { closeAfter: true })}>Speichern & schließen</Button>
         </div>
       )}
     </Card>
