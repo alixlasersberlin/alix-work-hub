@@ -54,10 +54,19 @@ export default function ReparaturDetail() {
 
   useEffect(() => { load(); }, [load]);
 
-  const updateRepair = async (patch: any) => {
+  const nav = useNavigate();
+  const updateRepair = async (patch: any, opts?: { closeAfter?: boolean }) => {
     const { error } = await sbRepair.from('repair_orders').update(patch).eq('id', id);
-    if (error) toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
-    else load();
+    if (error) {
+      toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: 'Gespeichert', description: 'Reparaturauftrag aktualisiert.' });
+    if (opts?.closeAfter) {
+      nav('/reparatur/auftraege');
+    } else {
+      load();
+    }
   };
 
   if (loading) return <Card className="p-8 text-center text-muted-foreground">Lade…</Card>;
