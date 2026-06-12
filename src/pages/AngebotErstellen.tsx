@@ -45,7 +45,7 @@ export default function AngebotErstellen() {
   const [lines, setLines] = useState<LineItem[]>([newLine()]);
 
   // Zahlungsberechnung
-  const [payType, setPayType] = useState<'Ratenzahlung' | 'Leasing' | 'Mietkauf' | 'Alix Flex'>('Ratenzahlung');
+  const [payType, setPayType] = useState<'Direktkauf' | 'Ratenzahlung' | 'Leasing' | 'Mietkauf' | 'Alix Flex'>('Direktkauf');
   const [payPrice, setPayPrice] = useState<string>('');
   const [payDown, setPayDown] = useState<string>('');
   const [payTerm, setPayTerm] = useState<number>(24);
@@ -801,6 +801,7 @@ export default function AngebotErstellen() {
           <Select value={payType} onValueChange={(v: any) => setPayType(v)}>
             <SelectTrigger className="w-48 bg-secondary border-border"><SelectValue /></SelectTrigger>
             <SelectContent>
+              <SelectItem value="Direktkauf">Direktkauf</SelectItem>
               <SelectItem value="Ratenzahlung">Ratenzahlung</SelectItem>
               <SelectItem value="Leasing">Leasing</SelectItem>
               <SelectItem value="Mietkauf">Mietkauf</SelectItem>
@@ -854,15 +855,27 @@ export default function AngebotErstellen() {
 
         <div className="flex justify-end pt-2 border-t border-border">
           <div className="text-right">
-            <div className="text-xs text-muted-foreground">Monatliche Rate ({payType})</div>
-            <div className="text-2xl font-bold text-primary">
-              {(() => {
-                const base = Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0));
-                const rate = payTerm > 0 ? base / payTerm : 0;
-                return fmtMoney(rate);
-              })()}
-            </div>
-            <div className="text-xs text-muted-foreground mt-1">über {payTerm} Monate</div>
+            {payType === 'Direktkauf' ? (
+              <>
+                <div className="text-xs text-muted-foreground">Zu zahlen ({payType})</div>
+                <div className="text-2xl font-bold text-primary">
+                  {fmtMoney(Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0)))}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">Einmalzahlung</div>
+              </>
+            ) : (
+              <>
+                <div className="text-xs text-muted-foreground">Monatliche Rate ({payType})</div>
+                <div className="text-2xl font-bold text-primary">
+                  {(() => {
+                    const base = Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0));
+                    const rate = payTerm > 0 ? base / payTerm : 0;
+                    return fmtMoney(rate);
+                  })()}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">über {payTerm} Monate</div>
+              </>
+            )}
           </div>
         </div>
       </div>
