@@ -93,12 +93,13 @@ export default function AngebotErstellen() {
   }, [customers, customerSearch]);
 
   const filteredItems = useMemo(() => {
-    const q = itemSearch.toLowerCase();
+    const q = itemSearch.toLowerCase().trim();
     if (!q) return items.slice(0, 30);
     return items.filter(i =>
       i.name?.toLowerCase().includes(q) ||
-      i.sku?.toLowerCase().includes(q)
-    ).slice(0, 30);
+      i.sku?.toLowerCase().includes(q) ||
+      i.description?.toLowerCase().includes(q)
+    );
   }, [items, itemSearch]);
 
   const selectedCustomer = customers.find(c => c.id === customerId);
