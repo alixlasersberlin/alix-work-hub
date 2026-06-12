@@ -1317,10 +1317,10 @@ export default function AngebotErstellen() {
         <Button
           variant="outline"
           className="gap-2 border-border"
-          onClick={() => toast.info('Signatur-Funktion folgt in Kürze')}
+          onClick={sendForSignature}
         >
           <Pencil className="w-4 h-4" />
-          Signieren
+          Mit Alix Sign zur Unterschrift senden
         </Button>
         <Button onClick={generatePDF} className="gold-gradient text-primary-foreground gap-2">
           <FileDown className="w-4 h-4" />
