@@ -139,6 +139,7 @@ export default function AlixSignPublic() {
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return toast.error('Bitte gültige E-Mail-Adresse eingeben');
     if (!city.trim()) return toast.error('Bitte Ort eingeben');
     if (!chkOffer || !chkSign) return toast.error('Bitte allen Zustimmungen zustimmen');
+    if (requiresCredit && !chkCredit) return toast.error('Bei Finanzierung/Mietkauf bitte Bonitäts- und Identitätsprüfung zustimmen');
     if (!hasInk.current) return toast.error('Bitte zuerst unterschreiben');
 
     setSubmitting(true);
@@ -258,6 +259,9 @@ export default function AlixSignPublic() {
           <div className="space-y-2 pt-2">
             <label className="flex items-start gap-3 cursor-pointer"><Checkbox checked={chkOffer} onCheckedChange={v => setChkOffer(v === true)} className="mt-0.5" /><span className="text-sm text-slate-700">Ich habe das Angebot gelesen und nehme es verbindlich an.</span></label>
             <label className="flex items-start gap-3 cursor-pointer"><Checkbox checked={chkSign} onCheckedChange={v => setChkSign(v === true)} className="mt-0.5" /><span className="text-sm text-slate-700">Ich bin mit der elektronischen Signatur über Alix Sign einverstanden.</span></label>
+            {requiresCredit && (
+              <label className="flex items-start gap-3 cursor-pointer"><Checkbox checked={chkCredit} onCheckedChange={v => setChkCredit(v === true)} className="mt-0.5" /><span className="text-sm text-slate-700">Ich bin mit einer Bonitäts- und Identitätsprüfung einverstanden.</span></label>
+            )}
 
           </div>
 
