@@ -115,11 +115,18 @@ export default function SalesLeadsList() {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <Inbox className="h-6 w-6 text-primary" />
-        <div>
-          <h1 className="text-2xl font-semibold">Anfragen</h1>
-          <p className="text-sm text-muted-foreground">Importierte Vertriebsanfragen (Zoho Forms)</p>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-3">
+          <Inbox className="h-6 w-6 text-primary" />
+          <div>
+            <h1 className="text-2xl font-semibold">Verkaufsanfragen</h1>
+            <p className="text-sm text-muted-foreground">Leads aus Zoho Forms, Website, Telefon, WhatsApp und API</p>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link to="/verkauf/anfragen/dashboard" className="px-3 py-1.5 text-sm rounded border border-border hover:bg-muted/30">Dashboard</Link>
+          <Link to="/verkauf/anfragen/import" className="px-3 py-1.5 text-sm rounded border border-border hover:bg-muted/30">CSV-Import</Link>
+          <Link to="/verkauf/anfragen/neu" className="px-3 py-1.5 text-sm rounded bg-primary text-primary-foreground hover:opacity-90">+ Neue Anfrage</Link>
         </div>
       </div>
 
