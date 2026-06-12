@@ -1,89 +1,94 @@
+# AlixWork Mega Design System 2026 — Umsetzungsplan
 
-# AlixWork Premium Visual Upgrade
-
-Reines visuelles Upgrade + Accessibility-Schriftgrößensteuerung. **Keine** Änderung an Datenflüssen, Supabase, RLS, Rollen, Routen, Formularen, Menüs oder Workflows.
-
-Vorgehen ist additiv: bestehendes Theme bleibt erhalten und wird über CSS-Variablen veredelt. Vorherige Versuche (3D Beta / Aurora Ultra / Neo Template) wurden vom User explizit deaktiviert — diese werden **nicht** reaktiviert.
+Reines additives Visual-/UX-Upgrade. **Keine** Änderung an Supabase, RLS, Routen, Formularen, Workflows, API-Calls oder Businesslogik. Bestehende Komponenten erben den neuen Look automatisch über CSS-Variablen + opt-in Modi-Klassen am `<html>`.
 
 ---
 
-## 1. Globales Theme-System (additiv)
+## 1. Experience Mode Switcher (Kernstück)
 
-**`src/index.css`** erweitern (keine bestehenden Tokens entfernen):
-- Premium-Farbpalette für **Light** (Weiß / Soft-Silver / Alix-Blau) und **Dark** (Tiefschwarz / Anthrazit / Alix-Blau / Cyan / dezente Gold-Akzente).
-- Neue Utility-Tokens: `--shadow-glass`, `--shadow-glow`, `--gradient-premium`, `--ring-premium`, `--surface-glass`, `--border-glass`.
-- Neue Utility-Klassen: `.glass-card`, `.glass-panel`, `.premium-button`, `.kpi-tile`, `.slide-in`, `.fade-in-card`, `.tilt-3d`, `.shimmer-skeleton`.
-- `prefers-reduced-motion`-Guards für alle Animationen.
-- Smooth Color-Transitions (`transition: background-color/color/border-color 200ms`) auf `html, body` für Theme-Switch ohne Flackern.
+Neuer Hook `src/hooks/useExperienceMode.tsx` mit drei Modi:
 
-## 2. Light/Dark-Mode Schalter (echtes Toggle)
+- `classic` → keinerlei zusätzliche Effekte (heutiger Zustand, garantiert unverändert)
+- `premium` → Glassmorphism, Premium Cards, sanfte Animationen, modernisierter Header/Sidebar
+- `mega` → alles aus Premium **plus** 3D-Tiefenebenen, Dynamic Lighting, Mission-Control-KPIs, animierte Statusindikatoren
 
-- `src/hooks/useTheme.tsx`: aktuelles Hard-Lock auf `light` aufheben — wieder echtes Toggle Light/Dark mit `localStorage("app-theme")`. Default: `light`. Anti-Flicker-Boot-Script in `index.html` (`<script>` vor `<body>` setzt `html.class` aus localStorage).
-- Neue Komponente `src/components/ThemeToggle.tsx`: Premium-Toggle mit Sonne/Mond, Glassmorphism-Style, `aria-label`, i18n.
-- Einbau im Header (`AppLayout.tsx`) neben bestehender Navigation, ohne andere Elemente zu entfernen.
+Setzt `data-experience="classic|premium|mega"` auf `<html>` + `localStorage("alix-experience")`. Anti-Flicker-Boot-Script in `index.html`.
 
-## 3. Schriftgrößen-Steuerung (Accessibility)
+Neue Komponente `src/components/ExperienceModeSwitcher.tsx` — Glass-Karte unten links in der Sidebar mit ✨-Icon, drei Optionen, Live-Preview ohne Reload, integrierter Download-Button für den Premium-Background.
 
-- Neuer Hook `src/hooks/useFontScale.tsx` mit Stufen: `sm 0.9` · `md 1.0` · `lg 1.15` · `xl 1.3` · `a11y 1.5`.
-- Setzt `--font-scale` auf `<html>` + Persistenz `localStorage("font-scale")` + Boot-Script gegen Flicker.
-- `index.css`: `html { font-size: calc(16px * var(--font-scale, 1)); }` — alle `rem`-basierten Tailwind-Größen skalieren automatisch (Buttons, Inputs, Cards, Tables, Modals).
-- Neue Komponente `src/components/FontScaleSwitcher.tsx`: A− / A / A+ / A++ / ♿ als Glass-Popover, im Header neben ThemeToggle.
+Einbau in `AppLayout.tsx` Sidebar-Footer (existierender Bereich, keine Strukturänderung).
 
-## 4. Premium Background (global)
+## 2. Light / Dark Mode (echtes Toggle)
 
-- Generierung `public/backgrounds/alixwork-premium-background.webp` (1920×1080, dezent, dunkle + helle Variante via CSS-Overlay), erstellt mit `imagegen` (standard quality).
-- Einbindung global in `src/index.css` über `body::before` als `position: fixed; inset:0; z-index:-1;` mit Overlay-Gradient pro Theme — Inhalte bleiben lesbar (Cards behalten opaken Hintergrund).
-- Download-Button in **Einstellungen → Design** (neuer kleiner Abschnitt auf vorhandener Settings-/Operation-Seite, keine neue Route nötig). Direkter `<a href="/backgrounds/alixwork-premium-background.webp" download>` — beeinflusst keine bestehende Funktion.
+`src/hooks/useTheme.tsx` reaktivieren: echtes Light/Dark mit `localStorage("app-theme")`, Default `light` (kein Bruch für Bestandsuser). Toggle-Button in `DisplaySettingsMenu` (bereits im Header vorhanden) — Sonne/Mond mit i18n-`aria-label`. Anti-Flicker-Boot-Script in `index.html` ergänzen.
 
-## 5. Mehrsprachigkeit (additiv)
+Dark-Tokens werden in `src/index.css` rebalanced (Tiefschwarz / Anthrazit / Alix-Blau / Cyan / dezente Gold-Akzente).
 
-- **Hinweis**: Das Projekt hat aktuell nur `src/i18n/wizard.ts` (nur Public-Wizard, 7 Sprachen). Es existiert **kein** globales i18n-Framework im Backend.
-- **Pragmatischer Ansatz**: Neue UI-Komponenten (Theme/FontScale/Download-Button) erhalten Texte über eine kleine, lokale `t()`-Funktion in `src/i18n/ui.ts` mit Sprachen DE/EN/FR/ES/IT/TR/AR/VI. Sprache wird aus `navigator.language` + `localStorage("ui-lang")` ermittelt.
-- RTL-Support für AR über `html[dir="rtl"]` automatisch gesetzt, wenn Sprache `ar`.
-- Keys: `theme.light`, `theme.dark`, `display.fontSize`, `display.small`, `display.normal`, `display.large`, `display.xlarge`, `display.a11y`, `design.downloadBackground`, `design.premiumDesign`, `display.settings`.
-- **Bestehende deutschsprachige UI bleibt unverändert** — nur die neuen Controls sind sprachfähig.
+## 3. Schriftgrößen-Steuerung (bereits vorhanden — bestätigen)
 
-## 6. Dezente Effekte (opt-in pro Komponente)
+`useFontScale` ist live. Stufen Small/Normal/Large/XLarge/A11y bleiben. Im `DisplaySettingsMenu` neben dem neuen Theme-Toggle weiterhin sichtbar.
 
-- Page-Transition: `<main>` in `AppLayout` bekommt `.slide-in` (CSS-only, ~200ms).
-- `card-glow` (bereits vorhanden) wird im Light/Dark passend rebalanced.
-- Hover-Lift auf KPI-Karten via neuer `.kpi-tile`-Klasse — bestehende Tiles können diese **optional** annehmen (nicht erzwungen).
+## 4. Globales Theme + Effekte (CSS-only, modi-gated)
+
+`src/index.css` erweitern (rein additiv, alte Tokens bleiben):
+
+- Neue Tokens: `--shadow-glass`, `--shadow-glow`, `--gradient-premium`, `--gradient-mega`, `--ring-premium`, `--surface-glass`, `--border-glass`, `--alix-gold`, `--alix-blue`
+- Utility-Klassen: `.glass-card`, `.glass-panel`, `.premium-button`, `.kpi-tile`, `.slide-in`, `.fade-in-card`, `.tilt-3d`, `.shimmer-skeleton`, `.glow-hover`, `.depth-layer-1/2/3`
+- Modi-Gating: Effekte greifen nur unter `html[data-experience="premium"]` bzw. `html[data-experience="mega"]`. Unter `classic` ist die Ausgabe **byte-identisch** zu heute.
+- `prefers-reduced-motion` deaktiviert alle Animationen
+- Smooth Color-Transitions auf `html, body` für Theme-Switch ohne Flackern
+
+## 5. Premium Background
+
+Generierung `public/backgrounds/alixwork-premium-background.jpg` (1920×1080, dunkle Variante mit Schwarz/Anthrazit/Alix-Blau/Gold, dezente Tech-Linien + Weltkarten-Andeutung). Light-Variante `…-light.jpg`.
+
+Einbindung in `index.css` via `body::before` (fixed, z-index -1, Overlay-Gradient pro Theme). **Nur** unter Premium/Mega aktiv — Classic bleibt unberührt. Cards behalten opaken Hintergrund für Lesbarkeit.
+
+Download-Button im Experience-Mode-Switcher: direkter `<a href="…" download>`.
+
+## 6. Mehrsprachigkeit
+
+`src/i18n/ui.ts` (bereits vorhanden) erweitert um Keys für: `experience.title`, `experience.classic`, `experience.premium`, `experience.mega`, `experience.download`, `theme.toggle`. Sprachen DE/EN/FR/ES/IT/TR/AR/VI. RTL via `html[dir="rtl"]` automatisch bei `ar`. Bestehende deutschsprachige UI bleibt unverändert.
 
 ## 7. Was **nicht** angefasst wird
 
-- `TemplateSwitcher`, `DesignVariantSwitcher` (bleiben deaktiviert wie vom User gewünscht).
-- Sidebar/AppLayout-**Struktur**, Routen, `App.tsx`-Routing.
-- PDF-Generatoren, Edge Functions, Supabase Client, RLS, Rollen-Hooks.
-- Bestehende Seiten/Komponenten werden **nicht** umgeschrieben — sie erben den neuen Look automatisch über Theme-Variablen.
+- `TemplateSwitcher`, `DesignVariantSwitcher` (bleiben deaktiviert wie vom User gewünscht)
+- `App.tsx`-Routing, Seiten-Logik, Sidebar-Struktur (nur Footer-Bereich erhält den Switcher)
+- PDF-Generatoren, Edge Functions, Supabase Client, RLS, Rollen-Hooks
+- Keine Tabellen-/Form-Komponenten werden umgeschrieben — sie erben Premium/Mega-Look über Tokens
 
 ---
 
-## Geänderte / neue Dateien
+## Neue / geänderte Dateien
 
 **Neu:**
-- `src/hooks/useFontScale.tsx`
-- `src/components/ThemeToggle.tsx`
-- `src/components/FontScaleSwitcher.tsx`
-- `src/components/DisplaySettingsMenu.tsx` (Wrapper: Theme + FontScale + BG-Download in einem Glass-Popover)
-- `src/i18n/ui.ts`
-- `public/backgrounds/alixwork-premium-background.webp`
+- `src/hooks/useExperienceMode.tsx`
+- `src/components/ExperienceModeSwitcher.tsx`
+- `public/backgrounds/alixwork-premium-background.jpg` (dark)
+- `public/backgrounds/alixwork-premium-background-light.jpg`
 
-**Editiert (rein additiv):**
-- `src/index.css` — neue Tokens, Glass-Utilities, BG, Font-Scale-Variable, Smooth-Transitions
-- `src/hooks/useTheme.tsx` — echtes Light/Dark-Toggle reaktivieren
-- `src/components/AppLayout.tsx` — `DisplaySettingsMenu` im Header einhängen
-- `index.html` — Anti-Flicker-Boot-Script für Theme + Font-Scale
+**Editiert (additiv, modi-gegated):**
+- `src/index.css` — neue Tokens, Glass/Mega-Utilities, Background, Smooth-Transitions; alles hinter `data-experience`
+- `src/hooks/useTheme.tsx` — echtes Light/Dark-Toggle
+- `src/components/AppLayout.tsx` — `ExperienceModeSwitcher` unten in der Sidebar einhängen
+- `src/components/DisplaySettingsMenu.tsx` — Theme-Toggle aktivieren
+- `src/i18n/ui.ts` — neue Keys + 8 Sprachen
+- `index.html` — Anti-Flicker-Boot-Script (Theme + Experience + FontScale)
 
 ---
 
 ## Risiken & Mitigation
 
-- **Dark-Mode reaktivieren** könnte Komponenten betreffen, die seit dem White-Lock auf `light` optimiert wurden. → Mitigation: Default bleibt `light`; User wählt aktiv Dark.
-- **Font-Scale > 1.3** kann in dichten Tabellen Spalten brechen. → `a11y`-Stufe explizit als "Accessibility" gelabelt; Tables behalten `overflow-x-auto`.
-- **Background** kann auf langsamen Geräten stören. → WebP, einmalig geladen, `position: fixed`, kein Parallax-JS.
+- **Classic muss byte-identisch bleiben** → alle neuen Styles strikt hinter `html[data-experience="premium"]` / `="mega"`-Selektoren; Default ist `classic`
+- **Dark Mode** könnte Komponenten betreffen, die seit dem White-Lock auf `light` optimiert wurden → Default bleibt `light`; User wählt aktiv Dark
+- **Mega-Effekte auf langsamen Geräten** → CSS-only (keine WebGL/Canvas), `prefers-reduced-motion` Guards, Background als statisches JPG mit `position:fixed`
+- **Font-Scale > 1.3 in dichten Tabellen** → bestehender `overflow-x-auto` greift; A11y-Stufe explizit gelabelt
 
 ---
 
-## Offene Frage
+## Offene Fragen
 
-Soll der **Dark Mode wirklich wieder aktivierbar** sein? Du hattest zuvor das Standard-Template auf reines Weiß/Grau festgelegt. Ohne Dark Mode kann ich Light-Only lassen und nur den Font-Scale-Switcher + Premium-Background + Download liefern. Bitte kurz bestätigen, dann setze ich um.
+1. **Default-Modus für Bestandsuser?** Vorschlag: `classic` (kein User merkt einen Unterschied, bis er aktiv wechselt). Alternativ: `premium`.
+2. **Mega-Mode Background-Variante:** dunkel mit Weltkarte + Goldlinien wie beschrieben — ok so, oder soll ich mehrere Varianten zur Auswahl generieren?
+
+Bitte kurz bestätigen, dann setze ich um.

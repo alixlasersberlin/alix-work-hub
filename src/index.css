@@ -1160,3 +1160,255 @@ table tbody tr:hover {
   color: hsl(var(--gold, 43 65% 53%));
 }
 
+
+/* =====================================================
+   ALIXWORK MEGA DESIGN SYSTEM 2026
+   - Light/Dark Mode (real toggle)
+   - Experience Modes: classic | premium | mega
+   - All effects strictly gated to keep `classic` byte-identical
+   ===================================================== */
+
+/* ---- Real Dark Mode tokens (only when html.dark) ---- */
+html.dark {
+  --background: 222 18% 7%;
+  --foreground: 210 20% 96%;
+
+  --card: 222 16% 11%;
+  --card-foreground: 210 20% 96%;
+
+  --popover: 222 16% 11%;
+  --popover-foreground: 210 20% 96%;
+
+  --primary: 217 92% 60%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 222 14% 16%;
+  --secondary-foreground: 210 20% 96%;
+
+  --muted: 222 14% 14%;
+  --muted-foreground: 215 15% 65%;
+
+  --accent: 222 14% 18%;
+  --accent-foreground: 210 20% 96%;
+
+  --destructive: 0 70% 55%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 222 14% 20%;
+  --input: 222 14% 18%;
+  --ring: 217 92% 60%;
+
+  --gold: 43 78% 58%;
+  --gold-light: 43 90% 70%;
+  --gold-dark: 38 60% 40%;
+  --gold-muted: 43 30% 22%;
+
+  --surface-1: 222 16% 11%;
+  --surface-2: 222 16% 9%;
+  --surface-3: 222 16% 13%;
+
+  --sidebar-background: 222 18% 8%;
+  --sidebar-foreground: 210 20% 92%;
+  --sidebar-primary: 217 92% 60%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 222 16% 14%;
+  --sidebar-accent-foreground: 210 20% 96%;
+  --sidebar-border: 222 14% 18%;
+  --sidebar-ring: 217 92% 60%;
+
+  --neu-light: 222 18% 14%;
+  --neu-dark: 222 30% 3%;
+
+  --shadow-neu:
+    8px 8px 24px -6px hsl(var(--neu-dark) / 0.75),
+    -4px -4px 14px -8px hsl(var(--neu-light) / 0.6);
+  --shadow-neu-sm:
+    4px 4px 12px -3px hsl(var(--neu-dark) / 0.65),
+    -2px -2px 8px -4px hsl(var(--neu-light) / 0.45);
+  --shadow-neu-inset:
+    inset 4px 4px 10px -3px hsl(var(--neu-dark) / 0.65),
+    inset -3px -3px 8px -4px hsl(var(--neu-light) / 0.45);
+  --shadow-card: var(--shadow-neu-sm);
+  --shadow-gold: 0 8px 28px -8px hsl(var(--gold) / 0.35);
+}
+html.dark body { color: hsl(210 20% 92%); }
+html.dark h1, html.dark h2, html.dark h3, html.dark h4, html.dark h5, html.dark h6 { color: hsl(210 30% 98%); }
+
+/* Smooth theme transition */
+html, body, [data-experience] {
+  transition: background-color 220ms ease, color 220ms ease, border-color 220ms ease;
+}
+
+/* ---- Premium/Mega shared design tokens ---- */
+html[data-experience="premium"], html[data-experience="mega"] {
+  --alix-blue: 217 92% 56%;
+  --alix-blue-glow: 200 100% 65%;
+  --alix-gold: 43 78% 58%;
+  --surface-glass: 0 0% 100% / 0.55;
+  --border-glass: 220 14% 70% / 0.35;
+  --shadow-glass: 0 10px 40px -12px hsl(220 30% 20% / 0.18);
+  --shadow-glow: 0 0 32px -4px hsl(var(--alix-blue) / 0.35);
+  --gradient-premium: linear-gradient(135deg, hsl(var(--alix-blue) / 0.12), hsl(var(--alix-gold) / 0.08));
+  --gradient-mega: radial-gradient(800px 400px at 0% 0%, hsl(var(--alix-blue) / 0.18) 0%, transparent 55%),
+                   radial-gradient(700px 400px at 100% 100%, hsl(var(--alix-gold) / 0.10) 0%, transparent 60%);
+  --ring-premium: 0 0 0 2px hsl(var(--alix-blue) / 0.35);
+}
+html.dark[data-experience="premium"], html.dark[data-experience="mega"] {
+  --surface-glass: 222 18% 12% / 0.55;
+  --border-glass: 217 30% 50% / 0.30;
+  --shadow-glass: 0 10px 40px -12px hsl(220 80% 4% / 0.55);
+}
+
+/* ---- Background swap: dark variant for dark theme ---- */
+html.dark body::before {
+  background:
+    linear-gradient(180deg, hsla(222,22%,5%,0.85) 0%, hsla(222,22%,5%,0.92) 100%),
+    url('/backgrounds/alixwork-premium-background.jpg') center center / cover no-repeat;
+}
+html.light body::before,
+html:not(.dark) body::before {
+  background:
+    linear-gradient(180deg, hsla(0,0%,100%,0.78) 0%, hsla(220,14%,96%,0.86) 100%),
+    url('/backgrounds/alixwork-premium-background-light.jpg') center center / cover no-repeat;
+}
+
+/* ---- Experience: PREMIUM ---- */
+html[data-experience="premium"] .card,
+html[data-experience="premium"] .card-glow,
+html[data-experience="premium"] [data-slot="card"] {
+  backdrop-filter: blur(10px) saturate(1.05);
+  -webkit-backdrop-filter: blur(10px) saturate(1.05);
+  background: hsl(var(--card) / 0.85);
+  border: 1px solid hsl(var(--border) / 0.7);
+  box-shadow: var(--shadow-glass), var(--shadow-neu-sm);
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+html[data-experience="premium"] .card-glow:hover,
+html[data-experience="premium"] [data-slot="card"]:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-glass), 0 6px 24px -10px hsl(var(--alix-blue) / 0.30);
+}
+html[data-experience="premium"] button,
+html[data-experience="premium"] a[href] {
+  transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease, color 180ms ease;
+}
+html[data-experience="premium"] header {
+  backdrop-filter: blur(14px) saturate(1.1);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  background: hsl(var(--card) / 0.78);
+}
+html[data-experience="premium"] aside {
+  background: hsl(var(--sidebar-background) / 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+html[data-experience="premium"] main > * {
+  animation: alix-fade-up 320ms ease both;
+}
+
+/* ---- Experience: MEGA (premium + extra depth & motion) ---- */
+html[data-experience="mega"] body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--gradient-mega);
+  mix-blend-mode: screen;
+  opacity: 0.7;
+}
+html.dark[data-experience="mega"] body::after { opacity: 0.55; }
+
+html[data-experience="mega"] .card,
+html[data-experience="mega"] .card-glow,
+html[data-experience="mega"] [data-slot="card"] {
+  backdrop-filter: blur(16px) saturate(1.15);
+  -webkit-backdrop-filter: blur(16px) saturate(1.15);
+  background: hsl(var(--card) / 0.78);
+  border: 1px solid hsl(var(--border) / 0.55);
+  box-shadow:
+    0 20px 60px -20px hsl(var(--alix-blue) / 0.25),
+    0 8px 24px -12px hsl(var(--alix-gold) / 0.15),
+    inset 0 1px 0 hsl(0 0% 100% / 0.08);
+  border-radius: calc(var(--radius) + 2px);
+  transform: translateZ(0);
+  transition: transform 280ms cubic-bezier(.2,.8,.2,1), box-shadow 280ms ease;
+}
+html[data-experience="mega"] .card-glow:hover,
+html[data-experience="mega"] [data-slot="card"]:hover {
+  transform: translateY(-3px) scale(1.005);
+  box-shadow:
+    0 28px 70px -20px hsl(var(--alix-blue) / 0.40),
+    0 10px 30px -12px hsl(var(--alix-gold) / 0.25);
+}
+html[data-experience="mega"] header {
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  background: hsl(var(--card) / 0.65);
+  border-bottom-color: hsl(var(--alix-blue) / 0.25);
+}
+html[data-experience="mega"] aside {
+  background: hsl(var(--sidebar-background) / 0.72);
+  backdrop-filter: blur(18px) saturate(1.15);
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
+  border-right-color: hsl(var(--alix-blue) / 0.2);
+}
+html[data-experience="mega"] aside a,
+html[data-experience="mega"] aside button {
+  transition: background-color 200ms ease, color 200ms ease, box-shadow 200ms ease, transform 200ms ease;
+}
+html[data-experience="mega"] aside a:hover,
+html[data-experience="mega"] aside button:hover {
+  box-shadow: inset 2px 0 0 hsl(var(--alix-blue) / 0.8),
+              0 0 18px -6px hsl(var(--alix-blue) / 0.45);
+}
+html[data-experience="mega"] table thead,
+html[data-experience="mega"] [data-slot="table-header"] {
+  position: sticky;
+  top: 0;
+  background: hsl(var(--card) / 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 2;
+}
+html[data-experience="mega"] main > * {
+  animation: alix-mega-in 380ms cubic-bezier(.2,.8,.2,1) both;
+}
+
+@keyframes alix-fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes alix-mega-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.995); filter: blur(4px); }
+  to   { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+
+/* Reduced motion: disable all extra animations */
+@media (prefers-reduced-motion: reduce) {
+  html[data-experience="premium"] main > *,
+  html[data-experience="mega"] main > *,
+  html[data-experience="premium"] .card-glow,
+  html[data-experience="mega"] .card-glow {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Utility classes (opt-in) */
+.glass-card {
+  background: hsl(var(--card) / 0.7);
+  border: 1px solid hsl(var(--border) / 0.6);
+  backdrop-filter: blur(12px) saturate(1.1);
+  -webkit-backdrop-filter: blur(12px) saturate(1.1);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-glass, var(--shadow-neu-sm));
+}
+.glow-hover { transition: box-shadow 220ms ease, transform 220ms ease; }
+.glow-hover:hover {
+  box-shadow: 0 0 24px -4px hsl(var(--alix-blue, 217 92% 56%) / 0.35);
+  transform: translateY(-1px);
+}
+.slide-in { animation: alix-fade-up 280ms ease both; }
+.kpi-tile { transition: transform 220ms ease, box-shadow 220ms ease; }
+.kpi-tile:hover { transform: translateY(-2px); }
