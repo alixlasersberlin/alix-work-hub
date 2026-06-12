@@ -314,6 +314,36 @@ Deno.serve(async (req) => {
     });
   } catch { /* ignore */ }
 
+  // Bestätigungs-Email an den Anfragenden (BCC an homebln@icloud.com)
+  try {
+    await supabase.functions.invoke("send-transactional-email", {
+      body: {
+        templateName: "sales-wizard-confirmation",
+        recipientEmail: input.email,
+        idempotencyKey: `sales-wizard-${lead.id}`,
+        extraCc: ["homebln@icloud.com"],
+        skipDefaultCopies: true,
+        templateData: {
+          first_name: input.first_name,
+          last_name: input.last_name,
+          company: input.company,
+          email: input.email,
+          phone: input.phone,
+          country_code: input.country_code,
+          interests: input.interests,
+          additional_interests: input.additional_interests,
+          delivery_preference: input.delivery_preference,
+          consultation_type: input.consultation_type,
+          notes: input.notes,
+          service_rating: input.service_rating,
+        },
+      },
+    });
+  } catch (e) {
+    console.warn("confirmation email failed", e);
+  }
+
+
   return Response.json(
     { ok: true, lead_id: lead.id, score: ai.score, category: ai.category },
     { headers: corsHeaders },
