@@ -580,6 +580,7 @@ export default function AngebotErstellen() {
     offerDate,
     validUntil,
     notes,
+    includeAppendix,
     customer: selectedCustomer ? {
       id: selectedCustomer.id,
       company_name: selectedCustomer.company_name,
