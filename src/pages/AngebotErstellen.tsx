@@ -1272,7 +1272,19 @@ export default function AngebotErstellen() {
           rows={4}
           className="bg-secondary border-border"
         />
+        <label className="flex items-start gap-3 pt-2 cursor-pointer select-none">
+          <Checkbox
+            checked={includeAppendix}
+            onCheckedChange={(v) => setIncludeAppendix(v === true)}
+            className="mt-0.5"
+          />
+          <span className="text-sm">
+            <span className="font-medium text-foreground">Anhang „Alix Smart KI Erfolgspaket" am Ende des PDFs anfügen</span>
+            <span className="block text-xs text-muted-foreground">Leistungsübersicht, Vorteile sowie Bonitäts- und Identitätshinweis</span>
+          </span>
+        </label>
       </div>
+
 
       <div className="flex flex-wrap justify-end gap-3 pt-2">
         <Button
