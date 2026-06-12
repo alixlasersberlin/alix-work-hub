@@ -737,6 +737,9 @@ export default function AngebotErstellen() {
                         onChange={e => updateLine(l.id, { rate: Number(e.target.value) })}
                         className="bg-secondary border-border h-8"
                       />
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        {Number(l.tax_percentage) > 0 ? 'inkl. MwSt' : 'netto'}
+                      </p>
                     </td>
                     <td className="p-2">
                       <Input
