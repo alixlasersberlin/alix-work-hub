@@ -586,6 +586,7 @@ export default function AngebotErstellen() {
                 );
               })()}
             </div>
+            )}
           </div>
         ) : (
           <>
