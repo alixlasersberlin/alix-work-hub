@@ -1378,7 +1378,16 @@ export default function AppLayout() {
             </Button>
             <DesignVariantSwitcher inline />
           </div>
-          {/* ExperienceModeSwitcher deaktiviert – nur Classic-Design aktiv */}
+          {!collapsed && (
+            <div className="px-2 pb-2">
+              <ExperienceModeSwitcher />
+            </div>
+          )}
+          {collapsed && (
+            <div className="px-2 pb-2">
+              <ExperienceModeSwitcher collapsed />
+            </div>
+          )}
         </div>
         {/* Resize-Handle (nur Desktop, wenn nicht eingeklappt) */}
         {!collapsed && (

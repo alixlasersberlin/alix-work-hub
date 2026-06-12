@@ -22,18 +22,19 @@ function apply(mode: ExperienceMode) {
 }
 
 export function ExperienceModeProvider({ children }: { children: ReactNode }) {
-  // Premium/Mega-Modi deaktiviert – System läuft ausschließlich im Classic-Design.
-  const [mode, setModeState] = useState<ExperienceMode>('classic');
+  const [mode, setModeState] = useState<ExperienceMode>(() => {
+    try { return parse(localStorage.getItem(STORAGE_KEY)); } catch { return 'classic'; }
+  });
 
   useEffect(() => {
-    apply('classic');
-    try { localStorage.setItem(STORAGE_KEY, 'classic'); } catch { /* ignore */ }
+    apply(mode);
+    try { localStorage.setItem(STORAGE_KEY, mode); } catch { /* ignore */ }
   }, [mode]);
 
-  const setMode = useCallback((_m: ExperienceMode) => setModeState('classic'), []);
+  const setMode = useCallback((m: ExperienceMode) => setModeState(m), []);
 
   return (
-    <ExperienceCtx.Provider value={{ mode: 'classic', setMode }}>
+    <ExperienceCtx.Provider value={{ mode, setMode }}>
       {children}
     </ExperienceCtx.Provider>
   );
@@ -43,7 +44,7 @@ export const useExperienceMode = () => useContext(ExperienceCtx);
 
 export function bootExperienceMode() {
   try {
-    apply('classic');
-    if (typeof localStorage !== 'undefined') localStorage.setItem(STORAGE_KEY, 'classic');
+    const m = parse(typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : null);
+    apply(m);
   } catch { /* ignore */ }
 }
