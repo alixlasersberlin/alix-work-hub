@@ -3,10 +3,11 @@ import { useCallback, useEffect, useState } from "react";
 export type UiTemplate = "standard" | "neo";
 const KEY = "alixwork.ui_template";
 
-function apply(t: UiTemplate) {
+function apply(_t: UiTemplate) {
+  // ALIXWORK NEO wurde auf das Standard-Template angeglichen.
+  // Die theme-neo Klasse wird daher nie mehr gesetzt, unabhängig von der Auswahl.
   const el = document.documentElement;
-  if (t === "neo") el.classList.add("theme-neo");
-  else el.classList.remove("theme-neo");
+  el.classList.remove("theme-neo");
 }
 
 export function getCurrentUiTemplate(): UiTemplate {
