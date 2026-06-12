@@ -107,7 +107,8 @@ export default function SalesLeadsList() {
       if (source !== 'alle' && r.source !== source) return false;
       if (!q) return true;
       return [
-        r.company, r.first_name, r.last_name, r.email, r.phone, r.requested_products, r.form_name,
+        r.lead_number, r.company, r.first_name, r.last_name, r.email, r.phone,
+        r.requested_products, r.form_name, r.device_category, r.customer_goal,
       ].some((v) => v?.toLowerCase().includes(q));
     });
   }, [rows, search, status, source]);
