@@ -250,9 +250,15 @@ export default function SalesLeadDetail() {
             <Field label="Land" value={lead.country} />
             <Field label="Quelle / Formular" value={lead.form_name || lead.source} />
             <Field label="Externe ID" value={lead.external_id} />
+            <Field label="Leadnummer" value={lead.lead_number} />
             <Field label="Importdatum" value={new Date(lead.created_at).toLocaleString('de-DE')} />
+            <Field label="Geräteklasse" value={lead.device_category} />
+            <Field label="Umsetzungszeitraum" value={lead.implementation_period} />
+            <Field label="Bewertung" value={lead.service_rating ? `${lead.service_rating} / 5` : null} />
+            <Field label="Kundenziel" value={lead.customer_goal} />
+            <div className="md:col-span-2"><Field label="Zusatzleistungen" value={(Array.isArray(lead.additional_services) ? lead.additional_services : []).join(', ') || null} /></div>
             <div className="md:col-span-2"><Field label="Produktinteresse" value={lead.requested_products} /></div>
-            <div className="md:col-span-2"><Field label="Nachricht" value={lead.message} multiline /></div>
+            <div className="md:col-span-2"><Field label="Nachricht" value={lead.message || lead.notes} multiline /></div>
           </Card>
         </TabsContent>
 
