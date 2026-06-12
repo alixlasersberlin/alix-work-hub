@@ -704,11 +704,12 @@ export default function AngebotErstellen() {
                       onChange={e => updateLine(l.id, { name: e.target.value })}
                       className="bg-secondary border-border h-8"
                     />
-                    <Input
+                    <Textarea
                       value={l.description}
                       placeholder="Beschreibung (optional)"
                       onChange={e => updateLine(l.id, { description: e.target.value })}
-                      className="bg-secondary border-border h-8 mt-1 text-xs"
+                      rows={Math.max(2, (l.description?.split('\n').length || 1))}
+                      className="bg-secondary border-border mt-1 text-xs min-h-[3.5rem] whitespace-pre-wrap resize-y leading-snug"
                     />
                   </td>
                   <td className="p-2">
