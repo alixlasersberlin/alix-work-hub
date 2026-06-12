@@ -114,19 +114,35 @@ export default function SalesLeadDetail() {
   async function createOffer() {
     let cid = lead.converted_customer_id as string | null;
     if (!cid) cid = await findOrLinkCustomer();
+    const services = Array.isArray(lead.additional_services)
+      ? lead.additional_services
+      : (Array.isArray(lead.additional_interests) ? lead.additional_interests : []);
     const handoff = {
       customer_id: cid,
       customer_email: lead.email,
       customer_company: lead.company,
       notes: [
+        lead.lead_number && `Lead: ${lead.lead_number}`,
+        lead.device_category && `Geräteklasse: ${lead.device_category}`,
+        services.length > 0 && `Zusatzleistungen: ${services.join(', ')}`,
+        lead.customer_goal && `Kundenziel: ${lead.customer_goal}`,
+        lead.implementation_period && `Umsetzungszeitraum: ${lead.implementation_period}`,
         lead.requested_products && `Produktinteresse: ${lead.requested_products}`,
         lead.message,
+        lead.notes,
       ].filter(Boolean).join('\n\n'),
       source: 'sales_lead',
       lead_id: lead.id,
     };
     sessionStorage.setItem('sales_lead_handoff_v1', JSON.stringify(handoff));
     await updateLead({ lead_status: 'Angebot erstellt' });
+    try {
+      await supabase.from('sales_lead_history').insert({
+        lead_id: lead.id,
+        action: 'offer_started',
+        note: 'Angebot-Erstellung gestartet via Detail',
+      } as any);
+    } catch { /* ignore */ }
     nav('/verkauf/angebot/neu');
   }
 
@@ -154,7 +170,10 @@ export default function SalesLeadDetail() {
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={() => nav('/verkauf/anfragen')}><ArrowLeft className="h-4 w-4 mr-1" />Zurück</Button>
-          <h1 className="text-2xl font-semibold">{lead.company || [lead.first_name, lead.last_name].filter(Boolean).join(' ') || 'Anfrage'}</h1>
+          <div className="flex flex-col">
+            <h1 className="text-2xl font-semibold">{lead.company || [lead.first_name, lead.last_name].filter(Boolean).join(' ') || 'Anfrage'}</h1>
+            {lead.lead_number && <span className="text-xs text-muted-foreground font-mono">{lead.lead_number}</span>}
+          </div>
           <Badge variant="outline">{lead.lead_status}</Badge>
           {lead.converted_customer_id && (
             <Link to={`/kunden/${lead.converted_customer_id}`} className="text-xs text-primary underline">Kunde geöffnet</Link>
@@ -231,9 +250,15 @@ export default function SalesLeadDetail() {
             <Field label="Land" value={lead.country} />
             <Field label="Quelle / Formular" value={lead.form_name || lead.source} />
             <Field label="Externe ID" value={lead.external_id} />
+            <Field label="Leadnummer" value={lead.lead_number} />
             <Field label="Importdatum" value={new Date(lead.created_at).toLocaleString('de-DE')} />
+            <Field label="Geräteklasse" value={lead.device_category} />
+            <Field label="Umsetzungszeitraum" value={lead.implementation_period} />
+            <Field label="Bewertung" value={lead.service_rating ? `${lead.service_rating} / 5` : null} />
+            <Field label="Kundenziel" value={lead.customer_goal} />
+            <div className="md:col-span-2"><Field label="Zusatzleistungen" value={(Array.isArray(lead.additional_services) ? lead.additional_services : []).join(', ') || null} /></div>
             <div className="md:col-span-2"><Field label="Produktinteresse" value={lead.requested_products} /></div>
-            <div className="md:col-span-2"><Field label="Nachricht" value={lead.message} multiline /></div>
+            <div className="md:col-span-2"><Field label="Nachricht" value={lead.message || lead.notes} multiline /></div>
           </Card>
         </TabsContent>
 

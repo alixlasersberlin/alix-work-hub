@@ -25,6 +25,11 @@ type Lead = {
   external_id: string | null;
   source: string;
   form_name: string | null;
+  lead_number: string | null;
+  device_category: string | null;
+  additional_services: any;
+  customer_goal: string | null;
+  implementation_period: string | null;
   first_name: string | null;
   last_name: string | null;
   company: string | null;
@@ -37,6 +42,7 @@ type Lead = {
   score_category: string | null;
   consultation_type: string | null;
   delivery_preference: string | null;
+  service_rating: number | null;
 };
 
 function statusVariant(s: string): 'default' | 'secondary' | 'destructive' | 'outline' {
@@ -58,7 +64,7 @@ export default function SalesLeadsList() {
   async function loadLeads() {
     const { data } = await supabase
       .from('sales_leads')
-      .select('id, created_at, external_id, source, form_name, first_name, last_name, company, email, phone, requested_products, lead_status, assigned_user, lead_score, score_category, consultation_type, delivery_preference')
+      .select('id, created_at, external_id, source, form_name, lead_number, device_category, additional_services, customer_goal, implementation_period, first_name, last_name, company, email, phone, requested_products, lead_status, assigned_user, lead_score, score_category, consultation_type, delivery_preference, service_rating')
       .order('created_at', { ascending: false })
       .limit(500);
     setRows((data ?? []) as Lead[]);
@@ -101,18 +107,26 @@ export default function SalesLeadsList() {
       if (source !== 'alle' && r.source !== source) return false;
       if (!q) return true;
       return [
-        r.company, r.first_name, r.last_name, r.email, r.phone, r.requested_products, r.form_name,
+        r.lead_number, r.company, r.first_name, r.last_name, r.email, r.phone,
+        r.requested_products, r.form_name, r.device_category, r.customer_goal,
       ].some((v) => v?.toLowerCase().includes(q));
     });
   }, [rows, search, status, source]);
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <Inbox className="h-6 w-6 text-primary" />
-        <div>
-          <h1 className="text-2xl font-semibold">Anfragen</h1>
-          <p className="text-sm text-muted-foreground">Importierte Vertriebsanfragen (Zoho Forms)</p>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-3">
+          <Inbox className="h-6 w-6 text-primary" />
+          <div>
+            <h1 className="text-2xl font-semibold">Verkaufsanfragen</h1>
+            <p className="text-sm text-muted-foreground">Leads aus Zoho Forms, Website, Telefon, WhatsApp und API</p>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link to="/verkauf/anfragen/dashboard" className="px-3 py-1.5 text-sm rounded border border-border hover:bg-muted/30">Dashboard</Link>
+          <Link to="/verkauf/anfragen/import" className="px-3 py-1.5 text-sm rounded border border-border hover:bg-muted/30">CSV-Import</Link>
+          <Link to="/verkauf/anfragen/neu" className="px-3 py-1.5 text-sm rounded bg-primary text-primary-foreground hover:opacity-90">+ Neue Anfrage</Link>
         </div>
       </div>
 
@@ -141,6 +155,11 @@ export default function SalesLeadsList() {
               <SelectContent>
                 <SelectItem value="alle">Alle Quellen</SelectItem>
                 <SelectItem value="zoho_forms">Zoho Forms</SelectItem>
+                <SelectItem value="website">Website</SelectItem>
+                <SelectItem value="phone">Telefon</SelectItem>
+                <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                <SelectItem value="api">API</SelectItem>
+                <SelectItem value="csv">CSV-Import</SelectItem>
                 <SelectItem value="manual">Manuell</SelectItem>
               </SelectContent>
             </Select>
@@ -154,14 +173,13 @@ export default function SalesLeadsList() {
             <thead className="bg-muted/40 text-left">
               <tr>
                 <th className="p-3">Datum</th>
+                <th className="p-3">Lead-Nr.</th>
                 <th className="p-3">Score</th>
-                <th className="p-3">Firma</th>
-                <th className="p-3">Ansprechpartner</th>
-                <th className="p-3">E-Mail</th>
-                <th className="p-3">Telefon</th>
-                <th className="p-3">Produktinteresse</th>
-                <th className="p-3">Beratung</th>
-                <th className="p-3">Lieferung</th>
+                <th className="p-3">Firma / Kontakt</th>
+                <th className="p-3">E-Mail / Telefon</th>
+                <th className="p-3">Geräteklasse</th>
+                <th className="p-3">Zeitraum</th>
+                <th className="p-3">Bewertung</th>
                 <th className="p-3">Quelle</th>
                 <th className="p-3">Status</th>
                 <th className="p-3">Zugewiesen an</th>
@@ -169,12 +187,17 @@ export default function SalesLeadsList() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={12} className="p-6 text-center text-muted-foreground">Lade …</td></tr>
+                <tr><td colSpan={11} className="p-6 text-center text-muted-foreground">Lade …</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={12} className="p-6 text-center text-muted-foreground">Keine Anfragen gefunden.</td></tr>
+                <tr><td colSpan={11} className="p-6 text-center text-muted-foreground">Keine Anfragen gefunden.</td></tr>
               ) : filtered.map((r) => (
                 <tr key={r.id} className="border-t hover:bg-muted/30">
                   <td className="p-3 whitespace-nowrap">{new Date(r.created_at).toLocaleString('de-DE')}</td>
+                  <td className="p-3 font-mono text-xs">
+                    <Link to={`/verkauf/anfragen/${r.id}`} className="text-primary hover:underline">
+                      {r.lead_number || '—'}
+                    </Link>
+                  </td>
                   <td className="p-3">
                     {r.lead_score != null ? (
                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold ${
@@ -187,17 +210,23 @@ export default function SalesLeadsList() {
                       </span>
                     ) : '—'}
                   </td>
-                  <td className="p-3 font-medium">
-                    <Link to={`/verkauf/anfragen/${r.id}`} className="text-primary hover:underline">
-                      {r.company || '—'}
-                    </Link>
+                  <td className="p-3">
+                    <div className="font-medium">
+                      <Link to={`/verkauf/anfragen/${r.id}`} className="text-primary hover:underline">
+                        {r.company || [r.first_name, r.last_name].filter(Boolean).join(' ') || '—'}
+                      </Link>
+                    </div>
+                    {r.company && (r.first_name || r.last_name) && (
+                      <div className="text-xs text-muted-foreground">{[r.first_name, r.last_name].filter(Boolean).join(' ')}</div>
+                    )}
                   </td>
-                  <td className="p-3">{[r.first_name, r.last_name].filter(Boolean).join(' ') || '—'}</td>
-                  <td className="p-3">{r.email || '—'}</td>
-                  <td className="p-3">{r.phone || '—'}</td>
-                  <td className="p-3">{r.requested_products || '—'}</td>
-                  <td className="p-3">{r.consultation_type || '—'}</td>
-                  <td className="p-3">{r.delivery_preference || '—'}</td>
+                  <td className="p-3 text-xs">
+                    {r.email && <div>{r.email}</div>}
+                    {r.phone && <div className="text-muted-foreground">{r.phone}</div>}
+                  </td>
+                  <td className="p-3">{r.device_category || r.requested_products || '—'}</td>
+                  <td className="p-3 whitespace-nowrap">{r.implementation_period || '—'}</td>
+                  <td className="p-3">{r.service_rating ? '★'.repeat(r.service_rating) : '—'}</td>
                   <td className="p-3 text-muted-foreground">{r.form_name || r.source}</td>
                   <td className="p-3"><Badge variant={statusVariant(r.lead_status)}>{r.lead_status}</Badge></td>
                   <td className="p-3">
