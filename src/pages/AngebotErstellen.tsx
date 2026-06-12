@@ -93,12 +93,13 @@ export default function AngebotErstellen() {
   }, [customers, customerSearch]);
 
   const filteredItems = useMemo(() => {
-    const q = itemSearch.toLowerCase();
+    const q = itemSearch.toLowerCase().trim();
     if (!q) return items.slice(0, 30);
     return items.filter(i =>
       i.name?.toLowerCase().includes(q) ||
-      i.sku?.toLowerCase().includes(q)
-    ).slice(0, 30);
+      i.sku?.toLowerCase().includes(q) ||
+      i.description?.toLowerCase().includes(q)
+    );
   }, [items, itemSearch]);
 
   const selectedCustomer = customers.find(c => c.id === customerId);
@@ -433,7 +434,10 @@ export default function AngebotErstellen() {
             className="pl-10 bg-secondary border-border"
           />
           {itemSearch && (
-            <div className="absolute z-10 mt-1 w-full max-h-64 overflow-auto border border-border rounded-lg bg-card shadow-lg divide-y divide-border">
+            <div className="absolute z-10 mt-1 w-full max-h-96 overflow-y-auto overscroll-contain border border-border rounded-lg bg-card shadow-lg divide-y divide-border">
+              <div className="sticky top-0 bg-card/95 backdrop-blur px-3 py-1.5 text-[11px] text-muted-foreground border-b border-border">
+                {filteredItems.length} Treffer
+              </div>
               {filteredItems.length === 0 ? (
                 <p className="p-3 text-sm text-muted-foreground text-center">Keine Artikel gefunden.</p>
               ) : filteredItems.map(i => (
