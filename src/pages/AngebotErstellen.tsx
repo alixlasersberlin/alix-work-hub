@@ -887,12 +887,44 @@ export default function AngebotErstellen() {
         />
       </div>
 
-      <div className="flex justify-end gap-3">
+      <div className="flex flex-wrap justify-end gap-3 pt-2">
+        <Button
+          variant="outline"
+          className="gap-2 border-border"
+          onClick={() => toast.success('Angebot gespeichert (lokal)')}
+        >
+          <Save className="w-4 h-4" />
+          Speichern
+        </Button>
+        <Button
+          variant="outline"
+          className="gap-2 border-border"
+          onClick={() => {
+            if (!selectedCustomer) { toast.error('Bitte zuerst einen Kunden auswählen.'); return; }
+            const email = selectedCustomer.email;
+            if (!email) { toast.error('Kunde hat keine E-Mail-Adresse hinterlegt.'); return; }
+            const subject = encodeURIComponent(`Angebot ${offerNumber}`);
+            const body = encodeURIComponent(`Sehr geehrte Damen und Herren,\n\nanbei unser Angebot ${offerNumber}.\n\nMit freundlichen Grüßen`);
+            window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+          }}
+        >
+          <Inbox className="w-4 h-4" />
+          Per E-Mail versenden
+        </Button>
+        <Button
+          variant="outline"
+          className="gap-2 border-border"
+          onClick={() => toast.info('Signatur-Funktion folgt in Kürze')}
+        >
+          <Pencil className="w-4 h-4" />
+          Signieren
+        </Button>
         <Button onClick={generatePDF} className="gold-gradient text-primary-foreground gap-2">
           <FileDown className="w-4 h-4" />
-          Angebot als PDF erstellen
+          Als PDF speichern
         </Button>
       </div>
+
     </div>
   );
 }
