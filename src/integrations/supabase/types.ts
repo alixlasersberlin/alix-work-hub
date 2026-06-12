@@ -9519,77 +9519,119 @@ export type Database = {
       }
       sales_leads: {
         Row: {
+          additional_interests: Json | null
+          ai_priority: string | null
+          ai_summary: string | null
           archived: boolean
           assigned_user: string | null
           city: string | null
           company: string | null
+          consent_contact: boolean | null
+          consent_data: boolean | null
+          consultation_type: string | null
           converted_customer_id: string | null
           converted_offer_id: string | null
           country: string | null
+          country_code: string | null
           created_at: string
+          delivery_preference: string | null
           email: string | null
           external_id: string | null
           first_name: string | null
           form_name: string | null
           id: string
+          interests: Json | null
           last_name: string | null
+          lead_score: number | null
           lead_status: string
           message: string | null
           metadata: Json
+          notes: string | null
           phone: string | null
           requested_products: string | null
+          score_category: string | null
+          service_rating: number | null
           source: string
           street: string | null
+          suggested_assignee: string | null
           updated_at: string
           zip: string | null
         }
         Insert: {
+          additional_interests?: Json | null
+          ai_priority?: string | null
+          ai_summary?: string | null
           archived?: boolean
           assigned_user?: string | null
           city?: string | null
           company?: string | null
+          consent_contact?: boolean | null
+          consent_data?: boolean | null
+          consultation_type?: string | null
           converted_customer_id?: string | null
           converted_offer_id?: string | null
           country?: string | null
+          country_code?: string | null
           created_at?: string
+          delivery_preference?: string | null
           email?: string | null
           external_id?: string | null
           first_name?: string | null
           form_name?: string | null
           id?: string
+          interests?: Json | null
           last_name?: string | null
+          lead_score?: number | null
           lead_status?: string
           message?: string | null
           metadata?: Json
+          notes?: string | null
           phone?: string | null
           requested_products?: string | null
+          score_category?: string | null
+          service_rating?: number | null
           source?: string
           street?: string | null
+          suggested_assignee?: string | null
           updated_at?: string
           zip?: string | null
         }
         Update: {
+          additional_interests?: Json | null
+          ai_priority?: string | null
+          ai_summary?: string | null
           archived?: boolean
           assigned_user?: string | null
           city?: string | null
           company?: string | null
+          consent_contact?: boolean | null
+          consent_data?: boolean | null
+          consultation_type?: string | null
           converted_customer_id?: string | null
           converted_offer_id?: string | null
           country?: string | null
+          country_code?: string | null
           created_at?: string
+          delivery_preference?: string | null
           email?: string | null
           external_id?: string | null
           first_name?: string | null
           form_name?: string | null
           id?: string
+          interests?: Json | null
           last_name?: string | null
+          lead_score?: number | null
           lead_status?: string
           message?: string | null
           metadata?: Json
+          notes?: string | null
           phone?: string | null
           requested_products?: string | null
+          score_category?: string | null
+          service_rating?: number | null
           source?: string
           street?: string | null
+          suggested_assignee?: string | null
           updated_at?: string
           zip?: string | null
         }
