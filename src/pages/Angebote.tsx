@@ -42,35 +42,50 @@ export default function Angebote() {
     return () => window.removeEventListener('storage', h);
   }, []);
 
-  // Sync signed offers from alix_sign_requests
+  // Sync signed offers from alix_sign_requests (on mount, focus, visibility, interval)
   useEffect(() => {
-    if (offers.length === 0) return;
-    const numbers = offers
-      .filter(o => o.status !== 'signed' && o.status !== 'order')
-      .map(o => o.offerNumber);
-    if (numbers.length === 0) return;
     let cancelled = false;
-    (async () => {
+    const syncSigned = async () => {
+      const raw = localStorage.getItem(KEY);
+      const current: SavedOffer[] = raw ? JSON.parse(raw) : [];
+      const numbers = current
+        .filter(o => o.status !== 'signed' && o.status !== 'order')
+        .map(o => o.offerNumber);
+      if (numbers.length === 0) return;
       const { data, error } = await supabase
         .from('alix_sign_requests')
         .select('offer_number, status, signed_at')
         .in('offer_number', numbers)
         .eq('status', 'unterschrieben');
-      if (error || !data || cancelled) return;
-      if (data.length === 0) return;
+      if (error || !data || cancelled || data.length === 0) return;
       const signedMap = new Map(data.map((r: any) => [r.offer_number, r.signed_at]));
-      const next = offers.map(o => {
+      let changed = false;
+      const next = current.map(o => {
         if (signedMap.has(o.offerNumber) && o.status !== 'signed' && o.status !== 'order') {
+          changed = true;
           return { ...o, status: 'signed' as const, signedAt: signedMap.get(o.offerNumber) || new Date().toISOString() };
         }
         return o;
       });
-      localStorage.setItem(KEY, JSON.stringify(next));
-      setOffers(next);
-    })();
-    return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [offers.length]);
+      if (changed) {
+        localStorage.setItem(KEY, JSON.stringify(next));
+        setOffers(next);
+      }
+    };
+    syncSigned();
+    const onFocus = () => syncSigned();
+    const onVisible = () => { if (document.visibilityState === 'visible') syncSigned(); };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisible);
+    const iv = window.setInterval(syncSigned, 30000);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.clearInterval(iv);
+    };
+  }, []);
+
 
   const remove = (offerNumber: string) => {
     if (!confirm(`Angebot ${offerNumber} löschen?`)) return;
