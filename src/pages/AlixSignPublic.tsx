@@ -137,8 +137,7 @@ export default function AlixSignPublic() {
     if (!firstName.trim() || !lastName.trim()) return toast.error('Bitte Vor- und Nachname eingeben');
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return toast.error('Bitte gültige E-Mail-Adresse eingeben');
     if (!city.trim()) return toast.error('Bitte Ort eingeben');
-    if (!chkOffer || !chkTerms || !chkPrivacy || !chkSign) return toast.error('Bitte allen Zustimmungen zustimmen');
-    if (requiresCredit && !chkCredit) return toast.error('Bei Finanzierung/Mietkauf bitte Bonitätsprüfung zustimmen');
+    if (!chkOffer || !chkSign) return toast.error('Bitte allen Zustimmungen zustimmen');
     if (!hasInk.current) return toast.error('Bitte zuerst unterschreiben');
 
     setSubmitting(true);
