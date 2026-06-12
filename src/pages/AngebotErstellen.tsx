@@ -774,7 +774,7 @@ export default function AngebotErstellen() {
           customer_id: selectedCustomer.id,
           customer_email: email,
           customer_name: selectedCustomer.contact_name || selectedCustomer.company_name,
-          base_url: window.location.origin,
+          base_url: 'https://alixwork.de',
           expires_days: 14,
         },
       });
