@@ -188,10 +188,10 @@ export default function SalesWizard({ publicMode = false }: Props) {
       )}>
         <div className="mb-6">
           <div className="flex items-center justify-between text-xs mb-2">
-            <span className={publicMode ? 'text-blue-100/70' : 'text-muted-foreground'}>
+            <span className={'text-cyan-200/70'}>
               Schritt {Math.min(step + 1, TOTAL_STEPS)} von {TOTAL_STEPS}
             </span>
-            <span className={publicMode ? 'text-blue-100/70' : 'text-muted-foreground'}>
+            <span className={'text-cyan-200/70'}>
               {progress}%
             </span>
           </div>
@@ -518,7 +518,7 @@ function Section({ title, hint, children, publicMode }: { title: string; hint?: 
       <div>
         <h2 className="text-xl md:text-2xl font-bold">{title}</h2>
         {hint && (
-          <p className={cn('text-xs mt-1', publicMode ? 'text-blue-100/70' : 'text-muted-foreground')}>
+          <p className={cn('text-xs mt-1', 'text-cyan-200/70')}>
             {hint}
           </p>
         )}
