@@ -1,0 +1,2 @@
+DROP POLICY IF EXISTS "integration_logs_insert" ON public.integration_logs;
+CREATE POLICY "integration_logs_insert" ON public.integration_logs FOR INSERT TO authenticated WITH CHECK (auth.uid() IS NOT NULL);
