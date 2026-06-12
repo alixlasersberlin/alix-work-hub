@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -257,9 +257,12 @@ export default function InstallmentPlanDialog({ order }: Props) {
         <FileText className="w-4 h-4 mr-2" /> Ratenplan
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-lg bg-card border-border">
+      <DialogContent className="max-w-lg bg-background border-border">
         <DialogHeader>
           <DialogTitle className="font-display">Ratenplan erstellen</DialogTitle>
+          <DialogDescription className="sr-only">
+            Erstellen und exportieren eines Ratenplans für diesen Auftrag.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 mt-2">

@@ -340,7 +340,7 @@ html.theme-neo header:not([role="dialog"]):not([data-radix-popper-content-wrappe
 /* ---------- Cards & Panels — luminous 3D glass ---------- */
 html.theme-neo [data-slot="card"],
 html.theme-neo .card,
-html.theme-neo [class*="bg-card"] {
+html.theme-neo [class*="bg-card"]:not([role="dialog"]) {
   position: relative;
   background:
     linear-gradient(180deg, hsla(0,0%,100%,0.96) 0%, hsla(220,40%,98%,0.92) 55%, hsla(220,40%,96%,0.9) 100%) !important;
