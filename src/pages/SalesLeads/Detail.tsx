@@ -410,3 +410,12 @@ function Field({ label, value, multiline }: { label: string; value?: string | nu
     </div>
   );
 }
+
+function EditField({ label, v, on }: { label: string; v: any; on: (val: string) => void }) {
+  return (
+    <div>
+      <Label className="text-xs uppercase text-muted-foreground">{label}</Label>
+      <Input value={v ?? ''} onChange={(e) => on(e.target.value)} />
+    </div>
+  );
+}
