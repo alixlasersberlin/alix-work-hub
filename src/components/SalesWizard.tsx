@@ -223,13 +223,14 @@ export default function SalesWizard({ publicMode = false }: Props) {
               <Sparkles className="h-12 w-12 mx-auto text-blue-400" />
               <div>
                 <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Alix Lasers ®</h1>
-              <p className="mt-2 text-sm md:text-base text-slate-600">
+              <p className="mt-2 text-sm md:text-base text-cyan-200/80 tracking-[0.18em] uppercase">
                   100% AI Full Technologie · Alix Lasers®
                 </p>
               </div>
-              <p className="max-w-md mx-auto text-slate-700">
+              <p className="max-w-md mx-auto text-slate-200/90">
                 Lass dich von Profis beraten und dir das beste Angebot erstellen.
               </p>
+
               <Button size="lg" onClick={() => setStep(1)} className="mt-2 px-10">
                 START <ArrowRight className="h-4 w-4" />
               </Button>
