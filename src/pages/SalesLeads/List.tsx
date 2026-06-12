@@ -64,7 +64,7 @@ export default function SalesLeadsList() {
   async function loadLeads() {
     const { data } = await supabase
       .from('sales_leads')
-      .select('id, created_at, external_id, source, form_name, first_name, last_name, company, email, phone, requested_products, lead_status, assigned_user, lead_score, score_category, consultation_type, delivery_preference')
+      .select('id, created_at, external_id, source, form_name, lead_number, device_category, additional_services, customer_goal, implementation_period, first_name, last_name, company, email, phone, requested_products, lead_status, assigned_user, lead_score, score_category, consultation_type, delivery_preference, service_rating')
       .order('created_at', { ascending: false })
       .limit(500);
     setRows((data ?? []) as Lead[]);
