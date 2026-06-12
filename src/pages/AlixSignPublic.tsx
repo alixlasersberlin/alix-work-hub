@@ -8,6 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, CheckCircle2, ShieldCheck, FileSignature, Eraser } from 'lucide-react';
 import { toast } from 'sonner';
 import { buildSignedPdfBase64 } from '@/lib/alix-sign-pdf';
+import alixLogo from '@/assets/alix-lasers-logo.png.asset.json';
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n || 0);
