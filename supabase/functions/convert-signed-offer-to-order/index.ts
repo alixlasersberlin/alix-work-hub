@@ -22,14 +22,17 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
 
+    const order_number = offer_number.replace(/^ANG-/i, '');
+
     // Already converted?
     const { data: existing } = await supabase
-      .from('orders').select('id, order_number').eq('order_number', offer_number).maybeSingle();
+      .from('orders').select('id, order_number').eq('order_number', order_number).maybeSingle();
     if (existing) {
       return new Response(JSON.stringify({ ok: true, already: true, order_id: existing.id }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+
 
     // Latest signed sign-request
     const { data: sr, error: srErr } = await supabase
@@ -65,7 +68,7 @@ Deno.serve(async (req) => {
       .from('orders')
       .insert({
         customer_id,
-        order_number: offer_number,
+        order_number,
         source_system,
         order_status: 'offen',
         currency: 'EUR',
