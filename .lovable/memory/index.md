@@ -41,5 +41,6 @@
 - [Finance Phase 3 Mahnwesen](mem://features/finance-phase3) — finance_reminders/_items, Engine-Cron 03:00 UTC erzeugt nur Entwürfe, manueller Versand via finance-reminder-send + Template finance-reminder, Einstellungen in app_settings
 - [Finance Phase 4 DATEV + Bankimport](mem://features/finance-phase4) — Edge Functions finance-datev-export (EXTF 700) & finance-bank-import (CAMT.053/MT940 mit Auto-Match), neue Tabellen finance_bank_statements/_lines, Seiten /finance/datev & /finance/bank
 - [Finance Phase 5 SEPA + Steuer + Cockpit](mem://features/finance-phase5) — pain.008-Lastschriften, USt-Auswertung pro Mandant, Reporting-Cockpit; neue Tabellen finance_sepa_mandates/_runs/_run_items, Edge Function finance-sepa-export, Seiten /finance/sepa, /finance/steuer, /finance/cockpit
+- [Sales Leads / Zoho Forms](mem://features/sales-leads) — SALES MANAGEMENT → Anfragen + Nachfassen, Tabellen sales_leads/_history/_followups + integration_logs, Edge Function zoho-forms-import (x-api-key), Angebots-Handoff per sessionStorage
 - [Finance Phase 13 Konzern-Konsolidierung](mem://features/finance-phase13) — Monatskonsolidierung mit IC-Eliminierung + FX-Umrechnung
 - [Finance Phase 14 Treasury+P2P+Meldewesen](mem://features/finance-phase14) — Bankkonten/Liquidität/Freigaben, PR→PO→Wareneingang→3-Way-Match, UStVA/ZM/OSS/Intrastat/E-Bilanz Export
