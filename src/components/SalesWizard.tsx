@@ -134,21 +134,15 @@ export default function SalesWizard({ publicMode = false }: Props) {
     setSubmitting(true);
     setError(null);
     try {
-      const url = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/sales-wizard-submit`;
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        },
-        body: JSON.stringify({
+      const { data: json, error: fnError } = await supabase.functions.invoke('sales-wizard-submit', {
+        body: {
           ...data,
           source: publicMode ? 'alixwork_wizard_public' : 'alixwork_wizard_internal',
           turnstile_token: captchaToken,
-        }),
+        },
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.message || json?.error || 'Fehler beim Absenden');
+      if (fnError) throw new Error(fnError.message || 'Fehler beim Absenden');
+      if (json?.error) throw new Error(json.message || json.error);
       setResult({ score: json.score, category: json.category });
       setStep(TOTAL_STEPS);
     } catch (e) {
