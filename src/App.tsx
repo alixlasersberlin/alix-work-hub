@@ -155,6 +155,7 @@ const Kategorie = lazy(() => import("./pages/Kategorie"));
 const Wareneingang = lazy(() => import("./pages/Wareneingang"));
 const ArtikelUebersicht = lazy(() => import("./pages/ArtikelUebersicht"));
 const AngebotErstellen = lazy(() => import("./pages/AngebotErstellen"));
+const AngebotImport = lazy(() => import("./pages/AngebotImport"));
 const Angebote = lazy(() => import("./pages/Angebote"));
 const Anzahlungsrechnung = lazy(() => import("./pages/Anzahlungsrechnung"));
 const Gutschriften = lazy(() => import("./pages/Gutschriften"));
