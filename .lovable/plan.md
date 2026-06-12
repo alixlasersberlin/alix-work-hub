@@ -1,75 +1,89 @@
-## Ziel
-Bestehendes Modul **Sales Leads** (`/verkauf/anfragen`) zu einem standardisierten Lead‑Import → Angebotsworkflow ausbauen, **ohne bestehende Funktionen zu brechen**. Nutzt die schon vorhandene Tabelle `sales_leads`, Detail-/Listen-Seite, Followups, Zoho‑Forms‑Webhook und den Angebot‑Handoff zu `/verkauf/angebot/neu`.
 
-## Was schon existiert (wird wiederverwendet)
-- Tabelle `sales_leads` inkl. Felder `service_rating`, `additional_interests` (jsonb), `delivery_preference`, `consultation_type`, `requested_products`, `notes`, `converted_offer_id`, `converted_customer_id`, `lead_score`, `assigned_user`, `lead_status`, `source`.
-- Tabellen `sales_lead_history`, `sales_followups`, Edge Function `zoho-forms-import`.
-- Routen `/verkauf/anfragen`, `/verkauf/anfragen/:id`, `/verkauf/nachfassen`, `/verkauf/anfragen/neu` (NeueAnfrage – Wizard).
-- Handoff `sessionStorage.sales_lead_handoff_v1` → `/verkauf/angebot/neu` (Kunde + Notizen prefilled).
+# AlixWork Premium Visual Upgrade
 
-## Lücken zum gewünschten Workflow
-1. Keine sprechende **Leadnummer** `LEAD-YYYY-000001`.
-2. Kein dediziertes Feld `device_category` / `customer_goal` / `implementation_period` (heute steckt das in `requested_products` / `interests`).
-3. Quellen-Vielfalt (Telefon / WhatsApp / Website / API / CSV / manuell) nicht klar abgebildet.
-4. Kein **CSV-Import** und kein generisches **API‑Endpoint** (nur Zoho Forms Webhook).
-5. Beim Klick „Angebot erstellen" wird zwar gehandoffed, aber **Geräteklasse + Zusatzleistungen + Ziel + Zeitraum** werden nicht ins Angebot übernommen, und der Status wird **nicht automatisch** auf „Angebot erstellt" gesetzt + `converted_offer_id` nicht zurückgeschrieben.
-6. Kein automatischer Followup „Kontaktaufnahme erforderlich" bei Import.
-7. Kein KPI‑Dashboard für Vertriebsanfragen.
+Reines visuelles Upgrade + Accessibility-Schriftgrößensteuerung. **Keine** Änderung an Datenflüssen, Supabase, RLS, Rollen, Routen, Formularen, Menüs oder Workflows.
 
-## Umsetzung
+Vorgehen ist additiv: bestehendes Theme bleibt erhalten und wird über CSS-Variablen veredelt. Vorherige Versuche (3D Beta / Aurora Ultra / Neo Template) wurden vom User explizit deaktiviert — diese werden **nicht** reaktiviert.
 
-### 1. Migration (additiv, keine Breaking Changes)
-Neue Spalten auf `sales_leads`:
-- `lead_number text unique` (Default via Trigger)
-- `device_category text`
-- `additional_services jsonb` (Array of strings)
-- `customer_goal text`
-- `implementation_period text`
+---
 
-Plus:
-- Sequence `sales_lead_seq` + Trigger `assign_sales_lead_number()` setzt `LEAD-YYYY-000000` bei Insert, falls leer.
-- Trigger `sales_lead_after_insert()` → erzeugt automatisch einen `sales_followups`-Eintrag „Kontaktaufnahme erforderlich" mit Fälligkeit +1 Werktag, sofern Status = „Neu" / „Importiert - Angebot offen".
+## 1. Globales Theme-System (additiv)
 
-Backfill: bestehende Zeilen erhalten Leadnummern in Reihenfolge `created_at`.
+**`src/index.css`** erweitern (keine bestehenden Tokens entfernen):
+- Premium-Farbpalette für **Light** (Weiß / Soft-Silver / Alix-Blau) und **Dark** (Tiefschwarz / Anthrazit / Alix-Blau / Cyan / dezente Gold-Akzente).
+- Neue Utility-Tokens: `--shadow-glass`, `--shadow-glow`, `--gradient-premium`, `--ring-premium`, `--surface-glass`, `--border-glass`.
+- Neue Utility-Klassen: `.glass-card`, `.glass-panel`, `.premium-button`, `.kpi-tile`, `.slide-in`, `.fade-in-card`, `.tilt-3d`, `.shimmer-skeleton`.
+- `prefers-reduced-motion`-Guards für alle Animationen.
+- Smooth Color-Transitions (`transition: background-color/color/border-color 200ms`) auf `html, body` für Theme-Switch ohne Flackern.
 
-### 2. Edge Function `zoho-forms-import` erweitern
-Mapping ergänzen für: `device_category`, `additional_services`, `customer_goal`, `implementation_period`, `lead_source` (z. B. „Telefonisch / WhatsApp", „Website", „API"). Bestehendes Schema bleibt rückwärtskompatibel.
+## 2. Light/Dark-Mode Schalter (echtes Toggle)
 
-### 3. Neue Edge Function `sales-leads-import`
-Generisches JSON‑API (auth über Header `x-api-key` / `SALES_LEADS_API_KEY`) für Website/API/WhatsApp. Akzeptiert flache + verschachtelte Struktur aus dem Beispiel-JSON.
+- `src/hooks/useTheme.tsx`: aktuelles Hard-Lock auf `light` aufheben — wieder echtes Toggle Light/Dark mit `localStorage("app-theme")`. Default: `light`. Anti-Flicker-Boot-Script in `index.html` (`<script>` vor `<body>` setzt `html.class` aus localStorage).
+- Neue Komponente `src/components/ThemeToggle.tsx`: Premium-Toggle mit Sonne/Mond, Glassmorphism-Style, `aria-label`, i18n.
+- Einbau im Header (`AppLayout.tsx`) neben bestehender Navigation, ohne andere Elemente zu entfernen.
 
-### 4. UI
+## 3. Schriftgrößen-Steuerung (Accessibility)
 
-**`/verkauf/anfragen` Liste**
-- Spalte „Leadnummer" + „Geräteklasse" ergänzen, Filter „Quelle" um Telefon/WhatsApp/Website erweitern, Geräteklasse‑Filter, Bewertungs‑Filter, Zeitraum‑Filter.
+- Neuer Hook `src/hooks/useFontScale.tsx` mit Stufen: `sm 0.9` · `md 1.0` · `lg 1.15` · `xl 1.3` · `a11y 1.5`.
+- Setzt `--font-scale` auf `<html>` + Persistenz `localStorage("font-scale")` + Boot-Script gegen Flicker.
+- `index.css`: `html { font-size: calc(16px * var(--font-scale, 1)); }` — alle `rem`-basierten Tailwind-Größen skalieren automatisch (Buttons, Inputs, Cards, Tables, Modals).
+- Neue Komponente `src/components/FontScaleSwitcher.tsx`: A− / A / A+ / A++ / ♿ als Glass-Popover, im Header neben ThemeToggle.
 
-**`/verkauf/anfragen/:id` Detail**
-- Block „Interesse" zeigt `device_category`, `additional_services`, `customer_goal`, `implementation_period`.
-- Button **„Angebot erstellen"**: schreibt erweiterten Handoff (inkl. Geräteklasse + Services + Ziel + Zeitraum), setzt `lead_status='Angebot erstellt'`, legt `sales_lead_history`-Eintrag an. Nach Rückkehr aus dem Angebotseditor wird via `converted_offer_id` verknüpft (Hook im `AngebotErstellen`-Save‑Pfad, der bei aktivem Handoff zurückschreibt).
+## 4. Premium Background (global)
 
-**`/verkauf/anfragen/neu` (NeueAnfrage Wizard)**
-- Felder Geräteklasse + Zusatzleistungen + Ziel + Zeitraum + Quelle ergänzen.
+- Generierung `public/backgrounds/alixwork-premium-background.webp` (1920×1080, dezent, dunkle + helle Variante via CSS-Overlay), erstellt mit `imagegen` (standard quality).
+- Einbindung global in `src/index.css` über `body::before` als `position: fixed; inset:0; z-index:-1;` mit Overlay-Gradient pro Theme — Inhalte bleiben lesbar (Cards behalten opaken Hintergrund).
+- Download-Button in **Einstellungen → Design** (neuer kleiner Abschnitt auf vorhandener Settings-/Operation-Seite, keine neue Route nötig). Direkter `<a href="/backgrounds/alixwork-premium-background.webp" download>` — beeinflusst keine bestehende Funktion.
 
-**Neu: `/verkauf/anfragen/import`**
-- CSV‑Import (Drag&Drop, Spalten‑Mapping, Preview), nutzt bestehendes Schema. Manuelle Einzeleingabe ist über NeueAnfrage abgedeckt.
+## 5. Mehrsprachigkeit (additiv)
 
-**Neu: `/verkauf/anfragen/dashboard`**
-- KPIs: Neue Leads heute / Monat, Angebote erstellt, Abschlussquote (Gewonnen / Gesamt), Ø Bewertung, Top‑Geräteklasse, Aufschlüsselung nach Quelle.
+- **Hinweis**: Das Projekt hat aktuell nur `src/i18n/wizard.ts` (nur Public-Wizard, 7 Sprachen). Es existiert **kein** globales i18n-Framework im Backend.
+- **Pragmatischer Ansatz**: Neue UI-Komponenten (Theme/FontScale/Download-Button) erhalten Texte über eine kleine, lokale `t()`-Funktion in `src/i18n/ui.ts` mit Sprachen DE/EN/FR/ES/IT/TR/AR/VI. Sprache wird aus `navigator.language` + `localStorage("ui-lang")` ermittelt.
+- RTL-Support für AR über `html[dir="rtl"]` automatisch gesetzt, wenn Sprache `ar`.
+- Keys: `theme.light`, `theme.dark`, `display.fontSize`, `display.small`, `display.normal`, `display.large`, `display.xlarge`, `display.a11y`, `design.downloadBackground`, `design.premiumDesign`, `display.settings`.
+- **Bestehende deutschsprachige UI bleibt unverändert** — nur die neuen Controls sind sprachfähig.
 
-### 5. Menü `AuroraTopNav`
-Unter „SALES MANAGEMENT" → „Verkaufsanfragen" als Eltern‑Eintrag mit Untermenü:
-- Übersicht (`/verkauf/anfragen`)
-- Dashboard (`/verkauf/anfragen/dashboard`)
-- Import (`/verkauf/anfragen/import`)
-- Neue Anfrage (`/verkauf/anfragen/neu`)
-- Nachfassen (`/verkauf/nachfassen`)
+## 6. Dezente Effekte (opt-in pro Komponente)
 
-### 6. RBAC
-Bestehende Rollenliste bleibt: `Super Admin`, `Admin`, `Vertrieb`, `Vertriebsleitung`, `Order`, `SACHBEARBEITUNG`. Delete: nur Super Admin (Memory-Regel).
+- Page-Transition: `<main>` in `AppLayout` bekommt `.slide-in` (CSS-only, ~200ms).
+- `card-glow` (bereits vorhanden) wird im Light/Dark passend rebalanced.
+- Hover-Lift auf KPI-Karten via neuer `.kpi-tile`-Klasse — bestehende Tiles können diese **optional** annehmen (nicht erzwungen).
 
-## Out of scope (separater Schritt)
-- Tiefere Integration in Produktion/Finance/Auslieferung — Lead→Angebot→Auftrag→Produktion ist im AlixWork‑Flow bereits implementiert, sobald aus dem Angebot ein Auftrag entsteht.
-- Direkter WhatsApp‑Webhook (kann später als zweite Edge Function über die existierende WhatsApp‑Infrastruktur ergänzt werden).
+## 7. Was **nicht** angefasst wird
 
-## Hinweis zu Secrets
-Für die neue Import‑API wird ein neues Secret `SALES_LEADS_API_KEY` benötigt — frage ich nach Plan‑Freigabe an.
+- `TemplateSwitcher`, `DesignVariantSwitcher` (bleiben deaktiviert wie vom User gewünscht).
+- Sidebar/AppLayout-**Struktur**, Routen, `App.tsx`-Routing.
+- PDF-Generatoren, Edge Functions, Supabase Client, RLS, Rollen-Hooks.
+- Bestehende Seiten/Komponenten werden **nicht** umgeschrieben — sie erben den neuen Look automatisch über Theme-Variablen.
+
+---
+
+## Geänderte / neue Dateien
+
+**Neu:**
+- `src/hooks/useFontScale.tsx`
+- `src/components/ThemeToggle.tsx`
+- `src/components/FontScaleSwitcher.tsx`
+- `src/components/DisplaySettingsMenu.tsx` (Wrapper: Theme + FontScale + BG-Download in einem Glass-Popover)
+- `src/i18n/ui.ts`
+- `public/backgrounds/alixwork-premium-background.webp`
+
+**Editiert (rein additiv):**
+- `src/index.css` — neue Tokens, Glass-Utilities, BG, Font-Scale-Variable, Smooth-Transitions
+- `src/hooks/useTheme.tsx` — echtes Light/Dark-Toggle reaktivieren
+- `src/components/AppLayout.tsx` — `DisplaySettingsMenu` im Header einhängen
+- `index.html` — Anti-Flicker-Boot-Script für Theme + Font-Scale
+
+---
+
+## Risiken & Mitigation
+
+- **Dark-Mode reaktivieren** könnte Komponenten betreffen, die seit dem White-Lock auf `light` optimiert wurden. → Mitigation: Default bleibt `light`; User wählt aktiv Dark.
+- **Font-Scale > 1.3** kann in dichten Tabellen Spalten brechen. → `a11y`-Stufe explizit als "Accessibility" gelabelt; Tables behalten `overflow-x-auto`.
+- **Background** kann auf langsamen Geräten stören. → WebP, einmalig geladen, `position: fixed`, kein Parallax-JS.
+
+---
+
+## Offene Frage
+
+Soll der **Dark Mode wirklich wieder aktivierbar** sein? Du hattest zuvor das Standard-Template auf reines Weiß/Grau festgelegt. Ohne Dark Mode kann ich Light-Only lassen und nur den Font-Scale-Switcher + Premium-Background + Download liefern. Bitte kurz bestätigen, dann setze ich um.
