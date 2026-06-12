@@ -258,7 +258,7 @@ export default function AlixSignPublic() {
             <label className="flex items-start gap-3 cursor-pointer"><Checkbox checked={chkOffer} onCheckedChange={v => setChkOffer(v === true)} className="mt-0.5" /><span className="text-sm text-slate-700">Ich habe das Angebot gelesen und nehme es verbindlich an.</span></label>
             <label className="flex items-start gap-3 cursor-pointer"><Checkbox checked={chkSign} onCheckedChange={v => setChkSign(v === true)} className="mt-0.5" /><span className="text-sm text-slate-700">Ich bin mit der elektronischen Signatur über Alix Sign einverstanden.</span></label>
             {requiresCredit && (
-              <label className="flex items-start gap-3 cursor-pointer"><Checkbox checked={chkCredit} onCheckedChange={v => setChkCredit(v === true)} className="mt-0.5" /><span className="text-sm text-slate-700">Ich bin mit einer Bonitäts- und Identitätsprüfung einverstanden.</span></label>
+              <div className="flex items-start gap-3"><Checkbox checked disabled className="mt-0.5" /><span className="text-sm text-slate-700">Ich bin mit einer Bonitäts- und Identitätsprüfung einverstanden.</span></div>
             )}
 
           </div>
