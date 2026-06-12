@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { Inbox, Search, Filter } from 'lucide-react';
+import { Inbox, Search, Filter, UserCheck } from 'lucide-react';
+import { toast } from 'sonner';
 
 const STATUS_OPTIONS = [
   'Importiert - Angebot offen',
@@ -51,19 +52,47 @@ export default function SalesLeadsList() {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<string>('alle');
   const [source, setSource] = useState<string>('alle');
+  const [users, setUsers] = useState<{ id: string; full_name: string | null; email: string | null }[]>([]);
+  const [assigning, setAssigning] = useState<string | null>(null);
+
+  async function loadLeads() {
+    const { data } = await supabase
+      .from('sales_leads')
+      .select('id, created_at, external_id, source, form_name, first_name, last_name, company, email, phone, requested_products, lead_status, assigned_user, lead_score, score_category, consultation_type, delivery_preference')
+      .order('created_at', { ascending: false })
+      .limit(500);
+    setRows((data ?? []) as Lead[]);
+  }
 
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const { data } = await supabase
-        .from('sales_leads')
-        .select('id, created_at, external_id, source, form_name, first_name, last_name, company, email, phone, requested_products, lead_status, assigned_user, lead_score, score_category, consultation_type, delivery_preference')
-        .order('created_at', { ascending: false })
-        .limit(500);
-      setRows((data ?? []) as Lead[]);
+      await loadLeads();
+      const { data: u } = await supabase
+        .from('user_profiles')
+        .select('id, full_name, email')
+        .eq('is_active', true)
+        .order('full_name', { ascending: true });
+      setUsers((u ?? []) as any);
       setLoading(false);
     })();
   }, []);
+
+  async function assign(leadId: string, userId: string) {
+    setAssigning(leadId);
+    const value = userId === '__none' ? null : userId;
+    const { error } = await supabase.from('sales_leads').update({ assigned_user: value }).eq('id', leadId);
+    setAssigning(null);
+    if (error) { toast.error(error.message); return; }
+    setRows((r) => r.map(x => x.id === leadId ? { ...x, assigned_user: value } : x));
+    toast.success(value ? 'Anfrage zugewiesen' : 'Zuweisung entfernt');
+  }
+
+  const userLabel = (id: string | null) => {
+    if (!id) return null;
+    const u = users.find(x => x.id === id);
+    return u?.full_name || u?.email || id.slice(0, 8);
+  };
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -135,13 +164,14 @@ export default function SalesLeadsList() {
                 <th className="p-3">Lieferung</th>
                 <th className="p-3">Quelle</th>
                 <th className="p-3">Status</th>
+                <th className="p-3">Zugewiesen an</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={11} className="p-6 text-center text-muted-foreground">Lade …</td></tr>
+                <tr><td colSpan={12} className="p-6 text-center text-muted-foreground">Lade …</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={11} className="p-6 text-center text-muted-foreground">Keine Anfragen gefunden.</td></tr>
+                <tr><td colSpan={12} className="p-6 text-center text-muted-foreground">Keine Anfragen gefunden.</td></tr>
               ) : filtered.map((r) => (
                 <tr key={r.id} className="border-t hover:bg-muted/30">
                   <td className="p-3 whitespace-nowrap">{new Date(r.created_at).toLocaleString('de-DE')}</td>
@@ -170,6 +200,28 @@ export default function SalesLeadsList() {
                   <td className="p-3">{r.delivery_preference || '—'}</td>
                   <td className="p-3 text-muted-foreground">{r.form_name || r.source}</td>
                   <td className="p-3"><Badge variant={statusVariant(r.lead_status)}>{r.lead_status}</Badge></td>
+                  <td className="p-3">
+                    <Select
+                      value={r.assigned_user ?? '__none'}
+                      onValueChange={(v) => assign(r.id, v)}
+                      disabled={assigning === r.id}
+                    >
+                      <SelectTrigger className="w-[200px] h-8 text-xs">
+                        <div className="flex items-center gap-1.5 truncate">
+                          <UserCheck className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                          <span className="truncate">{userLabel(r.assigned_user) || 'Zuweisen …'}</span>
+                        </div>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none">— Nicht zugewiesen —</SelectItem>
+                        {users.map((u) => (
+                          <SelectItem key={u.id} value={u.id}>
+                            {u.full_name || u.email || u.id.slice(0, 8)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </td>
                 </tr>
               ))}
             </tbody>
