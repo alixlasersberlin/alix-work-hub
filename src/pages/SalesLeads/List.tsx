@@ -25,6 +25,11 @@ type Lead = {
   external_id: string | null;
   source: string;
   form_name: string | null;
+  lead_number: string | null;
+  device_category: string | null;
+  additional_services: any;
+  customer_goal: string | null;
+  implementation_period: string | null;
   first_name: string | null;
   last_name: string | null;
   company: string | null;
@@ -37,6 +42,7 @@ type Lead = {
   score_category: string | null;
   consultation_type: string | null;
   delivery_preference: string | null;
+  service_rating: number | null;
 };
 
 function statusVariant(s: string): 'default' | 'secondary' | 'destructive' | 'outline' {
