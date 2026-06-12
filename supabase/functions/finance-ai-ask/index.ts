@@ -88,6 +88,12 @@ Deno.serve(async (req) => {
     const { data: { user } } = await userClient.auth.getUser();
     if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
+    // Restrict to users with finance access (Super Admin/Admin/Finance).
+    const { data: canFinance } = await userClient.rpc('can_access_finance');
+    if (!canFinance) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     const supa = createClient(SUPABASE_URL, SERVICE_ROLE);
     const { question } = await req.json();
     if (!question) return new Response(JSON.stringify({ error: "question required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
