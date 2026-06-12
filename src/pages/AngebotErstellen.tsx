@@ -44,6 +44,11 @@ export default function AngebotErstellen() {
   const [lines, setLines] = useState<LineItem[]>([newLine()]);
   const [loading, setLoading] = useState(true);
 
+  const [leadsOpen, setLeadsOpen] = useState(false);
+  const [leads, setLeads] = useState<any[]>([]);
+  const [leadsLoading, setLeadsLoading] = useState(false);
+  const [leadSearch, setLeadSearch] = useState('');
+
   useEffect(() => {
     async function load() {
       setLoading(true);
