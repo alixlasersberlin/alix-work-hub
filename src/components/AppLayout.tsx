@@ -1454,8 +1454,7 @@ export default function AppLayout() {
         </main>
       </div>
       <WelcomeDialog />
-      <LeoWelcomeDialog />
-      <NataliaWelcomeOverlay />
+      {/* Begrüßungs-Overlays für Natalia & Lars deaktiviert */}
     </div>
   );
 }
