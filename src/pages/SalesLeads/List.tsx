@@ -164,13 +164,14 @@ export default function SalesLeadsList() {
                 <th className="p-3">Lieferung</th>
                 <th className="p-3">Quelle</th>
                 <th className="p-3">Status</th>
+                <th className="p-3">Zugewiesen an</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={11} className="p-6 text-center text-muted-foreground">Lade …</td></tr>
+                <tr><td colSpan={12} className="p-6 text-center text-muted-foreground">Lade …</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={11} className="p-6 text-center text-muted-foreground">Keine Anfragen gefunden.</td></tr>
+                <tr><td colSpan={12} className="p-6 text-center text-muted-foreground">Keine Anfragen gefunden.</td></tr>
               ) : filtered.map((r) => (
                 <tr key={r.id} className="border-t hover:bg-muted/30">
                   <td className="p-3 whitespace-nowrap">{new Date(r.created_at).toLocaleString('de-DE')}</td>
@@ -199,6 +200,28 @@ export default function SalesLeadsList() {
                   <td className="p-3">{r.delivery_preference || '—'}</td>
                   <td className="p-3 text-muted-foreground">{r.form_name || r.source}</td>
                   <td className="p-3"><Badge variant={statusVariant(r.lead_status)}>{r.lead_status}</Badge></td>
+                  <td className="p-3">
+                    <Select
+                      value={r.assigned_user ?? '__none'}
+                      onValueChange={(v) => assign(r.id, v)}
+                      disabled={assigning === r.id}
+                    >
+                      <SelectTrigger className="w-[200px] h-8 text-xs">
+                        <div className="flex items-center gap-1.5 truncate">
+                          <UserCheck className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                          <span className="truncate">{userLabel(r.assigned_user) || 'Zuweisen …'}</span>
+                        </div>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none">— Nicht zugewiesen —</SelectItem>
+                        {users.map((u) => (
+                          <SelectItem key={u.id} value={u.id}>
+                            {u.full_name || u.email || u.id.slice(0, 8)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </td>
                 </tr>
               ))}
             </tbody>
