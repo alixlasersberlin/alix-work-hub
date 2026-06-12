@@ -19,6 +19,8 @@ import { template as bugCapaNotification } from './bug-capa-notification.tsx'
 import { template as reviewInvitation } from './review-invitation.tsx'
 import { template as financeReminder } from './finance-reminder.tsx'
 import { template as salesWizardConfirmation } from './sales-wizard-confirmation.tsx'
+import { template as alixSignInvite } from './alix-sign-invite.tsx'
+import { template as alixSignConfirmation } from './alix-sign-confirmation.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'otp-code': otpCode,
@@ -31,4 +33,6 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'review-invitation': reviewInvitation,
   'finance-reminder': financeReminder,
   'sales-wizard-confirmation': salesWizardConfirmation,
+  'alix-sign-invite': alixSignInvite,
+  'alix-sign-confirmation': alixSignConfirmation,
 }
