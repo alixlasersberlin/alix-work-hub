@@ -53,11 +53,27 @@ export default function AngebotErstellen() {
   useEffect(() => {
     async function load() {
       setLoading(true);
-      const [{ data: c }, { data: i }] = await Promise.all([
-        supabase.from('customers').select('id, company_name, contact_name, email, phone, billing_address, shipping_address, external_customer_id, source_system').order('company_name').limit(1000),
-        supabase.from('zoho_items').select('id, name, sku, description, rate, tax_percentage, unit').eq('status', 'active').order('name').limit(2000),
-      ]);
-      setCustomers(c ?? []);
+      // Load ALL customers in chunks (Supabase caps single queries at 1000 rows)
+      const CHUNK = 1000;
+      const allCustomers: any[] = [];
+      for (let from = 0; ; from += CHUNK) {
+        const { data: chunk, error: chunkErr } = await supabase
+          .from('customers')
+          .select('id, company_name, contact_name, email, phone, billing_address, shipping_address, external_customer_id, source_system')
+          .order('company_name')
+          .range(from, from + CHUNK - 1);
+        if (chunkErr || !chunk || chunk.length === 0) break;
+        allCustomers.push(...chunk);
+        if (chunk.length < CHUNK) break;
+      }
+      const { data: i } = await supabase
+        .from('zoho_items')
+        .select('id, name, sku, description, rate, tax_percentage, unit')
+        .eq('status', 'active')
+        .order('name')
+        .limit(2000);
+      const c = allCustomers;
+      setCustomers(c);
       setItems(i ?? []);
       setLoading(false);
 
