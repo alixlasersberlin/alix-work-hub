@@ -157,6 +157,15 @@ function replaceVars(tpl: string, vars: Record<string, string>) {
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
+  // Require CRON_SECRET — function is verify_jwt=false and triggers mass email sends.
+  const CRON_SECRET = Deno.env.get("CRON_SECRET");
+  const provided = req.headers.get("x-cron-secret") ?? "";
+  if (!CRON_SECRET || provided !== CRON_SECRET) {
+    return new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
