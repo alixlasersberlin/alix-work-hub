@@ -164,9 +164,6 @@ export default function SalesWizard({ publicMode = false }: Props) {
       style={publicMode ? { backgroundImage: `url(${bgAsset.url})` } : undefined}
     >
       {publicMode && (
-        <div aria-hidden className="pointer-events-none absolute inset-0 bg-black/55" />
-      )}
-      {publicMode && (
         <>
           <div
             aria-hidden
@@ -203,7 +200,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
 
         <Card className={cn(
           'p-6 md:p-8',
-          publicMode && 'bg-white/[0.04] border-white/10 backdrop-blur-xl text-white shadow-2xl',
+          publicMode && 'bg-black/70 border-white/10 backdrop-blur-xl text-white shadow-2xl',
         )}>
           {/* Step 0 – Willkommen */}
           {step === 0 && (
