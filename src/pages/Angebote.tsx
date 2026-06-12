@@ -59,6 +59,13 @@ export default function Angebote() {
         .eq('status', 'unterschrieben');
       if (error || !data || cancelled || data.length === 0) return;
       const signedMap = new Map(data.map((r: any) => [r.offer_number, r.signed_at]));
+      // Trigger conversion to orders for each newly-signed offer
+      await Promise.all(
+        Array.from(signedMap.keys()).map((num) =>
+          supabase.functions.invoke('convert-signed-offer-to-order', { body: { offer_number: num } })
+            .catch((e) => console.warn('convert offer failed', num, e))
+        )
+      );
       let changed = false;
       const next = current.map(o => {
         if (signedMap.has(o.offerNumber) && o.status !== 'signed' && o.status !== 'order') {
@@ -71,6 +78,7 @@ export default function Angebote() {
         localStorage.setItem(KEY, JSON.stringify(next));
         setOffers(next);
       }
+
     };
     syncSigned();
     const onFocus = () => syncSigned();
