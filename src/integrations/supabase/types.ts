@@ -5274,6 +5274,42 @@ export type Database = {
           },
         ]
       }
+      integration_logs: {
+        Row: {
+          created_at: string
+          event: string
+          external_id: string | null
+          id: string
+          message: string | null
+          payload: Json | null
+          source: string
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event: string
+          external_id?: string | null
+          id?: string
+          message?: string | null
+          payload?: Json | null
+          source: string
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event?: string
+          external_id?: string | null
+          id?: string
+          message?: string | null
+          payload?: Json | null
+          source?: string
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       invoice_workflow_states: {
         Row: {
           created_at: string
@@ -9389,6 +9425,180 @@ export type Database = {
             columns: ["updated_by"]
             isOneToOne: false
             referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_followups: {
+        Row: {
+          assigned_user: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          done_at: string | null
+          due_at: string | null
+          id: string
+          lead_id: string | null
+          status: string
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_user?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          done_at?: string | null
+          due_at?: string | null
+          id?: string
+          lead_id?: string | null
+          status?: string
+          title: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_user?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          done_at?: string | null
+          due_at?: string | null
+          id?: string
+          lead_id?: string | null
+          status?: string
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_followups_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "sales_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_lead_history: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          lead_id: string
+          note: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          lead_id: string
+          note?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          lead_id?: string
+          note?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_lead_history_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "sales_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_leads: {
+        Row: {
+          archived: boolean
+          assigned_user: string | null
+          city: string | null
+          company: string | null
+          converted_customer_id: string | null
+          converted_offer_id: string | null
+          country: string | null
+          created_at: string
+          email: string | null
+          external_id: string | null
+          first_name: string | null
+          form_name: string | null
+          id: string
+          last_name: string | null
+          lead_status: string
+          message: string | null
+          metadata: Json
+          phone: string | null
+          requested_products: string | null
+          source: string
+          street: string | null
+          updated_at: string
+          zip: string | null
+        }
+        Insert: {
+          archived?: boolean
+          assigned_user?: string | null
+          city?: string | null
+          company?: string | null
+          converted_customer_id?: string | null
+          converted_offer_id?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          external_id?: string | null
+          first_name?: string | null
+          form_name?: string | null
+          id?: string
+          last_name?: string | null
+          lead_status?: string
+          message?: string | null
+          metadata?: Json
+          phone?: string | null
+          requested_products?: string | null
+          source?: string
+          street?: string | null
+          updated_at?: string
+          zip?: string | null
+        }
+        Update: {
+          archived?: boolean
+          assigned_user?: string | null
+          city?: string | null
+          company?: string | null
+          converted_customer_id?: string | null
+          converted_offer_id?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          external_id?: string | null
+          first_name?: string | null
+          form_name?: string | null
+          id?: string
+          last_name?: string | null
+          lead_status?: string
+          message?: string | null
+          metadata?: Json
+          phone?: string | null
+          requested_products?: string | null
+          source?: string
+          street?: string | null
+          updated_at?: string
+          zip?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_leads_converted_customer_id_fkey"
+            columns: ["converted_customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
             referencedColumns: ["id"]
           },
         ]

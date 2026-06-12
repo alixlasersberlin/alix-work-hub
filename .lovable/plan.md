@@ -1,110 +1,57 @@
-# Alix-Finance Phase 1 – Finance Foundation
+## Ziel
+Zoho Forms Anfragen werden im bestehenden **SALES MANAGEMENT** als neuer Unterpunkt **Anfragen** sichtbar, additiv zum vorhandenen Modul. Aus jeder Anfrage entsteht per Klick ein Angebot über das bestehende Angebotsmodul. Zusätzlich neuer Unterpunkt **Nachfassen** und Erweiterung des Sales-Dashboards.
 
-Rein **additive** Erweiterung. Keine bestehenden Tabellen, Spalten, Policies, Funktionen oder UI-Module werden verändert. Alle SQL-Migrationen verwenden `IF NOT EXISTS` / `ADD COLUMN IF NOT EXISTS`. Keine `DROP`, kein `DELETE` ohne `WHERE`.
+Bestehende Module (Kunden, Angebote, Aufträge, Finance, Geräteakte, Tickets, Tourenplanung, Wartung, Kundenportal) werden nur **wiederverwendet**, nicht ersetzt.
 
-## Scope dieser Phase
-Nur Fundament. **Keine** DATEV, **keine** Mahnungen, **keine** Zoho-Sync, **keine** Gerätesperren-Logik – nur Strukturen/UI-Platzhalter.
+## Umfang (additiv)
 
-## 1. Datenbank (neue Migration, additiv)
+### 1. Datenbank (neue Tabellen, keine Änderung bestehender)
+- `sales_leads` – Lead-Datensätze aus Zoho Forms (Felder gem. Vorgabe inkl. `converted_offer_id`, `converted_customer_id`, `metadata jsonb`, `lead_status`).
+- `sales_lead_history` – Aktions-/Statushistorie pro Lead.
+- `sales_followups` – Nachfass-Aufgaben (Rückruf, Termin, Wiedervorlage) mit Fälligkeit + Status (offen/heute/überfällig/erledigt).
+- `integration_logs` – generisches Import-/Webhook-Log.
+- Trigger: `updated_at`, automatischer Eintrag in `sales_lead_history` bei Statuswechsel/Konvertierung.
+- RLS: Lese-/Schreibzugriff für `Super Admin`, `Admin`, `Vertriebsleitung`, `Vertrieb`; Löschen ausschließlich `Super Admin` (entspricht globaler Regel).
+- GRANTs für `authenticated` und `service_role` in derselben Migration.
 
-### Neue Tabellen (alle in `public`, mit GRANTs + RLS)
+### 2. Menü
+In `AppLayout.tsx` unter **SALES MANAGEMENT** zwei neue Einträge ergänzen, vorhandene unverändert lassen:
+- `Anfragen` → `/verkauf/anfragen`
+- `Nachfassen` → `/verkauf/nachfassen`
 
-**`finance_accounts`** – 1 pro Kunde
-- `id`, `customer_id` (FK customers, unique), `debtor_number`, `payment_terms`, `credit_limit numeric`, `current_balance numeric default 0`, `overdue_balance numeric default 0`, `reminder_level int default 0`, `blocked boolean default false`, `last_payment_at`, `last_reminder_at`, `notes`, `created_at`, `updated_at`
+Reihenfolge: Dashboard · Anfragen · Angebote · Kunden · Nachfassen · Aktivitäten · Auswertungen.
 
-**`finance_contracts`**
-- `id`, `customer_id`, `order_id` (nullable, FK orders), `device_id` (nullable, FK lager_devices), `contract_number unique`, `contract_type` (Kauf|Leasing|Mietkauf|Ratenzahlung|Servicevertrag), `start_date`, `end_date`, `monthly_rate numeric`, `remaining_amount numeric`, `status` (aktiv|beendet|gekündigt|entwurf), `notes`, `created_at`, `updated_at`
+### 3. Seiten
+- `/verkauf/anfragen` – Liste mit Spalten Datum, Firma, Ansprechpartner, E-Mail, Telefon, Produktinteresse, Quelle, Status, Bearbeiter; Filter (Zeitraum, Produkt, Status, Mitarbeiter, Quelle), Suche, Sortierungen.
+- `/verkauf/anfragen/:id` – Detailansicht mit Tabs **Stammdaten**, **Kommunikation**, **Notizen**, **Angebote**, **Historie** und Aktions-Buttons (Angebot erstellen, Kunde zuordnen, Neuen Kunden anlegen, Anfrage bearbeiten, Aufgabe erstellen, E-Mail senden, Nachfass-Termin anlegen, Archivieren).
+- `/verkauf/nachfassen` – Aufgabenliste mit Status-Tabs Offen / Heute / Überfällig / Erledigt; Dialoge für Rückruf, Termin, Wiedervorlage, Erinnerung.
+- Sales-Dashboard um KPI-Kacheln und Diagramme erweitern (Anfragen heute/Woche/Monat, Offen, Angebote, Volumen, Quote, Bearbeitungszeit, Gewonnene Kunden; Top-Produkte/Vertriebler, Umsatz nach Quelle).
 
-**`finance_transactions`**
-- `id`, `customer_id`, `order_id`, `device_id`, `contract_id`, `amount numeric`, `currency default 'EUR'`, `booking_date date`, `reference text`, `transaction_type` (Rechnung|Anzahlung|Zahlung|Gutschrift|Mahngebühr|Zinsen|Sonstiges), `notes`, `created_at`
+### 4. Aktion „Angebot erstellen"
+Klick übernimmt Kunde/Ansprechpartner/Adresse/Produktinteresse/Nachricht in den vorhandenen Angebot-Editor (`AngebotErstellen.tsx`) per `sessionStorage`-Handoff (gleiches Muster wie der bestehende Angebots-Import). Nach Speichern: `sales_leads.converted_offer_id` setzen, Status → `Angebot erstellt`, Eintrag in `sales_lead_history`.
 
-**`finance_history`** – Audit, append-only
-- `id`, `table_name`, `record_id`, `user_id`, `action`, `old_value jsonb`, `new_value jsonb`, `created_at`
-- Trigger auf `finance_accounts`, `finance_contracts`, `finance_transactions` (INSERT/UPDATE/DELETE → row in `finance_history`).
-- RLS verbietet UPDATE/DELETE für alle (nur SELECT für Finance-Rollen, INSERT nur via SECURITY DEFINER Trigger).
+### 5. Duplikatsprüfung
+Vor Kunden-/Angebotsanlage Match gegen `customers` in dieser Reihenfolge: E-Mail → Telefon → Firma. Treffer ⇒ verknüpfen statt anlegen. Optionaler Check gegen `zoho_invoices` (Books) und `alixsmart_products`-bezogene Stammdaten zur Anreicherung; keine Dubletten erzeugen.
 
-### Additive Spalten auf bestehenden Tabellen
+### 6. Auftrag bei Annahme
+Wenn das verknüpfte Angebot den Status „angenommen" erhält: Kunde sicherstellen, Auftrag im bestehenden Auftragsmodul erzeugen, Lead-Status → `Gewonnen`, `converted_customer_id` setzen.
 
-**`orders`** (nur `ADD COLUMN IF NOT EXISTS`, **keine** Veränderung bestehender Felder):
-- `finance_total_amount`, `finance_deposit_amount`, `finance_remaining_amount`, `finance_open_amount`, `finance_paid_amount`, `finance_overdue_amount` (numeric), `finance_payment_status` text
+### 7. Zoho Forms Webhook
+Edge Function `zoho-forms-import` (POST, `x-api-key`-Auth via Secret `ZOHO_FORMS_WEBHOOK_KEY`):
+- legt neue `sales_leads` an oder aktualisiert bestehende (`external_id` + `source`),
+- schreibt `integration_logs`,
+- triggert In-App-Benachrichtigung (`mail_notifications`) und E-Mail an Vertrieb/Vertriebsleitung/Admin/Super Admin („Neue Vertriebsanfrage eingegangen").
 
-**`lager_devices`** (additiv):
-- `finance_contract_number`, `finance_status`, `finance_invoice_status`, `finance_payment_status`, `finance_block_status`, `finance_open_amount numeric`
+### 8. Benachrichtigungen
+Bei neuem Lead: `mail_notifications`-Insert für alle Empfänger der genannten Rollen; optionaler E-Mail-Versand über bestehende `send-transactional-email` Function.
 
-Alle Felder nullable, Defaults `NULL`/`0`. Bestehende Queries bleiben unberührt.
+### 9. Auswertungen / Export
+Auswertungen-Seite um Reports (Quellen, Abschlussquote/Mitarbeiter und /Produkt, Volumen, Bearbeitungszeit, Conversion Forms→Angebot, Angebot→Auftrag) sowie Export (CSV/Excel via vorhandener `xlsx`, PDF via vorhandenem `jspdf`) erweitern.
 
-### RLS / Rollen
-Neue Helper-Function `can_access_finance_module()`:
-- Voll: `Super Admin`, `Admin`, `Finance`, `Geschäftsführung`
-- Read-only: `Kundenservice`, `Serviceleitung`
-- Sonst: kein Zugriff
+## Offene Fragen vor Umsetzung
+1. **Datenquelle „Import vorhanden"**: Existiert bereits eine Tabelle / Edge Function, die Zoho-Forms-Daten in Supabase ablegt? Falls ja: welche Tabelle/Spalten — dann lese ich daraus statt eine eigene `sales_leads` zu befüllen. Falls nein: neuer Webhook `zoho-forms-import` wie oben.
+2. **Webhook-URL & API-Key**: Soll ich den Secret-Slot `ZOHO_FORMS_WEBHOOK_KEY` anlegen und du trägst den Key später ein?
+3. **Rolle „Vertriebsleitung"**: existiert noch nicht im Rollen-Setup (`is_admin`, `Vertrieb`, …). Soll ich sie als neue Rolle aufnehmen oder vorerst auf `Vertrieb` + `Admin`/`Super Admin` mappen?
+4. **Auftragsanlage bei Angebotsannahme**: heute gibt es keinen automatisierten Übergang Angebot→Auftrag in AlixWork. Soll dieser Trigger Teil dieser Story sein (eigener Button im Angebot „in Auftrag wandeln") oder später separat?
 
-Policies pro neuer Tabelle:
-- SELECT: `can_access_finance_module()` ODER Read-only-Rollen
-- INSERT/UPDATE: nur Voll-Zugriff
-- DELETE: nur `Super Admin` (Memory-Regel)
-- `finance_history`: SELECT nur Voll-Zugriff, kein INSERT/UPDATE/DELETE aus App (nur Trigger)
-
-GRANTs: `authenticated` + `service_role` (kein `anon`).
-
-## 2. Frontend
-
-### Neue Menügruppe „Finance" (in `AppLayout.tsx`, additiv)
-Bestehender `/finance`-Eintrag bleibt; neue Gruppe ergänzt Unterpunkte:
-- `/finance/dashboard` – KPI-Platzhalter (offene/überfällige Forderungen, Anzahlungen, Verträge, Raten, Eingänge)
-- `/finance` (bestehend) – Forderungen
-- `/finance/anzahlungen` – Liste der Transaktionen Typ „Anzahlung"
-- `/finance/vertraege` – CRUD finance_contracts
-- `/finance/zahlungen` – Liste finance_transactions Typ „Zahlung"
-- `/finance/mahnwesen` – Platzhalter „Phase 3"
-- `/finance/datev` – Platzhalter „Phase 4"
-- `/finance/geraetesperren` – bestehende Seite verlinken
-- `/finance/einstellungen/systemstatus` – Status-Karten (Zoho/DATEV/Mahnwesen/Bankimport/Sperren = „vorbereitet")
-
-Sichtbarkeit per Rollen-Guard. Bestehende Routen bleiben unangetastet.
-
-### Kunde – neuer Tab „Finanzakte"
-In bestehender Kundendetailseite zusätzlicher Tab, der `finance_accounts` zum Kunden liest/anlegt (auto-create on first view, falls Finance-Rolle).
-
-### Auftrag – neuer Bereich „Finanzen"
-Read-only Anzeige der neuen `finance_*`-Felder + Liste verknüpfter `finance_transactions`.
-
-### Geräteakte – neuer Tab „FINANZEN"
-Platzhalter mit Anzeige der neuen Felder + verknüpfter Vertrag (falls vorhanden).
-
-### Service-Layer
-`src/lib/finance/api.ts`:
-- `getFinanceAccount`, `createFinanceAccount`, `updateFinanceAccount`
-- `getContract`, `createContract`, `updateContract`, `listContracts`
-- `createTransaction`, `updateTransaction`, `getTransactions`
-
-Hook `useFinancePermissions()` analog zu `useRepairPermissions`.
-
-## 3. Audit
-Trigger schreiben automatisch in `finance_history`. Zusätzlich `audit_logs`-Eintrag über bestehenden `audit_trigger_fn` durch Anbinden an die drei neuen Tabellen (nutzt vorhandene Infrastruktur).
-
-## 4. Abschlusskriterien
-- [ ] 4 neue Tabellen + Trigger + RLS
-- [ ] Additive Spalten auf `orders` und `lager_devices`
-- [ ] Helper `can_access_finance_module`
-- [ ] Menügruppe Finance mit allen Unterpunkten (Platzhalter wo nötig)
-- [ ] Tabs „Finanzakte" (Kunde), „Finanzen" (Auftrag), „FINANZEN" (Gerät)
-- [ ] `src/lib/finance/api.ts` Service-Layer
-- [ ] Keine bestehende Funktion verändert / kein Test gebrochen
-
-## Technische Details
-
-```text
-SQL-Migration:
-  1) CREATE TABLE IF NOT EXISTS finance_accounts (...)
-  2) GRANT SELECT,INSERT,UPDATE,DELETE TO authenticated; GRANT ALL TO service_role;
-  3) ALTER TABLE ... ENABLE RLS; CREATE POLICY ...
-  (gleich für finance_contracts, finance_transactions, finance_history)
-  4) CREATE OR REPLACE FUNCTION can_access_finance_module()
-  5) ALTER TABLE orders ADD COLUMN IF NOT EXISTS finance_*
-  6) ALTER TABLE lager_devices ADD COLUMN IF NOT EXISTS finance_*
-  7) CREATE TRIGGER finance_history_trg ... (SECURITY DEFINER)
-  8) Attach existing audit_trigger_fn to new tables
-```
-
-Soll ich so umsetzen? Wenn ja, starte ich mit der Migration und danach UI + Service-Layer.
+Sobald diese vier Punkte geklärt sind, setze ich die Migration + UI + Edge Function in einem Rutsch um, ohne bestehende Funktionen anzufassen.

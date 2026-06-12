@@ -54,6 +54,25 @@ export default function AngebotErstellen() {
       setCustomers(c ?? []);
       setItems(i ?? []);
       setLoading(false);
+
+      // Handoff aus Sales-Lead (SALES MANAGEMENT → Anfragen → "Angebot erstellen")
+      try {
+        const raw = sessionStorage.getItem('sales_lead_handoff_v1');
+        if (raw) {
+          const h = JSON.parse(raw);
+          sessionStorage.removeItem('sales_lead_handoff_v1');
+          if (h.customer_id) setCustomerId(h.customer_id);
+          else if (h.customer_email || h.customer_company) {
+            const match = (c ?? []).find((cu: any) =>
+              (h.customer_email && cu.email?.toLowerCase() === String(h.customer_email).toLowerCase()) ||
+              (h.customer_company && cu.company_name === h.customer_company)
+            );
+            if (match) setCustomerId(match.id);
+            else setCustomerSearch(h.customer_company || h.customer_email || '');
+          }
+          if (h.notes) setNotes(h.notes);
+        }
+      } catch { /* ignore */ }
     }
     load();
   }, []);
