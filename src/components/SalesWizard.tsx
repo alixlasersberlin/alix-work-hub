@@ -102,6 +102,7 @@ interface Props {
 }
 
 export default function SalesWizard({ publicMode = false }: Props) {
+  const { t } = useWizardLang();
   const [step, setStep] = useState(0);
   const [data, setData] = useState<State>(INITIAL);
   const [submitting, setSubmitting] = useState(false);
