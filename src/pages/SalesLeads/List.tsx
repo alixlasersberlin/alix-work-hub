@@ -185,6 +185,11 @@ export default function SalesLeadsList() {
               ) : filtered.map((r) => (
                 <tr key={r.id} className="border-t hover:bg-muted/30">
                   <td className="p-3 whitespace-nowrap">{new Date(r.created_at).toLocaleString('de-DE')}</td>
+                  <td className="p-3 font-mono text-xs">
+                    <Link to={`/verkauf/anfragen/${r.id}`} className="text-primary hover:underline">
+                      {r.lead_number || '—'}
+                    </Link>
+                  </td>
                   <td className="p-3">
                     {r.lead_score != null ? (
                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold ${
@@ -197,17 +202,23 @@ export default function SalesLeadsList() {
                       </span>
                     ) : '—'}
                   </td>
-                  <td className="p-3 font-medium">
-                    <Link to={`/verkauf/anfragen/${r.id}`} className="text-primary hover:underline">
-                      {r.company || '—'}
-                    </Link>
+                  <td className="p-3">
+                    <div className="font-medium">
+                      <Link to={`/verkauf/anfragen/${r.id}`} className="text-primary hover:underline">
+                        {r.company || [r.first_name, r.last_name].filter(Boolean).join(' ') || '—'}
+                      </Link>
+                    </div>
+                    {r.company && (r.first_name || r.last_name) && (
+                      <div className="text-xs text-muted-foreground">{[r.first_name, r.last_name].filter(Boolean).join(' ')}</div>
+                    )}
                   </td>
-                  <td className="p-3">{[r.first_name, r.last_name].filter(Boolean).join(' ') || '—'}</td>
-                  <td className="p-3">{r.email || '—'}</td>
-                  <td className="p-3">{r.phone || '—'}</td>
-                  <td className="p-3">{r.requested_products || '—'}</td>
-                  <td className="p-3">{r.consultation_type || '—'}</td>
-                  <td className="p-3">{r.delivery_preference || '—'}</td>
+                  <td className="p-3 text-xs">
+                    {r.email && <div>{r.email}</div>}
+                    {r.phone && <div className="text-muted-foreground">{r.phone}</div>}
+                  </td>
+                  <td className="p-3">{r.device_category || r.requested_products || '—'}</td>
+                  <td className="p-3 whitespace-nowrap">{r.implementation_period || '—'}</td>
+                  <td className="p-3">{r.service_rating ? '★'.repeat(r.service_rating) : '—'}</td>
                   <td className="p-3 text-muted-foreground">{r.form_name || r.source}</td>
                   <td className="p-3"><Badge variant={statusVariant(r.lead_status)}>{r.lead_status}</Badge></td>
                   <td className="p-3">
