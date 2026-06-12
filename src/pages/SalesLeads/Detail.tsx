@@ -32,6 +32,8 @@ const STATUS_OPTIONS = [
 export default function SalesLeadDetail() {
   const { id } = useParams();
   const nav = useNavigate();
+  const { hasRole } = useAuth();
+  const canEdit = hasRole('Super Admin');
   const [lead, setLead] = useState<any | null>(null);
   const [history, setHistory] = useState<any[]>([]);
   const [followups, setFollowups] = useState<any[]>([]);
@@ -42,6 +44,8 @@ export default function SalesLeadDetail() {
   const [followupTitle, setFollowupTitle] = useState('');
   const [followupDate, setFollowupDate] = useState('');
   const [followupNote, setFollowupNote] = useState('');
+  const [editMode, setEditMode] = useState(false);
+  const [editForm, setEditForm] = useState<any>({});
 
   async function load() {
     if (!id) return;
