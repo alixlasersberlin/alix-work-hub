@@ -15,6 +15,7 @@ type SavedOffer = {
   customer?: { company_name?: string; contact_name?: string; email?: string } | null;
   totals?: { net: number; tax: number; gross: number };
   createdAt: string;
+  status?: 'draft' | 'order';
 };
 
 const fmtMoney = (n: number) =>
