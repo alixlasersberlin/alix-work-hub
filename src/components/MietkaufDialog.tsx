@@ -373,12 +373,17 @@ export default function MietkaufDialog({ order }: Props) {
   }
 
   return (
+    <>
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      className="border-primary/30 text-primary hover:bg-primary/10"
+      onClick={() => { console.log('[MietkaufDialog] open click'); setOpen(true); }}
+    >
+      <FileText className="w-4 h-4 mr-2" /> Mietkauf
+    </Button>
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="border-primary/30 text-primary hover:bg-primary/10">
-          <FileText className="w-4 h-4 mr-2" /> Mietkauf
-        </Button>
-      </DialogTrigger>
       <DialogContent className="max-w-lg bg-card border-border">
         <DialogHeader>
           <DialogTitle className="font-display">Mietkaufvertrag erstellen</DialogTitle>
@@ -446,5 +451,6 @@ export default function MietkaufDialog({ order }: Props) {
         </div>
       </DialogContent>
     </Dialog>
+    </>
   );
 }

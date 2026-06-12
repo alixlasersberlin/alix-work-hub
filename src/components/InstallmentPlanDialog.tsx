@@ -252,7 +252,7 @@ export default function InstallmentPlanDialog({ order }: Props) {
         variant="outline"
         size="sm"
         className="border-primary/30 text-primary hover:bg-primary/10"
-        onClick={() => setOpen(true)}
+        onClick={() => { console.log('[InstallmentPlanDialog] open click'); setOpen(true); }}
       >
         <FileText className="w-4 h-4 mr-2" /> Ratenplan
       </Button>

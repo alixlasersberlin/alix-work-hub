@@ -215,6 +215,7 @@ export default function SepaMandatButton({ order }: Props) {
   }
 
   function handleClick() {
+    console.log('[SepaMandat] click');
     try {
       generateSepaMandat();
       toast.success('SEPA-Mandat erstellt');
