@@ -283,11 +283,12 @@ export default function SalesWizard({ publicMode = false }: Props) {
                       type="button"
                       onClick={() => toggle('additional_interests', a)}
                       className={cn(
-                        'w-full flex items-center gap-3 rounded-lg border p-3 text-left transition',
+                        'w-full flex items-center gap-3 rounded-lg border p-3 text-left transition backdrop-blur-sm',
                         active
-                          ? 'border-slate-900 bg-blue-500/10'
-                          : 'border-slate-900 hover:border-slate-700',
+                          ? 'border-cyan-400/80 bg-cyan-400/10 shadow-[0_0_20px_-4px_rgba(34,211,238,0.6)]'
+                          : 'border-white/15 hover:border-cyan-300/50 bg-white/5',
                       )}
+
                     >
                       <div className={cn(
                         'h-5 w-5 rounded border flex items-center justify-center shrink-0',
