@@ -558,7 +558,7 @@ export default function AngebotErstellen() {
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8);
       doc.setTextColor(120, 120, 120);
-      doc.text(`Angebot ${offerNumber}  ·  Seite ${i} von ${totalPages}`, RIGHT, PAGE_H - 8, { align: 'right' });
+      doc.text(`Angebot ${offerNumber}  ·  Seite ${i} von ${totalPages}`, RIGHT, PAGE_H - 4, { align: 'right' });
     }
 
     return doc;
