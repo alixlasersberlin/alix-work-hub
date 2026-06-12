@@ -1,11 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { Inbox, Search, Filter, UserCheck, Pencil } from 'lucide-react';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Inbox, Search, Filter, UserCheck, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const STATUS_OPTIONS = [
@@ -53,6 +58,8 @@ function statusVariant(s: string): 'default' | 'secondary' | 'destructive' | 'ou
 }
 
 export default function SalesLeadsList() {
+  const { hasRole } = useAuth();
+  const canDelete = hasRole('Super Admin');
   const [rows, setRows] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -60,6 +67,19 @@ export default function SalesLeadsList() {
   const [source, setSource] = useState<string>('alle');
   const [users, setUsers] = useState<{ id: string; full_name: string | null; email: string | null }[]>([]);
   const [assigning, setAssigning] = useState<string | null>(null);
+  const [toDelete, setToDelete] = useState<Lead | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  async function confirmDelete() {
+    if (!toDelete) return;
+    setDeleting(true);
+    const { error } = await supabase.from('sales_leads').delete().eq('id', toDelete.id);
+    setDeleting(false);
+    if (error) { toast.error(error.message); return; }
+    setRows((r) => r.filter(x => x.id !== toDelete.id));
+    setToDelete(null);
+    toast.success('Lead gelöscht');
+  }
 
   async function loadLeads() {
     const { data } = await supabase
@@ -253,12 +273,23 @@ export default function SalesLeadsList() {
                     </Select>
                   </td>
                   <td className="p-3 text-right">
-                    <Link
-                      to={`/verkauf/anfragen/${r.id}`}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded border border-border text-xs hover:bg-muted/40"
-                    >
-                      <Pencil className="h-3.5 w-3.5" />Bearbeiten
-                    </Link>
+                    <div className="inline-flex items-center gap-1.5">
+                      <Link
+                        to={`/verkauf/anfragen/${r.id}`}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded border border-border text-xs hover:bg-muted/40"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />Bearbeiten
+                      </Link>
+                      {canDelete && (
+                        <button
+                          type="button"
+                          onClick={() => setToDelete(r)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded border border-destructive/40 text-destructive text-xs hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />Löschen
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -266,6 +297,30 @@ export default function SalesLeadsList() {
           </table>
         </div>
       </Card>
+
+      <AlertDialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Lead löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {toDelete && (
+                <>
+                  <span className="font-mono">{toDelete.lead_number || toDelete.id.slice(0, 8)}</span>
+                  {' – '}
+                  {toDelete.company || [toDelete.first_name, toDelete.last_name].filter(Boolean).join(' ') || '—'}
+                  <br />Dieser Vorgang kann nicht rückgängig gemacht werden.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {deleting ? 'Lösche …' : 'Endgültig löschen'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
