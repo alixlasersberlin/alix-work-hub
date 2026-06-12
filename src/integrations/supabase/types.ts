@@ -517,6 +517,181 @@ export type Database = {
           },
         ]
       }
+      alix_sign_audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          id: string
+          ip_address: unknown
+          sign_request_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: unknown
+          sign_request_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: unknown
+          sign_request_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alix_sign_audit_log_sign_request_id_fkey"
+            columns: ["sign_request_id"]
+            isOneToOne: false
+            referencedRelation: "alix_sign_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alix_sign_requests: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          customer_email: string | null
+          customer_id: string | null
+          customer_name: string | null
+          expires_at: string
+          id: string
+          offer_number: string
+          offer_payload: Json
+          opened_at: string | null
+          signed_at: string | null
+          status: string
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          expires_at?: string
+          id?: string
+          offer_number: string
+          offer_payload: Json
+          opened_at?: string | null
+          signed_at?: string | null
+          status?: string
+          token: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          expires_at?: string
+          id?: string
+          offer_number?: string
+          offer_payload?: Json
+          opened_at?: string | null
+          signed_at?: string | null
+          status?: string
+          token?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alix_sign_requests_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alix_sign_signatures: {
+        Row: {
+          accepted_credit_check: boolean | null
+          accepted_electronic_signature: boolean
+          accepted_offer: boolean
+          accepted_privacy: boolean
+          accepted_terms: boolean
+          created_at: string
+          customer_id: string | null
+          id: string
+          ip_address: unknown
+          offer_number: string
+          pdf_data: string | null
+          pdf_hash: string | null
+          sign_request_id: string
+          signature_image_data: string | null
+          signer_email: string
+          signer_location: string | null
+          signer_name: string
+          user_agent: string | null
+        }
+        Insert: {
+          accepted_credit_check?: boolean | null
+          accepted_electronic_signature?: boolean
+          accepted_offer?: boolean
+          accepted_privacy?: boolean
+          accepted_terms?: boolean
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          ip_address?: unknown
+          offer_number: string
+          pdf_data?: string | null
+          pdf_hash?: string | null
+          sign_request_id: string
+          signature_image_data?: string | null
+          signer_email: string
+          signer_location?: string | null
+          signer_name: string
+          user_agent?: string | null
+        }
+        Update: {
+          accepted_credit_check?: boolean | null
+          accepted_electronic_signature?: boolean
+          accepted_offer?: boolean
+          accepted_privacy?: boolean
+          accepted_terms?: boolean
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          ip_address?: unknown
+          offer_number?: string
+          pdf_data?: string | null
+          pdf_hash?: string | null
+          sign_request_id?: string
+          signature_image_data?: string | null
+          signer_email?: string
+          signer_location?: string | null
+          signer_name?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alix_sign_signatures_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alix_sign_signatures_sign_request_id_fkey"
+            columns: ["sign_request_id"]
+            isOneToOne: false
+            referencedRelation: "alix_sign_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alixsmart_migration_logs: {
         Row: {
           action: string | null
@@ -12198,6 +12373,7 @@ export type Database = {
       can_run_ai_service: { Args: never; Returns: boolean }
       can_send_whatsapp: { Args: never; Returns: boolean }
       can_upload_factory_invoice: { Args: never; Returns: boolean }
+      can_use_alix_sign: { Args: never; Returns: boolean }
       can_view_finance_module: { Args: never; Returns: boolean }
       can_view_mail_audit: { Args: never; Returns: boolean }
       check_rate_limit: {
