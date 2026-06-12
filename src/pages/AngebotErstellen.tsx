@@ -696,7 +696,7 @@ export default function AngebotErstellen() {
             </thead>
             <tbody>
               {lines.map(l => (
-                <React.Fragment key={l.id}>
+                <Fragment key={l.id}>
                   <tr className="align-top">
                     <td className="p-2">
                       <Input
