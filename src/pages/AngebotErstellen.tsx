@@ -555,7 +555,7 @@ export default function AngebotErstellen() {
     if (!selectedCustomer) { toast.error('Bitte zuerst einen Kunden auswählen.'); return; }
     const email = selectedCustomer.email;
     if (!email) { toast.error('Kunde hat keine E-Mail-Adresse hinterlegt.'); return; }
-    const doc = buildPDF();
+    const doc = await buildPDF();
     if (!doc) return;
     saveOffer(true);
     const pdfBase64 = doc.output('datauristring').split(',')[1];
