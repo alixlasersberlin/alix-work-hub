@@ -7,141 +7,105 @@
 @tailwind utilities;
 
 @layer base {
-  :root, .dark {
-    --background: 0 0% 4%;
-    --foreground: 40 20% 92%;
+  /* =====================================================
+     AlixWork Standard – Soft Neumorphism (White / Gray 3D)
+     Single light palette applied to all theme classes.
+     ===================================================== */
+  :root, .dark, .light {
+    --background: 220 14% 96%;            /* #F1F3F5 ambient base */
+    --foreground: 222 14% 14%;            /* near-black text */
 
-    --card: 0 0% 7%;
-    --card-foreground: 40 20% 92%;
-
-    --popover: 0 0% 9%;
-    --popover-foreground: 40 20% 92%;
-
-    --primary: 43 74% 49%;
-    --primary-foreground: 0 0% 4%;
-
-    --secondary: 0 0% 12%;
-    --secondary-foreground: 40 20% 85%;
-
-    --muted: 0 0% 10%;
-    --muted-foreground: 0 0% 55%;
-
-    --accent: 43 74% 49%;
-    --accent-foreground: 0 0% 4%;
-
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 98%;
-
-    --border: 0 0% 14%;
-    --input: 0 0% 14%;
-    --ring: 43 74% 49%;
-
-    --radius: 0.5rem;
-
-    --gold: 43 74% 49%;
-    --gold-light: 43 80% 62%;
-    --gold-dark: 43 60% 35%;
-    --gold-muted: 43 30% 20%;
-
-    --surface-1: 0 0% 7%;
-    --surface-2: 0 0% 10%;
-    --surface-3: 0 0% 13%;
-
-    --success: 142 71% 45%;
-    --success-foreground: 0 0% 98%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 4%;
-    --info: 217 91% 60%;
-    --info-foreground: 0 0% 98%;
-
-    --sidebar-background: 0 0% 5%;
-    --sidebar-foreground: 40 20% 85%;
-    --sidebar-primary: 43 74% 49%;
-    --sidebar-primary-foreground: 0 0% 4%;
-    --sidebar-accent: 0 0% 10%;
-    --sidebar-accent-foreground: 40 20% 92%;
-    --sidebar-border: 0 0% 12%;
-    --sidebar-ring: 43 74% 49%;
-
-    --gradient-gold: linear-gradient(135deg, hsl(43, 74%, 49%), hsl(43, 80%, 62%));
-    --gradient-dark: linear-gradient(180deg, hsl(0, 0%, 7%), hsl(0, 0%, 4%));
-    --shadow-gold: 0 4px 20px -4px hsl(43 74% 49% / 0.15);
-    --shadow-card: 0 2px 12px -2px hsl(0 0% 0% / 0.4);
-  }
-
-  .light {
-    --background: 40 30% 97%;
-    --foreground: 0 0% 6%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 6%;
+    --card: 0 0% 100%;                    /* pure white raised surface */
+    --card-foreground: 222 14% 14%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 6%;
+    --popover-foreground: 222 14% 14%;
 
-    --primary: 43 80% 38%;
+    --primary: 222 14% 22%;               /* graphite primary */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 40 25% 91%;
-    --secondary-foreground: 0 0% 10%;
+    --secondary: 220 14% 92%;
+    --secondary-foreground: 222 14% 18%;
 
-    --muted: 40 20% 92%;
-    --muted-foreground: 0 0% 28%;
+    --muted: 220 14% 94%;
+    --muted-foreground: 220 8% 42%;
 
-    --accent: 43 80% 38%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 220 14% 88%;
+    --accent-foreground: 222 14% 14%;
 
-    --destructive: 0 78% 42%;
+    --destructive: 0 70% 48%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 72%;
-    --input: 0 0% 65%;
-    --ring: 43 80% 38%;
+    --border: 220 13% 86%;
+    --input: 220 13% 90%;
+    --ring: 222 14% 28%;
 
-    --gold: 43 80% 38%;
-    --gold-light: 43 82% 50%;
-    --gold-dark: 43 70% 28%;
-    --gold-muted: 43 35% 85%;
+    --radius: 0.75rem;
 
-    --surface-1: 40 30% 98%;
-    --surface-2: 40 25% 94%;
-    --surface-3: 40 20% 90%;
+    /* Legacy "gold" tokens repurposed as graphite so existing classes still work */
+    --gold: 222 14% 30%;
+    --gold-light: 220 10% 55%;
+    --gold-dark: 222 14% 18%;
+    --gold-muted: 220 13% 90%;
 
-    --success: 142 70% 32%;
+    --surface-1: 0 0% 100%;
+    --surface-2: 220 14% 96%;
+    --surface-3: 220 14% 92%;
+
+    --success: 152 55% 38%;
     --success-foreground: 0 0% 100%;
-    --warning: 32 92% 42%;
+    --warning: 32 92% 45%;
     --warning-foreground: 0 0% 100%;
-    --info: 217 88% 45%;
+    --info: 217 80% 50%;
     --info-foreground: 0 0% 100%;
 
-    --sidebar-background: 40 25% 94%;
-    --sidebar-foreground: 0 0% 10%;
-    --sidebar-primary: 43 80% 38%;
+    --sidebar-background: 220 14% 96%;
+    --sidebar-foreground: 222 14% 16%;
+    --sidebar-primary: 222 14% 22%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 40 25% 88%;
-    --sidebar-accent-foreground: 0 0% 6%;
-    --sidebar-border: 0 0% 70%;
-    --sidebar-ring: 43 80% 38%;
+    --sidebar-accent: 0 0% 100%;
+    --sidebar-accent-foreground: 222 14% 14%;
+    --sidebar-border: 220 13% 88%;
+    --sidebar-ring: 222 14% 28%;
 
-    --gradient-gold: linear-gradient(135deg, hsl(43, 80%, 38%), hsl(43, 82%, 50%));
-    --gradient-dark: linear-gradient(180deg, hsl(40, 30%, 98%), hsl(0, 0%, 100%));
-    --shadow-gold: 0 4px 20px -4px hsl(43 80% 38% / 0.25);
-    --shadow-card: 0 1px 2px 0 hsl(0 0% 0% / 0.1), 0 4px 12px -4px hsl(0 0% 0% / 0.12);
+    /* Neumorphism light / shadow pair */
+    --neu-light: 0 0% 100%;
+    --neu-dark: 220 14% 78%;
+
+    --gradient-gold: linear-gradient(135deg, hsl(220 14% 96%), hsl(0 0% 100%));
+    --gradient-dark: linear-gradient(180deg, hsl(220 14% 98%), hsl(220 14% 92%));
+
+    /* Soft 3D shadow tokens */
+    --shadow-neu:
+      8px 8px 20px -6px hsl(var(--neu-dark) / 0.55),
+      -8px -8px 20px -6px hsl(var(--neu-light) / 1);
+    --shadow-neu-sm:
+      4px 4px 10px -3px hsl(var(--neu-dark) / 0.5),
+      -4px -4px 10px -3px hsl(var(--neu-light) / 1);
+    --shadow-neu-inset:
+      inset 4px 4px 8px -2px hsl(var(--neu-dark) / 0.45),
+      inset -4px -4px 8px -2px hsl(var(--neu-light) / 0.9);
+    --shadow-card: var(--shadow-neu-sm);
+    --shadow-gold: var(--shadow-neu-sm);
   }
 
-  .light body {
+  /* Body / typography */
+  body {
     font-weight: 500;
   }
-  .light h1, .light h2, .light h3, .light h4, .light h5, .light h6 {
+  h1, h2, h3, h4, h5, h6 {
     font-weight: 700;
-    color: hsl(0 0% 4%);
+    color: hsl(222 14% 10%);
   }
 
+  /* Soft 3D card */
+  .card-glow,
   .light .card-glow {
-    box-shadow: 0 0 0 1px hsl(0 0% 0% / 0.08), 0 1px 3px 0 hsl(0 0% 0% / 0.1), 0 4px 12px -4px hsl(0 0% 0% / 0.12);
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border) / 0.6);
+    box-shadow: var(--shadow-neu-sm);
+    border-radius: var(--radius);
   }
-
-
 }
 
 @layer base {
@@ -161,9 +125,14 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', system-ui, sans-serif;
-    /* Vermeidet horizontales Scrollen auf Mobile */
     overflow-x: hidden;
     overscroll-behavior-y: none;
+    background:
+      radial-gradient(1200px 600px at 10% -10%, hsl(0 0% 100%) 0%, transparent 60%),
+      radial-gradient(900px 500px at 110% 10%, hsl(220 20% 99%) 0%, transparent 55%),
+      hsl(var(--background));
+    background-attachment: fixed;
+    color: hsl(222 14% 14%);
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -199,8 +168,32 @@
   .surface-3 { background-color: hsl(var(--surface-3)); }
 
   .card-glow {
-    box-shadow: 0 0 0 1px hsl(var(--gold) / 0.06), 0 1px 3px 0 hsl(0 0% 0% / 0.3), 0 1px 2px -1px hsl(0 0% 0% / 0.3);
+    background: hsl(var(--card));
+    box-shadow: var(--shadow-neu-sm);
+    border-radius: var(--radius);
   }
+
+  /* Soft Neumorphism utility set */
+  .neu-raised {
+    background: hsl(var(--card));
+    box-shadow: var(--shadow-neu);
+    border-radius: var(--radius);
+  }
+  .neu-flat {
+    background: hsl(var(--card));
+    box-shadow: var(--shadow-neu-sm);
+    border-radius: var(--radius);
+  }
+  .neu-inset {
+    background: hsl(var(--surface-2));
+    box-shadow: var(--shadow-neu-inset);
+    border-radius: var(--radius);
+  }
+  .neu-pressable {
+    transition: box-shadow 180ms ease, transform 180ms ease;
+  }
+  .neu-pressable:hover { transform: translateY(-1px); box-shadow: var(--shadow-neu); }
+  .neu-pressable:active { box-shadow: var(--shadow-neu-inset); transform: translateY(0); }
 
   .animate-fade-in {
     animation: fadeIn 0.25s ease-out;
@@ -250,14 +243,14 @@
   background: hsl(var(--muted-foreground) / 0.3);
 }
 
-/* Globaler gelber Hover-Balken für Tabellenzeilen (bessere Sicht beim Scrollen) */
+/* Sanfter Hover für Tabellenzeilen im hellen 3D-Modus */
 table tbody tr {
   position: relative;
   transition: background-color 0.15s ease, box-shadow 0.15s ease;
 }
 table tbody tr:hover {
-  background-color: hsl(var(--primary) / 0.08) !important;
-  box-shadow: inset 4px 0 0 0 hsl(var(--primary));
+  background-color: hsl(220 14% 94%) !important;
+  box-shadow: inset 3px 0 0 0 hsl(var(--primary) / 0.6);
 }
 
 /* ============================================================

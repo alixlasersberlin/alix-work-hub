@@ -10,33 +10,17 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType>({ theme: 'dark', toggleTheme: () => {} });
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    const stored = localStorage.getItem('app-theme');
-    return (stored === 'light' || stored === 'dark') ? stored : 'dark';
-  });
+  // AlixWork Standard ist jetzt durchgängig Weiß/Grau 3D – Dark Mode ist deaktiviert.
+  const [theme] = useState<Theme>('light');
 
   useEffect(() => {
     const root = document.documentElement;
-    const isNeo = root.classList.contains('theme-neo');
-    const effective: Theme = isNeo ? 'light' : theme;
-    root.classList.remove('light', 'dark');
-    root.classList.add(effective);
-    localStorage.setItem('app-theme', theme);
-  }, [theme]);
+    root.classList.remove('dark');
+    root.classList.add('light');
+    try { localStorage.setItem('app-theme', 'light'); } catch { /* ignore */ }
+  }, []);
 
-  // Re-apply when NEO template toggles
-  useEffect(() => {
-    const handler = () => {
-      const root = document.documentElement;
-      const isNeo = root.classList.contains('theme-neo');
-      root.classList.remove('light', 'dark');
-      root.classList.add(isNeo ? 'light' : theme);
-    };
-    window.addEventListener('alixwork:ui-template', handler);
-    return () => window.removeEventListener('alixwork:ui-template', handler);
-  }, [theme]);
-
-  const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  const toggleTheme = () => { /* Theme-Wechsel deaktiviert */ };
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>

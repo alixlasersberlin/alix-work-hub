@@ -45,15 +45,15 @@ export async function generateHandoverPdf(input: HandoverPdfInput): Promise<{ bl
   let y = M;
 
   const title = input.kind === 'finance' ? 'Finance-Übergabe' : 'Auslieferungs-Übergabe';
-  doc.setFillColor(15, 15, 20);
+  doc.setFillColor(235, 238, 242);
   doc.rect(0, 0, W, 60, 'F');
-  doc.setTextColor(212, 175, 55);
+  doc.setTextColor(30, 35, 45);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(18);
   doc.text(title, M, 38);
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
-  doc.setTextColor(220, 220, 220);
+  doc.setTextColor(90, 95, 105);
   doc.text(`Reparatur ${header.repair_number || input.repairId.slice(0, 8)}`, W - M, 38, { align: 'right' });
   y = 80;
 
@@ -94,7 +94,7 @@ export async function generateHandoverPdf(input: HandoverPdfInput): Promise<{ bl
     head: [['Feld', 'Wert']],
     body: metaRows.length ? metaRows : [['–', '–']],
     theme: 'striped',
-    headStyles: { fillColor: [30, 30, 36], textColor: [212, 175, 55] },
+    headStyles: { fillColor: [235, 238, 242], textColor: [55, 65, 81] },
     styles: { fontSize: 10, cellPadding: 4 },
     margin: { left: M, right: M },
   });
@@ -115,7 +115,7 @@ export async function generateHandoverPdf(input: HandoverPdfInput): Promise<{ bl
     head: [['', 'Beleg', 'Status', 'Datei', 'Größe']],
     body: checkBody,
     theme: 'grid',
-    headStyles: { fillColor: [30, 30, 36], textColor: [212, 175, 55] },
+    headStyles: { fillColor: [235, 238, 242], textColor: [55, 65, 81] },
     styles: { fontSize: 9, cellPadding: 4 },
     columnStyles: {
       0: { cellWidth: 20, halign: 'center', fontStyle: 'bold' },
@@ -144,7 +144,7 @@ export async function generateHandoverPdf(input: HandoverPdfInput): Promise<{ bl
     head: [['Typ', 'Storage-Pfad (Bucket: repair-files)']],
     body: refRows.length ? refRows : [['–', 'Keine Datei-Verweise']],
     theme: 'striped',
-    headStyles: { fillColor: [30, 30, 36], textColor: [212, 175, 55] },
+    headStyles: { fillColor: [235, 238, 242], textColor: [55, 65, 81] },
     styles: { fontSize: 8, cellPadding: 4, font: 'courier' },
     margin: { left: M, right: M },
   });
