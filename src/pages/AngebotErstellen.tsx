@@ -1300,6 +1300,14 @@ export default function AngebotErstellen() {
         <Button
           variant="outline"
           className="gap-2 border-border"
+          onClick={() => { if (saveOffer()) navigate('/verkauf/angebote'); }}
+        >
+          <Save className="w-4 h-4" />
+          Speichern + Schließen
+        </Button>
+        <Button
+          variant="outline"
+          className="gap-2 border-border"
           onClick={sendByEmail}
         >
           <Inbox className="w-4 h-4" />
