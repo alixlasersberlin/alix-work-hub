@@ -286,7 +286,7 @@ export default function AngebotErstellen() {
 
   // Wenn MwSt > 0: eingegebener Einzelpreis ist BRUTTO (inkl. MwSt).
   // Wenn MwSt = 0: Einzelpreis ist Netto.
-  const lineCalc = (l: Line) => {
+  const lineCalc = (l: LineItem) => {
     const qty = Number(l.quantity) || 0;
     const rate = Number(l.rate) || 0;
     const tax = Number(l.tax_percentage) || 0;
