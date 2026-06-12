@@ -284,15 +284,28 @@ export default function AngebotErstellen() {
     setLines(prev => (prev.length === 1 ? [newLine()] : prev.filter(l => l.id !== id)));
   };
 
-  const totals = useMemo(() => {
-    let net = 0;
-    let tax = 0;
-    for (const l of lines) {
-      const lineNet = (Number(l.quantity) || 0) * (Number(l.rate) || 0);
-      net += lineNet;
-      tax += lineNet * ((Number(l.tax_percentage) || 0) / 100);
+  // Wenn MwSt > 0: eingegebener Einzelpreis ist BRUTTO (inkl. MwSt).
+  // Wenn MwSt = 0: Einzelpreis ist Netto.
+  const lineCalc = (l: Line) => {
+    const qty = Number(l.quantity) || 0;
+    const rate = Number(l.rate) || 0;
+    const tax = Number(l.tax_percentage) || 0;
+    if (tax > 0) {
+      const gross = qty * rate;
+      const net = gross / (1 + tax / 100);
+      return { net, tax: gross - net, gross };
     }
-    return { net, tax, gross: net + tax };
+    const net = qty * rate;
+    return { net, tax: 0, gross: net };
+  };
+
+  const totals = useMemo(() => {
+    let net = 0, tax = 0, gross = 0;
+    for (const l of lines) {
+      const c = lineCalc(l);
+      net += c.net; tax += c.tax; gross += c.gross;
+    }
+    return { net, tax, gross };
   }, [lines]);
 
   const fmtMoney = (n: number) => n.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
