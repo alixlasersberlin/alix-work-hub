@@ -11,6 +11,9 @@ export default function TemplateSwitcher() {
 
   // Mobile-Bereich (/m/*) ist fest auf NEO — kein Switcher.
   if (pathname === "/m" || pathname.startsWith("/m/")) return null;
+  // Öffentliche Beratungsseite ist fest auf Standard — kein Switcher.
+  if (pathname === "/beratung" || pathname.startsWith("/beratung/")) return null;
+  if (typeof document !== "undefined" && document.documentElement.getAttribute("data-lock-template")) return null;
 
   return (
     <div className="fixed bottom-5 right-5 z-[100] print:hidden">
