@@ -310,11 +310,12 @@ export default function SalesWizard({ publicMode = false }: Props) {
               <RadioGroup value={data.delivery_preference} onValueChange={(v) => setData({ ...data, delivery_preference: v })}>
                 {DELIVERY.map((d) => (
                   <label key={d} className={cn(
-                    'flex items-center gap-3 rounded-lg border p-3 cursor-pointer',
+                    'flex items-center gap-3 rounded-lg border p-3 cursor-pointer transition backdrop-blur-sm',
                     data.delivery_preference === d
-                      ? 'border-slate-900 bg-blue-500/10'
-                      : 'border-slate-900',
+                      ? 'border-cyan-400/80 bg-cyan-400/10 shadow-[0_0_20px_-4px_rgba(34,211,238,0.6)]'
+                      : 'border-white/15 hover:border-cyan-300/50 bg-white/5',
                   )}>
+
                     <RadioGroupItem value={d} />
                     <span className="text-sm">{d}</span>
                   </label>
