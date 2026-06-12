@@ -316,15 +316,15 @@ export default function AngebotErstellen() {
 
   const fmtMoney = (n: number) => n.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
 
-  const generatePDF = () => {
+  const buildPDF = (): jsPDF | null => {
     if (!selectedCustomer) {
       toast.error('Bitte zuerst einen Kunden auswählen.');
-      return;
+      return null;
     }
     const validLines = lines.filter(l => l.name && l.quantity > 0);
     if (validLines.length === 0) {
       toast.error('Bitte mindestens eine Position erfassen.');
-      return;
+      return null;
     }
 
     const doc = new jsPDF();
@@ -382,9 +382,86 @@ export default function AngebotErstellen() {
       doc.text(doc.splitTextToSize(notes, 180), 14, finalY + 34);
     }
 
+    return doc;
+  };
+
+  const generatePDF = () => {
+    const doc = buildPDF();
+    if (!doc) return;
     doc.save(`${offerNumber}.pdf`);
     toast.success('Angebot als PDF erstellt.');
   };
+
+  const buildOfferSnapshot = () => ({
+    offerNumber,
+    offerDate,
+    validUntil,
+    notes,
+    customer: selectedCustomer ? {
+      id: selectedCustomer.id,
+      company_name: selectedCustomer.company_name,
+      contact_name: selectedCustomer.contact_name,
+      email: selectedCustomer.email,
+      phone: selectedCustomer.phone,
+    } : null,
+    lines: lines.filter(l => l.name && l.quantity > 0),
+    totals,
+    payment: { type: payType, price: parseFloat(payPrice) || 0, down: parseFloat(payDown) || 0, term: payTerm },
+    createdAt: new Date().toISOString(),
+  });
+
+  const saveOffer = (silent = false): boolean => {
+    if (!selectedCustomer) { toast.error('Bitte zuerst einen Kunden auswählen.'); return false; }
+    const validLines = lines.filter(l => l.name && l.quantity > 0);
+    if (validLines.length === 0) { toast.error('Bitte mindestens eine Position erfassen.'); return false; }
+    try {
+      const KEY = 'alix_angebote_v1';
+      const raw = localStorage.getItem(KEY);
+      const list = raw ? JSON.parse(raw) : [];
+      const snap = buildOfferSnapshot();
+      const idx = list.findIndex((o: any) => o.offerNumber === offerNumber);
+      if (idx >= 0) list[idx] = snap; else list.unshift(snap);
+      localStorage.setItem(KEY, JSON.stringify(list));
+      if (!silent) toast.success('Angebot gespeichert. Zu finden unter Sales Management → Angebote.');
+      return true;
+    } catch (e: any) {
+      toast.error('Speichern fehlgeschlagen: ' + (e?.message || 'Unbekannter Fehler'));
+      return false;
+    }
+  };
+
+  const sendByEmail = async () => {
+    if (!selectedCustomer) { toast.error('Bitte zuerst einen Kunden auswählen.'); return; }
+    const email = selectedCustomer.email;
+    if (!email) { toast.error('Kunde hat keine E-Mail-Adresse hinterlegt.'); return; }
+    const doc = buildPDF();
+    if (!doc) return;
+    saveOffer(true);
+    const pdfBase64 = doc.output('datauristring').split(',')[1];
+    const contactName = selectedCustomer.contact_name || selectedCustomer.company_name || 'Damen und Herren';
+    const textBody = `Sehr geehrte/r ${contactName},\n\nanbei unser Angebot ${offerNumber} vom ${new Date(offerDate).toLocaleDateString('de-DE')}.\n\nGesamtbetrag: ${fmtMoney(totals.gross)}${validUntil ? `\nGültig bis: ${new Date(validUntil).toLocaleDateString('de-DE')}` : ''}\n\nBei Rückfragen stehen wir Ihnen gerne zur Verfügung.\n\nMit freundlichen Grüßen\nIhr Alix-Team`;
+    const htmlBody = textBody.replace(/\n/g, '<br/>');
+    const t = toast.loading('Angebot wird versendet...');
+    try {
+      const { data, error } = await supabase.functions.invoke('send-mail', {
+        body: {
+          to_email: email,
+          to_name: contactName,
+          from_email: 'vertrieb@alixwork.de',
+          from_name: 'Alix Vertrieb',
+          subject: `Angebot ${offerNumber}`,
+          body_text: textBody,
+          body_html: htmlBody,
+          attachments: [{ filename: `${offerNumber}.pdf`, content: pdfBase64, content_type: 'application/pdf' }],
+        },
+      });
+      if (error || (data as any)?.error) throw new Error(error?.message || (data as any)?.error);
+      toast.success(`Angebot per E-Mail an ${email} gesendet.`, { id: t });
+    } catch (e: any) {
+      toast.error('E-Mail-Versand fehlgeschlagen: ' + (e?.message || 'Unbekannter Fehler'), { id: t });
+    }
+  };
+
 
   if (loading) {
     return (
