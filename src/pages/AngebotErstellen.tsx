@@ -741,7 +741,20 @@ export default function AngebotErstellen() {
                     />
                   </td>
                   <td className="p-2 text-right font-medium text-foreground">
-                    {fmtMoney((l.quantity || 0) * (l.rate || 0))}
+                    {(() => {
+                      const net = (l.quantity || 0) * (l.rate || 0);
+                      const tax = Number(l.tax_percentage) || 0;
+                      const gross = net * (1 + tax / 100);
+                      return tax > 0 ? (
+                        <div className="flex flex-col items-end leading-tight">
+                          <span>{fmtMoney(gross)}</span>
+                          <span className="text-[10px] text-muted-foreground font-normal">inkl. {tax}% MwSt</span>
+                          <span className="text-[10px] text-muted-foreground font-normal">netto {fmtMoney(net)}</span>
+                        </div>
+                      ) : (
+                        <span>{fmtMoney(net)}</span>
+                      );
+                    })()}
                   </td>
                   <td className="p-2">
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => removeLine(l.id)}>
