@@ -380,12 +380,69 @@ export default function AngebotErstellen() {
       <div className="rounded-xl border border-border bg-card card-glow p-6 space-y-4">
         <h2 className="font-semibold text-foreground">Kunde</h2>
         {selectedCustomer ? (
-          <div className="flex items-center justify-between p-3 rounded-lg bg-secondary border border-border">
-            <div>
-              <p className="font-medium text-foreground">{selectedCustomer.company_name || selectedCustomer.contact_name}</p>
-              <p className="text-xs text-muted-foreground">{selectedCustomer.email}</p>
+          <div className="p-4 rounded-lg bg-secondary border border-border space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-0.5">
+                <p className="font-semibold text-foreground text-base">
+                  {selectedCustomer.company_name || selectedCustomer.contact_name}
+                </p>
+                {selectedCustomer.company_name && selectedCustomer.contact_name && (
+                  <p className="text-sm text-foreground/80">z.Hd. {selectedCustomer.contact_name}</p>
+                )}
+                {selectedCustomer.external_customer_id && (
+                  <p className="text-[11px] text-muted-foreground font-mono">Kunden-Nr.: {selectedCustomer.external_customer_id}</p>
+                )}
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setCustomerId('')}>Ändern</Button>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => setCustomerId('')}>Ändern</Button>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+              <div className="space-y-1">
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Kontakt</p>
+                {selectedCustomer.email && <p className="text-foreground">{selectedCustomer.email}</p>}
+                {selectedCustomer.phone && <p className="text-foreground">{selectedCustomer.phone}</p>}
+                {!selectedCustomer.email && !selectedCustomer.phone && <p className="text-muted-foreground">—</p>}
+              </div>
+              {(() => {
+                const ba: any = selectedCustomer.billing_address || {};
+                const has = ba.address || ba.zip || ba.city || ba.country;
+                return (
+                  <div className="space-y-1">
+                    <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Rechnungsadresse</p>
+                    {has ? (
+                      <div className="text-foreground leading-snug">
+                        {ba.address && <p>{ba.address}</p>}
+                        {ba.street2 && <p>{ba.street2}</p>}
+                        {(ba.zip || ba.city) && <p>{[ba.zip, ba.city].filter(Boolean).join(' ')}</p>}
+                        {ba.country && <p>{ba.country}</p>}
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground">—</p>
+                    )}
+                  </div>
+                );
+              })()}
+              {(() => {
+                const sa: any = selectedCustomer.shipping_address || {};
+                const ba: any = selectedCustomer.billing_address || {};
+                const has = sa.address || sa.zip || sa.city;
+                const same =
+                  has &&
+                  sa.address === ba.address && sa.zip === ba.zip && sa.city === ba.city;
+                if (!has || same) return null;
+                return (
+                  <div className="space-y-1 sm:col-span-2">
+                    <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Lieferadresse</p>
+                    <div className="text-foreground leading-snug">
+                      {sa.address && <p>{sa.address}</p>}
+                      {sa.street2 && <p>{sa.street2}</p>}
+                      {(sa.zip || sa.city) && <p>{[sa.zip, sa.city].filter(Boolean).join(' ')}</p>}
+                      {sa.country && <p>{sa.country}</p>}
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
           </div>
         ) : (
           <>
