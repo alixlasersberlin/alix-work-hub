@@ -198,9 +198,24 @@ export default function SalesWizard({ publicMode = false }: Props) {
           <Progress value={progress} className={publicMode ? 'bg-white/10' : ''} />
         </div>
 
-        <Card className={cn(
-          'p-6 md:p-8 bg-white/85 border-white/40 backdrop-blur-xl shadow-2xl text-slate-900',
-        )}>
+        <div className="relative [perspective:1600px]">
+          {/* Ambient AI orbs */}
+          <div aria-hidden className="pointer-events-none absolute -inset-10 overflow-hidden">
+            <div className="absolute -top-16 -left-10 h-64 w-64 rounded-full bg-cyan-400/30 blur-3xl animate-pulse" />
+            <div className="absolute -bottom-20 -right-10 h-72 w-72 rounded-full bg-fuchsia-500/25 blur-3xl animate-pulse [animation-delay:1s]" />
+            <div className="absolute top-1/3 left-1/2 h-40 w-40 -translate-x-1/2 rounded-full bg-amber-300/20 blur-3xl animate-pulse [animation-delay:2s]" />
+          </div>
+          {/* Gradient border shell */}
+          <div className="relative rounded-3xl p-[1.5px] bg-[conic-gradient(from_140deg,rgba(34,211,238,0.9),rgba(217,119,6,0.7),rgba(232,121,249,0.9),rgba(34,211,238,0.9))] shadow-[0_30px_120px_-20px_rgba(34,211,238,0.5)]">
+            <Card className={cn(
+              'relative overflow-hidden p-6 md:p-9 rounded-[calc(1.5rem-1.5px)] border-0',
+              'bg-[radial-gradient(120%_120%_at_0%_0%,rgba(34,211,238,0.12),transparent_50%),radial-gradient(120%_120%_at_100%_100%,rgba(217,70,239,0.14),transparent_55%),linear-gradient(160deg,#070b1a_0%,#0b1228_45%,#0a0f24_100%)]',
+              'backdrop-blur-2xl text-slate-100',
+              'before:absolute before:inset-0 before:bg-[linear-gradient(transparent_95%,rgba(255,255,255,0.04)_95%),linear-gradient(90deg,transparent_95%,rgba(255,255,255,0.04)_95%)] before:bg-[size:36px_36px] before:opacity-40 before:pointer-events-none',
+              'after:absolute after:inset-x-8 after:top-0 after:h-px after:bg-gradient-to-r after:from-transparent after:via-cyan-300/70 after:to-transparent',
+              '[transform:rotateX(0.5deg)] transition-transform duration-700',
+            )}>
+
 
           {/* Step 0 – Willkommen */}
           {step === 0 && (
