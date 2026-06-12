@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
       .from('orders')
       .insert({
         customer_id,
-        order_number: offer_number,
+        order_number,
         source_system,
         order_status: 'offen',
         currency: 'EUR',
