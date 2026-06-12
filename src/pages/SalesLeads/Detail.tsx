@@ -170,7 +170,10 @@ export default function SalesLeadDetail() {
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={() => nav('/verkauf/anfragen')}><ArrowLeft className="h-4 w-4 mr-1" />Zurück</Button>
-          <h1 className="text-2xl font-semibold">{lead.company || [lead.first_name, lead.last_name].filter(Boolean).join(' ') || 'Anfrage'}</h1>
+          <div className="flex flex-col">
+            <h1 className="text-2xl font-semibold">{lead.company || [lead.first_name, lead.last_name].filter(Boolean).join(' ') || 'Anfrage'}</h1>
+            {lead.lead_number && <span className="text-xs text-muted-foreground font-mono">{lead.lead_number}</span>}
+          </div>
           <Badge variant="outline">{lead.lead_status}</Badge>
           {lead.converted_customer_id && (
             <Link to={`/kunden/${lead.converted_customer_id}`} className="text-xs text-primary underline">Kunde geöffnet</Link>
