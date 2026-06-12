@@ -192,13 +192,19 @@ export default function AlixSignPublic() {
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="max-w-3xl mx-auto p-6 space-y-6">
-        <header className="flex items-center gap-3 pb-4 border-b border-slate-200">
-          <div className="w-10 h-10 rounded-lg bg-[#14386e] text-white grid place-items-center"><FileSignature className="w-5 h-5" /></div>
-          <div>
-            <div className="text-xs uppercase tracking-wider text-slate-500">Alix Sign</div>
-            <div className="text-xl font-semibold text-slate-900">Angebot elektronisch unterzeichnen</div>
+        <header className="pb-4 border-b border-slate-200 space-y-4">
+          <div className="flex justify-center">
+            <img src={alixLogo.url} alt="Alix Lasers" className="h-10 w-auto opacity-90" />
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-[#14386e] text-white grid place-items-center"><FileSignature className="w-5 h-5" /></div>
+            <div>
+              <div className="text-xs uppercase tracking-wider text-slate-500">Alix Sign</div>
+              <div className="text-xl font-semibold text-slate-900">Angebot elektronisch unterzeichnen</div>
+            </div>
           </div>
         </header>
+
 
         <section className="bg-white rounded-xl border border-slate-200 p-5 space-y-3">
           <div className="flex justify-between text-sm">
