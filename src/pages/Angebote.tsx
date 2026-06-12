@@ -3,8 +3,9 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FileText, FilePlus, Trash2, Pencil } from 'lucide-react';
+import { FileText, FilePlus, Trash2, Pencil, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const KEY = 'alix_angebote_v1';
 
@@ -15,7 +16,8 @@ type SavedOffer = {
   customer?: { company_name?: string; contact_name?: string; email?: string } | null;
   totals?: { net: number; tax: number; gross: number };
   createdAt: string;
-  status?: 'draft' | 'order';
+  status?: 'draft' | 'order' | 'signed';
+  signedAt?: string;
 };
 
 const fmtMoney = (n: number) =>
@@ -39,6 +41,36 @@ export default function Angebote() {
     window.addEventListener('storage', h);
     return () => window.removeEventListener('storage', h);
   }, []);
+
+  // Sync signed offers from alix_sign_requests
+  useEffect(() => {
+    if (offers.length === 0) return;
+    const numbers = offers
+      .filter(o => o.status !== 'signed' && o.status !== 'order')
+      .map(o => o.offerNumber);
+    if (numbers.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from('alix_sign_requests')
+        .select('offer_number, status, signed_at')
+        .in('offer_number', numbers)
+        .eq('status', 'unterschrieben');
+      if (error || !data || cancelled) return;
+      if (data.length === 0) return;
+      const signedMap = new Map(data.map((r: any) => [r.offer_number, r.signed_at]));
+      const next = offers.map(o => {
+        if (signedMap.has(o.offerNumber) && o.status !== 'signed' && o.status !== 'order') {
+          return { ...o, status: 'signed' as const, signedAt: signedMap.get(o.offerNumber) || new Date().toISOString() };
+        }
+        return o;
+      });
+      localStorage.setItem(KEY, JSON.stringify(next));
+      setOffers(next);
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [offers.length]);
 
   const remove = (offerNumber: string) => {
     if (!confirm(`Angebot ${offerNumber} löschen?`)) return;
@@ -85,6 +117,7 @@ export default function Angebote() {
               <TableBody>
                 {offers.map(o => {
                   const isOrder = o.status === 'order';
+                  const isSigned = o.status === 'signed';
                   return (
                   <TableRow key={o.offerNumber}>
                     <TableCell className="font-medium">{o.offerNumber}</TableCell>
@@ -93,12 +126,19 @@ export default function Angebote() {
                     <TableCell className="text-muted-foreground">{o.customer?.email || '—'}</TableCell>
                     <TableCell className="text-right font-semibold">{fmtMoney(o.totals?.gross || 0)}</TableCell>
                     <TableCell>
-                      <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${isOrder ? 'bg-primary/10 text-primary' : 'bg-secondary text-muted-foreground'}`}>
-                        {isOrder ? 'Als Auftrag übernommen' : 'Entwurf'}
-                      </span>
+                      {isSigned ? (
+                        <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                          <CheckCircle2 className="h-3 w-3" />
+                          Unterzeichnet · in Aufträge übernommen
+                        </span>
+                      ) : (
+                        <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${isOrder ? 'bg-primary/10 text-primary' : 'bg-secondary text-muted-foreground'}`}>
+                          {isOrder ? 'Als Auftrag übernommen' : 'Entwurf'}
+                        </span>
+                      )}
                     </TableCell>
                     <TableCell className="text-right">
-                      {!isOrder && (
+                      {!isOrder && !isSigned && (
                         <Button variant="ghost" size="icon" asChild title="Bearbeiten">
                           <Link to={`/verkauf/angebot/neu?edit=${encodeURIComponent(o.offerNumber)}`}>
                             <Pencil className="h-4 w-4" />
