@@ -68,7 +68,8 @@ export default function ExperienceModeSwitcher({ collapsed = false }: { collapse
         <div
           role="dialog"
           aria-label={t('experience.title', lang)}
-          className="absolute bottom-full left-0 right-0 mb-2 z-[120] rounded-xl border border-border bg-popover/95 shadow-xl backdrop-blur-md p-2 animate-fade-in"
+          className="absolute bottom-full left-0 right-0 mb-2 z-[200] rounded-xl border border-border bg-popover text-popover-foreground shadow-2xl p-2 animate-fade-in"
+          style={{ backgroundColor: 'hsl(var(--popover))', backdropFilter: 'none', WebkitBackdropFilter: 'none' }}
         >
           <div className="flex items-center gap-2 px-2 pb-2 border-b border-border/60 mb-2">
             <Sparkles className="h-3.5 w-3.5 text-primary" />
