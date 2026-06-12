@@ -214,8 +214,18 @@ export default function SepaMandatButton({ order }: Props) {
     doc.save(`SEPA-Mandat_${order.order_number}.pdf`);
   }
 
+  function handleClick() {
+    try {
+      generateSepaMandat();
+      toast.success('SEPA-Mandat erstellt');
+    } catch (e: any) {
+      console.error('[SepaMandat]', e);
+      toast.error('Fehler beim Erstellen des SEPA-Mandats: ' + (e?.message || e));
+    }
+  }
+
   return (
-    <Button variant="outline" size="sm" onClick={generateSepaMandat} className="gap-1.5">
+    <Button variant="outline" size="sm" onClick={handleClick} className="gap-1.5">
       <FileText className="w-4 h-4" /> SEPA Mandat
     </Button>
   );
