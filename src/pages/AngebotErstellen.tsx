@@ -801,6 +801,7 @@ export default function AngebotErstellen() {
           <Select value={payType} onValueChange={(v: any) => setPayType(v)}>
             <SelectTrigger className="w-48 bg-secondary border-border"><SelectValue /></SelectTrigger>
             <SelectContent>
+              <SelectItem value="Direktkauf">Direktkauf</SelectItem>
               <SelectItem value="Ratenzahlung">Ratenzahlung</SelectItem>
               <SelectItem value="Leasing">Leasing</SelectItem>
               <SelectItem value="Mietkauf">Mietkauf</SelectItem>
