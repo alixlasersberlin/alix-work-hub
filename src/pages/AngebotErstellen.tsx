@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FilePlus, Plus, Trash2, Search, Loader2, FileDown, Inbox, ChevronDown, Pencil, Save, X } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -43,6 +44,7 @@ export default function AngebotErstellen() {
   const [offerDate, setOfferDate] = useState(new Date().toISOString().slice(0, 10));
   const [validUntil, setValidUntil] = useState('');
   const [notes, setNotes] = useState('');
+  const [includeAppendix, setIncludeAppendix] = useState(true);
   const [lines, setLines] = useState<LineItem[]>([newLine()]);
 
   // Zahlungsberechnung
@@ -97,6 +99,7 @@ export default function AngebotErstellen() {
             if (snap.offerDate) setOfferDate(snap.offerDate);
             if (snap.validUntil) setValidUntil(snap.validUntil);
             if (snap.notes) setNotes(snap.notes);
+            if (typeof snap.includeAppendix === 'boolean') setIncludeAppendix(snap.includeAppendix);
             if (snap.customer?.id) setCustomerId(snap.customer.id);
             if (Array.isArray(snap.lines) && snap.lines.length > 0) {
               setLines(snap.lines.map((l: any) => ({
@@ -543,6 +546,117 @@ export default function AngebotErstellen() {
       doc.text(wrapped, LEFT, py);
     }
 
+    // Optional appendix (marketing + Bonitäts-Hinweis)
+    if (includeAppendix) {
+      doc.addPage();
+      drawTemplate();
+      let ay = TOP_CONTENT;
+
+      const intro = 'Alix Smart KI ist kein einfacher Laser – sondern ein komplettes Erfolgspaket für moderne Studios und Kliniken. Mit Alix Lasers erhalten Sie nicht nur leistungsstarke KI-gestützte Technologie, sondern ein durchdachtes Gesamtkonzept aus Service, Sicherheit, Schulung, Marketing und persönlicher Betreuung.';
+      const bullets = [
+        'Europas KI Leader',
+        'Über 15 Jahre Erfahrung',
+        '10 Jahre Geräte-Garantie vor Ort',
+        'Ersatzgerät innerhalb von 24 Stunden bei Ausfall',
+        'Long Life Laserschüsse Garantie',
+        'Kein Aufladen oder Einsenden',
+        '24/7 Betreuung durch unsere Hotline',
+        'Flexible Finanzierungsmöglichkeiten',
+        'Alix Mietkauf mit 0 % Zinsen',
+        'Schulungswochenende in Berlin',
+        'Zugang zur Alix Akademie',
+        'Original Alix Lasers Systeme und Zubehör',
+        'Umfangreiches Media- und Marketingpaket',
+        'Online-Reservierungstool',
+        'Digitaler Online-Anamnesebogen',
+        'Eigene Webseiten- und Marketinglösungen',
+        '5.000 Flyer inklusive',
+        'Professionelle Social-Media-Vorlagen',
+        'Persönliche Betreuung',
+      ];
+      const outro = 'Unsere Lasersysteme werden je nach Leistungsgruppe, Ausstattung und individuellen Anforderungen konfiguriert und kalkuliert. Die ausgezeichnete Laser-Serie BlueIce Smart KI bietet den intelligenten Einstieg in die moderne KI-gestützte Lasertechnologie von Alix Lasers und vereint Leistung, Wirtschaftlichkeit und Zukunftssicherheit auf höchstem Niveau.';
+      const legal = 'Mit Abgabe einer Bestellung, Anfrage oder eines Finanzierungswunsches erklärt sich der Kunde ausdrücklich damit einverstanden, dass Alix Lasers GmbH sowie gegebenenfalls beauftragte Finanzierungspartner, Leasinggesellschaften, Kreditversicherer oder Auskunfteien eine Bonitäts- und Identitätsprüfung durchführen dürfen. Hierzu dürfen die zur Vertragsprüfung erforderlichen Daten verarbeitet, übermittelt und abgefragt werden. Die Annahme eines Auftrags sowie die Gewährung von Finanzierungs-, Mietkauf- oder Leasingangeboten erfolgen vorbehaltlich einer erfolgreichen Bonitätsprüfung.';
+
+      const ensureSpace = (needed: number) => {
+        if (ay + needed > BOTTOM_LIMIT) {
+          doc.addPage();
+          drawTemplate();
+          ay = TOP_CONTENT;
+        }
+      };
+
+      const writeBlock = (text: string, size = 9.5, lineH = 4.6, color: [number, number, number] = [60, 60, 60]) => {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(size);
+        doc.setTextColor(...color);
+        const lines = doc.splitTextToSize(text, CONTENT_W);
+        for (const ln of lines) {
+          ensureSpace(lineH);
+          doc.text(ln, LEFT, ay);
+          ay += lineH;
+        }
+      };
+
+      // Heading
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(13);
+      doc.setTextColor(20, 60, 110);
+      ensureSpace(8);
+      doc.text('Ihr Alix Smart KI Erfolgspaket', LEFT, ay);
+      ay += 8;
+
+      writeBlock(intro);
+      ay += 3;
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(20, 60, 110);
+      ensureSpace(6);
+      doc.text('Warum sich Studios und Kliniken für Alix Lasers entscheiden:', LEFT, ay);
+      ay += 6;
+
+      // Bullets in two columns
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9.5);
+      doc.setTextColor(60, 60, 60);
+      const colW = CONTENT_W / 2 - 3;
+      const bulletH = 5;
+      const half = Math.ceil(bullets.length / 2);
+      const left = bullets.slice(0, half);
+      const right = bullets.slice(half);
+      const rows = Math.max(left.length, right.length);
+      ensureSpace(rows * bulletH + 2);
+      const startY = ay;
+      for (let r = 0; r < left.length; r++) {
+        doc.text(`•  ${left[r]}`, LEFT, startY + r * bulletH);
+      }
+      for (let r = 0; r < right.length; r++) {
+        doc.text(`•  ${right[r]}`, LEFT + colW + 6, startY + r * bulletH);
+      }
+      ay = startY + rows * bulletH + 4;
+
+      writeBlock(outro);
+      ay += 3;
+
+      // Legal note
+      doc.setDrawColor(200, 200, 200);
+      ensureSpace(6);
+      doc.line(LEFT, ay, RIGHT, ay);
+      ay += 4;
+      writeBlock(legal, 8.5, 4.2, [90, 90, 90]);
+      ay += 6;
+
+      // Sign-off
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(20, 60, 110);
+      ensureSpace(10);
+      doc.text('Mit freundlichen Grüßen', LEFT, ay); ay += 5;
+      doc.setFont('helvetica', 'bold');
+      doc.text('Alix Lasers Deutschland', LEFT, ay);
+    }
+
+
     // Page numbers + offer number on every page (header on page 2+)
     const totalPages = (doc as any).internal.getNumberOfPages();
     for (let i = 1; i <= totalPages; i++) {
@@ -577,6 +691,7 @@ export default function AngebotErstellen() {
     offerDate,
     validUntil,
     notes,
+    includeAppendix,
     customer: selectedCustomer ? {
       id: selectedCustomer.id,
       company_name: selectedCustomer.company_name,
@@ -1157,7 +1272,19 @@ export default function AngebotErstellen() {
           rows={4}
           className="bg-secondary border-border"
         />
+        <label className="flex items-start gap-3 pt-2 cursor-pointer select-none">
+          <Checkbox
+            checked={includeAppendix}
+            onCheckedChange={(v) => setIncludeAppendix(v === true)}
+            className="mt-0.5"
+          />
+          <span className="text-sm">
+            <span className="font-medium text-foreground">Anhang „Alix Smart KI Erfolgspaket" am Ende des PDFs anfügen</span>
+            <span className="block text-xs text-muted-foreground">Leistungsübersicht, Vorteile sowie Bonitäts- und Identitätshinweis</span>
+          </span>
+        </label>
       </div>
+
 
       <div className="flex flex-wrap justify-end gap-3 pt-2">
         <Button
