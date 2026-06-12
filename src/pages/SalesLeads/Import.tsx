@@ -219,7 +219,7 @@ export default function SalesLeadsImport() {
     });
   }, [rows, mapping, defaultSource, defaultStatus]);
 
-  const txtMapped = useMemo(() => {
+  const txtMapped = useMemo<Record<string, any>[]>(() => {
     return txtParsed.map(p => ({
       source: defaultSource,
       lead_status: defaultStatus,
