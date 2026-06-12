@@ -792,7 +792,81 @@ export default function AngebotErstellen() {
               ))}
             </tbody>
           </table>
+      </div>
+
+      {/* Zahlungsberechnung */}
+      <div className="rounded-xl border border-border bg-card card-glow p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-foreground">Zahlungsberechnung</h3>
+          <Select value={payType} onValueChange={(v: any) => setPayType(v)}>
+            <SelectTrigger className="w-48 bg-secondary border-border"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Ratenzahlung">Ratenzahlung</SelectItem>
+              <SelectItem value="Leasing">Leasing</SelectItem>
+              <SelectItem value="Mietkauf">Mietkauf</SelectItem>
+              <SelectItem value="Alix Flex">Alix Flex</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Kaufpreis (€)</Label>
+            <Input
+              type="number" min={0} step="0.01"
+              value={payPrice}
+              onChange={e => setPayPrice(e.target.value)}
+              placeholder={totals.gross.toFixed(2)}
+              className="bg-secondary border-border"
+            />
+            <button type="button" className="text-xs text-primary hover:underline" onClick={() => setPayPrice(totals.gross.toFixed(2))}>
+              aus Gesamt übernehmen
+            </button>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Anzahlung (€)</Label>
+            <Input
+              type="number" min={0} step="0.01"
+              value={payDown}
+              onChange={e => setPayDown(e.target.value)}
+              placeholder="0,00"
+              className="bg-secondary border-border"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Laufzeit (Monate)</Label>
+            <Select value={String(payTerm)} onValueChange={v => setPayTerm(Number(v))}>
+              <SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {[12, 24, 36, 48, 60, 72].map(t => (
+                  <SelectItem key={t} value={String(t)}>{t} Monate</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Basis (€)</Label>
+            <div className="h-10 px-3 flex items-center rounded-md bg-secondary/50 border border-border text-foreground font-medium">
+              {fmtMoney(Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0)))}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-end pt-2 border-t border-border">
+          <div className="text-right">
+            <div className="text-xs text-muted-foreground">Monatliche Rate ({payType})</div>
+            <div className="text-2xl font-bold text-primary">
+              {(() => {
+                const base = Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0));
+                const rate = payTerm > 0 ? base / payTerm : 0;
+                return fmtMoney(rate);
+              })()}
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">über {payTerm} Monate</div>
+          </div>
+        </div>
+      </div>
+
 
         <div className="flex flex-col items-end gap-1 pt-3 border-t border-border text-sm">
           <div className="flex gap-8"><span className="text-muted-foreground">Netto:</span><span className="font-medium text-foreground w-32 text-right">{fmtMoney(totals.net)}</span></div>
