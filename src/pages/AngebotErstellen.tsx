@@ -233,10 +233,19 @@ export default function AngebotErstellen() {
     doc.setFontSize(11);
     doc.text('Kunde:', 14, 56);
     doc.setFontSize(10);
-    doc.text(selectedCustomer.company_name || selectedCustomer.contact_name || '—', 14, 62);
+    let cy = 62;
+    doc.text(selectedCustomer.company_name || selectedCustomer.contact_name || '—', 14, cy); cy += 6;
     if (selectedCustomer.contact_name && selectedCustomer.company_name) {
-      doc.text(selectedCustomer.contact_name, 14, 68);
+      doc.text(`z.Hd. ${selectedCustomer.contact_name}`, 14, cy); cy += 6;
     }
+    const ba: any = selectedCustomer.billing_address || {};
+    if (ba.address) { doc.text(String(ba.address), 14, cy); cy += 6; }
+    if (ba.street2) { doc.text(String(ba.street2), 14, cy); cy += 6; }
+    const zipCity = [ba.zip, ba.city].filter(Boolean).join(' ');
+    if (zipCity) { doc.text(zipCity, 14, cy); cy += 6; }
+    if (ba.country) { doc.text(String(ba.country), 14, cy); cy += 6; }
+    if (selectedCustomer.email) { doc.text(`E-Mail: ${selectedCustomer.email}`, 14, cy); cy += 6; }
+    if (selectedCustomer.phone) { doc.text(`Tel.: ${selectedCustomer.phone}`, 14, cy); cy += 6; }
 
     autoTable(doc, {
       startY: 80,
