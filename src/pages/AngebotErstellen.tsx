@@ -834,17 +834,19 @@ export default function AngebotErstellen() {
               className="bg-secondary border-border"
             />
           </div>
-          <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Laufzeit (Monate)</Label>
-            <Select value={String(payTerm)} onValueChange={v => setPayTerm(Number(v))}>
-              <SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {[12, 24, 36, 48, 60, 72].map(t => (
-                  <SelectItem key={t} value={String(t)}>{t} Monate</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {payType !== 'Direktkauf' && (
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Laufzeit (Monate)</Label>
+              <Select value={String(payTerm)} onValueChange={v => setPayTerm(Number(v))}>
+                <SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {[12, 24, 36, 48, 60, 72].map(t => (
+                    <SelectItem key={t} value={String(t)}>{t} Monate</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">Basis (€)</Label>
             <div className="h-10 px-3 flex items-center rounded-md bg-secondary/50 border border-border text-foreground font-medium">
