@@ -10,6 +10,7 @@ import { FilePlus, Plus, Trash2, Search, Loader2, FileDown, Inbox, ChevronDown, 
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import templateAsset from '@/assets/angebot-template.jpg.asset.json';
 
 type LineItem = {
   id: string;
@@ -316,7 +317,21 @@ export default function AngebotErstellen() {
 
   const fmtMoney = (n: number) => n.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
 
-  const buildPDF = (): jsPDF | null => {
+  const loadTemplateDataUrl = async (): Promise<string> => {
+    if ((loadTemplateDataUrl as any)._cache) return (loadTemplateDataUrl as any)._cache;
+    const res = await fetch(templateAsset.url);
+    const blob = await res.blob();
+    const dataUrl: string = await new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result as string);
+      r.onerror = reject;
+      r.readAsDataURL(blob);
+    });
+    (loadTemplateDataUrl as any)._cache = dataUrl;
+    return dataUrl;
+  };
+
+  const buildPDF = async (): Promise<jsPDF | null> => {
     if (!selectedCustomer) {
       toast.error('Bitte zuerst einen Kunden auswählen.');
       return null;
@@ -327,33 +342,80 @@ export default function AngebotErstellen() {
       return null;
     }
 
-    const doc = new jsPDF();
-    doc.setFontSize(20);
-    doc.text('Angebot', 14, 20);
-    doc.setFontSize(10);
-    doc.text(`Angebotsnummer: ${offerNumber}`, 14, 30);
-    doc.text(`Datum: ${new Date(offerDate).toLocaleDateString('de-DE')}`, 14, 36);
-    if (validUntil) doc.text(`Gültig bis: ${new Date(validUntil).toLocaleDateString('de-DE')}`, 14, 42);
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const PAGE_W = 210;
+    const PAGE_H = 297;
+    const LEFT = 30; // right of the blue stripe
+    const RIGHT = 195;
+    const CONTENT_W = RIGHT - LEFT;
+    const TOP_CONTENT = 55; // below logo
+    const BOTTOM_LIMIT = 265; // above footer
 
-    doc.setFontSize(11);
-    doc.text('Kunde:', 14, 56);
+    const templateUrl = await loadTemplateDataUrl();
+    const drawTemplate = () => {
+      doc.addImage(templateUrl, 'JPEG', 0, 0, PAGE_W, PAGE_H, undefined, 'FAST');
+    };
+    drawTemplate();
+
+    // Title
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(20);
+    doc.setTextColor(20, 60, 110);
+    doc.text('Angebot', LEFT, TOP_CONTENT);
+
+    // Meta block (right side)
+    doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
-    let cy = 62;
-    doc.text(selectedCustomer.company_name || selectedCustomer.contact_name || '—', 14, cy); cy += 6;
+    doc.setTextColor(60, 60, 60);
+    const metaX = 130;
+    let my = TOP_CONTENT - 4;
+    doc.text(`Angebotsnummer:`, metaX, my); doc.text(offerNumber, RIGHT, my, { align: 'right' }); my += 5;
+    doc.text(`Datum:`, metaX, my); doc.text(new Date(offerDate).toLocaleDateString('de-DE'), RIGHT, my, { align: 'right' }); my += 5;
+    if (validUntil) { doc.text(`Gültig bis:`, metaX, my); doc.text(new Date(validUntil).toLocaleDateString('de-DE'), RIGHT, my, { align: 'right' }); my += 5; }
+
+    // Customer block
+    doc.setTextColor(120, 120, 120);
+    doc.setFontSize(8);
+    doc.text('Alix Lasers GmbH · Buchsbaumweg 53 · 12357 Berlin', LEFT, TOP_CONTENT + 14);
+    doc.setDrawColor(200, 200, 200);
+    doc.line(LEFT, TOP_CONTENT + 16, LEFT + 80, TOP_CONTENT + 16);
+
+    doc.setTextColor(30, 30, 30);
+    doc.setFontSize(10);
+    let cy = TOP_CONTENT + 22;
+    doc.setFont('helvetica', 'bold');
+    doc.text(selectedCustomer.company_name || selectedCustomer.contact_name || '—', LEFT, cy); cy += 5;
+    doc.setFont('helvetica', 'normal');
     if (selectedCustomer.contact_name && selectedCustomer.company_name) {
-      doc.text(`z.Hd. ${selectedCustomer.contact_name}`, 14, cy); cy += 6;
+      doc.text(`z.Hd. ${selectedCustomer.contact_name}`, LEFT, cy); cy += 5;
     }
     const ba: any = selectedCustomer.billing_address || {};
-    if (ba.address) { doc.text(String(ba.address), 14, cy); cy += 6; }
-    if (ba.street2) { doc.text(String(ba.street2), 14, cy); cy += 6; }
+    if (ba.address) { doc.text(String(ba.address), LEFT, cy); cy += 5; }
+    if (ba.street2) { doc.text(String(ba.street2), LEFT, cy); cy += 5; }
     const zipCity = [ba.zip, ba.city].filter(Boolean).join(' ');
-    if (zipCity) { doc.text(zipCity, 14, cy); cy += 6; }
-    if (ba.country) { doc.text(String(ba.country), 14, cy); cy += 6; }
-    if (selectedCustomer.email) { doc.text(`E-Mail: ${selectedCustomer.email}`, 14, cy); cy += 6; }
-    if (selectedCustomer.phone) { doc.text(`Tel.: ${selectedCustomer.phone}`, 14, cy); cy += 6; }
+    if (zipCity) { doc.text(zipCity, LEFT, cy); cy += 5; }
+    if (ba.country) { doc.text(String(ba.country), LEFT, cy); cy += 5; }
+
+    // Greeting
+    cy += 6;
+    doc.setFontSize(10);
+    doc.text(
+      `Sehr geehrte${selectedCustomer.contact_name ? `/r ${selectedCustomer.contact_name}` : ' Damen und Herren'},`,
+      LEFT, cy,
+    );
+    cy += 6;
+    doc.text(
+      doc.splitTextToSize(
+        `vielen Dank für Ihre Anfrage. Gerne unterbreiten wir Ihnen folgendes Angebot:`,
+        CONTENT_W,
+      ),
+      LEFT, cy,
+    );
+    cy += 8;
 
     autoTable(doc, {
-      startY: Math.max(80, cy + 4),
+      startY: cy,
+      margin: { left: LEFT, right: PAGE_W - RIGHT, top: TOP_CONTENT, bottom: PAGE_H - BOTTOM_LIMIT },
       head: [['Pos', 'Artikel', 'Menge', 'Einzelpreis', 'MwSt', 'Summe']],
       body: validLines.map((l, idx) => [
         idx + 1,
@@ -363,34 +425,93 @@ export default function AngebotErstellen() {
         `${l.tax_percentage}%`,
         fmtMoney(l.quantity * l.rate),
       ]),
-      styles: { fontSize: 9 },
-      headStyles: { fillColor: [30, 30, 30] },
+      styles: { fontSize: 9, cellPadding: 2 },
+      headStyles: { fillColor: [20, 60, 110], textColor: 255 },
+      alternateRowStyles: { fillColor: [245, 249, 255] },
+      columnStyles: {
+        0: { cellWidth: 10, halign: 'center' },
+        2: { halign: 'right', cellWidth: 16 },
+        3: { halign: 'right', cellWidth: 25 },
+        4: { halign: 'right', cellWidth: 16 },
+        5: { halign: 'right', cellWidth: 25 },
+      },
+      didDrawPage: () => {
+        // Redraw template on every new page (autoTable advances pages)
+        const pageNo = (doc as any).internal.getCurrentPageInfo().pageNumber;
+        if (pageNo > 1) drawTemplate();
+      },
     });
 
-    const finalY = (doc as any).lastAutoTable.finalY + 10;
+    let finalY = (doc as any).lastAutoTable.finalY + 8;
+    if (finalY > BOTTOM_LIMIT - 40) {
+      doc.addPage();
+      drawTemplate();
+      finalY = TOP_CONTENT;
+    }
+
+    // Totals box
+    const totalsX = 130;
+    doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
-    doc.text(`Netto: ${fmtMoney(totals.net)}`, 140, finalY);
-    doc.text(`MwSt: ${fmtMoney(totals.tax)}`, 140, finalY + 6);
+    doc.setTextColor(60, 60, 60);
+    doc.text('Netto:', totalsX, finalY);
+    doc.text(fmtMoney(totals.net), RIGHT, finalY, { align: 'right' });
+    doc.text('MwSt:', totalsX, finalY + 5);
+    doc.text(fmtMoney(totals.tax), RIGHT, finalY + 5, { align: 'right' });
+    doc.setDrawColor(20, 60, 110);
+    doc.line(totalsX, finalY + 8, RIGHT, finalY + 8);
+    doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
-    doc.setFont(undefined, 'bold');
-    doc.text(`Gesamt: ${fmtMoney(totals.gross)}`, 140, finalY + 14);
+    doc.setTextColor(20, 60, 110);
+    doc.text('Gesamt:', totalsX, finalY + 14);
+    doc.text(fmtMoney(totals.gross), RIGHT, finalY + 14, { align: 'right' });
+
+    // Payment block
+    let py = finalY + 24;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(20, 60, 110);
+    doc.text(`Zahlung: ${payType}`, LEFT, py);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(60, 60, 60);
+    py += 5;
+    if (payType === 'Direktkauf') {
+      const amount = Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0));
+      if (parseFloat(payDown) > 0) {
+        doc.text(`Anzahlung: ${fmtMoney(parseFloat(payDown))}`, LEFT, py); py += 5;
+      }
+      doc.text(`Einmalzahlung: ${fmtMoney(amount > 0 ? amount : totals.gross)}`, LEFT, py); py += 5;
+    } else {
+      const base = Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0));
+      const rate = payTerm > 0 ? base / payTerm : 0;
+      if (parseFloat(payDown) > 0) { doc.text(`Anzahlung: ${fmtMoney(parseFloat(payDown))}`, LEFT, py); py += 5; }
+      doc.text(`Basis: ${fmtMoney(base)}`, LEFT, py); py += 5;
+      doc.text(`Laufzeit: ${payTerm} Monate`, LEFT, py); py += 5;
+      doc.text(`Monatliche Rate: ${fmtMoney(rate)}`, LEFT, py); py += 5;
+    }
 
     if (notes) {
+      py += 4;
+      doc.setFont('helvetica', 'bold');
       doc.setFontSize(9);
-      doc.setFont(undefined, 'normal');
-      doc.text('Anmerkungen:', 14, finalY + 28);
-      doc.text(doc.splitTextToSize(notes, 180), 14, finalY + 34);
+      doc.setTextColor(20, 60, 110);
+      doc.text('Anmerkungen / Bedingungen', LEFT, py); py += 5;
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(60, 60, 60);
+      const wrapped = doc.splitTextToSize(notes, CONTENT_W);
+      doc.text(wrapped, LEFT, py);
     }
 
     return doc;
   };
 
-  const generatePDF = () => {
-    const doc = buildPDF();
+  const generatePDF = async () => {
+    const doc = await buildPDF();
     if (!doc) return;
     doc.save(`${offerNumber}.pdf`);
     toast.success('Angebot als PDF erstellt.');
   };
+
 
   const buildOfferSnapshot = () => ({
     offerNumber,
@@ -434,7 +555,7 @@ export default function AngebotErstellen() {
     if (!selectedCustomer) { toast.error('Bitte zuerst einen Kunden auswählen.'); return; }
     const email = selectedCustomer.email;
     if (!email) { toast.error('Kunde hat keine E-Mail-Adresse hinterlegt.'); return; }
-    const doc = buildPDF();
+    const doc = await buildPDF();
     if (!doc) return;
     saveOffer(true);
     const pdfBase64 = doc.output('datauristring').split(',')[1];
