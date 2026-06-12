@@ -1376,7 +1376,7 @@ export default function AppLayout() {
               <LogOut className="w-4 h-4" />
               <span className="ml-1.5">Abmelden</span>
             </Button>
-            <DesignVariantSwitcher inline />
+            
           </div>
         </div>
         {/* Resize-Handle (nur Desktop, wenn nicht eingeklappt) */}
