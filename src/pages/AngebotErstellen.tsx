@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FilePlus, Plus, Trash2, Search, Loader2, FileDown, Inbox, ChevronDown } from 'lucide-react';
+import { FilePlus, Plus, Trash2, Search, Loader2, FileDown, Inbox, ChevronDown, Pencil, Save, X } from 'lucide-react';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -102,7 +102,76 @@ export default function AngebotErstellen() {
     );
   }, [items, itemSearch]);
 
-  const selectedCustomer = customers.find(c => c.id === customerId);
+  const baseCustomer = customers.find(c => c.id === customerId);
+  const [customerOverride, setCustomerOverride] = useState<Record<string, any>>({});
+  const [editingCustomer, setEditingCustomer] = useState(false);
+  const [savingCustomer, setSavingCustomer] = useState(false);
+  const [draft, setDraft] = useState<any>({});
+  const selectedCustomer = baseCustomer ? { ...baseCustomer, ...customerOverride } : null;
+
+  // Reset override when switching customer
+  useEffect(() => {
+    setCustomerOverride({});
+    setEditingCustomer(false);
+  }, [customerId]);
+
+  function startEditCustomer() {
+    if (!selectedCustomer) return;
+    const ba = selectedCustomer.billing_address || {};
+    const sa = selectedCustomer.shipping_address || {};
+    setDraft({
+      company_name: selectedCustomer.company_name || '',
+      contact_name: selectedCustomer.contact_name || '',
+      email: selectedCustomer.email || '',
+      phone: selectedCustomer.phone || '',
+      ba_address: ba.address || '',
+      ba_street2: ba.street2 || '',
+      ba_zip: ba.zip || '',
+      ba_city: ba.city || '',
+      ba_country: ba.country || '',
+      sa_address: sa.address || '',
+      sa_street2: sa.street2 || '',
+      sa_zip: sa.zip || '',
+      sa_city: sa.city || '',
+      sa_country: sa.country || '',
+    });
+    setEditingCustomer(true);
+  }
+
+  function buildOverrideFromDraft() {
+    const ba = { ...(baseCustomer?.billing_address || {}), address: draft.ba_address, street2: draft.ba_street2, zip: draft.ba_zip, city: draft.ba_city, country: draft.ba_country };
+    const sa = { ...(baseCustomer?.shipping_address || {}), address: draft.sa_address, street2: draft.sa_street2, zip: draft.sa_zip, city: draft.sa_city, country: draft.sa_country };
+    return {
+      company_name: draft.company_name,
+      contact_name: draft.contact_name,
+      email: draft.email,
+      phone: draft.phone,
+      billing_address: ba,
+      shipping_address: sa,
+    };
+  }
+
+  function applyDraftLocal() {
+    setCustomerOverride(buildOverrideFromDraft());
+    setEditingCustomer(false);
+    toast.success('Änderungen für dieses Angebot übernommen.');
+  }
+
+  async function saveDraftToCustomer() {
+    if (!baseCustomer) return;
+    setSavingCustomer(true);
+    const payload = buildOverrideFromDraft();
+    const { error } = await supabase.from('customers').update(payload).eq('id', baseCustomer.id);
+    setSavingCustomer(false);
+    if (error) {
+      toast.error('Speichern fehlgeschlagen: ' + error.message);
+      return;
+    }
+    setCustomers(prev => prev.map(c => c.id === baseCustomer.id ? { ...c, ...payload } : c));
+    setCustomerOverride({});
+    setEditingCustomer(false);
+    toast.success('Kundendaten in Stammdaten gespeichert.');
+  }
 
   async function openLeadsPanel() {
     setLeadsOpen(v => !v);
@@ -401,10 +470,75 @@ export default function AngebotErstellen() {
                 {selectedCustomer.external_customer_id && (
                   <p className="text-[11px] text-muted-foreground font-mono">Kunden-Nr.: {selectedCustomer.external_customer_id}</p>
                 )}
+                {Object.keys(customerOverride).length > 0 && !editingCustomer && (
+                  <p className="text-[11px] text-primary">Daten für dieses Angebot angepasst</p>
+                )}
               </div>
-              <Button variant="ghost" size="sm" onClick={() => setCustomerId('')}>Ändern</Button>
+              <div className="flex gap-1">
+                {!editingCustomer && (
+                  <Button variant="ghost" size="sm" onClick={startEditCustomer}>
+                    <Pencil className="w-3.5 h-3.5 mr-1" />Bearbeiten
+                  </Button>
+                )}
+                <Button variant="ghost" size="sm" onClick={() => setCustomerId('')}>Ändern</Button>
+              </div>
             </div>
 
+            {editingCustomer ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                <div>
+                  <Label className="text-[11px] uppercase">Firma</Label>
+                  <Input value={draft.company_name} onChange={e => setDraft({ ...draft, company_name: e.target.value })} className="bg-card border-border h-8 mt-1" />
+                </div>
+                <div>
+                  <Label className="text-[11px] uppercase">Ansprechpartner</Label>
+                  <Input value={draft.contact_name} onChange={e => setDraft({ ...draft, contact_name: e.target.value })} className="bg-card border-border h-8 mt-1" />
+                </div>
+                <div>
+                  <Label className="text-[11px] uppercase">E-Mail</Label>
+                  <Input value={draft.email} onChange={e => setDraft({ ...draft, email: e.target.value })} className="bg-card border-border h-8 mt-1" />
+                </div>
+                <div>
+                  <Label className="text-[11px] uppercase">Telefon</Label>
+                  <Input value={draft.phone} onChange={e => setDraft({ ...draft, phone: e.target.value })} className="bg-card border-border h-8 mt-1" />
+                </div>
+
+                <div className="sm:col-span-2 mt-2 text-[11px] uppercase tracking-wide text-muted-foreground">Rechnungsadresse</div>
+                <div className="sm:col-span-2">
+                  <Input placeholder="Straße / Adresse" value={draft.ba_address} onChange={e => setDraft({ ...draft, ba_address: e.target.value })} className="bg-card border-border h-8" />
+                </div>
+                <div className="sm:col-span-2">
+                  <Input placeholder="Adresszusatz" value={draft.ba_street2} onChange={e => setDraft({ ...draft, ba_street2: e.target.value })} className="bg-card border-border h-8" />
+                </div>
+                <Input placeholder="PLZ" value={draft.ba_zip} onChange={e => setDraft({ ...draft, ba_zip: e.target.value })} className="bg-card border-border h-8" />
+                <Input placeholder="Ort" value={draft.ba_city} onChange={e => setDraft({ ...draft, ba_city: e.target.value })} className="bg-card border-border h-8" />
+                <Input placeholder="Land" value={draft.ba_country} onChange={e => setDraft({ ...draft, ba_country: e.target.value })} className="bg-card border-border h-8 sm:col-span-2" />
+
+                <div className="sm:col-span-2 mt-2 text-[11px] uppercase tracking-wide text-muted-foreground">Lieferadresse (optional)</div>
+                <div className="sm:col-span-2">
+                  <Input placeholder="Straße / Adresse" value={draft.sa_address} onChange={e => setDraft({ ...draft, sa_address: e.target.value })} className="bg-card border-border h-8" />
+                </div>
+                <div className="sm:col-span-2">
+                  <Input placeholder="Adresszusatz" value={draft.sa_street2} onChange={e => setDraft({ ...draft, sa_street2: e.target.value })} className="bg-card border-border h-8" />
+                </div>
+                <Input placeholder="PLZ" value={draft.sa_zip} onChange={e => setDraft({ ...draft, sa_zip: e.target.value })} className="bg-card border-border h-8" />
+                <Input placeholder="Ort" value={draft.sa_city} onChange={e => setDraft({ ...draft, sa_city: e.target.value })} className="bg-card border-border h-8" />
+                <Input placeholder="Land" value={draft.sa_country} onChange={e => setDraft({ ...draft, sa_country: e.target.value })} className="bg-card border-border h-8 sm:col-span-2" />
+
+                <div className="sm:col-span-2 flex flex-wrap justify-end gap-2 pt-2 border-t border-border">
+                  <Button variant="ghost" size="sm" onClick={() => setEditingCustomer(false)}>
+                    <X className="w-3.5 h-3.5 mr-1" />Abbrechen
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={applyDraftLocal}>
+                    <Save className="w-3.5 h-3.5 mr-1" />Nur für dieses Angebot
+                  </Button>
+                  <Button size="sm" onClick={saveDraftToCustomer} disabled={savingCustomer} className="gold-gradient text-primary-foreground">
+                    {savingCustomer ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Save className="w-3.5 h-3.5 mr-1" />}
+                    In Stammdaten speichern
+                  </Button>
+                </div>
+              </div>
+            ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
               <div className="space-y-1">
                 <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Kontakt</p>
@@ -452,6 +586,7 @@ export default function AngebotErstellen() {
                 );
               })()}
             </div>
+            )}
           </div>
         ) : (
           <>
