@@ -102,7 +102,76 @@ export default function AngebotErstellen() {
     );
   }, [items, itemSearch]);
 
-  const selectedCustomer = customers.find(c => c.id === customerId);
+  const baseCustomer = customers.find(c => c.id === customerId);
+  const [customerOverride, setCustomerOverride] = useState<Record<string, any>>({});
+  const [editingCustomer, setEditingCustomer] = useState(false);
+  const [savingCustomer, setSavingCustomer] = useState(false);
+  const [draft, setDraft] = useState<any>({});
+  const selectedCustomer = baseCustomer ? { ...baseCustomer, ...customerOverride } : null;
+
+  // Reset override when switching customer
+  useEffect(() => {
+    setCustomerOverride({});
+    setEditingCustomer(false);
+  }, [customerId]);
+
+  function startEditCustomer() {
+    if (!selectedCustomer) return;
+    const ba = selectedCustomer.billing_address || {};
+    const sa = selectedCustomer.shipping_address || {};
+    setDraft({
+      company_name: selectedCustomer.company_name || '',
+      contact_name: selectedCustomer.contact_name || '',
+      email: selectedCustomer.email || '',
+      phone: selectedCustomer.phone || '',
+      ba_address: ba.address || '',
+      ba_street2: ba.street2 || '',
+      ba_zip: ba.zip || '',
+      ba_city: ba.city || '',
+      ba_country: ba.country || '',
+      sa_address: sa.address || '',
+      sa_street2: sa.street2 || '',
+      sa_zip: sa.zip || '',
+      sa_city: sa.city || '',
+      sa_country: sa.country || '',
+    });
+    setEditingCustomer(true);
+  }
+
+  function buildOverrideFromDraft() {
+    const ba = { ...(baseCustomer?.billing_address || {}), address: draft.ba_address, street2: draft.ba_street2, zip: draft.ba_zip, city: draft.ba_city, country: draft.ba_country };
+    const sa = { ...(baseCustomer?.shipping_address || {}), address: draft.sa_address, street2: draft.sa_street2, zip: draft.sa_zip, city: draft.sa_city, country: draft.sa_country };
+    return {
+      company_name: draft.company_name,
+      contact_name: draft.contact_name,
+      email: draft.email,
+      phone: draft.phone,
+      billing_address: ba,
+      shipping_address: sa,
+    };
+  }
+
+  function applyDraftLocal() {
+    setCustomerOverride(buildOverrideFromDraft());
+    setEditingCustomer(false);
+    toast.success('Änderungen für dieses Angebot übernommen.');
+  }
+
+  async function saveDraftToCustomer() {
+    if (!baseCustomer) return;
+    setSavingCustomer(true);
+    const payload = buildOverrideFromDraft();
+    const { error } = await supabase.from('customers').update(payload).eq('id', baseCustomer.id);
+    setSavingCustomer(false);
+    if (error) {
+      toast.error('Speichern fehlgeschlagen: ' + error.message);
+      return;
+    }
+    setCustomers(prev => prev.map(c => c.id === baseCustomer.id ? { ...c, ...payload } : c));
+    setCustomerOverride({});
+    setEditingCustomer(false);
+    toast.success('Kundendaten in Stammdaten gespeichert.');
+  }
 
   async function openLeadsPanel() {
     setLeadsOpen(v => !v);
