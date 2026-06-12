@@ -451,5 +451,6 @@ export default function MietkaufDialog({ order }: Props) {
         </div>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
