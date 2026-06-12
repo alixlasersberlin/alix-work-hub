@@ -435,11 +435,13 @@ export default function AngebotErstellen() {
         4: { halign: 'right', cellWidth: 16 },
         5: { halign: 'right', cellWidth: 25 },
       },
-      didDrawPage: () => {
-        // Redraw template on every new page (autoTable advances pages)
+      rowPageBreak: 'avoid',
+      willDrawPage: () => {
+        // Draw template as background BEFORE row content on each new page
         const pageNo = (doc as any).internal.getCurrentPageInfo().pageNumber;
         if (pageNo > 1) drawTemplate();
       },
+
     });
 
     let finalY = (doc as any).lastAutoTable.finalY + 8;
