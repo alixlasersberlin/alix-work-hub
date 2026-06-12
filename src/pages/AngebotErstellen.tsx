@@ -543,6 +543,24 @@ export default function AngebotErstellen() {
       doc.text(wrapped, LEFT, py);
     }
 
+    // Page numbers + offer number on every page (header on page 2+)
+    const totalPages = (doc as any).internal.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      if (i > 1) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(60, 60, 60);
+        doc.text(`Angebot ${offerNumber}`, LEFT, TOP_CONTENT - 8);
+        doc.setDrawColor(200, 200, 200);
+        doc.line(LEFT, TOP_CONTENT - 5, RIGHT, TOP_CONTENT - 5);
+      }
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(120, 120, 120);
+      doc.text(`Angebot ${offerNumber}  ·  Seite ${i} von ${totalPages}`, RIGHT, PAGE_H - 8, { align: 'right' });
+    }
+
     return doc;
   };
 
