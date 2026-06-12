@@ -329,10 +329,10 @@ export default function SalesWizard({ publicMode = false }: Props) {
             <Section title="Wie heißen Sie?" hint="Pflichtfeld" publicMode={publicMode}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <Field label="Vorname *">
-                  <Input value={data.first_name} onChange={(e) => setData({ ...data, first_name: e.target.value })} className={publicMode ? 'bg-white/5 border-white/15 text-white' : ''} />
+                  <Input value={data.first_name} onChange={(e) => setData({ ...data, first_name: e.target.value })} className='bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-cyan-400/60 focus-visible:border-cyan-300/60' />
                 </Field>
                 <Field label="Nachname *">
-                  <Input value={data.last_name} onChange={(e) => setData({ ...data, last_name: e.target.value })} className={publicMode ? 'bg-white/5 border-white/15 text-white' : ''} />
+                  <Input value={data.last_name} onChange={(e) => setData({ ...data, last_name: e.target.value })} className='bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-cyan-400/60 focus-visible:border-cyan-300/60' />
                 </Field>
               </div>
             </Section>
@@ -341,7 +341,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
           {/* Step 5 – Firma */}
           {step === 5 && (
             <Section title="Firma" hint="Optional" publicMode={publicMode}>
-              <Input value={data.company} onChange={(e) => setData({ ...data, company: e.target.value })} placeholder="Firmenname" className={publicMode ? 'bg-white/5 border-white/15 text-white' : ''} />
+              <Input value={data.company} onChange={(e) => setData({ ...data, company: e.target.value })} placeholder="Firmenname" className='bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-cyan-400/60 focus-visible:border-cyan-300/60' />
             </Section>
           )}
 
@@ -366,7 +366,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
                   onChange={(e) => setData({ ...data, phone: e.target.value })}
                   placeholder="Telefonnummer"
                   inputMode="tel"
-                  className={publicMode ? 'bg-white/5 border-white/15 text-white' : ''}
+                  className='bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-cyan-400/60 focus-visible:border-cyan-300/60'
                 />
               </div>
             </Section>
@@ -375,7 +375,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
           {/* Step 7 – Email */}
           {step === 7 && (
             <Section title="E-Mail-Adresse" hint="Pflichtfeld" publicMode={publicMode}>
-              <Input type="email" value={data.email} onChange={(e) => setData({ ...data, email: e.target.value })} placeholder="name@firma.de" className={publicMode ? 'bg-white/5 border-white/15 text-white' : ''} />
+              <Input type="email" value={data.email} onChange={(e) => setData({ ...data, email: e.target.value })} placeholder="name@firma.de" className='bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-cyan-400/60 focus-visible:border-cyan-300/60' />
             </Section>
           )}
 
@@ -401,7 +401,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
           {/* Step 9 – Weitere Infos */}
           {step === 9 && (
             <Section title="Weitere Informationen" hint="Möchten Sie uns noch etwas zur Angebotserstellung mitteilen?" publicMode={publicMode}>
-              <Textarea rows={6} value={data.notes} onChange={(e) => setData({ ...data, notes: e.target.value })} className={publicMode ? 'bg-white/5 border-white/15 text-white' : ''} />
+              <Textarea rows={6} value={data.notes} onChange={(e) => setData({ ...data, notes: e.target.value })} className='bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-cyan-400/60 focus-visible:border-cyan-300/60' />
             </Section>
           )}
 
