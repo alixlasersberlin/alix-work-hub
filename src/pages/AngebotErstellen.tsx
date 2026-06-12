@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FilePlus, Plus, Trash2, Search, Loader2, FileDown } from 'lucide-react';
+import { FilePlus, Plus, Trash2, Search, Loader2, FileDown, Inbox, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -43,6 +43,11 @@ export default function AngebotErstellen() {
   const [notes, setNotes] = useState('');
   const [lines, setLines] = useState<LineItem[]>([newLine()]);
   const [loading, setLoading] = useState(true);
+
+  const [leadsOpen, setLeadsOpen] = useState(false);
+  const [leads, setLeads] = useState<any[]>([]);
+  const [leadsLoading, setLeadsLoading] = useState(false);
+  const [leadSearch, setLeadSearch] = useState('');
 
   useEffect(() => {
     async function load() {
@@ -97,6 +102,75 @@ export default function AngebotErstellen() {
   }, [items, itemSearch]);
 
   const selectedCustomer = customers.find(c => c.id === customerId);
+
+  async function openLeadsPanel() {
+    setLeadsOpen(v => !v);
+    if (leads.length === 0 && !leadsLoading) {
+      setLeadsLoading(true);
+      const { data, error } = await supabase
+        .from('sales_leads')
+        .select('id, created_at, first_name, last_name, company, email, phone, country_code, requested_products, interests, additional_interests, delivery_preference, consultation_type, notes, message, lead_score, score_category, converted_customer_id')
+        .eq('archived', false)
+        .order('created_at', { ascending: false })
+        .limit(200);
+      if (error) toast.error('Anfragen konnten nicht geladen werden.');
+      setLeads(data ?? []);
+      setLeadsLoading(false);
+    }
+  }
+
+  const filteredLeads = useMemo(() => {
+    const q = leadSearch.toLowerCase().trim();
+    if (!q) return leads.slice(0, 80);
+    return leads.filter(l =>
+      (l.first_name || '').toLowerCase().includes(q) ||
+      (l.last_name || '').toLowerCase().includes(q) ||
+      (l.company || '').toLowerCase().includes(q) ||
+      (l.email || '').toLowerCase().includes(q) ||
+      (l.phone || '').toLowerCase().includes(q)
+    ).slice(0, 80);
+  }, [leads, leadSearch]);
+
+  function applyLead(l: any) {
+    // 1) Kunde verbinden
+    let matched: any = null;
+    if (l.converted_customer_id) {
+      matched = customers.find(c => c.id === l.converted_customer_id) || null;
+    }
+    if (!matched && l.email) {
+      matched = customers.find(c => (c.email || '').toLowerCase() === String(l.email).toLowerCase()) || null;
+    }
+    if (!matched && l.company) {
+      matched = customers.find(c => (c.company_name || '').toLowerCase() === String(l.company).toLowerCase()) || null;
+    }
+    if (matched) {
+      setCustomerId(matched.id);
+      setCustomerSearch('');
+      toast.success(`Kunde übernommen: ${matched.company_name || matched.contact_name}`);
+    } else {
+      setCustomerId('');
+      setCustomerSearch(l.company || `${l.first_name ?? ''} ${l.last_name ?? ''}`.trim() || l.email || '');
+      toast.info('Kein passender Kunde gefunden – bitte unten aus der Liste auswählen oder anlegen.');
+    }
+
+    // 2) Notizen aus Anfrage zusammenstellen
+    const noteParts: string[] = [];
+    const fullName = `${l.first_name ?? ''} ${l.last_name ?? ''}`.trim();
+    if (fullName) noteParts.push(`Anfrage von: ${fullName}${l.company ? ` (${l.company})` : ''}`);
+    if (l.email) noteParts.push(`E-Mail: ${l.email}`);
+    if (l.phone) noteParts.push(`Telefon: ${[l.country_code, l.phone].filter(Boolean).join(' ')}`);
+    if (l.consultation_type) noteParts.push(`Beratungsart: ${l.consultation_type}`);
+    if (l.delivery_preference) noteParts.push(`Lieferzeitraum: ${l.delivery_preference}`);
+    if (Array.isArray(l.interests) && l.interests.length) noteParts.push(`Interessen: ${l.interests.join(', ')}`);
+    if (Array.isArray(l.additional_interests) && l.additional_interests.length) noteParts.push(`Zusätzlich: ${l.additional_interests.join(', ')}`);
+    if (l.requested_products) noteParts.push(`Gewünschte Produkte: ${l.requested_products}`);
+    if (l.message) noteParts.push(`Nachricht: ${l.message}`);
+    if (l.notes) noteParts.push(`Notizen: ${l.notes}`);
+    setNotes(prev => (prev ? prev + '\n\n' : '') + noteParts.join('\n'));
+
+    setLeadsOpen(false);
+  }
+
 
   const addItem = (it: any) => {
     setLines(prev => [
@@ -229,6 +303,76 @@ export default function AngebotErstellen() {
           <Label>Gültig bis</Label>
           <Input type="date" value={validUntil} onChange={e => setValidUntil(e.target.value)} className="bg-secondary border-border mt-1.5" />
         </div>
+      </div>
+
+      {/* Aus Anfrage übernehmen */}
+      <div className="rounded-xl border border-border bg-card card-glow p-4">
+        <button
+          type="button"
+          onClick={openLeadsPanel}
+          className="w-full flex items-center justify-between text-left"
+        >
+          <span className="flex items-center gap-2 font-semibold text-foreground">
+            <Inbox className="w-4 h-4 text-primary" />
+            Aus Anfrage übernehmen
+            <span className="text-xs font-normal text-muted-foreground">
+              (Kundendaten & Notizen aus einer Sales-Lead-Anfrage übernehmen)
+            </span>
+          </span>
+          <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${leadsOpen ? 'rotate-180' : ''}`} />
+        </button>
+
+        {leadsOpen && (
+          <div className="mt-4 space-y-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Anfrage suchen (Name, Firma, E-Mail, Telefon)..."
+                value={leadSearch}
+                onChange={e => setLeadSearch(e.target.value)}
+                className="pl-10 bg-secondary border-border"
+              />
+            </div>
+            <div className="max-h-72 overflow-auto border border-border rounded-lg divide-y divide-border">
+              {leadsLoading ? (
+                <div className="p-6 flex items-center justify-center">
+                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                </div>
+              ) : filteredLeads.length === 0 ? (
+                <p className="p-4 text-sm text-muted-foreground text-center">Keine Anfragen gefunden.</p>
+              ) : filteredLeads.map(l => {
+                const full = `${l.first_name ?? ''} ${l.last_name ?? ''}`.trim() || '—';
+                return (
+                  <button
+                    key={l.id}
+                    onClick={() => applyLead(l)}
+                    className="w-full text-left p-3 hover:bg-secondary/50 transition-colors text-sm"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-medium text-foreground truncate">
+                        {full}{l.company ? ` · ${l.company}` : ''}
+                      </p>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {typeof l.lead_score === 'number' && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/15 text-primary">
+                            {l.score_category ?? 'Score'} {l.lead_score}
+                          </span>
+                        )}
+                        <span className="text-[10px] text-muted-foreground">
+                          {new Date(l.created_at).toLocaleDateString('de-DE')}
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {l.email || '—'}{l.phone ? ` · ${l.phone}` : ''}
+                      {l.requested_products ? ` · ${l.requested_products}` : ''}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Customer */}
