@@ -353,10 +353,8 @@ export default function SalesWizard({ publicMode = false }: Props) {
                 <select
                   value={data.country_code}
                   onChange={(e) => setData({ ...data, country_code: e.target.value })}
-                  className={cn(
-                    'h-10 rounded-md border px-3 text-sm',
-                    publicMode ? 'bg-white/5 border-white/15 text-white' : 'bg-background border-input',
-                  )}
+                  className="h-10 rounded-md border px-3 text-sm bg-white/5 border-white/15 text-white"
+
                 >
                   {COUNTRY_CODES.map((c) => (
                     <option key={c.code} value={c.code} className="text-foreground">{c.label}</option>
