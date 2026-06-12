@@ -36,6 +36,7 @@ const newLine = (): LineItem => ({
 });
 
 export default function AngebotErstellen() {
+  const navigate = useNavigate();
   const [customers, setCustomers] = useState<any[]>([]);
   const [items, setItems] = useState<any[]>([]);
   const [customerId, setCustomerId] = useState<string>('');
