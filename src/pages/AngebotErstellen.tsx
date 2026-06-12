@@ -43,6 +43,12 @@ export default function AngebotErstellen() {
   const [validUntil, setValidUntil] = useState('');
   const [notes, setNotes] = useState('');
   const [lines, setLines] = useState<LineItem[]>([newLine()]);
+
+  // Zahlungsberechnung
+  const [payType, setPayType] = useState<'Ratenzahlung' | 'Leasing' | 'Mietkauf' | 'Alix Flex'>('Ratenzahlung');
+  const [payPrice, setPayPrice] = useState<string>('');
+  const [payDown, setPayDown] = useState<string>('');
+  const [payTerm, setPayTerm] = useState<number>(24);
   const [loading, setLoading] = useState(true);
 
   const [leadsOpen, setLeadsOpen] = useState(false);
