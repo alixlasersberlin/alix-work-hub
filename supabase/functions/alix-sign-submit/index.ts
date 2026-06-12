@@ -59,8 +59,8 @@ Deno.serve(async (req) => {
       status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
-  if (!acceptedOffer || !acceptedTerms || !acceptedPrivacy || !acceptedElectronicSignature) {
-    return new Response(JSON.stringify({ error: 'Bitte alle Pflicht-Zustimmungen aktivieren' }), {
+  if (!acceptedOffer || !acceptedElectronicSignature) {
+    return new Response(JSON.stringify({ error: 'Bitte allen Zustimmungen zustimmen' }), {
       status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
