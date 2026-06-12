@@ -53,7 +53,7 @@ export default function AngebotErstellen() {
     async function load() {
       setLoading(true);
       const [{ data: c }, { data: i }] = await Promise.all([
-        supabase.from('customers').select('id, company_name, contact_name, email, billing_address').order('company_name').limit(1000),
+        supabase.from('customers').select('id, company_name, contact_name, email, phone, billing_address, shipping_address, external_customer_id, source_system').order('company_name').limit(1000),
         supabase.from('zoho_items').select('id, name, sku, description, rate, tax_percentage, unit').eq('status', 'active').order('name').limit(2000),
       ]);
       setCustomers(c ?? []);
