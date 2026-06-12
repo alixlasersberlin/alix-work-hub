@@ -1,6 +1,7 @@
-import { Sparkles, Check, Download, Layers, Wand2, Rocket } from 'lucide-react';
+import { Sparkles, Check, Download, Layers, Wand2, Rocket, Monitor, Palette } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useExperienceMode, type ExperienceMode } from '@/hooks/useExperienceMode';
+import { useDesignVariant, type DesignVariant } from '@/hooks/useDesignVariant';
 import { detectUiLang, t } from '@/i18n/ui';
 import { cn } from '@/lib/utils';
 
@@ -19,6 +20,7 @@ const OPTIONS: Option[] = [
 
 export default function ExperienceModeSwitcher({ collapsed = false }: { collapsed?: boolean }) {
   const { mode, setMode } = useExperienceMode();
+  const { variant, setVariant } = useDesignVariant();
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const lang = detectUiLang();
@@ -105,6 +107,41 @@ export default function ExperienceModeSwitcher({ collapsed = false }: { collapse
                 </button>
               );
             })}
+          </div>
+
+          <div className="mt-3 pt-3 border-t border-border/60">
+            <div className="flex items-center gap-2 px-2 pb-2">
+              <Palette className="h-3.5 w-3.5 text-primary" />
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                Design-Variante
+              </span>
+            </div>
+            <div className="grid grid-cols-3 gap-1 px-1">
+              {([
+                { value: 'classic', label: 'Classic' },
+                { value: 'beta3d', label: '3D Beta' },
+                { value: 'aurora', label: 'Aurora' },
+              ] as { value: DesignVariant; label: string }[]).map(dv => {
+                const isActive = variant === dv.value;
+                return (
+                  <button
+                    key={dv.value}
+                    type="button"
+                    onClick={() => setVariant(dv.value)}
+                    className={cn(
+                      'flex items-center justify-center gap-1 rounded-md border px-2 py-1.5 text-[11px] font-medium transition-all',
+                      isActive
+                        ? 'border-primary/60 bg-primary/10 text-primary shadow-sm'
+                        : 'border-border bg-background hover:bg-muted/60 text-foreground'
+                    )}
+                  >
+                    <Monitor className="h-3 w-3" />
+                    {dv.label}
+                    {isActive && <Check className="h-3 w-3 ml-0.5" />}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <a
