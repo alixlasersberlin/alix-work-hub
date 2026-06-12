@@ -14,8 +14,8 @@ const DesignVariantContext = createContext<DesignVariantContextType>({
   setVariant: () => {},
 });
 
-function parseVariant(v: string | null): DesignVariant {
-  if (v === 'beta3d' || v === 'aurora' || v === 'classic') return v;
+function parseVariant(_v: string | null): DesignVariant {
+  // AlixWork 3D Beta und Aurora Ultra wurden deaktiviert – immer Classic.
   return 'classic';
 }
 
