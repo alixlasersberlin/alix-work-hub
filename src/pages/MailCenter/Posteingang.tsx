@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { sanitizeHtml } from '@/lib/sanitize-html';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -275,7 +276,7 @@ export default function MailCenterPosteingang() {
               <div className="md:col-span-2 space-y-3">
                 <div className="rounded border border-border p-3 max-h-72 overflow-y-auto bg-background">
                   {selected.body_html
-                    ? <div dangerouslySetInnerHTML={{ __html: selected.body_html }} />
+                    ? <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(selected.body_html) }} />
                     : <pre className="text-xs whitespace-pre-wrap">{selected.body_text}</pre>}
                 </div>
 

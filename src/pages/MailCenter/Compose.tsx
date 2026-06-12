@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { sanitizeHtml } from '@/lib/sanitize-html';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -647,7 +648,7 @@ export default function MailCenterCompose() {
             </div>
             <div className="rounded-md border border-border bg-muted/30 p-3 max-h-[300px] overflow-auto">
               {bodyHtml ? (
-                <div className="prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
+                <div className="prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: sanitizeHtml(bodyHtml) }} />
               ) : (
                 <pre className="whitespace-pre-wrap text-sm font-sans">{body || '—'}</pre>
               )}

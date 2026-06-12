@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { sanitizeHtml } from '@/lib/sanitize-html';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -370,7 +371,7 @@ export default function CustomerCommunication({ customer }: { customer: any }) {
                   {selected.body_html ? (
                     <div
                       className="prose prose-sm max-w-none dark:prose-invert"
-                      dangerouslySetInnerHTML={{ __html: selected.body_html }}
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(selected.body_html) }}
                     />
                   ) : (
                     <pre className="whitespace-pre-wrap text-sm font-sans">{selected.body_text || '—'}</pre>

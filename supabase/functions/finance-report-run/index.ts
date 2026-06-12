@@ -4,6 +4,23 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
+    // Auth: require a logged-in user with finance access (Super Admin/Admin/Finance/Geschäftsführung).
+    const authHeader = req.headers.get('Authorization') ?? '';
+    if (!authHeader.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    const userClient = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: userData, error: userErr } = await userClient.auth.getUser();
+    if (userErr || !userData?.user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    const { data: canFinance } = await userClient.rpc('can_access_finance');
+    if (!canFinance) {
+      return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     const { report_id } = await req.json();
     if (!report_id) return new Response(JSON.stringify({ error: 'report_id required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
