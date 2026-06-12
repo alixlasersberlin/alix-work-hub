@@ -442,6 +442,10 @@ function AppRoutes() {
           <Route path="/verkauf/anfragen/:id" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Vertrieb','Vertriebsleitung','Order','SACHBEARBEITUNG']}><SalesLeadDetail /></ProtectedRoute>} />
           <Route path="/verkauf/nachfassen" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Vertrieb','Vertriebsleitung','Order','SACHBEARBEITUNG']}><SalesFollowups /></ProtectedRoute>} />
           <Route path="/verkauf/neue-anfrage" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Vertrieb','Vertriebsleitung','Order','SACHBEARBEITUNG']}><NeueAnfrage /></ProtectedRoute>} />
+          <Route path="/verkauf/anfragen/neu" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Vertrieb','Vertriebsleitung','Order','SACHBEARBEITUNG']}><NeueAnfrage /></ProtectedRoute>} />
+          <Route path="/verkauf/anfragen/dashboard" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Vertrieb','Vertriebsleitung','Order','SACHBEARBEITUNG']}><SalesLeadsDashboard /></ProtectedRoute>} />
+          <Route path="/verkauf/anfragen/import" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Vertrieb','Vertriebsleitung','Order','SACHBEARBEITUNG']}><SalesLeadsImport /></ProtectedRoute>} />
+
           <Route path="/verkauf/angebote" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Angebote /></ProtectedRoute>} />
 
           <Route path="/verkauf/anzahlungsrechnung" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Tourenplanung', 'Read Only Audit', 'Read Only', 'Geschäftsführung', 'Marketing', 'Technik', 'Kundenservice', 'Vertrieb', 'Reparaturannahme', 'Bestellwesen', 'Serviceleitung', 'Service', 'QM', 'SACHBEARBEITUNG']}><Anzahlungsrechnung /></ProtectedRoute>} />
