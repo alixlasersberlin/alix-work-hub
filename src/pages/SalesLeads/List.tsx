@@ -188,9 +188,9 @@ export default function SalesLeadsList() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={11} className="p-6 text-center text-muted-foreground">Lade …</td></tr>
+                <tr><td colSpan={12} className="p-6 text-center text-muted-foreground">Lade …</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={11} className="p-6 text-center text-muted-foreground">Keine Anfragen gefunden.</td></tr>
+                <tr><td colSpan={12} className="p-6 text-center text-muted-foreground">Keine Anfragen gefunden.</td></tr>
               ) : filtered.map((r) => (
                 <tr key={r.id} className="border-t hover:bg-muted/30">
                   <td className="p-3 whitespace-nowrap">{new Date(r.created_at).toLocaleString('de-DE')}</td>
