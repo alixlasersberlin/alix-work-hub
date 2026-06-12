@@ -357,7 +357,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
 
                 >
                   {COUNTRY_CODES.map((c) => (
-                    <option key={c.code} value={c.code} className="text-foreground">{c.label}</option>
+                    <option key={c.code} value={c.code} className="text-slate-900">{c.label}</option>
                   ))}
                 </select>
                 <Input
