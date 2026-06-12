@@ -855,15 +855,27 @@ export default function AngebotErstellen() {
 
         <div className="flex justify-end pt-2 border-t border-border">
           <div className="text-right">
-            <div className="text-xs text-muted-foreground">Monatliche Rate ({payType})</div>
-            <div className="text-2xl font-bold text-primary">
-              {(() => {
-                const base = Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0));
-                const rate = payTerm > 0 ? base / payTerm : 0;
-                return fmtMoney(rate);
-              })()}
-            </div>
-            <div className="text-xs text-muted-foreground mt-1">über {payTerm} Monate</div>
+            {payType === 'Direktkauf' ? (
+              <>
+                <div className="text-xs text-muted-foreground">Zu zahlen ({payType})</div>
+                <div className="text-2xl font-bold text-primary">
+                  {fmtMoney(Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0)))}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">Einmalzahlung</div>
+              </>
+            ) : (
+              <>
+                <div className="text-xs text-muted-foreground">Monatliche Rate ({payType})</div>
+                <div className="text-2xl font-bold text-primary">
+                  {(() => {
+                    const base = Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0));
+                    const rate = payTerm > 0 ? base / payTerm : 0;
+                    return fmtMoney(rate);
+                  })()}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">über {payTerm} Monate</div>
+              </>
+            )}
           </div>
         </div>
       </div>
