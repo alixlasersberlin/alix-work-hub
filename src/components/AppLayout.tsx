@@ -668,6 +668,37 @@ export default function AppLayout() {
     };
   }, []);
 
+  // Anzahl neuer / nicht zugeteilter Vertriebsanfragen (sales_leads)
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const { count } = await supabase
+        .from('sales_leads')
+        .select('*', { count: 'exact', head: true })
+        .or('assigned_user.is.null,lead_status.eq.Neu,lead_status.eq.Importiert - Angebot offen')
+        .not('lead_status', 'in', '("Gewonnen","Verloren","Archiviert")');
+      if (cancelled) return;
+      setLagerCounts((prev) => ({ ...prev, '/verkauf/anfragen': count ?? 0 }));
+    };
+    load();
+    const intervalId = window.setInterval(load, 5 * 60 * 1000);
+    let debounceId: number | undefined;
+    const scheduleReload = () => {
+      if (debounceId) window.clearTimeout(debounceId);
+      debounceId = window.setTimeout(load, 400);
+    };
+    const channel = supabase
+      .channel('sales_leads_counts')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sales_leads' }, scheduleReload)
+      .subscribe();
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+      if (debounceId) window.clearTimeout(debounceId);
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   // Anzahl der Bestellungen (production_orders + Bestellung möglich) – Echtzeit
   useEffect(() => {
     let cancelled = false;
@@ -777,13 +808,15 @@ export default function AppLayout() {
     }
     const isProductionGroup = path === '/production' && label === 'PRODUCTION';
     const colorClass =
-      path === '/order/freigabe'
-        ? (c > 0 ? 'text-yellow-500' : 'text-muted-foreground')
-        : c === 0
-          ? 'text-red-500'
-          : path === '/lager' || path === '/tourenplanung' || isProductionGroup
-            ? 'text-green-500'
-            : undefined;
+      path === '/verkauf/anfragen'
+        ? (c > 0 ? 'text-amber-500' : 'text-muted-foreground')
+        : path === '/order/freigabe'
+          ? (c > 0 ? 'text-yellow-500' : 'text-muted-foreground')
+          : c === 0
+            ? 'text-red-500'
+            : path === '/lager' || path === '/tourenplanung' || isProductionGroup
+              ? 'text-green-500'
+              : undefined;
     return (
       <>
         {label} <span className={colorClass}>({c})</span>
