@@ -103,6 +103,75 @@ export default function AngebotErstellen() {
 
   const selectedCustomer = customers.find(c => c.id === customerId);
 
+  async function openLeadsPanel() {
+    setLeadsOpen(v => !v);
+    if (leads.length === 0 && !leadsLoading) {
+      setLeadsLoading(true);
+      const { data, error } = await supabase
+        .from('sales_leads')
+        .select('id, created_at, first_name, last_name, company, email, phone, country_code, requested_products, interests, additional_interests, delivery_preference, consultation_type, notes, message, lead_score, score_category, converted_customer_id')
+        .eq('archived', false)
+        .order('created_at', { ascending: false })
+        .limit(200);
+      if (error) toast.error('Anfragen konnten nicht geladen werden.');
+      setLeads(data ?? []);
+      setLeadsLoading(false);
+    }
+  }
+
+  const filteredLeads = useMemo(() => {
+    const q = leadSearch.toLowerCase().trim();
+    if (!q) return leads.slice(0, 80);
+    return leads.filter(l =>
+      (l.first_name || '').toLowerCase().includes(q) ||
+      (l.last_name || '').toLowerCase().includes(q) ||
+      (l.company || '').toLowerCase().includes(q) ||
+      (l.email || '').toLowerCase().includes(q) ||
+      (l.phone || '').toLowerCase().includes(q)
+    ).slice(0, 80);
+  }, [leads, leadSearch]);
+
+  function applyLead(l: any) {
+    // 1) Kunde verbinden
+    let matched: any = null;
+    if (l.converted_customer_id) {
+      matched = customers.find(c => c.id === l.converted_customer_id) || null;
+    }
+    if (!matched && l.email) {
+      matched = customers.find(c => (c.email || '').toLowerCase() === String(l.email).toLowerCase()) || null;
+    }
+    if (!matched && l.company) {
+      matched = customers.find(c => (c.company_name || '').toLowerCase() === String(l.company).toLowerCase()) || null;
+    }
+    if (matched) {
+      setCustomerId(matched.id);
+      setCustomerSearch('');
+      toast.success(`Kunde übernommen: ${matched.company_name || matched.contact_name}`);
+    } else {
+      setCustomerId('');
+      setCustomerSearch(l.company || `${l.first_name ?? ''} ${l.last_name ?? ''}`.trim() || l.email || '');
+      toast.info('Kein passender Kunde gefunden – bitte unten aus der Liste auswählen oder anlegen.');
+    }
+
+    // 2) Notizen aus Anfrage zusammenstellen
+    const noteParts: string[] = [];
+    const fullName = `${l.first_name ?? ''} ${l.last_name ?? ''}`.trim();
+    if (fullName) noteParts.push(`Anfrage von: ${fullName}${l.company ? ` (${l.company})` : ''}`);
+    if (l.email) noteParts.push(`E-Mail: ${l.email}`);
+    if (l.phone) noteParts.push(`Telefon: ${[l.country_code, l.phone].filter(Boolean).join(' ')}`);
+    if (l.consultation_type) noteParts.push(`Beratungsart: ${l.consultation_type}`);
+    if (l.delivery_preference) noteParts.push(`Lieferzeitraum: ${l.delivery_preference}`);
+    if (Array.isArray(l.interests) && l.interests.length) noteParts.push(`Interessen: ${l.interests.join(', ')}`);
+    if (Array.isArray(l.additional_interests) && l.additional_interests.length) noteParts.push(`Zusätzlich: ${l.additional_interests.join(', ')}`);
+    if (l.requested_products) noteParts.push(`Gewünschte Produkte: ${l.requested_products}`);
+    if (l.message) noteParts.push(`Nachricht: ${l.message}`);
+    if (l.notes) noteParts.push(`Notizen: ${l.notes}`);
+    setNotes(prev => (prev ? prev + '\n\n' : '') + noteParts.join('\n'));
+
+    setLeadsOpen(false);
+  }
+
+
   const addItem = (it: any) => {
     setLines(prev => [
       ...prev.filter(l => l.name || l.sku || l.rate),
