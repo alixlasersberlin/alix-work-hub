@@ -168,8 +168,32 @@
   .surface-3 { background-color: hsl(var(--surface-3)); }
 
   .card-glow {
-    box-shadow: 0 0 0 1px hsl(var(--gold) / 0.06), 0 1px 3px 0 hsl(0 0% 0% / 0.3), 0 1px 2px -1px hsl(0 0% 0% / 0.3);
+    background: hsl(var(--card));
+    box-shadow: var(--shadow-neu-sm);
+    border-radius: var(--radius);
   }
+
+  /* Soft Neumorphism utility set */
+  .neu-raised {
+    background: hsl(var(--card));
+    box-shadow: var(--shadow-neu);
+    border-radius: var(--radius);
+  }
+  .neu-flat {
+    background: hsl(var(--card));
+    box-shadow: var(--shadow-neu-sm);
+    border-radius: var(--radius);
+  }
+  .neu-inset {
+    background: hsl(var(--surface-2));
+    box-shadow: var(--shadow-neu-inset);
+    border-radius: var(--radius);
+  }
+  .neu-pressable {
+    transition: box-shadow 180ms ease, transform 180ms ease;
+  }
+  .neu-pressable:hover { transform: translateY(-1px); box-shadow: var(--shadow-neu); }
+  .neu-pressable:active { box-shadow: var(--shadow-neu-inset); transform: translateY(0); }
 
   .animate-fade-in {
     animation: fadeIn 0.25s ease-out;
