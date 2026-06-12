@@ -183,6 +183,7 @@ export default function SalesLeadsList() {
                 <th className="p-3">Quelle</th>
                 <th className="p-3">Status</th>
                 <th className="p-3">Zugewiesen an</th>
+                <th className="p-3 text-right">Aktion</th>
               </tr>
             </thead>
             <tbody>
