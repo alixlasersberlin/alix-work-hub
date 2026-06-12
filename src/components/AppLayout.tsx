@@ -808,13 +808,15 @@ export default function AppLayout() {
     }
     const isProductionGroup = path === '/production' && label === 'PRODUCTION';
     const colorClass =
-      path === '/order/freigabe'
-        ? (c > 0 ? 'text-yellow-500' : 'text-muted-foreground')
-        : c === 0
-          ? 'text-red-500'
-          : path === '/lager' || path === '/tourenplanung' || isProductionGroup
-            ? 'text-green-500'
-            : undefined;
+      path === '/verkauf/anfragen'
+        ? (c > 0 ? 'text-amber-500' : 'text-muted-foreground')
+        : path === '/order/freigabe'
+          ? (c > 0 ? 'text-yellow-500' : 'text-muted-foreground')
+          : c === 0
+            ? 'text-red-500'
+            : path === '/lager' || path === '/tourenplanung' || isProductionGroup
+              ? 'text-green-500'
+              : undefined;
     return (
       <>
         {label} <span className={colorClass}>({c})</span>
