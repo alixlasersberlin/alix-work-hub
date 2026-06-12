@@ -155,6 +155,7 @@ const Kategorie = lazy(() => import("./pages/Kategorie"));
 const Wareneingang = lazy(() => import("./pages/Wareneingang"));
 const ArtikelUebersicht = lazy(() => import("./pages/ArtikelUebersicht"));
 const AngebotErstellen = lazy(() => import("./pages/AngebotErstellen"));
+const AngebotImport = lazy(() => import("./pages/AngebotImport"));
 const Angebote = lazy(() => import("./pages/Angebote"));
 const Anzahlungsrechnung = lazy(() => import("./pages/Anzahlungsrechnung"));
 const Gutschriften = lazy(() => import("./pages/Gutschriften"));
@@ -428,7 +429,9 @@ function AppRoutes() {
           <Route path="/verkauf/artikel-uebersicht" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><ArtikelUebersicht /></ProtectedRoute>} />
           <Route path="/verkauf" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><VerkaufUebersicht /></ProtectedRoute>} />
           <Route path="/verkauf/angebot/neu" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order']}><AngebotErstellen /></ProtectedRoute>} />
+          <Route path="/verkauf/angebot/import" element={<ProtectedRoute requiredRoles={['Super Admin']}><AngebotImport /></ProtectedRoute>} />
           <Route path="/verkauf/angebote" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Angebote /></ProtectedRoute>} />
+
           <Route path="/verkauf/anzahlungsrechnung" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Tourenplanung', 'Read Only Audit', 'Read Only', 'Geschäftsführung', 'Marketing', 'Technik', 'Kundenservice', 'Vertrieb', 'Reparaturannahme', 'Bestellwesen', 'Serviceleitung', 'Service', 'QM', 'SACHBEARBEITUNG']}><Anzahlungsrechnung /></ProtectedRoute>} />
           <Route path="/verkauf/gutschriften" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Gutschriften /></ProtectedRoute>} />
           <Route path="/verkauf/freigabe" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Freigabe /></ProtectedRoute>} />
