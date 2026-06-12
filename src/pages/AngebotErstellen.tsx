@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -696,7 +696,7 @@ export default function AngebotErstellen() {
             </thead>
             <tbody>
               {lines.map(l => (
-                <React.Fragment key={l.id}>
+                <Fragment key={l.id}>
                   <tr className="align-top">
                     <td className="p-2">
                       <Input
@@ -767,7 +767,7 @@ export default function AngebotErstellen() {
                       />
                     </td>
                   </tr>
-                </React.Fragment>
+                </Fragment>
               ))}
             </tbody>
           </table>
