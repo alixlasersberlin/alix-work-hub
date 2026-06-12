@@ -20,6 +20,7 @@ const OPTIONS: Option[] = [
 
 export default function ExperienceModeSwitcher({ collapsed = false }: { collapsed?: boolean }) {
   const { mode, setMode } = useExperienceMode();
+  const { variant, setVariant } = useDesignVariant();
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const lang = detectUiLang();
