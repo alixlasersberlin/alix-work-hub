@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -696,72 +696,78 @@ export default function AngebotErstellen() {
             </thead>
             <tbody>
               {lines.map(l => (
-                <tr key={l.id} className="border-b border-border align-top">
-                  <td className="p-2">
-                    <Input
-                      value={l.name}
-                      placeholder="Artikelname"
-                      onChange={e => updateLine(l.id, { name: e.target.value })}
-                      className="bg-secondary border-border h-8"
-                    />
-                    <Textarea
-                      value={l.description}
-                      placeholder="Beschreibung (optional)"
-                      onChange={e => updateLine(l.id, { description: e.target.value })}
-                      rows={Math.max(2, (l.description?.split('\n').length || 1))}
-                      className="bg-secondary border-border mt-1 text-xs min-h-[3.5rem] whitespace-pre-wrap resize-y leading-snug"
-                    />
-                  </td>
-                  <td className="p-2">
-                    <Input
-                      type="number"
-                      min={0}
-                      value={l.quantity}
-                      onChange={e => updateLine(l.id, { quantity: Number(e.target.value) })}
-                      className="bg-secondary border-border h-8"
-                    />
-                  </td>
-                  <td className="p-2">
-                    <Input
-                      type="number"
-                      min={0}
-                      step={0.01}
-                      value={l.rate}
-                      onChange={e => updateLine(l.id, { rate: Number(e.target.value) })}
-                      className="bg-secondary border-border h-8"
-                    />
-                  </td>
-                  <td className="p-2">
-                    <Input
-                      type="number"
-                      min={0}
-                      value={l.tax_percentage}
-                      onChange={e => updateLine(l.id, { tax_percentage: Number(e.target.value) })}
-                      className="bg-secondary border-border h-8"
-                    />
-                  </td>
-                  <td className="p-2 text-right font-medium text-foreground">
-                    {(() => {
-                      const net = (l.quantity || 0) * (l.rate || 0);
-                      const tax = Number(l.tax_percentage) || 0;
-                      const gross = net * (1 + tax / 100);
-                      return tax > 0 ? (
-                        <div className="flex flex-col items-end leading-tight">
-                          <span>{fmtMoney(gross)}</span>
-                          <span className="text-[10px] text-muted-foreground font-normal">inkl. {tax}% MwSt</span>
-                          <span className="text-[10px] text-muted-foreground font-normal">netto {fmtMoney(net)}</span>
-                        </div>
-                      ) : (
-                        <span>{fmtMoney(net)}</span>
-                      );
-                    })()}
-                  </td>
-                  <td className="p-2">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => removeLine(l.id)}>
-                      <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                    </Button>
-                  </td>
-                </tr>
+                <React.Fragment key={l.id}>
+                  <tr className="align-top">
+                    <td className="p-2">
+                      <Input
+                        value={l.name}
+                        placeholder="Artikelname"
+                        onChange={e => updateLine(l.id, { name: e.target.value })}
+                        className="bg-secondary border-border h-8"
+                      />
+                    </td>
+                    <td className="p-2">
+                      <Input
+                        type="number"
+                        min={0}
+                        value={l.quantity}
+                        onChange={e => updateLine(l.id, { quantity: Number(e.target.value) })}
+                        className="bg-secondary border-border h-8"
+                      />
+                    </td>
+                    <td className="p-2">
+                      <Input
+                        type="number"
+                        min={0}
+                        step={0.01}
+                        value={l.rate}
+                        onChange={e => updateLine(l.id, { rate: Number(e.target.value) })}
+                        className="bg-secondary border-border h-8"
+                      />
+                    </td>
+                    <td className="p-2">
+                      <Input
+                        type="number"
+                        min={0}
+                        value={l.tax_percentage}
+                        onChange={e => updateLine(l.id, { tax_percentage: Number(e.target.value) })}
+                        className="bg-secondary border-border h-8"
+                      />
+                    </td>
+                    <td className="p-2 text-right font-medium text-foreground" rowSpan={2}>
+                      {(() => {
+                        const net = (l.quantity || 0) * (l.rate || 0);
+                        const tax = Number(l.tax_percentage) || 0;
+                        const gross = net * (1 + tax / 100);
+                        return tax > 0 ? (
+                          <div className="flex flex-col items-end leading-tight">
+                            <span>{fmtMoney(gross)}</span>
+                            <span className="text-[10px] text-muted-foreground font-normal">inkl. {tax}% MwSt</span>
+                            <span className="text-[10px] text-muted-foreground font-normal">netto {fmtMoney(net)}</span>
+                          </div>
+                        ) : (
+                          <span>{fmtMoney(net)}</span>
+                        );
+                      })()}
+                    </td>
+                    <td className="p-2" rowSpan={2}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => removeLine(l.id)}>
+                        <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                      </Button>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-border">
+                    <td className="px-2 pb-3" colSpan={4}>
+                      <Textarea
+                        value={l.description}
+                        placeholder="Beschreibung (optional)"
+                        onChange={e => updateLine(l.id, { description: e.target.value })}
+                        rows={Math.max(2, (l.description?.split('\n').length || 1))}
+                        className="bg-secondary border-border text-xs min-h-[3.5rem] whitespace-pre-wrap resize-y leading-snug w-full"
+                      />
+                    </td>
+                  </tr>
+                </React.Fragment>
               ))}
             </tbody>
           </table>
