@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FilePlus, Plus, Trash2, Search, Loader2, FileDown, Inbox, ChevronDown, Pencil, Save, X } from 'lucide-react';
 import { toast } from 'sonner';
@@ -626,7 +627,7 @@ export default function AngebotErstellen() {
           </Button>
         </div>
 
-        <div className="relative">
+        <div className="relative z-20">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Artikel aus Katalog hinzufügen (Name, SKU)..."
@@ -635,8 +636,11 @@ export default function AngebotErstellen() {
             className="pl-10 bg-secondary border-border"
           />
           {itemSearch && (
-            <div className="mt-2 w-full max-h-80 overflow-y-auto overscroll-contain border border-border rounded-lg bg-card shadow-lg divide-y divide-border relative z-10">
-              <div className="sticky top-0 bg-card/95 backdrop-blur px-3 py-1.5 text-[11px] text-muted-foreground border-b border-border flex items-center justify-between">
+            <div
+              className="absolute left-0 right-0 top-full mt-2 overflow-hidden rounded-lg border border-border bg-card shadow-lg"
+              onWheel={e => e.stopPropagation()}
+            >
+              <div className="bg-card/95 backdrop-blur px-3 py-1.5 text-[11px] text-muted-foreground border-b border-border flex items-center justify-between">
                 <span>{filteredItems.length} Treffer</span>
                 <button
                   type="button"
@@ -644,18 +648,20 @@ export default function AngebotErstellen() {
                   className="text-muted-foreground hover:text-foreground"
                 >Schließen</button>
               </div>
-              {filteredItems.length === 0 ? (
-                <p className="p-3 text-sm text-muted-foreground text-center">Keine Artikel gefunden.</p>
-              ) : filteredItems.map(i => (
-                <button
-                  key={i.id}
-                  onClick={() => addItem(i)}
-                  className="w-full text-left p-3 hover:bg-secondary/50 transition-colors text-sm"
-                >
-                  <p className="font-medium text-foreground">{i.name}</p>
-                  <p className="text-xs text-muted-foreground">{i.sku} · {fmtMoney(Number(i.rate || 0))}</p>
-                </button>
-              ))}
+              <ScrollArea className="h-80">
+                {filteredItems.length === 0 ? (
+                  <p className="p-3 text-sm text-muted-foreground text-center">Keine Artikel gefunden.</p>
+                ) : filteredItems.map(i => (
+                  <button
+                    key={i.id}
+                    onClick={() => addItem(i)}
+                    className="w-full text-left p-3 hover:bg-secondary/50 transition-colors text-sm"
+                  >
+                    <p className="font-medium text-foreground">{i.name}</p>
+                    <p className="text-xs text-muted-foreground">{i.sku} · {fmtMoney(Number(i.rate || 0))}</p>
+                  </button>
+                ))}
+              </ScrollArea>
             </div>
           )}
         </div>
