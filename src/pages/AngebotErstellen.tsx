@@ -284,15 +284,28 @@ export default function AngebotErstellen() {
     setLines(prev => (prev.length === 1 ? [newLine()] : prev.filter(l => l.id !== id)));
   };
 
-  const totals = useMemo(() => {
-    let net = 0;
-    let tax = 0;
-    for (const l of lines) {
-      const lineNet = (Number(l.quantity) || 0) * (Number(l.rate) || 0);
-      net += lineNet;
-      tax += lineNet * ((Number(l.tax_percentage) || 0) / 100);
+  // Wenn MwSt > 0: eingegebener Einzelpreis ist BRUTTO (inkl. MwSt).
+  // Wenn MwSt = 0: Einzelpreis ist Netto.
+  const lineCalc = (l: LineItem) => {
+    const qty = Number(l.quantity) || 0;
+    const rate = Number(l.rate) || 0;
+    const tax = Number(l.tax_percentage) || 0;
+    if (tax > 0) {
+      const gross = qty * rate;
+      const net = gross / (1 + tax / 100);
+      return { net, tax: gross - net, gross };
     }
-    return { net, tax, gross: net + tax };
+    const net = qty * rate;
+    return { net, tax: 0, gross: net };
+  };
+
+  const totals = useMemo(() => {
+    let net = 0, tax = 0, gross = 0;
+    for (const l of lines) {
+      const c = lineCalc(l);
+      net += c.net; tax += c.tax; gross += c.gross;
+    }
+    return { net, tax, gross };
   }, [lines]);
 
   const fmtMoney = (n: number) => n.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
@@ -724,6 +737,9 @@ export default function AngebotErstellen() {
                         onChange={e => updateLine(l.id, { rate: Number(e.target.value) })}
                         className="bg-secondary border-border h-8"
                       />
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        {Number(l.tax_percentage) > 0 ? 'inkl. MwSt' : 'netto'}
+                      </p>
                     </td>
                     <td className="p-2">
                       <Input
@@ -736,17 +752,16 @@ export default function AngebotErstellen() {
                     </td>
                     <td className="p-2 text-right font-medium text-foreground" rowSpan={2}>
                       {(() => {
-                        const net = (l.quantity || 0) * (l.rate || 0);
+                        const c = lineCalc(l);
                         const tax = Number(l.tax_percentage) || 0;
-                        const gross = net * (1 + tax / 100);
                         return tax > 0 ? (
                           <div className="flex flex-col items-end leading-tight">
-                            <span>{fmtMoney(gross)}</span>
+                            <span>{fmtMoney(c.gross)}</span>
                             <span className="text-[10px] text-muted-foreground font-normal">inkl. {tax}% MwSt</span>
-                            <span className="text-[10px] text-muted-foreground font-normal">netto {fmtMoney(net)}</span>
+                            <span className="text-[10px] text-muted-foreground font-normal">netto {fmtMoney(c.net)}</span>
                           </div>
                         ) : (
-                          <span>{fmtMoney(net)}</span>
+                          <span>{fmtMoney(c.net)}</span>
                         );
                       })()}
                     </td>
