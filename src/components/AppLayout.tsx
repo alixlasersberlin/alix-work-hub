@@ -1455,6 +1455,7 @@ export default function AppLayout() {
         </main>
       </div>
       <WelcomeDialog />
+      <SalesLeadAssignmentOverlay />
       {/* Begrüßungs-Overlays für Natalia & Lars deaktiviert */}
     </div>
   );
