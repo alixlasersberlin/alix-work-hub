@@ -235,25 +235,26 @@ export default function SalesWizard({ publicMode = false }: Props) {
               <div>
                 <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Alix Lasers ®</h1>
               <p className="mt-2 text-sm md:text-base text-cyan-200/80 tracking-[0.18em] uppercase">
-                  100% AI Full Technologie · Alix Lasers®
+                  {t.brand_tag}
                 </p>
               </div>
               <p className="max-w-md mx-auto text-slate-200/90">
-                Lass dich von Profis beraten und dir das beste Angebot erstellen.
+                {t.welcome_lead}
               </p>
 
               <Button size="lg" onClick={() => setStep(1)} className="mt-2 px-10">
-                START <ArrowRight className="h-4 w-4" />
+                {t.start} <ArrowRight className="h-4 w-4" />
               </Button>
             </div>
           )}
 
           {/* Step 1 – Interessen */}
           {step === 1 && (
-            <Section title="Welche Bereiche interessieren Sie?" hint="Mehrfachauswahl möglich" publicMode={publicMode}>
+            <Section title={t.s_interests} hint={t.multi_select} publicMode={publicMode}>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {INTERESTS.map((it) => {
                   const active = data.interests.includes(it.key);
+                  const label = t.interests[it.key] || it.key;
                   return (
                     <button
                       key={it.key}
@@ -266,10 +267,10 @@ export default function SalesWizard({ publicMode = false }: Props) {
                           : publicMode ? 'border-white/15 hover:border-white/40' : 'border-border hover:border-primary/60',
                       )}
                     >
-                      <img src={it.img} alt={it.key} loading="lazy" width={768} height={768} className="absolute inset-0 w-full h-full object-cover opacity-70 group-hover:opacity-100 transition" />
+                      <img src={it.img} alt={label} loading="lazy" width={768} height={768} className="absolute inset-0 w-full h-full object-cover opacity-70 group-hover:opacity-100 transition" />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
                       <div className="absolute inset-x-0 bottom-0 p-2 text-xs font-semibold text-white text-left">
-                        {it.key}
+                        {label}
                       </div>
                       {active && (
                         <div className="absolute top-2 right-2 h-6 w-6 rounded-full bg-blue-500 text-white flex items-center justify-center">
@@ -285,10 +286,11 @@ export default function SalesWizard({ publicMode = false }: Props) {
 
           {/* Step 2 – Zusätzliche Interessen */}
           {step === 2 && (
-            <Section title="Zusätzliche Interessen" hint="Optional, Mehrfachauswahl" publicMode={publicMode}>
+            <Section title={t.s_additional} hint={t.optional_multi} publicMode={publicMode}>
               <div className="space-y-2">
                 {ADDITIONAL.map((a) => {
                   const active = data.additional_interests.includes(a);
+                  const label = t.additional[a] || a;
                   return (
                     <button
                       key={a}
@@ -308,7 +310,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
                       )}>
                         {active && <Check className="h-3.5 w-3.5 text-white" />}
                       </div>
-                      <span className="text-sm">{a}</span>
+                      <span className="text-sm">{label}</span>
                     </button>
                   );
                 })}
@@ -318,7 +320,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
 
           {/* Step 3 – Lieferzeitraum */}
           {step === 3 && (
-            <Section title="Gewünschter Lieferzeitraum" publicMode={publicMode}>
+            <Section title={t.s_delivery} publicMode={publicMode}>
               <RadioGroup value={data.delivery_preference} onValueChange={(v) => setData({ ...data, delivery_preference: v })}>
                 {DELIVERY.map((d) => (
                   <label key={d} className={cn(
@@ -329,7 +331,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
                   )}>
 
                     <RadioGroupItem value={d} />
-                    <span className="text-sm">{d}</span>
+                    <span className="text-sm">{t.delivery[d] || d}</span>
                   </label>
                 ))}
               </RadioGroup>
@@ -338,12 +340,12 @@ export default function SalesWizard({ publicMode = false }: Props) {
 
           {/* Step 4 – Name */}
           {step === 4 && (
-            <Section title="Wie heißen Sie?" hint="Pflichtfeld" publicMode={publicMode}>
+            <Section title={t.s_name} hint={t.required} publicMode={publicMode}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <Field label="Vorname *">
+                <Field label={t.first_name}>
                   <Input value={data.first_name} onChange={(e) => setData({ ...data, first_name: e.target.value })} className='bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-cyan-400/60 focus-visible:border-cyan-300/60' />
                 </Field>
-                <Field label="Nachname *">
+                <Field label={t.last_name}>
                   <Input value={data.last_name} onChange={(e) => setData({ ...data, last_name: e.target.value })} className='bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-cyan-400/60 focus-visible:border-cyan-300/60' />
                 </Field>
               </div>
@@ -352,14 +354,14 @@ export default function SalesWizard({ publicMode = false }: Props) {
 
           {/* Step 5 – Firma */}
           {step === 5 && (
-            <Section title="Firma" hint="Optional" publicMode={publicMode}>
-              <Input value={data.company} onChange={(e) => setData({ ...data, company: e.target.value })} placeholder="Firmenname" className='bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-cyan-400/60 focus-visible:border-cyan-300/60' />
+            <Section title={t.s_company} hint={t.optional} publicMode={publicMode}>
+              <Input value={data.company} onChange={(e) => setData({ ...data, company: e.target.value })} placeholder={t.company_name} className='bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-cyan-400/60 focus-visible:border-cyan-300/60' />
             </Section>
           )}
 
           {/* Step 6 – Telefon */}
           {step === 6 && (
-            <Section title="Telefonnummer" hint="Pflichtfeld" publicMode={publicMode}>
+            <Section title={t.s_phone} hint={t.required} publicMode={publicMode}>
               <div className="flex gap-2">
                 <select
                   value={data.country_code}
@@ -374,7 +376,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
                 <Input
                   value={data.phone}
                   onChange={(e) => setData({ ...data, phone: e.target.value })}
-                  placeholder="Telefonnummer"
+                  placeholder={t.phone_placeholder}
                   inputMode="tel"
                   className='bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-cyan-400/60 focus-visible:border-cyan-300/60'
                 />
@@ -384,14 +386,14 @@ export default function SalesWizard({ publicMode = false }: Props) {
 
           {/* Step 7 – Email */}
           {step === 7 && (
-            <Section title="E-Mail-Adresse" hint="Pflichtfeld" publicMode={publicMode}>
-              <Input type="email" value={data.email} onChange={(e) => setData({ ...data, email: e.target.value })} placeholder="name@firma.de" className='bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-cyan-400/60 focus-visible:border-cyan-300/60' />
+            <Section title={t.s_email} hint={t.required} publicMode={publicMode}>
+              <Input type="email" value={data.email} onChange={(e) => setData({ ...data, email: e.target.value })} placeholder={t.email_placeholder} className='bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-cyan-400/60 focus-visible:border-cyan-300/60' />
             </Section>
           )}
 
           {/* Step 8 – Beratungsart */}
           {step === 8 && (
-            <Section title="Beratungsart" publicMode={publicMode}>
+            <Section title={t.s_consultation} publicMode={publicMode}>
               <RadioGroup value={data.consultation_type} onValueChange={(v) => setData({ ...data, consultation_type: v })}>
                 {CONSULTATION.map((c) => (
                   <label key={c} className={cn(
@@ -401,7 +403,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
                       : publicMode ? 'border-white/15' : 'border-border',
                   )}>
                     <RadioGroupItem value={c} />
-                    <span className="text-sm">{c}</span>
+                    <span className="text-sm">{t.consultation[c] || c}</span>
                   </label>
                 ))}
               </RadioGroup>
@@ -410,26 +412,26 @@ export default function SalesWizard({ publicMode = false }: Props) {
 
           {/* Step 9 – Weitere Infos */}
           {step === 9 && (
-            <Section title="Weitere Informationen" hint="Möchten Sie uns noch etwas zur Angebotserstellung mitteilen?" publicMode={publicMode}>
+            <Section title={t.s_notes} hint={t.s_notes_hint} publicMode={publicMode}>
               <Textarea rows={6} value={data.notes} onChange={(e) => setData({ ...data, notes: e.target.value })} className='bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-cyan-400/60 focus-visible:border-cyan-300/60' />
             </Section>
           )}
 
           {/* Step 10 – Datenschutz + Captcha */}
           {step === 10 && (
-            <Section title="Datenschutz" publicMode={publicMode}>
+            <Section title={t.s_privacy} publicMode={publicMode}>
               <div className="space-y-3">
                 <label className="flex items-start gap-3 cursor-pointer">
                   <Checkbox checked={data.consent_data} onCheckedChange={(v) => setData({ ...data, consent_data: v === true })} />
-                  <span className="text-sm">Ich stimme der Verarbeitung meiner Daten zu.</span>
+                  <span className="text-sm">{t.consent_data}</span>
                 </label>
                 <label className="flex items-start gap-3 cursor-pointer">
                   <Checkbox checked={data.consent_contact} onCheckedChange={(v) => setData({ ...data, consent_contact: v === true })} />
-                  <span className="text-sm">Ich stimme der Kontaktaufnahme zu.</span>
+                  <span className="text-sm">{t.consent_contact}</span>
                 </label>
                 {publicMode && (
                   <div className="pt-2">
-                    <Turnstile theme="dark" onToken={(t) => setCaptchaToken(t)} onExpire={() => setCaptchaToken(null)} />
+                    <Turnstile theme="dark" onToken={(tok) => setCaptchaToken(tok)} onExpire={() => setCaptchaToken(null)} />
                   </div>
                 )}
               </div>
@@ -438,7 +440,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
 
           {/* Step 11 – Bewertung */}
           {step === 11 && (
-            <Section title="Wie haben Sie uns gefunden?" hint="Optional – bewerten Sie Ihren bisherigen Eindruck" publicMode={publicMode}>
+            <Section title={t.s_rating} hint={t.s_rating_hint} publicMode={publicMode}>
               <div className="flex justify-center gap-2 py-4">
                 {[1, 2, 3, 4, 5].map((n) => (
                   <button
@@ -466,15 +468,15 @@ export default function SalesWizard({ publicMode = false }: Props) {
               <div className="mx-auto h-16 w-16 rounded-full bg-green-500/20 flex items-center justify-center">
                 <Check className="h-8 w-8 text-green-400" />
               </div>
-              <h2 className="text-2xl font-bold">Vielen Dank!</h2>
+              <h2 className="text-2xl font-bold">{t.thanks_title}</h2>
               <p className={publicMode ? 'text-blue-100/80' : 'text-muted-foreground'}>
-                Ihre Anfrage ist bei uns eingegangen. Ein Berater meldet sich zeitnah.
+                {t.thanks_text}
               </p>
               <div className={cn(
                 'inline-block rounded-lg border px-4 py-2 text-sm',
                 publicMode ? 'border-white/15 bg-white/5' : 'border-border bg-muted',
               )}>
-                Bearbeitungs-Priorität: <strong>{result.category}</strong>
+                {t.priority}: <strong>{result.category}</strong>
               </div>
             </div>
           )}
@@ -488,7 +490,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
                 onClick={() => setStep((s) => Math.max(0, s - 1))}
                 disabled={submitting}
               >
-                <ArrowLeft className="h-4 w-4" /> Zurück
+                <ArrowLeft className="h-4 w-4" /> {t.back}
               </Button>
               {step < 11 ? (
                 <Button
@@ -496,12 +498,12 @@ export default function SalesWizard({ publicMode = false }: Props) {
                   onClick={() => setStep((s) => s + 1)}
                   disabled={!canContinue() || submitting}
                 >
-                  Weiter <ArrowRight className="h-4 w-4" />
+                  {t.next} <ArrowRight className="h-4 w-4" />
                 </Button>
               ) : (
                 <Button type="button" onClick={submit} disabled={submitting}>
                   {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                  Anfrage absenden
+                  {t.submit}
                 </Button>
               )}
             </div>
@@ -513,7 +515,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
 
         {publicMode && (
           <p className="mt-6 text-center text-[11px] text-blue-100/40">
-            © Alix Lasers® · Alle Anfragen werden vertraulich behandelt.
+            {t.footer}
           </p>
         )}
       </div>
