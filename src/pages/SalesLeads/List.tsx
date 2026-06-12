@@ -52,19 +52,47 @@ export default function SalesLeadsList() {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<string>('alle');
   const [source, setSource] = useState<string>('alle');
+  const [users, setUsers] = useState<{ id: string; full_name: string | null; email: string | null }[]>([]);
+  const [assigning, setAssigning] = useState<string | null>(null);
+
+  async function loadLeads() {
+    const { data } = await supabase
+      .from('sales_leads')
+      .select('id, created_at, external_id, source, form_name, first_name, last_name, company, email, phone, requested_products, lead_status, assigned_user, lead_score, score_category, consultation_type, delivery_preference')
+      .order('created_at', { ascending: false })
+      .limit(500);
+    setRows((data ?? []) as Lead[]);
+  }
 
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const { data } = await supabase
-        .from('sales_leads')
-        .select('id, created_at, external_id, source, form_name, first_name, last_name, company, email, phone, requested_products, lead_status, assigned_user, lead_score, score_category, consultation_type, delivery_preference')
-        .order('created_at', { ascending: false })
-        .limit(500);
-      setRows((data ?? []) as Lead[]);
+      await loadLeads();
+      const { data: u } = await supabase
+        .from('user_profiles')
+        .select('id, full_name, email')
+        .eq('is_active', true)
+        .order('full_name', { ascending: true });
+      setUsers((u ?? []) as any);
       setLoading(false);
     })();
   }, []);
+
+  async function assign(leadId: string, userId: string) {
+    setAssigning(leadId);
+    const value = userId === '__none' ? null : userId;
+    const { error } = await supabase.from('sales_leads').update({ assigned_user: value }).eq('id', leadId);
+    setAssigning(null);
+    if (error) { toast.error(error.message); return; }
+    setRows((r) => r.map(x => x.id === leadId ? { ...x, assigned_user: value } : x));
+    toast.success(value ? 'Anfrage zugewiesen' : 'Zuweisung entfernt');
+  }
+
+  const userLabel = (id: string | null) => {
+    if (!id) return null;
+    const u = users.find(x => x.id === id);
+    return u?.full_name || u?.email || id.slice(0, 8);
+  };
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
