@@ -158,9 +158,12 @@ Deno.serve(async (req) => {
   const input = parsed.data;
 
   const ip = (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || "0.0.0.0";
-  const ok = await verifyTurnstile(input.turnstile_token, ip);
-  if (!ok) {
-    return Response.json({ error: "captcha_failed" }, { status: 403, headers: corsHeaders });
+  const isInternal = input.source === "alixwork_wizard_internal";
+  if (!isInternal) {
+    const ok = await verifyTurnstile(input.turnstile_token, ip);
+    if (!ok) {
+      return Response.json({ error: "captcha_failed" }, { status: 403, headers: corsHeaders });
+    }
   }
 
   const url = Deno.env.get("SUPABASE_URL")!;
