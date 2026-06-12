@@ -63,8 +63,9 @@ export default function DisplaySettingsMenu() {
       {open && (
         <div
           className={cn(
-            'absolute right-0 mt-2 w-72 rounded-xl border border-border bg-card shadow-lg p-3 z-50 animate-fade-in',
+            'absolute right-0 mt-2 w-72 rounded-xl border border-border bg-popover text-popover-foreground shadow-2xl p-3 z-[200] animate-fade-in',
           )}
+          style={{ backgroundColor: 'hsl(var(--popover))', backdropFilter: 'none', WebkitBackdropFilter: 'none' }}
           role="dialog"
           aria-label={t('display.settings', lang)}
         >
