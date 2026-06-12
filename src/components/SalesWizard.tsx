@@ -164,9 +164,6 @@ export default function SalesWizard({ publicMode = false }: Props) {
       style={publicMode ? { backgroundImage: `url(${bgAsset.url})` } : undefined}
     >
       {publicMode && (
-        <div aria-hidden className="pointer-events-none absolute inset-0 bg-black/55" />
-      )}
-      {publicMode && (
         <>
           <div
             aria-hidden
