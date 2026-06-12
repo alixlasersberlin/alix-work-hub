@@ -248,7 +248,7 @@ export default function AngebotErstellen() {
     if (selectedCustomer.phone) { doc.text(`Tel.: ${selectedCustomer.phone}`, 14, cy); cy += 6; }
 
     autoTable(doc, {
-      startY: 80,
+      startY: Math.max(80, cy + 4),
       head: [['Pos', 'Artikel', 'Menge', 'Einzelpreis', 'MwSt', 'Summe']],
       body: validLines.map((l, idx) => [
         idx + 1,
