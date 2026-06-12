@@ -175,7 +175,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
             </div>
           </div>
           <div className="absolute inset-x-0 top-0 z-10 px-6 py-6 flex items-center justify-between">
-            <div className="text-2xl font-bold tracking-[0.18em]">ALIX LASERS®</div>
+            <div className="text-2xl font-bold tracking-[0.18em]">Alix Lasers ®</div>
             <div className="text-xs text-blue-100/70 hidden md:block">
               100% AI Full Technologie
             </div>
