@@ -32,6 +32,10 @@ type Lead = {
   requested_products: string | null;
   lead_status: string;
   assigned_user: string | null;
+  lead_score: number | null;
+  score_category: string | null;
+  consultation_type: string | null;
+  delivery_preference: string | null;
 };
 
 function statusVariant(s: string): 'default' | 'secondary' | 'destructive' | 'outline' {
@@ -53,7 +57,7 @@ export default function SalesLeadsList() {
       setLoading(true);
       const { data } = await supabase
         .from('sales_leads')
-        .select('id, created_at, external_id, source, form_name, first_name, last_name, company, email, phone, requested_products, lead_status, assigned_user')
+        .select('id, created_at, external_id, source, form_name, first_name, last_name, company, email, phone, requested_products, lead_status, assigned_user, lead_score, score_category, consultation_type, delivery_preference')
         .order('created_at', { ascending: false })
         .limit(500);
       setRows((data ?? []) as Lead[]);
@@ -121,23 +125,38 @@ export default function SalesLeadsList() {
             <thead className="bg-muted/40 text-left">
               <tr>
                 <th className="p-3">Datum</th>
+                <th className="p-3">Score</th>
                 <th className="p-3">Firma</th>
                 <th className="p-3">Ansprechpartner</th>
                 <th className="p-3">E-Mail</th>
                 <th className="p-3">Telefon</th>
                 <th className="p-3">Produktinteresse</th>
+                <th className="p-3">Beratung</th>
+                <th className="p-3">Lieferung</th>
                 <th className="p-3">Quelle</th>
                 <th className="p-3">Status</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={8} className="p-6 text-center text-muted-foreground">Lade …</td></tr>
+                <tr><td colSpan={11} className="p-6 text-center text-muted-foreground">Lade …</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={8} className="p-6 text-center text-muted-foreground">Keine Anfragen gefunden.</td></tr>
+                <tr><td colSpan={11} className="p-6 text-center text-muted-foreground">Keine Anfragen gefunden.</td></tr>
               ) : filtered.map((r) => (
                 <tr key={r.id} className="border-t hover:bg-muted/30">
                   <td className="p-3 whitespace-nowrap">{new Date(r.created_at).toLocaleString('de-DE')}</td>
+                  <td className="p-3">
+                    {r.lead_score != null ? (
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold ${
+                        r.lead_score >= 85 ? 'bg-red-500/20 text-red-400'
+                        : r.lead_score >= 70 ? 'bg-orange-500/20 text-orange-400'
+                        : r.lead_score >= 45 ? 'bg-yellow-500/20 text-yellow-500'
+                        : 'bg-blue-500/20 text-blue-400'
+                      }`}>
+                        {r.lead_score} {r.score_category && `· ${r.score_category}`}
+                      </span>
+                    ) : '—'}
+                  </td>
                   <td className="p-3 font-medium">
                     <Link to={`/verkauf/anfragen/${r.id}`} className="text-primary hover:underline">
                       {r.company || '—'}
@@ -147,6 +166,8 @@ export default function SalesLeadsList() {
                   <td className="p-3">{r.email || '—'}</td>
                   <td className="p-3">{r.phone || '—'}</td>
                   <td className="p-3">{r.requested_products || '—'}</td>
+                  <td className="p-3">{r.consultation_type || '—'}</td>
+                  <td className="p-3">{r.delivery_preference || '—'}</td>
                   <td className="p-3 text-muted-foreground">{r.form_name || r.source}</td>
                   <td className="p-3"><Badge variant={statusVariant(r.lead_status)}>{r.lead_status}</Badge></td>
                 </tr>
