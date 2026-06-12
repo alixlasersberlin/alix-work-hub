@@ -199,9 +199,9 @@ export default function SalesWizard({ publicMode = false }: Props) {
         </div>
 
         <Card className={cn(
-          'p-6 md:p-8',
-          publicMode && 'bg-white/85 border-white/40 backdrop-blur-xl shadow-2xl text-slate-900',
+          'p-6 md:p-8 bg-white/85 border-white/40 backdrop-blur-xl shadow-2xl text-slate-900',
         )}>
+
           {/* Step 0 – Willkommen */}
           {step === 0 && (
             <div className="text-center space-y-6 py-6">
