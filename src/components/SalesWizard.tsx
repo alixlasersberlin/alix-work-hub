@@ -155,11 +155,17 @@ export default function SalesWizard({ publicMode = false }: Props) {
   }
 
   const shellWrap = publicMode
-    ? 'min-h-screen w-full bg-gradient-to-br from-[#04132c] via-[#072049] to-[#031024] text-white relative overflow-hidden'
+    ? 'min-h-screen w-full text-white relative overflow-hidden bg-cover bg-center bg-no-repeat bg-fixed'
     : 'w-full';
 
   return (
-    <div className={shellWrap}>
+    <div
+      className={shellWrap}
+      style={publicMode ? { backgroundImage: `url(${bgAsset.url})` } : undefined}
+    >
+      {publicMode && (
+        <div aria-hidden className="pointer-events-none absolute inset-0 bg-black/55" />
+      )}
       {publicMode && (
         <>
           <div
