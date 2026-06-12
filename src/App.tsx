@@ -202,6 +202,7 @@ const Wartungsmanagement = lazy(() => import("./pages/Wartungsmanagement"));
 const Garantiecenter = lazy(() => import("./pages/Garantiecenter"));
 const GarantieKulanz = lazy(() => import("./pages/GarantieKulanz"));
 const DesignTemplate = lazy(() => import("./pages/DesignTemplate"));
+const AlixSignPublic = lazy(() => import("./pages/AlixSignPublic"));
 import TemplateSwitcher from "./components/TemplateSwitcher";
 const WhatsAppServiceCenter = lazy(() => import("./pages/WhatsAppServiceCenter"));
 const BugCapaLayoutLazy = lazy(() => import("./pages/BugCapa/_shared").then(m => ({ default: m.BugCapaLayout })));
