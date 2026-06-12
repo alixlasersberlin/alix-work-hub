@@ -8,6 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FilePlus, Plus, Trash2, Search, Loader2, FileDown, Inbox, ChevronDown, Pencil, Save, X } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -35,6 +36,7 @@ const newLine = (): LineItem => ({
 });
 
 export default function AngebotErstellen() {
+  const navigate = useNavigate();
   const [customers, setCustomers] = useState<any[]>([]);
   const [items, setItems] = useState<any[]>([]);
   const [customerId, setCustomerId] = useState<string>('');
@@ -1294,6 +1296,14 @@ export default function AngebotErstellen() {
         >
           <Save className="w-4 h-4" />
           Speichern
+        </Button>
+        <Button
+          variant="outline"
+          className="gap-2 border-border"
+          onClick={() => { if (saveOffer()) navigate('/verkauf/angebote'); }}
+        >
+          <Save className="w-4 h-4" />
+          Speichern + Schließen
         </Button>
         <Button
           variant="outline"
