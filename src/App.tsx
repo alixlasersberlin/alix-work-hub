@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { TenantProvider } from "@/contexts/TenantContext";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { DesignVariantProvider } from "@/hooks/useDesignVariant";
+import { ExperienceModeProvider } from "@/hooks/useExperienceMode";
 import DesignVariantSwitcher from "@/components/DesignVariantSwitcher";
 import AuroraSpotlight from "@/components/AuroraSpotlight";
 import { Truck as TruckIcon, Banknote as BanknoteIcon, FileSignature, CreditCard, Loader2 } from "lucide-react";
@@ -758,24 +759,26 @@ function AppRoutes() {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
-      <DesignVariantProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <AuthProvider>
-              <TenantProvider>
-                <MaintenanceGate>
-                  <AppRoutes />
-                  <AuroraSpotlight />
-                  <LeihgeraetReminder />
-                  {/* TemplateSwitcher (Standard / ALIXWORK NEO) deaktiviert */}
-                </MaintenanceGate>
-              </TenantProvider>
-            </AuthProvider>
-          </BrowserRouter>
-        </TooltipProvider>
-      </DesignVariantProvider>
+      <ExperienceModeProvider>
+        <DesignVariantProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <AuthProvider>
+                <TenantProvider>
+                  <MaintenanceGate>
+                    <AppRoutes />
+                    <AuroraSpotlight />
+                    <LeihgeraetReminder />
+                    {/* TemplateSwitcher (Standard / ALIXWORK NEO) deaktiviert */}
+                  </MaintenanceGate>
+                </TenantProvider>
+              </AuthProvider>
+            </BrowserRouter>
+          </TooltipProvider>
+        </DesignVariantProvider>
+      </ExperienceModeProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );

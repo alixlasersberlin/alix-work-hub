@@ -38,7 +38,7 @@
 
   <body>
     <script>
-      // Anti-Flicker: setzt Font-Scale + UI-Language vor React-Mount.
+      // Anti-Flicker: setzt Font-Scale + UI-Language + Theme + Experience-Mode vor React-Mount.
       (function () {
         try {
           var map = { sm: 0.9, md: 1.0, lg: 1.15, xl: 1.3, a11y: 1.5 };
@@ -51,6 +51,14 @@
             document.documentElement.setAttribute('lang', lang);
             document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
           }
+          var theme = localStorage.getItem('app-theme');
+          if (theme !== 'dark') theme = 'light';
+          document.documentElement.classList.remove(theme === 'dark' ? 'light' : 'dark');
+          document.documentElement.classList.add(theme);
+          document.documentElement.setAttribute('data-theme', theme);
+          var exp = localStorage.getItem('alix-experience');
+          if (exp !== 'premium' && exp !== 'mega') exp = 'classic';
+          document.documentElement.setAttribute('data-experience', exp);
         } catch (e) { /* ignore */ }
       })();
     </script>

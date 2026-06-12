@@ -16,6 +16,7 @@ import LeoWelcomeDialog from '@/components/LeoWelcomeDialog';
 import NataliaWelcomeOverlay from '@/components/NataliaWelcomeOverlay';
 import SalesLeadAssignmentOverlay from '@/components/SalesLeadAssignmentOverlay';
 import DesignVariantSwitcher from '@/components/DesignVariantSwitcher';
+import ExperienceModeSwitcher from '@/components/ExperienceModeSwitcher';
 import { SidebarInfoBar } from '@/components/SidebarInfoBar';
 import DisplaySettingsMenu from '@/components/DisplaySettingsMenu';
 import TenantSwitcher from '@/components/TenantSwitcher';
@@ -1377,6 +1378,16 @@ export default function AppLayout() {
             </Button>
             <DesignVariantSwitcher inline />
           </div>
+          {!collapsed && (
+            <div className="px-2 pb-2">
+              <ExperienceModeSwitcher />
+            </div>
+          )}
+          {collapsed && (
+            <div className="px-2 pb-2">
+              <ExperienceModeSwitcher collapsed />
+            </div>
+          )}
         </div>
         {/* Resize-Handle (nur Desktop, wenn nicht eingeklappt) */}
         {!collapsed && (
