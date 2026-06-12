@@ -494,7 +494,10 @@ export default function SalesWizard({ publicMode = false }: Props) {
               )}
             </div>
           )}
-        </Card>
+            </Card>
+          </div>
+        </div>
+
 
         {publicMode && (
           <p className="mt-6 text-center text-[11px] text-blue-100/40">
