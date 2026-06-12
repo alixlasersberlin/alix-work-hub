@@ -44,6 +44,7 @@ export default function AngebotErstellen() {
   const [offerDate, setOfferDate] = useState(new Date().toISOString().slice(0, 10));
   const [validUntil, setValidUntil] = useState('');
   const [notes, setNotes] = useState('');
+  const [includeAppendix, setIncludeAppendix] = useState(true);
   const [lines, setLines] = useState<LineItem[]>([newLine()]);
 
   // Zahlungsberechnung
