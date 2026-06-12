@@ -45,15 +45,15 @@ export async function generateHandoverPdf(input: HandoverPdfInput): Promise<{ bl
   let y = M;
 
   const title = input.kind === 'finance' ? 'Finance-Übergabe' : 'Auslieferungs-Übergabe';
-  doc.setFillColor(15, 15, 20);
+  doc.setFillColor(235, 238, 242);
   doc.rect(0, 0, W, 60, 'F');
-  doc.setTextColor(55, 65, 81);
+  doc.setTextColor(30, 35, 45);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(18);
   doc.text(title, M, 38);
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
-  doc.setTextColor(220, 220, 220);
+  doc.setTextColor(90, 95, 105);
   doc.text(`Reparatur ${header.repair_number || input.repairId.slice(0, 8)}`, W - M, 38, { align: 'right' });
   y = 80;
 
