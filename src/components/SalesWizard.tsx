@@ -188,19 +188,34 @@ export default function SalesWizard({ publicMode = false }: Props) {
       )}>
         <div className="mb-6">
           <div className="flex items-center justify-between text-xs mb-2">
-            <span className={publicMode ? 'text-blue-100/70' : 'text-muted-foreground'}>
+            <span className={'text-cyan-200/70'}>
               Schritt {Math.min(step + 1, TOTAL_STEPS)} von {TOTAL_STEPS}
             </span>
-            <span className={publicMode ? 'text-blue-100/70' : 'text-muted-foreground'}>
+            <span className={'text-cyan-200/70'}>
               {progress}%
             </span>
           </div>
           <Progress value={progress} className={publicMode ? 'bg-white/10' : ''} />
         </div>
 
-        <Card className={cn(
-          'p-6 md:p-8 bg-white/85 border-white/40 backdrop-blur-xl shadow-2xl text-slate-900',
-        )}>
+        <div className="relative [perspective:1600px]">
+          {/* Ambient AI orbs */}
+          <div aria-hidden className="pointer-events-none absolute -inset-10 overflow-hidden">
+            <div className="absolute -top-16 -left-10 h-64 w-64 rounded-full bg-cyan-400/30 blur-3xl animate-pulse" />
+            <div className="absolute -bottom-20 -right-10 h-72 w-72 rounded-full bg-fuchsia-500/25 blur-3xl animate-pulse [animation-delay:1s]" />
+            <div className="absolute top-1/3 left-1/2 h-40 w-40 -translate-x-1/2 rounded-full bg-amber-300/20 blur-3xl animate-pulse [animation-delay:2s]" />
+          </div>
+          {/* Gradient border shell */}
+          <div className="relative rounded-3xl p-[1.5px] bg-[conic-gradient(from_140deg,rgba(34,211,238,0.9),rgba(217,119,6,0.7),rgba(232,121,249,0.9),rgba(34,211,238,0.9))] shadow-[0_30px_120px_-20px_rgba(34,211,238,0.5)]">
+            <Card className={cn(
+              'relative overflow-hidden p-6 md:p-9 rounded-[calc(1.5rem-1.5px)] border-0',
+              'bg-[radial-gradient(120%_120%_at_0%_0%,rgba(34,211,238,0.12),transparent_50%),radial-gradient(120%_120%_at_100%_100%,rgba(217,70,239,0.14),transparent_55%),linear-gradient(160deg,#070b1a_0%,#0b1228_45%,#0a0f24_100%)]',
+              'backdrop-blur-2xl text-slate-100',
+              'before:absolute before:inset-0 before:bg-[linear-gradient(transparent_95%,rgba(255,255,255,0.04)_95%),linear-gradient(90deg,transparent_95%,rgba(255,255,255,0.04)_95%)] before:bg-[size:36px_36px] before:opacity-40 before:pointer-events-none',
+              'after:absolute after:inset-x-8 after:top-0 after:h-px after:bg-gradient-to-r after:from-transparent after:via-cyan-300/70 after:to-transparent',
+              '[transform:rotateX(0.5deg)] transition-transform duration-700',
+            )}>
+
 
           {/* Step 0 – Willkommen */}
           {step === 0 && (
@@ -208,13 +223,14 @@ export default function SalesWizard({ publicMode = false }: Props) {
               <Sparkles className="h-12 w-12 mx-auto text-blue-400" />
               <div>
                 <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Alix Lasers ®</h1>
-              <p className="mt-2 text-sm md:text-base text-slate-600">
+              <p className="mt-2 text-sm md:text-base text-cyan-200/80 tracking-[0.18em] uppercase">
                   100% AI Full Technologie · Alix Lasers®
                 </p>
               </div>
-              <p className="max-w-md mx-auto text-slate-700">
+              <p className="max-w-md mx-auto text-slate-200/90">
                 Lass dich von Profis beraten und dir das beste Angebot erstellen.
               </p>
+
               <Button size="lg" onClick={() => setStep(1)} className="mt-2 px-10">
                 START <ArrowRight className="h-4 w-4" />
               </Button>
@@ -268,11 +284,12 @@ export default function SalesWizard({ publicMode = false }: Props) {
                       type="button"
                       onClick={() => toggle('additional_interests', a)}
                       className={cn(
-                        'w-full flex items-center gap-3 rounded-lg border p-3 text-left transition',
+                        'w-full flex items-center gap-3 rounded-lg border p-3 text-left transition backdrop-blur-sm',
                         active
-                          ? 'border-slate-900 bg-blue-500/10'
-                          : 'border-slate-900 hover:border-slate-700',
+                          ? 'border-cyan-400/80 bg-cyan-400/10 shadow-[0_0_20px_-4px_rgba(34,211,238,0.6)]'
+                          : 'border-white/15 hover:border-cyan-300/50 bg-white/5',
                       )}
+
                     >
                       <div className={cn(
                         'h-5 w-5 rounded border flex items-center justify-center shrink-0',
@@ -294,11 +311,12 @@ export default function SalesWizard({ publicMode = false }: Props) {
               <RadioGroup value={data.delivery_preference} onValueChange={(v) => setData({ ...data, delivery_preference: v })}>
                 {DELIVERY.map((d) => (
                   <label key={d} className={cn(
-                    'flex items-center gap-3 rounded-lg border p-3 cursor-pointer',
+                    'flex items-center gap-3 rounded-lg border p-3 cursor-pointer transition backdrop-blur-sm',
                     data.delivery_preference === d
-                      ? 'border-slate-900 bg-blue-500/10'
-                      : 'border-slate-900',
+                      ? 'border-cyan-400/80 bg-cyan-400/10 shadow-[0_0_20px_-4px_rgba(34,211,238,0.6)]'
+                      : 'border-white/15 hover:border-cyan-300/50 bg-white/5',
                   )}>
+
                     <RadioGroupItem value={d} />
                     <span className="text-sm">{d}</span>
                   </label>
@@ -312,10 +330,10 @@ export default function SalesWizard({ publicMode = false }: Props) {
             <Section title="Wie heißen Sie?" hint="Pflichtfeld" publicMode={publicMode}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <Field label="Vorname *">
-                  <Input value={data.first_name} onChange={(e) => setData({ ...data, first_name: e.target.value })} className={publicMode ? 'bg-white/5 border-white/15 text-white' : ''} />
+                  <Input value={data.first_name} onChange={(e) => setData({ ...data, first_name: e.target.value })} className='bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-cyan-400/60 focus-visible:border-cyan-300/60' />
                 </Field>
                 <Field label="Nachname *">
-                  <Input value={data.last_name} onChange={(e) => setData({ ...data, last_name: e.target.value })} className={publicMode ? 'bg-white/5 border-white/15 text-white' : ''} />
+                  <Input value={data.last_name} onChange={(e) => setData({ ...data, last_name: e.target.value })} className='bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-cyan-400/60 focus-visible:border-cyan-300/60' />
                 </Field>
               </div>
             </Section>
@@ -324,7 +342,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
           {/* Step 5 – Firma */}
           {step === 5 && (
             <Section title="Firma" hint="Optional" publicMode={publicMode}>
-              <Input value={data.company} onChange={(e) => setData({ ...data, company: e.target.value })} placeholder="Firmenname" className={publicMode ? 'bg-white/5 border-white/15 text-white' : ''} />
+              <Input value={data.company} onChange={(e) => setData({ ...data, company: e.target.value })} placeholder="Firmenname" className='bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-cyan-400/60 focus-visible:border-cyan-300/60' />
             </Section>
           )}
 
@@ -335,13 +353,11 @@ export default function SalesWizard({ publicMode = false }: Props) {
                 <select
                   value={data.country_code}
                   onChange={(e) => setData({ ...data, country_code: e.target.value })}
-                  className={cn(
-                    'h-10 rounded-md border px-3 text-sm',
-                    publicMode ? 'bg-white/5 border-white/15 text-white' : 'bg-background border-input',
-                  )}
+                  className="h-10 rounded-md border px-3 text-sm bg-white/5 border-white/15 text-white"
+
                 >
                   {COUNTRY_CODES.map((c) => (
-                    <option key={c.code} value={c.code} className="text-foreground">{c.label}</option>
+                    <option key={c.code} value={c.code} className="text-slate-900">{c.label}</option>
                   ))}
                 </select>
                 <Input
@@ -349,7 +365,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
                   onChange={(e) => setData({ ...data, phone: e.target.value })}
                   placeholder="Telefonnummer"
                   inputMode="tel"
-                  className={publicMode ? 'bg-white/5 border-white/15 text-white' : ''}
+                  className='bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-cyan-400/60 focus-visible:border-cyan-300/60'
                 />
               </div>
             </Section>
@@ -358,7 +374,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
           {/* Step 7 – Email */}
           {step === 7 && (
             <Section title="E-Mail-Adresse" hint="Pflichtfeld" publicMode={publicMode}>
-              <Input type="email" value={data.email} onChange={(e) => setData({ ...data, email: e.target.value })} placeholder="name@firma.de" className={publicMode ? 'bg-white/5 border-white/15 text-white' : ''} />
+              <Input type="email" value={data.email} onChange={(e) => setData({ ...data, email: e.target.value })} placeholder="name@firma.de" className='bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-cyan-400/60 focus-visible:border-cyan-300/60' />
             </Section>
           )}
 
@@ -384,7 +400,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
           {/* Step 9 – Weitere Infos */}
           {step === 9 && (
             <Section title="Weitere Informationen" hint="Möchten Sie uns noch etwas zur Angebotserstellung mitteilen?" publicMode={publicMode}>
-              <Textarea rows={6} value={data.notes} onChange={(e) => setData({ ...data, notes: e.target.value })} className={publicMode ? 'bg-white/5 border-white/15 text-white' : ''} />
+              <Textarea rows={6} value={data.notes} onChange={(e) => setData({ ...data, notes: e.target.value })} className='bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-cyan-400/60 focus-visible:border-cyan-300/60' />
             </Section>
           )}
 
@@ -479,7 +495,10 @@ export default function SalesWizard({ publicMode = false }: Props) {
               )}
             </div>
           )}
-        </Card>
+            </Card>
+          </div>
+        </div>
+
 
         {publicMode && (
           <p className="mt-6 text-center text-[11px] text-blue-100/40">
@@ -497,7 +516,7 @@ function Section({ title, hint, children, publicMode }: { title: string; hint?: 
       <div>
         <h2 className="text-xl md:text-2xl font-bold">{title}</h2>
         {hint && (
-          <p className={cn('text-xs mt-1', publicMode ? 'text-blue-100/70' : 'text-muted-foreground')}>
+          <p className={cn('text-xs mt-1', 'text-cyan-200/70')}>
             {hint}
           </p>
         )}
