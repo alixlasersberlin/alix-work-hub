@@ -120,6 +120,10 @@
   html {
     /* Verhindert iOS-Auto-Zoom bei Inputs <16px */
     -webkit-text-size-adjust: 100%;
+    /* Accessibility: globaler Schrift-Skalierungsfaktor (rem-basiert).
+       Wird von useFontScale() gesetzt. Default 1.0. */
+    font-size: calc(16px * var(--font-scale, 1));
+    transition: font-size 180ms ease;
   }
 
   body {
@@ -133,6 +137,20 @@
       hsl(var(--background));
     background-attachment: fixed;
     color: hsl(222 14% 14%);
+    position: relative;
+  }
+
+  /* Globaler Premium-Background als dezente Schicht hinter allen Inhalten.
+     Cards/Tables behalten ihre opaken Hintergründe – Lesbarkeit bleibt erhalten. */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background:
+      linear-gradient(180deg, hsla(0,0%,100%,0.78) 0%, hsla(220,14%,96%,0.86) 100%),
+      url('/backgrounds/alixwork-premium-background.jpg') center center / cover no-repeat;
+    pointer-events: none;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -144,6 +162,10 @@
     input, select, textarea {
       font-size: 16px;
     }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { transition: none; }
   }
 }
 

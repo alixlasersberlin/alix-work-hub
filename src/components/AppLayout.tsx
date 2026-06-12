@@ -17,6 +17,7 @@ import NataliaWelcomeOverlay from '@/components/NataliaWelcomeOverlay';
 import SalesLeadAssignmentOverlay from '@/components/SalesLeadAssignmentOverlay';
 import DesignVariantSwitcher from '@/components/DesignVariantSwitcher';
 import { SidebarInfoBar } from '@/components/SidebarInfoBar';
+import DisplaySettingsMenu from '@/components/DisplaySettingsMenu';
 import TenantSwitcher from '@/components/TenantSwitcher';
 import AuroraPrioTicker from '@/components/AuroraPrioTicker';
 import AuroraTopNav from '@/components/AuroraTopNav';
@@ -1439,6 +1440,7 @@ export default function AppLayout() {
               <span className="font-display font-bold gold-text">AlixWork</span>
               <span className="text-muted-foreground font-mono text-xs hidden sm:inline">v{APP_VERSION}</span>
           </div>
+            <DisplaySettingsMenu />
             {!isNeo && (
               <Button
                 variant="ghost"
