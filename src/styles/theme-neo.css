@@ -320,9 +320,13 @@ html.theme-neo aside nav .border-l button:hover {
     0 0 0 1px hsla(222, 65%, 30%, 0.10) !important;
 }
 
-/* ---------- Header / Topbar ---------- */
-html.theme-neo header,
-html.theme-neo [class*="border-b"][class*="bg-"] {
+/* ---------- Header / Topbar ----------
+   Wichtig: NUR echte <header>-Elemente stylen. Ein generischer
+   Attribut-Substring-Selektor wie [class*="border-b"][class*="bg-"]
+   matcht auch shadcn-DialogContent (Klassen u.a. "border-border bg-card"
+   enthalten den Substring "border-b") und überschreibt dann dessen
+   fixed/translate-Layout mit margin/border-radius → Dialog unsichtbar. */
+html.theme-neo header:not([role="dialog"]):not([data-radix-popper-content-wrapper] *) {
   background: var(--neo-glass-bg-strong) !important;
   backdrop-filter: blur(var(--neo-glass-blur)) saturate(160%);
   -webkit-backdrop-filter: blur(var(--neo-glass-blur)) saturate(160%);
