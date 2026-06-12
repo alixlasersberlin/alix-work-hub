@@ -29,7 +29,6 @@ export default function AlixSignPublic() {
   const [chkTerms, setChkTerms] = useState(false);
   const [chkPrivacy, setChkPrivacy] = useState(false);
   const [chkSign, setChkSign] = useState(false);
-  const [chkCredit, setChkCredit] = useState(true);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
@@ -139,7 +138,6 @@ export default function AlixSignPublic() {
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return toast.error('Bitte gültige E-Mail-Adresse eingeben');
     if (!city.trim()) return toast.error('Bitte Ort eingeben');
     if (!chkOffer || !chkSign) return toast.error('Bitte allen Zustimmungen zustimmen');
-    if (requiresCredit && !chkCredit) return toast.error('Bei Finanzierung/Mietkauf bitte Bonitäts- und Identitätsprüfung zustimmen');
     if (!hasInk.current) return toast.error('Bitte zuerst unterschreiben');
 
     setSubmitting(true);
@@ -158,7 +156,7 @@ export default function AlixSignPublic() {
         acceptedTerms: chkTerms,
         acceptedPrivacy: chkPrivacy,
         acceptedElectronicSignature: chkSign,
-        acceptedCreditCheck: requiresCredit ? chkCredit : null,
+        acceptedCreditCheck: requiresCredit ? true : null,
         requestId: data.id,
       });
 
@@ -175,7 +173,7 @@ export default function AlixSignPublic() {
           accepted_terms: chkTerms,
           accepted_privacy: chkPrivacy,
           accepted_electronic_signature: chkSign,
-          accepted_credit_check: requiresCredit ? chkCredit : undefined,
+          accepted_credit_check: requiresCredit ? true : undefined,
           signature_image_data: signatureDataUrl,
           pdf_base64: pdfBase64,
         }),
