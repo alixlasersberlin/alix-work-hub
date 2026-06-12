@@ -43,7 +43,7 @@ export const useExperienceMode = () => useContext(ExperienceCtx);
 
 export function bootExperienceMode() {
   try {
-    const m = parse(typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : null);
-    apply(m);
+    apply('classic');
+    if (typeof localStorage !== 'undefined') localStorage.setItem(STORAGE_KEY, 'classic');
   } catch { /* ignore */ }
 }
