@@ -56,9 +56,8 @@
           document.documentElement.classList.remove(theme === 'dark' ? 'light' : 'dark');
           document.documentElement.classList.add(theme);
           document.documentElement.setAttribute('data-theme', theme);
-          var exp = localStorage.getItem('alix-experience');
-          if (exp !== 'premium' && exp !== 'mega') exp = 'classic';
-          document.documentElement.setAttribute('data-experience', exp);
+          try { localStorage.setItem('alix-experience', 'classic'); } catch (e2) {}
+          document.documentElement.setAttribute('data-experience', 'classic');
         } catch (e) { /* ignore */ }
       })();
     </script>
