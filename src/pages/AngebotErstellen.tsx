@@ -767,7 +767,7 @@ export default function AngebotErstellen() {
                       />
                     </td>
                   </tr>
-                </React.Fragment>
+                </Fragment>
               ))}
             </tbody>
           </table>
