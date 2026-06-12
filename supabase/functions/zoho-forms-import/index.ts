@@ -77,6 +77,21 @@ Deno.serve(async (req) => {
       "geraet",
     ]);
     const message = pick(data, ["message", "nachricht", "Nachricht", "comment", "kommentar"]);
+    const device_category = pick(data, [
+      "device_category", "geraeteklasse", "Geräteklasse", "device_class", "category"
+    ]);
+    const customer_goal = pick(data, [
+      "customer_goal", "ziel", "Ziel", "goal", "kundenziel"
+    ]);
+    const implementation_period = pick(data, [
+      "implementation_period", "umsetzung", "umsetzungszeitraum", "Umsetzungszeitraum", "timeline"
+    ]);
+    let additional_services: any = data?.additional_services ?? data?.zusatzleistungen ?? data?.services ?? null;
+    if (typeof additional_services === "string") {
+      additional_services = additional_services.split(/[;,|]/).map((s: string) => s.trim()).filter(Boolean);
+    }
+    const ratingRaw = pick(data, ["rating", "bewertung", "service_rating", "stars"]);
+    const service_rating = ratingRaw ? Math.max(1, Math.min(5, parseInt(ratingRaw, 10))) || null : null;
 
     const payload = {
       external_id,
@@ -93,6 +108,11 @@ Deno.serve(async (req) => {
       country,
       requested_products,
       message,
+      device_category,
+      customer_goal,
+      implementation_period,
+      additional_services,
+      service_rating,
       lead_status: "Importiert - Angebot offen",
       metadata: data,
       updated_at: new Date().toISOString(),
