@@ -13,8 +13,6 @@ import { Badge } from '@/components/ui/badge';
 
 const options: { value: DesignVariant; label: string; description: string; icon: typeof Monitor; beta?: boolean; ultra?: boolean }[] = [
   { value: 'classic', label: 'Classic Design', description: 'Aktuelles AlixWork Design', icon: Monitor },
-  { value: 'beta3d', label: 'AlixWork 3D Beta', description: '3D Command Center · Glas · Gold', icon: Sparkles, beta: true },
-  { value: 'aurora', label: 'AlixWork Aurora Ultra', description: 'Liquid Glass · Aurora · AI Light', icon: Wand2, ultra: true },
 ];
 
 export default function DesignVariantSwitcher({ inline = false }: { inline?: boolean } = {}) {
