@@ -176,13 +176,21 @@ export default function SalesWizard({ publicMode = false }: Props) {
               ALIX
             </div>
           </div>
-          <div className="absolute inset-x-0 top-0 z-10 px-6 py-6 flex items-center justify-between">
+          <div className="absolute inset-x-0 top-0 z-30 px-6 py-6 flex items-center justify-between">
             <div className="text-2xl font-bold tracking-[0.18em]">Alix Lasers ®</div>
-            <div className="text-xs text-blue-100/70 hidden md:block">
-              100% AI Full Technologie
+            <div className="flex items-center gap-4">
+              <div className="text-xs text-blue-100/70 hidden md:block">
+                100% AI Full Technologie
+              </div>
+              <WizardLanguageSwitcher variant="dark" />
             </div>
           </div>
         </>
+      )}
+      {!publicMode && (
+        <div className="relative z-30 flex justify-end mb-3">
+          <WizardLanguageSwitcher variant="dark" />
+        </div>
       )}
 
       <div className={cn(
@@ -192,7 +200,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
         <div className="mb-6">
           <div className="flex items-center justify-between text-xs mb-2">
             <span className={'text-cyan-200/70'}>
-              Schritt {Math.min(step + 1, TOTAL_STEPS)} von {TOTAL_STEPS}
+              {t.step_of(Math.min(step + 1, TOTAL_STEPS), TOTAL_STEPS)}
             </span>
             <span className={'text-cyan-200/70'}>
               {progress}%
