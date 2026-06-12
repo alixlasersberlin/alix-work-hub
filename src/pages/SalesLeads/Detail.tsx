@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import {
-  ArrowLeft, FilePlus, UserPlus, UserCheck, Archive, Phone, CalendarPlus, Mail, Loader2,
+  ArrowLeft, FilePlus, UserPlus, UserCheck, Archive, Phone, CalendarPlus, Mail, Loader2, Pencil, Save, X,
 } from 'lucide-react';
 
 const STATUS_OPTIONS = [
