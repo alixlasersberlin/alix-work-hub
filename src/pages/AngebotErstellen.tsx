@@ -48,8 +48,6 @@ export default function AngebotErstellen() {
   const [payType, setPayType] = useState<'Direktkauf' | 'Ratenzahlung' | 'Leasing' | 'Mietkauf' | 'Alix Flex'>('Direktkauf');
   const [payPrice, setPayPrice] = useState<string>('');
   const [payDown, setPayDown] = useState<string>('');
-  const [payDown2, setPayDown2] = useState<string>('');
-  const [payDownCount, setPayDownCount] = useState<1 | 2>(1);
   const [payTerm, setPayTerm] = useState<number>(24);
   const [loading, setLoading] = useState(true);
 
@@ -827,16 +825,7 @@ export default function AngebotErstellen() {
             </button>
           </div>
           <div className="space-y-1">
-            <div className="flex items-center justify-between gap-2">
-              <Label className="text-xs text-muted-foreground">Anzahlung 1 (€)</Label>
-              <Select value={String(payDownCount)} onValueChange={v => { const n = Number(v) as 1 | 2; setPayDownCount(n); if (n === 1) setPayDown2(''); }}>
-                <SelectTrigger className="h-6 w-[88px] text-xs bg-secondary border-border px-2"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">1 Zahlung</SelectItem>
-                  <SelectItem value="2">2 Zahlungen</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <Label className="text-xs text-muted-foreground">Anzahlung (€)</Label>
             <Input
               type="number" min={0} step="0.01"
               value={payDown}
@@ -845,18 +834,6 @@ export default function AngebotErstellen() {
               className="bg-secondary border-border"
             />
           </div>
-          {payDownCount === 2 && (
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Anzahlung 2 (€)</Label>
-              <Input
-                type="number" min={0} step="0.01"
-                value={payDown2}
-                onChange={e => setPayDown2(e.target.value)}
-                placeholder="0,00"
-                className="bg-secondary border-border"
-              />
-            </div>
-          )}
           {payType !== 'Direktkauf' && (
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">Laufzeit (Monate)</Label>
@@ -873,7 +850,7 @@ export default function AngebotErstellen() {
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">Basis (€)</Label>
             <div className="h-10 px-3 flex items-center rounded-md bg-secondary/50 border border-border text-foreground font-medium">
-              {fmtMoney(Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0) - (parseFloat(payDown2) || 0)))}
+              {fmtMoney(Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0)))}
             </div>
           </div>
         </div>
@@ -884,7 +861,7 @@ export default function AngebotErstellen() {
               <>
                 <div className="text-xs text-muted-foreground">Zu zahlen ({payType})</div>
                 <div className="text-2xl font-bold text-primary">
-                  {fmtMoney(Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0) - (parseFloat(payDown2) || 0)))}
+                  {fmtMoney(Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0)))}
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">Einmalzahlung</div>
               </>
@@ -893,7 +870,7 @@ export default function AngebotErstellen() {
                 <div className="text-xs text-muted-foreground">Monatliche Rate ({payType})</div>
                 <div className="text-2xl font-bold text-primary">
                   {(() => {
-                    const base = Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0) - (parseFloat(payDown2) || 0));
+                    const base = Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0));
                     const rate = payTerm > 0 ? base / payTerm : 0;
                     return fmtMoney(rate);
                   })()}
