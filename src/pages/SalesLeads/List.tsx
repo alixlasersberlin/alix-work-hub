@@ -165,14 +165,13 @@ export default function SalesLeadsList() {
             <thead className="bg-muted/40 text-left">
               <tr>
                 <th className="p-3">Datum</th>
+                <th className="p-3">Lead-Nr.</th>
                 <th className="p-3">Score</th>
-                <th className="p-3">Firma</th>
-                <th className="p-3">Ansprechpartner</th>
-                <th className="p-3">E-Mail</th>
-                <th className="p-3">Telefon</th>
-                <th className="p-3">Produktinteresse</th>
-                <th className="p-3">Beratung</th>
-                <th className="p-3">Lieferung</th>
+                <th className="p-3">Firma / Kontakt</th>
+                <th className="p-3">E-Mail / Telefon</th>
+                <th className="p-3">Geräteklasse</th>
+                <th className="p-3">Zeitraum</th>
+                <th className="p-3">Bewertung</th>
                 <th className="p-3">Quelle</th>
                 <th className="p-3">Status</th>
                 <th className="p-3">Zugewiesen an</th>
@@ -180,9 +179,9 @@ export default function SalesLeadsList() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={12} className="p-6 text-center text-muted-foreground">Lade …</td></tr>
+                <tr><td colSpan={11} className="p-6 text-center text-muted-foreground">Lade …</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={12} className="p-6 text-center text-muted-foreground">Keine Anfragen gefunden.</td></tr>
+                <tr><td colSpan={11} className="p-6 text-center text-muted-foreground">Keine Anfragen gefunden.</td></tr>
               ) : filtered.map((r) => (
                 <tr key={r.id} className="border-t hover:bg-muted/30">
                   <td className="p-3 whitespace-nowrap">{new Date(r.created_at).toLocaleString('de-DE')}</td>
