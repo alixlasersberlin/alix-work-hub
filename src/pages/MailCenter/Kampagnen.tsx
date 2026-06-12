@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { sanitizeHtml } from '@/lib/sanitize-html';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -590,7 +591,7 @@ function CampaignDetail({ campaignId, onClose }: { campaignId: string; onClose: 
             <div className="space-y-2">
               <p className="text-sm"><b>Betreff:</b> {campaign?.subject}</p>
               <div className="border border-border rounded p-3 max-h-96 overflow-y-auto bg-background"
-                dangerouslySetInnerHTML={{ __html: template?.body_html ?? '<em>Keine Vorlage</em>' }} />
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(template?.body_html ?? '<em>Keine Vorlage</em>') }} />
             </div>
           </TabsContent>
 

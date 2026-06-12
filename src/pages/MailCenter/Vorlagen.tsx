@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { sanitizeHtml } from '@/lib/sanitize-html';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -501,7 +502,7 @@ export default function MailCenterVorlagen() {
                       <div className="text-xs text-gray-500 mb-2">
                         <strong>Betreff:</strong> {renderWithSample(editing.subject ?? '')}
                       </div>
-                      <div dangerouslySetInnerHTML={{ __html: renderWithSample(editing.body_html ?? '') }} />
+                      <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(renderWithSample(editing.body_html ?? '')) }} />
                     </div>
                   </TabsContent>
                 </Tabs>
@@ -555,7 +556,7 @@ export default function MailCenterVorlagen() {
                 <div><span className="text-muted-foreground">Betreff:</span> {renderWithSample(previewTpl.subject ?? '')}</div>
               </div>
               <div className="border border-border rounded-md p-4 bg-white text-black">
-                <div dangerouslySetInnerHTML={{ __html: renderWithSample(previewTpl.body_html ?? '') }} />
+                <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(renderWithSample(previewTpl.body_html ?? '')) }} />
               </div>
               {previewTpl.body_text && (
                 <div>
