@@ -159,6 +159,8 @@ const AngebotImport = lazy(() => import("./pages/AngebotImport"));
 const SalesLeadsList = lazy(() => import("./pages/SalesLeads/List"));
 const SalesLeadDetail = lazy(() => import("./pages/SalesLeads/Detail"));
 const SalesFollowups = lazy(() => import("./pages/SalesLeads/Followups"));
+const NeueAnfrage = lazy(() => import("./pages/SalesLeads/NeueAnfrage"));
+const PublicBeratung = lazy(() => import("./pages/PublicBeratung"));
 const Angebote = lazy(() => import("./pages/Angebote"));
 const Anzahlungsrechnung = lazy(() => import("./pages/Anzahlungsrechnung"));
 const Gutschriften = lazy(() => import("./pages/Gutschriften"));
@@ -436,6 +438,7 @@ function AppRoutes() {
           <Route path="/verkauf/anfragen" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Vertrieb','Vertriebsleitung','Order','SACHBEARBEITUNG']}><SalesLeadsList /></ProtectedRoute>} />
           <Route path="/verkauf/anfragen/:id" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Vertrieb','Vertriebsleitung','Order','SACHBEARBEITUNG']}><SalesLeadDetail /></ProtectedRoute>} />
           <Route path="/verkauf/nachfassen" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Vertrieb','Vertriebsleitung','Order','SACHBEARBEITUNG']}><SalesFollowups /></ProtectedRoute>} />
+          <Route path="/verkauf/neue-anfrage" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Vertrieb','Vertriebsleitung','Order','SACHBEARBEITUNG']}><NeueAnfrage /></ProtectedRoute>} />
           <Route path="/verkauf/angebote" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Angebote /></ProtectedRoute>} />
 
           <Route path="/verkauf/anzahlungsrechnung" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Tourenplanung', 'Read Only Audit', 'Read Only', 'Geschäftsführung', 'Marketing', 'Technik', 'Kundenservice', 'Vertrieb', 'Reparaturannahme', 'Bestellwesen', 'Serviceleitung', 'Service', 'QM', 'SACHBEARBEITUNG']}><Anzahlungsrechnung /></ProtectedRoute>} />
@@ -705,6 +708,8 @@ function AppRoutes() {
         <Route path="/bewertung/:token" element={<PublicReviewForm />} />
         <Route path="/portal" element={<PortalLookup />} />
         <Route path="/portal/status" element={<PortalStatus />} />
+        <Route path="/beratung" element={<PublicBeratung />} />
+        <Route path="/angebot" element={<PublicBeratung />} />
         <Route path="/kunde/login" element={<CustomerPortalLogin />} />
         <Route path="/kunde" element={<CustomerPortalLayout />}>
           <Route index element={<CustomerPortalDashboard />} />

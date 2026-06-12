@@ -145,6 +145,7 @@ const navItems: NavItem[] = [
     path: '/verkauf', label: 'SALES MANAGEMENT', icon: TrendingUp,
     roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'Finanzierungen', 'FACTORY INVOICE', 'Lieferant', 'Read Only Audit', 'SACHBEARBEITUNG'],
     children: [
+      { path: '/verkauf/neue-anfrage', label: 'Neue Anfrage', icon: Sparkles, roles: ['Admin', 'Super Admin', 'Vertrieb', 'Vertriebsleitung', 'Order', 'SACHBEARBEITUNG'] },
       { path: '/verkauf/anfragen', label: 'Anfragen', icon: Inbox, roles: ['Admin', 'Super Admin', 'Vertrieb', 'Vertriebsleitung', 'Order', 'SACHBEARBEITUNG'] },
       { path: '/verkauf/angebot/neu', label: 'Angebot erstellen', icon: FilePlus, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
       { path: '/verkauf/angebot/import', label: 'Data Import', icon: Upload, roles: ['Super Admin'] },
