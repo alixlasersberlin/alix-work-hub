@@ -245,25 +245,93 @@ export default function SalesLeadDetail() {
         </TabsList>
 
         <TabsContent value="stammdaten" className="mt-4">
-          <Card className="p-6 grid md:grid-cols-2 gap-4 text-sm">
-            <Field label="Firma" value={lead.company} />
-            <Field label="Ansprechpartner" value={[lead.first_name, lead.last_name].filter(Boolean).join(' ')} />
-            <Field label="E-Mail" value={lead.email} />
-            <Field label="Telefon" value={lead.phone} />
-            <Field label="Straße" value={lead.street} />
-            <Field label="PLZ / Ort" value={[lead.zip, lead.city].filter(Boolean).join(' ')} />
-            <Field label="Land" value={lead.country} />
-            <Field label="Quelle / Formular" value={lead.form_name || lead.source} />
-            <Field label="Externe ID" value={lead.external_id} />
-            <Field label="Leadnummer" value={lead.lead_number} />
-            <Field label="Importdatum" value={new Date(lead.created_at).toLocaleString('de-DE')} />
-            <Field label="Geräteklasse" value={lead.device_category} />
-            <Field label="Umsetzungszeitraum" value={lead.implementation_period} />
-            <Field label="Bewertung" value={lead.service_rating ? `${lead.service_rating} / 5` : null} />
-            <Field label="Kundenziel" value={lead.customer_goal} />
-            <div className="md:col-span-2"><Field label="Zusatzleistungen" value={(Array.isArray(lead.additional_services) ? lead.additional_services : []).join(', ') || null} /></div>
-            <div className="md:col-span-2"><Field label="Produktinteresse" value={lead.requested_products} /></div>
-            <div className="md:col-span-2"><Field label="Nachricht" value={lead.message || lead.notes} multiline /></div>
+          <Card className="p-6 space-y-4">
+            {canEdit && (
+              <div className="flex justify-end gap-2">
+                {!editMode ? (
+                  <Button variant="outline" size="sm" onClick={() => { setEditForm({
+                    company: lead.company ?? '', first_name: lead.first_name ?? '', last_name: lead.last_name ?? '',
+                    email: lead.email ?? '', phone: lead.phone ?? '', street: lead.street ?? '',
+                    zip: lead.zip ?? '', city: lead.city ?? '', country: lead.country ?? '',
+                    device_category: lead.device_category ?? '', implementation_period: lead.implementation_period ?? '',
+                    customer_goal: lead.customer_goal ?? '', requested_products: lead.requested_products ?? '',
+                    additional_services: (Array.isArray(lead.additional_services) ? lead.additional_services : []).join(', '),
+                    message: lead.message ?? '', notes: lead.notes ?? '',
+                    service_rating: lead.service_rating ?? '',
+                  }); setEditMode(true); }}>
+                    <Pencil className="h-4 w-4 mr-1" />Bearbeiten
+                  </Button>
+                ) : (
+                  <>
+                    <Button variant="ghost" size="sm" onClick={() => setEditMode(false)} disabled={saving}>
+                      <X className="h-4 w-4 mr-1" />Abbrechen
+                    </Button>
+                    <Button size="sm" disabled={saving} onClick={async () => {
+                      const patch: any = { ...editForm };
+                      patch.additional_services = String(editForm.additional_services || '').split(',').map((s: string) => s.trim()).filter(Boolean);
+                      patch.service_rating = editForm.service_rating === '' || editForm.service_rating == null ? null : Number(editForm.service_rating);
+                      Object.keys(patch).forEach(k => { if (patch[k] === '') patch[k] = null; });
+                      await updateLead(patch);
+                      try {
+                        await supabase.from('sales_lead_history').insert({ lead_id: lead.id, action: 'lead_edited', note: 'Stammdaten bearbeitet (Super Admin)' } as any);
+                      } catch { /* ignore */ }
+                      setEditMode(false);
+                      toast.success('Lead aktualisiert');
+                    }}>
+                      <Save className="h-4 w-4 mr-1" />Speichern
+                    </Button>
+                  </>
+                )}
+              </div>
+            )}
+            {editMode ? (
+              <div className="grid md:grid-cols-2 gap-4 text-sm">
+                <EditField label="Firma" v={editForm.company} on={(v) => setEditForm({ ...editForm, company: v })} />
+                <EditField label="Vorname" v={editForm.first_name} on={(v) => setEditForm({ ...editForm, first_name: v })} />
+                <EditField label="Nachname" v={editForm.last_name} on={(v) => setEditForm({ ...editForm, last_name: v })} />
+                <EditField label="E-Mail" v={editForm.email} on={(v) => setEditForm({ ...editForm, email: v })} />
+                <EditField label="Telefon" v={editForm.phone} on={(v) => setEditForm({ ...editForm, phone: v })} />
+                <EditField label="Straße" v={editForm.street} on={(v) => setEditForm({ ...editForm, street: v })} />
+                <EditField label="PLZ" v={editForm.zip} on={(v) => setEditForm({ ...editForm, zip: v })} />
+                <EditField label="Ort" v={editForm.city} on={(v) => setEditForm({ ...editForm, city: v })} />
+                <EditField label="Land" v={editForm.country} on={(v) => setEditForm({ ...editForm, country: v })} />
+                <EditField label="Geräteklasse" v={editForm.device_category} on={(v) => setEditForm({ ...editForm, device_category: v })} />
+                <EditField label="Umsetzungszeitraum" v={editForm.implementation_period} on={(v) => setEditForm({ ...editForm, implementation_period: v })} />
+                <EditField label="Bewertung (1-5)" v={editForm.service_rating} on={(v) => setEditForm({ ...editForm, service_rating: v })} />
+                <div className="md:col-span-2"><EditField label="Kundenziel" v={editForm.customer_goal} on={(v) => setEditForm({ ...editForm, customer_goal: v })} /></div>
+                <div className="md:col-span-2"><EditField label="Zusatzleistungen (Komma-getrennt)" v={editForm.additional_services} on={(v) => setEditForm({ ...editForm, additional_services: v })} /></div>
+                <div className="md:col-span-2"><EditField label="Produktinteresse" v={editForm.requested_products} on={(v) => setEditForm({ ...editForm, requested_products: v })} /></div>
+                <div className="md:col-span-2">
+                  <Label className="text-xs uppercase text-muted-foreground">Nachricht</Label>
+                  <Textarea rows={4} value={editForm.message} onChange={(e) => setEditForm({ ...editForm, message: e.target.value })} />
+                </div>
+                <div className="md:col-span-2">
+                  <Label className="text-xs uppercase text-muted-foreground">Notizen</Label>
+                  <Textarea rows={3} value={editForm.notes} onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })} />
+                </div>
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-2 gap-4 text-sm">
+                <Field label="Firma" value={lead.company} />
+                <Field label="Ansprechpartner" value={[lead.first_name, lead.last_name].filter(Boolean).join(' ')} />
+                <Field label="E-Mail" value={lead.email} />
+                <Field label="Telefon" value={lead.phone} />
+                <Field label="Straße" value={lead.street} />
+                <Field label="PLZ / Ort" value={[lead.zip, lead.city].filter(Boolean).join(' ')} />
+                <Field label="Land" value={lead.country} />
+                <Field label="Quelle / Formular" value={lead.form_name || lead.source} />
+                <Field label="Externe ID" value={lead.external_id} />
+                <Field label="Leadnummer" value={lead.lead_number} />
+                <Field label="Importdatum" value={new Date(lead.created_at).toLocaleString('de-DE')} />
+                <Field label="Geräteklasse" value={lead.device_category} />
+                <Field label="Umsetzungszeitraum" value={lead.implementation_period} />
+                <Field label="Bewertung" value={lead.service_rating ? `${lead.service_rating} / 5` : null} />
+                <Field label="Kundenziel" value={lead.customer_goal} />
+                <div className="md:col-span-2"><Field label="Zusatzleistungen" value={(Array.isArray(lead.additional_services) ? lead.additional_services : []).join(', ') || null} /></div>
+                <div className="md:col-span-2"><Field label="Produktinteresse" value={lead.requested_products} /></div>
+                <div className="md:col-span-2"><Field label="Nachricht" value={lead.message || lead.notes} multiline /></div>
+              </div>
+            )}
           </Card>
         </TabsContent>
 
