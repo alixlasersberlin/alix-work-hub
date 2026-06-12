@@ -635,9 +635,14 @@ export default function AngebotErstellen() {
             className="pl-10 bg-secondary border-border"
           />
           {itemSearch && (
-            <div className="absolute z-10 mt-1 w-full max-h-96 overflow-y-auto overscroll-contain border border-border rounded-lg bg-card shadow-lg divide-y divide-border">
-              <div className="sticky top-0 bg-card/95 backdrop-blur px-3 py-1.5 text-[11px] text-muted-foreground border-b border-border">
-                {filteredItems.length} Treffer
+            <div className="mt-2 w-full max-h-80 overflow-y-auto overscroll-contain border border-border rounded-lg bg-card shadow-lg divide-y divide-border relative z-10">
+              <div className="sticky top-0 bg-card/95 backdrop-blur px-3 py-1.5 text-[11px] text-muted-foreground border-b border-border flex items-center justify-between">
+                <span>{filteredItems.length} Treffer</span>
+                <button
+                  type="button"
+                  onClick={() => setItemSearch('')}
+                  className="text-muted-foreground hover:text-foreground"
+                >Schließen</button>
               </div>
               {filteredItems.length === 0 ? (
                 <p className="p-3 text-sm text-muted-foreground text-center">Keine Artikel gefunden.</p>
