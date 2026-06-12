@@ -759,6 +759,34 @@ export default function AngebotErstellen() {
     }
   };
 
+  const sendForSignature = async () => {
+    if (!selectedCustomer) { toast.error('Bitte zuerst einen Kunden auswählen.'); return; }
+    const email = selectedCustomer.email;
+    if (!email) { toast.error('Kunde hat keine E-Mail-Adresse hinterlegt.'); return; }
+    if (!saveOffer(true)) return;
+    const t = toast.loading('Alix Sign Anfrage wird erstellt...');
+    try {
+      const snap = buildOfferSnapshot();
+      const { data, error } = await supabase.functions.invoke('alix-sign-create', {
+        body: {
+          offer_number: offerNumber,
+          offer_payload: snap,
+          customer_id: selectedCustomer.id,
+          customer_email: email,
+          customer_name: selectedCustomer.contact_name || selectedCustomer.company_name,
+          base_url: window.location.origin,
+          expires_days: 14,
+        },
+      });
+      if (error || (data as any)?.error) throw new Error(error?.message || (data as any)?.error);
+      const url = (data as any)?.sign_url;
+      try { if (url) await navigator.clipboard?.writeText(url); } catch {}
+      toast.success(`Signatur-Link an ${email} gesendet${url ? ' (Link in Zwischenablage kopiert)' : ''}.`, { id: t });
+    } catch (e: any) {
+      toast.error('Alix Sign fehlgeschlagen: ' + (e?.message || 'Unbekannter Fehler'), { id: t });
+    }
+  };
+
 
   if (loading) {
     return (
@@ -1317,10 +1345,10 @@ export default function AngebotErstellen() {
         <Button
           variant="outline"
           className="gap-2 border-border"
-          onClick={() => toast.info('Signatur-Funktion folgt in Kürze')}
+          onClick={sendForSignature}
         >
           <Pencil className="w-4 h-4" />
-          Signieren
+          Mit Alix Sign zur Unterschrift senden
         </Button>
         <Button onClick={generatePDF} className="gold-gradient text-primary-foreground gap-2">
           <FileDown className="w-4 h-4" />
