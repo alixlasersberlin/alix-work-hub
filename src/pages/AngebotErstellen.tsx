@@ -1343,8 +1343,7 @@ export default function AngebotErstellen() {
         </Button>
 
         <Button
-          variant="outline"
-          className="gap-2 border-border"
+          className="gap-2 bg-green-600 hover:bg-green-700 text-white border-0"
           onClick={sendForSignature}
         >
           <Pencil className="w-4 h-4" />
