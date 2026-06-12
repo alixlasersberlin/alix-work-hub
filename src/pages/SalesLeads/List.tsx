@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { Inbox, Search, Filter, UserCheck } from 'lucide-react';
+import { Inbox, Search, Filter, UserCheck, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 
 const STATUS_OPTIONS = [
@@ -183,13 +183,14 @@ export default function SalesLeadsList() {
                 <th className="p-3">Quelle</th>
                 <th className="p-3">Status</th>
                 <th className="p-3">Zugewiesen an</th>
+                <th className="p-3 text-right">Aktion</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={11} className="p-6 text-center text-muted-foreground">Lade …</td></tr>
+                <tr><td colSpan={12} className="p-6 text-center text-muted-foreground">Lade …</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={11} className="p-6 text-center text-muted-foreground">Keine Anfragen gefunden.</td></tr>
+                <tr><td colSpan={12} className="p-6 text-center text-muted-foreground">Keine Anfragen gefunden.</td></tr>
               ) : filtered.map((r) => (
                 <tr key={r.id} className="border-t hover:bg-muted/30">
                   <td className="p-3 whitespace-nowrap">{new Date(r.created_at).toLocaleString('de-DE')}</td>
@@ -250,6 +251,14 @@ export default function SalesLeadsList() {
                         ))}
                       </SelectContent>
                     </Select>
+                  </td>
+                  <td className="p-3 text-right">
+                    <Link
+                      to={`/verkauf/anfragen/${r.id}`}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded border border-border text-xs hover:bg-muted/40"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />Bearbeiten
+                    </Link>
                   </td>
                 </tr>
               ))}
