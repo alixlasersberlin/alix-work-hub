@@ -10,6 +10,7 @@ import { FilePlus, Plus, Trash2, Search, Loader2, FileDown, Inbox, ChevronDown, 
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import templateAsset from '@/assets/angebot-template.jpg.asset.json';
 
 type LineItem = {
   id: string;
