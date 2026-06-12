@@ -147,6 +147,11 @@ export default function SalesLeadsList() {
               <SelectContent>
                 <SelectItem value="alle">Alle Quellen</SelectItem>
                 <SelectItem value="zoho_forms">Zoho Forms</SelectItem>
+                <SelectItem value="website">Website</SelectItem>
+                <SelectItem value="phone">Telefon</SelectItem>
+                <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                <SelectItem value="api">API</SelectItem>
+                <SelectItem value="csv">CSV-Import</SelectItem>
                 <SelectItem value="manual">Manuell</SelectItem>
               </SelectContent>
             </Select>
