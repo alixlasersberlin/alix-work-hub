@@ -58,6 +58,8 @@ function statusVariant(s: string): 'default' | 'secondary' | 'destructive' | 'ou
 }
 
 export default function SalesLeadsList() {
+  const { hasRole } = useAuth();
+  const canDelete = hasRole('Super Admin');
   const [rows, setRows] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -65,6 +67,19 @@ export default function SalesLeadsList() {
   const [source, setSource] = useState<string>('alle');
   const [users, setUsers] = useState<{ id: string; full_name: string | null; email: string | null }[]>([]);
   const [assigning, setAssigning] = useState<string | null>(null);
+  const [toDelete, setToDelete] = useState<Lead | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  async function confirmDelete() {
+    if (!toDelete) return;
+    setDeleting(true);
+    const { error } = await supabase.from('sales_leads').delete().eq('id', toDelete.id);
+    setDeleting(false);
+    if (error) { toast.error(error.message); return; }
+    setRows((r) => r.filter(x => x.id !== toDelete.id));
+    setToDelete(null);
+    toast.success('Lead gelöscht');
+  }
 
   async function loadLeads() {
     const { data } = await supabase
