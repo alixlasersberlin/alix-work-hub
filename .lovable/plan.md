@@ -1,80 +1,75 @@
-# Alix Sign — Elektronische Angebotsannahme
+## Ziel
+Bestehendes Modul **Sales Leads** (`/verkauf/anfragen`) zu einem standardisierten Lead‑Import → Angebotsworkflow ausbauen, **ohne bestehende Funktionen zu brechen**. Nutzt die schon vorhandene Tabelle `sales_leads`, Detail-/Listen-Seite, Followups, Zoho‑Forms‑Webhook und den Angebot‑Handoff zu `/verkauf/angebot/neu`.
 
-Additive Integration in `/verkauf/angebote`. Keine bestehende Funktion wird entfernt; vorhandene Buttons („Signieren", Speichern, PDF) bleiben.
+## Was schon existiert (wird wiederverwendet)
+- Tabelle `sales_leads` inkl. Felder `service_rating`, `additional_interests` (jsonb), `delivery_preference`, `consultation_type`, `requested_products`, `notes`, `converted_offer_id`, `converted_customer_id`, `lead_score`, `assigned_user`, `lead_status`, `source`.
+- Tabellen `sales_lead_history`, `sales_followups`, Edge Function `zoho-forms-import`.
+- Routen `/verkauf/anfragen`, `/verkauf/anfragen/:id`, `/verkauf/nachfassen`, `/verkauf/anfragen/neu` (NeueAnfrage – Wizard).
+- Handoff `sessionStorage.sales_lead_handoff_v1` → `/verkauf/angebot/neu` (Kunde + Notizen prefilled).
 
-## Architektur-Hinweis (wichtig)
-Angebote werden heute ausschließlich im Browser-`localStorage` (`alix_angebote_v1`) gespeichert — es gibt keine `offers`-Tabelle. Damit der Kunde ein Angebot über einen öffentlichen Link sehen kann, wird beim Erstellen einer Signaturanfrage ein **vollständiger Snapshot des Angebots** (Kunde, Positionen, Summen, Zahlungsart) in `alix_sign_requests.offer_payload jsonb` mitgespeichert. `offer_id` bleibt textbasiert (= `offer_number`, z. B. `ANG-2026-10403`), weil keine UUID existiert.
+## Lücken zum gewünschten Workflow
+1. Keine sprechende **Leadnummer** `LEAD-YYYY-000001`.
+2. Kein dediziertes Feld `device_category` / `customer_goal` / `implementation_period` (heute steckt das in `requested_products` / `interests`).
+3. Quellen-Vielfalt (Telefon / WhatsApp / Website / API / CSV / manuell) nicht klar abgebildet.
+4. Kein **CSV-Import** und kein generisches **API‑Endpoint** (nur Zoho Forms Webhook).
+5. Beim Klick „Angebot erstellen" wird zwar gehandoffed, aber **Geräteklasse + Zusatzleistungen + Ziel + Zeitraum** werden nicht ins Angebot übernommen, und der Status wird **nicht automatisch** auf „Angebot erstellt" gesetzt + `converted_offer_id` nicht zurückgeschrieben.
+6. Kein automatischer Followup „Kontaktaufnahme erforderlich" bei Import.
+7. Kein KPI‑Dashboard für Vertriebsanfragen.
 
-## 1. Datenbank (3 neue Tabellen, additiv)
+## Umsetzung
 
-`alix_sign_requests`
-- offer_number text, offer_payload jsonb (Snapshot), customer_id uuid (nullable, FK customers)
-- token text unique, status text (`erstellt|gesendet|geöffnet|unterschrieben|abgelehnt|abgelaufen`)
-- expires_at, opened_at, signed_at, created_by uuid, created_at, updated_at
+### 1. Migration (additiv, keine Breaking Changes)
+Neue Spalten auf `sales_leads`:
+- `lead_number text unique` (Default via Trigger)
+- `device_category text`
+- `additional_services jsonb` (Array of strings)
+- `customer_goal text`
+- `implementation_period text`
 
-`alix_sign_signatures`
-- sign_request_id uuid FK, offer_number text, customer_id uuid
-- signer_name, signer_email, signer_location
-- signature_image_path (Storage), ip_address inet, user_agent text
-- accepted_offer, accepted_terms, accepted_privacy, accepted_electronic_signature, accepted_credit_check (bool)
-- pdf_path text, pdf_hash text, created_at
+Plus:
+- Sequence `sales_lead_seq` + Trigger `assign_sales_lead_number()` setzt `LEAD-YYYY-000000` bei Insert, falls leer.
+- Trigger `sales_lead_after_insert()` → erzeugt automatisch einen `sales_followups`-Eintrag „Kontaktaufnahme erforderlich" mit Fälligkeit +1 Werktag, sofern Status = „Neu" / „Importiert - Angebot offen".
 
-`alix_sign_audit_log`
-- sign_request_id uuid FK, action text, details jsonb, ip_address inet, user_agent text, created_at
+Backfill: bestehende Zeilen erhalten Leadnummern in Reihenfolge `created_at`.
 
-**Storage-Bucket** `alix-sign` (privat) für Signaturbilder + signierte PDFs.
+### 2. Edge Function `zoho-forms-import` erweitern
+Mapping ergänzen für: `device_category`, `additional_services`, `customer_goal`, `implementation_period`, `lead_source` (z. B. „Telefonisch / WhatsApp", „Website", „API"). Bestehendes Schema bleibt rückwärtskompatibel.
 
-**RLS / GRANTs**
-- Interne Tabellen: SELECT/INSERT/UPDATE für Rollen `Super Admin`, `Admin`, `Order`, `Vertrieb`, `Finance`, `Geschäftsführung` (via `has_role()`). DELETE nur Super Admin.
-- Öffentlicher Zugriff ausschließlich über Edge Functions (Service Role) — keine `anon`-Policies auf den Tabellen.
+### 3. Neue Edge Function `sales-leads-import`
+Generisches JSON‑API (auth über Header `x-api-key` / `SALES_LEADS_API_KEY`) für Website/API/WhatsApp. Akzeptiert flache + verschachtelte Struktur aus dem Beispiel-JSON.
 
-## 2. Edge Functions (public, ohne JWT)
+### 4. UI
 
-- `alix-sign-create` — interne Auth (Bearer Session). Erzeugt Token (32B random), speichert Snapshot, schickt E-Mail an Kunde via vorhandener Lovable Email-Infrastruktur.
-- `alix-sign-get` — `GET ?token=…` → liefert nur das, was die öffentliche Seite braucht (Snapshot + Status). Setzt `opened_at` + Audit-Eintrag. Verweigert bei abgelaufen/unterschrieben.
-- `alix-sign-submit` — `POST { token, signer_*, accepted_*, signature_png_base64 }`. Validiert (Zod), Token prüft, Signaturbild → Storage, generiert signiertes PDF (Original-Angebot + Signaturseite mit Audit-Trail) via `jsPDF` in Deno, speichert PDF + SHA-256-Hash, schreibt `alix_sign_signatures` + Audit, setzt Request `unterschrieben`, sendet Bestätigungs-E-Mail an Kunde + interne Benachrichtigung an Sales/Finance (vorhandene `mail_internal_messages`).
+**`/verkauf/anfragen` Liste**
+- Spalte „Leadnummer" + „Geräteklasse" ergänzen, Filter „Quelle" um Telefon/WhatsApp/Website erweitern, Geräteklasse‑Filter, Bewertungs‑Filter, Zeitraum‑Filter.
 
-## 3. E-Mail-Vorlagen (Lovable Emails, additiv)
+**`/verkauf/anfragen/:id` Detail**
+- Block „Interesse" zeigt `device_category`, `additional_services`, `customer_goal`, `implementation_period`.
+- Button **„Angebot erstellen"**: schreibt erweiterten Handoff (inkl. Geräteklasse + Services + Ziel + Zeitraum), setzt `lead_status='Angebot erstellt'`, legt `sales_lead_history`-Eintrag an. Nach Rückkehr aus dem Angebotseditor wird via `converted_offer_id` verknüpft (Hook im `AngebotErstellen`-Save‑Pfad, der bei aktivem Handoff zurückschreibt).
 
-- `alix-sign-invite` — Einladung mit Signatur-Link (Wortlaut wie spezifiziert).
-- `alix-sign-confirmation` — Bestätigung nach Signatur, signiertes PDF als Download-Link.
-- Interne Benachrichtigung läuft über bestehende `mail_internal_messages`-Tabelle (keine neue Vorlage nötig).
+**`/verkauf/anfragen/neu` (NeueAnfrage Wizard)**
+- Felder Geräteklasse + Zusatzleistungen + Ziel + Zeitraum + Quelle ergänzen.
 
-## 4. Frontend
+**Neu: `/verkauf/anfragen/import`**
+- CSV‑Import (Drag&Drop, Spalten‑Mapping, Preview), nutzt bestehendes Schema. Manuelle Einzeleingabe ist über NeueAnfrage abgedeckt.
 
-**Öffentliche Route** `/sign/:token` (außerhalb Auth-Wrapper, ähnlich `/portal`):
-- Lädt via `alix-sign-get`. Zeigt Angebotsnummer, Kunde, Positionen, Summen, Zahlungsart.
-- Hinweise: AGB, Datenschutz, ggf. Bonitätsprüfung (nur bei Finanzierung/Mietkauf/Leasing/Alix Flex).
-- Eingabefelder: Vorname, Nachname, E-Mail, Ort (Datum automatisch).
-- 3 Pflicht-Checkboxen + 4. konditional.
-- Signatur-Canvas (Maus/Touch) mit „Leeren" und „Verbindlich unterschreiben".
-- Nach Erfolg: Dankeseite + Download-Link für signiertes PDF.
+**Neu: `/verkauf/anfragen/dashboard`**
+- KPIs: Neue Leads heute / Monat, Angebote erstellt, Abschlussquote (Gewonnen / Gesamt), Ø Bewertung, Top‑Geräteklasse, Aufschlüsselung nach Quelle.
 
-**Im internen Bereich** `src/pages/AngebotErstellen.tsx` und `src/pages/Angebote.tsx`:
-- Neuer Button **„Mit Alix Sign zur Unterschrift senden"** im Angebot-Formular (zusätzlich; bestehender „Signieren"-Button bleibt).
-- Neuer Tab/Drawer **„Alix Sign"** mit: Signaturstatus, Link erstellen, Link kopieren, erneut senden, Ablaufdatum, Audit-Log, signiertes PDF herunterladen.
-- Bei Status `unterschrieben` wird das Angebot in der Liste schreibgeschützt markiert (Bearbeiten-Button deaktiviert), Hinweis „durch Alix Sign verbindlich angenommen".
-- Status-Feld am Angebot (im `alix_angebote_v1`-Snapshot) wird parallel gepflegt — bestehende Status-Logik unangetastet, neue Werte werden additiv ergänzt.
+### 5. Menü `AuroraTopNav`
+Unter „SALES MANAGEMENT" → „Verkaufsanfragen" als Eltern‑Eintrag mit Untermenü:
+- Übersicht (`/verkauf/anfragen`)
+- Dashboard (`/verkauf/anfragen/dashboard`)
+- Import (`/verkauf/anfragen/import`)
+- Neue Anfrage (`/verkauf/anfragen/neu`)
+- Nachfassen (`/verkauf/nachfassen`)
 
-## 5. „In Auftrag umgewandelt"
-Da Aufträge aus Zoho stammen und nicht hier angelegt werden, wird nach Signatur **kein** automatischer Order-Datensatz erzeugt — stattdessen erscheint im internen Angebot ein Button „Als Auftrag übernehmen" (manueller Schritt, vorhandene Logik), und der Status wechselt erst dann auf „In Auftrag umgewandelt". So bleibt die Zoho-Quelle unangetastet.
+### 6. RBAC
+Bestehende Rollenliste bleibt: `Super Admin`, `Admin`, `Vertrieb`, `Vertriebsleitung`, `Order`, `SACHBEARBEITUNG`. Delete: nur Super Admin (Memory-Regel).
 
-## 6. Sicherheit
-- Token: 32 Byte CSPRNG, base64url, einmalig.
-- Ablauf: 14 Tage default (in `app_settings` konfigurierbar).
-- Nach Signatur: Request- und Signaturdaten read-only. Snapshot ist eingefroren.
-- Rate-Limit auf `alix-sign-submit` via vorhandener `check_rate_limit`.
-- IP + User-Agent aus Request-Headern.
-- Service-Role nur in Edge Functions, nie im Browser.
+## Out of scope (separater Schritt)
+- Tiefere Integration in Produktion/Finance/Auslieferung — Lead→Angebot→Auftrag→Produktion ist im AlixWork‑Flow bereits implementiert, sobald aus dem Angebot ein Auftrag entsteht.
+- Direkter WhatsApp‑Webhook (kann später als zweite Edge Function über die existierende WhatsApp‑Infrastruktur ergänzt werden).
 
----
-
-## Reihenfolge der Umsetzung
-1. Migration: Tabellen + Storage + RLS + GRANTs.
-2. Edge Functions `alix-sign-create`, `alix-sign-get`, `alix-sign-submit`.
-3. E-Mail-Vorlagen + Registry.
-4. Öffentliche Route `/sign/:token` + Komponenten (Canvas, Form).
-5. Interne UI: Button + Alix-Sign-Tab im Angebot.
-6. Sperrlogik in `Angebote.tsx` (Edit deaktiviert bei `unterschrieben`).
-
-Soll ich so vorgehen?
+## Hinweis zu Secrets
+Für die neue Import‑API wird ein neues Secret `SALES_LEADS_API_KEY` benötigt — frage ich nach Plan‑Freigabe an.

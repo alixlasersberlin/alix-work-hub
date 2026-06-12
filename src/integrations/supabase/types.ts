@@ -9695,6 +9695,7 @@ export type Database = {
       sales_leads: {
         Row: {
           additional_interests: Json | null
+          additional_services: Json | null
           ai_priority: string | null
           ai_summary: string | null
           archived: boolean
@@ -9709,14 +9710,18 @@ export type Database = {
           country: string | null
           country_code: string | null
           created_at: string
+          customer_goal: string | null
           delivery_preference: string | null
+          device_category: string | null
           email: string | null
           external_id: string | null
           first_name: string | null
           form_name: string | null
           id: string
+          implementation_period: string | null
           interests: Json | null
           last_name: string | null
+          lead_number: string | null
           lead_score: number | null
           lead_status: string
           message: string | null
@@ -9734,6 +9739,7 @@ export type Database = {
         }
         Insert: {
           additional_interests?: Json | null
+          additional_services?: Json | null
           ai_priority?: string | null
           ai_summary?: string | null
           archived?: boolean
@@ -9748,14 +9754,18 @@ export type Database = {
           country?: string | null
           country_code?: string | null
           created_at?: string
+          customer_goal?: string | null
           delivery_preference?: string | null
+          device_category?: string | null
           email?: string | null
           external_id?: string | null
           first_name?: string | null
           form_name?: string | null
           id?: string
+          implementation_period?: string | null
           interests?: Json | null
           last_name?: string | null
+          lead_number?: string | null
           lead_score?: number | null
           lead_status?: string
           message?: string | null
@@ -9773,6 +9783,7 @@ export type Database = {
         }
         Update: {
           additional_interests?: Json | null
+          additional_services?: Json | null
           ai_priority?: string | null
           ai_summary?: string | null
           archived?: boolean
@@ -9787,14 +9798,18 @@ export type Database = {
           country?: string | null
           country_code?: string | null
           created_at?: string
+          customer_goal?: string | null
           delivery_preference?: string | null
+          device_category?: string | null
           email?: string | null
           external_id?: string | null
           first_name?: string | null
           form_name?: string | null
           id?: string
+          implementation_period?: string | null
           interests?: Json | null
           last_name?: string | null
+          lead_number?: string | null
           lead_score?: number | null
           lead_status?: string
           message?: string | null
