@@ -273,12 +273,23 @@ export default function SalesLeadsList() {
                     </Select>
                   </td>
                   <td className="p-3 text-right">
-                    <Link
-                      to={`/verkauf/anfragen/${r.id}`}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded border border-border text-xs hover:bg-muted/40"
-                    >
-                      <Pencil className="h-3.5 w-3.5" />Bearbeiten
-                    </Link>
+                    <div className="inline-flex items-center gap-1.5">
+                      <Link
+                        to={`/verkauf/anfragen/${r.id}`}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded border border-border text-xs hover:bg-muted/40"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />Bearbeiten
+                      </Link>
+                      {canDelete && (
+                        <button
+                          type="button"
+                          onClick={() => setToDelete(r)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded border border-destructive/40 text-destructive text-xs hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />Löschen
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -286,6 +297,30 @@ export default function SalesLeadsList() {
           </table>
         </div>
       </Card>
+
+      <AlertDialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Lead löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {toDelete && (
+                <>
+                  <span className="font-mono">{toDelete.lead_number || toDelete.id.slice(0, 8)}</span>
+                  {' – '}
+                  {toDelete.company || [toDelete.first_name, toDelete.last_name].filter(Boolean).join(' ') || '—'}
+                  <br />Dieser Vorgang kann nicht rückgängig gemacht werden.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {deleting ? 'Lösche …' : 'Endgültig löschen'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
