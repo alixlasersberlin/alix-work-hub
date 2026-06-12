@@ -84,6 +84,44 @@ export default function AngebotErstellen() {
       setItems(i ?? []);
       setLoading(false);
 
+      // Edit-Modus: Angebot aus localStorage laden, wenn ?edit=<offerNumber>
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const editKey = params.get('edit');
+        if (editKey) {
+          const rawList = localStorage.getItem('alix_angebote_v1');
+          const list = rawList ? JSON.parse(rawList) : [];
+          const snap = list.find((o: any) => o.offerNumber === editKey);
+          if (snap) {
+            setOfferNumber(snap.offerNumber);
+            if (snap.offerDate) setOfferDate(snap.offerDate);
+            if (snap.validUntil) setValidUntil(snap.validUntil);
+            if (snap.notes) setNotes(snap.notes);
+            if (snap.customer?.id) setCustomerId(snap.customer.id);
+            if (Array.isArray(snap.lines) && snap.lines.length > 0) {
+              setLines(snap.lines.map((l: any) => ({
+                id: l.id || crypto.randomUUID(),
+                item_id: l.item_id,
+                name: l.name || '',
+                description: l.description || '',
+                sku: l.sku || '',
+                quantity: Number(l.quantity) || 1,
+                rate: Number(l.rate) || 0,
+                tax_percentage: Number(l.tax_percentage) || 0,
+              })));
+            }
+            if (snap.payment) {
+              if (snap.payment.type) setPayType(snap.payment.type);
+              if (snap.payment.price) setPayPrice(String(snap.payment.price));
+              if (snap.payment.down) setPayDown(String(snap.payment.down));
+              if (snap.payment.term) setPayTerm(Number(snap.payment.term));
+            }
+            toast.info(`Angebot ${snap.offerNumber} geladen – Änderungen mit "Speichern" übernehmen.`);
+            return;
+          }
+        }
+      } catch { /* ignore */ }
+
       // Handoff aus Sales-Lead (SALES MANAGEMENT → Anfragen → "Angebot erstellen")
       try {
         const raw = sessionStorage.getItem('sales_lead_handoff_v1');
@@ -105,6 +143,7 @@ export default function AngebotErstellen() {
     }
     load();
   }, []);
+
 
   const filteredCustomers = useMemo(() => {
     const q = customerSearch.toLowerCase();
