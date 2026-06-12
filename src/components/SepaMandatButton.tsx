@@ -215,10 +215,15 @@ export default function SepaMandatButton({ order }: Props) {
   }
 
   function handleClick() {
+    console.log('[SepaMandat] click');
     try {
       generateSepaMandat();
       toast.success('SEPA-Mandat erstellt');
     } catch (e: any) {
+      console.error('[SepaMandat]', e);
+      toast.error('Fehler beim Erstellen des SEPA-Mandats: ' + (e?.message || e));
+    }
+  }
       console.error('[SepaMandat]', e);
       toast.error('Fehler beim Erstellen des SEPA-Mandats: ' + (e?.message || e));
     }
