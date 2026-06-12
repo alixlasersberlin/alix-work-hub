@@ -78,11 +78,14 @@ export default function Angebote() {
                   <TableHead>Kunde</TableHead>
                   <TableHead>E-Mail</TableHead>
                   <TableHead className="text-right">Gesamt</TableHead>
-                  <TableHead className="w-12"></TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="w-28 text-right">Aktionen</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {offers.map(o => (
+                {offers.map(o => {
+                  const isOrder = o.status === 'order';
+                  return (
                   <TableRow key={o.offerNumber}>
                     <TableCell className="font-medium">{o.offerNumber}</TableCell>
                     <TableCell>{o.offerDate ? new Date(o.offerDate).toLocaleDateString('de-DE') : '—'}</TableCell>
@@ -90,12 +93,26 @@ export default function Angebote() {
                     <TableCell className="text-muted-foreground">{o.customer?.email || '—'}</TableCell>
                     <TableCell className="text-right font-semibold">{fmtMoney(o.totals?.gross || 0)}</TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="icon" onClick={() => remove(o.offerNumber)}>
+                      <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${isOrder ? 'bg-primary/10 text-primary' : 'bg-secondary text-muted-foreground'}`}>
+                        {isOrder ? 'Als Auftrag übernommen' : 'Entwurf'}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {!isOrder && (
+                        <Button variant="ghost" size="icon" asChild title="Bearbeiten">
+                          <Link to={`/verkauf/angebot/neu?edit=${encodeURIComponent(o.offerNumber)}`}>
+                            <Pencil className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                      )}
+                      <Button variant="ghost" size="icon" onClick={() => remove(o.offerNumber)} title="Löschen">
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
+
               </TableBody>
             </Table>
           )}
