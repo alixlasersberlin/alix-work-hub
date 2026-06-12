@@ -224,10 +224,6 @@ export default function SepaMandatButton({ order }: Props) {
       toast.error('Fehler beim Erstellen des SEPA-Mandats: ' + (e?.message || e));
     }
   }
-      console.error('[SepaMandat]', e);
-      toast.error('Fehler beim Erstellen des SEPA-Mandats: ' + (e?.message || e));
-    }
-  }
 
   return (
     <Button variant="outline" size="sm" onClick={handleClick} className="gap-1.5">
