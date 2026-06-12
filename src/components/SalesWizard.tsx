@@ -11,6 +11,7 @@ import { ArrowLeft, ArrowRight, Check, Loader2, Send, Star, Sparkles } from 'luc
 import { cn } from '@/lib/utils';
 import Turnstile from '@/components/Turnstile';
 import { supabase } from '@/integrations/supabase/client';
+import bgAsset from '@/assets/wizard/alix-lasers-bg.jpg.asset.json';
 
 import imgHair from '@/assets/wizard/haarentfernung.jpg';
 import imgFace from '@/assets/wizard/gesicht.jpg';
@@ -154,11 +155,17 @@ export default function SalesWizard({ publicMode = false }: Props) {
   }
 
   const shellWrap = publicMode
-    ? 'min-h-screen w-full bg-gradient-to-br from-[#04132c] via-[#072049] to-[#031024] text-white relative overflow-hidden'
+    ? 'min-h-screen w-full text-white relative overflow-hidden bg-cover bg-center bg-no-repeat bg-fixed'
     : 'w-full';
 
   return (
-    <div className={shellWrap}>
+    <div
+      className={shellWrap}
+      style={publicMode ? { backgroundImage: `url(${bgAsset.url})` } : undefined}
+    >
+      {publicMode && (
+        <div aria-hidden className="pointer-events-none absolute inset-0 bg-black/55" />
+      )}
       {publicMode && (
         <>
           <div
