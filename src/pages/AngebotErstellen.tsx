@@ -465,7 +465,7 @@ export default function AngebotErstellen() {
         fmtMoney(l.quantity * l.rate),
       ]),
       styles: { fontSize: 9, cellPadding: 2 },
-      headStyles: { fillColor: [20, 60, 110], textColor: 255 },
+      headStyles: { fillColor: [5, 137, 160], textColor: 255 },
       alternateRowStyles: { fillColor: [245, 249, 255] },
       columnStyles: {
         0: { cellWidth: 10, halign: 'center' },
