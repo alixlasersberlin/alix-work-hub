@@ -12,6 +12,8 @@ import { cn } from '@/lib/utils';
 import Turnstile from '@/components/Turnstile';
 import { supabase } from '@/integrations/supabase/client';
 import bgAsset from '@/assets/wizard/alix-lasers-bg.jpg.asset.json';
+import WizardLanguageSwitcher from '@/components/WizardLanguageSwitcher';
+import { useWizardLang } from '@/i18n/wizard';
 
 import imgHair from '@/assets/wizard/haarentfernung.jpg';
 import imgFace from '@/assets/wizard/gesicht.jpg';
