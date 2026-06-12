@@ -29,7 +29,7 @@ export default function AlixSignPublic() {
   const [chkTerms, setChkTerms] = useState(false);
   const [chkPrivacy, setChkPrivacy] = useState(false);
   const [chkSign, setChkSign] = useState(false);
-  const [chkCredit, setChkCredit] = useState(false);
+  const [chkCredit, setChkCredit] = useState(true);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
