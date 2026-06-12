@@ -114,19 +114,35 @@ export default function SalesLeadDetail() {
   async function createOffer() {
     let cid = lead.converted_customer_id as string | null;
     if (!cid) cid = await findOrLinkCustomer();
+    const services = Array.isArray(lead.additional_services)
+      ? lead.additional_services
+      : (Array.isArray(lead.additional_interests) ? lead.additional_interests : []);
     const handoff = {
       customer_id: cid,
       customer_email: lead.email,
       customer_company: lead.company,
       notes: [
+        lead.lead_number && `Lead: ${lead.lead_number}`,
+        lead.device_category && `Geräteklasse: ${lead.device_category}`,
+        services.length > 0 && `Zusatzleistungen: ${services.join(', ')}`,
+        lead.customer_goal && `Kundenziel: ${lead.customer_goal}`,
+        lead.implementation_period && `Umsetzungszeitraum: ${lead.implementation_period}`,
         lead.requested_products && `Produktinteresse: ${lead.requested_products}`,
         lead.message,
+        lead.notes,
       ].filter(Boolean).join('\n\n'),
       source: 'sales_lead',
       lead_id: lead.id,
     };
     sessionStorage.setItem('sales_lead_handoff_v1', JSON.stringify(handoff));
     await updateLead({ lead_status: 'Angebot erstellt' });
+    try {
+      await supabase.from('sales_lead_history').insert({
+        lead_id: lead.id,
+        action: 'offer_started',
+        note: 'Angebot-Erstellung gestartet via Detail',
+      } as any);
+    } catch { /* ignore */ }
     nav('/verkauf/angebot/neu');
   }
 
