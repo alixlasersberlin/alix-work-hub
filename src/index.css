@@ -125,9 +125,14 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', system-ui, sans-serif;
-    /* Vermeidet horizontales Scrollen auf Mobile */
     overflow-x: hidden;
     overscroll-behavior-y: none;
+    background:
+      radial-gradient(1200px 600px at 10% -10%, hsl(0 0% 100%) 0%, transparent 60%),
+      radial-gradient(900px 500px at 110% 10%, hsl(220 20% 99%) 0%, transparent 55%),
+      hsl(var(--background));
+    background-attachment: fixed;
+    color: hsl(222 14% 14%);
   }
 
   h1, h2, h3, h4, h5, h6 {
