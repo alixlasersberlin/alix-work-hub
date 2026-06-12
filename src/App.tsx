@@ -769,7 +769,7 @@ const App = () => (
                   <AppRoutes />
                   <AuroraSpotlight />
                   <LeihgeraetReminder />
-                  <TemplateSwitcher />
+                  {/* TemplateSwitcher (Standard / ALIXWORK NEO) deaktiviert */}
                 </MaintenanceGate>
               </TenantProvider>
             </AuthProvider>
