@@ -270,8 +270,8 @@ export default function SalesWizard({ publicMode = false }: Props) {
                       className={cn(
                         'w-full flex items-center gap-3 rounded-lg border p-3 text-left transition',
                         active
-                          ? 'border-blue-400 bg-blue-500/10'
-                          : publicMode ? 'border-white/15 hover:border-white/30' : 'border-border hover:border-primary/40',
+                          ? 'border-slate-900 bg-blue-500/10'
+                          : 'border-slate-900 hover:border-slate-700',
                       )}
                     >
                       <div className={cn(
@@ -296,8 +296,8 @@ export default function SalesWizard({ publicMode = false }: Props) {
                   <label key={d} className={cn(
                     'flex items-center gap-3 rounded-lg border p-3 cursor-pointer',
                     data.delivery_preference === d
-                      ? 'border-blue-400 bg-blue-500/10'
-                      : publicMode ? 'border-white/15' : 'border-border',
+                      ? 'border-slate-900 bg-blue-500/10'
+                      : 'border-slate-900',
                   )}>
                     <RadioGroupItem value={d} />
                     <span className="text-sm">{d}</span>
