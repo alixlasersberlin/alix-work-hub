@@ -1378,16 +1378,6 @@ export default function AppLayout() {
             </Button>
             <DesignVariantSwitcher inline />
           </div>
-          {!collapsed && (
-            <div className="px-2 pb-2">
-              <ExperienceModeSwitcher />
-            </div>
-          )}
-          {collapsed && (
-            <div className="px-2 pb-2">
-              <ExperienceModeSwitcher collapsed />
-            </div>
-          )}
         </div>
         {/* Resize-Handle (nur Desktop, wenn nicht eingeklappt) */}
         {!collapsed && (
@@ -1472,6 +1462,9 @@ export default function AppLayout() {
       <WelcomeDialog />
       <SalesLeadAssignmentOverlay />
       {/* Begrüßungs-Overlays für Natalia & Lars deaktiviert */}
+      <div className="fixed bottom-4 right-4 z-[150] w-56 print:hidden pointer-events-auto">
+        <ExperienceModeSwitcher />
+      </div>
     </div>
   );
 }
