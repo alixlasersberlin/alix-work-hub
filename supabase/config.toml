@@ -128,3 +128,7 @@ verify_jwt = true
 
 [functions.repair-quote-decision]
 verify_jwt = false
+
+[functions.zoho-forms-import]
+verify_jwt = false
+
