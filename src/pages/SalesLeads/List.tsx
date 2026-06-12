@@ -252,6 +252,14 @@ export default function SalesLeadsList() {
                       </SelectContent>
                     </Select>
                   </td>
+                  <td className="p-3 text-right">
+                    <Link
+                      to={`/verkauf/anfragen/${r.id}`}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded border border-border text-xs hover:bg-muted/40"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />Bearbeiten
+                    </Link>
+                  </td>
                 </tr>
               ))}
             </tbody>
