@@ -1,6 +1,7 @@
-import { Sparkles, Check, Download, Layers, Wand2, Rocket } from 'lucide-react';
+import { Sparkles, Check, Download, Layers, Wand2, Rocket, Monitor, Palette } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useExperienceMode, type ExperienceMode } from '@/hooks/useExperienceMode';
+import { useDesignVariant, type DesignVariant } from '@/hooks/useDesignVariant';
 import { detectUiLang, t } from '@/i18n/ui';
 import { cn } from '@/lib/utils';
 
