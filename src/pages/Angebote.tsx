@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FileText, FilePlus, Trash2 } from 'lucide-react';
+import { FileText, FilePlus, Trash2, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 
 const KEY = 'alix_angebote_v1';
