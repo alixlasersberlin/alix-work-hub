@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/card';
 import { ArrowLeft, ArrowRight, Check, Loader2, Send, Star, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Turnstile from '@/components/Turnstile';
+import { supabase } from '@/integrations/supabase/client';
 
 import imgHair from '@/assets/wizard/haarentfernung.jpg';
 import imgFace from '@/assets/wizard/gesicht.jpg';
