@@ -8,9 +8,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { notifyNewRepairOrder } from '@/lib/repair/notify';
+import { notifyNewRepairOrder, sendRepairConfirmationToCustomer } from '@/lib/repair/notify';
+import { renderRepairWorkOrderPdf } from '@/lib/repair/work-order-pdf';
 import { useToast } from '@/hooks/use-toast';
-import { Search } from 'lucide-react';
+import { Search, FileDown, Printer } from 'lucide-react';
 
 type OrderSearchRow = {
   id: string;
