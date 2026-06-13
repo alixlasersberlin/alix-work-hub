@@ -172,7 +172,35 @@ Deno.serve(async (req) => {
   })
 
   // Send customer confirmation email (no auth context — send directly)
+  // Upload signed PDF to private storage bucket and create a 90-day signed URL
+  let downloadUrl: string | undefined
+  try {
+    // ensure bucket exists (idempotent)
+    try {
+      await admin.storage.createBucket('alix-sign-pdfs', { public: false })
+    } catch { /* already exists */ }
+    const objectPath = `${r.id}/${sig.id}.pdf`
+    const { error: upErr } = await admin.storage
+      .from('alix-sign-pdfs')
+      .upload(objectPath, pdfBytes, { contentType: 'application/pdf', upsert: true })
+    if (upErr) throw upErr
+    const { data: signed, error: signErr } = await admin.storage
+      .from('alix-sign-pdfs')
+      .createSignedUrl(objectPath, 60 * 60 * 24 * 90)
+    if (signErr) throw signErr
+    downloadUrl = signed?.signedUrl
+  } catch (e: any) {
+    console.error('alix-sign-submit storage upload failed', e?.message)
+    await admin.from('alix_sign_audit_log').insert({
+      sign_request_id: r.id,
+      action: 'pdf_upload_failed',
+      details: { error: e?.message ?? String(e), signature_id: sig.id },
+    })
+  }
+
   const apiKey = Deno.env.get('LOVABLE_API_KEY')
+  let emailStatus: 'sent' | 'failed' | 'skipped' = 'skipped'
+  let emailError: string | undefined
   if (apiKey) {
     try {
       const tpl = TEMPLATES['alix-sign-confirmation']
@@ -183,6 +211,8 @@ Deno.serve(async (req) => {
         signer_name: signerName,
         signed_at: new Date(now).toLocaleString('de-DE'),
         total_amount: r.offer_payload?.totals?.gross ? fmt(Number(r.offer_payload.totals.gross)) : undefined,
+        download_url: downloadUrl,
+        pdf_hash: pdfHash,
       }
       const html = await renderAsync(React.createElement(tpl.component, data))
       const text = await renderAsync(React.createElement(tpl.component, data), { plainText: true })
@@ -199,10 +229,27 @@ Deno.serve(async (req) => {
         idempotency_key: `alix-sign-conf-${sig.id}`,
         unsubscribe_token: unsub,
       }, { apiKey })
+      emailStatus = 'sent'
+      console.log('alix-sign-submit confirmation email sent to', signerEmail)
     } catch (e: any) {
-      console.error('alix-sign-submit confirmation email failed', e?.message)
+      emailStatus = 'failed'
+      emailError = e?.message ?? String(e)
+      console.error('alix-sign-submit confirmation email failed', emailError)
     }
+  } else {
+    emailError = 'LOVABLE_API_KEY missing'
+    console.error(emailError)
   }
+  await admin.from('alix_sign_audit_log').insert({
+    sign_request_id: r.id,
+    action: `confirmation_email_${emailStatus}`,
+    details: {
+      signature_id: sig.id,
+      recipient: signerEmail,
+      error: emailError,
+      download_url_present: !!downloadUrl,
+    },
+  })
 
   // Internal notification via mail_internal_messages
   try {
