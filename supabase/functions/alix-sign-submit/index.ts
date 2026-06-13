@@ -185,7 +185,7 @@ Deno.serve(async (req) => {
       .from('alix-sign-pdfs')
       .upload(objectPath, pdfBytes, { contentType: 'application/pdf', upsert: true })
     if (upErr) throw upErr
-    downloadUrl = `${APP_BASE_URL}/sign/pdf/${sig.id}`
+    downloadUrl = `${APP_BASE_URL}/sign/pdf/${sig.id}?token=${encodeURIComponent(token)}`
   } catch (e: any) {
     console.error('alix-sign-submit storage upload failed', e?.message)
     await admin.from('alix_sign_audit_log').insert({

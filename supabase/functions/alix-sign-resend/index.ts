@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
         .from('alix-sign-pdfs')
         .upload(objectPath, pdfBytes, { contentType: 'application/pdf', upsert: true })
       if (upErr) throw upErr
-      downloadUrl = `${APP_BASE_URL}/sign/pdf/${sig.id}`
+      downloadUrl = `${APP_BASE_URL}/sign/pdf/${sig.id}?token=${encodeURIComponent(r.id)}`
     } catch (e: any) {
       console.error('upload failed', e?.message)
     }
