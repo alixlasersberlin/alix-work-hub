@@ -46,7 +46,7 @@ function fmtBool(v: any): string {
   return '–';
 }
 
-async function buildPdf({ repair, parts = [] }: RenderInput): Promise<jsPDF> {
+async function buildPdf({ repair, parts = [], workOrders = [] }: RenderInput): Promise<jsPDF> {
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
   const W = doc.internal.pageSize.getWidth();
   const M = 40;
