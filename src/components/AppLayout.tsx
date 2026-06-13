@@ -250,16 +250,6 @@ const navItems: NavItem[] = [
     ],
   },
       {
-        path: '/reparatur-service', label: 'SERVICE', icon: Wrench, roles: ['Admin', 'Super Admin', 'Reparaturannahme', 'Technik', 'Service', 'Österreich', 'SACHBEARBEITUNG'],
-        children: [
-          { path: '/reparatur/neu', label: 'Reparaturannahme', icon: FilePlus, roles: ['Admin', 'Super Admin', 'Reparaturannahme', 'Technik', 'Service', 'Österreich', 'SACHBEARBEITUNG'] },
-          { path: '/reparatur/werkstattannahme', label: 'Werkstatt', icon: PackageCheck, roles: ['Admin', 'Super Admin', 'Reparaturannahme', 'Technik', 'Service', 'Österreich', 'SACHBEARBEITUNG'] },
-          { path: '/reparatur/kostenvoranschlaege', label: 'Kostenvoranschläge', icon: Receipt, roles: ['Admin', 'Super Admin', 'Reparaturannahme', 'Technik', 'Service', 'Österreich', 'SACHBEARBEITUNG'] },
-          { path: '/garantiecenter', label: 'Garantieprüfung', icon: ShieldCheck, roles: ['Admin', 'Super Admin', 'Reparaturannahme', 'Technik', 'Service', 'Österreich', 'SACHBEARBEITUNG'] },
-          { path: '/reparatur/rueckversand', label: 'Rückversand', icon: PackageCheck, roles: ['Admin', 'Super Admin', 'Reparaturannahme', 'Technik', 'Service', 'Österreich', 'SACHBEARBEITUNG'] },
-        ],
-      },
-      {
         path: '/reparatur', label: 'REPARATURANNAHME', icon: Wrench, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'Finance', 'QM', 'Österreich', 'Reparaturannahme', 'SACHBEARBEITUNG'],
         children: [
           { path: '/reparatur/neu', label: 'Neue Reparatur anlegen', icon: FilePlus, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Order', 'Finance', 'QM', 'Reparaturannahme', 'SACHBEARBEITUNG'] },
@@ -301,6 +291,16 @@ const navItems: NavItem[] = [
     path: '/warehouse-logistics', label: 'WAREHOUSE & LOGISTICS', icon: Warehouse,
     roles: null,
     children: [
+      {
+        path: '/reparatur-service', label: 'SERVICE', icon: Wrench, roles: ['Admin', 'Super Admin', 'Reparaturannahme', 'Technik', 'Service', 'Österreich', 'SACHBEARBEITUNG'],
+        children: [
+          { path: '/reparatur/neu', label: 'Reparaturannahme', icon: FilePlus, roles: ['Admin', 'Super Admin', 'Reparaturannahme', 'Technik', 'Service', 'Österreich', 'SACHBEARBEITUNG'] },
+          { path: '/reparatur/werkstattannahme', label: 'Werkstatt', icon: PackageCheck, roles: ['Admin', 'Super Admin', 'Reparaturannahme', 'Technik', 'Service', 'Österreich', 'SACHBEARBEITUNG'] },
+          { path: '/reparatur/kostenvoranschlaege', label: 'Kostenvoranschläge', icon: Receipt, roles: ['Admin', 'Super Admin', 'Reparaturannahme', 'Technik', 'Service', 'Österreich', 'SACHBEARBEITUNG'] },
+          { path: '/garantiecenter', label: 'Garantieprüfung', icon: ShieldCheck, roles: ['Admin', 'Super Admin', 'Reparaturannahme', 'Technik', 'Service', 'Österreich', 'SACHBEARBEITUNG'] },
+          { path: '/reparatur/rueckversand', label: 'Rückversand', icon: PackageCheck, roles: ['Admin', 'Super Admin', 'Reparaturannahme', 'Technik', 'Service', 'Österreich', 'SACHBEARBEITUNG'] },
+        ],
+      },
       {
         path: '/lagerverwaltung', label: 'LAGERVERWALTUNG', icon: Warehouse, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'SACHBEARBEITUNG'],
         children: [
