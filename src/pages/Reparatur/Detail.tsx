@@ -96,14 +96,20 @@ export default function ReparaturDetail() {
           onClick={async () => {
             try {
               const blob = repairReportHtmlBlob({ repair, parts, history });
+              const fileName = `Reparaturbericht-${repair.repair_number ?? repair.id}.pdf`;
               const path = `${repair.id}/reports/repair-report-${Date.now()}.pdf`;
               const { error: upErr } = await supabase.storage
                 .from('repair-files')
                 .upload(path, blob, { contentType: 'application/pdf', upsert: true });
               if (upErr) throw upErr;
               await sbRepair.from('repair_orders').update({ report_pdf_path: path }).eq('id', repair.id);
-              toast({ title: 'Reparaturbericht erzeugt', description: 'PDF wurde gespeichert.' });
-              printRepairReport({ repair, parts, history });
+              // Direct download in browser
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url; a.download = fileName;
+              document.body.appendChild(a); a.click(); a.remove();
+              setTimeout(() => URL.revokeObjectURL(url), 2000);
+              toast({ title: 'Reparaturbericht erzeugt', description: 'PDF wurde gespeichert und heruntergeladen.' });
               load();
             } catch (e: any) {
               toast({ title: 'Fehler', description: e.message, variant: 'destructive' });
@@ -113,16 +119,37 @@ export default function ReparaturDetail() {
           <FileText className="w-4 h-4 mr-1" /> Reparaturbericht erzeugen
         </Button>
         {repair.report_pdf_path && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={async () => {
-              const { data } = await supabase.storage.from('repair-files').createSignedUrl(repair.report_pdf_path, 600);
-              if (data?.signedUrl) window.open(data.signedUrl, '_blank');
-            }}
-          >
-            <FileDown className="w-4 h-4 mr-1" /> Bericht öffnen
-          </Button>
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                const { data } = await supabase.storage.from('repair-files').createSignedUrl(repair.report_pdf_path, 600);
+                if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+              }}
+            >
+              <FileDown className="w-4 h-4 mr-1" /> Bericht öffnen
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                const fileName = `Reparaturbericht-${repair.repair_number ?? repair.id}.pdf`;
+                const { data, error } = await supabase.storage
+                  .from('repair-files')
+                  .createSignedUrl(repair.report_pdf_path, 600, { download: fileName });
+                if (error || !data?.signedUrl) {
+                  toast({ title: 'Fehler', description: error?.message ?? 'Download fehlgeschlagen', variant: 'destructive' });
+                  return;
+                }
+                const a = document.createElement('a');
+                a.href = data.signedUrl; a.download = fileName;
+                document.body.appendChild(a); a.click(); a.remove();
+              }}
+            >
+              <FileDown className="w-4 h-4 mr-1" /> Bericht herunterladen
+            </Button>
+          </>
         )}
         <AiAnalysisPanel sourceKind="repair" recordId={repair.id} />
         <div className="ml-auto flex items-center gap-2">
