@@ -61,19 +61,33 @@ export default function ReparaturNew() {
   const upd = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
 
 
-  const runSearch = async () => {
-    if (!searchQuery.trim()) return;
+  const runSearch = async (rawQ?: string) => {
+    const q = (rawQ ?? searchQuery).trim();
+    if (q.length < 2) {
+      setSearchResults([]);
+      return;
+    }
     setSearching(true);
-    const q = searchQuery.trim();
+    // Split into tokens so "Mustermann GmbH" also matches "GmbH Mustermann"
+    const tokens = q.split(/\s+/).filter(Boolean).slice(0, 5);
+    const esc = (s: string) => s.replace(/[%,()]/g, ' ');
+
+    const orderOr = tokens
+      .map((t) => `order_number.ilike.%${esc(t)}%,external_order_id.ilike.%${esc(t)}%`)
+      .join(',');
     const { data: byOrder } = await supabase
       .from('orders')
       .select('id,order_number,customer_id,customers:customer_id(company_name,contact_name,email,phone)')
-      .or(`order_number.ilike.%${q}%,external_order_id.ilike.%${q}%`)
+      .or(orderOr)
       .limit(20);
+
+    const custOr = tokens
+      .map((t) => `company_name.ilike.%${esc(t)}%,contact_name.ilike.%${esc(t)}%,email.ilike.%${esc(t)}%,phone.ilike.%${esc(t)}%`)
+      .join(',');
     const { data: byCust } = await supabase
       .from('customers')
       .select('id,company_name,contact_name,email,phone')
-      .or(`company_name.ilike.%${q}%,contact_name.ilike.%${q}%,email.ilike.%${q}%,phone.ilike.%${q}%`)
+      .or(custOr)
       .limit(20);
     let custOrders: any[] = [];
     if (byCust && byCust.length > 0) {
@@ -90,6 +104,14 @@ export default function ReparaturNew() {
     setSearchResults(Array.from(map.values()));
     setSearching(false);
   };
+
+  // Live search-as-you-type (debounced)
+  useEffect(() => {
+    const t = setTimeout(() => { runSearch(searchQuery); }, 300);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery]);
+
 
   const pickOrder = (o: OrderSearchRow) => {
     setSelectedOrder(o);
