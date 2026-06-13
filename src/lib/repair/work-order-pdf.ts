@@ -1,99 +1,257 @@
 /**
- * Repair Work Order PDF – HTML-basiert, druckt via window.print()
- * oder lädt als HTML-Datei.
+ * Repair Work Order PDF (Arbeitsauftrag)
+ * – jsPDF basiert, mit Alix Lasers Logo oben rechts
+ * – Ausführlicher Arbeitsbericht mit allen relevanten Feldern
+ * – Liefert Blob, kann gedruckt, heruntergeladen oder per Mail versendet werden
  */
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import logoAsset from '@/assets/alix-lasers-logo-gold.png.asset.json';
+
 type RenderInput = {
   repair: any;
-  parts: any[];
+  parts?: any[];
 };
 
-function escape(s: any): string {
-  if (s == null) return '';
-  return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
-}
+const LOGO_URL = logoAsset.url;
 
-function buildHtml({ repair, parts }: RenderInput): string {
-  const today = new Date().toLocaleDateString('de-DE');
-  const device = [repair.device_brand, repair.device_model].filter(Boolean).join(' ') || repair.device_category || '';
-  return `<!doctype html><html><head><meta charset="utf-8"><title>Arbeitsauftrag ${escape(repair.repair_number)}</title>
-  <style>
-    body { font-family: -apple-system, system-ui, sans-serif; color: #111; padding: 24px; font-size: 12px; }
-    h1 { font-size: 18px; margin: 0 0 4px; }
-    h2 { font-size: 13px; margin: 16px 0 6px; padding-bottom: 4px; border-bottom: 1px solid #999; }
-    table { width: 100%; border-collapse: collapse; margin-top: 4px; }
-    td, th { padding: 4px 6px; border: 1px solid #ddd; text-align: left; vertical-align: top; }
-    th { background: #f3f3f3; }
-    .row { display: flex; gap: 16px; }
-    .col { flex: 1; }
-    .label { color: #666; font-size: 10px; text-transform: uppercase; }
-    .val { font-weight: 600; }
-    .box { border: 1px solid #ccc; padding: 8px; min-height: 40px; margin-top: 2px; }
-    .sig { margin-top: 32px; border-top: 1px solid #000; padding-top: 4px; }
-    @media print { body { padding: 12mm; } }
-  </style></head><body>
-  <div class="row">
-    <div class="col">
-      <h1>Technik-Arbeitsauftrag</h1>
-      <div>Reparaturnummer: <span class="val">${escape(repair.repair_number)}</span></div>
-      ${repair.order_number ? `<div>Zoho-Auftrag: ${escape(repair.order_number)}</div>` : ''}
-      <div>Datum: ${today}</div>
-    </div>
-    <div class="col" style="text-align:right">
-      <div class="label">Status</div>
-      <div class="val">${escape(repair.repair_status)}</div>
-    </div>
-  </div>
-
-  <h2>Kunde</h2>
-  <table>
-    <tr><th>Kunde / Firma</th><td>${escape(repair.customer_name)}</td></tr>
-    <tr><th>E-Mail</th><td>${escape(repair.customer_email)}</td></tr>
-    <tr><th>Telefon</th><td>${escape(repair.customer_phone)}</td></tr>
-  </table>
-
-  <h2>Gerät</h2>
-  <table>
-    <tr><th>Kategorie</th><td>${escape(repair.device_category)}</td><th>Marke / Modell</th><td>${escape(device)}</td></tr>
-    <tr><th>Seriennummer</th><td>${escape(repair.device_serial_number)}</td><th>Zubehör</th><td>${escape(repair.accessories)}</td></tr>
-  </table>
-
-  <h2>Fehlerbeschreibung Kunde</h2>
-  <div class="box">${escape(repair.issue_description)}</div>
-
-  <h2>Diagnose</h2>
-  <div class="box">${escape(repair.diagnosis)}</div>
-
-  <h2>Ersatzteile</h2>
-  <table><thead><tr><th>Bezeichnung</th><th>SKU</th><th>Menge</th><th>Lieferant</th><th>Status</th></tr></thead>
-  <tbody>${parts.length ? parts.map((p) => `<tr><td>${escape(p.item_name)}</td><td>${escape(p.sku)}</td><td>${escape(p.quantity)}</td><td>${escape(p.supplier_name)}</td><td>${escape(p.order_status)}</td></tr>`).join('') : '<tr><td colspan="5" style="text-align:center;color:#999">–</td></tr>'}</tbody></table>
-
-  <div class="row" style="margin-top:8px">
-    <div class="col"><span class="label">Kostenvoranschlag:</span> <b>${escape(repair.estimated_cost)} ${escape(repair.currency || 'EUR')}</b></div>
-    <div class="col"><span class="label">Tatsächliche Kosten:</span> <b>${escape(repair.actual_cost)} ${escape(repair.currency || 'EUR')}</b></div>
-  </div>
-
-  <h2>Interne Notizen</h2><div class="box">${escape(repair.internal_notes)}</div>
-
-  <div class="sig">Unterschrift Techniker: _______________________________ &nbsp; Datum: _____________</div>
-  </body></html>`;
-}
-
-export function renderRepairWorkOrderPdf(input: RenderInput, action: 'print' | 'download') {
-  const html = buildHtml(input);
-  if (action === 'print') {
-    const w = window.open('', '_blank', 'width=900,height=1000');
-    if (!w) return;
-    w.document.write(html);
-    w.document.close();
-    w.focus();
-    setTimeout(() => w.print(), 300);
-  } else {
-    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Arbeitsauftrag-${input.repair.repair_number || 'reparatur'}.html`;
-    a.click();
-    URL.revokeObjectURL(url);
+let cachedLogo: string | null = null;
+async function getLogoDataUrl(): Promise<string | null> {
+  if (cachedLogo) return cachedLogo;
+  try {
+    const res = await fetch(LOGO_URL);
+    const blob = await res.blob();
+    const dataUrl: string = await new Promise((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onload = () => resolve(String(fr.result));
+      fr.onerror = reject;
+      fr.readAsDataURL(blob);
+    });
+    cachedLogo = dataUrl;
+    return dataUrl;
+  } catch {
+    return null;
   }
+}
+
+function fmt(v: any): string {
+  if (v == null || v === '') return '–';
+  return String(v);
+}
+
+function fmtBool(v: any): string {
+  if (v === true) return 'Ja';
+  if (v === false) return 'Nein';
+  return '–';
+}
+
+async function buildPdf({ repair, parts = [] }: RenderInput): Promise<jsPDF> {
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+  const W = doc.internal.pageSize.getWidth();
+  const M = 40;
+  let y = M;
+
+  // === Header mit Logo oben rechts ===
+  const logo = await getLogoDataUrl();
+  if (logo) {
+    try {
+      // Höhe ~ 36pt, Verhältnis ~ 5:1 → Breite ~180pt
+      doc.addImage(logo, 'PNG', W - M - 160, M - 10, 160, 32);
+    } catch { /* ignore */ }
+  }
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(20);
+  doc.setTextColor(20, 20, 20);
+  doc.text('Arbeitsauftrag', M, y + 8);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(90, 95, 105);
+  doc.text(`Reparatur-Nr.: ${fmt(repair.repair_number)}`, M, y + 26);
+  doc.text(`Datum: ${new Date().toLocaleString('de-DE')}`, M, y + 40);
+  if (repair.order_number) doc.text(`Zoho-Auftrag: ${fmt(repair.order_number)}`, M, y + 54);
+
+  y = M + 80;
+
+  doc.setDrawColor(200, 170, 90);
+  doc.setLineWidth(1.2);
+  doc.line(M, y, W - M, y);
+  y += 14;
+
+  // === Kunde ===
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.setTextColor(20, 20, 20);
+  doc.text('Kunde', M, y);
+  y += 4;
+  autoTable(doc, {
+    startY: y + 4,
+    head: [],
+    body: [
+      ['Kunde / Firma', fmt(repair.customer_name)],
+      ['Firma', fmt(repair.customer_company)],
+      ['Ansprechpartner', fmt(repair.customer_contact)],
+      ['E-Mail', fmt(repair.customer_email)],
+      ['Telefon', fmt(repair.customer_phone)],
+      ['Adresse', [repair.address_street, [repair.address_zip, repair.address_city].filter(Boolean).join(' '), repair.address_country].filter(Boolean).join(', ') || '–'],
+      ['Priorität', fmt(repair.priority)],
+    ],
+    theme: 'plain',
+    styles: { fontSize: 10, cellPadding: 3 },
+    columnStyles: { 0: { fontStyle: 'bold', cellWidth: 130, textColor: [80, 80, 80] } },
+    margin: { left: M, right: M },
+  });
+  y = (doc as any).lastAutoTable.finalY + 14;
+
+  // === Gerät ===
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.text('Gerät', M, y);
+  autoTable(doc, {
+    startY: y + 6,
+    head: [],
+    body: [
+      ['Gerätetyp', fmt(repair.device_type)],
+      ['Kategorie', fmt(repair.device_category)],
+      ['Marke', fmt(repair.device_brand)],
+      ['Modell', fmt(repair.device_model)],
+      ['Seriennummer', fmt(repair.device_serial_number)],
+      ['Kaufdatum', fmt(repair.purchase_date)],
+      ['Zubehör', fmt(repair.accessories)],
+      ['Sichtbare Schäden', fmt(repair.visible_damages)],
+      ['Schaltet ein?', fmtBool(repair.powers_on)],
+      ['Fehler permanent?', fmtBool(repair.error_permanent)],
+    ],
+    theme: 'plain',
+    styles: { fontSize: 10, cellPadding: 3 },
+    columnStyles: { 0: { fontStyle: 'bold', cellWidth: 130, textColor: [80, 80, 80] } },
+    margin: { left: M, right: M },
+  });
+  y = (doc as any).lastAutoTable.finalY + 14;
+
+  // === Fehlerbeschreibung ===
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.text('Fehlerbeschreibung Kunde', M, y);
+  y += 6;
+  const issue = repair.customer_error_description || repair.issue_description || '–';
+  autoTable(doc, {
+    startY: y,
+    body: [[issue]],
+    theme: 'grid',
+    styles: { fontSize: 10, cellPadding: 6, minCellHeight: 50, valign: 'top' },
+    margin: { left: M, right: M },
+  });
+  y = (doc as any).lastAutoTable.finalY + 12;
+
+  // === Diagnose (Werkstatt) ===
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.text('Diagnose / Ursache', M, y);
+  y += 6;
+  autoTable(doc, {
+    startY: y,
+    body: [[fmt(repair.diagnosis)]],
+    theme: 'grid',
+    styles: { fontSize: 10, cellPadding: 6, minCellHeight: 60, valign: 'top' },
+    margin: { left: M, right: M },
+  });
+  y = (doc as any).lastAutoTable.finalY + 12;
+
+  // === Arbeitsbericht (durchgeführte Arbeiten) ===
+  if (y > 680) { doc.addPage(); y = M; }
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.text('Arbeitsbericht / Durchgeführte Arbeiten', M, y);
+  y += 6;
+  autoTable(doc, {
+    startY: y,
+    body: [[fmt(repair.work_report || repair.internal_notes)]],
+    theme: 'grid',
+    styles: { fontSize: 10, cellPadding: 6, minCellHeight: 120, valign: 'top' },
+    margin: { left: M, right: M },
+  });
+  y = (doc as any).lastAutoTable.finalY + 12;
+
+  // === Ersatzteile ===
+  if (y > 680) { doc.addPage(); y = M; }
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.text('Ersatzteile', M, y);
+  autoTable(doc, {
+    startY: y + 6,
+    head: [['Bezeichnung', 'SKU', 'Menge', 'Lieferant', 'Status']],
+    body: parts.length
+      ? parts.map((p) => [fmt(p.item_name || p.part_name), fmt(p.sku), fmt(p.quantity), fmt(p.supplier_name), fmt(p.order_status || p.status)])
+      : [['–', '–', '–', '–', '–']],
+    theme: 'striped',
+    headStyles: { fillColor: [235, 220, 180], textColor: [60, 50, 20] },
+    styles: { fontSize: 9, cellPadding: 4 },
+    margin: { left: M, right: M },
+  });
+  y = (doc as any).lastAutoTable.finalY + 14;
+
+  // === Kosten ===
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.text('Kosten', M, y);
+  autoTable(doc, {
+    startY: y + 6,
+    body: [
+      ['Kostenvoranschlag', `${fmt(repair.estimated_cost)} ${repair.currency || 'EUR'}`],
+      ['Tatsächliche Kosten', `${fmt(repair.actual_cost)} ${repair.currency || 'EUR'}`],
+    ],
+    theme: 'plain',
+    styles: { fontSize: 10, cellPadding: 3 },
+    columnStyles: { 0: { fontStyle: 'bold', cellWidth: 180, textColor: [80, 80, 80] } },
+    margin: { left: M, right: M },
+  });
+  y = (doc as any).lastAutoTable.finalY + 20;
+
+  // === Unterschriften ===
+  if (y > 720) { doc.addPage(); y = M; }
+  doc.setDrawColor(60);
+  doc.setLineWidth(0.5);
+  const colW = (W - M * 2 - 30) / 2;
+  doc.line(M, y + 30, M + colW, y + 30);
+  doc.line(M + colW + 30, y + 30, W - M, y + 30);
+  doc.setFontSize(9);
+  doc.setTextColor(80);
+  doc.text('Unterschrift Techniker / Datum', M, y + 44);
+  doc.text('Endkontrolle / Freigabe', M + colW + 30, y + 44);
+
+  // === Footer ===
+  const pageH = doc.internal.pageSize.getHeight();
+  doc.setFontSize(8);
+  doc.setTextColor(140);
+  doc.text(`Alix Lasers · Arbeitsauftrag · generiert ${new Date().toLocaleString('de-DE')}`, M, pageH - 20);
+
+  return doc;
+}
+
+export async function generateRepairWorkOrderPdfBlob(input: RenderInput): Promise<Blob> {
+  const doc = await buildPdf(input);
+  return doc.output('blob');
+}
+
+export async function renderRepairWorkOrderPdf(input: RenderInput, action: 'print' | 'download') {
+  const doc = await buildPdf(input);
+  const fileName = `Arbeitsauftrag-${input.repair.repair_number || 'reparatur'}.pdf`;
+  if (action === 'print') {
+    const url = doc.output('bloburl');
+    const w = window.open(String(url), '_blank');
+    if (w) setTimeout(() => { try { w.print(); } catch { /* ignore */ } }, 600);
+  } else {
+    doc.save(fileName);
+  }
+}
+
+export async function workOrderPdfBase64(input: RenderInput): Promise<{ base64: string; fileName: string }> {
+  const doc = await buildPdf(input);
+  // jsPDF datauristring → strip prefix
+  const dataUri = doc.output('datauristring');
+  const base64 = dataUri.split(',', 2)[1] || '';
+  const fileName = `Arbeitsauftrag-${input.repair.repair_number || 'reparatur'}.pdf`;
+  return { base64, fileName };
 }

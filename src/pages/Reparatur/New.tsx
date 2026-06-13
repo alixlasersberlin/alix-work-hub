@@ -8,9 +8,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { notifyNewRepairOrder } from '@/lib/repair/notify';
+import { notifyNewRepairOrder, sendRepairConfirmationToCustomer } from '@/lib/repair/notify';
+import { renderRepairWorkOrderPdf } from '@/lib/repair/work-order-pdf';
 import { useToast } from '@/hooks/use-toast';
-import { Search } from 'lucide-react';
+import { Search, FileDown, Printer } from 'lucide-react';
 
 type OrderSearchRow = {
   id: string;
@@ -24,6 +25,7 @@ export default function ReparaturNew() {
   const { toast } = useToast();
   const [mode, setMode] = useState<'existing' | 'new'>('existing');
   const [saving, setSaving] = useState(false);
+  const [created, setCreated] = useState<{ id: string; repair_number: string; payload: any } | null>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<OrderSearchRow[]>([]);
@@ -129,6 +131,10 @@ export default function ReparaturNew() {
       return;
     }
     toast({ title: 'Reparatur angelegt', description: data.repair_number });
+    const fullRepair = { ...payload, id: data.id, repair_number: data.repair_number };
+    setCreated({ id: data.id, repair_number: data.repair_number, payload: fullRepair });
+
+    // Interne Mitarbeiter-Benachrichtigung (wie bisher)
     notifyNewRepairOrder({
       repair_id: data.id,
       repair_number: data.repair_number,
@@ -137,7 +143,18 @@ export default function ReparaturNew() {
       device_serial_number: form.device_serial_number,
       issue_description: form.issue_description,
     }).catch(() => {});
-    nav(`/reparatur/${data.id}`);
+
+    // Zusätzliche Bestätigungs-Mail an Endkunden mit Arbeitsauftrag-PDF
+    if (form.customer_email) {
+      sendRepairConfirmationToCustomer({ repair: fullRepair, parts: [] })
+        .then(() => toast({ title: 'Kunden-Mail gesendet', description: form.customer_email }))
+        .catch((e) => toast({ title: 'Kunden-Mail fehlgeschlagen', description: e?.message || 'Fehler', variant: 'destructive' }));
+    }
+  };
+
+  const openArbeitsauftrag = async (action: 'download' | 'print') => {
+    if (!created) return;
+    await renderRepairWorkOrderPdf({ repair: created.payload, parts: [] }, action);
   };
 
 
@@ -232,9 +249,30 @@ export default function ReparaturNew() {
       </div>
 
 
-      <div className="flex justify-end gap-2 pt-6">
-        <Button variant="outline" onClick={() => nav('/reparatur/auftraege')}>Abbrechen</Button>
-        <Button onClick={submit} disabled={saving}>{saving ? 'Speichere…' : 'Reparatur anlegen'}</Button>
+      <div className="flex flex-wrap justify-end items-center gap-2 pt-6">
+        {created && (
+          <div className="mr-auto text-sm text-emerald-600 font-medium">
+            ✓ Reparatur {created.repair_number} angelegt
+          </div>
+        )}
+        {created ? (
+          <>
+            <Button variant="outline" onClick={() => openArbeitsauftrag('print')}>
+              <Printer className="w-4 h-4 mr-1" /> Arbeitsauftrag drucken
+            </Button>
+            <Button onClick={() => openArbeitsauftrag('download')}>
+              <FileDown className="w-4 h-4 mr-1" /> Arbeitsauftrag
+            </Button>
+            <Button variant="outline" onClick={() => nav(`/reparatur/${created.id}`)}>
+              Zum Auftrag
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button variant="outline" onClick={() => nav('/reparatur/auftraege')}>Abbrechen</Button>
+            <Button onClick={submit} disabled={saving}>{saving ? 'Speichere…' : 'Reparatur anlegen'}</Button>
+          </>
+        )}
       </div>
     </Card>
   );
