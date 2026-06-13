@@ -1378,7 +1378,12 @@ export default function AppLayout() {
             </Button>
             
           </div>
+          {/* Experience Mode Switcher am Ende des Sidebar-Menüs */}
+          <div className={cn("mt-2 px-1", collapsed && "px-0")}>
+            <ExperienceModeSwitcher collapsed={collapsed} />
+          </div>
         </div>
+
         {/* Resize-Handle (nur Desktop, wenn nicht eingeklappt) */}
         {!collapsed && (
           <div
