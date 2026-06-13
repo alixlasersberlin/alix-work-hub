@@ -4,7 +4,7 @@ import * as React from 'npm:react@18.3.1'
 import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
 
-const SITE_NAME = 'Alixwork'
+const SITE_NAME = 'Alix Lasers I Datacenter'
 const SENDER_DOMAIN = 'notify.alixlasers.ai'
 const FROM_DOMAIN = 'notify.alixlasers.ai'
 const APP_BASE_URL = 'https://www.alixwork.de'
