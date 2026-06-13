@@ -18,13 +18,13 @@ const Email = (p: Props) => {
   return (
     <Html lang="de" dir="ltr">
       <Head />
-      <Preview>Ihr Angebot {p.offer_number ?? ''} wurde erfolgreich unterzeichnet</Preview>
+      <Preview>Ihr Angebot {p.offer_number ?? ''} wurde erfolgreich über Alixwork bestätigt</Preview>
       <Body style={main}>
         <Container style={container}>
           <Heading style={h1}>Vielen Dank für Ihre Unterschrift</Heading>
           <Text style={paragraph}>{p.customer_name || 'Sehr geehrte/r Kundin/Kunde'},</Text>
           <Text style={paragraph}>
-            wir bestätigen den Eingang Ihrer elektronischen Unterschrift über <strong>Alix Sign</strong>.
+            wir bestätigen den Eingang Ihrer elektronischen Unterschrift über <strong>Alixwork</strong>.
             Das Angebot gilt damit als verbindlich angenommen.
           </Text>
 
@@ -55,7 +55,7 @@ const Email = (p: Props) => {
             Unser Team wird sich in Kürze mit den nächsten Schritten bei Ihnen melden.
           </Text>
 
-          <Text style={footer}>Mit freundlichen Grüßen<br/>Alix Lasers GmbH</Text>
+          <Text style={footer}>Mit freundlichen Grüßen<br/>Alixwork</Text>
         </Container>
       </Body>
     </Html>
@@ -65,8 +65,8 @@ const Email = (p: Props) => {
 export const template = {
   component: Email,
   subject: (d: Record<string, any>) =>
-    `Bestätigung: Angebot ${d?.offer_number ?? ''} elektronisch unterzeichnet`.trim(),
-  displayName: 'Alix Sign – Bestätigung',
+    `Bestätigung: Angebot ${d?.offer_number ?? ''} elektronisch über Alixwork unterzeichnet`.trim(),
+  displayName: 'Alixwork – Signaturbestätigung',
   previewData: {
     customer_name: 'Sehr geehrter Herr Mustermann',
     offer_number: 'ANG-2026-10403',
