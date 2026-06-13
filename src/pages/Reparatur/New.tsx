@@ -249,9 +249,30 @@ export default function ReparaturNew() {
       </div>
 
 
-      <div className="flex justify-end gap-2 pt-6">
-        <Button variant="outline" onClick={() => nav('/reparatur/auftraege')}>Abbrechen</Button>
-        <Button onClick={submit} disabled={saving}>{saving ? 'Speichere…' : 'Reparatur anlegen'}</Button>
+      <div className="flex flex-wrap justify-end items-center gap-2 pt-6">
+        {created && (
+          <div className="mr-auto text-sm text-emerald-600 font-medium">
+            ✓ Reparatur {created.repair_number} angelegt
+          </div>
+        )}
+        {created ? (
+          <>
+            <Button variant="outline" onClick={() => openArbeitsauftrag('print')}>
+              <Printer className="w-4 h-4 mr-1" /> Arbeitsauftrag drucken
+            </Button>
+            <Button onClick={() => openArbeitsauftrag('download')}>
+              <FileDown className="w-4 h-4 mr-1" /> Arbeitsauftrag
+            </Button>
+            <Button variant="outline" onClick={() => nav(`/reparatur/${created.id}`)}>
+              Zum Auftrag
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button variant="outline" onClick={() => nav('/reparatur/auftraege')}>Abbrechen</Button>
+            <Button onClick={submit} disabled={saving}>{saving ? 'Speichere…' : 'Reparatur anlegen'}</Button>
+          </>
+        )}
       </div>
     </Card>
   );
