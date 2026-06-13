@@ -1467,9 +1467,8 @@ export default function AppLayout() {
       <WelcomeDialog />
       <SalesLeadAssignmentOverlay />
       {/* Begrüßungs-Overlays für Natalia & Lars deaktiviert */}
-      <div className="fixed bottom-4 right-4 z-[150] w-56 print:hidden pointer-events-auto">
-        <ExperienceModeSwitcher />
-      </div>
+
+
     </div>
   );
 }
