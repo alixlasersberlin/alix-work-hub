@@ -11,6 +11,7 @@ import logoAsset from '@/assets/alix-lasers-logo-gold.png.asset.json';
 type RenderInput = {
   repair: any;
   parts?: any[];
+  workOrders?: any[];
 };
 
 const LOGO_URL = logoAsset.url;
