@@ -1,6 +1,7 @@
 // Builds the final signed Alix Sign PDF (offer + signature page) client-side.
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import alixLogo from '@/assets/alix-logo-gold.png';
 
 type Snapshot = {
   offerNumber: string;
@@ -39,12 +40,19 @@ export function buildSignedPdfBase64(snap: Snapshot, sig: Sig): string {
   const LEFT = 18;
   const RIGHT = PAGE_W - 18;
   const CONTENT_W = RIGHT - LEFT;
+  const logoW = 42;
+  const logoH = 11;
 
   // ---------- Page 1+: Offer content ----------
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(18);
   doc.setTextColor(20, 60, 110);
   doc.text('Angebot', LEFT, 25);
+  try {
+    doc.addImage(alixLogo, 'PNG', RIGHT - logoW, 14, logoW, logoH);
+  } catch {
+    // ignore logo rendering errors
+  }
   doc.setFontSize(11);
   doc.setTextColor(60, 60, 60);
   doc.setFont('helvetica', 'normal');
@@ -96,6 +104,11 @@ export function buildSignedPdfBase64(snap: Snapshot, sig: Sig): string {
   // ---------- Signature page ----------
   doc.addPage();
   let sy = 25;
+  try {
+    doc.addImage(alixLogo, 'PNG', RIGHT - logoW, 14, logoW, logoH);
+  } catch {
+    // ignore logo rendering errors
+  }
   doc.setFont('helvetica', 'bold'); doc.setFontSize(18); doc.setTextColor(20, 60, 110);
   doc.text('Alix Sign — Annahmeerklärung', LEFT, sy); sy += 10;
   doc.setDrawColor(20, 60, 110); doc.setLineWidth(0.5); doc.line(LEFT, sy, RIGHT, sy); sy += 8;

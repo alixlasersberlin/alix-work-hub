@@ -4,9 +4,10 @@ import * as React from 'npm:react@18.3.1'
 import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
 
-const SITE_NAME = 'Alix Lasers Datacenter'
+const SITE_NAME = 'Alixwork'
 const SENDER_DOMAIN = 'notify.alixlasers.ai'
 const FROM_DOMAIN = 'notify.alixlasers.ai'
+const APP_BASE_URL = 'https://www.alixwork.de'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -68,10 +69,14 @@ Deno.serve(async (req) => {
         .from('alix-sign-pdfs')
         .upload(objectPath, pdfBytes, { contentType: 'application/pdf', upsert: true })
       if (upErr) throw upErr
-      const { data: signed } = await admin.storage
-        .from('alix-sign-pdfs')
-        .createSignedUrl(objectPath, 60 * 60 * 24 * 90)
-      downloadUrl = signed?.signedUrl
+      const { data: requestRow } = await admin
+        .from('alix_sign_requests')
+        .select('token')
+        .eq('id', r.id)
+        .maybeSingle()
+      downloadUrl = requestRow?.token
+        ? `${APP_BASE_URL}/sign/pdf/${sig.id}?token=${encodeURIComponent(requestRow.token)}`
+        : undefined
     } catch (e: any) {
       console.error('upload failed', e?.message)
     }
