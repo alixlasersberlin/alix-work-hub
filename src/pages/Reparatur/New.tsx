@@ -131,6 +131,10 @@ export default function ReparaturNew() {
       return;
     }
     toast({ title: 'Reparatur angelegt', description: data.repair_number });
+    const fullRepair = { ...payload, id: data.id, repair_number: data.repair_number };
+    setCreated({ id: data.id, repair_number: data.repair_number, payload: fullRepair });
+
+    // Interne Mitarbeiter-Benachrichtigung (wie bisher)
     notifyNewRepairOrder({
       repair_id: data.id,
       repair_number: data.repair_number,
@@ -139,7 +143,18 @@ export default function ReparaturNew() {
       device_serial_number: form.device_serial_number,
       issue_description: form.issue_description,
     }).catch(() => {});
-    nav(`/reparatur/${data.id}`);
+
+    // Zusätzliche Bestätigungs-Mail an Endkunden mit Arbeitsauftrag-PDF
+    if (form.customer_email) {
+      sendRepairConfirmationToCustomer({ repair: fullRepair, parts: [] })
+        .then(() => toast({ title: 'Kunden-Mail gesendet', description: form.customer_email }))
+        .catch((e) => toast({ title: 'Kunden-Mail fehlgeschlagen', description: e?.message || 'Fehler', variant: 'destructive' }));
+    }
+  };
+
+  const openArbeitsauftrag = async (action: 'download' | 'print') => {
+    if (!created) return;
+    await renderRepairWorkOrderPdf({ repair: created.payload, parts: [] }, action);
   };
 
 
