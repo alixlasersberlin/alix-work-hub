@@ -115,11 +115,28 @@ export default function ReparaturDetail() {
             <DropdownMenuItem
               onClick={async () => {
                 try {
-                  const to = (repair.customer_email || '').trim();
-                  if (!to) {
-                    toast({ title: 'Keine E-Mail', description: 'Beim Kunden ist keine E-Mail hinterlegt.', variant: 'destructive' });
+                  // Empfänger: alle aktiven Mitarbeiter mit Rolle "Service" oder "Reparatur"
+                  const { data: roleRows } = await supabase
+                    .from('user_roles')
+                    .select('user_id, roles!inner(name)')
+                    .in('roles.name', ['Service', 'Reparatur', 'Reparaturannahme', 'Technik']);
+                  const userIds = Array.from(new Set((roleRows ?? []).map((r: any) => r.user_id)));
+                  if (!userIds.length) {
+                    toast({ title: 'Keine Empfänger', description: 'Keine Nutzer mit Rolle Service oder Reparatur gefunden.', variant: 'destructive' });
                     return;
                   }
+                  const { data: profiles } = await supabase
+                    .from('user_profiles')
+                    .select('email, full_name, status')
+                    .in('id', userIds);
+                  const recipients = (profiles ?? [])
+                    .filter((p: any) => p.email && (p.status ?? 'active') === 'active')
+                    .map((p: any) => ({ email: String(p.email).trim(), name: p.full_name || undefined }));
+                  if (!recipients.length) {
+                    toast({ title: 'Keine Empfänger', description: 'Keine aktiven E-Mail-Adressen gefunden.', variant: 'destructive' });
+                    return;
+                  }
+
                   const { data: wo } = await sbRepair.from('repair_work_orders')
                     .select('*').eq('repair_order_id', repair.id).order('created_at', { ascending: true });
                   const { base64, fileName } = await workOrderPdfBase64({ repair, parts, workOrders: wo || [] });
@@ -127,35 +144,41 @@ export default function ReparaturDetail() {
                   const subject = `Arbeitsauftrag ${repair.repair_number || ''}`.trim();
                   const html = `
                     <div style="font-family:Arial,sans-serif;color:#1a1a1a;max-width:640px">
-                      <p>Sehr geehrte/r ${repair.customer_contact || repair.customer_name || 'Kund:in'},</p>
-                      <p>im Anhang erhalten Sie den aktuellen <b>Arbeitsauftrag</b> zu Ihrer Reparatur <b>${repair.repair_number || ''}</b>.</p>
-                      <p style="color:#666">Gerät: ${device}${repair.device_serial_number ? ` · SN ${repair.device_serial_number}` : ''}</p>
-                      <p style="margin-top:18px">Mit besten Grüßen<br><b>Ihr Alix Lasers Service-Team</b></p>
+                      <p>Hallo Team,</p>
+                      <p>im Anhang findet ihr den aktuellen <b>Arbeitsauftrag</b> zur Reparatur <b>${repair.repair_number || ''}</b>.</p>
+                      <p style="color:#666">Kunde: ${repair.customer_name || '–'}<br>Gerät: ${device}${repair.device_serial_number ? ` · SN ${repair.device_serial_number}` : ''}</p>
+                      <p><a href="https://www.alixwork.de/reparatur/${repair.id}">Reparatur öffnen</a></p>
+                      <p style="margin-top:18px">Grüße<br><b>Alix Lasers · Service</b></p>
                     </div>`;
-                  const { error } = await supabase.functions.invoke('send-mail', {
-                    body: {
-                      to_email: to,
-                      to_name: repair.customer_name || undefined,
-                      from_email: 'service@alixwork.de',
-                      subject,
-                      body_html: html,
-                      body_text: `Arbeitsauftrag ${repair.repair_number || ''} im Anhang.`,
-                      repair_id: repair.id,
-                      customer_id: repair.customer_id || undefined,
-                      attachments: [{ filename: fileName, content: base64, content_type: 'application/pdf' }],
-                    },
-                  });
-                  if (error) throw error;
-                  toast({ title: 'E-Mail gesendet', description: `Arbeitsauftrag an ${to} versendet.` });
+
+                  const results = await Promise.allSettled(
+                    recipients.map((r) =>
+                      supabase.functions.invoke('send-mail', {
+                        body: {
+                          to_email: r.email,
+                          to_name: r.name,
+                          from_email: 'service@alixwork.de',
+                          subject,
+                          body_html: html,
+                          body_text: `Arbeitsauftrag ${repair.repair_number || ''} im Anhang. Reparatur: https://www.alixwork.de/reparatur/${repair.id}`,
+                          repair_id: repair.id,
+                          attachments: [{ filename: fileName, content: base64, content_type: 'application/pdf' }],
+                        },
+                      })
+                    )
+                  );
+                  const ok = results.filter((r) => r.status === 'fulfilled' && !(r.value as any)?.error).length;
+                  toast({ title: 'E-Mails gesendet', description: `${ok}/${recipients.length} Empfänger (Service & Reparatur).` });
                 } catch (e: any) {
                   toast({ title: 'Fehler', description: e.message, variant: 'destructive' });
                 }
               }}
             >
-              <Mail className="w-4 h-4 mr-2" /> Per E-Mail senden
+              <Mail className="w-4 h-4 mr-2" /> An Team Service & Reparatur senden
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+
         <Button
           variant="outline"
           size="sm"
