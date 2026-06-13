@@ -72,8 +72,19 @@ export default function ReparaturNew() {
     const tokens = q.split(/\s+/).filter(Boolean).slice(0, 5);
     const esc = (s: string) => s.replace(/[%,()]/g, ' ');
 
+    // Adress-Felder in JSONB shipping_address & billing_address mit einbeziehen
+    const addrCols = ['shipping_address', 'billing_address'];
+    const addrKeys = ['address', 'street', 'street2', 'city', 'zip', 'postal_code', 'country', 'attention'];
+
     const orderOr = tokens
-      .map((t) => `order_number.ilike.%${esc(t)}%,external_order_id.ilike.%${esc(t)}%`)
+      .map((t) => {
+        const esct = esc(t);
+        const base = `order_number.ilike.%${esct}%,external_order_id.ilike.%${esct}%`;
+        const addr = addrCols
+          .flatMap((c) => addrKeys.map((k) => `${c}->>${k}.ilike.%${esct}%`))
+          .join(',');
+        return `${base},${addr}`;
+      })
       .join(',');
     const { data: byOrder } = await supabase
       .from('orders')
@@ -82,7 +93,14 @@ export default function ReparaturNew() {
       .limit(20);
 
     const custOr = tokens
-      .map((t) => `company_name.ilike.%${esc(t)}%,contact_name.ilike.%${esc(t)}%,email.ilike.%${esc(t)}%,phone.ilike.%${esc(t)}%`)
+      .map((t) => {
+        const esct = esc(t);
+        const base = `company_name.ilike.%${esct}%,contact_name.ilike.%${esct}%,email.ilike.%${esct}%,phone.ilike.%${esct}%`;
+        const addr = addrCols
+          .flatMap((c) => addrKeys.map((k) => `${c}->>${k}.ilike.%${esct}%`))
+          .join(',');
+        return `${base},${addr}`;
+      })
       .join(',');
     const { data: byCust } = await supabase
       .from('customers')
