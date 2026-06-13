@@ -1378,7 +1378,12 @@ export default function AppLayout() {
             </Button>
             
           </div>
+          {/* Experience Mode Switcher am Ende des Sidebar-Menüs */}
+          <div className={cn("mt-2 px-1", collapsed && "px-0")}>
+            <ExperienceModeSwitcher collapsed={collapsed} />
+          </div>
         </div>
+
         {/* Resize-Handle (nur Desktop, wenn nicht eingeklappt) */}
         {!collapsed && (
           <div
@@ -1462,9 +1467,8 @@ export default function AppLayout() {
       <WelcomeDialog />
       <SalesLeadAssignmentOverlay />
       {/* Begrüßungs-Overlays für Natalia & Lars deaktiviert */}
-      <div className="fixed bottom-4 right-4 z-[150] w-56 print:hidden pointer-events-auto">
-        <ExperienceModeSwitcher />
-      </div>
+
+
     </div>
   );
 }
