@@ -25,10 +25,10 @@ export default function AlixSignPublic() {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [city, setCity] = useState('');
-  const [chkOffer, setChkOffer] = useState(false);
-  const [chkTerms, setChkTerms] = useState(false);
-  const [chkPrivacy, setChkPrivacy] = useState(false);
-  const [chkSign, setChkSign] = useState(false);
+  const [chkOffer, setChkOffer] = useState(true);
+  const [chkTerms, setChkTerms] = useState(true);
+  const [chkPrivacy, setChkPrivacy] = useState(true);
+  const [chkSign, setChkSign] = useState(true);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
@@ -137,7 +137,7 @@ export default function AlixSignPublic() {
     if (!firstName.trim() || !lastName.trim()) return toast.error('Bitte Vor- und Nachname eingeben');
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return toast.error('Bitte gültige E-Mail-Adresse eingeben');
     if (!city.trim()) return toast.error('Bitte Ort eingeben');
-    if (!chkOffer || !chkSign) return toast.error('Bitte allen Zustimmungen zustimmen');
+    if (!chkOffer || !chkTerms || !chkPrivacy || !chkSign) return toast.error('Bitte allen Zustimmungen zustimmen');
     if (!hasInk.current) return toast.error('Bitte zuerst unterschreiben');
 
     setSubmitting(true);
@@ -255,8 +255,10 @@ export default function AlixSignPublic() {
           </div>
 
           <div className="space-y-2 pt-2">
-            <label className="flex items-start gap-3 cursor-pointer"><Checkbox checked={chkOffer} onCheckedChange={v => setChkOffer(v === true)} className="mt-0.5" /><span className="text-sm text-slate-700">Ich habe das Angebot gelesen und nehme es verbindlich an.</span></label>
-            <label className="flex items-start gap-3 cursor-pointer"><Checkbox checked={chkSign} onCheckedChange={v => setChkSign(v === true)} className="mt-0.5" /><span className="text-sm text-slate-700">Ich bin mit der elektronischen Signatur über Alix Sign einverstanden.</span></label>
+             <label className="flex items-start gap-3 cursor-pointer"><Checkbox checked={chkOffer} onCheckedChange={v => setChkOffer(v === true)} className="mt-0.5" /><span className="text-sm text-slate-700">Ich habe das Angebot gelesen und nehme es verbindlich an.</span></label>
+             <label className="flex items-start gap-3 cursor-pointer"><Checkbox checked={chkTerms} onCheckedChange={v => setChkTerms(v === true)} className="mt-0.5" /><span className="text-sm text-slate-700">Ich akzeptiere die AGB und Vertragsbedingungen.</span></label>
+             <label className="flex items-start gap-3 cursor-pointer"><Checkbox checked={chkPrivacy} onCheckedChange={v => setChkPrivacy(v === true)} className="mt-0.5" /><span className="text-sm text-slate-700">Ich habe die Datenschutzhinweise zur Kenntnis genommen.</span></label>
+             <label className="flex items-start gap-3 cursor-pointer"><Checkbox checked={chkSign} onCheckedChange={v => setChkSign(v === true)} className="mt-0.5" /><span className="text-sm text-slate-700">Ich bin mit der elektronischen Signatur über Alix Sign einverstanden.</span></label>
             {requiresCredit && (
               <div className="flex items-start gap-3"><Checkbox checked disabled className="mt-0.5" /><span className="text-sm text-slate-700">Ich bin mit einer Bonitäts- und Identitätsprüfung einverstanden.</span></div>
             )}

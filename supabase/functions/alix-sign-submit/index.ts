@@ -4,9 +4,10 @@ import * as React from 'npm:react@18.3.1'
 import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
 
-const SITE_NAME = 'Alix Lasers Datacenter'
+const SITE_NAME = 'Alixwork'
 const SENDER_DOMAIN = 'notify.alixlasers.ai'
 const FROM_DOMAIN = 'notify.alixlasers.ai'
+const APP_BASE_URL = 'https://www.alixwork.de'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -59,7 +60,7 @@ Deno.serve(async (req) => {
       status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
-  if (!acceptedOffer || !acceptedElectronicSignature) {
+  if (!acceptedOffer || !acceptedTerms || !acceptedPrivacy || !acceptedElectronicSignature) {
     return new Response(JSON.stringify({ error: 'Bitte allen Zustimmungen zustimmen' }), {
       status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
@@ -184,11 +185,7 @@ Deno.serve(async (req) => {
       .from('alix-sign-pdfs')
       .upload(objectPath, pdfBytes, { contentType: 'application/pdf', upsert: true })
     if (upErr) throw upErr
-    const { data: signed, error: signErr } = await admin.storage
-      .from('alix-sign-pdfs')
-      .createSignedUrl(objectPath, 60 * 60 * 24 * 90)
-    if (signErr) throw signErr
-    downloadUrl = signed?.signedUrl
+    downloadUrl = `${APP_BASE_URL}/sign/pdf/${sig.id}`
   } catch (e: any) {
     console.error('alix-sign-submit storage upload failed', e?.message)
     await admin.from('alix_sign_audit_log').insert({
