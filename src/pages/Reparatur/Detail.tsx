@@ -14,7 +14,9 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Printer, FileDown, Plus, Trash2, Upload, Receipt, MapPin, FileText, MessageSquare } from 'lucide-react';
-import { renderRepairWorkOrderPdf } from '@/lib/repair/work-order-pdf';
+import { renderRepairWorkOrderPdf, workOrderPdfBase64 } from '@/lib/repair/work-order-pdf';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import { ClipboardList, Mail, Download } from 'lucide-react';
 import { printRepairReport, repairReportHtmlBlob } from '@/lib/repair/report-pdf';
 import { WerkstattAnnahmeTab, WerkstattauftraegeTab, SparePartsTab, FinanceHandoverTab, DeliveryHandoverTab, AttachmentsTab } from './RepairExtraTabs';
 import { SparePartRequestDialog } from './SparePartRequestDialog';
@@ -90,6 +92,70 @@ export default function ReparaturDetail() {
         )}
         {perms.canEditTechnik && <SparePartRequestDialog repair={repair} onCreated={load} />}
         {(perms.canEditTechnik || perms.canEditFinance) && <InvoiceProposalDialog repair={repair} onCreated={load} />}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm">
+              <ClipboardList className="w-4 h-4 mr-1" /> Arbeitsauftrag
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuItem
+              onClick={async () => {
+                try {
+                  const { data: wo } = await sbRepair.from('repair_work_orders')
+                    .select('*').eq('repair_order_id', repair.id).order('created_at', { ascending: true });
+                  await renderRepairWorkOrderPdf({ repair, parts, workOrders: wo || [] }, 'download');
+                } catch (e: any) {
+                  toast({ title: 'Fehler', description: e.message, variant: 'destructive' });
+                }
+              }}
+            >
+              <Download className="w-4 h-4 mr-2" /> Herunterladen
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={async () => {
+                try {
+                  const to = (repair.customer_email || '').trim();
+                  if (!to) {
+                    toast({ title: 'Keine E-Mail', description: 'Beim Kunden ist keine E-Mail hinterlegt.', variant: 'destructive' });
+                    return;
+                  }
+                  const { data: wo } = await sbRepair.from('repair_work_orders')
+                    .select('*').eq('repair_order_id', repair.id).order('created_at', { ascending: true });
+                  const { base64, fileName } = await workOrderPdfBase64({ repair, parts, workOrders: wo || [] });
+                  const device = [repair.device_brand, repair.device_model].filter(Boolean).join(' ') || repair.device_category || '–';
+                  const subject = `Arbeitsauftrag ${repair.repair_number || ''}`.trim();
+                  const html = `
+                    <div style="font-family:Arial,sans-serif;color:#1a1a1a;max-width:640px">
+                      <p>Sehr geehrte/r ${repair.customer_contact || repair.customer_name || 'Kund:in'},</p>
+                      <p>im Anhang erhalten Sie den aktuellen <b>Arbeitsauftrag</b> zu Ihrer Reparatur <b>${repair.repair_number || ''}</b>.</p>
+                      <p style="color:#666">Gerät: ${device}${repair.device_serial_number ? ` · SN ${repair.device_serial_number}` : ''}</p>
+                      <p style="margin-top:18px">Mit besten Grüßen<br><b>Ihr Alix Lasers Service-Team</b></p>
+                    </div>`;
+                  const { error } = await supabase.functions.invoke('send-mail', {
+                    body: {
+                      to_email: to,
+                      to_name: repair.customer_name || undefined,
+                      from_email: 'service@alixwork.de',
+                      subject,
+                      body_html: html,
+                      body_text: `Arbeitsauftrag ${repair.repair_number || ''} im Anhang.`,
+                      repair_id: repair.id,
+                      customer_id: repair.customer_id || undefined,
+                      attachments: [{ filename: fileName, content: base64, content_type: 'application/pdf' }],
+                    },
+                  });
+                  if (error) throw error;
+                  toast({ title: 'E-Mail gesendet', description: `Arbeitsauftrag an ${to} versendet.` });
+                } catch (e: any) {
+                  toast({ title: 'Fehler', description: e.message, variant: 'destructive' });
+                }
+              }}
+            >
+              <Mail className="w-4 h-4 mr-2" /> Per E-Mail senden
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <Button
           variant="outline"
           size="sm"
