@@ -10,20 +10,6 @@ const corsHeaders = {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders })
 
-  const auth = req.headers.get('Authorization') ?? ''
-  if (!auth.startsWith('Bearer ')) {
-    return new Response('Unauthorized', { status: 401, headers: corsHeaders })
-  }
-  const userClient = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_ANON_KEY')!,
-    { global: { headers: { Authorization: auth } }, auth: { persistSession: false, autoRefreshToken: false } },
-  )
-  const { data: ud, error: uerr } = await userClient.auth.getUser(auth.replace('Bearer ', ''))
-  if (uerr || !ud?.user) return new Response('Unauthorized', { status: 401, headers: corsHeaders })
-  const { data: canUse } = await userClient.rpc('can_use_alix_sign')
-  if (!canUse) return new Response('Forbidden', { status: 403, headers: corsHeaders })
-
   const url = new URL(req.url)
   const requestId = url.searchParams.get('request_id')
   const signatureId = url.searchParams.get('signature_id')
@@ -72,6 +58,20 @@ Deno.serve(async (req) => {
       },
     })
   }
+
+  const auth = req.headers.get('Authorization') ?? ''
+  if (!auth.startsWith('Bearer ')) {
+    return new Response('Unauthorized', { status: 401, headers: corsHeaders })
+  }
+  const userClient = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_ANON_KEY')!,
+    { global: { headers: { Authorization: auth } }, auth: { persistSession: false, autoRefreshToken: false } },
+  )
+  const { data: ud, error: uerr } = await userClient.auth.getUser(auth.replace('Bearer ', ''))
+  if (uerr || !ud?.user) return new Response('Unauthorized', { status: 401, headers: corsHeaders })
+  const { data: canUse } = await userClient.rpc('can_use_alix_sign')
+  if (!canUse) return new Response('Forbidden', { status: 403, headers: corsHeaders })
 
   if (!requestId) return new Response('request_id required', { status: 400, headers: corsHeaders })
 
