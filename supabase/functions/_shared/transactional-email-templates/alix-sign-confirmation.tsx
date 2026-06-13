@@ -1,6 +1,6 @@
 import * as React from 'npm:react@18.3.1'
 import {
-  Body, Container, Head, Heading, Hr, Html, Preview, Section, Text,
+  Body, Button, Container, Head, Heading, Hr, Html, Preview, Section, Text,
 } from 'npm:@react-email/components@0.0.22'
 import type { TemplateEntry } from './registry.ts'
 
@@ -10,6 +10,8 @@ interface Props {
   signer_name?: string
   signed_at?: string
   total_amount?: string
+  download_url?: string
+  pdf_hash?: string
 }
 
 const Email = (p: Props) => {
@@ -31,12 +33,23 @@ const Email = (p: Props) => {
             {p.signer_name ? <Text style={kv}><span style={kvLabel}>Unterzeichnet von: </span><span style={kvVal}>{p.signer_name}</span></Text> : null}
             {p.signed_at ? <Text style={kv}><span style={kvLabel}>Zeitpunkt: </span><span style={kvVal}>{p.signed_at}</span></Text> : null}
             {p.total_amount ? <Text style={kv}><span style={kvLabel}>Gesamtbetrag: </span><span style={kvVal}>{p.total_amount}</span></Text> : null}
+            {p.pdf_hash ? <Text style={kv}><span style={kvLabel}>Dokument-Hash (SHA-256): </span><span style={{ ...kvVal, fontFamily: 'monospace', fontSize: '11px' }}>{p.pdf_hash}</span></Text> : null}
           </Section>
+
+          {p.download_url ? (
+            <Section style={{ textAlign: 'center', margin: '24px 0' }}>
+              <Button href={p.download_url} style={btn}>Signiertes PDF herunterladen</Button>
+              <Text style={{ fontSize: '12px', color: '#777', marginTop: '8px' }}>
+                Der Download-Link ist 90 Tage gültig.
+              </Text>
+            </Section>
+          ) : null}
 
           <Hr style={hr} />
           <Text style={paragraph}>
-            Das signierte PDF-Dokument inklusive Annahmeerklärung und Prüfprotokoll ist
-            an diese E-Mail angehängt bzw. wird Ihnen separat zugestellt.
+            Das signierte PDF-Dokument enthält Ihre Annahmeerklärung, Zeitstempel und Prüfprotokoll
+            (IP-Adresse, Geräteinformationen, kryptografischer Hash).
+            Bitte bewahren Sie das Dokument für Ihre Unterlagen auf.
           </Text>
           <Text style={paragraph}>
             Unser Team wird sich in Kürze mit den nächsten Schritten bei Ihnen melden.
@@ -60,6 +73,8 @@ export const template = {
     signer_name: 'Max Mustermann',
     signed_at: '12.06.2026 14:23',
     total_amount: '12.345,67 €',
+    download_url: 'https://example.com/signed.pdf',
+    pdf_hash: 'a1b2c3...',
   },
 } satisfies TemplateEntry
 
@@ -73,3 +88,4 @@ const kvLabel = { color: '#555', fontWeight: 600 }
 const kvVal = { color: '#111' }
 const hr = { borderColor: '#eee', margin: '20px 0' }
 const footer = { fontSize: '13px', color: '#333', margin: '24px 0 0' }
+const btn = { background: '#c5a155', color: '#fff', padding: '12px 22px', borderRadius: '6px', fontWeight: 700, fontSize: '14px', textDecoration: 'none' }
