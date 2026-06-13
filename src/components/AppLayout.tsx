@@ -292,7 +292,6 @@ const navItems: NavItem[] = [
     roles: null,
     children: [
       {
-      {
         path: '/reparatur-service', label: 'SERVICE', icon: Wrench, roles: ['Admin', 'Super Admin', 'Reparaturannahme', 'Technik', 'Service', 'Österreich', 'SACHBEARBEITUNG'],
         children: [
           { path: '/reparatur/neu', label: 'Reparaturannahme', icon: FilePlus, roles: ['Admin', 'Super Admin', 'Reparaturannahme', 'Technik', 'Service', 'Österreich', 'SACHBEARBEITUNG'] },
