@@ -196,7 +196,7 @@ export default function ReparaturNew() {
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && runSearch()}
             />
-            <Button onClick={runSearch} disabled={searching}><Search className="w-4 h-4 mr-1" /> Suchen</Button>
+            <Button onClick={() => runSearch()} disabled={searching}><Search className="w-4 h-4 mr-1" /> Suchen</Button>
           </div>
           {searchResults.length > 0 && (
             <Card className="max-h-64 overflow-auto">
