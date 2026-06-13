@@ -113,12 +113,41 @@ export default function ReparaturNew() {
   }, [searchQuery]);
 
 
-  const pickOrder = (o: OrderSearchRow) => {
+  const pickOrder = async (o: OrderSearchRow) => {
     setSelectedOrder(o);
     const c = o.customers as any;
-    upd('customer_name', c?.company_name || c?.contact_name || '');
-    upd('customer_email', c?.email || '');
-    upd('customer_phone', c?.phone || '');
+
+    // Adresse aus Order (shipping bevorzugt) oder Kunde holen
+    const { data: ord } = await supabase
+      .from('orders')
+      .select('shipping_address,billing_address,customer_id')
+      .eq('id', o.id)
+      .maybeSingle();
+    const { data: cust } = await supabase
+      .from('customers')
+      .select('company_name,contact_name,email,phone,shipping_address,billing_address')
+      .eq('id', o.customer_id)
+      .maybeSingle();
+
+    const addr: any =
+      (ord as any)?.shipping_address ||
+      (cust as any)?.shipping_address ||
+      (ord as any)?.billing_address ||
+      (cust as any)?.billing_address ||
+      {};
+
+    setForm((f: any) => ({
+      ...f,
+      customer_name: cust?.company_name || c?.company_name || cust?.contact_name || c?.contact_name || '',
+      customer_company: cust?.company_name || c?.company_name || '',
+      customer_contact: cust?.contact_name || c?.contact_name || '',
+      customer_email: cust?.email || c?.email || '',
+      customer_phone: cust?.phone || c?.phone || '',
+      address_street: addr.address || addr.street || addr.attention || '',
+      address_zip: addr.zip || addr.postal_code || '',
+      address_city: addr.city || '',
+      address_country: addr.country || addr.country_code || '',
+    }));
   };
 
   const submit = async () => {
