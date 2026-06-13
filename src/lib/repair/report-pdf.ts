@@ -1,6 +1,10 @@
 /**
- * Reparaturbericht – HTML/PDF, druckbar oder als Blob speicherbar.
+ * Reparaturbericht – echte PDF-Erzeugung via jsPDF.
  */
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import alixLogo from '@/assets/alix-logo-gold.png';
+
 type ReportDoc = {
   repair: any;
   parts: any[];
@@ -8,102 +12,117 @@ type ReportDoc = {
   technician?: string;
 };
 
-function esc(s: any): string {
-  if (s == null) return '';
-  return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
-}
-
-function buildHtml({ repair, parts, history = [], technician }: ReportDoc): string {
+function build({ repair, parts, history = [], technician }: ReportDoc): jsPDF {
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+  const W = doc.internal.pageSize.getWidth();
+  const M = 40;
   const today = new Date().toLocaleDateString('de-DE');
   const device = [repair?.device_brand, repair?.device_model].filter(Boolean).join(' ') || repair?.device_category || '';
-  const partsRows = parts
-    .map(
-      (p: any) =>
-        `<tr><td>${esc(p.part_name || p.name)}</td><td>${esc(p.sku || '')}</td><td style="text-align:right">${esc(p.quantity || 1)}</td><td>${esc(p.status || '')}</td></tr>`,
-    )
-    .join('');
-  const histRows = history
-    .slice(0, 20)
-    .map(
-      (h: any) =>
-        `<tr><td>${new Date(h.created_at).toLocaleString('de-DE')}</td><td>${esc(h.old_status || '–')}</td><td>${esc(h.new_status)}</td><td>${esc(h.change_note || '')}</td></tr>`,
-    )
-    .join('');
 
-  return `<!doctype html><html><head><meta charset="utf-8"><title>Reparaturbericht ${esc(repair.repair_number)}</title>
-  <style>
-    body { font-family: -apple-system, system-ui, Arial, sans-serif; color: #111; padding: 24px; font-size: 12px; }
-    h1 { font-size: 20px; margin: 0 0 4px; color: #0f172a; }
-    h2 { font-size: 13px; margin: 18px 0 6px; padding-bottom: 4px; border-bottom: 1px solid #999; }
-    table { width: 100%; border-collapse: collapse; }
-    td, th { padding: 5px 8px; border: 1px solid #ddd; text-align: left; vertical-align: top; }
-    th { background: #f3f3f3; }
-    .row { display: flex; gap: 16px; }
-    .col { flex: 1; }
-    .box { border: 1px solid #ccc; padding: 8px; min-height: 32px; margin-top: 2px; white-space:pre-wrap; }
-    .sig { margin-top: 36px; border-top: 1px solid #000; padding-top: 4px; width:40%; }
-    @media print { body { padding: 12mm; } }
-  </style></head><body>
-  <div class="row">
-    <div class="col">
-      <h1>Reparaturbericht</h1>
-      <div>Reparaturnr.: <b>${esc(repair.repair_number)}</b></div>
-      <div>Datum: ${today}</div>
-    </div>
-    <div class="col" style="text-align:right">
-      <div style="color:#666;font-size:10px;text-transform:uppercase">Status</div>
-      <div style="font-weight:600">${esc(repair.repair_status)}</div>
-    </div>
-  </div>
+  // Logo top-right
+  try {
+    const logoW = 90, logoH = 28;
+    doc.addImage(alixLogo, 'PNG', W - M - logoW, 28, logoW, logoH);
+  } catch { /* ignore */ }
 
-  <h2>Kunde &amp; Gerät</h2>
-  <table>
-    <tr><th style="width:22%">Kunde</th><td>${esc(repair.customer_name)}</td><th>E-Mail</th><td>${esc(repair.customer_email)}</td></tr>
-    <tr><th>Telefon</th><td>${esc(repair.customer_phone)}</td><th>Auftrag (Zoho)</th><td>${esc(repair.order_number || '–')}</td></tr>
-    <tr><th>Marke / Modell</th><td>${esc(device)}</td><th>Seriennummer</th><td>${esc(repair.device_serial_number)}</td></tr>
-    <tr><th>Kaufdatum</th><td>${esc(repair.purchase_date || '–')}</td><th>Techniker</th><td>${esc(technician || '–')}</td></tr>
-  </table>
+  doc.setFont('helvetica', 'bold').setFontSize(18).setTextColor(15, 23, 42);
+  doc.text('Reparaturbericht', M, 50);
+  doc.setFont('helvetica', 'normal').setFontSize(10).setTextColor(40);
+  doc.text(`Reparaturnr.: ${repair.repair_number ?? ''}`, M, 68);
+  doc.text(`Datum: ${today}`, M, 82);
+  doc.text(`Status: ${repair.repair_status ?? ''}`, M, 96);
 
-  <h2>Fehlerbild / Kundenbeschreibung</h2>
-  <div class="box">${esc(repair.issue_description || repair.customer_error_description || '–')}</div>
+  let y = 120;
+  autoTable(doc, {
+    startY: y,
+    theme: 'grid',
+    styles: { fontSize: 9, cellPadding: 4 },
+    head: [['Kunde & Gerät', '']],
+    body: [
+      ['Kunde', repair.customer_name ?? '–'],
+      ['E-Mail', repair.customer_email ?? '–'],
+      ['Telefon', repair.customer_phone ?? '–'],
+      ['Auftrag (Zoho)', repair.order_number ?? '–'],
+      ['Marke / Modell', device || '–'],
+      ['Seriennummer', repair.device_serial_number ?? '–'],
+      ['Kaufdatum', repair.purchase_date ?? '–'],
+      ['Techniker', technician ?? '–'],
+    ],
+    headStyles: { fillColor: [217, 178, 60], textColor: 20 },
+    columnStyles: { 0: { cellWidth: 130, fontStyle: 'bold' } },
+    margin: { left: M, right: M },
+  });
+  y = (doc as any).lastAutoTable.finalY + 14;
 
-  <h2>Diagnose / Ursache</h2>
-  <div class="box">${esc(repair.diagnosis || '–')}</div>
+  const section = (title: string, text: string) => {
+    doc.setFont('helvetica', 'bold').setFontSize(11).setTextColor(15, 23, 42);
+    doc.text(title, M, y); y += 12;
+    doc.setFont('helvetica', 'normal').setFontSize(9).setTextColor(40);
+    const lines = doc.splitTextToSize(text || '–', W - 2 * M);
+    doc.text(lines, M, y);
+    y += lines.length * 11 + 10;
+    if (y > 760) { doc.addPage(); y = 60; }
+  };
 
-  <h2>Durchgeführte Arbeiten</h2>
-  <div class="box">${esc(repair.internal_notes || '–')}</div>
+  section('Fehlerbild / Kundenbeschreibung', repair.issue_description || repair.customer_error_description || '–');
+  section('Diagnose / Ursache', repair.diagnosis || '–');
+  section('Durchgeführte Arbeiten', repair.internal_notes || '–');
 
-  <h2>Verwendete Ersatzteile</h2>
-  <table>
-    <thead><tr><th>Bezeichnung</th><th>SKU</th><th style="width:8%">Menge</th><th style="width:18%">Status</th></tr></thead>
-    <tbody>${partsRows || '<tr><td colspan="4" style="text-align:center;color:#888">Keine Ersatzteile verbaut</td></tr>'}</tbody>
-  </table>
+  autoTable(doc, {
+    startY: y,
+    theme: 'grid',
+    styles: { fontSize: 9, cellPadding: 4 },
+    head: [['Bezeichnung', 'SKU', 'Menge', 'Status']],
+    body: parts.length
+      ? parts.map((p: any) => [p.part_name || p.name || '', p.sku || '', String(p.quantity ?? 1), p.status || ''])
+      : [[{ content: 'Keine Ersatzteile verbaut', colSpan: 4, styles: { halign: 'center', textColor: 140 } }]],
+    headStyles: { fillColor: [217, 178, 60], textColor: 20 },
+    margin: { left: M, right: M },
+  });
+  y = (doc as any).lastAutoTable.finalY + 14;
 
-  ${
-    histRows
-      ? `<h2>Statusverlauf</h2><table><thead><tr><th>Datum</th><th>von</th><th>nach</th><th>Hinweis</th></tr></thead><tbody>${histRows}</tbody></table>`
-      : ''
+  if (history.length) {
+    autoTable(doc, {
+      startY: y,
+      theme: 'grid',
+      styles: { fontSize: 8, cellPadding: 3 },
+      head: [['Datum', 'von', 'nach', 'Hinweis']],
+      body: history.slice(0, 20).map((h: any) => [
+        new Date(h.created_at).toLocaleString('de-DE'),
+        h.old_status || '–',
+        h.new_status || '',
+        h.change_note || '',
+      ]),
+      headStyles: { fillColor: [217, 178, 60], textColor: 20 },
+      margin: { left: M, right: M },
+    });
+    y = (doc as any).lastAutoTable.finalY + 30;
+  } else {
+    y += 20;
   }
 
-  <div class="row" style="margin-top:30px">
-    <div class="sig">Techniker</div>
-    <div class="sig" style="margin-left:auto">Endkontrolle / Freigabe</div>
-  </div>
-  </body></html>`;
+  if (y > 720) { doc.addPage(); y = 700; }
+  doc.setDrawColor(0); doc.setLineWidth(0.5);
+  doc.line(M, y, M + 200, y);
+  doc.line(W - M - 200, y, W - M, y);
+  doc.setFont('helvetica', 'normal').setFontSize(9).setTextColor(80);
+  doc.text('Techniker', M, y + 12);
+  doc.text('Endkontrolle / Freigabe', W - M - 200, y + 12);
+
+  return doc;
 }
 
-export function renderRepairReportHtml(doc: ReportDoc): string {
-  return buildHtml(doc);
+export function printRepairReport(d: ReportDoc) {
+  const doc = build(d);
+  const url = doc.output('bloburl');
+  window.open(String(url), '_blank');
 }
 
-export function printRepairReport(doc: ReportDoc) {
-  const w = window.open('', '_blank');
-  if (!w) return;
-  w.document.write(buildHtml(doc));
-  w.document.close();
-  setTimeout(() => w.print(), 400);
+export function repairReportPdfBlob(d: ReportDoc): Blob {
+  return build(d).output('blob');
 }
 
-export function repairReportHtmlBlob(doc: ReportDoc): Blob {
-  return new Blob([buildHtml(doc)], { type: 'text/html' });
+// Backwards-compat alias (kept name, now returns PDF Blob)
+export function repairReportHtmlBlob(d: ReportDoc): Blob {
+  return repairReportPdfBlob(d);
 }

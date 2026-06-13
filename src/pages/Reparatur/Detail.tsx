@@ -96,10 +96,10 @@ export default function ReparaturDetail() {
           onClick={async () => {
             try {
               const blob = repairReportHtmlBlob({ repair, parts, history });
-              const path = `${repair.id}/reports/repair-report-${Date.now()}.html`;
+              const path = `${repair.id}/reports/repair-report-${Date.now()}.pdf`;
               const { error: upErr } = await supabase.storage
                 .from('repair-files')
-                .upload(path, blob, { contentType: 'text/html', upsert: true });
+                .upload(path, blob, { contentType: 'application/pdf', upsert: true });
               if (upErr) throw upErr;
               await sbRepair.from('repair_orders').update({ report_pdf_path: path }).eq('id', repair.id);
               toast({ title: 'Reparaturbericht erzeugt', description: 'PDF wurde gespeichert.' });
