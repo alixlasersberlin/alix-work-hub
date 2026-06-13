@@ -160,26 +160,36 @@ async function buildPdf({ repair, parts = [], workOrders = [] }: RenderInput): P
   });
   y = (doc as any).lastAutoTable.finalY + 12;
 
-  // === Arbeitsbericht (durchgeführte Arbeiten) ===
+  // === Maßnahmen / Durchgeführte Arbeiten (aus Werkstattaufträgen) ===
   if (y > 680) { doc.addPage(); y = M; }
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(12);
-  doc.text('Arbeitsbericht / Durchgeführte Arbeiten', M, y);
-  y += 6;
+  doc.text('Maßnahmen / Durchgeführte Arbeiten', M, y);
+  const measureRows = (workOrders.length
+    ? workOrders.map((w, i) => [
+        String(i + 1),
+        fmt(w.work_performed || w.diagnosis),
+        fmt(w.status),
+        w.labor_hours != null ? `${Number(w.labor_hours).toFixed(2)} h` : '–',
+      ])
+    : [['1', fmt(repair.work_report || repair.internal_notes), '–', '–']]);
   autoTable(doc, {
-    startY: y,
-    body: [[fmt(repair.work_report || repair.internal_notes)]],
-    theme: 'grid',
-    styles: { fontSize: 10, cellPadding: 6, minCellHeight: 120, valign: 'top' },
+    startY: y + 6,
+    head: [['#', 'Maßnahme', 'Status', 'Zeit']],
+    body: measureRows,
+    theme: 'striped',
+    headStyles: { fillColor: [235, 220, 180], textColor: [60, 50, 20] },
+    styles: { fontSize: 10, cellPadding: 5, valign: 'top' },
+    columnStyles: { 0: { cellWidth: 24 }, 2: { cellWidth: 70 }, 3: { cellWidth: 55, halign: 'right' } },
     margin: { left: M, right: M },
   });
-  y = (doc as any).lastAutoTable.finalY + 12;
+  y = (doc as any).lastAutoTable.finalY + 14;
 
-  // === Ersatzteile ===
+  // === Material / Ersatzteile ===
   if (y > 680) { doc.addPage(); y = M; }
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(12);
-  doc.text('Ersatzteile', M, y);
+  doc.text('Material / Ersatzteile', M, y);
   autoTable(doc, {
     startY: y + 6,
     head: [['Bezeichnung', 'SKU', 'Menge', 'Lieferant', 'Status']],
@@ -189,6 +199,34 @@ async function buildPdf({ repair, parts = [], workOrders = [] }: RenderInput): P
     theme: 'striped',
     headStyles: { fillColor: [235, 220, 180], textColor: [60, 50, 20] },
     styles: { fontSize: 9, cellPadding: 4 },
+    margin: { left: M, right: M },
+  });
+  y = (doc as any).lastAutoTable.finalY + 14;
+
+  // === Arbeitszeit (Summen) ===
+  if (y > 680) { doc.addPage(); y = M; }
+  const totalHours = workOrders.reduce((s, w) => s + (Number(w.labor_hours) || 0), 0);
+  const weightedRate = (() => {
+    const rated = workOrders.filter((w) => Number(w.labor_rate) > 0 && Number(w.labor_hours) > 0);
+    if (!rated.length) return null;
+    const sumH = rated.reduce((s, w) => s + Number(w.labor_hours), 0);
+    const sumE = rated.reduce((s, w) => s + Number(w.labor_hours) * Number(w.labor_rate), 0);
+    return { hours: sumH, total: sumE, avg: sumH ? sumE / sumH : 0 };
+  })();
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.text('Arbeitszeit', M, y);
+  autoTable(doc, {
+    startY: y + 6,
+    body: [
+      ['Maßnahmen gesamt', String(workOrders.length || 0)],
+      ['Stunden gesamt', `${totalHours.toFixed(2)} h`],
+      ['Stundensatz Ø', weightedRate ? `${weightedRate.avg.toFixed(2)} ${repair.currency || 'EUR'}/h` : '–'],
+      ['Arbeitskosten', weightedRate ? `${weightedRate.total.toFixed(2)} ${repair.currency || 'EUR'}` : '–'],
+    ],
+    theme: 'plain',
+    styles: { fontSize: 10, cellPadding: 3 },
+    columnStyles: { 0: { fontStyle: 'bold', cellWidth: 180, textColor: [80, 80, 80] } },
     margin: { left: M, right: M },
   });
   y = (doc as any).lastAutoTable.finalY + 14;
