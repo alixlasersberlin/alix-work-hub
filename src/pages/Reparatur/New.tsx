@@ -129,12 +129,18 @@ export default function ReparaturNew() {
       .eq('id', o.customer_id)
       .maybeSingle();
 
+    const hasAddr = (a: any) =>
+      !!a && typeof a === 'object' &&
+      [a.address, a.street, a.attention, a.zip, a.postal_code, a.city, a.country, a.country_code]
+        .some((v) => typeof v === 'string' && v.trim().length > 0);
+
     const addr: any =
-      (ord as any)?.shipping_address ||
-      (cust as any)?.shipping_address ||
-      (ord as any)?.billing_address ||
-      (cust as any)?.billing_address ||
-      {};
+      [
+        (ord as any)?.shipping_address,
+        (cust as any)?.shipping_address,
+        (ord as any)?.billing_address,
+        (cust as any)?.billing_address,
+      ].find(hasAddr) || {};
 
     setForm((f: any) => ({
       ...f,
