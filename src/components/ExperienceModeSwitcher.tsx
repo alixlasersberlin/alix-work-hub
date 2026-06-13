@@ -23,6 +23,7 @@ export default function ExperienceModeSwitcher({ collapsed = false }: { collapse
   const { mode, setMode } = useExperienceMode();
   const { variant, setVariant } = useDesignVariant();
   const { theme, setTheme } = useTheme();
+  const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const lang = detectUiLang();
 
