@@ -25,6 +25,7 @@ export default function ReparaturNew() {
   const { toast } = useToast();
   const [mode, setMode] = useState<'existing' | 'new'>('existing');
   const [saving, setSaving] = useState(false);
+  const [created, setCreated] = useState<{ id: string; repair_number: string; payload: any } | null>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<OrderSearchRow[]>([]);
