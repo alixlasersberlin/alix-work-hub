@@ -321,7 +321,7 @@ export default function Detailsuche() {
           <div><Label>Modell</Label>
             <Input value={form.model} onChange={update('model')} placeholder="z. B. Alix Infinity" /></div>
           <div><Label>Seriennummer</Label>
-            <Input value={form.serial} onChange={update('serial')} placeholder="z. B. SN-12345" /></div>
+            <Input value={form.serial} onChange={update('serial')} placeholder="z. B. SN-12345" autoComplete="off" data-1p-ignore data-lpignore="true" data-form-type="other" name="serial-search" /></div>
         </div>
         <div className="flex flex-wrap gap-2 pt-2">
           <Button onClick={runSearch} disabled={loading}>
