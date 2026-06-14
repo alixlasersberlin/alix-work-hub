@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import {
-  ArrowLeft, FilePlus, UserPlus, UserCheck, Archive, Phone, CalendarPlus, Mail, Loader2, Pencil, Save, X,
+  ArrowLeft, FilePlus, UserPlus, UserCheck, Archive, Phone, CalendarPlus, Mail, Loader2, Pencil, Save, X, Send,
 } from 'lucide-react';
 
 const STATUS_OPTIONS = [
@@ -217,6 +217,51 @@ export default function SalesLeadDetail() {
           {lead.email && (
             <Button asChild variant="outline"><a href={`mailto:${lead.email}`}><Mail className="h-4 w-4 mr-1" />E-Mail</a></Button>
           )}
+          <Button
+            variant="outline"
+            onClick={async () => {
+              const tid = toast.loading('Sende Benachrichtigung …');
+              const { error } = await supabase.functions.invoke('send-transactional-email', {
+                body: {
+                  templateName: 'sales-lead-internal-notification',
+                  recipientEmail: lead.email || 'homebln@icloud.com',
+                  idempotencyKey: `sales-lead-resend-${lead.id}-${Date.now()}`,
+                  extraCc: ['homebln@icloud.com', 'rde@alix-lasers.com'].filter((e) => e !== lead.email),
+                  skipDefaultCopies: true,
+                  templateData: {
+                    lead_id: lead.id,
+                    lead_number: lead.lead_number,
+                    source: lead.source,
+                    first_name: lead.first_name,
+                    last_name: lead.last_name,
+                    company: lead.company,
+                    email: lead.email,
+                    phone: lead.phone,
+                    country_code: lead.country_code,
+                    city: lead.city,
+                    zip: lead.zip,
+                    country: lead.country,
+                    interests: lead.interests,
+                    additional_interests: lead.additional_interests,
+                    requested_products: lead.requested_products,
+                    delivery_preference: lead.delivery_preference,
+                    consultation_type: lead.consultation_type,
+                    notes: lead.notes ?? lead.message,
+                    lead_score: lead.lead_score,
+                    score_category: lead.score_category,
+                    ai_priority: lead.ai_priority,
+                    ai_summary: lead.ai_summary,
+                    app_base_url: 'https://alixwork.de',
+                  },
+                },
+              });
+              toast.dismiss(tid);
+              if (error) toast.error('Senden fehlgeschlagen: ' + error.message);
+              else toast.success('Benachrichtigung gesendet');
+            }}
+          >
+            <Send className="h-4 w-4 mr-1" />Benachrichtigung senden
+          </Button>
           {!lead.archived && (
             <Button variant="ghost" onClick={() => updateLead({ archived: true, lead_status: 'Archiviert' })}>
               <Archive className="h-4 w-4 mr-1" />Archivieren
