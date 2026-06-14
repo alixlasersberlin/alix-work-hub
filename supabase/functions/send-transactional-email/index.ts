@@ -29,37 +29,42 @@ Deno.serve(async (req) => {
     })
   }
   try {
-    const authClient = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
-      { global: { headers: { Authorization: authHeader } }, auth: { autoRefreshToken: false, persistSession: false } },
-    )
     const token = authHeader.replace('Bearer ', '')
-    const { data, error } = await authClient.auth.getUser(token)
-    if (error || !data?.user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
-    // Authorization: only allow privileged roles to send emails (prevent abuse by e.g. suppliers)
-    const { data: isAdmin } = await authClient.rpc('is_admin')
-    let allowed = !!isAdmin
-    if (!allowed) {
-      const { data: canManage } = await authClient.rpc('can_manage_orders')
-      allowed = !!canManage
-    }
-    if (!allowed) {
-      const { data: canFinance } = await authClient.rpc('can_access_finance')
-      allowed = !!canFinance
-    }
-    if (!allowed) {
-      const { data: canQm } = await authClient.rpc('can_access_qm')
-      allowed = !!canQm
-    }
-    if (!allowed) {
-      return new Response(JSON.stringify({ error: 'Forbidden' }), {
-        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    // Server-to-server bypass: edge functions invoking this one pass the service role key
+    if (token && token === serviceRoleKey) {
+      // trusted internal caller, skip user/role checks
+    } else {
+      const authClient = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_ANON_KEY')!,
+        { global: { headers: { Authorization: authHeader } }, auth: { autoRefreshToken: false, persistSession: false } },
+      )
+      const { data, error } = await authClient.auth.getUser(token)
+      if (error || !data?.user) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+      const { data: isAdmin } = await authClient.rpc('is_admin')
+      let allowed = !!isAdmin
+      if (!allowed) {
+        const { data: canManage } = await authClient.rpc('can_manage_orders')
+        allowed = !!canManage
+      }
+      if (!allowed) {
+        const { data: canFinance } = await authClient.rpc('can_access_finance')
+        allowed = !!canFinance
+      }
+      if (!allowed) {
+        const { data: canQm } = await authClient.rpc('can_access_qm')
+        allowed = !!canQm
+      }
+      if (!allowed) {
+        return new Response(JSON.stringify({ error: 'Forbidden' }), {
+          status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
     }
   } catch {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
