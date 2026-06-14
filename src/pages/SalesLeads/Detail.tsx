@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import {
-  ArrowLeft, FilePlus, UserPlus, UserCheck, Archive, Phone, CalendarPlus, Mail, Loader2, Pencil, Save, X,
+  ArrowLeft, FilePlus, UserPlus, UserCheck, Archive, Phone, CalendarPlus, Mail, Loader2, Pencil, Save, X, Send,
 } from 'lucide-react';
 
 const STATUS_OPTIONS = [
