@@ -131,6 +131,37 @@ Deno.serve(async (req) => {
       }
     } catch { /* ignore */ }
 
+    // Interne Benachrichtigung per E-Mail an Vertrieb (homebln + rde)
+    try {
+      await supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "sales-lead-internal-notification",
+          recipientEmail: "homebln@icloud.com",
+          idempotencyKey: `sales-lead-internal-${inserted?.id}`,
+          extraCc: ["rde@alix-lasers.com"],
+          skipDefaultCopies: true,
+          templateData: {
+            lead_id: inserted?.id,
+            lead_number: inserted?.lead_number,
+            source: sourceRaw,
+            first_name: fn,
+            last_name: ln,
+            company: payload.company,
+            email: payload.email,
+            phone: payload.phone,
+            city: payload.city,
+            zip: payload.zip,
+            country: payload.country,
+            requested_products: payload.requested_products,
+            notes: payload.notes ?? payload.message,
+            app_base_url: "https://alixwork.de",
+          },
+        },
+      });
+    } catch (e) {
+      console.warn("internal lead notification failed", e);
+    }
+
     return new Response(JSON.stringify({ ok: true, lead_id: inserted?.id, lead_number: inserted?.lead_number }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
