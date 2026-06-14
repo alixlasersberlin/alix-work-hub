@@ -21,6 +21,7 @@ import { template as financeReminder } from './finance-reminder.tsx'
 import { template as salesWizardConfirmation } from './sales-wizard-confirmation.tsx'
 import { template as alixSignInvite } from './alix-sign-invite.tsx'
 import { template as alixSignConfirmation } from './alix-sign-confirmation.tsx'
+import { template as salesLeadInternalNotification } from './sales-lead-internal-notification.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'otp-code': otpCode,
@@ -35,4 +36,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'sales-wizard-confirmation': salesWizardConfirmation,
   'alix-sign-invite': alixSignInvite,
   'alix-sign-confirmation': alixSignConfirmation,
+  'sales-lead-internal-notification': salesLeadInternalNotification,
 }
