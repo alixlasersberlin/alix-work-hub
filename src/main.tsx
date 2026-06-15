@@ -6,11 +6,13 @@ import { bootUiTemplate } from "./hooks/useUiTemplate";
 import { bootInfinityTheme } from "./hooks/useInfinityTheme";
 import { bootA11yPrefs } from "./hooks/useA11yPrefs";
 import { bootAIBackground } from "./hooks/useAIBackground";
+import { bootPageFade } from "./hooks/usePageFade";
 
 bootUiTemplate();
 bootInfinityTheme();
 bootA11yPrefs();
 bootAIBackground();
+bootPageFade();
 
 
 // Workaround for React bug with browser translation extensions (Google Translate, etc.)

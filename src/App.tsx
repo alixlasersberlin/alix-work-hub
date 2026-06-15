@@ -16,6 +16,7 @@ import { GlobalCommandBar } from "@/components/infinity/GlobalCommandBar";
 import { CopilotBar } from "@/components/infinity/CopilotBar";
 import { AIBackground } from "@/components/infinity/AIBackground";
 import { ShortcutsOverlay } from "@/components/infinity/ShortcutsOverlay";
+import { TopProgressBar } from "@/components/infinity/TopProgressBar";
 import { Truck as TruckIcon, Banknote as BanknoteIcon, FileSignature, CreditCard, Loader2 } from "lucide-react";
 
 // Eager: Auth-/Shell-Routen (klein & für initialen Render nötig)
@@ -786,6 +787,7 @@ const App = () => (
                     <GlobalCommandBar />
                     <CopilotBar />
                     <ShortcutsOverlay />
+                    <TopProgressBar />
                     <LeihgeraetReminder />
                     {/* TemplateSwitcher (Standard / ALIXWORK NEO) deaktiviert */}
                   </MaintenanceGate>

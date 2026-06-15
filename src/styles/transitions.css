@@ -1,0 +1,38 @@
+/* Phase I-15: Page Transitions */
+
+/* Top progress bar (NProgress-style, gold) */
+.iprog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  z-index: 9999;
+  pointer-events: none;
+  background: transparent;
+  overflow: hidden;
+}
+.iprog__bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg,
+    hsl(45 95% 55%) 0%,
+    hsl(38 92% 60%) 50%,
+    hsl(45 95% 55%) 100%);
+  box-shadow: 0 0 10px hsl(45 95% 55% / 0.6), 0 0 4px hsl(45 95% 55% / 0.4);
+  transition: width 220ms ease-out, opacity 300ms ease-out 150ms;
+}
+.iprog__bar[data-state="done"] { opacity: 0; }
+
+/* Route-change fade (opt-in via [data-page-fade="on"] on <html>) */
+html[data-page-fade="on"] .iroute {
+  animation: iroute-in 220ms ease-out both;
+}
+@keyframes iroute-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Reduced motion: no transitions, no animations */
+html[data-a11y-motion="reduced"] .iprog__bar { transition: none; }
+html[data-a11y-motion="reduced"] .iroute { animation: none; }
