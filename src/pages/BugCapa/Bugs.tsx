@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -36,7 +36,6 @@ export default function Bugs() {
   const [rows, setRows] = useState<Bug[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
-  const keepCreateDialogOpenUntilRef = useRef(0);
   const [editing, setEditing] = useState<Bug | null>(null);
   const [detail, setDetail] = useState<Bug | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -118,14 +117,8 @@ export default function Bugs() {
     }
   }
 
-  function openCreateDialog() {
-    keepCreateDialogOpenUntilRef.current = Date.now() + 350;
+  function startCreate() {
     setOpen(true);
-  }
-
-  function handleCreateDialogOpenChange(nextOpen: boolean) {
-    if (!nextOpen && Date.now() < keepCreateDialogOpenUntilRef.current) return;
-    setOpen(nextOpen);
   }
 
   async function setStatus(id: string, status: string) {
@@ -171,49 +164,9 @@ export default function Bugs() {
     <Section
       title={`Bugs (${visibleRows.length})`}
       action={
-        <Dialog open={open} onOpenChange={handleCreateDialogOpenChange}>
-          <Button type="button" onClick={openCreateDialog}><Plus className="h-4 w-4 mr-1" /> Neuer Bug</Button>
-          <DialogContent
-            className="max-w-2xl"
-            onInteractOutside={(event) => event.preventDefault()}
-            onPointerDownOutside={(event) => event.preventDefault()}
-          >
-            <DialogHeader>
-              <DialogTitle>Neuen Bug erfassen</DialogTitle>
-              <DialogDescription>Erfasse Titel, Beschreibung und Priorität für den neuen Bug.</DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-3 py-2">
-              <div><Label>Titel *</Label><Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} /></div>
-              <div><Label>Beschreibung</Label><Textarea rows={4} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></div>
-              <div className="grid grid-cols-3 gap-3">
-                <div><Label>Produkt</Label><Input value={form.product} onChange={e => setForm({ ...form, product: e.target.value })} /></div>
-                <div><Label>Modul</Label><Input value={form.module} onChange={e => setForm({ ...form, module: e.target.value })} /></div>
-                <div><Label>Softwareversion</Label><Input value={form.software_version} onChange={e => setForm({ ...form, software_version: e.target.value })} /></div>
-              </div>
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <Label>Priorität</Label>
-                  <Select value={form.priority} onValueChange={v => setForm({ ...form, priority: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{BUG_PRIORITY.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Kritikalität</Label>
-                  <Select value={form.criticality} onValueChange={v => setForm({ ...form, criticality: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{BUG_CRITICALITY.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
-                <div><Label>Fälligkeit</Label><Input type="date" value={form.due_date} onChange={e => setForm({ ...form, due_date: e.target.value })} /></div>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="ghost" onClick={() => setOpen(false)}>Abbrechen</Button>
-              <Button onClick={create}>Speichern</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <Button type="button" onClick={startCreate} disabled={open}>
+          <Plus className="h-4 w-4 mr-1" /> Neuer Bug
+        </Button>
       }
     >
       <div className="mb-3 inline-flex rounded-md border border-border p-1 bg-muted/30">
