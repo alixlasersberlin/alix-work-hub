@@ -76,8 +76,12 @@ export default function MfaChallenge() {
               <Label htmlFor="code">Authenticator-Code</Label>
               <Input
                 id="code"
+                name="alix-mfa-code"
                 inputMode="numeric"
-                autoComplete="one-time-code"
+                autoComplete="off"
+                data-1p-ignore
+                data-lpignore="true"
+                data-form-type="other"
                 maxLength={6}
                 value={code}
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
