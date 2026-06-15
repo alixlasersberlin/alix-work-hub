@@ -1673,3 +1673,329 @@ html[data-experience="mega"] main > * {
 .slide-in { animation: alix-fade-up 280ms ease both; }
 .kpi-tile { transition: transform 220ms ease, box-shadow 220ms ease; }
 .kpi-tile:hover { transform: translateY(-2px); }
+
+/* ============================================================
+   AURORA LUX — Refinement Layer (Hell + Dark)
+   - Editorial luxury serif display (Fraunces) + Inter Tight body
+   - Champagne gold accent (less candy, more refined)
+   - Hairline technical grid + monospace meta tags
+   - Calmer 3D interactions (premium restraint over flash)
+   - Scope: .design-aurora only
+   ============================================================ */
+
+/* Palette refinements — pearl background, champagne gold */
+.design-aurora {
+  --background: 38 28% 97.5%;
+  --foreground: 222 35% 11%;
+  --card: 0 0% 100%;
+  --muted-foreground: 222 14% 38%;
+  --border: 220 18% 86%;
+
+  /* Champagne gold (warmer, lower saturation than candy yellow) */
+  --aurora-gold: 40 70% 56%;
+  --aurora-gold-deep: 36 55% 42%;
+  --aurora-platinum: 220 18% 88%;
+
+  --shadow-card:
+    0 1px 0 0 hsl(0 0% 100% / 0.95) inset,
+    0 1px 1px 0 hsl(222 30% 20% / 0.03),
+    0 14px 36px -16px hsl(222 30% 20% / 0.10),
+    0 36px 70px -36px hsl(222 50% 25% / 0.12);
+  --shadow-gold: 0 12px 36px -14px hsl(var(--aurora-gold) / 0.30);
+}
+
+/* Body backdrop: pearl with the faintest champagne wash */
+.design-aurora body {
+  background:
+    radial-gradient(900px 600px at 8% -10%, hsl(var(--aurora-1) / 0.10), transparent 60%),
+    radial-gradient(800px 500px at 100% 0%, hsl(var(--aurora-2) / 0.09), transparent 60%),
+    radial-gradient(700px 500px at 50% 110%, hsl(var(--aurora-gold) / 0.07), transparent 60%),
+    linear-gradient(180deg, hsl(38 30% 98.5%), hsl(38 24% 96.5%));
+  background-attachment: fixed;
+}
+
+/* Hairline technical grid — barely visible, premium engineered feel */
+.design-aurora body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, hsl(222 25% 18% / 0.025) 1px, transparent 1px),
+    linear-gradient(to bottom, hsl(222 25% 18% / 0.025) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse at 50% 40%, black 30%, transparent 90%);
+  -webkit-mask-image: radial-gradient(ellipse at 50% 40%, black 30%, transparent 90%);
+}
+.design-aurora.aurora-spotlight-on body::after {
+  /* Spotlight feature stays authoritative if active */
+  background-image: none;
+}
+
+/* Typography — Fraunces (editorial luxe) + Inter Tight (technical body) */
+.design-aurora body,
+.design-aurora input,
+.design-aurora textarea,
+.design-aurora select,
+.design-aurora button {
+  font-family: 'Inter Tight', 'Inter', system-ui, -apple-system, sans-serif;
+  font-feature-settings: 'ss01', 'cv11', 'tnum';
+  letter-spacing: -0.005em;
+}
+
+.design-aurora h1,
+.design-aurora h2,
+.design-aurora h3,
+.design-aurora .font-display {
+  font-family: 'Fraunces', 'Plus Jakarta Sans', Georgia, serif;
+  font-variation-settings: "opsz" 96, "SOFT" 30;
+  font-weight: 500;
+  letter-spacing: -0.022em;
+  line-height: 1.08;
+}
+
+.design-aurora h1 {
+  font-weight: 400;
+  font-variation-settings: "opsz" 144, "SOFT" 30;
+  letter-spacing: -0.028em;
+}
+
+/* Editorial hairline rule under primary headings */
+.design-aurora main > * > h1::after,
+.design-aurora main h1.lux-rule::after {
+  content: "";
+  display: block;
+  margin-top: 0.5rem;
+  width: 56px;
+  height: 2px;
+  background: linear-gradient(90deg,
+    hsl(var(--aurora-gold)) 0%,
+    hsl(var(--aurora-gold) / 0.4) 60%,
+    transparent 100%);
+  border-radius: 2px;
+}
+
+/* Monospace technical numerals + small-caps meta */
+.design-aurora .font-mono,
+.design-aurora code,
+.design-aurora [class*="tabular"],
+.design-aurora .badge-spec {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+  font-feature-settings: 'tnum', 'zero', 'ss02';
+}
+
+.design-aurora .text-xs.uppercase,
+.design-aurora .text-\[11px\].uppercase,
+.design-aurora [class*="uppercase"][class*="text-xs"] {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  letter-spacing: 0.14em;
+  font-weight: 500;
+  font-size: 10.5px;
+}
+
+/* Cards — quieter base, champagne edge on hover */
+.design-aurora .bg-card,
+.design-aurora [class*="rounded-lg"][class*="border"],
+.design-aurora [class*="rounded-xl"][class*="border"] {
+  background-image: linear-gradient(180deg,
+    hsl(0 0% 100% / 0.98),
+    hsl(38 22% 98% / 0.96)) !important;
+  border: 1px solid hsl(220 18% 90% / 0.9) !important;
+  box-shadow:
+    0 1px 0 hsl(0 0% 100% / 1) inset,
+    0 1px 2px 0 hsl(222 30% 20% / 0.04),
+    0 12px 32px -16px hsl(222 30% 20% / 0.10);
+}
+.design-aurora .bg-card:hover,
+.design-aurora [class*="rounded-lg"][class*="border"]:hover,
+.design-aurora [class*="rounded-xl"][class*="border"]:hover {
+  transform: translate3d(0, -1px, 0);
+  border-color: hsl(var(--aurora-gold) / 0.45) !important;
+  box-shadow:
+    0 1px 0 hsl(0 0% 100% / 1) inset,
+    0 18px 40px -18px hsl(var(--aurora-gold) / 0.22),
+    0 8px 18px -10px hsl(222 30% 20% / 0.12);
+}
+
+/* Cards get a faint platinum hairline at the top — engineered feel */
+.design-aurora .bg-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    hsl(var(--aurora-gold) / 0.5) 20%,
+    hsl(var(--aurora-platinum) / 0.6) 50%,
+    hsl(var(--aurora-gold) / 0.5) 80%,
+    transparent 100%);
+  opacity: 0.55;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* Table headers — refined uppercase technical labels */
+.design-aurora table thead th {
+  background: linear-gradient(180deg,
+    hsl(38 22% 98%),
+    hsl(38 18% 95%)) !important;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: hsl(222 25% 28%);
+  border-bottom: 1px solid hsl(var(--aurora-gold) / 0.40) !important;
+  text-shadow: none;
+  padding-top: 0.85rem;
+  padding-bottom: 0.85rem;
+}
+
+/* Tables — calmer rows, champagne accent on hover (no shove) */
+.design-aurora table tbody tr:hover,
+.design-aurora [role="list"] > *:hover,
+.design-aurora ul > li:hover,
+.design-aurora ol > li:hover,
+.design-aurora .divide-y > *:hover,
+.design-aurora [class*="divide-y"] > *:hover {
+  background-image: linear-gradient(90deg,
+    hsl(var(--aurora-gold) / 0.07),
+    hsl(var(--aurora-gold) / 0.03) 70%,
+    transparent) !important;
+  transform: none;
+  box-shadow: inset 2px 0 0 hsl(var(--aurora-gold)) !important;
+}
+
+/* Tabular numerals everywhere in tables — engineered alignment */
+.design-aurora table tbody td {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Buttons — restrained gold pressed into pearl */
+.design-aurora .bg-primary,
+.design-aurora button[class*="bg-primary"] {
+  background-image: linear-gradient(180deg,
+    hsl(var(--aurora-gold)),
+    hsl(var(--aurora-gold-deep))) !important;
+  color: hsl(38 40% 10%) !important;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  border: 1px solid hsl(var(--aurora-gold-deep) / 0.5) !important;
+  box-shadow:
+    0 1px 0 hsl(40 100% 92% / 0.5) inset,
+    0 -1px 0 hsl(0 0% 0% / 0.10) inset,
+    0 8px 20px -10px hsl(var(--aurora-gold) / 0.40) !important;
+}
+.design-aurora .bg-primary:hover,
+.design-aurora button[class*="bg-primary"]:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.04);
+  box-shadow:
+    0 1px 0 hsl(40 100% 92% / 0.6) inset,
+    0 -1px 0 hsl(0 0% 0% / 0.12) inset,
+    0 14px 28px -12px hsl(var(--aurora-gold) / 0.55),
+    0 0 0 1px hsl(var(--aurora-gold) / 0.4) !important;
+}
+
+/* Inputs — pearl with champagne focus ring */
+.design-aurora input,
+.design-aurora textarea,
+.design-aurora select {
+  background-color: hsl(0 0% 100%);
+  border: 1px solid hsl(220 18% 86%);
+  border-radius: calc(var(--radius) - 2px);
+  transition: border-color .2s ease, box-shadow .2s ease, background-color .2s ease;
+}
+.design-aurora input:focus,
+.design-aurora textarea:focus,
+.design-aurora select:focus,
+.design-aurora input:focus-visible,
+.design-aurora textarea:focus-visible {
+  outline: none;
+  border-color: hsl(var(--aurora-gold) / 0.7);
+  box-shadow:
+    0 0 0 3px hsl(var(--aurora-gold) / 0.18),
+    0 4px 14px -6px hsl(var(--aurora-gold) / 0.22);
+}
+
+/* Sidebar refinement — quieter glass, gold rail on active */
+.design-aurora aside [data-active="true"],
+.design-aurora nav [data-active="true"],
+.design-aurora [class*="sidebar"] [data-active="true"],
+.design-aurora .bg-sidebar-accent {
+  background: linear-gradient(90deg,
+    hsl(var(--aurora-gold) / 0.14),
+    hsl(var(--aurora-gold) / 0.04) 70%,
+    transparent) !important;
+  box-shadow:
+    inset 2px 0 0 hsl(var(--aurora-gold)),
+    inset 0 1px 0 hsl(0 0% 100% / 0.4) !important;
+  border-radius: 10px;
+}
+.design-aurora aside a:hover,
+.design-aurora nav a:hover,
+.design-aurora [class*="sidebar"] a:hover {
+  transform: none;
+  background: hsl(var(--aurora-gold) / 0.07) !important;
+  box-shadow: inset 2px 0 0 hsl(var(--aurora-gold) / 0.5) !important;
+}
+
+/* Scrollbar — champagne hairline */
+.design-aurora ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.design-aurora ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg,
+    hsl(var(--aurora-gold) / 0.5),
+    hsl(var(--aurora-gold-deep) / 0.5));
+  border: 2px solid hsl(38 28% 97%);
+  border-radius: 999px;
+}
+.design-aurora ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Selection — champagne */
+.design-aurora ::selection {
+  background: hsl(var(--aurora-gold) / 0.28);
+  color: hsl(222 40% 10%);
+}
+
+/* DARK MODE — Fraunces stays, palette deepens to obsidian + warm gold */
+.design-aurora.dark {
+  --aurora-gold: 42 78% 60%;
+  --aurora-gold-deep: 38 65% 48%;
+  --aurora-platinum: 220 14% 70%;
+}
+.design-aurora.dark body::after {
+  background-image:
+    linear-gradient(to right, hsl(220 30% 90% / 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, hsl(220 30% 90% / 0.04) 1px, transparent 1px);
+}
+.design-aurora.dark .bg-card,
+.design-aurora.dark [class*="rounded-lg"][class*="border"],
+.design-aurora.dark [class*="rounded-xl"][class*="border"] {
+  background-image: linear-gradient(180deg,
+    hsl(224 40% 11% / 0.85),
+    hsl(224 40% 8% / 0.8)) !important;
+  border-color: hsl(220 20% 96% / 0.08) !important;
+}
+.design-aurora.dark .bg-card:hover {
+  border-color: hsl(var(--aurora-gold) / 0.4) !important;
+}
+.design-aurora.dark table thead th {
+  background: linear-gradient(180deg,
+    hsl(224 38% 13%),
+    hsl(224 38% 10%)) !important;
+  color: hsl(220 18% 78%);
+  border-bottom-color: hsl(var(--aurora-gold) / 0.4) !important;
+}
+
+/* Reduced motion — keep all of the above static */
+@media (prefers-reduced-motion: reduce) {
+  .design-aurora .bg-card:hover {
+    transform: none !important;
+  }
+}
+
