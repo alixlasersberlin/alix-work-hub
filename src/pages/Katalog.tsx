@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { PageSizeSelector, usePagination, PaginationControls } from '@/components/PageSizeSelector';
 import { Loader2, Search, BookOpen, Download, FileSpreadsheet } from 'lucide-react';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 type ZohoItem = {
   id: string;
@@ -174,24 +175,22 @@ export default function Katalog() {
 
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-[1600px] mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-display font-bold gold-text flex items-center gap-2">
-            <BookOpen className="w-6 h-6" /> Katalog
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Artikel auswählen, Felder festlegen und als Katalog herunterladen.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={downloadCsv} disabled={selectedItems.length === 0}>
-            <FileSpreadsheet className="w-4 h-4 mr-2" /> CSV
-          </Button>
-          <Button onClick={downloadPdf} disabled={selectedItems.length === 0} className="gold-gradient text-primary-foreground">
-            <Download className="w-4 h-4 mr-2" /> Katalog (PDF)
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        icon={BookOpen}
+        title="Katalog"
+        subtitle="Artikel auswählen, Felder festlegen und als Katalog herunterladen."
+        noBreadcrumbs
+        actions={
+          <>
+            <Button variant="outline" onClick={downloadCsv} disabled={selectedItems.length === 0}>
+              <FileSpreadsheet className="w-4 h-4 mr-2" /> CSV
+            </Button>
+            <Button onClick={downloadPdf} disabled={selectedItems.length === 0} className="gold-gradient text-primary-foreground">
+              <Download className="w-4 h-4 mr-2" /> Katalog (PDF)
+            </Button>
+          </>
+        }
+      />
 
       <Card className="p-4 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

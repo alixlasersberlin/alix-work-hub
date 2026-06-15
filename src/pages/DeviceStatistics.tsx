@@ -14,6 +14,7 @@ import {
   PieChart as PieChartIcon,
 } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 type SortField = 'item_name' | 'order_count' | 'total_quantity' | 'sold_quantity' | 'open_quantity';
 type SortDir = 'asc' | 'desc';
@@ -226,19 +227,12 @@ export default function DeviceStatistics() {
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
-            <BarChart3 className="w-6 h-6 text-primary" />
-            Gerätetypen
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {filtered.length} Modelle · {totals.items.toLocaleString('de-DE')} Stück gesamt ·{' '}
-            <span className="text-emerald-500 font-medium">{totals.sold.toLocaleString('de-DE')} verkauft</span> ·{' '}
-            <span className="text-amber-500 font-medium">{totals.open.toLocaleString('de-DE')} offen</span>
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        icon={BarChart3}
+        title="Gerätetypen"
+        subtitle={`${filtered.length} Modelle · ${totals.items.toLocaleString('de-DE')} Stück gesamt · ${totals.sold.toLocaleString('de-DE')} verkauft · ${totals.open.toLocaleString('de-DE')} offen`}
+        noBreadcrumbs
+      />
 
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <div className="relative flex-1 max-w-sm">
