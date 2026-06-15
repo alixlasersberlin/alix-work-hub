@@ -7,6 +7,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 type Entry = { path: string; label: string; desc: string; roles: string[] };
 type Section = {
@@ -565,20 +566,17 @@ const workflowDetails: Record<string, WorkflowDetail> = {
 export default function Dokumentation() {
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <BookOpen className="h-7 w-7 text-primary" />
-          <div>
-            <h1 className="text-3xl font-bold">Dokumentation</h1>
-            <p className="text-muted-foreground text-sm">
-              Komplette Übersicht aller Module und Unterpunkte von Alix Work.
-            </p>
-          </div>
-        </div>
-        <Button asChild variant="outline" size="sm">
-          <Link to="/hilfe"><ArrowLeft className="h-4 w-4 mr-2" /> Zurück zur Hilfe</Link>
-        </Button>
-      </div>
+      <PageHeader
+        icon={BookOpen}
+        title="Dokumentation"
+        subtitle="Komplette Übersicht aller Module und Unterpunkte von Alix Work."
+        noBreadcrumbs
+        actions={
+          <Button asChild variant="outline" size="sm">
+            <Link to="/hilfe"><ArrowLeft className="h-4 w-4 mr-2" /> Zurück zur Hilfe</Link>
+          </Button>
+        }
+      />
 
       <Card>
         <CardHeader>

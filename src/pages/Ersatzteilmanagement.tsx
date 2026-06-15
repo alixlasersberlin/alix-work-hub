@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
 import { Boxes, AlertTriangle, PackageCheck, ShoppingCart, TrendingDown, Loader2, RefreshCw, Truck } from 'lucide-react';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 type StockRow = {
   id: string;
@@ -129,19 +130,19 @@ export default function Ersatzteilmanagement() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <Boxes className="h-7 w-7 text-primary" />
-        <div>
-          <h1 className="text-3xl font-bold">Ersatzteilmanagement</h1>
-          <p className="text-muted-foreground text-sm">Lager, Bestellvorschläge, Wareneingang, Verbrauch und Technikerlager.</p>
-        </div>
-        <div className="ml-auto flex gap-2">
+      <PageHeader
+        icon={Boxes}
+        title="Ersatzteilmanagement"
+        subtitle="Lager, Bestellvorschläge, Wareneingang, Verbrauch und Technikerlager."
+        noBreadcrumbs
+        actions={
           <Button variant="outline" size="sm" onClick={load} disabled={loading}>
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-1" />}
             Aktualisieren
           </Button>
-        </div>
-      </div>
+        }
+      />
+
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card><CardContent className="p-4">

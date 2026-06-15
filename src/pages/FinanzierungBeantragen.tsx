@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { StatusBadge } from '@/components/StatusBadge';
 import { supabase } from '@/integrations/supabase/client';
 import BankFinancingTab from '@/components/BankFinancingTab';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 type AvailableOrder = {
   id: string;
@@ -132,15 +133,12 @@ export default function FinanzierungBeantragen() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <FileSignature className="h-7 w-7 text-primary" />
-        <div>
-          <h1 className="text-3xl font-bold">Finanzierung beantragen</h1>
-          <p className="text-muted-foreground text-sm">
-            Wähle einen Auftrag aus den verfügbaren Aufträgen, um eine Finanzierung zu beantragen.
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        icon={FileSignature}
+        title="Finanzierung beantragen"
+        subtitle="Wähle einen Auftrag aus den verfügbaren Aufträgen, um eine Finanzierung zu beantragen."
+        noBreadcrumbs
+      />
 
       <Card>
         <CardHeader>
