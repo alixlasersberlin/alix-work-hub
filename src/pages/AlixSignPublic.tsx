@@ -34,6 +34,19 @@ export default function AlixSignPublic() {
   const drawing = useRef(false);
   const hasInk = useRef(false);
 
+  // Force light theme on this public page so inputs/labels remain readable
+  // regardless of the visitor's OS dark-mode preference.
+  useEffect(() => {
+    const root = document.documentElement;
+    const hadDark = root.classList.contains('dark');
+    root.classList.remove('dark');
+    root.classList.add('light');
+    return () => {
+      root.classList.remove('light');
+      if (hadDark) root.classList.add('dark');
+    };
+  }, []);
+
   useEffect(() => {
     (async () => {
       try {
