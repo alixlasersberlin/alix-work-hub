@@ -43,9 +43,11 @@ export default function FinanceSystemstatus() {
   return (
     <div className="container mx-auto px-4 py-8">
       <PageHeader
-        icon={<SettingsIcon className="w-6 h-6 text-primary" />}
+        icon={SettingsIcon}
         title="Finance Systemstatus"
         subtitle="Status der Subsysteme & manuelle Synchronisation"
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={running ? 'progress' : 'done'} label={running ? 'Sync läuft' : 'Bereit'} pulse={running} />}
         actions={isSuperAdmin && (
           <Button onClick={runSync} disabled={running} className="gold-gradient text-primary-foreground">
             {running ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <PlayCircle className="w-4 h-4 mr-2" />}
