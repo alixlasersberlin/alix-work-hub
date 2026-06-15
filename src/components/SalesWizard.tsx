@@ -70,6 +70,8 @@ type State = {
   first_name: string;
   last_name: string;
   company: string;
+  studio_in_germany: boolean;
+  has_nisv: '' | 'ja' | 'nein';
   country_code: string;
   phone: string;
   email: string;
@@ -89,6 +91,8 @@ const INITIAL: State = {
   first_name: '',
   last_name: '',
   company: '',
+  studio_in_germany: false,
+  has_nisv: '',
   country_code: '+49',
   phone: '',
   email: '',
@@ -146,8 +150,12 @@ export default function SalesWizard({ publicMode = false }: Props) {
       const deviceLines: string[] = [];
       if (data.laser_model) deviceLines.push(`Wunschgerät (Alix Lasers): ${data.laser_model}`);
       if (data.beauty_model) deviceLines.push(`Wunschgerät (Alix Beauty): ${data.beauty_model}`);
+      if (data.studio_in_germany) {
+        deviceLines.push(`Studio in Deutschland: Ja`);
+        if (data.has_nisv) deviceLines.push(`NISV: ${data.has_nisv === 'ja' ? 'Ja' : 'Nein'}`);
+      }
       const mergedNotes = [deviceLines.join('\n'), data.notes].filter(Boolean).join('\n\n');
-      const { laser_model, beauty_model, ...rest } = data;
+      const { laser_model, beauty_model, studio_in_germany, has_nisv, ...rest } = data;
       const { data: json, error: fnError } = await supabase.functions.invoke('sales-wizard-submit', {
         body: {
           ...rest,
@@ -156,6 +164,8 @@ export default function SalesWizard({ publicMode = false }: Props) {
             ...data.additional_interests,
             ...(laser_model ? [`Gerät: ${laser_model}`] : []),
             ...(beauty_model ? [`Gerät: ${beauty_model}`] : []),
+            ...(studio_in_germany ? ['Studio: Deutschland'] : []),
+            ...(studio_in_germany && has_nisv ? [`NISV: ${has_nisv === 'ja' ? 'Ja' : 'Nein'}`] : []),
           ],
           source: publicMode ? 'alixwork_wizard_public' : 'alixwork_wizard_internal',
           turnstile_token: captchaToken,
@@ -398,6 +408,41 @@ export default function SalesWizard({ publicMode = false }: Props) {
                 <Field label={t.last_name}>
                   <Input value={data.last_name} onChange={(e) => setData({ ...data, last_name: e.target.value })} className='bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-cyan-400/60 focus-visible:border-cyan-300/60' />
                 </Field>
+              </div>
+
+              <div className="mt-6 space-y-4">
+                <label className="flex items-center gap-3 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={data.studio_in_germany}
+                    onChange={(e) => setData({ ...data, studio_in_germany: e.target.checked, has_nisv: e.target.checked ? data.has_nisv : '' })}
+                    className="h-4 w-4 rounded border-white/30 bg-white/5 accent-cyan-400"
+                  />
+                  <span className="text-sm text-white/90">Mein Studio ist in Deutschland <span className="text-white/50">(optional)</span></span>
+                </label>
+
+                {data.studio_in_germany && (
+                  <div className="pl-7 flex flex-wrap items-center gap-4">
+                    <span className="text-sm text-white/80">Haben Sie NISV?</span>
+                    <div className="flex gap-2">
+                      {(['ja', 'nein'] as const).map((v) => (
+                        <button
+                          key={v}
+                          type="button"
+                          onClick={() => setData({ ...data, has_nisv: v })}
+                          className={cn(
+                            'px-4 py-1.5 rounded-md text-sm border transition',
+                            data.has_nisv === v
+                              ? 'border-cyan-300 bg-cyan-400/15 text-white'
+                              : 'border-white/15 bg-white/5 text-white/80 hover:border-cyan-300/50',
+                          )}
+                        >
+                          {v === 'ja' ? 'Ja' : 'Nein'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </Section>
           )}
