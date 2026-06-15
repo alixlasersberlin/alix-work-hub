@@ -652,6 +652,8 @@ export default function Lagergeraete({
     setLeihCustomerName('');
     setLeihShotCount('');
     setLeihStart('');
+    setLeihRepairId(null);
+    setLeihRepairLabel('');
     setSendCustomerEmailOnSave(false);
   };
 
