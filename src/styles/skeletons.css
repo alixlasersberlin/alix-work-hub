@@ -1,0 +1,37 @@
+/* Phase I-16: Premium Skeletons */
+
+.iskel {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted) / 0.35) 0%,
+    hsl(var(--muted) / 0.6) 50%,
+    hsl(var(--muted) / 0.35) 100%
+  );
+  background-size: 200% 100%;
+  border-radius: 8px;
+  animation: iskel-shimmer 1.6s ease-in-out infinite;
+}
+.iskel--gold {
+  background: linear-gradient(
+    90deg,
+    hsl(45 30% 18% / 0.4) 0%,
+    hsl(45 60% 35% / 0.55) 50%,
+    hsl(45 30% 18% / 0.4) 100%
+  );
+  background-size: 200% 100%;
+}
+.iskel--text { height: 0.85em; border-radius: 4px; }
+.iskel--title { height: 1.4em; border-radius: 6px; }
+.iskel--avatar { width: 40px; height: 40px; border-radius: 50%; }
+.iskel--card { height: 120px; border-radius: 14px; }
+.iskel--row { height: 44px; border-radius: 10px; }
+
+@keyframes iskel-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Reduced motion: static muted block */
+html[data-a11y-motion="reduced"] .iskel { animation: none; }

@@ -9,6 +9,8 @@
 @import './styles/a11y.css';
 /* Page Transitions (Phase I-15) */
 @import './styles/transitions.css';
+/* Premium Skeletons (Phase I-16) */
+@import './styles/skeletons.css';
 
 /* Fonts werden in index.html non-blocking geladen (preconnect + preload) */
 
