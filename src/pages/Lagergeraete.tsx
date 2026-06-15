@@ -540,6 +540,36 @@ export default function Lagergeraete({
     return () => { cancelled = true; clearTimeout(t); };
   }, [customerPickerOpen, customerSearch]);
 
+  // Reparaturauftrag-Suche für Leihgerät
+  useEffect(() => {
+    if (!repairPickerOpen) return;
+    const q = repairSearch.trim();
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      setLoadingRepairs(true);
+      let query = sbRepair
+        .from('repair_orders')
+        .select('id, repair_number, customer_name, device_model, device_serial_number, repair_status')
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (q.length >= 1) {
+        query = query.or(
+          `repair_number.ilike.%${q}%,customer_name.ilike.%${q}%,device_serial_number.ilike.%${q}%,device_model.ilike.%${q}%`,
+        );
+      }
+      const { data } = await query;
+      if (cancelled) return;
+      const opts = (data ?? []).map((r: any) => ({
+        id: r.id,
+        label: `${r.repair_number ?? '—'} · ${r.customer_name ?? ''}${r.device_serial_number ? ' · SN ' + r.device_serial_number : ''}${r.repair_status ? ' · ' + r.repair_status : ''}`.trim(),
+      }));
+      setRepairOptions(opts);
+      setLoadingRepairs(false);
+    }, 200);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [repairPickerOpen, repairSearch]);
+
+
 
 
   const loadDevices = async () => {
