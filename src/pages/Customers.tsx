@@ -13,6 +13,8 @@ import { VipBadge } from '@/components/VipBadge';
 import { isCustomerVip, vipFirst } from '@/lib/vip';
 import { SourceBadge, sourceLabel, sourceFlag } from '@/lib/source-system';
 import { useAtOnly } from '@/hooks/useAtOnly';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 
 type SortField = 'company_name' | 'contact_name' | 'created_at';
 type SortDir = 'asc' | 'desc';
@@ -132,28 +134,24 @@ export default function Customers() {
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
-      <div className="mb-6 flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
-            <Building2 className="w-6 h-6 text-primary" />
-            Kunden
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">{totalFiltered} Kunden</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => navigate('/kunden/doppelte')}>
-            <Users className="w-4 h-4 mr-2" /> Doppelte suchen
-          </Button>
-          <Button
-            onClick={() => setEditCustomer({})}
-            className="gold-gradient text-primary-foreground"
-          >
-            <UserPlus className="w-4 h-4 mr-2" /> Neuer Kunde
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        icon={Building2}
+        title="Kunden"
+        subtitle={`${totalFiltered} Kunden`}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind="done" label={`${totalFiltered}`} />}
+        actions={
+          <>
+            <Button variant="outline" onClick={() => navigate('/kunden/doppelte')}>
+              <Users className="w-4 h-4 mr-2" /> Doppelte suchen
+            </Button>
+            <Button onClick={() => setEditCustomer({})} className="gold-gradient text-primary-foreground">
+              <UserPlus className="w-4 h-4 mr-2" /> Neuer Kunde
+            </Button>
+          </>
+        }
+      />
 
-      {/* Filters row */}
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
