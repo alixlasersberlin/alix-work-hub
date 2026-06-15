@@ -210,6 +210,7 @@ export default function FinanceJahresabschluss() {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }
