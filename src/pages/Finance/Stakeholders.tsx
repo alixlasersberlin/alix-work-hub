@@ -110,6 +110,7 @@ export default function FinanceStakeholders() {
           </div>
         )}
       </DataCard>
+      )}
 
       <Dialog open={show} onOpenChange={setShow}>
         <DialogContent>
