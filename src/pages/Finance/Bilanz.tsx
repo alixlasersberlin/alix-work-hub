@@ -92,6 +92,9 @@ export default function FinanceBilanz() {
           </table>
         </DataCard>
       </div>
+      )}
+
+
 
       <div className="text-xs text-muted-foreground">
         Hinweis: Vereinfachte HGB-nahe Auswertung. Für die offizielle Bilanz bitte Steuerberater/DATEV-Abschluss verwenden.
