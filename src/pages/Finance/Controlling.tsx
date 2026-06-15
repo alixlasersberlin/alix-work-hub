@@ -109,14 +109,14 @@ export default function FinanceControlling() {
       ) : (
       <>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <KpiTile label="Umsatzrentabilität" value={`${kpis.margin.toFixed(1)} %`} sub={`Erg. ${fmt(kpis.ergebnis)}`} icon={Gauge} color={kpis.margin >= 0 ? 'emerald' : 'rose'} />
-        <KpiTile label="DSO – Forderungsdauer" value={`${kpis.dso} Tage`} sub={`Ford. ${fmt(kpis.forderungen)}`} icon={Clock} color="sky" />
-        <KpiTile label="DPO – Zahlungsdauer" value={`${kpis.dpo} Tage`} sub={`Verb. ${fmt(kpis.verbindlichkeiten)}`} icon={Timer} color="violet" />
-        <KpiTile label="Working Capital" value={fmt(kpis.workingCapital)} sub={`Bank ${fmt(kpis.bank)}`} icon={Wallet} color="gold" />
-        <KpiTile label="Burn Rate (ø/Mon.)" value={fmt(kpis.burn)} icon={Flame} color="rose" />
-        <KpiTile label="Runway" value={isFinite(kpis.runway) ? `${kpis.runway.toFixed(1)} Mon.` : '∞'} icon={Activity} color="amber" />
-        <KpiTile label="Umsatz YTD" value={fmt(kpis.ytd)} icon={TrendingUp} color="emerald" />
-        <KpiTile label="Aufwand YTD" value={fmt(kpis.aufw)} icon={TrendingDown} color="rose" />
+        <KpiTile label="Umsatzrentabilität" value={`${kpis.margin.toFixed(1)} %`} icon={Gauge} accent={kpis.margin >= 0 ? 'emerald' : 'rose'} />
+        <KpiTile label="DSO – Forderungsdauer" value={`${kpis.dso} Tage`} icon={Clock} accent="sky" />
+        <KpiTile label="DPO – Zahlungsdauer" value={`${kpis.dpo} Tage`} icon={Timer} accent="violet" />
+        <KpiTile label="Working Capital" value={fmt(kpis.workingCapital)} icon={Wallet} accent="gold" />
+        <KpiTile label="Burn Rate (ø/Mon.)" value={fmt(kpis.burn)} icon={Flame} accent="rose" />
+        <KpiTile label="Runway" value={isFinite(kpis.runway) ? `${kpis.runway.toFixed(1)} Mon.` : '∞'} icon={Activity} accent="gold" />
+        <KpiTile label="Umsatz YTD" value={fmt(kpis.ytd)} icon={TrendingUp} accent="emerald" />
+        <KpiTile label="Aufwand YTD" value={fmt(kpis.aufw)} icon={TrendingDown} accent="rose" />
       </div>
 
 
