@@ -80,22 +80,31 @@ export default function FinanceBudget() {
 
   const rowTotal = (cat: string) => Array.from({ length: 12 }, (_, i) => data[cat]?.[i + 1] || 0).reduce((a, b) => a + b, 0);
 
-  if (loading) return <PageLoading />;
-
   return (
     <div className="p-6 space-y-6">
-      <PageHeader title="Budgetplanung" subtitle={`Plan-Werte pro Kategorie und Monat · ${year}`} />
+      <PageHeader
+        icon={Target}
+        title="Budgetplanung"
+        subtitle={`Plan-Werte pro Kategorie und Monat · ${year}`}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : dirty ? 'warning' : 'done'} label={loading ? 'Lädt' : dirty ? 'Ungespeichert' : 'Aktuell'} pulse={loading} />}
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <Select value={String(year)} onValueChange={v => setYear(Number(v))}>
+              <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+              <SelectContent>{[year + 1, year, year - 1, year - 2].map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
+            </Select>
+            <Button variant="outline" onClick={copyFromPriorYearActual}><Copy className="h-4 w-4 mr-2" />Vorjahres-Ist</Button>
+            <Button onClick={save} disabled={!dirty}><Save className="h-4 w-4 mr-2" />Speichern</Button>
+          </div>
+        }
+      />
 
-      <div className="flex flex-wrap items-center gap-3">
-        <Select value={String(year)} onValueChange={v => setYear(Number(v))}>
-          <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-          <SelectContent>{[year + 1, year, year - 1, year - 2].map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
-        </Select>
-        <Button variant="outline" onClick={copyFromPriorYearActual}><Copy className="h-4 w-4 mr-2" />Aus Vorjahres-Ist übernehmen</Button>
-        <Button onClick={save} disabled={!dirty}><Save className="h-4 w-4 mr-2" />Speichern</Button>
-      </div>
-
+      {loading ? (
+        <DataCard><SkeletonTable rows={8} cols={13} /></DataCard>
+      ) : (
       <DataCard title={`Budget ${year}`}>
+
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-muted/50">
