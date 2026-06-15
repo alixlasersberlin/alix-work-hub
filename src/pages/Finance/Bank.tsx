@@ -133,9 +133,7 @@ export default function FinanceBank() {
                 </tr>
               </thead>
               <tbody>
-                {filteredLines.length === 0 ? (
-                  <tr><td colSpan={7} className="text-center text-muted-foreground py-10">Keine Buchungen.</td></tr>
-                ) : filteredLines.map(l => (
+                {filteredLines.map(l => (
                   <tr key={l.id} className="border-t border-border hover:bg-muted/20">
                     <td className="px-4 py-3 text-xs">{l.booking_date ?? l.value_date ?? '–'}</td>
                     <td className="px-4 py-3 max-w-md truncate" title={l.purpose}>{l.purpose ?? '–'}</td>
