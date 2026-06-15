@@ -500,7 +500,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {loading
           ? <SkeletonKpiGrid count={kpiCards.length || 5} />
-          : kpiCards.map((card) => (
+          : kpiCards.map((card: any) => (
               <KpiTile
                 key={card.label}
                 label={card.label}
@@ -508,6 +508,9 @@ export default function Dashboard() {
                 icon={card.icon as any}
                 accent={card.accent}
                 onClick={card.onClick}
+                trend={card.trend}
+                delta={card.delta}
+                deltaInverted={card.deltaInverted}
               />
             ))}
       </div>
