@@ -64,6 +64,8 @@ const COUNTRY_CODES = [
 type State = {
   interests: string[];
   additional_interests: string[];
+  laser_model: string;
+  beauty_model: string;
   delivery_preference: string;
   first_name: string;
   last_name: string;
@@ -81,6 +83,8 @@ type State = {
 const INITIAL: State = {
   interests: [],
   additional_interests: [],
+  laser_model: '',
+  beauty_model: '',
   delivery_preference: '',
   first_name: '',
   last_name: '',
@@ -95,7 +99,7 @@ const INITIAL: State = {
   service_rating: 0,
 };
 
-const TOTAL_STEPS = 12;
+const TOTAL_STEPS = 13;
 
 interface Props {
   /** When true the wizard renders the full public landing chrome (logo, watermark). */
