@@ -19,6 +19,7 @@ const PRIORITIES = ['niedrig', 'normal', 'hoch', 'dringend'];
 
 export function SparePartRequestDialog({ repair, onCreated }: Props) {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [f, setF] = useState({
