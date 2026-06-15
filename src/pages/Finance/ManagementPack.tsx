@@ -103,7 +103,7 @@ export default function FinanceManagementPack() {
     setForm((f: any) => ({ ...f, sections: f.sections.includes(v) ? f.sections.filter((x: string) => x !== v) : [...f.sections, v] }));
   };
 
-  if (loading) return <PageLoading />;
+  
 
   return (
     <div className="space-y-6">
