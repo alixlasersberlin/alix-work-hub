@@ -132,6 +132,8 @@ export default function FinanceKonsolidierung() {
           </div>
         )}
       </DataCard>
+      </>
+      )}
     </div>
   );
 }
