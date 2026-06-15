@@ -302,6 +302,34 @@ export default function Dashboard() {
         setActiveSessions((sessionsRes.data ?? []) as any);
         setSecurityIncidents((incidentsRes.data ?? []) as any);
         setPrioOrders(vipFirst((prioRes.data ?? []) as any[], isOrderVip));
+
+        // 14-day trend buckets (lightweight: only timestamps)
+        const DAYS = 14;
+        const since = new Date(Date.now() - DAYS * 86400000).toISOString();
+        const bucket = (rows: { created_at: string }[]): number[] => {
+          const arr = new Array(DAYS).fill(0);
+          const now = Date.now();
+          for (const r of rows) {
+            const t = new Date(r.created_at).getTime();
+            const idx = DAYS - 1 - Math.floor((now - t) / 86400000);
+            if (idx >= 0 && idx < DAYS) arr[idx]++;
+          }
+          return arr;
+        };
+        const [ordersTrend, financeTrend] = await Promise.all([
+          canSeeOrders
+            ? (atOnly
+                ? supabase.from('orders').select('created_at').eq('source_system', 'zoho_eu_2').gte('created_at', since).limit(1000)
+                : supabase.from('orders').select('created_at').gte('created_at', since).limit(1000))
+            : Promise.resolve({ data: [] as any[] }),
+          canSeeFinance
+            ? supabase.from('finance_records').select('created_at').gte('created_at', since).limit(1000)
+            : Promise.resolve({ data: [] as any[] }),
+        ]);
+        setTrends({
+          orders: bucket((ordersTrend.data ?? []) as any[]),
+          finance: bucket((financeTrend.data ?? []) as any[]),
+        });
       } catch (e: any) {
         setError('Daten konnten nicht geladen werden. Bitte versuchen Sie es erneut.');
       } finally {
