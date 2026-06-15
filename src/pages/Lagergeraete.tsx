@@ -674,6 +674,14 @@ export default function Lagergeraete({
     setLeihCustomerName(k.name);
     setLeihShotCount(parseSchusszahl(d.notes));
     setLeihStart(parseLeihStart(d.notes));
+    const repId = parseRepairId(d.notes);
+    setLeihRepairId(repId);
+    setLeihRepairLabel('');
+    if (repId) {
+      sbRepair.from('repair_orders').select('id,repair_number,device_model,device_serial_number,customer_name').eq('id', repId).maybeSingle().then(({ data }: any) => {
+        if (data) setLeihRepairLabel(`${data.repair_number ?? ''} · ${data.customer_name ?? ''}${data.device_serial_number ? ' · SN ' + data.device_serial_number : ''}`.trim());
+      });
+    }
     setOpen(true);
   };
 
