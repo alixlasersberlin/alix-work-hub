@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Star, Loader2, MessageSquare, Send, CheckCircle2 } from 'lucide-react';
+import { Star, MessageSquare, Send, CheckCircle2 } from 'lucide-react';
 import { useAtOnly } from '@/hooks/useAtOnly';
 import { filterAtOnlyByOrderId } from '@/lib/at-review-filter';
+import { KpiTile } from '@/components/infinity/KpiTile';
+import { SkeletonKpiGrid } from '@/components/infinity/Skeleton';
 
 type Row = {
   order_id: string;
@@ -32,16 +34,14 @@ export default function ReviewsOverview() {
     })();
   }, [atOnly]);
 
-
   if (loading) {
-    return <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div>;
+    return <SkeletonKpiGrid count={4} />;
   }
 
   const submitted = rows.filter(r => !!r.submitted_at);
   const sent = rows.filter(r => !!r.invitation_sent_at);
   const pending = rows.filter(r => !r.invitation_sent_at);
 
-  // Distribution: combined average of both ratings, fallback to delivery rating
   const buckets: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
   submitted.forEach(r => {
     const vals = [r.rating_delivery, r.rating_driver_friendliness].filter((v): v is number => !!v);
@@ -52,12 +52,12 @@ export default function ReviewsOverview() {
 
   const avgDelivery =
     submitted.length > 0
-      ? submitted.reduce((s, r) => s + (r.rating_delivery || 0), 0) / submitted.filter(r => r.rating_delivery).length
+      ? submitted.reduce((s, r) => s + (r.rating_delivery || 0), 0) / (submitted.filter(r => r.rating_delivery).length || 1)
       : 0;
   const avgDriver =
     submitted.length > 0
       ? submitted.reduce((s, r) => s + (r.rating_driver_friendliness || 0), 0) /
-        submitted.filter(r => r.rating_driver_friendliness).length
+        (submitted.filter(r => r.rating_driver_friendliness).length || 1)
       : 0;
 
   const maxBucket = Math.max(1, ...Object.values(buckets));
@@ -65,13 +65,14 @@ export default function ReviewsOverview() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Kpi icon={<MessageSquare className="h-5 w-5" />} label="Bewertungen gesamt" value={submitted.length} />
-        <Kpi icon={<Send className="h-5 w-5" />} label="Einladungen versendet" value={sent.length} />
-        <Kpi icon={<CheckCircle2 className="h-5 w-5" />} label="Noch nicht versendet" value={pending.length} />
-        <Kpi
-          icon={<Star className="h-5 w-5 text-amber-400" />}
+        <KpiTile label="Bewertungen gesamt" value={submitted.length} icon={MessageSquare} accent="sky" />
+        <KpiTile label="Einladungen versendet" value={sent.length} icon={Send} accent="violet" />
+        <KpiTile label="Noch nicht versendet" value={pending.length} icon={CheckCircle2} accent="rose" />
+        <KpiTile
           label="Ø Lieferung / Fahrer"
           value={`${avgDelivery ? avgDelivery.toFixed(1) : '–'} / ${avgDriver ? avgDriver.toFixed(1) : '–'}`}
+          icon={Star}
+          accent="gold"
         />
       </div>
 
@@ -103,18 +104,6 @@ export default function ReviewsOverview() {
           })}
         </div>
       </div>
-    </div>
-  );
-}
-
-function Kpi({ icon, label, value }: { icon: React.ReactNode; label: string; value: number | string }) {
-  return (
-    <div className="rounded-lg border bg-card p-4">
-      <div className="flex items-center gap-2 text-muted-foreground text-xs uppercase tracking-wide">
-        {icon}
-        {label}
-      </div>
-      <div className="text-2xl font-bold mt-2">{value}</div>
     </div>
   );
 }
