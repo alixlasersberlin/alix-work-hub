@@ -57,15 +57,12 @@ export default function LeasingBank() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <Landmark className="h-7 w-7 text-primary" />
-        <div>
-          <h1 className="text-3xl font-bold">Verfügbare Aufträge</h1>
-          <p className="text-muted-foreground text-sm">
-            Aufträge mit Status <span className="font-medium">OPEN</span>, <span className="font-medium">HOLD</span> oder <span className="font-medium">OVERDUE</span>.
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        icon={Landmark}
+        title="Verfügbare Aufträge"
+        subtitle="Aufträge mit Status OPEN, HOLD oder OVERDUE."
+        noBreadcrumbs
+      />
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-3 flex-wrap">
