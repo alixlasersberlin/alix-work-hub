@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { StatusBadge } from '@/components/StatusBadge';
 import { supabase } from '@/integrations/supabase/client';
 import BankFinancingTab from '@/components/BankFinancingTab';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 type AvailableOrder = {
   id: string;

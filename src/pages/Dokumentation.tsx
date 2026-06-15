@@ -7,6 +7,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 type Entry = { path: string; label: string; desc: string; roles: string[] };
 type Section = {

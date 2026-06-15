@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
 import { Boxes, AlertTriangle, PackageCheck, ShoppingCart, TrendingDown, Loader2, RefreshCw, Truck } from 'lucide-react';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 type StockRow = {
   id: string;

@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ShieldCheck, Clock, AlertOctagon, FileWarning } from "lucide-react";
 import { toast } from "sonner";
+import { PageHeader } from "@/components/infinity/PageHeader";
 
 type Warranty = {
   id: string; serial_number: string; device_name: string | null; customer_name: string | null;
