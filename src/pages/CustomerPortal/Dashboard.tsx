@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useOutletContext, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent } from '@/components/ui/card';
-import { Mail, FileText, Receipt, FileCheck2, Wrench, ArrowRight, Cpu, ShieldCheck, MessageSquare, Calendar } from 'lucide-react';
+import { Mail, FileText, Receipt, FileCheck2, Wrench, Cpu, ShieldCheck, MessageSquare, Calendar } from 'lucide-react';
+import { KpiTile } from '@/components/infinity/KpiTile';
 
 type Ctx = { customerId: string; companyName: string | null; email: string | null };
 
