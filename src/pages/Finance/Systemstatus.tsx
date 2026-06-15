@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { CheckCircle2, Clock, RefreshCw, PlayCircle } from 'lucide-react';
-import { PageHeader } from '@/components/PageShell';
-import { Settings as SettingsIcon } from 'lucide-react';
+import { CheckCircle2, Clock, RefreshCw, PlayCircle, Settings as SettingsIcon } from 'lucide-react';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
