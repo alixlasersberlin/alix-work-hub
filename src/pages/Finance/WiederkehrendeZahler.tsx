@@ -198,7 +198,7 @@ export default function WiederkehrendeZahler() {
     };
   }, [filtered]);
 
-  if (loading) return <PageLoading />;
+  if (loading) return <div className="space-y-6"><SkeletonKpiGrid count={5} /></div>;
 
   return (
     <div className="space-y-6">
@@ -206,6 +206,8 @@ export default function WiederkehrendeZahler() {
         title="Wiederkehrende Zahler"
         subtitle="Periodische Rechnungen & aktive Verträge aus Zoho Deutschland — gruppiert nach Kundenkonto"
         icon={Repeat}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind="done" label={`${profiles.length}`} dotOnly />}
         actions={
           <Button onClick={runSync} disabled={syncing} size="sm" variant="outline">
             {syncing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
