@@ -1,6 +1,7 @@
 import { FileText, FileSignature, Receipt, FileCheck2, Files, Truck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 const tiles = [
   { title: 'Angebote', description: 'Alle erstellten Angebote', icon: FileText, to: '/verkauf/angebote' },
@@ -14,10 +15,12 @@ const tiles = [
 export default function Papiere() {
   return (
     <div className="p-6 space-y-6">
-      <header className="space-y-1">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">VERSAND</h1>
-        <p className="text-muted-foreground">Übersicht aller Geschäftsdokumente</p>
-      </header>
+      <PageHeader
+        icon={FileText}
+        title="VERSAND"
+        subtitle="Übersicht aller Geschäftsdokumente"
+        noBreadcrumbs
+      />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {tiles.map((t) => {

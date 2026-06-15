@@ -1,5 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { LucideIcon } from 'lucide-react';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 interface Props {
   title: string;
@@ -10,10 +11,12 @@ interface Props {
 export default function VersandPlaceholder({ title, description, icon: Icon }: Props) {
   return (
     <div className="p-6 space-y-6">
-      <header className="space-y-1">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">{title}</h1>
-        {description && <p className="text-muted-foreground">{description}</p>}
-      </header>
+      <PageHeader
+        icon={Icon}
+        title={title}
+        subtitle={description}
+        noBreadcrumbs
+      />
       <Card className="p-12 flex flex-col items-center justify-center text-center gap-4 border-dashed">
         <div className="p-4 rounded-full bg-primary/10 text-primary">
           <Icon className="w-10 h-10" />

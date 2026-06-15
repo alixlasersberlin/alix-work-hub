@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { CalendarClock, Wrench, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { PageHeader } from "@/components/infinity/PageHeader";
 
 type Row = {
   id: string;
@@ -94,13 +95,13 @@ export default function Wartungscenter() {
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2"><Wrench className="h-7 w-7 text-primary" /> Wartungscenter</h1>
-          <p className="text-muted-foreground mt-1">Plant, terminiert und überwacht alle Gerätewartungen.</p>
-        </div>
-        <Button variant="outline" onClick={exportCsv}>Export CSV</Button>
-      </div>
+      <PageHeader
+        icon={Wrench}
+        title="Wartungscenter"
+        subtitle="Plant, terminiert und überwacht alle Gerätewartungen."
+        noBreadcrumbs
+        actions={<Button variant="outline" onClick={exportCsv}>Export CSV</Button>}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Kpi icon={<CalendarClock className="h-5 w-5" />} title="Heute" value={kpis.today} />
