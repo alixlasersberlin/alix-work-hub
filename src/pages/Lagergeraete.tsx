@@ -423,7 +423,7 @@ export default function Lagergeraete({
       const { data, error } = await supabase
         .from('orders')
         .select('id, order_number, order_status, expected_shipment_date, customers(company_name, contact_name), order_items(item_name, description, sku)')
-        .in('order_status', ['overdue', 'Overdue', 'invoiced', 'Invoiced', 'open', 'Open', 'offen', 'Offen', 'approved', 'Approved'])
+        .in('order_status', ['overdue', 'Overdue', 'invoiced', 'Invoiced', 'open', 'Open', 'offen', 'Offen', 'approved', 'Approved', 'Hold', 'hold', 'Anwalt', 'anwalt'])
         .limit(500);
       if (cancelled) return;
       if (error) { setLoadingFreeOrders(false); return; }
@@ -470,7 +470,7 @@ export default function Lagergeraete({
       const { data, error } = await supabase
         .from('orders')
         .select('id, order_number, order_status, expected_shipment_date, customers(company_name, contact_name), order_items(item_name, description, sku)')
-        .in('order_status', ['overdue', 'Overdue', 'invoiced', 'Invoiced', 'open', 'Open', 'offen', 'Offen', 'approved', 'Approved'])
+        .in('order_status', ['overdue', 'Overdue', 'invoiced', 'Invoiced', 'open', 'Open', 'offen', 'Offen', 'approved', 'Approved', 'Hold', 'hold', 'Anwalt', 'anwalt'])
         .limit(500);
       if (cancelled) return;
       if (error) {
