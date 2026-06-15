@@ -117,9 +117,19 @@ export default function OrderItemsEditDialog({ orderId, orderNumber, open, onClo
         }
       }
 
+      // Preserve current status (especially 'teilgeliefert') so the order
+      // doesn't disappear from its list after editing positions.
+      const { data: curOrd } = await supabase
+        .from('orders')
+        .select('order_status')
+        .eq('id', orderId)
+        .maybeSingle();
+      const keepStatus = curOrd?.order_status === 'teilgeliefert'
+        ? 'teilgeliefert'
+        : 'offen';
       const { error: ordErr } = await supabase
         .from('orders')
-        .update({ total_amount: newTotal, order_status: 'offen' })
+        .update({ total_amount: newTotal, order_status: keepStatus })
         .eq('id', orderId);
       if (ordErr) throw ordErr;
 
