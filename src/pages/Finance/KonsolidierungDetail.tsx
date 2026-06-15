@@ -38,8 +38,7 @@ export default function FinanceKonsolidierungDetail() {
     })();
   }, [id]);
 
-  if (loading) return <PageLoading />;
-  if (!run) return <PageEmpty message="Lauf nicht gefunden." />;
+  if (!loading && !run) return <PageEmpty message="Lauf nicht gefunden." />;
 
   // group items per tenant
   const byTenant = new Map<string, { gross: number; elim: number; cons: number; types: any[] }>();
@@ -54,25 +53,35 @@ export default function FinanceKonsolidierungDetail() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-6">
       <PageHeader
-        title={`Konsolidierung ${(run.period_month ?? '').slice(0, 7)}`}
-        subtitle={run.notes ?? undefined}
         icon={Building2}
+        title={`Konsolidierung ${(run?.period_month ?? '').slice(0, 7)}`}
+        subtitle={run?.notes ?? undefined}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : (run?.status ?? '–')} pulse={loading} />}
         actions={<Button asChild variant="outline" size="sm"><Link to="/finance/konsolidierung"><ArrowLeft className="h-4 w-4 mr-1.5" />Zurück</Link></Button>}
       />
 
+      {loading ? (
+        <>
+          <DataCard><SkeletonKpiGrid count={4} /></DataCard>
+          <DataCard><SkeletonTable rows={6} cols={4} /></DataCard>
+        </>
+      ) : (
+      <>
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <DataCard><div className="p-4"><div className="text-xs text-muted-foreground">Status</div><div className="mt-1"><Badge>{run.status}</Badge></div></div></DataCard>
-        <DataCard><div className="p-4"><div className="text-xs text-muted-foreground">Brutto</div><div className="text-xl font-semibold mt-1">{eur(Number(run.gross_total))}</div></div></DataCard>
-        <DataCard><div className="p-4"><div className="text-xs text-muted-foreground">Eliminiert</div><div className="text-xl font-semibold mt-1 text-destructive">-{eur(Number(run.eliminated_total))}</div></div></DataCard>
-        <DataCard><div className="p-4"><div className="text-xs text-muted-foreground">Konsolidiert</div><div className="text-xl font-semibold mt-1 text-primary">{eur(Number(run.consolidated_total))}</div></div></DataCard>
+        <KpiTile label="Status" value={run.status} accent="sky" />
+        <KpiTile label="Brutto" value={eur(Number(run.gross_total))} icon={Wallet} accent="gold" />
+        <KpiTile label="Eliminiert" value={`-${eur(Number(run.eliminated_total))}`} icon={TrendingDown} accent="rose" />
+        <KpiTile label="Konsolidiert" value={eur(Number(run.consolidated_total))} icon={CheckCircle2} accent="emerald" />
       </div>
 
       {[...byTenant.entries()].map(([tid, b]) => (
         <DataCard key={tid} title={tenants[tid] ?? (tid === 'ohne' ? 'Ohne Mandant' : tid)}>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
+
               <thead className="border-b border-border/40 text-muted-foreground">
                 <tr>
                   <th className="text-left p-3">Buchungsart</th>
