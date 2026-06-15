@@ -7,6 +7,7 @@ import {
   Package, Crown, CheckCircle2, Factory, Truck, FileText, Calendar, ChevronDown
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 const AT = 'zoho_eu_2';
 
@@ -205,17 +206,12 @@ export default function AtDashboard() {
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in space-y-8">
-      <div>
-        <div className="flex items-center gap-2 mb-1">
-          <span className="text-2xl">🇦🇹</span>
-          <h1 className="text-2xl font-display font-bold text-foreground">
-            <span className="gold-text">Alix Austria</span> – Dashboard
-          </h1>
-        </div>
-        <p className="text-muted-foreground text-sm">
-          Willkommen zurück, {profile?.full_name || 'Benutzer'}. Übersicht aller -AT Aufträge, Kunden und Finanzen.
-        </p>
-      </div>
+      <PageHeader
+        icon={TrendingUp}
+        title="🇦🇹 Alix Austria – Dashboard"
+        subtitle={`Willkommen zurück, ${profile?.full_name || 'Benutzer'}. Übersicht aller -AT Aufträge, Kunden und Finanzen.`}
+        noBreadcrumbs
+      />
 
       {error && (
         <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 flex items-center gap-3">

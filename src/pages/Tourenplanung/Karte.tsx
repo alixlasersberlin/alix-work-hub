@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MapPin, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 declare global { interface Window { google?: any; initDispatchMap?: () => void } }
 
@@ -105,22 +106,23 @@ export default function TourenKarte() {
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-        <h1 className="text-2xl font-display font-bold flex items-center gap-2">
-          <MapPin className="w-5 h-5 text-primary" />
-          Kartenansicht
-        </h1>
-        <div className="flex gap-2">
-          <input type="date" className="bg-secondary border border-border rounded-md px-3 py-1.5 text-sm" value={date} onChange={e => setDate(e.target.value)} />
-          <Select value={tech} onValueChange={setTech}>
-            <SelectTrigger className="w-44 bg-secondary border-border"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Alle Techniker</SelectItem>
-              {techs.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      <PageHeader
+        icon={MapPin}
+        title="Kartenansicht"
+        noBreadcrumbs
+        actions={
+          <>
+            <input type="date" className="bg-secondary border border-border rounded-md px-3 py-1.5 text-sm" value={date} onChange={e => setDate(e.target.value)} />
+            <Select value={tech} onValueChange={setTech}>
+              <SelectTrigger className="w-44 bg-secondary border-border"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Techniker</SelectItem>
+                {techs.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </>
+        }
+      />
 
       {error && <div className="rounded-lg border border-destructive/40 bg-destructive/10 text-destructive p-3 mb-3 text-sm">{error}</div>}
 

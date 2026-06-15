@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { FileDown, Upload, FileSpreadsheet, CheckCircle2, AlertTriangle, Trash2, ArrowRight, History } from 'lucide-react';
 import { toast } from 'sonner';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 type RawRow = Record<string, any>;
 
@@ -218,20 +219,18 @@ export default function AngebotImport() {
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in space-y-6 max-w-7xl mx-auto">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
-            <FileSpreadsheet className="w-6 h-6 text-primary" /> Angebot · Data Import
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            CSV/Excel Vorlage hochladen, validieren und Angebote als Entwurf öffnen. Nur Super Admin.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={downloadTemplate}><FileDown className="w-4 h-4 mr-2" /> Vorlage .xlsx</Button>
-          <Button variant="outline" size="sm" onClick={downloadTemplateCsv}><FileDown className="w-4 h-4 mr-2" /> Vorlage .csv</Button>
-        </div>
-      </div>
+      <PageHeader
+        icon={FileSpreadsheet}
+        title="Angebot · Data Import"
+        subtitle="CSV/Excel Vorlage hochladen, validieren und Angebote als Entwurf öffnen. Nur Super Admin."
+        noBreadcrumbs
+        actions={
+          <>
+            <Button variant="outline" size="sm" onClick={downloadTemplate}><FileDown className="w-4 h-4 mr-2" /> Vorlage .xlsx</Button>
+            <Button variant="outline" size="sm" onClick={downloadTemplateCsv}><FileDown className="w-4 h-4 mr-2" /> Vorlage .csv</Button>
+          </>
+        }
+      />
 
       <Card className="card-glow">
         <CardHeader>
