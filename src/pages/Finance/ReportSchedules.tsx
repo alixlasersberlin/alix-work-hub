@@ -107,6 +107,7 @@ export default function FinanceReportSchedules() {
           </div>
         )}
       </DataCard>
+      )}
 
       <Dialog open={show} onOpenChange={setShow}>
         <DialogContent>
