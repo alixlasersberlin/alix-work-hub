@@ -106,6 +106,8 @@ export default function FinanceFxRates() {
           </div>
         )}
       </DataCard>
+      </>
+      )}
     </div>
   );
 }
