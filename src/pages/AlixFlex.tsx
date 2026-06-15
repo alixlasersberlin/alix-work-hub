@@ -336,7 +336,7 @@ export default function AlixFlex() {
       {error && <PageError message={error} onRetry={fetchRows} />}
 
       {loading ? (
-        <PageLoading />
+        <DataCard><SkeletonTable rows={8} cols={10} /></DataCard>
       ) : (
         <DataCard className="overflow-hidden">
           <div className="overflow-x-auto">
