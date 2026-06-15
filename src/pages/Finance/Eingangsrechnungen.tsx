@@ -152,11 +152,13 @@ export default function FinanceEingangsrechnungen() {
   return (
     <div className="p-4 sm:p-6">
       <PageHeader
-        icon={<Inbox className="w-6 h-6 text-primary" />}
+        icon={Inbox}
         title="Eingangsrechnungen"
         subtitle="Kreditoren-Light mit XRechnung/ZUGFeRD-Erkennung und Freigabe-Workflow"
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${rows.length}`} pulse={!loading} />}
         actions={
-          <div className="flex gap-2">
+          <>
             <input ref={fileRef} type="file" accept=".xml" hidden onChange={onXmlFile} />
             <Button variant="outline" onClick={() => fileRef.current?.click()} disabled={busy}>
               <Sparkles className="w-4 h-4 mr-2" />XML einlesen
@@ -164,7 +166,7 @@ export default function FinanceEingangsrechnungen() {
             <Button onClick={() => { setParseHint(null); setShowNew(true); }} className="gold-gradient text-primary-foreground">
               <Upload className="w-4 h-4 mr-2" />Neu erfassen
             </Button>
-          </div>
+          </>
         }
       />
 
