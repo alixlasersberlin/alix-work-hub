@@ -12,6 +12,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { withAt } from '@/lib/atSuffix';
 import { toast } from 'sonner';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 type StatusResult = {
   id: string;
@@ -113,15 +114,12 @@ export default function AuftragStatus() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <Activity className="h-7 w-7 text-primary" />
-        <div>
-          <h1 className="text-3xl font-bold">Auftragsstatus</h1>
-          <p className="text-muted-foreground text-sm">
-            Schnellabfrage: Status, Anzahlung, Bestellung, Reservierung, Lieferung & Tourenplanung zu einem Auftrag.
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        icon={Activity}
+        title="Auftragsstatus"
+        subtitle="Schnellabfrage: Status, Anzahlung, Bestellung, Reservierung, Lieferung & Tourenplanung zu einem Auftrag."
+        noBreadcrumbs
+      />
 
       <Card>
         <CardHeader>

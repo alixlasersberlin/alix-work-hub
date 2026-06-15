@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Package, PackageCheck, BookOpen, Plus } from 'lucide-react';
 import { format } from 'date-fns';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 type Receipt = {
   id: string;
@@ -40,20 +41,19 @@ export default function ArtikelUebersicht() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-3">
-          <Package className="h-7 w-7 text-primary" />
-          <div>
-            <h1 className="text-3xl font-bold">Artikel – Übersicht</h1>
-            <p className="text-muted-foreground text-sm">Letzte Wareneingänge und Schnellzugriff auf Artikel-Funktionen.</p>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <Button asChild variant="outline"><Link to="/verkauf/artikel"><Package className="h-4 w-4 mr-2" />Alle Artikel</Link></Button>
-          <Button asChild variant="outline"><Link to="/verkauf/artikel/katalog"><BookOpen className="h-4 w-4 mr-2" />Katalog</Link></Button>
-          <Button asChild><Link to="/verkauf/artikel/wareneingang"><Plus className="h-4 w-4 mr-2" />Wareneingang buchen</Link></Button>
-        </div>
-      </div>
+      <PageHeader
+        icon={Package}
+        title="Artikel – Übersicht"
+        subtitle="Letzte Wareneingänge und Schnellzugriff auf Artikel-Funktionen."
+        noBreadcrumbs
+        actions={
+          <>
+            <Button asChild variant="outline"><Link to="/verkauf/artikel"><Package className="h-4 w-4 mr-2" />Alle Artikel</Link></Button>
+            <Button asChild variant="outline"><Link to="/verkauf/artikel/katalog"><BookOpen className="h-4 w-4 mr-2" />Katalog</Link></Button>
+            <Button asChild><Link to="/verkauf/artikel/wareneingang"><Plus className="h-4 w-4 mr-2" />Wareneingang buchen</Link></Button>
+          </>
+        }
+      />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card><CardContent className="p-4">
