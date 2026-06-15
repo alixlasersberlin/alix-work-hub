@@ -64,7 +64,7 @@ function getBlockReason(profile: UserProfile | null): AccountBlockReason {
 
 const MFA_TAB_KEY = 'alixwork.mfa_verified_tab';
 const MFA_GRACE_KEY = 'alixwork.mfa_grace_until';
-const MFA_GRACE_MS = 5 * 60 * 60 * 1000; // 5 Stunden
+const MFA_GRACE_MS = 24 * 60 * 60 * 1000; // 24 Stunden
 
 export function markMfaVerifiedThisTab() {
   try { sessionStorage.setItem(MFA_TAB_KEY, '1'); } catch { /* ignore */ }
