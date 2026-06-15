@@ -169,6 +169,44 @@ export default function Bugs() {
         </Button>
       }
     >
+      {open && (
+        <div className="rounded-md border border-border bg-card p-4 space-y-4">
+          <div>
+            <h3 className="text-base font-semibold">Neuen Bug erfassen</h3>
+            <p className="text-sm text-muted-foreground">Erfasse Titel, Beschreibung und Priorität für den neuen Bug.</p>
+          </div>
+          <div className="grid gap-3">
+            <div><Label>Titel *</Label><Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} autoFocus /></div>
+            <div><Label>Beschreibung</Label><Textarea rows={4} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div><Label>Produkt</Label><Input value={form.product} onChange={e => setForm({ ...form, product: e.target.value })} /></div>
+              <div><Label>Modul</Label><Input value={form.module} onChange={e => setForm({ ...form, module: e.target.value })} /></div>
+              <div><Label>Softwareversion</Label><Input value={form.software_version} onChange={e => setForm({ ...form, software_version: e.target.value })} /></div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <Label>Priorität</Label>
+                <Select value={form.priority} onValueChange={v => setForm({ ...form, priority: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{BUG_PRIORITY.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Kritikalität</Label>
+                <Select value={form.criticality} onValueChange={v => setForm({ ...form, criticality: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{BUG_CRITICALITY.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div><Label>Fälligkeit</Label><Input type="date" value={form.due_date} onChange={e => setForm({ ...form, due_date: e.target.value })} /></div>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setOpen(false)}>Abbrechen</Button>
+            <Button onClick={create}>Speichern</Button>
+          </div>
+        </div>
+      )}
       <div className="mb-3 inline-flex rounded-md border border-border p-1 bg-muted/30">
         <button
           onClick={() => setView('active')}
