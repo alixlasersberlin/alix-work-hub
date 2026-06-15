@@ -62,7 +62,10 @@ export default function FinanceAiInsights() {
 
   return (
     <div className="p-6 space-y-6">
-      <PageHeader title="KI-Finanzanalyse" subtitle="Automatische Erklärungen zu Cockpit, BWA, Soll-Ist & Forecast" />
+      <PageHeader title="KI-Finanzanalyse" subtitle={loading ? 'Lädt…' : 'Automatische Erklärungen zu Cockpit, BWA, Soll-Ist & Forecast'} icon={Brain} noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${insights.length} Analysen`} pulse={loading} />} />
+      {loading ? <DataCard><SkeletonTable rows={4} cols={3} /></DataCard> : (
+      <>
       <div className="flex items-center gap-3">
         <Select value={scope} onValueChange={(v: any) => setScope(v)}>
           <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
@@ -87,6 +90,8 @@ export default function FinanceAiInsights() {
           </DataCard>
         ))}
       </div>
+      </>
+      )}
     </div>
   );
 }
