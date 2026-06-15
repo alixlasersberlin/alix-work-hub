@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bug, ClipboardCheck, FileSearch, ListChecks } from 'lucide-react';
+import { KpiTile } from '@/components/infinity/KpiTile';
+import { SkeletonKpiGrid } from '@/components/infinity/Skeleton';
 
 type Counts = { bugs_open: number; capas_open: number; findings_open: number; actions_open: number };
 
 export default function BugCapaDashboard() {
+  const [loading, setLoading] = useState(true);
   const [c, setC] = useState<Counts>({ bugs_open: 0, capas_open: 0, findings_open: 0, actions_open: 0 });
 
   useEffect(() => {
@@ -23,28 +25,23 @@ export default function BugCapaDashboard() {
         findings_open: af.count ?? 0,
         actions_open: ac.count ?? 0,
       });
+      setLoading(false);
     })();
   }, []);
 
   const tiles = [
-    { label: 'Offene Bugs', value: c.bugs_open, icon: Bug },
-    { label: 'Offene CAPAs', value: c.capas_open, icon: ClipboardCheck },
-    { label: 'Offene Audit-Feststellungen', value: c.findings_open, icon: FileSearch },
-    { label: 'Offene Maßnahmen', value: c.actions_open, icon: ListChecks },
+    { label: 'Offene Bugs', value: c.bugs_open, icon: Bug, accent: 'rose' as const },
+    { label: 'Offene CAPAs', value: c.capas_open, icon: ClipboardCheck, accent: 'gold' as const },
+    { label: 'Offene Audit-Feststellungen', value: c.findings_open, icon: FileSearch, accent: 'sky' as const },
+    { label: 'Offene Maßnahmen', value: c.actions_open, icon: ListChecks, accent: 'violet' as const },
   ];
+
+  if (loading) return <SkeletonKpiGrid count={4} />;
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       {tiles.map(t => (
-        <Card key={t.label}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">{t.label}</CardTitle>
-            <t.icon className="h-5 w-5 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{t.value}</div>
-          </CardContent>
-        </Card>
+        <KpiTile key={t.label} label={t.label} value={t.value} icon={t.icon} accent={t.accent} />
       ))}
     </div>
   );

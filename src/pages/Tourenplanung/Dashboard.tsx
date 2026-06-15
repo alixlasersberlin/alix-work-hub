@@ -2,19 +2,13 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { LayoutDashboard, Truck, Clock, AlertTriangle, Users, XCircle, Timer } from 'lucide-react';
 import { format } from 'date-fns';
-
-function Kpi({ label, value, icon: Icon, color }: any) {
-  return (
-    <div className="rounded-xl border border-border bg-card p-5 card-glow">
-      <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-        <Icon className={`w-4 h-4 ${color}`} /> {label}
-      </div>
-      <div className="text-2xl font-display font-bold">{value}</div>
-    </div>
-  );
-}
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { KpiTile } from '@/components/infinity/KpiTile';
+import { SkeletonKpiGrid } from '@/components/infinity/Skeleton';
+import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 
 export default function TourenDashboard() {
+  const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     today: 0, open: 0, overdue: 0, failed: 0, technicians: 0, avgMinutes: 0,
   });
@@ -43,22 +37,36 @@ export default function TourenDashboard() {
         technicians: techSet.size,
         avgMinutes: avg,
       });
+      setLoading(false);
     })();
   }, []);
 
+  const kpis = [
+    { label: 'Heutige Touren', value: stats.today, icon: Truck, accent: 'sky' as const },
+    { label: 'Offene Touren', value: stats.open, icon: Clock, accent: 'gold' as const },
+    { label: 'Überfällige Einsätze', value: stats.overdue, icon: AlertTriangle, accent: 'rose' as const },
+    { label: 'Aktive Techniker', value: stats.technicians, icon: Users, accent: 'emerald' as const },
+    { label: 'Fehlgeschlagene Einsätze', value: stats.failed, icon: XCircle, accent: 'rose' as const },
+    { label: 'Ø Einsatzdauer (Min.)', value: stats.avgMinutes, icon: Timer, accent: 'violet' as const },
+  ];
+
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
-      <h1 className="text-2xl font-display font-bold flex items-center gap-2 mb-6">
-        <LayoutDashboard className="w-5 h-5 text-primary" /> Touren-Dashboard
-      </h1>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Kpi label="Heutige Touren" value={stats.today} icon={Truck} color="text-blue-400" />
-        <Kpi label="Offene Touren" value={stats.open} icon={Clock} color="text-amber-400" />
-        <Kpi label="Überfällige Einsätze" value={stats.overdue} icon={AlertTriangle} color="text-orange-400" />
-        <Kpi label="Aktive Techniker" value={stats.technicians} icon={Users} color="text-emerald-400" />
-        <Kpi label="Fehlgeschlagene Einsätze" value={stats.failed} icon={XCircle} color="text-destructive" />
-        <Kpi label="Ø Einsatzdauer (Min.)" value={stats.avgMinutes} icon={Timer} color="text-primary" />
-      </div>
+      <PageHeader
+        title="Touren-Dashboard"
+        subtitle="Übersicht über Tagespläne, Auslastung und Einsatzqualität"
+        icon={LayoutDashboard}
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : 'Live'} pulse={!loading} dotOnly />}
+      />
+      {loading ? (
+        <SkeletonKpiGrid count={6} />
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {kpis.map(k => (
+            <KpiTile key={k.label} label={k.label} value={k.value} icon={k.icon} accent={k.accent} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
