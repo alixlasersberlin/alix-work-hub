@@ -104,6 +104,7 @@ export function SparePartRequestDialog({ repair, onCreated }: Props) {
       reset();
       setOpen(false);
       onCreated?.();
+      navigate('/reparatur/auftraege');
     } catch (e: any) {
       toast({ title: 'Fehler', description: e?.message || String(e), variant: 'destructive' });
     } finally {
