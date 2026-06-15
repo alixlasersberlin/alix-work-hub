@@ -45,6 +45,8 @@ export default function AngebotErstellen() {
   const [offerNumber, setOfferNumber] = useState(`ANG-${new Date().getFullYear()}-${String(Date.now()).slice(-5)}`);
   const [offerDate, setOfferDate] = useState(new Date().toISOString().slice(0, 10));
   const [validUntil, setValidUntil] = useState('');
+  const [salesAdvisor, setSalesAdvisor] = useState('');
+  const [deliveryWeek, setDeliveryWeek] = useState('');
   const [notes, setNotes] = useState('');
   const [includeAppendix, setIncludeAppendix] = useState(true);
   const [lines, setLines] = useState<LineItem[]>([newLine()]);
@@ -100,6 +102,8 @@ export default function AngebotErstellen() {
             setOfferNumber(snap.offerNumber);
             if (snap.offerDate) setOfferDate(snap.offerDate);
             if (snap.validUntil) setValidUntil(snap.validUntil);
+            if (snap.salesAdvisor) setSalesAdvisor(snap.salesAdvisor);
+            if (snap.deliveryWeek) setDeliveryWeek(snap.deliveryWeek);
             if (snap.notes) setNotes(snap.notes);
             if (typeof snap.includeAppendix === 'boolean') setIncludeAppendix(snap.includeAppendix);
             if (snap.customer?.id) setCustomerId(snap.customer.id);
@@ -416,6 +420,12 @@ export default function AngebotErstellen() {
     doc.text(`Angebotsnummer:`, metaX, my); doc.text(offerNumber, RIGHT, my, { align: 'right' }); my += 5;
     doc.text(`Datum:`, metaX, my); doc.text(new Date(offerDate).toLocaleDateString('de-DE'), RIGHT, my, { align: 'right' }); my += 5;
     if (validUntil) { doc.text(`Gültig bis:`, metaX, my); doc.text(new Date(validUntil).toLocaleDateString('de-DE'), RIGHT, my, { align: 'right' }); my += 5; }
+    if (salesAdvisor) { doc.text(`Verkaufsberater:`, metaX, my); doc.text(salesAdvisor, RIGHT, my, { align: 'right' }); my += 5; }
+    if (deliveryWeek) {
+      const wkMatch = deliveryWeek.match(/^(\d{4})-W(\d{2})$/);
+      const wkLabel = wkMatch ? `KW ${wkMatch[2]} / ${wkMatch[1]}` : deliveryWeek;
+      doc.text(`Vorauss. Liefertermin:`, metaX, my); doc.text(wkLabel, RIGHT, my, { align: 'right' }); my += 5;
+    }
 
     // Customer block
     doc.setTextColor(120, 120, 120);
@@ -692,6 +702,8 @@ export default function AngebotErstellen() {
     offerNumber,
     offerDate,
     validUntil,
+    salesAdvisor,
+    deliveryWeek,
     notes,
     includeAppendix,
     customer: selectedCustomer ? {
@@ -820,9 +832,29 @@ export default function AngebotErstellen() {
           <Label>Gültig bis</Label>
           <Input type="date" value={validUntil} onChange={e => setValidUntil(e.target.value)} className="bg-secondary border-border mt-1.5" />
         </div>
+        <div>
+          <Label>Verkaufsberater</Label>
+          <Input
+            value={salesAdvisor}
+            onChange={e => setSalesAdvisor(e.target.value)}
+            placeholder="Name des Beraters"
+            className="bg-secondary border-border mt-1.5"
+          />
+        </div>
+        <div>
+          <Label>Voraussichtlicher Liefertermin (KW)</Label>
+          <Input
+            type="week"
+            value={deliveryWeek}
+            onChange={e => setDeliveryWeek(e.target.value)}
+            placeholder="z.B. 2026-W24"
+            className="bg-secondary border-border mt-1.5"
+          />
+        </div>
       </div>
 
       {/* Aus Anfrage übernehmen */}
+
       <div className="rounded-xl border border-border bg-card card-glow p-4">
         <button
           type="button"
