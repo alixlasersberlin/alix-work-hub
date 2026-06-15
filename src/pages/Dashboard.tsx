@@ -316,22 +316,21 @@ export default function Dashboard() {
     load();
   }, [canSeeOrders, canSeeRoutes, canSeeFinance, isAdmin, canSeeAudit, canSeeCustomers, atOnly]);
 
-  const kpiCards = [
-    { label: 'Freie Geräte (Pool)', value: stats.freePoolDevices, icon: PackageCheck, visible: isAdmin, onClick: () => navigate('/lager/equipment-area') },
-    { label: 'Leihgeräte', value: stats.leihgeraete, icon: Warehouse, visible: isAdmin, onClick: () => navigate('/lager/leihgeraete') },
-    { label: 'VIP-Aufträge', value: stats.vipOrders, icon: Crown, visible: canSeeOrders, onClick: () => navigate('/auftraege') },
-    { label: 'Offene Aufträge', value: stats.openOrders, icon: AlertCircle, visible: canSeeOrders, onClick: () => navigate('/auftraege') },
-    { label: 'Geplante Touren', value: stats.routes, icon: MapPin, visible: canSeeRoutes, onClick: () => navigate('/tourenplanung') },
-    { label: 'Offene Zahlungen', value: stats.openFinance, icon: Banknote, visible: canSeeFinance, onClick: () => navigate('/finance') },
+  const kpiCards: Array<{
+    label: string;
+    value: number;
+    icon: React.ElementType;
+    visible: boolean;
+    onClick: () => void;
+    accent: 'gold' | 'sky' | 'emerald' | 'rose' | 'violet';
+  }> = [
+    { label: 'Freie Geräte (Pool)', value: stats.freePoolDevices, icon: PackageCheck, visible: isAdmin, onClick: () => navigate('/lager/equipment-area'), accent: 'sky' },
+    { label: 'Leihgeräte', value: stats.leihgeraete, icon: Warehouse, visible: isAdmin, onClick: () => navigate('/lager/leihgeraete'), accent: 'violet' },
+    { label: 'VIP-Aufträge', value: stats.vipOrders, icon: Crown, visible: canSeeOrders, onClick: () => navigate('/auftraege'), accent: 'gold' },
+    { label: 'Offene Aufträge', value: stats.openOrders, icon: AlertCircle, visible: canSeeOrders, onClick: () => navigate('/auftraege'), accent: 'rose' },
+    { label: 'Geplante Touren', value: stats.routes, icon: MapPin, visible: canSeeRoutes, onClick: () => navigate('/tourenplanung'), accent: 'emerald' },
+    { label: 'Offene Zahlungen', value: stats.openFinance, icon: Banknote, visible: canSeeFinance, onClick: () => navigate('/finance'), accent: 'rose' },
   ].filter(c => c.visible);
-
-  const kpiColors = [
-    'text-[hsl(var(--info))]',
-    'text-primary',
-    'text-[hsl(var(--warning))]',
-    'text-[hsl(var(--success))]',
-    'text-destructive',
-  ];
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in space-y-8">
