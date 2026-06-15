@@ -16,6 +16,7 @@ import {
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { PageHeader } from "@/components/infinity/PageHeader";
+import { KpiTile } from "@/components/infinity/KpiTile";
 
 type KPI = { label: string; value: string | number; hint?: string; icon?: any; tone?: "default" | "warn" | "ok" | "danger" };
 
@@ -304,19 +305,18 @@ export default function ManagementDashboard() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   {group.items.map(k => {
                     const Icon = k.icon ?? Activity;
-                    const tone = k.tone === "danger" ? "border-destructive/40 bg-destructive/5"
-                      : k.tone === "warn" ? "border-yellow-500/40 bg-yellow-500/5"
-                      : k.tone === "ok" ? "border-emerald-500/40 bg-emerald-500/5"
-                      : "";
+                    const accent = k.tone === "danger" ? "rose"
+                      : k.tone === "warn" ? "gold"
+                      : k.tone === "ok" ? "emerald"
+                      : "sky";
                     return (
-                      <Card key={k.label} className={tone}>
-                        <CardHeader className="pb-2">
-                          <CardDescription className="flex items-center gap-2"><Icon className="h-4 w-4" /> {k.label}</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="text-2xl font-bold">{loading ? "–" : k.value}</div>
-                        </CardContent>
-                      </Card>
+                      <KpiTile
+                        key={k.label}
+                        label={k.label}
+                        value={loading ? "–" : k.value}
+                        icon={Icon}
+                        accent={accent as any}
+                      />
                     );
                   })}
                 </div>
