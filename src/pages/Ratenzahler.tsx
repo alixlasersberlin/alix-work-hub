@@ -198,7 +198,7 @@ export default function Ratenzahler() {
       {error && <PageError message={error} onRetry={fetchRows} />}
 
       {loading ? (
-        <PageLoading />
+        <DataCard><SkeletonTable rows={10} cols={6} /></DataCard>
       ) : (
         <DataCard className="overflow-hidden">
           <div className="overflow-x-auto">
