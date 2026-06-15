@@ -542,7 +542,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
               >
                 <ArrowLeft className="h-4 w-4" /> {t.back}
               </Button>
-              {step < 11 ? (
+              {step < 12 ? (
                 <Button
                   type="button"
                   onClick={() => setStep((s) => s + 1)}
