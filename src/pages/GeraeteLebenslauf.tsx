@@ -10,6 +10,7 @@ import {
   Search, ShoppingCart, Truck, Wrench, Hammer, Package,
   AlertTriangle, ShieldCheck, RefreshCw, Undo2, Heart, Activity, Award, FileText,
 } from 'lucide-react';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 type DLRow = {
   id: string;

@@ -8,6 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Card } from '@/components/ui/card';
 import { Building2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 interface Tenant {
   id: string; code: string; name: string;

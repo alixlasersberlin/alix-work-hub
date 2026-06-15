@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Landmark, Search, Loader2, Inbox, Eye, Check } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
 import { PageSizeSelector, usePagination, PaginationControls } from '@/components/PageSizeSelector';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 export default function LeasingBank() {
   const navigate = useNavigate();
