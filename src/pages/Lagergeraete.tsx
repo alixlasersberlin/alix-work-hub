@@ -883,24 +883,24 @@ export default function Lagergeraete({
               </AlertDialogContent>
             </AlertDialog>
           )}
-        <Dialog open={open} onOpenChange={(v) => { if (!v) { setOpen(false); resetForm(); } else { setOpen(true); } }}>
-          <DialogTrigger asChild>
-            <Button className="gap-2" onClick={() => setOpen(true)}>
-              <Plus className="w-4 h-4" /> {addLabel}
-            </Button>
-          </DialogTrigger>
-          <DialogContent
-            className="max-h-[90vh] overflow-y-auto"
-            onPointerDownOutside={(e) => e.preventDefault()}
-            onInteractOutside={(e) => e.preventDefault()}
-            onEscapeKeyDown={(e) => e.preventDefault()}
-          >
-            <DialogHeader>
-              <DialogTitle>{editingId ? `${dialogTitle} bearbeiten` : `${dialogTitle} erfassen`}</DialogTitle>
-              <DialogDescription>
-                Bitte alle Pflichtfelder ausfüllen.
-              </DialogDescription>
-            </DialogHeader>
+          <Button className="gap-2" onClick={() => { resetForm(); setOpen(true); }}>
+            <Plus className="w-4 h-4" /> {addLabel}
+          </Button>
+          {open && (
+            <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-background/80 px-4 py-8 backdrop-blur-sm">
+              <div className="relative w-full max-w-lg rounded-lg border bg-background p-6 shadow-lg">
+                <button
+                  type="button"
+                  aria-label="Schließen"
+                  className="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  onClick={() => { setOpen(false); resetForm(); }}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+                <div className="flex flex-col space-y-1.5 text-center sm:text-left">
+                  <h2 className="text-lg font-semibold leading-none tracking-tight">{editingId ? `${dialogTitle} bearbeiten` : `${dialogTitle} erfassen`}</h2>
+                  <p className="text-sm text-muted-foreground">Bitte alle Pflichtfelder ausfüllen.</p>
+                </div>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="serial">Seriennummer *</Label>
