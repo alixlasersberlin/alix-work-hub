@@ -868,3 +868,131 @@ html[data-aurora="2"] [role="dialog"] {
     0 0 0 1px hsl(var(--primary) / 0.12),
     0 0 80px -20px hsl(var(--primary) / 0.25);
 }
+
+/* ============================================================
+   Aurora 2.0 — Phase 5: Navigation, Sidebar & Loading
+   ============================================================ */
+
+/* Sidebar: glass blur + subtle gold edge */
+html[data-aurora="2"] [data-sidebar="sidebar"],
+html[data-aurora="2"] aside[class*="sidebar"] {
+  background:
+    linear-gradient(180deg,
+      hsl(var(--background) / 0.85) 0%,
+      hsl(var(--background) / 0.95) 100%);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border-right: 1px solid hsl(var(--primary) / 0.08);
+}
+
+/* Sidebar menu items: gold rail on active */
+html[data-aurora="2"] [data-sidebar="menu-button"],
+html[data-aurora="2"] nav a {
+  position: relative;
+  transition: background-color 0.15s ease, color 0.15s ease,
+    padding-left 0.18s ease;
+}
+html[data-aurora="2"] [data-sidebar="menu-button"]::before,
+html[data-aurora="2"] nav a[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  border-radius: 2px;
+  background: hsl(var(--primary));
+  box-shadow: 0 0 8px hsl(var(--primary) / 0.6);
+  transform: scaleY(0);
+  transition: transform 0.2s ease;
+}
+html[data-aurora="2"] [data-sidebar="menu-button"][data-active="true"]::before,
+html[data-aurora="2"] [data-sidebar="menu-button"]:hover::before,
+html[data-aurora="2"] nav a[aria-current="page"]::before {
+  transform: scaleY(1);
+}
+html[data-aurora="2"] [data-sidebar="menu-button"][data-active="true"] {
+  background: linear-gradient(90deg,
+    hsl(var(--primary) / 0.1) 0%,
+    transparent 100%);
+  color: hsl(var(--primary));
+}
+
+/* Top nav: gold underline on hover */
+html[data-aurora="2"] header nav a,
+html[data-aurora="2"] header [role="menuitem"] {
+  position: relative;
+}
+html[data-aurora="2"] header nav a::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -2px;
+  width: 0;
+  height: 1.5px;
+  background: hsl(var(--primary));
+  transition: width 0.2s ease, left 0.2s ease;
+}
+html[data-aurora="2"] header nav a:hover::after {
+  width: 100%;
+  left: 0;
+}
+
+/* Skeleton shimmer */
+html[data-aurora="2"] [class*="skeleton"],
+html[data-aurora="2"] [data-skeleton] {
+  position: relative;
+  overflow: hidden;
+  background: hsl(var(--muted) / 0.4);
+}
+html[data-aurora="2"] [class*="skeleton"]::after,
+html[data-aurora="2"] [data-skeleton]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    hsl(var(--primary) / 0.08) 50%,
+    transparent 100%
+  );
+  transform: translateX(-100%);
+  animation: a2-shimmer 1.8s infinite;
+}
+@keyframes a2-shimmer {
+  100% { transform: translateX(100%); }
+}
+
+/* Page transition: subtle fade-in on route content */
+html[data-aurora="2"] main > * {
+  animation: a2-page-in 0.35s ease-out;
+}
+@keyframes a2-page-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Spinner: gold gradient ring */
+html[data-aurora="2"] .animate-spin {
+  filter: drop-shadow(0 0 6px hsl(var(--primary) / 0.4));
+}
+
+/* Dropdown / Popover refinement */
+html[data-aurora="2"] [role="menu"],
+html[data-aurora="2"] [data-radix-popper-content-wrapper] > * {
+  background: hsl(var(--popover) / 0.96) !important;
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  border: 1px solid hsl(var(--primary) / 0.12) !important;
+  box-shadow:
+    0 20px 40px -12px rgba(0, 0, 0, 0.5),
+    0 0 0 1px hsl(var(--border) / 0.4),
+    0 0 30px -10px hsl(var(--primary) / 0.2);
+}
+
+/* Menu items hover */
+html[data-aurora="2"] [role="menuitem"]:hover,
+html[data-aurora="2"] [role="option"]:hover {
+  background: hsl(var(--primary) / 0.1) !important;
+  color: hsl(var(--primary));
+}
