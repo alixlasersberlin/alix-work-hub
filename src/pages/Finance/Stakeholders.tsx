@@ -75,13 +75,13 @@ export default function FinanceStakeholders() {
     setForm((f: any) => ({ ...f, allowed_reports: f.allowed_reports.includes(id) ? f.allowed_reports.filter((x: string) => x !== id) : [...f.allowed_reports, id] }));
   };
 
-  if (loading) return <PageLoading />;
-
   return (
     <div className="space-y-6">
-      <PageHeader title="Stakeholder-Portale" subtitle="Externe Empfänger mit Token-Zugriff auf ausgewählte Berichte" icon={Users}
+      <PageHeader title="Stakeholder-Portale" subtitle={loading ? 'Lädt…' : 'Externe Empfänger mit Token-Zugriff auf ausgewählte Berichte'} icon={Users} noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${rows.length} Stakeholder`} pulse={loading} />}
         actions={canEdit && <Button onClick={() => setShow(true)} className="gap-2"><Plus className="h-4 w-4" />Neuer Stakeholder</Button>} />
 
+      {loading ? <DataCard><SkeletonTable rows={6} cols={4} /></DataCard> : (
       <DataCard title={`Stakeholder (${rows.length})`}>
         {rows.length === 0 ? <div className="p-8 text-center text-muted-foreground">Keine Stakeholder konfiguriert.</div> : (
           <div className="divide-y divide-border">
