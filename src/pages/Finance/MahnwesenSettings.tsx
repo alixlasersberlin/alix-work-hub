@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Settings as SettingsIcon, Save } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { PageHeader, PageLoading, DataCard } from '@/components/PageShell';
+import { DataCard } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { SkeletonTable } from '@/components/infinity/Skeleton';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -49,20 +52,22 @@ export default function FinanceMahnwesenSettings() {
     finally { setSaving(false); }
   };
 
-  if (loading) return <PageLoading />;
-
   return (
     <div className="p-4 sm:p-6">
       <PageHeader
-        icon={<SettingsIcon className="w-6 h-6 text-primary" />}
+        icon={SettingsIcon}
         title="Mahnwesen Einstellungen"
-        subtitle="Mahnstufen, Gebühren, Verzugszinsen und Zahlungsfrist"
+        subtitle={loading ? 'Lädt…' : 'Mahnstufen, Gebühren, Verzugszinsen und Zahlungsfrist'}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : 'Konfiguration'} pulse={loading} />}
         actions={isSuperAdmin && (
-          <Button onClick={save} disabled={saving} className="gold-gradient text-primary-foreground">
+          <Button onClick={save} disabled={saving || loading} className="gold-gradient text-primary-foreground">
             <Save className="w-4 h-4 mr-2" />{saving ? 'Speichert…' : 'Speichern'}
           </Button>
         )}
       />
+      {loading ? <DataCard><SkeletonTable rows={5} cols={5} /></DataCard> : (
+      <>
       {!isSuperAdmin && <div className="mb-3 text-sm text-amber-500">Nur Super Admin kann Einstellungen speichern.</div>}
 
       <DataCard className="p-4 mb-4">
@@ -103,6 +108,8 @@ export default function FinanceMahnwesenSettings() {
         Hinweis: Die Mahn-Engine läuft täglich 03:00 UTC und erzeugt nur Entwürfe.
         Versand erfolgt ausschließlich manuell aus der Übersicht.
       </p>
+      </>
+      )}
     </div>
   );
 }
