@@ -156,13 +156,12 @@ export default function EmailTemplates() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <Mail className="h-7 w-7 text-primary" />
-        <div>
-          <h1 className="text-3xl font-bold">E-Mail Vorlagen</h1>
-          <p className="text-muted-foreground text-sm">Inhalte der automatisch versendeten E-Mails bearbeiten.</p>
-        </div>
-      </div>
+      <PageHeader
+        icon={Mail}
+        title="E-Mail Vorlagen"
+        subtitle="Inhalte der automatisch versendeten E-Mails bearbeiten."
+        noBreadcrumbs
+      />
 
       {loading ? (
         <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>

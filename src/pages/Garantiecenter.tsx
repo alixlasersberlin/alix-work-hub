@@ -75,10 +75,12 @@ export default function Garantiecenter() {
 
   return (
     <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-3xl font-bold flex items-center gap-2"><ShieldCheck className="h-7 w-7 text-primary" /> Garantiecenter</h1>
-        <p className="text-muted-foreground mt-1">Übersicht aller Garantien und Garantiefälle.</p>
-      </div>
+      <PageHeader
+        icon={ShieldCheck}
+        title="Garantiecenter"
+        subtitle="Übersicht aller Garantien und Garantiefälle."
+        noBreadcrumbs
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Kpi icon={<ShieldCheck className="h-5 w-5 text-green-500" />} title="Aktive Garantien" value={kpis.active} />
