@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, ClipboardList, ArrowUpDown, Loader2, Inbox, Pencil, CalendarClock, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { Search, ClipboardList, ArrowUpDown, Loader2, Inbox, Pencil, CalendarClock, CheckCircle2, ShieldCheck, AlertOctagon } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
 import OrderEditDialog from '@/components/OrderEditDialog';
 import OrderDeferDialog from '@/components/OrderDeferDialog';
