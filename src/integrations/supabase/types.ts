@@ -12436,6 +12436,10 @@ export type Database = {
         }
         Returns: string
       }
+      merge_customers: {
+        Args: { _duplicate_ids: string[]; _primary_id: string }
+        Returns: Json
+      }
       notify_customer_event: {
         Args: {
           _customer_name: string
