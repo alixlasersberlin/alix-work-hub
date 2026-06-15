@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { PageHeader, PageLoading, DataCard } from '@/components/PageShell';
+import { DataCard } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { SkeletonKpiGrid, SkeletonChart } from '@/components/infinity/Skeleton';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
+import { KpiTile } from '@/components/infinity/KpiTile';
+import { Gauge, TrendingUp, TrendingDown, Wallet, Clock, Flame, Timer, Activity } from 'lucide-react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { fmt, MONTH_NAMES, classifyTx } from './_controlling';
 
