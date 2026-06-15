@@ -82,5 +82,11 @@ export function useNotifications() {
     };
   }, []);
   const unread = list.filter((n) => !n.read).length;
-  return { list, unread, ...notifyBus };
+  return {
+    list,
+    items: list, // back-compat alias
+    unread,
+    unreadCount: unread, // back-compat alias
+    ...notifyBus,
+  };
 }
