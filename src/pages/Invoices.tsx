@@ -275,7 +275,7 @@ export default function Invoices() {
 
       {error && <PageError message={error} onRetry={fetchRows} />}
 
-      {loading ? <PageLoading /> : (
+      {loading ? <DataCard><SkeletonTable rows={8} cols={6} /></DataCard> : (
         <div className="space-y-3">
           {accounts.length === 0 ? (
             <DataCard className="p-12 text-center text-muted-foreground">
