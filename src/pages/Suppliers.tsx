@@ -10,6 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Plus, Loader2, Pencil, Trash2, ArrowLeft, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageSizeSelector, usePagination, PaginationControls } from '@/components/PageSizeSelector';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 
 interface Supplier {
   id: string;
@@ -90,17 +92,19 @@ export default function Suppliers() {
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <Button variant="ghost" size="sm" onClick={() => navigate('/order')} className="mb-2">
-            <ArrowLeft className="w-4 h-4 mr-1" /> Zurück
-          </Button>
-          <h1 className="text-2xl font-display font-bold gold-text flex items-center gap-2">
-            <Users className="w-6 h-6" /> Zulieferer
-          </h1>
-        </div>
-        <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" /> Zulieferer anlegen</Button>
-      </div>
+      <Button variant="ghost" size="sm" onClick={() => navigate('/order')} className="mb-2">
+        <ArrowLeft className="w-4 h-4 mr-1" /> Zurück
+      </Button>
+      <PageHeader
+        icon={Users}
+        title="Zulieferer"
+        subtitle={`${rows.length} Zulieferer`}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind="done" label={`${rows.length}`} />}
+        actions={
+          <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" /> Zulieferer anlegen</Button>
+        }
+      />
 
       <div className="flex justify-end">
         <PageSizeSelector value={pageSize} onChange={setPageSize} />

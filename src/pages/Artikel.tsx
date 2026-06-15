@@ -16,6 +16,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/hooks/useAuth';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 
 type ZohoItem = {
   id: string;
@@ -487,33 +489,28 @@ export default function Artikel() {
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-[1600px] mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-display font-bold gold-text flex items-center gap-2">
-            <Package className="w-6 h-6" /> Artikel
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Artikel-Stammdaten aus Zoho Books{lastSync ? ` · zuletzt synchronisiert: ${lastSync}` : ''}
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="text-right hidden sm:block">
-            <div className="text-2xl font-semibold gold-text leading-none">{items.length.toLocaleString('de-DE')}</div>
-            <div className="text-[11px] uppercase text-muted-foreground tracking-wider">Artikel gesamt</div>
-          </div>
-          <Button variant="outline" onClick={() => { load(); loadCategoryData(); }} disabled={loading} title="Artikel neu laden">
-            {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
-            Neu laden
-          </Button>
-          <Button variant="outline" onClick={() => { setCreateDraft(emptyDraft); setCreateOpen(true); }}>
-            <Plus className="w-4 h-4 mr-2" /> Artikel anlegen
-          </Button>
-          <Button onClick={syncAll} disabled={syncing} className="gold-gradient text-primary-foreground">
-            {syncing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
-            Aus Zoho synchronisieren
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        icon={Package}
+        title="Artikel"
+        subtitle={`Artikel-Stammdaten aus Zoho Books${lastSync ? ` · zuletzt synchronisiert: ${lastSync}` : ''}`}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind="done" label={`${items.length.toLocaleString('de-DE')} Artikel`} />}
+        actions={
+          <>
+            <Button variant="outline" onClick={() => { load(); loadCategoryData(); }} disabled={loading} title="Artikel neu laden">
+              {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+              Neu laden
+            </Button>
+            <Button variant="outline" onClick={() => { setCreateDraft(emptyDraft); setCreateOpen(true); }}>
+              <Plus className="w-4 h-4 mr-2" /> Artikel anlegen
+            </Button>
+            <Button onClick={syncAll} disabled={syncing} className="gold-gradient text-primary-foreground">
+              {syncing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+              Aus Zoho synchronisieren
+            </Button>
+          </>
+        }
+      />
 
       {/* Filterleiste */}
       <Card className="p-3">
