@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 import { FileBarChart, Plus, Send, Trash2, Download } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { PageHeader, PageLoading, DataCard } from '@/components/PageShell';
+import { DataCard } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { SkeletonTable } from '@/components/infinity/Skeleton';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -100,13 +103,15 @@ export default function FinanceManagementPack() {
     setForm((f: any) => ({ ...f, sections: f.sections.includes(v) ? f.sections.filter((x: string) => x !== v) : [...f.sections, v] }));
   };
 
-  if (loading) return <PageLoading />;
+  
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Management-Pack" subtitle="Monats- und Quartalspakete für Geschäftsführung & Beirat" icon={FileBarChart}
+      <PageHeader title="Management-Pack" subtitle={loading ? 'Lädt…' : 'Monats- und Quartalspakete für Geschäftsführung & Beirat'} icon={FileBarChart} noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${rows.length} Pakete`} pulse={loading} />}
         actions={canEdit && <Button onClick={() => setShow(true)} className="gap-2"><Plus className="h-4 w-4" />Neues Pack</Button>} />
 
+      {loading ? <DataCard><SkeletonTable rows={6} cols={4} /></DataCard> : (
       <DataCard title={`Pakete (${rows.length})`}>
         {rows.length === 0 ? <div className="p-8 text-center text-muted-foreground">Noch keine Pakete erstellt.</div> : (
           <div className="divide-y divide-border">
@@ -133,6 +138,7 @@ export default function FinanceManagementPack() {
           </div>
         )}
       </DataCard>
+      )}
 
       <Dialog open={show} onOpenChange={setShow}>
         <DialogContent>
