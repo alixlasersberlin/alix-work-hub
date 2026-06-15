@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Warehouse, PackageCheck, Truck, Factory, Package, Loader2, Search, X } from 'lucide-react';
-import { PageHeader } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -180,9 +181,11 @@ export default function Lager() {
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
       <PageHeader
-        icon={<Warehouse className="w-6 h-6 text-primary" />}
+        icon={Warehouse}
         title="Lagerbestand"
         subtitle={`Übersicht aller Abteilungen · ${displayedTotal} Geräte gesamt`}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind="done" label={`${displayedTotal} Geräte`} />}
       />
 
       {/* Suche */}
