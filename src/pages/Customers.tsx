@@ -140,12 +140,17 @@ export default function Customers() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">{totalFiltered} Kunden</p>
         </div>
-        <Button
-          onClick={() => setEditCustomer({})}
-          className="gold-gradient text-primary-foreground"
-        >
-          <UserPlus className="w-4 h-4 mr-2" /> Neuer Kunde
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => navigate('/kunden/doppelte')}>
+            <Users className="w-4 h-4 mr-2" /> Doppelte suchen
+          </Button>
+          <Button
+            onClick={() => setEditCustomer({})}
+            className="gold-gradient text-primary-foreground"
+          >
+            <UserPlus className="w-4 h-4 mr-2" /> Neuer Kunde
+          </Button>
+        </div>
       </div>
 
       {/* Filters row */}
