@@ -3,9 +3,10 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Package, PackageCheck, BookOpen, Plus } from 'lucide-react';
+import { Package, PackageCheck, BookOpen, Plus, Hash, Boxes, CalendarClock, Layers } from 'lucide-react';
 import { format } from 'date-fns';
 import { PageHeader } from '@/components/infinity/PageHeader';
+import { KpiTile } from '@/components/infinity/KpiTile';
 
 type Receipt = {
   id: string;
@@ -56,22 +57,10 @@ export default function ArtikelUebersicht() {
       />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card><CardContent className="p-4">
-          <p className="text-xs text-muted-foreground uppercase tracking-wide">Buchungen gesamt</p>
-          <p className="text-2xl font-bold mt-1">{stats.count}</p>
-        </CardContent></Card>
-        <Card><CardContent className="p-4">
-          <p className="text-xs text-muted-foreground uppercase tracking-wide">Menge gesamt</p>
-          <p className="text-2xl font-bold mt-1">{stats.totalQty}</p>
-        </CardContent></Card>
-        <Card><CardContent className="p-4">
-          <p className="text-xs text-muted-foreground uppercase tracking-wide">Letzte 7 Tage</p>
-          <p className="text-2xl font-bold mt-1">{stats.last7Count} <span className="text-sm font-normal text-muted-foreground">({stats.last7Qty} Stk.)</span></p>
-        </CardContent></Card>
-        <Card><CardContent className="p-4">
-          <p className="text-xs text-muted-foreground uppercase tracking-wide">Verschiedene Artikel</p>
-          <p className="text-2xl font-bold mt-1">{stats.uniqueItems}</p>
-        </CardContent></Card>
+        <KpiTile label="Buchungen gesamt" value={stats.count} icon={Hash} accent="gold" />
+        <KpiTile label="Menge gesamt" value={stats.totalQty} unit="Stk." icon={Boxes} accent="sky" />
+        <KpiTile label="Letzte 7 Tage" value={stats.last7Count} unit={`(${stats.last7Qty} Stk.)`} icon={CalendarClock} accent="emerald" />
+        <KpiTile label="Verschiedene Artikel" value={stats.uniqueItems} icon={Layers} accent="violet" />
       </div>
 
       <Card>
