@@ -14,6 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import bgAsset from '@/assets/wizard/alix-lasers-bg.jpg.asset.json';
 import WizardLanguageSwitcher from '@/components/WizardLanguageSwitcher';
 import { useWizardLang } from '@/i18n/wizard';
+import { ALIX_LASERS_MODELS, ALIX_BEAUTY_MODELS } from '@/lib/alix-models';
 
 import imgHair from '@/assets/wizard/haarentfernung.jpg';
 import imgFace from '@/assets/wizard/gesicht.jpg';
@@ -63,6 +64,8 @@ const COUNTRY_CODES = [
 type State = {
   interests: string[];
   additional_interests: string[];
+  laser_model: string;
+  beauty_model: string;
   delivery_preference: string;
   first_name: string;
   last_name: string;
@@ -80,6 +83,8 @@ type State = {
 const INITIAL: State = {
   interests: [],
   additional_interests: [],
+  laser_model: '',
+  beauty_model: '',
   delivery_preference: '',
   first_name: '',
   last_name: '',
@@ -94,7 +99,7 @@ const INITIAL: State = {
   service_rating: 0,
 };
 
-const TOTAL_STEPS = 12;
+const TOTAL_STEPS = 13;
 
 interface Props {
   /** When true the wizard renders the full public landing chrome (logo, watermark). */
@@ -124,12 +129,12 @@ export default function SalesWizard({ publicMode = false }: Props) {
   function canContinue(): boolean {
     switch (step) {
       case 1: return data.interests.length > 0;
-      case 3: return !!data.delivery_preference;
-      case 4: return !!data.first_name.trim() && !!data.last_name.trim();
-      case 6: return data.phone.trim().length >= 3;
-      case 7: return /.+@.+\..+/.test(data.email.trim());
-      case 8: return !!data.consultation_type;
-      case 10: return data.consent_data && data.consent_contact && (publicMode ? !!captchaToken : true);
+      case 4: return !!data.delivery_preference;
+      case 5: return !!data.first_name.trim() && !!data.last_name.trim();
+      case 7: return data.phone.trim().length >= 3;
+      case 8: return /.+@.+\..+/.test(data.email.trim());
+      case 9: return !!data.consultation_type;
+      case 11: return data.consent_data && data.consent_contact && (publicMode ? !!captchaToken : true);
       default: return true;
     }
   }
@@ -138,9 +143,20 @@ export default function SalesWizard({ publicMode = false }: Props) {
     setSubmitting(true);
     setError(null);
     try {
+      const deviceLines: string[] = [];
+      if (data.laser_model) deviceLines.push(`Wunschgerät (Alix Lasers): ${data.laser_model}`);
+      if (data.beauty_model) deviceLines.push(`Wunschgerät (Alix Beauty): ${data.beauty_model}`);
+      const mergedNotes = [deviceLines.join('\n'), data.notes].filter(Boolean).join('\n\n');
+      const { laser_model, beauty_model, ...rest } = data;
       const { data: json, error: fnError } = await supabase.functions.invoke('sales-wizard-submit', {
         body: {
-          ...data,
+          ...rest,
+          notes: mergedNotes,
+          additional_interests: [
+            ...data.additional_interests,
+            ...(laser_model ? [`Gerät: ${laser_model}`] : []),
+            ...(beauty_model ? [`Gerät: ${beauty_model}`] : []),
+          ],
           source: publicMode ? 'alixwork_wizard_public' : 'alixwork_wizard_internal',
           turnstile_token: captchaToken,
         },
@@ -284,8 +300,42 @@ export default function SalesWizard({ publicMode = false }: Props) {
             </Section>
           )}
 
-          {/* Step 2 – Zusätzliche Interessen */}
+          {/* Step 2 – Wunschgerät (optional) */}
           {step === 2 && (
+            <Section title="Wunschgerät" hint="Optional – wählen Sie ein Gerät aus unserem Portfolio" publicMode={publicMode}>
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs uppercase tracking-wide opacity-80">Alix Lasers</Label>
+                  <select
+                    value={data.laser_model}
+                    onChange={(e) => setData({ ...data, laser_model: e.target.value })}
+                    className="w-full h-10 rounded-md border px-3 text-sm bg-white/5 border-white/15 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+                  >
+                    <option value="" className="text-slate-900">– Kein Gerät ausgewählt –</option>
+                    {ALIX_LASERS_MODELS.map((m) => (
+                      <option key={m} value={m} className="text-slate-900">{m}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs uppercase tracking-wide opacity-80">Alix Beauty (optional)</Label>
+                  <select
+                    value={data.beauty_model}
+                    onChange={(e) => setData({ ...data, beauty_model: e.target.value })}
+                    className="w-full h-10 rounded-md border px-3 text-sm bg-white/5 border-white/15 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+                  >
+                    <option value="" className="text-slate-900">– Kein Gerät ausgewählt –</option>
+                    {ALIX_BEAUTY_MODELS.map((m) => (
+                      <option key={m} value={m} className="text-slate-900">{m}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </Section>
+          )}
+
+          {/* Step 3 – Zusätzliche Interessen */}
+          {step === 3 && (
             <Section title={t.s_additional} hint={t.optional_multi} publicMode={publicMode}>
               <div className="space-y-2">
                 {ADDITIONAL.map((a) => {
@@ -319,7 +369,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
           )}
 
           {/* Step 3 – Lieferzeitraum */}
-          {step === 3 && (
+          {step === 4 && (
             <Section title={t.s_delivery} publicMode={publicMode}>
               <RadioGroup value={data.delivery_preference} onValueChange={(v) => setData({ ...data, delivery_preference: v })}>
                 {DELIVERY.map((d) => (
@@ -339,7 +389,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
           )}
 
           {/* Step 4 – Name */}
-          {step === 4 && (
+          {step === 5 && (
             <Section title={t.s_name} hint={t.required} publicMode={publicMode}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <Field label={t.first_name}>
@@ -353,14 +403,14 @@ export default function SalesWizard({ publicMode = false }: Props) {
           )}
 
           {/* Step 5 – Firma */}
-          {step === 5 && (
+          {step === 6 && (
             <Section title={t.s_company} hint={t.optional} publicMode={publicMode}>
               <Input value={data.company} onChange={(e) => setData({ ...data, company: e.target.value })} placeholder={t.company_name} className='bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-cyan-400/60 focus-visible:border-cyan-300/60' />
             </Section>
           )}
 
           {/* Step 6 – Telefon */}
-          {step === 6 && (
+          {step === 7 && (
             <Section title={t.s_phone} hint={t.required} publicMode={publicMode}>
               <div className="flex gap-2">
                 <select
@@ -385,14 +435,14 @@ export default function SalesWizard({ publicMode = false }: Props) {
           )}
 
           {/* Step 7 – Email */}
-          {step === 7 && (
+          {step === 8 && (
             <Section title={t.s_email} hint={t.required} publicMode={publicMode}>
               <Input type="email" value={data.email} onChange={(e) => setData({ ...data, email: e.target.value })} placeholder={t.email_placeholder} className='bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-cyan-400/60 focus-visible:border-cyan-300/60' />
             </Section>
           )}
 
           {/* Step 8 – Beratungsart */}
-          {step === 8 && (
+          {step === 9 && (
             <Section title={t.s_consultation} publicMode={publicMode}>
               <RadioGroup value={data.consultation_type} onValueChange={(v) => setData({ ...data, consultation_type: v })}>
                 {CONSULTATION.map((c) => (
@@ -411,14 +461,14 @@ export default function SalesWizard({ publicMode = false }: Props) {
           )}
 
           {/* Step 9 – Weitere Infos */}
-          {step === 9 && (
+          {step === 10 && (
             <Section title={t.s_notes} hint={t.s_notes_hint} publicMode={publicMode}>
               <Textarea rows={6} value={data.notes} onChange={(e) => setData({ ...data, notes: e.target.value })} className='bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-cyan-400/60 focus-visible:border-cyan-300/60' />
             </Section>
           )}
 
           {/* Step 10 – Datenschutz + Captcha */}
-          {step === 10 && (
+          {step === 11 && (
             <Section title={t.s_privacy} publicMode={publicMode}>
               <div className="space-y-3">
                 <label className="flex items-start gap-3 cursor-pointer">
@@ -439,7 +489,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
           )}
 
           {/* Step 11 – Bewertung */}
-          {step === 11 && (
+          {step === 12 && (
             <Section title={t.s_rating} hint={t.s_rating_hint} publicMode={publicMode}>
               <div className="flex justify-center gap-2 py-4">
                 {[1, 2, 3, 4, 5].map((n) => (
@@ -492,7 +542,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
               >
                 <ArrowLeft className="h-4 w-4" /> {t.back}
               </Button>
-              {step < 11 ? (
+              {step < 12 ? (
                 <Button
                   type="button"
                   onClick={() => setStep((s) => s + 1)}
