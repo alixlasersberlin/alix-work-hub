@@ -377,6 +377,9 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* Aurora 2.0 — Ticket-Aktivität */}
+      <ActivityHeatmap />
+
       {/* Prio-Liste */}
       {canSeeOrders && (
         <div className="rounded-xl border border-border bg-card card-glow overflow-hidden">
