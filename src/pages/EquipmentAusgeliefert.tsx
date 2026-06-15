@@ -8,7 +8,7 @@ export default function EquipmentAusgeliefert() {
       pageTitle="Ausgeliefert"
       pageSubtitle={'Lagergeräte mit Status „Ausgeliefert"'}
       emptyLabel="Noch keine Geräte als ausgeliefert markiert."
-      pageIcon={<PackageCheck className="w-6 h-6 text-blue-500" />}
+      pageIcon={PackageCheck}
       rowAccentClass="bg-blue-500/10 hover:bg-blue-500/15"
     />
   );

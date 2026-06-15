@@ -8,7 +8,7 @@ export default function EquipmentWarehouse() {
       pageTitle="Warehouse"
       pageSubtitle="Gesamtübersicht aller Geräte im Pool"
       emptyLabel="Keine Geräte im Warehouse erfasst."
-      pageIcon={<Warehouse className="w-6 h-6 text-white" />}
+      pageIcon={Warehouse}
       rowAccentClass="bg-white/5 hover:bg-white/10"
     />
   );
