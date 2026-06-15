@@ -28,6 +28,8 @@ import { OrderCard, OrderCardGrid } from '@/components/OrderCard';
 import { ALIX_MODEL_GROUPS } from '@/lib/alix-models';
 import { withAt } from '@/lib/atSuffix';
 import { useAtOnly } from '@/hooks/useAtOnly';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 
 type SortField = 'order_number' | 'order_date' | 'total_amount' | 'created_at';
 type SortDir = 'asc' | 'desc';
@@ -182,15 +184,15 @@ export default function Orders() {
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
-      <div className="mb-6">
-        <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
-          <ClipboardList className="w-6 h-6 text-primary" />
-          Aufträge
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">{filtered.length} Aufträge</p>
-      </div>
+      <PageHeader
+        icon={ClipboardList}
+        title="Aufträge"
+        subtitle={`${filtered.length} Aufträge`}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind="done" label={`${filtered.length}`} />}
+      />
 
-      <Tabs defaultValue="list" className="space-y-4">
+      <Tabs defaultValue="list" className="space-y-4 mt-4">
         <TabsList className="bg-secondary">
           <TabsTrigger value="list" className="gap-1.5">
             <List className="w-3.5 h-3.5" /> Liste
