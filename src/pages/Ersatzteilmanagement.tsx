@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { toast } from 'sonner';
 import { Boxes, AlertTriangle, PackageCheck, ShoppingCart, TrendingDown, Loader2, RefreshCw, Truck } from 'lucide-react';
 import { PageHeader } from '@/components/infinity/PageHeader';
+import { KpiTile } from '@/components/infinity/KpiTile';
 
 type StockRow = {
   id: string;
@@ -145,26 +146,11 @@ export default function Ersatzteilmanagement() {
 
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <Card><CardContent className="p-4">
-          <div className="text-xs uppercase text-muted-foreground flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Kritisch</div>
-          <div className="text-2xl font-bold text-destructive">{kpis.critical}</div>
-        </CardContent></Card>
-        <Card><CardContent className="p-4">
-          <div className="text-xs uppercase text-muted-foreground flex items-center gap-1"><TrendingDown className="w-3 h-3" /> Meldebestand</div>
-          <div className="text-2xl font-bold text-amber-600">{kpis.reorder}</div>
-        </CardContent></Card>
-        <Card><CardContent className="p-4">
-          <div className="text-xs uppercase text-muted-foreground flex items-center gap-1"><ShoppingCart className="w-3 h-3" /> Offene Bestellungen</div>
-          <div className="text-2xl font-bold">{kpis.openOrders}</div>
-        </CardContent></Card>
-        <Card><CardContent className="p-4">
-          <div className="text-xs uppercase text-muted-foreground flex items-center gap-1"><PackageCheck className="w-3 h-3" /> Wareneingänge (30 T.)</div>
-          <div className="text-2xl font-bold">{kpis.receiptsThisMonth}</div>
-        </CardContent></Card>
-        <Card><CardContent className="p-4">
-          <div className="text-xs uppercase text-muted-foreground">Verbrauch (30 T.)</div>
-          <div className="text-2xl font-bold">{kpis.monthConsumption}</div>
-        </CardContent></Card>
+        <KpiTile label="Kritisch" value={kpis.critical} icon={AlertTriangle} accent="rose" />
+        <KpiTile label="Meldebestand" value={kpis.reorder} icon={TrendingDown} accent="gold" />
+        <KpiTile label="Offene Bestellungen" value={kpis.openOrders} icon={ShoppingCart} accent="sky" />
+        <KpiTile label="Wareneingänge (30 T.)" value={kpis.receiptsThisMonth} icon={PackageCheck} accent="emerald" />
+        <KpiTile label="Verbrauch (30 T.)" value={kpis.monthConsumption} icon={Boxes} accent="violet" />
       </div>
 
       <Tabs defaultValue="stock">

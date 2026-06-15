@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { KpiTile } from '@/components/infinity/KpiTile';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -97,24 +98,13 @@ export default function Telefonie() {
       {/* KPIs */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          { label: 'Anrufe heute', value: '—', icon: PhoneCall, color: 'text-primary' },
-          { label: 'Verpasste Anrufe', value: '—', icon: PhoneMissed, color: 'text-red-500' },
-          { label: 'Rückrufe offen', value: callbackTasks.filter(t => t.status === 'offen').length, icon: PhoneOutgoing, color: 'text-amber-500' },
-          { label: 'Ø Gesprächsdauer', value: '—', icon: Clock, color: 'text-emerald-500' },
-        ].map(k => {
-          const Icon = k.icon;
-          return (
-            <Card key={k.label}>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs text-muted-foreground">{k.label}</span>
-                  <Icon className={`w-4 h-4 ${k.color}`} />
-                </div>
-                <div className="text-2xl font-bold">{k.value}</div>
-              </CardContent>
-            </Card>
-          );
-        })}
+          { label: 'Anrufe heute', value: '—', icon: PhoneCall, accent: 'gold' as const },
+          { label: 'Verpasste Anrufe', value: '—', icon: PhoneMissed, accent: 'rose' as const },
+          { label: 'Rückrufe offen', value: callbackTasks.filter(t => t.status === 'offen').length, icon: PhoneOutgoing, accent: 'sky' as const },
+          { label: 'Ø Gesprächsdauer', value: '—', icon: Clock, accent: 'emerald' as const },
+        ].map(k => (
+          <KpiTile key={k.label} label={k.label} value={k.value} icon={k.icon} accent={k.accent} />
+        ))}
       </div>
 
       <Tabs defaultValue="live">
