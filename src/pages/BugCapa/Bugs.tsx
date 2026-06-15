@@ -173,7 +173,11 @@ export default function Bugs() {
       action={
         <Dialog open={open} onOpenChange={handleCreateDialogOpenChange}>
           <Button type="button" onClick={openCreateDialog}><Plus className="h-4 w-4 mr-1" /> Neuer Bug</Button>
-          <DialogContent className="max-w-2xl">
+          <DialogContent
+            className="max-w-2xl"
+            onInteractOutside={(event) => event.preventDefault()}
+            onPointerDownOutside={(event) => event.preventDefault()}
+          >
             <DialogHeader>
               <DialogTitle>Neuen Bug erfassen</DialogTitle>
               <DialogDescription>Erfasse Titel, Beschreibung und Priorität für den neuen Bug.</DialogDescription>
@@ -313,7 +317,11 @@ export default function Bugs() {
         title={detail ? `${detail.ticket_number} – ${detail.title}` : ''}
       />
       <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent
+          className="max-w-2xl"
+          onInteractOutside={(event) => event.preventDefault()}
+          onPointerDownOutside={(event) => event.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle>Bug bearbeiten {editing?.ticket_number}</DialogTitle>
             <DialogDescription>Bearbeite die vorhandenen Bug-Daten.</DialogDescription>
