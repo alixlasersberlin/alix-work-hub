@@ -151,7 +151,7 @@ export default function ExecutiveDashboard() {
         subtitle="Kampagnen-ROI, Mitarbeiter-Performance, Kunden-Score & KI-Empfehlungen"
         icon={TrendingUp}
         noBreadcrumbs
-        meta={<InfinityStatusBadge kind={loading ? 'inprogress' : 'done'} label={loading ? 'Lädt' : 'Live'} pulse={!loading} dotOnly />}
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : 'Live'} pulse={!loading} dotOnly />}
         actions={
           <Button onClick={load} disabled={loading} variant="outline" size="sm">
             <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />Aktualisieren
