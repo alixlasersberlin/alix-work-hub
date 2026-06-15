@@ -118,31 +118,42 @@ export default function FinanceForecast() {
   if (loading) return <PageLoading />;
 
   return (
-    <div className="p-6 space-y-6">
-      <PageHeader title="Rolling Forecast" subtitle={`Prognose ${year} · Szenario ${scenario}`} />
+    <div className="p-4 sm:p-6 space-y-6">
+      <PageHeader
+        icon={LineChartIcon}
+        title="Rolling Forecast"
+        subtitle={`Prognose ${year} · Szenario ${scenario}`}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : scenario.toUpperCase()} pulse={loading} />}
+        actions={
+          <div className="flex items-center gap-2 flex-wrap">
+            <Select value={String(year)} onValueChange={v => setYear(Number(v))}>
+              <SelectTrigger className="w-28 h-9"><SelectValue /></SelectTrigger>
+              <SelectContent>{[year + 1, year, year - 1].map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
+            </Select>
+            <Select value={scenario} onValueChange={v => setScenario(v as Scenario)}>
+              <SelectTrigger className="w-40 h-9"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ai">KI</SelectItem>
+                <SelectItem value="base">Base</SelectItem>
+                <SelectItem value="best">Best Case (+15%)</SelectItem>
+                <SelectItem value="worst">Worst Case (-15%)</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="sm" onClick={autoInit}><Sparkles className="h-4 w-4 mr-2" />Auto-Init</Button>
+            <Button variant="outline" size="sm" onClick={aiGenerate} disabled={aiLoading}>
+              {aiLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Bot className="h-4 w-4 mr-2" />}
+              KI-Forecast
+            </Button>
+            <Button size="sm" onClick={save}><Save className="h-4 w-4 mr-2" />Speichern</Button>
+          </div>
+        }
+      />
 
-      <div className="flex flex-wrap gap-3 items-center">
-        <Select value={String(year)} onValueChange={v => setYear(Number(v))}>
-          <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
-          <SelectContent>{[year + 1, year, year - 1].map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
-        </Select>
-        <Select value={scenario} onValueChange={v => setScenario(v as Scenario)}>
-          <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ai">KI</SelectItem>
-            <SelectItem value="base">Base</SelectItem>
-            <SelectItem value="best">Best Case (+15%)</SelectItem>
-            <SelectItem value="worst">Worst Case (-15%)</SelectItem>
-          </SelectContent>
-        </Select>
-        <Button variant="outline" onClick={autoInit}><Sparkles className="h-4 w-4 mr-2" />Auto-Init</Button>
-        <Button variant="outline" onClick={aiGenerate} disabled={aiLoading}>
-          {aiLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Bot className="h-4 w-4 mr-2" />}
-          KI-Forecast
-        </Button>
-        <Button onClick={save}><Save className="h-4 w-4 mr-2" />Speichern</Button>
-      </div>
-
+      {loading ? (
+        <DataCard><SkeletonTable rows={8} cols={13} /></DataCard>
+      ) : (
+      <>
       <DataCard title="Umsatz – Ist vs. Forecast">
         <div className="h-72">
           <ResponsiveContainer>
