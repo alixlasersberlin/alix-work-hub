@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Plus, RefreshCcw, Download, TrendingUp, AlertTriangle, Wallet } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { PageHeader, PageLoading, DataCard } from '@/components/PageShell';
+import { DataCard } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { SkeletonKpiGrid, SkeletonTable } from '@/components/infinity/Skeleton';
+import { KpiTile } from '@/components/infinity/KpiTile';
+import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
+import { Droplets } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -199,15 +204,19 @@ export default function FinanceLiquiditaet() {
     a.click(); URL.revokeObjectURL(url);
   };
 
-  if (loading) return <PageLoading />;
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 sm:p-6">
       <PageHeader
+        icon={Droplets}
         title="Liquiditätsplanung"
         subtitle="12-Monats-Forecast: Cashflow & Saldo"
-        actions={canEdit ? <Button onClick={() => setDialogOpen(true)} className="gap-2"><Plus className="h-4 w-4" /> Neuer Plan</Button> : undefined}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${plans.length} Pläne`} pulse={loading} />}
+        actions={canEdit ? <Button onClick={() => setDialogOpen(true)} size="sm" className="gap-2"><Plus className="h-4 w-4" /> Neuer Plan</Button> : undefined}
       />
+
+      {loading ? <SkeletonKpiGrid count={4} /> : (<></>)}
+
 
       <div className="flex flex-wrap items-center gap-3">
         <Select value={selectedPlan?.id ?? ''} onValueChange={v => setSelectedPlan(plans.find(p => p.id === v))}>
@@ -234,10 +243,10 @@ export default function FinanceLiquiditaet() {
       {selectedPlan && (
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <DataCard title="Geplante Einnahmen"><div className="text-2xl font-semibold">{fmtEUR(totals.totalIn)}</div></DataCard>
-            <DataCard title="Geplante Ausgaben"><div className="text-2xl font-semibold">{fmtEUR(totals.totalOut)}</div></DataCard>
-            <DataCard title="Endsaldo"><div className="text-2xl font-semibold">{fmtEUR(totals.endSaldo)}</div></DataCard>
-            <DataCard title="Minimum-Saldo"><div className="text-2xl font-semibold">{fmtEUR(totals.minSaldo)}</div></DataCard>
+            <KpiTile icon={TrendingUp} label="Geplante Einnahmen" value={fmtEUR(totals.totalIn)} accent="emerald" />
+            <KpiTile icon={Wallet} label="Geplante Ausgaben" value={fmtEUR(totals.totalOut)} accent="rose" />
+            <KpiTile icon={Wallet} label="Endsaldo" value={fmtEUR(totals.endSaldo)} accent={totals.endSaldo >= 0 ? 'gold' : 'rose'} />
+            <KpiTile icon={AlertTriangle} label="Minimum-Saldo" value={fmtEUR(totals.minSaldo)} accent={totals.minSaldo >= 0 ? 'sky' : 'rose'} />
           </div>
 
           {totals.minSaldo < 0 && (
