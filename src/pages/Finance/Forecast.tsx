@@ -115,7 +115,8 @@ export default function FinanceForecast() {
     return MONTH_NAMES.map((m, i) => ({ month: m, Ist: istSum[i] || 0, Forecast: fcSum[i] || 0 }));
   }, [actual, forecast]);
 
-  if (loading) return <PageLoading />;
+
+
 
   return (
     <div className="p-4 sm:p-6 space-y-6">
