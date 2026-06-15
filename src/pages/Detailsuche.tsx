@@ -8,7 +8,7 @@ import {
   Search, Loader2, Inbox, X, SearchCheck, ChevronDown, ChevronRight,
   Factory, Warehouse, Banknote, MapPin, FileText, MessageSquare, Landmark,
 } from 'lucide-react';
-import { PageHeader } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
 import { StatusBadge } from '@/components/StatusBadge';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
@@ -301,9 +301,10 @@ export default function Detailsuche() {
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
       <PageHeader
-        icon={<SearchCheck className="w-6 h-6 text-primary" />}
+        icon={SearchCheck}
         title="Detailsuche"
         subtitle="Suche nach Name, PLZ, Wohnort, Auftragsnummer, Telefonnummer, Modell oder Seriennummer"
+        noBreadcrumbs
       />
 
       <div className="rounded-xl border border-border bg-card p-6 space-y-4">
