@@ -6,6 +6,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { AlertOctagon, TrendingUp, ListChecks, Sparkles, Clock, CheckCircle2, XCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { KpiTile } from '@/components/infinity/KpiTile';
+import { SkeletonKpiGrid } from '@/components/infinity/Skeleton';
 
 function fmtEur(v: number | null | undefined) {
   if (v == null) return '–';
