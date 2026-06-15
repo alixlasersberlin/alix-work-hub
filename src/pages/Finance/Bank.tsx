@@ -116,7 +116,9 @@ export default function FinanceBank() {
             ))}
           </div>
         </div>
-        {loading ? <PageLoading /> : (
+        {loading ? <div className="p-6"><SkeletonTable rows={8} cols={7} /></div> : filteredLines.length === 0 ? (
+          <div className="p-8"><EmptyState compact title="Keine Buchungen" description="Es gibt keine Buchungen für den gewählten Filter." /></div>
+        ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-muted/30 text-xs text-muted-foreground uppercase">
