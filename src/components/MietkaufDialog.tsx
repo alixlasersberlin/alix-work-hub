@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useState } from 'react';
+import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -383,77 +383,82 @@ export default function MietkaufDialog({ order }: Props) {
     >
       <FileText className="w-4 h-4 mr-2" /> Mietkauf
     </Button>
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-lg bg-background border-border">
-        <DialogHeader>
-          <DialogTitle className="font-display">Mietkaufvertrag erstellen</DialogTitle>
-          <DialogDescription className="sr-only">
-            Erstellen und herunterladen eines Mietkaufvertrags für diesen Auftrag.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4 mt-2">
-          <div>
-            <label className="text-sm text-muted-foreground">Gerät Modell</label>
-            <Input value={geraetModell} onChange={e => setGeraetModell(e.target.value)} placeholder="z.B. Alix Pro 2000" className="bg-secondary border-border" />
-          </div>
-          <div>
-            <label className="text-sm text-muted-foreground">Kaufpreis netto (€)</label>
-            <Input type="number" min={0} step="0.01" value={kaufpreis} onChange={e => setKaufpreis(e.target.value)} placeholder="0,00" className="bg-secondary border-border" />
-          </div>
-          <div>
-            <label className="text-sm text-muted-foreground">1. Rate / Anzahlung netto (€)</label>
-            <Input type="number" min={0} step="0.01" value={anzahlung} onChange={e => setAnzahlung(e.target.value)} placeholder="0,00" className="bg-secondary border-border" />
-          </div>
-          <div>
-            <label className="text-sm text-muted-foreground">Laufzeit</label>
-            <Select value={String(term)} onValueChange={v => setTerm(Number(v))}>
-              <SelectTrigger className="bg-secondary border-border">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {TERMS.map(t => (
-                  <SelectItem key={t} value={String(t)}>{t / 12} {t === 12 ? 'Jahr' : 'Jahre'} ({t} Monate)</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <label className="text-sm text-muted-foreground">Kaufpreis bei Vertragsende netto (€)</label>
-            <Input type="number" min={0} step="0.01" value={kaufpreisEnde} onChange={e => setKaufpreisEnde(e.target.value)} placeholder="0,00" className="bg-secondary border-border" />
-          </div>
-          <div className="flex items-center justify-between rounded-lg bg-secondary/50 border border-border p-3">
-            <Label htmlFor="mwst-toggle" className="text-sm text-muted-foreground cursor-pointer">19% MwSt. ausweisen</Label>
-            <Switch id="mwst-toggle" checked={mitMwst} onCheckedChange={setMitMwst} />
-          </div>
-          <div>
-            <label className="text-sm text-muted-foreground">Zusätzliche Serviceleistungen</label>
-            <Input value={zusatzService} onChange={e => setZusatzService(e.target.value)} placeholder="Optional" className="bg-secondary border-border" />
-          </div>
-
-          {isValid && (
-            <div className="rounded-lg bg-secondary/50 border border-border p-3 text-sm space-y-1">
-              <p className="text-muted-foreground">Kaufpreis: <span className="text-foreground font-medium">{fmtCurrency(kaufpreisNum)}</span></p>
-              <p className="text-muted-foreground">1. Rate (Anzahlung): <span className="text-foreground font-medium">{fmtCurrency(anzahlungNum)} netto / {fmtCurrency(anzahlungBrutto)} brutto</span></p>
-              <p className="text-muted-foreground">Restbetrag: <span className="text-foreground font-medium">{fmtCurrency(restBetrag)}</span></p>
-              <p className="text-muted-foreground">Monatliche Rate: <span className="text-foreground font-medium">{fmtCurrency(monatlicheRate)} netto / {fmtCurrency(rateBrutto)} brutto</span></p>
-              <p className="text-muted-foreground">Laufzeit: <span className="text-foreground font-medium">{term} Monate</span></p>
-            </div>
-          )}
-
-          <Button
-            onClick={async () => {
-              await generatePDF();
-              toast({ title: 'PDF exportiert', description: 'Mietkaufvertrag wurde als PDF heruntergeladen.' });
-            }}
-            disabled={!isValid}
-            className="w-full gold-gradient text-primary-foreground"
+    {open && (
+      <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-background/80 px-4 py-8 backdrop-blur-sm">
+        <div className="relative w-full max-w-lg rounded-lg border border-border bg-background p-6 shadow-lg">
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            className="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100"
+            aria-label="Schließen"
           >
-            <Download className="w-4 h-4 mr-2" /> PDF erstellen
-          </Button>
+            <X className="h-4 w-4" />
+          </button>
+          <h2 className="font-display text-lg font-semibold leading-none tracking-tight">Mietkaufvertrag erstellen</h2>
+
+          <div className="space-y-4 mt-4">
+            <div>
+              <label className="text-sm text-muted-foreground">Gerät Modell</label>
+              <Input value={geraetModell} onChange={e => setGeraetModell(e.target.value)} placeholder="z.B. Alix Pro 2000" className="bg-secondary border-border" />
+            </div>
+            <div>
+              <label className="text-sm text-muted-foreground">Kaufpreis netto (€)</label>
+              <Input type="number" min={0} step="0.01" value={kaufpreis} onChange={e => setKaufpreis(e.target.value)} placeholder="0,00" className="bg-secondary border-border" />
+            </div>
+            <div>
+              <label className="text-sm text-muted-foreground">1. Rate / Anzahlung netto (€)</label>
+              <Input type="number" min={0} step="0.01" value={anzahlung} onChange={e => setAnzahlung(e.target.value)} placeholder="0,00" className="bg-secondary border-border" />
+            </div>
+            <div>
+              <label className="text-sm text-muted-foreground">Laufzeit</label>
+              <Select value={String(term)} onValueChange={v => setTerm(Number(v))}>
+                <SelectTrigger className="bg-secondary border-border">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TERMS.map(t => (
+                    <SelectItem key={t} value={String(t)}>{t / 12} {t === 12 ? 'Jahr' : 'Jahre'} ({t} Monate)</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm text-muted-foreground">Kaufpreis bei Vertragsende netto (€)</label>
+              <Input type="number" min={0} step="0.01" value={kaufpreisEnde} onChange={e => setKaufpreisEnde(e.target.value)} placeholder="0,00" className="bg-secondary border-border" />
+            </div>
+            <div className="flex items-center justify-between rounded-lg bg-secondary/50 border border-border p-3">
+              <Label htmlFor="mwst-toggle" className="text-sm text-muted-foreground cursor-pointer">19% MwSt. ausweisen</Label>
+              <Switch id="mwst-toggle" checked={mitMwst} onCheckedChange={setMitMwst} />
+            </div>
+            <div>
+              <label className="text-sm text-muted-foreground">Zusätzliche Serviceleistungen</label>
+              <Input value={zusatzService} onChange={e => setZusatzService(e.target.value)} placeholder="Optional" className="bg-secondary border-border" />
+            </div>
+
+            {isValid && (
+              <div className="rounded-lg bg-secondary/50 border border-border p-3 text-sm space-y-1">
+                <p className="text-muted-foreground">Kaufpreis: <span className="text-foreground font-medium">{fmtCurrency(kaufpreisNum)}</span></p>
+                <p className="text-muted-foreground">1. Rate (Anzahlung): <span className="text-foreground font-medium">{fmtCurrency(anzahlungNum)} netto / {fmtCurrency(anzahlungBrutto)} brutto</span></p>
+                <p className="text-muted-foreground">Restbetrag: <span className="text-foreground font-medium">{fmtCurrency(restBetrag)}</span></p>
+                <p className="text-muted-foreground">Monatliche Rate: <span className="text-foreground font-medium">{fmtCurrency(monatlicheRate)} netto / {fmtCurrency(rateBrutto)} brutto</span></p>
+                <p className="text-muted-foreground">Laufzeit: <span className="text-foreground font-medium">{term} Monate</span></p>
+              </div>
+            )}
+
+            <Button
+              onClick={async () => {
+                await generatePDF();
+                toast({ title: 'PDF exportiert', description: 'Mietkaufvertrag wurde als PDF heruntergeladen.' });
+              }}
+              disabled={!isValid}
+              className="w-full gold-gradient text-primary-foreground"
+            >
+              <Download className="w-4 h-4 mr-2" /> PDF erstellen
+            </Button>
+          </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    )}
     </>
   );
 }

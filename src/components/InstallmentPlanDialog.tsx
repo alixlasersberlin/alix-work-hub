@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -256,77 +256,82 @@ export default function InstallmentPlanDialog({ order }: Props) {
       >
         <FileText className="w-4 h-4 mr-2" /> Ratenplan
       </Button>
-      <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-lg bg-background border-border">
-        <DialogHeader>
-          <DialogTitle className="font-display">Ratenplan erstellen</DialogTitle>
-          <DialogDescription className="sr-only">
-            Erstellen und exportieren eines Ratenplans für diesen Auftrag.
-          </DialogDescription>
-        </DialogHeader>
+      {open && (
+        <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-background/80 px-4 py-8 backdrop-blur-sm">
+          <div className="relative w-full max-w-lg rounded-lg border border-border bg-background p-6 shadow-lg">
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100"
+              aria-label="Schließen"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <h2 className="font-display text-lg font-semibold leading-none tracking-tight">Ratenplan erstellen</h2>
 
-        <div className="space-y-4 mt-2">
-          <div>
-            <label className="text-sm text-muted-foreground">Kaufpreis (€)</label>
-            <Input type="number" min={0} step="0.01" value={price} onChange={e => setPrice(e.target.value)} placeholder="0,00" className="bg-secondary border-border" />
-          </div>
-          <div>
-            <label className="text-sm text-muted-foreground">Anzahlung (€)</label>
-            <Input type="number" min={0} step="0.01" value={downPayment} onChange={e => setDownPayment(e.target.value)} placeholder="0,00" className="bg-secondary border-border" />
-          </div>
-          <div>
-            <label className="text-sm text-muted-foreground">Laufzeit</label>
-            <Select value={String(term)} onValueChange={v => setTerm(Number(v))}>
-              <SelectTrigger className="bg-secondary border-border">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {TERMS.map(t => (
-                  <SelectItem key={t} value={String(t)}>{t} Monate</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <label className="text-sm text-muted-foreground">Erste Rate am</label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className={cn("w-full justify-start text-left bg-secondary border-border", !startDate && "text-muted-foreground")}>
-                  <CalendarIcon className="w-4 h-4 mr-2" />
-                  {startDate ? fmtDate(startDate) : fmtDate(defaultStart) + ' (automatisch)'}
+            <div className="space-y-4 mt-4">
+              <div>
+                <label className="text-sm text-muted-foreground">Kaufpreis (€)</label>
+                <Input type="number" min={0} step="0.01" value={price} onChange={e => setPrice(e.target.value)} placeholder="0,00" className="bg-secondary border-border" />
+              </div>
+              <div>
+                <label className="text-sm text-muted-foreground">Anzahlung (€)</label>
+                <Input type="number" min={0} step="0.01" value={downPayment} onChange={e => setDownPayment(e.target.value)} placeholder="0,00" className="bg-secondary border-border" />
+              </div>
+              <div>
+                <label className="text-sm text-muted-foreground">Laufzeit</label>
+                <Select value={String(term)} onValueChange={v => setTerm(Number(v))}>
+                  <SelectTrigger className="bg-secondary border-border">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TERMS.map(t => (
+                      <SelectItem key={t} value={String(t)}>{t} Monate</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-sm text-muted-foreground">Erste Rate am</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("w-full justify-start text-left bg-secondary border-border", !startDate && "text-muted-foreground")}>
+                      <CalendarIcon className="w-4 h-4 mr-2" />
+                      {startDate ? fmtDate(startDate) : fmtDate(defaultStart) + ' (automatisch)'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={startDate || defaultStart} onSelect={setStartDate} locale={de} className="p-3 pointer-events-auto" />
+                  </PopoverContent>
+                </Popover>
+                {startDate && (
+                  <Button variant="ghost" size="sm" className="text-xs text-muted-foreground mt-1 h-6 px-1" onClick={() => setStartDate(undefined)}>
+                    Auf automatisch zurücksetzen
+                  </Button>
+                )}
+              </div>
+
+              {baseAmount > 0 && (
+                <div className="rounded-lg bg-secondary/50 border border-border p-3 text-sm space-y-1">
+                  <p className="text-muted-foreground">Basiswert: <span className="text-foreground font-medium">{fmtCurrency(baseAmount)}</span></p>
+                  <p className="text-muted-foreground">Monatliche Rate: <span className="text-foreground font-medium">{fmtCurrency(monthlyRate)}</span></p>
+                  <p className="text-muted-foreground">Erste Rate am: <span className="text-foreground font-medium">{schedule.length > 0 ? fmtDate(schedule[0].dueDate) : '—'}</span></p>
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <Button onClick={async () => { await generatePDF(); toast({ title: 'PDF exportiert', description: 'Ratenplan wurde als PDF heruntergeladen.' }); }} disabled={schedule.length === 0} variant="outline" className="flex-1 border-primary/30 text-primary hover:bg-primary/10">
+                  <Download className="w-4 h-4 mr-2" /> Nur PDF
                 </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar mode="single" selected={startDate || defaultStart} onSelect={setStartDate} locale={de} className="p-3 pointer-events-auto" />
-              </PopoverContent>
-            </Popover>
-            {startDate && (
-              <Button variant="ghost" size="sm" className="text-xs text-muted-foreground mt-1 h-6 px-1" onClick={() => setStartDate(undefined)}>
-                Auf automatisch zurücksetzen
-              </Button>
-            )}
-          </div>
-
-          {baseAmount > 0 && (
-            <div className="rounded-lg bg-secondary/50 border border-border p-3 text-sm space-y-1">
-              <p className="text-muted-foreground">Basiswert: <span className="text-foreground font-medium">{fmtCurrency(baseAmount)}</span></p>
-              <p className="text-muted-foreground">Monatliche Rate: <span className="text-foreground font-medium">{fmtCurrency(monthlyRate)}</span></p>
-              <p className="text-muted-foreground">Erste Rate am: <span className="text-foreground font-medium">{schedule.length > 0 ? fmtDate(schedule[0].dueDate) : '—'}</span></p>
+                <Button onClick={createAndExport} disabled={schedule.length === 0 || saving} className="flex-1 gold-gradient text-primary-foreground">
+                  {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
+                  {saving ? 'Erstelle...' : 'PDF & Finance'}
+                </Button>
+              </div>
             </div>
-          )}
-
-          <div className="flex gap-3">
-            <Button onClick={async () => { await generatePDF(); toast({ title: 'PDF exportiert', description: 'Ratenplan wurde als PDF heruntergeladen.' }); }} disabled={schedule.length === 0} variant="outline" className="flex-1 border-primary/30 text-primary hover:bg-primary/10">
-              <Download className="w-4 h-4 mr-2" /> Nur PDF
-            </Button>
-            <Button onClick={createAndExport} disabled={schedule.length === 0 || saving} className="flex-1 gold-gradient text-primary-foreground">
-              {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
-              {saving ? 'Erstelle...' : 'PDF & Finance'}
-            </Button>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      )}
     </>
   );
 }
