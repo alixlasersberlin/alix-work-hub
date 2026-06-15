@@ -102,11 +102,13 @@ export default function FinanceBelege() {
   return (
     <div className="p-4 sm:p-6">
       <PageHeader
-        icon={<Files className="w-6 h-6 text-primary" />}
+        icon={Files}
         title="Belegarchiv"
         subtitle="GoBD-konforme Ablage aller Finanzbelege mit 10-Jahres Aufbewahrungsfrist"
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${docs.length}`} pulse={!loading} />}
         actions={
-          <div className="flex gap-2 items-center">
+          <>
             <Select value={uploadType} onValueChange={setUploadType}>
               <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
               <SelectContent>{DOC_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
@@ -115,7 +117,7 @@ export default function FinanceBelege() {
             <Button onClick={() => fileRef.current?.click()} disabled={uploading} className="gold-gradient text-primary-foreground">
               <Upload className="w-4 h-4 mr-2" />{uploading ? 'Lade hoch…' : 'Beleg hochladen'}
             </Button>
-          </div>
+          </>
         }
       />
 
