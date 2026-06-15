@@ -36,8 +36,22 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
     bic: customer?.bic || '',
     bank_name: customer?.bank_name || '',
     is_vip: !!customer?.is_vip,
+    contact_tenant_id: customer?.contact_tenant_id || '',
+    supplier_tenant_id: customer?.supplier_tenant_id || '',
   });
   const [saving, setSaving] = useState(false);
+  const [tenants, setTenants] = useState<Array<{ id: string; name: string; flag_emoji: string | null; code: string }>>([]);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from('tenants')
+        .select('id, name, flag_emoji, code')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true });
+      setTenants(data || []);
+    })();
+  }, []);
 
   // Auto-detect bank from IBAN
   function handleIbanChange(val: string) {
