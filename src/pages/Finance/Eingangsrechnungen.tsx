@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { Inbox, Upload, Download, CheckCircle2, XCircle, Eye, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { PageHeader, PageLoading, DataCard } from '@/components/PageShell';
+import { DataCard } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { SkeletonTable } from '@/components/infinity/Skeleton';
+import { EmptyState } from '@/components/infinity/EmptyState';
+import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -149,11 +152,13 @@ export default function FinanceEingangsrechnungen() {
   return (
     <div className="p-4 sm:p-6">
       <PageHeader
-        icon={<Inbox className="w-6 h-6 text-primary" />}
+        icon={Inbox}
         title="Eingangsrechnungen"
         subtitle="Kreditoren-Light mit XRechnung/ZUGFeRD-Erkennung und Freigabe-Workflow"
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${rows.length}`} pulse={!loading} />}
         actions={
-          <div className="flex gap-2">
+          <>
             <input ref={fileRef} type="file" accept=".xml" hidden onChange={onXmlFile} />
             <Button variant="outline" onClick={() => fileRef.current?.click()} disabled={busy}>
               <Sparkles className="w-4 h-4 mr-2" />XML einlesen
@@ -161,7 +166,7 @@ export default function FinanceEingangsrechnungen() {
             <Button onClick={() => { setParseHint(null); setShowNew(true); }} className="gold-gradient text-primary-foreground">
               <Upload className="w-4 h-4 mr-2" />Neu erfassen
             </Button>
-          </div>
+          </>
         }
       />
 
@@ -172,8 +177,8 @@ export default function FinanceEingangsrechnungen() {
       </DataCard>
 
       <DataCard className="overflow-hidden">
-        {loading ? <PageLoading /> : rows.length === 0 ? (
-          <div className="text-center text-muted-foreground py-16">Keine Eingangsrechnungen.</div>
+        {loading ? <div className="p-6"><SkeletonTable rows={8} cols={8} /></div> : rows.length === 0 ? (
+          <div className="p-8"><EmptyState title="Keine Eingangsrechnungen" description="Erfasse eine Rechnung oder lies eine XRechnung-/ZUGFeRD-XML ein." /></div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
