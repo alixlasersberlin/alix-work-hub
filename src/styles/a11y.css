@@ -3,28 +3,8 @@
    Globale A11y-Layer via data-Attribute auf <html>.
    ============================================================ */
 
-/* Skip-Link: per Tab erreichbar, springt zum Hauptinhalt */
-.a11y-skip-link {
-  position: fixed;
-  top: 0;
-  left: 50%;
-  transform: translate(-50%, -120%);
-  z-index: 9999;
-  background: hsl(var(--primary));
-  color: hsl(var(--primary-foreground));
-  padding: 0.6rem 1rem;
-  border-radius: 0 0 10px 10px;
-  font-weight: 600;
-  font-size: 0.875rem;
-  transition: transform 160ms ease;
-  text-decoration: none;
-}
-.a11y-skip-link:focus,
-.a11y-skip-link:focus-visible {
-  transform: translate(-50%, 0);
-  outline: 2px solid hsl(var(--ring));
-  outline-offset: 2px;
-}
+/* Skip-Link deaktiviert (auf Wunsch ausgeblendet) */
+.a11y-skip-link { display: none !important; }
 
 /* ---------- Textgrößen-Skalierung ---------- */
 html[data-a11y-text-scale="110"] body { font-size: 110%; }
