@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { PageHeader } from '@/components/infinity/PageHeader';
+import { KpiTile } from '@/components/infinity/KpiTile';
 
 export default function AiServiceCenter() {
   const { roles } = useAuth();
@@ -67,10 +68,10 @@ export default function AiServiceCenter() {
       />
 
       <div className="grid md:grid-cols-4 gap-4">
-        <KpiCard icon={<AlertTriangle className="w-5 h-5" />} label="Kritische offene Tickets" value={stats.criticalTickets.length} tone="red" />
-        <KpiCard icon={<TrendingUp className="w-5 h-5" />} label="AI Analysen (gesamt)" value={stats.latestAnalyses.length >= 12 ? '12+' : stats.latestAnalyses.length} tone="amber" />
-        <KpiCard icon={<Wrench className="w-5 h-5" />} label="Top-Ersatzteil" value={stats.topParts[0]?.name ?? '—'} tone="amber" />
-        <KpiCard icon={<ListChecks className="w-5 h-5" />} label="Wissenseinträge" value={stats.kbCount} tone="green" />
+        <KpiTile icon={AlertTriangle} label="Kritische offene Tickets" value={stats.criticalTickets.length} accent="rose" />
+        <KpiTile icon={TrendingUp} label="AI Analysen (gesamt)" value={stats.latestAnalyses.length >= 12 ? '12+' : stats.latestAnalyses.length} accent="gold" />
+        <KpiTile icon={Wrench} label="Top-Ersatzteil" value={stats.topParts[0]?.name ?? '—'} accent="sky" />
+        <KpiTile icon={ListChecks} label="Wissenseinträge" value={stats.kbCount} accent="emerald" />
       </div>
 
       <Tabs defaultValue="cockpit">
