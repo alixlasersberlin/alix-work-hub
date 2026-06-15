@@ -100,13 +100,13 @@ export default function FinanceReports() {
     setForm((f: any) => ({ ...f, [key]: f[key].includes(v) ? f[key].filter((x: string) => x !== v) : [...f[key], v] }));
   };
 
-  if (loading) return <PageLoading />;
-
   return (
     <div className="space-y-6">
-      <PageHeader title="Report Builder" subtitle="Eigene Berichte mit Dimensionen, Kennzahlen und Visualisierung" icon={BarChart3}
+      <PageHeader title="Report Builder" subtitle={loading ? 'Lädt…' : 'Eigene Berichte mit Dimensionen, Kennzahlen und Visualisierung'} icon={BarChart3} noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${rows.length} Berichte`} pulse={loading} />}
         actions={canEdit && <Button onClick={() => setShow(true)} className="gap-2"><Plus className="h-4 w-4" />Neuer Bericht</Button>} />
 
+      {loading ? <DataCard><SkeletonTable rows={6} cols={4} /></DataCard> : (
       <DataCard title={`Berichte (${rows.length})`}>
         {rows.length === 0 ? <div className="p-8 text-center text-muted-foreground">Noch keine Berichte angelegt.</div> : (
           <div className="divide-y divide-border">
