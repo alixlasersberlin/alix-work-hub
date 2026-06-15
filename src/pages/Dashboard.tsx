@@ -378,8 +378,11 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Aurora 2.0 — Ticket-Aktivität */}
-      <ActivityHeatmap />
+      {/* Aurora 2.0 — Aktivitäts-Heatmaps */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <ActivityHeatmap />
+        <ToursHeatmap />
+      </div>
 
       {/* Prio-Liste */}
       {canSeeOrders && (
