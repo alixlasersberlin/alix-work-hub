@@ -93,7 +93,7 @@ interface LagerDevicesPageProps {
   addLabel?: string;
   dialogTitle?: string;
   emptyLabel?: string;
-  pageIcon?: React.ReactNode;
+  pageIcon?: LucideIcon;
   rowAccentClass?: string;
 }
 
