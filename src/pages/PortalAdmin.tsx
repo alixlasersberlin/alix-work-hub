@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Save, Globe, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 interface Row {
   id: string;
@@ -109,14 +110,12 @@ export default function PortalAdmin() {
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
-      <div className="flex items-center gap-3 mb-2">
-        <Globe className="w-5 h-5 text-primary" />
-        <h1 className="text-2xl font-display font-bold text-foreground">Kundenportal</h1>
-      </div>
-      <p className="text-sm text-muted-foreground mb-6">
-        Status der öffentlichen Statusabfrage unter <a href="/portal" target="_blank" rel="noopener" className="text-primary underline">/portal</a>.
-        Der Portal-Status wird automatisch aus den Auftragsdaten abgeleitet. Hier können Sie pro Auftrag eine Trackingnummer und ein voraussichtliches Lieferdatum pflegen.
-      </p>
+      <PageHeader
+        icon={Globe}
+        title="Kundenportal"
+        subtitle="Status der öffentlichen Statusabfrage unter /portal. Der Portal-Status wird automatisch aus den Auftragsdaten abgeleitet. Hier können Sie pro Auftrag eine Trackingnummer und ein voraussichtliches Lieferdatum pflegen."
+        noBreadcrumbs
+      />
 
       <div className="mb-4 relative max-w-sm">
         <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />

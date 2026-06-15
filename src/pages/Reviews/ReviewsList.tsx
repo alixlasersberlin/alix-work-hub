@@ -13,6 +13,7 @@ import { sendReviewInvitation } from '@/lib/review-invitation';
 import { Link } from 'react-router-dom';
 import { useAtOnly } from '@/hooks/useAtOnly';
 import { filterAtOnlyByOrderId } from '@/lib/at-review-filter';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 
 type Review = {
@@ -134,15 +135,13 @@ export default function ReviewsList() {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-display font-bold flex items-center gap-2">
-            <Star className="h-6 w-6 text-amber-400" />
-            Bewertungen
-          </h1>
-          <p className="text-sm text-muted-foreground">Kundenbewertungen zu ausgelieferten Aufträgen</p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
+      <PageHeader
+        icon={Star}
+        title="Bewertungen"
+        subtitle="Kundenbewertungen zu ausgelieferten Aufträgen"
+        noBreadcrumbs
+      />
+      <div className="flex items-center justify-end gap-2 flex-wrap">
           <div className="relative">
             <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -165,8 +164,8 @@ export default function ReviewsList() {
               {['1','2','3','4','5'].map(n => <SelectItem key={n} value={n}>{n} Sterne (Lieferung)</SelectItem>)}
             </SelectContent>
           </Select>
-        </div>
       </div>
+
 
       <div className="rounded-lg border bg-card">
         <Table>
