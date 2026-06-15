@@ -40,7 +40,13 @@ export default function FinanceAsk() {
 
   return (
     <div className="p-6 space-y-6 max-w-4xl">
-      <PageHeader title="Finanz-KI fragen" subtitle="Stelle Fragen zu Umsatz, offenen Posten, Kunden" />
+      <PageHeader
+        icon={MessageSquare}
+        title="Finanz-KI fragen"
+        subtitle="Stelle Fragen zu Umsatz, offenen Posten, Kunden"
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Denkt nach' : `${history.length} Fragen`} pulse={loading} />}
+      />
 
       <DataCard title="Frage">
         <div className="space-y-3">
