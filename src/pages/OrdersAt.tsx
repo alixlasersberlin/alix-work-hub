@@ -242,10 +242,14 @@ export default function OrdersAt() {
                 paged.map(o => (
                   <tbody key={`${o.id}-${o._seq}`} className="border-b border-border">
                     <tr
-                      className="hover:bg-secondary/30 transition-colors cursor-pointer"
+                      className={`hover:bg-secondary/30 transition-colors cursor-pointer ${
+                        canSeeApproval && !o._atApproved
+                          ? 'bg-red-500/5 hover:bg-red-500/10'
+                          : ''
+                      }`}
                       onClick={() => navigate(`/auftraege/${o.id}`)}
                     >
-                      <td className="px-4 py-3 font-medium text-foreground">
+                      <td className={`px-4 py-3 font-medium text-foreground ${canSeeApproval && !o._atApproved ? 'border-l-4 border-red-500' : ''}`}>
                         <span className="inline-flex items-center gap-2">
                           {isOrderVip(o) && <VipBadge size="sm" iconOnly />}
                           {o._displayNumber || o.order_number}
@@ -274,7 +278,10 @@ export default function OrdersAt() {
                               Freigabe erteilt
                             </span>
                           ) : (
-                            <span className="text-muted-foreground">—</span>
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-red-500/15 border border-red-500/50 text-red-400 font-semibold">
+                              <AlertOctagon className="w-3.5 h-3.5" />
+                              an Hold
+                            </span>
                           )}
                         </td>
                       )}
