@@ -4,7 +4,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format, differenceInCalendarDays, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { PageHeader } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -241,9 +242,11 @@ export default function OffenePosten() {
     <div className="p-4 sm:p-6 space-y-6">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <PageHeader
-          icon={<FileText className="w-5 h-5" />}
+          icon={FileText}
           title="Offene Posten"
           subtitle="Alle fälligen Rechnungen, farblich nach Fälligkeit"
+          noBreadcrumbs
+          meta={<InfinityStatusBadge kind={totals.overdue > 0 ? 'warning' : 'done'} label={`${totals.count} offen`} />}
         />
         <div className="flex flex-wrap items-end gap-2">
           <div className="flex flex-col gap-1">
