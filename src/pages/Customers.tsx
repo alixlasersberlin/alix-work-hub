@@ -134,8 +134,6 @@ export default function Customers() {
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
-      <div className="mb-6 flex items-start justify-between gap-4">
-        <div>
       <PageHeader
         icon={Building2}
         title="Kunden"
