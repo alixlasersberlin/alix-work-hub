@@ -5,11 +5,16 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   TrendingUp, Mail, MousePointerClick, FileText, CheckCircle2, Euro,
-  Users, Flame, Sparkles, Download, RefreshCw, Trophy, AlertTriangle,
+  Users, Flame, Sparkles, Download, RefreshCw, Trophy, AlertTriangle, Inbox,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { KpiTile } from '@/components/infinity/KpiTile';
+import { SkeletonKpiGrid } from '@/components/infinity/Skeleton';
+import { EmptyState } from '@/components/infinity/EmptyState';
+import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 
-interface KPI { label: string; value: string | number; icon: any; hint?: string }
+interface KPI { label: string; value: string | number; icon: any; hint?: string; accent?: 'gold' | 'sky' | 'emerald' | 'rose' | 'violet' }
 
 function fmtEUR(n: number) { return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n || 0); }
 
@@ -25,7 +30,6 @@ export default function ExecutiveDashboard() {
   async function load() {
     setLoading(true);
 
-    // Mail metrics
     const [msgs, evts, campaignsData, ordersData] = await Promise.all([
       supabase.from('mail_messages').select('id,status,opened_at,clicked_at,created_by,to_email,subject,customer_id,created_at').order('created_at', { ascending: false }).limit(1000),
       supabase.from('mail_events').select('id,event_type,message_id,created_at').limit(2000),
@@ -44,24 +48,22 @@ export default function ExecutiveDashboard() {
     const orderTotal = orders.reduce((s: number, o: any) => s + Number(o.total_amount || 0), 0);
     const paidOrders = orders.filter((o: any) => /bezahlt|paid|geliefert/i.test(o.order_status || '')).length;
 
-    // Customers reached by mail with subsequent order
     const customersMailed = new Set(messages.map((m: any) => m.customer_id).filter(Boolean));
     const mailDrivenRevenue = orders
       .filter((o: any) => customersMailed.has(o.customer_id))
       .reduce((s: number, o: any) => s + Number(o.total_amount || 0), 0);
 
     setKpis([
-      { label: 'Versendete E-Mails', value: sent, icon: Mail },
-      { label: 'Öffnungsrate', value: sent ? `${((opened / sent) * 100).toFixed(1)}%` : '—', icon: TrendingUp },
-      { label: 'Klickrate', value: sent ? `${((clicked / sent) * 100).toFixed(1)}%` : '—', icon: MousePointerClick },
-      { label: 'Angebote versendet', value: offerSent, icon: FileText },
-      { label: 'Bezahlte Aufträge', value: paidOrders, icon: CheckCircle2 },
-      { label: 'Umsatz gesamt', value: fmtEUR(orderTotal), icon: Euro },
-      { label: 'Umsatz aus E-Mail-Kontakten', value: fmtEUR(mailDrivenRevenue), icon: Sparkles, hint: 'Kunden mit E-Mail-Historie' },
-      { label: 'Aktive Kampagnen', value: (campaignsData.data || []).filter((c: any) => c.status === 'active' || c.status === 'sent').length, icon: Trophy },
+      { label: 'Versendete E-Mails', value: sent, icon: Mail, accent: 'sky' },
+      { label: 'Öffnungsrate', value: sent ? `${((opened / sent) * 100).toFixed(1)}%` : '—', icon: TrendingUp, accent: 'emerald' },
+      { label: 'Klickrate', value: sent ? `${((clicked / sent) * 100).toFixed(1)}%` : '—', icon: MousePointerClick, accent: 'violet' },
+      { label: 'Angebote versendet', value: offerSent, icon: FileText, accent: 'gold' },
+      { label: 'Bezahlte Aufträge', value: paidOrders, icon: CheckCircle2, accent: 'emerald' },
+      { label: 'Umsatz gesamt', value: fmtEUR(orderTotal), icon: Euro, accent: 'gold' },
+      { label: 'Umsatz aus E-Mail-Kontakten', value: fmtEUR(mailDrivenRevenue), icon: Sparkles, hint: 'Kunden mit E-Mail-Historie', accent: 'gold' },
+      { label: 'Aktive Kampagnen', value: (campaignsData.data || []).filter((c: any) => c.status === 'active' || c.status === 'sent').length, icon: Trophy, accent: 'rose' },
     ]);
 
-    // Campaigns with revenue (best effort: by created_at window)
     const camps = (campaignsData.data || []).map((c: any) => {
       const since = new Date(c.created_at);
       const rev = orders.filter((o: any) => new Date(o.created_at) >= since).reduce((s: number, o: any) => s + Number(o.total_amount || 0), 0);
@@ -69,7 +71,6 @@ export default function ExecutiveDashboard() {
     });
     setCampaigns(camps);
 
-    // Staff performance
     const byUser: Record<string, any> = {};
     messages.forEach((m: any) => {
       const k = m.created_by || 'unbekannt';
@@ -85,7 +86,6 @@ export default function ExecutiveDashboard() {
     });
     setStaff(Object.values(byUser).sort((a: any, b: any) => b.revenue - a.revenue).slice(0, 20));
 
-    // Customer score
     const byCust: Record<string, any> = {};
     messages.forEach((m: any) => {
       if (!m.customer_id) return;
@@ -105,10 +105,8 @@ export default function ExecutiveDashboard() {
     const sortedCust = Object.values(byCust).sort((a: any, b: any) => b.score - a.score).slice(0, 25);
     setTopCustomers(sortedCust);
 
-    // Lead alerts: hot customers without recent order
     setLeads(sortedCust.filter((c: any) => c.score >= 51 && c.orders === 0).slice(0, 10));
 
-    // Simple heuristic recommendations
     const recs: string[] = [];
     if (opened > 0 && clicked / Math.max(opened, 1) < 0.1) recs.push('Klickrate unter 10% — CTAs prominenter platzieren.');
     if (offerSent > 0 && paidOrders / Math.max(offerSent, 1) < 0.2) recs.push('Wenige Angebote führen zu Zahlung — Nachfass-Automation empfohlen.');
@@ -148,29 +146,29 @@ export default function ExecutiveDashboard() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-2"><TrendingUp className="w-5 h-5 text-primary" /><h2 className="text-xl font-semibold">Executive Dashboard</h2></div>
-        <Button onClick={load} disabled={loading} variant="outline" size="sm"><RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />Aktualisieren</Button>
-      </div>
+      <PageHeader
+        title="Executive Dashboard"
+        subtitle="Kampagnen-ROI, Mitarbeiter-Performance, Kunden-Score & KI-Empfehlungen"
+        icon={TrendingUp}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : 'Live'} pulse={!loading} dotOnly />}
+        actions={
+          <Button onClick={load} disabled={loading} variant="outline" size="sm">
+            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />Aktualisieren
+          </Button>
+        }
+      />
 
       {/* KPIs */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {kpis.map(k => {
-          const Icon = k.icon;
-          return (
-            <Card key={k.label}>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs text-muted-foreground">{k.label}</span>
-                  <Icon className="w-4 h-4 text-primary" />
-                </div>
-                <div className="text-2xl font-bold">{k.value}</div>
-                {k.hint && <div className="text-xs text-muted-foreground mt-1">{k.hint}</div>}
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+      {loading ? (
+        <SkeletonKpiGrid count={8} />
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {kpis.map(k => (
+            <KpiTile key={k.label} label={k.label} value={k.value} icon={k.icon} accent={k.accent} />
+          ))}
+        </div>
+      )}
 
       <Tabs defaultValue="campaigns">
         <TabsList className="flex-wrap h-auto">
@@ -189,21 +187,24 @@ export default function ExecutiveDashboard() {
               <Button size="sm" variant="ghost" onClick={() => exportCSV(campaigns, 'kampagnen.csv')}><Download className="w-4 h-4 mr-2" />Export</Button>
             </CardHeader>
             <CardContent className="p-0 overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-muted/40"><tr className="text-left">
-                  <th className="p-3">Kampagne</th><th className="p-3">Status</th><th className="p-3 text-right">Umsatz (nach Start)</th>
-                </tr></thead>
-                <tbody>
-                  {campaigns.map(c => (
-                    <tr key={c.id} className="border-t border-border">
-                      <td className="p-3">{c.name}</td>
-                      <td className="p-3"><Badge variant="outline">{c.status}</Badge></td>
-                      <td className="p-3 text-right font-semibold">{fmtEUR(c.revenue)}</td>
-                    </tr>
-                  ))}
-                  {!campaigns.length && <tr><td colSpan={3} className="p-8 text-center text-muted-foreground">Keine Kampagnen</td></tr>}
-                </tbody>
-              </table>
+              {campaigns.length === 0 ? (
+                <div className="p-6"><EmptyState compact icon={Inbox} title="Keine Kampagnen" /></div>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/40"><tr className="text-left">
+                    <th className="p-3">Kampagne</th><th className="p-3">Status</th><th className="p-3 text-right">Umsatz (nach Start)</th>
+                  </tr></thead>
+                  <tbody>
+                    {campaigns.map(c => (
+                      <tr key={c.id} className="border-t border-border">
+                        <td className="p-3">{c.name}</td>
+                        <td className="p-3"><Badge variant="outline">{c.status}</Badge></td>
+                        <td className="p-3 text-right font-semibold">{fmtEUR(c.revenue)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -215,23 +216,27 @@ export default function ExecutiveDashboard() {
               <Button size="sm" variant="ghost" onClick={() => exportCSV(staff, 'mitarbeiter.csv')}><Download className="w-4 h-4 mr-2" />Export</Button>
             </CardHeader>
             <CardContent className="p-0 overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-muted/40"><tr className="text-left">
-                  <th className="p-3">Benutzer</th><th className="p-3 text-right">E-Mails</th><th className="p-3 text-right">Geöffnet</th>
-                  <th className="p-3 text-right">Aufträge</th><th className="p-3 text-right">Umsatz</th>
-                </tr></thead>
-                <tbody>
-                  {staff.map((s: any) => (
-                    <tr key={s.user_id} className="border-t border-border">
-                      <td className="p-3 font-mono text-xs">{String(s.user_id).slice(0, 24)}</td>
-                      <td className="p-3 text-right">{s.sent}</td>
-                      <td className="p-3 text-right">{s.opened}</td>
-                      <td className="p-3 text-right">{s.orders}</td>
-                      <td className="p-3 text-right font-semibold">{fmtEUR(s.revenue)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              {staff.length === 0 ? (
+                <div className="p-6"><EmptyState compact icon={Users} title="Keine Mitarbeiter-Daten" /></div>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/40"><tr className="text-left">
+                    <th className="p-3">Benutzer</th><th className="p-3 text-right">E-Mails</th><th className="p-3 text-right">Geöffnet</th>
+                    <th className="p-3 text-right">Aufträge</th><th className="p-3 text-right">Umsatz</th>
+                  </tr></thead>
+                  <tbody>
+                    {staff.map((s: any) => (
+                      <tr key={s.user_id} className="border-t border-border">
+                        <td className="p-3 font-mono text-xs">{String(s.user_id).slice(0, 24)}</td>
+                        <td className="p-3 text-right">{s.sent}</td>
+                        <td className="p-3 text-right">{s.opened}</td>
+                        <td className="p-3 text-right">{s.orders}</td>
+                        <td className="p-3 text-right font-semibold">{fmtEUR(s.revenue)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -243,24 +248,28 @@ export default function ExecutiveDashboard() {
               <Button size="sm" variant="ghost" onClick={() => exportCSV(topCustomers, 'kunden-score.csv')}><Download className="w-4 h-4 mr-2" />Export</Button>
             </CardHeader>
             <CardContent className="p-0 overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-muted/40"><tr className="text-left">
-                  <th className="p-3">Kunde</th><th className="p-3 text-right">Opens</th><th className="p-3 text-right">Klicks</th>
-                  <th className="p-3 text-right">Aufträge</th><th className="p-3 text-right">Umsatz</th><th className="p-3">Score</th>
-                </tr></thead>
-                <tbody>
-                  {topCustomers.map((c: any) => (
-                    <tr key={c.customer_id} className="border-t border-border">
-                      <td className="p-3 font-mono text-xs">{c.customer_id.slice(0, 8)}</td>
-                      <td className="p-3 text-right">{c.opens}</td>
-                      <td className="p-3 text-right">{c.clicks}</td>
-                      <td className="p-3 text-right">{c.orders}</td>
-                      <td className="p-3 text-right">{fmtEUR(c.revenue)}</td>
-                      <td className="p-3"><Badge variant="outline" className={scoreColor(c.score)}>{c.score} · {scoreLabel(c.score)}</Badge></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              {topCustomers.length === 0 ? (
+                <div className="p-6"><EmptyState compact icon={Users} title="Keine Kunden-Daten" /></div>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/40"><tr className="text-left">
+                    <th className="p-3">Kunde</th><th className="p-3 text-right">Opens</th><th className="p-3 text-right">Klicks</th>
+                    <th className="p-3 text-right">Aufträge</th><th className="p-3 text-right">Umsatz</th><th className="p-3">Score</th>
+                  </tr></thead>
+                  <tbody>
+                    {topCustomers.map((c: any) => (
+                      <tr key={c.customer_id} className="border-t border-border">
+                        <td className="p-3 font-mono text-xs">{c.customer_id.slice(0, 8)}</td>
+                        <td className="p-3 text-right">{c.opens}</td>
+                        <td className="p-3 text-right">{c.clicks}</td>
+                        <td className="p-3 text-right">{c.orders}</td>
+                        <td className="p-3 text-right">{fmtEUR(c.revenue)}</td>
+                        <td className="p-3"><Badge variant="outline" className={scoreColor(c.score)}>{c.score} · {scoreLabel(c.score)}</Badge></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -269,8 +278,9 @@ export default function ExecutiveDashboard() {
           <Card>
             <CardHeader><CardTitle className="text-base flex items-center gap-2"><Flame className="w-4 h-4 text-red-500" />Heiße Leads ohne Auftrag</CardTitle></CardHeader>
             <CardContent className="space-y-2">
-              {leads.length === 0 && <p className="text-sm text-muted-foreground">Keine akuten Leads.</p>}
-              {leads.map((l: any) => (
+              {leads.length === 0 ? (
+                <EmptyState compact icon={Flame} title="Keine akuten Leads" />
+              ) : leads.map((l: any) => (
                 <div key={l.customer_id} className="flex items-center justify-between p-3 border border-border rounded-md">
                   <div>
                     <div className="font-mono text-xs">{l.customer_id}</div>
