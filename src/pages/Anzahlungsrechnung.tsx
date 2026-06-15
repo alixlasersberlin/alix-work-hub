@@ -10,6 +10,7 @@ import { withAt } from '@/lib/atSuffix';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 type Row = {
   id: string;
