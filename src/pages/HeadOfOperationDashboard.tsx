@@ -271,10 +271,15 @@ export default function HeadOfOperationDashboard() {
       {groups.map((g) => {
         const Icon = g.icon;
         return (
-          <section key={g.title} className="rounded-xl border border-border bg-card overflow-hidden">
-            <div className="flex items-center gap-2 px-5 py-3 border-b border-border bg-muted/20">
-              <Icon className="w-4 h-4 text-primary" />
-              <h2 className="font-display font-semibold text-foreground">{g.title}</h2>
+          <section
+            key={g.title}
+            className="rounded-2xl border border-amber-500/15 bg-gradient-to-br from-amber-500/[0.03] via-card to-card overflow-hidden shadow-[0_0_40px_-20px_rgba(245,158,11,0.25)]"
+          >
+            <div className="flex items-center gap-3 px-5 py-3 border-b border-amber-500/15 bg-gradient-to-r from-amber-500/[0.06] via-transparent to-transparent">
+              <div className="grid place-items-center h-8 w-8 rounded-lg bg-gradient-to-br from-amber-400/20 to-amber-600/10 border border-amber-500/25 shadow-[0_0_20px_rgba(245,158,11,0.15)]">
+                <Icon className="w-4 h-4 text-amber-300" />
+              </div>
+              <h2 className="font-display font-semibold text-foreground tracking-tight">{g.title}</h2>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-px bg-border">
               {g.items.map((it) => (
@@ -282,7 +287,7 @@ export default function HeadOfOperationDashboard() {
                   key={it.label}
                   onClick={it.onClick}
                   disabled={!it.onClick}
-                  className={`bg-card p-4 text-left transition-colors hover:bg-muted/30 ${it.onClick ? 'cursor-pointer' : 'cursor-default'}`}
+                  className={`bg-card p-4 text-left transition-colors hover:bg-amber-500/[0.04] ${it.onClick ? 'cursor-pointer' : 'cursor-default'}`}
                 >
                   <p className="text-[11px] uppercase tracking-wider text-muted-foreground truncate">{it.label}</p>
                   {loading ? (
