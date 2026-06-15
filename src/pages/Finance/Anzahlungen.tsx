@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Wallet, Loader2, Inbox } from 'lucide-react';
-import { PageHeader } from '@/components/PageShell';
+import { Wallet } from 'lucide-react';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { SkeletonTable } from '@/components/infinity/Skeleton';
+import { EmptyState } from '@/components/infinity/EmptyState';
+import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { getTransactions } from '@/lib/finance/api';
 import { ListToolbar } from '@/components/finance/ListToolbar';
 import { matchesQuery, paginate, type PageSize } from '@/lib/finance/list-filter';
@@ -18,7 +21,13 @@ export default function FinanceAnzahlungen() {
   const visible = useMemo(() => paginate(filtered, pageSize), [filtered, pageSize]);
   return (
     <div className="container mx-auto px-4 py-8">
-      <PageHeader icon={<Wallet className="w-6 h-6 text-primary" />} title="Anzahlungen" subtitle={`${rows.length} Anzahlungen`} />
+      <PageHeader
+        icon={Wallet}
+        title="Anzahlungen"
+        subtitle={`${rows.length} Anzahlungen`}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${rows.length}`} pulse={!loading} />}
+      />
       <ListToolbar
         search={search}
         onSearchChange={setSearch}
@@ -29,9 +38,9 @@ export default function FinanceAnzahlungen() {
       />
       <div className="rounded-xl border border-border bg-card card-glow overflow-hidden">
         {loading ? (
-          <div className="p-12 text-center"><Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" /></div>
+          <div className="p-6"><SkeletonTable rows={8} cols={4} /></div>
         ) : visible.length === 0 ? (
-          <div className="p-12 text-center text-muted-foreground"><Inbox className="w-8 h-8 mx-auto mb-2 opacity-50" />Keine Anzahlungen erfasst.</div>
+          <div className="p-8"><EmptyState title="Keine Anzahlungen" description="Es wurden noch keine Anzahlungen erfasst." /></div>
         ) : (
           <table className="w-full text-sm">
             <thead className="bg-secondary/50 text-muted-foreground">
