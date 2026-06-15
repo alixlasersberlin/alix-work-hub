@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Plus, RefreshCcw, Download, TrendingUp, AlertTriangle, Wallet } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { PageHeader, PageLoading, DataCard } from '@/components/PageShell';
+import { DataCard } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { SkeletonKpiGrid, SkeletonTable } from '@/components/infinity/Skeleton';
+import { KpiTile } from '@/components/infinity/KpiTile';
+import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
+import { Droplets } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
