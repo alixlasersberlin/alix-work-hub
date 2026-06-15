@@ -155,9 +155,11 @@ export default function Ratenzahler() {
   return (
     <div className="p-4 sm:p-6">
       <PageHeader
-        icon={<Banknote className="w-6 h-6 text-primary" />}
+        icon={Banknote}
         title="Ratenzahler"
         subtitle="Periodische Rechnungen aus Zoho Books mit Zahlungsstatus"
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${rows.length} Raten`} pulse={loading} />}
         actions={
           isAdmin && (
             <Button onClick={handleImport} disabled={importing} className="gold-gradient text-primary-foreground">
