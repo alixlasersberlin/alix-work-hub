@@ -9,8 +9,12 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Ticket, Search, ArrowRight, Loader2, Plus } from 'lucide-react';
+import { Ticket, Search, ArrowRight, Loader2, Plus, RefreshCw, Inbox } from 'lucide-react';
 import { toast } from 'sonner';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { EmptyState } from '@/components/infinity/EmptyState';
+import { SkeletonTable } from '@/components/infinity/Skeleton';
+import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 
 interface TicketRow {
   id: string;
@@ -145,22 +149,27 @@ export default function TicketsList() {
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
-      <div className="flex items-center gap-3 mb-6 flex-wrap">
-        <Ticket className="w-6 h-6 text-primary" />
-        <h1 className="text-2xl font-display font-bold text-foreground">Tickets</h1>
-        <Badge variant="outline" className="ml-2">{filtered.length}</Badge>
-        <div className="ml-auto flex items-center gap-2">
-          <Button size="sm" onClick={() => setCreateOpen(true)}>
-            <Plus className="w-4 h-4 mr-1" /> Neues Ticket
-          </Button>
-          <Link
-            to="/tickets/sync"
-            className="text-xs px-3 py-1.5 rounded-md border border-border bg-card hover:border-primary/40 hover:text-primary transition-colors"
-          >
-            Synchronisation
-          </Link>
-        </div>
-      </div>
+      <PageHeader
+        title="Tickets"
+        subtitle="Service-, Technik- und Finance-Tickets aus allen Quellen"
+        icon={Ticket}
+        meta={
+          <>
+            <InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${filtered.length}`} pulse={!loading} />
+          </>
+        }
+        actions={
+          <>
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/tickets/sync"><RefreshCw className="w-4 h-4 mr-2" />Synchronisation</Link>
+            </Button>
+            <Button size="sm" onClick={() => setCreateOpen(true)} className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-semibold border-0">
+              <Plus className="w-4 h-4 mr-1" /> Neues Ticket
+            </Button>
+          </>
+        }
+      />
+
 
 
       <div className="rounded-xl border border-border bg-card p-4 mb-4 grid gap-3 md:grid-cols-5">
@@ -200,10 +209,11 @@ export default function TicketsList() {
 
       <div className="rounded-xl border border-border bg-card overflow-hidden">
         {loading ? (
-          <div className="p-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+          <div className="p-4"><SkeletonTable rows={8} cols={9} /></div>
         ) : filtered.length === 0 ? (
-          <div className="p-12 text-center text-muted-foreground">Keine Tickets gefunden.</div>
+          <div className="p-8"><EmptyState compact icon={Inbox} title="Keine Tickets gefunden" description="Passe die Filter an oder erstelle ein neues Ticket." action={{ label: 'Neues Ticket', icon: Plus, onClick: () => setCreateOpen(true) }} /></div>
         ) : (
+
           <Table>
             <TableHeader>
               <TableRow>
