@@ -66,9 +66,11 @@ export default function FinanceBank() {
   return (
     <div className="p-4 sm:p-6">
       <PageHeader
-        icon={<Banknote className="w-6 h-6 text-primary" />}
+        icon={Banknote}
         title="Bankimport & Reconciliation"
         subtitle="CAMT.053 (XML) oder MT940 hochladen, automatisches Matching gegen offene Rechnungen"
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${lines.length} Buchungen`} pulse={loading} />}
         actions={
           <div>
             <input ref={fileRef} type="file" accept=".xml,.sta,.txt,.mt940" hidden onChange={onFile} />
