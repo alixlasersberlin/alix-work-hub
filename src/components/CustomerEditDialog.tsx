@@ -144,7 +144,17 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
             <Field label="Kontaktperson" field="contact_name" />
             <Field label="E-Mail" field="email" />
             <Field label="Telefon" field="phone" />
+            <div>
+              <Label className="text-xs text-muted-foreground">Geburtsdatum</Label>
+              <Input
+                type="date"
+                value={form.birth_date}
+                onChange={e => set('birth_date', e.target.value)}
+                className="bg-secondary border-border mt-1"
+              />
+            </div>
           </div>
+
 
           <h3 className="text-sm font-medium text-foreground pt-2">Rechnungsadresse</h3>
           <div className="grid grid-cols-2 gap-3">
