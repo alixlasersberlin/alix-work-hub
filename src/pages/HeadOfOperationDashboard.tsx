@@ -7,6 +7,8 @@ import {
   Package, ShieldCheck, AlertCircle, Mail, Clock
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState as InfinityEmptyState } from '@/components/infinity/EmptyState';
+import { Inbox } from 'lucide-react';
 
 interface Counts {
   usersTotal: number;
