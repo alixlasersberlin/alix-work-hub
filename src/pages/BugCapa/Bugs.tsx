@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -161,11 +161,12 @@ export default function Bugs() {
       title={`Bugs (${visibleRows.length})`}
       action={
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button><Plus className="h-4 w-4 mr-1" /> Neuer Bug</Button>
-          </DialogTrigger>
+          <Button type="button" onClick={() => setOpen(true)}><Plus className="h-4 w-4 mr-1" /> Neuer Bug</Button>
           <DialogContent className="max-w-2xl">
-            <DialogHeader><DialogTitle>Neuen Bug erfassen</DialogTitle></DialogHeader>
+            <DialogHeader>
+              <DialogTitle>Neuen Bug erfassen</DialogTitle>
+              <DialogDescription>Erfasse Titel, Beschreibung und Priorität für den neuen Bug.</DialogDescription>
+            </DialogHeader>
             <div className="grid gap-3 py-2">
               <div><Label>Titel *</Label><Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} /></div>
               <div><Label>Beschreibung</Label><Textarea rows={4} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></div>
@@ -302,7 +303,10 @@ export default function Bugs() {
       />
       <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
         <DialogContent className="max-w-2xl">
-          <DialogHeader><DialogTitle>Bug bearbeiten {editing?.ticket_number}</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>Bug bearbeiten {editing?.ticket_number}</DialogTitle>
+            <DialogDescription>Bearbeite die vorhandenen Bug-Daten.</DialogDescription>
+          </DialogHeader>
           <div className="grid gap-3 py-2">
             <div><Label>Titel *</Label><Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} /></div>
             <div><Label>Beschreibung</Label><Textarea rows={4} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></div>
