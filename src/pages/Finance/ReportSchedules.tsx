@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 import { CalendarClock, Plus, Trash2, Power } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { PageHeader, PageLoading, DataCard } from '@/components/PageShell';
+import { DataCard } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { SkeletonTable } from '@/components/infinity/Skeleton';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -70,13 +73,13 @@ export default function FinanceReportSchedules() {
     load();
   };
 
-  if (loading) return <PageLoading />;
-
   return (
     <div className="space-y-6">
-      <PageHeader title="Berichts-Zeitpläne" subtitle="Geplante Berichte automatisch erstellen und versenden" icon={CalendarClock}
+      <PageHeader title="Berichts-Zeitpläne" subtitle={loading ? 'Lädt…' : 'Geplante Berichte automatisch erstellen und versenden'} icon={CalendarClock} noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${rows.length} Zeitpläne`} pulse={loading} />}
         actions={canEdit && <Button onClick={() => setShow(true)} className="gap-2"><Plus className="h-4 w-4" />Neuer Zeitplan</Button>} />
 
+      {loading ? <DataCard><SkeletonTable rows={6} cols={4} /></DataCard> : (
       <DataCard title={`Zeitpläne (${rows.length})`}>
         {rows.length === 0 ? <div className="p-8 text-center text-muted-foreground">Keine Zeitpläne aktiv.</div> : (
           <div className="divide-y divide-border">
@@ -104,6 +107,7 @@ export default function FinanceReportSchedules() {
           </div>
         )}
       </DataCard>
+      )}
 
       <Dialog open={show} onOpenChange={setShow}>
         <DialogContent>
