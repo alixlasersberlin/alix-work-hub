@@ -429,6 +429,7 @@ function AppRoutes() {
         <Route path="/mfa-recovery" element={<MfaGate expect="any"><MfaRecovery /></MfaGate>} />
         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route path="/" element={<HomeRoute />} />
+          <Route path="/infinity-showcase" element={<InfinityShowcase />} />
           <Route path="/at-dashboard" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Österreich']}><AtDashboard /></ProtectedRoute>} />
 
           <Route path="/detailsuche" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Detailsuche /></ProtectedRoute>} />
@@ -579,7 +580,6 @@ function AppRoutes() {
           <Route path="/service/garantie-kulanz" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Service', 'Serviceleitung', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance', 'Tourenplanung']}><GarantieKulanz /></ProtectedRoute>} />
           <Route path="/management-dashboard" element={<ProtectedRoute requiredRoles={['Super Admin']}><ManagementDashboard /></ProtectedRoute>} />
           <Route path="/executive" element={<ProtectedRoute requiredRoles={['Super Admin']}><ExecutiveCommandCenter /></ProtectedRoute>} />
-          <Route path="/infinity-showcase" element={<ProtectedRoute><AppLayout><InfinityShowcase /></AppLayout></ProtectedRoute>} />
           <Route path="/ai-center" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Geschäftsführung', 'Serviceleitung', 'Service', 'Technik', 'Finance', 'Österreich']}><AiCenter /></ProtectedRoute>} />
 
           <Route path="/design-template" element={<ProtectedRoute><DesignTemplate /></ProtectedRoute>} />
