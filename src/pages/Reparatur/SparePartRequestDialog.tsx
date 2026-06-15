@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { sbRepair } from '@/lib/repair/api';
 import { Button } from '@/components/ui/button';
@@ -18,6 +19,7 @@ const PRIORITIES = ['niedrig', 'normal', 'hoch', 'dringend'];
 
 export function SparePartRequestDialog({ repair, onCreated }: Props) {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [f, setF] = useState({
@@ -102,6 +104,7 @@ export function SparePartRequestDialog({ repair, onCreated }: Props) {
       reset();
       setOpen(false);
       onCreated?.();
+      navigate('/reparatur/auftraege');
     } catch (e: any) {
       toast({ title: 'Fehler', description: e?.message || String(e), variant: 'destructive' });
     } finally {
