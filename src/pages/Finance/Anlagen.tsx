@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Plus, Search, Wallet, TrendingDown, Archive, Edit2, X } from 'lucide-react';
+import { Plus, Search, Wallet, TrendingDown, Archive, Edit2, X, Building2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { PageHeader, PageLoading, DataCard } from '@/components/PageShell';
+import { DataCard } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { SkeletonKpiGrid, SkeletonTable } from '@/components/infinity/Skeleton';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
+import { KpiTile } from '@/components/infinity/KpiTile';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -112,22 +116,31 @@ export default function FinanceAnlagen() {
     toast({ title: 'Gelöscht' }); load();
   };
 
-  if (loading) return <PageLoading />;
-
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-6">
       <PageHeader
+        icon={Building2}
         title="Anlagenbuchhaltung"
         subtitle="Anlagevermögen, AfA und Restbuchwerte"
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${items.length} Anlagen`} pulse={loading} />}
         actions={canEdit ? <Button onClick={openNew} className="gap-2"><Plus className="h-4 w-4" /> Neue Anlage</Button> : undefined}
       />
 
+      {loading ? (
+        <>
+          <DataCard><SkeletonKpiGrid count={4} /></DataCard>
+          <DataCard><SkeletonTable rows={8} cols={9} /></DataCard>
+        </>
+      ) : (
+      <>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <DataCard title="Aktive Anlagen"><div className="text-2xl font-semibold">{String(stats.count)}</div></DataCard>
-        <DataCard title="Anschaffungswerte"><div className="text-2xl font-semibold">{fmtEUR(stats.ahk)}</div></DataCard>
-        <DataCard title="Restbuchwert gesamt"><div className="text-2xl font-semibold">{fmtEUR(stats.book)}</div></DataCard>
-        <DataCard title="Kumulierte AfA"><div className="text-2xl font-semibold">{fmtEUR(stats.depr)}</div></DataCard>
+        <KpiTile label="Aktive Anlagen" value={String(stats.count)} icon={Archive} accent="sky" />
+        <KpiTile label="Anschaffungswerte" value={fmtEUR(stats.ahk)} icon={Wallet} accent="gold" />
+        <KpiTile label="Restbuchwert gesamt" value={fmtEUR(stats.book)} icon={Wallet} accent="emerald" />
+        <KpiTile label="Kumulierte AfA" value={fmtEUR(stats.depr)} icon={TrendingDown} accent="rose" />
       </div>
+
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[240px]">
@@ -203,6 +216,8 @@ export default function FinanceAnlagen() {
           </table>
         </div>
       </div>
+      </>
+      )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl">
