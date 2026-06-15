@@ -1,94 +1,84 @@
-# AlixWork Mega Design System 2026 — Umsetzungsplan
+## Ziel
 
-Reines additives Visual-/UX-Upgrade. **Keine** Änderung an Supabase, RLS, Routen, Formularen, Workflows, API-Calls oder Businesslogik. Bestehende Komponenten erben den neuen Look automatisch über CSS-Variablen + opt-in Modi-Klassen am `<html>`.
+Visuelles Refresh auf „Aurora 2.0" (Light + Dark, Inter, Glass, mehr Whitespace) ohne jede Änderung an Routen, Datenbank, RLS, Edge Functions, Rollen, Business-Logik oder Seitenstruktur.
 
----
+## Scope Phase 1 (dieser Schritt)
 
-## 1. Experience Mode Switcher (Kernstück)
+1. **Design-Foundation**
+   - Neuer Theme-Token-Layer `aurora2` zusätzlich zu vorhandenen Themes (Black/Gold, theme-neo bleiben unangetastet als Fallback).
+   - Tokens in `src/index.css` unter `[data-theme="aurora2"]` und `[data-theme="aurora2-dark"]` exakt wie im Prompt: `--background`, `--card`, `--foreground`, `--muted-foreground`, `--border`, `--primary` (#2563EB / #60A5FA), `--success`, `--warning`, `--destructive`.
+   - Glass-Tokens: `--glass-bg`, `--glass-border`, `--shadow-elegant`.
+   - Spacing/Radius-Skala: `--radius` 14px (Forms) / 24px (Sidebar), Container `max-w-[1600px]`.
+   - Inter Variable via Google Fonts in `index.html`, in `tailwind.config.ts` als `font-sans` mit `system-ui, -apple-system, "SF Pro Display"` Fallback.
+   - Typo-Klassen: `text-h1/h2/h3/body/small/label` mit den geforderten Größen + 150% line-height.
+   - `useTheme` erweitert um Variante `aurora2` + `aurora2-dark`, persistiert in localStorage; Black/Gold bleibt wählbar.
 
-Neuer Hook `src/hooks/useExperienceMode.tsx` mit drei Modi:
+2. **Sidebar Aurora 2.0**
+   - Neue Komponente `src/components/AuroraSidebar.tsx`, gleiches `navItems`-Array wie heutiges `AppLayout` (keine Route ändern).
+   - 280px breit, floating, `rounded-3xl`, Glass-Surface, gruppiert nach: Dashboard, Sales, Customers, Devices, Tickets, Service Center, Academy, Finance, Administration, AI Center.
+   - Aktiver Eintrag: blauer Glow + linke 3px-Statuslinie.
+   - Hover: 150ms ease-out fade + leichtes scale-[1.01].
+   - Kollabierbar auf 72px (Icon-Only) via shadcn `SidebarProvider` Pattern.
+   - `AppLayout` wird so umgebaut, dass es bei aktivem `aurora2`-Theme die neue Sidebar rendert, sonst die alte. Damit ist Rollback ein 1-Zeilen-Toggle.
 
-- `classic` → keinerlei zusätzliche Effekte (heutiger Zustand, garantiert unverändert)
-- `premium` → Glassmorphism, Premium Cards, sanfte Animationen, modernisierter Header/Sidebar
-- `mega` → alles aus Premium **plus** 3D-Tiefenebenen, Dynamic Lighting, Mission-Control-KPIs, animierte Statusindikatoren
+3. **Dashboard Aurora 2.0**
+   - Nur `src/pages/Dashboard.tsx` betroffen.
+   - Header-Band: Begrüßung („Guten Morgen, {Vorname}"), Datum, Schnellaktionen (Neue Anfrage, Neuer Auftrag, Suche).
+   - 12-Spalten-Grid, `gap-6`, Max-Breite 1600px.
+   - KPI-Karten (existierende Datenquellen, nichts neu abfragen): Umsatz, Geräte, Tickets, Kunden, Wartungen, Garantien, Offene Aufgaben. Jede Karte: Icon, Wert, Trend-Pill (↑/↓ %), Sparkline (recharts, bereits installiert).
+   - Activity-Feed + Timeline-Sektion nutzen vorhandene Datenhooks; nur Präsentation neu.
+   - Framer Motion `fade-in`/`scale-in` 200ms beim Mount, keine durchgehenden Loops.
 
-Setzt `data-experience="classic|premium|mega"` auf `<html>` + `localStorage("alix-experience")`. Anti-Flicker-Boot-Script in `index.html`.
+4. **Globale Cmd+K-Suche**
+   - Neue Komponente `src/components/CommandPalette.tsx` auf Basis von shadcn `Command` (bereits in `components/ui/command.tsx`).
+   - Trigger: globaler Hotkey `⌘K`/`Ctrl+K`, im neuen Header sichtbarer Suchbutton mit Shortcut-Hint.
+   - Quellen (alle bestehende Tabellen, keine neuen):
+     - `customers` (name, company_name, email)
+     - `lager_devices` (serial_number, model)
+     - `tickets` (subject, ticket_number)
+     - `zoho_invoices` (invoice_number, customer_name)
+     - `academy_sessions` (title)
+     - `order_documents` (file_name)
+   - Debounced `ilike`-Queries (300ms), je Quelle Limit 5, gruppiert dargestellt.
+   - Treffer routen über `useNavigate` auf die existierenden Detail-Routen — keine neue Route, keine neue Edge Function.
+   - Respektiert RLS automatisch (Queries laufen mit User-Token).
 
-Neue Komponente `src/components/ExperienceModeSwitcher.tsx` — Glass-Karte unten links in der Sidebar mit ✨-Icon, drei Optionen, Live-Preview ohne Reload, integrierter Download-Button für den Premium-Background.
+5. **Accessibility**
+   - Font-Scale-Switcher S/M/L/XL existiert bereits (`useFontScale`); nur ins neue Header-Menü integrieren.
+   - Alle neuen interaktiven Elemente: `aria-label` bei Icon-Buttons, `focus-visible:ring-2 ring-primary`, Tap-Targets ≥ 44px.
 
-Einbau in `AppLayout.tsx` Sidebar-Footer (existierender Bereich, keine Strukturänderung).
+## Out of Scope (spätere Phasen, hier explizit NICHT enthalten)
 
-## 2. Light / Dark Mode (echtes Toggle)
+- Tabellen, Formulare, AI Center, Finance-Cockpits, Mobile-PWA — diese ziehen automatisch über die neuen semantischen Tokens nach, strukturell unverändert.
+- Heatmaps und neue Diagrammtypen.
+- Keine Migration, keine Edge Function, keine RLS-Policy-Änderung.
 
-`src/hooks/useTheme.tsx` reaktivieren: echtes Light/Dark mit `localStorage("app-theme")`, Default `light` (kein Bruch für Bestandsuser). Toggle-Button in `DisplaySettingsMenu` (bereits im Header vorhanden) — Sonne/Mond mit i18n-`aria-label`. Anti-Flicker-Boot-Script in `index.html` ergänzen.
+## Garantien
 
-Dark-Tokens werden in `src/index.css` rebalanced (Tiefschwarz / Anthrazit / Alix-Blau / Cyan / dezente Gold-Akzente).
+- `supabase/migrations/**` wird **nicht** angefasst.
+- `supabase/functions/**` wird **nicht** angefasst.
+- `App.tsx`-Routen bleiben Zeichen-identisch.
+- Bestehende Themes (`black-gold`, `theme-neo`, alle DesignVariants) bleiben funktionsfähig und per Switcher wählbar; Aurora 2.0 wird neuer **Default für neue Sessions**, alte Auswahl wird respektiert.
+- Rollback: ein Token-Wechsel im `useTheme`-Default reicht.
 
-## 3. Schriftgrößen-Steuerung (bereits vorhanden — bestätigen)
+## Technische Details
 
-`useFontScale` ist live. Stufen Small/Normal/Large/XLarge/A11y bleiben. Im `DisplaySettingsMenu` neben dem neuen Theme-Toggle weiterhin sichtbar.
+- Dateien neu: `src/components/AuroraSidebar.tsx`, `src/components/AuroraHeader.tsx`, `src/components/CommandPalette.tsx`, `src/styles/aurora2.css`.
+- Dateien editiert (minimal): `src/index.css` (Import + ein Theme-Block), `src/hooks/useTheme.tsx` (neue Variante), `src/components/AppLayout.tsx` (Theme-Switch zwischen alter/neuer Sidebar+Header), `src/pages/Dashboard.tsx` (Layout-Refactor, gleiche Datenhooks), `tailwind.config.ts` (Font, Typo-Klassen), `index.html` (Inter-Link).
+- Recharts und framer-motion sind bereits installiert — keine neuen Dependencies.
 
-## 4. Globales Theme + Effekte (CSS-only, modi-gated)
+```text
+┌─────────────────────────────────────────────────────────────┐
+│  AuroraHeader  ⌘K Search    Tenant   Notif   User   Theme   │
+├──────────┬──────────────────────────────────────────────────┤
+│ Sidebar  │  Dashboard                                       │
+│ 280px    │  ┌─── Welcome ─────────────── Quick Actions ──┐  │
+│ floating │  └────────────────────────────────────────────┘  │
+│ glass    │  ┌── KPI ──┐ ┌── KPI ──┐ ┌── KPI ──┐ ┌── KPI ──┐ │
+│ rounded  │  └─────────┘ └─────────┘ └─────────┘ └─────────┘ │
+│ groups   │  ┌──── Activity Feed ────┐ ┌── Timeline ──────┐  │
+│          │  └────────────────────────┘ └──────────────────┘ │
+└──────────┴──────────────────────────────────────────────────┘
+```
 
-`src/index.css` erweitern (rein additiv, alte Tokens bleiben):
-
-- Neue Tokens: `--shadow-glass`, `--shadow-glow`, `--gradient-premium`, `--gradient-mega`, `--ring-premium`, `--surface-glass`, `--border-glass`, `--alix-gold`, `--alix-blue`
-- Utility-Klassen: `.glass-card`, `.glass-panel`, `.premium-button`, `.kpi-tile`, `.slide-in`, `.fade-in-card`, `.tilt-3d`, `.shimmer-skeleton`, `.glow-hover`, `.depth-layer-1/2/3`
-- Modi-Gating: Effekte greifen nur unter `html[data-experience="premium"]` bzw. `html[data-experience="mega"]`. Unter `classic` ist die Ausgabe **byte-identisch** zu heute.
-- `prefers-reduced-motion` deaktiviert alle Animationen
-- Smooth Color-Transitions auf `html, body` für Theme-Switch ohne Flackern
-
-## 5. Premium Background
-
-Generierung `public/backgrounds/alixwork-premium-background.jpg` (1920×1080, dunkle Variante mit Schwarz/Anthrazit/Alix-Blau/Gold, dezente Tech-Linien + Weltkarten-Andeutung). Light-Variante `…-light.jpg`.
-
-Einbindung in `index.css` via `body::before` (fixed, z-index -1, Overlay-Gradient pro Theme). **Nur** unter Premium/Mega aktiv — Classic bleibt unberührt. Cards behalten opaken Hintergrund für Lesbarkeit.
-
-Download-Button im Experience-Mode-Switcher: direkter `<a href="…" download>`.
-
-## 6. Mehrsprachigkeit
-
-`src/i18n/ui.ts` (bereits vorhanden) erweitert um Keys für: `experience.title`, `experience.classic`, `experience.premium`, `experience.mega`, `experience.download`, `theme.toggle`. Sprachen DE/EN/FR/ES/IT/TR/AR/VI. RTL via `html[dir="rtl"]` automatisch bei `ar`. Bestehende deutschsprachige UI bleibt unverändert.
-
-## 7. Was **nicht** angefasst wird
-
-- `TemplateSwitcher`, `DesignVariantSwitcher` (bleiben deaktiviert wie vom User gewünscht)
-- `App.tsx`-Routing, Seiten-Logik, Sidebar-Struktur (nur Footer-Bereich erhält den Switcher)
-- PDF-Generatoren, Edge Functions, Supabase Client, RLS, Rollen-Hooks
-- Keine Tabellen-/Form-Komponenten werden umgeschrieben — sie erben Premium/Mega-Look über Tokens
-
----
-
-## Neue / geänderte Dateien
-
-**Neu:**
-- `src/hooks/useExperienceMode.tsx`
-- `src/components/ExperienceModeSwitcher.tsx`
-- `public/backgrounds/alixwork-premium-background.jpg` (dark)
-- `public/backgrounds/alixwork-premium-background-light.jpg`
-
-**Editiert (additiv, modi-gegated):**
-- `src/index.css` — neue Tokens, Glass/Mega-Utilities, Background, Smooth-Transitions; alles hinter `data-experience`
-- `src/hooks/useTheme.tsx` — echtes Light/Dark-Toggle
-- `src/components/AppLayout.tsx` — `ExperienceModeSwitcher` unten in der Sidebar einhängen
-- `src/components/DisplaySettingsMenu.tsx` — Theme-Toggle aktivieren
-- `src/i18n/ui.ts` — neue Keys + 8 Sprachen
-- `index.html` — Anti-Flicker-Boot-Script (Theme + Experience + FontScale)
-
----
-
-## Risiken & Mitigation
-
-- **Classic muss byte-identisch bleiben** → alle neuen Styles strikt hinter `html[data-experience="premium"]` / `="mega"`-Selektoren; Default ist `classic`
-- **Dark Mode** könnte Komponenten betreffen, die seit dem White-Lock auf `light` optimiert wurden → Default bleibt `light`; User wählt aktiv Dark
-- **Mega-Effekte auf langsamen Geräten** → CSS-only (keine WebGL/Canvas), `prefers-reduced-motion` Guards, Background als statisches JPG mit `position:fixed`
-- **Font-Scale > 1.3 in dichten Tabellen** → bestehender `overflow-x-auto` greift; A11y-Stufe explizit gelabelt
-
----
-
-## Offene Fragen
-
-1. **Default-Modus für Bestandsuser?** Vorschlag: `classic` (kein User merkt einen Unterschied, bis er aktiv wechselt). Alternativ: `premium`.
-2. **Mega-Mode Background-Variante:** dunkel mit Weltkarte + Goldlinien wie beschrieben — ok so, oder soll ich mehrere Varianten zur Auswahl generieren?
-
-Bitte kurz bestätigen, dann setze ich um.
+Nach Phase 1 prüfen wir gemeinsam visuell, dann gehen Tabellen / Forms / AI Center in Phase 2.

@@ -22,6 +22,7 @@ import DisplaySettingsMenu from '@/components/DisplaySettingsMenu';
 import TenantSwitcher from '@/components/TenantSwitcher';
 import AuroraPrioTicker from '@/components/AuroraPrioTicker';
 import AuroraTopNav from '@/components/AuroraTopNav';
+import CommandPalette, { CommandPaletteTrigger } from '@/components/CommandPalette';
 import { useDesignVariant } from '@/hooks/useDesignVariant';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { useFavorites, type FavoriteEntry } from '@/hooks/useFavorites';
@@ -916,6 +917,9 @@ export default function AppLayout() {
 
   return (
     <div className="h-screen-dvh flex bg-background overflow-hidden">
+      {/* Aurora 2.0: globale Cmd+K Suche */}
+      <CommandPalette />
+      <CommandPaletteTrigger />
       {/* Mobile Backdrop */}
       {mobileOpen && (
         <button
