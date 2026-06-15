@@ -261,9 +261,19 @@
   table tbody tr {
     transition: background-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
   }
+  /* Subtle zebra striping for readability */
+  table tbody tr:nth-child(even) {
+    background: hsl(var(--surface-1) / 0.35);
+  }
   table tbody tr:hover {
-    background: linear-gradient(90deg, hsl(var(--gold) / 0.06), transparent 60%);
+    background: linear-gradient(90deg, hsl(var(--gold) / 0.08), transparent 60%);
     box-shadow: inset 2px 0 0 0 hsl(var(--gold) / 0.55);
+  }
+  /* Numeric columns: tabular figures everywhere */
+  table td.tabular-nums,
+  table th.tabular-nums {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
   }
   @media (prefers-reduced-motion: reduce) {
     table tbody tr { transition: none; }
