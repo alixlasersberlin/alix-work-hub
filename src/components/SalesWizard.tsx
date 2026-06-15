@@ -320,29 +320,29 @@ export default function SalesWizard({ publicMode = false }: Props) {
 
           {/* Step 2 – Wunschgerät (optional) */}
           {step === 2 && (
-            <Section title="Wunschgerät" hint="Optional – wählen Sie ein Gerät aus unserem Portfolio" publicMode={publicMode}>
+            <Section title={t.s_wish_device} hint={t.s_wish_device_hint} publicMode={publicMode}>
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <Label className="text-xs uppercase tracking-wide opacity-80">Alix Lasers</Label>
+                  <Label className="text-xs uppercase tracking-wide opacity-80">{t.alix_lasers_label}</Label>
                   <select
                     value={data.laser_model}
                     onChange={(e) => setData({ ...data, laser_model: e.target.value })}
                     className="w-full h-10 rounded-md border px-3 text-sm bg-white/5 border-white/15 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
                   >
-                    <option value="" className="text-slate-900">– Kein Gerät ausgewählt –</option>
+                    <option value="" className="text-slate-900">{t.no_device}</option>
                     {ALIX_LASERS_MODELS.map((m) => (
                       <option key={m} value={m} className="text-slate-900">{m}</option>
                     ))}
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs uppercase tracking-wide opacity-80">Alix Beauty (optional)</Label>
+                  <Label className="text-xs uppercase tracking-wide opacity-80">{t.alix_beauty_label}</Label>
                   <select
                     value={data.beauty_model}
                     onChange={(e) => setData({ ...data, beauty_model: e.target.value })}
                     className="w-full h-10 rounded-md border px-3 text-sm bg-white/5 border-white/15 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
                   >
-                    <option value="" className="text-slate-900">– Kein Gerät ausgewählt –</option>
+                    <option value="" className="text-slate-900">{t.no_device}</option>
                     {ALIX_BEAUTY_MODELS.map((m) => (
                       <option key={m} value={m} className="text-slate-900">{m}</option>
                     ))}
@@ -351,6 +351,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
               </div>
             </Section>
           )}
+
 
           {/* Step 3 – Zusätzliche Interessen */}
           {step === 3 && (
@@ -426,12 +427,12 @@ export default function SalesWizard({ publicMode = false }: Props) {
                     onChange={(e) => setData({ ...data, studio_in_germany: e.target.checked, has_nisv: e.target.checked ? data.has_nisv : '' })}
                     className="h-4 w-4 rounded border-white/30 bg-white/5 accent-cyan-400"
                   />
-                  <span className="text-sm text-white/90">Mein Studio ist in Deutschland <span className="text-white/50">(optional)</span></span>
+                  <span className="text-sm text-white/90">{t.studio_in_germany_label} <span className="text-white/50">({t.optional})</span></span>
                 </label>
 
                 {data.studio_in_germany && (
                   <div className="pl-7 flex flex-wrap items-center gap-4">
-                    <span className="text-sm text-white/80">Haben Sie NISV?</span>
+                    <span className="text-sm text-white/80">{t.has_nisv_q}</span>
                     <div className="flex gap-2">
                       {(['ja', 'nein'] as const).map((v) => (
                         <button
@@ -445,7 +446,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
                               : 'border-white/15 bg-white/5 text-white/80 hover:border-cyan-300/50',
                           )}
                         >
-                          {v === 'ja' ? 'Ja' : 'Nein'}
+                          {v === 'ja' ? t.yes : t.no}
                         </button>
                       ))}
                     </div>
@@ -468,11 +469,11 @@ export default function SalesWizard({ publicMode = false }: Props) {
                     onChange={(e) => setData({ ...data, is_startup: e.target.checked, studio_years: e.target.checked ? '' : data.studio_years })}
                     className="h-4 w-4 rounded border-white/20 bg-white/5 accent-cyan-400"
                   />
-                  <span className="text-sm text-white/90">Neueröffnung / Startup (optional)</span>
+                  <span className="text-sm text-white/90">{t.startup_label}</span>
                 </label>
 
                 <div className="flex items-center gap-3">
-                  <span className="text-sm text-white/80 whitespace-nowrap">Mein Studio besteht seit</span>
+                  <span className="text-sm text-white/80 whitespace-nowrap">{t.studio_exists_since}</span>
                   <Input
                     type="number"
                     inputMode="numeric"
@@ -485,10 +486,11 @@ export default function SalesWizard({ publicMode = false }: Props) {
                       const v = e.target.value.replace(/\D/g, '').slice(0, 3);
                       setData({ ...data, studio_years: v });
                     }}
-                    placeholder="z. B. 5"
+                    placeholder={t.example_short}
                     className="w-28 bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-cyan-400/60 focus-visible:border-cyan-300/60 disabled:opacity-40"
                   />
-                  <span className="text-sm text-white/80">Jahr(e)</span>
+                  <span className="text-sm text-white/80">{t.years_label}</span>
+
                 </div>
               </div>
             </Section>
