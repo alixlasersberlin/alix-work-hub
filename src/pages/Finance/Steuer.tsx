@@ -203,6 +203,8 @@ export default function FinanceSteuer() {
           Hinweis: Beträge werden vereinfachend mit dem Standard-USt-Satz des jeweiligen Mandanten (DE 19 %, AT 20 %) herausgerechnet. Für die offizielle UStVA bitte mit dem Steuerberater abstimmen.
         </p>
       </DataCard>
+      </>
+      )}
     </div>
   );
 }
