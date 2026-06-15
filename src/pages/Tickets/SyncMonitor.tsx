@@ -11,6 +11,7 @@ import {
   ArrowLeft, RefreshCw, CheckCircle2, AlertTriangle, Ban, Clock,
   ArrowUpRight, ArrowDownLeft, BellRing, Mail,
 } from 'lucide-react';
+import { KpiTile } from '@/components/infinity/KpiTile';
 import { toast } from 'sonner';
 
 interface LogRow {
@@ -249,14 +250,14 @@ export default function TicketsSyncMonitor() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
-        <KpiCard label="Push erfolgreich" value={stats?.pushSuccess ?? 0} icon={<ArrowUpRight className="w-4 h-4 text-emerald-400" />} />
-        <KpiCard label="Push fehlgeschlagen" value={stats?.pushError ?? 0} icon={<ArrowUpRight className="w-4 h-4 text-destructive" />} />
-        <KpiCard label="Polling erfolgreich" value={stats?.pollSuccess ?? 0} icon={<ArrowDownLeft className="w-4 h-4 text-emerald-400" />} />
-        <KpiCard label="Polling fehlgeschlagen" value={stats?.pollError ?? 0} icon={<ArrowDownLeft className="w-4 h-4 text-destructive" />} />
-        <KpiCard label="Blockiert (Konflikt)" value={stats?.blocked ?? 0} icon={<Ban className="w-4 h-4 text-amber-400" />} />
-        <KpiCard label="Tickets gesamt" value={stats?.ticketsTotal ?? 0} icon={<RefreshCw className="w-4 h-4 text-primary" />} />
-        <KpiCard label="Heute synchronisiert" value={stats?.ticketsSyncedToday ?? 0} icon={<Clock className="w-4 h-4 text-sky-400" />} />
-        <KpiCard label="Alerts gesendet" value={alertsTotal} icon={<BellRing className="w-4 h-4 text-rose-400" />} />
+        <KpiTile label="Push erfolgreich" value={stats?.pushSuccess ?? 0} icon={ArrowUpRight} accent="emerald" />
+        <KpiTile label="Push fehlgeschlagen" value={stats?.pushError ?? 0} icon={ArrowUpRight} accent="rose" />
+        <KpiTile label="Polling erfolgreich" value={stats?.pollSuccess ?? 0} icon={ArrowDownLeft} accent="emerald" />
+        <KpiTile label="Polling fehlgeschlagen" value={stats?.pollError ?? 0} icon={ArrowDownLeft} accent="rose" />
+        <KpiTile label="Blockiert (Konflikt)" value={stats?.blocked ?? 0} icon={Ban} accent="gold" />
+        <KpiTile label="Tickets gesamt" value={stats?.ticketsTotal ?? 0} icon={RefreshCw} accent="gold" />
+        <KpiTile label="Heute synchronisiert" value={stats?.ticketsSyncedToday ?? 0} icon={Clock} accent="sky" />
+        <KpiTile label="Alerts gesendet" value={alertsTotal} icon={BellRing} accent="rose" />
       </div>
 
       {/* Alerts */}
@@ -495,18 +496,6 @@ export default function TicketsSyncMonitor() {
         </Table>
       </Card>
     </div>
-  );
-}
-
-function KpiCard({ label, value, icon }: { label: string; value: number; icon: React.ReactNode }) {
-  return (
-    <Card className="p-4">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-xs text-muted-foreground">{label}</span>
-        {icon}
-      </div>
-      <p className="text-2xl font-display font-bold tabular-nums">{value}</p>
-    </Card>
   );
 }
 
