@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { PageHeader, PageLoading, PageError, DataCard } from '@/components/PageShell';
+import { DataCard, PageError } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { SkeletonTable } from '@/components/infinity/Skeleton';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { Banknote, RefreshCw, ArrowRightLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -152,9 +155,11 @@ export default function Ratenzahler() {
   return (
     <div className="p-4 sm:p-6">
       <PageHeader
-        icon={<Banknote className="w-6 h-6 text-primary" />}
+        icon={Banknote}
         title="Ratenzahler"
         subtitle="Periodische Rechnungen aus Zoho Books mit Zahlungsstatus"
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${rows.length} Raten`} pulse={loading} />}
         actions={
           isAdmin && (
             <Button onClick={handleImport} disabled={importing} className="gold-gradient text-primary-foreground">
@@ -193,7 +198,7 @@ export default function Ratenzahler() {
       {error && <PageError message={error} onRetry={fetchRows} />}
 
       {loading ? (
-        <PageLoading />
+        <DataCard><SkeletonTable rows={10} cols={6} /></DataCard>
       ) : (
         <DataCard className="overflow-hidden">
           <div className="overflow-x-auto">
