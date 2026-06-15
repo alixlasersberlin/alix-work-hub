@@ -1239,7 +1239,7 @@ export default function Lagergeraete({
                   )}
                 </div>
               )}
-              <DialogFooter>
+              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                 <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                   Abbrechen
                 </Button>
@@ -1247,10 +1247,11 @@ export default function Lagergeraete({
                   {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                   Speichern
                 </Button>
-              </DialogFooter>
+              </div>
             </form>
-          </DialogContent>
-        </Dialog>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
