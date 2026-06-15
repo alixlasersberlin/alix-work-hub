@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, RefreshCw, Package, ExternalLink } from 'lucide-react';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 const STATUSES = ['Bestellvorschlag', 'offen', 'bestellt', 'erhalten', 'storniert'];
 
@@ -75,28 +76,27 @@ export default function BestellwesenErsatzteile() {
 
   return (
     <div className="p-6 lg:p-8 space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-3">
-          <Package className="w-6 h-6 text-primary" />
-          <div>
-            <h1 className="text-2xl font-display font-bold text-foreground">Ersatzteil-Bestellvorschläge</h1>
-            <p className="text-xs text-muted-foreground">Bestellanforderungen aus Reparaturaufträgen</p>
-          </div>
-        </div>
-        <div className="flex gap-2 items-center">
-          <Input placeholder="Suche…" value={q} onChange={e => setQ(e.target.value)} className="w-56" />
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="alle">Alle Status</SelectItem>
-              {STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Button variant="outline" size="sm" onClick={load} disabled={loading}>
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        icon={Package}
+        title="Ersatzteil-Bestellvorschläge"
+        subtitle="Bestellanforderungen aus Reparaturaufträgen"
+        noBreadcrumbs
+        actions={
+          <>
+            <Input placeholder="Suche…" value={q} onChange={e => setQ(e.target.value)} className="w-56" />
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="alle">Alle Status</SelectItem>
+                {STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="sm" onClick={load} disabled={loading}>
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+            </Button>
+          </>
+        }
+      />
 
       <Card className="overflow-hidden">
         <div className="overflow-x-auto">
