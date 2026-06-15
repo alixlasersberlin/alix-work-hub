@@ -284,7 +284,7 @@ export default function SalesLeadsList() {
                         <button
                           type="button"
                           onClick={() => setToDelete(r)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded border border-destructive/40 text-destructive text-xs hover:bg-destructive/10"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded border border-destructive/50 bg-destructive text-destructive-foreground text-xs font-medium hover:bg-destructive/90 transition-colors"
                         >
                           <Trash2 className="h-3.5 w-3.5" />Löschen
                         </button>
