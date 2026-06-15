@@ -13,7 +13,9 @@ import {
 type Hit =
   | { kind: "customer"; id: string; label: string; sub?: string }
   | { kind: "order"; id: string; label: string; sub?: string }
-  | { kind: "ticket"; id: string; label: string; sub?: string };
+  | { kind: "ticket"; id: string; label: string; sub?: string }
+  | { kind: "repair"; id: string; label: string; sub?: string }
+  | { kind: "invoice"; id: string; label: string; sub?: string };
 
 const NAV: { label: string; to: string; icon: any; roles?: string[]; group: string }[] = [
   { label: "Dashboard", to: "/dashboard", icon: Home, group: "Navigation" },
