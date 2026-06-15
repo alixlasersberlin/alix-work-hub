@@ -6,6 +6,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { AlertOctagon, TrendingUp, ListChecks, Sparkles, Clock, CheckCircle2, XCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { KpiTile } from '@/components/infinity/KpiTile';
+import { SkeletonKpiGrid } from '@/components/infinity/Skeleton';
 
 function fmtEur(v: number | null | undefined) {
   if (v == null) return '–';
@@ -76,12 +78,16 @@ export default function AicDashboard() {
   return (
     <div className="space-y-6">
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <KpiCard title="Offene Insights" value={counts?.insights ?? 0} icon={Sparkles} accent="primary" />
-        <KpiCard title="Offene Risiken" value={counts?.risks ?? 0} icon={AlertOctagon} accent="destructive" />
-        <KpiCard title="Offene KI-Aufgaben" value={counts?.tasks ?? 0} icon={ListChecks} accent="primary" />
-        <KpiCard title="Aktive Prognosen" value={counts?.forecasts ?? 0} icon={TrendingUp} accent="primary" />
-      </div>
+      {!counts ? (
+        <SkeletonKpiGrid count={4} />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <KpiTile label="Offene Insights" value={counts.insights} icon={Sparkles} accent="gold" />
+          <KpiTile label="Offene Risiken" value={counts.risks} icon={AlertOctagon} accent="rose" />
+          <KpiTile label="Offene KI-Aufgaben" value={counts.tasks} icon={ListChecks} accent="sky" />
+          <KpiTile label="Aktive Prognosen" value={counts.forecasts} icon={TrendingUp} accent="violet" />
+        </div>
+      )}
 
       {/* Geschäftsdaten-Snapshot */}
       {snapshot && (
