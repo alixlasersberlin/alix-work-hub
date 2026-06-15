@@ -21,6 +21,7 @@ import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 const IMPORT_SOURCES = [
   { key: 'zoho_eu_1', label: 'Alix Deutschland', region: 'EU' },
@@ -727,15 +728,17 @@ export default function ImportManagement() {
   return (
     <div className="p-6 space-y-6 max-w-[1400px] mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-display font-bold gold-text">Importverwaltung</h1>
-          <p className="text-muted-foreground text-sm mt-1">Zoho Books Verbindungen, Importe & Kontrollfunktionen</p>
-        </div>
-        <Button variant="outline" size="sm" onClick={() => { fetchSourceStats(); fetchLogs(); }}>
-          <RefreshCw className="w-4 h-4 mr-2" /> Aktualisieren
-        </Button>
-      </div>
+      <PageHeader
+        icon={Cloud}
+        title="Importverwaltung"
+        subtitle="Zoho Books Verbindungen, Importe & Kontrollfunktionen"
+        noBreadcrumbs
+        actions={
+          <Button variant="outline" size="sm" onClick={() => { fetchSourceStats(); fetchLogs(); }}>
+            <RefreshCw className="w-4 h-4 mr-2" /> Aktualisieren
+          </Button>
+        }
+      />
 
       <Tabs defaultValue="overview" className="space-y-6">
         <TabsList className="bg-secondary border border-border">

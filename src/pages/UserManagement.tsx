@@ -16,6 +16,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 
 /* ─── Types ─── */
 interface EnrichedUser {
@@ -632,25 +634,25 @@ export default function UserManagement() {
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
-            <Users className="w-6 h-6 text-primary" />
-            Benutzerverwaltung
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">{filteredUsers.length} von {users.length} Benutzern</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={loadData} disabled={loading}>
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          </Button>
-          {isAdmin && (
-            <Button size="sm" onClick={() => setShowCreate(true)} className="gold-gradient text-primary-foreground">
-              <Plus className="w-4 h-4" /> Benutzer anlegen
+      <PageHeader
+        icon={Users}
+        title="Benutzerverwaltung"
+        subtitle={`${filteredUsers.length} von ${users.length} Benutzern`}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind="done" label={`${filteredUsers.length}`} />}
+        actions={
+          <>
+            <Button variant="outline" size="sm" onClick={loadData} disabled={loading}>
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </Button>
-          )}
-        </div>
-      </div>
+            {isAdmin && (
+              <Button size="sm" onClick={() => setShowCreate(true)} className="gold-gradient text-primary-foreground">
+                <Plus className="w-4 h-4" /> Benutzer anlegen
+              </Button>
+            )}
+          </>
+        }
+      />
 
       {/* Filters */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
