@@ -12,6 +12,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { withAt } from '@/lib/atSuffix';
 import { toast } from 'sonner';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 type StatusResult = {
   id: string;
