@@ -39,12 +39,16 @@ export default function FinanceAfaLauf() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-6">
       <PageHeader
+        icon={TrendingDown}
         title="AfA-Lauf"
         subtitle="Monatliche Abschreibungsbuchungen erzeugen"
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={busy ? 'progress' : preview ? 'done' : 'neutral'} label={busy ? 'Läuft' : preview ? 'Bereit' : 'Idle'} pulse={busy} />}
         actions={<Button variant="outline" onClick={() => nav('/finance/anlagen')}>Zur Anlagenliste</Button>}
       />
+
 
       {!canRun && (
         <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 flex items-center gap-2 text-sm">
