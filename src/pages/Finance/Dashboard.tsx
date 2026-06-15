@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Banknote, AlertTriangle, FileText, Wallet, ScrollText, ArrowDownToLine } from 'lucide-react';
-import { PageHeader } from '@/components/PageShell';
 import { supabase } from '@/integrations/supabase/client';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { KpiTile } from '@/components/infinity/KpiTile';
+import { SkeletonKpiGrid } from '@/components/infinity/Skeleton';
+import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 
-interface Kpi { label: string; value: string; icon: any; tone?: string; }
+interface Kpi { label: string; value: string; icon: any; accent: 'gold' | 'sky' | 'emerald' | 'rose' | 'violet'; }
 
 export default function FinanceDashboard() {
   const [kpis, setKpis] = useState<Kpi[]>([]);
@@ -26,12 +29,12 @@ export default function FinanceDashboard() {
       const payments = tx.filter(t => t.transaction_type === 'Zahlung').reduce((s, t) => s + Number(t.amount || 0), 0);
       const monthlyRates = contracts.reduce((s, c) => s + Number(c.monthly_rate || 0), 0);
       setKpis([
-        { label: 'Offene Forderungen', value: fmt(open), icon: Banknote },
-        { label: 'Überfällige Forderungen', value: fmt(overdue), icon: AlertTriangle, tone: 'text-destructive' },
-        { label: 'Offene Anzahlungen', value: fmt(deposits), icon: Wallet },
-        { label: 'Aktive Verträge', value: String(contracts.length), icon: FileText },
-        { label: 'Offene Raten (monatlich)', value: fmt(monthlyRates), icon: ScrollText },
-        { label: 'Zahlungseingänge', value: fmt(payments), icon: ArrowDownToLine, tone: 'text-success' },
+        { label: 'Offene Forderungen', value: fmt(open), icon: Banknote, accent: 'gold' },
+        { label: 'Überfällige Forderungen', value: fmt(overdue), icon: AlertTriangle, accent: 'rose' },
+        { label: 'Offene Anzahlungen', value: fmt(deposits), icon: Wallet, accent: 'sky' },
+        { label: 'Aktive Verträge', value: String(contracts.length), icon: FileText, accent: 'violet' },
+        { label: 'Offene Raten (monatlich)', value: fmt(monthlyRates), icon: ScrollText, accent: 'gold' },
+        { label: 'Zahlungseingänge', value: fmt(payments), icon: ArrowDownToLine, accent: 'emerald' },
       ]);
       setLoading(false);
     })();
@@ -39,21 +42,21 @@ export default function FinanceDashboard() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <PageHeader icon={<Banknote className="w-6 h-6 text-primary" />} title="Finance Dashboard" subtitle="Übersicht über Forderungen, Verträge und Zahlungen" />
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {kpis.map(k => {
-          const Icon = k.icon;
-          return (
-            <div key={k.label} className="rounded-xl border border-border bg-card p-5 card-glow">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-xs text-muted-foreground">{k.label}</p>
-                <Icon className={`w-4 h-4 ${k.tone || 'text-primary'}`} />
-              </div>
-              <p className={`text-2xl font-display font-bold ${k.tone || 'text-foreground'}`}>{loading ? '—' : k.value}</p>
-            </div>
-          );
-        })}
-      </div>
+      <PageHeader
+        icon={Banknote}
+        title="Finance Dashboard"
+        subtitle="Übersicht über Forderungen, Verträge und Zahlungen"
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : 'Live'} pulse={!loading} dotOnly />}
+      />
+      {loading ? (
+        <SkeletonKpiGrid count={6} />
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {kpis.map(k => (
+            <KpiTile key={k.label} label={k.label} value={k.value} icon={k.icon} accent={k.accent} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
