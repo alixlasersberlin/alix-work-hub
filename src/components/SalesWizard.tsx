@@ -129,12 +129,12 @@ export default function SalesWizard({ publicMode = false }: Props) {
   function canContinue(): boolean {
     switch (step) {
       case 1: return data.interests.length > 0;
-      case 3: return !!data.delivery_preference;
-      case 4: return !!data.first_name.trim() && !!data.last_name.trim();
-      case 6: return data.phone.trim().length >= 3;
-      case 7: return /.+@.+\..+/.test(data.email.trim());
-      case 8: return !!data.consultation_type;
-      case 10: return data.consent_data && data.consent_contact && (publicMode ? !!captchaToken : true);
+      case 4: return !!data.delivery_preference;
+      case 5: return !!data.first_name.trim() && !!data.last_name.trim();
+      case 7: return data.phone.trim().length >= 3;
+      case 8: return /.+@.+\..+/.test(data.email.trim());
+      case 9: return !!data.consultation_type;
+      case 11: return data.consent_data && data.consent_contact && (publicMode ? !!captchaToken : true);
       default: return true;
     }
   }
