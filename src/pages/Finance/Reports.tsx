@@ -132,6 +132,7 @@ export default function FinanceReports() {
           </div>
         )}
       </DataCard>
+      )}
 
       <Dialog open={show} onOpenChange={setShow}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
