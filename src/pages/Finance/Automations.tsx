@@ -90,14 +90,17 @@ export default function FinanceAutomations() {
     setBusy(false);
   };
 
-  if (loading) return <PageLoading />;
   return (
     <div className="space-y-6">
-      <PageHeader title="Finance Automations" subtitle={"Regel-basierte Workflow-Engine"} icon={Workflow} actions={<>
-        <Button variant="outline" onClick={runNow} disabled={busy}><Play className="h-4 w-4 mr-2" />Jetzt ausführen</Button>
-        {canEdit && <Button onClick={() => setShow(true)}><Plus className="h-4 w-4 mr-2" />Neue Regel</Button>}
-      </>} />
+      <PageHeader title="Finance Automations" subtitle={loading ? 'Lädt…' : 'Regel-basierte Workflow-Engine'} icon={Workflow} noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${rows.length} Regeln`} pulse={loading} />}
+        actions={<>
+          <Button variant="outline" onClick={runNow} disabled={busy}><Play className="h-4 w-4 mr-2" />Jetzt ausführen</Button>
+          {canEdit && <Button onClick={() => setShow(true)}><Plus className="h-4 w-4 mr-2" />Neue Regel</Button>}
+        </>} />
 
+      {loading ? <DataCard><SkeletonTable rows={6} cols={4} /></DataCard> : (
+      <>
       <DataCard title={`${rows.length} Regeln`}>
         <div className="space-y-2">
           {rows.map(r => (
