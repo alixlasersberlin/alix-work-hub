@@ -112,15 +112,17 @@ function findMatches(items: OrderItem[], devices: FreeDevice[]): FreeDevice[] {
       hit = devTokens.some(t => orderTokens.has(t));
     }
     if (!hit) continue;
-    // 3) Farb-Filter: wenn beide Seiten eine Farbe nennen, muss sie übereinstimmen
+    // 3) Farb-Filter: wenn beide Seiten Farben nennen, müssen ALLE Gerätefarben
+    //    in den Auftragsfarben enthalten sein (z. B. „black/pink" passt nicht zu „black/gold").
     if (orderColors.size > 0) {
       const devColors = colorsOf(`${d.model_name} ${d.notes || ''}`);
       if (devColors.size > 0) {
-        let colorMatch = false;
-        for (const c of devColors) if (orderColors.has(c)) { colorMatch = true; break; }
-        if (!colorMatch) continue;
+        let allMatch = true;
+        for (const c of devColors) if (!orderColors.has(c)) { allMatch = false; break; }
+        if (!allMatch) continue;
       }
     }
+
     if (!seen.has(d.id)) {
       seen.add(d.id);
       out.push(d);
