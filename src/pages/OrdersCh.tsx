@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ClipboardList, Search, Loader2, Inbox } from 'lucide-react';
+import { PageHeader } from '@/components/infinity/PageHeader';
 import { StatusBadge } from '@/components/StatusBadge';
 
 const CH_BRANCH_ID = '598077000000065075';
@@ -45,15 +46,12 @@ export default function OrdersCh() {
 
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6 animate-fade-in">
-      <div className="flex items-center gap-3">
-        <ClipboardList className="w-6 h-6 text-primary" />
-        <div>
-          <h1 className="text-2xl font-display font-bold gold-text">🇨🇭 Aufträge Schweiz</h1>
-          <p className="text-sm text-muted-foreground">
-            Alix Lasers ® Schweiz – Niederlassung (branch_id <code>{CH_BRANCH_ID}</code>)
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        icon={ClipboardList}
+        title="🇨🇭 Aufträge Schweiz"
+        subtitle={`Alix Lasers ® Schweiz – Niederlassung (branch_id ${CH_BRANCH_ID})`}
+        noBreadcrumbs
+      />
 
       <div className="flex items-center gap-3">
         <div className="relative flex-1 max-w-md">

@@ -7,6 +7,8 @@ import { StatusBadge } from '@/components/StatusBadge';
 import OrderStatsBar from '@/components/OrderStatsBar';
 import { PageSizeSelector, usePagination, PaginationControls } from '@/components/PageSizeSelector';
 import { useAtOnly } from '@/hooks/useAtOnly';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 
 type SortField = 'order_number' | 'expected_shipment_date' | 'total_amount';
 type SortDir = 'asc' | 'desc';
@@ -76,15 +78,13 @@ export default function DeliveredList() {
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
-            <Truck className="w-6 h-6 text-primary" />
-            Auftrag geliefert
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">{filtered.length} Aufträge mit Status „geliefert"</p>
-        </div>
-      </div>
+      <PageHeader
+        icon={Truck}
+        title="Auftrag geliefert"
+        subtitle={`${filtered.length} Aufträge mit Status „geliefert"`}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind="done" label={`${filtered.length}`} />}
+      />
 
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <div className="relative flex-1 max-w-sm">

@@ -5,6 +5,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, AlertTriangle, Loader2, Inbox, Pencil, CalendarClock, RotateCcw } from 'lucide-react';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { StatusBadge } from '@/components/StatusBadge';
 import { toast } from 'sonner';
 import OrderEditDialog from '@/components/OrderEditDialog';
@@ -97,15 +99,13 @@ export default function OrdersInClarification() {
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
-      <div className="mb-6">
-        <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
-          <AlertTriangle className="w-6 h-6 text-primary" />
-          In Klärung
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          {filtered.length} zurückgestellte Aufträge
-        </p>
-      </div>
+      <PageHeader
+        icon={AlertTriangle}
+        title="In Klärung"
+        subtitle={`${filtered.length} zurückgestellte Aufträge`}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind="warning" label={`${filtered.length}`} />}
+      />
 
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center mb-4">
         <div className="relative flex-1 max-w-sm">

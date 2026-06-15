@@ -4,6 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { PackageCheck, Search, Loader2, Inbox, ArrowUpDown, Pencil, ShoppingCart, CheckCircle2 } from 'lucide-react';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { StatusBadge } from '@/components/StatusBadge';
 import { useAuth } from '@/hooks/useAuth';
 import OrderItemsEditDialog from '@/components/OrderItemsEditDialog';
@@ -97,15 +99,13 @@ export default function PartialDeliveryList() {
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
-            <PackageCheck className="w-6 h-6 text-primary" />
-            Teilgeliefert
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">{filtered.length} Aufträge mit Status „teilgeliefert"</p>
-        </div>
-      </div>
+      <PageHeader
+        icon={PackageCheck}
+        title="Teilgeliefert"
+        subtitle={`${filtered.length} Aufträge mit Status „teilgeliefert"`}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind="warning" label={`${filtered.length}`} />}
+      />
 
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <div className="relative flex-1 max-w-sm">

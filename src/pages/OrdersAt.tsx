@@ -11,6 +11,8 @@ import OrderEditDialog from '@/components/OrderEditDialog';
 import OrderDeferDialog from '@/components/OrderDeferDialog';
 import OrderItemsEditDialog from '@/components/OrderItemsEditDialog';
 import { Package } from 'lucide-react';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import OrderStatsBar from '@/components/OrderStatsBar';
 import { VipBadge } from '@/components/VipBadge';
 import { isOrderVip, vipFirst } from '@/lib/vip';
@@ -147,13 +149,13 @@ export default function OrdersAt() {
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
-      <div className="mb-6">
-        <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
-          <ClipboardList className="w-6 h-6 text-primary" />
-          Aufträge AT 🇦🇹
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">{filtered.length} Aufträge (Alix Austria · -AT)</p>
-      </div>
+      <PageHeader
+        icon={ClipboardList}
+        title="Aufträge AT 🇦🇹"
+        subtitle={`${filtered.length} Aufträge (Alix Austria · -AT)`}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind="done" label={`${filtered.length}`} />}
+      />
 
       <div className="space-y-4">
         <OrderStatsBar
