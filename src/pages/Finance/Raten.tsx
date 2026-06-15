@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { PageHeader, PageLoading, PageError, DataCard } from '@/components/PageShell';
+import { PageError, DataCard } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { SkeletonTable } from '@/components/infinity/Skeleton';
+import { EmptyState } from '@/components/infinity/EmptyState';
+import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { ScrollText, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
