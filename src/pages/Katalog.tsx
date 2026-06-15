@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { PageSizeSelector, usePagination, PaginationControls } from '@/components/PageSizeSelector';
 import { Loader2, Search, BookOpen, Download, FileSpreadsheet } from 'lucide-react';
+import { EmptyState } from '@/components/infinity/EmptyState';
 import { PageHeader } from '@/components/infinity/PageHeader';
 
 type ZohoItem = {
@@ -249,7 +250,9 @@ export default function Katalog() {
             <Loader2 className="w-6 h-6 animate-spin text-primary" />
           </div>
         ) : filtered.length === 0 ? (
-          <div className="p-12 text-center text-muted-foreground">Keine Artikel gefunden.</div>
+          <div className="p-8">
+            <EmptyState icon={BookOpen} title="Keine Artikel gefunden" description="Pass die Suche oder den Filter an, um Artikel zu sehen." compact />
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">

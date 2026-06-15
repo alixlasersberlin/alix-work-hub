@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Receipt, Search, ExternalLink, RefreshCw, FileText, Wallet, Banknote } from 'lucide-react';
+import { EmptyState } from '@/components/infinity/EmptyState';
 import { supabase } from '@/integrations/supabase/client';
 import { withAt } from '@/lib/atSuffix';
 import {
@@ -154,7 +155,7 @@ export default function Anzahlungsrechnung() {
           {loading ? (
             <div className="py-10 text-center text-muted-foreground text-sm">Lade …</div>
           ) : filtered.length === 0 ? (
-            <div className="py-10 text-center text-muted-foreground text-sm">Keine Aufträge gefunden.</div>
+            <div className="py-6"><EmptyState icon={Receipt} title="Keine Aufträge gefunden" description="Es gibt aktuell keine passenden Aufträge für die gewählten Filter." compact /></div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
