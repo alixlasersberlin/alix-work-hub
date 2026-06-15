@@ -320,29 +320,29 @@ export default function SalesWizard({ publicMode = false }: Props) {
 
           {/* Step 2 – Wunschgerät (optional) */}
           {step === 2 && (
-            <Section title="Wunschgerät" hint="Optional – wählen Sie ein Gerät aus unserem Portfolio" publicMode={publicMode}>
+            <Section title={t.s_wish_device} hint={t.s_wish_device_hint} publicMode={publicMode}>
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <Label className="text-xs uppercase tracking-wide opacity-80">Alix Lasers</Label>
+                  <Label className="text-xs uppercase tracking-wide opacity-80">{t.alix_lasers_label}</Label>
                   <select
                     value={data.laser_model}
                     onChange={(e) => setData({ ...data, laser_model: e.target.value })}
                     className="w-full h-10 rounded-md border px-3 text-sm bg-white/5 border-white/15 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
                   >
-                    <option value="" className="text-slate-900">– Kein Gerät ausgewählt –</option>
+                    <option value="" className="text-slate-900">{t.no_device}</option>
                     {ALIX_LASERS_MODELS.map((m) => (
                       <option key={m} value={m} className="text-slate-900">{m}</option>
                     ))}
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs uppercase tracking-wide opacity-80">Alix Beauty (optional)</Label>
+                  <Label className="text-xs uppercase tracking-wide opacity-80">{t.alix_beauty_label}</Label>
                   <select
                     value={data.beauty_model}
                     onChange={(e) => setData({ ...data, beauty_model: e.target.value })}
                     className="w-full h-10 rounded-md border px-3 text-sm bg-white/5 border-white/15 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
                   >
-                    <option value="" className="text-slate-900">– Kein Gerät ausgewählt –</option>
+                    <option value="" className="text-slate-900">{t.no_device}</option>
                     {ALIX_BEAUTY_MODELS.map((m) => (
                       <option key={m} value={m} className="text-slate-900">{m}</option>
                     ))}
@@ -351,6 +351,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
               </div>
             </Section>
           )}
+
 
           {/* Step 3 – Zusätzliche Interessen */}
           {step === 3 && (
