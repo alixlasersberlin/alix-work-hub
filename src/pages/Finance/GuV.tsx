@@ -85,6 +85,7 @@ export default function FinanceGuV() {
             <Row label="= Ergebnis vor Steuern (EBT)" val={ergebnisVorSteuern} bold />
           </tbody>
         </table>
+        )}
       </DataCard>
     </div>
   );
