@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { PageHeader, PageLoading, PageError, DataCard } from '@/components/PageShell';
+import { PageError, DataCard } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { SkeletonTable } from '@/components/infinity/Skeleton';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { Zap, RefreshCw, Search, Loader2, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -230,9 +233,11 @@ export default function AlixFlex() {
   return (
     <div className="p-4 sm:p-6">
       <PageHeader
-        icon={<Zap className="w-6 h-6 text-primary" />}
+        icon={Zap}
         title="ALIX FLEX"
-        subtitle="Periodische Rechnungs-Stammdaten (Recurring Profile) aus Zoho Books"
+        subtitle={loading ? 'Lädt…' : 'Periodische Rechnungs-Stammdaten (Recurring Profile) aus Zoho Books'}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${rows.length} Profile`} pulse={loading} />}
         actions={
           isAdmin && (
             <Button onClick={handleImport} disabled={importing} className="gold-gradient text-primary-foreground">
@@ -331,7 +336,7 @@ export default function AlixFlex() {
       {error && <PageError message={error} onRetry={fetchRows} />}
 
       {loading ? (
-        <PageLoading />
+        <DataCard><SkeletonTable rows={8} cols={10} /></DataCard>
       ) : (
         <DataCard className="overflow-hidden">
           <div className="overflow-x-auto">
