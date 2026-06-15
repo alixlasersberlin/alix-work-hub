@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/infinity/PageHeader';
+import { KpiTile } from '@/components/infinity/KpiTile';
 
 const AT = 'zoho_eu_2';
 
@@ -222,30 +223,18 @@ export default function AtDashboard() {
 
       {/* KPI Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-        {kpis.map((k) => {
-          const Icon = k.icon;
-          return (
-            <button
-              key={k.label}
+        {kpis.map((k) => (
+          <div key={k.label} className="space-y-1">
+            <KpiTile
+              label={k.label}
+              value={loading ? '…' : k.value}
+              icon={k.icon}
+              accent="gold"
               onClick={k.onClick}
-              disabled={!k.onClick}
-              className={`group rounded-xl border border-border bg-card p-5 text-left transition-all hover:border-primary/40 hover:shadow-lg ${k.onClick ? 'cursor-pointer' : 'cursor-default'}`}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs uppercase tracking-wider text-muted-foreground">{k.label}</p>
-                  {loading ? (
-                    <Skeleton className="h-7 w-20 mt-2" />
-                  ) : (
-                    <p className="text-2xl font-display font-bold text-foreground mt-1 truncate">{k.value}</p>
-                  )}
-                  {k.hint && <p className="text-[11px] text-muted-foreground mt-1">{k.hint}</p>}
-                </div>
-                <Icon className="w-5 h-5 text-primary flex-shrink-0" />
-              </div>
-            </button>
-          );
-        })}
+            />
+            {k.hint && <p className="text-[11px] text-muted-foreground px-1">{k.hint}</p>}
+          </div>
+        ))}
       </div>
 
       {/* Status Breakdown */}
