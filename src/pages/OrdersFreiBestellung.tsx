@@ -53,26 +53,51 @@ function normalize(s: string | null | undefined) {
 // Stopwords that are too generic to count as product identity.
 const MATCH_STOPWORDS = new Set([
   'alix', 'ai', 'ki', 'smart', 'pro', 'max', 'mini', 'plus', 'new',
-  'white', 'black', 'gold', 'silver', 'silber', 'weiss', 'weiß', 'schwarz',
-  'blau', 'blue', 'rot', 'red', 'grau', 'grey', 'gray', 'grün', 'gruen', 'green',
-  'pink', 'rosa', 'and', 'und', 'mit', 'with', 'inkl', 'inklusive', 'set',
+  'and', 'und', 'mit', 'with', 'inkl', 'inklusive', 'set',
 ]);
 
+// Farben werden separat behandelt: wenn Auftrag UND Gerät eine Farbe nennen,
+// muss sie übereinstimmen. Synonyme werden auf eine kanonische Farbe gemappt.
+const COLOR_SYNONYMS: Record<string, string> = {
+  white: 'white', weiss: 'white', 'weiß': 'white', weis: 'white',
+  black: 'black', schwarz: 'black',
+  gold: 'gold', golden: 'gold',
+  silver: 'silver', silber: 'silver',
+  blue: 'blue', blau: 'blue',
+  red: 'red', rot: 'red',
+  grey: 'grey', gray: 'grey', grau: 'grey',
+  green: 'green', 'grün': 'green', gruen: 'green',
+  pink: 'pink', rosa: 'pink',
+};
+
+function tokenize(s: string | null | undefined): string[] {
+  return (s || '').toLowerCase().split(/[^a-zäöüß0-9]+/).filter(Boolean);
+}
+
 function strongTokens(s: string | null | undefined): string[] {
-  return (s || '')
-    .toLowerCase()
-    .split(/[^a-zäöüß0-9]+/)
-    .filter(t => t.length >= 3 && !MATCH_STOPWORDS.has(t) && !/^\d+w?$/.test(t));
+  return tokenize(s).filter(t =>
+    t.length >= 3 && !MATCH_STOPWORDS.has(t) && !COLOR_SYNONYMS[t] && !/^\d+w?$/.test(t)
+  );
+}
+
+function colorsOf(s: string | null | undefined): Set<string> {
+  const out = new Set<string>();
+  for (const t of tokenize(s)) {
+    const c = COLOR_SYNONYMS[t];
+    if (c) out.add(c);
+  }
+  return out;
 }
 
 function findMatches(items: OrderItem[], devices: FreeDevice[]): FreeDevice[] {
   if (!items.length || !devices.length) return [];
   const haystack = items.map(i => normalize(`${i.item_name || ''} ${i.description || ''} ${i.sku || ''}`)).join(' | ');
   const orderTokens = new Set<string>();
+  const orderColors = new Set<string>();
   for (const it of items) {
-    for (const t of strongTokens(`${it.item_name || ''} ${it.description || ''} ${it.sku || ''}`)) {
-      orderTokens.add(t);
-    }
+    const text = `${it.item_name || ''} ${it.description || ''} ${it.sku || ''}`;
+    for (const t of strongTokens(text)) orderTokens.add(t);
+    for (const c of colorsOf(text)) orderColors.add(c);
   }
   const seen = new Set<string>();
   const out: FreeDevice[] = [];
@@ -82,18 +107,28 @@ function findMatches(items: OrderItem[], devices: FreeDevice[]): FreeDevice[] {
     // 1) Voller Modellname als Substring im Auftrag enthalten
     let hit = haystack.includes(m);
     // 2) Token-Treffer: Gerät & Auftrag teilen mind. ein starkes Produkt-Token
-    //    (z. B. "Twin" matcht "Alix Twin KI Smart 5000 8W" ↔ "Alix Secret Twin")
     if (!hit && orderTokens.size > 0) {
       const devTokens = strongTokens(`${d.model_name} ${d.notes || ''}`);
       hit = devTokens.some(t => orderTokens.has(t));
     }
-    if (hit && !seen.has(d.id)) {
+    if (!hit) continue;
+    // 3) Farb-Filter: wenn beide Seiten eine Farbe nennen, muss sie übereinstimmen
+    if (orderColors.size > 0) {
+      const devColors = colorsOf(`${d.model_name} ${d.notes || ''}`);
+      if (devColors.size > 0) {
+        let colorMatch = false;
+        for (const c of devColors) if (orderColors.has(c)) { colorMatch = true; break; }
+        if (!colorMatch) continue;
+      }
+    }
+    if (!seen.has(d.id)) {
       seen.add(d.id);
       out.push(d);
     }
   }
   return out;
 }
+
 
 export default function OrdersFreiBestellung() {
   const [orders, setOrders] = useState<any[]>([]);
