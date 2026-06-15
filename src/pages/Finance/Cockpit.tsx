@@ -66,14 +66,24 @@ export default function FinanceCockpit() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Finance Cockpit" subtitle="Konsolidiertes Reporting für Geschäftsführung & Finance" icon={TrendingUp} />
+      <PageHeader
+        title="Finance Cockpit"
+        subtitle="Konsolidiertes Reporting für Geschäftsführung & Finance"
+        icon={TrendingUp}
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : 'Live'} pulse={!loading} dotOnly />}
+      />
 
-      <div className="grid md:grid-cols-4 gap-4">
-        <DataCard title="Umsatz MTD"><div className="text-2xl font-semibold">{fmt(mtd)}</div></DataCard>
-        <DataCard title="Umsatz YTD"><div className="text-2xl font-semibold">{fmt(ytd)}</div></DataCard>
-        <DataCard title="Offene Forderungen"><div className="text-2xl font-semibold">{fmt(openBalance)}</div><div className="text-xs text-muted-foreground">{accounts.length} Debitoren</div></DataCard>
-        <DataCard title="Überfällig"><div className="text-2xl font-semibold text-destructive">{fmt(overdueBalance)}</div><div className="text-xs text-muted-foreground">{reminders.length} aktive Mahnungen</div></DataCard>
-      </div>
+      {loading ? (
+        <SkeletonKpiGrid count={4} />
+      ) : (
+        <div className="grid md:grid-cols-4 gap-4">
+          <KpiTile label="Umsatz MTD" value={fmt(mtd)} icon={TrendingUp} accent="gold" />
+          <KpiTile label="Umsatz YTD" value={fmt(ytd)} icon={Banknote} accent="emerald" />
+          <KpiTile label="Offene Forderungen" value={fmt(openBalance)} icon={Users} accent="sky" />
+          <KpiTile label="Überfällig" value={fmt(overdueBalance)} icon={AlertTriangle} accent="rose" />
+        </div>
+      )}
+
 
       <DataCard title="Monatsumsatz pro Mandant (laufendes Jahr)">
         <div className="h-72">
