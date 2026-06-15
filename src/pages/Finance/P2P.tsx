@@ -299,6 +299,8 @@ export default function FinanceP2P() {
           )}
         </TabsContent>
       </Tabs>
+      </>
+      )}
     </div>
   );
 }
