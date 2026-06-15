@@ -29,6 +29,7 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 const AtDashboard = lazy(() => import("./pages/AtDashboard"));
 const Customers = lazy(() => import("./pages/Customers"));
 const CustomerDetail = lazy(() => import("./pages/CustomerDetail"));
+const DoppelteKunden = lazy(() => import("./pages/DoppelteKunden"));
 const Orders = lazy(() => import("./pages/Orders"));
 const OrdersAt = lazy(() => import("./pages/OrdersAt"));
 const OrdersCh = lazy(() => import("./pages/OrdersCh"));
@@ -426,6 +427,7 @@ function AppRoutes() {
           <Route path="/auftragsstatus" element={<ProtectedRoute><AuftragStatus /></ProtectedRoute>} />
           <Route path="/geraetesperren" element={<ProtectedRoute><Geraetesperren /></ProtectedRoute>} />
           <Route path="/kunden" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Customers /></ProtectedRoute>} />
+          <Route path="/kunden/doppelte" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><DoppelteKunden /></ProtectedRoute>} />
           <Route path="/kunden/:id" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><CustomerDetail /></ProtectedRoute>} />
           <Route path="/auftraege" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Orders /></ProtectedRoute>} />
           <Route path="/auftraege-at" element={<ProtectedRoute><OrdersAt /></ProtectedRoute>} />

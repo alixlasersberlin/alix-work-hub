@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Building2, ArrowUpDown, Loader2, Inbox, Pencil, Trash2, UserPlus } from 'lucide-react';
+import { Search, Building2, ArrowUpDown, Loader2, Inbox, Pencil, Trash2, UserPlus, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -140,12 +140,17 @@ export default function Customers() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">{totalFiltered} Kunden</p>
         </div>
-        <Button
-          onClick={() => setEditCustomer({})}
-          className="gold-gradient text-primary-foreground"
-        >
-          <UserPlus className="w-4 h-4 mr-2" /> Neuer Kunde
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => navigate('/kunden/doppelte')}>
+            <Users className="w-4 h-4 mr-2" /> Doppelte suchen
+          </Button>
+          <Button
+            onClick={() => setEditCustomer({})}
+            className="gold-gradient text-primary-foreground"
+          >
+            <UserPlus className="w-4 h-4 mr-2" /> Neuer Kunde
+          </Button>
+        </div>
       </div>
 
       {/* Filters row */}
