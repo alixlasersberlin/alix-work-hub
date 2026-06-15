@@ -3,6 +3,8 @@
 @import './styles/aurora2.css';
 /* Infinity Design Engine (aktiviert via html[data-infinity="..."]) */
 @import './styles/infinity.css';
+/* Infinity Table Experience 2.0 (opt-in via .itable / InfinityTable) */
+@import './styles/itable.css';
 
 /* Fonts werden in index.html non-blocking geladen (preconnect + preload) */
 
