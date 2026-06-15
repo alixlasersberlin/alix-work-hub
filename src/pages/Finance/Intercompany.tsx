@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Network, Plus, Trash2, Save } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { PageHeader, PageLoading, DataCard, PageEmpty } from '@/components/PageShell';
+import { DataCard, PageEmpty } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { SkeletonTable } from '@/components/infinity/Skeleton';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
