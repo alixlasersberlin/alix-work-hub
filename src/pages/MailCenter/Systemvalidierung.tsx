@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 type PassFail = 'pending' | 'pass' | 'fail';
 const PF: Record<PassFail, { color: string; label: string }> = {
@@ -160,19 +161,18 @@ export default function Systemvalidierung() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-3">
-          <ShieldCheck className="w-7 h-7 text-primary" />
-          <div>
-            <h2 className="text-2xl font-display font-bold">Systemvalidierung & Governance</h2>
-            <p className="text-sm text-muted-foreground">Phase 3 — Validierung, Risiko, BCP, Audit, Freigabe</p>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={exportAuditCSV}><FileDown className="w-4 h-4 mr-2" /> Audit-Export (CSV)</Button>
-          <Button onClick={exportManagementReview}><FileDown className="w-4 h-4 mr-2" /> Management Review</Button>
-        </div>
-      </div>
+      <PageHeader
+        icon={ShieldCheck}
+        title="Systemvalidierung & Governance"
+        subtitle="Phase 3 — Validierung, Risiko, BCP, Audit, Freigabe"
+        noBreadcrumbs
+        actions={
+          <>
+            <Button variant="outline" onClick={exportAuditCSV}><FileDown className="w-4 h-4 mr-2" /> Audit-Export (CSV)</Button>
+            <Button onClick={exportManagementReview}><FileDown className="w-4 h-4 mr-2" /> Management Review</Button>
+          </>
+        }
+      />
 
       <Tabs defaultValue="validation">
         <TabsList className="flex-wrap h-auto">

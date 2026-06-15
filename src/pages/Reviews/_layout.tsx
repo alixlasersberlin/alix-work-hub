@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { Star, Truck, MessageSquare, Monitor, LayoutDashboard, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 const tabs = [
   { to: '/bewertungen', label: 'Übersicht', icon: LayoutDashboard, end: true },
@@ -14,13 +15,12 @@ export default function ReviewsLayout() {
   const loc = useLocation();
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <Star className="h-7 w-7 text-amber-400" />
-        <div>
-          <h1 className="text-3xl font-bold">Bewertungen</h1>
-          <p className="text-muted-foreground text-sm">Kundenbewertungen, Einladungen und Auswertung.</p>
-        </div>
-      </div>
+      <PageHeader
+        icon={Star}
+        title="Bewertungen"
+        subtitle="Kundenbewertungen, Einladungen und Auswertung."
+        noBreadcrumbs
+      />
       <nav className="flex flex-wrap gap-2 border-b border-border pb-2">
         {tabs.map(t => {
           const active = t.end ? loc.pathname === t.to : loc.pathname.startsWith(t.to);
