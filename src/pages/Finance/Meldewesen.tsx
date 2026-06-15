@@ -78,18 +78,21 @@ export default function FinanceMeldewesen() {
     URL.revokeObjectURL(url);
   };
 
-  if (loading) return <PageLoading />;
-
   const filtered = filings.filter((f) => f.filing_type === tab);
 
   return (
     <div className="space-y-6 container mx-auto px-4 py-8">
       <PageHeader
-        title="Steuer & Meldewesen"
-        subtitle={`${filings.length} Meldungen insgesamt`}
         icon={FileSpreadsheet}
+        title="Steuer & Meldewesen"
+        subtitle={loading ? 'Lädt…' : `${filings.length} Meldungen insgesamt`}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${filings.length} Meldungen`} pulse={loading} />}
       />
 
+      {loading ? (
+        <DataCard><SkeletonTable rows={8} cols={6} /></DataCard>
+      ) : (
       <Tabs value={tab} onValueChange={(v) => setTab(v as FilingType)}>
         <TabsList>
           {TYPES.map((t) => (
