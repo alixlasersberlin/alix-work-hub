@@ -47,8 +47,6 @@ export default function FinanceGuV() {
   const betriebsergebnis = rohertrag - data.sbA - data.sonstigeAufw - data.abschr;
   const ergebnisVorSteuern = betriebsergebnis - data.zinsen;
 
-  if (loading) return <PageLoading />;
-
   const Row = ({ label, val, bold }: { label: string; val: number; bold?: boolean }) => (
     <tr className={bold ? 'bg-primary/5 border-t border-border font-bold' : 'border-t border-border/40'}>
       <td className="px-4 py-2">{label}</td>
@@ -57,14 +55,23 @@ export default function FinanceGuV() {
   );
 
   return (
-    <div className="p-6 space-y-6">
-      <PageHeader title="Gewinn- und Verlustrechnung" subtitle={`§ 275 HGB Gesamtkostenverfahren · ${year}`} />
-      <Select value={String(year)} onValueChange={v => setYear(Number(v))}>
-        <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-        <SelectContent>{[year + 1, year, year - 1, year - 2].map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
-      </Select>
+    <div className="p-4 sm:p-6 space-y-6">
+      <PageHeader
+        icon={Receipt}
+        title="Gewinn- und Verlustrechnung"
+        subtitle={`§ 275 HGB Gesamtkostenverfahren · ${year}`}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${tx.length} Buchungen`} pulse={loading} />}
+        actions={
+          <Select value={String(year)} onValueChange={v => setYear(Number(v))}>
+            <SelectTrigger className="w-32 h-9"><SelectValue /></SelectTrigger>
+            <SelectContent>{[year + 1, year, year - 1, year - 2].map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
+          </Select>
+        }
+      />
 
       <DataCard title="GuV-Schema">
+        {loading ? <SkeletonTable rows={9} cols={2} /> : (
         <table className="w-full text-sm">
           <tbody>
             <Row label="1. Umsatzerlöse" val={data.umsatz} />
