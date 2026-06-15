@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LifeBuoy, Send, Loader2, MessageSquare } from 'lucide-react';
+import { EmptyState } from '@/components/infinity/EmptyState';
 import { toast } from 'sonner';
 
 type Ctx = { customerId: string };
@@ -99,7 +100,7 @@ export default function CustomerPortalSupport() {
           {loading ? (
             <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
           ) : tickets.length === 0 ? (
-            <p className="text-center py-10 text-muted-foreground">Noch keine Tickets.</p>
+            <EmptyState icon={MessageSquare} title="Noch keine Tickets" description="Erstellen Sie ein neues Ticket, um eine Anfrage an uns zu senden." compact />
           ) : (
             <div className="space-y-2">
               {tickets.map((t) => (

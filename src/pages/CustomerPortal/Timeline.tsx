@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { History, Loader2, Mail, FileText, ShoppingCart, Wrench, MessageSquare } from 'lucide-react';
+import { EmptyState } from '@/components/infinity/EmptyState';
 
 type Ctx = { customerId: string };
 
@@ -53,7 +54,7 @@ export default function CustomerPortalTimeline() {
         {loading ? (
           <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
         ) : items.length === 0 ? (
-          <p className="text-center py-10 text-muted-foreground">Noch keine Aktivität.</p>
+          <EmptyState icon={History} title="Noch keine Aktivität" description="Sobald Aktivitäten entstehen, erscheinen sie hier in der Historie." compact />
         ) : (
           <div className="space-y-6">
             {Object.entries(grouped).map(([month, list]) => (
