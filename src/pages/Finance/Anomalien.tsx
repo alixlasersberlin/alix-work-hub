@@ -125,11 +125,11 @@ export default function FinanceAnomalien() {
                   </td>
                 </tr>
               ))}
-              {rows.length === 0 && <tr><td colSpan={7} className="px-3 py-8 text-center text-muted-foreground">Keine Treffer</td></tr>}
             </tbody>
           </table>
         </div>
       </DataCard>
+      )}
     </div>
   );
 }
