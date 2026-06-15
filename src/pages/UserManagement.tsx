@@ -775,151 +775,155 @@ export default function UserManagement() {
       </div>
 
       {/* Create User Dialog */}
-      <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><Plus className="w-5 h-5 text-primary" /> Benutzer anlegen</DialogTitle>
-            <DialogDescription>Neuen Benutzer über sichere Server-Funktion erstellen</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Name *</Label>
-                <Input value={createForm.full_name} onChange={e => setCreateForm(f => ({ ...f, full_name: e.target.value }))} />
+      {showCreate && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto" onClick={() => !creating && setShowCreate(false)}>
+          <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-lg p-6 space-y-4 my-8" onClick={e => e.stopPropagation()}>
+            <div>
+              <h2 className="text-lg font-semibold flex items-center gap-2"><Plus className="w-5 h-5 text-primary" /> Benutzer anlegen</h2>
+              <p className="text-sm text-muted-foreground">Neuen Benutzer über sichere Server-Funktion erstellen</p>
+            </div>
+            <div className="space-y-4 py-2">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Name *</Label>
+                  <Input value={createForm.full_name} onChange={e => setCreateForm(f => ({ ...f, full_name: e.target.value }))} />
+                </div>
+                <div>
+                  <Label>E-Mail *</Label>
+                  <Input type="email" value={createForm.email} onChange={e => setCreateForm(f => ({ ...f, email: e.target.value }))} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Passwort (optional)</Label>
+                  <Input type="password" value={createForm.password} onChange={e => setCreateForm(f => ({ ...f, password: e.target.value }))} placeholder="Auto-generiert wenn leer" autoComplete="off" data-1p-ignore data-lpignore="true" data-form-type="other" />
+                </div>
+                <div>
+                  <Label>Telefon</Label>
+                  <Input value={createForm.phone_number} onChange={e => setCreateForm(f => ({ ...f, phone_number: e.target.value }))} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Abteilung</Label>
+                  <Select value={createForm.department_id} onValueChange={v => setCreateForm(f => ({ ...f, department_id: v }))}>
+                    <SelectTrigger><SelectValue placeholder="Wählen…" /></SelectTrigger>
+                    <SelectContent>
+                      {departments.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>OTP-Kanal</Label>
+                  <Select value={createForm.otp_channel} onValueChange={v => setCreateForm(f => ({ ...f, otp_channel: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="sms">SMS</SelectItem>
+                      <SelectItem value="email">E-Mail</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div>
-                <Label>E-Mail *</Label>
-                <Input type="email" value={createForm.email} onChange={e => setCreateForm(f => ({ ...f, email: e.target.value }))} />
+                <Label className="mb-2 block">Rollen</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {roles.map(r => (
+                    <label key={r.id} className="flex items-center gap-2 text-sm cursor-pointer p-2 rounded hover:bg-secondary/50 transition-colors">
+                      <Checkbox
+                        checked={createForm.role_ids.includes(r.id)}
+                        onCheckedChange={(checked) => {
+                          setCreateForm(f => ({
+                            ...f,
+                            role_ids: checked
+                              ? [...f.role_ids, r.id]
+                              : f.role_ids.filter(id => id !== r.id),
+                          }));
+                        }}
+                      />
+                      {r.name}
+                    </label>
+                  ))}
+                </div>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Passwort (optional)</Label>
-                <Input type="password" value={createForm.password} onChange={e => setCreateForm(f => ({ ...f, password: e.target.value }))} placeholder="Auto-generiert wenn leer" autoComplete="off" data-1p-ignore data-lpignore="true" data-form-type="other" />
-              </div>
-              <div>
-                <Label>Telefon</Label>
-                <Input value={createForm.phone_number} onChange={e => setCreateForm(f => ({ ...f, phone_number: e.target.value }))} />
-              </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => setShowCreate(false)}>Abbrechen</Button>
+              <Button onClick={handleCreate} disabled={creating} className="gold-gradient text-primary-foreground">
+                {creating && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                Erstellen
+              </Button>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+          </div>
+        </div>
+      )}
+
+      {/* Edit Roles Dialog */}
+      {showEditRoles && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto" onClick={() => !savingRoles && setShowEditRoles(false)}>
+          <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-md p-6 space-y-4 my-8" onClick={e => e.stopPropagation()}>
+            <div>
+              <h2 className="text-lg font-semibold">Rollen & Abteilung bearbeiten</h2>
+              <p className="text-sm text-muted-foreground">{selectedUser?.full_name} ({selectedUser?.email})</p>
+            </div>
+            <div className="space-y-4 py-2">
               <div>
-                <Label>Abteilung</Label>
-                <Select value={createForm.department_id} onValueChange={v => setCreateForm(f => ({ ...f, department_id: v }))}>
-                  <SelectTrigger><SelectValue placeholder="Wählen…" /></SelectTrigger>
+                <Label className="mb-2 block">Abteilung</Label>
+                <Select value={editDeptId} onValueChange={setEditDeptId}>
+                  <SelectTrigger><SelectValue placeholder="Keine Abteilung" /></SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="none">Keine Abteilung</SelectItem>
                     {departments.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>OTP-Kanal</Label>
-                <Select value={createForm.otp_channel} onValueChange={v => setCreateForm(f => ({ ...f, otp_channel: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="sms">SMS</SelectItem>
-                    <SelectItem value="email">E-Mail</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div>
-              <Label className="mb-2 block">Rollen</Label>
-              <div className="grid grid-cols-2 gap-2">
-                {roles.map(r => (
-                  <label key={r.id} className="flex items-center gap-2 text-sm cursor-pointer p-2 rounded hover:bg-secondary/50 transition-colors">
-                    <Checkbox
-                      checked={createForm.role_ids.includes(r.id)}
-                      onCheckedChange={(checked) => {
-                        setCreateForm(f => ({
-                          ...f,
-                          role_ids: checked
-                            ? [...f.role_ids, r.id]
-                            : f.role_ids.filter(id => id !== r.id),
-                        }));
-                      }}
-                    />
-                    {r.name}
-                  </label>
-                ))}
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreate(false)}>Abbrechen</Button>
-            <Button onClick={handleCreate} disabled={creating} className="gold-gradient text-primary-foreground">
-              {creating && <Loader2 className="w-4 h-4 animate-spin" />}
-              Erstellen
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Roles Dialog */}
-      <Dialog open={showEditRoles} onOpenChange={setShowEditRoles}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Rollen & Abteilung bearbeiten</DialogTitle>
-            <DialogDescription>{selectedUser?.full_name} ({selectedUser?.email})</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div>
-              <Label className="mb-2 block">Abteilung</Label>
-              <Select value={editDeptId} onValueChange={setEditDeptId}>
-                <SelectTrigger><SelectValue placeholder="Keine Abteilung" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Keine Abteilung</SelectItem>
-                  {departments.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="mb-2 block">Rollen</Label>
-              <div className="space-y-1">
-                {roles.map(r => (
-                  <label key={r.id} className="flex items-center gap-2 text-sm cursor-pointer p-2 rounded hover:bg-secondary/50 transition-colors">
-                    <Checkbox
-                      checked={editRoleIds.includes(r.id)}
-                      onCheckedChange={(checked) => {
-                        setEditRoleIds(prev => checked ? [...prev, r.id] : prev.filter(id => id !== r.id));
-                      }}
-                    />
-                    {r.name}
-                    {r.description && <span className="text-xs text-muted-foreground ml-1">— {r.description}</span>}
-                  </label>
-                ))}
-              </div>
-            </div>
-            {(() => {
-              const lieferantRoleId = roles.find(r => r.name === 'Lieferant')?.id;
-              const isLieferant = lieferantRoleId ? editRoleIds.includes(lieferantRoleId) : false;
-              if (!isLieferant) return null;
-              return (
-                <div>
-                  <Label className="mb-2 block">Lieferant zuordnen <span className="text-destructive">*</span></Label>
-                  <Select value={editSupplierId} onValueChange={setEditSupplierId}>
-                    <SelectTrigger><SelectValue placeholder="Lieferant wählen" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">— Kein Lieferant —</SelectItem>
-                      {suppliers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Der Benutzer sieht nur Production Orders dieses Lieferanten.
-                  </p>
+                <Label className="mb-2 block">Rollen</Label>
+                <div className="space-y-1">
+                  {roles.map(r => (
+                    <label key={r.id} className="flex items-center gap-2 text-sm cursor-pointer p-2 rounded hover:bg-secondary/50 transition-colors">
+                      <Checkbox
+                        checked={editRoleIds.includes(r.id)}
+                        onCheckedChange={(checked) => {
+                          setEditRoleIds(prev => checked ? [...prev, r.id] : prev.filter(id => id !== r.id));
+                        }}
+                      />
+                      {r.name}
+                      {r.description && <span className="text-xs text-muted-foreground ml-1">— {r.description}</span>}
+                    </label>
+                  ))}
                 </div>
-              );
-            })()}
+              </div>
+              {(() => {
+                const lieferantRoleId = roles.find(r => r.name === 'Lieferant')?.id;
+                const isLieferant = lieferantRoleId ? editRoleIds.includes(lieferantRoleId) : false;
+                if (!isLieferant) return null;
+                return (
+                  <div>
+                    <Label className="mb-2 block">Lieferant zuordnen <span className="text-destructive">*</span></Label>
+                    <Select value={editSupplierId} onValueChange={setEditSupplierId}>
+                      <SelectTrigger><SelectValue placeholder="Lieferant wählen" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">— Kein Lieferant —</SelectItem>
+                        {suppliers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Der Benutzer sieht nur Production Orders dieses Lieferanten.
+                    </p>
+                  </div>
+                );
+              })()}
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => setShowEditRoles(false)}>Abbrechen</Button>
+              <Button onClick={handleSaveRoles} disabled={savingRoles}>
+                {savingRoles && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                Speichern
+              </Button>
+            </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEditRoles(false)}>Abbrechen</Button>
-            <Button onClick={handleSaveRoles} disabled={savingRoles}>
-              {savingRoles && <Loader2 className="w-4 h-4 animate-spin" />}
-              Speichern
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
     </div>
   );
 }
