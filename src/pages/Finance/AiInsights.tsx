@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { PageHeader, PageLoading, DataCard } from '@/components/PageShell';
+import { DataCard } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { SkeletonTable } from '@/components/infinity/Skeleton';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2, Sparkles, Brain } from 'lucide-react';
 import { toast } from 'sonner';
 import { classifyTx, mapIncomingCategory, BUDGET_CATEGORIES } from './_controlling';
 
@@ -55,11 +58,14 @@ export default function FinanceAiInsights() {
     }
   }
 
-  if (loading) return <PageLoading />;
+  
 
   return (
     <div className="p-6 space-y-6">
-      <PageHeader title="KI-Finanzanalyse" subtitle="Automatische Erklärungen zu Cockpit, BWA, Soll-Ist & Forecast" />
+      <PageHeader title="KI-Finanzanalyse" subtitle={loading ? 'Lädt…' : 'Automatische Erklärungen zu Cockpit, BWA, Soll-Ist & Forecast'} icon={Brain} noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${insights.length} Analysen`} pulse={loading} />} />
+      {loading ? <DataCard><SkeletonTable rows={4} cols={3} /></DataCard> : (
+      <>
       <div className="flex items-center gap-3">
         <Select value={scope} onValueChange={(v: any) => setScope(v)}>
           <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
@@ -84,6 +90,8 @@ export default function FinanceAiInsights() {
           </DataCard>
         ))}
       </div>
+      </>
+      )}
     </div>
   );
 }
