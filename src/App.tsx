@@ -11,6 +11,7 @@ import { DesignVariantProvider } from "@/hooks/useDesignVariant";
 import { ExperienceModeProvider } from "@/hooks/useExperienceMode";
 import DesignVariantSwitcher from "@/components/DesignVariantSwitcher";
 import AuroraSpotlight from "@/components/AuroraSpotlight";
+import { CursorSpotlight } from "@/components/aurora/CursorSpotlight";
 import { Truck as TruckIcon, Banknote as BanknoteIcon, FileSignature, CreditCard, Loader2 } from "lucide-react";
 
 // Eager: Auth-/Shell-Routen (klein & für initialen Render nötig)
@@ -774,6 +775,7 @@ const App = () => (
                   <MaintenanceGate>
                     <AppRoutes />
                     <AuroraSpotlight />
+                    <CursorSpotlight />
                     <LeihgeraetReminder />
                     {/* TemplateSwitcher (Standard / ALIXWORK NEO) deaktiviert */}
                   </MaintenanceGate>
