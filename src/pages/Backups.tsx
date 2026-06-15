@@ -151,15 +151,12 @@ export default function Backups() {
 
   return (
     <div className="container max-w-6xl py-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <Shield className="w-7 h-7 text-primary" />
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Datensicherung</h1>
-          <p className="text-sm text-muted-foreground">
-            Vollständige Sicherung aller Datenbanktabellen und Storage-Inventar – verschlüsselt im privaten Bucket gespeichert.
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        icon={Shield}
+        title="Datensicherung"
+        subtitle="Vollständige Sicherung aller Datenbanktabellen und Storage-Inventar – verschlüsselt im privaten Bucket gespeichert."
+        noBreadcrumbs
+      />
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
