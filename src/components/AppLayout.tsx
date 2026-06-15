@@ -486,6 +486,7 @@ export default function AppLayout() {
   const [lagerCounts, setLagerCounts] = useState<Record<string, number>>({});
   const atOnly = useAtOnly();
   const { favorites, isFavorite, toggle: toggleFavorite } = useFavorites();
+  useNotificationFeed();
   // Desktop: flexible Sidebar-Breite (px), per Drag anpassbar, in localStorage gespeichert
   const SIDEBAR_MIN = 180;
   const SIDEBAR_MAX = 480;
