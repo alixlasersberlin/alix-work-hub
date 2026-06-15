@@ -2,7 +2,12 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Building2, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { PageHeader, PageLoading, DataCard, PageEmpty } from '@/components/PageShell';
+import { DataCard, PageEmpty } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { SkeletonKpiGrid, SkeletonTable } from '@/components/infinity/Skeleton';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
+import { KpiTile } from '@/components/infinity/KpiTile';
+import { Wallet, TrendingDown, CheckCircle2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
