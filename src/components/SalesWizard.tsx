@@ -473,7 +473,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
                 </label>
 
                 <div className="flex items-center gap-3">
-                  <span className="text-sm text-white/80 whitespace-nowrap">Mein Studio besteht seit</span>
+                  <span className="text-sm text-white/80 whitespace-nowrap">{t.studio_exists_since}</span>
                   <Input
                     type="number"
                     inputMode="numeric"
