@@ -164,8 +164,8 @@ export default function ReviewsList() {
               {['1','2','3','4','5'].map(n => <SelectItem key={n} value={n}>{n} Sterne (Lieferung)</SelectItem>)}
             </SelectContent>
           </Select>
-        </div>
       </div>
+
 
       <div className="rounded-lg border bg-card">
         <Table>
