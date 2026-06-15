@@ -69,7 +69,18 @@ export default function FinanceDatev() {
 
   return (
     <div className="p-4 sm:p-6">
-      <PageHeader icon={<FileText className="w-6 h-6 text-primary" />} title="DATEV-Export" subtitle="EXTF Buchungsstapel 700 aus finance_transactions" />
+      <PageHeader
+        icon={FileText}
+        title="DATEV-Export"
+        subtitle="EXTF Buchungsstapel 700 aus finance_transactions"
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind="done" label={`SKR ${cfg.skr}`} />}
+        actions={
+          <Button onClick={download} disabled={downloading} size="sm" className="gold-gradient text-primary-foreground">
+            <Download className="w-4 h-4 mr-2" />{downloading ? 'Erstelle…' : 'CSV herunterladen'}
+          </Button>
+        }
+      />
 
       <DataCard className="p-4 mb-6">
         <h3 className="font-semibold mb-3">Zeitraum</h3>
