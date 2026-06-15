@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Wrench, AlertTriangle, Loader2 } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import AccessDenied from './AccessDenied';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 export default function Systemwartung() {
   const { hasRole, user } = useAuth();

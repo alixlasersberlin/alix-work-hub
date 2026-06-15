@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { PackageCheck, Plus, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 type Item = { id: string; name: string | null; sku: string | null; stock_on_hand: number | null };
 type Receipt = {
