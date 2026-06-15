@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { CheckCircle2, Clock, RefreshCw, PlayCircle } from 'lucide-react';
-import { PageHeader } from '@/components/PageShell';
-import { Settings as SettingsIcon } from 'lucide-react';
+import { CheckCircle2, Clock, RefreshCw, PlayCircle, Settings as SettingsIcon } from 'lucide-react';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -43,9 +43,11 @@ export default function FinanceSystemstatus() {
   return (
     <div className="container mx-auto px-4 py-8">
       <PageHeader
-        icon={<SettingsIcon className="w-6 h-6 text-primary" />}
+        icon={SettingsIcon}
         title="Finance Systemstatus"
         subtitle="Status der Subsysteme & manuelle Synchronisation"
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={running ? 'progress' : 'done'} label={running ? 'Sync läuft' : 'Bereit'} pulse={running} />}
         actions={isSuperAdmin && (
           <Button onClick={runSync} disabled={running} className="gold-gradient text-primary-foreground">
             {running ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <PlayCircle className="w-4 h-4 mr-2" />}
