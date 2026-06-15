@@ -181,9 +181,11 @@ export default function Lager() {
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
       <PageHeader
-        icon={<Warehouse className="w-6 h-6 text-primary" />}
+        icon={Warehouse}
         title="Lagerbestand"
         subtitle={`Übersicht aller Abteilungen · ${displayedTotal} Geräte gesamt`}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind="done" label={`${displayedTotal} Geräte`} />}
       />
 
       {/* Suche */}
