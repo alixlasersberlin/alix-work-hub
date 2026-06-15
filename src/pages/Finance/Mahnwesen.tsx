@@ -1,12 +1,16 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { AlertTriangle, PlayCircle, RefreshCw, Settings as SettingsIcon, Eye } from 'lucide-react';
+import { AlertTriangle, PlayCircle, RefreshCw, Settings as SettingsIcon, Eye, Inbox } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { PageHeader, PageLoading, DataCard } from '@/components/PageShell';
+import { DataCard } from '@/components/PageShell';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { SkeletonTable } from '@/components/infinity/Skeleton';
+import { EmptyState } from '@/components/infinity/EmptyState';
+import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 
 type AccRow = {
   id: string;
@@ -68,24 +72,29 @@ export default function FinanceMahnwesen() {
   return (
     <div className="p-4 sm:p-6">
       <PageHeader
-        icon={<AlertTriangle className="w-6 h-6 text-amber-500" />}
+        icon={AlertTriangle}
         title="Mahnwesen"
         subtitle="Überfällige Forderungen, automatische Stufenfindung & manueller Versand"
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${accounts.length}`} pulse={!loading} />}
         actions={
-          <div className="flex gap-2">
-            <Link to="/finance/mahnwesen/einstellungen">
-              <Button variant="outline" size="sm"><SettingsIcon className="w-4 h-4 mr-2" />Einstellungen</Button>
-            </Link>
-            <Button onClick={runEngine} disabled={running} className="gold-gradient text-primary-foreground">
+          <>
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/finance/mahnwesen/einstellungen"><SettingsIcon className="w-4 h-4 mr-2" />Einstellungen</Link>
+            </Button>
+            <Button onClick={runEngine} disabled={running} size="sm" className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-semibold border-0">
               {running ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <PlayCircle className="w-4 h-4 mr-2" />}
               {running ? 'Lauf läuft…' : 'Mahn-Engine starten'}
             </Button>
-          </div>
+          </>
         }
       />
 
-      {loading ? <PageLoading /> : (
-        <DataCard className="overflow-hidden">
+      <DataCard className="overflow-hidden">
+        {loading ? (
+          <div className="p-4"><SkeletonTable rows={8} cols={7} /></div>
+        ) : accounts.length === 0 ? (
+          <div className="p-8"><EmptyState compact icon={Inbox} title="Keine überfälligen Forderungen" description="Alle Debitoren sind im grünen Bereich." /></div>
+        ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-muted/30 text-xs uppercase text-muted-foreground">
@@ -100,9 +109,7 @@ export default function FinanceMahnwesen() {
                 </tr>
               </thead>
               <tbody>
-                {accounts.length === 0 ? (
-                  <tr><td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">Keine überfälligen Forderungen.</td></tr>
-                ) : accounts.map(a => {
+                {accounts.map(a => {
                   const d = draftsByCustomer.get(a.customer_id);
                   return (
                     <tr key={a.id} className="border-t border-border hover:bg-muted/20">
@@ -123,8 +130,8 @@ export default function FinanceMahnwesen() {
               </tbody>
             </table>
           </div>
-        </DataCard>
-      )}
+        )}
+      </DataCard>
     </div>
   );
 }
