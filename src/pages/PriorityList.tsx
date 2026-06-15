@@ -17,6 +17,8 @@ import { ALIX_MODEL_GROUPS } from '@/lib/alix-models';
 import { VipBadge } from '@/components/VipBadge';
 import { isOrderVip, vipFirst } from '@/lib/vip';
 import { useAtOnly } from '@/hooks/useAtOnly';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 
 type SortField = 'expected_shipment_date' | 'order_number' | 'total_amount';
 type SortDir = 'asc' | 'desc';
@@ -192,15 +194,13 @@ export default function PriorityList() {
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
-      <div className="mb-6">
-        <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
-          <ListOrdered className="w-6 h-6 text-primary" />
-          Prio-Liste
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          {filtered.length} Aufträge sortiert nach Versanddatum
-        </p>
-      </div>
+      <PageHeader
+        icon={ListOrdered}
+        title="Prio-Liste"
+        subtitle={`${filtered.length} Aufträge sortiert nach Versanddatum`}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind="done" label={`${filtered.length}`} />}
+      />
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3 mb-4">

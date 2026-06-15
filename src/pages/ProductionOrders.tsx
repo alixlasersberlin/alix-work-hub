@@ -19,6 +19,8 @@ import { useViewMode } from '@/hooks/useViewMode';
 import { ViewToggle } from '@/components/ViewToggle';
 import { useAuth } from '@/hooks/useAuth';
 import { Warehouse } from 'lucide-react';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import {
   findLagerMatch,
   lagerFoundNote,
@@ -362,28 +364,25 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-4 md:space-y-5">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="text-xl md:text-2xl font-display font-bold gold-text flex items-center gap-2">
-            {isReclamation
-              ? <><AlertTriangle className="w-5 h-5 md:w-6 md:h-6" /> Reklamation</>
-              : <><Factory className="w-5 h-5 md:w-6 md:h-6" /> {t.title}</>}
-          </h1>
-          <p className="text-xs md:text-sm text-muted-foreground">
-            {isReclamation ? 'Reklamationsbestellungen verwalten und versenden' : t.subtitle}
-          </p>
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          {!isReclamation && (
-            <Button variant="outline" size="sm" onClick={() => navigate('/order/zulieferer')}>
-              <UsersIcon className="w-4 h-4 mr-2" /> {t.suppliers}
+      <PageHeader
+        icon={isReclamation ? AlertTriangle : Factory}
+        title={isReclamation ? 'Reklamation' : t.title}
+        subtitle={isReclamation ? 'Reklamationsbestellungen verwalten und versenden' : t.subtitle}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind="done" label={`${filtered.length}`} />}
+        actions={
+          <>
+            {!isReclamation && (
+              <Button variant="outline" size="sm" onClick={() => navigate('/order/zulieferer')}>
+                <UsersIcon className="w-4 h-4 mr-2" /> {t.suppliers}
+              </Button>
+            )}
+            <Button size="sm" onClick={() => navigate(`${basePath}/neu`)}>
+              <Plus className="w-4 h-4 mr-2" /> {isReclamation ? 'Neue Reklamation' : t.newOrder}
             </Button>
-          )}
-          <Button size="sm" onClick={() => navigate(`${basePath}/neu`)}>
-            <Plus className="w-4 h-4 mr-2" /> {isReclamation ? 'Neue Reklamation' : t.newOrder}
-          </Button>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {/* Toolbar: Search + Filters + Lang */}
       <Card className="p-3 md:p-4 space-y-3">
