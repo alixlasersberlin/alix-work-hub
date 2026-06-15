@@ -173,9 +173,9 @@ export default function FinanceSteuer() {
       ) : (
       <>
       <div className="grid md:grid-cols-3 gap-4">
-        <KpiTile icon={TrendingUp} label="Umsatz Brutto" value={fmt(totalIncome)} hint={`${tx.filter(t => t.transaction_type === 'Rechnung').length} Rechnungen`} tone="gold" />
-        <KpiTile icon={Wallet} label="Zahlungen" value={fmt(totalPayments)} tone="emerald" />
-        <KpiTile icon={Receipt} label="USt gesamt" value={fmt(Object.values(groups).reduce((s, g) => s + g.ust19, 0))} tone="violet" />
+        <KpiTile icon={TrendingUp} label="Umsatz Brutto" value={fmt(totalIncome)} accent="gold" />
+        <KpiTile icon={Wallet} label="Zahlungen" value={fmt(totalPayments)} accent="emerald" />
+        <KpiTile icon={Receipt} label="USt gesamt" value={fmt(Object.values(groups).reduce((s, g) => s + g.ust19, 0))} accent="violet" />
       </div>
 
       <DataCard title="Aufschlüsselung pro Mandant">
