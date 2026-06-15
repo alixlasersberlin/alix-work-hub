@@ -50,15 +50,44 @@ function normalize(s: string | null | undefined) {
   return (s || '').toLowerCase().replace(/\s+/g, ' ').trim();
 }
 
+// Stopwords that are too generic to count as product identity.
+const MATCH_STOPWORDS = new Set([
+  'alix', 'ai', 'ki', 'smart', 'pro', 'max', 'mini', 'plus', 'new',
+  'white', 'black', 'gold', 'silver', 'silber', 'weiss', 'weiß', 'schwarz',
+  'blau', 'blue', 'rot', 'red', 'grau', 'grey', 'gray', 'grün', 'gruen', 'green',
+  'pink', 'rosa', 'and', 'und', 'mit', 'with', 'inkl', 'inklusive', 'set',
+]);
+
+function strongTokens(s: string | null | undefined): string[] {
+  return (s || '')
+    .toLowerCase()
+    .split(/[^a-zäöüß0-9]+/)
+    .filter(t => t.length >= 3 && !MATCH_STOPWORDS.has(t) && !/^\d+w?$/.test(t));
+}
+
 function findMatches(items: OrderItem[], devices: FreeDevice[]): FreeDevice[] {
   if (!items.length || !devices.length) return [];
   const haystack = items.map(i => normalize(`${i.item_name || ''} ${i.description || ''} ${i.sku || ''}`)).join(' | ');
+  const orderTokens = new Set<string>();
+  for (const it of items) {
+    for (const t of strongTokens(`${it.item_name || ''} ${it.description || ''} ${it.sku || ''}`)) {
+      orderTokens.add(t);
+    }
+  }
   const seen = new Set<string>();
   const out: FreeDevice[] = [];
   for (const d of devices) {
     const m = normalize(d.model_name);
     if (!m) continue;
-    if (haystack.includes(m) && !seen.has(d.id)) {
+    // 1) Voller Modellname als Substring im Auftrag enthalten
+    let hit = haystack.includes(m);
+    // 2) Token-Treffer: Gerät & Auftrag teilen mind. ein starkes Produkt-Token
+    //    (z. B. "Twin" matcht "Alix Twin KI Smart 5000 8W" ↔ "Alix Secret Twin")
+    if (!hit && orderTokens.size > 0) {
+      const devTokens = strongTokens(`${d.model_name} ${d.notes || ''}`);
+      hit = devTokens.some(t => orderTokens.has(t));
+    }
+    if (hit && !seen.has(d.id)) {
       seen.add(d.id);
       out.push(d);
     }
