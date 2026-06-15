@@ -1,0 +1,110 @@
+/* ============================================================
+   Table Experience 2.0 — Phase I-10
+   ------------------------------------------------------------
+   Opt-in styles. Wrap a table or container with class="itable"
+   or data-itable to receive the upgrade. Theme-agnostic
+   (works mit Aurora, Standard und allen Infinity-Themes).
+   ============================================================ */
+
+.itable-wrap {
+  position: relative;
+  border: 1px solid hsl(var(--border));
+  border-radius: 12px;
+  overflow: hidden;
+  background: hsl(var(--card));
+}
+
+.itable-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid hsl(var(--border));
+  background: linear-gradient(180deg, hsl(var(--card)) 0%, hsl(var(--background) / 0.4) 100%);
+}
+
+.itable-scroll {
+  overflow: auto;
+  max-height: var(--itable-max-h, 70vh);
+  scrollbar-gutter: stable;
+}
+
+.itable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.875rem;
+}
+
+.itable thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid hsl(var(--border));
+  white-space: nowrap;
+  user-select: none;
+  cursor: default;
+}
+.itable thead th[data-sortable="true"] { cursor: pointer; }
+.itable thead th[data-sortable="true"]:hover { color: hsl(var(--foreground)); }
+.itable thead th .sort-indicator {
+  display: inline-block;
+  margin-left: 0.35rem;
+  opacity: 0.55;
+  font-size: 0.7em;
+}
+
+.itable tbody td {
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid hsl(var(--border) / 0.5);
+  vertical-align: middle;
+}
+.itable tbody tr {
+  transition: background 160ms ease;
+}
+.itable tbody tr:nth-child(odd) td { background: hsl(var(--foreground) / 0.015); }
+.itable tbody tr:hover td { background: hsl(var(--primary) / 0.06); }
+.itable tbody tr[data-clickable="true"] { cursor: pointer; }
+.itable tbody tr[data-selected="true"] td {
+  background: hsl(var(--primary) / 0.10);
+  box-shadow: inset 2px 0 0 hsl(var(--primary));
+}
+
+/* Density-Varianten */
+.itable[data-density="compact"] thead th { padding: 0.35rem 0.6rem; font-size: 0.68rem; }
+.itable[data-density="compact"] tbody td { padding: 0.3rem 0.6rem; font-size: 0.8rem; }
+.itable[data-density="comfortable"] thead th { padding: 0.85rem 0.9rem; }
+.itable[data-density="comfortable"] tbody td { padding: 0.85rem 0.9rem; }
+
+/* Numerische Spalten rechtsbündig */
+.itable td[data-align="right"], .itable th[data-align="right"] { text-align: right; font-variant-numeric: tabular-nums; }
+.itable td[data-align="center"], .itable th[data-align="center"] { text-align: center; }
+
+/* Empty State */
+.itable-empty {
+  padding: 3rem 1rem;
+  text-align: center;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.875rem;
+}
+
+/* Footer / Pagination */
+.itable-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-top: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  font-size: 0.78rem;
+  color: hsl(var(--muted-foreground));
+}
