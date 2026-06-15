@@ -307,48 +307,54 @@ export default function Bugs() {
         entityId={detail?.id ?? null}
         title={detail ? `${detail.ticket_number} – ${detail.title}` : ''}
       />
-      <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
-        <DialogContent
-          className="max-w-2xl"
-          onInteractOutside={(event) => event.preventDefault()}
-          onPointerDownOutside={(event) => event.preventDefault()}
-        >
-          <DialogHeader>
-            <DialogTitle>Bug bearbeiten {editing?.ticket_number}</DialogTitle>
-            <DialogDescription>Bearbeite die vorhandenen Bug-Daten.</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-3 py-2">
-            <div><Label>Titel *</Label><Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} /></div>
-            <div><Label>Beschreibung</Label><Textarea rows={4} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></div>
-            <div className="grid grid-cols-3 gap-3">
-              <div><Label>Produkt</Label><Input value={form.product} onChange={e => setForm({ ...form, product: e.target.value })} /></div>
-              <div><Label>Modul</Label><Input value={form.module} onChange={e => setForm({ ...form, module: e.target.value })} /></div>
-              <div><Label>Softwareversion</Label><Input value={form.software_version} onChange={e => setForm({ ...form, software_version: e.target.value })} /></div>
+      {editing && (
+        <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-background/80 px-4 py-8 backdrop-blur-sm">
+          <div className="absolute inset-0" onClick={() => setEditing(null)} />
+          <div className="relative w-full max-w-2xl rounded-lg border border-border bg-background p-6 shadow-2xl">
+            <button
+              onClick={() => setEditing(null)}
+              className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100"
+              aria-label="Schließen"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <div className="mb-4 pr-8">
+              <h2 className="text-lg font-semibold leading-none tracking-tight">Bug bearbeiten {editing.ticket_number}</h2>
+              <p className="text-sm text-muted-foreground mt-1">Bearbeite die vorhandenen Bug-Daten.</p>
             </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <Label>Priorität</Label>
-                <Select value={form.priority} onValueChange={v => setForm({ ...form, priority: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{BUG_PRIORITY.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
-                </Select>
+            <div className="grid gap-3 py-2">
+              <div><Label>Titel *</Label><Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} /></div>
+              <div><Label>Beschreibung</Label><Textarea rows={4} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></div>
+              <div className="grid grid-cols-3 gap-3">
+                <div><Label>Produkt</Label><Input value={form.product} onChange={e => setForm({ ...form, product: e.target.value })} /></div>
+                <div><Label>Modul</Label><Input value={form.module} onChange={e => setForm({ ...form, module: e.target.value })} /></div>
+                <div><Label>Softwareversion</Label><Input value={form.software_version} onChange={e => setForm({ ...form, software_version: e.target.value })} /></div>
               </div>
-              <div>
-                <Label>Kritikalität</Label>
-                <Select value={form.criticality} onValueChange={v => setForm({ ...form, criticality: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{BUG_CRITICALITY.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
-                </Select>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <Label>Priorität</Label>
+                  <Select value={form.priority} onValueChange={v => setForm({ ...form, priority: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{BUG_PRIORITY.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Kritikalität</Label>
+                  <Select value={form.criticality} onValueChange={v => setForm({ ...form, criticality: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{BUG_CRITICALITY.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div><Label>Fälligkeit</Label><Input type="date" value={form.due_date} onChange={e => setForm({ ...form, due_date: e.target.value })} /></div>
               </div>
-              <div><Label>Fälligkeit</Label><Input type="date" value={form.due_date} onChange={e => setForm({ ...form, due_date: e.target.value })} /></div>
+            </div>
+            <div className="flex justify-end gap-2 mt-4">
+              <Button variant="ghost" onClick={() => setEditing(null)}>Abbrechen</Button>
+              <Button onClick={saveEdit}>Speichern</Button>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setEditing(null)}>Abbrechen</Button>
-            <Button onClick={saveEdit}>Speichern</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
     </Section>
   );
 }
