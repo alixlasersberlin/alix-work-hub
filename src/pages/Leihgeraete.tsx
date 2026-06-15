@@ -10,7 +10,7 @@ export default function Leihgeraete() {
       addLabel="Neues Leihgerät"
       dialogTitle="Leihgerät"
       emptyLabel="Noch keine Leihgeräte erfasst."
-      pageIcon={<PackageCheck className="w-6 h-6 text-primary" />}
+      pageIcon={PackageCheck}
     />
   );
 }
