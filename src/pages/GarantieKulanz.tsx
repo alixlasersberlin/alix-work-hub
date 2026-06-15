@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ShieldCheck, Clock, AlertOctagon, Gift, Truck, Euro, Plus, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "sonner";
+import { PageHeader } from "@/components/infinity/PageHeader";
 
 type Warranty = {
   id: string; serial_number: string; device_name: string | null; customer_name: string | null;
@@ -169,17 +170,17 @@ export default function GarantieKulanz() {
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <ShieldCheck className="h-7 w-7 text-primary" /> Garantie &amp; Kulanz
-          </h1>
-          <p className="text-muted-foreground mt-1">Garantieakte, Entscheidungen, Kulanzfälle, Ersatzgeräte und Kosten.</p>
-        </div>
-        <Button onClick={() => { setEditing({ source_type: "repair_order", check_result: "Offen", decision: "Offen" }); setShowDec(true); }}>
-          <Plus className="h-4 w-4 mr-2" /> Neue Garantieprüfung
-        </Button>
-      </div>
+      <PageHeader
+        icon={ShieldCheck}
+        title="Garantie & Kulanz"
+        subtitle="Garantieakte, Entscheidungen, Kulanzfälle, Ersatzgeräte und Kosten."
+        noBreadcrumbs
+        actions={
+          <Button onClick={() => { setEditing({ source_type: "repair_order", check_result: "Offen", decision: "Offen" }); setShowDec(true); }}>
+            <Plus className="h-4 w-4 mr-2" /> Neue Garantieprüfung
+          </Button>
+        }
+      />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Kpi icon={<ShieldCheck className="h-5 w-5 text-green-500" />} title="Aktive Garantien" value={kpis.active} />

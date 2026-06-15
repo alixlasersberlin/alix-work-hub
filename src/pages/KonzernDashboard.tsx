@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
 import { Card } from '@/components/ui/card';
 import { Building2, TrendingUp, Wrench, Boxes, Ticket, Loader2 } from 'lucide-react';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 interface TenantStats {
   code: string; name: string; flag: string;
@@ -53,13 +54,12 @@ export default function KonzernDashboard() {
 
   return (
     <div className="container max-w-7xl py-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <Building2 className="w-7 h-7 text-primary" />
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Konzern-Dashboard</h1>
-          <p className="text-sm text-muted-foreground">Aggregierte KPIs aller Mandanten.</p>
-        </div>
-      </div>
+      <PageHeader
+        icon={Building2}
+        title="Konzern-Dashboard"
+        subtitle="Aggregierte KPIs aller Mandanten."
+        noBreadcrumbs
+      />
 
       {loading ? (
         <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" /> lädt…</div>

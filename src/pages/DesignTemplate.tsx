@@ -6,6 +6,7 @@ import { useInfinityTheme, INFINITY_THEMES, type InfinityTheme } from "@/hooks/u
 import { Sparkles, Layers, Check, Infinity as InfinityIcon } from "lucide-react";
 import { A11yPrefsPanel } from "@/components/infinity/A11yPrefsPanel";
 import { AIBackgroundPanel } from "@/components/infinity/AIBackgroundPanel";
+import { PageHeader } from "@/components/infinity/PageHeader";
 
 const OPTIONS: { id: UiTemplate; name: string; description: string; preview: React.ReactNode }[] = [
   {
@@ -55,15 +56,12 @@ export default function DesignTemplate() {
 
   return (
     <div className="p-6 space-y-6 max-w-5xl mx-auto">
-      <div>
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Layers className="h-7 w-7 text-primary" /> Design-Template
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Wähle das visuelle Erscheinungsbild von AlixWork. Die Umschaltung erfolgt sofort und ohne Neuladen.
-          Alle Funktionen und Daten bleiben identisch.
-        </p>
-      </div>
+      <PageHeader
+        icon={Layers}
+        title="Design-Template"
+        subtitle="Wähle das visuelle Erscheinungsbild von AlixWork. Die Umschaltung erfolgt sofort und ohne Neuladen. Alle Funktionen und Daten bleiben identisch."
+        noBreadcrumbs
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {OPTIONS.map((opt) => {

@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { PageHeader } from "@/components/infinity/PageHeader";
 
 type KPI = { label: string; value: string | number; hint?: string; icon?: any; tone?: "default" | "warn" | "ok" | "danger" };
 
@@ -267,22 +268,24 @@ export default function ManagementDashboard() {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <BarChart3 className="h-6 w-6 text-primary" /> Management Dashboard
-          </h1>
-          <p className="text-sm text-muted-foreground">Echtzeit-Auswertung aller Unternehmensbereiche</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={exportCSV}><FileSpreadsheet className="mr-1" />CSV</Button>
-          <Button variant="outline" size="sm" onClick={exportJSON}><Download className="mr-1" />JSON</Button>
-          <Button variant="outline" size="sm" onClick={exportPDF}><FileText className="mr-1" />PDF</Button>
-          <Button size="sm" onClick={loadAll} disabled={loading}>
-            {loading ? <Loader2 className="mr-1 animate-spin" /> : <Activity className="mr-1" />}
-            Aktualisieren
-          </Button>
-        </div>
+      <div className="print:hidden">
+        <PageHeader
+          icon={BarChart3}
+          title="Management Dashboard"
+          subtitle="Echtzeit-Auswertung aller Unternehmensbereiche"
+          noBreadcrumbs
+          actions={
+            <>
+              <Button variant="outline" size="sm" onClick={exportCSV}><FileSpreadsheet className="mr-1" />CSV</Button>
+              <Button variant="outline" size="sm" onClick={exportJSON}><Download className="mr-1" />JSON</Button>
+              <Button variant="outline" size="sm" onClick={exportPDF}><FileText className="mr-1" />PDF</Button>
+              <Button size="sm" onClick={loadAll} disabled={loading}>
+                {loading ? <Loader2 className="mr-1 animate-spin" /> : <Activity className="mr-1" />}
+                Aktualisieren
+              </Button>
+            </>
+          }
+        />
       </div>
 
       <Tabs defaultValue="overview">

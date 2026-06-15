@@ -8,6 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Card } from '@/components/ui/card';
 import { Building2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 interface Tenant {
   id: string; code: string; name: string;
@@ -44,13 +45,12 @@ export default function Mandanten() {
 
   return (
     <div className="container max-w-6xl py-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <Building2 className="w-7 h-7 text-primary" />
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Mandanten</h1>
-          <p className="text-sm text-muted-foreground">Verwaltung der Konzerngesellschaften.</p>
-        </div>
-      </div>
+      <PageHeader
+        icon={Building2}
+        title="Mandanten"
+        subtitle="Verwaltung der Konzerngesellschaften."
+        noBreadcrumbs
+      />
 
       {loading ? (
         <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" /> lädt…</div>
