@@ -170,11 +170,12 @@ export default function GeraeteLebenslauf() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3 flex-wrap">
-        <Activity className="w-6 h-6 text-primary" />
-        <h1 className="text-2xl font-bold">Geräte-Lebenslauf</h1>
-        <Badge variant="outline">Automatisch aus allen Modulen</Badge>
-      </div>
+      <PageHeader
+        icon={Activity}
+        title="Geräte-Lebenslauf"
+        subtitle="Automatisch aus allen Modulen aggregiert."
+        noBreadcrumbs
+      />
 
       <Card className="p-4 space-y-3">
         <Label className="text-xs">Suche (Seriennummer, Kunde, Auftrag, Gerät)</Label>
