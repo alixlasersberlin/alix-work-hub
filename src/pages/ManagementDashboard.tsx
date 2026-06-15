@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { PageHeader } from "@/components/infinity/PageHeader";
 
 type KPI = { label: string; value: string | number; hint?: string; icon?: any; tone?: "default" | "warn" | "ok" | "danger" };
 
