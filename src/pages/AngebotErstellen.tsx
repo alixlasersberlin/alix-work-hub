@@ -102,6 +102,8 @@ export default function AngebotErstellen() {
             setOfferNumber(snap.offerNumber);
             if (snap.offerDate) setOfferDate(snap.offerDate);
             if (snap.validUntil) setValidUntil(snap.validUntil);
+            if (snap.salesAdvisor) setSalesAdvisor(snap.salesAdvisor);
+            if (snap.deliveryWeek) setDeliveryWeek(snap.deliveryWeek);
             if (snap.notes) setNotes(snap.notes);
             if (typeof snap.includeAppendix === 'boolean') setIncludeAppendix(snap.includeAppendix);
             if (snap.customer?.id) setCustomerId(snap.customer.id);
