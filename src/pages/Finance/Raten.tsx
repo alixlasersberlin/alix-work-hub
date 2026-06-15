@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { PageHeader, PageLoading, PageError, DataCard } from '@/components/PageShell';
+import { PageError, DataCard } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { SkeletonTable } from '@/components/infinity/Skeleton';
+import { EmptyState } from '@/components/infinity/EmptyState';
+import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { ScrollText, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
@@ -55,9 +59,11 @@ export default function FinanceRaten() {
   return (
     <div className="p-4 sm:p-6">
       <PageHeader
-        icon={<ScrollText className="w-6 h-6 text-primary" />}
+        icon={ScrollText}
         title="Laufende Raten"
         subtitle="Periodische Rechnungs-Stammdaten (Quelle: Zoho)"
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${rows.length}`} pulse={!loading} />}
       />
       <DataCard className="p-4 mb-4">
         <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
@@ -72,7 +78,9 @@ export default function FinanceRaten() {
       </DataCard>
 
       {error && <PageError message={error} onRetry={() => location.reload()} />}
-      {loading ? <PageLoading /> : (
+      {loading ? <DataCard className="p-6"><SkeletonTable rows={8} cols={8} /></DataCard> : filtered.length === 0 ? (
+        <DataCard className="p-8"><EmptyState title="Keine laufenden Raten" description="Es wurden keine Profile gefunden." /></DataCard>
+      ) : (
         <DataCard className="overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -89,9 +97,7 @@ export default function FinanceRaten() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.length === 0 ? (
-                  <tr><td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">Keine laufenden Raten gefunden.</td></tr>
-                ) : filtered.map(r => (
+                {filtered.map(r => (
                   <tr key={r.id} className="border-t border-border hover:bg-muted/20">
                     <td className="px-4 py-3 font-mono text-xs">{r.recurring_invoice_id ?? '–'}</td>
                     <td className="px-4 py-3">{r.reference_number ?? '–'}</td>
