@@ -696,6 +696,8 @@ export default function AngebotErstellen() {
     offerNumber,
     offerDate,
     validUntil,
+    salesAdvisor,
+    deliveryWeek,
     notes,
     includeAppendix,
     customer: selectedCustomer ? {
