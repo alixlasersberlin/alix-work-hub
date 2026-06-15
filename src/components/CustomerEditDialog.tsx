@@ -22,6 +22,7 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
     contact_name: customer?.contact_name || '',
     email: customer?.email || '',
     phone: customer?.phone || '',
+    birth_date: customer?.birth_date || '',
     billing_street: customer?.billing_address?.address || customer?.billing_address?.street || '',
     billing_zip: customer?.billing_address?.zip || '',
     billing_city: customer?.billing_address?.city || '',
@@ -98,6 +99,7 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
       iban: form.iban || null,
       bic: form.bic || null,
       bank_name: form.bank_name || null,
+      birth_date: form.birth_date || null,
       is_vip: form.is_vip,
     };
     const isNew = !customer?.id;
@@ -142,7 +144,17 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
             <Field label="Kontaktperson" field="contact_name" />
             <Field label="E-Mail" field="email" />
             <Field label="Telefon" field="phone" />
+            <div>
+              <Label className="text-xs text-muted-foreground">Geburtsdatum</Label>
+              <Input
+                type="date"
+                value={form.birth_date}
+                onChange={e => set('birth_date', e.target.value)}
+                className="bg-secondary border-border mt-1"
+              />
+            </div>
           </div>
+
 
           <h3 className="text-sm font-medium text-foreground pt-2">Rechnungsadresse</h3>
           <div className="grid grid-cols-2 gap-3">

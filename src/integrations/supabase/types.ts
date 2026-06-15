@@ -1710,6 +1710,7 @@ export type Database = {
           bank_name: string | null
           bic: string | null
           billing_address: Json | null
+          birth_date: string | null
           company_name: string | null
           contact_name: string | null
           created_at: string
@@ -1730,6 +1731,7 @@ export type Database = {
           bank_name?: string | null
           bic?: string | null
           billing_address?: Json | null
+          birth_date?: string | null
           company_name?: string | null
           contact_name?: string | null
           created_at?: string
@@ -1750,6 +1752,7 @@ export type Database = {
           bank_name?: string | null
           bic?: string | null
           billing_address?: Json | null
+          birth_date?: string | null
           company_name?: string | null
           contact_name?: string | null
           created_at?: string
