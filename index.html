@@ -59,6 +59,14 @@
           var exp = localStorage.getItem('alix-experience');
           if (exp !== 'premium' && exp !== 'mega') exp = 'classic';
           document.documentElement.setAttribute('data-experience', exp);
+          // AURORA 2.0 – Premium UI Overlay. Default ON, per localStorage abschaltbar.
+          var aurora = localStorage.getItem('alix-aurora');
+          if (aurora === null) { aurora = '2'; }
+          if (aurora === '2') {
+            document.documentElement.setAttribute('data-aurora', '2');
+          } else {
+            document.documentElement.removeAttribute('data-aurora');
+          }
         } catch (e) { /* ignore */ }
       })();
     </script>

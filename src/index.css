@@ -6,6 +6,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Aurora 2.0 Premium UI Overlay (aktiviert via html[data-aurora="2"]) */
+@import './styles/aurora2.css';
+
 @layer base {
   /* =====================================================
      AlixWork Standard – Soft Neumorphism (White / Gray 3D)
