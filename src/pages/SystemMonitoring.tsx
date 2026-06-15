@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { PageHeader } from '@/components/infinity/PageHeader';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 
@@ -199,16 +200,18 @@ export default function SystemMonitoring() {
   return (
     <div className="p-6 space-y-6 max-w-[1400px] mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-display font-bold gold-text">System & Monitoring</h1>
-          <p className="text-muted-foreground text-sm mt-1">Backups, Importe, Sicherheit & Systemstatus</p>
-        </div>
-        <Button variant="outline" size="sm" onClick={loadAll} disabled={loading}>
-          {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
-          Aktualisieren
-        </Button>
-      </div>
+      <PageHeader
+        icon={Server}
+        title="System & Monitoring"
+        subtitle="Backups, Importe, Sicherheit & Systemstatus"
+        noBreadcrumbs
+        actions={
+          <Button variant="outline" size="sm" onClick={loadAll} disabled={loading}>
+            {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+            Aktualisieren
+          </Button>
+        }
+      />
 
       <Tabs defaultValue="status" className="space-y-6">
         <TabsList className="bg-secondary border border-border">
