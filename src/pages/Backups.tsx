@@ -11,6 +11,7 @@ import {
   Shield, Database, Download, Loader2, Trash2, RefreshCw, Mail, Clock, HardDrive, CheckCircle2, AlertTriangle,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 interface BackupRow {
   id: string;
