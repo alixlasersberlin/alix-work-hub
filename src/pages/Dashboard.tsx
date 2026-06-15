@@ -5,9 +5,13 @@ import { useAuth } from '@/hooks/useAuth';
 import {
   ClipboardList, Users, MapPin, Banknote, AlertCircle,
   Clock, TrendingUp, FileText, CalendarDays, CircleDot, Inbox, Package, ChevronDown,
-  Warehouse, PackageCheck, ShieldAlert, UserCheck, Crown, ListOrdered
+  Warehouse, PackageCheck, ShieldAlert, UserCheck, Crown, ListOrdered, LayoutDashboard
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { KpiTile } from '@/components/infinity/KpiTile';
+import { SkeletonKpiGrid } from '@/components/infinity/Skeleton';
+import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { VipBadge } from '@/components/VipBadge';
 import { isOrderVip, vipFirst } from '@/lib/vip';
 
