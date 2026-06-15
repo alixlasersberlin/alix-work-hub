@@ -12,16 +12,22 @@ export default function PublicBeratung() {
     } catch {
       /* ignore */
     }
-    document.documentElement.classList.remove('theme-neo');
-    document.documentElement.setAttribute('data-lock-template', 'standard');
+    const root = document.documentElement;
+    const hadDark = root.classList.contains('dark');
+    const hadLight = root.classList.contains('light');
+    root.classList.remove('theme-neo', 'light');
+    root.classList.add('dark');
+    root.setAttribute('data-lock-template', 'standard');
     if (isEmbed) {
-      document.documentElement.style.background = 'transparent';
+      root.style.background = 'transparent';
       document.body.style.background = 'transparent';
     }
     return () => {
-      document.documentElement.removeAttribute('data-lock-template');
+      root.removeAttribute('data-lock-template');
+      if (!hadDark) root.classList.remove('dark');
+      if (hadLight) root.classList.add('light');
       if (isEmbed) {
-        document.documentElement.style.background = '';
+        root.style.background = '';
         document.body.style.background = '';
       }
     };
