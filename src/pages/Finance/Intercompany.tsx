@@ -183,6 +183,8 @@ export default function FinanceIntercompany() {
           </div>
         )}
       </DataCard>
+      </>
+      )}
     </div>
   );
 }
