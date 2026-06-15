@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import SalesWizard from '@/components/SalesWizard';
-import WizardLanguageSwitcher from '@/components/WizardLanguageSwitcher';
+
 
 export default function PublicBeratung() {
   const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
