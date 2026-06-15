@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { PageHeader, PageLoading, DataCard } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { SkeletonKpiGrid, SkeletonTable } from '@/components/infinity/Skeleton';
+import { KpiTile } from '@/components/infinity/KpiTile';
+import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Download } from 'lucide-react';
+import { Download, BarChart3, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
 
 const fmt = (n: number) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n || 0);
 
@@ -131,30 +134,43 @@ export default function FinanceBwa() {
     URL.revokeObjectURL(url);
   }
 
-  if (loading) return <PageLoading />;
-
   const months = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
-  const ergebnis = rows[rows.length - 1].total;
+  const ergebnis = loading ? 0 : rows[rows.length - 1].total;
   const years = [year + 1, year, year - 1, year - 2, year - 3];
+  const delta = ergebnis - prevTotal;
 
   return (
-    <div className="p-6 space-y-6">
-      <PageHeader title="BWA – Betriebswirtschaftliche Auswertung" subtitle={`Geschäftsjahr ${year}`} />
+    <div className="p-4 sm:p-6 space-y-6">
+      <PageHeader
+        icon={BarChart3}
+        title="BWA – Betriebswirtschaftliche Auswertung"
+        subtitle={`Geschäftsjahr ${year}`}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${tx.length} Buchungen`} pulse={loading} />}
+        actions={
+          <div className="flex items-center gap-2">
+            <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
+              <SelectTrigger className="w-32 h-9"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {years.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="sm" onClick={exportCsv} disabled={loading}><Download className="h-4 w-4 mr-2" />CSV</Button>
+          </div>
+        }
+      />
 
-      <div className="flex items-center gap-3">
-        <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
-          <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {years.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Button variant="outline" onClick={exportCsv}><Download className="h-4 w-4 mr-2" />CSV Export</Button>
-      </div>
-
+      {loading ? (
+        <>
+          <SkeletonKpiGrid count={3} />
+          <SkeletonTable rows={8} cols={13} />
+        </>
+      ) : (
+      <>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <DataCard title="Ergebnis YTD"><div className="text-2xl font-bold">{fmt(ergebnis)}</div></DataCard>
-        <DataCard title="Vorjahres-Ergebnis"><div className="text-2xl font-bold">{fmt(prevTotal)}</div></DataCard>
-        <DataCard title="Veränderung"><div className="text-2xl font-bold">{fmt(ergebnis - prevTotal)}</div></DataCard>
+        <KpiTile icon={TrendingUp} label="Ergebnis YTD" value={fmt(ergebnis)} accent={ergebnis >= 0 ? 'emerald' : 'rose'} />
+        <KpiTile icon={Wallet} label="Vorjahres-Ergebnis" value={fmt(prevTotal)} accent="gold" />
+        <KpiTile icon={delta >= 0 ? TrendingUp : TrendingDown} label="Veränderung" value={fmt(delta)} accent={delta >= 0 ? 'emerald' : 'rose'} />
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-border bg-card">
@@ -177,6 +193,8 @@ export default function FinanceBwa() {
           </tbody>
         </table>
       </div>
+      </>
+      )}
     </div>
   );
 }
