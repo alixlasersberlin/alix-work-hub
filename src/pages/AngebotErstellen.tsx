@@ -1135,32 +1135,96 @@ export default function AngebotErstellen() {
           </div>
         ) : (
           <>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Kunde suchen (Name, E-Mail)..."
-                value={customerSearch}
-                onChange={e => setCustomerSearch(e.target.value)}
-                className="pl-10 bg-secondary border-border"
-              />
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Kunde suchen (Name, E-Mail)..."
+                  value={customerSearch}
+                  onChange={e => setCustomerSearch(e.target.value)}
+                  className="pl-10 bg-secondary border-border"
+                />
+              </div>
+              <Button type="button" variant="outline" onClick={() => setNewCustomerOpen(true)}>
+                <UserPlus className="w-4 h-4 mr-2" /> Neuer Kunde
+              </Button>
             </div>
-            <div className="max-h-64 overflow-auto border border-border rounded-lg divide-y divide-border">
-              {filteredCustomers.length === 0 ? (
-                <p className="p-4 text-sm text-muted-foreground text-center">Keine Kunden gefunden.</p>
-              ) : filteredCustomers.map(c => (
-                <button
-                  key={c.id}
-                  onClick={() => setCustomerId(c.id)}
-                  className="w-full text-left p-3 hover:bg-secondary/50 transition-colors text-sm"
-                >
-                  <p className="font-medium text-foreground">{c.company_name || c.contact_name}</p>
-                  <p className="text-xs text-muted-foreground">{c.contact_name} · {c.email}</p>
-                </button>
-              ))}
-            </div>
+            {customerSearch.trim() && (
+              <div className="max-h-64 overflow-auto border border-border rounded-lg divide-y divide-border">
+                {filteredCustomers.length === 0 ? (
+                  <p className="p-4 text-sm text-muted-foreground text-center">
+                    Keine Kunden gefunden. Über „Neuer Kunde" anlegen.
+                  </p>
+                ) : filteredCustomers.map(c => (
+                  <button
+                    key={c.id}
+                    onClick={() => setCustomerId(c.id)}
+                    className="w-full text-left p-3 hover:bg-secondary/50 transition-colors text-sm"
+                  >
+                    <p className="font-medium text-foreground">{c.company_name || c.contact_name}</p>
+                    <p className="text-xs text-muted-foreground">{c.contact_name} · {c.email}</p>
+                  </button>
+                ))}
+              </div>
+            )}
           </>
         )}
       </div>
+
+      {/* Neuer Kunde Dialog */}
+      <Dialog open={newCustomerOpen} onOpenChange={setNewCustomerOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Neuen Kunden anlegen</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <Label>Firma</Label>
+              <Input value={newCustomer.company_name} onChange={e => setNewCustomer(p => ({ ...p, company_name: e.target.value }))} className="mt-1.5" />
+            </div>
+            <div>
+              <Label>Ansprechpartner</Label>
+              <Input value={newCustomer.contact_name} onChange={e => setNewCustomer(p => ({ ...p, contact_name: e.target.value }))} className="mt-1.5" />
+            </div>
+            <div>
+              <Label>E-Mail</Label>
+              <Input type="email" value={newCustomer.email} onChange={e => setNewCustomer(p => ({ ...p, email: e.target.value }))} className="mt-1.5" />
+            </div>
+            <div>
+              <Label>Telefon</Label>
+              <Input value={newCustomer.phone} onChange={e => setNewCustomer(p => ({ ...p, phone: e.target.value }))} className="mt-1.5" />
+            </div>
+            <div className="sm:col-span-2">
+              <Label>Straße</Label>
+              <Input value={newCustomer.ba_address} onChange={e => setNewCustomer(p => ({ ...p, ba_address: e.target.value }))} className="mt-1.5" />
+            </div>
+            <div className="sm:col-span-2">
+              <Label>Adresszusatz</Label>
+              <Input value={newCustomer.ba_street2} onChange={e => setNewCustomer(p => ({ ...p, ba_street2: e.target.value }))} className="mt-1.5" />
+            </div>
+            <div>
+              <Label>PLZ</Label>
+              <Input value={newCustomer.ba_zip} onChange={e => setNewCustomer(p => ({ ...p, ba_zip: e.target.value }))} className="mt-1.5" />
+            </div>
+            <div>
+              <Label>Ort</Label>
+              <Input value={newCustomer.ba_city} onChange={e => setNewCustomer(p => ({ ...p, ba_city: e.target.value }))} className="mt-1.5" />
+            </div>
+            <div className="sm:col-span-2">
+              <Label>Land</Label>
+              <Input value={newCustomer.ba_country} onChange={e => setNewCustomer(p => ({ ...p, ba_country: e.target.value }))} className="mt-1.5" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNewCustomerOpen(false)} disabled={newCustomerSaving}>Abbrechen</Button>
+            <Button onClick={createNewCustomer} disabled={newCustomerSaving}>
+              {newCustomerSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <UserPlus className="w-4 h-4 mr-2" />}
+              Anlegen & übernehmen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       {/* Items */}
       <div className="rounded-xl border border-border bg-card card-glow p-6 space-y-4">
