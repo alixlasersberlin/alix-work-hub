@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
-import { Paperclip, Send, Download, Trash2, FileText } from 'lucide-react';
+import { Paperclip, Send, Download, Trash2, FileText, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -61,6 +60,13 @@ export function QmDetailDrawer({
 
   useEffect(() => { if (open) load(); }, [open, load]);
 
+  useEffect(() => {
+    if (!open) return;
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onOpenChange(false); }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, onOpenChange]);
+
   async function addComment() {
     if (!text.trim() || !entityId || !user) return;
     setBusy(true);
@@ -112,12 +118,22 @@ export function QmDetailDrawer({
     load();
   }
 
+  if (!open) return null;
+
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle>{title}</SheetTitle>
-        </SheetHeader>
+    <div className="fixed inset-0 z-[100] flex justify-end bg-background/80 backdrop-blur-sm">
+      <div className="absolute inset-0" onClick={() => onOpenChange(false)} />
+      <div className="relative h-full w-full sm:max-w-xl bg-background border-l border-border shadow-2xl overflow-y-auto p-6">
+        <button
+          onClick={() => onOpenChange(false)}
+          className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100"
+          aria-label="Schließen"
+        >
+          <X className="h-5 w-5" />
+        </button>
+        <div className="mb-4 pr-8">
+          <h2 className="text-lg font-semibold leading-none tracking-tight">{title}</h2>
+        </div>
 
         <div className="mt-6 space-y-6">
           <section>
@@ -171,7 +187,7 @@ export function QmDetailDrawer({
             </div>
           </section>
         </div>
-      </SheetContent>
-    </Sheet>
+      </div>
+    </div>
   );
 }
