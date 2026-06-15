@@ -1,13 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
 import { sendCustomerShippingNotice } from '@/lib/send-customer-shipping-notice';
 import { sendReviewInvitation } from '@/lib/review-invitation';
 import { VipBadge } from '@/components/VipBadge';
