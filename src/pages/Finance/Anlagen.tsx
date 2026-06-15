@@ -216,6 +216,8 @@ export default function FinanceAnlagen() {
           </table>
         </div>
       </div>
+      </>
+      )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl">
