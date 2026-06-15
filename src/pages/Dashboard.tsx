@@ -316,21 +316,14 @@ export default function Dashboard() {
     load();
   }, [canSeeOrders, canSeeRoutes, canSeeFinance, isAdmin, canSeeAudit, canSeeCustomers, atOnly]);
 
-  const kpiCards: Array<{
-    label: string;
-    value: number;
-    icon: React.ElementType;
-    visible: boolean;
-    onClick: () => void;
-    accent: 'gold' | 'sky' | 'emerald' | 'rose' | 'violet';
-  }> = [
-    { label: 'Freie Geräte (Pool)', value: stats.freePoolDevices, icon: PackageCheck, visible: isAdmin, onClick: () => navigate('/lager/equipment-area'), accent: 'sky' },
-    { label: 'Leihgeräte', value: stats.leihgeraete, icon: Warehouse, visible: isAdmin, onClick: () => navigate('/lager/leihgeraete'), accent: 'violet' },
-    { label: 'VIP-Aufträge', value: stats.vipOrders, icon: Crown, visible: canSeeOrders, onClick: () => navigate('/auftraege'), accent: 'gold' },
-    { label: 'Offene Aufträge', value: stats.openOrders, icon: AlertCircle, visible: canSeeOrders, onClick: () => navigate('/auftraege'), accent: 'rose' },
-    { label: 'Geplante Touren', value: stats.routes, icon: MapPin, visible: canSeeRoutes, onClick: () => navigate('/tourenplanung'), accent: 'emerald' },
-    { label: 'Offene Zahlungen', value: stats.openFinance, icon: Banknote, visible: canSeeFinance, onClick: () => navigate('/finance'), accent: 'rose' },
-  ].filter(c => c.visible);
+  const kpiCards = ([
+    { label: 'Freie Geräte (Pool)', value: stats.freePoolDevices, icon: PackageCheck, visible: isAdmin, onClick: () => navigate('/lager/equipment-area'), accent: 'sky' as const },
+    { label: 'Leihgeräte', value: stats.leihgeraete, icon: Warehouse, visible: isAdmin, onClick: () => navigate('/lager/leihgeraete'), accent: 'violet' as const },
+    { label: 'VIP-Aufträge', value: stats.vipOrders, icon: Crown, visible: canSeeOrders, onClick: () => navigate('/auftraege'), accent: 'gold' as const },
+    { label: 'Offene Aufträge', value: stats.openOrders, icon: AlertCircle, visible: canSeeOrders, onClick: () => navigate('/auftraege'), accent: 'rose' as const },
+    { label: 'Geplante Touren', value: stats.routes, icon: MapPin, visible: canSeeRoutes, onClick: () => navigate('/tourenplanung'), accent: 'emerald' as const },
+    { label: 'Offene Zahlungen', value: stats.openFinance, icon: Banknote, visible: canSeeFinance, onClick: () => navigate('/finance'), accent: 'rose' as const },
+  ]).filter(c => c.visible);
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in space-y-8">
