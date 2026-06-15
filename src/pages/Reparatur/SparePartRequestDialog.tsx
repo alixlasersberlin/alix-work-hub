@@ -1,14 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { sbRepair } from '@/lib/repair/api';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { PackagePlus, Loader2 } from 'lucide-react';
+import { PackagePlus, Loader2, X } from 'lucide-react';
 
 interface Props {
   repair: any;
@@ -32,6 +31,13 @@ export function SparePartRequestDialog({ repair, onCreated }: Props) {
 
   const reset = () => setF({ part_name: '', part_number: '', supplier: '', quantity: 1, priority: 'normal', notes: '' });
 
+  useEffect(() => {
+    if (!open) return;
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') setOpen(false); }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open]);
+
   const submit = async () => {
     if (!f.part_name.trim()) {
       toast({ title: 'Bezeichnung fehlt', variant: 'destructive' });
@@ -43,7 +49,6 @@ export function SparePartRequestDialog({ repair, onCreated }: Props) {
       const device = [repair.device_brand, repair.device_model].filter(Boolean).join(' ')
         || repair.device_category || repair.device_type || '';
 
-      // Ticket-Nummer (falls verknüpft) laden für Anzeige im Bestellwesen
       let ticketNumber: string | null = null;
       if (repair.ticket_id) {
         const { data: t } = await supabase
@@ -72,7 +77,6 @@ export function SparePartRequestDialog({ repair, onCreated }: Props) {
       });
       if (error) throw error;
 
-      // Benachrichtigung an Einkauf (best effort, kein Fehler nach außen)
       try {
         await supabase.from('mail_internal_messages').insert({
           sender_id: user?.id || null,
@@ -106,62 +110,80 @@ export function SparePartRequestDialog({ repair, onCreated }: Props) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="border-amber-500/40 text-amber-600 hover:bg-amber-500/10">
-          <PackagePlus className="w-4 h-4 mr-1" /> Ersatzteil benötigt
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Ersatzteil-Bestellvorschlag</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-3 text-sm">
-          <div className="rounded-md border border-border bg-muted/30 p-3 text-xs space-y-1">
-            <div><span className="text-muted-foreground">Reparaturauftrag:</span> <span className="font-mono">{repair.repair_number}</span></div>
-            <div><span className="text-muted-foreground">Gerät:</span> {[repair.device_brand, repair.device_model].filter(Boolean).join(' ') || repair.device_category || '—'}</div>
-            <div><span className="text-muted-foreground">Seriennummer:</span> {repair.device_serial_number || '—'}</div>
-            {repair.ticket_id && <div><span className="text-muted-foreground">Ticket-Verknüpfung:</span> vorhanden</div>}
-          </div>
+    <>
+      <Button
+        variant="outline"
+        size="sm"
+        className="border-amber-500/40 text-amber-600 hover:bg-amber-500/10"
+        onClick={() => setOpen(true)}
+      >
+        <PackagePlus className="w-4 h-4 mr-1" /> Ersatzteil benötigt
+      </Button>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="sm:col-span-2">
-              <Label>Benötigtes Teil *</Label>
-              <Input value={f.part_name} onChange={e => setF({ ...f, part_name: e.target.value })} placeholder="z.B. Lüftermodul" />
+      {open && (
+        <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-background/80 px-4 py-8 backdrop-blur-sm">
+          <div className="absolute inset-0" onClick={() => !saving && setOpen(false)} />
+          <div className="relative w-full max-w-lg rounded-lg border border-border bg-background p-6 shadow-2xl">
+            <button
+              onClick={() => !saving && setOpen(false)}
+              className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100"
+              aria-label="Schließen"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <div className="mb-4 pr-8">
+              <h2 className="text-lg font-semibold leading-none tracking-tight">Ersatzteil-Bestellvorschlag</h2>
             </div>
-            <div>
-              <Label>Teilenummer</Label>
-              <Input value={f.part_number} onChange={e => setF({ ...f, part_number: e.target.value })} />
+
+            <div className="space-y-3 text-sm">
+              <div className="rounded-md border border-border bg-muted/30 p-3 text-xs space-y-1">
+                <div><span className="text-muted-foreground">Reparaturauftrag:</span> <span className="font-mono">{repair.repair_number}</span></div>
+                <div><span className="text-muted-foreground">Gerät:</span> {[repair.device_brand, repair.device_model].filter(Boolean).join(' ') || repair.device_category || '—'}</div>
+                <div><span className="text-muted-foreground">Seriennummer:</span> {repair.device_serial_number || '—'}</div>
+                {repair.ticket_id && <div><span className="text-muted-foreground">Ticket-Verknüpfung:</span> vorhanden</div>}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="sm:col-span-2">
+                  <Label>Benötigtes Teil *</Label>
+                  <Input value={f.part_name} onChange={e => setF({ ...f, part_name: e.target.value })} placeholder="z.B. Lüftermodul" />
+                </div>
+                <div>
+                  <Label>Teilenummer</Label>
+                  <Input value={f.part_number} onChange={e => setF({ ...f, part_number: e.target.value })} />
+                </div>
+                <div>
+                  <Label>Lieferant-Vorschlag</Label>
+                  <Input value={f.supplier} onChange={e => setF({ ...f, supplier: e.target.value })} />
+                </div>
+                <div>
+                  <Label>Menge</Label>
+                  <Input type="number" min={1} value={f.quantity} onChange={e => setF({ ...f, quantity: Number(e.target.value) || 1 })} />
+                </div>
+                <div>
+                  <Label>Priorität</Label>
+                  <Select value={f.priority} onValueChange={v => setF({ ...f, priority: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{PRIORITIES.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="sm:col-span-2">
+                  <Label>Notiz</Label>
+                  <Textarea rows={2} value={f.notes} onChange={e => setF({ ...f, notes: e.target.value })} />
+                </div>
+              </div>
             </div>
-            <div>
-              <Label>Lieferant-Vorschlag</Label>
-              <Input value={f.supplier} onChange={e => setF({ ...f, supplier: e.target.value })} />
-            </div>
-            <div>
-              <Label>Menge</Label>
-              <Input type="number" min={1} value={f.quantity} onChange={e => setF({ ...f, quantity: Number(e.target.value) || 1 })} />
-            </div>
-            <div>
-              <Label>Priorität</Label>
-              <Select value={f.priority} onValueChange={v => setF({ ...f, priority: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{PRIORITIES.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <div className="sm:col-span-2">
-              <Label>Notiz</Label>
-              <Textarea rows={2} value={f.notes} onChange={e => setF({ ...f, notes: e.target.value })} />
+
+            <div className="flex justify-end gap-2 mt-4">
+              <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>Abbrechen</Button>
+              <Button onClick={submit} disabled={saving || !f.part_name.trim()}>
+                {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <PackagePlus className="w-4 h-4 mr-1" />}
+                An Einkauf senden
+              </Button>
             </div>
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>Abbrechen</Button>
-          <Button onClick={submit} disabled={saving || !f.part_name.trim()}>
-            {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <PackagePlus className="w-4 h-4 mr-1" />}
-            An Einkauf senden
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      )}
+    </>
   );
 }
