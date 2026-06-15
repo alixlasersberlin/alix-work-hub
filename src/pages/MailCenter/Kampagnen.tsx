@@ -23,7 +23,9 @@ import {
 } from '@/components/ui/table';
 import {
   Megaphone, Plus, Send, Eye, Trash2, AlertTriangle, RefreshCw, Users,
+  CheckCircle2, MailOpen, MousePointerClick, UserMinus, XCircle, BarChart3, LucideIcon,
 } from 'lucide-react';
+import { KpiTile } from '@/components/infinity/KpiTile';
 
 const SENDERS = [
   { email: 'news@alixwork.de', name: 'Alix Newsletter' },
@@ -597,18 +599,17 @@ function CampaignDetail({ campaignId, onClose }: { campaignId: string; onClose: 
 
           <TabsContent value="tracking">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {[
-                ['Versendet', stats.sent], ['Zugestellt', stats.delivered],
-                ['Geöffnet', stats.opened], ['Geklickt', stats.clicked],
-                ['Bounces', stats.bounced], ['Abmeldungen', stats.unsubscribed],
-                ['Fehler', stats.failed], ['Gesamt', stats.total],
-              ].map(([label, val]) => (
-                <Card key={label as string}>
-                  <CardContent className="p-3">
-                    <p className="text-xs text-muted-foreground">{label}</p>
-                    <p className="text-2xl font-bold">{val as number}</p>
-                  </CardContent>
-                </Card>
+              {([
+                ['Versendet', stats.sent, Send, 'sky'],
+                ['Zugestellt', stats.delivered, CheckCircle2, 'emerald'],
+                ['Geöffnet', stats.opened, MailOpen, 'gold'],
+                ['Geklickt', stats.clicked, MousePointerClick, 'violet'],
+                ['Bounces', stats.bounced, AlertTriangle, 'rose'],
+                ['Abmeldungen', stats.unsubscribed, UserMinus, 'rose'],
+                ['Fehler', stats.failed, XCircle, 'rose'],
+                ['Gesamt', stats.total, BarChart3, 'gold'],
+              ] as Array<[string, number, LucideIcon, 'sky'|'emerald'|'gold'|'violet'|'rose']>).map(([label, val, Icon, accent]) => (
+                <KpiTile key={label} label={label} value={val} icon={Icon} accent={accent} />
               ))}
             </div>
           </TabsContent>
