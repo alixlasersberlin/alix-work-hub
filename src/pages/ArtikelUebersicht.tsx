@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Package, PackageCheck, BookOpen, Plus } from 'lucide-react';
 import { format } from 'date-fns';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 type Receipt = {
   id: string;
