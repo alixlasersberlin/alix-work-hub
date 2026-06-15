@@ -117,11 +117,16 @@ export default function FinanceSteuer() {
     URL.revokeObjectURL(a.href);
   };
 
-  if (loading) return <PageLoading />;
-
   return (
-    <div className="space-y-6">
-      <PageHeader title="Steuer-Auswertung" subtitle="USt-Vorbereitung pro Mandant für Steuerberater" icon={Calculator} />
+    <div className="space-y-6 p-4 sm:p-6">
+      <PageHeader
+        title="Steuer-Auswertung"
+        subtitle="USt-Vorbereitung pro Mandant für Steuerberater"
+        icon={Calculator}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${tx.length} Buchungen`} pulse={loading} />}
+        actions={<Button onClick={exportCsv} variant="outline" size="sm"><Download className="h-4 w-4 mr-2" />CSV Export</Button>}
+      />
 
       <DataCard title="Zeitraum">
         <div className="flex flex-wrap gap-3 items-end">
@@ -157,14 +162,20 @@ export default function FinanceSteuer() {
               </SelectContent>
             </Select>
           </div>
-          <Button onClick={exportCsv} variant="outline"><Download className="h-4 w-4 mr-2" />CSV Export</Button>
         </div>
       </DataCard>
 
+      {loading ? (
+        <>
+          <SkeletonKpiGrid count={3} />
+          <DataCard><div className="p-4"><SkeletonTable rows={3} cols={5} /></div></DataCard>
+        </>
+      ) : (
+      <>
       <div className="grid md:grid-cols-3 gap-4">
-        <DataCard title="Umsatz Brutto"><div className="text-2xl font-semibold">{fmt(totalIncome)}</div><div className="text-xs text-muted-foreground">{tx.filter(t => t.transaction_type === 'Rechnung').length} Rechnungen</div></DataCard>
-        <DataCard title="Zahlungen"><div className="text-2xl font-semibold">{fmt(totalPayments)}</div></DataCard>
-        <DataCard title="USt gesamt"><div className="text-2xl font-semibold">{fmt(Object.values(groups).reduce((s, g) => s + g.ust19, 0))}</div></DataCard>
+        <KpiTile icon={TrendingUp} label="Umsatz Brutto" value={fmt(totalIncome)} hint={`${tx.filter(t => t.transaction_type === 'Rechnung').length} Rechnungen`} tone="gold" />
+        <KpiTile icon={Wallet} label="Zahlungen" value={fmt(totalPayments)} tone="emerald" />
+        <KpiTile icon={Receipt} label="USt gesamt" value={fmt(Object.values(groups).reduce((s, g) => s + g.ust19, 0))} tone="violet" />
       </div>
 
       <DataCard title="Aufschlüsselung pro Mandant">
