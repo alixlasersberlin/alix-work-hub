@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Save, Trash2, Plus } from 'lucide-react';
+import { Loader2, Save, Trash2, Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Props {
@@ -141,15 +140,35 @@ export default function OrderItemsEditDialog({ orderId, orderNumber, open, onClo
     }
   }
 
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !saving) onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, saving, onClose]);
+
+  if (!open) return null;
+
   return (
-    <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="font-display">Artikelliste bearbeiten {orderNumber ? `– ${orderNumber}` : ''}</DialogTitle>
-          <DialogDescription>
+    <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-background/80 px-4 py-8 backdrop-blur-sm">
+      <div className="relative w-full max-w-4xl max-h-[85vh] overflow-y-auto rounded-lg border border-border bg-background p-6 shadow-lg">
+        <button
+          type="button"
+          onClick={onClose}
+          disabled={saving}
+          className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100 focus:outline-none disabled:pointer-events-none disabled:opacity-40"
+          aria-label="Schließen"
+        >
+          <X className="h-4 w-4" />
+        </button>
+        <div className="mb-4 pr-8">
+          <h2 className="font-display text-lg font-semibold leading-none tracking-tight">Artikelliste bearbeiten {orderNumber ? `– ${orderNumber}` : ''}</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
             Artikel hinzufügen, entfernen oder ändern. Der Auftrag wird neu berechnet und auf Status „offen" gesetzt.
-          </DialogDescription>
-        </DialogHeader>
+          </p>
+        </div>
 
         {loading ? (
           <div className="py-12 text-center"><Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" /></div>
@@ -264,7 +283,7 @@ export default function OrderItemsEditDialog({ orderId, orderNumber, open, onClo
             </div>
           </div>
         )}
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 }
