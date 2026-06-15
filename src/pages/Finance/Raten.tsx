@@ -78,7 +78,9 @@ export default function FinanceRaten() {
       </DataCard>
 
       {error && <PageError message={error} onRetry={() => location.reload()} />}
-      {loading ? <PageLoading /> : (
+      {loading ? <DataCard className="p-6"><SkeletonTable rows={8} cols={8} /></DataCard> : filtered.length === 0 ? (
+        <DataCard className="p-8"><EmptyState title="Keine laufenden Raten" description="Es wurden keine Profile gefunden." /></DataCard>
+      ) : (
         <DataCard className="overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
