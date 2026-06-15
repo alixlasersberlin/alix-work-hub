@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ShieldCheck, Clock, AlertOctagon, Gift, Truck, Euro, Plus, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/infinity/PageHeader";
+import { KpiTile } from "@/components/infinity/KpiTile";
 
 type Warranty = {
   id: string; serial_number: string; device_name: string | null; customer_name: string | null;
@@ -183,14 +184,14 @@ export default function GarantieKulanz() {
       />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Kpi icon={<ShieldCheck className="h-5 w-5 text-green-500" />} title="Aktive Garantien" value={kpis.active} />
-        <Kpi icon={<Clock className="h-5 w-5 text-amber-500" />} title="Bald ablaufend (90 T.)" value={kpis.soon} />
-        <Kpi icon={<AlertOctagon className="h-5 w-5 text-red-500" />} title="Abgelaufen" value={kpis.expired} />
-        <Kpi icon={<ShieldCheck className="h-5 w-5 text-blue-400" />} title="Offene Prüfungen" value={kpis.openChecks} />
-        <Kpi icon={<Gift className="h-5 w-5 text-amber-500" />} title="Offene Kulanzanträge" value={kpis.openGoodwill} />
-        <Kpi icon={<Truck className="h-5 w-5 text-primary" />} title="Ersatzgeräte unterwegs" value={kpis.loanerOut} />
-        <Kpi icon={<Euro className="h-5 w-5 text-green-500" />} title="Garantiekosten Monat" value={`${kpis.monthlyWarranty.toFixed(2)} €`} />
-        <Kpi icon={<Euro className="h-5 w-5 text-amber-500" />} title="Kulanzkosten Monat" value={`${kpis.monthlyGoodwill.toFixed(2)} €`} />
+        <KpiTile icon={ShieldCheck} label="Aktive Garantien" value={kpis.active} accent="emerald" />
+        <KpiTile icon={Clock} label="Bald ablaufend (90 T.)" value={kpis.soon} accent="gold" />
+        <KpiTile icon={AlertOctagon} label="Abgelaufen" value={kpis.expired} accent="rose" />
+        <KpiTile icon={ShieldCheck} label="Offene Prüfungen" value={kpis.openChecks} accent="sky" />
+        <KpiTile icon={Gift} label="Offene Kulanzanträge" value={kpis.openGoodwill} accent="gold" />
+        <KpiTile icon={Truck} label="Ersatzgeräte unterwegs" value={kpis.loanerOut} accent="violet" />
+        <KpiTile icon={Euro} label="Garantiekosten Monat" value={`${kpis.monthlyWarranty.toFixed(2)} €`} accent="emerald" />
+        <KpiTile icon={Euro} label="Kulanzkosten Monat" value={`${kpis.monthlyGoodwill.toFixed(2)} €`} accent="gold" />
       </div>
 
       <Tabs defaultValue="warranties">
@@ -418,16 +419,5 @@ export default function GarantieKulanz() {
         </DialogContent>
       </Dialog>
     </div>
-  );
-}
-
-function Kpi({ icon, title, value }: { icon: React.ReactNode; title: string; value: number | string }) {
-  return (
-    <Card><CardContent className="pt-6">
-      <div className="flex items-center justify-between">
-        <div><p className="text-sm text-muted-foreground">{title}</p><p className="text-2xl font-bold mt-1">{value}</p></div>
-        {icon}
-      </div>
-    </CardContent></Card>
   );
 }
