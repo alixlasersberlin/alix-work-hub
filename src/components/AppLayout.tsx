@@ -26,6 +26,8 @@ import CommandPalette, { CommandPaletteTrigger } from '@/components/CommandPalet
 import { useDesignVariant } from '@/hooks/useDesignVariant';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { useFavorites, type FavoriteEntry } from '@/hooks/useFavorites';
+import { NotificationCenter } from '@/components/infinity/NotificationCenter';
+import { useNotificationFeed } from '@/hooks/useNotificationFeed';
 import { Briefcase } from 'lucide-react';
 import alixLogo from '@/assets/alix-logo-gold.png';
 
@@ -484,6 +486,7 @@ export default function AppLayout() {
   const [lagerCounts, setLagerCounts] = useState<Record<string, number>>({});
   const atOnly = useAtOnly();
   const { favorites, isFavorite, toggle: toggleFavorite } = useFavorites();
+  useNotificationFeed();
   // Desktop: flexible Sidebar-Breite (px), per Drag anpassbar, in localStorage gespeichert
   const SIDEBAR_MIN = 180;
   const SIDEBAR_MAX = 480;
@@ -1450,6 +1453,7 @@ export default function AppLayout() {
               <span className="font-display font-bold gold-text">AlixWork</span>
               <span className="text-muted-foreground font-mono text-xs hidden sm:inline">v{APP_VERSION}</span>
           </div>
+            <NotificationCenter />
             <DisplaySettingsMenu />
             {!isNeo && (
               <Button
