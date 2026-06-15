@@ -47,6 +47,7 @@ export default function AngebotErstellen() {
   const [validUntil, setValidUntil] = useState('');
   const [salesAdvisor, setSalesAdvisor] = useState('');
   const [deliveryWeek, setDeliveryWeek] = useState('');
+  const [specialOffer, setSpecialOffer] = useState('');
   const [notes, setNotes] = useState('');
   const [includeAppendix, setIncludeAppendix] = useState(true);
   const [lines, setLines] = useState<LineItem[]>([newLine()]);
@@ -104,6 +105,7 @@ export default function AngebotErstellen() {
             if (snap.validUntil) setValidUntil(snap.validUntil);
             if (snap.salesAdvisor) setSalesAdvisor(snap.salesAdvisor);
             if (snap.deliveryWeek) setDeliveryWeek(snap.deliveryWeek);
+            if (snap.specialOffer) setSpecialOffer(snap.specialOffer);
             if (snap.notes) setNotes(snap.notes);
             if (typeof snap.includeAppendix === 'boolean') setIncludeAppendix(snap.includeAppendix);
             if (snap.customer?.id) setCustomerId(snap.customer.id);
@@ -467,6 +469,23 @@ export default function AngebotErstellen() {
     );
     cy += 8;
 
+    if (specialOffer.trim()) {
+      const lines = doc.splitTextToSize(specialOffer.trim(), CONTENT_W - 6);
+      const boxH = lines.length * 5 + 8;
+      doc.setFillColor(255, 247, 220);
+      doc.setDrawColor(212, 175, 55);
+      doc.roundedRect(LEFT, cy, CONTENT_W, boxH, 2, 2, 'FD');
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(140, 90, 0);
+      doc.text('Sonderaktion', LEFT + 3, cy + 5);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(60, 40, 0);
+      doc.text(lines, LEFT + 3, cy + 10);
+      doc.setTextColor(30, 30, 30);
+      cy += boxH + 6;
+    }
+
+
     autoTable(doc, {
       startY: cy,
       margin: { left: LEFT, right: PAGE_W - RIGHT, top: TOP_CONTENT, bottom: PAGE_H - BOTTOM_LIMIT },
@@ -704,6 +723,7 @@ export default function AngebotErstellen() {
     validUntil,
     salesAdvisor,
     deliveryWeek,
+    specialOffer,
     notes,
     includeAppendix,
     customer: selectedCustomer ? {
@@ -849,6 +869,15 @@ export default function AngebotErstellen() {
             onChange={e => setDeliveryWeek(e.target.value)}
             placeholder="z.B. 2026-W24"
             className="bg-secondary border-border mt-1.5"
+          />
+        </div>
+        <div className="md:col-span-3">
+          <Label>Sonderaktion</Label>
+          <Textarea
+            value={specialOffer}
+            onChange={e => setSpecialOffer(e.target.value)}
+            placeholder="z.B. -10% Frühbucher-Rabatt, kostenlose Einweisung, …"
+            className="bg-secondary border-border mt-1.5 min-h-[72px]"
           />
         </div>
       </div>
