@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Building2, Play, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { PageHeader, PageLoading, DataCard, PageEmpty } from '@/components/PageShell';
+import { DataCard, PageEmpty } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { SkeletonTable } from '@/components/infinity/Skeleton';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -50,18 +53,23 @@ export default function FinanceKonsolidierung() {
     setBusy(false);
   };
 
-  if (loading) return <PageLoading />;
-
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-6">
       <PageHeader
+        icon={Building2}
         title="Konzern-Konsolidierung"
         subtitle="Mandantenübergreifende Monatskonsolidierung mit Intercompany-Eliminierung"
-        icon={Building2}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : busy ? 'progress' : 'done'} label={loading ? 'Lädt' : busy ? 'Läuft' : `${runs.length} Läufe`} pulse={loading || busy} />}
       />
 
+      {loading ? (
+        <DataCard><SkeletonTable rows={8} cols={8} /></DataCard>
+      ) : (
+      <>
       <DataCard title="Neuen Lauf starten">
         <div className="p-4 flex flex-col sm:flex-row gap-3 sm:items-end">
+
           <div className="space-y-1">
             <label className="text-xs text-muted-foreground">Periode (Monat)</label>
             <Input
@@ -124,6 +132,8 @@ export default function FinanceKonsolidierung() {
           </div>
         )}
       </DataCard>
+      </>
+      )}
     </div>
   );
 }
