@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { PageHeader, PageLoading, PageError, DataCard } from '@/components/PageShell';
+import { DataCard, PageError } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { SkeletonTable } from '@/components/infinity/Skeleton';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { FileText, RefreshCw, ArrowRightLeft, ChevronDown, ChevronRight, Users, Wallet, AlertTriangle, Repeat } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -207,9 +210,11 @@ export default function Invoices() {
   return (
     <div className="p-4 sm:p-6">
       <PageHeader
-        icon={<FileText className="w-6 h-6 text-primary" />}
+        icon={FileText}
         title="Rechnungen nach Kundenkonto"
         subtitle="Konsolidierte Übersicht aller Zoho-Rechnungen (einmalig + periodisch) je Kunde"
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${kpi.accounts} Konten`} pulse={loading} />}
         actions={
           isAdmin && (
             <Button onClick={handleImport} disabled={importing} className="gold-gradient text-primary-foreground">
@@ -270,7 +275,7 @@ export default function Invoices() {
 
       {error && <PageError message={error} onRetry={fetchRows} />}
 
-      {loading ? <PageLoading /> : (
+      {loading ? <DataCard><SkeletonTable rows={8} cols={6} /></DataCard> : (
         <div className="space-y-3">
           {accounts.length === 0 ? (
             <DataCard className="p-12 text-center text-muted-foreground">
