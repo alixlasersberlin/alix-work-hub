@@ -337,7 +337,7 @@ export default function Dashboard() {
             : 'Ihre aktuelle Übersicht'
         }
         noBreadcrumbs
-        meta={<InfinityStatusBadge kind="done" label="Live" pulse variant="dot" />}
+        meta={<InfinityStatusBadge kind="done" label="Live" pulse dotOnly />}
         actions={
           isSuperAdmin ? (
             <div className="inline-flex rounded-lg border border-border bg-card p-1">
