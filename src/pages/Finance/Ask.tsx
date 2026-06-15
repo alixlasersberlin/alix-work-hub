@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { PageHeader, DataCard } from '@/components/PageShell';
+import { DataCard } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Send, Sparkles } from 'lucide-react';
+import { Loader2, Send, Sparkles, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 
 type Turn = { q: string; a: string };
@@ -38,7 +40,13 @@ export default function FinanceAsk() {
 
   return (
     <div className="p-6 space-y-6 max-w-4xl">
-      <PageHeader title="Finanz-KI fragen" subtitle="Stelle Fragen zu Umsatz, offenen Posten, Kunden" />
+      <PageHeader
+        icon={MessageSquare}
+        title="Finanz-KI fragen"
+        subtitle="Stelle Fragen zu Umsatz, offenen Posten, Kunden"
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Denkt nach' : `${history.length} Fragen`} pulse={loading} />}
+      />
 
       <DataCard title="Frage">
         <div className="space-y-3">
