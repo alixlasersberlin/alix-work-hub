@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { PageHeader, DataCard } from '@/components/PageShell';
+import { DataCard } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Send, Sparkles } from 'lucide-react';
+import { Loader2, Send, Sparkles, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 
 type Turn = { q: string; a: string };
