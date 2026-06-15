@@ -9,7 +9,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { z } from 'zod';
-import { PageHeader } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import type { LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
