@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { FileDown, Upload, FileSpreadsheet, CheckCircle2, AlertTriangle, Trash2, ArrowRight, History } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/infinity/PageHeader';
+import { KpiTile } from '@/components/infinity/KpiTile';
+import { Rows3, FileCheck2, AlertCircle } from 'lucide-react';
 
 type RawRow = Record<string, any>;
 
@@ -262,10 +264,10 @@ export default function AngebotImport() {
       {rows.length > 0 && (
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Zeilen</p><p className="text-2xl font-bold">{summary.total}</p></CardContent></Card>
-            <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Angebote (gültig)</p><p className="text-2xl font-bold text-primary">{summary.groups}</p></CardContent></Card>
-            <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Fehlerhafte Zeilen</p><p className={`text-2xl font-bold ${summary.errors ? 'text-destructive' : 'text-emerald-500'}`}>{summary.errors}</p></CardContent></Card>
-            <Card><CardContent className="p-4 flex items-center justify-end"><Button variant="ghost" size="sm" onClick={clearAll}><Trash2 className="w-4 h-4 mr-2" /> Zurücksetzen</Button></CardContent></Card>
+            <KpiTile label="Zeilen" value={summary.total} icon={Rows3} accent="sky" />
+            <KpiTile label="Angebote (gültig)" value={summary.groups} icon={FileCheck2} accent="gold" />
+            <KpiTile label="Fehlerhafte Zeilen" value={summary.errors} icon={AlertCircle} accent={summary.errors ? 'rose' : 'emerald'} />
+            <Card><CardContent className="p-4 flex items-center justify-end h-full"><Button variant="ghost" size="sm" onClick={clearAll}><Trash2 className="w-4 h-4 mr-2" /> Zurücksetzen</Button></CardContent></Card>
           </div>
 
           <Card className="card-glow">
