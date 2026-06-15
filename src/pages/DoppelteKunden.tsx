@@ -204,6 +204,25 @@ export default function DoppelteKunden() {
                   <span className="font-mono text-foreground truncate">{g.key}</span>
                   <div className="flex items-center gap-3">
                     <span className="text-xs text-muted-foreground">{g.rows.length} Treffer</span>
+                    {canMerge && (() => {
+                      const allDupIds = g.rows.map(r => r.id).filter(id => id !== primaryId);
+                      const allSelected = allDupIds.length > 0 && allDupIds.every(id => selectedDups.has(id));
+                      return (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setDupsByGroup(prev => {
+                              const next = { ...prev };
+                              next[g.key] = allSelected ? new Set() : new Set(allDupIds);
+                              return next;
+                            });
+                          }}
+                        >
+                          {allSelected ? 'Auswahl aufheben' : 'Alle markieren'}
+                        </Button>
+                      );
+                    })()}
                     {canMerge && (
                       <Button
                         size="sm"
