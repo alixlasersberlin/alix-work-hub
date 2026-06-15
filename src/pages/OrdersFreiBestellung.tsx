@@ -666,44 +666,53 @@ export default function OrdersFreiBestellung() {
       </div>
       <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} total={total} />
 
-      <Dialog open={!!reserveOrder} onOpenChange={(v) => { if (!v) { setReserveOrder(null); setReserveDeviceId(''); } }}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Warehouse className="w-5 h-5 text-emerald-500" />
-              Aus Lagerbestand reservieren
-            </DialogTitle>
-            <DialogDescription>
-              Für Auftrag <span className="font-medium text-foreground">{reserveOrder?.order_number}</span> wurde ein passendes Gerät im Lagerbestand gefunden. Wird ein Gerät reserviert, ist <span className="font-medium">keine Bestellung</span> mehr nötig.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2 max-h-72 overflow-y-auto">
-            {(matchesByOrder[reserveOrder?.id] || []).map(d => (
-              <label key={d.id} className={`flex items-center gap-3 p-3 rounded-md border cursor-pointer ${reserveDeviceId === d.id ? 'border-emerald-500 bg-emerald-500/10' : 'border-border'}`}>
-                <input
-                  type="radio"
-                  name="lagerdevice"
-                  checked={reserveDeviceId === d.id}
-                  onChange={() => setReserveDeviceId(d.id)}
-                />
-                <div className="flex-1">
-                  <div className="text-sm font-medium">{d.model_name}</div>
-                  <div className="text-xs text-muted-foreground font-mono">SN: {d.serial_number}</div>
-                </div>
-              </label>
-            ))}
+      {reserveOrder && (
+        <div
+          className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-background/80 px-4 py-8 backdrop-blur-sm"
+          onClick={() => { if (!reserving) { setReserveOrder(null); setReserveDeviceId(''); } }}
+        >
+          <div
+            className="relative w-full max-w-lg rounded-lg border border-border bg-background p-6 shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4">
+              <h2 className="font-display text-lg font-semibold leading-none tracking-tight flex items-center gap-2">
+                <Warehouse className="w-5 h-5 text-emerald-500" />
+                Aus Lagerbestand reservieren
+              </h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Für Auftrag <span className="font-medium text-foreground">{reserveOrder?.order_number}</span> wurde ein passendes Gerät im Lagerbestand gefunden. Wird ein Gerät reserviert, ist <span className="font-medium">keine Bestellung</span> mehr nötig.
+              </p>
+            </div>
+            <div className="space-y-2 max-h-72 overflow-y-auto">
+              {(matchesByOrder[reserveOrder?.id] || []).map(d => (
+                <label key={d.id} className={`flex items-center gap-3 p-3 rounded-md border cursor-pointer ${reserveDeviceId === d.id ? 'border-emerald-500 bg-emerald-500/10' : 'border-border'}`}>
+                  <input
+                    type="radio"
+                    name="lagerdevice"
+                    checked={reserveDeviceId === d.id}
+                    onChange={() => setReserveDeviceId(d.id)}
+                  />
+                  <div className="flex-1">
+                    <div className="text-sm font-medium">{d.model_name}</div>
+                    <div className="text-xs text-muted-foreground font-mono">SN: {d.serial_number}</div>
+                  </div>
+                </label>
+              ))}
+            </div>
+            <div className="flex justify-end gap-2 pt-4">
+              <Button variant="outline" onClick={() => { setReserveOrder(null); setReserveDeviceId(''); }} disabled={reserving}>
+                Abbrechen
+              </Button>
+              <Button onClick={confirmReserve} disabled={!reserveDeviceId || reserving} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                {reserving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-1" />}
+                Reservierung bestätigen
+              </Button>
+            </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setReserveOrder(null); setReserveDeviceId(''); }} disabled={reserving}>
-              Abbrechen
-            </Button>
-            <Button onClick={confirmReserve} disabled={!reserveDeviceId || reserving} className="bg-emerald-600 hover:bg-emerald-700 text-white">
-              {reserving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-1" />}
-              Reservierung bestätigen
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
+
 
       <AlertDialog open={!!unassignOrder} onOpenChange={(v) => { if (!v) setUnassignOrder(null); }}>
         <AlertDialogContent>
