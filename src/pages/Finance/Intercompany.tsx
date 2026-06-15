@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Network, Plus, Trash2, Save } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { PageHeader, PageLoading, DataCard, PageEmpty } from '@/components/PageShell';
+import { DataCard, PageEmpty } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { SkeletonTable } from '@/components/infinity/Skeleton';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -66,18 +69,26 @@ export default function FinanceIntercompany() {
     else await load();
   };
 
-  if (loading) return <PageLoading />;
-
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-6">
       <PageHeader
+        icon={Network}
         title="Intercompany"
         subtitle="Mandanten-Beziehungen und intercompany-markierte Buchungen"
-        icon={Network}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${rels.length} Beziehungen`} pulse={loading} />}
       />
 
+      {loading ? (
+        <>
+          <DataCard><SkeletonTable rows={4} cols={5} /></DataCard>
+          <DataCard><SkeletonTable rows={6} cols={6} /></DataCard>
+        </>
+      ) : (
+      <>
       <DataCard title="Neue Beziehung anlegen">
         <div className="p-4 grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+
           <div className="space-y-1">
             <label className="text-xs text-muted-foreground">Quelle</label>
             <select value={source} onChange={(e) => setSource(e.target.value)} className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
@@ -172,6 +183,8 @@ export default function FinanceIntercompany() {
           </div>
         )}
       </DataCard>
+      </>
+      )}
     </div>
   );
 }
