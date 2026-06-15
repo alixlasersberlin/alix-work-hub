@@ -73,7 +73,7 @@ export default function Personalisierung() {
         <Card
           icon={Zap}
           title="Bewegung & Übergänge"
-          desc="Sanfte Animationen bei Seitenwechseln. Deaktiviert sich bei „Reduzierte Bewegung" automatisch."
+          desc='Sanfte Animationen bei Seitenwechseln. Deaktiviert sich bei „Reduzierte Bewegung" automatisch.'
         >
           <PageFadeToggle />
         </Card>
