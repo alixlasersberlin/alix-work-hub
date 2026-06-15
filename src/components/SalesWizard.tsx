@@ -70,6 +70,8 @@ type State = {
   first_name: string;
   last_name: string;
   company: string;
+  is_startup: boolean;
+  studio_years: string;
   studio_in_germany: boolean;
   has_nisv: '' | 'ja' | 'nein';
   country_code: string;
