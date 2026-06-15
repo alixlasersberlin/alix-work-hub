@@ -108,6 +108,8 @@ export default function FinanceMahnwesenSettings() {
         Hinweis: Die Mahn-Engine läuft täglich 03:00 UTC und erzeugt nur Entwürfe.
         Versand erfolgt ausschließlich manuell aus der Übersicht.
       </p>
+      </>
+      )}
     </div>
   );
 }
