@@ -172,6 +172,50 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
             </div>
           </div>
 
+          <h3 className="text-sm font-medium text-foreground pt-2">Mandanten-Zuordnung</h3>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs text-muted-foreground">Ansprechpartner-Mandant</Label>
+              <Select
+                value={form.contact_tenant_id || '__none__'}
+                onValueChange={v => set('contact_tenant_id', v === '__none__' ? '' : v)}
+              >
+                <SelectTrigger className="bg-secondary border-border mt-1">
+                  <SelectValue placeholder="Mandant wählen" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">— Nicht zugewiesen —</SelectItem>
+                  {tenants.map(t => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.flag_emoji ? `${t.flag_emoji} ` : ''}{t.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Lieferer-Mandant</Label>
+              <Select
+                value={form.supplier_tenant_id || '__none__'}
+                onValueChange={v => set('supplier_tenant_id', v === '__none__' ? '' : v)}
+              >
+                <SelectTrigger className="bg-secondary border-border mt-1">
+                  <SelectValue placeholder="Mandant wählen" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">— Nicht zugewiesen —</SelectItem>
+                  {tenants.map(t => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.flag_emoji ? `${t.flag_emoji} ` : ''}{t.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+
+
 
           <h3 className="text-sm font-medium text-foreground pt-2">Rechnungsadresse</h3>
           <div className="grid grid-cols-2 gap-3">
