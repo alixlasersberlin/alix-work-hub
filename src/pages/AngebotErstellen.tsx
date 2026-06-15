@@ -852,6 +852,15 @@ export default function AngebotErstellen() {
             className="bg-secondary border-border mt-1.5"
           />
         </div>
+        <div className="md:col-span-3">
+          <Label>Sonderaktion</Label>
+          <Textarea
+            value={specialOffer}
+            onChange={e => setSpecialOffer(e.target.value)}
+            placeholder="z.B. -10% Frühbucher-Rabatt, kostenlose Einweisung, …"
+            className="bg-secondary border-border mt-1.5 min-h-[72px]"
+          />
+        </div>
       </div>
 
       {/* Aus Anfrage übernehmen */}
