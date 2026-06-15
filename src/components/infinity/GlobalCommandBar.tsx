@@ -144,12 +144,16 @@ export function GlobalCommandBar() {
                   onSelect={() => {
                     if (h.kind === "customer") go(`/kunden/${h.id}`);
                     else if (h.kind === "order") go(`/auftraege/${h.id}`);
+                    else if (h.kind === "repair") go(`/reparatur/${h.id}`);
+                    else if (h.kind === "invoice") go(`/finance/belege?invoice=${h.id}`);
                     else go(`/tickets/${h.id}`);
                   }}
                 >
                   {h.kind === "customer" && <User className="mr-2 h-4 w-4 text-sky-400" />}
                   {h.kind === "order" && <FileText className="mr-2 h-4 w-4 text-amber-400" />}
                   {h.kind === "ticket" && <Ticket className="mr-2 h-4 w-4 text-rose-400" />}
+                  {h.kind === "repair" && <Wrench className="mr-2 h-4 w-4 text-emerald-400" />}
+                  {h.kind === "invoice" && <Receipt className="mr-2 h-4 w-4 text-violet-400" />}
                   <div className="flex flex-col">
                     <span>{h.label}</span>
                     {h.sub && <span className="text-xs text-muted-foreground">{h.sub}</span>}
