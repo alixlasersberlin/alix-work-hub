@@ -93,6 +93,8 @@ const INITIAL: State = {
   first_name: '',
   last_name: '',
   company: '',
+  is_startup: false,
+  studio_years: '',
   studio_in_germany: false,
   has_nisv: '',
   country_code: '+49',
