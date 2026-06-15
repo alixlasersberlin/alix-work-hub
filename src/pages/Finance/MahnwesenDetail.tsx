@@ -140,6 +140,7 @@ export default function FinanceMahnwesenDetail() {
           </div>
         )}
       </DataCard>
+      )}
     </div>
   );
 }
