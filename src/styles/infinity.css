@@ -233,10 +233,158 @@ html[data-infinity="neon"] body::before {
     radial-gradient(40% 30% at 80% 80%, hsl(var(--infinity-accent-2) / 0.15), transparent 70%);
   mix-blend-mode: screen;
 }
-html[data-infinity="neon"] .card,
-html[data-infinity="neon"] [class*="rounded-xl"]:hover {
-  transition: box-shadow var(--infinity-transition);
+
+/* --- Infinity Neon: Full Component Layer (Phase I-5) --- */
+
+/* Animiertes Scanline-Raster im Hintergrund */
+html[data-infinity="neon"] body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    linear-gradient(hsl(var(--infinity-accent) / 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--infinity-accent-2) / 0.04) 1px, transparent 1px);
+  background-size: 44px 44px, 44px 44px;
+  mask-image: radial-gradient(ellipse at 50% 40%, black 30%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse at 50% 40%, black 30%, transparent 80%);
+  animation: infinityNeonDrift 22s linear infinite;
 }
+@keyframes infinityNeonDrift {
+  0%   { background-position: 0 0, 0 0; }
+  100% { background-position: 44px 44px, -44px 44px; }
+}
+
+/* Karten: dunkler Korpus mit doppeltem Neon-Rand */
+html[data-infinity="neon"] .card,
+html[data-infinity="neon"] [data-slot="card"],
+html[data-infinity="neon"] .rounded-xl.border,
+html[data-infinity="neon"] .rounded-lg.border {
+  background: linear-gradient(180deg, #060914 0%, #03050e 100%) !important;
+  border: 1px solid hsl(var(--infinity-accent) / 0.30) !important;
+  box-shadow:
+    inset 0 0 0 1px hsl(var(--infinity-accent-2) / 0.10),
+    0 0 0 1px hsl(var(--infinity-accent) / 0.06),
+    0 18px 40px -16px hsl(var(--infinity-accent) / 0.30);
+  transition: transform var(--infinity-transition), box-shadow var(--infinity-transition), border-color var(--infinity-transition);
+}
+html[data-infinity="neon"] .card:hover,
+html[data-infinity="neon"] [data-slot="card"]:hover {
+  border-color: hsl(var(--infinity-accent) / 0.7) !important;
+  box-shadow:
+    inset 0 0 0 1px hsl(var(--infinity-accent-2) / 0.25),
+    0 0 24px -2px hsl(var(--infinity-accent) / 0.55),
+    0 0 60px -10px hsl(var(--infinity-accent-2) / 0.35);
+  transform: translateY(-1px);
+}
+
+/* Sidebar: vertikaler Cyan-Streifen */
+html[data-infinity="neon"] aside.bg-sidebar,
+html[data-infinity="neon"] [data-sidebar="sidebar"] {
+  background: linear-gradient(180deg, #03050e 0%, #050814 100%) !important;
+  border-right: 1px solid hsl(var(--infinity-accent) / 0.35) !important;
+  box-shadow:
+    inset -1px 0 0 hsl(var(--infinity-accent-2) / 0.15),
+    0 0 40px -10px hsl(var(--infinity-accent) / 0.35);
+}
+html[data-infinity="neon"] aside.bg-sidebar a[class*="bg-primary/10"],
+html[data-infinity="neon"] aside.bg-sidebar div[class*="bg-primary/10"],
+html[data-infinity="neon"] [data-sidebar="menu-button"][data-active="true"] {
+  background: linear-gradient(90deg, hsl(var(--infinity-accent) / 0.22), transparent 80%) !important;
+  border-left: 2px solid hsl(var(--infinity-accent)) !important;
+  box-shadow:
+    inset 0 0 18px hsl(var(--infinity-accent) / 0.25),
+    0 0 14px -2px hsl(var(--infinity-accent) / 0.45);
+  color: hsl(var(--infinity-accent)) !important;
+}
+
+/* Header */
+html[data-infinity="neon"] header,
+html[data-infinity="neon"] .border-b.bg-background,
+html[data-infinity="neon"] .sticky.top-0 {
+  background: #03050e !important;
+  border-bottom: 1px solid hsl(var(--infinity-accent) / 0.35) !important;
+  box-shadow: 0 1px 0 hsl(var(--infinity-accent-2) / 0.15), 0 8px 30px -16px hsl(var(--infinity-accent) / 0.5);
+}
+
+/* Buttons primär: leuchtender Neon-Knopf */
+html[data-infinity="neon"] .bg-primary {
+  background: linear-gradient(135deg, hsl(var(--infinity-accent)), hsl(var(--infinity-accent-2))) !important;
+  color: #050814 !important;
+  border: 1px solid hsl(var(--infinity-accent) / 0.8) !important;
+  box-shadow:
+    inset 0 1px 0 hsl(0 0% 100% / 0.4),
+    0 0 18px -2px hsl(var(--infinity-accent) / 0.7),
+    0 0 40px -10px hsl(var(--infinity-accent-2) / 0.6);
+  text-shadow: 0 0 8px hsl(0 0% 100% / 0.3);
+}
+html[data-infinity="neon"] .bg-primary:hover {
+  filter: brightness(1.15) saturate(1.2);
+  box-shadow:
+    inset 0 1px 0 hsl(0 0% 100% / 0.5),
+    0 0 28px -2px hsl(var(--infinity-accent) / 0.9),
+    0 0 60px -10px hsl(var(--infinity-accent-2) / 0.7);
+}
+
+/* Inputs */
+html[data-infinity="neon"] input:not([type="checkbox"]):not([type="radio"]),
+html[data-infinity="neon"] textarea,
+html[data-infinity="neon"] select,
+html[data-infinity="neon"] [role="combobox"] {
+  background: hsl(220 60% 4%) !important;
+  border: 1px solid hsl(var(--infinity-accent) / 0.30) !important;
+  color: hsl(var(--infinity-accent)) !important;
+}
+html[data-infinity="neon"] input::placeholder,
+html[data-infinity="neon"] textarea::placeholder { color: hsl(var(--infinity-accent) / 0.4) !important; }
+html[data-infinity="neon"] input:focus,
+html[data-infinity="neon"] textarea:focus,
+html[data-infinity="neon"] [role="combobox"]:focus {
+  border-color: hsl(var(--infinity-accent)) !important;
+  box-shadow: 0 0 0 2px hsl(var(--infinity-accent) / 0.25), 0 0 22px -2px hsl(var(--infinity-accent) / 0.6) !important;
+  outline: none !important;
+}
+
+/* Tabellen */
+html[data-infinity="neon"] thead th {
+  background: #03050e !important;
+  color: hsl(var(--infinity-accent)) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid hsl(var(--infinity-accent) / 0.4) !important;
+}
+html[data-infinity="neon"] tbody tr { transition: background var(--infinity-transition); }
+html[data-infinity="neon"] tbody tr:hover {
+  background: linear-gradient(90deg, hsl(var(--infinity-accent) / 0.12), hsl(var(--infinity-accent-2) / 0.04)) !important;
+  box-shadow: inset 0 0 0 1px hsl(var(--infinity-accent) / 0.25);
+}
+
+/* Dialoge */
+html[data-infinity="neon"] [role="dialog"],
+html[data-infinity="neon"] [data-radix-popper-content-wrapper] > * {
+  background: linear-gradient(180deg, #050814 0%, #03050e 100%) !important;
+  border: 1px solid hsl(var(--infinity-accent) / 0.45) !important;
+  box-shadow:
+    0 0 0 1px hsl(var(--infinity-accent-2) / 0.15),
+    0 30px 60px -20px hsl(var(--infinity-accent) / 0.4),
+    0 0 80px -20px hsl(var(--infinity-accent-2) / 0.5);
+}
+
+/* Headlines: leichter Neon-Schimmer */
+html[data-infinity="neon"] h1,
+html[data-infinity="neon"] h2 {
+  text-shadow: 0 0 18px hsl(var(--infinity-accent) / 0.25);
+}
+
+/* Scrollbar */
+html[data-infinity="neon"] ::-webkit-scrollbar { width: 10px; height: 10px; }
+html[data-infinity="neon"] ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, hsl(var(--infinity-accent)), hsl(var(--infinity-accent-2)));
+  border-radius: 8px;
+  box-shadow: 0 0 12px hsl(var(--infinity-accent) / 0.5);
+}
+
 
 /* ============================================================
    3) INFINITY EXECUTIVE — schwarzes Leder, Gold
@@ -255,6 +403,150 @@ html[data-infinity="executive"] body::before {
   background:
     radial-gradient(70% 50% at 50% 0%, hsl(var(--infinity-accent) / 0.10), transparent 70%),
     linear-gradient(180deg, transparent 0%, hsl(0 0% 0% / 0.35) 100%);
+}
+
+/* --- Infinity Executive: Full Component Layer (Phase I-5) --- */
+
+/* Subtile Leder-Textur via fein körnigem Gradient */
+html[data-infinity="executive"] body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    repeating-linear-gradient(45deg, hsl(40 30% 8% / 0.08) 0 2px, transparent 2px 5px),
+    radial-gradient(60% 40% at 50% 100%, hsl(var(--infinity-accent) / 0.06), transparent 70%);
+  mix-blend-mode: overlay;
+}
+
+/* Karten: schwarzes Leder mit Gold-Kante */
+html[data-infinity="executive"] .card,
+html[data-infinity="executive"] [data-slot="card"],
+html[data-infinity="executive"] .rounded-xl.border,
+html[data-infinity="executive"] .rounded-lg.border {
+  background: linear-gradient(180deg, #0c0a06 0%, #050402 100%) !important;
+  border: 1px solid hsl(var(--infinity-accent) / 0.30) !important;
+  box-shadow:
+    inset 0 1px 0 hsl(var(--infinity-accent-2) / 0.20),
+    inset 0 -1px 0 hsl(0 0% 0% / 0.6),
+    0 18px 40px -18px hsl(0 0% 0% / 0.9),
+    0 0 0 1px hsl(var(--infinity-accent) / 0.05);
+  transition: border-color var(--infinity-transition), box-shadow var(--infinity-transition);
+}
+html[data-infinity="executive"] .card:hover,
+html[data-infinity="executive"] [data-slot="card"]:hover {
+  border-color: hsl(var(--infinity-accent) / 0.55) !important;
+  box-shadow:
+    inset 0 1px 0 hsl(var(--infinity-accent-2) / 0.35),
+    inset 0 -1px 0 hsl(0 0% 0% / 0.6),
+    0 20px 50px -16px hsl(0 0% 0% / 0.95),
+    0 0 18px -2px hsl(var(--infinity-accent) / 0.30);
+}
+
+/* Sidebar: tiefes Schwarz mit Gold-Trennlinie */
+html[data-infinity="executive"] aside.bg-sidebar,
+html[data-infinity="executive"] [data-sidebar="sidebar"] {
+  background: linear-gradient(180deg, #050402 0%, #020100 100%) !important;
+  border-right: 1px solid hsl(var(--infinity-accent) / 0.35) !important;
+  box-shadow:
+    inset -1px 0 0 hsl(var(--infinity-accent-2) / 0.10),
+    6px 0 30px -10px hsl(0 0% 0% / 0.9);
+}
+html[data-infinity="executive"] aside.bg-sidebar a[class*="bg-primary/10"],
+html[data-infinity="executive"] aside.bg-sidebar div[class*="bg-primary/10"],
+html[data-infinity="executive"] [data-sidebar="menu-button"][data-active="true"] {
+  background: linear-gradient(90deg, hsl(var(--infinity-accent) / 0.20), transparent 80%) !important;
+  border-left: 2px solid hsl(var(--infinity-accent)) !important;
+  color: hsl(var(--infinity-accent-2)) !important;
+  box-shadow: inset 0 0 0 1px hsl(var(--infinity-accent) / 0.18);
+}
+
+/* Header */
+html[data-infinity="executive"] header,
+html[data-infinity="executive"] .border-b.bg-background,
+html[data-infinity="executive"] .sticky.top-0 {
+  background: linear-gradient(180deg, #050402 0%, #0a0805 100%) !important;
+  border-bottom: 1px solid hsl(var(--infinity-accent) / 0.40) !important;
+  box-shadow: 0 1px 0 hsl(var(--infinity-accent-2) / 0.10);
+}
+
+/* Buttons primär: massiver Gold-Knopf */
+html[data-infinity="executive"] .bg-primary {
+  background: linear-gradient(180deg, hsl(var(--infinity-accent-2)) 0%, hsl(var(--infinity-accent)) 100%) !important;
+  color: #0a0805 !important;
+  border: 1px solid hsl(40 60% 35%) !important;
+  box-shadow:
+    inset 0 1px 0 hsl(50 100% 90% / 0.6),
+    inset 0 -1px 0 hsl(30 60% 20% / 0.5),
+    0 8px 20px -8px hsl(var(--infinity-accent) / 0.5);
+  font-weight: 600;
+}
+html[data-infinity="executive"] .bg-primary:hover {
+  filter: brightness(1.08);
+  box-shadow:
+    inset 0 1px 0 hsl(50 100% 90% / 0.8),
+    inset 0 -1px 0 hsl(30 60% 20% / 0.5),
+    0 10px 26px -8px hsl(var(--infinity-accent) / 0.7);
+}
+
+/* Inputs: dunkel mit Gold-Focus */
+html[data-infinity="executive"] input:not([type="checkbox"]):not([type="radio"]),
+html[data-infinity="executive"] textarea,
+html[data-infinity="executive"] select,
+html[data-infinity="executive"] [role="combobox"] {
+  background: #050402 !important;
+  border: 1px solid hsl(40 30% 20%) !important;
+  color: hsl(var(--infinity-accent-2)) !important;
+}
+html[data-infinity="executive"] input:focus,
+html[data-infinity="executive"] textarea:focus,
+html[data-infinity="executive"] [role="combobox"]:focus {
+  border-color: hsl(var(--infinity-accent)) !important;
+  box-shadow: 0 0 0 2px hsl(var(--infinity-accent) / 0.25) !important;
+  outline: none !important;
+}
+
+/* Tabellen */
+html[data-infinity="executive"] thead th {
+  background: linear-gradient(180deg, #0a0805 0%, #050402 100%) !important;
+  color: hsl(var(--infinity-accent-2)) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.78rem;
+  border-bottom: 1px solid hsl(var(--infinity-accent) / 0.4) !important;
+}
+html[data-infinity="executive"] tbody tr { transition: background var(--infinity-transition); }
+html[data-infinity="executive"] tbody tr:hover {
+  background: linear-gradient(90deg, hsl(var(--infinity-accent) / 0.08), transparent 80%) !important;
+}
+html[data-infinity="executive"] tbody td { border-color: hsl(40 30% 12%) !important; }
+
+/* Dialoge */
+html[data-infinity="executive"] [role="dialog"],
+html[data-infinity="executive"] [data-radix-popper-content-wrapper] > * {
+  background: linear-gradient(180deg, #0c0a06 0%, #050402 100%) !important;
+  border: 1px solid hsl(var(--infinity-accent) / 0.45) !important;
+  box-shadow:
+    inset 0 1px 0 hsl(var(--infinity-accent-2) / 0.20),
+    0 30px 60px -20px hsl(0 0% 0% / 0.95);
+}
+
+/* Headlines in Gold */
+html[data-infinity="executive"] h1,
+html[data-infinity="executive"] h2 {
+  background: linear-gradient(180deg, hsl(var(--infinity-accent-2)) 0%, hsl(var(--infinity-accent)) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 1px 0 hsl(0 0% 0% / 0.4);
+}
+
+/* Scrollbar */
+html[data-infinity="executive"] ::-webkit-scrollbar { width: 10px; height: 10px; }
+html[data-infinity="executive"] ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, hsl(var(--infinity-accent-2)), hsl(var(--infinity-accent)));
+  border-radius: 8px;
 }
 
 /* ============================================================
