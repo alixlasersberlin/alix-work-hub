@@ -108,6 +108,7 @@ export default function FinanceFreigaben() {
           {rows.length === 0 && <div className="text-sm text-muted-foreground p-4 text-center">Keine Einträge</div>}
         </div>
       </DataCard>
+      )}
 
       <Dialog open={dlg.open} onOpenChange={(o) => setDlg({ ...dlg, open: o })}>
         <DialogContent>
