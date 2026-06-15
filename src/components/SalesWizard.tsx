@@ -486,10 +486,11 @@ export default function SalesWizard({ publicMode = false }: Props) {
                       const v = e.target.value.replace(/\D/g, '').slice(0, 3);
                       setData({ ...data, studio_years: v });
                     }}
-                    placeholder="z. B. 5"
+                    placeholder={t.example_short}
                     className="w-28 bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-cyan-400/60 focus-visible:border-cyan-300/60 disabled:opacity-40"
                   />
-                  <span className="text-sm text-white/80">Jahr(e)</span>
+                  <span className="text-sm text-white/80">{t.years_label}</span>
+
                 </div>
               </div>
             </Section>
