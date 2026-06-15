@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { VipBadge } from '@/components/VipBadge';
@@ -35,8 +36,22 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
     bic: customer?.bic || '',
     bank_name: customer?.bank_name || '',
     is_vip: !!customer?.is_vip,
+    contact_tenant_id: customer?.contact_tenant_id || '',
+    supplier_tenant_id: customer?.supplier_tenant_id || '',
   });
   const [saving, setSaving] = useState(false);
+  const [tenants, setTenants] = useState<Array<{ id: string; name: string; flag_emoji: string | null; code: string }>>([]);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from('tenants')
+        .select('id, name, flag_emoji, code')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true });
+      setTenants(data || []);
+    })();
+  }, []);
 
   // Auto-detect bank from IBAN
   function handleIbanChange(val: string) {
@@ -101,6 +116,8 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
       bank_name: form.bank_name || null,
       birth_date: form.birth_date || null,
       is_vip: form.is_vip,
+      contact_tenant_id: form.contact_tenant_id || null,
+      supplier_tenant_id: form.supplier_tenant_id || null,
     };
     const isNew = !customer?.id;
     const { error } = isNew
@@ -154,6 +171,50 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
               />
             </div>
           </div>
+
+          <h3 className="text-sm font-medium text-foreground pt-2">Mandanten-Zuordnung</h3>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs text-muted-foreground">Ansprechpartner-Mandant</Label>
+              <Select
+                value={form.contact_tenant_id || '__none__'}
+                onValueChange={v => set('contact_tenant_id', v === '__none__' ? '' : v)}
+              >
+                <SelectTrigger className="bg-secondary border-border mt-1">
+                  <SelectValue placeholder="Mandant wählen" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">— Nicht zugewiesen —</SelectItem>
+                  {tenants.map(t => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.flag_emoji ? `${t.flag_emoji} ` : ''}{t.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Lieferer-Mandant</Label>
+              <Select
+                value={form.supplier_tenant_id || '__none__'}
+                onValueChange={v => set('supplier_tenant_id', v === '__none__' ? '' : v)}
+              >
+                <SelectTrigger className="bg-secondary border-border mt-1">
+                  <SelectValue placeholder="Mandant wählen" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">— Nicht zugewiesen —</SelectItem>
+                  {tenants.map(t => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.flag_emoji ? `${t.flag_emoji} ` : ''}{t.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+
 
 
           <h3 className="text-sm font-medium text-foreground pt-2">Rechnungsadresse</h3>
