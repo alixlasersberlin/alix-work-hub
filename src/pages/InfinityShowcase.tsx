@@ -164,7 +164,7 @@ export default function InfinityShowcase() {
         {showSkeleton ? (
           <SkeletonTable rows={6} cols={4} />
         ) : (
-          <InfinityTable
+          <InfinityTable<Row>
             data={DEMO}
             columns={COLS}
             searchKeys={["order", "customer"]}
