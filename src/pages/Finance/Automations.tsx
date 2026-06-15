@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Workflow, Plus, Play, Trash2, Power } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { PageHeader, PageLoading, DataCard } from '@/components/PageShell';
+import { DataCard } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { SkeletonTable } from '@/components/infinity/Skeleton';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -87,14 +90,17 @@ export default function FinanceAutomations() {
     setBusy(false);
   };
 
-  if (loading) return <PageLoading />;
   return (
     <div className="space-y-6">
-      <PageHeader title="Finance Automations" subtitle={"Regel-basierte Workflow-Engine"} icon={Workflow} actions={<>
-        <Button variant="outline" onClick={runNow} disabled={busy}><Play className="h-4 w-4 mr-2" />Jetzt ausführen</Button>
-        {canEdit && <Button onClick={() => setShow(true)}><Plus className="h-4 w-4 mr-2" />Neue Regel</Button>}
-      </>} />
+      <PageHeader title="Finance Automations" subtitle={loading ? 'Lädt…' : 'Regel-basierte Workflow-Engine'} icon={Workflow} noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${rows.length} Regeln`} pulse={loading} />}
+        actions={<>
+          <Button variant="outline" onClick={runNow} disabled={busy}><Play className="h-4 w-4 mr-2" />Jetzt ausführen</Button>
+          {canEdit && <Button onClick={() => setShow(true)}><Plus className="h-4 w-4 mr-2" />Neue Regel</Button>}
+        </>} />
 
+      {loading ? <DataCard><SkeletonTable rows={6} cols={4} /></DataCard> : (
+      <>
       <DataCard title={`${rows.length} Regeln`}>
         <div className="space-y-2">
           {rows.map(r => (
@@ -134,6 +140,8 @@ export default function FinanceAutomations() {
           {runs.length === 0 && <div className="text-sm text-muted-foreground p-4 text-center">Noch keine Ausführungen</div>}
         </div>
       </DataCard>
+      </>
+      )}
 
       <Dialog open={show} onOpenChange={setShow}>
         <DialogContent>
