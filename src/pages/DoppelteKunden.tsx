@@ -4,10 +4,16 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Users, Loader2, ArrowLeft, ExternalLink, Trash2, Search } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Users, Loader2, ArrowLeft, ExternalLink, Trash2, Search, GitMerge } from 'lucide-react';
 import { SourceBadge } from '@/lib/source-system';
 import CustomerDeleteDialog from '@/components/CustomerDeleteDialog';
 import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 type DupKey = 'email' | 'phone' | 'company_name';
 
@@ -17,12 +23,19 @@ function norm(v: any): string {
 
 export default function DoppelteKunden() {
   const navigate = useNavigate();
-  const { isAdmin } = useAuth();
+  const { isAdmin, hasRole } = useAuth();
+  const canMerge = hasRole('Super Admin');
   const [customers, setCustomers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [keyField, setKeyField] = useState<DupKey>('email');
   const [search, setSearch] = useState('');
   const [deleteCustomer, setDeleteCustomer] = useState<any>(null);
+
+  // Merge state: per-group selections
+  const [primaryByGroup, setPrimaryByGroup] = useState<Record<string, string>>({});
+  const [dupsByGroup, setDupsByGroup] = useState<Record<string, Set<string>>>({});
+  const [mergePending, setMergePending] = useState<{ groupKey: string; primary: any; dups: any[] } | null>(null);
+  const [merging, setMerging] = useState(false);
 
   async function loadAll() {
     setLoading(true);
@@ -39,6 +52,8 @@ export default function DoppelteKunden() {
       if (data.length < CHUNK) break;
     }
     setCustomers(all);
+    setPrimaryByGroup({});
+    setDupsByGroup({});
     setLoading(false);
   }
 
@@ -70,6 +85,57 @@ export default function DoppelteKunden() {
   }, [customers, keyField, search]);
 
   const totalDuplicates = groups.reduce((sum, g) => sum + g.rows.length, 0);
+
+  function getPrimaryId(g: { key: string; rows: any[] }) {
+    return primaryByGroup[g.key] ?? g.rows[0].id;
+  }
+  function toggleDup(groupKey: string, id: string, checked: boolean) {
+    setDupsByGroup(prev => {
+      const next = { ...prev };
+      const set = new Set(next[groupKey] ?? []);
+      if (checked) set.add(id); else set.delete(id);
+      next[groupKey] = set;
+      return next;
+    });
+  }
+  function setPrimary(groupKey: string, id: string) {
+    setPrimaryByGroup(prev => ({ ...prev, [groupKey]: id }));
+    // ensure primary not in dup set
+    setDupsByGroup(prev => {
+      const set = new Set(prev[groupKey] ?? []);
+      set.delete(id);
+      return { ...prev, [groupKey]: set };
+    });
+  }
+
+  function startMerge(g: { key: string; rows: any[] }) {
+    const primaryId = getPrimaryId(g);
+    const primary = g.rows.find(r => r.id === primaryId);
+    const dupIds = Array.from(dupsByGroup[g.key] ?? []).filter(id => id !== primaryId);
+    if (!primary || dupIds.length === 0) {
+      toast.error('Bitte mindestens ein zu mergendes Duplikat auswählen.');
+      return;
+    }
+    const dups = g.rows.filter(r => dupIds.includes(r.id));
+    setMergePending({ groupKey: g.key, primary, dups });
+  }
+
+  async function confirmMerge() {
+    if (!mergePending) return;
+    setMerging(true);
+    const { error } = await supabase.rpc('merge_customers', {
+      _primary_id: mergePending.primary.id,
+      _duplicate_ids: mergePending.dups.map(d => d.id),
+    });
+    setMerging(false);
+    if (error) {
+      toast.error('Zusammenführen fehlgeschlagen: ' + error.message);
+      return;
+    }
+    toast.success(`${mergePending.dups.length} Kunde(n) in „${mergePending.primary.company_name || mergePending.primary.contact_name || '—'}" zusammengeführt.`);
+    setMergePending(null);
+    loadAll();
+  }
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in space-y-6">
@@ -112,6 +178,12 @@ export default function DoppelteKunden() {
         </div>
       </div>
 
+      {canMerge && (
+        <p className="text-xs text-muted-foreground">
+          Wähle pro Gruppe den <span className="text-primary font-medium">Master-Kunden</span> (Radio) und die zu integrierenden Duplikate (Häkchen). Beim Zusammenführen werden alle Aufträge, Rechnungen, Notizen usw. auf den Master umgeschrieben und die Duplikate gelöscht.
+        </p>
+      )}
+
       {loading ? (
         <div className="flex items-center justify-center py-20 text-muted-foreground">
           <Loader2 className="w-5 h-5 mr-2 animate-spin" /> Lade Kunden …
@@ -122,45 +194,94 @@ export default function DoppelteKunden() {
         </div>
       ) : (
         <div className="space-y-4">
-          {groups.map((g) => (
-            <div key={g.key} className="rounded-xl border border-border bg-card overflow-hidden">
-              <div className="px-4 py-2 bg-secondary/40 border-b border-border flex items-center justify-between text-sm">
-                <span className="font-mono text-foreground">{g.key}</span>
-                <span className="text-xs text-muted-foreground">{g.rows.length} Treffer</span>
-              </div>
-              <div className="divide-y divide-border">
-                {g.rows.map((c) => (
-                  <div key={c.id} className="px-4 py-3 flex items-center gap-3 hover:bg-secondary/30">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium text-foreground truncate">
-                          {c.company_name || c.contact_name || '—'}
-                        </p>
-                        <SourceBadge source={c.source_system} />
-                      </div>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {[c.contact_name, c.email, c.phone].filter(Boolean).join(' · ')}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground/70 mt-0.5">
-                        Erstellt: {new Date(c.created_at).toLocaleString('de-DE')}
-                        {c.external_customer_id ? ` · Nr. ${c.external_customer_id}` : ''}
-                      </p>
-                    </div>
-                    <Button asChild variant="outline" size="sm">
-                      <Link to={`/kunden/${c.id}`}>
-                        <ExternalLink className="w-3.5 h-3.5 mr-1" /> Öffnen
-                      </Link>
-                    </Button>
-                    {isAdmin && (
-                      <Button variant="outline" size="sm" onClick={() => setDeleteCustomer(c)}>
-                        <Trash2 className="w-3.5 h-3.5 mr-1" /> Löschen
+          {groups.map((g) => {
+            const primaryId = getPrimaryId(g);
+            const selectedDups = (dupsByGroup[g.key] ?? new Set<string>());
+            const dupCount = Array.from(selectedDups).filter(id => id !== primaryId).length;
+            return (
+              <div key={g.key} className="rounded-xl border border-border bg-card overflow-hidden">
+                <div className="px-4 py-2 bg-secondary/40 border-b border-border flex items-center justify-between text-sm gap-3">
+                  <span className="font-mono text-foreground truncate">{g.key}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-muted-foreground">{g.rows.length} Treffer</span>
+                    {canMerge && (
+                      <Button
+                        size="sm"
+                        variant="default"
+                        disabled={dupCount === 0}
+                        onClick={() => startMerge(g)}
+                      >
+                        <GitMerge className="w-3.5 h-3.5 mr-1" />
+                        Zusammenführen {dupCount > 0 ? `(${dupCount})` : ''}
                       </Button>
                     )}
                   </div>
-                ))}
+                </div>
+                <div className="divide-y divide-border">
+                  {g.rows.map((c) => {
+                    const isPrimary = c.id === primaryId;
+                    const isDupChecked = selectedDups.has(c.id) && !isPrimary;
+                    return (
+                      <div key={c.id} className="px-4 py-3 flex items-center gap-3 hover:bg-secondary/30">
+                        {canMerge && (
+                          <div className="flex items-center gap-2 shrink-0">
+                            <label className="flex items-center gap-1 text-[11px] text-muted-foreground cursor-pointer" title="Als Master setzen">
+                              <input
+                                type="radio"
+                                name={`primary-${g.key}`}
+                                checked={isPrimary}
+                                onChange={() => setPrimary(g.key, c.id)}
+                                className="accent-primary"
+                              />
+                              Master
+                            </label>
+                            <label className="flex items-center gap-1 text-[11px] text-muted-foreground cursor-pointer" title="Als Duplikat markieren">
+                              <Checkbox
+                                checked={isDupChecked}
+                                disabled={isPrimary}
+                                onCheckedChange={(v) => toggleDup(g.key, c.id, !!v)}
+                              />
+                              Dup.
+                            </label>
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-foreground truncate">
+                              {c.company_name || c.contact_name || '—'}
+                            </p>
+                            <SourceBadge source={c.source_system} />
+                            {isPrimary && canMerge && (
+                              <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-primary/15 text-primary border border-primary/30">
+                                Master
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {[c.contact_name, c.email, c.phone].filter(Boolean).join(' · ')}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground/70 mt-0.5">
+                            Erstellt: {new Date(c.created_at).toLocaleString('de-DE')}
+                            {c.external_customer_id ? ` · Nr. ${c.external_customer_id}` : ''}
+                          </p>
+                        </div>
+                        <Button asChild variant="outline" size="sm">
+                          <Link to={`/kunden/${c.id}`}>
+                            <ExternalLink className="w-3.5 h-3.5 mr-1" /> Öffnen
+                          </Link>
+                        </Button>
+                        {isAdmin && (
+                          <Button variant="outline" size="sm" onClick={() => setDeleteCustomer(c)}>
+                            <Trash2 className="w-3.5 h-3.5 mr-1" /> Löschen
+                          </Button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -172,6 +293,47 @@ export default function DoppelteKunden() {
           onDeleted={() => { setDeleteCustomer(null); loadAll(); }}
         />
       )}
+
+      <AlertDialog open={!!mergePending} onOpenChange={(o) => !o && !merging && setMergePending(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Kunden zusammenführen?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3 text-sm">
+                <div>
+                  <div className="text-muted-foreground">Master-Kunde (bleibt erhalten):</div>
+                  <div className="font-medium text-foreground">
+                    {mergePending?.primary.company_name || mergePending?.primary.contact_name || '—'}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {[mergePending?.primary.email, mergePending?.primary.phone].filter(Boolean).join(' · ')}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground">Werden gelöscht ({mergePending?.dups.length}):</div>
+                  <ul className="list-disc list-inside text-foreground">
+                    {mergePending?.dups.map(d => (
+                      <li key={d.id} className="truncate">
+                        {d.company_name || d.contact_name || '—'}
+                        <span className="text-xs text-muted-foreground"> · {d.email || d.phone || '—'}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="text-xs text-amber-500">
+                  Alle verknüpften Datensätze (Aufträge, Rechnungen, Notizen, Mails …) werden auf den Master umgeschrieben. Diese Aktion kann nicht rückgängig gemacht werden.
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={merging}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={(e) => { e.preventDefault(); confirmMerge(); }} disabled={merging}>
+              {merging ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Führe zusammen …</> : 'Zusammenführen'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
