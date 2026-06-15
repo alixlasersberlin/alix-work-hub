@@ -7,6 +7,8 @@
 @import './styles/itable.css';
 /* Accessibility Pro (Phase I-11) */
 @import './styles/a11y.css';
+/* Page Transitions (Phase I-15) */
+@import './styles/transitions.css';
 
 /* Fonts werden in index.html non-blocking geladen (preconnect + preload) */
 
