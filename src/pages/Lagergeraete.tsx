@@ -794,6 +794,7 @@ export default function Lagergeraete({
       .replace(/\s*\[Kunde:\s*[^\]]+\]\s*/g, ' ')
       .replace(/\s*\[Schusszahl:\s*[^\]]+\]\s*/g, ' ')
       .replace(/\s*\[Leihstart:\s*[^\]]+\]\s*/g, ' ')
+      .replace(/\s*\[Reparatur:\s*[^\]]+\]\s*/g, ' ')
       .trim();
     const effectiveStatus = deviceType === 'Leihgerät' ? 'Bestand' : deviceStatus;
     const leihTags: string[] = [];
@@ -806,6 +807,7 @@ export default function Lagergeraete({
       }
       const shot = leihShotCount.trim();
       if (shot) leihTags.push(`[Schusszahl: ${shot}]`);
+      if (leihRepairId) leihTags.push(`[Reparatur: ${leihRepairId}]`);
     }
     const tagPrefix = `[Typ: ${deviceType}] [Status: ${effectiveStatus}]${leihTags.length ? ' ' + leihTags.join(' ') : ''}`;
     const notesWithType = `${tagPrefix}${cleanedNotes ? ' ' + cleanedNotes : ''}`;
