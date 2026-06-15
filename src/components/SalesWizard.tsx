@@ -70,6 +70,8 @@ type State = {
   first_name: string;
   last_name: string;
   company: string;
+  is_startup: boolean;
+  studio_years: string;
   studio_in_germany: boolean;
   has_nisv: '' | 'ja' | 'nein';
   country_code: string;
@@ -91,6 +93,8 @@ const INITIAL: State = {
   first_name: '',
   last_name: '',
   company: '',
+  is_startup: false,
+  studio_years: '',
   studio_in_germany: false,
   has_nisv: '',
   country_code: '+49',
@@ -154,8 +158,10 @@ export default function SalesWizard({ publicMode = false }: Props) {
         deviceLines.push(`Studio in Deutschland: Ja`);
         if (data.has_nisv) deviceLines.push(`NISV: ${data.has_nisv === 'ja' ? 'Ja' : 'Nein'}`);
       }
+      if (data.is_startup) deviceLines.push(`Neueröffnung / Startup: Ja`);
+      else if (data.studio_years) deviceLines.push(`Studio besteht seit: ${data.studio_years} Jahr(e)`);
       const mergedNotes = [deviceLines.join('\n'), data.notes].filter(Boolean).join('\n\n');
-      const { laser_model, beauty_model, studio_in_germany, has_nisv, ...rest } = data;
+      const { laser_model, beauty_model, studio_in_germany, has_nisv, is_startup, studio_years, ...rest } = data;
       const { data: json, error: fnError } = await supabase.functions.invoke('sales-wizard-submit', {
         body: {
           ...rest,
@@ -166,6 +172,8 @@ export default function SalesWizard({ publicMode = false }: Props) {
             ...(beauty_model ? [`Gerät: ${beauty_model}`] : []),
             ...(studio_in_germany ? ['Studio: Deutschland'] : []),
             ...(studio_in_germany && has_nisv ? [`NISV: ${has_nisv === 'ja' ? 'Ja' : 'Nein'}`] : []),
+            ...(is_startup ? ['Neueröffnung/Startup'] : []),
+            ...(!is_startup && studio_years ? [`Studio besteht: ${studio_years} Jahr(e)`] : []),
           ],
           source: publicMode ? 'alixwork_wizard_public' : 'alixwork_wizard_internal',
           turnstile_token: captchaToken,
@@ -451,8 +459,41 @@ export default function SalesWizard({ publicMode = false }: Props) {
           {step === 6 && (
             <Section title={t.s_company} hint={t.optional} publicMode={publicMode}>
               <Input value={data.company} onChange={(e) => setData({ ...data, company: e.target.value })} placeholder={t.company_name} className='bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-cyan-400/60 focus-visible:border-cyan-300/60' />
+
+              <div className="mt-5 space-y-3">
+                <label className="flex items-center gap-3 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={data.is_startup}
+                    onChange={(e) => setData({ ...data, is_startup: e.target.checked, studio_years: e.target.checked ? '' : data.studio_years })}
+                    className="h-4 w-4 rounded border-white/20 bg-white/5 accent-cyan-400"
+                  />
+                  <span className="text-sm text-white/90">Neueröffnung / Startup (optional)</span>
+                </label>
+
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-white/80 whitespace-nowrap">Mein Studio besteht seit</span>
+                  <Input
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    max={999}
+                    maxLength={3}
+                    value={data.studio_years}
+                    disabled={data.is_startup}
+                    onChange={(e) => {
+                      const v = e.target.value.replace(/\D/g, '').slice(0, 3);
+                      setData({ ...data, studio_years: v });
+                    }}
+                    placeholder="z. B. 5"
+                    className="w-28 bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-cyan-400/60 focus-visible:border-cyan-300/60 disabled:opacity-40"
+                  />
+                  <span className="text-sm text-white/80">Jahr(e)</span>
+                </div>
+              </div>
             </Section>
           )}
+
 
           {/* Step 6 – Telefon */}
           {step === 7 && (
