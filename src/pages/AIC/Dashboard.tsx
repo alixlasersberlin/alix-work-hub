@@ -215,19 +215,6 @@ export default function AicDashboard() {
   );
 }
 
-function KpiCard({ title, value, icon: Icon, accent }: { title: string; value: number | string; icon: any; accent: 'primary' | 'destructive' }) {
-  return (
-    <Card className="p-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="text-xs text-muted-foreground">{title}</div>
-          <div className="text-2xl font-bold mt-1">{value}</div>
-        </div>
-        <Icon className={accent === 'destructive' ? 'w-8 h-8 text-destructive/60' : 'w-8 h-8 text-primary/60'} />
-      </div>
-    </Card>
-  );
-}
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (

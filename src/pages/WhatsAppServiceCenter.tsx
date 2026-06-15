@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
+import { PageHeader } from "@/components/infinity/PageHeader";
 
 type Conversation = {
   id: string;
@@ -303,28 +304,26 @@ export default function WhatsAppServiceCenter() {
 
   return (
     <div className="h-[calc(100vh-4rem)] flex flex-col p-4 gap-4">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <MessageSquare className="h-6 w-6 text-primary" /> WhatsApp Service Center
-            <Badge variant="secondary" className="ml-2">Anbieter: Twilio</Badge>
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Eingehende WhatsApp-Nachrichten als Tickets verwalten (Twilio Programmable Messaging)
-          </p>
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" size="sm" onClick={testConnection}>
-            Twilio Verbindung testen
-          </Button>
-          <Button variant="outline" size="sm" onClick={sendTestMessage} disabled={!selected}>
-            WhatsApp Testnachricht senden
-          </Button>
-          <Button variant="outline" size="sm" onClick={loadConversations}>
-            <RefreshCw className="h-4 w-4 mr-1" /> Aktualisieren
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        icon={MessageSquare}
+        title="WhatsApp Service Center"
+        subtitle="Eingehende WhatsApp-Nachrichten als Tickets verwalten (Twilio Programmable Messaging)"
+        noBreadcrumbs
+        actions={
+          <>
+            <Badge variant="secondary" className="mr-2">Anbieter: Twilio</Badge>
+            <Button variant="outline" size="sm" onClick={testConnection}>
+              Twilio Verbindung testen
+            </Button>
+            <Button variant="outline" size="sm" onClick={sendTestMessage} disabled={!selected}>
+              WhatsApp Testnachricht senden
+            </Button>
+            <Button variant="outline" size="sm" onClick={loadConversations}>
+              <RefreshCw className="h-4 w-4 mr-1" /> Aktualisieren
+            </Button>
+          </>
+        }
+      />
 
 
       <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr_320px] gap-4 flex-1 min-h-0">
