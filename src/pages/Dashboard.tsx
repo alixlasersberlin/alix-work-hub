@@ -152,6 +152,7 @@ export default function Dashboard() {
   const [activeSessions, setActiveSessions] = useState<ActiveSession[]>([]);
   const [securityIncidents, setSecurityIncidents] = useState<SecurityIncident[]>([]);
   const [prioOrders, setPrioOrders] = useState<any[]>([]);
+  const [trends, setTrends] = useState<{ orders: number[]; finance: number[] }>({ orders: [], finance: [] });
   const [prioOpen, setPrioOpen] = useState(false);
   const [shipmentFilter, setShipmentFilter] = useState<number | null>(14);
   const [shipmentLimit, setShipmentLimit] = useState<number | null>(10);
