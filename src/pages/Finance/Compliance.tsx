@@ -58,7 +58,6 @@ export default function FinanceCompliance() {
     setBusy(false);
   };
 
-  if (loading) return <PageLoading />;
 
   return (
     <div className="p-6 space-y-6">
