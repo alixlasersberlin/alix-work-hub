@@ -29,6 +29,7 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 const AtDashboard = lazy(() => import("./pages/AtDashboard"));
 const Customers = lazy(() => import("./pages/Customers"));
 const CustomerDetail = lazy(() => import("./pages/CustomerDetail"));
+const DoppelteKunden = lazy(() => import("./pages/DoppelteKunden"));
 const Orders = lazy(() => import("./pages/Orders"));
 const OrdersAt = lazy(() => import("./pages/OrdersAt"));
 const OrdersCh = lazy(() => import("./pages/OrdersCh"));
