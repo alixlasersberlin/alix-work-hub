@@ -59,6 +59,20 @@ type Dict = {
   additional: Record<string, string>;
   delivery: Record<string, string>;
   consultation: Record<string, string>;
+  // extras (device + studio meta)
+  s_wish_device: string;
+  s_wish_device_hint: string;
+  alix_lasers_label: string;
+  alix_beauty_label: string;
+  no_device: string;
+  studio_in_germany_label: string;
+  has_nisv_q: string;
+  yes: string;
+  no: string;
+  startup_label: string;
+  studio_exists_since: string;
+  years_label: string;
+  example_short: string;
 };
 
 export const DICT: Record<Lang, Dict> = {
@@ -96,6 +110,7 @@ export const DICT: Record<Lang, Dict> = {
     additional: { 'NiSV Ausbildung':'NiSV Ausbildung','Laserschulung':'Laserschulung','Finanzierungsmöglichkeiten':'Finanzierungsmöglichkeiten','Mietkauf / Miete / Smart Impulse':'Mietkauf / Miete / Smart Impulse','Katalog anfordern':'Katalog anfordern' },
     delivery: { 'schnellstmöglich':'schnellstmöglich','2–4 Wochen':'2–4 Wochen','4–8 Wochen':'4–8 Wochen','mehr als 8 Wochen':'mehr als 8 Wochen' },
     consultation: { 'Telefonische Beratung':'Telefonische Beratung','WhatsApp Beratung':'WhatsApp Beratung','Studio Beratung':'Studio Beratung','Alix Showroom':'Alix Showroom','Videoberatung':'Videoberatung' },
+    s_wish_device: 'Wunschgerät', s_wish_device_hint: 'Optional – wählen Sie ein Gerät aus unserem Portfolio', alix_lasers_label: 'Alix Lasers', alix_beauty_label: 'Alix Beauty (optional)', no_device: '– Kein Gerät ausgewählt –', studio_in_germany_label: 'Mein Studio ist in Deutschland', has_nisv_q: 'Haben Sie NiSV?', yes: 'Ja', no: 'Nein', startup_label: 'Neueröffnung / Startup (optional)', studio_exists_since: 'Mein Studio besteht seit', years_label: 'Jahr(e)', example_short: 'z. B. 5',
   },
   en: {
     brand_tag: '100% AI Full Technology · Alix Lasers®',
@@ -131,6 +146,7 @@ export const DICT: Record<Lang, Dict> = {
     additional: { 'NiSV Ausbildung':'NiSV training','Laserschulung':'Laser training','Finanzierungsmöglichkeiten':'Financing options','Mietkauf / Miete / Smart Impulse':'Lease-to-own / Rental / Smart Impulse','Katalog anfordern':'Request catalogue' },
     delivery: { 'schnellstmöglich':'as soon as possible','2–4 Wochen':'2–4 weeks','4–8 Wochen':'4–8 weeks','mehr als 8 Wochen':'more than 8 weeks' },
     consultation: { 'Telefonische Beratung':'Phone consultation','WhatsApp Beratung':'WhatsApp consultation','Studio Beratung':'Studio consultation','Alix Showroom':'Alix Showroom','Videoberatung':'Video consultation' },
+    s_wish_device: 'Preferred device', s_wish_device_hint: 'Optional – choose a device from our portfolio', alix_lasers_label: 'Alix Lasers', alix_beauty_label: 'Alix Beauty (optional)', no_device: '– No device selected –', studio_in_germany_label: 'My studio is in Germany', has_nisv_q: 'Do you have NiSV?', yes: 'Yes', no: 'No', startup_label: 'New opening / startup (optional)', studio_exists_since: 'My studio has existed for', years_label: 'year(s)', example_short: 'e.g. 5',
   },
   fr: {
     brand_tag: '100% AI Full Technologie · Alix Lasers®',
@@ -166,6 +182,7 @@ export const DICT: Record<Lang, Dict> = {
     additional: { 'NiSV Ausbildung':'Formation NiSV','Laserschulung':'Formation laser','Finanzierungsmöglichkeiten':'Options de financement','Mietkauf / Miete / Smart Impulse':'Location-vente / Location / Smart Impulse','Katalog anfordern':'Demander le catalogue' },
     delivery: { 'schnellstmöglich':'dès que possible','2–4 Wochen':'2–4 semaines','4–8 Wochen':'4–8 semaines','mehr als 8 Wochen':'plus de 8 semaines' },
     consultation: { 'Telefonische Beratung':'Conseil téléphonique','WhatsApp Beratung':'Conseil WhatsApp','Studio Beratung':'Conseil en studio','Alix Showroom':'Alix Showroom','Videoberatung':'Conseil vidéo' },
+    s_wish_device: 'Appareil souhaité', s_wish_device_hint: 'Optionnel – choisissez un appareil dans notre catalogue', alix_lasers_label: 'Alix Lasers', alix_beauty_label: 'Alix Beauty (optionnel)', no_device: '– Aucun appareil sélectionné –', studio_in_germany_label: 'Mon studio est en Allemagne', has_nisv_q: 'Avez-vous la NiSV ?', yes: 'Oui', no: 'Non', startup_label: 'Nouvelle ouverture / startup (optionnel)', studio_exists_since: 'Mon studio existe depuis', years_label: 'an(s)', example_short: 'p. ex. 5',
   },
   it: {
     brand_tag: '100% AI Full Technology · Alix Lasers®',
@@ -201,6 +218,7 @@ export const DICT: Record<Lang, Dict> = {
     additional: { 'NiSV Ausbildung':'Formazione NiSV','Laserschulung':'Formazione laser','Finanzierungsmöglichkeiten':'Opzioni di finanziamento','Mietkauf / Miete / Smart Impulse':'Riscatto / Noleggio / Smart Impulse','Katalog anfordern':'Richiedi il catalogo' },
     delivery: { 'schnellstmöglich':'il prima possibile','2–4 Wochen':'2–4 settimane','4–8 Wochen':'4–8 settimane','mehr als 8 Wochen':'oltre 8 settimane' },
     consultation: { 'Telefonische Beratung':'Consulenza telefonica','WhatsApp Beratung':'Consulenza WhatsApp','Studio Beratung':'Consulenza in studio','Alix Showroom':'Alix Showroom','Videoberatung':'Consulenza video' },
+    s_wish_device: 'Dispositivo desiderato', s_wish_device_hint: 'Opzionale – scegli un dispositivo dal nostro portfolio', alix_lasers_label: 'Alix Lasers', alix_beauty_label: 'Alix Beauty (opzionale)', no_device: '– Nessun dispositivo selezionato –', studio_in_germany_label: 'Il mio studio è in Germania', has_nisv_q: 'Hai la NiSV?', yes: 'Sì', no: 'No', startup_label: 'Nuova apertura / startup (opzionale)', studio_exists_since: 'Il mio studio esiste da', years_label: 'anno/i', example_short: 'es. 5',
   },
   es: {
     brand_tag: '100% AI Full Technology · Alix Lasers®',
@@ -236,6 +254,7 @@ export const DICT: Record<Lang, Dict> = {
     additional: { 'NiSV Ausbildung':'Formación NiSV','Laserschulung':'Formación láser','Finanzierungsmöglichkeiten':'Opciones de financiación','Mietkauf / Miete / Smart Impulse':'Alquiler con opción a compra / Alquiler / Smart Impulse','Katalog anfordern':'Solicitar catálogo' },
     delivery: { 'schnellstmöglich':'lo antes posible','2–4 Wochen':'2–4 semanas','4–8 Wochen':'4–8 semanas','mehr als 8 Wochen':'más de 8 semanas' },
     consultation: { 'Telefonische Beratung':'Asesoramiento telefónico','WhatsApp Beratung':'Asesoramiento por WhatsApp','Studio Beratung':'Asesoramiento en estudio','Alix Showroom':'Alix Showroom','Videoberatung':'Videoasesoramiento' },
+    s_wish_device: 'Equipo deseado', s_wish_device_hint: 'Opcional – elige un equipo de nuestro catálogo', alix_lasers_label: 'Alix Lasers', alix_beauty_label: 'Alix Beauty (opcional)', no_device: '– Ningún equipo seleccionado –', studio_in_germany_label: 'Mi estudio está en Alemania', has_nisv_q: '¿Tienes NiSV?', yes: 'Sí', no: 'No', startup_label: 'Nueva apertura / startup (opcional)', studio_exists_since: 'Mi estudio existe desde hace', years_label: 'año(s)', example_short: 'p. ej. 5',
   },
   nl: {
     brand_tag: '100% AI Full Technology · Alix Lasers®',
@@ -271,6 +290,7 @@ export const DICT: Record<Lang, Dict> = {
     additional: { 'NiSV Ausbildung':'NiSV-opleiding','Laserschulung':'Laseropleiding','Finanzierungsmöglichkeiten':'Financieringsmogelijkheden','Mietkauf / Miete / Smart Impulse':'Huurkoop / Huur / Smart Impulse','Katalog anfordern':'Catalogus aanvragen' },
     delivery: { 'schnellstmöglich':'zo snel mogelijk','2–4 Wochen':'2–4 weken','4–8 Wochen':'4–8 weken','mehr als 8 Wochen':'meer dan 8 weken' },
     consultation: { 'Telefonische Beratung':'Telefonisch advies','WhatsApp Beratung':'WhatsApp-advies','Studio Beratung':'Advies in studio','Alix Showroom':'Alix Showroom','Videoberatung':'Videoadvies' },
+    s_wish_device: 'Gewenst apparaat', s_wish_device_hint: 'Optioneel – kies een apparaat uit ons portfolio', alix_lasers_label: 'Alix Lasers', alix_beauty_label: 'Alix Beauty (optioneel)', no_device: '– Geen apparaat geselecteerd –', studio_in_germany_label: 'Mijn studio is in Duitsland', has_nisv_q: 'Heeft u NiSV?', yes: 'Ja', no: 'Nee', startup_label: 'Nieuwe opening / startup (optioneel)', studio_exists_since: 'Mijn studio bestaat sinds', years_label: 'jaar', example_short: 'bijv. 5',
   },
   ar: {
     brand_tag: '100% AI Full Technology · Alix Lasers®',
@@ -306,6 +326,7 @@ export const DICT: Record<Lang, Dict> = {
     additional: { 'NiSV Ausbildung':'تدريب NiSV','Laserschulung':'تدريب الليزر','Finanzierungsmöglichkeiten':'خيارات التمويل','Mietkauf / Miete / Smart Impulse':'إيجار منتهٍ بالتمليك / إيجار / Smart Impulse','Katalog anfordern':'طلب الكتالوج' },
     delivery: { 'schnellstmöglich':'في أسرع وقت ممكن','2–4 Wochen':'2–4 أسابيع','4–8 Wochen':'4–8 أسابيع','mehr als 8 Wochen':'أكثر من 8 أسابيع' },
     consultation: { 'Telefonische Beratung':'استشارة هاتفية','WhatsApp Beratung':'استشارة عبر واتساب','Studio Beratung':'استشارة في الاستوديو','Alix Showroom':'صالة عرض Alix','Videoberatung':'استشارة بالفيديو' },
+    s_wish_device: 'الجهاز المطلوب', s_wish_device_hint: 'اختياري – اختر جهازًا من قائمتنا', alix_lasers_label: 'Alix Lasers', alix_beauty_label: 'Alix Beauty (اختياري)', no_device: '– لم يتم اختيار جهاز –', studio_in_germany_label: 'الاستوديو الخاص بي في ألمانيا', has_nisv_q: 'هل لديك شهادة NiSV؟', yes: 'نعم', no: 'لا', startup_label: 'افتتاح جديد / شركة ناشئة (اختياري)', studio_exists_since: 'الاستوديو موجود منذ', years_label: 'سنة/سنوات', example_short: 'مثلاً 5',
   },
   vi: {
     brand_tag: '100% AI Full Technology · Alix Lasers®',
@@ -341,6 +362,7 @@ export const DICT: Record<Lang, Dict> = {
     additional: { 'NiSV Ausbildung':'Đào tạo NiSV','Laserschulung':'Đào tạo laser','Finanzierungsmöglichkeiten':'Phương án tài chính','Mietkauf / Miete / Smart Impulse':'Thuê mua / Thuê / Smart Impulse','Katalog anfordern':'Yêu cầu catalogue' },
     delivery: { 'schnellstmöglich':'càng sớm càng tốt','2–4 Wochen':'2–4 tuần','4–8 Wochen':'4–8 tuần','mehr als 8 Wochen':'hơn 8 tuần' },
     consultation: { 'Telefonische Beratung':'Tư vấn qua điện thoại','WhatsApp Beratung':'Tư vấn qua WhatsApp','Studio Beratung':'Tư vấn tại studio','Alix Showroom':'Alix Showroom','Videoberatung':'Tư vấn qua video' },
+    s_wish_device: 'Thiết bị mong muốn', s_wish_device_hint: 'Tùy chọn – chọn thiết bị từ danh mục của chúng tôi', alix_lasers_label: 'Alix Lasers', alix_beauty_label: 'Alix Beauty (tùy chọn)', no_device: '– Chưa chọn thiết bị –', studio_in_germany_label: 'Studio của tôi ở Đức', has_nisv_q: 'Bạn có NiSV không?', yes: 'Có', no: 'Không', startup_label: 'Khai trương mới / startup (tùy chọn)', studio_exists_since: 'Studio của tôi đã hoạt động được', years_label: 'năm', example_short: 'ví dụ 5',
   },
   ru: {
     brand_tag: '100% AI Full Technology · Alix Lasers®',
@@ -376,6 +398,7 @@ export const DICT: Record<Lang, Dict> = {
     additional: { 'NiSV Ausbildung':'Обучение NiSV','Laserschulung':'Обучение работе с лазером','Finanzierungsmöglichkeiten':'Варианты финансирования','Mietkauf / Miete / Smart Impulse':'Аренда с выкупом / Аренда / Smart Impulse','Katalog anfordern':'Запросить каталог' },
     delivery: { 'schnellstmöglich':'как можно скорее','2–4 Wochen':'2–4 недели','4–8 Wochen':'4–8 недель','mehr als 8 Wochen':'более 8 недель' },
     consultation: { 'Telefonische Beratung':'Консультация по телефону','WhatsApp Beratung':'Консультация в WhatsApp','Studio Beratung':'Консультация в студии','Alix Showroom':'Шоурум Alix','Videoberatung':'Видеоконсультация' },
+    s_wish_device: 'Желаемое устройство', s_wish_device_hint: 'Необязательно – выберите устройство из нашего портфолио', alix_lasers_label: 'Alix Lasers', alix_beauty_label: 'Alix Beauty (необязательно)', no_device: '– Устройство не выбрано –', studio_in_germany_label: 'Моя студия в Германии', has_nisv_q: 'У вас есть NiSV?', yes: 'Да', no: 'Нет', startup_label: 'Новое открытие / стартап (необязательно)', studio_exists_since: 'Моя студия существует уже', years_label: 'лет', example_short: 'напр. 5',
   },
 };
 
