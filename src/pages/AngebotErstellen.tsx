@@ -824,9 +824,29 @@ export default function AngebotErstellen() {
           <Label>Gültig bis</Label>
           <Input type="date" value={validUntil} onChange={e => setValidUntil(e.target.value)} className="bg-secondary border-border mt-1.5" />
         </div>
+        <div>
+          <Label>Verkaufsberater</Label>
+          <Input
+            value={salesAdvisor}
+            onChange={e => setSalesAdvisor(e.target.value)}
+            placeholder="Name des Beraters"
+            className="bg-secondary border-border mt-1.5"
+          />
+        </div>
+        <div>
+          <Label>Voraussichtlicher Liefertermin (KW)</Label>
+          <Input
+            type="week"
+            value={deliveryWeek}
+            onChange={e => setDeliveryWeek(e.target.value)}
+            placeholder="z.B. 2026-W24"
+            className="bg-secondary border-border mt-1.5"
+          />
+        </div>
       </div>
 
       {/* Aus Anfrage übernehmen */}
+
       <div className="rounded-xl border border-border bg-card card-glow p-4">
         <button
           type="button"
