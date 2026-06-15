@@ -1371,3 +1371,140 @@ html[data-aurora="2"] [data-empty-state] svg {
   margin: 0 auto 16px;
   filter: drop-shadow(0 0 12px hsl(var(--primary) / 0.2));
 }
+
+/* ============================================================
+   Aurora 2.0 — Phase 9: Hero, 3D Cards & Cursor Spotlight
+   ============================================================ */
+
+/* Gradient hero text — use .a2-hero on big headings */
+html[data-aurora="2"] .a2-hero,
+html[data-aurora="2"] h1[data-hero] {
+  background: linear-gradient(
+    135deg,
+    hsl(var(--foreground)) 0%,
+    hsl(var(--primary)) 50%,
+    hsl(var(--foreground)) 100%
+  );
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: a2-hero-shine 8s ease-in-out infinite;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+@keyframes a2-hero-shine {
+  0%, 100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+
+/* H1 default tightening */
+html[data-aurora="2"] h1 {
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+
+/* Cursor spotlight — cards track mouse via --a2-mx / --a2-my */
+html[data-aurora="2"] [class*="card"] {
+  position: relative;
+  overflow: hidden;
+}
+html[data-aurora="2"] [class*="card"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: radial-gradient(
+    420px circle at var(--a2-mx, 50%) var(--a2-my, 0%),
+    hsl(var(--primary) / 0.08),
+    transparent 60%
+  );
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+html[data-aurora="2"] [class*="card"]:hover::after {
+  opacity: 1;
+}
+
+/* 3D tilt on .a2-tilt */
+html[data-aurora="2"] .a2-tilt {
+  transition: transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+html[data-aurora="2"] .a2-tilt:hover {
+  transform:
+    perspective(900px)
+    rotateX(2deg)
+    rotateY(-2deg)
+    translateY(-2px);
+}
+
+/* Keyboard shortcut chip — <kbd> */
+html[data-aurora="2"] kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  color: hsl(var(--muted-foreground));
+  background: linear-gradient(
+    180deg,
+    hsl(var(--muted) / 0.6),
+    hsl(var(--muted) / 0.3)
+  );
+  border: 1px solid hsl(var(--border));
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  box-shadow: 0 1px 0 hsl(var(--border));
+}
+
+/* Dialog backdrop — refined blur */
+html[data-aurora="2"] [data-radix-dialog-overlay],
+html[data-aurora="2"] [data-state="open"][class*="overlay"] {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 0, 0, 0.65) 0%,
+    rgba(0, 0, 0, 0.85) 100%
+  ) !important;
+  backdrop-filter: blur(8px) saturate(120%);
+  -webkit-backdrop-filter: blur(8px) saturate(120%);
+}
+
+/* Code blocks */
+html[data-aurora="2"] code:not(pre code) {
+  background: hsl(var(--muted) / 0.5);
+  border: 1px solid hsl(var(--border) / 0.6);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.875em;
+  color: hsl(var(--primary));
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+}
+html[data-aurora="2"] pre {
+  background: hsl(var(--card) / 0.7);
+  border: 1px solid hsl(var(--border));
+  border-left: 3px solid hsl(var(--primary));
+  border-radius: 8px;
+  padding: 14px 16px;
+  overflow-x: auto;
+}
+
+/* Link refinement (in-content links, not nav) */
+html[data-aurora="2"] main a[href]:not([class*="button"]):not([class*="badge"]) {
+  color: hsl(var(--primary));
+  text-decoration: none;
+  background-image: linear-gradient(hsl(var(--primary)), hsl(var(--primary)));
+  background-size: 0% 1px;
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  transition: background-size 0.25s ease;
+}
+html[data-aurora="2"] main a[href]:not([class*="button"]):not([class*="badge"]):hover {
+  background-size: 100% 1px;
+}
