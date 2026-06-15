@@ -109,11 +109,13 @@ function formatDate(date: string | null) {
   });
 }
 
+import { EmptyState as InfinityEmptyState } from '@/components/infinity/EmptyState';
+import { SkeletonTable } from '@/components/infinity/Skeleton';
+
 function EmptyState({ icon: Icon, message }: { icon: React.ElementType; message: string }) {
   return (
-    <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
-      <Icon className="w-8 h-8 mb-3 opacity-40" />
-      <p className="text-sm">{message}</p>
+    <div className="p-5">
+      <InfinityEmptyState compact icon={Icon as any} title={message} />
     </div>
   );
 }
@@ -132,16 +134,8 @@ function CardSkeleton() {
 
 function TableSkeleton({ rows = 3 }: { rows?: number }) {
   return (
-    <div className="divide-y divide-border">
-      {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="flex items-center justify-between p-4">
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-3 w-20" />
-          </div>
-          <Skeleton className="h-6 w-20 rounded-full" />
-        </div>
-      ))}
+    <div className="p-4">
+      <SkeletonTable rows={rows} cols={3} />
     </div>
   );
 }
