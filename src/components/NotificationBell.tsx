@@ -43,16 +43,16 @@ export function NotificationBell() {
                 key={n.id}
                 onClick={() => {
                   markRead(n.id);
-                  if (n.link) navigate(n.link);
+                  if (n.href) navigate(n.href);
                 }}
                 className={`block w-full text-left p-3 border-b border-border hover:bg-muted/40 ${
-                  !n.is_read ? 'bg-primary/5' : ''
+                  !n.read ? 'bg-primary/5' : ''
                 }`}
               >
                 <p className="text-sm font-medium">{n.title}</p>
                 {n.body && <p className="text-xs text-muted-foreground truncate">{n.body}</p>}
                 <p className="text-[10px] text-muted-foreground mt-1">
-                  {new Date(n.created_at).toLocaleString('de-DE')}
+                  {new Date(n.createdAt).toLocaleString('de-DE')}
                 </p>
               </button>
             ))

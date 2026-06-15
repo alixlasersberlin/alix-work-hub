@@ -1,62 +1,92 @@
-import { useEffect, useState, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
+import { useEffect, useState } from "react";
 
-export type MailNotification = {
+export type InfinityNotification = {
   id: string;
-  user_id: string;
-  type: string;
   title: string;
-  body: string | null;
-  link: string | null;
-  is_read: boolean;
-  created_at: string;
+  body?: string;
+  kind?: "info" | "success" | "warning" | "error";
+  href?: string;
+  module?: string;
+  createdAt: number;
+  read?: boolean;
+};
+
+type Listener = (list: InfinityNotification[]) => void;
+
+const KEY = "alixwork.notifications.v1";
+const MAX = 50;
+
+let state: InfinityNotification[] = load();
+const listeners = new Set<Listener>();
+
+function load(): InfinityNotification[] {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.slice(0, MAX) : [];
+  } catch {
+    return [];
+  }
+}
+
+function persist() {
+  try {
+    localStorage.setItem(KEY, JSON.stringify(state.slice(0, MAX)));
+  } catch {
+    /* noop */
+  }
+  listeners.forEach((l) => l(state));
+}
+
+export const notifyBus = {
+  push(n: Omit<InfinityNotification, "id" | "createdAt" | "read">) {
+    const item: InfinityNotification = {
+      ...n,
+      id: crypto.randomUUID(),
+      createdAt: Date.now(),
+      read: false,
+    };
+    state = [item, ...state].slice(0, MAX);
+    persist();
+    return item.id;
+  },
+  markRead(id: string) {
+    state = state.map((n) => (n.id === id ? { ...n, read: true } : n));
+    persist();
+  },
+  markAllRead() {
+    state = state.map((n) => ({ ...n, read: true }));
+    persist();
+  },
+  remove(id: string) {
+    state = state.filter((n) => n.id !== id);
+    persist();
+  },
+  clear() {
+    state = [];
+    persist();
+  },
+  get() {
+    return state;
+  },
 };
 
 export function useNotifications() {
-  const { user } = useAuth();
-  const [items, setItems] = useState<MailNotification[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const load = useCallback(async () => {
-    if (!user?.id) return;
-    setLoading(true);
-    const { data } = await supabase
-      .from('mail_notifications')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(50);
-    setItems((data ?? []) as MailNotification[]);
-    setLoading(false);
-  }, [user?.id]);
-
+  const [list, setList] = useState<InfinityNotification[]>(state);
   useEffect(() => {
-    load();
-    if (!user?.id) return;
-    const ch = supabase
-      .channel(`mail_notifications:${user.id}`)
-      .on('postgres_changes', {
-        event: 'INSERT', schema: 'public', table: 'mail_notifications',
-        filter: `user_id=eq.${user.id}`,
-      }, (payload) => setItems(prev => [payload.new as MailNotification, ...prev]))
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
-  }, [user?.id, load]);
-
-  const markRead = async (id: string) => {
-    await supabase.from('mail_notifications')
-      .update({ is_read: true, read_at: new Date().toISOString() }).eq('id', id);
-    setItems(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+    const l: Listener = (next) => setList([...next]);
+    listeners.add(l);
+    return () => {
+      listeners.delete(l);
+    };
+  }, []);
+  const unread = list.filter((n) => !n.read).length;
+  return {
+    list,
+    items: list, // back-compat alias
+    unread,
+    unreadCount: unread, // back-compat alias
+    ...notifyBus,
   };
-
-  const markAllRead = async () => {
-    if (!user?.id) return;
-    await supabase.from('mail_notifications')
-      .update({ is_read: true, read_at: new Date().toISOString() })
-      .eq('user_id', user.id).eq('is_read', false);
-    setItems(prev => prev.map(n => ({ ...n, is_read: true })));
-  };
-
-  return { items, loading, unreadCount: items.filter(i => !i.is_read).length, reload: load, markRead, markAllRead };
 }
