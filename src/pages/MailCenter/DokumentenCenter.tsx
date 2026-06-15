@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { FileText, Download, Eye, Search, Loader2, Send, FileCheck2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { KpiTile } from '@/components/infinity/KpiTile';
 
 const TYPES = ['Alle','Rechnung','Angebot','Lieferschein','Reparaturbericht','Servicebericht','Vertrag','Schulungszertifikat','Mahnung','Sonstiges'];
 const STATUSES = ['Alle','erstellt','versendet','geoeffnet','heruntergeladen','signiert','fehler'];
@@ -89,25 +90,10 @@ export default function DokumentenCenter() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {[
-          { label: 'Dokumente gesamt', value: stats.total, icon: FileText },
-          { label: 'Versendet', value: stats.sent, icon: Send },
-          { label: 'Geöffnet', value: stats.opened, icon: Eye },
-          { label: 'Heruntergeladen', value: stats.downloaded, icon: Download },
-        ].map((s) => {
-          const Icon = s.icon;
-          return (
-            <Card key={s.label}>
-              <CardContent className="pt-4 flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-muted-foreground">{s.label}</p>
-                  <p className="text-2xl font-bold">{s.value}</p>
-                </div>
-                <Icon className="w-5 h-5 text-primary" />
-              </CardContent>
-            </Card>
-          );
-        })}
+        <KpiTile label="Dokumente gesamt" value={stats.total} icon={FileText} accent="sky" />
+        <KpiTile label="Versendet" value={stats.sent} icon={Send} accent="gold" />
+        <KpiTile label="Geöffnet" value={stats.opened} icon={Eye} accent="emerald" />
+        <KpiTile label="Heruntergeladen" value={stats.downloaded} icon={Download} accent="violet" />
       </div>
 
       <Card>

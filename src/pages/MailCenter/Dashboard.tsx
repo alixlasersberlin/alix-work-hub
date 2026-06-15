@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { KpiTile } from '@/components/infinity/KpiTile';
 import {
   Send, MailOpen, MousePointerClick, AlertTriangle, ShieldAlert, Loader2,
   Inbox, Wrench, AlertOctagon,
@@ -74,24 +75,15 @@ export default function MailCenterDashboard() {
         <p className="text-sm text-muted-foreground">Live-KPIs aus MailCenter und Operations.</p>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-        {cards.map((k) => {
-          const Icon = k.icon;
-          return (
-            <Card key={k.label} className="card-glow">
-              <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
-                <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  {k.label}
-                </CardTitle>
-                <Icon className="w-4 h-4 text-primary" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-display font-bold text-foreground">
-                  {kpis === null ? <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /> : (k.value ?? 0)}
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+        {cards.map((k) => (
+          <KpiTile
+            key={k.label}
+            label={k.label}
+            value={kpis === null ? '…' : (k.value ?? 0)}
+            icon={k.icon}
+            accent="gold"
+          />
+        ))}
       </div>
     </div>
   );
