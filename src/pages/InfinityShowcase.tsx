@@ -165,8 +165,9 @@ export default function InfinityShowcase() {
           <SkeletonTable rows={6} cols={4} />
         ) : (
           <InfinityTable<Row>
-            data={DEMO}
+            rows={DEMO}
             columns={COLS}
+            rowKey={(r) => r.id}
             searchKeys={["order", "customer"]}
             pageSize={10}
             onRowClick={(r) =>
