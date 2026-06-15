@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { KpiTile } from '@/components/infinity/KpiTile';
 import { Rows3, FileCheck2, AlertCircle } from 'lucide-react';
+import { EmptyState } from '@/components/infinity/EmptyState';
 
 type RawRow = Record<string, any>;
 
@@ -342,7 +343,7 @@ export default function AngebotImport() {
         <CardHeader><CardTitle className="text-base flex items-center gap-2"><History className="w-4 h-4 text-primary" /> Import-Historie</CardTitle></CardHeader>
         <CardContent className="p-0">
           {history.length === 0 ? (
-            <p className="p-6 text-center text-sm text-muted-foreground">Noch keine Imports.</p>
+            <div className="p-6"><EmptyState icon={History} title="Noch keine Imports" description="Hochgeladene Angebots-Importe erscheinen hier in der Historie." compact /></div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
