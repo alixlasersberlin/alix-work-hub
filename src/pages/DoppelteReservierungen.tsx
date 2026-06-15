@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AlertTriangle, Loader2, ExternalLink, X } from 'lucide-react';
-import { PageHeader, PageLoading, PageEmpty, PageError } from '@/components/PageShell';
+import { PageEmpty, PageError } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { SkeletonTable } from '@/components/infinity/Skeleton';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
+import { DataCard } from '@/components/PageShell';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
@@ -122,13 +126,15 @@ export default function DoppelteReservierungen() {
   return (
     <div className="container mx-auto p-6">
       <PageHeader
-        icon={<AlertTriangle className="w-6 h-6 text-amber-500" />}
+        icon={AlertTriangle}
         title="Doppelte Reservierungen"
         subtitle={
           loading
             ? 'wird geladen…'
             : `${groups.length} Auftrag${groups.length === 1 ? '' : 'e'} mit mehrfacher Reservierung · ${totalDevices} Geräte gesamt`
         }
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : groups.length > 0 ? 'warning' : 'done'} label={loading ? 'Lädt' : `${groups.length} Konflikte`} pulse={loading} />}
         actions={
           <Button variant="outline" size="sm" onClick={load} disabled={loading}>
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Neu laden'}
@@ -136,7 +142,7 @@ export default function DoppelteReservierungen() {
         }
       />
 
-      {loading && <PageLoading />}
+      {loading && <DataCard><SkeletonTable rows={6} cols={5} /></DataCard>}
       {!loading && error && <PageError message={error} onRetry={load} />}
       {!loading && !error && groups.length === 0 && (
         <PageEmpty message="Keine doppelten Reservierungen gefunden." />
