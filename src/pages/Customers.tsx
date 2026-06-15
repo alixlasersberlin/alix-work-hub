@@ -13,6 +13,8 @@ import { VipBadge } from '@/components/VipBadge';
 import { isCustomerVip, vipFirst } from '@/lib/vip';
 import { SourceBadge, sourceLabel, sourceFlag } from '@/lib/source-system';
 import { useAtOnly } from '@/hooks/useAtOnly';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 
 type SortField = 'company_name' | 'contact_name' | 'created_at';
 type SortDir = 'asc' | 'desc';
