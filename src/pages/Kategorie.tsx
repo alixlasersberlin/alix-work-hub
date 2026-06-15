@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Search, FolderTree, Plus, Pencil, Trash2, Package, X } from 'lucide-react';
+import { EmptyState } from '@/components/infinity/EmptyState';
 import { PageHeader } from '@/components/infinity/PageHeader';
 
 type Category = {
@@ -181,9 +182,7 @@ export default function Kategorie() {
           {loading ? (
             <div className="p-6 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>
           ) : categories.length === 0 ? (
-            <div className="text-sm text-muted-foreground p-4 text-center">
-              Noch keine Kategorien. Lege jetzt deine erste an.
-            </div>
+            <EmptyState icon={FolderTree} title="Noch keine Kategorien" description="Lege jetzt deine erste Kategorie an." compact />
           ) : (
             <ul className="space-y-1">
               {categories.map(c => {

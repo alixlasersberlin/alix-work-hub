@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { FileText, FilePlus, Trash2, Pencil, CheckCircle2 } from 'lucide-react';
+import { EmptyState } from '@/components/infinity/EmptyState';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { PageHeader } from '@/components/infinity/PageHeader';
@@ -123,9 +124,9 @@ export default function Angebote() {
         <CardHeader><CardTitle>Liste ({offers.length})</CardTitle></CardHeader>
         <CardContent className="p-0">
           {offers.length === 0 ? (
-            <p className="text-muted-foreground text-sm py-10 text-center">
-              Noch keine Angebote vorhanden.
-            </p>
+            <div className="p-8">
+              <EmptyState icon={FileText} title="Noch keine Angebote" description="Sobald Angebote erstellt wurden, erscheinen sie hier." compact />
+            </div>
           ) : (
             <Table>
               <TableHeader>
