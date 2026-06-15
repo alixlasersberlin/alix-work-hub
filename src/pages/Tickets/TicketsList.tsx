@@ -209,10 +209,11 @@ export default function TicketsList() {
 
       <div className="rounded-xl border border-border bg-card overflow-hidden">
         {loading ? (
-          <div className="p-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+          <div className="p-4"><SkeletonTable rows={8} cols={9} /></div>
         ) : filtered.length === 0 ? (
-          <div className="p-12 text-center text-muted-foreground">Keine Tickets gefunden.</div>
+          <div className="p-8"><EmptyState compact icon={Inbox} title="Keine Tickets gefunden" description="Passe die Filter an oder erstelle ein neues Ticket." action={{ label: 'Neues Ticket', icon: Plus, onClick: () => setCreateOpen(true) }} /></div>
         ) : (
+
           <Table>
             <TableHeader>
               <TableRow>
