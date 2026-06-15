@@ -233,9 +233,11 @@ export default function AlixFlex() {
   return (
     <div className="p-4 sm:p-6">
       <PageHeader
-        icon={<Zap className="w-6 h-6 text-primary" />}
+        icon={Zap}
         title="ALIX FLEX"
-        subtitle="Periodische Rechnungs-Stammdaten (Recurring Profile) aus Zoho Books"
+        subtitle={loading ? 'Lädt…' : 'Periodische Rechnungs-Stammdaten (Recurring Profile) aus Zoho Books'}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${rows.length} Profile`} pulse={loading} />}
         actions={
           isAdmin && (
             <Button onClick={handleImport} disabled={importing} className="gold-gradient text-primary-foreground">
