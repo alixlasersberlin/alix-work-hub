@@ -115,7 +115,7 @@ export default function Angebote() {
         noBreadcrumbs
         meta={<InfinityStatusBadge kind="done" label={`${offers.length}`} />}
         actions={
-          <Button asChild>
+          <Button asChild className="gold-gradient text-black hover:opacity-90">
             <Link to="/verkauf/angebot/neu"><FilePlus className="h-4 w-4 mr-2" />Neues Angebot</Link>
           </Button>
         }
