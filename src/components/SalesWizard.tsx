@@ -143,9 +143,20 @@ export default function SalesWizard({ publicMode = false }: Props) {
     setSubmitting(true);
     setError(null);
     try {
+      const deviceLines: string[] = [];
+      if (data.laser_model) deviceLines.push(`Wunschgerät (Alix Lasers): ${data.laser_model}`);
+      if (data.beauty_model) deviceLines.push(`Wunschgerät (Alix Beauty): ${data.beauty_model}`);
+      const mergedNotes = [deviceLines.join('\n'), data.notes].filter(Boolean).join('\n\n');
+      const { laser_model, beauty_model, ...rest } = data;
       const { data: json, error: fnError } = await supabase.functions.invoke('sales-wizard-submit', {
         body: {
-          ...data,
+          ...rest,
+          notes: mergedNotes,
+          additional_interests: [
+            ...data.additional_interests,
+            ...(laser_model ? [`Gerät: ${laser_model}`] : []),
+            ...(beauty_model ? [`Gerät: ${beauty_model}`] : []),
+          ],
           source: publicMode ? 'alixwork_wizard_public' : 'alixwork_wizard_internal',
           turnstile_token: captchaToken,
         },
