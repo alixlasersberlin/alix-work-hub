@@ -193,6 +193,8 @@ export default function FinanceBwa() {
           </tbody>
         </table>
       </div>
+      </>
+      )}
     </div>
   );
 }
