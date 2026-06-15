@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import SalesWizard from '@/components/SalesWizard';
-import WizardLanguageSwitcher from '@/components/WizardLanguageSwitcher';
+
 
 export default function PublicBeratung() {
   const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
@@ -59,11 +59,8 @@ export default function PublicBeratung() {
         <div className="text-base sm:text-2xl font-bold tracking-[0.18em] truncate">
           Alix Lasers ®
         </div>
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="hidden md:block text-xs text-blue-100/70">
-            100% AI Full Technologie
-          </div>
-          <WizardLanguageSwitcher variant="dark" />
+        <div className="hidden md:block text-xs text-blue-100/70 shrink-0">
+          100% AI Full Technologie
         </div>
       </header>
 
