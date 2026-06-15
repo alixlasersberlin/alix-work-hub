@@ -115,4 +115,5 @@ export function mapToStatusKind(s: string | null | undefined): StatusKind {
   return map[v] ?? "neutral";
 }
 
+export const InfinityStatusBadge = StatusBadge;
 export default StatusBadge;
