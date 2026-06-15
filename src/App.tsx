@@ -65,6 +65,7 @@ const Ersatzteilmanagement = lazy(() => import("./pages/Ersatzteilmanagement"));
 const ManagementDashboard = lazy(() => import("./pages/ManagementDashboard"));
 const ExecutiveCommandCenter = lazy(() => import("./pages/ExecutiveCommandCenter"));
 const InfinityShowcase = lazy(() => import("./pages/InfinityShowcase"));
+const Personalisierung = lazy(() => import("./pages/Personalisierung"));
 const AiCenter = lazy(() => import("./pages/AiCenter"));
 const RoutePlanDetail = lazy(() => import("./pages/RoutePlanDetail"));
 const RoutePlanForm = lazy(() => import("./pages/RoutePlanForm"));
@@ -430,6 +431,7 @@ function AppRoutes() {
         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route path="/" element={<HomeRoute />} />
           <Route path="/infinity-showcase" element={<InfinityShowcase />} />
+          <Route path="/einstellungen/personalisierung" element={<Personalisierung />} />
           <Route path="/at-dashboard" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Österreich']}><AtDashboard /></ProtectedRoute>} />
 
           <Route path="/detailsuche" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Detailsuche /></ProtectedRoute>} />
