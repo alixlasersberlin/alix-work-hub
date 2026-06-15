@@ -67,7 +67,7 @@ export function GlobalCommandBar() {
       setLoading(true);
       try {
         const like = `%${term}%`;
-        const [cust, ord, tk] = await Promise.all([
+        const [cust, ord, tk, rep, inv] = await Promise.all([
           supabase.from("customers" as any).select("id,customer_name,email,city").or(
             `customer_name.ilike.${like},email.ilike.${like},city.ilike.${like}`
           ).limit(6),
@@ -75,6 +75,12 @@ export function GlobalCommandBar() {
             `order_number.ilike.${like},customer_name.ilike.${like}`
           ).limit(6),
           supabase.from("tickets" as any).select("id,subject,status").ilike("subject", like).limit(6),
+          supabase.from("repair_orders" as any).select("id,repair_number,customer_name,device_model,repair_status").or(
+            `repair_number.ilike.${like},customer_name.ilike.${like},device_model.ilike.${like}`
+          ).limit(6),
+          supabase.from("zoho_invoices" as any).select("id,invoice_number,customer_name,balance,status").or(
+            `invoice_number.ilike.${like},customer_name.ilike.${like}`
+          ).limit(6),
         ]);
         const out: Hit[] = [];
         for (const c of (cust.data ?? []) as any[]) {
@@ -86,6 +92,12 @@ export function GlobalCommandBar() {
         }
         for (const t of (tk.data ?? []) as any[]) {
           out.push({ kind: "ticket", id: t.id, label: t.subject || t.id, sub: t.status });
+        }
+        for (const r of (rep.data ?? []) as any[]) {
+          out.push({ kind: "repair", id: r.id, label: r.repair_number || r.id, sub: [r.customer_name, r.device_model, r.repair_status].filter(Boolean).join(" · ") });
+        }
+        for (const i of (inv.data ?? []) as any[]) {
+          out.push({ kind: "invoice", id: i.id, label: i.invoice_number || i.id, sub: [i.customer_name, i.status].filter(Boolean).join(" · ") });
         }
         setHits(out);
       } catch (e) {
