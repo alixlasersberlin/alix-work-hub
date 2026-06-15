@@ -1,6 +1,7 @@
 import { Workflow, Mail, FileText, ChevronRight, Database } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 const tiles = [
   { to: '/operation/email-vorlagen', icon: Mail, title: 'E-Mail Vorlagen', desc: 'Inhalte automatisch versendeter E-Mails bearbeiten.' },
@@ -11,13 +12,12 @@ const tiles = [
 export default function Operation() {
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <Workflow className="h-7 w-7 text-primary" />
-        <div>
-          <h1 className="text-3xl font-bold">Operation</h1>
-          <p className="text-muted-foreground text-sm">Operative Abläufe und Tools.</p>
-        </div>
-      </div>
+      <PageHeader
+        icon={Workflow}
+        title="Operation"
+        subtitle="Operative Abläufe und Tools."
+        noBreadcrumbs
+      />
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {tiles.map(t => (
           <Link key={t.to} to={t.to}>
