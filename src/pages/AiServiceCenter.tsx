@@ -173,16 +173,6 @@ export default function AiServiceCenter() {
   );
 }
 
-function KpiCard({ icon, label, value, tone }: { icon: React.ReactNode; label: string; value: any; tone: 'red' | 'amber' | 'green' }) {
-  const toneCls = tone === 'red' ? 'text-red-400' : tone === 'green' ? 'text-emerald-400' : 'text-amber-400';
-  return (
-    <Card className="p-4">
-      <div className={`flex items-center gap-2 ${toneCls}`}>{icon}<span className="text-xs uppercase tracking-wider">{label}</span></div>
-      <div className="text-2xl font-bold mt-2 truncate">{value}</div>
-    </Card>
-  );
-}
-
 function KbEditor({ onSaved }: { onSaved: (row: any) => void }) {
   const [form, setForm] = useState({ geraetetyp: '', fehlercode: '', symptom: '', ursache: '', loesung: '' });
   const [saving, setSaving] = useState(false);

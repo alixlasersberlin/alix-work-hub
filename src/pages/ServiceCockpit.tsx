@@ -16,6 +16,7 @@ import {
   Wrench, Inbox, Calendar, Clock, Users, Cpu, AlertTriangle,
   CheckCircle2, Package, Receipt, Target, FileDown, Sheet,
 } from 'lucide-react';
+import { KpiTile } from '@/components/infinity/KpiTile';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -335,12 +336,17 @@ export default function ServiceCockpit() {
 }
 
 function Kpi({ icon: Icon, color, label, value, sub }: any) {
+  const accent: 'gold' | 'sky' | 'emerald' | 'rose' | 'violet' =
+    typeof color === 'string' && color.includes('emerald') ? 'emerald'
+    : typeof color === 'string' && (color.includes('red') || color.includes('rose') || color.includes('pink')) ? 'rose'
+    : typeof color === 'string' && (color.includes('blue') || color.includes('cyan') || color.includes('sky') || color.includes('indigo')) ? 'sky'
+    : typeof color === 'string' && (color.includes('purple') || color.includes('violet')) ? 'violet'
+    : 'gold';
   return (
-    <Card className="p-3">
-      <div className="flex items-center gap-2 text-xs text-muted-foreground"><Icon className={`w-4 h-4 ${color}`} /> {label}</div>
-      <div className="text-2xl font-bold mt-1">{value}</div>
-      {sub && <div className="text-xs text-muted-foreground">{sub}</div>}
-    </Card>
+    <div className="space-y-1">
+      <KpiTile icon={Icon} label={label} value={value} accent={accent} />
+      {sub && <div className="text-xs text-muted-foreground px-1">{sub}</div>}
+    </div>
   );
 }
 
