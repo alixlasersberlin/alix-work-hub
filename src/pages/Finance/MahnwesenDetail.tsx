@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Send, Trash2, Mail } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { PageHeader, PageLoading, DataCard } from '@/components/PageShell';
+import { DataCard } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { SkeletonTable } from '@/components/infinity/Skeleton';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
@@ -69,18 +72,20 @@ export default function FinanceMahnwesenDetail() {
     await load();
   };
 
-  if (loading) return <PageLoading />;
-  if (!customer) return <div className="p-6 text-muted-foreground">Kunde nicht gefunden.</div>;
+  const overdue = account?.overdue_balance ?? 0;
 
   return (
     <div className="p-4 sm:p-6">
       <Link to="/finance/mahnwesen" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-3"><ArrowLeft className="w-4 h-4 mr-1" />Zurück zur Übersicht</Link>
       <PageHeader
-        icon={<Mail className="w-6 h-6 text-primary" />}
-        title={customer.company_name || customer.contact_name || 'Kunde'}
-        subtitle={`E-Mail: ${customer.email ?? '–'} • Überfällig: ${fmt(account?.overdue_balance)} • Aktuelle Stufe: ${LEVEL_LABEL[account?.reminder_level ?? 0]}`}
+        icon={Mail}
+        title={loading ? 'Lädt…' : (customer?.company_name || customer?.contact_name || 'Kunde')}
+        subtitle={loading ? 'Lädt…' : `E-Mail: ${customer?.email ?? '–'} • Überfällig: ${fmt(overdue)} • Aktuelle Stufe: ${LEVEL_LABEL[account?.reminder_level ?? 0]}`}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : overdue ? 'warning' : 'done'} label={loading ? 'Lädt' : overdue ? fmt(overdue) : 'Aktuell'} pulse={loading} />}
       />
 
+      {loading ? <DataCard><SkeletonTable rows={6} cols={4} /></DataCard> : (
       <DataCard className="overflow-hidden">
         <div className="px-4 py-3 border-b border-border font-semibold">Mahnungs-Historie</div>
         {reminders.length === 0 ? (
@@ -135,6 +140,7 @@ export default function FinanceMahnwesenDetail() {
           </div>
         )}
       </DataCard>
+      )}
     </div>
   );
 }
