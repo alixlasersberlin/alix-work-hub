@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useOutletContext, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent } from '@/components/ui/card';
-import { Mail, FileText, Receipt, FileCheck2, Wrench, ArrowRight, Cpu, ShieldCheck, MessageSquare, Calendar } from 'lucide-react';
+import { Mail, FileText, Receipt, FileCheck2, Wrench, Cpu, ShieldCheck, MessageSquare, Calendar } from 'lucide-react';
+import { KpiTile } from '@/components/infinity/KpiTile';
 
 type Ctx = { customerId: string; companyName: string | null; email: string | null };
 
@@ -79,23 +79,11 @@ export default function CustomerPortalDashboard() {
         <p className="text-muted-foreground text-sm">Ihre zentrale Übersicht bei Alix Lasers.</p>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-        {tiles.map((t) => {
-          const Icon = t.icon;
-          return (
-            <Link key={t.to} to={t.to}>
-              <Card className="hover:border-primary transition-colors cursor-pointer h-full">
-                <CardContent className="pt-5 pb-5">
-                  <div className="flex items-center justify-between">
-                    <Icon className="w-5 h-5 text-primary" />
-                    <ArrowRight className="w-4 h-4 text-muted-foreground" />
-                  </div>
-                  <p className="text-3xl font-bold mt-3">{t.value}</p>
-                  <p className="text-xs text-muted-foreground">{t.label}</p>
-                </CardContent>
-              </Card>
-            </Link>
-          );
-        })}
+        {tiles.map((t) => (
+          <Link key={t.to} to={t.to} className="block">
+            <KpiTile label={t.label} value={t.value} icon={t.icon} accent="gold" />
+          </Link>
+        ))}
       </div>
     </div>
   );
