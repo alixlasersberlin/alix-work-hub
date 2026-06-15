@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 export default function AiServiceCenter() {
   const { roles } = useAuth();
@@ -58,13 +59,12 @@ export default function AiServiceCenter() {
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
-      <div className="flex items-center gap-3">
-        <Sparkles className="w-7 h-7 text-amber-400" />
-        <div>
-          <h1 className="text-2xl font-display font-bold">AI Service Center</h1>
-          <p className="text-sm text-muted-foreground">Cockpit für Fehleranalysen, Ersatzteile, Anleitungen und Wissensdatenbank.</p>
-        </div>
-      </div>
+      <PageHeader
+        icon={Sparkles}
+        title="AI Service Center"
+        subtitle="Cockpit für Fehleranalysen, Ersatzteile, Anleitungen und Wissensdatenbank."
+        noBreadcrumbs
+      />
 
       <div className="grid md:grid-cols-4 gap-4">
         <KpiCard icon={<AlertTriangle className="w-5 h-5" />} label="Kritische offene Tickets" value={stats.criticalTickets.length} tone="red" />

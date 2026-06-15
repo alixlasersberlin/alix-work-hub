@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Search, FolderTree, Plus, Pencil, Trash2, Package, X } from 'lucide-react';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 type Category = {
   id: string;
@@ -161,19 +162,17 @@ export default function Kategorie() {
 
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-[1600px] mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-display font-bold gold-text flex items-center gap-2">
-            <FolderTree className="w-6 h-6" /> Kategorie
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Eigene Kategorien anlegen und Artikel zuordnen.
-          </p>
-        </div>
-        <Button onClick={openCreate} className="gold-gradient text-primary-foreground">
-          <Plus className="w-4 h-4 mr-2" /> Neue Kategorie
-        </Button>
-      </div>
+      <PageHeader
+        icon={FolderTree}
+        title="Kategorie"
+        subtitle="Eigene Kategorien anlegen und Artikel zuordnen."
+        noBreadcrumbs
+        actions={
+          <Button onClick={openCreate} className="gold-gradient text-primary-foreground">
+            <Plus className="w-4 h-4 mr-2" /> Neue Kategorie
+          </Button>
+        }
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Categories list */}
