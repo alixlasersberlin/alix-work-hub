@@ -892,13 +892,18 @@ export default function Lagergeraete({
               </AlertDialogContent>
             </AlertDialog>
           )}
-        <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
+        <Dialog open={open} onOpenChange={(v) => { if (!v) { setOpen(false); resetForm(); } else { setOpen(true); } }}>
           <DialogTrigger asChild>
-            <Button className="gap-2">
+            <Button className="gap-2" onClick={() => setOpen(true)}>
               <Plus className="w-4 h-4" /> {addLabel}
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogContent
+            className="max-h-[90vh] overflow-y-auto"
+            onPointerDownOutside={(e) => e.preventDefault()}
+            onInteractOutside={(e) => e.preventDefault()}
+            onEscapeKeyDown={(e) => e.preventDefault()}
+          >
             <DialogHeader>
               <DialogTitle>{editingId ? `${dialogTitle} bearbeiten` : `${dialogTitle} erfassen`}</DialogTitle>
               <DialogDescription>
