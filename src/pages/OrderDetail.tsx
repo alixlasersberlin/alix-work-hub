@@ -1,3 +1,4 @@
+import { SkeletonForm } from '@/components/infinity/Skeleton';
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -214,7 +215,7 @@ export default function OrderDetail() {
     loadAll();
   }
 
-  if (loading) return <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+  if (loading) return <SkeletonForm fields={10} />;
   if (!order) return <div className="p-8 text-center text-muted-foreground">Auftrag nicht gefunden.</div>;
 
   const formatAddr = (a: any) => {

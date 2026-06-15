@@ -64,3 +64,21 @@ export const SkeletonTable = ({ rows = 8, cols = 5 }: { rows?: number; cols?: nu
     ))}
   </div>
 );
+
+/** Pre-composed detail/form skeleton (header + grid of fields) */
+export const SkeletonForm = ({ fields = 8, cols = 2 }: { fields?: number; cols?: number }) => (
+  <div className="p-4 sm:p-6 space-y-6">
+    <div className="space-y-3">
+      <Skeleton variant="title" gold style={{ width: '40%' }} />
+      <Skeleton variant="text" style={{ width: '60%' }} />
+    </div>
+    <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
+      {Array.from({ length: fields }).map((_, i) => (
+        <div key={i} className="space-y-2">
+          <Skeleton variant="text" style={{ width: '30%' }} />
+          <Skeleton variant="card" style={{ height: 44 }} />
+        </div>
+      ))}
+    </div>
+  </div>
+);

@@ -1,3 +1,4 @@
+import { SkeletonForm } from '@/components/infinity/Skeleton';
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -39,7 +40,7 @@ export default function RoutePlanDetail() {
 
   useEffect(() => { if (id) load(); }, [id, load]);
 
-  if (loading) return <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+  if (loading) return <SkeletonForm fields={10} />;
   if (!plan) return <div className="p-8 text-center text-muted-foreground">Tour nicht gefunden.</div>;
 
   const addr = (a: any) => {

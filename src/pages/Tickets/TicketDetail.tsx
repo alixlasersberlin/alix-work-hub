@@ -1,3 +1,4 @@
+import { SkeletonForm } from '@/components/infinity/Skeleton';
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -364,7 +365,7 @@ export default function TicketDetail() {
     }
   }
 
-  if (loading) return <div className="p-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
+  if (loading) return <SkeletonForm fields={10} />;
   if (!ticket) return <div className="p-8">Ticket nicht gefunden. <Link to="/tickets" className="underline">Zurück</Link></div>;
 
   return (
