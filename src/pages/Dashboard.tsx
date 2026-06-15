@@ -85,6 +85,7 @@ interface SecurityIncident {
 }
 
 import { StatusBadge } from '@/components/StatusBadge';
+import { ActivityHeatmap } from '@/components/aurora/ActivityHeatmap';
 
 function formatCurrency(amount: number | null, currency: string | null) {
   if (amount == null) return '—';
