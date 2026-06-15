@@ -132,12 +132,20 @@ export default function Customers() {
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
-      <div className="mb-6">
-        <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
-          <Building2 className="w-6 h-6 text-primary" />
-          Kunden
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">{totalFiltered} Kunden</p>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
+            <Building2 className="w-6 h-6 text-primary" />
+            Kunden
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">{totalFiltered} Kunden</p>
+        </div>
+        <Button
+          onClick={() => setEditCustomer({})}
+          className="gold-gradient text-primary-foreground"
+        >
+          <UserPlus className="w-4 h-4 mr-2" /> Neuer Kunde
+        </Button>
       </div>
 
       {/* Filters row */}
