@@ -323,3 +323,288 @@ html[data-aurora="2"] .a2-welcome {
   border-radius: 18px;
   padding: 24px 28px;
 }
+
+/* =====================================================
+   AURORA 2.0 – PHASE 2
+   Tabellen, Forms, Badges, AI Center, Heatmaps, Timeline
+   ===================================================== */
+
+/* ---------- TABELLEN ---------- */
+html[data-aurora="2"] table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+html[data-aurora="2"] table thead {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: hsl(var(--card));
+  backdrop-filter: blur(8px);
+}
+html[data-aurora="2"] table thead th {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+  padding: 14px 16px !important;
+  height: auto !important;
+  border-bottom: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+}
+html[data-aurora="2"] table tbody td {
+  padding: 16px !important;
+  height: auto !important;
+  font-size: 14px;
+  border-bottom: 1px solid hsl(var(--border) / 0.55);
+  vertical-align: middle;
+}
+html[data-aurora="2"] table tbody tr {
+  transition: background-color 140ms ease;
+}
+html[data-aurora="2"] table tbody tr:hover {
+  background: hsl(var(--primary) / 0.05);
+}
+html[data-aurora="2"] table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* ---------- FORMULARE ---------- */
+html[data-aurora="2"] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+html[data-aurora="2"] textarea,
+html[data-aurora="2"] select,
+html[data-aurora="2"] [role="combobox"] {
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  font-size: 14px;
+  line-height: 1.4;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+html[data-aurora="2"] textarea {
+  min-height: 96px;
+  padding: 12px 14px;
+}
+html[data-aurora="2"] input:focus,
+html[data-aurora="2"] textarea:focus,
+html[data-aurora="2"] select:focus,
+html[data-aurora="2"] [role="combobox"]:focus {
+  outline: none;
+  border-color: hsl(var(--primary) / 0.6);
+  box-shadow: 0 0 0 4px hsl(var(--primary) / 0.12);
+}
+html[data-aurora="2"] label {
+  font-size: 13px;
+  font-weight: 500;
+  color: hsl(var(--foreground));
+  letter-spacing: -0.005em;
+}
+html[data-aurora="2"] form > * + *,
+html[data-aurora="2"] .form-grid > * + * {
+  margin-top: 6px;
+}
+html[data-aurora="2"] [data-form-error="true"],
+html[data-aurora="2"] .text-destructive[role="alert"],
+html[data-aurora="2"] [aria-invalid="true"] {
+  border-color: hsl(var(--destructive) / 0.7) !important;
+  box-shadow: 0 0 0 4px hsl(var(--destructive) / 0.12) !important;
+}
+
+/* ---------- BUTTONS ---------- */
+html[data-aurora="2"] button[class*="bg-primary"]:not(:disabled) {
+  box-shadow: 0 6px 18px -8px hsl(var(--primary) / 0.45);
+  transition: transform 140ms ease, box-shadow 160ms ease, background-color 140ms ease;
+}
+html[data-aurora="2"] button[class*="bg-primary"]:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 26px -10px hsl(var(--primary) / 0.55);
+}
+
+/* ---------- BADGES ---------- */
+html[data-aurora="2"] [class*="rounded-full"][class*="border"][class*="px-2.5"],
+html[data-aurora="2"] .badge {
+  border-radius: 9999px;
+  padding: 3px 10px;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+}
+
+/* ---------- TABS ---------- */
+html[data-aurora="2"] [role="tablist"] {
+  background: hsl(var(--muted));
+  border: 1px solid hsl(var(--border));
+  padding: 4px;
+  border-radius: 12px;
+  gap: 2px;
+}
+html[data-aurora="2"] [role="tab"] {
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-weight: 500;
+  font-size: 13.5px;
+  transition: all 160ms ease;
+}
+html[data-aurora="2"] [role="tab"][data-state="active"] {
+  background: hsl(var(--card));
+  color: hsl(var(--primary));
+  box-shadow: 0 2px 8px -2px hsl(var(--foreground) / 0.10);
+}
+
+/* ---------- DIALOGE / SHEETS ---------- */
+html[data-aurora="2"] [role="dialog"] {
+  border-radius: 20px;
+  box-shadow: var(--shadow-elevated);
+  border: 1px solid hsl(var(--border));
+}
+
+/* ---------- AI CENTER ---------- */
+html[data-aurora="2"] body:has([href="/ai-center"][class*="bg-primary/10"]) main,
+html[data-aurora="2"] .a2-ai-hero {
+  /* placeholder, no-op fallback */
+}
+/* Hero-Header für AI-Seiten */
+html[data-aurora="2"] main h1:has(> svg) {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+/* Chat-Bereich (Copilot) breiter & lesbarer */
+html[data-aurora="2"] .a2-chat,
+html[data-aurora="2"] [data-ai-chat] {
+  max-width: 880px;
+  margin-inline: auto;
+}
+
+/* ---------- ACTIVITY FEED ---------- */
+html[data-aurora="2"] .a2-feed {
+  position: relative;
+}
+html[data-aurora="2"] .a2-feed > * {
+  position: relative;
+  padding-left: 28px;
+  padding-bottom: 18px;
+}
+html[data-aurora="2"] .a2-feed > *::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: hsl(var(--primary));
+  box-shadow: 0 0 0 4px hsl(var(--primary) / 0.15);
+}
+html[data-aurora="2"] .a2-feed > *::after {
+  content: '';
+  position: absolute;
+  left: 11px;
+  top: 18px;
+  bottom: 0;
+  width: 2px;
+  background: hsl(var(--border));
+}
+html[data-aurora="2"] .a2-feed > *:last-child::after { display: none; }
+
+/* ---------- TIMELINE (horizontal) ---------- */
+html[data-aurora="2"] .a2-timeline {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 12px 0;
+}
+html[data-aurora="2"] .a2-timeline-step {
+  flex: 1;
+  position: relative;
+  text-align: center;
+  font-size: 12px;
+  color: hsl(var(--muted-foreground));
+}
+html[data-aurora="2"] .a2-timeline-step::before {
+  content: '';
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background: hsl(var(--muted));
+  border: 2px solid hsl(var(--border));
+  margin: 0 auto 8px;
+}
+html[data-aurora="2"] .a2-timeline-step[data-state="done"]::before {
+  background: hsl(var(--success));
+  border-color: hsl(var(--success));
+}
+html[data-aurora="2"] .a2-timeline-step[data-state="current"]::before {
+  background: hsl(var(--primary));
+  border-color: hsl(var(--primary));
+  box-shadow: 0 0 0 4px hsl(var(--primary) / 0.20);
+}
+html[data-aurora="2"] .a2-timeline-step + .a2-timeline-step::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: -50%;
+  right: 50%;
+  height: 2px;
+  background: hsl(var(--border));
+}
+
+/* ---------- HEATMAP ---------- */
+html[data-aurora="2"] .a2-heatmap {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14px, 1fr));
+  gap: 3px;
+}
+html[data-aurora="2"] .a2-heatmap-cell {
+  aspect-ratio: 1 / 1;
+  border-radius: 3px;
+  background: hsl(var(--primary) / var(--a2-cell-alpha, 0.08));
+  transition: transform 120ms ease;
+}
+html[data-aurora="2"] .a2-heatmap-cell:hover {
+  transform: scale(1.25);
+}
+
+/* ---------- KPI MINI-CHART CONTAINER ---------- */
+html[data-aurora="2"] .a2-spark {
+  height: 36px;
+  width: 100%;
+  margin-top: 4px;
+  opacity: 0.85;
+}
+
+/* ---------- PAGE PADDING / MAX-WIDTH ---------- */
+html[data-aurora="2"] main > div.p-6,
+html[data-aurora="2"] main > div[class*="p-6"]:not([class*="md:p-"]),
+html[data-aurora="2"] main > div.p-8 {
+  padding: 28px 32px;
+}
+html[data-aurora="2"] main > * {
+  max-width: 1600px;
+  margin-inline: auto;
+}
+
+/* ---------- DARK MODE TWEAKS ---------- */
+html[data-aurora="2"].dark table thead {
+  background: hsl(221 39% 13%);
+}
+html[data-aurora="2"].dark table tbody tr:hover {
+  background: hsl(var(--primary) / 0.08);
+}
+html[data-aurora="2"].dark input,
+html[data-aurora="2"].dark textarea,
+html[data-aurora="2"].dark select,
+html[data-aurora="2"].dark [role="combobox"] {
+  background: hsl(221 39% 13%);
+}
+
+/* ---------- MICRO-ANIMATIONS ---------- */
+@keyframes a2-fade-slide-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+html[data-aurora="2"] main > * {
+  animation: a2-fade-slide-in 220ms ease-out;
+}
