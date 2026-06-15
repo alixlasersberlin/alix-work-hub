@@ -1235,8 +1235,78 @@ export default function Lagergeraete({
                       maxLength={12}
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="leih-repair">Zugeordneter Reparaturauftrag (optional)</Label>
+                    <Popover open={repairPickerOpen} onOpenChange={(v) => { setRepairPickerOpen(v); if (v) setRepairSearch(''); }}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          id="leih-repair"
+                          type="button"
+                          variant="outline"
+                          role="combobox"
+                          className="w-full justify-between font-normal"
+                        >
+                          <span className="truncate">{leihRepairLabel || (leihRepairId ? leihRepairId : 'Reparaturauftrag auswählen…')}</span>
+                          <Wrench className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                        <Command shouldFilter={false}>
+                          <CommandInput
+                            placeholder="Nummer, Kunde, Seriennummer…"
+                            value={repairSearch}
+                            onValueChange={setRepairSearch}
+                          />
+                          <CommandList className="max-h-72">
+                            {loadingRepairs && (
+                              <div className="flex items-center justify-center py-4 text-xs text-muted-foreground">
+                                <Loader2 className="w-3 h-3 mr-2 animate-spin" /> Lade…
+                              </div>
+                            )}
+                            {!loadingRepairs && repairOptions.length === 0 && (
+                              <CommandEmpty>Keine Treffer.</CommandEmpty>
+                            )}
+                            <CommandGroup>
+                              {repairOptions.map((r) => (
+                                <CommandItem
+                                  key={r.id}
+                                  value={r.id}
+                                  onSelect={() => {
+                                    setLeihRepairId(r.id);
+                                    setLeihRepairLabel(r.label);
+                                    setRepairPickerOpen(false);
+                                  }}
+                                >
+                                  {r.label}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    {leihRepairId && (
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/reparatur/${leihRepairId}`)}
+                          className="text-primary hover:underline"
+                        >
+                          Reparatur öffnen
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setLeihRepairId(null); setLeihRepairLabel(''); }}
+                          className="text-destructive hover:underline"
+                        >
+                          entfernen
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
+
 
 
               <div className="space-y-2">
