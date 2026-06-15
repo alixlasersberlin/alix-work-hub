@@ -2,7 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useUiTemplate, type UiTemplate } from "@/hooks/useUiTemplate";
-import { Sparkles, Layers, Check } from "lucide-react";
+import { useInfinityTheme, INFINITY_THEMES, type InfinityTheme } from "@/hooks/useInfinityTheme";
+import { Sparkles, Layers, Check, Infinity as InfinityIcon } from "lucide-react";
 
 const OPTIONS: { id: UiTemplate; name: string; description: string; preview: React.ReactNode }[] = [
   {
