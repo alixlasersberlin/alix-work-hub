@@ -65,6 +65,50 @@ export default function AngebotErstellen() {
   const [leadsLoading, setLeadsLoading] = useState(false);
   const [leadSearch, setLeadSearch] = useState('');
 
+  // Neuer Kunde Dialog
+  const [newCustomerOpen, setNewCustomerOpen] = useState(false);
+  const [newCustomerSaving, setNewCustomerSaving] = useState(false);
+  const [newCustomer, setNewCustomer] = useState({
+    company_name: '', contact_name: '', email: '', phone: '',
+    ba_address: '', ba_street2: '', ba_zip: '', ba_city: '', ba_country: 'Deutschland',
+  });
+
+  async function createNewCustomer() {
+    if (!newCustomer.company_name && !newCustomer.contact_name) {
+      toast.error('Bitte Firma oder Name angeben.');
+      return;
+    }
+    setNewCustomerSaving(true);
+    const ba = {
+      address: newCustomer.ba_address || null,
+      street2: newCustomer.ba_street2 || null,
+      zip: newCustomer.ba_zip || null,
+      city: newCustomer.ba_city || null,
+      country: newCustomer.ba_country || null,
+    };
+    const payload: any = {
+      company_name: newCustomer.company_name || newCustomer.contact_name,
+      contact_name: newCustomer.contact_name || null,
+      email: newCustomer.email || null,
+      phone: newCustomer.phone || null,
+      billing_address: ba,
+      shipping_address: ba,
+    };
+    const { data, error } = await supabase.from('customers').insert(payload).select('*').single();
+    setNewCustomerSaving(false);
+    if (error) { toast.error('Anlegen fehlgeschlagen: ' + error.message); return; }
+    setCustomers(prev => [data, ...prev]);
+    setCustomerId(data.id);
+    setCustomerSearch('');
+    setNewCustomerOpen(false);
+    setNewCustomer({
+      company_name: '', contact_name: '', email: '', phone: '',
+      ba_address: '', ba_street2: '', ba_zip: '', ba_city: '', ba_country: 'Deutschland',
+    });
+    toast.success('Kunde angelegt und ausgewählt.');
+  }
+
+
   useEffect(() => {
     async function load() {
       setLoading(true);
