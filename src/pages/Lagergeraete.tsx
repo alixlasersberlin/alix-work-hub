@@ -1240,7 +1240,7 @@ export default function Lagergeraete({
                 </div>
               )}
               <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                <Button type="button" variant="outline" onClick={() => { setOpen(false); resetForm(); }}>
                   Abbrechen
                 </Button>
                 <Button type="submit" disabled={saving}>
