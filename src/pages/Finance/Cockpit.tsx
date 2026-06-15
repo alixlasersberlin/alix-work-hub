@@ -121,21 +121,24 @@ export default function FinanceCockpit() {
         </DataCard>
 
         <DataCard title="Top 10 Schuldner">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead><tr className="text-left border-b border-border"><th className="p-2">Kunde</th><th className="p-2 text-right">Überfällig</th><th></th></tr></thead>
-              <tbody>
-                {topDebtors.map((a, i) => (
-                  <tr key={i} className="border-b border-border/50">
-                    <td className="p-2">{a.customers?.company_name || a.customers?.contact_name || a.customer_id}</td>
-                    <td className="p-2 text-right text-destructive font-medium">{fmt(Number(a.overdue_balance))}</td>
-                    <td className="p-2"><Button size="sm" variant="ghost" onClick={() => nav(`/finance/mahnwesen/${a.customer_id}`)}><ArrowRight className="h-4 w-4" /></Button></td>
-                  </tr>
-                ))}
-                {topDebtors.length === 0 && <tr><td colSpan={3} className="p-4 text-center text-muted-foreground">Keine überfälligen Debitoren</td></tr>}
-              </tbody>
-            </table>
-          </div>
+          {topDebtors.length === 0 ? (
+            <EmptyState compact icon={Inbox} title="Keine überfälligen Debitoren" />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead><tr className="text-left border-b border-border"><th className="p-2">Kunde</th><th className="p-2 text-right">Überfällig</th><th></th></tr></thead>
+                <tbody>
+                  {topDebtors.map((a, i) => (
+                    <tr key={i} className="border-b border-border/50">
+                      <td className="p-2">{a.customers?.company_name || a.customers?.contact_name || a.customer_id}</td>
+                      <td className="p-2 text-right text-destructive font-medium">{fmt(Number(a.overdue_balance))}</td>
+                      <td className="p-2"><Button size="sm" variant="ghost" onClick={() => nav(`/finance/mahnwesen/${a.customer_id}`)}><ArrowRight className="h-4 w-4" /></Button></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </DataCard>
       </div>
 
