@@ -215,35 +215,34 @@ export default function AlixSmartMigration() {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Database className="w-6 h-6 text-primary" />
-            AlixSmart Migration
-          </h1>
-          <p className="text-sm text-muted-foreground">Vorbereitung, Dry-Run und kontrollierter Import.</p>
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" size="sm" onClick={loadAll} disabled={loading}>
-            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />Aktualisieren
-          </Button>
-          <Button variant="outline" size="sm" onClick={testConnection} disabled={running === 'test'}>
-            <Wifi className={`w-4 h-4 mr-2 ${running === 'test' ? 'animate-spin' : ''}`} />Verbindung testen
-          </Button>
-          <Button variant="outline" size="sm" onClick={analyseSchemas} disabled={running === 'schema' || !connectionOk}>
-            <Database className={`w-4 h-4 mr-2 ${running === 'schema' ? 'animate-spin' : ''}`} />Schema analysieren
-          </Button>
-          <Button size="sm" onClick={runDryRun} disabled={running === 'dryrun' || !schemaReady || !connectionOk}>
-            <PlayCircle className={`w-4 h-4 mr-2 ${running === 'dryrun' ? 'animate-spin' : ''}`} />Dry-Run starten
-          </Button>
-          <Button variant="outline" size="sm" onClick={analyseWave1} disabled={running === 'wave1' || !connectionOk}>
-            <AlertTriangle className={`w-4 h-4 mr-2 ${running === 'wave1' ? 'animate-spin' : ''}`} />Welle 1 analysieren
-          </Button>
-          <Button size="sm" variant="default" onClick={materializePending} disabled={running === 'materialize' || !connectionOk}>
-            <Database className={`w-4 h-4 mr-2 ${running === 'materialize' ? 'animate-spin' : ''}`} />Pending Profile → Kunden
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        icon={Database}
+        title="AlixSmart Migration"
+        subtitle="Vorbereitung, Dry-Run und kontrollierter Import."
+        noBreadcrumbs
+        actions={
+          <>
+            <Button variant="outline" size="sm" onClick={loadAll} disabled={loading}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />Aktualisieren
+            </Button>
+            <Button variant="outline" size="sm" onClick={testConnection} disabled={running === 'test'}>
+              <Wifi className={`w-4 h-4 mr-2 ${running === 'test' ? 'animate-spin' : ''}`} />Verbindung testen
+            </Button>
+            <Button variant="outline" size="sm" onClick={analyseSchemas} disabled={running === 'schema' || !connectionOk}>
+              <Database className={`w-4 h-4 mr-2 ${running === 'schema' ? 'animate-spin' : ''}`} />Schema analysieren
+            </Button>
+            <Button size="sm" onClick={runDryRun} disabled={running === 'dryrun' || !schemaReady || !connectionOk}>
+              <PlayCircle className={`w-4 h-4 mr-2 ${running === 'dryrun' ? 'animate-spin' : ''}`} />Dry-Run starten
+            </Button>
+            <Button variant="outline" size="sm" onClick={analyseWave1} disabled={running === 'wave1' || !connectionOk}>
+              <AlertTriangle className={`w-4 h-4 mr-2 ${running === 'wave1' ? 'animate-spin' : ''}`} />Welle 1 analysieren
+            </Button>
+            <Button size="sm" variant="default" onClick={materializePending} disabled={running === 'materialize' || !connectionOk}>
+              <Database className={`w-4 h-4 mr-2 ${running === 'materialize' ? 'animate-spin' : ''}`} />Pending Profile → Kunden
+            </Button>
+          </>
+        }
+      />
 
       <div className="grid md:grid-cols-3 gap-3">
         <StatusBadge label="Schema bereit" ok={schemaReady} />
