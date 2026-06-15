@@ -83,7 +83,7 @@ export default function FinanceBank() {
 
       <DataCard className="p-4 mb-6">
         <h3 className="font-semibold mb-3">Statements</h3>
-        {statements.length === 0 ? <p className="text-sm text-muted-foreground">Noch keine Importe.</p> : (
+        {statements.length === 0 ? <div className="py-6"><EmptyState compact icon={Upload} title="Noch keine Importe" description="Lade ein CAMT.053- oder MT940-Statement hoch, um zu starten." /></div> : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="text-xs text-muted-foreground uppercase">
