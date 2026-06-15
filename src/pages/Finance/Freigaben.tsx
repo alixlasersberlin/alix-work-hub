@@ -56,23 +56,25 @@ export default function FinanceFreigaben() {
     setBusy(false);
   };
 
-  if (loading) return <PageLoading />;
   const pending = rows.filter(r => r.status === 'pending').length;
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Finance Freigaben" subtitle={`${pending} offene Genehmigungen`} icon={CheckSquare} actions={<>
-        <Select value={filter} onValueChange={setFilter}>
-          <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="pending">Offen</SelectItem>
-            <SelectItem value="approved">Freigegeben</SelectItem>
-            <SelectItem value="rejected">Abgelehnt</SelectItem>
-            <SelectItem value="alle">Alle</SelectItem>
-          </SelectContent>
-        </Select>
-      </>} />
+      <PageHeader title="Finance Freigaben" subtitle={loading ? 'Lädt…' : `${pending} offene Genehmigungen`} icon={CheckSquare} noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : pending ? 'warning' : 'done'} label={loading ? 'Lädt' : pending ? `${pending} offen` : 'Aktuell'} pulse={loading} />}
+        actions={<>
+          <Select value={filter} onValueChange={setFilter}>
+            <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="pending">Offen</SelectItem>
+              <SelectItem value="approved">Freigegeben</SelectItem>
+              <SelectItem value="rejected">Abgelehnt</SelectItem>
+              <SelectItem value="alle">Alle</SelectItem>
+            </SelectContent>
+          </Select>
+        </>} />
 
+      {loading ? <DataCard><SkeletonTable rows={8} cols={4} /></DataCard> : (
       <DataCard title="Inbox">
         <div className="space-y-2">
           {rows.map(r => (
