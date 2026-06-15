@@ -107,9 +107,11 @@ export default function FinanceManagementPack() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Management-Pack" subtitle="Monats- und Quartalspakete für Geschäftsführung & Beirat" icon={FileBarChart}
+      <PageHeader title="Management-Pack" subtitle={loading ? 'Lädt…' : 'Monats- und Quartalspakete für Geschäftsführung & Beirat'} icon={FileBarChart} noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${rows.length} Pakete`} pulse={loading} />}
         actions={canEdit && <Button onClick={() => setShow(true)} className="gap-2"><Plus className="h-4 w-4" />Neues Pack</Button>} />
 
+      {loading ? <DataCard><SkeletonTable rows={6} cols={4} /></DataCard> : (
       <DataCard title={`Pakete (${rows.length})`}>
         {rows.length === 0 ? <div className="p-8 text-center text-muted-foreground">Noch keine Pakete erstellt.</div> : (
           <div className="divide-y divide-border">
