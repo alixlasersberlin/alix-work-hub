@@ -13,6 +13,8 @@ import { Users, Loader2, ArrowLeft, ExternalLink, Trash2, Search, GitMerge } fro
 import { SourceBadge } from '@/lib/source-system';
 import CustomerDeleteDialog from '@/components/CustomerDeleteDialog';
 import { useAuth } from '@/hooks/useAuth';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { toast } from 'sonner';
 
 type DupKey = 'email' | 'phone' | 'company_name';
@@ -139,21 +141,21 @@ export default function DoppelteKunden() {
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <Button variant="ghost" size="sm" onClick={() => navigate('/kunden')} className="mb-2 -ml-2">
-            <ArrowLeft className="w-4 h-4 mr-1" /> Zurück zu Kunden
-          </Button>
-          <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
-            <Users className="w-6 h-6 text-primary" />
-            Doppelte Kunden
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {loading
+      <div>
+        <Button variant="ghost" size="sm" onClick={() => navigate('/kunden')} className="mb-2 -ml-2">
+          <ArrowLeft className="w-4 h-4 mr-1" /> Zurück zu Kunden
+        </Button>
+        <PageHeader
+          icon={Users}
+          title="Doppelte Kunden"
+          subtitle={
+            loading
               ? 'Lade Kunden …'
-              : `${groups.length} Dublettengruppen · ${totalDuplicates} betroffene Kunden`}
-          </p>
-        </div>
+              : `${groups.length} Dublettengruppen · ${totalDuplicates} betroffene Kunden`
+          }
+          noBreadcrumbs
+          meta={<InfinityStatusBadge kind="warning" label={`${groups.length}`} />}
+        />
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">

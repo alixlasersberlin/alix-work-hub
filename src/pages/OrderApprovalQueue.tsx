@@ -12,6 +12,9 @@ import {
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
+
 
 interface Row {
   id: string;
@@ -162,19 +165,13 @@ export default function OrderApprovalQueue() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-2xl font-display font-bold gold-text flex items-center gap-2">
-            <ShieldCheck className="w-6 h-6" /> Freigabe – ORDER Produktionsbestellungen
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Wartende Bestellungen, die auf Freigabe durch den Super Admin warten.
-          </p>
-        </div>
-        <Badge variant="outline" className="text-xs border-yellow-500/40 text-yellow-500">
-          {filtered.length} wartend
-        </Badge>
-      </div>
+      <PageHeader
+        icon={ShieldCheck}
+        title="Freigabe – ORDER Produktionsbestellungen"
+        subtitle="Wartende Bestellungen, die auf Freigabe durch den Super Admin warten."
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind="warning" label={`${filtered.length} wartend`} />}
+      />
 
       <Card className="p-3">
         <div className="relative">
