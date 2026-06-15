@@ -72,15 +72,12 @@ export default function Systemwartung() {
 
   return (
     <div className="container mx-auto p-6 max-w-3xl space-y-6">
-      <div className="flex items-center gap-3">
-        <Wrench className="h-7 w-7 text-primary" />
-        <div>
-          <h1 className="text-3xl font-bold">Systemwartung</h1>
-          <p className="text-muted-foreground text-sm">
-            Aktiviert den Wartungsmodus für das gesamte System.
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        icon={Wrench}
+        title="Systemwartung"
+        subtitle="Aktiviert den Wartungsmodus für das gesamte System."
+        noBreadcrumbs
+      />
 
       {loading ? (
         <div className="flex items-center justify-center py-12">

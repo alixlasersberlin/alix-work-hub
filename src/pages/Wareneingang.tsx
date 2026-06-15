@@ -114,13 +114,12 @@ export default function Wareneingang() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <PackageCheck className="h-7 w-7 text-primary" />
-        <div>
-          <h1 className="text-3xl font-bold">Wareneingang</h1>
-          <p className="text-muted-foreground text-sm">Erfassen Sie eingehende Ware und buchen Sie diese den Artikeln zu.</p>
-        </div>
-      </div>
+      <PageHeader
+        icon={PackageCheck}
+        title="Wareneingang"
+        subtitle="Erfassen Sie eingehende Ware und buchen Sie diese den Artikeln zu."
+        noBreadcrumbs
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2">

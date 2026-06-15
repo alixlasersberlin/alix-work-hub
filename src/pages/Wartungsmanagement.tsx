@@ -167,13 +167,13 @@ export default function Wartungsmanagement() {
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2"><Cog className="h-7 w-7 text-primary" /> Wartungsmanagement</h1>
-          <p className="text-muted-foreground mt-1">Plant, terminiert und überwacht alle Gerätewartungen inkl. automatischer Erinnerungen.</p>
-        </div>
-        <Button onClick={runDaily} disabled={busy}><Mail className="h-4 w-4 mr-2" /> Tägliche Erinnerungen jetzt senden</Button>
-      </div>
+      <PageHeader
+        icon={Cog}
+        title="Wartungsmanagement"
+        subtitle="Plant, terminiert und überwacht alle Gerätewartungen inkl. automatischer Erinnerungen."
+        noBreadcrumbs
+        actions={<Button onClick={runDaily} disabled={busy}><Mail className="h-4 w-4 mr-2" /> Tägliche Erinnerungen jetzt senden</Button>}
+      />
 
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
         <Kpi icon={<AlertTriangle className="h-5 w-5 text-red-500" />} title="Überfällig" value={kpis.over} />

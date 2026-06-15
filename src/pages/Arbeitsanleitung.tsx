@@ -505,18 +505,17 @@ function StepCard({ step, index }: { step: Step; index: number }) {
 export default function Arbeitsanleitung() {
   return (
     <div className="container mx-auto p-6 space-y-8">
-      <div className="flex items-center gap-3">
-        <ClipboardList className="h-7 w-7 text-primary" />
-        <div>
-          <h1 className="text-3xl font-bold">Arbeitsanleitung</h1>
-          <p className="text-muted-foreground text-sm">
-            Schritt-für-Schritt-Anleitung für alle Abteilungen und Menüpunkte.
-          </p>
-        </div>
-        <Link to="/hilfe" className="ml-auto text-sm text-primary hover:underline">
-          ← Zurück zur Hilfe
-        </Link>
-      </div>
+      <PageHeader
+        icon={ClipboardList}
+        title="Arbeitsanleitung"
+        subtitle="Schritt-für-Schritt-Anleitung für alle Abteilungen und Menüpunkte."
+        noBreadcrumbs
+        actions={
+          <Link to="/hilfe" className="text-sm text-primary hover:underline">
+            ← Zurück zur Hilfe
+          </Link>
+        }
+      />
 
       <Card className="border-primary/30 bg-primary/5">
         <CardContent className="flex gap-3 pt-6 text-sm">
