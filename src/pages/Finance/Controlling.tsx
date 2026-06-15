@@ -135,6 +135,8 @@ export default function FinanceControlling() {
           </ResponsiveContainer>
         </div>
       </DataCard>
+      </>
+      )}
     </div>
   );
 }
