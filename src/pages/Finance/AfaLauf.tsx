@@ -1,7 +1,10 @@
 import { useState } from 'react';
-import { Play, FileCheck2, AlertTriangle } from 'lucide-react';
+import { Play, FileCheck2, AlertTriangle, TrendingDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { PageHeader, DataCard } from '@/components/PageShell';
+import { DataCard } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
+import { KpiTile } from '@/components/infinity/KpiTile';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -36,12 +39,16 @@ export default function FinanceAfaLauf() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-6">
       <PageHeader
+        icon={TrendingDown}
         title="AfA-Lauf"
         subtitle="Monatliche Abschreibungsbuchungen erzeugen"
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={busy ? 'progress' : preview ? 'done' : 'neutral'} label={busy ? 'Läuft' : preview ? 'Bereit' : 'Idle'} pulse={busy} />}
         actions={<Button variant="outline" onClick={() => nav('/finance/anlagen')}>Zur Anlagenliste</Button>}
       />
+
 
       {!canRun && (
         <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 flex items-center gap-2 text-sm">
@@ -69,9 +76,9 @@ export default function FinanceAfaLauf() {
       {preview && (
         <>
           <div className="grid grid-cols-3 gap-4">
-            <DataCard title="Periode"><div className="text-2xl font-semibold">{preview.period}</div></DataCard>
-            <DataCard title="Anlagen"><div className="text-2xl font-semibold">{String(preview.asset_count)}</div></DataCard>
-            <DataCard title="Summe AfA"><div className="text-2xl font-semibold">{fmtEUR(preview.total_amount)}</div></DataCard>
+            <KpiTile label="Periode" value={preview.period} accent="sky" />
+            <KpiTile label="Anlagen" value={String(preview.asset_count)} accent="violet" />
+            <KpiTile label="Summe AfA" value={fmtEUR(preview.total_amount)} icon={TrendingDown} accent="gold" />
           </div>
           <div className="rounded-md border border-border bg-card">
             <div className="p-4 flex items-center justify-between">
