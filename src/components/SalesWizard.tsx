@@ -301,7 +301,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
           )}
 
           {/* Step 2 – Zusätzliche Interessen */}
-          {step === 2 && (
+          {step === 3 && (
             <Section title={t.s_additional} hint={t.optional_multi} publicMode={publicMode}>
               <div className="space-y-2">
                 {ADDITIONAL.map((a) => {
@@ -335,7 +335,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
           )}
 
           {/* Step 3 – Lieferzeitraum */}
-          {step === 3 && (
+          {step === 4 && (
             <Section title={t.s_delivery} publicMode={publicMode}>
               <RadioGroup value={data.delivery_preference} onValueChange={(v) => setData({ ...data, delivery_preference: v })}>
                 {DELIVERY.map((d) => (
@@ -355,7 +355,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
           )}
 
           {/* Step 4 – Name */}
-          {step === 4 && (
+          {step === 5 && (
             <Section title={t.s_name} hint={t.required} publicMode={publicMode}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <Field label={t.first_name}>
@@ -369,14 +369,14 @@ export default function SalesWizard({ publicMode = false }: Props) {
           )}
 
           {/* Step 5 – Firma */}
-          {step === 5 && (
+          {step === 6 && (
             <Section title={t.s_company} hint={t.optional} publicMode={publicMode}>
               <Input value={data.company} onChange={(e) => setData({ ...data, company: e.target.value })} placeholder={t.company_name} className='bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-cyan-400/60 focus-visible:border-cyan-300/60' />
             </Section>
           )}
 
           {/* Step 6 – Telefon */}
-          {step === 6 && (
+          {step === 7 && (
             <Section title={t.s_phone} hint={t.required} publicMode={publicMode}>
               <div className="flex gap-2">
                 <select
@@ -401,14 +401,14 @@ export default function SalesWizard({ publicMode = false }: Props) {
           )}
 
           {/* Step 7 – Email */}
-          {step === 7 && (
+          {step === 8 && (
             <Section title={t.s_email} hint={t.required} publicMode={publicMode}>
               <Input type="email" value={data.email} onChange={(e) => setData({ ...data, email: e.target.value })} placeholder={t.email_placeholder} className='bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-cyan-400/60 focus-visible:border-cyan-300/60' />
             </Section>
           )}
 
           {/* Step 8 – Beratungsart */}
-          {step === 8 && (
+          {step === 9 && (
             <Section title={t.s_consultation} publicMode={publicMode}>
               <RadioGroup value={data.consultation_type} onValueChange={(v) => setData({ ...data, consultation_type: v })}>
                 {CONSULTATION.map((c) => (
@@ -427,14 +427,14 @@ export default function SalesWizard({ publicMode = false }: Props) {
           )}
 
           {/* Step 9 – Weitere Infos */}
-          {step === 9 && (
+          {step === 10 && (
             <Section title={t.s_notes} hint={t.s_notes_hint} publicMode={publicMode}>
               <Textarea rows={6} value={data.notes} onChange={(e) => setData({ ...data, notes: e.target.value })} className='bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-cyan-400/60 focus-visible:border-cyan-300/60' />
             </Section>
           )}
 
           {/* Step 10 – Datenschutz + Captcha */}
-          {step === 10 && (
+          {step === 11 && (
             <Section title={t.s_privacy} publicMode={publicMode}>
               <div className="space-y-3">
                 <label className="flex items-start gap-3 cursor-pointer">
@@ -455,7 +455,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
           )}
 
           {/* Step 11 – Bewertung */}
-          {step === 11 && (
+          {step === 12 && (
             <Section title={t.s_rating} hint={t.s_rating_hint} publicMode={publicMode}>
               <div className="flex justify-center gap-2 py-4">
                 {[1, 2, 3, 4, 5].map((n) => (
