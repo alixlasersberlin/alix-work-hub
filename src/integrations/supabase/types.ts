@@ -1713,6 +1713,7 @@ export type Database = {
           birth_date: string | null
           company_name: string | null
           contact_name: string | null
+          contact_tenant_id: string | null
           created_at: string
           created_by: string | null
           email: string | null
@@ -1724,6 +1725,7 @@ export type Database = {
           raw_data: Json | null
           shipping_address: Json | null
           source_system: string
+          supplier_tenant_id: string | null
           updated_at: string
           user_id: string | null
         }
@@ -1734,6 +1736,7 @@ export type Database = {
           birth_date?: string | null
           company_name?: string | null
           contact_name?: string | null
+          contact_tenant_id?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
@@ -1745,6 +1748,7 @@ export type Database = {
           raw_data?: Json | null
           shipping_address?: Json | null
           source_system: string
+          supplier_tenant_id?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -1755,6 +1759,7 @@ export type Database = {
           birth_date?: string | null
           company_name?: string | null
           contact_name?: string | null
+          contact_tenant_id?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
@@ -1766,10 +1771,26 @@ export type Database = {
           raw_data?: Json | null
           shipping_address?: Json | null
           source_system?: string
+          supplier_tenant_id?: string | null
           updated_at?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "customers_contact_tenant_id_fkey"
+            columns: ["contact_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customers_supplier_tenant_id_fkey"
+            columns: ["supplier_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       deleted_customers: {
         Row: {
