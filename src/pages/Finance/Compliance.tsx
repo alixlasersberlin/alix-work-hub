@@ -106,6 +106,7 @@ export default function FinanceCompliance() {
           {logs.length === 0 && <div className="text-sm text-muted-foreground p-8 text-center">Keine Einträge im Zeitraum</div>}
         </div>
       </DataCard>
+      )}
     </div>
   );
 }
