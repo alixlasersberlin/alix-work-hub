@@ -13,6 +13,8 @@ import OrderEditDialog from '@/components/OrderEditDialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useAtOnly } from '@/hooks/useAtOnly';
 import { createPDF } from '@/lib/pdf-utils';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import autoTable from 'jspdf-autotable';
 
 type SortField = 'order_number' | 'expected_shipment_date' | 'total_amount';

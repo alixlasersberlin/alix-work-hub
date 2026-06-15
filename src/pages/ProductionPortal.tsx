@@ -13,6 +13,7 @@ import { format } from 'date-fns';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { PageHeader } from '@/components/infinity/PageHeader';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useViewMode } from '@/hooks/useViewMode';
 import { ViewToggle } from '@/components/ViewToggle';
@@ -319,28 +320,26 @@ export default function ProductionPortal() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-2xl font-display font-bold gold-text flex items-center gap-2">
-            <Factory className="w-6 h-6" /> {t.title}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {t.worklist} {supplierName ? `– ${supplierName}` : ''}
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <DesignVariantSwitcher inline />
-          <Link
-            to="/hilfe"
-            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors border border-border rounded-md px-2.5 py-1.5"
-          >
-            <HelpCircle className="w-3.5 h-3.5" /> Hilfe
-          </Link>
-          <div className="text-right text-xs text-muted-foreground">
-            {t.loggedInAs} <span className="text-foreground font-medium">{profile?.full_name || profile?.email}</span>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        icon={Factory}
+        title={t.title}
+        subtitle={`${t.worklist}${supplierName ? ` – ${supplierName}` : ''}`}
+        noBreadcrumbs
+        actions={
+          <>
+            <DesignVariantSwitcher inline />
+            <Link
+              to="/hilfe"
+              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors border border-border rounded-md px-2.5 py-1.5"
+            >
+              <HelpCircle className="w-3.5 h-3.5" /> Hilfe
+            </Link>
+            <div className="text-right text-xs text-muted-foreground">
+              {t.loggedInAs} <span className="text-foreground font-medium">{profile?.full_name || profile?.email}</span>
+            </div>
+          </>
+        }
+      />
 
       <Card className="p-3 md:p-4 space-y-3">
         <div className="flex flex-col lg:flex-row gap-2 lg:items-center">

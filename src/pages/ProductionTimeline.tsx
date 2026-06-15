@@ -13,6 +13,7 @@ import { format, differenceInCalendarDays, isValid } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { createPDF } from '@/lib/pdf-utils';
+import { PageHeader } from '@/components/infinity/PageHeader';
 import autoTable from 'jspdf-autotable';
 import { useAtOnly } from '@/hooks/useAtOnly';
 import { useAuth } from '@/hooks/useAuth';
@@ -199,16 +200,13 @@ export default function ProductionTimeline() {
 
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-4 md:space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-        <div>
-          <h1 className="text-xl md:text-2xl font-display font-bold gold-text flex items-center gap-2">
-            <Calendar className="w-5 h-5 md:w-6 md:h-6" /> Timeline
-          </h1>
-          <p className="text-xs md:text-sm text-muted-foreground">
-            Alle Bestellungen und Reklamationen nach Fälligkeit sortiert
-            {selectionCount > 0 && ` · ${selectionCount} ausgewählt`}
-          </p>
-        </div>
+      <PageHeader
+        icon={Calendar}
+        title="Timeline"
+        subtitle={`Alle Bestellungen und Reklamationen nach Fälligkeit sortiert${selectionCount > 0 ? ` · ${selectionCount} ausgewählt` : ''}`}
+        noBreadcrumbs
+      />
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3"><div></div>
         <div className="flex items-center gap-2">
           <div className="flex gap-1 p-1 bg-muted/30 rounded-lg">
             {(['all', 'order', 'reclamation'] as const).map(f => (
