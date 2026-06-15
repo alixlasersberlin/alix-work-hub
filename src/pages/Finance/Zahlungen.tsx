@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowDownToLine, Loader2, Inbox } from 'lucide-react';
-import { PageHeader } from '@/components/PageShell';
+import { ArrowDownToLine } from 'lucide-react';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { SkeletonTable } from '@/components/infinity/Skeleton';
+import { EmptyState } from '@/components/infinity/EmptyState';
+import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { getTransactions } from '@/lib/finance/api';
 import { ListToolbar } from '@/components/finance/ListToolbar';
 import { matchesQuery, paginate, type PageSize } from '@/lib/finance/list-filter';
@@ -18,7 +21,13 @@ export default function FinanceZahlungen() {
   const visible = useMemo(() => paginate(filtered, pageSize), [filtered, pageSize]);
   return (
     <div className="container mx-auto px-4 py-8">
-      <PageHeader icon={<ArrowDownToLine className="w-6 h-6 text-success" />} title="Zahlungen" subtitle={`${rows.length} Zahlungseingänge`} />
+      <PageHeader
+        title="Zahlungen"
+        subtitle={`${rows.length} Zahlungseingänge`}
+        icon={ArrowDownToLine}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${rows.length}`} pulse={!loading} />}
+      />
       <ListToolbar
         search={search}
         onSearchChange={setSearch}
@@ -29,9 +38,9 @@ export default function FinanceZahlungen() {
       />
       <div className="rounded-xl border border-border bg-card card-glow overflow-hidden">
         {loading ? (
-          <div className="p-12 text-center"><Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" /></div>
+          <div className="p-6"><SkeletonTable rows={8} cols={4} /></div>
         ) : visible.length === 0 ? (
-          <div className="p-12 text-center text-muted-foreground"><Inbox className="w-8 h-8 mx-auto mb-2 opacity-50" />Keine Zahlungen erfasst.</div>
+          <div className="p-8"><EmptyState title="Keine Zahlungen" description="Es wurden noch keine Zahlungseingänge erfasst." /></div>
         ) : (
           <table className="w-full text-sm">
             <thead className="bg-secondary/50 text-muted-foreground">
