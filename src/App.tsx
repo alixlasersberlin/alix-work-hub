@@ -787,6 +787,7 @@ const App = () => (
                     <GlobalCommandBar />
                     <CopilotBar />
                     <ShortcutsOverlay />
+                    <TopProgressBar />
                     <LeihgeraetReminder />
                     {/* TemplateSwitcher (Standard / ALIXWORK NEO) deaktiviert */}
                   </MaintenanceGate>
