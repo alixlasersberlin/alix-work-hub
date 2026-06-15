@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/infinity/PageHeader';
+import { KpiTile } from '@/components/infinity/KpiTile';
+import { CheckCheck, UserCircle, AlertOctagon, Ban } from 'lucide-react';
 
 const TARGET_TABLES = [
   'model_manuals', 'support_videos', 'customer_notes', 'maintenance_confirmations',
@@ -654,22 +656,10 @@ function Wave1RolesTab({ data, onExport }: { data: any; onExport: (f: string, r:
         {data.fetch_error && <div className="text-xs text-red-500">Quell-Fehler: {data.fetch_error}</div>}
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3">
-            <div className="text-2xl font-bold text-emerald-500">{status.auto}</div>
-            <div className="text-xs text-muted-foreground">automatisch mappbar</div>
-          </div>
-          <div className="rounded-md border border-sky-500/30 bg-sky-500/5 p-3">
-            <div className="text-2xl font-bold text-sky-500">{status.customer_profile_only}</div>
-            <div className="text-xs text-muted-foreground">Kundenprofil ohne Backend-Rolle</div>
-          </div>
-          <div className="rounded-md border border-amber-500/30 bg-amber-500/5 p-3">
-            <div className="text-2xl font-bold text-amber-500">{status.manual}</div>
-            <div className="text-xs text-muted-foreground">manuell prüfen</div>
-          </div>
-          <div className="rounded-md border border-red-500/30 bg-red-500/5 p-3">
-            <div className="text-2xl font-bold text-red-500">{status.blocked}</div>
-            <div className="text-xs text-muted-foreground">blockiert</div>
-          </div>
+          <KpiTile label="automatisch mappbar" value={status.auto} icon={CheckCheck} accent="emerald" />
+          <KpiTile label="Kundenprofil ohne Backend-Rolle" value={status.customer_profile_only} icon={UserCircle} accent="sky" />
+          <KpiTile label="manuell prüfen" value={status.manual} icon={AlertOctagon} accent="gold" />
+          <KpiTile label="blockiert" value={status.blocked} icon={Ban} accent="rose" />
         </div>
 
         <div className="grid grid-cols-3 gap-3">
