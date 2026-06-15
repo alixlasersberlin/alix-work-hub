@@ -1,13 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
 import { sendCustomerShippingNotice } from '@/lib/send-customer-shipping-notice';
 import { sendReviewInvitation } from '@/lib/review-invitation';
 import { VipBadge } from '@/components/VipBadge';
@@ -96,12 +95,30 @@ export default function OrderEditDialog({ order, open, onClose, onSaved }: Props
     onClose();
   }
 
+  // Esc to close
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
   return (
-    <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="font-display">Auftrag bearbeiten</DialogTitle>
-        </DialogHeader>
+    <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-background/80 px-4 py-8 backdrop-blur-sm">
+      <div className="relative w-full max-w-md rounded-lg border bg-background p-6 shadow-lg">
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100 focus:outline-none"
+          aria-label="Schließen"
+        >
+          <X className="h-4 w-4" />
+        </button>
+        <div className="mb-4">
+          <h2 className="text-lg font-display font-semibold leading-none tracking-tight">Auftrag bearbeiten</h2>
+        </div>
         <div className="space-y-4">
           <label className="flex items-center justify-between gap-3 rounded-md border border-amber-500/30 bg-gradient-to-r from-amber-500/10 to-transparent p-3 cursor-pointer">
             <span className="flex items-center gap-2">
@@ -195,7 +212,7 @@ export default function OrderEditDialog({ order, open, onClose, onSaved }: Props
             </Button>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 }
