@@ -287,7 +287,6 @@ export default function ManagementDashboard() {
           }
         />
       </div>
-      </div>
 
       <Tabs defaultValue="overview">
         <TabsList className="print:hidden">
