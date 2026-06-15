@@ -204,15 +204,19 @@ export default function FinanceLiquiditaet() {
     a.click(); URL.revokeObjectURL(url);
   };
 
-  if (loading) return <PageLoading />;
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 sm:p-6">
       <PageHeader
+        icon={Droplets}
         title="Liquiditätsplanung"
         subtitle="12-Monats-Forecast: Cashflow & Saldo"
-        actions={canEdit ? <Button onClick={() => setDialogOpen(true)} className="gap-2"><Plus className="h-4 w-4" /> Neuer Plan</Button> : undefined}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${plans.length} Pläne`} pulse={loading} />}
+        actions={canEdit ? <Button onClick={() => setDialogOpen(true)} size="sm" className="gap-2"><Plus className="h-4 w-4" /> Neuer Plan</Button> : undefined}
       />
+
+      {loading ? <SkeletonKpiGrid count={4} /> : (<></>)}
+
 
       <div className="flex flex-wrap items-center gap-3">
         <Select value={selectedPlan?.id ?? ''} onValueChange={v => setSelectedPlan(plans.find(p => p.id === v))}>
