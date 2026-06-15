@@ -218,20 +218,9 @@ export default function OrdersFreiBestellung() {
     const combined = [...restMapped, ...baseFiltered];
 
 
-    // Für -AT-Aufträge zusätzlich die Bestellfreigabe aus order_at_approval prüfen
-    const atIds = combined.filter((o: any) => o.source_system === 'zoho_eu_2').map((o: any) => o.id);
-    const approvedAtIds = new Set<string>();
-    if (atIds.length > 0) {
-      const { data: approvals } = await (supabase as any)
-        .from('order_at_approval')
-        .select('order_id, bestellfreigabe')
-        .in('order_id', atIds)
-        .eq('bestellfreigabe', true);
-      (approvals || []).forEach((a: any) => approvedAtIds.add(a.order_id));
-    }
-    const filteredOrders = combined.filter((o: any) =>
-      o.source_system !== 'zoho_eu_2' || approvedAtIds.has(o.id)
-    );
+    // -AT-Aufträge (zoho_eu_2) sind jetzt ebenfalls direkt für Bestellungen freigeschaltet,
+    // unabhängig von order_at_approval.bestellfreigabe.
+    const filteredOrders = combined;
     setOrders(filteredOrders);
 
     // Map reserved devices by order id (Leihgeräte ausschließen)
