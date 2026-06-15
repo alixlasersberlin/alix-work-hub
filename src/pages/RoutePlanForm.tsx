@@ -1,3 +1,4 @@
+import { SkeletonForm } from '@/components/infinity/Skeleton';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -142,7 +143,7 @@ export default function RoutePlanForm() {
     }
   }
 
-  if (loading) return <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+  if (loading) return <SkeletonForm fields={10} />;
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in max-w-3xl">
