@@ -1,17 +1,17 @@
 import { HelpCircle, Mail, BookOpen, LifeBuoy, ClipboardList, GraduationCap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 export default function Hilfe() {
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <HelpCircle className="h-7 w-7 text-primary" />
-        <div>
-          <h1 className="text-3xl font-bold">Hilfe</h1>
-          <p className="text-muted-foreground text-sm">Support, Dokumentation und Kontakt.</p>
-        </div>
-      </div>
+      <PageHeader
+        icon={HelpCircle}
+        title="Hilfe"
+        subtitle="Support, Dokumentation und Kontakt."
+        noBreadcrumbs
+      />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
