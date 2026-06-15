@@ -5,9 +5,13 @@ import { useAuth } from '@/hooks/useAuth';
 import {
   ClipboardList, Users, MapPin, Banknote, AlertCircle,
   Clock, TrendingUp, FileText, CalendarDays, CircleDot, Inbox, Package, ChevronDown,
-  Warehouse, PackageCheck, ShieldAlert, UserCheck, Crown, ListOrdered
+  Warehouse, PackageCheck, ShieldAlert, UserCheck, Crown, ListOrdered, LayoutDashboard
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { KpiTile } from '@/components/infinity/KpiTile';
+import { SkeletonKpiGrid } from '@/components/infinity/Skeleton';
+import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { VipBadge } from '@/components/VipBadge';
 import { isOrderVip, vipFirst } from '@/lib/vip';
 
@@ -312,60 +316,53 @@ export default function Dashboard() {
     load();
   }, [canSeeOrders, canSeeRoutes, canSeeFinance, isAdmin, canSeeAudit, canSeeCustomers, atOnly]);
 
-  const kpiCards = [
-    { label: 'Freie Geräte (Pool)', value: stats.freePoolDevices, icon: PackageCheck, visible: isAdmin, onClick: () => navigate('/lager/equipment-area') },
-    { label: 'Leihgeräte', value: stats.leihgeraete, icon: Warehouse, visible: isAdmin, onClick: () => navigate('/lager/leihgeraete') },
-    { label: 'VIP-Aufträge', value: stats.vipOrders, icon: Crown, visible: canSeeOrders, onClick: () => navigate('/auftraege') },
-    { label: 'Offene Aufträge', value: stats.openOrders, icon: AlertCircle, visible: canSeeOrders, onClick: () => navigate('/auftraege') },
-    { label: 'Geplante Touren', value: stats.routes, icon: MapPin, visible: canSeeRoutes, onClick: () => navigate('/tourenplanung') },
-    { label: 'Offene Zahlungen', value: stats.openFinance, icon: Banknote, visible: canSeeFinance, onClick: () => navigate('/finance') },
-  ].filter(c => c.visible);
-
-  const kpiColors = [
-    'text-[hsl(var(--info))]',
-    'text-primary',
-    'text-[hsl(var(--warning))]',
-    'text-[hsl(var(--success))]',
-    'text-destructive',
-  ];
+  const kpiCards = ([
+    { label: 'Freie Geräte (Pool)', value: stats.freePoolDevices, icon: PackageCheck, visible: isAdmin, onClick: () => navigate('/lager/equipment-area'), accent: 'sky' as const },
+    { label: 'Leihgeräte', value: stats.leihgeraete, icon: Warehouse, visible: isAdmin, onClick: () => navigate('/lager/leihgeraete'), accent: 'violet' as const },
+    { label: 'VIP-Aufträge', value: stats.vipOrders, icon: Crown, visible: canSeeOrders, onClick: () => navigate('/auftraege'), accent: 'gold' as const },
+    { label: 'Offene Aufträge', value: stats.openOrders, icon: AlertCircle, visible: canSeeOrders, onClick: () => navigate('/auftraege'), accent: 'rose' as const },
+    { label: 'Geplante Touren', value: stats.routes, icon: MapPin, visible: canSeeRoutes, onClick: () => navigate('/tourenplanung'), accent: 'emerald' as const },
+    { label: 'Offene Zahlungen', value: stats.openFinance, icon: Banknote, visible: canSeeFinance, onClick: () => navigate('/finance'), accent: 'rose' as const },
+  ]).filter(c => c.visible);
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in space-y-8">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">
-            Willkommen zurück, <span className="gold-text">{profile?.full_name || 'Benutzer'}</span>
-          </h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            {isSuperAdmin
-              ? (view === 'hoo' ? 'Head of Operation – Gesamtsystem-Übersicht' : 'Superadmin – Klassische Ansicht')
-              : 'Ihre aktuelle Übersicht'}
-          </p>
-        </div>
-        {isSuperAdmin && (
-          <div className="inline-flex rounded-lg border border-border bg-card p-1">
-            <button
-              type="button"
-              onClick={() => setView('hoo')}
-              className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                view === 'hoo' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              Head of Operation
-            </button>
-            <button
-              type="button"
-              onClick={() => setView('super')}
-              className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                view === 'super' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              Superadmin
-            </button>
-          </div>
-        )}
-      </div>
+      <PageHeader
+        icon={LayoutDashboard}
+        title={`Willkommen zurück, ${profile?.full_name || 'Benutzer'}`}
+        subtitle={
+          isSuperAdmin
+            ? (view === 'hoo' ? 'Head of Operation – Gesamtsystem-Übersicht' : 'Superadmin – Klassische Ansicht')
+            : 'Ihre aktuelle Übersicht'
+        }
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind="done" label="Live" pulse dotOnly />}
+        actions={
+          isSuperAdmin ? (
+            <div className="inline-flex rounded-lg border border-border bg-card p-1">
+              <button
+                type="button"
+                onClick={() => setView('hoo')}
+                className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                  view === 'hoo' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Head of Operation
+              </button>
+              <button
+                type="button"
+                onClick={() => setView('super')}
+                className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                  view === 'super' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Superadmin
+              </button>
+            </div>
+          ) : undefined
+        }
+      />
 
       {isSuperAdmin && view === 'hoo' ? <HeadOfOperationDashboard /> : (<>
 
@@ -469,20 +466,16 @@ export default function Dashboard() {
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {loading
-          ? Array.from({ length: 5 }).map((_, i) => <CardSkeleton key={i} />)
-          : kpiCards.map((card, i) => (
-              <button
+          ? <SkeletonKpiGrid count={kpiCards.length || 5} />
+          : kpiCards.map((card) => (
+              <KpiTile
                 key={card.label}
-                type="button"
+                label={card.label}
+                value={card.value}
+                icon={card.icon as any}
+                accent={card.accent}
                 onClick={card.onClick}
-                className="text-left rounded-xl border border-border bg-card p-5 card-glow group hover:border-primary/30 hover:bg-secondary/20 transition-colors"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm text-muted-foreground">{card.label}</span>
-                  <card.icon className={`w-5 h-5 ${kpiColors[i] || 'text-primary'}`} />
-                </div>
-                <p className="text-3xl font-display font-bold text-foreground">{card.value}</p>
-              </button>
+              />
             ))}
       </div>
 
