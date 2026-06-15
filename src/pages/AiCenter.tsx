@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { PageHeader } from "@/components/infinity/PageHeader";
 
 type ChatMsg = { role: "user" | "assistant" | "system"; content: string };
 
