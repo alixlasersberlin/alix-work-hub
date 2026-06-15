@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -36,6 +36,7 @@ export default function Bugs() {
   const [rows, setRows] = useState<Bug[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const keepCreateDialogOpenUntilRef = useRef(0);
   const [editing, setEditing] = useState<Bug | null>(null);
   const [detail, setDetail] = useState<Bug | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -117,6 +118,16 @@ export default function Bugs() {
     }
   }
 
+  function openCreateDialog() {
+    keepCreateDialogOpenUntilRef.current = Date.now() + 350;
+    setOpen(true);
+  }
+
+  function handleCreateDialogOpenChange(nextOpen: boolean) {
+    if (!nextOpen && Date.now() < keepCreateDialogOpenUntilRef.current) return;
+    setOpen(nextOpen);
+  }
+
   async function setStatus(id: string, status: string) {
     const { error } = await (supabase as any).from('bugs').update({ status }).eq('id', id);
     if (error) { toast.error('Update fehlgeschlagen: ' + error.message); return; }
@@ -160,8 +171,8 @@ export default function Bugs() {
     <Section
       title={`Bugs (${visibleRows.length})`}
       action={
-        <Dialog open={open} onOpenChange={setOpen}>
-          <Button type="button" onClick={() => setOpen(true)}><Plus className="h-4 w-4 mr-1" /> Neuer Bug</Button>
+        <Dialog open={open} onOpenChange={handleCreateDialogOpenChange}>
+          <Button type="button" onClick={openCreateDialog}><Plus className="h-4 w-4 mr-1" /> Neuer Bug</Button>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Neuen Bug erfassen</DialogTitle>
