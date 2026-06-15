@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
-import { FileText, Loader2, Inbox, Plus } from 'lucide-react';
-import { PageHeader } from '@/components/PageShell';
+import { FileText, Plus } from 'lucide-react';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { SkeletonTable } from '@/components/infinity/Skeleton';
+import { EmptyState } from '@/components/infinity/EmptyState';
+import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { listContracts } from '@/lib/finance/api';
 import { useFinancePermissions } from '@/hooks/useFinancePermissions';
@@ -16,15 +19,19 @@ export default function FinanceVertraege() {
   const fmt = (n: number | null | undefined) => n != null ? Number(n).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) : '—';
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-start mb-2">
-        <PageHeader icon={<FileText className="w-6 h-6 text-primary" />} title="Verträge" subtitle={`${rows.length} Verträge`} />
-        {canWrite && <Button disabled className="gold-gradient text-primary-foreground"><Plus className="w-4 h-4 mr-2" />Neuer Vertrag (folgt)</Button>}
-      </div>
+      <PageHeader
+        icon={FileText}
+        title="Verträge"
+        subtitle={`${rows.length} Verträge`}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${rows.length}`} pulse={!loading} />}
+        actions={canWrite ? <Button disabled className="gold-gradient text-primary-foreground"><Plus className="w-4 h-4 mr-2" />Neuer Vertrag (folgt)</Button> : undefined}
+      />
       <div className="rounded-xl border border-border bg-card card-glow overflow-hidden">
         {loading ? (
-          <div className="p-12 text-center"><Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" /></div>
+          <div className="p-6"><SkeletonTable rows={8} cols={7} /></div>
         ) : rows.length === 0 ? (
-          <div className="p-12 text-center text-muted-foreground"><Inbox className="w-8 h-8 mx-auto mb-2 opacity-50" />Noch keine Verträge angelegt.</div>
+          <div className="p-8"><EmptyState title="Keine Verträge" description="Noch keine Verträge angelegt." /></div>
         ) : (
           <table className="w-full text-sm">
             <thead className="bg-secondary/50 text-muted-foreground">
