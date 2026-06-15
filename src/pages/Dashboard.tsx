@@ -152,6 +152,7 @@ export default function Dashboard() {
   const [activeSessions, setActiveSessions] = useState<ActiveSession[]>([]);
   const [securityIncidents, setSecurityIncidents] = useState<SecurityIncident[]>([]);
   const [prioOrders, setPrioOrders] = useState<any[]>([]);
+  const [trends, setTrends] = useState<{ orders: number[]; finance: number[] }>({ orders: [], finance: [] });
   const [prioOpen, setPrioOpen] = useState(false);
   const [shipmentFilter, setShipmentFilter] = useState<number | null>(14);
   const [shipmentLimit, setShipmentLimit] = useState<number | null>(10);
@@ -301,6 +302,34 @@ export default function Dashboard() {
         setActiveSessions((sessionsRes.data ?? []) as any);
         setSecurityIncidents((incidentsRes.data ?? []) as any);
         setPrioOrders(vipFirst((prioRes.data ?? []) as any[], isOrderVip));
+
+        // 14-day trend buckets (lightweight: only timestamps)
+        const DAYS = 14;
+        const since = new Date(Date.now() - DAYS * 86400000).toISOString();
+        const bucket = (rows: { created_at: string }[]): number[] => {
+          const arr = new Array(DAYS).fill(0);
+          const now = Date.now();
+          for (const r of rows) {
+            const t = new Date(r.created_at).getTime();
+            const idx = DAYS - 1 - Math.floor((now - t) / 86400000);
+            if (idx >= 0 && idx < DAYS) arr[idx]++;
+          }
+          return arr;
+        };
+        const [ordersTrend, financeTrend] = await Promise.all([
+          canSeeOrders
+            ? (atOnly
+                ? supabase.from('orders').select('created_at').eq('source_system', 'zoho_eu_2').gte('created_at', since).limit(1000)
+                : supabase.from('orders').select('created_at').gte('created_at', since).limit(1000))
+            : Promise.resolve({ data: [] as any[] }),
+          canSeeFinance
+            ? supabase.from('finance_records').select('created_at').gte('created_at', since).limit(1000)
+            : Promise.resolve({ data: [] as any[] }),
+        ]);
+        setTrends({
+          orders: bucket((ordersTrend.data ?? []) as any[]),
+          finance: bucket((financeTrend.data ?? []) as any[]),
+        });
       } catch (e: any) {
         setError('Daten konnten nicht geladen werden. Bitte versuchen Sie es erneut.');
       } finally {
@@ -310,13 +339,23 @@ export default function Dashboard() {
     load();
   }, [canSeeOrders, canSeeRoutes, canSeeFinance, isAdmin, canSeeAudit, canSeeCustomers, atOnly]);
 
+  const pctChange = (arr: number[]): number | undefined => {
+    if (!arr || arr.length < 4) return undefined;
+    const half = Math.floor(arr.length / 2);
+    const prev = arr.slice(0, half).reduce((s, n) => s + n, 0);
+    const curr = arr.slice(half).reduce((s, n) => s + n, 0);
+    if (prev === 0) return curr === 0 ? 0 : undefined;
+    return ((curr - prev) / prev) * 100;
+  };
+  const ordersTrendArr = trends.orders;
+  const financeTrendArr = trends.finance;
   const kpiCards = ([
     { label: 'Freie Geräte (Pool)', value: stats.freePoolDevices, icon: PackageCheck, visible: isAdmin, onClick: () => navigate('/lager/equipment-area'), accent: 'sky' as const },
     { label: 'Leihgeräte', value: stats.leihgeraete, icon: Warehouse, visible: isAdmin, onClick: () => navigate('/lager/leihgeraete'), accent: 'violet' as const },
     { label: 'VIP-Aufträge', value: stats.vipOrders, icon: Crown, visible: canSeeOrders, onClick: () => navigate('/auftraege'), accent: 'gold' as const },
-    { label: 'Offene Aufträge', value: stats.openOrders, icon: AlertCircle, visible: canSeeOrders, onClick: () => navigate('/auftraege'), accent: 'rose' as const },
+    { label: 'Offene Aufträge', value: stats.openOrders, icon: AlertCircle, visible: canSeeOrders, onClick: () => navigate('/auftraege'), accent: 'rose' as const, trend: ordersTrendArr, delta: pctChange(ordersTrendArr), deltaInverted: true },
     { label: 'Geplante Touren', value: stats.routes, icon: MapPin, visible: canSeeRoutes, onClick: () => navigate('/tourenplanung'), accent: 'emerald' as const },
-    { label: 'Offene Zahlungen', value: stats.openFinance, icon: Banknote, visible: canSeeFinance, onClick: () => navigate('/finance'), accent: 'rose' as const },
+    { label: 'Offene Zahlungen', value: stats.openFinance, icon: Banknote, visible: canSeeFinance, onClick: () => navigate('/finance'), accent: 'rose' as const, trend: financeTrendArr, delta: pctChange(financeTrendArr), deltaInverted: true },
   ]).filter(c => c.visible);
 
   return (
@@ -461,7 +500,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {loading
           ? <SkeletonKpiGrid count={kpiCards.length || 5} />
-          : kpiCards.map((card) => (
+          : kpiCards.map((card: any) => (
               <KpiTile
                 key={card.label}
                 label={card.label}
@@ -469,6 +508,9 @@ export default function Dashboard() {
                 icon={card.icon as any}
                 accent={card.accent}
                 onClick={card.onClick}
+                trend={card.trend}
+                delta={card.delta}
+                deltaInverted={card.deltaInverted}
               />
             ))}
       </div>
