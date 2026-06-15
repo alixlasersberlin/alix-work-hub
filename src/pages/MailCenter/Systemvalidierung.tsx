@@ -12,6 +12,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/infinity/PageHeader';
+import { KpiTile } from '@/components/infinity/KpiTile';
 
 type PassFail = 'pending' | 'pass' | 'fail';
 const PF: Record<PassFail, { color: string; label: string }> = {
@@ -372,16 +373,15 @@ export default function Systemvalidierung() {
         <TabsContent value="kpi">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {kpis.map(k => (
-              <Card key={k.name}>
-                <CardContent className="p-4">
-                  <div className="text-xs text-muted-foreground">{k.name}</div>
-                  <div className="text-2xl font-bold mt-1">{k.value}</div>
-                  <div className="text-xs text-muted-foreground mt-1">Ziel: {k.target}</div>
-                  <Badge className={k.ok ? 'bg-emerald-500/15 text-emerald-400 mt-2' : 'bg-red-500/15 text-red-400 mt-2'}>
+              <div key={k.name} className="space-y-2">
+                <KpiTile label={k.name} value={k.value} icon={Target} accent={k.ok ? 'emerald' : 'rose'} />
+                <div className="flex items-center justify-between px-1 text-xs">
+                  <span className="text-muted-foreground">Ziel: {k.target}</span>
+                  <Badge className={k.ok ? 'bg-emerald-500/15 text-emerald-400' : 'bg-red-500/15 text-red-400'}>
                     {k.ok ? 'OK' : 'kritisch'}
                   </Badge>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             ))}
           </div>
         </TabsContent>
