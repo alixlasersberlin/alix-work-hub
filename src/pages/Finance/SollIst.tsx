@@ -1,8 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { PageHeader, PageLoading, DataCard } from '@/components/PageShell';
+import { DataCard } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { SkeletonTable } from '@/components/infinity/Skeleton';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Scale } from 'lucide-react';
 import { BUDGET_CATEGORIES, MONTH_NAMES, fmt, classifyTx, mapIncomingCategory } from './_controlling';
 
 export default function FinanceSollIst() {
@@ -54,8 +58,6 @@ export default function FinanceSollIst() {
     })();
   }, [year]);
 
-  if (loading) return <PageLoading />;
-
   function ampel(plan: number, ist: number) {
     if (plan === 0 && ist === 0) return 'bg-muted';
     const abw = plan === 0 ? 1 : Math.abs((ist - plan) / plan);
@@ -64,15 +66,27 @@ export default function FinanceSollIst() {
     return 'bg-red-500/15 text-red-500';
   }
 
+
   return (
     <div className="p-6 space-y-6">
-      <PageHeader title="Soll-Ist-Vergleich" subtitle={`Plan vs. Ist · ${year}`} />
-      <Select value={String(year)} onValueChange={v => setYear(Number(v))}>
-        <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-        <SelectContent>{[year + 1, year, year - 1, year - 2].map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
-      </Select>
+      <PageHeader
+        icon={Scale}
+        title="Soll-Ist-Vergleich"
+        subtitle={`Plan vs. Ist · ${year}`}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : String(year)} pulse={loading} />}
+        actions={
+          <Select value={String(year)} onValueChange={v => setYear(Number(v))}>
+            <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+            <SelectContent>{[year + 1, year, year - 1, year - 2].map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
+          </Select>
+        }
+      />
 
-      {BUDGET_CATEGORIES.map(cat => {
+      {loading ? (
+        <DataCard><SkeletonTable rows={6} cols={13} /></DataCard>
+      ) : BUDGET_CATEGORIES.map(cat => {
+
         const plan = budget[cat] || Array(12).fill(0);
         const ist = actual[cat] || Array(12).fill(0);
         const planTotal = plan.reduce((a, b) => a + b, 0);
