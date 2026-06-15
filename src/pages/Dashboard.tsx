@@ -85,6 +85,7 @@ interface SecurityIncident {
 }
 
 import { StatusBadge } from '@/components/StatusBadge';
+import { ActivityHeatmap } from '@/components/aurora/ActivityHeatmap';
 
 function formatCurrency(amount: number | null, currency: string | null) {
   if (amount == null) return '—';
@@ -375,6 +376,9 @@ export default function Dashboard() {
           <p className="text-sm text-destructive">{error}</p>
         </div>
       )}
+
+      {/* Aurora 2.0 — Ticket-Aktivität */}
+      <ActivityHeatmap />
 
       {/* Prio-Liste */}
       {canSeeOrders && (
