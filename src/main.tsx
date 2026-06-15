@@ -3,8 +3,10 @@ import App from "./App.tsx";
 import "./index.css";
 import "./styles/theme-neo.css";
 import { bootUiTemplate } from "./hooks/useUiTemplate";
+import { bootInfinityTheme } from "./hooks/useInfinityTheme";
 
 bootUiTemplate();
+bootInfinityTheme();
 
 
 // Workaround for React bug with browser translation extensions (Google Translate, etc.)
