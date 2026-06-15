@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ShieldCheck, AlertTriangle, RefreshCw, Check, X, UserPlus, PackagePlus } from 'lucide-react';
 import { toast } from 'sonner';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 type MatchClass = 'secure' | 'suggestion' | 'manual' | 'no_match';
 
