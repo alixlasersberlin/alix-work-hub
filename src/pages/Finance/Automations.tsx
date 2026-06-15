@@ -140,6 +140,8 @@ export default function FinanceAutomations() {
           {runs.length === 0 && <div className="text-sm text-muted-foreground p-4 text-center">Noch keine Ausführungen</div>}
         </div>
       </DataCard>
+      </>
+      )}
 
       <Dialog open={show} onOpenChange={setShow}>
         <DialogContent>
