@@ -30,7 +30,7 @@ export function DesignVariantProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const root = document.documentElement;
-    root.classList.toggle('design-beta3d', variant === 'beta3d');
+    root.classList.remove('design-beta3d');
     root.classList.toggle('design-classic', variant === 'classic');
     root.classList.toggle('design-aurora', variant === 'aurora');
     try {
