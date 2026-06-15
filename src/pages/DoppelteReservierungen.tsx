@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AlertTriangle, Loader2, ExternalLink, X } from 'lucide-react';
-import { PageHeader, PageLoading, PageEmpty, PageError } from '@/components/PageShell';
+import { PageEmpty, PageError } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { SkeletonTable } from '@/components/infinity/Skeleton';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
+import { DataCard } from '@/components/PageShell';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
