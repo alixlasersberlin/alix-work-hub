@@ -10,6 +10,8 @@ import { ViewToggle } from '@/components/ViewToggle';
 import { useViewMode } from '@/hooks/useViewMode';
 import { OrderCard, OrderCardGrid } from '@/components/OrderCard';
 import { useAtOnly } from '@/hooks/useAtOnly';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 
 interface HoldOrder {
   id: string;
@@ -88,15 +90,13 @@ export default function HoldList() {
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
-      <div className="mb-6">
-        <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
-          <Pause className="w-6 h-6 text-amber-500" />
-          Hold
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          {filtered.length} Aufträge mit Status „Hold"
-        </p>
-      </div>
+      <PageHeader
+        icon={Pause}
+        title="Hold"
+        subtitle={`${filtered.length} Aufträge mit Status „Hold"`}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind="warning" label={`${filtered.length}`} />}
+      />
 
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <div className="relative flex-1 max-w-sm">

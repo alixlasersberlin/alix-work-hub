@@ -13,6 +13,8 @@ import OrderEditDialog from '@/components/OrderEditDialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useAtOnly } from '@/hooks/useAtOnly';
 import { createPDF } from '@/lib/pdf-utils';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import autoTable from 'jspdf-autotable';
 
 type SortField = 'order_number' | 'expected_shipment_date' | 'total_amount';
@@ -181,33 +183,31 @@ export default function LawyerList() {
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
-            <Gavel className="w-6 h-6 text-primary" />
-            Anwaltsliste
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {filtered.length} Fälle mit Status „Anwalt"{selectionCount > 0 && ` · ${selectionCount} ausgewählt`}
-          </p>
-        </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="default">
-              <Download className="w-4 h-4 mr-2" />
-              Download {selectionCount > 0 ? `(${selectionCount})` : `(${filtered.length})`}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={downloadCSV}>
-              <FileSpreadsheet className="w-4 h-4 mr-2" /> Als CSV
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={downloadPDF}>
-              <FileText className="w-4 h-4 mr-2" /> Als PDF
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+      <PageHeader
+        icon={Gavel}
+        title="Anwaltsliste"
+        subtitle={`${filtered.length} Fälle mit Status „Anwalt"${selectionCount > 0 ? ` · ${selectionCount} ausgewählt` : ''}`}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind="warning" label={`${filtered.length}`} />}
+        actions={
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="default">
+                <Download className="w-4 h-4 mr-2" />
+                Download {selectionCount > 0 ? `(${selectionCount})` : `(${filtered.length})`}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={downloadCSV}>
+                <FileSpreadsheet className="w-4 h-4 mr-2" /> Als CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={downloadPDF}>
+                <FileText className="w-4 h-4 mr-2" /> Als PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        }
+      />
 
       <div className="flex flex-col sm:flex-row gap-3 mb-4 items-stretch sm:items-center">
         <div className="relative flex-1 max-w-sm">

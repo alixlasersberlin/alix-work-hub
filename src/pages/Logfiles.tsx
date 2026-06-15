@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, RefreshCw, Search, FileText, Download, ScrollText } from 'lucide-react';
 import { PageSizeSelector, usePagination, PaginationControls } from '@/components/PageSizeSelector';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 type AuditRow = {
   id: string;
@@ -192,25 +193,23 @@ export default function Logfiles() {
 
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-[1600px] mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-display font-bold gold-text flex items-center gap-2">
-            <ScrollText className="w-6 h-6" /> Logfiles
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Protokoll aller Zugriffe, Logins und Aktionen im System.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={load} disabled={loading}>
-            {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
-            Neu laden
-          </Button>
-          <Button variant="outline" onClick={exportCsv} disabled={filtered.length === 0}>
-            <Download className="w-4 h-4 mr-2" /> CSV-Export
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        icon={ScrollText}
+        title="Logfiles"
+        subtitle="Protokoll aller Zugriffe, Logins und Aktionen im System."
+        noBreadcrumbs
+        actions={
+          <>
+            <Button variant="outline" onClick={load} disabled={loading}>
+              {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+              Neu laden
+            </Button>
+            <Button variant="outline" onClick={exportCsv} disabled={filtered.length === 0}>
+              <Download className="w-4 h-4 mr-2" /> CSV-Export
+            </Button>
+          </>
+        }
+      />
 
       <Card className="p-3">
         <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center flex-wrap">
