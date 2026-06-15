@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ClipboardList, GraduationCap, Factory, GitBranch, AlertTriangle, FileWarning } from 'lucide-react';
 import { Section } from './_shared';
+import { KpiTile } from '@/components/infinity/KpiTile';
+import { SkeletonKpiGrid } from '@/components/infinity/Skeleton';
 
 type Counts = {
   audits_open: number;
@@ -15,6 +16,7 @@ type Counts = {
 };
 
 export default function IsoDashboard() {
+  const [loading, setLoading] = useState(true);
   const [c, setC] = useState<Counts>({
     audits_open: 0, findings_open: 0, trainings: 0, expiring_trainings: 0,
     suppliers: 0, changes_pending: 0, vigilance_open: 0,
@@ -47,33 +49,31 @@ export default function IsoDashboard() {
       changes_pending: ch.count ?? 0,
       vigilance_open: v.count ?? 0,
     });
+    setLoading(false);
   }
 
   const tiles = [
-    { label: 'Offene Audits', value: c.audits_open, icon: ClipboardList },
-    { label: 'Offene Feststellungen', value: c.findings_open, icon: FileWarning },
-    { label: 'Schulungen', value: c.trainings, icon: GraduationCap },
-    { label: 'Schulungen laufen bald ab', value: c.expiring_trainings, icon: GraduationCap },
-    { label: 'Lieferantenbewertungen', value: c.suppliers, icon: Factory },
-    { label: 'Änderungen in Prüfung', value: c.changes_pending, icon: GitBranch },
-    { label: 'Offene MDR-Meldungen', value: c.vigilance_open, icon: AlertTriangle },
+    { label: 'Offene Audits', value: c.audits_open, icon: ClipboardList, accent: 'gold' as const },
+    { label: 'Offene Feststellungen', value: c.findings_open, icon: FileWarning, accent: 'rose' as const },
+    { label: 'Schulungen', value: c.trainings, icon: GraduationCap, accent: 'sky' as const },
+    { label: 'Schulungen laufen bald ab', value: c.expiring_trainings, icon: GraduationCap, accent: 'rose' as const },
+    { label: 'Lieferantenbewertungen', value: c.suppliers, icon: Factory, accent: 'violet' as const },
+    { label: 'Änderungen in Prüfung', value: c.changes_pending, icon: GitBranch, accent: 'gold' as const },
+    { label: 'Offene MDR-Meldungen', value: c.vigilance_open, icon: AlertTriangle, accent: 'rose' as const },
   ];
 
   return (
     <Section title="Übersicht">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {tiles.map(t => (
-          <Card key={t.label}>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">{t.label}</CardTitle>
-              <t.icon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{t.value}</div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {loading ? (
+        <SkeletonKpiGrid count={7} />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {tiles.map(t => (
+            <KpiTile key={t.label} label={t.label} value={t.value} icon={t.icon} accent={t.accent} />
+          ))}
+        </div>
+      )}
     </Section>
   );
 }
+
