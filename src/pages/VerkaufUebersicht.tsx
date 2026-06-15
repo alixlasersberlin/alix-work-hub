@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Building2, FileText, ClipboardList, Receipt, Undo2, TrendingUp, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAtOnly } from '@/hooks/useAtOnly';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 type Tile = {
   key: string;
@@ -125,13 +126,12 @@ export default function VerkaufUebersicht() {
 
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6 animate-fade-in">
-      <div className="flex items-center gap-3">
-        <TrendingUp className="w-6 h-6 text-primary" />
-        <div>
-          <h1 className="text-2xl font-display font-bold gold-text">Verkäufe – Übersicht</h1>
-          <p className="text-sm text-muted-foreground">Schneller Zugriff auf alle Verkaufsbereiche</p>
-        </div>
-      </div>
+      <PageHeader
+        icon={TrendingUp}
+        title="Verkäufe – Übersicht"
+        subtitle="Schneller Zugriff auf alle Verkaufsbereiche"
+        noBreadcrumbs
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {visibleTiles.map((t) => {
