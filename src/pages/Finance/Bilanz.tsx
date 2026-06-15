@@ -44,8 +44,6 @@ export default function FinanceBilanz() {
     return { anlagevermoegen, forderungen, bank, verbindlichkeiten, aktivaSumme, eigenkapital };
   }, [assets, accounts, bankLines, incoming]);
 
-  if (loading) return <PageLoading />;
-
   const Row = ({ label, val, bold }: { label: string; val: number; bold?: boolean }) => (
     <tr className={bold ? 'bg-primary/5 border-t border-border font-bold' : 'border-t border-border/40'}>
       <td className="px-4 py-2">{label}</td>
@@ -54,10 +52,22 @@ export default function FinanceBilanz() {
   );
 
   return (
-    <div className="p-6 space-y-6">
-      <PageHeader title="Bilanz (vereinfacht)" subtitle={`Stichtag ${new Date(stichtag).toLocaleDateString('de-DE')}`} />
-      <Input type="date" value={stichtag} onChange={e => setStichtag(e.target.value)} className="w-48" />
+    <div className="p-4 sm:p-6 space-y-6">
+      <PageHeader
+        icon={Scale}
+        title="Bilanz (vereinfacht)"
+        subtitle={`Stichtag ${new Date(stichtag).toLocaleDateString('de-DE')}`}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : 'Aktuell'} pulse={loading} />}
+        actions={<Input type="date" value={stichtag} onChange={e => setStichtag(e.target.value)} className="w-44 h-9" />}
+      />
 
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <DataCard><SkeletonTable rows={5} cols={2} /></DataCard>
+          <DataCard><SkeletonTable rows={4} cols={2} /></DataCard>
+        </div>
+      ) : (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <DataCard title="AKTIVA">
           <table className="w-full text-sm">
