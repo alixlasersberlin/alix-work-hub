@@ -1,11 +1,11 @@
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -36,6 +36,7 @@ export default function Bugs() {
   const [rows, setRows] = useState<Bug[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const keepCreateDialogOpenUntilRef = useRef(0);
   const [editing, setEditing] = useState<Bug | null>(null);
   const [detail, setDetail] = useState<Bug | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -117,6 +118,16 @@ export default function Bugs() {
     }
   }
 
+  function openCreateDialog() {
+    keepCreateDialogOpenUntilRef.current = Date.now() + 350;
+    setOpen(true);
+  }
+
+  function handleCreateDialogOpenChange(nextOpen: boolean) {
+    if (!nextOpen && Date.now() < keepCreateDialogOpenUntilRef.current) return;
+    setOpen(nextOpen);
+  }
+
   async function setStatus(id: string, status: string) {
     const { error } = await (supabase as any).from('bugs').update({ status }).eq('id', id);
     if (error) { toast.error('Update fehlgeschlagen: ' + error.message); return; }
@@ -160,12 +171,13 @@ export default function Bugs() {
     <Section
       title={`Bugs (${visibleRows.length})`}
       action={
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button><Plus className="h-4 w-4 mr-1" /> Neuer Bug</Button>
-          </DialogTrigger>
+        <Dialog open={open} onOpenChange={handleCreateDialogOpenChange}>
+          <Button type="button" onClick={openCreateDialog}><Plus className="h-4 w-4 mr-1" /> Neuer Bug</Button>
           <DialogContent className="max-w-2xl">
-            <DialogHeader><DialogTitle>Neuen Bug erfassen</DialogTitle></DialogHeader>
+            <DialogHeader>
+              <DialogTitle>Neuen Bug erfassen</DialogTitle>
+              <DialogDescription>Erfasse Titel, Beschreibung und Priorität für den neuen Bug.</DialogDescription>
+            </DialogHeader>
             <div className="grid gap-3 py-2">
               <div><Label>Titel *</Label><Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} /></div>
               <div><Label>Beschreibung</Label><Textarea rows={4} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></div>
@@ -302,7 +314,10 @@ export default function Bugs() {
       />
       <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
         <DialogContent className="max-w-2xl">
-          <DialogHeader><DialogTitle>Bug bearbeiten {editing?.ticket_number}</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>Bug bearbeiten {editing?.ticket_number}</DialogTitle>
+            <DialogDescription>Bearbeite die vorhandenen Bug-Daten.</DialogDescription>
+          </DialogHeader>
           <div className="grid gap-3 py-2">
             <div><Label>Titel *</Label><Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} /></div>
             <div><Label>Beschreibung</Label><Textarea rows={4} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></div>
