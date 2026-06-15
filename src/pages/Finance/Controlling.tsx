@@ -91,29 +91,34 @@ export default function FinanceControlling() {
     return Object.values(map).map(x => ({ ...x, ergebnis: x.umsatz - x.aufwand }));
   }, [tx, incoming]);
 
-  if (loading) return <PageLoading />;
-
-  const Tile = ({ title, value, hint }: { title: string; value: string; hint?: string }) => (
-    <DataCard title={title}>
-      <div className="text-2xl font-bold tabular-nums">{value}</div>
-      {hint && <div className="text-xs text-muted-foreground mt-1">{hint}</div>}
-    </DataCard>
-  );
-
   return (
     <div className="p-6 space-y-6">
-      <PageHeader title="Controlling-Cockpit" subtitle="Management-KPIs (12 Monate rollierend)" />
+      <PageHeader
+        icon={Gauge}
+        title="Controlling-Cockpit"
+        subtitle="Management-KPIs (12 Monate rollierend)"
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : '12M rollierend'} pulse={loading} />}
+      />
 
+      {loading ? (
+        <>
+          <DataCard><SkeletonKpiGrid count={8} /></DataCard>
+          <DataCard><Skeleton className="h-80 w-full" /></DataCard>
+        </>
+      ) : (
+      <>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Tile title="Umsatzrentabilität" value={`${kpis.margin.toFixed(1)} %`} hint={`Ergebnis ${fmt(kpis.ergebnis)} / Umsatz ${fmt(kpis.ytd)}`} />
-        <Tile title="DSO – Forderungsdauer" value={`${kpis.dso} Tage`} hint={`Forderungen ${fmt(kpis.forderungen)}`} />
-        <Tile title="DPO – Zahlungsdauer" value={`${kpis.dpo} Tage`} hint={`Verbindl. ${fmt(kpis.verbindlichkeiten)}`} />
-        <Tile title="Working Capital" value={fmt(kpis.workingCapital)} hint={`Bank ${fmt(kpis.bank)}`} />
-        <Tile title="Burn Rate (ø/Monat)" value={fmt(kpis.burn)} />
-        <Tile title="Runway" value={isFinite(kpis.runway) ? `${kpis.runway.toFixed(1)} Mon.` : '∞'} />
-        <Tile title="Umsatz YTD" value={fmt(kpis.ytd)} />
-        <Tile title="Aufwand YTD" value={fmt(kpis.aufw)} />
+        <KpiTile label="Umsatzrentabilität" value={`${kpis.margin.toFixed(1)} %`} sub={`Erg. ${fmt(kpis.ergebnis)}`} icon={Gauge} color={kpis.margin >= 0 ? 'emerald' : 'rose'} />
+        <KpiTile label="DSO – Forderungsdauer" value={`${kpis.dso} Tage`} sub={`Ford. ${fmt(kpis.forderungen)}`} icon={Clock} color="sky" />
+        <KpiTile label="DPO – Zahlungsdauer" value={`${kpis.dpo} Tage`} sub={`Verb. ${fmt(kpis.verbindlichkeiten)}`} icon={Timer} color="violet" />
+        <KpiTile label="Working Capital" value={fmt(kpis.workingCapital)} sub={`Bank ${fmt(kpis.bank)}`} icon={Wallet} color="gold" />
+        <KpiTile label="Burn Rate (ø/Mon.)" value={fmt(kpis.burn)} icon={Flame} color="rose" />
+        <KpiTile label="Runway" value={isFinite(kpis.runway) ? `${kpis.runway.toFixed(1)} Mon.` : '∞'} icon={Activity} color="amber" />
+        <KpiTile label="Umsatz YTD" value={fmt(kpis.ytd)} icon={TrendingUp} color="emerald" />
+        <KpiTile label="Aufwand YTD" value={fmt(kpis.aufw)} icon={TrendingDown} color="rose" />
       </div>
+
 
       <DataCard title="Trend 12 Monate – Umsatz, Aufwand, Ergebnis">
         <div className="h-80">
