@@ -150,8 +150,12 @@ export default function SalesWizard({ publicMode = false }: Props) {
       const deviceLines: string[] = [];
       if (data.laser_model) deviceLines.push(`Wunschgerät (Alix Lasers): ${data.laser_model}`);
       if (data.beauty_model) deviceLines.push(`Wunschgerät (Alix Beauty): ${data.beauty_model}`);
+      if (data.studio_in_germany) {
+        deviceLines.push(`Studio in Deutschland: Ja`);
+        if (data.has_nisv) deviceLines.push(`NISV: ${data.has_nisv === 'ja' ? 'Ja' : 'Nein'}`);
+      }
       const mergedNotes = [deviceLines.join('\n'), data.notes].filter(Boolean).join('\n\n');
-      const { laser_model, beauty_model, ...rest } = data;
+      const { laser_model, beauty_model, studio_in_germany, has_nisv, ...rest } = data;
       const { data: json, error: fnError } = await supabase.functions.invoke('sales-wizard-submit', {
         body: {
           ...rest,
@@ -160,6 +164,8 @@ export default function SalesWizard({ publicMode = false }: Props) {
             ...data.additional_interests,
             ...(laser_model ? [`Gerät: ${laser_model}`] : []),
             ...(beauty_model ? [`Gerät: ${beauty_model}`] : []),
+            ...(studio_in_germany ? ['Studio: Deutschland'] : []),
+            ...(studio_in_germany && has_nisv ? [`NISV: ${has_nisv === 'ja' ? 'Ja' : 'Nein'}`] : []),
           ],
           source: publicMode ? 'alixwork_wizard_public' : 'alixwork_wizard_internal',
           turnstile_token: captchaToken,
