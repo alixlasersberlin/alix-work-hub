@@ -210,9 +210,11 @@ export default function Invoices() {
   return (
     <div className="p-4 sm:p-6">
       <PageHeader
-        icon={<FileText className="w-6 h-6 text-primary" />}
+        icon={FileText}
         title="Rechnungen nach Kundenkonto"
         subtitle="Konsolidierte Übersicht aller Zoho-Rechnungen (einmalig + periodisch) je Kunde"
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${kpi.accounts} Konten`} pulse={loading} />}
         actions={
           isAdmin && (
             <Button onClick={handleImport} disabled={importing} className="gold-gradient text-primary-foreground">
