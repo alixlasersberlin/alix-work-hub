@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Files, Upload, Download, Trash2, Search } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { PageHeader, PageLoading, DataCard } from '@/components/PageShell';
+import { DataCard } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { SkeletonTable } from '@/components/infinity/Skeleton';
+import { EmptyState } from '@/components/infinity/EmptyState';
+import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -98,11 +102,13 @@ export default function FinanceBelege() {
   return (
     <div className="p-4 sm:p-6">
       <PageHeader
-        icon={<Files className="w-6 h-6 text-primary" />}
+        icon={Files}
         title="Belegarchiv"
         subtitle="GoBD-konforme Ablage aller Finanzbelege mit 10-Jahres Aufbewahrungsfrist"
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${docs.length}`} pulse={!loading} />}
         actions={
-          <div className="flex gap-2 items-center">
+          <>
             <Select value={uploadType} onValueChange={setUploadType}>
               <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
               <SelectContent>{DOC_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
@@ -111,7 +117,7 @@ export default function FinanceBelege() {
             <Button onClick={() => fileRef.current?.click()} disabled={uploading} className="gold-gradient text-primary-foreground">
               <Upload className="w-4 h-4 mr-2" />{uploading ? 'Lade hoch…' : 'Beleg hochladen'}
             </Button>
-          </div>
+          </>
         }
       />
 
@@ -130,8 +136,8 @@ export default function FinanceBelege() {
       </DataCard>
 
       <DataCard className="overflow-hidden">
-        {loading ? <PageLoading /> : filtered.length === 0 ? (
-          <div className="text-center text-muted-foreground py-16">Keine Belege gefunden.</div>
+        {loading ? <div className="p-6"><SkeletonTable rows={8} cols={8} /></div> : filtered.length === 0 ? (
+          <div className="p-8"><EmptyState title="Keine Belege gefunden" description="Lade einen Beleg hoch oder ändere die Filter." /></div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
