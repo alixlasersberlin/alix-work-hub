@@ -5,6 +5,8 @@
 @import './styles/infinity.css';
 /* Infinity Table Experience 2.0 (opt-in via .itable / InfinityTable) */
 @import './styles/itable.css';
+/* Accessibility Pro (Phase I-11) */
+@import './styles/a11y.css';
 
 /* Fonts werden in index.html non-blocking geladen (preconnect + preload) */
 

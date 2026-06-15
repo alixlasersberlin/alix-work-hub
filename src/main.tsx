@@ -4,9 +4,11 @@ import "./index.css";
 import "./styles/theme-neo.css";
 import { bootUiTemplate } from "./hooks/useUiTemplate";
 import { bootInfinityTheme } from "./hooks/useInfinityTheme";
+import { bootA11yPrefs } from "./hooks/useA11yPrefs";
 
 bootUiTemplate();
 bootInfinityTheme();
+bootA11yPrefs();
 
 
 // Workaround for React bug with browser translation extensions (Google Translate, etc.)
