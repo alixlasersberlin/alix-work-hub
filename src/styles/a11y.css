@@ -1,0 +1,99 @@
+/* ============================================================
+   Accessibility Pro — Phase I-11
+   Globale A11y-Layer via data-Attribute auf <html>.
+   ============================================================ */
+
+/* Skip-Link: per Tab erreichbar, springt zum Hauptinhalt */
+.a11y-skip-link {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -120%);
+  z-index: 9999;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  padding: 0.6rem 1rem;
+  border-radius: 0 0 10px 10px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: transform 160ms ease;
+  text-decoration: none;
+}
+.a11y-skip-link:focus,
+.a11y-skip-link:focus-visible {
+  transform: translate(-50%, 0);
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* ---------- Textgrößen-Skalierung ---------- */
+html[data-a11y-text-scale="110"] body { font-size: 110%; }
+html[data-a11y-text-scale="125"] body { font-size: 125%; }
+html[data-a11y-text-scale="150"] body { font-size: 150%; }
+
+/* ---------- Bewegungsreduktion ---------- */
+html[data-a11y-reduced-motion] *,
+html[data-a11y-reduced-motion] *::before,
+html[data-a11y-reduced-motion] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+html[data-a11y-reduced-motion] body::before,
+html[data-a11y-reduced-motion] body::after {
+  animation: none !important;
+}
+
+/* ---------- Hoher Kontrast ---------- */
+html[data-a11y-contrast] {
+  --background: 0 0% 0%;
+  --foreground: 60 100% 96%;
+  --card: 0 0% 4%;
+  --card-foreground: 60 100% 96%;
+  --popover: 0 0% 4%;
+  --popover-foreground: 60 100% 96%;
+  --primary: 48 100% 60%;
+  --primary-foreground: 0 0% 0%;
+  --secondary: 0 0% 12%;
+  --secondary-foreground: 60 100% 96%;
+  --muted: 0 0% 8%;
+  --muted-foreground: 60 50% 85%;
+  --accent: 48 100% 50%;
+  --accent-foreground: 0 0% 0%;
+  --destructive: 0 100% 55%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 60 100% 60%;
+  --input: 60 100% 60%;
+  --ring: 48 100% 60%;
+}
+html[data-a11y-contrast] * {
+  text-shadow: none !important;
+}
+html[data-a11y-contrast] .card,
+html[data-a11y-contrast] [data-slot="card"] {
+  border-width: 2px !important;
+}
+
+/* ---------- Fokus-Ring „bold" ---------- */
+html[data-a11y-focus="bold"] :focus-visible {
+  outline: 3px solid hsl(48 100% 60%) !important;
+  outline-offset: 3px !important;
+  border-radius: 4px;
+  box-shadow: 0 0 0 6px hsl(48 100% 60% / 0.25) !important;
+}
+
+/* ---------- Links unterstreichen ---------- */
+html[data-a11y-underline] a:not([class*="btn"]):not([role="button"]) {
+  text-decoration: underline !important;
+  text-underline-offset: 3px;
+}
+
+/* ---------- Tap-Targets auf Mobile ---------- */
+@media (max-width: 768px) {
+  html[data-a11y-text-scale="125"] button,
+  html[data-a11y-text-scale="150"] button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
