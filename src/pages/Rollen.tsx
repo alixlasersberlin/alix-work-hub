@@ -32,15 +32,13 @@ export default function Rollen() {
 
   return (
     <div className="container max-w-5xl py-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <Shield className="w-7 h-7 text-primary" />
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Rollen</h1>
-          <p className="text-sm text-muted-foreground">
-            Übersicht aller verfügbaren Systemrollen und ihrer Zuweisungen.
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        icon={Shield}
+        title="Rollen"
+        subtitle="Übersicht aller verfügbaren Systemrollen und ihrer Zuweisungen."
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind="done" label={`${roles.length}`} />}
+      />
 
       {loading ? (
         <div className="flex items-center justify-center py-16">
