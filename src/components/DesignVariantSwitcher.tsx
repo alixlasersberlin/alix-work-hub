@@ -32,11 +32,6 @@ export default function DesignVariantSwitcher({ inline = false }: { inline?: boo
         >
           <ActiveIcon className="h-4 w-4 text-primary" />
           <span className="hidden sm:inline">Design</span>
-          {variant === 'beta3d' && (
-            <Badge variant="outline" className="ml-1 h-4 border-primary/60 px-1 text-[10px] text-primary">
-              Beta
-            </Badge>
-          )}
           {variant === 'aurora' && (
             <Badge variant="outline" className="ml-1 h-4 border-primary/60 px-1 text-[10px] text-primary">
               Ultra
