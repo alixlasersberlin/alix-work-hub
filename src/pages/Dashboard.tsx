@@ -465,20 +465,16 @@ export default function Dashboard() {
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {loading
-          ? Array.from({ length: 5 }).map((_, i) => <CardSkeleton key={i} />)
-          : kpiCards.map((card, i) => (
-              <button
+          ? <SkeletonKpiGrid count={kpiCards.length || 5} />
+          : kpiCards.map((card) => (
+              <KpiTile
                 key={card.label}
-                type="button"
+                label={card.label}
+                value={card.value}
+                icon={card.icon as any}
+                accent={card.accent}
                 onClick={card.onClick}
-                className="text-left rounded-xl border border-border bg-card p-5 card-glow group hover:border-primary/30 hover:bg-secondary/20 transition-colors"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm text-muted-foreground">{card.label}</span>
-                  <card.icon className={`w-5 h-5 ${kpiColors[i] || 'text-primary'}`} />
-                </div>
-                <p className="text-3xl font-display font-bold text-foreground">{card.value}</p>
-              </button>
+              />
             ))}
       </div>
 
