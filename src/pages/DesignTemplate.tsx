@@ -137,6 +137,8 @@ export default function DesignTemplate() {
         </CardContent>
       </Card>
 
+      <A11yPrefsPanel />
+
       <Card>
         <CardHeader><CardTitle>Hinweise</CardTitle></CardHeader>
         <CardContent className="text-sm text-muted-foreground space-y-1">
