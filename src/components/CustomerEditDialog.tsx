@@ -99,6 +99,7 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
       iban: form.iban || null,
       bic: form.bic || null,
       bank_name: form.bank_name || null,
+      birth_date: form.birth_date || null,
       is_vip: form.is_vip,
     };
     const isNew = !customer?.id;
