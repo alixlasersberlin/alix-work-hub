@@ -47,6 +47,7 @@ export default function AngebotErstellen() {
   const [validUntil, setValidUntil] = useState('');
   const [salesAdvisor, setSalesAdvisor] = useState('');
   const [deliveryWeek, setDeliveryWeek] = useState('');
+  const [specialOffer, setSpecialOffer] = useState('');
   const [notes, setNotes] = useState('');
   const [includeAppendix, setIncludeAppendix] = useState(true);
   const [lines, setLines] = useState<LineItem[]>([newLine()]);
