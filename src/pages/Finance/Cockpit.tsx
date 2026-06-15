@@ -36,7 +36,7 @@ export default function FinanceCockpit() {
     })();
   }, []);
 
-  if (loading) return <PageLoading />;
+  // loading handled inline via skeletons
 
   const now = new Date();
   const mtd = tx.filter(r => new Date(r.booking_date).getMonth() === now.getMonth() && r.transaction_type === 'Rechnung').reduce((s, r) => s + Number(r.amount), 0);
