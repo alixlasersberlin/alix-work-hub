@@ -22,6 +22,7 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
     contact_name: customer?.contact_name || '',
     email: customer?.email || '',
     phone: customer?.phone || '',
+    birth_date: customer?.birth_date || '',
     billing_street: customer?.billing_address?.address || customer?.billing_address?.street || '',
     billing_zip: customer?.billing_address?.zip || '',
     billing_city: customer?.billing_address?.city || '',
