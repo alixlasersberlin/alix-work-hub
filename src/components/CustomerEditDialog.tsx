@@ -78,7 +78,7 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
 
   async function handleSave() {
     setSaving(true);
-    const { error } = await supabase.from('customers').update({
+    const payload: any = {
       company_name: form.company_name || null,
       contact_name: form.contact_name || null,
       email: form.email || null,
@@ -99,13 +99,18 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
       bic: form.bic || null,
       bank_name: form.bank_name || null,
       is_vip: form.is_vip,
-    } as any).eq('id', customer.id);
+    };
+    const isNew = !customer?.id;
+    const { error } = isNew
+      ? await supabase.from('customers').insert(payload)
+      : await supabase.from('customers').update(payload).eq('id', customer.id);
     setSaving(false);
     if (error) { toast.error('Fehler beim Speichern: ' + error.message); return; }
-    toast.success('Kundendaten aktualisiert');
+    toast.success(isNew ? 'Kunde angelegt' : 'Kundendaten aktualisiert');
     onSaved();
     onClose();
   }
+
 
   const Field = ({ label, field }: { label: string; field: string }) => (
     <div>
@@ -122,7 +127,7 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
       <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="font-display">Kunde bearbeiten</DialogTitle>
+          <DialogTitle className="font-display">{customer?.id ? 'Kunde bearbeiten' : 'Neuen Kunden anlegen'}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <label className="flex items-center justify-between gap-3 rounded-md border border-amber-500/30 bg-gradient-to-r from-amber-500/10 to-transparent p-3 cursor-pointer">
