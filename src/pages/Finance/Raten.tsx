@@ -97,9 +97,7 @@ export default function FinanceRaten() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.length === 0 ? (
-                  <tr><td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">Keine laufenden Raten gefunden.</td></tr>
-                ) : filtered.map(r => (
+                {filtered.map(r => (
                   <tr key={r.id} className="border-t border-border hover:bg-muted/20">
                     <td className="px-4 py-3 font-mono text-xs">{r.recurring_invoice_id ?? '–'}</td>
                     <td className="px-4 py-3">{r.reference_number ?? '–'}</td>
