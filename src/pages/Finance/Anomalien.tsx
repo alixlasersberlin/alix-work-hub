@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { PageHeader, PageLoading, DataCard } from '@/components/PageShell';
+import { DataCard } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { SkeletonTable } from '@/components/infinity/Skeleton';
+import { EmptyState } from '@/components/infinity/EmptyState';
+import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Play, Check, X } from 'lucide-react';
+import { Loader2, Play, Check, X, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { fmt } from './_controlling';
 
@@ -56,27 +60,38 @@ export default function FinanceAnomalien() {
     await load();
   }
 
-  if (loading) return <PageLoading />;
+
 
   return (
     <div className="p-6 space-y-6">
-      <PageHeader title="Anomalie-Erkennung" subtitle="Auffälligkeiten in Transaktionen & Eingangsrechnungen" />
-      <div className="flex items-center gap-3">
-        <Select value={statusFilter} onValueChange={(v: any) => setStatusFilter(v)}>
-          <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="open">Offen</SelectItem>
-            <SelectItem value="reviewed">Geprüft</SelectItem>
-            <SelectItem value="dismissed">Verworfen</SelectItem>
-            <SelectItem value="all">Alle</SelectItem>
-          </SelectContent>
-        </Select>
-        <Button onClick={runScan} disabled={scanning} variant="outline">
-          {scanning ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Play className="h-4 w-4 mr-2" />}
-          Scan jetzt starten
-        </Button>
-      </div>
+      <PageHeader
+        title="Anomalie-Erkennung"
+        subtitle="Auffälligkeiten in Transaktionen & Eingangsrechnungen"
+        icon={AlertTriangle}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${rows.length}`} pulse={!loading} />}
+        actions={
+          <>
+            <Select value={statusFilter} onValueChange={(v: any) => setStatusFilter(v)}>
+              <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="open">Offen</SelectItem>
+                <SelectItem value="reviewed">Geprüft</SelectItem>
+                <SelectItem value="dismissed">Verworfen</SelectItem>
+                <SelectItem value="all">Alle</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button onClick={runScan} disabled={scanning} variant="outline">
+              {scanning ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Play className="h-4 w-4 mr-2" />}
+              Scan starten
+            </Button>
+          </>
+        }
+      />
 
+      {loading ? <DataCard className="p-6"><SkeletonTable rows={8} cols={7} /></DataCard> : rows.length === 0 ? (
+        <DataCard className="p-8"><EmptyState title="Keine Anomalien" description="Es wurden keine Auffälligkeiten erkannt." /></DataCard>
+      ) : (
       <DataCard title={`${rows.length} Treffer`}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -110,11 +125,11 @@ export default function FinanceAnomalien() {
                   </td>
                 </tr>
               ))}
-              {rows.length === 0 && <tr><td colSpan={7} className="px-3 py-8 text-center text-muted-foreground">Keine Treffer</td></tr>}
             </tbody>
           </table>
         </div>
       </DataCard>
+      )}
     </div>
   );
 }
