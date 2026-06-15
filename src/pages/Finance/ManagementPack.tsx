@@ -138,6 +138,7 @@ export default function FinanceManagementPack() {
           </div>
         )}
       </DataCard>
+      )}
 
       <Dialog open={show} onOpenChange={setShow}>
         <DialogContent>
