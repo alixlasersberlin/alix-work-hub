@@ -608,3 +608,147 @@ html[data-aurora="2"].dark [role="combobox"] {
 html[data-aurora="2"] main > * {
   animation: a2-fade-slide-in 220ms ease-out;
 }
+
+/* ====================================================================
+   PHASE 3 — KPI CARDS · CHARTS · SCROLLBARS · WIDGETS
+   ==================================================================== */
+
+/* ---------- KPI CARDS (auto-detect: card with big number) ---------- */
+html[data-aurora="2"] [class*="rounded-"][class*="border"]:has(> *:first-child [class*="text-2xl"], > *:first-child [class*="text-3xl"], > *:first-child [class*="text-4xl"]) {
+  background:
+    radial-gradient(120% 100% at 0% 0%, hsl(var(--primary) / 0.06), transparent 55%),
+    hsl(var(--card));
+  border: 1px solid hsl(var(--border) / 0.7);
+  transition: transform 200ms ease-out, box-shadow 200ms ease-out, border-color 200ms ease-out;
+}
+html[data-aurora="2"] [class*="rounded-"][class*="border"]:has(> *:first-child [class*="text-2xl"], > *:first-child [class*="text-3xl"]):hover {
+  transform: translateY(-2px);
+  border-color: hsl(var(--primary) / 0.35);
+  box-shadow:
+    0 1px 0 hsl(var(--primary) / 0.04) inset,
+    0 12px 32px -16px hsl(var(--primary) / 0.35);
+}
+
+/* Numeric emphasis */
+html[data-aurora="2"] .text-2xl,
+html[data-aurora="2"] .text-3xl,
+html[data-aurora="2"] .text-4xl {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+
+/* Trend deltas (positive/negative semantics) */
+html[data-aurora="2"] [data-trend="up"]   { color: hsl(var(--success, 142 71% 45%)); }
+html[data-aurora="2"] [data-trend="down"] { color: hsl(var(--destructive)); }
+html[data-aurora="2"] [data-trend="flat"] { color: hsl(var(--muted-foreground)); }
+
+/* ---------- CHARTS (recharts containers) ---------- */
+html[data-aurora="2"] .recharts-cartesian-grid line {
+  stroke: hsl(var(--border) / 0.55);
+  stroke-dasharray: 3 5;
+}
+html[data-aurora="2"] .recharts-cartesian-axis-tick text,
+html[data-aurora="2"] .recharts-legend-item-text {
+  fill: hsl(var(--muted-foreground)) !important;
+  font-size: 11px;
+  font-weight: 500;
+}
+html[data-aurora="2"] .recharts-tooltip-wrapper .recharts-default-tooltip {
+  background: hsl(var(--popover)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 12px 32px -12px hsl(0 0% 0% / 0.25) !important;
+  padding: 10px 12px !important;
+}
+
+/* ---------- SCROLLBARS (premium, slim) ---------- */
+html[data-aurora="2"] * {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+}
+html[data-aurora="2"] *::-webkit-scrollbar { width: 10px; height: 10px; }
+html[data-aurora="2"] *::-webkit-scrollbar-track { background: transparent; }
+html[data-aurora="2"] *::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.25);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+html[data-aurora="2"] *::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.45);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+}
+
+/* ---------- SECTION HEADERS (h2, h3 in main) ---------- */
+html[data-aurora="2"] main h2 {
+  font-size: 1.375rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  margin-bottom: 4px;
+}
+html[data-aurora="2"] main h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* ---------- AVATARS ---------- */
+html[data-aurora="2"] [class*="rounded-full"][class*="bg-"]:not(button):not(a) {
+  box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 3px hsl(var(--border));
+}
+
+/* ---------- EMPTY-STATE POLISH ---------- */
+html[data-aurora="2"] [class*="text-center"]:has(> svg.lucide):not(button) {
+  padding: 32px 16px;
+  color: hsl(var(--muted-foreground));
+}
+
+/* ---------- TOAST (sonner) ---------- */
+html[data-aurora="2"] [data-sonner-toast] {
+  border-radius: 14px !important;
+  border: 1px solid hsl(var(--border)) !important;
+  box-shadow: 0 12px 40px -12px hsl(0 0% 0% / 0.28) !important;
+  backdrop-filter: blur(12px);
+}
+
+/* ---------- HEATMAP WIDGET (real data) ---------- */
+html[data-aurora="2"] .a2-heatmap-grid {
+  display: grid;
+  grid-template-columns: auto repeat(53, minmax(12px, 1fr));
+  gap: 3px;
+  align-items: center;
+}
+html[data-aurora="2"] .a2-heatmap-week {
+  display: grid;
+  grid-template-rows: repeat(7, 14px);
+  gap: 3px;
+}
+html[data-aurora="2"] .a2-heatmap-day {
+  width: 100%;
+  border-radius: 3px;
+  background: hsl(var(--primary) / var(--a2-cell-alpha, 0.06));
+  transition: transform 120ms ease-out;
+  cursor: pointer;
+}
+html[data-aurora="2"] .a2-heatmap-day:hover {
+  transform: scale(1.4);
+  outline: 1px solid hsl(var(--primary));
+}
+html[data-aurora="2"] .a2-heatmap-label {
+  font-size: 10px;
+  color: hsl(var(--muted-foreground));
+  font-variant-numeric: tabular-nums;
+  padding-right: 6px;
+}
+
+/* ---------- BREADCRUMBS / PAGE TITLES ---------- */
+html[data-aurora="2"] nav[aria-label="breadcrumb"] {
+  font-size: 12px;
+  color: hsl(var(--muted-foreground));
+  margin-bottom: 8px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
