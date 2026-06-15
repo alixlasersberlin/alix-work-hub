@@ -515,13 +515,25 @@ export default function OrdersFreiBestellung() {
                           const reserved = reservedByOrder[o.id] || [];
                           if (reserved.length > 0) {
                             return (
-                              <span
-                                className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-amber-500/15 text-amber-500 text-xs font-medium"
-                                title={reserved.map(r => `${r.model_name} (SN: ${r.serial_number})`).join('\n')}
-                              >
-                                <Warehouse className="w-3.5 h-3.5" />
-                                {reserved.length}× reserviert
-                              </span>
+                              <HoverCard>
+                                <HoverCardTrigger asChild>
+                                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-amber-500/15 text-amber-500 text-xs font-medium cursor-help">
+                                    <Warehouse className="w-3.5 h-3.5" />
+                                    {reserved.length}× reserviert
+                                  </span>
+                                </HoverCardTrigger>
+                                <HoverCardContent className="w-80">
+                                  <p className="text-xs font-semibold text-muted-foreground mb-2">Reservierte Geräte</p>
+                                  <ul className="space-y-1 text-sm">
+                                    {reserved.map(r => (
+                                      <li key={r.id} className="flex flex-col border-b border-border/40 last:border-0 pb-1 last:pb-0">
+                                        <span className="font-medium">{r.model_name}</span>
+                                        <span className="text-xs text-muted-foreground font-mono">SN: {r.serial_number}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </HoverCardContent>
+                              </HoverCard>
                             );
                           }
                           return inStock ? (
@@ -534,6 +546,7 @@ export default function OrdersFreiBestellung() {
                           );
                         })()}
                       </td>
+
                       <td className="px-4 py-3"><StatusBadge status={o.order_status} /></td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-2 flex-wrap">
