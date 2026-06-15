@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 import { CheckSquare, Check, X, ChevronRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { PageHeader, PageLoading, DataCard } from '@/components/PageShell';
+import { DataCard } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { SkeletonTable } from '@/components/infinity/Skeleton';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
@@ -53,23 +56,25 @@ export default function FinanceFreigaben() {
     setBusy(false);
   };
 
-  if (loading) return <PageLoading />;
   const pending = rows.filter(r => r.status === 'pending').length;
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Finance Freigaben" subtitle={`${pending} offene Genehmigungen`} icon={CheckSquare} actions={<>
-        <Select value={filter} onValueChange={setFilter}>
-          <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="pending">Offen</SelectItem>
-            <SelectItem value="approved">Freigegeben</SelectItem>
-            <SelectItem value="rejected">Abgelehnt</SelectItem>
-            <SelectItem value="alle">Alle</SelectItem>
-          </SelectContent>
-        </Select>
-      </>} />
+      <PageHeader title="Finance Freigaben" subtitle={loading ? 'Lädt…' : `${pending} offene Genehmigungen`} icon={CheckSquare} noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : pending ? 'warning' : 'done'} label={loading ? 'Lädt' : pending ? `${pending} offen` : 'Aktuell'} pulse={loading} />}
+        actions={<>
+          <Select value={filter} onValueChange={setFilter}>
+            <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="pending">Offen</SelectItem>
+              <SelectItem value="approved">Freigegeben</SelectItem>
+              <SelectItem value="rejected">Abgelehnt</SelectItem>
+              <SelectItem value="alle">Alle</SelectItem>
+            </SelectContent>
+          </Select>
+        </>} />
 
+      {loading ? <DataCard><SkeletonTable rows={8} cols={4} /></DataCard> : (
       <DataCard title="Inbox">
         <div className="space-y-2">
           {rows.map(r => (
@@ -103,6 +108,7 @@ export default function FinanceFreigaben() {
           {rows.length === 0 && <div className="text-sm text-muted-foreground p-4 text-center">Keine Einträge</div>}
         </div>
       </DataCard>
+      )}
 
       <Dialog open={dlg.open} onOpenChange={(o) => setDlg({ ...dlg, open: o })}>
         <DialogContent>
