@@ -157,14 +157,15 @@ export default function AngebotErstellen() {
 
 
   const filteredCustomers = useMemo(() => {
-    const q = customerSearch.toLowerCase();
-    if (!q) return customers.slice(0, 50);
+    const q = customerSearch.toLowerCase().trim();
+    if (!q) return [];
     return customers.filter(c =>
       c.company_name?.toLowerCase().includes(q) ||
       c.contact_name?.toLowerCase().includes(q) ||
       c.email?.toLowerCase().includes(q)
     ).slice(0, 50);
   }, [customers, customerSearch]);
+
 
   const filteredItems = useMemo(() => {
     const q = itemSearch.toLowerCase().trim();
