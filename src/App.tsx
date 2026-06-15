@@ -58,6 +58,7 @@ const PublicRepairQuoteDecision = lazy(() => import("./pages/PublicRepairQuote/D
 const BestellwesenErsatzteile = lazy(() => import("./pages/Bestellwesen/Ersatzteile"));
 const Ersatzteilmanagement = lazy(() => import("./pages/Ersatzteilmanagement"));
 const ManagementDashboard = lazy(() => import("./pages/ManagementDashboard"));
+const ExecutiveCommandCenter = lazy(() => import("./pages/ExecutiveCommandCenter"));
 const AiCenter = lazy(() => import("./pages/AiCenter"));
 const RoutePlanDetail = lazy(() => import("./pages/RoutePlanDetail"));
 const RoutePlanForm = lazy(() => import("./pages/RoutePlanForm"));
@@ -571,6 +572,7 @@ function AppRoutes() {
           <Route path="/garantie-kulanz" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Service', 'Serviceleitung', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance', 'Tourenplanung']}><GarantieKulanz /></ProtectedRoute>} />
           <Route path="/service/garantie-kulanz" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Service', 'Serviceleitung', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance', 'Tourenplanung']}><GarantieKulanz /></ProtectedRoute>} />
           <Route path="/management-dashboard" element={<ProtectedRoute requiredRoles={['Super Admin']}><ManagementDashboard /></ProtectedRoute>} />
+          <Route path="/executive" element={<ProtectedRoute requiredRoles={['Super Admin']}><ExecutiveCommandCenter /></ProtectedRoute>} />
           <Route path="/ai-center" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Geschäftsführung', 'Serviceleitung', 'Service', 'Technik', 'Finance', 'Österreich']}><AiCenter /></ProtectedRoute>} />
 
           <Route path="/design-template" element={<ProtectedRoute><DesignTemplate /></ProtectedRoute>} />
