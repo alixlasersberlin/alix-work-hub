@@ -761,35 +761,29 @@ export default function AppLayout() {
         '__production_liste': factory,
       }));
     };
-    load();
+    // Initiales Laden in idle-Zeit verschieben (8 parallele Queries → nicht beim ersten Render).
+    const ric: any = (window as any).requestIdleCallback ?? ((cb: any) => window.setTimeout(cb, 300));
+    const cic: any = (window as any).cancelIdleCallback ?? ((id: any) => window.clearTimeout(id));
+    const idleId = ric(() => { if (!cancelled) load(); });
     const intervalId = window.setInterval(load, 5 * 60 * 1000);
     let debounceId: number | undefined;
     const scheduleReload = () => {
       if (debounceId) window.clearTimeout(debounceId);
       debounceId = window.setTimeout(load, 400);
     };
-    const ch1 = supabase
-      .channel('production_orders_counts')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'production_orders' }, scheduleReload)
-      .subscribe();
-    const ch2 = supabase
-      .channel('orders_counts_einkauf')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, scheduleReload)
-      .subscribe();
-    const ch3 = supabase
-      .channel('lager_devices_counts_einkauf')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'lager_devices' }, scheduleReload)
-      .subscribe();
+    // Realtime-Subscriptions auf `production_orders`, `orders` und `lager_devices`
+    // wurden entfernt — sie haben bei jeder Zeilenänderung 8 parallele Count-
+    // Queries ausgelöst und die App spürbar gebremst. Statt dessen wird über
+    // das custom Event `einkauf-counts-refresh` (Routenwechsel + nach manuellen
+    // Mutationen) sowie dem 5-Minuten-Intervall aktualisiert.
     const onRefresh = () => scheduleReload();
     window.addEventListener('einkauf-counts-refresh', onRefresh);
     return () => {
       cancelled = true;
+      cic(idleId);
       window.clearInterval(intervalId);
       if (debounceId) window.clearTimeout(debounceId);
       window.removeEventListener('einkauf-counts-refresh', onRefresh);
-      supabase.removeChannel(ch1);
-      supabase.removeChannel(ch2);
-      supabase.removeChannel(ch3);
     };
   }, [atOnly]);
 
