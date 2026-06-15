@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Card } from '@/components/ui/card';
+import { PageHeader } from '@/components/infinity/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -210,15 +211,18 @@ export default function ServiceCockpit() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center flex-wrap gap-3">
-        <Wrench className="w-6 h-6 text-emerald-400" />
-        <h1 className="text-2xl font-bold">Service Cockpit</h1>
-        <Badge variant="outline" className="ml-2">Reparatur · Tickets · Finance</Badge>
-        <div className="ml-auto flex gap-2">
-          <Button variant="outline" size="sm" onClick={exportExcel}><Sheet className="w-4 h-4 mr-1" /> Excel</Button>
-          <Button variant="outline" size="sm" onClick={exportPdf}><FileDown className="w-4 h-4 mr-1" /> PDF</Button>
-        </div>
-      </div>
+      <PageHeader
+        icon={Wrench}
+        title="Service Cockpit"
+        subtitle="Reparatur · Tickets · Finance"
+        noBreadcrumbs
+        actions={
+          <>
+            <Button variant="outline" size="sm" onClick={exportExcel}><Sheet className="w-4 h-4 mr-1" /> Excel</Button>
+            <Button variant="outline" size="sm" onClick={exportPdf}><FileDown className="w-4 h-4 mr-1" /> PDF</Button>
+          </>
+        }
+      />
 
       <Card className="p-4">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
