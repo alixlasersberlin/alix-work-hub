@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ShieldCheck, Clock, AlertOctagon, Gift, Truck, Euro, Plus, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "sonner";
+import { PageHeader } from "@/components/infinity/PageHeader";
 
 type Warranty = {
   id: string; serial_number: string; device_name: string | null; customer_name: string | null;

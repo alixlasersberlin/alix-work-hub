@@ -6,6 +6,7 @@ import { useInfinityTheme, INFINITY_THEMES, type InfinityTheme } from "@/hooks/u
 import { Sparkles, Layers, Check, Infinity as InfinityIcon } from "lucide-react";
 import { A11yPrefsPanel } from "@/components/infinity/A11yPrefsPanel";
 import { AIBackgroundPanel } from "@/components/infinity/AIBackgroundPanel";
+import { PageHeader } from "@/components/infinity/PageHeader";
 
 const OPTIONS: { id: UiTemplate; name: string; description: string; preview: React.ReactNode }[] = [
   {

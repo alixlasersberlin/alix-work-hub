@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
 import { Card } from '@/components/ui/card';
 import { Building2, TrendingUp, Wrench, Boxes, Ticket, Loader2 } from 'lucide-react';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 interface TenantStats {
   code: string; name: string; flag: string;
