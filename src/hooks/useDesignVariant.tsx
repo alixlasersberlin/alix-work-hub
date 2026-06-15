@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 
-export type DesignVariant = 'classic' | 'beta3d' | 'aurora';
+export type DesignVariant = 'classic' | 'aurora';
 
 interface DesignVariantContextType {
   variant: DesignVariant;
