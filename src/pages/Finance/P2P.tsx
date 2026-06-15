@@ -115,15 +115,20 @@ export default function FinanceP2P() {
     else { toast({ title: '3-Way-Match erzeugt' }); load(); }
   };
 
-  if (loading) return <PageLoading />;
-
   return (
     <div className="space-y-6 container mx-auto px-4 py-8">
       <PageHeader
-        title="Procure-to-Pay"
-        subtitle={`${prs.length} Anforderungen · ${pos.length} Bestellungen · ${matches.length} Matches`}
         icon={ShoppingCart}
+        title="Procure-to-Pay"
+        subtitle={loading ? 'Lädt…' : `${prs.length} Anforderungen · ${pos.length} Bestellungen · ${matches.length} Matches`}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${matches.length} Matches`} pulse={loading} />}
       />
+
+      {loading ? (
+        <DataCard><SkeletonTable rows={8} cols={6} /></DataCard>
+      ) : (
+      <>
 
       <Tabs defaultValue="prs">
         <TabsList>
