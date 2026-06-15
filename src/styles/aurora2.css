@@ -1237,3 +1237,137 @@ html[data-aurora="2"] ::selection {
     border-color: CanvasText !important;
   }
 }
+
+/* ============================================================
+   Aurora 2.0 — Phase 8: Data Viz & Command Palette
+   ============================================================ */
+
+/* Recharts — premium polish */
+html[data-aurora="2"] .recharts-cartesian-axis-tick text {
+  fill: hsl(var(--muted-foreground));
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+html[data-aurora="2"] .recharts-legend-item-text {
+  color: hsl(var(--muted-foreground)) !important;
+  font-size: 12px;
+}
+html[data-aurora="2"] .recharts-active-dot {
+  filter: drop-shadow(0 0 6px hsl(var(--primary) / 0.6));
+}
+html[data-aurora="2"] .recharts-bar-rectangle path,
+html[data-aurora="2"] .recharts-area-area {
+  filter: drop-shadow(0 2px 8px hsl(var(--primary) / 0.15));
+}
+html[data-aurora="2"] .recharts-reference-line line {
+  stroke-dasharray: 4 4;
+  stroke: hsl(var(--primary) / 0.4);
+}
+
+/* Pie / Donut center label */
+html[data-aurora="2"] .recharts-pie-label-text {
+  font-weight: 600;
+  fill: hsl(var(--foreground));
+}
+
+/* Sparkline container */
+html[data-aurora="2"] [data-sparkline] {
+  background: linear-gradient(
+    180deg,
+    hsl(var(--primary) / 0.04) 0%,
+    transparent 100%
+  );
+  border-radius: 6px;
+  padding: 4px;
+}
+
+/* KPI Delta indicators */
+html[data-aurora="2"] [data-delta="up"] {
+  color: hsl(142 71% 55%);
+  font-variant-numeric: tabular-nums;
+}
+html[data-aurora="2"] [data-delta="up"]::before { content: "▲ "; font-size: 0.85em; }
+html[data-aurora="2"] [data-delta="down"] {
+  color: hsl(var(--destructive));
+  font-variant-numeric: tabular-nums;
+}
+html[data-aurora="2"] [data-delta="down"]::before { content: "▼ "; font-size: 0.85em; }
+html[data-aurora="2"] [data-delta="flat"] {
+  color: hsl(var(--muted-foreground));
+}
+html[data-aurora="2"] [data-delta="flat"]::before { content: "— "; }
+
+/* Command Palette (cmdk) */
+html[data-aurora="2"] [cmdk-root] {
+  background: hsl(var(--popover) / 0.94) !important;
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid hsl(var(--primary) / 0.15) !important;
+  box-shadow:
+    0 40px 80px -20px rgba(0, 0, 0, 0.7),
+    0 0 0 1px hsl(var(--border) / 0.3),
+    0 0 60px -20px hsl(var(--primary) / 0.35) !important;
+  border-radius: 14px !important;
+}
+html[data-aurora="2"] [cmdk-input] {
+  font-size: 15px !important;
+  letter-spacing: 0.01em;
+  padding: 16px !important;
+  border-bottom: 1px solid hsl(var(--border) / 0.4) !important;
+}
+html[data-aurora="2"] [cmdk-input]::placeholder {
+  color: hsl(var(--muted-foreground) / 0.7);
+}
+html[data-aurora="2"] [cmdk-item] {
+  border-radius: 8px !important;
+  margin: 2px 6px !important;
+  padding: 10px 12px !important;
+  transition: background-color 0.12s ease, color 0.12s ease,
+    padding-left 0.15s ease;
+}
+html[data-aurora="2"] [cmdk-item][data-selected="true"],
+html[data-aurora="2"] [cmdk-item]:hover {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--primary) / 0.15) 0%,
+    hsl(var(--primary) / 0.05) 100%
+  ) !important;
+  color: hsl(var(--primary)) !important;
+  padding-left: 16px !important;
+}
+html[data-aurora="2"] [cmdk-item][data-selected="true"]::before {
+  content: "›";
+  margin-right: 6px;
+  color: hsl(var(--primary));
+  font-weight: 700;
+}
+html[data-aurora="2"] [cmdk-group-heading] {
+  font-size: 10.5px !important;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground) / 0.7) !important;
+  padding: 12px 14px 6px !important;
+  font-weight: 600;
+}
+
+/* Search highlight (mark) */
+html[data-aurora="2"] mark {
+  background: hsl(var(--primary) / 0.25);
+  color: hsl(var(--primary));
+  padding: 0 2px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+/* Empty state */
+html[data-aurora="2"] [data-empty-state] {
+  text-align: center;
+  padding: 48px 24px;
+  color: hsl(var(--muted-foreground));
+}
+html[data-aurora="2"] [data-empty-state] svg {
+  opacity: 0.4;
+  margin: 0 auto 16px;
+  filter: drop-shadow(0 0 12px hsl(var(--primary) / 0.2));
+}
