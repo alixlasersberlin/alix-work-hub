@@ -149,22 +149,27 @@ export default function TicketsList() {
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
-      <div className="flex items-center gap-3 mb-6 flex-wrap">
-        <Ticket className="w-6 h-6 text-primary" />
-        <h1 className="text-2xl font-display font-bold text-foreground">Tickets</h1>
-        <Badge variant="outline" className="ml-2">{filtered.length}</Badge>
-        <div className="ml-auto flex items-center gap-2">
-          <Button size="sm" onClick={() => setCreateOpen(true)}>
-            <Plus className="w-4 h-4 mr-1" /> Neues Ticket
-          </Button>
-          <Link
-            to="/tickets/sync"
-            className="text-xs px-3 py-1.5 rounded-md border border-border bg-card hover:border-primary/40 hover:text-primary transition-colors"
-          >
-            Synchronisation
-          </Link>
-        </div>
-      </div>
+      <PageHeader
+        title="Tickets"
+        subtitle="Service-, Technik- und Finance-Tickets aus allen Quellen"
+        icon={Ticket}
+        meta={
+          <>
+            <InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${filtered.length}`} pulse={!loading} />
+          </>
+        }
+        actions={
+          <>
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/tickets/sync"><RefreshCw className="w-4 h-4 mr-2" />Synchronisation</Link>
+            </Button>
+            <Button size="sm" onClick={() => setCreateOpen(true)} className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-semibold border-0">
+              <Plus className="w-4 h-4 mr-1" /> Neues Ticket
+            </Button>
+          </>
+        }
+      />
+
 
 
       <div className="rounded-xl border border-border bg-card p-4 mb-4 grid gap-3 md:grid-cols-5">
