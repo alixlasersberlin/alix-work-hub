@@ -337,7 +337,7 @@ export default function HeadOfOperationDashboard() {
             {loading ? (
               <div className="p-4"><Skeleton className="h-24" /></div>
             ) : sessions.length === 0 ? (
-              <p className="p-4 text-sm text-muted-foreground text-center">Keine aktiven Sessions.</p>
+              <div className="p-4"><InfinityEmptyState compact icon={Users} title="Keine aktiven Sessions." /></div>
             ) : sessions.map((s) => (
               <div key={s.id} className="px-5 py-3 flex items-center gap-3 text-sm">
                 <ShieldCheck className="w-3.5 h-3.5 text-[hsl(var(--success))] flex-shrink-0" />
