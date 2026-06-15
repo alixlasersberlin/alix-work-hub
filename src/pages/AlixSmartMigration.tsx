@@ -11,6 +11,7 @@ import {
   Upload, Wifi, ShieldAlert,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 const TARGET_TABLES = [
   'model_manuals', 'support_videos', 'customer_notes', 'maintenance_confirmations',
