@@ -17,6 +17,8 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { useViewMode } from '@/hooks/useViewMode';
 import { ViewToggle } from '@/components/ViewToggle';
 import { useAtOnly } from '@/hooks/useAtOnly';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 
 type SortField = 'planned_date' | 'priority';
 type SortDir = 'asc' | 'desc';
@@ -149,55 +151,55 @@ export default function RoutePlanning() {
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
-            <MapPin className="w-6 h-6 text-primary" />
-            Tourenplanung
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {pageSize === 'all' || filtered.length <= pageSize
-              ? `${filtered.length} Touren`
-              : `${paged.length} von ${filtered.length} Touren`}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="flex rounded-lg border border-border overflow-hidden">
-            {([20, 50, 100, 'all'] as const).map((opt, i) => (
+      <PageHeader
+        icon={MapPin}
+        title="Tourenplanung"
+        subtitle={
+          pageSize === 'all' || filtered.length <= pageSize
+            ? `${filtered.length} Touren`
+            : `${paged.length} von ${filtered.length} Touren`
+        }
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind="done" label={`${filtered.length}`} />}
+        actions={
+          <>
+            <div className="flex rounded-lg border border-border overflow-hidden">
+              {([20, 50, 100, 'all'] as const).map((opt, i) => (
+                <button
+                  key={String(opt)}
+                  type="button"
+                  onClick={() => setPageSize(opt)}
+                  className={cn(
+                    "px-3 py-2 text-sm transition-colors",
+                    pageSize === opt
+                      ? 'bg-primary/10 text-primary font-medium'
+                      : 'text-muted-foreground hover:text-foreground',
+                    i > 0 && 'border-l border-border'
+                  )}
+                >
+                  {opt === 'all' ? 'Alle' : opt}
+                </button>
+              ))}
+            </div>
+            {view === 'list' && <ViewToggle value={viewMode} onChange={setViewMode} />}
+            <div className="flex rounded-lg border border-border overflow-hidden">
               <button
-                key={String(opt)}
-                type="button"
-                onClick={() => setPageSize(opt)}
-                className={cn(
-                  "px-3 py-2 text-sm transition-colors",
-                  pageSize === opt
-                    ? 'bg-primary/10 text-primary font-medium'
-                    : 'text-muted-foreground hover:text-foreground',
-                  i > 0 && 'border-l border-border'
-                )}
-              >
-                {opt === 'all' ? 'Alle' : opt}
-              </button>
-            ))}
-          </div>
-          {view === 'list' && <ViewToggle value={viewMode} onChange={setViewMode} />}
-          <div className="flex rounded-lg border border-border overflow-hidden">
-            <button
-              className={cn("px-3 py-2 text-sm transition-colors", view === 'list' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground')}
-              onClick={() => setView('list')}
-            ><List className="w-4 h-4" /></button>
-            <button
-              className={cn("px-3 py-2 text-sm transition-colors border-l border-border", view === 'calendar' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground')}
-              onClick={() => setView('calendar')}
-            ><CalendarDays className="w-4 h-4" /></button>
-          </div>
-          {canWrite && (
-            <Button onClick={() => navigate('/tourenplanung/neu')} className="gold-gradient text-primary-foreground">
-              <Plus className="w-4 h-4 mr-2" /> Neue Tour
-            </Button>
-          )}
-        </div>
-      </div>
+                className={cn("px-3 py-2 text-sm transition-colors", view === 'list' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground')}
+                onClick={() => setView('list')}
+              ><List className="w-4 h-4" /></button>
+              <button
+                className={cn("px-3 py-2 text-sm transition-colors border-l border-border", view === 'calendar' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground')}
+                onClick={() => setView('calendar')}
+              ><CalendarDays className="w-4 h-4" /></button>
+            </div>
+            {canWrite && (
+              <Button onClick={() => navigate('/tourenplanung/neu')} className="gold-gradient text-primary-foreground">
+                <Plus className="w-4 h-4 mr-2" /> Neue Tour
+              </Button>
+            )}
+          </>
+        }
+      />
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3 mb-4 flex-wrap">

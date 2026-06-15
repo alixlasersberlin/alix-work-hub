@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
 import { PageSizeSelector, usePagination, PaginationControls } from '@/components/PageSizeSelector';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 
 type SortField = 'due_date' | 'amount_due';
 type SortDir = 'asc' | 'desc';
@@ -143,19 +145,20 @@ export default function Finance() {
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
-            <Banknote className="w-6 h-6 text-primary" /> Finance
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">{grouped.length} Aufträge · {filtered.length} Positionen</p>
-        </div>
-        {canWrite && (
-          <Button onClick={() => navigate('/finance/neu')} className="gold-gradient text-primary-foreground">
-            <Plus className="w-4 h-4 mr-2" /> Neuer Eintrag
-          </Button>
-        )}
-      </div>
+      <PageHeader
+        icon={Banknote}
+        title="Finance"
+        subtitle={`${grouped.length} Aufträge · ${filtered.length} Positionen`}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind="done" label={`${grouped.length}`} />}
+        actions={
+          canWrite ? (
+            <Button onClick={() => navigate('/finance/neu')} className="gold-gradient text-primary-foreground">
+              <Plus className="w-4 h-4 mr-2" /> Neuer Eintrag
+            </Button>
+          ) : undefined
+        }
+      />
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">

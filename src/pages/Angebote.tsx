@@ -6,6 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { FileText, FilePlus, Trash2, Pencil, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 
 const KEY = 'alix_angebote_v1';
 
@@ -105,18 +107,18 @@ export default function Angebote() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-3">
-          <FileText className="h-7 w-7 text-primary" />
-          <div>
-            <h1 className="text-3xl font-bold">Angebote</h1>
-            <p className="text-muted-foreground text-sm">Übersicht aller erstellten Angebote.</p>
-          </div>
-        </div>
-        <Button asChild>
-          <Link to="/verkauf/angebot/neu"><FilePlus className="h-4 w-4 mr-2" />Neues Angebot</Link>
-        </Button>
-      </div>
+      <PageHeader
+        icon={FileText}
+        title="Angebote"
+        subtitle="Übersicht aller erstellten Angebote."
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind="done" label={`${offers.length}`} />}
+        actions={
+          <Button asChild>
+            <Link to="/verkauf/angebot/neu"><FilePlus className="h-4 w-4 mr-2" />Neues Angebot</Link>
+          </Button>
+        }
+      />
       <Card>
         <CardHeader><CardTitle>Liste ({offers.length})</CardTitle></CardHeader>
         <CardContent className="p-0">
