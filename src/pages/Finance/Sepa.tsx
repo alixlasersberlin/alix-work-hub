@@ -159,12 +159,19 @@ export default function FinanceSepa() {
     load();
   };
 
-  if (loading) return <PageLoading />;
-
   return (
-    <div className="space-y-6">
-      <PageHeader title="SEPA Lastschriften" subtitle="Mandate verwalten und pain.008-XML-Lastschriftläufe erstellen" icon={Banknote} />
+    <div className="space-y-6 p-4 sm:p-6">
+      <PageHeader
+        title="SEPA Lastschriften"
+        subtitle="Mandate verwalten und pain.008-XML-Lastschriftläufe erstellen"
+        icon={Banknote}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${runs.length} Läufe`} pulse={loading} />}
+      />
 
+      {loading ? (
+        <DataCard><div className="p-4"><SkeletonTable rows={8} cols={8} /></div></DataCard>
+      ) : (
       <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
         <TabsList>
           <TabsTrigger value="runs">Lastschriftläufe ({runs.length})</TabsTrigger>
