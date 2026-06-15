@@ -10,6 +10,7 @@ import { withAt } from '@/lib/atSuffix';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 type Row = {
   id: string;
@@ -116,21 +117,18 @@ export default function Anzahlungsrechnung() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-3">
-          <Receipt className="h-7 w-7 text-primary" />
-          <div>
-            <h1 className="text-3xl font-bold">Neue Anzahlungen</h1>
-            <p className="text-muted-foreground text-sm">
-              Aufträge mit bestätigter Anzahlung (Status offen / open) ohne bereits ausgelöste Bestellung.
-            </p>
-          </div>
-        </div>
-        <Button variant="outline" size="sm" onClick={load} disabled={loading}>
-          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          Aktualisieren
-        </Button>
-      </div>
+      <PageHeader
+        icon={Receipt}
+        title="Neue Anzahlungen"
+        subtitle="Aufträge mit bestätigter Anzahlung (Status offen / open) ohne bereits ausgelöste Bestellung."
+        noBreadcrumbs
+        actions={
+          <Button variant="outline" size="sm" onClick={load} disabled={loading}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Aktualisieren
+          </Button>
+        }
+      />
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>

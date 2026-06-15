@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ShieldCheck, AlertTriangle, RefreshCw, Check, X, UserPlus, PackagePlus } from 'lucide-react';
 import { toast } from 'sonner';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 type MatchClass = 'secure' | 'suggestion' | 'manual' | 'no_match';
 
@@ -144,32 +145,28 @@ export default function AlixSmartKonfliktaufloesung() {
 
   return (
     <div className="container max-w-7xl py-6 space-y-6">
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div className="flex items-center gap-3">
-          <ShieldCheck className="w-7 h-7 text-primary" />
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Konfliktauflösung</h1>
-            <p className="text-sm text-muted-foreground">
-              Read-only. Entscheidungen werden in <code>alixsmart_migration_map</code> dokumentiert –
-              es werden keine Geschäftsdaten verändert.
-            </p>
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button onClick={() => bulkApplyNewRecords('profile')} variant="secondary" size="sm" disabled={counts.profiles.new_record === 0}>
-            <UserPlus className="w-4 h-4 mr-2" />
-            Alle Kunden ohne Match übernehmen ({counts.profiles.new_record})
-          </Button>
-          <Button onClick={() => bulkApplyNewRecords('device')} variant="secondary" size="sm" disabled={counts.devices.new_record === 0}>
-            <PackagePlus className="w-4 h-4 mr-2" />
-            Alle Geräte ohne Match übernehmen ({counts.devices.new_record})
-          </Button>
-          <Button onClick={runAnalysis} disabled={loading} variant="outline" size="sm">
-            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Analyse neu laden
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        icon={ShieldCheck}
+        title="Konfliktauflösung"
+        subtitle="Read-only. Entscheidungen werden in alixsmart_migration_map dokumentiert – es werden keine Geschäftsdaten verändert."
+        noBreadcrumbs
+        actions={
+          <>
+            <Button onClick={() => bulkApplyNewRecords('profile')} variant="secondary" size="sm" disabled={counts.profiles.new_record === 0}>
+              <UserPlus className="w-4 h-4 mr-2" />
+              Alle Kunden ohne Match übernehmen ({counts.profiles.new_record})
+            </Button>
+            <Button onClick={() => bulkApplyNewRecords('device')} variant="secondary" size="sm" disabled={counts.devices.new_record === 0}>
+              <PackagePlus className="w-4 h-4 mr-2" />
+              Alle Geräte ohne Match übernehmen ({counts.devices.new_record})
+            </Button>
+            <Button onClick={runAnalysis} disabled={loading} variant="outline" size="sm">
+              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Analyse neu laden
+            </Button>
+          </>
+        }
+      />
 
       <SummaryCards counts={counts} summary={summary} />
 
