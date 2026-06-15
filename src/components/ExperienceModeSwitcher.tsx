@@ -118,10 +118,9 @@ export default function ExperienceModeSwitcher({ collapsed = false }: { collapse
                 Design-Variante
               </span>
             </div>
-            <div className="grid grid-cols-3 gap-1 px-1">
+            <div className="grid grid-cols-2 gap-1 px-1">
               {([
                 { value: 'classic', label: 'Classic' },
-                { value: 'beta3d', label: '3D Beta' },
                 { value: 'aurora', label: 'Aurora' },
               ] as { value: DesignVariant; label: string }[]).map(dv => {
                 const isActive = variant === dv.value;
