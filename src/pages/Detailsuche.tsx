@@ -8,7 +8,7 @@ import {
   Search, Loader2, Inbox, X, SearchCheck, ChevronDown, ChevronRight,
   Factory, Warehouse, Banknote, MapPin, FileText, MessageSquare, Landmark,
 } from 'lucide-react';
-import { PageHeader } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
 import { StatusBadge } from '@/components/StatusBadge';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
