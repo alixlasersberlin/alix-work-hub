@@ -14,6 +14,7 @@ import AuroraSpotlight from "@/components/AuroraSpotlight";
 import { CursorSpotlight } from "@/components/aurora/CursorSpotlight";
 import { GlobalCommandBar } from "@/components/infinity/GlobalCommandBar";
 import { CopilotBar } from "@/components/infinity/CopilotBar";
+import { AIBackground } from "@/components/infinity/AIBackground";
 import { Truck as TruckIcon, Banknote as BanknoteIcon, FileSignature, CreditCard, Loader2 } from "lucide-react";
 
 // Eager: Auth-/Shell-Routen (klein & für initialen Render nötig)
@@ -777,6 +778,7 @@ const App = () => (
               <AuthProvider>
                 <TenantProvider>
                   <MaintenanceGate>
+                    <AIBackground />
                     <AppRoutes />
                     <AuroraSpotlight />
                     <CursorSpotlight />
