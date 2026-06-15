@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Coins, Plus, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { PageHeader, PageLoading, DataCard, PageEmpty } from '@/components/PageShell';
+import { DataCard, PageEmpty } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { SkeletonTable } from '@/components/infinity/Skeleton';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
@@ -48,12 +51,13 @@ export default function FinanceFxRates() {
     else await load();
   };
 
-  if (loading) return <PageLoading />;
-
   return (
     <div className="space-y-6">
-      <PageHeader title="Devisenkurse" subtitle="FX-Kurse zur Umrechnung in EUR (für Konsolidierung)" icon={Coins} />
+      <PageHeader title="Devisenkurse" subtitle={loading ? 'Lädt…' : 'FX-Kurse zur Umrechnung in EUR (für Konsolidierung)'} icon={Coins} noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${rows.length} Kurse`} pulse={loading} />} />
 
+      {loading ? <DataCard><SkeletonTable rows={8} cols={4} /></DataCard> : (
+      <>
       <DataCard title="Neuen Kurs anlegen">
         <div className="p-4 grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
           <div className="space-y-1"><label className="text-xs text-muted-foreground">Währung</label>
@@ -102,6 +106,8 @@ export default function FinanceFxRates() {
           </div>
         )}
       </DataCard>
+      </>
+      )}
     </div>
   );
 }
