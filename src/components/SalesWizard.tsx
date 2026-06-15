@@ -446,7 +446,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
                               : 'border-white/15 bg-white/5 text-white/80 hover:border-cyan-300/50',
                           )}
                         >
-                          {v === 'ja' ? 'Ja' : 'Nein'}
+                          {v === 'ja' ? t.yes : t.no}
                         </button>
                       ))}
                     </div>
