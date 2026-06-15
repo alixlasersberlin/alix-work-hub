@@ -161,14 +161,23 @@ export default function OrdersFreiBestellung() {
     ]);
     const usedOrderIds = new Set(((existing ?? []).map((p: any) => p.order_id)));
     const hiddenOrderIds = new Set(((hiddenNotes ?? []) as any[]).map(n => n.order_id));
+    // Aufträge mit bereits reservierten Lagergeräten (außer Leihgeräten) ausblenden —
+    // die Reservierung ersetzt die Bestellung.
+    const reservedOrderIds = new Set<string>();
+    for (const d of (reservedDevs ?? []) as any[]) {
+      if (!d.reserved_order_id) continue;
+      if (/leihger[äa]t/i.test(d.notes || '')) continue;
+      reservedOrderIds.add(d.reserved_order_id);
+    }
     // Aufträge mit bereits angelegter Production-Order werden ausgeblendet —
     // sie liegen jetzt bei „Factory Orders". Ausnahme: Restbestellung-Marker
     // (Teilgeliefert) sollen weiterhin sichtbar bleiben.
     const baseFiltered = (data ?? []).filter((o: any) =>
-      !pendingRestIds.has(o.id) && !hiddenOrderIds.has(o.id) && !usedOrderIds.has(o.id)
+      !pendingRestIds.has(o.id) && !hiddenOrderIds.has(o.id) && !usedOrderIds.has(o.id) && !reservedOrderIds.has(o.id)
     );
-    const restMapped = (restData ?? []).map((o: any) => ({ ...o, _isRestbestellung: true })).filter((o: any) => !hiddenOrderIds.has(o.id));
+    const restMapped = (restData ?? []).map((o: any) => ({ ...o, _isRestbestellung: true })).filter((o: any) => !hiddenOrderIds.has(o.id) && !reservedOrderIds.has(o.id));
     const combined = [...restMapped, ...baseFiltered];
+
 
     // Für -AT-Aufträge zusätzlich die Bestellfreigabe aus order_at_approval prüfen
     const atIds = combined.filter((o: any) => o.source_system === 'zoho_eu_2').map((o: any) => o.id);
