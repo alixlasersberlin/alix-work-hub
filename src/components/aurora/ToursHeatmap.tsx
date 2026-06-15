@@ -17,13 +17,13 @@ export function ToursHeatmap() {
       since.setDate(since.getDate() - 365);
       const { data } = await supabase
         .from("route_plans")
-        .select("plan_date")
-        .gte("plan_date", since.toISOString().slice(0, 10))
+        .select("planned_date")
+        .gte("planned_date", since.toISOString().slice(0, 10))
         .limit(5000);
       const map: Record<string, number> = {};
-      for (const row of (data ?? []) as { plan_date: string }[]) {
-        if (!row.plan_date) continue;
-        const d = row.plan_date.slice(0, 10);
+      for (const row of (data ?? []) as { planned_date: string }[]) {
+        if (!row.planned_date) continue;
+        const d = row.planned_date.slice(0, 10);
         map[d] = (map[d] ?? 0) + 1;
       }
       setCounts(map);
