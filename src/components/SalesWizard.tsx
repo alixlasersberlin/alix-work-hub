@@ -432,7 +432,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
 
                 {data.studio_in_germany && (
                   <div className="pl-7 flex flex-wrap items-center gap-4">
-                    <span className="text-sm text-white/80">Haben Sie NISV?</span>
+                    <span className="text-sm text-white/80">{t.has_nisv_q}</span>
                     <div className="flex gap-2">
                       {(['ja', 'nein'] as const).map((v) => (
                         <button
