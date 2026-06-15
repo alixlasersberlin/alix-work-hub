@@ -76,9 +76,9 @@ export default function FinanceAfaLauf() {
       {preview && (
         <>
           <div className="grid grid-cols-3 gap-4">
-            <DataCard title="Periode"><div className="text-2xl font-semibold">{preview.period}</div></DataCard>
-            <DataCard title="Anlagen"><div className="text-2xl font-semibold">{String(preview.asset_count)}</div></DataCard>
-            <DataCard title="Summe AfA"><div className="text-2xl font-semibold">{fmtEUR(preview.total_amount)}</div></DataCard>
+            <KpiTile label="Periode" value={preview.period} accent="sky" />
+            <KpiTile label="Anlagen" value={String(preview.asset_count)} accent="violet" />
+            <KpiTile label="Summe AfA" value={fmtEUR(preview.total_amount)} icon={TrendingDown} accent="gold" />
           </div>
           <div className="rounded-md border border-border bg-card">
             <div className="p-4 flex items-center justify-between">
