@@ -133,8 +133,9 @@ export default function OrderItemsEditDialog({ orderId, orderNumber, open, onClo
       toast.success('Auftrag aktualisiert');
       onSaved();
       onClose();
-    } catch (e: any) {
-      toast.error('Fehler beim Speichern: ' + e.message);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Unbekannter Fehler';
+      toast.error('Fehler beim Speichern: ' + message);
     } finally {
       setSaving(false);
     }
