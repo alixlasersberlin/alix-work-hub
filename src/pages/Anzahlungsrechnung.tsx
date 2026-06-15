@@ -4,13 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Receipt, Search, ExternalLink, RefreshCw } from 'lucide-react';
+import { Receipt, Search, ExternalLink, RefreshCw, FileText, Wallet, Banknote } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { withAt } from '@/lib/atSuffix';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import { PageHeader } from '@/components/infinity/PageHeader';
+import { KpiTile } from '@/components/infinity/KpiTile';
 
 type Row = {
   id: string;
@@ -131,18 +132,9 @@ export default function Anzahlungsrechnung() {
       />
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Aufträge</CardTitle></CardHeader>
-          <CardContent className="text-2xl font-bold">{filtered.length}</CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Summe Anzahlungen</CardTitle></CardHeader>
-          <CardContent className="text-2xl font-bold">{fmtMoney(totals.deposit)}</CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Summe Aufträge</CardTitle></CardHeader>
-          <CardContent className="text-2xl font-bold">{fmtMoney(totals.total)}</CardContent>
-        </Card>
+        <KpiTile label="Aufträge" value={filtered.length} icon={FileText} accent="sky" />
+        <KpiTile label="Summe Anzahlungen" value={fmtMoney(totals.deposit)} icon={Wallet} accent="gold" />
+        <KpiTile label="Summe Aufträge" value={fmtMoney(totals.total)} icon={Banknote} accent="emerald" />
       </div>
 
       <Card>

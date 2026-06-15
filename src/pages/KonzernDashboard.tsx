@@ -4,6 +4,7 @@ import { useTenant } from '@/contexts/TenantContext';
 import { Card } from '@/components/ui/card';
 import { Building2, TrendingUp, Wrench, Boxes, Ticket, Loader2 } from 'lucide-react';
 import { PageHeader } from '@/components/infinity/PageHeader';
+import { KpiTile } from '@/components/infinity/KpiTile';
 
 interface TenantStats {
   code: string; name: string; flag: string;
@@ -102,15 +103,5 @@ export default function KonzernDashboard() {
 }
 
 function Kpi({ icon: Icon, label, value }: { icon: any; label: string; value: number }) {
-  return (
-    <Card className="p-4 card-glow">
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="text-xs uppercase text-muted-foreground tracking-wider">{label}</div>
-          <div className="text-2xl font-bold mt-1">{value.toLocaleString('de-DE')}</div>
-        </div>
-        <Icon className="w-8 h-8 text-primary opacity-70" />
-      </div>
-    </Card>
-  );
+  return <KpiTile label={label} value={value.toLocaleString('de-DE')} icon={Icon} accent="gold" />;
 }
