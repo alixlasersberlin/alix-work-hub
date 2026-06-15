@@ -313,7 +313,7 @@ export default function HeadOfOperationDashboard() {
             {loading ? (
               <div className="p-4"><Skeleton className="h-24" /></div>
             ) : recentAudits.length === 0 ? (
-              <p className="p-4 text-sm text-muted-foreground text-center">Keine Aktivität.</p>
+              <div className="p-4"><InfinityEmptyState compact icon={Inbox} title="Keine Aktivität." /></div>
             ) : recentAudits.map((a) => (
               <div key={a.id} className="px-5 py-3 flex items-center gap-3 text-sm">
                 <Clock className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
