@@ -427,7 +427,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
                     onChange={(e) => setData({ ...data, studio_in_germany: e.target.checked, has_nisv: e.target.checked ? data.has_nisv : '' })}
                     className="h-4 w-4 rounded border-white/30 bg-white/5 accent-cyan-400"
                   />
-                  <span className="text-sm text-white/90">Mein Studio ist in Deutschland <span className="text-white/50">(optional)</span></span>
+                  <span className="text-sm text-white/90">{t.studio_in_germany_label} <span className="text-white/50">({t.optional})</span></span>
                 </label>
 
                 {data.studio_in_germany && (
