@@ -158,8 +158,10 @@ export default function SalesWizard({ publicMode = false }: Props) {
         deviceLines.push(`Studio in Deutschland: Ja`);
         if (data.has_nisv) deviceLines.push(`NISV: ${data.has_nisv === 'ja' ? 'Ja' : 'Nein'}`);
       }
+      if (data.is_startup) deviceLines.push(`Neueröffnung / Startup: Ja`);
+      else if (data.studio_years) deviceLines.push(`Studio besteht seit: ${data.studio_years} Jahr(e)`);
       const mergedNotes = [deviceLines.join('\n'), data.notes].filter(Boolean).join('\n\n');
-      const { laser_model, beauty_model, studio_in_germany, has_nisv, ...rest } = data;
+      const { laser_model, beauty_model, studio_in_germany, has_nisv, is_startup, studio_years, ...rest } = data;
       const { data: json, error: fnError } = await supabase.functions.invoke('sales-wizard-submit', {
         body: {
           ...rest,
@@ -170,6 +172,8 @@ export default function SalesWizard({ publicMode = false }: Props) {
             ...(beauty_model ? [`Gerät: ${beauty_model}`] : []),
             ...(studio_in_germany ? ['Studio: Deutschland'] : []),
             ...(studio_in_germany && has_nisv ? [`NISV: ${has_nisv === 'ja' ? 'Ja' : 'Nein'}`] : []),
+            ...(is_startup ? ['Neueröffnung/Startup'] : []),
+            ...(!is_startup && studio_years ? [`Studio besteht: ${studio_years} Jahr(e)`] : []),
           ],
           source: publicMode ? 'alixwork_wizard_public' : 'alixwork_wizard_internal',
           turnstile_token: captchaToken,
