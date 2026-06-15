@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, AlertTriangle, Plus } from 'lucide-react';
 import { format, addDays, startOfWeek, endOfWeek, startOfDay, endOfDay, addWeeks, isSameDay, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 type Tour = any;
 
@@ -99,46 +100,47 @@ export default function TourenKalender() {
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
-          <CalendarIcon className="w-5 h-5 text-primary" />
-          Tourenkalender
-        </h1>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={() => setAnchor(view === 'day' ? addDays(anchor, -1) : addWeeks(anchor, -1))}>
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => setAnchor(new Date())}>Heute</Button>
-          <Button variant="outline" size="sm" onClick={() => setAnchor(view === 'day' ? addDays(anchor, 1) : addWeeks(anchor, 1))}>
-            <ChevronRight className="w-4 h-4" />
-          </Button>
-          <Select value={view} onValueChange={(v) => setView(v as 'day' | 'week')}>
-            <SelectTrigger className="w-32 bg-secondary border-border"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="day">Tag</SelectItem>
-              <SelectItem value="week">Woche</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={technicianFilter} onValueChange={setTechnicianFilter}>
-            <SelectTrigger className="w-44 bg-secondary border-border"><SelectValue placeholder="Techniker" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Alle Techniker</SelectItem>
-              {techList.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-44 bg-secondary border-border"><SelectValue placeholder="Status" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Alle Status</SelectItem>
-              {['Entwurf','Geplant','Bestätigt','Unterwegs','Vor Ort','Erledigt','Fehlgeschlagen','Verschoben','Storniert'].map(s =>
-                <SelectItem key={s} value={s}>{s}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Button size="sm" className="gold-gradient text-primary-foreground" onClick={() => navigate('/tourenplanung/neu')}>
-            <Plus className="w-4 h-4 mr-1" /> Neue Tour
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        icon={CalendarIcon}
+        title="Tourenkalender"
+        subtitle="Touren übersichtlich planen — Tag/Woche, Konflikt­erkennung, Drag & Drop."
+        actions={
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={() => setAnchor(view === 'day' ? addDays(anchor, -1) : addWeeks(anchor, -1))}>
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setAnchor(new Date())}>Heute</Button>
+            <Button variant="outline" size="sm" onClick={() => setAnchor(view === 'day' ? addDays(anchor, 1) : addWeeks(anchor, 1))}>
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+            <Select value={view} onValueChange={(v) => setView(v as 'day' | 'week')}>
+              <SelectTrigger className="w-32 bg-secondary border-border"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="day">Tag</SelectItem>
+                <SelectItem value="week">Woche</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={technicianFilter} onValueChange={setTechnicianFilter}>
+              <SelectTrigger className="w-44 bg-secondary border-border"><SelectValue placeholder="Techniker" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Techniker</SelectItem>
+                {techList.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-44 bg-secondary border-border"><SelectValue placeholder="Status" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Status</SelectItem>
+                {['Entwurf','Geplant','Bestätigt','Unterwegs','Vor Ort','Erledigt','Fehlgeschlagen','Verschoben','Storniert'].map(s =>
+                  <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Button size="sm" className="gold-gradient text-primary-foreground" onClick={() => navigate('/tourenplanung/neu')}>
+              <Plus className="w-4 h-4 mr-1" /> Neue Tour
+            </Button>
+          </div>
+        }
+      />
 
       <div className="text-sm text-muted-foreground mb-3">
         {format(range.from, 'dd.MM.yyyy', { locale: de })} – {format(range.to, 'dd.MM.yyyy', { locale: de })}

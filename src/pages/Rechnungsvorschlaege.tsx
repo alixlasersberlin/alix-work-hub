@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Banknote, ExternalLink, CheckCircle2, X } from 'lucide-react';
 import { ListToolbar } from '@/components/finance/ListToolbar';
 import { matchesQuery, paginate, type PageSize } from '@/lib/finance/list-filter';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 const STATUS_LABEL: Record<string, string> = {
   offen: 'Offen',
@@ -60,11 +61,11 @@ export default function Rechnungsvorschlaege() {
 
   return (
     <div className="space-y-4">
-
-      <div className="flex items-center gap-3">
-        <Banknote className="w-6 h-6 text-emerald-400" />
-        <h1 className="text-2xl font-bold">Rechnungsvorschläge (Reparaturen)</h1>
-        <div className="ml-auto">
+      <PageHeader
+        icon={Banknote}
+        title="Rechnungsvorschläge"
+        subtitle="Offene Reparatur-Rechnungsvorschläge prüfen, übernehmen oder ablehnen."
+        actions={
           <Select value={filter} onValueChange={(v) => setFilter(v as any)}>
             <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -74,8 +75,8 @@ export default function Rechnungsvorschlaege() {
               <SelectItem value="alle">Alle</SelectItem>
             </SelectContent>
           </Select>
-        </div>
-      </div>
+        }
+      />
 
       <ListToolbar
         search={search}

@@ -8,6 +8,7 @@ import { ShieldCheck, CheckCircle2, XCircle, AlertCircle, Loader2, Play, FileDow
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 type Status = 'pending' | 'running' | 'pass' | 'warn' | 'fail';
 type Check = { id: string; label: string; status: Status; note?: string };
@@ -235,24 +236,23 @@ export default function Qualitaetssicherung() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-3">
-          <ShieldCheck className="w-7 h-7 text-primary" />
-          <div>
-            <h2 className="text-2xl font-display font-bold">Qualitätssicherung</h2>
-            <p className="text-sm text-muted-foreground">Phase 1 — Stabilisierung & Prüfung vor Produktivbetrieb</p>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <Button onClick={runChecks} disabled={running}>
-            {running ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Play className="w-4 h-4 mr-2" />}
-            Alle Prüfungen starten
-          </Button>
-          <Button variant="outline" onClick={exportReport}>
-            <FileDown className="w-4 h-4 mr-2" /> Bericht exportieren
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        icon={ShieldCheck}
+        title="Qualitätssicherung"
+        subtitle="Phase 1 — Stabilisierung & Prüfung vor Produktivbetrieb"
+        noBreadcrumbs
+        actions={
+          <>
+            <Button onClick={runChecks} disabled={running}>
+              {running ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Play className="w-4 h-4 mr-2" />}
+              Alle Prüfungen starten
+            </Button>
+            <Button variant="outline" onClick={exportReport}>
+              <FileDown className="w-4 h-4 mr-2" /> Bericht exportieren
+            </Button>
+          </>
+        }
+      />
 
       <Card>
         <CardHeader>

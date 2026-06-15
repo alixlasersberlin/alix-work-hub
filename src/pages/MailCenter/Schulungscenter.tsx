@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 type Status = 'pending' | 'active' | 'done';
 const STATUS: Record<Status, { color: string; label: string }> = {
@@ -122,26 +123,25 @@ export default function Schulungscenter() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-3">
-          <GraduationCap className="w-7 h-7 text-primary" />
-          <div>
-            <h2 className="text-2xl font-display font-bold">Schulungscenter</h2>
-            <p className="text-sm text-muted-foreground">Phase 2 — Dokumentation, Schulung & Produktiv-Rollout</p>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => downloadHandbook('user')}>
-            <FileDown className="w-4 h-4 mr-2" /> Benutzerhandbuch
-          </Button>
-          <Button variant="outline" onClick={() => downloadHandbook('admin')}>
-            <FileDown className="w-4 h-4 mr-2" /> Admin-Handbuch
-          </Button>
-          <Button onClick={downloadManagementReport}>
-            <Mail className="w-4 h-4 mr-2" /> Management-Bericht
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        icon={GraduationCap}
+        title="Schulungscenter"
+        subtitle="Phase 2 — Dokumentation, Schulung & Produktiv-Rollout"
+        noBreadcrumbs
+        actions={
+          <>
+            <Button variant="outline" onClick={() => downloadHandbook('user')}>
+              <FileDown className="w-4 h-4 mr-2" /> Benutzerhandbuch
+            </Button>
+            <Button variant="outline" onClick={() => downloadHandbook('admin')}>
+              <FileDown className="w-4 h-4 mr-2" /> Admin-Handbuch
+            </Button>
+            <Button onClick={downloadManagementReport}>
+              <Mail className="w-4 h-4 mr-2" /> Management-Bericht
+            </Button>
+          </>
+        }
+      />
 
       <Tabs defaultValue="user">
         <TabsList className="flex-wrap h-auto">
