@@ -26,6 +26,8 @@ import CommandPalette, { CommandPaletteTrigger } from '@/components/CommandPalet
 import { useDesignVariant } from '@/hooks/useDesignVariant';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { useFavorites, type FavoriteEntry } from '@/hooks/useFavorites';
+import { NotificationCenter } from '@/components/infinity/NotificationCenter';
+import { useNotificationFeed } from '@/hooks/useNotificationFeed';
 import { Briefcase } from 'lucide-react';
 import alixLogo from '@/assets/alix-logo-gold.png';
 
