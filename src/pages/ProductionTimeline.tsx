@@ -205,44 +205,44 @@ export default function ProductionTimeline() {
         title="Timeline"
         subtitle={`Alle Bestellungen und Reklamationen nach Fälligkeit sortiert${selectionCount > 0 ? ` · ${selectionCount} ausgewählt` : ''}`}
         noBreadcrumbs
+        actions={
+          <>
+            <div className="flex gap-1 p-1 bg-muted/30 rounded-lg">
+              {(['all', 'order', 'reclamation'] as const).map(f => (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => setFilter(f)}
+                  className={cn(
+                    'px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+                    filter === f
+                      ? 'bg-primary/15 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.3)]'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  {f === 'all' ? 'Alle' : f === 'order' ? 'Bestellungen' : 'Reklamationen'}
+                </button>
+              ))}
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="default" size="sm">
+                  <Download className="w-4 h-4 mr-2" />
+                  Download ({selectionCount > 0 ? selectionCount : filtered.length})
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={downloadCSV}>
+                  <FileSpreadsheet className="w-4 h-4 mr-2" /> Als CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={downloadPDF}>
+                  <FileText className="w-4 h-4 mr-2" /> Als PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
+        }
       />
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3"><div></div>
-        <div className="flex items-center gap-2">
-          <div className="flex gap-1 p-1 bg-muted/30 rounded-lg">
-            {(['all', 'order', 'reclamation'] as const).map(f => (
-              <button
-                key={f}
-                type="button"
-                onClick={() => setFilter(f)}
-                className={cn(
-                  'px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
-                  filter === f
-                    ? 'bg-primary/15 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.3)]'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                {f === 'all' ? 'Alle' : f === 'order' ? 'Bestellungen' : 'Reklamationen'}
-              </button>
-            ))}
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="default" size="sm">
-                <Download className="w-4 h-4 mr-2" />
-                Download ({selectionCount > 0 ? selectionCount : filtered.length})
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={downloadCSV}>
-                <FileSpreadsheet className="w-4 h-4 mr-2" /> Als CSV
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={downloadPDF}>
-                <FileText className="w-4 h-4 mr-2" /> Als PDF
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
 
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <div className="relative flex-1">
