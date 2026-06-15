@@ -321,6 +321,7 @@ export default function FinanceSepa() {
           </DataCard>
         </TabsContent>
       </Tabs>
+      )}
 
       <Dialog open={mDlg} onOpenChange={setMDlg}>
         <DialogContent className="max-w-2xl">
