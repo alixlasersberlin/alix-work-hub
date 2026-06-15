@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Plus, Download, Trash2, FileText, Banknote, Check, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { PageHeader, PageLoading, DataCard } from '@/components/PageShell';
+import { DataCard } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { SkeletonTable } from '@/components/infinity/Skeleton';
+import { EmptyState } from '@/components/infinity/EmptyState';
+import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -155,12 +159,19 @@ export default function FinanceSepa() {
     load();
   };
 
-  if (loading) return <PageLoading />;
-
   return (
-    <div className="space-y-6">
-      <PageHeader title="SEPA Lastschriften" subtitle="Mandate verwalten und pain.008-XML-Lastschriftläufe erstellen" icon={Banknote} />
+    <div className="space-y-6 p-4 sm:p-6">
+      <PageHeader
+        title="SEPA Lastschriften"
+        subtitle="Mandate verwalten und pain.008-XML-Lastschriftläufe erstellen"
+        icon={Banknote}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${runs.length} Läufe`} pulse={loading} />}
+      />
 
+      {loading ? (
+        <DataCard><div className="p-4"><SkeletonTable rows={8} cols={8} /></div></DataCard>
+      ) : (
       <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
         <TabsList>
           <TabsTrigger value="runs">Lastschriftläufe ({runs.length})</TabsTrigger>
@@ -310,6 +321,7 @@ export default function FinanceSepa() {
           </DataCard>
         </TabsContent>
       </Tabs>
+      )}
 
       <Dialog open={mDlg} onOpenChange={setMDlg}>
         <DialogContent className="max-w-2xl">
