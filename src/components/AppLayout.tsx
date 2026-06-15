@@ -593,26 +593,19 @@ export default function AppLayout() {
       }));
     };
 
-    load();
+    // Initiales Laden in idle-Zeit verschieben, damit der erste Render nicht blockiert wird.
+    const ric: any = (window as any).requestIdleCallback ?? ((cb: any) => window.setTimeout(cb, 200));
+    const cic: any = (window as any).cancelIdleCallback ?? ((id: any) => window.clearTimeout(id));
+    const idleId = ric(() => { if (!cancelled) load(); });
 
-    // Periodischer Refresh alle 30 Minuten
+    // Periodischer Refresh
     const intervalId = window.setInterval(load, REFRESH_MS);
 
-    // Realtime: sofortige Aktualisierung bei jeder Änderung an lager_devices
-    // (debounced, um Burst-Events zu bündeln)
     let debounceId: number | undefined;
     const scheduleReload = () => {
       if (debounceId) window.clearTimeout(debounceId);
       debounceId = window.setTimeout(load, 400);
     };
-    const channel = supabase
-      .channel('lager_devices_counts')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'lager_devices' },
-        scheduleReload,
-      )
-      .subscribe();
 
     // Bei Tab-Fokus: nur neu laden, wenn Daten älter als REFRESH_MS sind
     const onVisibility = () => {
@@ -625,16 +618,18 @@ export default function AppLayout() {
     // Custom Event: Seiten können `window.dispatchEvent(new Event('lager-data-refresh'))`
     // auslösen, sobald sie eigene Daten neu laden – damit aktualisiert sich auch
     // sofort die Zählung im linken Menü.
+    // (Realtime-Subscription auf `lager_devices` wurde entfernt — bei vielen
+    //  parallelen Änderungen erzeugte sie zu viele Reloads und bremste die UI.)
     const onCustomRefresh = () => scheduleReload();
     window.addEventListener('lager-data-refresh', onCustomRefresh);
 
     return () => {
       cancelled = true;
+      cic(idleId);
       window.clearInterval(intervalId);
       if (debounceId) window.clearTimeout(debounceId);
       document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('lager-data-refresh', onCustomRefresh);
-      supabase.removeChannel(channel);
     };
   }, []);
 
