@@ -204,6 +204,8 @@ export default function FinanceForecast() {
           </table>
         </div>
       </DataCard>
+      </>
+      )}
     </div>
   );
 }
