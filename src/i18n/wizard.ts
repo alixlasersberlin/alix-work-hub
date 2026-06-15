@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 
-export type Lang = 'de' | 'en' | 'fr' | 'it' | 'es' | 'nl' | 'pl';
+export type Lang = 'de' | 'en' | 'fr' | 'it' | 'es' | 'nl' | 'ar' | 'vi' | 'ru';
 
 export const LANGS: { code: Lang; label: string; flag: string }[] = [
   { code: 'de', label: 'Deutsch', flag: '🇩🇪' },
@@ -9,7 +9,9 @@ export const LANGS: { code: Lang; label: string; flag: string }[] = [
   { code: 'it', label: 'Italiano', flag: '🇮🇹' },
   { code: 'es', label: 'Español', flag: '🇪🇸' },
   { code: 'nl', label: 'Nederlands', flag: '🇳🇱' },
-  { code: 'pl', label: 'Polski', flag: '🇵🇱' },
+  { code: 'ar', label: 'العربية', flag: '🇸🇦' },
+  { code: 'vi', label: 'Tiếng Việt', flag: '🇻🇳' },
+  { code: 'ru', label: 'Русский', flag: '🇷🇺' },
 ];
 
 const STORAGE_KEY = 'alix.wizard.lang';
