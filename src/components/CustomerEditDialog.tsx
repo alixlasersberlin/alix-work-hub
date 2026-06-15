@@ -116,6 +116,8 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
       bank_name: form.bank_name || null,
       birth_date: form.birth_date || null,
       is_vip: form.is_vip,
+      contact_tenant_id: form.contact_tenant_id || null,
+      supplier_tenant_id: form.supplier_tenant_id || null,
     };
     const isNew = !customer?.id;
     const { error } = isNew
