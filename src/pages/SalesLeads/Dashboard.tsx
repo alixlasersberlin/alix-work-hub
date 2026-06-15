@@ -3,7 +3,11 @@ import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { BarChart3, Inbox, Star, TrendingUp, Loader2, FilePlus, ArrowRight } from 'lucide-react';
+import { BarChart3, Inbox, Star, TrendingUp, FilePlus, ArrowRight, Trophy } from 'lucide-react';
+import { KpiTile } from '@/components/infinity/KpiTile';
+import { SkeletonKpiGrid } from '@/components/infinity/Skeleton';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 
 type Row = {
   id: string;
