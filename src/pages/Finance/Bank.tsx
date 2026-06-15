@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Banknote, Upload, Link2, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { PageHeader, PageLoading, DataCard } from '@/components/PageShell';
+import { DataCard } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { SkeletonTable } from '@/components/infinity/Skeleton';
+import { EmptyState } from '@/components/infinity/EmptyState';
+import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
@@ -62,9 +66,11 @@ export default function FinanceBank() {
   return (
     <div className="p-4 sm:p-6">
       <PageHeader
-        icon={<Banknote className="w-6 h-6 text-primary" />}
+        icon={Banknote}
         title="Bankimport & Reconciliation"
         subtitle="CAMT.053 (XML) oder MT940 hochladen, automatisches Matching gegen offene Rechnungen"
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${lines.length} Buchungen`} pulse={loading} />}
         actions={
           <div>
             <input ref={fileRef} type="file" accept=".xml,.sta,.txt,.mt940" hidden onChange={onFile} />
@@ -110,7 +116,9 @@ export default function FinanceBank() {
             ))}
           </div>
         </div>
-        {loading ? <PageLoading /> : (
+        {loading ? <div className="p-6"><SkeletonTable rows={8} cols={7} /></div> : filteredLines.length === 0 ? (
+          <div className="p-8"><EmptyState compact title="Keine Buchungen" description="Es gibt keine Buchungen für den gewählten Filter." /></div>
+        ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-muted/30 text-xs text-muted-foreground uppercase">
@@ -125,9 +133,7 @@ export default function FinanceBank() {
                 </tr>
               </thead>
               <tbody>
-                {filteredLines.length === 0 ? (
-                  <tr><td colSpan={7} className="text-center text-muted-foreground py-10">Keine Buchungen.</td></tr>
-                ) : filteredLines.map(l => (
+                {filteredLines.map(l => (
                   <tr key={l.id} className="border-t border-border hover:bg-muted/20">
                     <td className="px-4 py-3 text-xs">{l.booking_date ?? l.value_date ?? '–'}</td>
                     <td className="px-4 py-3 max-w-md truncate" title={l.purpose}>{l.purpose ?? '–'}</td>
