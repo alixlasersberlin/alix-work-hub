@@ -339,13 +339,23 @@ export default function Dashboard() {
     load();
   }, [canSeeOrders, canSeeRoutes, canSeeFinance, isAdmin, canSeeAudit, canSeeCustomers, atOnly]);
 
+  const pctChange = (arr: number[]): number | undefined => {
+    if (!arr || arr.length < 4) return undefined;
+    const half = Math.floor(arr.length / 2);
+    const prev = arr.slice(0, half).reduce((s, n) => s + n, 0);
+    const curr = arr.slice(half).reduce((s, n) => s + n, 0);
+    if (prev === 0) return curr === 0 ? 0 : undefined;
+    return ((curr - prev) / prev) * 100;
+  };
+  const ordersTrendArr = trends.orders;
+  const financeTrendArr = trends.finance;
   const kpiCards = ([
     { label: 'Freie Geräte (Pool)', value: stats.freePoolDevices, icon: PackageCheck, visible: isAdmin, onClick: () => navigate('/lager/equipment-area'), accent: 'sky' as const },
     { label: 'Leihgeräte', value: stats.leihgeraete, icon: Warehouse, visible: isAdmin, onClick: () => navigate('/lager/leihgeraete'), accent: 'violet' as const },
     { label: 'VIP-Aufträge', value: stats.vipOrders, icon: Crown, visible: canSeeOrders, onClick: () => navigate('/auftraege'), accent: 'gold' as const },
-    { label: 'Offene Aufträge', value: stats.openOrders, icon: AlertCircle, visible: canSeeOrders, onClick: () => navigate('/auftraege'), accent: 'rose' as const },
+    { label: 'Offene Aufträge', value: stats.openOrders, icon: AlertCircle, visible: canSeeOrders, onClick: () => navigate('/auftraege'), accent: 'rose' as const, trend: ordersTrendArr, delta: pctChange(ordersTrendArr), deltaInverted: true },
     { label: 'Geplante Touren', value: stats.routes, icon: MapPin, visible: canSeeRoutes, onClick: () => navigate('/tourenplanung'), accent: 'emerald' as const },
-    { label: 'Offene Zahlungen', value: stats.openFinance, icon: Banknote, visible: canSeeFinance, onClick: () => navigate('/finance'), accent: 'rose' as const },
+    { label: 'Offene Zahlungen', value: stats.openFinance, icon: Banknote, visible: canSeeFinance, onClick: () => navigate('/finance'), accent: 'rose' as const, trend: financeTrendArr, delta: pctChange(financeTrendArr), deltaInverted: true },
   ]).filter(c => c.visible);
 
   return (
