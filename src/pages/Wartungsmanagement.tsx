@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { Wrench, AlertTriangle, Clock, CalendarClock, MapPin, Mail, ListChecks, Cog } from "lucide-react";
 import { PageHeader } from "@/components/infinity/PageHeader";
+import { KpiTile } from "@/components/infinity/KpiTile";
 
 type Row = {
   id: string;
@@ -176,13 +177,13 @@ export default function Wartungsmanagement() {
       />
 
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-        <Kpi icon={<AlertTriangle className="h-5 w-5 text-red-500" />} title="Überfällig" value={kpis.over} />
-        <Kpi icon={<Clock className="h-5 w-5 text-amber-500" />} title="Fällig" value={kpis.due} />
-        <Kpi icon={<CalendarClock className="h-5 w-5" />} title="Bald fällig" value={kpis.soon} />
-        <Kpi icon={<CalendarClock className="h-5 w-5" />} title="Diese Woche" value={kpis.week} />
-        <Kpi icon={<CalendarClock className="h-5 w-5" />} title="Diesen Monat" value={kpis.month} />
-        <Kpi icon={<ListChecks className="h-5 w-5" />} title="Ohne Plan" value={unplanned} />
-        <Kpi icon={<AlertTriangle className="h-5 w-5" />} title="Ausfallrisiko" value={highRisk} />
+        <KpiTile icon={AlertTriangle} label="Überfällig" value={kpis.over} accent="rose" />
+        <KpiTile icon={Clock} label="Fällig" value={kpis.due} accent="gold" />
+        <KpiTile icon={CalendarClock} label="Bald fällig" value={kpis.soon} accent="sky" />
+        <KpiTile icon={CalendarClock} label="Diese Woche" value={kpis.week} accent="sky" />
+        <KpiTile icon={CalendarClock} label="Diesen Monat" value={kpis.month} accent="violet" />
+        <KpiTile icon={ListChecks} label="Ohne Plan" value={unplanned} accent="gold" />
+        <KpiTile icon={AlertTriangle} label="Ausfallrisiko" value={highRisk} accent="rose" />
       </div>
 
       <Card>
@@ -245,19 +246,5 @@ export default function Wartungsmanagement() {
         </CardContent>
       </Card>
     </div>
-  );
-}
-
-function Kpi({ icon, title, value }: { icon: React.ReactNode; title: string; value: number }) {
-  return (
-    <Card><CardContent className="pt-5">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-xs text-muted-foreground">{title}</p>
-          <p className="text-2xl font-bold mt-1">{value}</p>
-        </div>
-        <div className="text-primary">{icon}</div>
-      </div>
-    </CardContent></Card>
   );
 }
