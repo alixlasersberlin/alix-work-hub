@@ -3,7 +3,11 @@ import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { BarChart3, Inbox, Star, TrendingUp, Loader2, FilePlus, ArrowRight } from 'lucide-react';
+import { BarChart3, Inbox, Star, TrendingUp, FilePlus, ArrowRight, Trophy } from 'lucide-react';
+import { KpiTile } from '@/components/infinity/KpiTile';
+import { SkeletonKpiGrid } from '@/components/infinity/Skeleton';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 
 type Row = {
   id: string;
@@ -64,34 +68,34 @@ export default function SalesLeadsDashboard() {
     return { total, today_count, month_count, offers, won, closeRate, avgRating, topCats, sources };
   }, [rows]);
 
-  if (loading) {
-    return <div className="p-10 flex items-center gap-2 text-muted-foreground"><Loader2 className="animate-spin h-5 w-5" /> Lade …</div>;
-  }
-
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-3">
-          <BarChart3 className="h-6 w-6 text-primary" />
-          <div>
-            <h1 className="text-2xl font-semibold">Verkaufsanfragen – Dashboard</h1>
-            <p className="text-sm text-muted-foreground">Auswertung aller Leads (Top {Math.min(rows.length, 5000)})</p>
-          </div>
-        </div>
-        <Link to="/verkauf/anfragen" className="text-sm text-primary hover:underline inline-flex items-center gap-1">
-          Zur Anfragenliste <ArrowRight className="h-4 w-4" />
-        </Link>
-      </div>
+      <PageHeader
+        title="Verkaufsanfragen"
+        subtitle={`Auswertung aller Leads (Top ${Math.min(rows.length, 5000)})`}
+        icon={BarChart3}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : 'Live'} pulse={!loading} dotOnly />}
+        actions={
+          <Link to="/verkauf/anfragen" className="text-sm text-primary hover:underline inline-flex items-center gap-1">
+            Zur Anfragenliste <ArrowRight className="h-4 w-4" />
+          </Link>
+        }
+      />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Kpi label="Neue Leads heute" value={kpis.today_count} icon={<Inbox className="h-4 w-4" />} />
-        <Kpi label="Neue Leads diesen Monat" value={kpis.month_count} icon={<Inbox className="h-4 w-4" />} />
-        <Kpi label="Angebote erstellt" value={kpis.offers} icon={<FilePlus className="h-4 w-4" />} />
-        <Kpi label="Abschlussquote" value={`${kpis.closeRate.toFixed(0)} %`} icon={<TrendingUp className="h-4 w-4" />} />
-        <Kpi label="Ø Bewertung" value={kpis.avgRating ? kpis.avgRating.toFixed(1) : '—'} icon={<Star className="h-4 w-4" />} />
-        <Kpi label="Leads gesamt" value={kpis.total} icon={<BarChart3 className="h-4 w-4" />} />
-        <Kpi label="Gewonnen" value={kpis.won} />
-      </div>
+      {loading ? (
+        <SkeletonKpiGrid count={7} />
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <KpiTile label="Neue Leads heute" value={kpis.today_count} icon={Inbox} accent="sky" />
+          <KpiTile label="Neue Leads diesen Monat" value={kpis.month_count} icon={Inbox} accent="violet" />
+          <KpiTile label="Angebote erstellt" value={kpis.offers} icon={FilePlus} accent="gold" />
+          <KpiTile label="Abschlussquote" value={`${kpis.closeRate.toFixed(0)} %`} icon={TrendingUp} accent="emerald" />
+          <KpiTile label="Ø Bewertung" value={kpis.avgRating ? kpis.avgRating.toFixed(1) : '—'} icon={Star} accent="gold" />
+          <KpiTile label="Leads gesamt" value={kpis.total} icon={BarChart3} accent="sky" />
+          <KpiTile label="Gewonnen" value={kpis.won} icon={Trophy} accent="emerald" />
+        </div>
+      )}
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card className="p-5">
