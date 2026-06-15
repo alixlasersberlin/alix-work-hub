@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { PageHeader, PageLoading, DataCard } from '@/components/PageShell';
+import { DataCard } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { SkeletonTable } from '@/components/infinity/Skeleton';
+import { EmptyState } from '@/components/infinity/EmptyState';
+import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Play, Check, X } from 'lucide-react';
+import { Loader2, Play, Check, X, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { fmt } from './_controlling';
 
