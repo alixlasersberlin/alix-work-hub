@@ -177,8 +177,8 @@ export default function FinanceEingangsrechnungen() {
       </DataCard>
 
       <DataCard className="overflow-hidden">
-        {loading ? <PageLoading /> : rows.length === 0 ? (
-          <div className="text-center text-muted-foreground py-16">Keine Eingangsrechnungen.</div>
+        {loading ? <div className="p-6"><SkeletonTable rows={8} cols={8} /></div> : rows.length === 0 ? (
+          <div className="p-8"><EmptyState title="Keine Eingangsrechnungen" description="Erfasse eine Rechnung oder lies eine XRechnung-/ZUGFeRD-XML ein." /></div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
