@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { useUiTemplate, type UiTemplate } from "@/hooks/useUiTemplate";
 import { useInfinityTheme, INFINITY_THEMES, type InfinityTheme } from "@/hooks/useInfinityTheme";
 import { Sparkles, Layers, Check, Infinity as InfinityIcon } from "lucide-react";
+import { A11yPrefsPanel } from "@/components/infinity/A11yPrefsPanel";
 
 const OPTIONS: { id: UiTemplate; name: string; description: string; preview: React.ReactNode }[] = [
   {
