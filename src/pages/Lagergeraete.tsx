@@ -249,6 +249,12 @@ export default function Lagergeraete({
   const [leihCustomerName, setLeihCustomerName] = useState<string>('');
   const [leihShotCount, setLeihShotCount] = useState<string>('');
   const [leihStart, setLeihStart] = useState<string>('');
+  const [leihRepairId, setLeihRepairId] = useState<string | null>(null);
+  const [leihRepairLabel, setLeihRepairLabel] = useState<string>('');
+  const [repairPickerOpen, setRepairPickerOpen] = useState(false);
+  const [repairSearch, setRepairSearch] = useState('');
+  const [repairOptions, setRepairOptions] = useState<Array<{ id: string; label: string }>>([]);
+  const [loadingRepairs, setLoadingRepairs] = useState(false);
   const [customerPickerOpen, setCustomerPickerOpen] = useState(false);
   const [customerSearch, setCustomerSearch] = useState('');
   const [customerOptions, setCustomerOptions] = useState<Array<{ id: string; label: string }>>([]);
