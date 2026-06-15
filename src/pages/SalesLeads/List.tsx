@@ -144,9 +144,9 @@ export default function SalesLeadsList() {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link to="/verkauf/anfragen/dashboard" className="px-3 py-1.5 text-sm rounded border border-border hover:bg-muted/30">Dashboard</Link>
-          <Link to="/verkauf/anfragen/import" className="px-3 py-1.5 text-sm rounded border border-border hover:bg-muted/30">CSV-Import</Link>
-          <Link to="/verkauf/anfragen/neu" className="px-3 py-1.5 text-sm rounded bg-primary text-primary-foreground hover:opacity-90">+ Neue Anfrage</Link>
+          <Link to="/verkauf/anfragen/dashboard" className="px-3 py-1.5 text-sm font-medium rounded border border-border text-foreground hover:bg-muted/30">Dashboard</Link>
+          <Link to="/verkauf/anfragen/import" className="px-3 py-1.5 text-sm font-medium rounded border border-border text-foreground hover:bg-muted/30">CSV-Import</Link>
+          <Link to="/verkauf/anfragen/neu" className="px-3 py-1.5 text-sm font-semibold rounded bg-primary text-primary-foreground hover:opacity-90">+ Neue Anfrage</Link>
         </div>
       </div>
 
