@@ -219,11 +219,12 @@ export default function WiederkehrendeZahler() {
       {error && <PageError message={error} onRetry={load} />}
 
       <div className="grid md:grid-cols-5 gap-4">
-        <DataCard title="Kunden"><div className="text-2xl font-semibold">{totals.customers}</div></DataCard>
-        <DataCard title="Aktive Verträge"><div className="text-2xl font-semibold">{totals.activeProfiles}</div></DataCard>
-        <DataCard title="Volumen / Monat"><div className="text-2xl font-semibold">{fmt(totals.monthly)}</div></DataCard>
-        <DataCard title="Abgerechnet YTD"><div className="text-2xl font-semibold">{fmt(totals.ytd)}</div></DataCard>
-        <DataCard title="Offene Beträge"><div className={`text-2xl font-semibold ${totals.open > 0 ? 'text-destructive' : ''}`}>{fmt(totals.open)}</div></DataCard>
+      <div className="grid md:grid-cols-5 gap-4">
+        <KpiTile label="Kunden" value={totals.customers} icon={Repeat} accent="sky" />
+        <KpiTile label="Aktive Verträge" value={totals.activeProfiles} icon={Repeat} accent="violet" />
+        <KpiTile label="Volumen / Monat" value={fmt(totals.monthly)} icon={Repeat} accent="gold" />
+        <KpiTile label="Abgerechnet YTD" value={fmt(totals.ytd)} icon={Repeat} accent="emerald" />
+        <KpiTile label="Offene Beträge" value={fmt(totals.open)} icon={Repeat} accent={totals.open > 0 ? 'rose' : 'emerald'} />
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
