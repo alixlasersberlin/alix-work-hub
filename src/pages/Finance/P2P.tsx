@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
-import { ShoppingCart, Plus, Loader2 } from 'lucide-react';
+import { ShoppingCart, Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { PageHeader, PageLoading, DataCard, PageEmpty } from '@/components/PageShell';
+import { DataCard, PageEmpty } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { SkeletonTable } from '@/components/infinity/Skeleton';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -112,15 +115,20 @@ export default function FinanceP2P() {
     else { toast({ title: '3-Way-Match erzeugt' }); load(); }
   };
 
-  if (loading) return <PageLoading />;
-
   return (
     <div className="space-y-6 container mx-auto px-4 py-8">
       <PageHeader
-        title="Procure-to-Pay"
-        subtitle={`${prs.length} Anforderungen · ${pos.length} Bestellungen · ${matches.length} Matches`}
         icon={ShoppingCart}
+        title="Procure-to-Pay"
+        subtitle={loading ? 'Lädt…' : `${prs.length} Anforderungen · ${pos.length} Bestellungen · ${matches.length} Matches`}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${matches.length} Matches`} pulse={loading} />}
       />
+
+      {loading ? (
+        <DataCard><SkeletonTable rows={8} cols={6} /></DataCard>
+      ) : (
+      <>
 
       <Tabs defaultValue="prs">
         <TabsList>
@@ -291,6 +299,8 @@ export default function FinanceP2P() {
           )}
         </TabsContent>
       </Tabs>
+      </>
+      )}
     </div>
   );
 }
