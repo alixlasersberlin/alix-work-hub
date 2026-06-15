@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { PageHeader } from '@/components/infinity/PageHeader';
 
 type PassFail = 'pending' | 'pass' | 'fail';
 const PF: Record<PassFail, { color: string; label: string }> = {
