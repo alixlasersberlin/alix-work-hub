@@ -243,10 +243,10 @@ export default function FinanceLiquiditaet() {
       {selectedPlan && (
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <DataCard title="Geplante Einnahmen"><div className="text-2xl font-semibold">{fmtEUR(totals.totalIn)}</div></DataCard>
-            <DataCard title="Geplante Ausgaben"><div className="text-2xl font-semibold">{fmtEUR(totals.totalOut)}</div></DataCard>
-            <DataCard title="Endsaldo"><div className="text-2xl font-semibold">{fmtEUR(totals.endSaldo)}</div></DataCard>
-            <DataCard title="Minimum-Saldo"><div className="text-2xl font-semibold">{fmtEUR(totals.minSaldo)}</div></DataCard>
+            <KpiTile icon={TrendingUp} label="Geplante Einnahmen" value={fmtEUR(totals.totalIn)} accent="emerald" />
+            <KpiTile icon={Wallet} label="Geplante Ausgaben" value={fmtEUR(totals.totalOut)} accent="rose" />
+            <KpiTile icon={Wallet} label="Endsaldo" value={fmtEUR(totals.endSaldo)} accent={totals.endSaldo >= 0 ? 'gold' : 'rose'} />
+            <KpiTile icon={AlertTriangle} label="Minimum-Saldo" value={fmtEUR(totals.minSaldo)} accent={totals.minSaldo >= 0 ? 'sky' : 'rose'} />
           </div>
 
           {totals.minSaldo < 0 && (
