@@ -41,14 +41,12 @@ export default function AiCenter() {
 
   return (
     <div className="p-6 space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Sparkles className="h-6 w-6 text-primary" /> AI Center
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          KI-gestützte Auswertungen aus bestehenden Daten – unterstützend, ohne automatische Entscheidungen.
-        </p>
-      </div>
+      <PageHeader
+        icon={Sparkles}
+        title="AI Center"
+        subtitle="KI-gestützte Auswertungen aus bestehenden Daten – unterstützend, ohne automatische Entscheidungen."
+        noBreadcrumbs
+      />
 
       <Tabs defaultValue="copilot">
         <TabsList className="flex-wrap h-auto">
