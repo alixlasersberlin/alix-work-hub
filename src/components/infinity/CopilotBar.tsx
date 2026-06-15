@@ -2,18 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Sparkles, X, Send, Loader2, MessageSquareMore } from "lucide-react";
+import { useTenant } from "@/contexts/TenantContext";
+import { Sparkles, X, Send, Loader2, MessageSquareMore, Wrench } from "lucide-react";
 
-type Msg = { role: "user" | "assistant"; content: string };
-
-const SYSTEM = `Du bist ALIX, der KI-Copilot von AlixSmart Infinity OS für interne Mitarbeiter.
-Antworte präzise, auf Deutsch, in 1–4 Sätzen. Keine Halluzinationen über Datenbankinhalte —
-wenn dir konkrete Werte fehlen, sage es und schlage vor, welches Modul der Nutzer öffnen soll.
-Du kennst Module wie: Verkauf, Kunden, Aufträge, Tickets, Tourenplanung, Reparatur, Lager,
-Finance, ISO 13485 / MDR, Bug & CAPA, Executive Command Center.`;
+type Msg = { role: "user" | "assistant"; content: string; trace?: { name: string; args: any }[] };
 
 export function CopilotBar() {
   const { user } = useAuth();
+  const { sourceFilter } = useTenant();
   const location = useLocation();
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
@@ -45,19 +41,17 @@ export function CopilotBar() {
     setInput("");
     setBusy(true);
     try {
-      const ctx = `Kontext: aktueller Pfad="${location.pathname}".`;
-      const { data, error } = await supabase.functions.invoke("ai-center-chat", {
+      const { data, error } = await supabase.functions.invoke("alix-copilot", {
         body: {
-          messages: [
-            { role: "system", content: SYSTEM },
-            { role: "system", content: ctx },
-            ...next.map(m => ({ role: m.role, content: m.content })),
-          ],
+          messages: next.map(m => ({ role: m.role, content: m.content })),
+          page: location.pathname,
+          tenantSources: sourceFilter,
         },
       });
       if (error) throw error;
       const content = (data as any)?.content || (data as any)?.error || "Keine Antwort erhalten.";
-      setMsgs(m => [...m, { role: "assistant", content }]);
+      const trace = (data as any)?.tool_trace ?? [];
+      setMsgs(m => [...m, { role: "assistant", content, trace }]);
     } catch (e: any) {
       setMsgs(m => [...m, { role: "assistant", content: `Fehler: ${e?.message || "Anfrage fehlgeschlagen."}` }]);
     } finally {
@@ -117,7 +111,7 @@ export function CopilotBar() {
               </div>
             )}
             {msgs.map((m, i) => (
-              <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div key={i} className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}>
                 <div className={`rounded-2xl px-3 py-2 max-w-[85%] whitespace-pre-wrap leading-relaxed ${
                   m.role === "user"
                     ? "bg-amber-500/15 border border-amber-400/30 text-amber-50"
@@ -125,6 +119,15 @@ export function CopilotBar() {
                 }`}>
                   {m.content}
                 </div>
+                {m.trace && m.trace.length > 0 && (
+                  <div className="mt-1 flex flex-wrap gap-1 max-w-[85%]">
+                    {m.trace.map((t, ti) => (
+                      <span key={ti} className="inline-flex items-center gap-1 text-[10px] text-amber-200/70 border border-amber-400/20 rounded px-1.5 py-0.5 bg-amber-500/5">
+                        <Wrench className="h-2.5 w-2.5" />{t.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
             {busy && (
