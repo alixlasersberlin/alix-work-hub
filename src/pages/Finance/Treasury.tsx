@@ -80,18 +80,22 @@ export default function FinanceTreasury() {
     else load();
   };
 
-  if (loading) return <PageLoading />;
-
   const totalBalance = accounts.reduce((s, a) => s + Number(a.current_balance ?? 0), 0);
+  const pendingCount = approvals.filter(a => a.status === 'pending').length;
 
   return (
-    <div className="space-y-6 container mx-auto px-4 py-8">
+    <div className="p-6 space-y-6">
       <PageHeader
-        title="Treasury & Cash-Management"
-        subtitle={`${accounts.length} Bankkonten · Gesamtsaldo ${fmt(totalBalance)}`}
         icon={Landmark}
+        title="Treasury & Cash-Management"
+        subtitle={loading ? 'Lädt …' : `${accounts.length} Bankkonten · Gesamtsaldo ${fmt(totalBalance)}`}
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : pendingCount ? 'warning' : 'done'} label={loading ? 'Lädt' : pendingCount ? `${pendingCount} offen` : 'Aktuell'} pulse={loading} />}
       />
 
+      {loading ? (
+        <DataCard><SkeletonTable rows={8} cols={6} /></DataCard>
+      ) : (
       <Tabs defaultValue="accounts">
         <TabsList>
           <TabsTrigger value="accounts">Bankkonten</TabsTrigger>
