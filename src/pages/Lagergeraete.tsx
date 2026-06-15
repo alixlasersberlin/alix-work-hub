@@ -249,6 +249,12 @@ export default function Lagergeraete({
   const [leihCustomerName, setLeihCustomerName] = useState<string>('');
   const [leihShotCount, setLeihShotCount] = useState<string>('');
   const [leihStart, setLeihStart] = useState<string>('');
+  const [leihRepairId, setLeihRepairId] = useState<string | null>(null);
+  const [leihRepairLabel, setLeihRepairLabel] = useState<string>('');
+  const [repairPickerOpen, setRepairPickerOpen] = useState(false);
+  const [repairSearch, setRepairSearch] = useState('');
+  const [repairOptions, setRepairOptions] = useState<Array<{ id: string; label: string }>>([]);
+  const [loadingRepairs, setLoadingRepairs] = useState(false);
   const [customerPickerOpen, setCustomerPickerOpen] = useState(false);
   const [customerSearch, setCustomerSearch] = useState('');
   const [customerOptions, setCustomerOptions] = useState<Array<{ id: string; label: string }>>([]);
@@ -534,6 +540,36 @@ export default function Lagergeraete({
     return () => { cancelled = true; clearTimeout(t); };
   }, [customerPickerOpen, customerSearch]);
 
+  // Reparaturauftrag-Suche für Leihgerät
+  useEffect(() => {
+    if (!repairPickerOpen) return;
+    const q = repairSearch.trim();
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      setLoadingRepairs(true);
+      let query = sbRepair
+        .from('repair_orders')
+        .select('id, repair_number, customer_name, device_model, device_serial_number, repair_status')
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (q.length >= 1) {
+        query = query.or(
+          `repair_number.ilike.%${q}%,customer_name.ilike.%${q}%,device_serial_number.ilike.%${q}%,device_model.ilike.%${q}%`,
+        );
+      }
+      const { data } = await query;
+      if (cancelled) return;
+      const opts = (data ?? []).map((r: any) => ({
+        id: r.id,
+        label: `${r.repair_number ?? '—'} · ${r.customer_name ?? ''}${r.device_serial_number ? ' · SN ' + r.device_serial_number : ''}${r.repair_status ? ' · ' + r.repair_status : ''}`.trim(),
+      }));
+      setRepairOptions(opts);
+      setLoadingRepairs(false);
+    }, 200);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [repairPickerOpen, repairSearch]);
+
+
 
 
   const loadDevices = async () => {
@@ -646,6 +682,8 @@ export default function Lagergeraete({
     setLeihCustomerName('');
     setLeihShotCount('');
     setLeihStart('');
+    setLeihRepairId(null);
+    setLeihRepairLabel('');
     setSendCustomerEmailOnSave(false);
   };
 
@@ -666,6 +704,14 @@ export default function Lagergeraete({
     setLeihCustomerName(k.name);
     setLeihShotCount(parseSchusszahl(d.notes));
     setLeihStart(parseLeihStart(d.notes));
+    const repId = parseRepairId(d.notes);
+    setLeihRepairId(repId);
+    setLeihRepairLabel('');
+    if (repId) {
+      sbRepair.from('repair_orders').select('id,repair_number,device_model,device_serial_number,customer_name').eq('id', repId).maybeSingle().then(({ data }: any) => {
+        if (data) setLeihRepairLabel(`${data.repair_number ?? ''} · ${data.customer_name ?? ''}${data.device_serial_number ? ' · SN ' + data.device_serial_number : ''}`.trim());
+      });
+    }
     setOpen(true);
   };
 
@@ -748,6 +794,7 @@ export default function Lagergeraete({
       .replace(/\s*\[Kunde:\s*[^\]]+\]\s*/g, ' ')
       .replace(/\s*\[Schusszahl:\s*[^\]]+\]\s*/g, ' ')
       .replace(/\s*\[Leihstart:\s*[^\]]+\]\s*/g, ' ')
+      .replace(/\s*\[Reparatur:\s*[^\]]+\]\s*/g, ' ')
       .trim();
     const effectiveStatus = deviceType === 'Leihgerät' ? 'Bestand' : deviceStatus;
     const leihTags: string[] = [];
@@ -760,6 +807,7 @@ export default function Lagergeraete({
       }
       const shot = leihShotCount.trim();
       if (shot) leihTags.push(`[Schusszahl: ${shot}]`);
+      if (leihRepairId) leihTags.push(`[Reparatur: ${leihRepairId}]`);
     }
     const tagPrefix = `[Typ: ${deviceType}] [Status: ${effectiveStatus}]${leihTags.length ? ' ' + leihTags.join(' ') : ''}`;
     const notesWithType = `${tagPrefix}${cleanedNotes ? ' ' + cleanedNotes : ''}`;
@@ -1187,8 +1235,78 @@ export default function Lagergeraete({
                       maxLength={12}
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="leih-repair">Zugeordneter Reparaturauftrag (optional)</Label>
+                    <Popover open={repairPickerOpen} onOpenChange={(v) => { setRepairPickerOpen(v); if (v) setRepairSearch(''); }}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          id="leih-repair"
+                          type="button"
+                          variant="outline"
+                          role="combobox"
+                          className="w-full justify-between font-normal"
+                        >
+                          <span className="truncate">{leihRepairLabel || (leihRepairId ? leihRepairId : 'Reparaturauftrag auswählen…')}</span>
+                          <Wrench className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                        <Command shouldFilter={false}>
+                          <CommandInput
+                            placeholder="Nummer, Kunde, Seriennummer…"
+                            value={repairSearch}
+                            onValueChange={setRepairSearch}
+                          />
+                          <CommandList className="max-h-72">
+                            {loadingRepairs && (
+                              <div className="flex items-center justify-center py-4 text-xs text-muted-foreground">
+                                <Loader2 className="w-3 h-3 mr-2 animate-spin" /> Lade…
+                              </div>
+                            )}
+                            {!loadingRepairs && repairOptions.length === 0 && (
+                              <CommandEmpty>Keine Treffer.</CommandEmpty>
+                            )}
+                            <CommandGroup>
+                              {repairOptions.map((r) => (
+                                <CommandItem
+                                  key={r.id}
+                                  value={r.id}
+                                  onSelect={() => {
+                                    setLeihRepairId(r.id);
+                                    setLeihRepairLabel(r.label);
+                                    setRepairPickerOpen(false);
+                                  }}
+                                >
+                                  {r.label}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    {leihRepairId && (
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/reparatur/${leihRepairId}`)}
+                          className="text-primary hover:underline"
+                        >
+                          Reparatur öffnen
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setLeihRepairId(null); setLeihRepairLabel(''); }}
+                          className="text-destructive hover:underline"
+                        >
+                          entfernen
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
+
 
 
               <div className="space-y-2">
