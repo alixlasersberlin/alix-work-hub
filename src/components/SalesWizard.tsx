@@ -469,7 +469,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
                     onChange={(e) => setData({ ...data, is_startup: e.target.checked, studio_years: e.target.checked ? '' : data.studio_years })}
                     className="h-4 w-4 rounded border-white/20 bg-white/5 accent-cyan-400"
                   />
-                  <span className="text-sm text-white/90">Neueröffnung / Startup (optional)</span>
+                  <span className="text-sm text-white/90">{t.startup_label}</span>
                 </label>
 
                 <div className="flex items-center gap-3">
