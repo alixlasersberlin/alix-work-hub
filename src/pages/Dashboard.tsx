@@ -328,40 +328,41 @@ export default function Dashboard() {
   return (
     <div className="p-6 lg:p-8 animate-fade-in space-y-8">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">
-            Willkommen zurück, <span className="gold-text">{profile?.full_name || 'Benutzer'}</span>
-          </h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            {isSuperAdmin
-              ? (view === 'hoo' ? 'Head of Operation – Gesamtsystem-Übersicht' : 'Superadmin – Klassische Ansicht')
-              : 'Ihre aktuelle Übersicht'}
-          </p>
-        </div>
-        {isSuperAdmin && (
-          <div className="inline-flex rounded-lg border border-border bg-card p-1">
-            <button
-              type="button"
-              onClick={() => setView('hoo')}
-              className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                view === 'hoo' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              Head of Operation
-            </button>
-            <button
-              type="button"
-              onClick={() => setView('super')}
-              className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                view === 'super' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              Superadmin
-            </button>
-          </div>
-        )}
-      </div>
+      <PageHeader
+        icon={LayoutDashboard}
+        title={`Willkommen zurück, ${profile?.full_name || 'Benutzer'}`}
+        subtitle={
+          isSuperAdmin
+            ? (view === 'hoo' ? 'Head of Operation – Gesamtsystem-Übersicht' : 'Superadmin – Klassische Ansicht')
+            : 'Ihre aktuelle Übersicht'
+        }
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind="active" label="Live" pulse variant="dot" />}
+        actions={
+          isSuperAdmin ? (
+            <div className="inline-flex rounded-lg border border-border bg-card p-1">
+              <button
+                type="button"
+                onClick={() => setView('hoo')}
+                className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                  view === 'hoo' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Head of Operation
+              </button>
+              <button
+                type="button"
+                onClick={() => setView('super')}
+                className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                  view === 'super' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Superadmin
+              </button>
+            </div>
+          ) : undefined
+        }
+      />
 
       {isSuperAdmin && view === 'hoo' ? <HeadOfOperationDashboard /> : (<>
 
