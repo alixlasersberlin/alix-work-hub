@@ -59,9 +59,11 @@ export default function FinanceRaten() {
   return (
     <div className="p-4 sm:p-6">
       <PageHeader
-        icon={<ScrollText className="w-6 h-6 text-primary" />}
+        icon={ScrollText}
         title="Laufende Raten"
         subtitle="Periodische Rechnungs-Stammdaten (Quelle: Zoho)"
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${rows.length}`} pulse={!loading} />}
       />
       <DataCard className="p-4 mb-4">
         <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
