@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { PageHeader, PageLoading, DataCard } from '@/components/PageShell';
+import { DataCard } from '@/components/PageShell';
+import { PageHeader } from '@/components/infinity/PageHeader';
+import { SkeletonList } from '@/components/infinity/Skeleton';
+import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, AlertCircle, Lock, Unlock, Plus } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Lock, Unlock, Plus, CalendarCheck } from 'lucide-react';
 import { toast } from 'sonner';
 
 type Run = {
@@ -102,23 +105,29 @@ export default function FinanceJahresabschluss() {
     load();
   }
 
-  if (loading) return <PageLoading />;
 
   const done = selected ? CHECKLIST_ITEMS.filter(i => selected.checklist?.[i.key]).length : 0;
   const isClosed = selected?.status === 'abgeschlossen';
 
   return (
     <div className="p-6 space-y-6">
-      <PageHeader title="Jahresabschluss-Cockpit" subtitle="Vorbereitung und Sperrung des Geschäftsjahres" />
+      <PageHeader
+        icon={CalendarCheck}
+        title="Jahresabschluss-Cockpit"
+        subtitle="Vorbereitung und Sperrung des Geschäftsjahres"
+        noBreadcrumbs
+        meta={<InfinityStatusBadge kind={loading ? 'progress' : isClosed ? 'done' : 'progress'} label={loading ? 'Lädt' : selected ? `${selected.fiscal_year} · ${selected.status}` : `${runs.length} Jahre`} pulse={loading} />}
+        actions={
+          <div className="flex items-end gap-2">
+            <Input type="number" value={newYear} onChange={e => setNewYear(Number(e.target.value))} className="w-28" />
+            <Button onClick={createRun}><Plus className="h-4 w-4 mr-2" />Anlegen</Button>
+          </div>
+        }
+      />
 
-      <div className="flex flex-wrap items-end gap-3">
-        <div>
-          <label className="text-xs text-muted-foreground">Neues Geschäftsjahr</label>
-          <Input type="number" value={newYear} onChange={e => setNewYear(Number(e.target.value))} className="w-32" />
-        </div>
-        <Button onClick={createRun}><Plus className="h-4 w-4 mr-2" />Anlegen</Button>
-      </div>
-
+      {loading ? (
+        <DataCard><SkeletonList rows={6} /></DataCard>
+      ) : (
       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
         <DataCard title="Geschäftsjahre">
           <div className="space-y-1">
@@ -201,6 +210,7 @@ export default function FinanceJahresabschluss() {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }
