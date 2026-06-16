@@ -2023,18 +2023,18 @@ html[data-experience="mega"] main > * {
 
 /* Finale Template-Sicherung: muss nach Tailwind/Aurora stehen, damit
    Aktionsbuttons nicht nur beim Hover/Klick kurz sichtbar sind. */
-html[data-infinity] :is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"], a[href][class*="rounded"][class*="border"]) {
+html[data-infinity] :is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"][class*="rounded"], a[href][class*="rounded"][class*="border"]) {
   opacity: 1 !important;
   visibility: visible !important;
   color: hsl(var(--foreground)) !important;
   border-color: hsl(var(--border)) !important;
 }
 
-html[data-infinity] :is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"], a[href][class*="rounded"][class*="border"]):not([class*="bg-"]):not([data-variant="ghost"]):not([data-variant="link"]) {
+html[data-infinity] :is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"][class*="rounded"], a[href][class*="rounded"][class*="border"]):not([class*="bg-"]):not([data-variant="ghost"]):not([data-variant="link"]) {
   background-color: hsl(var(--card) / 0.78) !important;
 }
 
-html[data-infinity] :is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"], a[href][class*="rounded"][class*="border"]):is(:hover, :active, :focus-visible) {
+html[data-infinity] :is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"][class*="rounded"], a[href][class*="rounded"][class*="border"]):is(:hover, :active, :focus-visible) {
   opacity: 1 !important;
   visibility: visible !important;
   color: hsl(var(--foreground)) !important;
@@ -2050,7 +2050,7 @@ html[data-infinity] a[href][class*="bg-destructive"] {
   color: hsl(var(--destructive-foreground)) !important;
 }
 
-html[data-infinity] :is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"]) > :is(svg, span) {
+html[data-infinity] :is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"][class*="rounded"]) > :is(svg, span) {
   opacity: 1 !important;
   visibility: visible !important;
   color: currentColor !important;
