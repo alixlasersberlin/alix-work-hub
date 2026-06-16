@@ -909,9 +909,8 @@ export default function AppLayout() {
 
   return (
     <div className="h-screen-dvh flex bg-background overflow-hidden">
-      {/* Aurora 2.0: globale Cmd+K Suche */}
+      {/* Globale Cmd+K Suche (per Tastatur erreichbar) */}
       <CommandPalette />
-      <CommandPaletteTrigger />
       {/* Mobile Backdrop */}
       {mobileOpen && (
         <button
