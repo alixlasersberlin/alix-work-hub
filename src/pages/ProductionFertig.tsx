@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle2, Loader2, FileText, Search } from 'lucide-react';
+import { CheckCircle2, Loader2, FileText, Search, Mail, RefreshCw } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { supabase } from '@/integrations/supabase/client';
 import { useAtOnly } from '@/hooks/useAtOnly';
+import { sendProductionSuccessfulEmail } from '@/lib/send-production-successful-email';
 import { toast } from 'sonner';
 import { format, isValid } from 'date-fns';
 import { de } from 'date-fns/locale';
