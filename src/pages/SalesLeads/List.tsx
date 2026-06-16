@@ -75,8 +75,6 @@ export default function SalesLeadsList() {
     setRows((r) => r.filter(x => x.id !== lead.id));
     toast.success('Lead gelöscht');
   }
-    toast.success('Lead gelöscht');
-  }
 
   async function loadLeads() {
     const { data } = await supabase
