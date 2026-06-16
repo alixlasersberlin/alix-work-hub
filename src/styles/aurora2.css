@@ -272,8 +272,9 @@ html[data-aurora="2"] :focus-visible {
   outline-offset: 2px;
 }
 
-/* ---------- CMD+K TRIGGER PILL ---------- */
-.a2-cmdk-trigger {
+/* ---------- CMD+K TRIGGER PILL (nur Aurora 2) ---------- */
+.a2-cmdk-trigger { display: none; }
+html[data-aurora="2"] .a2-cmdk-trigger {
   position: fixed;
   top: 16px;
   right: 24px;
@@ -292,12 +293,12 @@ html[data-aurora="2"] :focus-visible {
   box-shadow: var(--shadow-elegant);
   transition: all 160ms ease;
 }
-.a2-cmdk-trigger:hover {
+html[data-aurora="2"] .a2-cmdk-trigger:hover {
   color: hsl(var(--foreground));
   border-color: hsl(var(--primary) / 0.4);
   transform: translateY(-1px);
 }
-.a2-cmdk-trigger kbd {
+html[data-aurora="2"] .a2-cmdk-trigger kbd {
   display: inline-flex;
   align-items: center;
   padding: 2px 7px;
@@ -311,7 +312,7 @@ html[data-aurora="2"] :focus-visible {
   letter-spacing: 0.02em;
 }
 @media (max-width: 768px) {
-  .a2-cmdk-trigger { display: none; }
+  html[data-aurora="2"] .a2-cmdk-trigger { display: none; }
 }
 
 /* ---------- DASHBOARD WELCOME GRADIENT (optional) ---------- */
