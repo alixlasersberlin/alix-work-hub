@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle2, Loader2, FileText, Search } from 'lucide-react';
+import { CheckCircle2, Loader2, FileText, Search, Mail, RefreshCw } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { supabase } from '@/integrations/supabase/client';
 import { useAtOnly } from '@/hooks/useAtOnly';
+import { sendProductionSuccessfulEmail } from '@/lib/send-production-successful-email';
 import { toast } from 'sonner';
 import { format, isValid } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -66,6 +68,28 @@ export default function ProductionFertig() {
       setLoading(false);
     })();
   }, [atOnly]);
+
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  const changeStatus = async (r: Row, newStatus: string) => {
+    setBusyId(r.id);
+    const { error } = await supabase
+      .from('production_orders')
+      .update({ status: newStatus })
+      .eq('id', r.id);
+    setBusyId(null);
+    if (error) return toast.error(error.message);
+    toast.success(`Status auf "${newStatus}" geändert`);
+    setRows(prev => prev.filter(x => x.id !== r.id));
+  };
+
+  const sendEmail = async (r: Row) => {
+    setBusyId(r.id);
+    const res = await sendProductionSuccessfulEmail(r.id, 'manuell');
+    setBusyId(null);
+    if (res.ok) toast.success(res.message);
+    else toast.error(res.message);
+  };
 
   const q = search.trim().toLowerCase();
   const filtered = rows.filter(r => {
@@ -143,6 +167,32 @@ export default function ProductionFertig() {
                             : '—'}
                         </div>
                       </div>
+                      <Select
+                        value={r.status}
+                        onValueChange={(v) => v !== r.status && changeStatus(r, v)}
+                        disabled={busyId === r.id}
+                      >
+                        <SelectTrigger className="h-9 w-[170px]">
+                          <RefreshCw className="w-3.5 h-3.5 mr-1" />
+                          <SelectValue placeholder="Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="offen">offen</SelectItem>
+                          <SelectItem value="in Bearbeitung">in Bearbeitung</SelectItem>
+                          <SelectItem value="fertig">fertig produziert</SelectItem>
+                          <SelectItem value="versendet">versendet</SelectItem>
+                          <SelectItem value="erledigt">erledigt</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => sendEmail(r)}
+                        disabled={busyId === r.id}
+                      >
+                        {busyId === r.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+                        <span className="ml-1">E-Mail</span>
+                      </Button>
                       <Button asChild size="sm" variant="ghost">
                         <Link to={`${basePath}/${r.id}`}><FileText className="w-4 h-4" /></Link>
                       </Button>

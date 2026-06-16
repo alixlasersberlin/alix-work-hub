@@ -173,6 +173,7 @@ export default function ProductionPortal() {
 
   const updateStatus = async (id: string, newStatus: string) => {
     setUpdatingId(id);
+    const prev = rows.find(r => r.id === id);
     const { error } = await supabase
       .from('production_orders')
       .update({ status: newStatus })
@@ -180,7 +181,13 @@ export default function ProductionPortal() {
     setUpdatingId(null);
     if (error) return toast.error(error.message);
     toast.success(t.statusUpdated);
-    setRows(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r));
+    setRows(prevRows => prevRows.map(r => r.id === id ? { ...r, status: newStatus } : r));
+    if (newStatus === 'fertig' && prev?.status !== 'fertig') {
+      const { sendProductionSuccessfulEmail } = await import('@/lib/send-production-successful-email');
+      const res = await sendProductionSuccessfulEmail(id, 'automatisch');
+      if (res.ok) toast.success(res.message);
+      else toast.error(`E-Mail nicht versendet: ${res.message}`);
+    }
   };
 
   const revokeApproval = async (row: ProductionOrderRow) => {
@@ -273,8 +280,16 @@ export default function ProductionPortal() {
     setSaving(false);
     if (error) return toast.error(error.message);
     toast.success(t.saved);
+    const prevStatus = editing.status;
     setRows(prev => prev.map(r => r.id === editing.id ? { ...r, ...payload } as ProductionOrderRow : r));
+    const editingId = editing.id;
     setEditing(null);
+    if (payload.status === 'fertig' && prevStatus !== 'fertig') {
+      const { sendProductionSuccessfulEmail } = await import('@/lib/send-production-successful-email');
+      const res = await sendProductionSuccessfulEmail(editingId, 'automatisch');
+      if (res.ok) toast.success(res.message);
+      else toast.error(`E-Mail nicht versendet: ${res.message}`);
+    }
   };
 
   const downloadPdf = async (path: string | null, orderNumber: string) => {
