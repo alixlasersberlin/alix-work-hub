@@ -909,3 +909,41 @@ html[data-infinity] button[class*="border-input"],
 html[data-infinity] button[class*="border-border"] {
   border-color: hsl(var(--border));
 }
+
+/* Systemweite Button-Stabilisierung: Viele ältere Aktions-Links/-Buttons
+   sind transparent gebaut und werden erst bei Hover/Active sichtbar. Im
+   Infinity-Template bekommen sie deshalb einen dauerhaft sichtbaren,
+   aber dezenten Grundzustand. */
+html[data-infinity] :is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"], a[href][class*="rounded"][class*="border"]) {
+  opacity: 1 !important;
+  visibility: visible !important;
+  color: hsl(var(--foreground));
+  text-decoration-color: currentColor;
+}
+
+html[data-infinity] :is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"], a[href][class*="rounded"][class*="border"]):not([class*="bg-"]):not([data-variant="ghost"]):not([data-variant="link"]) {
+  background: hsl(var(--card) / 0.72);
+  border-color: hsl(var(--border)) !important;
+}
+
+html[data-infinity] :is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"], a[href][class*="rounded"][class*="border"]):is(:hover, :active, :focus-visible) {
+  opacity: 1 !important;
+  visibility: visible !important;
+  color: hsl(var(--foreground));
+}
+
+html[data-infinity] :is(button, [role="button"], a[data-slot="button"])[class*="bg-primary"],
+html[data-infinity] a[href][class*="bg-primary"] {
+  color: hsl(var(--primary-foreground)) !important;
+}
+
+html[data-infinity] :is(button, [role="button"], a[data-slot="button"])[class*="bg-destructive"],
+html[data-infinity] a[href][class*="bg-destructive"] {
+  color: hsl(var(--destructive-foreground)) !important;
+}
+
+html[data-infinity] :is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"]) > :is(svg, span) {
+  opacity: 1;
+  visibility: visible;
+  color: currentColor;
+}
