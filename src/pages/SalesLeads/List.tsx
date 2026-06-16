@@ -63,17 +63,18 @@ export default function SalesLeadsList() {
   const [source, setSource] = useState<string>('alle');
   const [users, setUsers] = useState<{ id: string; full_name: string | null; email: string | null }[]>([]);
   const [assigning, setAssigning] = useState<string | null>(null);
-  const [toDelete, setToDelete] = useState<Lead | null>(null);
-  const [deleting, setDeleting] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
-  async function confirmDelete() {
-    if (!toDelete) return;
-    setDeleting(true);
-    const { error } = await supabase.from('sales_leads').delete().eq('id', toDelete.id);
-    setDeleting(false);
+  async function handleDelete(lead: Lead) {
+    const label = lead.lead_number || lead.company || [lead.first_name, lead.last_name].filter(Boolean).join(' ') || lead.id.slice(0, 8);
+    if (!window.confirm(`Lead "${label}" endgültig löschen?\n\nDieser Vorgang kann nicht rückgängig gemacht werden.`)) return;
+    setDeleting(lead.id);
+    const { error } = await supabase.from('sales_leads').delete().eq('id', lead.id);
+    setDeleting(null);
     if (error) { toast.error(error.message); return; }
-    setRows((r) => r.filter(x => x.id !== toDelete.id));
-    setToDelete(null);
+    setRows((r) => r.filter(x => x.id !== lead.id));
+    toast.success('Lead gelöscht');
+  }
     toast.success('Lead gelöscht');
   }
 
