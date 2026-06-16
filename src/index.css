@@ -2023,36 +2023,120 @@ html[data-experience="mega"] main > * {
 
 /* Finale Template-Sicherung: muss nach Tailwind/Aurora stehen, damit
    Aktionsbuttons nicht nur beim Hover/Klick kurz sichtbar sind. */
-html[data-infinity] :is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"][class*="rounded"], a[href][class*="rounded"][class*="border"]) {
+:is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"][class*="rounded"], a[href][class*="rounded"][class*="border"], a[href][class*="rounded"][class*="bg-"]) {
+  position: relative;
+  z-index: 2;
   opacity: 1 !important;
   visibility: visible !important;
-  color: hsl(var(--foreground)) !important;
-  border-color: hsl(var(--border)) !important;
+  -webkit-text-fill-color: currentColor !important;
 }
 
-html[data-infinity] :is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"][class*="rounded"], a[href][class*="rounded"][class*="border"]):not([class*="bg-"]):not([data-variant="ghost"]):not([data-variant="link"]) {
+:is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"][class*="rounded"], a[href][class*="rounded"]):not([class*="bg-"]):not([class*="text-"]) {
+  color: hsl(var(--foreground)) !important;
+  -webkit-text-fill-color: hsl(var(--foreground)) !important;
+}
+
+:is(button, [role="button"], a[data-slot="button"], a[href][class*="rounded"])[class~="bg-primary"],
+a[href][class*="rounded"][class~="bg-primary"],
+:is(button, [role="button"])[class*="gold-gradient"] {
+  color: hsl(var(--primary-foreground)) !important;
+  -webkit-text-fill-color: hsl(var(--primary-foreground)) !important;
+}
+
+:is(button, [role="button"], a[data-slot="button"], a[href][class*="rounded"])[class~="bg-destructive"],
+a[href][class*="rounded"][class~="bg-destructive"] {
+  color: hsl(var(--destructive-foreground)) !important;
+  -webkit-text-fill-color: hsl(var(--destructive-foreground)) !important;
+}
+
+:is(.card, [data-slot="card"], .card-glow, .rounded-xl.border, .rounded-lg.border)::before,
+:is(.card, [data-slot="card"], .card-glow, .rounded-xl.border, .rounded-lg.border)::after {
+  z-index: 0 !important;
+  pointer-events: none !important;
+}
+
+:is(.card, [data-slot="card"], .card-glow, .rounded-xl.border, .rounded-lg.border) > * {
+  position: relative;
+  z-index: 1;
+}
+
+html[data-infinity] :is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"][class*="rounded"], a[href][class*="rounded"][class*="border"], a[href][class*="rounded"][class*="bg-"]),
+html[data-aurora="2"] :is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"][class*="rounded"], a[href][class*="rounded"][class*="border"], a[href][class*="rounded"][class*="bg-"]),
+.design-aurora :is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"][class*="rounded"], a[href][class*="rounded"][class*="border"], a[href][class*="rounded"][class*="bg-"]) {
+  position: relative;
+  z-index: 2;
+  opacity: 1 !important;
+  visibility: visible !important;
+  border-color: hsl(var(--border)) !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+
+html[data-infinity] :is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"][class*="rounded"], a[href][class*="rounded"][class*="border"], a[href][class*="rounded"][class*="bg-"]):not([class*="bg-"]):not([data-variant="ghost"]):not([data-variant="link"]),
+html[data-aurora="2"] :is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"][class*="rounded"], a[href][class*="rounded"][class*="border"], a[href][class*="rounded"][class*="bg-"]):not([class*="bg-"]):not([data-variant="ghost"]):not([data-variant="link"]),
+.design-aurora :is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"][class*="rounded"], a[href][class*="rounded"][class*="border"], a[href][class*="rounded"][class*="bg-"]):not([class*="bg-"]):not([data-variant="ghost"]):not([data-variant="link"]) {
   background-color: hsl(var(--card) / 0.78) !important;
 }
 
-html[data-infinity] :is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"][class*="rounded"], a[href][class*="rounded"][class*="border"]):is(:hover, :active, :focus-visible) {
+html[data-infinity] :is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"][class*="rounded"], a[href][class*="rounded"][class*="border"], a[href][class*="rounded"][class*="bg-"]):is(:hover, :active, :focus-visible),
+html[data-aurora="2"] :is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"][class*="rounded"], a[href][class*="rounded"][class*="border"], a[href][class*="rounded"][class*="bg-"]):is(:hover, :active, :focus-visible),
+.design-aurora :is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"][class*="rounded"], a[href][class*="rounded"][class*="border"], a[href][class*="rounded"][class*="bg-"]):is(:hover, :active, :focus-visible) {
   opacity: 1 !important;
   visibility: visible !important;
-  color: hsl(var(--foreground)) !important;
 }
 
-html[data-infinity] :is(button, [role="button"], a[data-slot="button"])[class*="bg-primary"],
-html[data-infinity] a[href][class*="bg-primary"] {
+html[data-infinity] :is(button, [role="button"], a[data-slot="button"])[class~="bg-primary"],
+html[data-infinity] a[href][class~="bg-primary"],
+html[data-aurora="2"] :is(button, [role="button"], a[data-slot="button"])[class~="bg-primary"],
+html[data-aurora="2"] a[href][class~="bg-primary"],
+.design-aurora :is(button, [role="button"], a[data-slot="button"])[class~="bg-primary"],
+.design-aurora a[href][class~="bg-primary"],
+html[data-infinity] :is(button, [role="button"])[class*="gold-gradient"],
+html[data-aurora="2"] :is(button, [role="button"])[class*="gold-gradient"],
+.design-aurora :is(button, [role="button"])[class*="gold-gradient"] {
   color: hsl(var(--primary-foreground)) !important;
+  -webkit-text-fill-color: hsl(var(--primary-foreground)) !important;
 }
 
-html[data-infinity] :is(button, [role="button"], a[data-slot="button"])[class*="bg-destructive"],
-html[data-infinity] a[href][class*="bg-destructive"] {
+html[data-infinity] :is(button, [role="button"], a[data-slot="button"])[class~="bg-destructive"],
+html[data-infinity] a[href][class~="bg-destructive"],
+html[data-aurora="2"] :is(button, [role="button"], a[data-slot="button"])[class~="bg-destructive"],
+html[data-aurora="2"] a[href][class~="bg-destructive"],
+.design-aurora :is(button, [role="button"], a[data-slot="button"])[class~="bg-destructive"],
+.design-aurora a[href][class~="bg-destructive"] {
   color: hsl(var(--destructive-foreground)) !important;
+  -webkit-text-fill-color: hsl(var(--destructive-foreground)) !important;
 }
 
-html[data-infinity] :is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"][class*="rounded"]) > :is(svg, span) {
+html[data-infinity] :is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"][class*="rounded"], a[href][class*="rounded"]):not([class*="bg-"]),
+html[data-aurora="2"] :is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"][class*="rounded"], a[href][class*="rounded"]):not([class*="bg-"]),
+.design-aurora :is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"][class*="rounded"], a[href][class*="rounded"]):not([class*="bg-"]) {
+  color: hsl(var(--foreground)) !important;
+  -webkit-text-fill-color: hsl(var(--foreground)) !important;
+}
+
+html[data-infinity] :is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"][class*="rounded"]) > :is(svg, span),
+html[data-aurora="2"] :is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"][class*="rounded"]) > :is(svg, span),
+.design-aurora :is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"][class*="rounded"]) > :is(svg, span) {
   opacity: 1 !important;
   visibility: visible !important;
   color: currentColor !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+
+html[data-infinity] :is(.card, [data-slot="card"], .rounded-xl.border, .rounded-lg.border)::before,
+html[data-infinity] :is(.card, [data-slot="card"], .rounded-xl.border, .rounded-lg.border)::after,
+html[data-aurora="2"] :is(.card, [data-slot="card"], [class*="card"], .rounded-xl.border, .rounded-lg.border)::before,
+html[data-aurora="2"] :is(.card, [data-slot="card"], [class*="card"], .rounded-xl.border, .rounded-lg.border)::after,
+.design-aurora :is(.card, [data-slot="card"], [class*="card"], .rounded-xl.border, .rounded-lg.border)::before,
+.design-aurora :is(.card, [data-slot="card"], [class*="card"], .rounded-xl.border, .rounded-lg.border)::after {
+  z-index: 0 !important;
+  pointer-events: none !important;
+}
+
+html[data-infinity] :is(.card, [data-slot="card"], .rounded-xl.border, .rounded-lg.border) > *,
+html[data-aurora="2"] :is(.card, [data-slot="card"], [class*="card"], .rounded-xl.border, .rounded-lg.border) > *,
+.design-aurora :is(.card, [data-slot="card"], [class*="card"], .rounded-xl.border, .rounded-lg.border) > * {
+  position: relative;
+  z-index: 1;
 }
 
