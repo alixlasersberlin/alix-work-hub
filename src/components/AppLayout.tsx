@@ -90,7 +90,7 @@ const navItems: NavItem[] = [
     children: [
       { path: '/detailsuche', label: 'Detailsuche', icon: SearchCheck, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Read Only Audit', 'SACHBEARBEITUNG'] },
       { path: '/auftragsstatus', label: 'Auftragsstatus', icon: Activity, roles: null },
-      { path: '/geraetesperren', label: 'Gerätesperren', icon: Lock, roles: null },
+
 
 
       {
