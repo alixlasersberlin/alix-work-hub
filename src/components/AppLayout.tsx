@@ -46,6 +46,8 @@ const navItems: NavItem[] = [
       { path: '/', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Read Only Audit', 'Österreich'] },
       { path: '/management-dashboard', label: 'Management Dashboard', icon: BarChart3, roles: ['Super Admin'] },
       { path: '/konzern/dashboard', label: 'Konzern-Dashboard', icon: TrendingUp, roles: ['Super Admin'] },
+      { path: '/detailsuche', label: 'Detailsuche', icon: SearchCheck, roles: null },
+      { path: '/auftragsstatus', label: 'Auftragsstatus', icon: Activity, roles: null },
     ],
   },
 
@@ -73,14 +75,6 @@ const navItems: NavItem[] = [
     ],
   },
 
-  {
-    path: '/alix-global-search', label: 'ALIX GLOBAL SEARCH', icon: Sparkles,
-    roles: null,
-    children: [
-      { path: '/detailsuche', label: 'Detailsuche', icon: SearchCheck, roles: null },
-      { path: '/auftragsstatus', label: 'Auftragsstatus', icon: Activity, roles: null },
-    ],
-  },
 
   {
     path: '/customer-care', label: 'CUSTOMER CARE', icon: HeartPulse,
