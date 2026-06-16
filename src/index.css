@@ -2052,7 +2052,10 @@ html[data-infinity] a[href][class~="bg-primary"],
 html[data-aurora="2"] :is(button, [role="button"], a[data-slot="button"])[class~="bg-primary"],
 html[data-aurora="2"] a[href][class~="bg-primary"],
 .design-aurora :is(button, [role="button"], a[data-slot="button"])[class~="bg-primary"],
-.design-aurora a[href][class~="bg-primary"] {
+.design-aurora a[href][class~="bg-primary"],
+html[data-infinity] :is(button, [role="button"])[class*="gold-gradient"],
+html[data-aurora="2"] :is(button, [role="button"])[class*="gold-gradient"],
+.design-aurora :is(button, [role="button"])[class*="gold-gradient"] {
   color: hsl(var(--primary-foreground)) !important;
   -webkit-text-fill-color: hsl(var(--primary-foreground)) !important;
 }
