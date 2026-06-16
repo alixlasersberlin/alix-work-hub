@@ -328,7 +328,7 @@ export default function ProductionPortal() {
     if (ps === 'Ja') return 'bg-green-500/15 text-green-500 border-green-500/30';
     if (ps === 'Teilweise') return 'bg-yellow-500/15 text-yellow-500 border-yellow-500/30';
     if (ps === 'Garantie') return 'bg-blue-500/15 text-blue-500 border-blue-500/30';
-    return 'bg-destructive/15 text-destructive border-destructive/30';
+    return 'bg-red-500/15 text-red-300 border-red-500/40';
   };
 
   const supplierName = rows[0]?.supplier?.name;
