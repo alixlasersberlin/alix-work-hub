@@ -52,12 +52,6 @@ const navItems: NavItem[] = [
   },
 
   {
-    path: '/geraetesperren', label: 'GERÄTESPERREN', icon: Lock,
-    roles: null,
-    children: [],
-  },
-
-  {
     path: '/ai-center', label: 'ALIX AI DIENSTE', icon: Sparkles,
     roles: ['Admin', 'Super Admin', 'Geschäftsführung', 'Serviceleitung', 'Service', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance', 'Österreich', 'SACHBEARBEITUNG'],
     children: [
@@ -96,7 +90,7 @@ const navItems: NavItem[] = [
     children: [
       { path: '/detailsuche', label: 'Detailsuche', icon: SearchCheck, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Read Only Audit', 'SACHBEARBEITUNG'] },
       { path: '/auftragsstatus', label: 'Auftragsstatus', icon: Activity, roles: null },
-      
+      { path: '/geraetesperren', label: 'Gerätesperren', icon: Lock, roles: null },
 
 
       {
