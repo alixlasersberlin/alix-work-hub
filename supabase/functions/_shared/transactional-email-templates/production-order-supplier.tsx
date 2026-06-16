@@ -58,8 +58,12 @@ const ProductionOrderSupplierEmail = ({
             <Text style={infoRow}><strong>Contact:</strong> {bearbeiter || '—'}</Text>
           </Section>
           <Section style={{ textAlign: 'center', margin: '24px 0' }}>
-            <Button href={pdf_url} style={btn}>Download Order PDF</Button>
+            <Button href={pdf_url} target="_blank" style={btn}>Download Order PDF</Button>
           </Section>
+          <Text style={fallbackText}>
+            If the button doesn't work, copy this link into your browser:<br />
+            <Link href={pdf_url} target="_blank" style={fallbackLink}>{pdf_url}</Link>
+          </Text>
           {anmerkungen ? (
             <Section>
               <Text style={text}><strong>Notes:</strong></Text>
