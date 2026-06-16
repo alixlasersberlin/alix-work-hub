@@ -280,8 +280,16 @@ export default function ProductionPortal() {
     setSaving(false);
     if (error) return toast.error(error.message);
     toast.success(t.saved);
+    const prevStatus = editing.status;
     setRows(prev => prev.map(r => r.id === editing.id ? { ...r, ...payload } as ProductionOrderRow : r));
+    const editingId = editing.id;
     setEditing(null);
+    if (payload.status === 'fertig' && prevStatus !== 'fertig') {
+      const { sendProductionSuccessfulEmail } = await import('@/lib/send-production-successful-email');
+      const res = await sendProductionSuccessfulEmail(editingId, 'automatisch');
+      if (res.ok) toast.success(res.message);
+      else toast.error(`E-Mail nicht versendet: ${res.message}`);
+    }
   };
 
   const downloadPdf = async (path: string | null, orderNumber: string) => {
