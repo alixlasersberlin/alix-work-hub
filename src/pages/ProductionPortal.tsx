@@ -203,7 +203,6 @@ export default function ProductionPortal() {
   };
 
   const openEdit = async (row: ProductionOrderRow) => {
-    console.log('[ProductionPortal] openEdit clicked', row.id, row.order_number);
     setEditing(row);
     setEditForm({
       modellname: row.modellname,

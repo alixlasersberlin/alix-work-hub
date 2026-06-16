@@ -870,6 +870,8 @@ html[data-infinity] .infinity-ring {
   box-shadow: 0 0 0 var(--infinity-ring) hsl(var(--infinity-accent) / 0.35);
 }
 
-/* Sicherstellen, dass Body-Overlays Inhalte nicht verdecken */
+/* Sicherstellen, dass Body-Overlays Inhalte nicht verdecken.
+   Nur die App-Wurzel anheben — Radix-Portale (Dialog/Popover) bleiben
+   unangetastet, damit deren Stacking-Context funktioniert. */
 html[data-infinity] body { position: relative; }
-html[data-infinity] body > * { position: relative; z-index: 1; }
+html[data-infinity] body > #root { position: relative; z-index: 1; }
