@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Factory, Download, Search, Pencil, Camera, Calendar, User, Palette, Zap, Hash, ImageIcon, ArrowUpDown, HelpCircle } from 'lucide-react';
+import { Loader2, Factory, Download, Search, Pencil, Camera, Calendar, User, Palette, Zap, Hash, ImageIcon, ArrowUpDown, HelpCircle, XCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { differenceInCalendarDays, isValid } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -42,6 +42,7 @@ interface ProductionOrderRow {
   supplier_id: string;
   created_at: string;
   sent_at: string | null;
+  approval_status: string | null;
   supplier?: { name: string | null } | null;
 }
 
@@ -137,7 +138,8 @@ const statusKey = (s: string) => {
 };
 
 export default function ProductionPortal() {
-  const { profile } = useAuth();
+  const { profile, hasRole } = useAuth();
+  const isSuperAdmin = hasRole('Super Admin');
   const [rows, setRows] = useState<ProductionOrderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -179,6 +181,19 @@ export default function ProductionPortal() {
     if (error) return toast.error(error.message);
     toast.success(t.statusUpdated);
     setRows(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r));
+  };
+
+  const revokeApproval = async (row: ProductionOrderRow) => {
+    if (!confirm(`Freigabe für ${row.production_order_number || row.order_number} wirklich widerrufen?`)) return;
+    setUpdatingId(row.id);
+    const { error } = await supabase
+      .from('production_orders')
+      .update({ approval_status: 'rejected', approved_by: null, approved_at: null })
+      .eq('id', row.id);
+    setUpdatingId(null);
+    if (error) return toast.error(error.message);
+    toast.success('Freigabe widerrufen');
+    setRows(prev => prev.map(r => r.id === row.id ? { ...r, approval_status: 'rejected' } : r));
   };
 
   const signedPhotoUrl = async (path: string | null) => {
@@ -461,8 +476,19 @@ export default function ProductionPortal() {
                         <Download className="w-4 h-4 mr-1" /> {t.pdf}
                       </Button>
                     )}
+                    {isSuperAdmin && row.approval_status === 'approved' && (
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => revokeApproval(row)}
+                        disabled={updatingId === row.id}
+                      >
+                        <XCircle className="w-4 h-4 mr-1" /> Freigabe widerrufen
+                      </Button>
+                    )}
                   </div>
                 </div>
+
 
                 <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs pt-2 border-t border-border/50">
                   <div className="flex items-center gap-1.5 min-w-0">
