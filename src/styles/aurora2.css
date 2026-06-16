@@ -130,7 +130,7 @@ html[data-aurora="2"].dark {
   --sidebar-background: 221 39% 11%;
   --sidebar-foreground: 210 17% 92%;
   --sidebar-primary: 213 94% 68%;
-  --sidebar-primary-foreground: 220 47% 8%;
+  --sidebar-primary-foreground: 0 0% 100%;
   --sidebar-accent: 220 26% 18%;
   --sidebar-accent-foreground: 213 94% 80%;
   --sidebar-border: 217 19% 21%;
