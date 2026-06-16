@@ -7,7 +7,7 @@ export default function ProductionFertig() {
     <div className="container mx-auto p-6 space-y-6">
       <PageHeader
         icon={CheckCircle2}
-        title="Production – Fertig"
+        title="Production – Fertig produziert"
         subtitle="Abgeschlossene Produktionsaufträge."
         noBreadcrumbs
       />
