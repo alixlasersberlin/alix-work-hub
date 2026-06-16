@@ -880,3 +880,32 @@ html[data-infinity] .infinity-ring {
 html[data-infinity] body > * { position: relative; z-index: 1; }
 html[data-infinity] body > [data-radix-portal],
 html[data-infinity] body > [data-radix-popper-content-wrapper] { z-index: 60; }
+
+/* ============================================================
+   Button-Sichtbarkeits-Sicherheitsnetz (Phase I-21)
+   Manche Custom-Buttons in der Codebase nutzen rohes <button>
+   ohne explizite text-Klasse und erben dadurch in bestimmten
+   Containern (Cards, Muted-Bereiche) eine zu schwache Textfarbe
+   oder gar transparent. Hier setzen wir verlässliche Defaults
+   pro Template, OHNE explizit gesetzte Farben zu überschreiben.
+   ============================================================ */
+html[data-infinity] button:not([class*="text-"]):not([class*="bg-"]) {
+  color: hsl(var(--foreground));
+}
+html[data-infinity] button[class*="bg-primary"]:not([class*="text-"]) {
+  color: hsl(var(--primary-foreground));
+}
+html[data-infinity] button[class*="bg-destructive"]:not([class*="text-"]) {
+  color: hsl(var(--destructive-foreground));
+}
+html[data-infinity] button[class*="bg-secondary"]:not([class*="text-"]) {
+  color: hsl(var(--secondary-foreground));
+}
+html[data-infinity] button[class*="bg-accent"]:not([class*="text-"]) {
+  color: hsl(var(--accent-foreground));
+}
+/* Sichtbare Standard-Border für Outline-/Border-Buttons */
+html[data-infinity] button[class*="border-input"],
+html[data-infinity] button[class*="border-border"] {
+  border-color: hsl(var(--border));
+}
