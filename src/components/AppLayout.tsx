@@ -90,7 +90,7 @@ const navItems: NavItem[] = [
     children: [
       { path: '/detailsuche', label: 'Detailsuche', icon: SearchCheck, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Read Only Audit', 'SACHBEARBEITUNG'] },
       { path: '/auftragsstatus', label: 'Auftragsstatus', icon: Activity, roles: null },
-      { path: '/geraetesperren', label: 'Gerätesperren', icon: Lock, roles: null },
+
 
 
       {
@@ -133,6 +133,8 @@ const navItems: NavItem[] = [
           { path: '/lager/equipment-area/warehouse', label: 'Warehouse', icon: Warehouse, roles: ['Admin', 'Super Admin', 'Order', 'SACHBEARBEITUNG'] },
           { path: '/lager/equipment-area/hold', label: 'Hold', icon: AlertTriangle, roles: ['Admin', 'Super Admin', 'Order', 'SACHBEARBEITUNG'] },
           { path: '/lager/equipment-area/ausgeliefert', label: 'Ausgeliefert', icon: PackageCheck, roles: ['Admin', 'Super Admin', 'Order', 'SACHBEARBEITUNG'] },
+          { path: '/geraetesperren', label: 'Gerätesperren', icon: Lock, roles: null },
+
         ],
       },
     ],
