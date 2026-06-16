@@ -42,6 +42,7 @@ interface ProductionOrderRow {
   supplier_id: string;
   created_at: string;
   sent_at: string | null;
+  approval_status: string | null;
   supplier?: { name: string | null } | null;
 }
 
