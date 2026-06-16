@@ -183,6 +183,19 @@ export default function ProductionPortal() {
     setRows(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r));
   };
 
+  const revokeApproval = async (row: ProductionOrderRow) => {
+    if (!confirm(`Freigabe für ${row.production_order_number || row.order_number} wirklich widerrufen?`)) return;
+    setUpdatingId(row.id);
+    const { error } = await supabase
+      .from('production_orders')
+      .update({ approval_status: 'rejected', approved_by: null, approved_at: null })
+      .eq('id', row.id);
+    setUpdatingId(null);
+    if (error) return toast.error(error.message);
+    toast.success('Freigabe widerrufen');
+    setRows(prev => prev.map(r => r.id === row.id ? { ...r, approval_status: 'rejected' } : r));
+  };
+
   const signedPhotoUrl = async (path: string | null) => {
     if (!path) return null;
     const { data } = await supabase.storage.from('production-photos').createSignedUrl(path, 3600);
