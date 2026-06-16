@@ -312,7 +312,7 @@ export default function ProductionPortal() {
     if (!date) return null;
     const d = new Date(date); if (!isValid(d)) return null;
     const diff = differenceInCalendarDays(d, today);
-    if (diff < 0) return { label: `${Math.abs(diff)} ${t.days} ${t.overdue}`, cls: 'bg-destructive/15 text-destructive border-destructive/30' };
+    if (diff < 0) return { label: `${Math.abs(diff)} ${t.days} ${t.overdue}`, cls: 'bg-red-500/15 text-red-300 border-red-500/40' };
     if (diff === 0) return { label: t.dueToday, cls: 'bg-yellow-500/15 text-yellow-500 border-yellow-500/30' };
     if (diff <= 7) return { label: `${t.dueIn} ${diff} ${t.days}`, cls: 'bg-yellow-500/15 text-yellow-500 border-yellow-500/30' };
     return { label: `${t.dueIn} ${diff} ${t.days}`, cls: 'bg-green-500/15 text-green-500 border-green-500/30' };
