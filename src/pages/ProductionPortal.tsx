@@ -138,7 +138,8 @@ const statusKey = (s: string) => {
 };
 
 export default function ProductionPortal() {
-  const { profile } = useAuth();
+  const { profile, hasRole } = useAuth();
+  const isSuperAdmin = hasRole('Super Admin');
   const [rows, setRows] = useState<ProductionOrderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
