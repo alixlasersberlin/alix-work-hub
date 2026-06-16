@@ -134,7 +134,7 @@ export default function SalesLeadsList() {
   }, [rows, search, status, source]);
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 pb-32 space-y-6">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-3">
           <Inbox className="h-6 w-6 text-primary" />
@@ -299,7 +299,7 @@ export default function SalesLeadsList() {
       </Card>
 
       <AlertDialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="z-[80]">
           <AlertDialogHeader>
             <AlertDialogTitle>Lead löschen?</AlertDialogTitle>
             <AlertDialogDescription>
