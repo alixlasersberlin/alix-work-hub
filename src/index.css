@@ -2023,6 +2023,43 @@ html[data-experience="mega"] main > * {
 
 /* Finale Template-Sicherung: muss nach Tailwind/Aurora stehen, damit
    Aktionsbuttons nicht nur beim Hover/Klick kurz sichtbar sind. */
+:is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"][class*="rounded"], a[href][class*="rounded"][class*="border"], a[href][class*="rounded"][class*="bg-"]) {
+  position: relative;
+  z-index: 2;
+  opacity: 1 !important;
+  visibility: visible !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+
+:is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"][class*="rounded"], a[href][class*="rounded"]):not([class*="bg-"]):not([class*="text-"]) {
+  color: hsl(var(--foreground)) !important;
+  -webkit-text-fill-color: hsl(var(--foreground)) !important;
+}
+
+:is(button, [role="button"], a[data-slot="button"], a[href][class*="rounded"])[class~="bg-primary"],
+a[href][class*="rounded"][class~="bg-primary"],
+:is(button, [role="button"])[class*="gold-gradient"] {
+  color: hsl(var(--primary-foreground)) !important;
+  -webkit-text-fill-color: hsl(var(--primary-foreground)) !important;
+}
+
+:is(button, [role="button"], a[data-slot="button"], a[href][class*="rounded"])[class~="bg-destructive"],
+a[href][class*="rounded"][class~="bg-destructive"] {
+  color: hsl(var(--destructive-foreground)) !important;
+  -webkit-text-fill-color: hsl(var(--destructive-foreground)) !important;
+}
+
+:is(.card, [data-slot="card"], .card-glow, .rounded-xl.border, .rounded-lg.border)::before,
+:is(.card, [data-slot="card"], .card-glow, .rounded-xl.border, .rounded-lg.border)::after {
+  z-index: 0 !important;
+  pointer-events: none !important;
+}
+
+:is(.card, [data-slot="card"], .card-glow, .rounded-xl.border, .rounded-lg.border) > * {
+  position: relative;
+  z-index: 1;
+}
+
 html[data-infinity] :is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"][class*="rounded"], a[href][class*="rounded"][class*="border"], a[href][class*="rounded"][class*="bg-"]),
 html[data-aurora="2"] :is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"][class*="rounded"], a[href][class*="rounded"][class*="border"], a[href][class*="rounded"][class*="bg-"]),
 .design-aurora :is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"][class*="rounded"], a[href][class*="rounded"][class*="border"], a[href][class*="rounded"][class*="bg-"]) {
