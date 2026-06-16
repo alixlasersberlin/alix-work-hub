@@ -167,6 +167,32 @@ export default function ProductionFertig() {
                             : '—'}
                         </div>
                       </div>
+                      <Select
+                        value={r.status}
+                        onValueChange={(v) => v !== r.status && changeStatus(r, v)}
+                        disabled={busyId === r.id}
+                      >
+                        <SelectTrigger className="h-9 w-[170px]">
+                          <RefreshCw className="w-3.5 h-3.5 mr-1" />
+                          <SelectValue placeholder="Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="offen">offen</SelectItem>
+                          <SelectItem value="in Bearbeitung">in Bearbeitung</SelectItem>
+                          <SelectItem value="fertig">fertig produziert</SelectItem>
+                          <SelectItem value="versendet">versendet</SelectItem>
+                          <SelectItem value="erledigt">erledigt</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => sendEmail(r)}
+                        disabled={busyId === r.id}
+                      >
+                        {busyId === r.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+                        <span className="ml-1">E-Mail</span>
+                      </Button>
                       <Button asChild size="sm" variant="ghost">
                         <Link to={`${basePath}/${r.id}`}><FileText className="w-4 h-4" /></Link>
                       </Button>
