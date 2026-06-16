@@ -717,15 +717,18 @@ export default function AppLayout() {
         ? supabase.from('production_orders').select('*, orders!inner(source_system)', { count: 'exact', head: true }).eq('orders.source_system', 'zoho_eu_2').eq('is_reclamation', false)
         : supabase.from('production_orders').select('*', { count: 'exact', head: true }).eq('is_reclamation', false);
       const approvedProd = atOnly
-        ? supabase.from('production_orders').select('*, orders!inner(source_system)', { count: 'exact', head: true }).eq('orders.source_system', 'zoho_eu_2').eq('approval_status', 'approved')
-        : supabase.from('production_orders').select('*', { count: 'exact', head: true }).eq('approval_status', 'approved');
+        ? supabase.from('production_orders').select('*, orders!inner(source_system)', { count: 'exact', head: true }).eq('orders.source_system', 'zoho_eu_2').eq('approval_status', 'approved').neq('status', 'fertig')
+        : supabase.from('production_orders').select('*', { count: 'exact', head: true }).eq('approval_status', 'approved').neq('status', 'fertig');
       const pendingProd = atOnly
         ? supabase.from('production_orders').select('*, orders!inner(source_system)', { count: 'exact', head: true }).eq('orders.source_system', 'zoho_eu_2').or('approval_status.is.null,approval_status.eq.pending')
         : supabase.from('production_orders').select('*', { count: 'exact', head: true }).or('approval_status.is.null,approval_status.eq.pending');
+      const fertigProd = atOnly
+        ? supabase.from('production_orders').select('*, orders!inner(source_system)', { count: 'exact', head: true }).eq('orders.source_system', 'zoho_eu_2').eq('status', 'fertig')
+        : supabase.from('production_orders').select('*', { count: 'exact', head: true }).eq('status', 'fertig');
       const freiOrdersQ = atOnly
         ? supabase.from('orders').select('id').eq('source_system', 'zoho_eu_2').eq('deposit_ok', true).not('deposit_ok_by', 'is', null).neq('deposit_ok_by', '').limit(2000)
         : supabase.from('orders').select('id').eq('deposit_ok', true).not('deposit_ok_by', 'is', null).neq('deposit_ok_by', '').limit(2000);
-      const [allRes, reklaRes, factoryRes, freiOrdersRes, prodOrderIdsRes, reservedDevsRes, approvedRes, pendingRes] = await Promise.all([
+      const [allRes, reklaRes, factoryRes, freiOrdersRes, prodOrderIdsRes, reservedDevsRes, approvedRes, pendingRes, fertigRes] = await Promise.all([
         baseProdSel,
         reklaProd,
         factoryProd,
@@ -734,6 +737,7 @@ export default function AppLayout() {
         supabase.from('lager_devices').select('reserved_order_id').not('reserved_order_id', 'is', null).limit(2000),
         approvedProd,
         pendingProd,
+        fertigProd,
       ]);
       if (cancelled) return;
       const all = allRes.count ?? 0;
@@ -746,7 +750,7 @@ export default function AppLayout() {
       const frei = (freiOrdersRes.data ?? []).filter((o: any) => !usedOrderIds.has(o.id)).length;
       const approved = approvedRes.count ?? 0;
       const pending = pendingRes.count ?? 0;
-      const fertig = 0;
+      const fertig = fertigRes.count ?? 0;
       setLagerCounts((prev) => ({
         ...prev,
         '/einkauf': frei,
