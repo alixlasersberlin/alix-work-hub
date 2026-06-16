@@ -133,6 +133,8 @@ const navItems: NavItem[] = [
           { path: '/lager/equipment-area/warehouse', label: 'Warehouse', icon: Warehouse, roles: ['Admin', 'Super Admin', 'Order', 'SACHBEARBEITUNG'] },
           { path: '/lager/equipment-area/hold', label: 'Hold', icon: AlertTriangle, roles: ['Admin', 'Super Admin', 'Order', 'SACHBEARBEITUNG'] },
           { path: '/lager/equipment-area/ausgeliefert', label: 'Ausgeliefert', icon: PackageCheck, roles: ['Admin', 'Super Admin', 'Order', 'SACHBEARBEITUNG'] },
+          { path: '/geraetesperren', label: 'Gerätesperren', icon: Lock, roles: null },
+
         ],
       },
     ],
