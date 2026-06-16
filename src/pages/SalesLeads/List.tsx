@@ -283,8 +283,8 @@ export default function SalesLeadsList() {
                       {canDelete && (
                         <button
                           type="button"
-                          onClick={() => setToDelete(r)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded border border-destructive/50 bg-destructive text-destructive-foreground text-xs font-medium hover:bg-destructive/90 transition-colors"
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setToDelete(r); }}
+                          className="relative z-10 inline-flex items-center gap-1 px-2.5 py-1 rounded border border-destructive/50 bg-destructive text-destructive-foreground text-xs font-medium hover:bg-destructive/90 transition-colors cursor-pointer"
                         >
                           <Trash2 className="h-3.5 w-3.5" />Löschen
                         </button>
