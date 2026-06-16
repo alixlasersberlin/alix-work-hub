@@ -870,8 +870,9 @@ html[data-infinity] .infinity-ring {
   box-shadow: 0 0 0 var(--infinity-ring) hsl(var(--infinity-accent) / 0.35);
 }
 
-/* Sicherstellen, dass Body-Overlays Inhalte nicht verdecken.
-   Nur die App-Wurzel anheben — Radix-Portale (Dialog/Popover) bleiben
-   unangetastet, damit deren Stacking-Context funktioniert. */
-html[data-infinity] body { position: relative; }
-html[data-infinity] body > #root { position: relative; z-index: 1; }
+/* Sicherstellen, dass Body-Overlays Inhalte nicht verdecken,
+   ohne den Stacking-Context von Radix-Portalen (Dialog/Popover/Toast)
+   zu zerstören. Body bleibt OHNE Stacking-Context; alle direkten
+   Body-Kinder (inkl. Portals) werden auf z-index:1 angehoben, damit
+   sie über den ::before/::after-Pseudo-Layern (z:0) liegen. */
+html[data-infinity] body > * { position: relative; z-index: 1; }
