@@ -1,7 +1,7 @@
 /// <reference types="npm:@types/react@18.3.1" />
 import * as React from 'npm:react@18.3.1'
 import {
-  Body, Container, Head, Heading, Html, Preview, Text, Section, Button, Hr,
+  Body, Container, Head, Heading, Html, Preview, Text, Section, Button, Hr, Link,
 } from 'npm:@react-email/components@0.0.22'
 import type { TemplateEntry } from './registry.ts'
 
@@ -58,8 +58,12 @@ const ProductionOrderSupplierEmail = ({
             <Text style={infoRow}><strong>Contact:</strong> {bearbeiter || '—'}</Text>
           </Section>
           <Section style={{ textAlign: 'center', margin: '24px 0' }}>
-            <Button href={pdf_url} style={btn}>Download Order PDF</Button>
+            <Button href={pdf_url} target="_blank" style={btn}>Download Order PDF</Button>
           </Section>
+          <Text style={fallbackText}>
+            If the button doesn't work, copy this link into your browser:<br />
+            <Link href={pdf_url} target="_blank" style={fallbackLink}>{pdf_url}</Link>
+          </Text>
           {anmerkungen ? (
             <Section>
               <Text style={text}><strong>Notes:</strong></Text>
@@ -91,8 +95,12 @@ const ProductionOrderSupplierEmail = ({
             <Text style={infoRow}><strong>联系人：</strong> {bearbeiter || '—'}</Text>
           </Section>
           <Section style={{ textAlign: 'center', margin: '24px 0' }}>
-            <Button href={pdf_url} style={btn}>下载订单 PDF</Button>
+            <Button href={pdf_url} target="_blank" style={btn}>下载订单 PDF</Button>
           </Section>
+          <Text style={fallbackText}>
+            如果按钮无法点击，请将以下链接复制到浏览器：<br />
+            <Link href={pdf_url} target="_blank" style={fallbackLink}>{pdf_url}</Link>
+          </Text>
           {anmerkungen ? (
             <Section>
               <Text style={text}><strong>备注：</strong></Text>
@@ -139,6 +147,8 @@ const h1 = { fontSize: '22px', fontWeight: '700' as const, color: '#000000', mar
 const text = { fontSize: '14px', color: '#55575d', lineHeight: '1.6', margin: '0 0 16px' }
 const infoSection = { backgroundColor: '#f5f0e6', borderRadius: '8px', padding: '20px', margin: '0 0 16px', border: '1px solid #e8dfc8' }
 const infoRow = { fontSize: '13px', color: '#333', margin: '4px 0', lineHeight: '1.5' }
-const btn = { backgroundColor: '#9a7b2d', color: '#fff', padding: '14px 28px', borderRadius: '6px', textDecoration: 'none', fontWeight: '600' as const, fontSize: '14px' }
+const btn = { backgroundColor: '#9a7b2d', color: '#ffffff', padding: '14px 28px', borderRadius: '6px', textDecoration: 'none', fontWeight: '600' as const, fontSize: '14px', display: 'inline-block', mso_padding_alt: '0px' as any }
+const fallbackText = { fontSize: '12px', color: '#777', lineHeight: '1.5', margin: '0 0 16px', textAlign: 'center' as const, wordBreak: 'break-all' as const }
+const fallbackLink = { color: '#9a7b2d', textDecoration: 'underline', fontSize: '12px', wordBreak: 'break-all' as const }
 const hr = { borderColor: '#e8dfc8', margin: '32px 0' }
 const footer = { fontSize: '12px', color: '#999999', margin: '4px 0 0', lineHeight: '1.5' }
