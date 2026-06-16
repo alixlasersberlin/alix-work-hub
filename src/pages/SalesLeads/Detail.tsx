@@ -111,7 +111,6 @@ export default function SalesLeadDetail() {
       shipping_address: [lead.street, [lead.zip, lead.city].filter(Boolean).join(' '), lead.country].filter(Boolean).join(', ') || null,
       source_system: 'manual',
     };
-    };
     const { data, error } = await supabase.from('customers').insert(payload).select('id').single();
     if (error) { toast.error(error.message); return; }
     await updateLead({ converted_customer_id: data.id });
