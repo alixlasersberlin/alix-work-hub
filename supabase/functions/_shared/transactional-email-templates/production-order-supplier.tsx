@@ -95,8 +95,12 @@ const ProductionOrderSupplierEmail = ({
             <Text style={infoRow}><strong>联系人：</strong> {bearbeiter || '—'}</Text>
           </Section>
           <Section style={{ textAlign: 'center', margin: '24px 0' }}>
-            <Button href={pdf_url} style={btn}>下载订单 PDF</Button>
+            <Button href={pdf_url} target="_blank" style={btn}>下载订单 PDF</Button>
           </Section>
+          <Text style={fallbackText}>
+            如果按钮无法点击，请将以下链接复制到浏览器：<br />
+            <Link href={pdf_url} target="_blank" style={fallbackLink}>{pdf_url}</Link>
+          </Text>
           {anmerkungen ? (
             <Section>
               <Text style={text}><strong>备注：</strong></Text>
