@@ -95,10 +95,10 @@ const PAYMENT_VALUES = ['Ja', 'Nein', 'Teilweise', 'Garantie'] as const;
 
 function paymentClasses(ps: string) {
   switch (ps) {
-    case 'Ja': return 'bg-green-500/15 text-green-500 border border-green-500/30';
-    case 'Teilweise': return 'bg-yellow-500/15 text-yellow-500 border border-yellow-500/30';
-    case 'Garantie': return 'bg-blue-500/15 text-blue-500 border border-blue-500/30';
-    default: return 'bg-destructive/15 text-destructive border border-destructive/30';
+    case 'Ja': return 'bg-green-500/15 text-green-300 border border-green-500/40';
+    case 'Teilweise': return 'bg-yellow-500/15 text-yellow-300 border border-yellow-500/40';
+    case 'Garantie': return 'bg-blue-500/15 text-blue-300 border border-blue-500/40';
+    default: return 'bg-red-500/15 text-red-300 border border-red-500/40';
   }
 }
 
