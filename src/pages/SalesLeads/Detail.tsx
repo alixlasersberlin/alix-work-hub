@@ -109,6 +109,7 @@ export default function SalesLeadDetail() {
       phone: lead.phone || null,
       billing_address: [lead.street, [lead.zip, lead.city].filter(Boolean).join(' '), lead.country].filter(Boolean).join(', ') || null,
       shipping_address: [lead.street, [lead.zip, lead.city].filter(Boolean).join(' '), lead.country].filter(Boolean).join(', ') || null,
+      source_system: 'manual',
     };
     const { data, error } = await supabase.from('customers').insert(payload).select('id').single();
     if (error) { toast.error(error.message); return; }
