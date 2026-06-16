@@ -476,8 +476,19 @@ export default function ProductionPortal() {
                         <Download className="w-4 h-4 mr-1" /> {t.pdf}
                       </Button>
                     )}
+                    {isSuperAdmin && row.approval_status === 'approved' && (
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => revokeApproval(row)}
+                        disabled={updatingId === row.id}
+                      >
+                        <XCircle className="w-4 h-4 mr-1" /> Freigabe widerrufen
+                      </Button>
+                    )}
                   </div>
                 </div>
+
 
                 <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs pt-2 border-t border-border/50">
                   <div className="flex items-center gap-1.5 min-w-0">
