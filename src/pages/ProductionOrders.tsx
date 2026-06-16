@@ -141,6 +141,7 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
       .from('production_orders')
       .select('*, supplier:suppliers(name, email)')
       .eq('is_reclamation', isReclamation)
+      .neq('status', 'fertig')
       .order('created_at', { ascending: false });
     if (error) { toast.error(error.message); setLoading(false); return; }
     let list = (data || []).map((r: any) => ({
