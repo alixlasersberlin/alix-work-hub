@@ -69,6 +69,28 @@ export default function ProductionFertig() {
     })();
   }, [atOnly]);
 
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  const changeStatus = async (r: Row, newStatus: string) => {
+    setBusyId(r.id);
+    const { error } = await supabase
+      .from('production_orders')
+      .update({ status: newStatus })
+      .eq('id', r.id);
+    setBusyId(null);
+    if (error) return toast.error(error.message);
+    toast.success(`Status auf "${newStatus}" geändert`);
+    setRows(prev => prev.filter(x => x.id !== r.id));
+  };
+
+  const sendEmail = async (r: Row) => {
+    setBusyId(r.id);
+    const res = await sendProductionSuccessfulEmail(r.id, 'manuell');
+    setBusyId(null);
+    if (res.ok) toast.success(res.message);
+    else toast.error(res.message);
+  };
+
   const q = search.trim().toLowerCase();
   const filtered = rows.filter(r => {
     if (!q) return true;
