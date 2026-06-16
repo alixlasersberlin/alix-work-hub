@@ -171,7 +171,7 @@ export default function OrdersFreiBestellung() {
       .eq('deposit_ok', true)
       .not('deposit_ok_by', 'is', null)
       .neq('deposit_ok_by', '')
-      .not('order_status', 'in', '("Anwalt","Hold","anwalt","hold")')
+      .not('order_status', 'in', '("Anwalt","Hold","anwalt","hold","geliefert","Geliefert","GELIEFERT","delivered","Delivered")')
       .order('deposit_ok_at', { ascending: false })
       .limit(500);
     if (atOnly) baseQuery = baseQuery.eq('source_system', 'zoho_eu_2');
