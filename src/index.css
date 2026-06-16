@@ -2030,7 +2030,6 @@ html[data-aurora="2"] :is(button, [role="button"], a[data-slot="button"], a[href
   z-index: 2;
   opacity: 1 !important;
   visibility: visible !important;
-  color: hsl(var(--foreground)) !important;
   border-color: hsl(var(--border)) !important;
   -webkit-text-fill-color: currentColor !important;
 }
@@ -2046,7 +2045,6 @@ html[data-aurora="2"] :is(button, [role="button"], a[data-slot="button"], a[href
 .design-aurora :is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"][class*="rounded"], a[href][class*="rounded"][class*="border"], a[href][class*="rounded"][class*="bg-"]):is(:hover, :active, :focus-visible) {
   opacity: 1 !important;
   visibility: visible !important;
-  color: hsl(var(--foreground)) !important;
 }
 
 html[data-infinity] :is(button, [role="button"], a[data-slot="button"])[class~="bg-primary"],
@@ -2056,6 +2054,7 @@ html[data-aurora="2"] a[href][class~="bg-primary"],
 .design-aurora :is(button, [role="button"], a[data-slot="button"])[class~="bg-primary"],
 .design-aurora a[href][class~="bg-primary"] {
   color: hsl(var(--primary-foreground)) !important;
+  -webkit-text-fill-color: hsl(var(--primary-foreground)) !important;
 }
 
 html[data-infinity] :is(button, [role="button"], a[data-slot="button"])[class~="bg-destructive"],
@@ -2065,6 +2064,14 @@ html[data-aurora="2"] a[href][class~="bg-destructive"],
 .design-aurora :is(button, [role="button"], a[data-slot="button"])[class~="bg-destructive"],
 .design-aurora a[href][class~="bg-destructive"] {
   color: hsl(var(--destructive-foreground)) !important;
+  -webkit-text-fill-color: hsl(var(--destructive-foreground)) !important;
+}
+
+html[data-infinity] :is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"][class*="rounded"], a[href][class*="rounded"]):not([class*="bg-"]),
+html[data-aurora="2"] :is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"][class*="rounded"], a[href][class*="rounded"]):not([class*="bg-"]),
+.design-aurora :is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"][class*="rounded"], a[href][class*="rounded"]):not([class*="bg-"]) {
+  color: hsl(var(--foreground)) !important;
+  -webkit-text-fill-color: hsl(var(--foreground)) !important;
 }
 
 html[data-infinity] :is(button, [role="button"], a[data-slot="button"], a[href][class*="inline-flex"][class*="rounded"]) > :is(svg, span),
