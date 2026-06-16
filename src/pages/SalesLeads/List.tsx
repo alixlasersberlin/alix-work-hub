@@ -299,7 +299,7 @@ export default function SalesLeadsList() {
       </Card>
 
       <AlertDialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="z-[80]">
           <AlertDialogHeader>
             <AlertDialogTitle>Lead löschen?</AlertDialogTitle>
             <AlertDialogDescription>
