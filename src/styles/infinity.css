@@ -871,11 +871,7 @@ html[data-infinity] .infinity-ring {
 }
 
 /* Sicherstellen, dass Body-Overlays Inhalte nicht verdecken.
-   WICHTIG: Radix-Portale (Dialog/Popover/Dropdown/Toast) ausnehmen,
-   sonst kollidiert das mit deren Stacking-Context und Klicks/Overlay
-   landen unter dem App-Content. */
+   Nur die App-Wurzel anheben — Radix-Portale (Dialog/Popover) bleiben
+   unangetastet, damit deren Stacking-Context funktioniert. */
 html[data-infinity] body { position: relative; }
-html[data-infinity] body > *:not([data-radix-portal]):not([data-radix-popper-content-wrapper]):not([data-sonner-toaster]):not([data-radix-toast-viewport]) {
-  position: relative;
-  z-index: 1;
-}
+html[data-infinity] body > #root { position: relative; z-index: 1; }
