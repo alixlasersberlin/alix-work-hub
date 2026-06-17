@@ -57,7 +57,10 @@ const navItems: NavItem[] = [
     children: [
       { path: '/ai-center', label: 'AI Center', icon: Sparkles, roles: ['Admin', 'Super Admin', 'Geschäftsführung', 'Serviceleitung', 'Service', 'Technik', 'Finance', 'Österreich'] },
       { path: '/ai-service-center', label: 'AI Service Center', icon: Sparkles, roles: ['Admin', 'Super Admin', 'Service', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance', 'SACHBEARBEITUNG'] },
+      { path: '/detailsuche', label: 'Detailsuche', icon: SearchCheck, roles: null },
+      { path: '/auftragsstatus', label: 'Auftragsstatus', icon: Activity, roles: null },
       { path: '/finance/ai-insights', label: 'KI-Analyse (Finance)', icon: Sparkles, roles: ['Admin', 'Super Admin', 'Finance', 'Geschäftsführung'] },
+
       {
         path: '/aic', label: 'Alix Intelligence', icon: Brain, roles: ['Super Admin'],
         children: [
@@ -88,8 +91,8 @@ const navItems: NavItem[] = [
     path: '/auftragsverwaltung', label: 'ORDER MANAGEMENT', icon: ClipboardList,
     roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'Lieferant', 'FACTORY INVOICE', 'Bestellwesen', 'Read Only Audit', 'Read Only', 'Geschäftsführung', 'Marketing', 'Technik', 'Kundenservice', 'Vertrieb', 'Reparaturannahme', 'Serviceleitung', 'Service', 'QM', 'SACHBEARBEITUNG'],
     children: [
-      { path: '/detailsuche', label: 'Detailsuche', icon: SearchCheck, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Read Only Audit', 'SACHBEARBEITUNG'] },
-      { path: '/auftragsstatus', label: 'Auftragsstatus', icon: Activity, roles: null },
+
+
 
 
 
