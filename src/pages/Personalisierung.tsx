@@ -1,10 +1,7 @@
-import { Palette, Eye, Sparkles, Zap, Keyboard } from "lucide-react";
+import { Palette, Eye, Sparkles, Keyboard } from "lucide-react";
 import { PageHeader } from "@/components/infinity/PageHeader";
 import { A11yPrefsPanel } from "@/components/infinity/A11yPrefsPanel";
 import { AIBackgroundPanel } from "@/components/infinity/AIBackgroundPanel";
-import { usePageFade } from "@/hooks/usePageFade";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
@@ -33,16 +30,6 @@ const Card = ({
   </div>
 );
 
-const PageFadeToggle = () => {
-  const { on, setOn } = usePageFade();
-  return (
-    <div className="flex items-center justify-between pt-1">
-      <Label htmlFor="page-fade" className="text-sm">Seitenwechsel-Fade</Label>
-      <Switch id="page-fade" checked={on} onCheckedChange={setOn} />
-    </div>
-  );
-};
-
 export default function Personalisierung() {
   return (
     <div className="container mx-auto px-4 py-6 space-y-6">
@@ -68,15 +55,6 @@ export default function Personalisierung() {
 
         {/* AI Background */}
         <AIBackgroundPanel />
-
-        {/* Bewegung */}
-        <Card
-          icon={Zap}
-          title="Bewegung & Übergänge"
-          desc='Sanfte Animationen bei Seitenwechseln. Deaktiviert sich bei „Reduzierte Bewegung" automatisch.'
-        >
-          <PageFadeToggle />
-        </Card>
 
         {/* Shortcuts */}
         <Card

@@ -9,13 +9,13 @@ interface ThemeContextType {
 }
 
 const ThemeContext = createContext<ThemeContextType>({
-  theme: 'light',
+  theme: 'dark',
   toggleTheme: () => {},
   setTheme: () => {},
 });
 
-function parse(v: string | null): Theme {
-  return v === 'dark' ? 'dark' : 'light';
+function parse(_v: string | null): Theme {
+  return 'dark';
 }
 
 function apply(theme: Theme) {
@@ -28,7 +28,7 @@ function apply(theme: Theme) {
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() => {
-    try { return parse(localStorage.getItem('app-theme')); } catch { return 'light'; }
+    try { return parse(localStorage.getItem('app-theme')); } catch { return 'dark'; }
   });
 
   useEffect(() => {
@@ -36,8 +36,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     try { localStorage.setItem('app-theme', theme); } catch { /* ignore */ }
   }, [theme]);
 
-  const setTheme = useCallback((t: Theme) => setThemeState(t), []);
-  const toggleTheme = useCallback(() => setThemeState(t => (t === 'dark' ? 'light' : 'dark')), []);
+  const setTheme = useCallback((_t: Theme) => setThemeState('dark'), []);
+  const toggleTheme = useCallback(() => setThemeState('dark'), []);
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>

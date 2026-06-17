@@ -17,7 +17,6 @@ import { PageHeader } from '@/components/infinity/PageHeader';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useViewMode } from '@/hooks/useViewMode';
 import { ViewToggle } from '@/components/ViewToggle';
-import DesignVariantSwitcher from '@/components/DesignVariantSwitcher';
 
 type PhotoSide = 'front' | 'right' | 'left';
 
@@ -357,7 +356,6 @@ export default function ProductionPortal() {
         noBreadcrumbs
         actions={
           <>
-            <DesignVariantSwitcher inline />
             <Link
               to="/hilfe"
               className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors border border-border rounded-md px-2.5 py-1.5"

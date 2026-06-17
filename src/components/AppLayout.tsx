@@ -2,8 +2,6 @@ import { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useAtOnly } from '@/hooks/useAtOnly';
-import { useTheme } from '@/hooks/useTheme';
-import { useUiTemplate } from '@/hooks/useUiTemplate';
 import { supabase } from '@/integrations/supabase/client';
 import {
   LayoutDashboard, ClipboardList, MapPin, Banknote, Users, LogOut, Shield, ShieldCheck, Menu, X, ChevronLeft, Building2, Cloud, Server, ListOrdered, Sun, Moon, Gavel, Truck, PackageCheck, BarChart3, Factory, ShoppingCart, ChevronDown, TrendingUp, Workflow, AlertTriangle, Calendar, FileText, FileSignature, Warehouse, Settings, Package, FilePlus, BookOpen, Receipt, Undo2, CreditCard, CheckCircle2, FolderTree, ScrollText, Inbox, Mail, Landmark, SearchCheck, Pause, Clock, HelpCircle, Star, Lock, Globe, Wrench, Ticket,
@@ -15,10 +13,7 @@ import WelcomeDialog from '@/components/WelcomeDialog';
 import LeoWelcomeDialog from '@/components/LeoWelcomeDialog';
 import NataliaWelcomeOverlay from '@/components/NataliaWelcomeOverlay';
 import SalesLeadAssignmentOverlay from '@/components/SalesLeadAssignmentOverlay';
-import DesignVariantSwitcher from '@/components/DesignVariantSwitcher';
-import ExperienceModeSwitcher from '@/components/ExperienceModeSwitcher';
 import { SidebarInfoBar } from '@/components/SidebarInfoBar';
-import DisplaySettingsMenu from '@/components/DisplaySettingsMenu';
 import TenantSwitcher from '@/components/TenantSwitcher';
 import AuroraPrioTicker from '@/components/AuroraPrioTicker';
 import AuroraTopNav from '@/components/AuroraTopNav';
@@ -472,9 +467,6 @@ const navItems: NavItem[] = [
 
 export default function AppLayout() {
   const { profile, roles, signOut } = useAuth();
-  const { theme, toggleTheme } = useTheme();
-  const { template: uiTemplate } = useUiTemplate();
-  const isNeo = uiTemplate === 'neo';
   const { variant } = useDesignVariant();
   const isAurora = variant === 'aurora';
   const location = useLocation();
@@ -1378,10 +1370,6 @@ export default function AppLayout() {
             </Button>
             
           </div>
-          {/* Experience Mode Switcher am Ende des Sidebar-Menüs */}
-          <div className={cn("mt-2 px-1", collapsed && "px-0")}>
-            <ExperienceModeSwitcher collapsed={collapsed} />
-          </div>
         </div>
 
         {/* Resize-Handle (nur Desktop, wenn nicht eingeklappt) */}
@@ -1447,18 +1435,6 @@ export default function AppLayout() {
               <span className="text-muted-foreground font-mono text-xs hidden sm:inline">v{APP_VERSION}</span>
           </div>
             <NotificationCenter />
-            <DisplaySettingsMenu />
-            {!isNeo && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                onClick={toggleTheme}
-                title={theme === 'dark' ? 'Helles Design' : 'Dunkles Design'}
-              >
-                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              </Button>
-            )}
           </div>
         </header>
         <main className="flex-1 overflow-y-auto overflow-x-hidden scroll-touch pb-safe">

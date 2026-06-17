@@ -7,7 +7,9 @@ import { bootInfinityTheme } from "./hooks/useInfinityTheme";
 import { bootA11yPrefs } from "./hooks/useA11yPrefs";
 import { bootAIBackground } from "./hooks/useAIBackground";
 import { bootPageFade } from "./hooks/usePageFade";
+import { bootTheme } from "./hooks/useTheme";
 
+bootTheme();
 bootUiTemplate();
 bootInfinityTheme();
 bootA11yPrefs();

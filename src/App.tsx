@@ -9,7 +9,6 @@ import { TenantProvider } from "@/contexts/TenantContext";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { DesignVariantProvider } from "@/hooks/useDesignVariant";
 import { ExperienceModeProvider } from "@/hooks/useExperienceMode";
-import DesignVariantSwitcher from "@/components/DesignVariantSwitcher";
 import AuroraSpotlight from "@/components/AuroraSpotlight";
 import { CursorSpotlight } from "@/components/aurora/CursorSpotlight";
 import { GlobalCommandBar } from "@/components/infinity/GlobalCommandBar";
@@ -215,10 +214,8 @@ const Wartungscenter = lazy(() => import("./pages/Wartungscenter"));
 const Wartungsmanagement = lazy(() => import("./pages/Wartungsmanagement"));
 const Garantiecenter = lazy(() => import("./pages/Garantiecenter"));
 const GarantieKulanz = lazy(() => import("./pages/GarantieKulanz"));
-const DesignTemplate = lazy(() => import("./pages/DesignTemplate"));
 const AlixSignPublic = lazy(() => import("./pages/AlixSignPublic"));
 const AlixSignPdfDownload = lazy(() => import("./pages/AlixSignPdfDownload"));
-import TemplateSwitcher from "./components/TemplateSwitcher";
 const WhatsAppServiceCenter = lazy(() => import("./pages/WhatsAppServiceCenter"));
 const BugCapaLayoutLazy = lazy(() => import("./pages/BugCapa/_shared").then(m => ({ default: m.BugCapaLayout })));
 const BugCapaDashboard = lazy(() => import("./pages/BugCapa/BugCapaDashboard"));
@@ -585,7 +582,7 @@ function AppRoutes() {
           <Route path="/executive" element={<ProtectedRoute requiredRoles={['Super Admin']}><ExecutiveCommandCenter /></ProtectedRoute>} />
           <Route path="/ai-center" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Geschäftsführung', 'Serviceleitung', 'Service', 'Technik', 'Finance', 'Österreich']}><AiCenter /></ProtectedRoute>} />
 
-          <Route path="/design-template" element={<ProtectedRoute><DesignTemplate /></ProtectedRoute>} />
+          <Route path="/design-template" element={<Navigate to="/" replace />} />
 
           <Route path="/finance/neu" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Finance']}><FinanceForm /></ProtectedRoute>} />
           <Route path="/finance/:id" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceDetail /></ProtectedRoute>} />

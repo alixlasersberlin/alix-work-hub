@@ -12,7 +12,6 @@ interface Ctx {
 const ExperienceCtx = createContext<Ctx>({ mode: 'classic', setMode: () => {} });
 
 function parse(v: string | null): ExperienceMode {
-  if (v === 'classic' || v === 'premium' || v === 'mega') return v;
   return 'classic';
 }
 
@@ -31,7 +30,7 @@ export function ExperienceModeProvider({ children }: { children: ReactNode }) {
     try { localStorage.setItem(STORAGE_KEY, mode); } catch { /* ignore */ }
   }, [mode]);
 
-  const setMode = useCallback((m: ExperienceMode) => setModeState(m), []);
+  const setMode = useCallback((_m: ExperienceMode) => setModeState('classic'), []);
 
   return (
     <ExperienceCtx.Provider value={{ mode, setMode }}>
@@ -44,7 +43,7 @@ export const useExperienceMode = () => useContext(ExperienceCtx);
 
 export function bootExperienceMode() {
   try {
-    const m = parse(typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : null);
-    apply(m);
+    if (typeof localStorage !== 'undefined') localStorage.setItem(STORAGE_KEY, 'classic');
+    apply('classic');
   } catch { /* ignore */ }
 }
