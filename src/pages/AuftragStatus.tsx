@@ -259,6 +259,43 @@ export default function AuftragStatus() {
                 <StepCard icon={<MapPin className="h-4 w-4" />} label="Tourenplanung" count={result.route_plans} ok={result.route_plans > 0} />
               </div>
             </div>
+
+            {reservedDevices.length > 0 && (
+              <>
+                <Separator />
+                <div>
+                  <div className="text-sm font-semibold mb-3">
+                    Reservierte Geräte ({reservedDevices.length})
+                  </div>
+                  <div className="rounded-lg border border-border divide-y divide-border">
+                    {reservedDevices.map((d) => (
+                      <div key={d.id} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-muted/30">
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate">{d.model_name}</p>
+                          <p className="text-xs text-muted-foreground font-mono mt-0.5">SN: {d.serial_number}</p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => releaseDevice(d.id)}
+                          disabled={releasing === d.id}
+                          className="text-destructive hover:text-destructive flex-shrink-0"
+                        >
+                          {releasing === d.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <>
+                              <X className="w-4 h-4 mr-1" />
+                              Reservierung aufheben
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       )}
