@@ -119,7 +119,7 @@ export default function MietkaufDialog({ order }: Props) {
     doc.setFont('Inter', 'bold');
     doc.setFontSize(16);
     doc.setTextColor(0);
-    doc.text('Mietkauf', ml, y);
+    doc.text('Vertrag', ml, y);
     y += 12;
 
     // "zwischen"
