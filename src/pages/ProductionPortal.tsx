@@ -195,7 +195,12 @@ export default function ProductionPortal() {
     setUpdatingId(null);
     if (error) return toast.error(error.message);
     toast.success(t.statusUpdated);
-    setRows(prevRows => prevRows.map(r => r.id === id ? { ...r, status: newStatus } : r));
+    if (newStatus === 'fertig') {
+      setRows(prevRows => prevRows.filter(r => r.id !== id));
+      toast.info('Auftrag wurde nach „Fertig produziert" verschoben.');
+    } else {
+      setRows(prevRows => prevRows.map(r => r.id === id ? { ...r, status: newStatus } : r));
+    }
     if (newStatus === 'fertig' && prev?.status !== 'fertig') {
       const { sendProductionSuccessfulEmail } = await import('@/lib/send-production-successful-email');
       const res = await sendProductionSuccessfulEmail(id, 'automatisch');
