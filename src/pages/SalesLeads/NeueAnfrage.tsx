@@ -1,4 +1,5 @@
 import SalesWizard from '@/components/SalesWizard';
+import logoAsset from '@/assets/alix-lasers-logo-gold-new.png.asset.json';
 
 export default function NeueAnfrage() {
   return (
