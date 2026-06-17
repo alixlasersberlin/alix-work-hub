@@ -679,6 +679,7 @@ export default function Lagergeraete({
     setReservedOrderId(null);
     setReservedOrderNumber(null);
     setOriginalReservedOrderId(null);
+    setOriginalDeviceStatus(null);
     setReservationWeek('');
     setLeihCustomerId(null);
     setLeihCustomerName('');
