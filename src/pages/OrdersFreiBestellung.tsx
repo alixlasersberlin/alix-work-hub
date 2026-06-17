@@ -304,32 +304,62 @@ export default function OrdersFreiBestellung() {
 
   const confirmUnassign = async () => {
     if (!unassignOrder) return;
+    const orderId = unassignOrder.id;
+    const orderNumber = unassignOrder.order_number;
     setUnassigning(true);
-    // 1. Reservierungen aller Lagergeräte für diesen Auftrag aufheben
-    const { error: lagerErr } = await supabase
-      .from('lager_devices')
-      .update({ reserved_order_id: null })
-      .eq('reserved_order_id', unassignOrder.id);
-    if (lagerErr) {
+    try {
+      // 1. Reservierungen aller Lagergeräte für diesen Auftrag aufheben
+      const { error: lagerErr } = await supabase
+        .from('lager_devices')
+        .update({ reserved_order_id: null, reservation_week: null })
+        .eq('reserved_order_id', orderId);
+      if (lagerErr) {
+        console.error('[confirmUnassign] lager_devices update failed', lagerErr);
+        toast.error('Lager-Reservierung konnte nicht entfernt werden: ' + lagerErr.message);
+        return;
+      }
+
+      // 2. Prüfen, ob bereits ein Hidden-Marker existiert (Idempotenz)
+      const { data: existingMarker } = await supabase
+        .from('order_notes')
+        .select('id')
+        .eq('order_id', orderId)
+        .eq('note_type', FREI_HIDDEN_NOTE)
+        .limit(1)
+        .maybeSingle();
+
+      if (!existingMarker) {
+        const { data: { user } } = await supabase.auth.getUser();
+        const { error: noteErr } = await supabase.from('order_notes').insert({
+          order_id: orderId,
+          note_type: FREI_HIDDEN_NOTE,
+          note_text: 'Zuordnung gelöscht — aus „Bestellung möglich" entfernt.',
+          is_internal: true,
+          created_by: user?.id ?? null,
+        });
+        if (noteErr) {
+          console.error('[confirmUnassign] order_notes insert failed', noteErr);
+          toast.error('Eintrag konnte nicht ausgeblendet werden: ' + noteErr.message);
+          return;
+        }
+      }
+
+      // Optimistisch aus lokaler Liste entfernen — auch falls reload langsam ist
+      setOrders(prev => prev.filter((o: any) => o.id !== orderId));
+      setSelected(prev => {
+        const next = new Set(prev);
+        next.delete(orderId);
+        return next;
+      });
+      setUnassignOrder(null);
+      toast.success(`Zuordnung für ${orderNumber} gelöscht`);
+      reload();
+    } catch (e: any) {
+      console.error('[confirmUnassign] unexpected', e);
+      toast.error('Unerwarteter Fehler: ' + (e?.message ?? String(e)));
+    } finally {
       setUnassigning(false);
-      toast.error('Lager-Reservierung konnte nicht entfernt werden: ' + lagerErr.message);
-      return;
     }
-    // 2. Auftrag aus "Bestellung möglich" ausblenden (Marker-Notiz)
-    const { error: noteErr } = await supabase.from('order_notes').insert({
-      order_id: unassignOrder.id,
-      note_type: FREI_HIDDEN_NOTE,
-      note_text: 'Zuordnung gelöscht — aus „Bestellung möglich" entfernt.',
-      is_internal: true,
-    });
-    setUnassigning(false);
-    if (noteErr) {
-      toast.error('Eintrag konnte nicht ausgeblendet werden: ' + noteErr.message);
-      return;
-    }
-    toast.success('Zuordnung gelöscht und Auftrag aus Liste entfernt');
-    setUnassignOrder(null);
-    reload();
   };
 
   const allVisibleSelected = paged.length > 0 && paged.every((o: any) => selected.has(o.id));
