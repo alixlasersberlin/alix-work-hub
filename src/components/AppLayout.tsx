@@ -674,7 +674,8 @@ export default function AppLayout() {
         .or('assigned_user.is.null,lead_status.eq.Neu,lead_status.eq.Importiert - Angebot offen')
         .not('lead_status', 'in', '("Gewonnen","Verloren","Archiviert")');
       if (cancelled) return;
-      setLagerCounts((prev) => ({ ...prev, '/verkauf/anfragen': count ?? 0 }));
+      const n = count ?? 0;
+      setLagerCounts((prev) => ({ ...prev, '/verkauf/anfragen': n, '/verkauf/angebote': n }));
     };
     load();
     const intervalId = window.setInterval(load, 5 * 60 * 1000);
@@ -802,7 +803,7 @@ export default function AppLayout() {
     }
     const isProductionGroup = path === '/production' && label === 'PRODUCTION';
     const colorClass =
-      path === '/verkauf/anfragen'
+      path === '/verkauf/anfragen' || path === '/verkauf/angebote'
         ? (c > 0 ? 'text-amber-500' : 'text-muted-foreground')
         : path === '/order/freigabe'
           ? (c > 0 ? 'text-yellow-500' : 'text-muted-foreground')
@@ -1040,7 +1041,7 @@ export default function AppLayout() {
                             )}
                           >
                             <Icon className={cn("w-5 h-5 flex-shrink-0", fActive && "text-primary")} />
-                            <span className="truncate">{meta.label}</span>
+                            <span className="truncate">{labelWithCount(f.path, meta.label)}</span>
                           </Link>
                           <FavStar path={f.path} label={meta.label} />
                         </div>
