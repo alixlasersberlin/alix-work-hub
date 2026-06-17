@@ -120,6 +120,10 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
       supplier_tenant_id: form.supplier_tenant_id || null,
     };
     const isNew = !customer?.id;
+    if (isNew) {
+      payload.source_system = 'manual';
+      payload.external_customer_id = `manual-${crypto.randomUUID()}`;
+    }
     const { error } = isNew
       ? await supabase.from('customers').insert(payload)
       : await supabase.from('customers').update(payload).eq('id', customer.id);
