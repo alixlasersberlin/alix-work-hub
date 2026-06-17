@@ -164,7 +164,6 @@ export default function DeliveryNoteTab({ order, customer, items, onReload }: Pr
           return [
             String(idx + 1),
             String(i.item_name || '—') + (i.description ? `\n${String(i.description).slice(0, 80)}` : ''),
-            String(i.sku || ''),
             String(s.qty),
           ];
         })
@@ -172,18 +171,18 @@ export default function DeliveryNoteTab({ order, customer, items, onReload }: Pr
 
       autoTable(doc, {
         startY: y,
-        head: [['#', 'Artikel', 'HS Power', 'Menge']],
+        head: [['#', 'Artikel', 'Menge']],
         body,
         theme: 'grid',
         styles: { font: 'Inter', fontSize: 9, cellPadding: 2 },
         headStyles: { fillColor: [240, 240, 240], textColor: 20, fontStyle: 'bold' },
         columnStyles: {
           0: { cellWidth: 10, halign: 'center' },
-          2: { cellWidth: 35 },
-          3: { cellWidth: 20, halign: 'right' },
+          2: { cellWidth: 20, halign: 'right' },
         },
         margin: { left: ml, right: ml },
       });
+
 
       let fy = (doc as any).lastAutoTable.finalY + 10;
 
