@@ -4,16 +4,14 @@ export type UiTemplate = "standard" | "neo";
 const KEY = "alixwork.ui_template";
 
 function apply(_t: UiTemplate) {
-  // ALIXWORK NEO wurde auf das Standard-Template angeglichen.
-  // Die theme-neo Klasse wird daher nie mehr gesetzt, unabhängig von der Auswahl.
+  // Template-Wechsel ist deaktiviert: immer Standard, keine Blue/White-Variante.
   const el = document.documentElement;
   el.classList.remove("theme-neo");
+  el.setAttribute("data-lock-template", "standard");
 }
 
 export function getCurrentUiTemplate(): UiTemplate {
-  if (typeof window === "undefined") return "neo";
-  const stored = localStorage.getItem(KEY) as UiTemplate | null;
-  return stored || "neo";
+  return "standard";
 }
 
 /** Globaler Live-Switch zwischen Standard und ALIXWORK NEO. */
@@ -43,5 +41,10 @@ export function useUiTemplate() {
 
 /** Boot-time apply so first paint has the right theme. */
 export function bootUiTemplate() {
-  apply(getCurrentUiTemplate());
+  try {
+    localStorage.setItem(KEY, "standard");
+  } catch {
+    /* noop */
+  }
+  apply("standard");
 }
