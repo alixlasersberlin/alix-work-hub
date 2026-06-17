@@ -141,8 +141,10 @@ export default function AuftragStatus() {
       geliefert: delRes.count ?? 0,
       route_plans: rpRes.count ?? 0,
     });
+    await loadReservedDevices(o.id);
     setLoading(false);
   }
+
 
   function onKey(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Enter') search();
