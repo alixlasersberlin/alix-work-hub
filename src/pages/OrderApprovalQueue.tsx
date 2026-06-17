@@ -332,6 +332,20 @@ export default function OrderApprovalQueue() {
                       )}
                       Freigeben
                     </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => deleteProposal(r)}
+                      disabled={deletingId === r.id}
+                      className="text-destructive hover:text-destructive border-destructive/40"
+                    >
+                      {deletingId === r.id ? (
+                        <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                      )}
+                      Löschen
+                    </Button>
                   </>
                 )}
               </div>
