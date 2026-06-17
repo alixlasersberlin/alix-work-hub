@@ -12,6 +12,7 @@ import { PageHeader } from '@/components/infinity/PageHeader';
 import { StatusBadge } from '@/components/StatusBadge';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
+import { ALIX_MODEL_GROUPS } from '@/lib/alix-models';
 
 type ProductionVorgang = {
   id: string;
