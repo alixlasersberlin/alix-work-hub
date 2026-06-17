@@ -93,6 +93,8 @@ export default function AngebotErstellen() {
       phone: newCustomer.phone || null,
       billing_address: ba,
       shipping_address: ba,
+      source_system: 'manual',
+      external_customer_id: `manual-${crypto.randomUUID()}`,
     };
     const { data, error } = await supabase.from('customers').insert(payload).select('*').single();
     setNewCustomerSaving(false);
