@@ -263,7 +263,17 @@ export default function DeliveryNoteTab({ order, customer, items, onReload }: Pr
         <h2 className="text-base font-display font-bold text-foreground flex items-center gap-2">
           <Truck className="w-4 h-4 text-primary" /> Lieferschein
         </h2>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Label htmlFor="delivery-date" className="text-sm">Datum</Label>
+            <Input
+              id="delivery-date"
+              type="date"
+              value={deliveryDate}
+              onChange={(e) => setDeliveryDate(e.target.value)}
+              className="h-8 w-40"
+            />
+          </div>
           <div className="flex items-center gap-2">
             <Switch id="partial" checked={allowPartial} onCheckedChange={setAllowPartial} />
             <Label htmlFor="partial" className="text-sm">Teillieferung erlauben</Label>
