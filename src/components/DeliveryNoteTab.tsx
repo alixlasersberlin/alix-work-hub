@@ -54,6 +54,7 @@ function fmtAddress(a: any): string[] {
 export default function DeliveryNoteTab({ order, customer, items, onReload }: Props) {
   const { user } = useAuth();
   const [allowPartial, setAllowPartial] = useState(true);
+  const [deliveryDate, setDeliveryDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
   const [selection, setSelection] = useState<Record<string, { checked: boolean; qty: number }>>(
     () => Object.fromEntries(items.map(i => [i.id, { checked: true, qty: Number(i.quantity || 0) }])),
   );
