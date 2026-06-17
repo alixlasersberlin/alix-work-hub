@@ -420,7 +420,7 @@ function AppRoutes() {
   if (loading) return <FullscreenLoader />;
 
   return (
-    <Suspense fallback={<FullscreenLoader />}>
+    <Suspense fallback={null}>
       <Routes>
         <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
         <Route path="/passwort-setzen" element={<SetPassword />} />
