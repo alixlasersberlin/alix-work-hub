@@ -50,7 +50,6 @@ const navItems: NavItem[] = [
     children: [
       { path: '/ai-center', label: 'AI Center', icon: Sparkles, roles: ['Admin', 'Super Admin', 'Geschäftsführung', 'Serviceleitung', 'Service', 'Technik', 'Finance', 'Österreich'] },
       { path: '/ai-service-center', label: 'AI Service Center', icon: Sparkles, roles: ['Admin', 'Super Admin', 'Service', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance', 'SACHBEARBEITUNG'] },
-      { path: '/detailsuche', label: 'Detailsuche', icon: SearchCheck, roles: null },
       { path: '/auftragsstatus', label: 'Auftragsstatus', icon: Activity, roles: null },
       { path: '/finance/ai-insights', label: 'KI-Analyse (Finance)', icon: Sparkles, roles: ['Admin', 'Super Admin', 'Finance', 'Geschäftsführung'] },
 
@@ -965,6 +964,31 @@ export default function AppLayout() {
 
         {/* Navigation */}
         <nav className="flex-1 py-2 px-2 space-y-0.5 overflow-y-auto scroll-touch">
+          {/* Detailsuche – globale Suche */}
+          {(() => {
+            const isCollapsedView = collapsed && !mobileOpen;
+            const dActive = isActive('/detailsuche');
+            return (
+              <Link
+                to="/detailsuche"
+                title={isCollapsedView ? 'Detailsuche' : undefined}
+                className={cn(
+                  "mb-2 flex items-center gap-2.5 rounded-lg border transition-all duration-150",
+                  isCollapsedView ? "md:px-0 md:py-2.5 md:justify-center px-3.5 py-2.5" : "px-3 py-2.5",
+                  dActive
+                    ? "bg-primary/10 text-primary border-primary/40"
+                    : "bg-muted/40 text-muted-foreground border-border hover:text-primary hover:border-primary/40 hover:bg-primary/5"
+                )}
+              >
+                <SearchCheck className={cn("w-4 h-4 flex-shrink-0", dActive && "text-primary")} />
+                {!isCollapsedView && (
+                  <span className="text-[13px] font-medium truncate flex-1 text-left">
+                    Detailsuche…
+                  </span>
+                )}
+              </Link>
+            );
+          })()}
           {/* Mein Arbeitsplatz – persönliche Favoriten */}
           {(() => {
             const isCollapsedView = collapsed && !mobileOpen;
