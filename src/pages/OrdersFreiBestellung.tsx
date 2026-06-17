@@ -603,8 +603,8 @@ export default function OrdersFreiBestellung() {
                           {isSuperAdmin && (
                             <Button
                               size="sm"
-                              variant="outline"
-                              className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                              variant="destructive"
+                              className="text-white hover:text-white"
                               onClick={() => setUnassignOrder(o)}
                               title="Lager-Reservierung entfernen und Auftrag aus dieser Liste ausblenden"
                             >
