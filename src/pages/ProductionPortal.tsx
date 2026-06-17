@@ -43,6 +43,7 @@ interface ProductionOrderRow {
   sent_at: string | null;
   approval_status: string | null;
   supplier?: { name: string | null } | null;
+  customer_name?: string | null;
 }
 
 const STATUS_OPTIONS = [
@@ -163,8 +164,21 @@ export default function ProductionPortal() {
       .from('production_orders')
       .select('*, supplier:suppliers(name)')
       .order('liefertermin', { ascending: true });
-    if (error) toast.error(error.message);
-    else setRows(data || []);
+    if (error) { toast.error(error.message); setLoading(false); return; }
+    const list = (data || []) as ProductionOrderRow[];
+    const orderNumbers = Array.from(new Set(list.map(r => r.order_number).filter(Boolean)));
+    const nameMap = new Map<string, string>();
+    if (orderNumbers.length > 0) {
+      const { data: orders } = await supabase
+        .from('orders')
+        .select('order_number, customers(company_name, contact_name)')
+        .in('order_number', orderNumbers as string[]);
+      (orders || []).forEach((o: any) => {
+        const name = o.customers?.company_name || o.customers?.contact_name || '';
+        if (o.order_number && name) nameMap.set(o.order_number, name);
+      });
+    }
+    setRows(list.map(r => ({ ...r, customer_name: nameMap.get(r.order_number) || null })));
     setLoading(false);
   };
 
@@ -310,7 +324,7 @@ export default function ProductionPortal() {
     let out = rows.filter(r => {
       if (statusFilter !== 'all' && r.status !== statusFilter) return false;
       if (!q) return true;
-      const hay = `${r.production_order_number || ''} ${r.order_number} ${r.modellname || ''} ${r.farbe || ''} ${r.bearbeiter || ''} ${r.seriennummer || ''} ${r.sonderwuensche || ''}`.toLowerCase();
+      const hay = `${r.production_order_number || ''} ${r.order_number} ${r.modellname || ''} ${r.farbe || ''} ${r.bearbeiter || ''} ${r.seriennummer || ''} ${r.sonderwuensche || ''} ${r.customer_name || ''}`.toLowerCase();
       return hay.includes(q);
     });
     out = [...out].sort((a, b) => {
@@ -459,6 +473,12 @@ export default function ProductionPortal() {
                       {row.production_order_number || row.order_number}
                     </p>
                     <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                      {row.customer_name && (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold border bg-primary/10 text-primary border-primary/30 inline-flex items-center gap-1 max-w-[220px]">
+                          <User className="w-3 h-3 flex-shrink-0" />
+                          <span className="truncate">{row.customer_name}</span>
+                        </span>
+                      )}
                       <span className={cn('px-2 py-0.5 rounded text-[10px] font-medium border', statusBadgeCls(row.status))}>
                         {tStatus(row.status)}
                       </span>
