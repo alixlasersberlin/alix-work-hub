@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
-  Loader2, ShieldCheck, Search, Download, Calendar, CheckCircle2, Clock, AlertTriangle, Factory,
+  Loader2, ShieldCheck, Search, Download, Calendar, CheckCircle2, Clock, AlertTriangle, Factory, X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -42,6 +42,7 @@ export default function OrderApprovalQueue() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [releasingId, setReleasingId] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -153,6 +154,33 @@ export default function OrderApprovalQueue() {
     URL.revokeObjectURL(url);
   };
 
+  const releaseReservation = async (row: Row) => {
+    if (!isSuperAdmin || !row.order_id) return;
+    if (!confirm(`Reservierung für ${row.production_order_number || row.order_number} wirklich aufheben?`)) return;
+    setReleasingId(row.id);
+    try {
+      const { data: devs, error: fetchErr } = await supabase
+        .from('lager_devices')
+        .select('id, serial_number, model_name')
+        .eq('reserved_order_id', row.order_id);
+      if (fetchErr) throw fetchErr;
+      if (!devs || devs.length === 0) {
+        toast.info('Keine reservierten Geräte zu diesem Auftrag gefunden');
+        return;
+      }
+      const { error } = await supabase
+        .from('lager_devices')
+        .update({ reserved_order_id: null, reservation_week: null })
+        .eq('reserved_order_id', row.order_id);
+      if (error) throw error;
+      toast.success(`${devs.length} Reservierung(en) aufgehoben`);
+    } catch (e: any) {
+      toast.error(e?.message || 'Aufheben fehlgeschlagen');
+    } finally {
+      setReleasingId(null);
+    }
+  };
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return rows;
@@ -257,19 +285,35 @@ export default function OrderApprovalQueue() {
                   <Download className="w-3.5 h-3.5 mr-1.5" /> PDF
                 </Button>
                 {isSuperAdmin && (
-                  <Button
-                    size="sm"
-                    onClick={() => approve(r.id)}
-                    disabled={approvingId === r.id}
-                    className="bg-green-600 hover:bg-green-700 text-white"
-                  >
-                    {approvingId === r.id ? (
-                      <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                    ) : (
-                      <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
-                    )}
-                    Freigeben
-                  </Button>
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => releaseReservation(r)}
+                      disabled={releasingId === r.id || !r.order_id}
+                      className="text-destructive hover:text-destructive border-destructive/40"
+                    >
+                      {releasingId === r.id ? (
+                        <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                      ) : (
+                        <X className="w-3.5 h-3.5 mr-1.5" />
+                      )}
+                      Reservierung aufheben
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => approve(r.id)}
+                      disabled={approvingId === r.id}
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      {approvingId === r.id ? (
+                        <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                      ) : (
+                        <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
+                      )}
+                      Freigeben
+                    </Button>
+                  </>
                 )}
               </div>
             </div>
