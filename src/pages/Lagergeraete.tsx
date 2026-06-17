@@ -932,6 +932,84 @@ export default function Lagergeraete({
               </AlertDialogContent>
             </AlertDialog>
           )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <FileDown className="w-4 h-4" /> Aufträge exportieren
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem
+                onClick={() => {
+                  const rows = filteredDevices;
+                  const header = ['Seriennummer', 'Modell', 'Status', 'Eingangsdatum', 'Auftrag', 'Kunde', 'KW', 'Notizen'];
+                  const esc = (v: any) => {
+                    const s = (v ?? '').toString().replace(/"/g, '""');
+                    return /[";\n]/.test(s) ? `"${s}"` : s;
+                  };
+                  const lines = [header.join(';')];
+                  rows.forEach((d) => {
+                    const cleaned = (d.notes ?? '').replace(/\[Status:[^\]]+\]/g, '').replace(/\[Typ:[^\]]+\]/g, '').trim();
+                    lines.push([
+                      d.serial_number,
+                      d.model_name,
+                      getStatusFromNotes(d.notes),
+                      d.entry_date,
+                      d.orders?.order_number ?? '',
+                      d.orders?.customer_name ?? '',
+                      formatWeek(d.reservation_week),
+                      cleaned,
+                    ].map(esc).join(';'));
+                  });
+                  const blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `${pageTitle.replace(/\s+/g, '_')}_Auftraege_${format(new Date(), 'yyyyMMdd_HHmm')}.csv`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                  toast.success(`${rows.length} Einträge als CSV exportiert`);
+                }}
+              >
+                <FileDown className="w-4 h-4 mr-2" /> Als CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  const rows = filteredDevices;
+                  const doc = createPDF({ orientation: 'landscape' });
+                  doc.setFont('Inter', 'bold');
+                  doc.setFontSize(14);
+                  doc.text(`${pageTitle} – Aufträge (${rows.length})`, 14, 14);
+                  doc.setFont('Inter', 'normal');
+                  doc.setFontSize(9);
+                  doc.text(format(new Date(), 'dd.MM.yyyy HH:mm', { locale: de }), 14, 20);
+                  autoTable(doc, {
+                    startY: 26,
+                    head: [['Seriennummer', 'Modell', 'Status', 'Eingang', 'Auftrag', 'Kunde', 'KW', 'Notizen']],
+                    body: rows.map((d) => {
+                      const cleaned = (d.notes ?? '').replace(/\[Status:[^\]]+\]/g, '').replace(/\[Typ:[^\]]+\]/g, '').trim();
+                      return [
+                        d.serial_number,
+                        d.model_name,
+                        getStatusFromNotes(d.notes),
+                        d.entry_date,
+                        d.orders?.order_number ?? '',
+                        d.orders?.customer_name ?? '',
+                        formatWeek(d.reservation_week),
+                        cleaned,
+                      ];
+                    }),
+                    styles: { font: 'Inter', fontSize: 8, cellPadding: 2 },
+                    headStyles: { fillColor: [30, 30, 30] },
+                  });
+                  doc.save(`${pageTitle.replace(/\s+/g, '_')}_Auftraege_${format(new Date(), 'yyyyMMdd_HHmm')}.pdf`);
+                  toast.success(`${rows.length} Einträge als PDF exportiert`);
+                }}
+              >
+                <FileText className="w-4 h-4 mr-2" /> Als PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button className="gap-2" onClick={() => { resetForm(); setOpen(true); }}>
             <Plus className="w-4 h-4" /> {addLabel}
           </Button>
