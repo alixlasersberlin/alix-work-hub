@@ -473,6 +473,12 @@ export default function ProductionPortal() {
                       {row.production_order_number || row.order_number}
                     </p>
                     <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                      {row.customer_name && (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold border bg-primary/10 text-primary border-primary/30 inline-flex items-center gap-1 max-w-[220px]">
+                          <User className="w-3 h-3 flex-shrink-0" />
+                          <span className="truncate">{row.customer_name}</span>
+                        </span>
+                      )}
                       <span className={cn('px-2 py-0.5 rounded text-[10px] font-medium border', statusBadgeCls(row.status))}>
                         {tStatus(row.status)}
                       </span>
