@@ -196,7 +196,10 @@ export default function DeliveryNoteTab({ order, customer, items, onReload }: Pr
 
       // Signature blocks
       doc.setFontSize(10);
-      doc.text(`Datum: ${new Date().toLocaleDateString('de-DE')}`, ml, fy);
+      const dateLabel = deliveryDate
+        ? new Date(deliveryDate + 'T00:00:00').toLocaleDateString('de-DE')
+        : new Date().toLocaleDateString('de-DE');
+      doc.text(`Datum: ${dateLabel}`, ml, fy);
       fy += 14;
       doc.line(ml, fy, ml + 70, fy);
       doc.line(pw - ml - 70, fy, pw - ml, fy);
