@@ -86,6 +86,7 @@ Deno.serve(async (req) => {
   let idempotencyKey: string
   let templateData: Record<string, any> = {}
   let extraCc: string[] = []
+  let bccEmails: string[] = []
   let skipDefaultCopies = false
   try {
     const body = await req.json()
@@ -97,6 +98,9 @@ Deno.serve(async (req) => {
     }
     if (Array.isArray(body.extraCc)) {
       extraCc = body.extraCc.filter((e: any) => typeof e === 'string' && e.includes('@'))
+    }
+    if (Array.isArray(body.bcc)) {
+      bccEmails = body.bcc.filter((e: any) => typeof e === 'string' && e.includes('@'))
     }
     if (body.skipDefaultCopies === true) skipDefaultCopies = true
   } catch {
