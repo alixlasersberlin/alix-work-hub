@@ -157,8 +157,8 @@ export default function ReparaturList({ archived = false }: { archived?: boolean
                         </Button>
                         <Button
                           size="sm"
-                          variant="outline"
-                          className="border-destructive/40 text-destructive hover:bg-destructive/10"
+                          variant="destructive"
+                          className="text-destructive-foreground"
                           onClick={() => setPending({ row: r, action: 'archive' })}
                         >
                           <Archive className="w-3.5 h-3.5 mr-1" /> Archivieren
