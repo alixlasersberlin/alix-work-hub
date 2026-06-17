@@ -68,7 +68,7 @@ const T: Record<Lang, Record<string, string>> = {
     allStatus: 'All statuses', allPayment: 'All payment',
     sort: 'Sort',
     s_created_desc: 'Newest first', s_liefertermin_asc: 'Delivery ↑', s_liefertermin_desc: 'Delivery ↓', s_order_asc: 'Order no.',
-    intern: 'Internal', model: 'Model', handler: 'Handler', delivery: 'Delivery',
+    intern: 'ORDER CONTROL', model: 'Model', handler: 'Handler', delivery: 'Delivery',
     payment: 'Payment', status: 'Status', actions: 'Actions', supplier: 'Supplier',
     overdue: 'overdue', dueToday: 'due today', dueIn: 'in', days: 'days',
     p_Ja: 'Yes', p_Nein: 'No', p_Teilweise: 'Partial', p_Garantie: 'Warranty',
