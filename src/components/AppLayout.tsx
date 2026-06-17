@@ -803,7 +803,7 @@ export default function AppLayout() {
     }
     const isProductionGroup = path === '/production' && label === 'PRODUCTION';
     const colorClass =
-      path === '/verkauf/anfragen'
+      path === '/verkauf/anfragen' || path === '/verkauf/angebote'
         ? (c > 0 ? 'text-amber-500' : 'text-muted-foreground')
         : path === '/order/freigabe'
           ? (c > 0 ? 'text-yellow-500' : 'text-muted-foreground')
