@@ -1,4 +1,4 @@
-import { useState, Fragment } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import {
   Search, Loader2, Inbox, X, SearchCheck, ChevronDown, ChevronRight,
   Factory, Warehouse, Banknote, MapPin, FileText, MessageSquare, Landmark,
+  BookmarkPlus, CheckCircle2,
 } from 'lucide-react';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -90,6 +91,31 @@ export default function Detailsuche() {
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
+  // Reservierungs-Panel
+  type AvailOrder = {
+    id: string;
+    order_number: string;
+    customer_name: string;
+    zip: string | null;
+    city: string | null;
+    open_models: string[];
+    order_date: string | null;
+  };
+  const [availOrders, setAvailOrders] = useState<AvailOrder[] | null>(null);
+  const [loadingAvail, setLoadingAvail] = useState(false);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('');
+  const [reservingId, setReservingId] = useState<string | null>(null);
+
+  // Auto-Auswahl, wenn genau ein freies Lagergerät vorliegt
+  useEffect(() => {
+    if (!selectedDeviceId && unassignedLager.length === 1) {
+      setSelectedDeviceId(unassignedLager[0].id);
+    }
+    if (selectedDeviceId && !unassignedLager.some(d => d.id === selectedDeviceId)) {
+      setSelectedDeviceId('');
+    }
+  }, [unassignedLager, selectedDeviceId]);
+
   const toggleExpand = (id: string) => {
     setExpanded(prev => {
       const n = new Set(prev);
@@ -101,7 +127,101 @@ export default function Detailsuche() {
   const update = (k: keyof typeof EMPTY) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm(f => ({ ...f, [k]: e.target.value }));
 
-  const reset = () => { setForm({ ...EMPTY }); setHits(null); setUnassignedLager([]); setError(null); setExpanded(new Set()); };
+  const reset = () => {
+    setForm({ ...EMPTY }); setHits(null); setUnassignedLager([]); setError(null);
+    setExpanded(new Set()); setAvailOrders(null); setSelectedDeviceId('');
+  };
+
+  const loadAvailableOrders = async () => {
+    setLoadingAvail(true); setError(null);
+    try {
+      const modelFilter = form.model.trim();
+
+      // 1) Offene Produktions-Positionen ohne Seriennummer
+      let poQ = supabase
+        .from('production_orders')
+        .select('order_id, modellname')
+        .is('seriennummer', null)
+        .not('order_id', 'is', null)
+        .limit(2000);
+      if (modelFilter) poQ = poQ.ilike('modellname', `%${modelFilter}%`);
+      const { data: poRows, error: poErr } = await poQ;
+      if (poErr) throw poErr;
+
+      const openModelsByOrder = new Map<string, Set<string>>();
+      for (const p of (poRows || []) as any[]) {
+        if (!p.order_id) continue;
+        const set = openModelsByOrder.get(p.order_id) ?? new Set<string>();
+        if (p.modellname) set.add(p.modellname);
+        openModelsByOrder.set(p.order_id, set);
+      }
+      const candidateIds = Array.from(openModelsByOrder.keys());
+      if (candidateIds.length === 0) { setAvailOrders([]); setLoadingAvail(false); return; }
+
+      // 2) Bereits durch Lagergerät reservierte Aufträge ausschließen
+      const { data: reserved } = await supabase
+        .from('lager_devices')
+        .select('reserved_order_id')
+        .in('reserved_order_id', candidateIds);
+      const reservedSet = new Set<string>((reserved || []).map((r: any) => r.reserved_order_id).filter(Boolean));
+      const targetIds = candidateIds.filter(id => !reservedSet.has(id));
+      if (targetIds.length === 0) { setAvailOrders([]); setLoadingAvail(false); return; }
+
+      // 3) Auftragsdetails laden
+      let oQ = supabase
+        .from('orders')
+        .select('id, order_number, order_date, billing_address, shipping_address, customers(company_name, contact_name)')
+        .in('id', targetIds)
+        .order('order_date', { ascending: false })
+        .limit(500);
+      if (atOnly) oQ = oQ.eq('source_system', 'zoho_eu_2');
+      const { data: orderRows, error: oErr } = await oQ;
+      if (oErr) throw oErr;
+
+      const out: AvailOrder[] = ((orderRows || []) as any[]).map(o => {
+        const a = addr(o);
+        return {
+          id: o.id,
+          order_number: o.order_number,
+          customer_name: o.customers?.company_name || o.customers?.contact_name || '—',
+          zip: a.zip || null,
+          city: a.city || null,
+          open_models: Array.from(openModelsByOrder.get(o.id) ?? []),
+          order_date: o.order_date,
+        };
+      });
+      setAvailOrders(out);
+    } catch (e: any) {
+      setError(e.message || String(e));
+    } finally {
+      setLoadingAvail(false);
+    }
+  };
+
+  const reserveOrder = async (orderId: string) => {
+    if (!selectedDeviceId) {
+      toast.error('Bitte zuerst ein Lagergerät auswählen (Suche per Seriennummer).');
+      return;
+    }
+    setReservingId(orderId);
+    try {
+      const { error: upErr } = await supabase
+        .from('lager_devices')
+        .update({ reserved_order_id: orderId })
+        .eq('id', selectedDeviceId);
+      if (upErr) throw upErr;
+      toast.success('Reservierung gespeichert.');
+      // Lokal entfernen
+      setAvailOrders(prev => prev ? prev.filter(o => o.id !== orderId) : prev);
+      setUnassignedLager(prev => prev.filter(d => d.id !== selectedDeviceId));
+      setSelectedDeviceId('');
+    } catch (e: any) {
+      toast.error(e.message || 'Reservierung fehlgeschlagen');
+    } finally {
+      setReservingId(null);
+    }
+  };
+
 
   const runSearch = async () => {
     const trimmed = Object.fromEntries(Object.entries(form).map(([k, v]) => [k, v.trim()])) as typeof EMPTY;
@@ -338,9 +458,76 @@ export default function Detailsuche() {
           <Button variant="outline" onClick={reset} disabled={loading}>
             <X className="w-4 h-4 mr-2" /> Zurücksetzen
           </Button>
+          <Button variant="secondary" onClick={loadAvailableOrders} disabled={loadingAvail}>
+            {loadingAvail ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <BookmarkPlus className="w-4 h-4 mr-2" />}
+            Reservierung – verfügbare Aufträge
+          </Button>
         </div>
         {error && <div className="text-sm text-destructive">{error}</div>}
       </div>
+
+      {availOrders !== null && (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 overflow-hidden">
+          <div className="px-4 py-3 border-b border-amber-500/20 flex flex-wrap items-center gap-3">
+            <BookmarkPlus className="w-4 h-4 text-amber-500" />
+            <h3 className="text-sm font-semibold">Verfügbare Aufträge für Reservierung</h3>
+            <span className="text-xs text-muted-foreground">({availOrders.length})</span>
+            <div className="ml-auto flex items-center gap-2">
+              <Label className="text-xs whitespace-nowrap">Lagergerät:</Label>
+              <select
+                value={selectedDeviceId}
+                onChange={(e) => setSelectedDeviceId(e.target.value)}
+                className="h-8 rounded-md border border-input bg-background px-2 text-xs"
+              >
+                <option value="">— wählen —</option>
+                {unassignedLager.map(d => (
+                  <option key={d.id} value={d.id}>
+                    {(d.model_name || '—')} · SN {d.serial_number}
+                  </option>
+                ))}
+              </select>
+              <Button size="sm" variant="ghost" className="h-8" onClick={() => setAvailOrders(null)}>
+                <X className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+          </div>
+          {unassignedLager.length === 0 && (
+            <div className="px-4 py-2 text-xs text-muted-foreground border-b border-amber-500/20">
+              Tipp: Zuerst per <strong>Seriennummer</strong> ein freies Lagergerät suchen, damit es zur Reservierung verfügbar ist.
+            </div>
+          )}
+          <div className="divide-y divide-border max-h-[480px] overflow-y-auto">
+            {availOrders.length === 0 ? (
+              <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+                Keine offenen Aufträge ohne Reservierung gefunden.
+              </div>
+            ) : availOrders.map(o => (
+              <div key={o.id} className="px-4 py-3 flex flex-wrap items-center gap-x-3 gap-y-1 hover:bg-amber-500/10">
+                <button onClick={() => navigate(`/auftraege/${o.id}`)} className="font-medium hover:underline">
+                  {o.order_number}
+                </button>
+                <span className="text-xs text-muted-foreground">{formatDate(o.order_date)}</span>
+                <span className="text-sm">{o.customer_name}</span>
+                <span className="text-xs text-muted-foreground">{[o.zip, o.city].filter(Boolean).join(' ')}</span>
+                {o.open_models.length > 0 && (
+                  <span className="text-xs text-amber-600 dark:text-amber-400">{o.open_models.join(', ')}</span>
+                )}
+                <Button
+                  size="sm"
+                  className="ml-auto"
+                  disabled={!selectedDeviceId || reservingId === o.id}
+                  onClick={() => reserveOrder(o.id)}
+                >
+                  {reservingId === o.id
+                    ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                    : <CheckCircle2 className="w-3.5 h-3.5 mr-1" />}
+                  Reservieren
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {unassignedLager.length > 0 && (
         <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 overflow-hidden">
