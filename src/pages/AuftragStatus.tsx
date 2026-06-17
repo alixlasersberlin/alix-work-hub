@@ -7,12 +7,18 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import {
   Activity, Search, Loader2, Calendar, Euro, CheckCircle2, XCircle,
-  Factory, Package, Truck, MapPin, ExternalLink,
+  Factory, Package, Truck, MapPin, ExternalLink, X, Plus,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { withAt } from '@/lib/atSuffix';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/infinity/PageHeader';
+
+type ReservedDevice = {
+  id: string;
+  serial_number: string;
+  model_name: string;
+};
 
 type StatusResult = {
   id: string;
@@ -42,6 +48,38 @@ export default function AuftragStatus() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<StatusResult | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [reservedDevices, setReservedDevices] = useState<ReservedDevice[]>([]);
+  const [releasing, setReleasing] = useState<string | null>(null);
+
+  async function loadReservedDevices(orderId: string) {
+    const { data } = await supabase
+      .from('lager_devices')
+      .select('id, serial_number, model_name')
+      .eq('reserved_order_id', orderId);
+    setReservedDevices((data ?? []) as ReservedDevice[]);
+  }
+
+  async function releaseDevice(deviceId: string) {
+    if (!confirm('Reservierung dieses Geräts wirklich aufheben?')) return;
+    setReleasing(deviceId);
+    try {
+      const { error } = await supabase
+        .from('lager_devices')
+        .update({ reserved_order_id: null, reservation_week: null })
+        .eq('id', deviceId);
+      if (error) throw error;
+      toast.success('Reservierung aufgehoben');
+      if (result) {
+        await loadReservedDevices(result.id);
+        setResult({ ...result, reserviert: Math.max(0, result.reserviert - 1) });
+      }
+    } catch (e: any) {
+      toast.error(e?.message ?? 'Fehler beim Aufheben');
+    } finally {
+      setReleasing(null);
+    }
+  }
+
 
   async function search() {
     const term = q.trim();
@@ -103,8 +141,10 @@ export default function AuftragStatus() {
       geliefert: delRes.count ?? 0,
       route_plans: rpRes.count ?? 0,
     });
+    await loadReservedDevices(o.id);
     setLoading(false);
   }
+
 
   function onKey(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Enter') search();
@@ -170,6 +210,22 @@ export default function AuftragStatus() {
             </Button>
           </CardHeader>
           <CardContent className="space-y-6">
+            <div className="flex flex-wrap gap-2">
+              <Button asChild size="sm" className="gold-gradient text-primary-foreground">
+                <Link to={`/order/neu?order_id=${result.id}`}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Produktionsbestellung anlegen
+                </Link>
+              </Button>
+              <Button asChild size="sm" variant="outline">
+                <Link to={`/order/reklamation/neu?order_id=${result.id}`}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Reklamation anlegen
+                </Link>
+              </Button>
+            </div>
+
+
             <div className="grid gap-4 md:grid-cols-2">
               <Field label="Kunde" value={result.customer_name} />
               <Field label="Verkäufer" value={result.salesperson_name || '–'} />
@@ -203,6 +259,43 @@ export default function AuftragStatus() {
                 <StepCard icon={<MapPin className="h-4 w-4" />} label="Tourenplanung" count={result.route_plans} ok={result.route_plans > 0} />
               </div>
             </div>
+
+            {reservedDevices.length > 0 && (
+              <>
+                <Separator />
+                <div>
+                  <div className="text-sm font-semibold mb-3">
+                    Reservierte Geräte ({reservedDevices.length})
+                  </div>
+                  <div className="rounded-lg border border-border divide-y divide-border">
+                    {reservedDevices.map((d) => (
+                      <div key={d.id} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-muted/30">
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate">{d.model_name}</p>
+                          <p className="text-xs text-muted-foreground font-mono mt-0.5">SN: {d.serial_number}</p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => releaseDevice(d.id)}
+                          disabled={releasing === d.id}
+                          className="text-destructive hover:text-destructive flex-shrink-0"
+                        >
+                          {releasing === d.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <>
+                              <X className="w-4 h-4 mr-1" />
+                              Reservierung aufheben
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       )}
