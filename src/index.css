@@ -2140,3 +2140,29 @@ html[data-aurora="2"] :is(.card, [data-slot="card"], [class*="card"], .rounded-x
   z-index: 1;
 }
 
+/* Template-Schutz für Radix-Portale: Dialoge/Dropdowns dürfen nie wie Cards
+   oder Seiten-Container transformiert/relativ positioniert werden. Sonst
+   blitzen Menüs/Bestätigungsdialoge beim Klick nur kurz auf und schließen. */
+html :is([data-radix-portal], [data-radix-popper-content-wrapper]) {
+  z-index: 9999 !important;
+  pointer-events: auto !important;
+  transform-style: flat !important;
+  perspective: none !important;
+}
+
+html [role="dialog"][data-state] {
+  position: fixed !important;
+  left: 50% !important;
+  top: 50% !important;
+  z-index: 10000 !important;
+  transform: translate(-50%, -50%) !important;
+  pointer-events: auto !important;
+}
+
+html [data-radix-popper-content-wrapper] > * {
+  position: relative !important;
+  z-index: 10000 !important;
+  pointer-events: auto !important;
+  transform: none !important;
+}
+
