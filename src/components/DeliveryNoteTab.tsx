@@ -16,6 +16,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { createPDF } from '@/lib/pdf-utils';
 import autoTable from 'jspdf-autotable';
 import alixLogo from '@/assets/alix-lasers-logo.png';
+import lieferscheinBg from '@/assets/lieferschein-vorlage.png.asset.json';
 import { createRestbestellungMarker } from '@/lib/restbestellung';
 
 interface Props {
@@ -118,13 +119,13 @@ export default function DeliveryNoteTab({ order, customer, items, onReload }: Pr
       const doc = createPDF({ unit: 'mm', format: 'a4' });
       const pw = doc.internal.pageSize.getWidth();
       const ph = doc.internal.pageSize.getHeight();
-      const ml = 18;
+      const ml = 25;
       let y = 18;
 
-      // Logo top-right
+      // Background template (full A4)
       try {
-        const logoData = await loadImageAsBase64(alixLogo);
-        doc.addImage(logoData, 'PNG', pw - 60, 10, 46, 18);
+        const bgData = await loadImageAsBase64(lieferscheinBg.url);
+        doc.addImage(bgData, 'PNG', 0, 0, pw, ph);
       } catch { /* ignore */ }
 
       // Title
@@ -207,12 +208,7 @@ export default function DeliveryNoteTab({ order, customer, items, onReload }: Pr
       doc.text('Unterschrift Kunde', ml, fy + 5);
       doc.text('Unterschrift Alix Lasers', pw - ml - 70, fy + 5);
 
-      // Footer
-      doc.setFontSize(7);
-      doc.setTextColor(110);
-      const footer = 'Alix Lasers GmbH, Buchsbaumweg 53, 12357 Berlin, Telefon 030-57712745 · Registergericht: Amtsgericht Berlin Charlottenburg · HRB 245388 · DE 321691012 · Berliner Sparkasse DE70 1005 0000 0191 1695 95 · BELADEBEXXX';
-      const ftLines = doc.splitTextToSize(footer, pw - ml * 2);
-      doc.text(ftLines, ml, ph - 12);
+      // Footer is part of the background template – no extra footer drawn.
 
       doc.save(`Lieferschein_${order.order_number || order.id}.pdf`);
 
