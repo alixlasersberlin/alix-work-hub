@@ -674,7 +674,8 @@ export default function AppLayout() {
         .or('assigned_user.is.null,lead_status.eq.Neu,lead_status.eq.Importiert - Angebot offen')
         .not('lead_status', 'in', '("Gewonnen","Verloren","Archiviert")');
       if (cancelled) return;
-      setLagerCounts((prev) => ({ ...prev, '/verkauf/anfragen': count ?? 0 }));
+      const n = count ?? 0;
+      setLagerCounts((prev) => ({ ...prev, '/verkauf/anfragen': n, '/verkauf/angebote': n }));
     };
     load();
     const intervalId = window.setInterval(load, 5 * 60 * 1000);
