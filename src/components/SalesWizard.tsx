@@ -115,10 +115,11 @@ interface Props {
 }
 
 // Shared input styling for the light premium look
+// `!` important utilities override the global `.design-aurora.dark input/select` theme rules.
 const inputCls =
-  'bg-white/90 border-slate-200/80 text-slate-900 placeholder:text-slate-400 focus-visible:ring-amber-300/60 focus-visible:border-amber-300 shadow-sm';
+  '!bg-white !text-slate-900 !border-slate-200 placeholder:text-slate-400 focus-visible:ring-amber-300/60 focus-visible:!border-amber-300 shadow-sm';
 const selectCls =
-  'w-full h-11 rounded-xl border px-3 text-sm bg-white/90 border-slate-200/80 text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-300/60 shadow-sm';
+  'w-full h-11 rounded-xl border px-3 text-sm !bg-white !text-slate-900 !border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-300/60 shadow-sm';
 
 export default function SalesWizard({ publicMode = false }: Props) {
   const { t } = useWizardLang();
