@@ -163,6 +163,7 @@ export default function ProductionPortal() {
     const { data, error } = await supabase
       .from('production_orders')
       .select('*, supplier:suppliers(name)')
+      .neq('status', 'fertig')
       .order('liefertermin', { ascending: true });
     if (error) { toast.error(error.message); setLoading(false); return; }
     const list = (data || []) as ProductionOrderRow[];
@@ -194,7 +195,12 @@ export default function ProductionPortal() {
     setUpdatingId(null);
     if (error) return toast.error(error.message);
     toast.success(t.statusUpdated);
-    setRows(prevRows => prevRows.map(r => r.id === id ? { ...r, status: newStatus } : r));
+    if (newStatus === 'fertig') {
+      setRows(prevRows => prevRows.filter(r => r.id !== id));
+      toast.info('Auftrag wurde nach „Fertig produziert" verschoben.');
+    } else {
+      setRows(prevRows => prevRows.map(r => r.id === id ? { ...r, status: newStatus } : r));
+    }
     if (newStatus === 'fertig' && prev?.status !== 'fertig') {
       const { sendProductionSuccessfulEmail } = await import('@/lib/send-production-successful-email');
       const res = await sendProductionSuccessfulEmail(id, 'automatisch');
@@ -294,7 +300,12 @@ export default function ProductionPortal() {
     if (error) return toast.error(error.message);
     toast.success(t.saved);
     const prevStatus = editing.status;
-    setRows(prev => prev.map(r => r.id === editing.id ? { ...r, ...payload } as ProductionOrderRow : r));
+    if (payload.status === 'fertig') {
+      setRows(prev => prev.filter(r => r.id !== editing.id));
+      toast.info('Auftrag wurde nach „Fertig produziert" verschoben.');
+    } else {
+      setRows(prev => prev.map(r => r.id === editing.id ? { ...r, ...payload } as ProductionOrderRow : r));
+    }
     const editingId = editing.id;
     setEditing(null);
     if (payload.status === 'fertig' && prevStatus !== 'fertig') {
