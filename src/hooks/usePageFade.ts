@@ -14,21 +14,15 @@ export const bootPageFade = () => {
 
 export const usePageFade = () => {
   const [on, setOn] = useState<boolean>(() => {
-    try {
-      const v = localStorage.getItem(KEY);
-      return v === null ? true : v === "on";
-    } catch {
-      return true;
-    }
+    return false;
   });
   useEffect(() => {
     try {
-      localStorage.setItem(KEY, on ? "on" : "off");
+      localStorage.setItem(KEY, "off");
     } catch {
       /* noop */
     }
-    if (on) document.documentElement.setAttribute("data-page-fade", "on");
-    else document.documentElement.removeAttribute("data-page-fade");
-  }, [on]);
-  return { on, setOn };
+    document.documentElement.removeAttribute("data-page-fade");
+  }, []);
+  return { on, setOn: (_value: boolean) => setOn(false) };
 };
