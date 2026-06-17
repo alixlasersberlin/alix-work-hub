@@ -172,6 +172,12 @@ Deno.serve(async (req) => {
       seen.add(k)
       recipients.push({ email, subjectPrefix: '[Kopie] ', keySuffix: `copy-extra-${idx}` })
     })
+    bccEmails.forEach((email, idx) => {
+      const k = email.toLowerCase()
+      if (seen.has(k)) return
+      seen.add(k)
+      recipients.push({ email, keySuffix: `bcc-${idx}` })
+    })
 
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
     const isRateLimited = (msg?: string) => !!msg && /429|rate.?limit|high demand/i.test(msg)
