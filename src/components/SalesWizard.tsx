@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import bgAsset from '@/assets/wizard/alix-lasers-bg.jpg.asset.json';
 import WizardLanguageSwitcher from '@/components/WizardLanguageSwitcher';
 import { useWizardLang } from '@/i18n/wizard';
+import logoAsset from '@/assets/alix-lasers-logo-gold-new.png.asset.json';
 import { ALIX_LASERS_MODELS, ALIX_BEAUTY_MODELS } from '@/lib/alix-models';
 
 import imgHair from '@/assets/wizard/haarentfernung.jpg';
@@ -227,7 +228,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
             </div>
           </div>
           <div className="absolute inset-x-0 top-0 z-30 px-6 py-6 flex items-center justify-between">
-            <div className="text-2xl font-bold tracking-[0.18em] text-slate-900">Alix Lasers ®</div>
+            <img src={logoAsset.url} alt="Alix Lasers" className="h-9 md:h-10 w-auto" />
             <div className="flex items-center gap-4">
               <div className="text-xs text-slate-500 hidden md:block">100% AI Full Technologie</div>
               <WizardLanguageSwitcher variant="light" />
@@ -279,11 +280,8 @@ export default function SalesWizard({ publicMode = false }: Props) {
                 <Slide key={step} direction={direction}>
                   {step === 0 && (
                     <div className="text-center space-y-6 py-4">
-                      <div className="mx-auto h-16 w-16 rounded-2xl bg-gradient-to-br from-amber-100 to-rose-100 flex items-center justify-center shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_10px_30px_-10px_rgba(217,119,6,0.35)]">
-                        <Sparkles className="h-8 w-8 text-amber-500" />
-                      </div>
+                      <img src={logoAsset.url} alt="Alix Lasers" className="mx-auto h-12 md:h-16 w-auto drop-shadow-[0_10px_25px_rgba(217,119,6,0.25)]" />
                       <div>
-                        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900">Alix Lasers ®</h1>
                         <p className="mt-2 text-xs md:text-sm text-slate-500 tracking-[0.22em] uppercase">
                           {t.brand_tag}
                         </p>
