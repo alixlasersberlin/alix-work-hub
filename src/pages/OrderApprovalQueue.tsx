@@ -42,6 +42,7 @@ export default function OrderApprovalQueue() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [releasingId, setReleasingId] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
