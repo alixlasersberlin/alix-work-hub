@@ -285,19 +285,35 @@ export default function OrderApprovalQueue() {
                   <Download className="w-3.5 h-3.5 mr-1.5" /> PDF
                 </Button>
                 {isSuperAdmin && (
-                  <Button
-                    size="sm"
-                    onClick={() => approve(r.id)}
-                    disabled={approvingId === r.id}
-                    className="bg-green-600 hover:bg-green-700 text-white"
-                  >
-                    {approvingId === r.id ? (
-                      <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                    ) : (
-                      <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
-                    )}
-                    Freigeben
-                  </Button>
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => releaseReservation(r)}
+                      disabled={releasingId === r.id || !r.order_id}
+                      className="text-destructive hover:text-destructive border-destructive/40"
+                    >
+                      {releasingId === r.id ? (
+                        <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                      ) : (
+                        <X className="w-3.5 h-3.5 mr-1.5" />
+                      )}
+                      Reservierung aufheben
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => approve(r.id)}
+                      disabled={approvingId === r.id}
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      {approvingId === r.id ? (
+                        <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                      ) : (
+                        <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
+                      )}
+                      Freigeben
+                    </Button>
+                  </>
                 )}
               </div>
             </div>
