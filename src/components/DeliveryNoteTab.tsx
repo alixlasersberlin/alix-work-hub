@@ -54,6 +54,7 @@ function fmtAddress(a: any): string[] {
 export default function DeliveryNoteTab({ order, customer, items, onReload }: Props) {
   const { user } = useAuth();
   const [allowPartial, setAllowPartial] = useState(true);
+  const [deliveryDate, setDeliveryDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
   const [selection, setSelection] = useState<Record<string, { checked: boolean; qty: number }>>(
     () => Object.fromEntries(items.map(i => [i.id, { checked: true, qty: Number(i.quantity || 0) }])),
   );
@@ -195,7 +196,10 @@ export default function DeliveryNoteTab({ order, customer, items, onReload }: Pr
 
       // Signature blocks
       doc.setFontSize(10);
-      doc.text(`Datum: ${new Date().toLocaleDateString('de-DE')}`, ml, fy);
+      const dateLabel = deliveryDate
+        ? new Date(deliveryDate + 'T00:00:00').toLocaleDateString('de-DE')
+        : new Date().toLocaleDateString('de-DE');
+      doc.text(`Datum: ${dateLabel}`, ml, fy);
       fy += 14;
       doc.line(ml, fy, ml + 70, fy);
       doc.line(pw - ml - 70, fy, pw - ml, fy);
@@ -259,7 +263,17 @@ export default function DeliveryNoteTab({ order, customer, items, onReload }: Pr
         <h2 className="text-base font-display font-bold text-foreground flex items-center gap-2">
           <Truck className="w-4 h-4 text-primary" /> Lieferschein
         </h2>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Label htmlFor="delivery-date" className="text-sm">Datum</Label>
+            <Input
+              id="delivery-date"
+              type="date"
+              value={deliveryDate}
+              onChange={(e) => setDeliveryDate(e.target.value)}
+              className="h-8 w-40"
+            />
+          </div>
           <div className="flex items-center gap-2">
             <Switch id="partial" checked={allowPartial} onCheckedChange={setAllowPartial} />
             <Label htmlFor="partial" className="text-sm">Teillieferung erlauben</Label>
