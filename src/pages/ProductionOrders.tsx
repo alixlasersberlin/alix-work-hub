@@ -8,12 +8,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   Plus, Loader2, Factory, Users as UsersIcon, FileText, Pencil, Trash2, AlertTriangle,
   Search, Calendar, Truck, User, Package, Hash, ArrowUpDown, CheckCircle2, XCircle, Clock, Mail,
+  Download, FileDown,
 } from 'lucide-react';
 import { sendProductionOrderEmail } from '@/lib/send-production-order-email';
 import { toast } from 'sonner';
 import { format, differenceInCalendarDays, isValid } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { createPDF } from '@/lib/pdf-utils';
 import { PageSizeSelector, usePagination, PaginationControls } from '@/components/PageSizeSelector';
 import { useViewMode } from '@/hooks/useViewMode';
 import { ViewToggle } from '@/components/ViewToggle';
