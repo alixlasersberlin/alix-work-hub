@@ -634,7 +634,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
                         type="button"
                         onClick={goNext}
                         disabled={!canContinue() || submitting}
-                        className="h-11 px-7 rounded-xl bg-slate-900 hover:bg-slate-800 text-white shadow-[0_15px_40px_-18px_rgba(15,23,42,0.55)] disabled:bg-slate-300 disabled:shadow-none transition"
+                        className="h-11 px-7 rounded-xl bg-gradient-to-b from-[#d8b56a] to-[#b8893a] hover:from-[#e2c179] hover:to-[#c4953f] text-white shadow-[0_15px_40px_-18px_rgba(184,137,58,0.7),inset_0_1px_0_rgba(255,255,255,0.35)] disabled:from-slate-300 disabled:to-slate-300 disabled:shadow-none transition"
                       >
                         {t.next} <ArrowRight className="h-4 w-4" />
                       </Button>
