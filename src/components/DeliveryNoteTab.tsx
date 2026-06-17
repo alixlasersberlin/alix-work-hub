@@ -16,6 +16,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { createPDF } from '@/lib/pdf-utils';
 import autoTable from 'jspdf-autotable';
 import alixLogo from '@/assets/alix-lasers-logo.png';
+import lieferscheinBg from '@/assets/lieferschein-vorlage.png.asset.json';
 import { createRestbestellungMarker } from '@/lib/restbestellung';
 
 interface Props {
