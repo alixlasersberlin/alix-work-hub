@@ -164,8 +164,21 @@ export default function ProductionPortal() {
       .from('production_orders')
       .select('*, supplier:suppliers(name)')
       .order('liefertermin', { ascending: true });
-    if (error) toast.error(error.message);
-    else setRows(data || []);
+    if (error) { toast.error(error.message); setLoading(false); return; }
+    const list = (data || []) as ProductionOrderRow[];
+    const orderNumbers = Array.from(new Set(list.map(r => r.order_number).filter(Boolean)));
+    const nameMap = new Map<string, string>();
+    if (orderNumbers.length > 0) {
+      const { data: orders } = await supabase
+        .from('orders')
+        .select('order_number, customers(company_name, contact_name)')
+        .in('order_number', orderNumbers as string[]);
+      (orders || []).forEach((o: any) => {
+        const name = o.customers?.company_name || o.customers?.contact_name || '';
+        if (o.order_number && name) nameMap.set(o.order_number, name);
+      });
+    }
+    setRows(list.map(r => ({ ...r, customer_name: nameMap.get(r.order_number) || null })));
     setLoading(false);
   };
 
