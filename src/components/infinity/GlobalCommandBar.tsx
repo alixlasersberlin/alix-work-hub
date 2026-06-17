@@ -6,7 +6,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import {
-  BarChart3, Boxes, Building2, ClipboardList, Crown, FileText, Gauge, Home, Layers, Package,
+  BarChart3, Boxes, Building2, ClipboardList, Crown, FileText, Gauge, Home, Package,
   Receipt, Settings, ShieldCheck, Sparkles, Ticket, Truck, User, Users, Wrench,
 } from "lucide-react";
 
@@ -34,7 +34,6 @@ const NAV: { label: string; to: string; icon: any; roles?: string[]; group: stri
   { label: "AI Center", to: "/ai-center", icon: Sparkles, group: "Navigation" },
   { label: "Executive Command Center", to: "/executive", icon: Crown, roles: ["Super Admin"], group: "Admin" },
   { label: "Management Dashboard", to: "/management-dashboard", icon: Gauge, roles: ["Super Admin"], group: "Admin" },
-  { label: "Design-Template / Themes", to: "/design-template", icon: Layers, group: "Einstellungen" },
   { label: "Einstellungen", to: "/einstellungen", icon: Settings, group: "Einstellungen" },
 ];
 
