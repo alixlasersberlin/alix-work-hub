@@ -241,13 +241,32 @@ export default function Orders() {
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
-      <PageHeader
-        icon={ClipboardList}
-        title="Aufträge"
-        subtitle={`${filtered.length} Aufträge`}
-        noBreadcrumbs
-        meta={<InfinityStatusBadge kind="done" label={`${filtered.length}`} />}
-      />
+      <div className="flex items-start justify-between gap-4">
+        <PageHeader
+          icon={ClipboardList}
+          title="Aufträge"
+          subtitle={`${filtered.length} Aufträge`}
+          noBreadcrumbs
+          meta={<InfinityStatusBadge kind="done" label={`${filtered.length}`} />}
+        />
+        {canExportAll && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <FileDown className="w-4 h-4" /> Aufträge exportieren
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem onClick={handleExportCsv}>
+                <FileDown className="w-4 h-4 mr-2" /> Als CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportPdf}>
+                <FileText className="w-4 h-4 mr-2" /> Als PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </div>
 
       <Tabs defaultValue="list" className="space-y-4 mt-4">
         <TabsList className="bg-secondary">
