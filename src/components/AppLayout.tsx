@@ -7,7 +7,7 @@ import { useUiTemplate } from '@/hooks/useUiTemplate';
 import { supabase } from '@/integrations/supabase/client';
 import {
   LayoutDashboard, ClipboardList, MapPin, Banknote, Users, LogOut, Shield, ShieldCheck, Menu, X, ChevronLeft, Building2, Cloud, Server, ListOrdered, Sun, Moon, Gavel, Truck, PackageCheck, BarChart3, Factory, ShoppingCart, ChevronDown, TrendingUp, Workflow, AlertTriangle, Calendar, FileText, FileSignature, Warehouse, Settings, Package, FilePlus, BookOpen, Receipt, Undo2, CreditCard, CheckCircle2, FolderTree, ScrollText, Inbox, Mail, Landmark, SearchCheck, Pause, Clock, HelpCircle, Star, Lock, Globe, Wrench, Ticket,
-  PenSquare, Send, FileEdit, MessageSquare, MessageCircle, Sparkles, FileCheck2, Files, Phone, PhoneCall, CheckSquare, CalendarClock, Megaphone, Activity, MailX, HeartPulse, TestTube2, Rocket, Database, Upload, FileDown, BadgeCheck, GraduationCap, Brain, AlertOctagon, LineChart, ListChecks, Cog, Boxes, Repeat
+  PenSquare, Send, FileEdit, MessageSquare, MessageCircle, Sparkles, FileCheck2, Files, Phone, PhoneCall, CheckSquare, CalendarClock, Megaphone, Activity, MailX, HeartPulse, TestTube2, Rocket, Database, Upload, FileDown, BadgeCheck, GraduationCap, Brain, AlertOctagon, LineChart, ListChecks, Cog, Boxes, Repeat, Wallet
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -344,92 +344,95 @@ const navItems: NavItem[] = [
   {
     path: '/finance', label: 'FINANCE & CONTROLLING', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance', 'Finanzierungen', 'Order'],
     children: [
-      // ── Übersicht ─────────────────────────────────────────────
-      { path: '/finance/dashboard', label: 'Dashboard', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'] },
-      { path: '/verkauf/anzahlungsrechnung', label: 'Neue Anzahlungen', icon: Receipt, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Tourenplanung', 'Read Only Audit', 'Read Only', 'Geschäftsführung', 'Marketing', 'Technik', 'Kundenservice', 'Vertrieb', 'Reparaturannahme', 'Bestellwesen', 'Serviceleitung', 'Service', 'QM', 'SACHBEARBEITUNG'] },
-      { path: '/verkauf/anzahlungsrechnung', label: 'Anzahlungsrechnung', icon: Receipt, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
-      { path: '/finance/rechnungen', label: 'Rechnung', icon: FileText, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
-      { path: '/verkauf/gutschriften', label: 'Gutschriften', icon: Undo2, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
-      { path: '/finance/cockpit', label: 'Finance Cockpit', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'] },
-      { path: '/finance/controlling', label: 'Controlling-Cockpit', icon: Activity, roles: ['Admin', 'Super Admin', 'Finance'] },
-      { path: '/finance/wiederkehrende-zahler', label: 'Wiederkehrende Zahler', icon: Repeat, roles: ['Admin', 'Super Admin', 'Finance'] },
-
-      // ── Debitoren (Forderungen) ───────────────────────────────
-      { path: '/finance/rechnungen', label: 'Rechnungen', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
-      { path: '/finance/rechnungsvorschlaege', label: 'Rechnungsvorschläge (Reparaturen)', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'] },
-      { path: '/finance/offene-posten', label: 'Offene Posten', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
-
-      { path: '/finance/anzahlungen', label: 'Anzahlungen', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'] },
-      { path: '/finance/zahlungen', label: 'Zahlungen', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'] },
-      { path: '/finance/mahnwesen', label: 'Mahnwesen', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
-
-      // ── Kreditoren (Verbindlichkeiten) ────────────────────────
-      { path: '/finance/eingangsrechnungen', label: 'Eingangsrechnungen', icon: Inbox, roles: ['Admin', 'Super Admin', 'Finance'] },
-      { path: '/finance/belege', label: 'Belegarchiv', icon: Files, roles: ['Admin', 'Super Admin', 'Finance'] },
-      { path: '/finance/p2p', label: 'Procure-to-Pay', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance', 'Geschäftsführung'] },
-
-      // ── Verträge, Raten & Leasing ─────────────────────────────
-      { path: '/finance/vertraege', label: 'Verträge', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
-      { path: '/finance/raten', label: 'Laufende Raten', icon: ScrollText, roles: ['Admin', 'Super Admin', 'Finance'] },
-      { path: '/finance/alix-flex', label: 'ALIX FLEX', icon: Banknote, roles: ['Admin', 'Super Admin'] },
       {
-        path: '/finanzierungen', label: 'FREMD LEASING', icon: Landmark, roles: ['Admin', 'Super Admin', 'Finance', 'Finanzierungen', 'Order'],
+        path: '/finance/dashboard', label: 'DASHBOARD', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'],
         children: [
-          { path: '/finanzierungen/leasing-bank', label: 'Verfügbare Aufträge', icon: Landmark, roles: ['Admin', 'Super Admin', 'Finance', 'Finanzierungen', 'Order'] },
-          { path: '/finanzierungen/beantragen', label: 'Finanzierung beantragen', icon: FileSignature, roles: ['Admin', 'Super Admin', 'Finance', 'Finanzierungen', 'Order'] },
-          { path: '/finanzierungen/anfragen-offen', label: 'Anfragen offen', icon: Clock, roles: ['Admin', 'Super Admin', 'Finance', 'Finanzierungen', 'Order'] },
-          { path: '/finanzierungen/zusagen-bank', label: 'Zusagen Bank', icon: CheckCircle2, roles: ['Admin', 'Super Admin', 'Finance', 'Finanzierungen', 'Order'] },
-          { path: '/finanzierungen/absagen-bank', label: 'Absagen Bank', icon: X, roles: ['Admin', 'Super Admin', 'Finance', 'Finanzierungen', 'Order'] },
+          { path: '/finance/dashboard', label: 'Dashboard', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'] },
+          { path: '/finance/cockpit', label: 'Finance Cockpit', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'] },
+          { path: '/finance/controlling', label: 'Controlling-Cockpit', icon: Activity, roles: ['Admin', 'Super Admin', 'Finance'] },
         ],
       },
-
-      // ── Banking & Zahlungsverkehr ─────────────────────────────
-      { path: '/finance/bank', label: 'Bankimport', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'] },
-      { path: '/finance/sepa', label: 'SEPA Lastschriften', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'] },
-      { path: '/finance/treasury', label: 'Treasury', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance', 'Geschäftsführung'] },
-
-      // ── Buchhaltung & Abschluss ───────────────────────────────
-      { path: '/finance/anlagen', label: 'Anlagenbuchhaltung', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
-      { path: '/finance/anlagen/afa-lauf', label: 'AfA-Lauf', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
-      { path: '/finance/bwa', label: 'BWA', icon: BarChart3, roles: ['Admin', 'Super Admin', 'Finance'] },
-      { path: '/finance/guv', label: 'GuV', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
-      { path: '/finance/bilanz', label: 'Bilanz', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
-      { path: '/finance/jahresabschluss', label: 'Jahresabschluss', icon: Lock, roles: ['Admin', 'Super Admin', 'Finance'] },
-      { path: '/finance/datev', label: 'DATEV', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
-
-      // ── Steuer & Meldewesen ───────────────────────────────────
-      { path: '/finance/steuer', label: 'Steuer-Auswertung', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
-      { path: '/finance/meldewesen', label: 'Steuer & Meldewesen', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance', 'Geschäftsführung'] },
-
-      // ── Planung & Controlling ─────────────────────────────────
-      { path: '/finance/budget', label: 'Budgetplanung', icon: BarChart3, roles: ['Admin', 'Super Admin', 'Finance'] },
-      { path: '/finance/soll-ist', label: 'Soll-Ist-Vergleich', icon: TrendingUp, roles: ['Admin', 'Super Admin', 'Finance'] },
-      { path: '/finance/forecast', label: 'Rolling Forecast', icon: LineChart, roles: ['Admin', 'Super Admin', 'Finance'] },
-      { path: '/finance/liquiditaet', label: 'Liquiditätsplanung', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'] },
-
-      // ── Konzern & Konsolidierung ──────────────────────────────
-      { path: '/finance/konsolidierung', label: 'Konsolidierung', icon: BarChart3, roles: ['Admin', 'Super Admin', 'Finance', 'Geschäftsführung'] },
-      { path: '/finance/intercompany', label: 'Intercompany', icon: Activity, roles: ['Admin', 'Super Admin', 'Finance', 'Geschäftsführung'] },
-      { path: '/finance/fx', label: 'Devisenkurse', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'] },
-
-      // ── KI & Analyse ──────────────────────────────────────────
-      { path: '/finance/ai-insights', label: 'KI-Analyse', icon: Sparkles, roles: ['Admin', 'Super Admin', 'Finance', 'Geschäftsführung'] },
-      { path: '/finance/anomalien', label: 'Anomalien', icon: AlertTriangle, roles: ['Admin', 'Super Admin', 'Finance', 'Geschäftsführung'] },
-      { path: '/finance/ask', label: 'KI-Assistent (Fragen)', icon: MessageCircle, roles: ['Admin', 'Super Admin', 'Finance', 'Geschäftsführung'] },
-
-      // ── Reporting ─────────────────────────────────────────────
-      { path: '/finance/reports', label: 'Report Builder', icon: BarChart3, roles: ['Admin', 'Super Admin', 'Finance', 'Geschäftsführung'] },
-      { path: '/finance/schedules', label: 'Berichts-Zeitpläne', icon: Activity, roles: ['Admin', 'Super Admin', 'Finance'] },
-      { path: '/finance/management-pack', label: 'Management-Pack', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance', 'Geschäftsführung'] },
-      { path: '/finance/stakeholders', label: 'Stakeholder-Portale', icon: Users, roles: ['Super Admin', 'Geschäftsführung'] },
-
-      // ── Workflows & Compliance ────────────────────────────────
-      { path: '/finance/freigaben', label: 'Freigaben', icon: CheckSquare, roles: ['Admin', 'Super Admin', 'Finance', 'Geschäftsführung'] },
-      { path: '/finance/automations', label: 'Automations', icon: Cog, roles: ['Admin', 'Super Admin', 'Finance'] },
-      { path: '/finance/compliance', label: 'Compliance', icon: BadgeCheck, roles: ['Admin', 'Super Admin', 'Geschäftsführung'] },
-
-      // ── System ────────────────────────────────────────────────
-      { path: '/finance/einstellungen/systemstatus', label: 'Systemstatus', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
+      {
+        path: '/finance/anzahlungen', label: 'ANZAHLUNGEN', icon: Wallet, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'],
+        children: [
+          { path: '/verkauf/anzahlungsrechnung', label: 'Neue Anzahlungen', icon: Receipt, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Tourenplanung', 'Read Only Audit', 'Read Only', 'Geschäftsführung', 'Marketing', 'Technik', 'Kundenservice', 'Vertrieb', 'Reparaturannahme', 'Bestellwesen', 'Serviceleitung', 'Service', 'QM', 'SACHBEARBEITUNG'] },
+          { path: '/verkauf/anzahlungsrechnung', label: 'Anzahlungsrechnung', icon: Receipt, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
+          { path: '/finance/anzahlungen', label: 'Anzahlungen', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'] },
+        ],
+      },
+      {
+        path: '/finance/raten', label: 'RATENZAHLER', icon: ScrollText, roles: ['Admin', 'Super Admin', 'Finance', 'Finanzierungen', 'Order'],
+        children: [
+          { path: '/finance/wiederkehrende-zahler', label: 'Wiederkehrende Zahler', icon: Repeat, roles: ['Admin', 'Super Admin', 'Finance'] },
+          { path: '/finance/vertraege', label: 'Verträge', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
+          { path: '/finance/raten', label: 'Laufende Raten', icon: ScrollText, roles: ['Admin', 'Super Admin', 'Finance'] },
+          { path: '/finance/alix-flex', label: 'ALIX FLEX', icon: Banknote, roles: ['Admin', 'Super Admin'] },
+          {
+            path: '/finanzierungen', label: 'FREMD LEASING', icon: Landmark, roles: ['Admin', 'Super Admin', 'Finance', 'Finanzierungen', 'Order'],
+            children: [
+              { path: '/finanzierungen/leasing-bank', label: 'Verfügbare Aufträge', icon: Landmark, roles: ['Admin', 'Super Admin', 'Finance', 'Finanzierungen', 'Order'] },
+              { path: '/finanzierungen/beantragen', label: 'Finanzierung beantragen', icon: FileSignature, roles: ['Admin', 'Super Admin', 'Finance', 'Finanzierungen', 'Order'] },
+              { path: '/finanzierungen/anfragen-offen', label: 'Anfragen offen', icon: Clock, roles: ['Admin', 'Super Admin', 'Finance', 'Finanzierungen', 'Order'] },
+              { path: '/finanzierungen/zusagen-bank', label: 'Zusagen Bank', icon: CheckCircle2, roles: ['Admin', 'Super Admin', 'Finance', 'Finanzierungen', 'Order'] },
+              { path: '/finanzierungen/absagen-bank', label: 'Absagen Bank', icon: X, roles: ['Admin', 'Super Admin', 'Finance', 'Finanzierungen', 'Order'] },
+            ],
+          },
+        ],
+      },
+      {
+        path: '/finance/rechnungen', label: 'RECHNUNGEN', icon: FileText, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'],
+        children: [
+          { path: '/finance/rechnungen', label: 'Rechnungen', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
+          { path: '/finance/rechnungsvorschlaege', label: 'Rechnungsvorschläge (Reparaturen)', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'] },
+          { path: '/finance/offene-posten', label: 'Offene Posten', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
+          { path: '/finance/zahlungen', label: 'Zahlungen', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'] },
+          { path: '/verkauf/gutschriften', label: 'Gutschriften', icon: Undo2, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
+          { path: '/finance/eingangsrechnungen', label: 'Eingangsrechnungen', icon: Inbox, roles: ['Admin', 'Super Admin', 'Finance'] },
+          { path: '/finance/belege', label: 'Belegarchiv', icon: Files, roles: ['Admin', 'Super Admin', 'Finance'] },
+          { path: '/finance/p2p', label: 'Procure-to-Pay', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance', 'Geschäftsführung'] },
+          { path: '/finance/bank', label: 'Bankimport', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'] },
+          { path: '/finance/sepa', label: 'SEPA Lastschriften', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'] },
+          { path: '/finance/treasury', label: 'Treasury', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance', 'Geschäftsführung'] },
+        ],
+      },
+      {
+        path: '/finance/mahnwesen', label: 'MAHNUNGEN', icon: AlertTriangle, roles: ['Admin', 'Super Admin', 'Finance'],
+        children: [
+          { path: '/finance/mahnwesen', label: 'Mahnwesen', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
+        ],
+      },
+      {
+        path: '/finance/bwa', label: 'STATISTIK', icon: BarChart3, roles: ['Admin', 'Super Admin', 'Finance', 'Geschäftsführung'],
+        children: [
+          { path: '/finance/anlagen', label: 'Anlagenbuchhaltung', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
+          { path: '/finance/anlagen/afa-lauf', label: 'AfA-Lauf', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
+          { path: '/finance/bwa', label: 'BWA', icon: BarChart3, roles: ['Admin', 'Super Admin', 'Finance'] },
+          { path: '/finance/guv', label: 'GuV', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
+          { path: '/finance/bilanz', label: 'Bilanz', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
+          { path: '/finance/jahresabschluss', label: 'Jahresabschluss', icon: Lock, roles: ['Admin', 'Super Admin', 'Finance'] },
+          { path: '/finance/datev', label: 'DATEV', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
+          { path: '/finance/steuer', label: 'Steuer-Auswertung', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
+          { path: '/finance/meldewesen', label: 'Steuer & Meldewesen', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance', 'Geschäftsführung'] },
+          { path: '/finance/budget', label: 'Budgetplanung', icon: BarChart3, roles: ['Admin', 'Super Admin', 'Finance'] },
+          { path: '/finance/soll-ist', label: 'Soll-Ist-Vergleich', icon: TrendingUp, roles: ['Admin', 'Super Admin', 'Finance'] },
+          { path: '/finance/forecast', label: 'Rolling Forecast', icon: LineChart, roles: ['Admin', 'Super Admin', 'Finance'] },
+          { path: '/finance/liquiditaet', label: 'Liquiditätsplanung', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'] },
+          { path: '/finance/konsolidierung', label: 'Konsolidierung', icon: BarChart3, roles: ['Admin', 'Super Admin', 'Finance', 'Geschäftsführung'] },
+          { path: '/finance/intercompany', label: 'Intercompany', icon: Activity, roles: ['Admin', 'Super Admin', 'Finance', 'Geschäftsführung'] },
+          { path: '/finance/fx', label: 'Devisenkurse', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'] },
+          { path: '/finance/ai-insights', label: 'KI-Analyse', icon: Sparkles, roles: ['Admin', 'Super Admin', 'Finance', 'Geschäftsführung'] },
+          { path: '/finance/anomalien', label: 'Anomalien', icon: AlertTriangle, roles: ['Admin', 'Super Admin', 'Finance', 'Geschäftsführung'] },
+          { path: '/finance/ask', label: 'KI-Assistent (Fragen)', icon: MessageCircle, roles: ['Admin', 'Super Admin', 'Finance', 'Geschäftsführung'] },
+          { path: '/finance/reports', label: 'Report Builder', icon: BarChart3, roles: ['Admin', 'Super Admin', 'Finance', 'Geschäftsführung'] },
+          { path: '/finance/schedules', label: 'Berichts-Zeitpläne', icon: Activity, roles: ['Admin', 'Super Admin', 'Finance'] },
+          { path: '/finance/management-pack', label: 'Management-Pack', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance', 'Geschäftsführung'] },
+          { path: '/finance/stakeholders', label: 'Stakeholder-Portale', icon: Users, roles: ['Super Admin', 'Geschäftsführung'] },
+          { path: '/finance/freigaben', label: 'Freigaben', icon: CheckSquare, roles: ['Admin', 'Super Admin', 'Finance', 'Geschäftsführung'] },
+          { path: '/finance/automations', label: 'Automations', icon: Cog, roles: ['Admin', 'Super Admin', 'Finance'] },
+          { path: '/finance/compliance', label: 'Compliance', icon: BadgeCheck, roles: ['Admin', 'Super Admin', 'Geschäftsführung'] },
+          { path: '/finance/einstellungen/systemstatus', label: 'Systemstatus', icon: FileText, roles: ['Admin', 'Super Admin', 'Finance'] },
+        ],
+      },
     ],
   },
 
