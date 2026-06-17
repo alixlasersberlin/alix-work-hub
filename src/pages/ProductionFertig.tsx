@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle2, Loader2, FileText, Search, Mail, RefreshCw } from 'lucide-react';
+import { CheckCircle2, Loader2, FileText, Search, Mail, RefreshCw, Download, FileDown } from 'lucide-react';
+import { createPDF } from '@/lib/pdf-utils';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
