@@ -51,7 +51,6 @@ const navItems: NavItem[] = [
       { path: '/ai-center', label: 'AI Center', icon: Sparkles, roles: ['Admin', 'Super Admin', 'Geschäftsführung', 'Serviceleitung', 'Service', 'Technik', 'Finance', 'Österreich'] },
       { path: '/ai-service-center', label: 'AI Service Center', icon: Sparkles, roles: ['Admin', 'Super Admin', 'Service', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance', 'SACHBEARBEITUNG'] },
       { path: '/auftragsstatus', label: 'Auftragsstatus', icon: Activity, roles: null },
-      { path: '/auftragsstatus', label: 'Auftragsstatus', icon: Activity, roles: null },
       { path: '/finance/ai-insights', label: 'KI-Analyse (Finance)', icon: Sparkles, roles: ['Admin', 'Super Admin', 'Finance', 'Geschäftsführung'] },
 
       {
