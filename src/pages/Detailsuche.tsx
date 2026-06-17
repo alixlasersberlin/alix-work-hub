@@ -106,6 +106,16 @@ export default function Detailsuche() {
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('');
   const [reservingId, setReservingId] = useState<string | null>(null);
 
+  // Auto-Auswahl, wenn genau ein freies Lagergerät vorliegt
+  useEffect(() => {
+    if (!selectedDeviceId && unassignedLager.length === 1) {
+      setSelectedDeviceId(unassignedLager[0].id);
+    }
+    if (selectedDeviceId && !unassignedLager.some(d => d.id === selectedDeviceId)) {
+      setSelectedDeviceId('');
+    }
+  }, [unassignedLager, selectedDeviceId]);
+
   const toggleExpand = (id: string) => {
     setExpanded(prev => {
       const n = new Set(prev);
