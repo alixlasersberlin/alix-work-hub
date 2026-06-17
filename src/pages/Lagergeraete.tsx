@@ -245,6 +245,7 @@ export default function Lagergeraete({
   const [reservedOrderId, setReservedOrderId] = useState<string | null>(null);
   const [reservedOrderNumber, setReservedOrderNumber] = useState<string | null>(null);
   const [originalReservedOrderId, setOriginalReservedOrderId] = useState<string | null>(null);
+  const [originalDeviceStatus, setOriginalDeviceStatus] = useState<DeviceStatus | null>(null);
   const [reservationWeek, setReservationWeek] = useState<string>('');
   const [leihCustomerId, setLeihCustomerId] = useState<string | null>(null);
   const [leihCustomerName, setLeihCustomerName] = useState<string>('');
