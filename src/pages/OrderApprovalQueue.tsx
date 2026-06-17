@@ -154,6 +154,33 @@ export default function OrderApprovalQueue() {
     URL.revokeObjectURL(url);
   };
 
+  const releaseReservation = async (row: Row) => {
+    if (!isSuperAdmin || !row.order_id) return;
+    if (!confirm(`Reservierung für ${row.production_order_number || row.order_number} wirklich aufheben?`)) return;
+    setReleasingId(row.id);
+    try {
+      const { data: devs, error: fetchErr } = await supabase
+        .from('lager_devices')
+        .select('id, serial_number, model_name')
+        .eq('reserved_order_id', row.order_id);
+      if (fetchErr) throw fetchErr;
+      if (!devs || devs.length === 0) {
+        toast.info('Keine reservierten Geräte zu diesem Auftrag gefunden');
+        return;
+      }
+      const { error } = await supabase
+        .from('lager_devices')
+        .update({ reserved_order_id: null, reservation_week: null })
+        .eq('reserved_order_id', row.order_id);
+      if (error) throw error;
+      toast.success(`${devs.length} Reservierung(en) aufgehoben`);
+    } catch (e: any) {
+      toast.error(e?.message || 'Aufheben fehlgeschlagen');
+    } finally {
+      setReleasingId(null);
+    }
+  };
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return rows;
