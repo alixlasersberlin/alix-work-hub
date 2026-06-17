@@ -324,7 +324,7 @@ export default function ProductionPortal() {
     let out = rows.filter(r => {
       if (statusFilter !== 'all' && r.status !== statusFilter) return false;
       if (!q) return true;
-      const hay = `${r.production_order_number || ''} ${r.order_number} ${r.modellname || ''} ${r.farbe || ''} ${r.bearbeiter || ''} ${r.seriennummer || ''} ${r.sonderwuensche || ''}`.toLowerCase();
+      const hay = `${r.production_order_number || ''} ${r.order_number} ${r.modellname || ''} ${r.farbe || ''} ${r.bearbeiter || ''} ${r.seriennummer || ''} ${r.sonderwuensche || ''} ${r.customer_name || ''}`.toLowerCase();
       return hay.includes(q);
     });
     out = [...out].sort((a, b) => {
