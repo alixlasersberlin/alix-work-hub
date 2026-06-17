@@ -689,7 +689,7 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <Label className="text-[11px] uppercase tracking-wide text-slate-500">{label}</Label>
+      <Label className="text-[11px] uppercase tracking-wide !text-slate-500">{label}</Label>
       {children}
     </div>
   );
