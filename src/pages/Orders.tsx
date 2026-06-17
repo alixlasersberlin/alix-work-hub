@@ -9,7 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Search, ClipboardList, ArrowUpDown, Loader2, Inbox, CalendarDays, List, Car, Pencil, CalendarClock, MoveRight, CheckCircle2, PackageCheck } from 'lucide-react';
+import { Search, ClipboardList, ArrowUpDown, Loader2, Inbox, CalendarDays, List, Car, Pencil, CalendarClock, MoveRight, CheckCircle2, PackageCheck, FileDown, FileText } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { createPDF } from '@/lib/pdf-utils';
+import autoTable from 'jspdf-autotable';
+import { format } from 'date-fns';
+import { de } from 'date-fns/locale';
 import { StatusBadge } from '@/components/StatusBadge';
 import { toast } from 'sonner';
 import OrdersCalendar from '@/components/OrdersCalendar';
@@ -61,12 +66,64 @@ export default function Orders() {
   const [bulkStatus, setBulkStatus] = useState<string>('');
   const [bulkSaving, setBulkSaving] = useState(false);
   const navigate = useNavigate();
-  const { isAdmin, hasRole } = useAuth();
+  const { isAdmin, hasRole, user } = useAuth();
   const { drivingTimes, loading: drivingLoading, requestedIds, fetchDrivingTimes, retryFailed } = useDrivingTimes();
   const [viewMode, setViewMode] = useViewMode();
 
   const canWrite = isAdmin || hasRole('Auftragsverwaltung');
   const canEditItems = hasRole('Super Admin');
+  const canExportAll = hasRole('Super Admin') || (user?.email?.toLowerCase() === 'jh@alix-operation.de');
+
+  function escCsv(v: any) {
+    const s = (v ?? '').toString().replace(/"/g, '""');
+    return /[";\n]/.test(s) ? `"${s}"` : s;
+  }
+  function exportRows() {
+    return filtered.map((o: any) => ({
+      number: o._displayNumber ?? o.order_number ?? '',
+      date: o.order_date ?? '',
+      status: o.order_status ?? '',
+      customer: o.customers?.company_name || o.customers?.contact_name || '',
+      city: resolveCity(o),
+      total: o.total_amount ?? '',
+      currency: o.currency ?? '',
+      source: o.source_system ?? '',
+      items: (o.order_items ?? []).map((it: any) => `${it.quantity ?? ''}× ${it.item_name ?? ''}`).join(' | '),
+    }));
+  }
+  function handleExportCsv() {
+    const rows = exportRows();
+    const header = ['Auftragsnr', 'Datum', 'Status', 'Kunde', 'Ort', 'Betrag', 'Währung', 'Quelle', 'Positionen'];
+    const lines = [header.join(';')];
+    rows.forEach(r => lines.push([r.number, r.date, r.status, r.customer, r.city, r.total, r.currency, r.source, r.items].map(escCsv).join(';')));
+    const blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Auftraege_${format(new Date(), 'yyyyMMdd_HHmm')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${rows.length} Aufträge als CSV exportiert`);
+  }
+  function handleExportPdf() {
+    const rows = exportRows();
+    const doc = createPDF({ orientation: 'landscape' });
+    doc.setFont('Inter', 'bold');
+    doc.setFontSize(14);
+    doc.text(`Aufträge (${rows.length})`, 14, 14);
+    doc.setFont('Inter', 'normal');
+    doc.setFontSize(9);
+    doc.text(format(new Date(), 'dd.MM.yyyy HH:mm', { locale: de }), 14, 20);
+    autoTable(doc, {
+      startY: 26,
+      head: [['Auftragsnr', 'Datum', 'Status', 'Kunde', 'Ort', 'Betrag', 'Währ.', 'Quelle']],
+      body: rows.map(r => [r.number, r.date, r.status, r.customer, r.city, r.total, r.currency, r.source]),
+      styles: { font: 'Inter', fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [30, 30, 30] },
+    });
+    doc.save(`Auftraege_${format(new Date(), 'yyyyMMdd_HHmm')}.pdf`);
+    toast.success(`${rows.length} Aufträge als PDF exportiert`);
+  }
 
   async function load() {
     setLoading(true);
@@ -184,13 +241,32 @@ export default function Orders() {
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
-      <PageHeader
-        icon={ClipboardList}
-        title="Aufträge"
-        subtitle={`${filtered.length} Aufträge`}
-        noBreadcrumbs
-        meta={<InfinityStatusBadge kind="done" label={`${filtered.length}`} />}
-      />
+      <div className="flex items-start justify-between gap-4">
+        <PageHeader
+          icon={ClipboardList}
+          title="Aufträge"
+          subtitle={`${filtered.length} Aufträge`}
+          noBreadcrumbs
+          meta={<InfinityStatusBadge kind="done" label={`${filtered.length}`} />}
+        />
+        {canExportAll && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <FileDown className="w-4 h-4" /> Aufträge exportieren
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem onClick={handleExportCsv}>
+                <FileDown className="w-4 h-4 mr-2" /> Als CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportPdf}>
+                <FileText className="w-4 h-4 mr-2" /> Als PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </div>
 
       <Tabs defaultValue="list" className="space-y-4 mt-4">
         <TabsList className="bg-secondary">
