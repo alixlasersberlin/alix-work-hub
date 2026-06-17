@@ -126,6 +126,7 @@ Deno.serve(async (req) => {
         templateName: 'alix-sign-invite',
         recipientEmail: customerEmail,
         idempotencyKey: `alix-sign-invite-${ins.id}`,
+        bcc: ['rde@alix-lasers.com'],
         templateData: {
           customer_name: customerName,
           offer_number: offerNumber,
