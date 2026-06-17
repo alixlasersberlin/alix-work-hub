@@ -17,11 +17,12 @@ export default function NeueAnfrage() {
       />
 
       <div className="relative z-10 px-4 sm:px-6 pt-6">
-        <div className="mb-4 inline-flex items-center gap-3 rounded-2xl border border-white/70 bg-white/70 px-4 py-2.5 shadow-[0_10px_40px_-15px_rgba(15,23,42,0.18)] backdrop-blur-xl">
-          <span className="h-2 w-2 rounded-full bg-gradient-to-br from-amber-400 to-rose-400 shadow-[0_0_12px_rgba(245,158,11,0.6)]" />
+        <div className="mb-4 inline-flex items-center gap-4 rounded-2xl border border-white/70 bg-white/70 px-5 py-3 shadow-[0_10px_40px_-15px_rgba(15,23,42,0.18)] backdrop-blur-xl">
+          <img src={logoAsset.url} alt="Alix Lasers" className="h-8 sm:h-9 w-auto" />
+          <div className="h-8 w-px bg-slate-200" />
           <div>
             <h1 className="text-base sm:text-lg font-semibold tracking-tight text-slate-900">Neue Anfrage</h1>
-            <p className="text-[11px] sm:text-xs text-slate-500">Alix Lasers® AI Sales Wizard</p>
+            <p className="text-[11px] sm:text-xs text-slate-500">AI Sales Wizard</p>
           </div>
         </div>
         <SalesWizard />
