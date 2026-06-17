@@ -4,11 +4,9 @@ const KEY = "alixwork.page_fade";
 
 export const bootPageFade = () => {
   try {
-    const v = localStorage.getItem(KEY);
-    // Default on
-    if (v === null || v === "on") {
-      document.documentElement.setAttribute("data-page-fade", "on");
-    }
+    // Forced off: no page transitions/fades anymore
+    localStorage.setItem(KEY, "off");
+    document.documentElement.removeAttribute("data-page-fade");
   } catch {
     /* noop */
   }
