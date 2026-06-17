@@ -141,6 +141,7 @@ const DeviceStatistics = lazy(() => import("./pages/DeviceStatistics"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 const ProductionOrders = lazy(() => import("./pages/ProductionOrders"));
 const OrdersFreiBestellung = lazy(() => import("./pages/OrdersFreiBestellung"));
+const BestellwesenOverview = lazy(() => import("./pages/BestellwesenOverview"));
 const ProductionOrderForm = lazy(() => import("./pages/ProductionOrderForm"));
 const ProductionOrderDetail = lazy(() => import("./pages/ProductionOrderDetail"));
 const ProductionTimeline = lazy(() => import("./pages/ProductionTimeline"));
@@ -601,6 +602,7 @@ function AppRoutes() {
           <Route path="/datensicherung" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Backups /></ProtectedRoute>} />
           <Route path="/rollen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Rollen /></ProtectedRoute>} />
           <Route path="/system" element={<ProtectedRoute requiredRoles={SYSTEM_ROLES}><SystemMonitoring /></ProtectedRoute>} />
+          <Route path="/auftragsverwaltung/bestellungen" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><BestellwesenOverview /></ProtectedRoute>} />
           <Route path="/order" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><ProductionOrders /></ProtectedRoute>} />
           <Route path="/order/freigabe" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><OrderApprovalQueue /></ProtectedRoute>} />
           <Route path="/order/frei-bestellung" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><OrdersFreiBestellung /></ProtectedRoute>} />
