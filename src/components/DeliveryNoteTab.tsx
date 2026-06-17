@@ -119,13 +119,13 @@ export default function DeliveryNoteTab({ order, customer, items, onReload }: Pr
       const doc = createPDF({ unit: 'mm', format: 'a4' });
       const pw = doc.internal.pageSize.getWidth();
       const ph = doc.internal.pageSize.getHeight();
-      const ml = 18;
+      const ml = 25;
       let y = 18;
 
-      // Logo top-right
+      // Background template (full A4)
       try {
-        const logoData = await loadImageAsBase64(alixLogo);
-        doc.addImage(logoData, 'PNG', pw - 60, 10, 46, 18);
+        const bgData = await loadImageAsBase64(lieferscheinBg.url);
+        doc.addImage(bgData, 'PNG', 0, 0, pw, ph);
       } catch { /* ignore */ }
 
       // Title
