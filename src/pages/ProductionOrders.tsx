@@ -8,12 +8,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   Plus, Loader2, Factory, Users as UsersIcon, FileText, Pencil, Trash2, AlertTriangle,
   Search, Calendar, Truck, User, Package, Hash, ArrowUpDown, CheckCircle2, XCircle, Clock, Mail,
+  Download, FileDown,
 } from 'lucide-react';
 import { sendProductionOrderEmail } from '@/lib/send-production-order-email';
 import { toast } from 'sonner';
 import { format, differenceInCalendarDays, isValid } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { createPDF } from '@/lib/pdf-utils';
 import { PageSizeSelector, usePagination, PaginationControls } from '@/components/PageSizeSelector';
 import { useViewMode } from '@/hooks/useViewMode';
 import { ViewToggle } from '@/components/ViewToggle';
@@ -351,6 +353,112 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
 
   const { pageSize, setPageSize, page, setPage, totalPages, paged, total } = usePagination(filtered, 20);
 
+  const exportRows = () => filtered.map((r: any) => ({
+    bestellnummer: r.display_order_number || '',
+    auftragsnummer: r.order_number || '',
+    kunde: r.customer_name_snapshot || '',
+    modell: r.modellname || '',
+    farbe: r.farbe || '',
+    power: r.power_handstueck || '',
+    seriennummer: r.seriennummer || '',
+    bearbeiter: r.bearbeiter || '',
+    zulieferer: r.supplier?.name || '',
+    zulieferer_email: r.supplier?.email || '',
+    liefertermin: r.liefertermin ? format(new Date(r.liefertermin), 'dd.MM.yyyy') : '',
+    status: r.status || '',
+    payment: r.payment_status || 'Nein',
+    freigabe: r.approval_status || 'pending',
+    interne_nummer: r.sonderwuensche || '',
+    anmerkungen: (r.anmerkungen || '').replace(/\s+/g, ' ').trim(),
+    erstellt_am: r.created_at ? format(new Date(r.created_at), 'dd.MM.yyyy HH:mm') : '',
+  }));
+
+  const exportCSV = () => {
+    const data = exportRows();
+    if (data.length === 0) { toast.info('Keine Daten zum Exportieren'); return; }
+    const headers = Object.keys(data[0]);
+    const escape = (v: any) => {
+      const s = v == null ? '' : String(v);
+      return /[;"\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const csv = [
+      headers.join(';'),
+      ...data.map(row => headers.map(h => escape((row as any)[h])).join(';')),
+    ].join('\r\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `produktionsbestellungen_${format(new Date(), 'yyyyMMdd_HHmm')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${data.length} Bestellungen exportiert`);
+  };
+
+  const exportPDF = () => {
+    const data = exportRows();
+    if (data.length === 0) { toast.info('Keine Daten zum Exportieren'); return; }
+    const doc = createPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
+    const pageW = 297, pageH = 210, marginX = 10;
+    let y = 14;
+    doc.setFont('Inter', 'bold'); doc.setFontSize(14);
+    doc.text(isReclamation ? 'Reklamationsbestellungen' : 'Produktionsbestellungen', marginX, y);
+    doc.setFont('Inter', 'normal'); doc.setFontSize(9);
+    doc.text(`Stand: ${format(new Date(), 'dd.MM.yyyy HH:mm')}  ·  ${data.length} Einträge`, pageW - marginX, y, { align: 'right' });
+    y += 6;
+
+    // Columns
+    const cols = [
+      { key: 'bestellnummer',  label: 'Bestell-Nr.', w: 28 },
+      { key: 'auftragsnummer', label: 'Auftrag',     w: 26 },
+      { key: 'kunde',          label: 'Kunde',       w: 38 },
+      { key: 'modell',         label: 'Modell',      w: 30 },
+      { key: 'farbe',          label: 'Farbe',       w: 18 },
+      { key: 'seriennummer',   label: 'SN',          w: 22 },
+      { key: 'bearbeiter',     label: 'Bearbeiter',  w: 22 },
+      { key: 'zulieferer',     label: 'Zulieferer',  w: 30 },
+      { key: 'liefertermin',   label: 'Liefertermin', w: 22 },
+      { key: 'status',         label: 'Status',      w: 25 },
+      { key: 'payment',        label: 'Payment',     w: 16 },
+      { key: 'freigabe',       label: 'Freigabe',    w: 20 },
+    ] as const;
+
+    const drawHeader = () => {
+      doc.setFillColor(30, 30, 30);
+      doc.setTextColor(255, 255, 255);
+      doc.rect(marginX, y - 4, pageW - marginX * 2, 6, 'F');
+      doc.setFont('Inter', 'bold'); doc.setFontSize(8);
+      let x = marginX + 1;
+      cols.forEach(c => { doc.text(c.label, x, y); x += c.w; });
+      y += 4;
+      doc.setTextColor(0, 0, 0);
+      doc.setFont('Inter', 'normal');
+    };
+    drawHeader();
+
+    doc.setFontSize(7.5);
+    data.forEach((row, idx) => {
+      // measure row height
+      const cellLines = cols.map(c => doc.splitTextToSize(String((row as any)[c.key] ?? ''), c.w - 2));
+      const rowH = Math.max(...cellLines.map(l => l.length)) * 3.2 + 1.5;
+      if (y + rowH > pageH - 10) { doc.addPage(); y = 14; drawHeader(); doc.setFontSize(7.5); }
+      if (idx % 2 === 0) {
+        doc.setFillColor(245, 245, 245);
+        doc.rect(marginX, y - 3, pageW - marginX * 2, rowH, 'F');
+      }
+      let x = marginX + 1;
+      cellLines.forEach((lines, i) => {
+        doc.text(lines, x, y);
+        x += cols[i].w;
+      });
+      y += rowH;
+    });
+
+    doc.save(`produktionsbestellungen_${format(new Date(), 'yyyyMMdd_HHmm')}.pdf`);
+    toast.success(`${data.length} Bestellungen als PDF exportiert`);
+  };
+
+
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const dueLabel = (date: string | null) => {
     if (!date) return null;
@@ -373,6 +481,12 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
         meta={<InfinityStatusBadge kind="done" label={`${filtered.length}`} />}
         actions={
           <>
+            <Button variant="outline" size="sm" onClick={exportCSV} title="Als CSV herunterladen">
+              <FileDown className="w-4 h-4 mr-2" /> CSV
+            </Button>
+            <Button variant="outline" size="sm" onClick={exportPDF} title="Als PDF herunterladen">
+              <Download className="w-4 h-4 mr-2" /> PDF
+            </Button>
             {!isReclamation && (
               <Button variant="outline" size="sm" onClick={() => navigate('/order/zulieferer')}>
                 <UsersIcon className="w-4 h-4 mr-2" /> {t.suppliers}
