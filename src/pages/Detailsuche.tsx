@@ -448,9 +448,76 @@ export default function Detailsuche() {
           <Button variant="outline" onClick={reset} disabled={loading}>
             <X className="w-4 h-4 mr-2" /> Zurücksetzen
           </Button>
+          <Button variant="secondary" onClick={loadAvailableOrders} disabled={loadingAvail}>
+            {loadingAvail ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <BookmarkPlus className="w-4 h-4 mr-2" />}
+            Reservierung – verfügbare Aufträge
+          </Button>
         </div>
         {error && <div className="text-sm text-destructive">{error}</div>}
       </div>
+
+      {availOrders !== null && (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 overflow-hidden">
+          <div className="px-4 py-3 border-b border-amber-500/20 flex flex-wrap items-center gap-3">
+            <BookmarkPlus className="w-4 h-4 text-amber-500" />
+            <h3 className="text-sm font-semibold">Verfügbare Aufträge für Reservierung</h3>
+            <span className="text-xs text-muted-foreground">({availOrders.length})</span>
+            <div className="ml-auto flex items-center gap-2">
+              <Label className="text-xs whitespace-nowrap">Lagergerät:</Label>
+              <select
+                value={selectedDeviceId}
+                onChange={(e) => setSelectedDeviceId(e.target.value)}
+                className="h-8 rounded-md border border-input bg-background px-2 text-xs"
+              >
+                <option value="">— wählen —</option>
+                {unassignedLager.map(d => (
+                  <option key={d.id} value={d.id}>
+                    {(d.model_name || '—')} · SN {d.serial_number}
+                  </option>
+                ))}
+              </select>
+              <Button size="sm" variant="ghost" className="h-8" onClick={() => setAvailOrders(null)}>
+                <X className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+          </div>
+          {unassignedLager.length === 0 && (
+            <div className="px-4 py-2 text-xs text-muted-foreground border-b border-amber-500/20">
+              Tipp: Zuerst per <strong>Seriennummer</strong> ein freies Lagergerät suchen, damit es zur Reservierung verfügbar ist.
+            </div>
+          )}
+          <div className="divide-y divide-border max-h-[480px] overflow-y-auto">
+            {availOrders.length === 0 ? (
+              <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+                Keine offenen Aufträge ohne Reservierung gefunden.
+              </div>
+            ) : availOrders.map(o => (
+              <div key={o.id} className="px-4 py-3 flex flex-wrap items-center gap-x-3 gap-y-1 hover:bg-amber-500/10">
+                <button onClick={() => navigate(`/auftraege/${o.id}`)} className="font-medium hover:underline">
+                  {o.order_number}
+                </button>
+                <span className="text-xs text-muted-foreground">{formatDate(o.order_date)}</span>
+                <span className="text-sm">{o.customer_name}</span>
+                <span className="text-xs text-muted-foreground">{[o.zip, o.city].filter(Boolean).join(' ')}</span>
+                {o.open_models.length > 0 && (
+                  <span className="text-xs text-amber-600 dark:text-amber-400">{o.open_models.join(', ')}</span>
+                )}
+                <Button
+                  size="sm"
+                  className="ml-auto"
+                  disabled={!selectedDeviceId || reservingId === o.id}
+                  onClick={() => reserveOrder(o.id)}
+                >
+                  {reservingId === o.id
+                    ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                    : <CheckCircle2 className="w-3.5 h-3.5 mr-1" />}
+                  Reservieren
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {unassignedLager.length > 0 && (
         <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 overflow-hidden">
