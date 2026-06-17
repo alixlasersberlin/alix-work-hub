@@ -210,6 +210,22 @@ export default function AuftragStatus() {
             </Button>
           </CardHeader>
           <CardContent className="space-y-6">
+            <div className="flex flex-wrap gap-2">
+              <Button asChild size="sm" className="gold-gradient text-primary-foreground">
+                <Link to={`/order/neu?order_id=${result.id}`}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Produktionsbestellung anlegen
+                </Link>
+              </Button>
+              <Button asChild size="sm" variant="outline">
+                <Link to={`/order/reklamation/neu?order_id=${result.id}`}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Reklamation anlegen
+                </Link>
+              </Button>
+            </div>
+
+
             <div className="grid gap-4 md:grid-cols-2">
               <Field label="Kunde" value={result.customer_name} />
               <Field label="Verkäufer" value={result.salesperson_name || '–'} />
