@@ -1041,7 +1041,7 @@ export default function AppLayout() {
                             )}
                           >
                             <Icon className={cn("w-5 h-5 flex-shrink-0", fActive && "text-primary")} />
-                            <span className="truncate">{meta.label}</span>
+                            <span className="truncate">{labelWithCount(f.path, meta.label)}</span>
                           </Link>
                           <FavStar path={f.path} label={meta.label} />
                         </div>
