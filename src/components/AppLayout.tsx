@@ -266,6 +266,23 @@ const navItems: NavItem[] = [
     ],
   },
       {
+        path: '/bewertungen', label: 'BEWERTUNGEN', icon: Star, roles: null,
+        children: [
+          { path: '/bewertungen', label: 'Übersicht', icon: LayoutDashboard, roles: null },
+          { path: '/bewertungen/geliefert', label: 'Aufträge geliefert', icon: Truck, roles: null },
+          { path: '/bewertungen/abgegeben', label: 'Abgegebene Bewertungen', icon: Star, roles: null },
+          { path: '/bewertungen/geschlossen', label: 'Geschlossen', icon: Lock, roles: null },
+          { path: '/bewertungen/frontend', label: 'Frontend', icon: Cloud, roles: null },
+        ],
+      },
+    ],
+  },
+
+  {
+    path: '/warehouse-logistics', label: 'WAREHOUSE & LOGISTICS', icon: Warehouse,
+    roles: null,
+    children: [
+      {
         path: '/reparatur', label: 'REPARATURANNAHME', icon: Wrench, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'Finance', 'QM', 'Österreich', 'Reparaturannahme', 'SACHBEARBEITUNG'],
         children: [
           { path: '/reparatur/neu', label: 'Neue Reparatur anlegen', icon: FilePlus, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Order', 'Finance', 'QM', 'Reparaturannahme', 'SACHBEARBEITUNG'] },
@@ -290,23 +307,6 @@ const navItems: NavItem[] = [
           { path: '/reparatur/archiv', label: 'Reparaturarchiv', icon: FileText, roles: null },
         ],
       },
-      {
-        path: '/bewertungen', label: 'BEWERTUNGEN', icon: Star, roles: null,
-        children: [
-          { path: '/bewertungen', label: 'Übersicht', icon: LayoutDashboard, roles: null },
-          { path: '/bewertungen/geliefert', label: 'Aufträge geliefert', icon: Truck, roles: null },
-          { path: '/bewertungen/abgegeben', label: 'Abgegebene Bewertungen', icon: Star, roles: null },
-          { path: '/bewertungen/geschlossen', label: 'Geschlossen', icon: Lock, roles: null },
-          { path: '/bewertungen/frontend', label: 'Frontend', icon: Cloud, roles: null },
-        ],
-      },
-    ],
-  },
-
-  {
-    path: '/warehouse-logistics', label: 'WAREHOUSE & LOGISTICS', icon: Warehouse,
-    roles: null,
-    children: [
       {
         path: '/reparatur-service', label: 'SERVICE', icon: Wrench, roles: ['Admin', 'Super Admin', 'Reparaturannahme', 'Technik', 'Service', 'Österreich', 'SACHBEARBEITUNG'],
         children: [
