@@ -308,40 +308,15 @@ export default function OrdersFreiBestellung() {
     const orderNumber = unassignOrder.order_number;
     setUnassigning(true);
     try {
-      // 1. Reservierungen aller Lagergeräte für diesen Auftrag aufheben
-      const { error: lagerErr } = await supabase
-        .from('lager_devices')
-        .update({ reserved_order_id: null, reservation_week: null })
-        .eq('reserved_order_id', orderId);
-      if (lagerErr) {
-        console.error('[confirmUnassign] lager_devices update failed', lagerErr);
-        toast.error('Lager-Reservierung konnte nicht entfernt werden: ' + lagerErr.message);
+      const resolveAssignment = supabase.rpc as unknown as (
+        fn: 'resolve_frei_bestellung_assignment',
+        args: { _order_id: string },
+      ) => Promise<{ error: { message: string } | null }>;
+      const { error: resolveErr } = await resolveAssignment('resolve_frei_bestellung_assignment', { _order_id: orderId });
+      if (resolveErr) {
+        console.error('[confirmUnassign] resolve failed', resolveErr);
+        toast.error('Zuordnung konnte nicht gelöscht werden: ' + resolveErr.message);
         return;
-      }
-
-      // 2. Prüfen, ob bereits ein Hidden-Marker existiert (Idempotenz)
-      const { data: existingMarker } = await supabase
-        .from('order_notes')
-        .select('id')
-        .eq('order_id', orderId)
-        .eq('note_type', FREI_HIDDEN_NOTE)
-        .limit(1)
-        .maybeSingle();
-
-      if (!existingMarker) {
-        const { data: { user } } = await supabase.auth.getUser();
-        const { error: noteErr } = await supabase.from('order_notes').insert({
-          order_id: orderId,
-          note_type: FREI_HIDDEN_NOTE,
-          note_text: 'Zuordnung gelöscht — aus „Bestellung möglich" entfernt.',
-          is_internal: true,
-          created_by: user?.id ?? null,
-        });
-        if (noteErr) {
-          console.error('[confirmUnassign] order_notes insert failed', noteErr);
-          toast.error('Eintrag konnte nicht ausgeblendet werden: ' + noteErr.message);
-          return;
-        }
       }
 
       // Optimistisch aus lokaler Liste entfernen — auch falls reload langsam ist

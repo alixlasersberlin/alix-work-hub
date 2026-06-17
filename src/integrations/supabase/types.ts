@@ -12480,6 +12480,10 @@ export type Database = {
         Returns: undefined
       }
       requires_reauth: { Args: never; Returns: boolean }
+      resolve_frei_bestellung_assignment: {
+        Args: { _order_id: string }
+        Returns: undefined
+      }
       session_requires_reauth: { Args: never; Returns: boolean }
       set_factory_invoice_payment_ok: {
         Args: { _ok: boolean; _production_order_id: string }
