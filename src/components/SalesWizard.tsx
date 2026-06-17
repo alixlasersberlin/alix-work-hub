@@ -280,11 +280,8 @@ export default function SalesWizard({ publicMode = false }: Props) {
                 <Slide key={step} direction={direction}>
                   {step === 0 && (
                     <div className="text-center space-y-6 py-4">
-                      <div className="mx-auto h-16 w-16 rounded-2xl bg-gradient-to-br from-amber-100 to-rose-100 flex items-center justify-center shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_10px_30px_-10px_rgba(217,119,6,0.35)]">
-                        <Sparkles className="h-8 w-8 text-amber-500" />
-                      </div>
+                      <img src={logoAsset.url} alt="Alix Lasers" className="mx-auto h-12 md:h-16 w-auto drop-shadow-[0_10px_25px_rgba(217,119,6,0.25)]" />
                       <div>
-                        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900">Alix Lasers ®</h1>
                         <p className="mt-2 text-xs md:text-sm text-slate-500 tracking-[0.22em] uppercase">
                           {t.brand_tag}
                         </p>
