@@ -43,6 +43,7 @@ interface ProductionOrderRow {
   sent_at: string | null;
   approval_status: string | null;
   supplier?: { name: string | null } | null;
+  customer_name?: string | null;
 }
 
 const STATUS_OPTIONS = [
