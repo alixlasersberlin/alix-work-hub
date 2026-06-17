@@ -894,6 +894,20 @@ export default function Lagergeraete({
       else toast.warning('Kunden-E-Mail nicht versendet: ' + res.message);
     }
 
+    // Automatischer Versand der Vorlage "Kunde – Produktion" sobald der Status
+    // auf "Produktion" wechselt (nur wenn nicht bereits manuell oben gesendet).
+    const becameProduktion = effectiveStatus === 'Produktion' && originalDeviceStatus !== 'Produktion';
+    if (becameProduktion && finalReservedOrderId && !sendCustomerEmailOnSave) {
+      const res = await sendCustomerShippingNotice(
+        finalReservedOrderId,
+        editingId ?? undefined,
+        'automatisch',
+        'customer_in_production',
+      );
+      if (res.ok) toast.success('Kunden-E-Mail "Produktion" automatisch versendet');
+      else toast.warning('Auto-E-Mail nicht versendet: ' + res.message);
+    }
+
     setSaving(false);
     toast.success(editingId ? 'Lagergerät aktualisiert' : 'Lagergerät erfasst');
     resetForm();
