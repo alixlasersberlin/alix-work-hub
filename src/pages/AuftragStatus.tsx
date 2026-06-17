@@ -7,12 +7,18 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import {
   Activity, Search, Loader2, Calendar, Euro, CheckCircle2, XCircle,
-  Factory, Package, Truck, MapPin, ExternalLink,
+  Factory, Package, Truck, MapPin, ExternalLink, X, Plus,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { withAt } from '@/lib/atSuffix';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/infinity/PageHeader';
+
+type ReservedDevice = {
+  id: string;
+  serial_number: string;
+  model_name: string;
+};
 
 type StatusResult = {
   id: string;
