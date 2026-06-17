@@ -141,6 +141,7 @@ const DeviceStatistics = lazy(() => import("./pages/DeviceStatistics"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 const ProductionOrders = lazy(() => import("./pages/ProductionOrders"));
 const OrdersFreiBestellung = lazy(() => import("./pages/OrdersFreiBestellung"));
+const BestellwesenOverview = lazy(() => import("./pages/BestellwesenOverview"));
 const ProductionOrderForm = lazy(() => import("./pages/ProductionOrderForm"));
 const ProductionOrderDetail = lazy(() => import("./pages/ProductionOrderDetail"));
 const ProductionTimeline = lazy(() => import("./pages/ProductionTimeline"));
