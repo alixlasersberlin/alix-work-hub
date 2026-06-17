@@ -66,7 +66,7 @@ export default function Orders() {
   const [bulkStatus, setBulkStatus] = useState<string>('');
   const [bulkSaving, setBulkSaving] = useState(false);
   const navigate = useNavigate();
-  const { isAdmin, hasRole } = useAuth();
+  const { isAdmin, hasRole, user } = useAuth();
   const { drivingTimes, loading: drivingLoading, requestedIds, fetchDrivingTimes, retryFailed } = useDrivingTimes();
   const [viewMode, setViewMode] = useViewMode();
 
