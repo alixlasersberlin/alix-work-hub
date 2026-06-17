@@ -83,7 +83,7 @@ const T: Record<Lang, Record<string, string>> = {
     allStatus: '所有状态', allPayment: '所有付款',
     sort: '排序',
     s_created_desc: '最新优先', s_liefertermin_asc: '交期 ↑', s_liefertermin_desc: '交期 ↓', s_order_asc: '订单号',
-    intern: '内部', model: '型号', handler: '处理人', delivery: '交货日期',
+    intern: 'ORDER CONTROL', model: '型号', handler: '处理人', delivery: '交货日期',
     payment: '付款', status: '状态', actions: '操作', supplier: '供应商',
     overdue: '逾期', dueToday: '今日到期', dueIn: '剩', days: '天',
     p_Ja: '是', p_Nein: '否', p_Teilweise: '部分', p_Garantie: '保修',
