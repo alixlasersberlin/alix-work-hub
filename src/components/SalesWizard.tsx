@@ -543,7 +543,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
                               ? 'border-amber-300 bg-amber-50/80 shadow-[0_8px_24px_-12px_rgba(217,119,6,0.45)]'
                               : 'border-slate-200/80 bg-white/80 hover:border-amber-200 hover:bg-white',
                           )}>
-                            <RadioGroupItem value={c} />
+                            <RadioGroupItem value={c} className="!border-amber-400 !text-amber-600 data-[state=checked]:!border-amber-500 data-[state=checked]:!bg-white [&_svg]:!fill-amber-600 [&_svg]:!text-amber-600" />
                             <span className="text-sm text-slate-800">{t.consultation[c] || c}</span>
                           </label>
                         ))}
