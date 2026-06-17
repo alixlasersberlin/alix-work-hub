@@ -540,14 +540,18 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
                       </span>
                     </div>
                   </div>
-                  {(due || r.sonderwuensche) && (
-                    <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-border/50 text-[11px]">
-                      {r.sonderwuensche
-                        ? <span className="font-mono uppercase text-muted-foreground truncate">{r.sonderwuensche}</span>
-                        : <span />}
-                      {due && <span className={cn('font-medium', due.cls)}>{due.label}</span>}
+                  <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-border/50 text-[11px]">
+                    <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                      {r.sent_at
+                        ? <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-500/15 text-green-500 border border-green-500/40"><CheckCircle2 className="w-3 h-3" /> bestellt</span>
+                        : <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-500/15 text-red-400 border border-red-500/40"><XCircle className="w-3 h-3" /> offen</span>
+                      }
+                      {r.sonderwuensche && (
+                        <span className="font-mono uppercase text-muted-foreground truncate ml-1">{r.sonderwuensche}</span>
+                      )}
                     </div>
-                  )}
+                    {due && <span className={cn('font-medium flex-shrink-0', due.cls)}>{due.label}</span>}
+                  </div>
                   <div className="flex justify-end gap-0.5 mt-2 pt-2 border-t border-border/50">
                     <Button asChild size="sm" variant="ghost" className="h-8 w-8 p-0"><Link to={`${basePath}/${r.id}`}><FileText className="w-4 h-4" /></Link></Button>
                     <Button asChild size="sm" variant="ghost" className="h-8 w-8 p-0"><Link to={`${basePath}/${r.id}/bearbeiten`}><Pencil className="w-4 h-4" /></Link></Button>
