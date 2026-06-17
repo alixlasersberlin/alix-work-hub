@@ -28,12 +28,12 @@ export function useUiTemplate() {
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  const setTemplate = useCallback((t: UiTemplate) => {
-    localStorage.setItem(KEY, t);
-    apply(t);
-    setTemplateState(t);
+  const setTemplate = useCallback((_t: UiTemplate) => {
+    localStorage.setItem(KEY, "standard");
+    apply("standard");
+    setTemplateState("standard");
     // Inform same-tab listeners
-    window.dispatchEvent(new CustomEvent("alixwork:ui-template", { detail: t }));
+    window.dispatchEvent(new CustomEvent("alixwork:ui-template", { detail: "standard" }));
   }, []);
 
   return { template, setTemplate };
