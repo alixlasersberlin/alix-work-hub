@@ -72,6 +72,22 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
       .then(({ data }) => setSuppliers(data || []));
   }, []);
 
+  // Load all items (zoho_items) for Modellname picker
+  const [zohoItems, setZohoItems] = useState<Array<{ item_name: string; sku: string | null }>>([]);
+  const [modelOpen, setModelOpen] = useState(false);
+  const [modelSearch, setModelSearch] = useState('');
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from('zoho_items')
+        .select('item_name, sku')
+        .not('item_name', 'is', null)
+        .order('item_name')
+        .limit(5000);
+      setZohoItems((data || []) as any);
+    })();
+  }, []);
+
   // Prefill bearbeiter with logged-in user's name (only for new orders)
   useEffect(() => {
     if (isEdit) return;
