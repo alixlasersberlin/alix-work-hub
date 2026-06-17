@@ -163,6 +163,7 @@ export default function ProductionPortal() {
     const { data, error } = await supabase
       .from('production_orders')
       .select('*, supplier:suppliers(name)')
+      .neq('status', 'fertig')
       .order('liefertermin', { ascending: true });
     if (error) { toast.error(error.message); setLoading(false); return; }
     const list = (data || []) as ProductionOrderRow[];
