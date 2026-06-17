@@ -2150,7 +2150,7 @@ html :is([data-radix-portal], [data-radix-popper-content-wrapper]) {
   perspective: none !important;
 }
 
-html [role="dialog"][data-state] {
+html :is([role="dialog"], [role="alertdialog"])[data-state] {
   position: fixed !important;
   left: 50% !important;
   top: 50% !important;
