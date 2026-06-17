@@ -115,17 +115,13 @@ const navItems: NavItem[] = [
           { path: '/order/freigabe', label: 'Freigabe', icon: ShieldCheck, roles: ['Admin', 'Super Admin', 'Order', 'SACHBEARBEITUNG'] },
           { path: '/bestellwesen/ersatzteile', label: 'Ersatzteil-Bestellvorschläge', icon: Package, roles: ['Admin', 'Super Admin', 'Bestellwesen', 'Order', 'Technik', 'SACHBEARBEITUNG'] },
           { path: '/ersatzteilmanagement', label: 'Ersatzteilmanagement', icon: Boxes, roles: ['Admin', 'Super Admin', 'Bestellwesen', 'Order', 'Technik', 'Reparaturannahme', 'Serviceleitung', 'Service', 'Finance', 'SACHBEARBEITUNG'] },
-        ],
-      },
-      {
-        path: '/production', label: 'PRODUCTION', icon: Factory, roles: ['Super Admin', 'Lieferant', 'FACTORY INVOICE'],
-        children: [
           { path: '/production/order-in', label: 'Order In', icon: Inbox, roles: ['Super Admin', 'Lieferant', 'FACTORY INVOICE'] },
           { path: '/production', label: 'Liste', icon: ListOrdered, roles: ['Super Admin', 'Lieferant', 'FACTORY INVOICE'] },
           { path: '/production/fertig', label: 'Fertig produziert', icon: CheckCircle2, roles: ['Super Admin', 'Lieferant', 'FACTORY INVOICE'] },
           { path: '/production/factory-invoice', label: 'Factory Invoice', icon: Receipt, roles: ['Super Admin', 'FACTORY INVOICE'] },
         ],
       },
+
       {
         path: '/lagerverwaltung', label: 'LAGERVERWALTUNG', icon: Warehouse, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'SACHBEARBEITUNG'],
         children: [
