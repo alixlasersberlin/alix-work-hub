@@ -290,7 +290,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
                       <Button
                         size="lg"
                         onClick={goNext}
-                        className="mt-2 px-10 h-12 rounded-xl bg-slate-900 hover:bg-slate-800 text-white shadow-[0_15px_40px_-15px_rgba(15,23,42,0.5)] transition"
+                        className="mt-2 px-10 h-12 rounded-xl bg-gradient-to-b from-[#d8b56a] to-[#b8893a] hover:from-[#e2c179] hover:to-[#c4953f] text-white shadow-[0_15px_40px_-15px_rgba(184,137,58,0.65),inset_0_1px_0_rgba(255,255,255,0.35)] transition"
                       >
                         {t.start} <ArrowRight className="h-4 w-4" />
                       </Button>
