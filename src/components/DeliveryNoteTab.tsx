@@ -163,7 +163,7 @@ export default function DeliveryNoteTab({ order, customer, items, onReload }: Pr
           if (!s?.checked || s.qty <= 0) return null;
           return [
             String(idx + 1),
-            String(i.item_name || '—') + (i.description ? `\n${String(i.description).slice(0, 80)}` : ''),
+            String(i.item_name || '—'),
             String(s.qty),
           ];
         })
