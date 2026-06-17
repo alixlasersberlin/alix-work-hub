@@ -245,6 +245,7 @@ export default function Lagergeraete({
   const [reservedOrderId, setReservedOrderId] = useState<string | null>(null);
   const [reservedOrderNumber, setReservedOrderNumber] = useState<string | null>(null);
   const [originalReservedOrderId, setOriginalReservedOrderId] = useState<string | null>(null);
+  const [originalDeviceStatus, setOriginalDeviceStatus] = useState<DeviceStatus | null>(null);
   const [reservationWeek, setReservationWeek] = useState<string>('');
   const [leihCustomerId, setLeihCustomerId] = useState<string | null>(null);
   const [leihCustomerName, setLeihCustomerName] = useState<string>('');
@@ -678,6 +679,7 @@ export default function Lagergeraete({
     setReservedOrderId(null);
     setReservedOrderNumber(null);
     setOriginalReservedOrderId(null);
+    setOriginalDeviceStatus(null);
     setReservationWeek('');
     setLeihCustomerId(null);
     setLeihCustomerName('');
@@ -693,7 +695,9 @@ export default function Lagergeraete({
     setSerial(d.serial_number);
     setModelName(d.model_name);
     setDeviceType(getDeviceTypeFromNotes(d.notes));
-    setDeviceStatus(getStatusFromNotes(d.notes));
+    const initialStatus = getStatusFromNotes(d.notes);
+    setDeviceStatus(initialStatus);
+    setOriginalDeviceStatus(initialStatus);
     setEntryDate(d.entry_date);
     setNotes(d.notes ?? '');
     setReservedOrderId(d.reserved_order_id);
@@ -888,6 +892,20 @@ export default function Lagergeraete({
       const res = await sendCustomerShippingNotice(finalReservedOrderId, editingId ?? undefined, 'manuell', tplKey);
       if (res.ok) toast.success('Kunden-E-Mail versendet');
       else toast.warning('Kunden-E-Mail nicht versendet: ' + res.message);
+    }
+
+    // Automatischer Versand der Vorlage "Kunde – Produktion" sobald der Status
+    // auf "Produktion" wechselt (nur wenn nicht bereits manuell oben gesendet).
+    const becameProduktion = effectiveStatus === 'Produktion' && originalDeviceStatus !== 'Produktion';
+    if (becameProduktion && finalReservedOrderId && !sendCustomerEmailOnSave) {
+      const res = await sendCustomerShippingNotice(
+        finalReservedOrderId,
+        editingId ?? undefined,
+        'automatisch',
+        'customer_in_production',
+      );
+      if (res.ok) toast.success('Kunden-E-Mail "Produktion" automatisch versendet');
+      else toast.warning('Auto-E-Mail nicht versendet: ' + res.message);
     }
 
     setSaving(false);
