@@ -75,6 +75,102 @@ const navItems: NavItem[] = [
       },
     ],
   },
+  {
+    path: '/mailcenter', label: 'CUSTOMER SERVICE', icon: HelpCircle,
+    roles: ['Admin', 'Super Admin', 'Geschäftsführung', 'Marketing', 'Finance', 'Technik', 'Kundenservice', 'Vertrieb', 'Reparaturannahme', 'Serviceleitung', 'Service', 'Tourenplanung', 'Bestellwesen', 'Order', 'Auftragsverwaltung', 'QM', 'Read Only', 'Read Only Audit', 'Österreich', 'SACHBEARBEITUNG'],
+    children: [
+  {
+    path: '/mailcenter', label: 'ALIX i-COM', icon: Mail,
+    roles: ['Admin', 'Super Admin', 'Geschäftsführung', 'Marketing', 'Finance', 'Technik', 'Kundenservice', 'Vertrieb', 'Reparaturannahme', 'Tourenplanung', 'Bestellwesen', 'Order', 'Read Only', 'Read Only Audit', 'Österreich', 'SACHBEARBEITUNG'],
+    children: [
+      { path: '/mailcenter', label: 'Dashboard', icon: LayoutDashboard, roles: null },
+      { path: '/tickets', label: 'Ticketliste', icon: Ticket, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
+      { path: '/mailcenter/schreiben', label: 'E-Mail schreiben', icon: PenSquare, roles: null },
+      { path: '/mailcenter/intern', label: 'Interne Nachrichten', icon: MessageSquare, roles: null },
+      { path: '/mailcenter/telefonnotizen', label: 'Telefonnotizen', icon: Phone, roles: null },
+      { path: '/mailcenter/aufgaben', label: 'Aufgaben', icon: CheckSquare, roles: null },
+      { path: '/tickets?new=1', label: 'Neues Ticket', icon: Ticket, roles: null },
+      {
+        path: '/mailcenter/schreiben', label: 'E-Mail', icon: Mail, roles: ['Super Admin'],
+        children: [
+          { path: '/mailcenter/gesendet', label: 'Gesendet', icon: Send, roles: ['Super Admin'] },
+          { path: '/mailcenter/entwuerfe', label: 'Entwürfe', icon: FileEdit, roles: ['Super Admin'] },
+          { path: '/mailcenter/intern', label: 'Interne Nachrichten', icon: MessageSquare, roles: null },
+          { path: '/mailcenter/schreiben', label: 'E-Mail schreiben', icon: PenSquare, roles: null },
+          { path: '/mailcenter/kampagnen', label: 'Kampagnen', icon: Megaphone, roles: ['Super Admin'] },
+          { path: '/mailcenter/vorlagen', label: 'Vorlagen', icon: FileText, roles: ['Super Admin'] },
+          { path: '/mailcenter/automationen', label: 'Automationen', icon: Workflow, roles: ['Super Admin'] },
+          { path: '/mailcenter/ki-assistent', label: 'KI-Assistent', icon: Sparkles, roles: null },
+          { path: '/mailcenter/tracking', label: 'Tracking', icon: Activity, roles: ['Super Admin'] },
+          { path: '/mailcenter/abmeldungen', label: 'Abmeldungen', icon: MailX, roles: ['Super Admin'] },
+          { path: '/mailcenter/domains', label: 'Domains', icon: Globe, roles: ['Super Admin'] },
+          { path: '/mailcenter/spam', label: 'Spam & Zustellbarkeit', icon: Shield, roles: ['Super Admin'] },
+        ],
+      },
+      {
+        path: '/mailcenter/telefonie', label: 'Telefon', icon: PhoneCall, roles: ['Super Admin'],
+        children: [
+          { path: '/mailcenter/telefonie', label: 'Telefonie (3CX)', icon: PhoneCall, roles: null },
+          { path: '/mailcenter/telefonnotizen', label: 'Telefonnotizen', icon: Phone, roles: null },
+          { path: '/mailcenter/gespraechsprotokolle', label: 'Gesprächsprotokolle', icon: ClipboardList, roles: ['Super Admin'] },
+        ],
+      },
+      {
+        path: '/mailcenter/aufgaben', label: 'Aufgaben', icon: CheckSquare, roles: ['Super Admin'],
+        children: [
+          { path: '/mailcenter/aufgaben', label: 'Aufgaben', icon: CheckSquare, roles: ['Super Admin'] },
+          { path: '/mailcenter/wiedervorlagen', label: 'Wiedervorlagen', icon: CalendarClock, roles: ['Super Admin'] },
+        ],
+      },
+      {
+        path: '/mailcenter/dokumente', label: 'Dokumente', icon: Files, roles: ['Super Admin'],
+        children: [
+          { path: '/mailcenter/dokumente', label: 'Dokumenten-Center', icon: Files, roles: ['Super Admin'] },
+          { path: '/mailcenter/versandnachweise', label: 'Versandnachweise', icon: FileCheck2, roles: ['Super Admin'] },
+          { path: '/mailcenter/dokumente-vorlagen', label: 'Dok.-Vorlagen', icon: FileText, roles: ['Super Admin'] },
+          { path: '/mailcenter/dokumente-automationen', label: 'Dok.-Automationen', icon: Workflow, roles: ['Super Admin'] },
+        ],
+      },
+      {
+        path: '/mailcenter/systemstatus', label: 'Status & Logs', icon: HeartPulse, roles: ['Super Admin'],
+        children: [
+          { path: '/mailcenter/systemstatus', label: 'Systemstatus', icon: HeartPulse, roles: ['Super Admin'] },
+          { path: '/mailcenter/audit-log', label: 'Audit-Log', icon: ScrollText, roles: ['Super Admin'] },
+          { path: '/mailcenter/fehlerprotokoll', label: 'Fehlerprotokoll', icon: AlertTriangle, roles: ['Super Admin'] },
+          { path: '/mailcenter/tracking', label: 'Tracking', icon: Activity, roles: ['Super Admin'] },
+          { path: '/mailcenter/berichte', label: 'Berichte', icon: BarChart3, roles: ['Super Admin'] },
+        ],
+      },
+      {
+        path: '/mailcenter/einstellungen', label: 'Setup', icon: Settings, roles: ['Super Admin'],
+        children: [
+          { path: '/mailcenter/einstellungen', label: 'Einstellungen', icon: Settings, roles: ['Super Admin'] },
+          { path: '/mailcenter/berechtigungen', label: 'Berechtigungen', icon: ShieldCheck, roles: ['Super Admin'] },
+          { path: '/mailcenter/domains', label: 'Domains', icon: Globe, roles: ['Super Admin'] },
+          { path: '/mailcenter/backup', label: 'Backup Center', icon: Database, roles: ['Super Admin'] },
+          { path: '/mailcenter/import', label: 'Import', icon: Upload, roles: ['Super Admin'] },
+          { path: '/mailcenter/export', label: 'Export', icon: FileDown, roles: ['Super Admin'] },
+          { path: '/mailcenter/spam', label: 'Spam & Zustellbarkeit', icon: Shield, roles: ['Super Admin'] },
+          { path: '/mailcenter/testcenter', label: 'Testcenter', icon: TestTube2, roles: ['Super Admin'] },
+          { path: '/mailcenter/qualitaetssicherung', label: 'Qualitätssicherung', icon: BadgeCheck, roles: ['Super Admin'] },
+          { path: '/mailcenter/systemvalidierung', label: 'Systemvalidierung', icon: FileSignature, roles: ['Super Admin'] },
+          { path: '/mailcenter/produktivfreigabe', label: 'Produktivfreigabe', icon: Rocket, roles: ['Super Admin'] },
+        ],
+      },
+    ],
+  },
+      {
+        path: '/bewertungen', label: 'BEWERTUNGEN', icon: Star, roles: null,
+        children: [
+          { path: '/bewertungen', label: 'Übersicht', icon: LayoutDashboard, roles: null },
+          { path: '/bewertungen/geliefert', label: 'Aufträge geliefert', icon: Truck, roles: null },
+          { path: '/bewertungen/abgegeben', label: 'Abgegebene Bewertungen', icon: Star, roles: null },
+          { path: '/bewertungen/geschlossen', label: 'Geschlossen', icon: Lock, roles: null },
+          { path: '/bewertungen/frontend', label: 'Frontend', icon: Cloud, roles: null },
+        ],
+      },
+    ],
+  },
 
 
   {
@@ -170,102 +266,6 @@ const navItems: NavItem[] = [
           { path: '/lager/equipment-area/hold', label: 'Hold', icon: AlertTriangle, roles: ['Admin', 'Super Admin', 'Order', 'SACHBEARBEITUNG'] },
           { path: '/lager/equipment-area/ausgeliefert', label: 'Ausgeliefert', icon: PackageCheck, roles: ['Admin', 'Super Admin', 'Order', 'SACHBEARBEITUNG'] },
           { path: '/geraetesperren', label: 'Gerätesperren', icon: Lock, roles: null },
-        ],
-      },
-    ],
-  },
-  {
-    path: '/mailcenter', label: 'CUSTOMER SERVICE', icon: HelpCircle,
-    roles: ['Admin', 'Super Admin', 'Geschäftsführung', 'Marketing', 'Finance', 'Technik', 'Kundenservice', 'Vertrieb', 'Reparaturannahme', 'Serviceleitung', 'Service', 'Tourenplanung', 'Bestellwesen', 'Order', 'Auftragsverwaltung', 'QM', 'Read Only', 'Read Only Audit', 'Österreich', 'SACHBEARBEITUNG'],
-    children: [
-  {
-    path: '/mailcenter', label: 'ALIX i-COM', icon: Mail,
-    roles: ['Admin', 'Super Admin', 'Geschäftsführung', 'Marketing', 'Finance', 'Technik', 'Kundenservice', 'Vertrieb', 'Reparaturannahme', 'Tourenplanung', 'Bestellwesen', 'Order', 'Read Only', 'Read Only Audit', 'Österreich', 'SACHBEARBEITUNG'],
-    children: [
-      { path: '/mailcenter', label: 'Dashboard', icon: LayoutDashboard, roles: null },
-      { path: '/tickets', label: 'Ticketliste', icon: Ticket, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
-      { path: '/mailcenter/schreiben', label: 'E-Mail schreiben', icon: PenSquare, roles: null },
-      { path: '/mailcenter/intern', label: 'Interne Nachrichten', icon: MessageSquare, roles: null },
-      { path: '/mailcenter/telefonnotizen', label: 'Telefonnotizen', icon: Phone, roles: null },
-      { path: '/mailcenter/aufgaben', label: 'Aufgaben', icon: CheckSquare, roles: null },
-      { path: '/tickets?new=1', label: 'Neues Ticket', icon: Ticket, roles: null },
-      {
-        path: '/mailcenter/schreiben', label: 'E-Mail', icon: Mail, roles: ['Super Admin'],
-        children: [
-          { path: '/mailcenter/gesendet', label: 'Gesendet', icon: Send, roles: ['Super Admin'] },
-          { path: '/mailcenter/entwuerfe', label: 'Entwürfe', icon: FileEdit, roles: ['Super Admin'] },
-          { path: '/mailcenter/intern', label: 'Interne Nachrichten', icon: MessageSquare, roles: null },
-          { path: '/mailcenter/schreiben', label: 'E-Mail schreiben', icon: PenSquare, roles: null },
-          { path: '/mailcenter/kampagnen', label: 'Kampagnen', icon: Megaphone, roles: ['Super Admin'] },
-          { path: '/mailcenter/vorlagen', label: 'Vorlagen', icon: FileText, roles: ['Super Admin'] },
-          { path: '/mailcenter/automationen', label: 'Automationen', icon: Workflow, roles: ['Super Admin'] },
-          { path: '/mailcenter/ki-assistent', label: 'KI-Assistent', icon: Sparkles, roles: null },
-          { path: '/mailcenter/tracking', label: 'Tracking', icon: Activity, roles: ['Super Admin'] },
-          { path: '/mailcenter/abmeldungen', label: 'Abmeldungen', icon: MailX, roles: ['Super Admin'] },
-          { path: '/mailcenter/domains', label: 'Domains', icon: Globe, roles: ['Super Admin'] },
-          { path: '/mailcenter/spam', label: 'Spam & Zustellbarkeit', icon: Shield, roles: ['Super Admin'] },
-        ],
-      },
-      {
-        path: '/mailcenter/telefonie', label: 'Telefon', icon: PhoneCall, roles: ['Super Admin'],
-        children: [
-          { path: '/mailcenter/telefonie', label: 'Telefonie (3CX)', icon: PhoneCall, roles: null },
-          { path: '/mailcenter/telefonnotizen', label: 'Telefonnotizen', icon: Phone, roles: null },
-          { path: '/mailcenter/gespraechsprotokolle', label: 'Gesprächsprotokolle', icon: ClipboardList, roles: ['Super Admin'] },
-        ],
-      },
-      {
-        path: '/mailcenter/aufgaben', label: 'Aufgaben', icon: CheckSquare, roles: ['Super Admin'],
-        children: [
-          { path: '/mailcenter/aufgaben', label: 'Aufgaben', icon: CheckSquare, roles: ['Super Admin'] },
-          { path: '/mailcenter/wiedervorlagen', label: 'Wiedervorlagen', icon: CalendarClock, roles: ['Super Admin'] },
-        ],
-      },
-      {
-        path: '/mailcenter/dokumente', label: 'Dokumente', icon: Files, roles: ['Super Admin'],
-        children: [
-          { path: '/mailcenter/dokumente', label: 'Dokumenten-Center', icon: Files, roles: ['Super Admin'] },
-          { path: '/mailcenter/versandnachweise', label: 'Versandnachweise', icon: FileCheck2, roles: ['Super Admin'] },
-          { path: '/mailcenter/dokumente-vorlagen', label: 'Dok.-Vorlagen', icon: FileText, roles: ['Super Admin'] },
-          { path: '/mailcenter/dokumente-automationen', label: 'Dok.-Automationen', icon: Workflow, roles: ['Super Admin'] },
-        ],
-      },
-      {
-        path: '/mailcenter/systemstatus', label: 'Status & Logs', icon: HeartPulse, roles: ['Super Admin'],
-        children: [
-          { path: '/mailcenter/systemstatus', label: 'Systemstatus', icon: HeartPulse, roles: ['Super Admin'] },
-          { path: '/mailcenter/audit-log', label: 'Audit-Log', icon: ScrollText, roles: ['Super Admin'] },
-          { path: '/mailcenter/fehlerprotokoll', label: 'Fehlerprotokoll', icon: AlertTriangle, roles: ['Super Admin'] },
-          { path: '/mailcenter/tracking', label: 'Tracking', icon: Activity, roles: ['Super Admin'] },
-          { path: '/mailcenter/berichte', label: 'Berichte', icon: BarChart3, roles: ['Super Admin'] },
-        ],
-      },
-      {
-        path: '/mailcenter/einstellungen', label: 'Setup', icon: Settings, roles: ['Super Admin'],
-        children: [
-          { path: '/mailcenter/einstellungen', label: 'Einstellungen', icon: Settings, roles: ['Super Admin'] },
-          { path: '/mailcenter/berechtigungen', label: 'Berechtigungen', icon: ShieldCheck, roles: ['Super Admin'] },
-          { path: '/mailcenter/domains', label: 'Domains', icon: Globe, roles: ['Super Admin'] },
-          { path: '/mailcenter/backup', label: 'Backup Center', icon: Database, roles: ['Super Admin'] },
-          { path: '/mailcenter/import', label: 'Import', icon: Upload, roles: ['Super Admin'] },
-          { path: '/mailcenter/export', label: 'Export', icon: FileDown, roles: ['Super Admin'] },
-          { path: '/mailcenter/spam', label: 'Spam & Zustellbarkeit', icon: Shield, roles: ['Super Admin'] },
-          { path: '/mailcenter/testcenter', label: 'Testcenter', icon: TestTube2, roles: ['Super Admin'] },
-          { path: '/mailcenter/qualitaetssicherung', label: 'Qualitätssicherung', icon: BadgeCheck, roles: ['Super Admin'] },
-          { path: '/mailcenter/systemvalidierung', label: 'Systemvalidierung', icon: FileSignature, roles: ['Super Admin'] },
-          { path: '/mailcenter/produktivfreigabe', label: 'Produktivfreigabe', icon: Rocket, roles: ['Super Admin'] },
-        ],
-      },
-    ],
-  },
-      {
-        path: '/bewertungen', label: 'BEWERTUNGEN', icon: Star, roles: null,
-        children: [
-          { path: '/bewertungen', label: 'Übersicht', icon: LayoutDashboard, roles: null },
-          { path: '/bewertungen/geliefert', label: 'Aufträge geliefert', icon: Truck, roles: null },
-          { path: '/bewertungen/abgegeben', label: 'Abgegebene Bewertungen', icon: Star, roles: null },
-          { path: '/bewertungen/geschlossen', label: 'Geschlossen', icon: Lock, roles: null },
-          { path: '/bewertungen/frontend', label: 'Frontend', icon: Cloud, roles: null },
         ],
       },
     ],
