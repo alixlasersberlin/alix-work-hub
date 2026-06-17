@@ -238,13 +238,9 @@ export default function DeliveryNoteTab({ order, customer, items, onReload }: Pr
 
       // Handle "nachbestellen" → Restbestellungs-Marker
       const nachbestellen = leftoverWithDecisions.filter(l => l.decision === 'nachbestellen');
-      if (nachbestellen.length > 0 && user) {
+      if (nachbestellen.length > 0) {
         try {
-          await createRestbestellungMarker(
-            order.id,
-            user.id,
-            nachbestellen.map(l => `${l.item.item_name} × ${l.remain}`).join(', '),
-          );
+          await createRestbestellungMarker(order.id);
         } catch { /* ignore – marker optional */ }
       }
 
