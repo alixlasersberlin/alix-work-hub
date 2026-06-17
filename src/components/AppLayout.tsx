@@ -1370,10 +1370,6 @@ export default function AppLayout() {
             </Button>
             
           </div>
-          {/* Experience Mode Switcher am Ende des Sidebar-Menüs */}
-          <div className={cn("mt-2 px-1", collapsed && "px-0")}>
-            <ExperienceModeSwitcher collapsed={collapsed} />
-          </div>
         </div>
 
         {/* Resize-Handle (nur Desktop, wenn nicht eingeklappt) */}
@@ -1439,18 +1435,6 @@ export default function AppLayout() {
               <span className="text-muted-foreground font-mono text-xs hidden sm:inline">v{APP_VERSION}</span>
           </div>
             <NotificationCenter />
-            <DisplaySettingsMenu />
-            {!isNeo && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                onClick={toggleTheme}
-                title={theme === 'dark' ? 'Helles Design' : 'Dunkles Design'}
-              >
-                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              </Button>
-            )}
           </div>
         </header>
         <main className="flex-1 overflow-y-auto overflow-x-hidden scroll-touch pb-safe">
