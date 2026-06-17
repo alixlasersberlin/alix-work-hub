@@ -99,6 +99,106 @@ export default function ProductionFertig() {
       .filter(Boolean).join(' ').toLowerCase().includes(q);
   });
 
+  const exportRows = () => filtered.map((r: any) => ({
+    bestellnummer: r.display_order_number || '',
+    auftragsnummer: r.order_number || '',
+    kunde: r.customer_name || '',
+    modell: r.modellname || '',
+    farbe: r.farbe || '',
+    power: r.power_handstueck || '',
+    seriennummer: r.seriennummer || '',
+    bearbeiter: r.bearbeiter || '',
+    zulieferer: r.supplier?.name || '',
+    liefertermin: r.liefertermin && isValid(new Date(r.liefertermin)) ? format(new Date(r.liefertermin), 'dd.MM.yyyy') : '',
+    status: r.status || '',
+    reklamation: r.is_reclamation ? 'Ja' : 'Nein',
+    sonderwuensche: (r.sonderwuensche || '').replace(/\s+/g, ' ').trim(),
+    anmerkungen: (r.anmerkungen || '').replace(/\s+/g, ' ').trim(),
+    aktualisiert_am: r.updated_at ? format(new Date(r.updated_at), 'dd.MM.yyyy HH:mm') : '',
+  }));
+
+  const exportCSV = () => {
+    const data = exportRows();
+    if (data.length === 0) { toast.info('Keine Daten zum Exportieren'); return; }
+    const headers = Object.keys(data[0]);
+    const escape = (v: any) => {
+      const s = v == null ? '' : String(v);
+      return /[;"\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const csv = [
+      headers.join(';'),
+      ...data.map(row => headers.map(h => escape((row as any)[h])).join(';')),
+    ].join('\r\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `fertig_produziert_${format(new Date(), 'yyyyMMdd_HHmm')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${data.length} Einträge exportiert`);
+  };
+
+  const exportPDF = () => {
+    const data = exportRows();
+    if (data.length === 0) { toast.info('Keine Daten zum Exportieren'); return; }
+    const doc = createPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
+    const pageW = 297, pageH = 210, marginX = 10;
+    let y = 14;
+    doc.setFont('Inter', 'bold'); doc.setFontSize(14);
+    doc.text('Production – Fertig produziert', marginX, y);
+    doc.setFont('Inter', 'normal'); doc.setFontSize(9);
+    doc.text(`Stand: ${format(new Date(), 'dd.MM.yyyy HH:mm')}  ·  ${data.length} Einträge`, pageW - marginX, y, { align: 'right' });
+    y += 6;
+
+    const cols = [
+      { key: 'bestellnummer',  label: 'Bestell-Nr.', w: 28 },
+      { key: 'auftragsnummer', label: 'Auftrag',     w: 26 },
+      { key: 'kunde',          label: 'Kunde',       w: 40 },
+      { key: 'modell',         label: 'Modell',      w: 32 },
+      { key: 'farbe',          label: 'Farbe',       w: 18 },
+      { key: 'seriennummer',   label: 'SN',          w: 22 },
+      { key: 'bearbeiter',     label: 'Bearbeiter',  w: 24 },
+      { key: 'zulieferer',     label: 'Zulieferer',  w: 30 },
+      { key: 'liefertermin',   label: 'Liefertermin', w: 22 },
+      { key: 'status',         label: 'Status',      w: 22 },
+      { key: 'reklamation',    label: 'Rekl.',       w: 14 },
+    ] as const;
+
+    const drawHeader = () => {
+      doc.setFillColor(30, 30, 30);
+      doc.setTextColor(255, 255, 255);
+      doc.rect(marginX, y - 4, pageW - marginX * 2, 6, 'F');
+      doc.setFont('Inter', 'bold'); doc.setFontSize(8);
+      let x = marginX + 1;
+      cols.forEach(c => { doc.text(c.label, x, y); x += c.w; });
+      y += 4;
+      doc.setTextColor(0, 0, 0);
+      doc.setFont('Inter', 'normal');
+    };
+    drawHeader();
+
+    doc.setFontSize(7.5);
+    data.forEach((row, idx) => {
+      const cellLines = cols.map(c => doc.splitTextToSize(String((row as any)[c.key] ?? ''), c.w - 2));
+      const rowH = Math.max(...cellLines.map(l => l.length)) * 3.2 + 1.5;
+      if (y + rowH > pageH - 10) { doc.addPage(); y = 14; drawHeader(); doc.setFontSize(7.5); }
+      if (idx % 2 === 0) {
+        doc.setFillColor(245, 245, 245);
+        doc.rect(marginX, y - 3, pageW - marginX * 2, rowH, 'F');
+      }
+      let x = marginX + 1;
+      cellLines.forEach((lines, i) => {
+        doc.text(lines, x, y);
+        x += cols[i].w;
+      });
+      y += rowH;
+    });
+
+    doc.save(`fertig_produziert_${format(new Date(), 'yyyyMMdd_HHmm')}.pdf`);
+    toast.success(`${data.length} Einträge als PDF exportiert`);
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       <PageHeader
@@ -106,6 +206,16 @@ export default function ProductionFertig() {
         title="Production – Fertig produziert"
         subtitle={`${filtered.length} abgeschlossene Produktionsaufträge`}
         noBreadcrumbs
+        actions={
+          <>
+            <Button variant="outline" size="sm" onClick={exportCSV} title="Als CSV herunterladen">
+              <FileDown className="w-4 h-4 mr-1" /> CSV
+            </Button>
+            <Button variant="outline" size="sm" onClick={exportPDF} title="Als PDF herunterladen">
+              <Download className="w-4 h-4 mr-1" /> PDF
+            </Button>
+          </>
+        }
       />
 
       <div className="relative">
