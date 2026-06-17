@@ -12,6 +12,7 @@ import { PageHeader } from '@/components/infinity/PageHeader';
 import { StatusBadge } from '@/components/StatusBadge';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
+import { ALIX_MODEL_GROUPS } from '@/lib/alix-models';
 
 type ProductionVorgang = {
   id: string;
@@ -320,7 +321,12 @@ export default function Detailsuche() {
           <div><Label>Telefonnummer</Label>
             <Input value={form.phone} onChange={update('phone')} placeholder="z. B. +49 …" /></div>
           <div><Label>Modell</Label>
-            <Input value={form.model} onChange={update('model')} placeholder="z. B. Alix Infinity" /></div>
+            <Input value={form.model} onChange={update('model')} placeholder="z. B. Alix Infinity" list="detailsuche-modell-list" />
+            <datalist id="detailsuche-modell-list">
+              {ALIX_MODEL_GROUPS.flatMap(g => g.models).map(m => (
+                <option key={m} value={m} />
+              ))}
+            </datalist></div>
           <div><Label>Seriennummer</Label>
             <Input value={form.serial} onChange={update('serial')} placeholder="z. B. SN-12345" autoComplete="off" data-1p-ignore data-lpignore="true" data-form-type="other" name="serial-search" /></div>
         </div>
