@@ -882,6 +882,12 @@ export default function OrderDetail() {
         </div>
       )}
 
+      {activeTab === 'lieferschein' && (
+        <DeliveryNoteTab order={order} customer={customer} items={items} onReload={loadAll} />
+      )}
+
+
+
       {activeTab === 'notes' && (
         <div className="space-y-4">
           {canWrite && (
