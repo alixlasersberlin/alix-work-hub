@@ -8,7 +8,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowLeft, Loader2, Search, Save, Send, Download, Plus, Trash2, Upload, FileText, X } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { ArrowLeft, Loader2, Search, Save, Send, Download, Plus, Trash2, Upload, FileText, X, ChevronsUpDown, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateProductionOrderPdf } from '@/lib/production-order-pdf';
 import { ALIX_MODEL_GROUPS } from '@/lib/alix-models';
@@ -68,6 +70,22 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
   useEffect(() => {
     supabase.from('suppliers').select('*').eq('is_active', true).order('name')
       .then(({ data }) => setSuppliers(data || []));
+  }, []);
+
+  // Load all items (zoho_items) for Modellname picker
+  const [zohoItems, setZohoItems] = useState<Array<{ item_name: string; sku: string | null }>>([]);
+  const [modelOpen, setModelOpen] = useState(false);
+  const [modelSearch, setModelSearch] = useState('');
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from('zoho_items')
+        .select('item_name, sku')
+        .not('item_name', 'is', null)
+        .order('item_name')
+        .limit(5000);
+      setZohoItems((data || []) as any);
+    })();
   }, []);
 
   // Prefill bearbeiter with logged-in user's name (only for new orders)
@@ -811,21 +829,105 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
             <Label>Modellname</Label>
-            <Select value={form.modellname} onValueChange={v => setForm({ ...form, modellname: v })}>
-              <SelectTrigger><SelectValue placeholder="Modell wählen…" /></SelectTrigger>
-              <SelectContent className="max-h-80">
-                {ALIX_MODEL_GROUPS.map(group => (
-                  <div key={group.label}>
-                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                      {group.label}
-                    </div>
-                    {[...group.models].sort((a, b) => a.localeCompare(b, 'de')).map(m => (
-                      <SelectItem key={m} value={m}>{m}</SelectItem>
+            <Popover open={modelOpen} onOpenChange={setModelOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  role="combobox"
+                  className="w-full justify-between font-normal"
+                >
+                  <span className={form.modellname ? '' : 'text-muted-foreground'}>
+                    {form.modellname || 'Modell wählen oder eingeben…'}
+                  </span>
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                <Command shouldFilter={true}>
+                  <CommandInput
+                    placeholder="Suchen oder neuen Artikel eingeben…"
+                    value={modelSearch}
+                    onValueChange={setModelSearch}
+                  />
+                  <CommandList className="max-h-80">
+                    <CommandEmpty>
+                      {modelSearch.trim() ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setForm({ ...form, modellname: modelSearch.trim() });
+                            setModelOpen(false);
+                            setModelSearch('');
+                          }}
+                          className="w-full text-left px-2 py-1.5 text-sm hover:bg-accent rounded-sm flex items-center gap-2"
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                          „{modelSearch.trim()}" als neuen Artikel verwenden
+                        </button>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">Keine Treffer.</span>
+                      )}
+                    </CommandEmpty>
+                    {modelSearch.trim() && !ALIX_MODEL_GROUPS.some(g => g.models.some(m => m.toLowerCase() === modelSearch.trim().toLowerCase())) && !zohoItems.some(it => (it.item_name || '').toLowerCase() === modelSearch.trim().toLowerCase()) && (
+                      <CommandGroup heading="Neu">
+                        <CommandItem
+                          value={`__new__ ${modelSearch.trim()}`}
+                          onSelect={() => {
+                            setForm({ ...form, modellname: modelSearch.trim() });
+                            setModelOpen(false);
+                            setModelSearch('');
+                          }}
+                        >
+                          <Plus className="mr-2 h-3.5 w-3.5" />
+                          „{modelSearch.trim()}" als neuen Artikel verwenden
+                        </CommandItem>
+                      </CommandGroup>
+                    )}
+                    {ALIX_MODEL_GROUPS.map(group => (
+                      <CommandGroup key={group.label} heading={group.label}>
+                        {[...group.models].sort((a, b) => a.localeCompare(b, 'de')).map(m => (
+                          <CommandItem
+                            key={m}
+                            value={m}
+                            onSelect={() => {
+                              setForm({ ...form, modellname: m });
+                              setModelOpen(false);
+                              setModelSearch('');
+                            }}
+                          >
+                            <Check className={`mr-2 h-3.5 w-3.5 ${form.modellname === m ? 'opacity-100' : 'opacity-0'}`} />
+                            {m}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
                     ))}
-                  </div>
-                ))}
-              </SelectContent>
-            </Select>
+                    {zohoItems.length > 0 && (
+                      <CommandGroup heading="Bestand (Zoho Artikel)">
+                        {zohoItems.map((it, idx) => (
+                          <CommandItem
+                            key={`${it.item_name}-${idx}`}
+                            value={`${it.item_name} ${it.sku || ''}`}
+                            onSelect={() => {
+                              setForm({ ...form, modellname: it.item_name });
+                              setModelOpen(false);
+                              setModelSearch('');
+                            }}
+                          >
+                            <Check className={`mr-2 h-3.5 w-3.5 ${form.modellname === it.item_name ? 'opacity-100' : 'opacity-0'}`} />
+                            <span className="flex-1 truncate">{it.item_name}</span>
+                            {it.sku && <span className="ml-2 text-xs text-muted-foreground">{it.sku}</span>}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    )}
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Tipp: Tippen zum Suchen oder neuen Artikelnamen eingeben und übernehmen.
+            </p>
           </div>
           <div>
             <Label>Farbe {!isReclamation && '*'}</Label>
