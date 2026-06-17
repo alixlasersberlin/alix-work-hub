@@ -308,10 +308,11 @@ export default function OrdersFreiBestellung() {
     const orderNumber = unassignOrder.order_number;
     setUnassigning(true);
     try {
-      const { error: resolveErr } = await supabase.rpc(
-        'resolve_frei_bestellung_assignment' as any,
-        { _order_id: orderId } as any,
-      );
+      const resolveAssignment = supabase.rpc as unknown as (
+        fn: 'resolve_frei_bestellung_assignment',
+        args: { _order_id: string },
+      ) => Promise<{ error: { message: string } | null }>;
+      const { error: resolveErr } = await resolveAssignment('resolve_frei_bestellung_assignment', { _order_id: orderId });
       if (resolveErr) {
         console.error('[confirmUnassign] resolve failed', resolveErr);
         toast.error('Zuordnung konnte nicht gelöscht werden: ' + resolveErr.message);
