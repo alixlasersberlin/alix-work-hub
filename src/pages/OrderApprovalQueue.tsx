@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
-  Loader2, ShieldCheck, Search, Download, Calendar, CheckCircle2, Clock, AlertTriangle, Factory,
+  Loader2, ShieldCheck, Search, Download, Calendar, CheckCircle2, Clock, AlertTriangle, Factory, X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
