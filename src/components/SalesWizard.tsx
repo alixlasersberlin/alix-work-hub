@@ -6,7 +6,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Progress } from '@/components/ui/progress';
-import { Card } from '@/components/ui/card';
 import { ArrowLeft, ArrowRight, Check, Loader2, Send, Star, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Turnstile from '@/components/Turnstile';
@@ -114,6 +113,12 @@ interface Props {
   publicMode?: boolean;
 }
 
+// Shared input styling for the light premium look
+const inputCls =
+  'bg-white/90 border-slate-200/80 text-slate-900 placeholder:text-slate-400 focus-visible:ring-amber-300/60 focus-visible:border-amber-300 shadow-sm';
+const selectCls =
+  'w-full h-11 rounded-xl border px-3 text-sm bg-white/90 border-slate-200/80 text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-300/60 shadow-sm';
+
 export default function SalesWizard({ publicMode = false }: Props) {
   const { t } = useWizardLang();
   const [step, setStep] = useState(0);
@@ -122,8 +127,12 @@ export default function SalesWizard({ publicMode = false }: Props) {
   const [result, setResult] = useState<{ score: number; category: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [direction, setDirection] = useState<'forward' | 'backward'>('forward');
 
   const progress = useMemo(() => Math.round(((step + 1) / (TOTAL_STEPS + 1)) * 100), [step]);
+
+  const goNext = () => { setDirection('forward'); setStep((s) => s + 1); };
+  const goBack = () => { setDirection('backward'); setStep((s) => Math.max(0, s - 1)); };
 
   const toggle = (list: keyof Pick<State, 'interests' | 'additional_interests'>, value: string) => {
     setData((d) => {
@@ -182,6 +191,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
       if (fnError) throw new Error(fnError.message || 'Fehler beim Absenden');
       if (json?.error) throw new Error(json.message || json.error);
       setResult({ score: json.score, category: json.category });
+      setDirection('forward');
       setStep(TOTAL_STEPS);
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Unbekannter Fehler';
@@ -192,485 +202,485 @@ export default function SalesWizard({ publicMode = false }: Props) {
   }
 
   const shellWrap = publicMode
-    ? 'min-h-screen w-full text-white relative overflow-hidden bg-cover bg-center bg-no-repeat bg-fixed'
+    ? 'min-h-screen w-full relative overflow-hidden bg-cover bg-center bg-no-repeat bg-fixed'
     : 'w-full';
 
   return (
     <div
       className={shellWrap}
-      style={publicMode ? { backgroundImage: `url(${bgAsset.url})` } : undefined}
+      style={
+        publicMode
+          ? {
+              backgroundImage: `linear-gradient(160deg, rgba(255,255,255,0.92) 0%, rgba(247,246,242,0.9) 60%, rgba(238,240,245,0.92) 100%), url(${bgAsset.url})`,
+            }
+          : undefined
+      }
     >
       {publicMode && (
         <>
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-0 opacity-[0.06] flex items-center justify-center select-none"
+            className="pointer-events-none absolute inset-0 opacity-[0.04] flex items-center justify-center select-none"
           >
-            <div className="text-[18vw] font-black tracking-tighter text-white whitespace-nowrap">
+            <div className="text-[18vw] font-black tracking-tighter text-slate-900 whitespace-nowrap">
               ALIX
             </div>
           </div>
           <div className="absolute inset-x-0 top-0 z-30 px-6 py-6 flex items-center justify-between">
-            <div className="text-2xl font-bold tracking-[0.18em]">Alix Lasers ®</div>
+            <div className="text-2xl font-bold tracking-[0.18em] text-slate-900">Alix Lasers ®</div>
             <div className="flex items-center gap-4">
-              <div className="text-xs text-blue-100/70 hidden md:block">
-                100% AI Full Technologie
-              </div>
-              <WizardLanguageSwitcher variant="dark" />
+              <div className="text-xs text-slate-500 hidden md:block">100% AI Full Technologie</div>
+              <WizardLanguageSwitcher variant="light" />
             </div>
           </div>
         </>
       )}
       {!publicMode && (
         <div className="relative z-30 flex justify-end mb-3">
-          <WizardLanguageSwitcher variant="dark" />
+          <WizardLanguageSwitcher variant="light" />
         </div>
       )}
 
-      <div className={cn(
-        'relative z-20 mx-auto w-full max-w-2xl px-4',
-        publicMode ? 'pt-24 pb-12' : 'py-6',
-      )}>
-        <div className="mb-6">
-          <div className="flex items-center justify-between text-xs mb-2">
-            <span className={'text-cyan-200/70'}>
+      <div className={cn('relative z-20 mx-auto w-full max-w-2xl px-3 sm:px-4', publicMode ? 'pt-24 pb-10' : 'py-4')}>
+        {/* Premium step bar */}
+        <div className="mb-5">
+          <div className="flex items-center justify-between text-[11px] font-medium tracking-wide mb-2">
+            <span className="text-slate-500">
               {t.step_of(Math.min(step + 1, TOTAL_STEPS), TOTAL_STEPS)}
             </span>
-            <span className={'text-cyan-200/70'}>
-              {progress}%
-            </span>
+            <span className="text-slate-700">{progress}%</span>
           </div>
-          <Progress value={progress} className={publicMode ? 'bg-white/10' : ''} />
+          <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-slate-200/70">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-amber-300 via-rose-300 to-sky-300 shadow-[0_0_12px_rgba(251,191,36,0.55)] transition-[width] duration-500 ease-out"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
         </div>
 
-        <div className="relative [perspective:1600px]">
-          {/* Ambient AI orbs */}
-          <div aria-hidden className="pointer-events-none absolute -inset-10 overflow-hidden">
-            <div className="absolute -top-16 -left-10 h-64 w-64 rounded-full bg-cyan-400/30 blur-3xl animate-pulse" />
-            <div className="absolute -bottom-20 -right-10 h-72 w-72 rounded-full bg-fuchsia-500/25 blur-3xl animate-pulse [animation-delay:1s]" />
-            <div className="absolute top-1/3 left-1/2 h-40 w-40 -translate-x-1/2 rounded-full bg-amber-300/20 blur-3xl animate-pulse [animation-delay:2s]" />
-          </div>
-          {/* Gradient border shell */}
-          <div className="relative rounded-3xl p-[1.5px] bg-[conic-gradient(from_140deg,rgba(34,211,238,0.9),rgba(217,119,6,0.7),rgba(232,121,249,0.9),rgba(34,211,238,0.9))] shadow-[0_30px_120px_-20px_rgba(34,211,238,0.5)]">
-            <Card className={cn(
-              'relative overflow-hidden p-6 md:p-9 rounded-[calc(1.5rem-1.5px)] border-0',
-              'bg-[radial-gradient(120%_120%_at_0%_0%,rgba(34,211,238,0.12),transparent_50%),radial-gradient(120%_120%_at_100%_100%,rgba(217,70,239,0.14),transparent_55%),linear-gradient(160deg,#070b1a_0%,#0b1228_45%,#0a0f24_100%)]',
-              'backdrop-blur-2xl text-slate-100',
-              'before:absolute before:inset-0 before:bg-[linear-gradient(transparent_95%,rgba(255,255,255,0.04)_95%),linear-gradient(90deg,transparent_95%,rgba(255,255,255,0.04)_95%)] before:bg-[size:36px_36px] before:opacity-40 before:pointer-events-none',
-              'after:absolute after:inset-x-8 after:top-0 after:h-px after:bg-gradient-to-r after:from-transparent after:via-cyan-300/70 after:to-transparent',
-              '[transform:rotateX(0.5deg)] transition-transform duration-700',
-            )}>
+        {/* 3D stage */}
+        <div className="relative [perspective:1800px]">
+          {/* Silver gradient border */}
+          <div className="relative rounded-[28px] p-[1px] bg-[linear-gradient(135deg,rgba(255,255,255,0.95),rgba(203,213,225,0.6)_40%,rgba(255,255,255,0.95)_70%,rgba(217,180,107,0.55))] shadow-[0_40px_120px_-30px_rgba(15,23,42,0.25),0_10px_30px_-10px_rgba(15,23,42,0.12)]">
+            <div
+              className={cn(
+                'relative overflow-hidden rounded-[27px] border border-white/80',
+                'bg-[radial-gradient(120%_120%_at_0%_0%,rgba(254,243,199,0.55),transparent_55%),radial-gradient(120%_120%_at_100%_100%,rgba(186,230,253,0.45),transparent_55%),linear-gradient(180deg,#ffffff_0%,#fbfaf7_100%)]',
+                'backdrop-blur-2xl text-slate-900',
+                'transition-transform duration-700 will-change-transform [transform:rotateX(0.4deg)]',
+              )}
+            >
+              {/* Top highlight */}
+              <div aria-hidden className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-amber-300/70 to-transparent" />
+              {/* Inner soft shine */}
+              <div aria-hidden className="pointer-events-none absolute -top-20 -right-20 h-56 w-56 rounded-full bg-white/70 blur-3xl" />
 
-
-          {/* Step 0 – Willkommen */}
-          {step === 0 && (
-            <div className="text-center space-y-6 py-6">
-              <Sparkles className="h-12 w-12 mx-auto text-blue-400" />
-              <div>
-                <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Alix Lasers ®</h1>
-              <p className="mt-2 text-sm md:text-base text-cyan-200/80 tracking-[0.18em] uppercase">
-                  {t.brand_tag}
-                </p>
-              </div>
-              <p className="max-w-md mx-auto text-slate-200/90">
-                {t.welcome_lead}
-              </p>
-
-              <Button size="lg" onClick={() => setStep(1)} className="mt-2 px-10">
-                {t.start} <ArrowRight className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
-
-          {/* Step 1 – Interessen */}
-          {step === 1 && (
-            <Section title={t.s_interests} hint={t.multi_select} publicMode={publicMode}>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {INTERESTS.map((it) => {
-                  const active = data.interests.includes(it.key);
-                  const label = t.interests[it.key] || it.key;
-                  return (
-                    <button
-                      key={it.key}
-                      type="button"
-                      onClick={() => toggle('interests', it.key)}
-                      className={cn(
-                        'relative aspect-square rounded-xl overflow-hidden border-2 transition-all group',
-                        active
-                          ? 'border-blue-400 ring-2 ring-blue-400/50'
-                          : publicMode ? 'border-white/15 hover:border-white/40' : 'border-border hover:border-primary/60',
-                      )}
-                    >
-                      <img src={it.img} alt={label} loading="lazy" width={768} height={768} className="absolute inset-0 w-full h-full object-cover opacity-70 group-hover:opacity-100 transition" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-                      <div className="absolute inset-x-0 bottom-0 p-2 text-xs font-semibold text-white text-left">
-                        {label}
+              <div className="relative p-6 md:p-9">
+                <Slide key={step} direction={direction}>
+                  {step === 0 && (
+                    <div className="text-center space-y-6 py-4">
+                      <div className="mx-auto h-16 w-16 rounded-2xl bg-gradient-to-br from-amber-100 to-rose-100 flex items-center justify-center shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_10px_30px_-10px_rgba(217,119,6,0.35)]">
+                        <Sparkles className="h-8 w-8 text-amber-500" />
                       </div>
-                      {active && (
-                        <div className="absolute top-2 right-2 h-6 w-6 rounded-full bg-blue-500 text-white flex items-center justify-center">
-                          <Check className="h-4 w-4" />
+                      <div>
+                        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900">Alix Lasers ®</h1>
+                        <p className="mt-2 text-xs md:text-sm text-slate-500 tracking-[0.22em] uppercase">
+                          {t.brand_tag}
+                        </p>
+                      </div>
+                      <p className="max-w-md mx-auto text-slate-600">{t.welcome_lead}</p>
+                      <Button
+                        size="lg"
+                        onClick={goNext}
+                        className="mt-2 px-10 h-12 rounded-xl bg-slate-900 hover:bg-slate-800 text-white shadow-[0_15px_40px_-15px_rgba(15,23,42,0.5)] transition"
+                      >
+                        {t.start} <ArrowRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+
+                  {step === 1 && (
+                    <Section title={t.s_interests} hint={t.multi_select}>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {INTERESTS.map((it) => {
+                          const active = data.interests.includes(it.key);
+                          const label = t.interests[it.key] || it.key;
+                          return (
+                            <button
+                              key={it.key}
+                              type="button"
+                              onClick={() => toggle('interests', it.key)}
+                              className={cn(
+                                'relative aspect-square rounded-2xl overflow-hidden border transition-all group shadow-sm hover:-translate-y-0.5 hover:shadow-lg',
+                                active
+                                  ? 'border-amber-400 ring-2 ring-amber-300/60 shadow-[0_15px_40px_-15px_rgba(217,119,6,0.5)]'
+                                  : 'border-white/80',
+                              )}
+                            >
+                              <img src={it.img} alt={label} loading="lazy" width={768} height={768} className="absolute inset-0 w-full h-full object-cover opacity-95 group-hover:scale-[1.04] transition-transform duration-500" />
+                              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/85 via-slate-900/20 to-transparent" />
+                              <div className="absolute inset-x-0 bottom-0 p-2.5 text-xs font-semibold text-white text-left drop-shadow">
+                                {label}
+                              </div>
+                              {active && (
+                                <div className="absolute top-2 right-2 h-6 w-6 rounded-full bg-amber-400 text-white flex items-center justify-center shadow-md">
+                                  <Check className="h-4 w-4" />
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </Section>
+                  )}
+
+                  {step === 2 && (
+                    <Section title={t.s_wish_device} hint={t.s_wish_device_hint}>
+                      <div className="space-y-4">
+                        <div className="space-y-1.5">
+                          <Label className="text-[11px] uppercase tracking-wide text-slate-500">{t.alix_lasers_label}</Label>
+                          <select
+                            value={data.laser_model}
+                            onChange={(e) => setData({ ...data, laser_model: e.target.value })}
+                            className={selectCls}
+                          >
+                            <option value="">{t.no_device}</option>
+                            {ALIX_LASERS_MODELS.map((m) => (
+                              <option key={m} value={m}>{m}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-[11px] uppercase tracking-wide text-slate-500">{t.alix_beauty_label}</Label>
+                          <select
+                            value={data.beauty_model}
+                            onChange={(e) => setData({ ...data, beauty_model: e.target.value })}
+                            className={selectCls}
+                          >
+                            <option value="">{t.no_device}</option>
+                            {ALIX_BEAUTY_MODELS.map((m) => (
+                              <option key={m} value={m}>{m}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </Section>
+                  )}
+
+                  {step === 3 && (
+                    <Section title={t.s_additional} hint={t.optional_multi}>
+                      <div className="space-y-2.5">
+                        {ADDITIONAL.map((a) => {
+                          const active = data.additional_interests.includes(a);
+                          const label = t.additional[a] || a;
+                          return (
+                            <button
+                              key={a}
+                              type="button"
+                              onClick={() => toggle('additional_interests', a)}
+                              className={cn(
+                                'w-full flex items-center gap-3 rounded-xl border p-3.5 text-left transition-all',
+                                active
+                                  ? 'border-amber-300 bg-amber-50/80 shadow-[0_8px_24px_-12px_rgba(217,119,6,0.45)]'
+                                  : 'border-slate-200/80 bg-white/80 hover:border-amber-200 hover:bg-white',
+                              )}
+                            >
+                              <div className={cn(
+                                'h-5 w-5 rounded-md border flex items-center justify-center shrink-0 transition',
+                                active ? 'border-amber-400 bg-amber-400' : 'border-slate-300',
+                              )}>
+                                {active && <Check className="h-3.5 w-3.5 text-white" />}
+                              </div>
+                              <span className="text-sm text-slate-800">{label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </Section>
+                  )}
+
+                  {step === 4 && (
+                    <Section title={t.s_delivery}>
+                      <RadioGroup value={data.delivery_preference} onValueChange={(v) => setData({ ...data, delivery_preference: v })} className="gap-2.5">
+                        {DELIVERY.map((d) => (
+                          <label key={d} className={cn(
+                            'flex items-center gap-3 rounded-xl border p-3.5 cursor-pointer transition-all',
+                            data.delivery_preference === d
+                              ? 'border-amber-300 bg-amber-50/80 shadow-[0_8px_24px_-12px_rgba(217,119,6,0.45)]'
+                              : 'border-slate-200/80 bg-white/80 hover:border-amber-200 hover:bg-white',
+                          )}>
+                            <RadioGroupItem value={d} />
+                            <span className="text-sm text-slate-800">{t.delivery[d] || d}</span>
+                          </label>
+                        ))}
+                      </RadioGroup>
+                    </Section>
+                  )}
+
+                  {step === 5 && (
+                    <Section title={t.s_name} hint={t.required}>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <Field label={t.first_name}>
+                          <Input value={data.first_name} onChange={(e) => setData({ ...data, first_name: e.target.value })} className={inputCls} />
+                        </Field>
+                        <Field label={t.last_name}>
+                          <Input value={data.last_name} onChange={(e) => setData({ ...data, last_name: e.target.value })} className={inputCls} />
+                        </Field>
+                      </div>
+
+                      <div className="mt-5 space-y-4">
+                        <label className="flex items-center gap-3 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={data.studio_in_germany}
+                            onChange={(e) => setData({ ...data, studio_in_germany: e.target.checked, has_nisv: e.target.checked ? data.has_nisv : '' })}
+                            className="h-4 w-4 rounded border-slate-300 accent-amber-500"
+                          />
+                          <span className="text-sm text-slate-700">
+                            {t.studio_in_germany_label} <span className="text-slate-400">({t.optional})</span>
+                          </span>
+                        </label>
+
+                        {data.studio_in_germany && (
+                          <div className="pl-7 flex flex-wrap items-center gap-4">
+                            <span className="text-sm text-slate-700">{t.has_nisv_q}</span>
+                            <div className="flex gap-2">
+                              {(['ja', 'nein'] as const).map((v) => (
+                                <button
+                                  key={v}
+                                  type="button"
+                                  onClick={() => setData({ ...data, has_nisv: v })}
+                                  className={cn(
+                                    'px-4 py-1.5 rounded-lg text-sm border transition',
+                                    data.has_nisv === v
+                                      ? 'border-amber-400 bg-amber-50 text-slate-900'
+                                      : 'border-slate-200 bg-white text-slate-700 hover:border-amber-200',
+                                  )}
+                                >
+                                  {v === 'ja' ? t.yes : t.no}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </Section>
+                  )}
+
+                  {step === 6 && (
+                    <Section title={t.s_company} hint={t.optional}>
+                      <Input value={data.company} onChange={(e) => setData({ ...data, company: e.target.value })} placeholder={t.company_name} className={inputCls} />
+
+                      <div className="mt-5 space-y-3">
+                        <label className="flex items-center gap-3 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={data.is_startup}
+                            onChange={(e) => setData({ ...data, is_startup: e.target.checked, studio_years: e.target.checked ? '' : data.studio_years })}
+                            className="h-4 w-4 rounded border-slate-300 accent-amber-500"
+                          />
+                          <span className="text-sm text-slate-700">{t.startup_label}</span>
+                        </label>
+
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm text-slate-700 whitespace-nowrap">{t.studio_exists_since}</span>
+                          <Input
+                            type="number"
+                            inputMode="numeric"
+                            min={0}
+                            max={999}
+                            maxLength={3}
+                            value={data.studio_years}
+                            disabled={data.is_startup}
+                            onChange={(e) => {
+                              const v = e.target.value.replace(/\D/g, '').slice(0, 3);
+                              setData({ ...data, studio_years: v });
+                            }}
+                            placeholder={t.example_short}
+                            className={cn(inputCls, 'w-28 disabled:opacity-40')}
+                          />
+                          <span className="text-sm text-slate-700">{t.years_label}</span>
+                        </div>
+                      </div>
+                    </Section>
+                  )}
+
+                  {step === 7 && (
+                    <Section title={t.s_phone} hint={t.required}>
+                      <div className="flex gap-2">
+                        <select
+                          value={data.country_code}
+                          onChange={(e) => setData({ ...data, country_code: e.target.value })}
+                          className={cn(selectCls, 'w-auto')}
+                        >
+                          {COUNTRY_CODES.map((c) => (
+                            <option key={c.code} value={c.code}>{c.label}</option>
+                          ))}
+                        </select>
+                        <Input
+                          value={data.phone}
+                          onChange={(e) => setData({ ...data, phone: e.target.value })}
+                          placeholder={t.phone_placeholder}
+                          inputMode="tel"
+                          className={inputCls}
+                        />
+                      </div>
+                    </Section>
+                  )}
+
+                  {step === 8 && (
+                    <Section title={t.s_email} hint={t.required}>
+                      <Input type="email" value={data.email} onChange={(e) => setData({ ...data, email: e.target.value })} placeholder={t.email_placeholder} className={inputCls} />
+                    </Section>
+                  )}
+
+                  {step === 9 && (
+                    <Section title={t.s_consultation}>
+                      <RadioGroup value={data.consultation_type} onValueChange={(v) => setData({ ...data, consultation_type: v })} className="gap-2.5">
+                        {CONSULTATION.map((c) => (
+                          <label key={c} className={cn(
+                            'flex items-center gap-3 rounded-xl border p-3.5 cursor-pointer transition-all',
+                            data.consultation_type === c
+                              ? 'border-amber-300 bg-amber-50/80 shadow-[0_8px_24px_-12px_rgba(217,119,6,0.45)]'
+                              : 'border-slate-200/80 bg-white/80 hover:border-amber-200 hover:bg-white',
+                          )}>
+                            <RadioGroupItem value={c} />
+                            <span className="text-sm text-slate-800">{t.consultation[c] || c}</span>
+                          </label>
+                        ))}
+                      </RadioGroup>
+                    </Section>
+                  )}
+
+                  {step === 10 && (
+                    <Section title={t.s_notes} hint={t.s_notes_hint}>
+                      <Textarea rows={5} value={data.notes} onChange={(e) => setData({ ...data, notes: e.target.value })} className={inputCls} />
+                    </Section>
+                  )}
+
+                  {step === 11 && (
+                    <Section title={t.s_privacy}>
+                      <div className="space-y-3">
+                        <label className="flex items-start gap-3 cursor-pointer rounded-xl border border-slate-200/80 bg-white/70 p-3.5">
+                          <Checkbox checked={data.consent_data} onCheckedChange={(v) => setData({ ...data, consent_data: v === true })} />
+                          <span className="text-sm text-slate-700">{t.consent_data}</span>
+                        </label>
+                        <label className="flex items-start gap-3 cursor-pointer rounded-xl border border-slate-200/80 bg-white/70 p-3.5">
+                          <Checkbox checked={data.consent_contact} onCheckedChange={(v) => setData({ ...data, consent_contact: v === true })} />
+                          <span className="text-sm text-slate-700">{t.consent_contact}</span>
+                        </label>
+                        {publicMode && (
+                          <div className="pt-2">
+                            <Turnstile theme="light" onToken={(tok) => setCaptchaToken(tok)} onExpire={() => setCaptchaToken(null)} />
+                          </div>
+                        )}
+                      </div>
+                    </Section>
+                  )}
+
+                  {step === 12 && (
+                    <Section title={t.s_rating} hint={t.s_rating_hint}>
+                      <div className="flex justify-center gap-2 py-3">
+                        {[1, 2, 3, 4, 5].map((n) => (
+                          <button
+                            key={n}
+                            type="button"
+                            onClick={() => setData({ ...data, service_rating: n })}
+                            className="transition hover:scale-110"
+                          >
+                            <Star
+                              className={cn(
+                                'h-10 w-10 transition',
+                                n <= data.service_rating ? 'fill-amber-400 text-amber-400 drop-shadow-[0_4px_10px_rgba(251,191,36,0.5)]' : 'text-slate-300',
+                              )}
+                            />
+                          </button>
+                        ))}
+                      </div>
+                      {error && (
+                        <div className="mt-2 rounded-xl border border-rose-200 bg-rose-50/80 px-4 py-3 text-sm text-rose-700">
+                          {error}
                         </div>
                       )}
-                    </button>
-                  );
-                })}
-              </div>
-            </Section>
-          )}
+                    </Section>
+                  )}
 
-          {/* Step 2 – Wunschgerät (optional) */}
-          {step === 2 && (
-            <Section title={t.s_wish_device} hint={t.s_wish_device_hint} publicMode={publicMode}>
-              <div className="space-y-4">
-                <div className="space-y-1.5">
-                  <Label className="text-xs uppercase tracking-wide opacity-80">{t.alix_lasers_label}</Label>
-                  <select
-                    value={data.laser_model}
-                    onChange={(e) => setData({ ...data, laser_model: e.target.value })}
-                    className="w-full h-10 rounded-md border px-3 text-sm bg-white/5 border-white/15 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
-                  >
-                    <option value="" className="text-slate-900">{t.no_device}</option>
-                    {ALIX_LASERS_MODELS.map((m) => (
-                      <option key={m} value={m} className="text-slate-900">{m}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs uppercase tracking-wide opacity-80">{t.alix_beauty_label}</Label>
-                  <select
-                    value={data.beauty_model}
-                    onChange={(e) => setData({ ...data, beauty_model: e.target.value })}
-                    className="w-full h-10 rounded-md border px-3 text-sm bg-white/5 border-white/15 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
-                  >
-                    <option value="" className="text-slate-900">{t.no_device}</option>
-                    {ALIX_BEAUTY_MODELS.map((m) => (
-                      <option key={m} value={m} className="text-slate-900">{m}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </Section>
-          )}
-
-
-          {/* Step 3 – Zusätzliche Interessen */}
-          {step === 3 && (
-            <Section title={t.s_additional} hint={t.optional_multi} publicMode={publicMode}>
-              <div className="space-y-2">
-                {ADDITIONAL.map((a) => {
-                  const active = data.additional_interests.includes(a);
-                  const label = t.additional[a] || a;
-                  return (
-                    <button
-                      key={a}
-                      type="button"
-                      onClick={() => toggle('additional_interests', a)}
-                      className={cn(
-                        'w-full flex items-center gap-3 rounded-lg border p-3 text-left transition backdrop-blur-sm',
-                        active
-                          ? 'border-cyan-400/80 bg-cyan-400/10 shadow-[0_0_20px_-4px_rgba(34,211,238,0.6)]'
-                          : 'border-white/15 hover:border-cyan-300/50 bg-white/5',
-                      )}
-
-                    >
-                      <div className={cn(
-                        'h-5 w-5 rounded border flex items-center justify-center shrink-0',
-                        active ? 'border-blue-400 bg-blue-500' : publicMode ? 'border-white/40' : 'border-muted-foreground',
-                      )}>
-                        {active && <Check className="h-3.5 w-3.5 text-white" />}
+                  {step === TOTAL_STEPS && result && (
+                    <div className="text-center space-y-4 py-6">
+                      <div className="mx-auto h-16 w-16 rounded-full bg-emerald-100 flex items-center justify-center shadow-[0_10px_30px_-10px_rgba(16,185,129,0.45)]">
+                        <Check className="h-8 w-8 text-emerald-600" />
                       </div>
-                      <span className="text-sm">{label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </Section>
-          )}
-
-          {/* Step 3 – Lieferzeitraum */}
-          {step === 4 && (
-            <Section title={t.s_delivery} publicMode={publicMode}>
-              <RadioGroup value={data.delivery_preference} onValueChange={(v) => setData({ ...data, delivery_preference: v })}>
-                {DELIVERY.map((d) => (
-                  <label key={d} className={cn(
-                    'flex items-center gap-3 rounded-lg border p-3 cursor-pointer transition backdrop-blur-sm',
-                    data.delivery_preference === d
-                      ? 'border-cyan-400/80 bg-cyan-400/10 shadow-[0_0_20px_-4px_rgba(34,211,238,0.6)]'
-                      : 'border-white/15 hover:border-cyan-300/50 bg-white/5',
-                  )}>
-
-                    <RadioGroupItem value={d} />
-                    <span className="text-sm">{t.delivery[d] || d}</span>
-                  </label>
-                ))}
-              </RadioGroup>
-            </Section>
-          )}
-
-          {/* Step 4 – Name */}
-          {step === 5 && (
-            <Section title={t.s_name} hint={t.required} publicMode={publicMode}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <Field label={t.first_name}>
-                  <Input value={data.first_name} onChange={(e) => setData({ ...data, first_name: e.target.value })} className='bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-cyan-400/60 focus-visible:border-cyan-300/60' />
-                </Field>
-                <Field label={t.last_name}>
-                  <Input value={data.last_name} onChange={(e) => setData({ ...data, last_name: e.target.value })} className='bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-cyan-400/60 focus-visible:border-cyan-300/60' />
-                </Field>
-              </div>
-
-              <div className="mt-6 space-y-4">
-                <label className="flex items-center gap-3 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={data.studio_in_germany}
-                    onChange={(e) => setData({ ...data, studio_in_germany: e.target.checked, has_nisv: e.target.checked ? data.has_nisv : '' })}
-                    className="h-4 w-4 rounded border-white/30 bg-white/5 accent-cyan-400"
-                  />
-                  <span className="text-sm text-white/90">{t.studio_in_germany_label} <span className="text-white/50">({t.optional})</span></span>
-                </label>
-
-                {data.studio_in_germany && (
-                  <div className="pl-7 flex flex-wrap items-center gap-4">
-                    <span className="text-sm text-white/80">{t.has_nisv_q}</span>
-                    <div className="flex gap-2">
-                      {(['ja', 'nein'] as const).map((v) => (
-                        <button
-                          key={v}
-                          type="button"
-                          onClick={() => setData({ ...data, has_nisv: v })}
-                          className={cn(
-                            'px-4 py-1.5 rounded-md text-sm border transition',
-                            data.has_nisv === v
-                              ? 'border-cyan-300 bg-cyan-400/15 text-white'
-                              : 'border-white/15 bg-white/5 text-white/80 hover:border-cyan-300/50',
-                          )}
-                        >
-                          {v === 'ja' ? t.yes : t.no}
-                        </button>
-                      ))}
+                      <h2 className="text-2xl font-bold text-slate-900">{t.thanks_title}</h2>
+                      <p className="text-slate-600">{t.thanks_text}</p>
+                      <div className="inline-block rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-slate-800">
+                        {t.priority}: <strong>{result.category}</strong>
+                      </div>
                     </div>
+                  )}
+                </Slide>
+
+                {/* Navigation */}
+                {step > 0 && step < TOTAL_STEPS && (
+                  <div className="mt-7 flex items-center justify-between gap-3">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={goBack}
+                      disabled={submitting}
+                      className="h-11 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                    >
+                      <ArrowLeft className="h-4 w-4" /> {t.back}
+                    </Button>
+                    {step < 12 ? (
+                      <Button
+                        type="button"
+                        onClick={goNext}
+                        disabled={!canContinue() || submitting}
+                        className="h-11 px-7 rounded-xl bg-slate-900 hover:bg-slate-800 text-white shadow-[0_15px_40px_-18px_rgba(15,23,42,0.55)] disabled:bg-slate-300 disabled:shadow-none transition"
+                      >
+                        {t.next} <ArrowRight className="h-4 w-4" />
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        onClick={submit}
+                        disabled={submitting}
+                        className="h-11 px-7 rounded-xl bg-gradient-to-r from-amber-500 to-rose-500 hover:from-amber-600 hover:to-rose-600 text-white shadow-[0_15px_40px_-15px_rgba(217,119,6,0.6)] transition"
+                      >
+                        {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                        {t.submit}
+                      </Button>
+                    )}
                   </div>
                 )}
               </div>
-            </Section>
-          )}
-
-          {/* Step 5 – Firma */}
-          {step === 6 && (
-            <Section title={t.s_company} hint={t.optional} publicMode={publicMode}>
-              <Input value={data.company} onChange={(e) => setData({ ...data, company: e.target.value })} placeholder={t.company_name} className='bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-cyan-400/60 focus-visible:border-cyan-300/60' />
-
-              <div className="mt-5 space-y-3">
-                <label className="flex items-center gap-3 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={data.is_startup}
-                    onChange={(e) => setData({ ...data, is_startup: e.target.checked, studio_years: e.target.checked ? '' : data.studio_years })}
-                    className="h-4 w-4 rounded border-white/20 bg-white/5 accent-cyan-400"
-                  />
-                  <span className="text-sm text-white/90">{t.startup_label}</span>
-                </label>
-
-                <div className="flex items-center gap-3">
-                  <span className="text-sm text-white/80 whitespace-nowrap">{t.studio_exists_since}</span>
-                  <Input
-                    type="number"
-                    inputMode="numeric"
-                    min={0}
-                    max={999}
-                    maxLength={3}
-                    value={data.studio_years}
-                    disabled={data.is_startup}
-                    onChange={(e) => {
-                      const v = e.target.value.replace(/\D/g, '').slice(0, 3);
-                      setData({ ...data, studio_years: v });
-                    }}
-                    placeholder={t.example_short}
-                    className="w-28 bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-cyan-400/60 focus-visible:border-cyan-300/60 disabled:opacity-40"
-                  />
-                  <span className="text-sm text-white/80">{t.years_label}</span>
-
-                </div>
-              </div>
-            </Section>
-          )}
-
-
-          {/* Step 6 – Telefon */}
-          {step === 7 && (
-            <Section title={t.s_phone} hint={t.required} publicMode={publicMode}>
-              <div className="flex gap-2">
-                <select
-                  value={data.country_code}
-                  onChange={(e) => setData({ ...data, country_code: e.target.value })}
-                  className="h-10 rounded-md border px-3 text-sm bg-white/5 border-white/15 text-white"
-
-                >
-                  {COUNTRY_CODES.map((c) => (
-                    <option key={c.code} value={c.code} className="text-slate-900">{c.label}</option>
-                  ))}
-                </select>
-                <Input
-                  value={data.phone}
-                  onChange={(e) => setData({ ...data, phone: e.target.value })}
-                  placeholder={t.phone_placeholder}
-                  inputMode="tel"
-                  className='bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-cyan-400/60 focus-visible:border-cyan-300/60'
-                />
-              </div>
-            </Section>
-          )}
-
-          {/* Step 7 – Email */}
-          {step === 8 && (
-            <Section title={t.s_email} hint={t.required} publicMode={publicMode}>
-              <Input type="email" value={data.email} onChange={(e) => setData({ ...data, email: e.target.value })} placeholder={t.email_placeholder} className='bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-cyan-400/60 focus-visible:border-cyan-300/60' />
-            </Section>
-          )}
-
-          {/* Step 8 – Beratungsart */}
-          {step === 9 && (
-            <Section title={t.s_consultation} publicMode={publicMode}>
-              <RadioGroup value={data.consultation_type} onValueChange={(v) => setData({ ...data, consultation_type: v })}>
-                {CONSULTATION.map((c) => (
-                  <label key={c} className={cn(
-                    'flex items-center gap-3 rounded-lg border p-3 cursor-pointer',
-                    data.consultation_type === c
-                      ? 'border-blue-400 bg-blue-500/10'
-                      : publicMode ? 'border-white/15' : 'border-border',
-                  )}>
-                    <RadioGroupItem value={c} />
-                    <span className="text-sm">{t.consultation[c] || c}</span>
-                  </label>
-                ))}
-              </RadioGroup>
-            </Section>
-          )}
-
-          {/* Step 9 – Weitere Infos */}
-          {step === 10 && (
-            <Section title={t.s_notes} hint={t.s_notes_hint} publicMode={publicMode}>
-              <Textarea rows={6} value={data.notes} onChange={(e) => setData({ ...data, notes: e.target.value })} className='bg-white/5 border-white/15 text-white placeholder:text-white/40 focus-visible:ring-cyan-400/60 focus-visible:border-cyan-300/60' />
-            </Section>
-          )}
-
-          {/* Step 10 – Datenschutz + Captcha */}
-          {step === 11 && (
-            <Section title={t.s_privacy} publicMode={publicMode}>
-              <div className="space-y-3">
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <Checkbox checked={data.consent_data} onCheckedChange={(v) => setData({ ...data, consent_data: v === true })} />
-                  <span className="text-sm">{t.consent_data}</span>
-                </label>
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <Checkbox checked={data.consent_contact} onCheckedChange={(v) => setData({ ...data, consent_contact: v === true })} />
-                  <span className="text-sm">{t.consent_contact}</span>
-                </label>
-                {publicMode && (
-                  <div className="pt-2">
-                    <Turnstile theme="dark" onToken={(tok) => setCaptchaToken(tok)} onExpire={() => setCaptchaToken(null)} />
-                  </div>
-                )}
-              </div>
-            </Section>
-          )}
-
-          {/* Step 11 – Bewertung */}
-          {step === 12 && (
-            <Section title={t.s_rating} hint={t.s_rating_hint} publicMode={publicMode}>
-              <div className="flex justify-center gap-2 py-4">
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    onClick={() => setData({ ...data, service_rating: n })}
-                    className="transition"
-                  >
-                    <Star
-                      className={cn(
-                        'h-10 w-10',
-                        n <= data.service_rating ? 'fill-yellow-400 text-yellow-400' : (publicMode ? 'text-white/30' : 'text-muted-foreground'),
-                      )}
-                    />
-                  </button>
-                ))}
-              </div>
-              {error && <p className="text-sm text-red-400 text-center">{error}</p>}
-            </Section>
-          )}
-
-          {/* Final – Success */}
-          {step === TOTAL_STEPS && result && (
-            <div className="text-center space-y-4 py-8">
-              <div className="mx-auto h-16 w-16 rounded-full bg-green-500/20 flex items-center justify-center">
-                <Check className="h-8 w-8 text-green-400" />
-              </div>
-              <h2 className="text-2xl font-bold">{t.thanks_title}</h2>
-              <p className={publicMode ? 'text-blue-100/80' : 'text-muted-foreground'}>
-                {t.thanks_text}
-              </p>
-              <div className={cn(
-                'inline-block rounded-lg border px-4 py-2 text-sm',
-                publicMode ? 'border-white/15 bg-white/5' : 'border-border bg-muted',
-              )}>
-                {t.priority}: <strong>{result.category}</strong>
-              </div>
             </div>
-          )}
-
-          {/* Navigation */}
-          {step > 0 && step < TOTAL_STEPS && (
-            <div className="mt-8 flex items-center justify-between gap-3">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setStep((s) => Math.max(0, s - 1))}
-                disabled={submitting}
-              >
-                <ArrowLeft className="h-4 w-4" /> {t.back}
-              </Button>
-              {step < 12 ? (
-                <Button
-                  type="button"
-                  onClick={() => setStep((s) => s + 1)}
-                  disabled={!canContinue() || submitting}
-                >
-                  {t.next} <ArrowRight className="h-4 w-4" />
-                </Button>
-              ) : (
-                <Button type="button" onClick={submit} disabled={submitting}>
-                  {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                  {t.submit}
-                </Button>
-              )}
-            </div>
-          )}
-            </Card>
           </div>
         </div>
 
-
         {publicMode && (
-          <p className="mt-6 text-center text-[11px] text-blue-100/40">
-            {t.footer}
-          </p>
+          <p className="mt-6 text-center text-[11px] text-slate-500">{t.footer}</p>
         )}
       </div>
     </div>
   );
 }
 
-function Section({ title, hint, children, publicMode }: { title: string; hint?: string; children: React.ReactNode; publicMode?: boolean }) {
+/** Slide transition for each step. Forward slides in from right, backward from left. */
+function Slide({ children, direction }: { children: React.ReactNode; direction: 'forward' | 'backward' }) {
+  const cls =
+    direction === 'forward'
+      ? 'animate-in slide-in-from-right-8 fade-in duration-500 ease-out'
+      : 'animate-in slide-in-from-left-8 fade-in duration-500 ease-out';
+  return <div className={cls}>{children}</div>;
+}
+
+function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-xl md:text-2xl font-bold">{title}</h2>
-        {hint && (
-          <p className={cn('text-xs mt-1', 'text-cyan-200/70')}>
-            {hint}
-          </p>
-        )}
+        <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900">{title}</h2>
+        {hint && <p className="text-xs mt-1 text-slate-500">{hint}</p>}
       </div>
       {children}
     </div>
@@ -680,7 +690,7 @@ function Section({ title, hint, children, publicMode }: { title: string; hint?: 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <Label className="text-xs uppercase tracking-wide opacity-80">{label}</Label>
+      <Label className="text-[11px] uppercase tracking-wide text-slate-500">{label}</Label>
       {children}
     </div>
   );
