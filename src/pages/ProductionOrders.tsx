@@ -53,7 +53,7 @@ const T: Record<Lang, Record<string, string>> = {
     allStatus: 'Alle Status', allPayment: 'Alle Payment',
     sort: 'Sortierung',
     s_created_desc: 'Neueste zuerst', s_liefertermin_asc: 'Liefertermin ↑', s_liefertermin_desc: 'Liefertermin ↓', s_order_asc: 'Bestellnummer',
-    intern: 'Intern', model: 'Modell', handler: 'Bearbeiter', delivery: 'Liefertermin',
+    intern: 'ORDER CONTROL', model: 'Modell', handler: 'Bearbeiter', delivery: 'Liefertermin',
     payment: 'Payment', status: 'Status', actions: 'Aktionen', supplier: 'Zulieferer',
     overdue: 'überfällig', dueToday: 'heute fällig', dueIn: 'in', days: 'Tagen',
     p_Ja: 'Ja', p_Nein: 'Nein', p_Teilweise: 'Teilweise', p_Garantie: 'Garantie',
@@ -68,7 +68,7 @@ const T: Record<Lang, Record<string, string>> = {
     allStatus: 'All statuses', allPayment: 'All payment',
     sort: 'Sort',
     s_created_desc: 'Newest first', s_liefertermin_asc: 'Delivery ↑', s_liefertermin_desc: 'Delivery ↓', s_order_asc: 'Order no.',
-    intern: 'Internal', model: 'Model', handler: 'Handler', delivery: 'Delivery',
+    intern: 'ORDER CONTROL', model: 'Model', handler: 'Handler', delivery: 'Delivery',
     payment: 'Payment', status: 'Status', actions: 'Actions', supplier: 'Supplier',
     overdue: 'overdue', dueToday: 'due today', dueIn: 'in', days: 'days',
     p_Ja: 'Yes', p_Nein: 'No', p_Teilweise: 'Partial', p_Garantie: 'Warranty',
@@ -83,7 +83,7 @@ const T: Record<Lang, Record<string, string>> = {
     allStatus: '所有状态', allPayment: '所有付款',
     sort: '排序',
     s_created_desc: '最新优先', s_liefertermin_asc: '交期 ↑', s_liefertermin_desc: '交期 ↓', s_order_asc: '订单号',
-    intern: '内部', model: '型号', handler: '处理人', delivery: '交货日期',
+    intern: 'ORDER CONTROL', model: '型号', handler: '处理人', delivery: '交货日期',
     payment: '付款', status: '状态', actions: '操作', supplier: '供应商',
     overdue: '逾期', dueToday: '今日到期', dueIn: '剩', days: '天',
     p_Ja: '是', p_Nein: '否', p_Teilweise: '部分', p_Garantie: '保修',
@@ -540,14 +540,18 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
                       </span>
                     </div>
                   </div>
-                  {(due || r.sonderwuensche) && (
-                    <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-border/50 text-[11px]">
-                      {r.sonderwuensche
-                        ? <span className="font-mono uppercase text-muted-foreground truncate">{r.sonderwuensche}</span>
-                        : <span />}
-                      {due && <span className={cn('font-medium', due.cls)}>{due.label}</span>}
+                  <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-border/50 text-[11px]">
+                    <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                      {r.sent_at
+                        ? <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-500/15 text-green-500 border border-green-500/40"><CheckCircle2 className="w-3 h-3" /> bestellt</span>
+                        : <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-500/15 text-red-400 border border-red-500/40"><XCircle className="w-3 h-3" /> offen</span>
+                      }
+                      {r.sonderwuensche && (
+                        <span className="font-mono uppercase text-muted-foreground truncate ml-1">{r.sonderwuensche}</span>
+                      )}
                     </div>
-                  )}
+                    {due && <span className={cn('font-medium flex-shrink-0', due.cls)}>{due.label}</span>}
+                  </div>
                   <div className="flex justify-end gap-0.5 mt-2 pt-2 border-t border-border/50">
                     <Button asChild size="sm" variant="ghost" className="h-8 w-8 p-0"><Link to={`${basePath}/${r.id}`}><FileText className="w-4 h-4" /></Link></Button>
                     <Button asChild size="sm" variant="ghost" className="h-8 w-8 p-0"><Link to={`${basePath}/${r.id}/bearbeiten`}><Pencil className="w-4 h-4" /></Link></Button>
@@ -608,7 +612,13 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
                           )}
                         </td>
 
-                        <td className="p-3 font-mono uppercase text-xs">{r.sonderwuensche || '—'}</td>
+                        <td className="p-3">
+                          <div className="font-mono uppercase text-xs mb-1">{r.sonderwuensche || '—'}</div>
+                          {r.sent_at
+                            ? <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-green-500/15 text-green-500 border border-green-500/40"><CheckCircle2 className="w-3 h-3" /> bestellt</span>
+                            : <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-red-500/15 text-red-400 border border-red-500/40"><XCircle className="w-3 h-3" /> offen</span>
+                          }
+                        </td>
                         <td className="p-3">{r.supplier?.name || '—'}</td>
                         <td className="p-3">{r.modellname || '—'}</td>
                         <td className="p-3">{r.bearbeiter}</td>
