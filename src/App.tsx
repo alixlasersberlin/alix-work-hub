@@ -602,6 +602,7 @@ function AppRoutes() {
           <Route path="/datensicherung" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Backups /></ProtectedRoute>} />
           <Route path="/rollen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Rollen /></ProtectedRoute>} />
           <Route path="/system" element={<ProtectedRoute requiredRoles={SYSTEM_ROLES}><SystemMonitoring /></ProtectedRoute>} />
+          <Route path="/auftragsverwaltung/bestellungen" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><BestellwesenOverview /></ProtectedRoute>} />
           <Route path="/order" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><ProductionOrders /></ProtectedRoute>} />
           <Route path="/order/freigabe" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><OrderApprovalQueue /></ProtectedRoute>} />
           <Route path="/order/frei-bestellung" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><OrdersFreiBestellung /></ProtectedRoute>} />
