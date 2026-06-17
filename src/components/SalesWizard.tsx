@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import bgAsset from '@/assets/wizard/alix-lasers-bg.jpg.asset.json';
 import WizardLanguageSwitcher from '@/components/WizardLanguageSwitcher';
 import { useWizardLang } from '@/i18n/wizard';
+import logoAsset from '@/assets/alix-lasers-logo-gold-new.png.asset.json';
 import { ALIX_LASERS_MODELS, ALIX_BEAUTY_MODELS } from '@/lib/alix-models';
 
 import imgHair from '@/assets/wizard/haarentfernung.jpg';
