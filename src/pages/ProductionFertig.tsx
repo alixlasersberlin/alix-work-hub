@@ -143,7 +143,7 @@ export default function ProductionFertig() {
                             Fertig produziert
                           </span>
                           {r.is_reclamation && (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-destructive/15 text-destructive">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-red-600 text-white border border-red-400/40">
                               Reklamation
                             </span>
                           )}
