@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
-  Loader2, ShieldCheck, Search, Download, Calendar, CheckCircle2, Clock, AlertTriangle, Factory, X,
+  Loader2, ShieldCheck, Search, Download, Calendar, CheckCircle2, Clock, AlertTriangle, Factory, X, Trash2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -43,6 +43,7 @@ export default function OrderApprovalQueue() {
   const [search, setSearch] = useState('');
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [releasingId, setReleasingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -181,6 +182,24 @@ export default function OrderApprovalQueue() {
     }
   };
 
+  const deleteProposal = async (row: Row) => {
+    if (!isSuperAdmin) return;
+    if (!confirm(`Bestellvorschlag ${row.production_order_number || row.order_number} wirklich endgültig löschen?`)) return;
+    setDeletingId(row.id);
+    try {
+      await supabase.from('production_order_items').delete().eq('production_order_id', row.id);
+      const { error } = await supabase.from('production_orders').delete().eq('id', row.id);
+      if (error) throw error;
+      toast.success('Bestellvorschlag gelöscht');
+      setRows((prev) => prev.filter((x) => x.id !== row.id));
+      window.dispatchEvent(new Event('einkauf-counts-refresh'));
+    } catch (e: any) {
+      toast.error(e?.message || 'Löschen fehlgeschlagen');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return rows;
@@ -312,6 +331,20 @@ export default function OrderApprovalQueue() {
                         <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
                       )}
                       Freigeben
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => deleteProposal(r)}
+                      disabled={deletingId === r.id}
+                      className="text-destructive hover:text-destructive border-destructive/40"
+                    >
+                      {deletingId === r.id ? (
+                        <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                      )}
+                      Löschen
                     </Button>
                   </>
                 )}
