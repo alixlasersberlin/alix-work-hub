@@ -678,8 +678,8 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900">{title}</h2>
-        {hint && <p className="text-xs mt-1 text-slate-500">{hint}</p>}
+        <h2 className="text-xl md:text-2xl font-bold tracking-tight !text-slate-900">{title}</h2>
+        {hint && <p className="text-xs mt-1 !text-slate-500">{hint}</p>}
       </div>
       {children}
     </div>
