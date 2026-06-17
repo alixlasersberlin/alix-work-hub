@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Ticket, Search, ArrowRight, Loader2, Plus, RefreshCw, Inbox } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { EmptyState } from '@/components/infinity/EmptyState';
@@ -113,6 +114,11 @@ export default function TicketsList() {
     });
   }, [rows, search, statusF, prioF, deptF, sourceF]);
 
+  const isClosed = (s: string) => s === 'geschlossen' || s === 'gelöst';
+  const openRows = useMemo(() => filtered.filter(r => !isClosed(r.status)), [filtered]);
+  const closedRows = useMemo(() => filtered.filter(r => isClosed(r.status)), [filtered]);
+  const [tab, setTab] = useState<'open' | 'closed'>('open');
+
   const sources = useMemo(() => Array.from(new Set(rows.map(r => r.source_system).filter(Boolean))) as string[], [rows]);
 
   const [createOpen, setCreateOpen] = useState(false);
@@ -207,61 +213,82 @@ export default function TicketsList() {
         </Select>
       </div>
 
-      <div className="rounded-xl border border-border bg-card overflow-hidden">
-        {loading ? (
-          <div className="p-4"><SkeletonTable rows={8} cols={9} /></div>
-        ) : filtered.length === 0 ? (
-          <div className="p-8"><EmptyState compact icon={Inbox} title="Keine Tickets gefunden" description="Passe die Filter an oder erstelle ein neues Ticket." action={{ label: 'Neues Ticket', icon: Plus, onClick: () => setCreateOpen(true) }} /></div>
-        ) : (
+      <Tabs value={tab} onValueChange={(v) => setTab(v as 'open' | 'closed')}>
+        <TabsList className="mb-3">
+          <TabsTrigger value="open">Offene Tickets ({openRows.length})</TabsTrigger>
+          <TabsTrigger value="closed">Geschlossene Tickets ({closedRows.length})</TabsTrigger>
+        </TabsList>
 
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Ticket</TableHead>
-                <TableHead>Kunde</TableHead>
-                <TableHead>Gerät</TableHead>
-                <TableHead>Seriennr.</TableHead>
-                <TableHead>Abteilung</TableHead>
-                <TableHead>Priorität</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Letzter Sync</TableHead>
-                <TableHead className="text-right">Aktion</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map(r => (
-                <TableRow
-                  key={r.id}
-                  onClick={() => navigate(`/tickets/${r.id}`)}
-                  className="cursor-pointer hover:bg-muted/40"
-                >
-                  <TableCell>
-                    <div className="font-medium text-foreground">{r.title || r.external_ticket_id || r.id.slice(0, 8)}</div>
-                    <div className="text-xs text-muted-foreground">{r.external_ticket_id || r.source_system}</div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-sm">{r.customer_name || '—'}</div>
-                    <div className="text-xs text-muted-foreground">{r.company_name || ''}</div>
-                  </TableCell>
-                  <TableCell className="text-sm">{r.device_name || '—'}</TableCell>
-                  <TableCell className="text-sm font-mono">{r.serial_number || '—'}</TableCell>
-                  <TableCell><Badge variant="outline">{r.department}</Badge></TableCell>
-                  <TableCell><Badge variant="outline" className={priorityColor(r.priority)}>{r.priority}</Badge></TableCell>
-                  <TableCell><Badge variant="outline" className={statusColor(r.status)}>{r.status}</Badge></TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {r.last_synced_at ? new Date(r.last_synced_at).toLocaleString('de-DE') : '—'}
-                  </TableCell>
-                  <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                    <Button size="sm" variant="outline" asChild>
-                      <Link to={`/tickets/${r.id}`}>Details <ArrowRight className="w-3 h-3 ml-1" /></Link>
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </div>
+        {(['open', 'closed'] as const).map((key) => {
+          const list = key === 'open' ? openRows : closedRows;
+          return (
+            <TabsContent key={key} value={key}>
+              <div className="rounded-xl border border-border bg-card overflow-hidden">
+                {loading ? (
+                  <div className="p-4"><SkeletonTable rows={8} cols={9} /></div>
+                ) : list.length === 0 ? (
+                  <div className="p-8">
+                    <EmptyState
+                      compact
+                      icon={Inbox}
+                      title={key === 'open' ? 'Keine offenen Tickets' : 'Keine geschlossenen Tickets'}
+                      description="Passe die Filter an oder erstelle ein neues Ticket."
+                      action={key === 'open' ? { label: 'Neues Ticket', icon: Plus, onClick: () => setCreateOpen(true) } : undefined}
+                    />
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Ticket</TableHead>
+                        <TableHead>Kunde</TableHead>
+                        <TableHead>Gerät</TableHead>
+                        <TableHead>Seriennr.</TableHead>
+                        <TableHead>Abteilung</TableHead>
+                        <TableHead>Priorität</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Letzter Sync</TableHead>
+                        <TableHead className="text-right">Aktion</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {list.map(r => (
+                        <TableRow
+                          key={r.id}
+                          onClick={() => navigate(`/tickets/${r.id}`)}
+                          className="cursor-pointer hover:bg-muted/40"
+                        >
+                          <TableCell>
+                            <div className="font-medium text-foreground">{r.title || r.external_ticket_id || r.id.slice(0, 8)}</div>
+                            <div className="text-xs text-muted-foreground">{r.external_ticket_id || r.source_system}</div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">{r.customer_name || '—'}</div>
+                            <div className="text-xs text-muted-foreground">{r.company_name || ''}</div>
+                          </TableCell>
+                          <TableCell className="text-sm">{r.device_name || '—'}</TableCell>
+                          <TableCell className="text-sm font-mono">{r.serial_number || '—'}</TableCell>
+                          <TableCell><Badge variant="outline">{r.department}</Badge></TableCell>
+                          <TableCell><Badge variant="outline" className={priorityColor(r.priority)}>{r.priority}</Badge></TableCell>
+                          <TableCell><Badge variant="outline" className={statusColor(r.status)}>{r.status}</Badge></TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {r.last_synced_at ? new Date(r.last_synced_at).toLocaleString('de-DE') : '—'}
+                          </TableCell>
+                          <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                            <Button size="sm" variant="outline" asChild>
+                              <Link to={`/tickets/${r.id}`}>Details <ArrowRight className="w-3 h-3 ml-1" /></Link>
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </div>
+            </TabsContent>
+          );
+        })}
+      </Tabs>
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="max-w-2xl">
