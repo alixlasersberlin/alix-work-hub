@@ -48,6 +48,38 @@ export default function AuftragStatus() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<StatusResult | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [reservedDevices, setReservedDevices] = useState<ReservedDevice[]>([]);
+  const [releasing, setReleasing] = useState<string | null>(null);
+
+  async function loadReservedDevices(orderId: string) {
+    const { data } = await supabase
+      .from('lager_devices')
+      .select('id, serial_number, model_name')
+      .eq('reserved_order_id', orderId);
+    setReservedDevices((data ?? []) as ReservedDevice[]);
+  }
+
+  async function releaseDevice(deviceId: string) {
+    if (!confirm('Reservierung dieses Geräts wirklich aufheben?')) return;
+    setReleasing(deviceId);
+    try {
+      const { error } = await supabase
+        .from('lager_devices')
+        .update({ reserved_order_id: null, reservation_week: null })
+        .eq('id', deviceId);
+      if (error) throw error;
+      toast.success('Reservierung aufgehoben');
+      if (result) {
+        await loadReservedDevices(result.id);
+        setResult({ ...result, reserviert: Math.max(0, result.reserviert - 1) });
+      }
+    } catch (e: any) {
+      toast.error(e?.message ?? 'Fehler beim Aufheben');
+    } finally {
+      setReleasing(null);
+    }
+  }
+
 
   async function search() {
     const term = q.trim();
