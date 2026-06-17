@@ -9,7 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Search, ClipboardList, ArrowUpDown, Loader2, Inbox, CalendarDays, List, Car, Pencil, CalendarClock, MoveRight, CheckCircle2, PackageCheck } from 'lucide-react';
+import { Search, ClipboardList, ArrowUpDown, Loader2, Inbox, CalendarDays, List, Car, Pencil, CalendarClock, MoveRight, CheckCircle2, PackageCheck, FileDown, FileText } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { createPDF } from '@/lib/pdf-utils';
+import autoTable from 'jspdf-autotable';
+import { format } from 'date-fns';
+import { de } from 'date-fns/locale';
 import { StatusBadge } from '@/components/StatusBadge';
 import { toast } from 'sonner';
 import OrdersCalendar from '@/components/OrdersCalendar';
