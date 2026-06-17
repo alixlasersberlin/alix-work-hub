@@ -114,6 +114,11 @@ export default function TicketsList() {
     });
   }, [rows, search, statusF, prioF, deptF, sourceF]);
 
+  const isClosed = (s: string) => s === 'geschlossen' || s === 'gelöst';
+  const openRows = useMemo(() => filtered.filter(r => !isClosed(r.status)), [filtered]);
+  const closedRows = useMemo(() => filtered.filter(r => isClosed(r.status)), [filtered]);
+  const [tab, setTab] = useState<'open' | 'closed'>('open');
+
   const sources = useMemo(() => Array.from(new Set(rows.map(r => r.source_system).filter(Boolean))) as string[], [rows]);
 
   const [createOpen, setCreateOpen] = useState(false);
