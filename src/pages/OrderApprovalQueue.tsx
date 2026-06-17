@@ -182,6 +182,24 @@ export default function OrderApprovalQueue() {
     }
   };
 
+  const deleteProposal = async (row: Row) => {
+    if (!isSuperAdmin) return;
+    if (!confirm(`Bestellvorschlag ${row.production_order_number || row.order_number} wirklich endgültig löschen?`)) return;
+    setDeletingId(row.id);
+    try {
+      await supabase.from('production_order_items').delete().eq('production_order_id', row.id);
+      const { error } = await supabase.from('production_orders').delete().eq('id', row.id);
+      if (error) throw error;
+      toast.success('Bestellvorschlag gelöscht');
+      setRows((prev) => prev.filter((x) => x.id !== row.id));
+      window.dispatchEvent(new Event('einkauf-counts-refresh'));
+    } catch (e: any) {
+      toast.error(e?.message || 'Löschen fehlgeschlagen');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return rows;
