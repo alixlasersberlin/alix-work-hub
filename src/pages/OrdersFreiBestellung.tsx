@@ -574,10 +574,27 @@ export default function OrdersFreiBestellung() {
                             );
                           }
                           return inStock ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-emerald-500/10 text-emerald-500 text-xs font-medium">
-                              <Warehouse className="w-3.5 h-3.5" />
-                              {matches.length}× vorhanden
-                            </span>
+                            <HoverCard openDelay={120} closeDelay={80}>
+                              <HoverCardTrigger asChild>
+                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-emerald-500/10 text-emerald-500 text-xs font-medium cursor-help">
+                                  <Warehouse className="w-3.5 h-3.5" />
+                                  {matches.length}× vorhanden
+                                </span>
+                              </HoverCardTrigger>
+                              <HoverCardContent className="w-80">
+                                <p className="text-xs font-semibold text-muted-foreground mb-2">
+                                  Verfügbare Lagergeräte ({matches.length})
+                                </p>
+                                <ul className="space-y-1 text-sm max-h-72 overflow-y-auto">
+                                  {matches.map(d => (
+                                    <li key={d.id} className="flex flex-col border-b border-border/40 last:border-0 pb-1 last:pb-0">
+                                      <span className="font-medium">{d.model_name}</span>
+                                      <span className="text-xs text-muted-foreground font-mono">SN: {d.serial_number}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </HoverCardContent>
+                            </HoverCard>
                           ) : (
                             <span className="text-xs text-muted-foreground">—</span>
                           );
