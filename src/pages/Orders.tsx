@@ -72,6 +72,58 @@ export default function Orders() {
 
   const canWrite = isAdmin || hasRole('Auftragsverwaltung');
   const canEditItems = hasRole('Super Admin');
+  const canExportAll = hasRole('Super Admin') || (user?.email?.toLowerCase() === 'jh@alix-operation.de');
+
+  function escCsv(v: any) {
+    const s = (v ?? '').toString().replace(/"/g, '""');
+    return /[";\n]/.test(s) ? `"${s}"` : s;
+  }
+  function exportRows() {
+    return filtered.map((o: any) => ({
+      number: o._displayNumber ?? o.order_number ?? '',
+      date: o.order_date ?? '',
+      status: o.order_status ?? '',
+      customer: o.customers?.company_name || o.customers?.contact_name || '',
+      city: resolveCity(o),
+      total: o.total_amount ?? '',
+      currency: o.currency ?? '',
+      source: o.source_system ?? '',
+      items: (o.order_items ?? []).map((it: any) => `${it.quantity ?? ''}× ${it.item_name ?? ''}`).join(' | '),
+    }));
+  }
+  function handleExportCsv() {
+    const rows = exportRows();
+    const header = ['Auftragsnr', 'Datum', 'Status', 'Kunde', 'Ort', 'Betrag', 'Währung', 'Quelle', 'Positionen'];
+    const lines = [header.join(';')];
+    rows.forEach(r => lines.push([r.number, r.date, r.status, r.customer, r.city, r.total, r.currency, r.source, r.items].map(escCsv).join(';')));
+    const blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Auftraege_${format(new Date(), 'yyyyMMdd_HHmm')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${rows.length} Aufträge als CSV exportiert`);
+  }
+  function handleExportPdf() {
+    const rows = exportRows();
+    const doc = createPDF({ orientation: 'landscape' });
+    doc.setFont('Inter', 'bold');
+    doc.setFontSize(14);
+    doc.text(`Aufträge (${rows.length})`, 14, 14);
+    doc.setFont('Inter', 'normal');
+    doc.setFontSize(9);
+    doc.text(format(new Date(), 'dd.MM.yyyy HH:mm', { locale: de }), 14, 20);
+    autoTable(doc, {
+      startY: 26,
+      head: [['Auftragsnr', 'Datum', 'Status', 'Kunde', 'Ort', 'Betrag', 'Währ.', 'Quelle']],
+      body: rows.map(r => [r.number, r.date, r.status, r.customer, r.city, r.total, r.currency, r.source]),
+      styles: { font: 'Inter', fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [30, 30, 30] },
+    });
+    doc.save(`Auftraege_${format(new Date(), 'yyyyMMdd_HHmm')}.pdf`);
+    toast.success(`${rows.length} Aufträge als PDF exportiert`);
+  }
 
   async function load() {
     setLoading(true);
