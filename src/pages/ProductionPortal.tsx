@@ -300,7 +300,12 @@ export default function ProductionPortal() {
     if (error) return toast.error(error.message);
     toast.success(t.saved);
     const prevStatus = editing.status;
-    setRows(prev => prev.map(r => r.id === editing.id ? { ...r, ...payload } as ProductionOrderRow : r));
+    if (payload.status === 'fertig') {
+      setRows(prev => prev.filter(r => r.id !== editing.id));
+      toast.info('Auftrag wurde nach „Fertig produziert" verschoben.');
+    } else {
+      setRows(prev => prev.map(r => r.id === editing.id ? { ...r, ...payload } as ProductionOrderRow : r));
+    }
     const editingId = editing.id;
     setEditing(null);
     if (payload.status === 'fertig' && prevStatus !== 'fertig') {
