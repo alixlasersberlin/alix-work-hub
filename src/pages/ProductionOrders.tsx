@@ -608,7 +608,13 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
                           )}
                         </td>
 
-                        <td className="p-3 font-mono uppercase text-xs">{r.sonderwuensche || '—'}</td>
+                        <td className="p-3">
+                          <div className="font-mono uppercase text-xs mb-1">{r.sonderwuensche || '—'}</div>
+                          {r.sent_at
+                            ? <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-green-500/15 text-green-500 border border-green-500/40"><CheckCircle2 className="w-3 h-3" /> bestellt</span>
+                            : <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-red-500/15 text-red-400 border border-red-500/40"><XCircle className="w-3 h-3" /> offen</span>
+                          }
+                        </td>
                         <td className="p-3">{r.supplier?.name || '—'}</td>
                         <td className="p-3">{r.modellname || '—'}</td>
                         <td className="p-3">{r.bearbeiter}</td>
