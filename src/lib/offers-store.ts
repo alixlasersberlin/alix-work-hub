@@ -71,10 +71,10 @@ export async function upsertOffer(snap: OfferSnapshot): Promise<void> {
   if (user?.id) {
     const { data: prof } = await supabase
       .from('user_profiles')
-      .select('display_name, full_name, email')
-      .eq('user_id', user.id)
+      .select('full_name, email')
+      .eq('id', user.id)
       .maybeSingle();
-    createdByName = (prof as any)?.display_name || (prof as any)?.full_name || (prof as any)?.email || createdByName;
+    createdByName = (prof as any)?.full_name || (prof as any)?.email || createdByName;
   }
 
   const row: any = {
