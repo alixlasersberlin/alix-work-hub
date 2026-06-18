@@ -930,6 +930,16 @@ export default function OrderDetail() {
         <DeliveryNoteTab order={order} customer={customer} items={items} onReload={loadAll} />
       )}
 
+      {activeTab === 'auftragsbestaetigung' && id && (
+        <AuftragsbestaetigungTab
+          orderId={id}
+          customerId={order?.customer_id ?? null}
+          customerEmail={customer?.email ?? null}
+        />
+      )}
+
+
+
 
 
       {activeTab === 'notes' && (
