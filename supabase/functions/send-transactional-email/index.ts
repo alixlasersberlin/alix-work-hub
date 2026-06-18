@@ -201,9 +201,12 @@ Deno.serve(async (req) => {
             { apiKey },
           )
         } catch (err: any) {
-          if (isRateLimited(err?.message) && attempt < 4) {
+          if (isRateLimited(err?.message) && attempt < 8) {
             attempt++
-            await sleep(1000 * attempt)
+            // Exponential backoff with jitter: 2s, 4s, 8s, 16s, 30s cap
+            const backoff = Math.min(30000, 2000 * Math.pow(2, attempt - 1))
+            const jitter = Math.floor(Math.random() * 1000)
+            await sleep(backoff + jitter)
             continue
           }
           throw err
