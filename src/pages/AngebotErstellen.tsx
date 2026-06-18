@@ -165,6 +165,7 @@ export default function AngebotErstellen() {
           }
           if (snap) {
             setOfferNumber(snap.offerNumber);
+            if (snap.caseNumber) setCaseNumber(snap.caseNumber);
             if (snap.offerDate) setOfferDate(snap.offerDate);
             if (snap.validUntil) setValidUntil(snap.validUntil);
             if (snap.salesAdvisor) setSalesAdvisor(snap.salesAdvisor);
