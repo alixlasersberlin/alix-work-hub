@@ -1,9 +1,10 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FileText, FilePlus, Trash2, Pencil, CheckCircle2, Link2, Copy } from 'lucide-react';
+import { FileText, FilePlus, Trash2, Pencil, CheckCircle2, Link2, Copy, Download } from 'lucide-react';
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { EmptyState } from '@/components/infinity/EmptyState';
@@ -23,8 +24,10 @@ const fmtMoney = (n: number) =>
   (n || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
 
 export default function Angebote() {
+  const navigate = useNavigate();
   const [offers, setOffers] = useState<OfferSnapshot[]>([]);
   const [loading, setLoading] = useState(true);
+
   const [signLinkOpen, setSignLinkOpen] = useState(false);
   const [signLinkLoading, setSignLinkLoading] = useState(false);
   const [signLinkOffer, setSignLinkOffer] = useState<string | null>(null);
@@ -178,7 +181,11 @@ export default function Angebote() {
                   const isOrder = o.status === 'order';
                   const isSigned = o.status === 'signed';
                   return (
-                  <TableRow key={o.offerNumber}>
+                  <TableRow
+                    key={o.offerNumber}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => navigate(`/verkauf/angebot/neu?edit=${encodeURIComponent(o.offerNumber)}`)}
+                  >
                     <TableCell className="font-medium">{o.offerNumber}</TableCell>
                     <TableCell>{o.offerDate ? new Date(o.offerDate).toLocaleDateString('de-DE') : '—'}</TableCell>
                     <TableCell>{o.customer?.company_name || o.customer?.contact_name || '—'}</TableCell>
@@ -197,7 +204,15 @@ export default function Angebote() {
                         </span>
                       )}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => navigate(`/verkauf/angebot/neu?edit=${encodeURIComponent(o.offerNumber)}&download=1`)}
+                        title="PDF herunterladen"
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
                       {!isOrder && !isSigned && (
                         <Button variant="ghost" size="icon" asChild title="Bearbeiten">
                           <Link to={`/verkauf/angebot/neu?edit=${encodeURIComponent(o.offerNumber)}`}>
@@ -216,6 +231,7 @@ export default function Angebote() {
                     </TableCell>
                   </TableRow>
                   );
+
                 })}
               </TableBody>
             </Table>

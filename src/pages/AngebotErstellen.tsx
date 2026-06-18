@@ -770,6 +770,22 @@ export default function AngebotErstellen() {
     toast.success('Angebot als PDF erstellt.');
   };
 
+  // Auto-Download wenn aus Angebotsliste mit ?download=1 aufgerufen
+  useEffect(() => {
+    if (loading) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('download') !== '1') return;
+    if (!selectedCustomer) return;
+    if (!lines.some(l => l.name && l.quantity > 0)) return;
+    // Einmal triggern: download-Param entfernen
+    const url = new URL(window.location.href);
+    url.searchParams.delete('download');
+    window.history.replaceState({}, '', url.toString());
+    generatePDF();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, selectedCustomer?.id, lines]);
+
+
 
   const buildOfferSnapshot = () => ({
     offerNumber,
