@@ -498,6 +498,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
       const itemRows = [...fromOrder, ...fromManual];
       if (itemRows.length) await supabase.from('production_order_items').insert(itemRows);
     }
+    savingRef.current = false;
     setSaving(false);
     return poId || null;
   };
