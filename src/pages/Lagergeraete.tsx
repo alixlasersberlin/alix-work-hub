@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Pencil, Plus, Warehouse, Link2, X, Sparkles, Package, Search, ArrowUpDown, ArrowUp, ArrowDown, Mail, Send, PackageCheck, FileDown, FileText, Wrench } from 'lucide-react';
+import { Loader2, Pencil, Plus, Warehouse, Link2, Link2Off, X, Sparkles, Package, Search, ArrowUpDown, ArrowUp, ArrowDown, Mail, Send, PackageCheck, FileDown, FileText, Wrench } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { sbRepair } from '@/lib/repair/api';
 import { notifyNewRepairOrder } from '@/lib/repair/notify';
@@ -267,6 +267,8 @@ export default function Lagergeraete({
   const [selectionMode, setSelectionMode] = useState(false);
   const [bulkStatus, setBulkStatus] = useState<DeviceStatus>('Bestand');
   const [deliverDevice, setDeliverDevice] = useState<LagerDevice | null>(null);
+  const [releaseDevice, setReleaseDevice] = useState<LagerDevice | null>(null);
+  const [releasing, setReleasing] = useState(false);
   const [bulkApplying, setBulkApplying] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
   const [bulkResending, setBulkResending] = useState(false);
@@ -762,6 +764,45 @@ export default function Lagergeraete({
   };
 
   const markAsDelivered = (d: LagerDevice) => setDeliverDevice(d);
+
+  const performReleaseReservation = async (d: LagerDevice) => {
+    if (!d.reserved_order_id) return;
+    setReleasing(true);
+    try {
+      const orderId = d.reserved_order_id;
+      const { error } = await supabase
+        .from('lager_devices')
+        .update({ reserved_order_id: null, reservation_week: null })
+        .eq('id', d.id);
+      if (error) {
+        toast.error('Fehler: ' + error.message);
+        return;
+      }
+      // Auto-Tourenplan entfernen, falls kein anderes Gerät mehr für diesen Auftrag reserviert
+      const { data: stillReserved } = await supabase
+        .from('lager_devices')
+        .select('id')
+        .eq('reserved_order_id', orderId)
+        .limit(1);
+      if (!stillReserved || stillReserved.length === 0) {
+        await supabase
+          .from('route_plans')
+          .delete()
+          .eq('order_id', orderId)
+          .is('planned_date', null);
+      }
+      setDevices((prev) => prev.map((x) => x.id === d.id
+        ? { ...x, reserved_order_id: null, reservation_week: null, orders: null }
+        : x,
+      ));
+      toast.success(`Reservierung für ${d.serial_number} aufgehoben — Gerät wieder verfügbar.`);
+    } finally {
+      setReleasing(false);
+    }
+  };
+
+  const releaseReservation = (d: LagerDevice) => setReleaseDevice(d);
+
 
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -1943,6 +1984,17 @@ export default function Lagergeraete({
                         <Mail className="w-4 h-4" /> E-Mail an Kunde
                       </Button>
                     )}
+                    {d.reserved_order_id && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="gap-1 h-8 text-amber-500 hover:text-amber-600"
+                        onClick={() => releaseReservation(d)}
+                        title="Reservierung aufheben und Gerät freigeben"
+                      >
+                        <Link2Off className="w-4 h-4" /> Reservierung aufheben
+                      </Button>
+                    )}
                     {getStatusFromNotes(d.notes) !== 'Ausgeliefert' && (
                       <Button
                         variant="ghost"
@@ -2143,6 +2195,17 @@ export default function Lagergeraete({
                           <Mail className="w-4 h-4" /> E-Mail an Kunde
                         </Button>
                       )}
+                      {d.reserved_order_id && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="gap-1 text-amber-500 hover:text-amber-600"
+                          onClick={() => releaseReservation(d)}
+                          title="Reservierung aufheben und Gerät freigeben"
+                        >
+                          <Link2Off className="w-4 h-4" /> Reservierung aufheben
+                        </Button>
+                      )}
                       {getStatusFromNotes(d.notes) !== 'Ausgeliefert' && (
                         <Button
                           variant="ghost"
@@ -2197,6 +2260,34 @@ export default function Lagergeraete({
               </>
             );
           })()}
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!releaseDevice} onOpenChange={(o) => !o && !releasing && setReleaseDevice(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reservierung aufheben?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {releaseDevice?.orders?.order_number
+                ? `Die Reservierung von Gerät „${releaseDevice?.serial_number}" für Auftrag ${releaseDevice?.orders?.order_number} wird aufgehoben. Das Gerät steht danach wieder als verfügbar im Lager.`
+                : `Die Reservierung von Gerät „${releaseDevice?.serial_number}" wird aufgehoben. Das Gerät steht danach wieder als verfügbar im Lager.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={releasing}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={releasing}
+              onClick={async (e) => {
+                e.preventDefault();
+                const d = releaseDevice;
+                if (!d) return;
+                await performReleaseReservation(d);
+                setReleaseDevice(null);
+              }}
+            >
+              {releasing ? 'Wird freigegeben…' : 'Ja, freigeben'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>
