@@ -180,6 +180,7 @@ export default function BestellungenDashboard() {
           <table className="w-full text-xs">
             <thead className="text-[11px] text-muted-foreground border-b border-border">
               <tr>
+                <th className="py-2 px-2"></th>
                 <th className="text-left py-2 px-2">Auftrag</th>
                 <th className="text-left py-2 px-2">Kunde</th>
                 <th className="text-left py-2 px-2">Verkäufer</th>
@@ -195,7 +196,6 @@ export default function BestellungenDashboard() {
                 <th className="text-left py-2 px-2">Freigabe</th>
                 <th className="text-center py-2 px-2">Bestellung</th>
                 <th className="text-left py-2 px-2">Zahlung</th>
-                <th className="py-2 px-2"></th>
               </tr>
             </thead>
             <tbody>
