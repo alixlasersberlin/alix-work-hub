@@ -29,6 +29,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [productionOrderNumber, setProductionOrderNumber] = useState<string>('');
   const [attachmentPath, setAttachmentPath] = useState<string | null>(null);
