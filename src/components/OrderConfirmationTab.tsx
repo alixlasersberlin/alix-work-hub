@@ -55,7 +55,22 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
   const [confirmDate, setConfirmDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [deliveryWeek, setDeliveryWeek] = useState<string>('');
   const [notes, setNotes] = useState<string>('Vielen Dank für Ihre Bestellung. Wir bestätigen Ihnen hiermit den Auftrag zu den nachfolgenden Konditionen.');
+  const [paymentTerms, setPaymentTerms] = useState<string>('');
   const [generating, setGenerating] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!customer?.id) return;
+      const { data } = await supabase
+        .from('finance_accounts')
+        .select('payment_terms')
+        .eq('customer_id', customer.id)
+        .maybeSingle();
+      if (!cancelled && data?.payment_terms) setPaymentTerms(data.payment_terms);
+    })();
+    return () => { cancelled = true; };
+  }, [customer?.id]);
 
   const currency = order?.currency || 'EUR';
 
