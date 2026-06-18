@@ -267,6 +267,8 @@ export default function Lagergeraete({
   const [selectionMode, setSelectionMode] = useState(false);
   const [bulkStatus, setBulkStatus] = useState<DeviceStatus>('Bestand');
   const [deliverDevice, setDeliverDevice] = useState<LagerDevice | null>(null);
+  const [releaseDevice, setReleaseDevice] = useState<LagerDevice | null>(null);
+  const [releasing, setReleasing] = useState(false);
   const [bulkApplying, setBulkApplying] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
   const [bulkResending, setBulkResending] = useState(false);
