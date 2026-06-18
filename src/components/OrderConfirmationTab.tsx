@@ -104,7 +104,7 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
       if (!customer?.id) return;
       const { data } = await supabase
         .from('offers')
-        .select('offer_number, status, total_gross, payload, created_at')
+        .select('offer_number, status, total_gross, payload, case_number, created_at')
         .eq('customer_id', customer.id)
         .in('status', ['order', 'signed', 'draft'])
         .order('created_at', { ascending: false })
@@ -117,9 +117,11 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
         return da - db;
       });
       const pick: any = ranked[0];
+      setLinkedOfferNr(pick?.offer_number || '');
+      // Stammnummer vom besten passenden Angebot übernehmen, falls Auftrag noch keine hat
+      if (!caseNumber && pick?.case_number) setCaseNumber(pick.case_number);
       const p = (pick?.payload as any)?.payment;
       if (!p) return;
-      setLinkedOfferNr(pick.offer_number || '');
       if (p.type) setPayType(p.type as PayType);
       if (typeof p.price === 'number') setPayPrice(String(p.price));
       else if (target) setPayPrice(String(target));
