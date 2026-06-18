@@ -273,6 +273,9 @@ export default function Lagergeraete({
   const [bulkSendEmail, setBulkSendEmail] = useState(true);
   const [sendCustomerEmailOnSave, setSendCustomerEmailOnSave] = useState(false);
   const [sendingManualEmail, setSendingManualEmail] = useState(false);
+  const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
+  const [allTemplates, setAllTemplates] = useState<Array<{ template_key: string; display_name: string; subject: string }>>([]);
+  const [pickedTemplate, setPickedTemplate] = useState<string>('');
 
   // Welcher Status der aktuellen Seite ist Bulk-Versand-fähig?
   const bulkResendStatus = useMemo(
