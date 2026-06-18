@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { createPDF } from '@/lib/pdf-utils';
 import autoTable from 'jspdf-autotable';
@@ -51,12 +52,21 @@ async function loadTemplate(): Promise<string> {
   return data;
 }
 
+type PayType = 'Direktkauf' | 'Ratenzahlung' | 'Leasing' | 'Mietkauf' | 'Alix Flex';
+
 export default function OrderConfirmationTab({ order, customer, items }: Props) {
   const [confirmDate, setConfirmDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [deliveryWeek, setDeliveryWeek] = useState<string>('');
   const [notes, setNotes] = useState<string>('Vielen Dank für Ihre Bestellung. Wir bestätigen Ihnen hiermit den Auftrag zu den nachfolgenden Konditionen.');
   const [paymentTerms, setPaymentTerms] = useState<string>('');
   const [generating, setGenerating] = useState(false);
+
+  // Zahlungsberechnung (aus Angebot übernommen, manuell überschreibbar)
+  const [payType, setPayType] = useState<PayType>('Direktkauf');
+  const [payPrice, setPayPrice] = useState<string>('');
+  const [payDown, setPayDown] = useState<string>('');
+  const [payTerm, setPayTerm] = useState<number>(24);
+  const [linkedOfferNr, setLinkedOfferNr] = useState<string>('');
 
   useEffect(() => {
     let cancelled = false;
@@ -71,6 +81,38 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
     })();
     return () => { cancelled = true; };
   }, [customer?.id]);
+
+  // Bestes Angebot zum Auftrag finden (gleicher Kunde, Status order/signed, Betragsabgleich bevorzugt)
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!customer?.id) return;
+      const { data } = await supabase
+        .from('offers')
+        .select('offer_number, status, total_gross, payload, created_at')
+        .eq('customer_id', customer.id)
+        .in('status', ['order', 'signed', 'draft'])
+        .order('created_at', { ascending: false })
+        .limit(25);
+      if (cancelled || !data?.length) return;
+      const target = Number(order?.total_amount) || 0;
+      const ranked = [...data].sort((a: any, b: any) => {
+        const da = Math.abs((Number(a.total_gross) || 0) - target);
+        const db = Math.abs((Number(b.total_gross) || 0) - target);
+        return da - db;
+      });
+      const pick: any = ranked[0];
+      const p = (pick?.payload as any)?.payment;
+      if (!p) return;
+      setLinkedOfferNr(pick.offer_number || '');
+      if (p.type) setPayType(p.type as PayType);
+      if (typeof p.price === 'number') setPayPrice(String(p.price));
+      else if (target) setPayPrice(String(target));
+      if (typeof p.down === 'number') setPayDown(String(p.down));
+      if (typeof p.term === 'number') setPayTerm(p.term);
+    })();
+    return () => { cancelled = true; };
+  }, [customer?.id, order?.total_amount]);
 
   const currency = order?.currency || 'EUR';
 
@@ -288,6 +330,56 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
         py += ptWrapped.length * 4.6 + 6;
       }
 
+      // Zahlungsberechnung (aus Angebot)
+      {
+        const price = parseFloat(payPrice) || 0;
+        const down = parseFloat(payDown) || 0;
+        const base = Math.max(0, price - down);
+        const isFinanced = payType !== 'Direktkauf';
+        const rate = isFinanced && payTerm > 0 ? base / payTerm : 0;
+
+        if (price > 0 || isFinanced) {
+          if (py > BOTTOM_LIMIT - 45) {
+            doc.addPage();
+            drawTemplate();
+            py = TOP_CONTENT;
+          }
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(10);
+          doc.setTextColor(20, 60, 110);
+          doc.text(`Zahlungsberechnung — ${payType}${linkedOfferNr ? `  (Angebot ${linkedOfferNr})` : ''}`, LEFT, py);
+          py += 6;
+
+          const rows: Array<[string, string]> = [
+            ['Kaufpreis', fmtMoney(price, currency)],
+          ];
+          if (down > 0 || isFinanced) rows.push(['Anzahlung', fmtMoney(down, currency)]);
+          if (isFinanced) {
+            rows.push(['Laufzeit', `${payTerm} Monate`]);
+            rows.push(['Basis (Finanzierungsbetrag)', fmtMoney(base, currency)]);
+            rows.push(['Monatliche Rate', fmtMoney(rate, currency)]);
+          } else {
+            rows.push(['Zu zahlen', fmtMoney(base, currency)]);
+          }
+
+          autoTable(doc, {
+            startY: py,
+            margin: { left: LEFT, right: PAGE_W - RIGHT },
+            body: rows,
+            theme: 'grid',
+            styles: { fontSize: 9.5, cellPadding: 2, textColor: [40, 40, 40] },
+            columnStyles: {
+              0: { cellWidth: 70, fontStyle: 'bold', textColor: [20, 60, 110] },
+              1: { halign: 'right' },
+            },
+            tableWidth: CONTENT_W,
+          });
+          py = (doc as any).lastAutoTable.finalY + 8;
+        }
+      }
+
+
+
 
       // Sign-off
       if (py > BOTTOM_LIMIT - 18) {
@@ -386,6 +478,61 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
           className="bg-secondary border-border mt-1"
         />
       </div>
+
+      <div className="rounded-lg border border-border bg-secondary/40 p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="text-xs font-semibold tracking-wide text-primary">ZAHLUNGSBERECHNUNG</div>
+          {linkedOfferNr && (
+            <div className="text-xs text-muted-foreground">aus Angebot <span className="font-mono">{linkedOfferNr}</span></div>
+          )}
+        </div>
+        <div className="grid sm:grid-cols-5 gap-3">
+          <div className="sm:col-span-2">
+            <Label className="text-xs text-muted-foreground">Zahlungsart</Label>
+            <Select value={payType} onValueChange={(v: any) => setPayType(v)}>
+              <SelectTrigger className="bg-secondary border-border mt-1"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Direktkauf">Direktkauf</SelectItem>
+                <SelectItem value="Ratenzahlung">Ratenzahlung</SelectItem>
+                <SelectItem value="Leasing">Leasing</SelectItem>
+                <SelectItem value="Mietkauf">Mietkauf</SelectItem>
+                <SelectItem value="Alix Flex">Alix Flex</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground">Kaufpreis (€)</Label>
+            <Input type="number" inputMode="decimal" value={payPrice} onChange={e => setPayPrice(e.target.value)} className="bg-secondary border-border mt-1" />
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground">Anzahlung (€)</Label>
+            <Input type="number" inputMode="decimal" value={payDown} onChange={e => setPayDown(e.target.value)} className="bg-secondary border-border mt-1" />
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground">Laufzeit (Monate)</Label>
+            <Input type="number" min={1} value={payTerm} onChange={e => setPayTerm(Number(e.target.value) || 0)} disabled={payType === 'Direktkauf'} className="bg-secondary border-border mt-1" />
+          </div>
+        </div>
+        <div className="grid sm:grid-cols-2 gap-3 text-sm pt-1">
+          <div className="rounded-md bg-background/60 border border-border px-3 py-2">
+            <div className="text-xs text-muted-foreground">Basis (Finanzierungsbetrag)</div>
+            <div className="font-semibold text-foreground">{fmtMoney(Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0)), currency)}</div>
+          </div>
+          <div className="rounded-md bg-background/60 border border-border px-3 py-2">
+            <div className="text-xs text-muted-foreground">{payType === 'Direktkauf' ? 'Zu zahlen' : 'Monatliche Rate'}</div>
+            <div className="font-semibold text-foreground">
+              {(() => {
+                const base = Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0));
+                if (payType === 'Direktkauf') return fmtMoney(base, currency);
+                const r = payTerm > 0 ? base / payTerm : 0;
+                return `${fmtMoney(r, currency)} × ${payTerm} Mt.`;
+              })()}
+            </div>
+          </div>
+        </div>
+      </div>
+
+
 
 
       <div className="rounded-lg border border-border bg-secondary/40 p-4">
