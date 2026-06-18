@@ -205,6 +205,11 @@ export default function Angebote() {
                           </Link>
                         </Button>
                       )}
+                      {!isSigned && (
+                        <Button variant="ghost" size="icon" onClick={() => openSignLink(o.offerNumber)} title="Unterschriftslink anzeigen">
+                          <Link2 className="h-4 w-4" />
+                        </Button>
+                      )}
                       <Button variant="ghost" size="icon" onClick={() => remove(o.offerNumber)} title="Löschen">
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
