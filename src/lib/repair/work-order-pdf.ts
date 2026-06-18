@@ -5,6 +5,7 @@
  * – Liefert Blob, kann gedruckt, heruntergeladen oder per Mail versendet werden
  */
 import jsPDF from 'jspdf';
+import { createPDF } from '@/lib/pdf-utils';
 import autoTable from 'jspdf-autotable';
 import logoAsset from '@/assets/alix-lasers-logo-gold.png.asset.json';
 
@@ -47,7 +48,7 @@ function fmtBool(v: any): string {
 }
 
 async function buildPdf({ repair, parts = [], workOrders = [] }: RenderInput): Promise<jsPDF> {
-  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+  const doc = createPDF({ unit: 'pt', format: 'a4' });
   const W = doc.internal.pageSize.getWidth();
   const M = 40;
   let y = M;

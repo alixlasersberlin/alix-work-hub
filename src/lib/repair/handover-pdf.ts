@@ -1,4 +1,5 @@
 import jsPDF from 'jspdf';
+import { createPDF } from '@/lib/pdf-utils';
 import autoTable from 'jspdf-autotable';
 import { supabase } from '@/integrations/supabase/client';
 import { sbRepair } from '@/lib/repair/api';
@@ -39,7 +40,7 @@ async function fetchRepairHeader(repairId: string) {
 
 export async function generateHandoverPdf(input: HandoverPdfInput): Promise<{ blob: Blob; storagePath: string; fileName: string }> {
   const header = await fetchRepairHeader(input.repairId);
-  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+  const doc = createPDF({ unit: 'pt', format: 'a4' });
   const W = doc.internal.pageSize.getWidth();
   const M = 40;
   let y = M;

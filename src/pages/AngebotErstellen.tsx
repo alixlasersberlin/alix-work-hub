@@ -12,6 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
+import { createPDF } from '@/lib/pdf-utils';
 import autoTable from 'jspdf-autotable';
 import templateAsset from '@/assets/angebot-template.jpg.asset.json';
 import { upsertOffer, getOffer } from '@/lib/offers-store';
@@ -445,7 +446,7 @@ export default function AngebotErstellen() {
       return null;
     }
 
-    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const doc = createPDF({ unit: 'mm', format: 'a4' });
     const PAGE_W = 210;
     const PAGE_H = 297;
     const LEFT = 30; // right of the blue stripe

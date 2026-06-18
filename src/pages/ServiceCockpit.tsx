@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { KpiTile } from '@/components/infinity/KpiTile';
 import jsPDF from 'jspdf';
+import { createPDF } from '@/lib/pdf-utils';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 
@@ -196,7 +197,7 @@ export default function ServiceCockpit() {
 
   const exportPdf = () => {
     const { kpis, techniker, geraete, fehler } = buildExportRows();
-    const doc = new jsPDF();
+    const doc = createPDF();
     doc.setFontSize(16); doc.text('Service Cockpit', 14, 16);
     doc.setFontSize(10); doc.text(`Zeitraum: ${from} – ${to}`, 14, 23);
     autoTable(doc, { head: [kpis[0] as any], body: kpis.slice(1) as any, startY: 28, theme: 'striped' });

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import jsPDF from 'jspdf';
+import { createPDF } from '@/lib/pdf-utils';
 import autoTable from 'jspdf-autotable';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -463,7 +464,7 @@ export default function Artikel() {
       toast({ title: 'Keine Auswahl', description: 'Bitte mindestens einen Artikel auswählen.', variant: 'destructive' });
       return;
     }
-    const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+    const doc = createPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
     doc.setFontSize(16);
     doc.text('Artikel-Export', 40, 40);
     doc.setFontSize(9);

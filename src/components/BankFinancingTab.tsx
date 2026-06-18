@@ -1,3 +1,4 @@
+import { createPDF } from '@/lib/pdf-utils';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -185,7 +186,7 @@ export default function BankFinancingTab({ orderId }: Props) {
       const orderNo = order?.order_number || '—';
       const customerName = cust.company_name || cust.contact_name || '—';
 
-      const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+      const doc = createPDF({ unit: 'pt', format: 'a4' });
       const pageW = doc.internal.pageSize.getWidth();
       const now = new Date().toLocaleString('de-DE');
 
