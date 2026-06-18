@@ -182,7 +182,7 @@ Deno.serve(async (req) => {
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
     const isRateLimited = (msg?: string) => !!msg && /429|rate.?limit|high demand/i.test(msg)
 
-    const sendOne = async (r: typeof recipients[number]) => {
+    const sendOne = async (r: typeof recipients[number], maxAttempts: number) => {
       let attempt = 0
       while (true) {
         try {
@@ -201,11 +201,11 @@ Deno.serve(async (req) => {
             { apiKey },
           )
         } catch (err: any) {
-          if (isRateLimited(err?.message) && attempt < 8) {
+          if (isRateLimited(err?.message) && attempt < maxAttempts) {
             attempt++
-            // Exponential backoff with jitter: 2s, 4s, 8s, 16s, 30s cap
-            const backoff = Math.min(30000, 2000 * Math.pow(2, attempt - 1))
-            const jitter = Math.floor(Math.random() * 1000)
+            // Backoff: 1.5s, 3s, 6s (cap 8s) + small jitter
+            const backoff = Math.min(8000, 1500 * Math.pow(2, attempt - 1))
+            const jitter = Math.floor(Math.random() * 500)
             await sleep(backoff + jitter)
             continue
           }
@@ -214,16 +214,29 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Send primary synchronously (with retries), but fire-and-forget copies
+    // to stay well under the 150s Edge Function idle timeout.
     const results: PromiseSettledResult<any>[] = []
-    for (let i = 0; i < recipients.length; i++) {
-      const r = recipients[i]
-      try {
-        const value = await sendOne(r)
-        results.push({ status: 'fulfilled', value } as PromiseFulfilledResult<any>)
-      } catch (reason: any) {
-        results.push({ status: 'rejected', reason } as PromiseRejectedResult)
-      }
-      if (i < recipients.length - 1) await sleep(1200)
+    try {
+      const value = await sendOne(recipients[0], 4)
+      results.push({ status: 'fulfilled', value } as PromiseFulfilledResult<any>)
+    } catch (reason: any) {
+      results.push({ status: 'rejected', reason } as PromiseRejectedResult)
+    }
+
+    // Fire copies in background, spaced out, without blocking the response
+    const copies = recipients.slice(1)
+    if (copies.length > 0) {
+      ;(async () => {
+        for (let i = 0; i < copies.length; i++) {
+          try {
+            await sendOne(copies[i], 3)
+          } catch (e: any) {
+            console.error('Copy send failed', { recipient: copies[i].email, error: e?.message })
+          }
+          if (i < copies.length - 1) await sleep(1500)
+        }
+      })()
     }
 
     const failures = results
