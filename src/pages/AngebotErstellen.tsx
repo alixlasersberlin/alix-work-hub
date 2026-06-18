@@ -561,7 +561,7 @@ export default function AngebotErstellen() {
         4: { halign: 'right', cellWidth: 16 },
         5: { halign: 'right', cellWidth: 25 },
       },
-      rowPageBreak: 'avoid',
+      rowPageBreak: 'auto',
       willDrawPage: () => {
         // Draw template as background BEFORE row content on each new page
         const pageNo = (doc as any).internal.getCurrentPageInfo().pageNumber;
