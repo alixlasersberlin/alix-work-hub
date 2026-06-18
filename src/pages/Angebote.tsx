@@ -25,6 +25,51 @@ const fmtMoney = (n: number) =>
 export default function Angebote() {
   const [offers, setOffers] = useState<OfferSnapshot[]>([]);
   const [loading, setLoading] = useState(true);
+  const [signLinkOpen, setSignLinkOpen] = useState(false);
+  const [signLinkLoading, setSignLinkLoading] = useState(false);
+  const [signLinkOffer, setSignLinkOffer] = useState<string | null>(null);
+  const [signLinkUrl, setSignLinkUrl] = useState<string | null>(null);
+  const [signLinkExpires, setSignLinkExpires] = useState<string | null>(null);
+  const [signLinkError, setSignLinkError] = useState<string | null>(null);
+
+  const openSignLink = async (offerNumber: string) => {
+    setSignLinkOpen(true);
+    setSignLinkOffer(offerNumber);
+    setSignLinkUrl(null);
+    setSignLinkExpires(null);
+    setSignLinkError(null);
+    setSignLinkLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('alix_sign_requests')
+        .select('token, expires_at, status, created_at')
+        .eq('offer_number', offerNumber)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      if (!data?.token) {
+        setSignLinkError('Für dieses Angebot wurde noch kein Unterschriftslink erstellt. Öffne das Angebot und sende es zur Unterschrift.');
+      } else {
+        setSignLinkUrl(`${window.location.origin}/sign/${data.token}`);
+        setSignLinkExpires(data.expires_at || null);
+      }
+    } catch (e: any) {
+      setSignLinkError(e?.message || 'Link konnte nicht geladen werden.');
+    } finally {
+      setSignLinkLoading(false);
+    }
+  };
+
+  const copySignLink = async () => {
+    if (!signLinkUrl) return;
+    try {
+      await navigator.clipboard.writeText(signLinkUrl);
+      toast.success('Link in Zwischenablage kopiert.');
+    } catch {
+      toast.error('Kopieren fehlgeschlagen.');
+    }
+  };
 
   const reload = async () => {
     const list = await listOffers();
