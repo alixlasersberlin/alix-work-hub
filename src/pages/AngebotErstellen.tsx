@@ -47,6 +47,7 @@ export default function AngebotErstellen() {
   const [customerSearch, setCustomerSearch] = useState('');
   const [itemSearch, setItemSearch] = useState('');
   const [offerNumber, setOfferNumber] = useState(`ANG-${new Date().getFullYear()}-${String(Date.now()).slice(-5)}`);
+  const [caseNumber, setCaseNumber] = useState<string | null>(null);
   const [offerDate, setOfferDate] = useState(new Date().toISOString().slice(0, 10));
   const [validUntil, setValidUntil] = useState('');
   const [salesAdvisor, setSalesAdvisor] = useState('');
