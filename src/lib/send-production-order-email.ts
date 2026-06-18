@@ -97,7 +97,7 @@ export async function sendProductionOrderEmail(poId: string): Promise<SendResult
   // automatisch als Default-Kopien hinzugefügt (mit Dedupe + Rate-Limit-Schutz).
   const [primary, ...rest] = recipients;
   const extraCc = rest;
-  const allRecipients = Array.from(new Set([primary, ...extraCc, CC_EMAIL, BCC_EMAIL]));
+  const allRecipients = Array.from(new Set([primary, ...extraCc, CC_EMAIL]));
 
   const { data, error } = await supabase.functions.invoke('send-transactional-email', {
     body: {
@@ -113,5 +113,5 @@ export async function sendProductionOrderEmail(poId: string): Promise<SendResult
     const msg = error?.message || (data as any)?.error || 'E-Mail-Versand fehlgeschlagen';
     return { ok: false, total: allRecipients.length, sent: 0, message: msg };
   }
-  return { ok: true, total: allRecipients.length, sent: allRecipients.length, message: `E-Mail an Zulieferer versendet (Kopie an ${BCC_EMAIL})` };
+  return { ok: true, total: allRecipients.length, sent: allRecipients.length, message: `E-Mail an Zulieferer versendet (Kopie an ${CC_EMAIL})` };
 }
