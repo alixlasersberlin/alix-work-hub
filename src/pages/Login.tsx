@@ -119,7 +119,7 @@ export default function Login() {
             )}
 
             {error && (
-              <p className="text-sm text-destructive bg-destructive/10 rounded-lg p-3">{error}</p>
+              <p className="text-sm font-medium text-white bg-destructive rounded-lg p-3">{error}</p>
             )}
 
             <Button type="submit" disabled={loading || (!isBypass && !captchaToken)} className="w-full gold-gradient font-semibold">
