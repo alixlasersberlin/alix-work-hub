@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -29,6 +29,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [productionOrderNumber, setProductionOrderNumber] = useState<string>('');
   const [attachmentPath, setAttachmentPath] = useState<string | null>(null);
@@ -390,7 +391,9 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
     c?.company_name || c?.contact_name || c?.email || '';
 
   const persist = async (): Promise<string | null> => {
+    if (savingRef.current) return null;
     if (!validate()) return null;
+    savingRef.current = true;
     setSaving(true);
     const customerForPo =
       selectedOrder?.customer_id
@@ -421,7 +424,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
     let poId = id;
     if (isEdit && id) {
       const { error } = await supabase.from('production_orders').update(payload).eq('id', id);
-      if (error) { toast.error(error.message); setSaving(false); return null; }
+      if (error) { savingRef.current = false; toast.error(error.message); setSaving(false); return null; }
       await supabase.from('production_order_items').delete().eq('production_order_id', id);
     } else {
       // Sperre: Pro Auftrag entweder Lager-Reservierung ODER Bestellung.
@@ -437,15 +440,34 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
           return !isLeih;
         });
         if (blocker) {
+          savingRef.current = false;
           setSaving(false);
           toast.error(
             `Bestellung nicht möglich: Für Auftrag ${selectedOrder.order_number} ist bereits ein Lagergerät reserviert (${blocker.model_name} · SN ${blocker.serial_number}). Bitte zuerst die Reservierung im Lager aufheben.`,
           );
           return null;
         }
+
+        // Idempotenz: kein doppeltes Erfassen derselben Bestellung innerhalb von 30 s
+        const since = new Date(Date.now() - 30_000).toISOString();
+        const { data: recent } = await supabase
+          .from('production_orders')
+          .select('id, production_order_number')
+          .eq('order_id', selectedOrder.id)
+          .eq('supplier_id', form.supplier_id)
+          .gte('created_at', since)
+          .limit(1);
+        if (recent && recent.length > 0) {
+          savingRef.current = false;
+          setSaving(false);
+          toast.warning(
+            `Für Auftrag ${selectedOrder.order_number} wurde gerade eben bereits eine Bestellung erfasst (${recent[0].production_order_number ?? ''}). Doppelte Erfassung verhindert.`,
+          );
+          return null;
+        }
       }
       const { data, error } = await supabase.from('production_orders').insert(payload).select('id').single();
-      if (error || !data) { toast.error(error?.message || 'Fehler'); setSaving(false); return null; }
+      if (error || !data) { savingRef.current = false; toast.error(error?.message || 'Fehler'); setSaving(false); return null; }
       poId = data.id;
       // Falls dieser Auftrag als "Restbestellung" in Bestellung möglich markiert war, Marker erledigen
       if (selectedOrder?.id) {
@@ -476,6 +498,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
       const itemRows = [...fromOrder, ...fromManual];
       if (itemRows.length) await supabase.from('production_order_items').insert(itemRows);
     }
+    savingRef.current = false;
     setSaving(false);
     return poId || null;
   };
