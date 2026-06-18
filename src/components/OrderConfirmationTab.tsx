@@ -52,12 +52,21 @@ async function loadTemplate(): Promise<string> {
   return data;
 }
 
+type PayType = 'Direktkauf' | 'Ratenzahlung' | 'Leasing' | 'Mietkauf' | 'Alix Flex';
+
 export default function OrderConfirmationTab({ order, customer, items }: Props) {
   const [confirmDate, setConfirmDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [deliveryWeek, setDeliveryWeek] = useState<string>('');
   const [notes, setNotes] = useState<string>('Vielen Dank für Ihre Bestellung. Wir bestätigen Ihnen hiermit den Auftrag zu den nachfolgenden Konditionen.');
   const [paymentTerms, setPaymentTerms] = useState<string>('');
   const [generating, setGenerating] = useState(false);
+
+  // Zahlungsberechnung (aus Angebot übernommen, manuell überschreibbar)
+  const [payType, setPayType] = useState<PayType>('Direktkauf');
+  const [payPrice, setPayPrice] = useState<string>('');
+  const [payDown, setPayDown] = useState<string>('');
+  const [payTerm, setPayTerm] = useState<number>(24);
+  const [linkedOfferNr, setLinkedOfferNr] = useState<string>('');
 
   useEffect(() => {
     let cancelled = false;
@@ -72,6 +81,38 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
     })();
     return () => { cancelled = true; };
   }, [customer?.id]);
+
+  // Bestes Angebot zum Auftrag finden (gleicher Kunde, Status order/signed, Betragsabgleich bevorzugt)
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!customer?.id) return;
+      const { data } = await supabase
+        .from('offers')
+        .select('offer_number, status, total_gross, payload, created_at')
+        .eq('customer_id', customer.id)
+        .in('status', ['order', 'signed', 'draft'])
+        .order('created_at', { ascending: false })
+        .limit(25);
+      if (cancelled || !data?.length) return;
+      const target = Number(order?.total_amount) || 0;
+      const ranked = [...data].sort((a: any, b: any) => {
+        const da = Math.abs((Number(a.total_gross) || 0) - target);
+        const db = Math.abs((Number(b.total_gross) || 0) - target);
+        return da - db;
+      });
+      const pick: any = ranked[0];
+      const p = (pick?.payload as any)?.payment;
+      if (!p) return;
+      setLinkedOfferNr(pick.offer_number || '');
+      if (p.type) setPayType(p.type as PayType);
+      if (typeof p.price === 'number') setPayPrice(String(p.price));
+      else if (target) setPayPrice(String(target));
+      if (typeof p.down === 'number') setPayDown(String(p.down));
+      if (typeof p.term === 'number') setPayTerm(p.term);
+    })();
+    return () => { cancelled = true; };
+  }, [customer?.id, order?.total_amount]);
 
   const currency = order?.currency || 'EUR';
 
