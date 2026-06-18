@@ -179,13 +179,18 @@ export default function Nummernkreise() {
                     value: nextValue,
                   });
               return (
-                <TableRow key={r.code} className={r.active ? '' : 'opacity-70'}>
+                <TableRow key={r.code} className={(r.active ? '' : 'opacity-70') + (r.code === 'case' ? ' bg-primary/5' : '')}>
                   <TableCell>
                     <Switch checked={r.active} onCheckedChange={(v) => toggleActive(r, v)} />
                   </TableCell>
                   <TableCell className="font-medium">
                     {r.label}
-                    {r.inherit_case && (
+                    {r.code === 'case' && (
+                      <span className="ml-2 inline-block rounded bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 align-middle font-semibold">
+                        STAMM
+                      </span>
+                    )}
+                    {r.inherit_case && r.code !== 'case' && (
                       <span className="ml-2 inline-block rounded bg-primary/15 text-primary text-[10px] px-1.5 py-0.5 align-middle">
                         Vorgangs-Nr
                       </span>
