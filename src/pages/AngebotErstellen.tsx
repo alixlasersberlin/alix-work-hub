@@ -141,10 +141,19 @@ export default function AngebotErstellen() {
       setItems(i ?? []);
       setLoading(false);
 
+      const params = new URLSearchParams(window.location.search);
+      const editKey = params.get('edit');
+
+      // Zentraler Nummernkreis: wenn aktiv & Neuanlage, übernehme nächste Vorschau-Nummer
+      if (!editKey) {
+        try {
+          const nr = await peekNumber('offer');
+          if (nr) setOfferNumber(nr);
+        } catch { /* ignore */ }
+      }
+
       // Edit-Modus: Angebot aus DB laden, wenn ?edit=<offerNumber>
       try {
-        const params = new URLSearchParams(window.location.search);
-        const editKey = params.get('edit');
         if (editKey) {
           let snap: any = await getOffer(editKey);
           if (!snap) {
