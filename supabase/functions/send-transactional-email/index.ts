@@ -162,7 +162,6 @@ Deno.serve(async (req) => {
     if (!skipDefaultCopies) {
       recipients.push(
         { email: 'Natalia.p@alix-operation.de', subjectPrefix: '[Kopie] ', keySuffix: 'copy-natalia' },
-        { email: 'rde@alix-lasers.com', subjectPrefix: '[Kopie] ', keySuffix: 'copy-rde' },
       )
     }
     const seen = new Set<string>([effectiveRecipient.toLowerCase()])
