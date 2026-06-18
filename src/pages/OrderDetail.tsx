@@ -389,6 +389,15 @@ export default function OrderDetail() {
                   </Button>
                 )
               )}
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
+                onClick={() => navigate(`/order/neu?order_id=${order.id}`)}
+                title="Produktions-/Lieferantenbestellung für diesen Auftrag anlegen"
+              >
+                <ShoppingBag className="w-3.5 h-3.5 mr-1.5" /> Bestellung auslösen
+              </Button>
               <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
                 <Pencil className="w-3.5 h-3.5 mr-1.5" /> Ändern
               </Button>
