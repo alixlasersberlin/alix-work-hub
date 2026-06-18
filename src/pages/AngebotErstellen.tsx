@@ -139,14 +139,18 @@ export default function AngebotErstellen() {
       setItems(i ?? []);
       setLoading(false);
 
-      // Edit-Modus: Angebot aus localStorage laden, wenn ?edit=<offerNumber>
+      // Edit-Modus: Angebot aus DB laden, wenn ?edit=<offerNumber>
       try {
         const params = new URLSearchParams(window.location.search);
         const editKey = params.get('edit');
         if (editKey) {
-          const rawList = localStorage.getItem('alix_angebote_v1');
-          const list = rawList ? JSON.parse(rawList) : [];
-          const snap = list.find((o: any) => o.offerNumber === editKey);
+          let snap: any = await getOffer(editKey);
+          if (!snap) {
+            // Fallback: alte Daten aus localStorage
+            const rawList = localStorage.getItem('alix_angebote_v1');
+            const list = rawList ? JSON.parse(rawList) : [];
+            snap = list.find((o: any) => o.offerNumber === editKey);
+          }
           if (snap) {
             setOfferNumber(snap.offerNumber);
             if (snap.offerDate) setOfferDate(snap.offerDate);
