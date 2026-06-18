@@ -30,6 +30,7 @@ import OrderItemsEditDialog from '@/components/OrderItemsEditDialog';
 import OrderDeferDialog from '@/components/OrderDeferDialog';
 import MietkaufDialog from '@/components/MietkaufDialog';
 import DeliveryNoteTab from '@/components/DeliveryNoteTab';
+import AuftragsbestaetigungTab from '@/components/AuftragsbestaetigungTab';
 import { sendCustomerShippingNotice } from '@/lib/send-customer-shipping-notice';
 import { sendReviewInvitation } from '@/lib/review-invitation';
 import { VipBadge } from '@/components/VipBadge';
@@ -51,7 +52,7 @@ export default function OrderDetail() {
   const [history, setHistory] = useState<any[]>([]);
   const [poCount, setPoCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'items' | 'serials' | 'deposit' | 'financing' | 'at_purchase' | 'at_approval' | 'packages' | 'lieferschein' | 'notes' | 'emails' | 'history' | 'raw'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'items' | 'serials' | 'deposit' | 'financing' | 'at_purchase' | 'at_approval' | 'packages' | 'lieferschein' | 'auftragsbestaetigung' | 'notes' | 'emails' | 'history' | 'raw'>('overview');
   const [serialDevices, setSerialDevices] = useState<Array<{ id: string; serial_number: string; model_name: string; notes: string | null; updated_at: string | null }>>([]);
   const [sendingEmail, setSendingEmail] = useState(false);
   const [depositOk, setDepositOk] = useState(false);
@@ -281,6 +282,7 @@ export default function OrderDetail() {
         { key: 'serials', label: 'Seriennummer', icon: Hash, count: serialDevices.length },
         { key: 'packages', label: 'Pakete', icon: Truck, count: packages.length },
         { key: 'lieferschein', label: 'Lieferschein', icon: FileText },
+        { key: 'auftragsbestaetigung', label: 'Auftragsbestätigung', icon: FileText },
       ],
     },
     {
@@ -927,6 +929,16 @@ export default function OrderDetail() {
       {activeTab === 'lieferschein' && (
         <DeliveryNoteTab order={order} customer={customer} items={items} onReload={loadAll} />
       )}
+
+      {activeTab === 'auftragsbestaetigung' && id && (
+        <AuftragsbestaetigungTab
+          orderId={id}
+          customerId={order?.customer_id ?? null}
+          customerEmail={customer?.email ?? null}
+        />
+      )}
+
+
 
 
 
