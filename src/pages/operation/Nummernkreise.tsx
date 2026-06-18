@@ -269,6 +269,19 @@ export default function Nummernkreise() {
                 <Switch checked={editing.reset_yearly}
                         onCheckedChange={(v) => setEditing(s => s ? { ...s, reset_yearly: v } : s)} />
               </div>
+              {editing.code !== 'case' && (
+                <div className="flex items-center justify-between rounded-md border border-primary/30 bg-primary/5 px-3 py-2">
+                  <div>
+                    <div className="text-sm font-medium">An Vorgangsnummer koppeln</div>
+                    <div className="text-xs text-muted-foreground">
+                      Dokumentnummer = Präfix + Vorgangs-Stammnummer (z. B. <code>AB-2026-04217</code>).
+                      Der eigene Zähler wird nicht verwendet.
+                    </div>
+                  </div>
+                  <Switch checked={editing.inherit_case}
+                          onCheckedChange={(v) => setEditing(s => s ? { ...s, inherit_case: v } : s)} />
+                </div>
+              )}
               <div>
                 <Label className="text-xs text-muted-foreground">Notiz</Label>
                 <Textarea value={editing.notes || ''}
@@ -279,13 +292,15 @@ export default function Nummernkreise() {
               <div className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2">
                 <div className="text-xs text-muted-foreground">Nächste vergebene Nummer (Vorschau):</div>
                 <div className="font-mono text-base text-primary">
-                  {formatDocumentNumberPreview({
-                    prefix: editing.prefix,
-                    separator: editing.separator,
-                    include_year: editing.include_year,
-                    padding: editing.padding,
-                    value: Math.max(editing.current_value + 1, editing.start_value),
-                  })}
+                  {editing.inherit_case
+                    ? formatCaseSuffixPreview(editing.prefix, editing.separator)
+                    : formatDocumentNumberPreview({
+                        prefix: editing.prefix,
+                        separator: editing.separator,
+                        include_year: editing.include_year,
+                        padding: editing.padding,
+                        value: Math.max(editing.current_value + 1, editing.start_value),
+                      })}
                 </div>
               </div>
 
