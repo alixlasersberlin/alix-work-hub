@@ -205,7 +205,7 @@ export default function BestellungenDashboard() {
                 return (
                   <tr key={r.id} className="border-b border-border/40 hover:bg-muted/30">
                     <td className="py-2 px-2">
-                      <Link to={`/order/${r.id}`} className="inline-flex items-center px-2 py-1 rounded border border-amber-500/50 text-amber-400 hover:bg-amber-500/10 text-[11px] font-semibold">Öffnen</Link>
+                      <Link to={`/auftraege/${r.id}`} className="inline-flex items-center px-2 py-1 rounded border border-amber-500/50 text-amber-400 hover:bg-amber-500/10 text-[11px] font-semibold">Öffnen</Link>
                     </td>
                     <td className="py-2 px-2 font-medium whitespace-nowrap">
                       {r._vip && <Crown className="inline w-3 h-3 text-amber-400 mr-1" />}
