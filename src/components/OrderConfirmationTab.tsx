@@ -150,15 +150,15 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
       const shipping = customer?.shipping_address || customer?.billing_address || {};
       const colW = (CONTENT_W - 8) / 2;
 
-      const drawAddress = (title: string, x: number, addr: any) => {
+      const drawAddress = (title: string, x: number, addr: any, yStart: number) => {
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(9);
         doc.setTextColor(20, 60, 110);
-        doc.text(title, x, ay);
+        doc.text(title, x, yStart);
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(9.5);
         doc.setTextColor(40, 40, 40);
-        let y = ay + 5;
+        let y = yStart + 5;
         if (customer?.company_name) { doc.text(String(customer.company_name), x, y); y += 4.4; }
         if (customer?.contact_name) { doc.text(String(customer.contact_name), x, y); y += 4.4; }
         for (const ln of addrLines(addr)) { doc.text(ln, x, y); y += 4.4; }
@@ -169,8 +169,8 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
         return y;
       };
 
-      const yBilling = drawAddress('Rechnungsadresse', LEFT, billing);
-      const yShipping = drawAddress('Lieferadresse', LEFT + colW + 8, shipping);
+      const yBilling = drawAddress('Rechnungsadresse', LEFT, billing, ay);
+      const yShipping = drawAddress('Lieferadresse', LEFT + colW + 8, shipping, ay + 10);
       let cy = Math.max(yBilling, yShipping) + 6;
 
       // Intro
