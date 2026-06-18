@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FileCheck2, FileDown, Loader2, Mail } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -54,7 +55,22 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
   const [confirmDate, setConfirmDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [deliveryWeek, setDeliveryWeek] = useState<string>('');
   const [notes, setNotes] = useState<string>('Vielen Dank für Ihre Bestellung. Wir bestätigen Ihnen hiermit den Auftrag zu den nachfolgenden Konditionen.');
+  const [paymentTerms, setPaymentTerms] = useState<string>('');
   const [generating, setGenerating] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!customer?.id) return;
+      const { data } = await supabase
+        .from('finance_accounts')
+        .select('payment_terms')
+        .eq('customer_id', customer.id)
+        .maybeSingle();
+      if (!cancelled && data?.payment_terms) setPaymentTerms(data.payment_terms);
+    })();
+    return () => { cancelled = true; };
+  }, [customer?.id]);
 
   const currency = order?.currency || 'EUR';
 
@@ -134,15 +150,15 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
       const shipping = customer?.shipping_address || customer?.billing_address || {};
       const colW = (CONTENT_W - 8) / 2;
 
-      const drawAddress = (title: string, x: number, addr: any) => {
+      const drawAddress = (title: string, x: number, addr: any, yStart: number) => {
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(9);
         doc.setTextColor(20, 60, 110);
-        doc.text(title, x, ay);
+        doc.text(title, x, yStart);
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(9.5);
         doc.setTextColor(40, 40, 40);
-        let y = ay + 5;
+        let y = yStart + 5;
         if (customer?.company_name) { doc.text(String(customer.company_name), x, y); y += 4.4; }
         if (customer?.contact_name) { doc.text(String(customer.contact_name), x, y); y += 4.4; }
         for (const ln of addrLines(addr)) { doc.text(ln, x, y); y += 4.4; }
@@ -153,8 +169,8 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
         return y;
       };
 
-      const yBilling = drawAddress('Rechnungsadresse', LEFT, billing);
-      const yShipping = drawAddress('Lieferadresse', LEFT + colW + 8, shipping);
+      const yBilling = drawAddress('Rechnungsadresse', LEFT, billing, ay);
+      const yShipping = drawAddress('Lieferadresse', LEFT + colW + 8, shipping, ay + 10);
       let cy = Math.max(yBilling, yShipping) + 6;
 
       // Intro
@@ -252,6 +268,27 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
       doc.text(wrapped, LEFT, py);
       py += wrapped.length * 4.6 + 6;
 
+      // Zahlungsweise / Zahlungsbedingungen
+      if (paymentTerms && paymentTerms.trim()) {
+        if (py > BOTTOM_LIMIT - 25) {
+          doc.addPage();
+          drawTemplate();
+          py = TOP_CONTENT;
+        }
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(20, 60, 110);
+        doc.text('Zahlungsweise', LEFT, py);
+        py += 5;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9.5);
+        doc.setTextColor(60, 60, 60);
+        const ptWrapped = doc.splitTextToSize(paymentTerms.trim(), CONTENT_W);
+        doc.text(ptWrapped, LEFT, py);
+        py += ptWrapped.length * 4.6 + 6;
+      }
+
+
       // Sign-off
       if (py > BOTTOM_LIMIT - 18) {
         doc.addPage();
@@ -338,6 +375,18 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
         <Label className="text-xs text-muted-foreground">Einleitungstext</Label>
         <Textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3} className="bg-secondary border-border mt-1" />
       </div>
+
+      <div>
+        <Label className="text-xs text-muted-foreground">Zahlungsweise (aus Kundenkonto)</Label>
+        <Textarea
+          value={paymentTerms}
+          onChange={e => setPaymentTerms(e.target.value)}
+          rows={2}
+          placeholder="z. B. 14 Tage netto"
+          className="bg-secondary border-border mt-1"
+        />
+      </div>
+
 
       <div className="rounded-lg border border-border bg-secondary/40 p-4">
         <div className="text-xs text-muted-foreground mb-2">Vorschau der Eckdaten</div>
