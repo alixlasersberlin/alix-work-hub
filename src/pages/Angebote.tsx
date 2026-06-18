@@ -24,8 +24,10 @@ const fmtMoney = (n: number) =>
   (n || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
 
 export default function Angebote() {
+  const navigate = useNavigate();
   const [offers, setOffers] = useState<OfferSnapshot[]>([]);
   const [loading, setLoading] = useState(true);
+
   const [signLinkOpen, setSignLinkOpen] = useState(false);
   const [signLinkLoading, setSignLinkLoading] = useState(false);
   const [signLinkOffer, setSignLinkOffer] = useState<string | null>(null);
