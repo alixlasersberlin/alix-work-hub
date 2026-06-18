@@ -432,6 +432,7 @@ function AppRoutes() {
           <Route path="/infinity-showcase" element={<InfinityShowcase />} />
           <Route path="/einstellungen/personalisierung" element={<Personalisierung />} />
           <Route path="/at-dashboard" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Österreich']}><AtDashboard /></ProtectedRoute>} />
+          <Route path="/dashboard/bestellungen" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Auftragsverwaltung','Order','Bestellwesen','SACHBEARBEITUNG','Finance']}><BestellungenDashboard /></ProtectedRoute>} />
 
           <Route path="/detailsuche" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Detailsuche /></ProtectedRoute>} />
           <Route path="/auftragsstatus" element={<ProtectedRoute><AuftragStatus /></ProtectedRoute>} />
