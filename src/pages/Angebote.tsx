@@ -3,7 +3,9 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FileText, FilePlus, Trash2, Pencil, CheckCircle2 } from 'lucide-react';
+import { FileText, FilePlus, Trash2, Pencil, CheckCircle2, Link2, Copy } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { EmptyState } from '@/components/infinity/EmptyState';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -23,6 +25,51 @@ const fmtMoney = (n: number) =>
 export default function Angebote() {
   const [offers, setOffers] = useState<OfferSnapshot[]>([]);
   const [loading, setLoading] = useState(true);
+  const [signLinkOpen, setSignLinkOpen] = useState(false);
+  const [signLinkLoading, setSignLinkLoading] = useState(false);
+  const [signLinkOffer, setSignLinkOffer] = useState<string | null>(null);
+  const [signLinkUrl, setSignLinkUrl] = useState<string | null>(null);
+  const [signLinkExpires, setSignLinkExpires] = useState<string | null>(null);
+  const [signLinkError, setSignLinkError] = useState<string | null>(null);
+
+  const openSignLink = async (offerNumber: string) => {
+    setSignLinkOpen(true);
+    setSignLinkOffer(offerNumber);
+    setSignLinkUrl(null);
+    setSignLinkExpires(null);
+    setSignLinkError(null);
+    setSignLinkLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('alix_sign_requests')
+        .select('token, expires_at, status, created_at')
+        .eq('offer_number', offerNumber)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      if (!data?.token) {
+        setSignLinkError('Für dieses Angebot wurde noch kein Unterschriftslink erstellt. Öffne das Angebot und sende es zur Unterschrift.');
+      } else {
+        setSignLinkUrl(`${window.location.origin}/sign/${data.token}`);
+        setSignLinkExpires(data.expires_at || null);
+      }
+    } catch (e: any) {
+      setSignLinkError(e?.message || 'Link konnte nicht geladen werden.');
+    } finally {
+      setSignLinkLoading(false);
+    }
+  };
+
+  const copySignLink = async () => {
+    if (!signLinkUrl) return;
+    try {
+      await navigator.clipboard.writeText(signLinkUrl);
+      toast.success('Link in Zwischenablage kopiert.');
+    } catch {
+      toast.error('Kopieren fehlgeschlagen.');
+    }
+  };
 
   const reload = async () => {
     const list = await listOffers();
@@ -158,6 +205,11 @@ export default function Angebote() {
                           </Link>
                         </Button>
                       )}
+                      {!isSigned && (
+                        <Button variant="ghost" size="icon" onClick={() => openSignLink(o.offerNumber)} title="Unterschriftslink anzeigen">
+                          <Link2 className="h-4 w-4" />
+                        </Button>
+                      )}
                       <Button variant="ghost" size="icon" onClick={() => remove(o.offerNumber)} title="Löschen">
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
@@ -170,6 +222,36 @@ export default function Angebote() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={signLinkOpen} onOpenChange={setSignLinkOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Link2 className="h-5 w-5" /> Unterschriftslink</DialogTitle>
+            <DialogDescription>
+              {signLinkOffer ? `Angebot ${signLinkOffer}` : ''}
+              {signLinkExpires ? ` · gültig bis ${new Date(signLinkExpires).toLocaleDateString('de-DE')}` : ''}
+            </DialogDescription>
+          </DialogHeader>
+          {signLinkLoading ? (
+            <div className="py-4 text-sm text-muted-foreground">Lade Link…</div>
+          ) : signLinkError ? (
+            <div className="py-2 text-sm text-destructive">{signLinkError}</div>
+          ) : signLinkUrl ? (
+            <div className="flex items-center gap-2">
+              <Input readOnly value={signLinkUrl} onFocus={(e) => e.currentTarget.select()} />
+              <Button onClick={copySignLink} className="shrink-0"><Copy className="h-4 w-4 mr-2" />Kopieren</Button>
+            </div>
+          ) : null}
+          <DialogFooter>
+            {signLinkUrl && (
+              <Button variant="outline" asChild>
+                <a href={signLinkUrl} target="_blank" rel="noreferrer">Im neuen Tab öffnen</a>
+              </Button>
+            )}
+            <Button variant="ghost" onClick={() => setSignLinkOpen(false)}>Schließen</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
