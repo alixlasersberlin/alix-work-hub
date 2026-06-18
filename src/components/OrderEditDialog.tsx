@@ -90,6 +90,16 @@ export default function OrderEditDialog({ order, open, onClose, onSaved }: Props
       // Automatische Bewertungseinladung (fehlerresistent)
       sendReviewInvitation(order.id, { manual: false }).catch(() => {});
     }
+    // Anzahlung gerade frisch bestätigt → Kunden-Mail (BCC k.trinh, natalia.p)
+    const depositJustConfirmed = form.deposit_ok && !order?.deposit_ok;
+    if (depositJustConfirmed) {
+      const mail = await sendDepositReceivedNotice(order.id, {
+        depositAmount: order?.deposit_amount ?? null,
+        depositDate: order?.deposit_booking_date ?? new Date().toISOString(),
+        trigger: 'automatisch',
+      });
+      if (mail.ok) toast.success(mail.message); else toast.error('Anzahlungs-Mail nicht versendet: ' + mail.message);
+    }
 
 
     onSaved();
