@@ -4,6 +4,7 @@ export type OfferStatus = 'draft' | 'order' | 'signed';
 
 export type OfferSnapshot = {
   offerNumber: string;
+  caseNumber?: string | null;
   offerDate?: string;
   validUntil?: string;
   customer?: { id?: string; company_name?: string; contact_name?: string; email?: string; phone?: string } | null;
