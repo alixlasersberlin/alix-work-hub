@@ -282,6 +282,7 @@ export default function OrderDetail() {
         { key: 'items', label: 'Artikel', icon: Package, count: items.length },
         { key: 'serials', label: 'Seriennummer', icon: Hash, count: serialDevices.length },
         { key: 'packages', label: 'Pakete', icon: Truck, count: packages.length },
+        { key: 'confirmation', label: 'Auftragsbestätigung', icon: FileText },
         { key: 'lieferschein', label: 'Lieferschein', icon: FileText },
         { key: 'auftragsbestaetigung', label: 'Auftrag Unterzeichnet', icon: FileText },
       ],
