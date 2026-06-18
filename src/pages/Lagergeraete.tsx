@@ -1479,6 +1479,64 @@ export default function Lagergeraete({
         </div>
       </div>
 
+      <Dialog open={templatePickerOpen} onOpenChange={setTemplatePickerOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>E-Mail Vorlage wählen</DialogTitle>
+            <DialogDescription>
+              Wähle die Vorlage, die der Kunde erhalten soll. Die voreingestellte Vorlage passt zum aktuellen Gerätestatus.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[60vh] overflow-y-auto">
+            {allTemplates.length === 0 ? (
+              <div className="py-6 text-center text-sm text-muted-foreground">
+                <Loader2 className="w-4 h-4 animate-spin inline mr-2" /> Vorlagen werden geladen…
+              </div>
+            ) : (
+              <RadioGroup value={pickedTemplate} onValueChange={setPickedTemplate} className="space-y-2">
+                {allTemplates.map((t) => (
+                  <label
+                    key={t.template_key}
+                    htmlFor={`tpl-${t.template_key}`}
+                    className="flex items-start gap-3 rounded-md border border-border p-3 cursor-pointer hover:bg-accent/50"
+                  >
+                    <RadioGroupItem id={`tpl-${t.template_key}`} value={t.template_key} className="mt-1" />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm">{t.display_name}</div>
+                      <div className="text-xs text-muted-foreground truncate">{t.subject}</div>
+                      <div className="text-[10px] text-muted-foreground/70 mt-0.5"><code>{t.template_key}</code></div>
+                    </div>
+                  </label>
+                ))}
+              </RadioGroup>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTemplatePickerOpen(false)}>Abbrechen</Button>
+            <Button
+              disabled={!pickedTemplate || sendingManualEmail || !reservedOrderId}
+              onClick={async () => {
+                if (!reservedOrderId || !pickedTemplate) return;
+                setSendingManualEmail(true);
+                const res = await sendCustomerShippingNotice(
+                  reservedOrderId,
+                  editingId ?? undefined,
+                  'manuell',
+                  pickedTemplate as any,
+                );
+                setSendingManualEmail(false);
+                if (res.ok) { toast.success('Kunden-E-Mail versendet'); setTemplatePickerOpen(false); }
+                else toast.warning('Kunden-E-Mail nicht versendet: ' + res.message);
+              }}
+            >
+              {sendingManualEmail ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
+              Jetzt senden
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
       <OrderPickerDialog
         open={pickerOpen}
         onOpenChange={setPickerOpen}
