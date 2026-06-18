@@ -106,7 +106,7 @@ export default function AuftragsbestaetigungTab({ orderId, customerId, customerE
   return (
     <div className="rounded-xl border border-border bg-card p-6 card-glow space-y-6">
       <h2 className="text-base font-display font-bold text-foreground flex items-center gap-2">
-        <FileText className="w-4 h-4 text-primary" /> Auftragsbestätigung
+        <FileText className="w-4 h-4 text-primary" /> Auftrag Unterzeichnet
       </h2>
 
       {sigs.length === 0 ? (
