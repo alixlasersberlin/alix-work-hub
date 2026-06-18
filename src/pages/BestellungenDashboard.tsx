@@ -181,6 +181,7 @@ export default function BestellungenDashboard() {
             <thead className="text-[11px] text-muted-foreground border-b border-border">
               <tr>
                 <th className="py-2 px-2"></th>
+                <th className="text-center py-2 px-2">Bestellung</th>
                 <th className="text-left py-2 px-2">Auftrag</th>
                 <th className="text-left py-2 px-2">Kunde</th>
                 <th className="text-left py-2 px-2">Verkäufer</th>
@@ -194,7 +195,6 @@ export default function BestellungenDashboard() {
                 <th className="text-left py-2 px-2">Lieferant</th>
                 <th className="text-left py-2 px-2">PO-Status</th>
                 <th className="text-left py-2 px-2">Freigabe</th>
-                <th className="text-center py-2 px-2">Bestellung</th>
                 <th className="text-left py-2 px-2">Zahlung</th>
               </tr>
             </thead>
@@ -206,6 +206,13 @@ export default function BestellungenDashboard() {
                   <tr key={r.id} className="border-b border-border/40 hover:bg-muted/30">
                     <td className="py-2 px-2">
                       <Link to={`/auftraege/${r.id}`} className="inline-flex items-center px-2 py-1 rounded border border-amber-500/50 text-amber-400 hover:bg-amber-500/10 text-[11px] font-semibold">Öffnen</Link>
+                    </td>
+                    <td className="py-2 px-2 text-center">
+                      {r._ordered
+                        ? <Badge variant="outline" className="border-emerald-500/50 text-emerald-500">bestellt</Badge>
+                        : r._depositOk
+                          ? <Badge variant="outline" className="border-amber-500/50 text-amber-500">bereit</Badge>
+                          : <Badge variant="outline" className="border-muted-foreground/40 text-muted-foreground">wartet</Badge>}
                     </td>
                     <td className="py-2 px-2 font-medium whitespace-nowrap">
                       {r._vip && <Crown className="inline w-3 h-3 text-amber-400 mr-1" />}
@@ -229,13 +236,6 @@ export default function BestellungenDashboard() {
                     <td className="py-2 px-2 truncate max-w-[140px]">{po?.supplier?.name ?? '—'}</td>
                     <td className="py-2 px-2">{po?.status ?? '—'}</td>
                     <td className="py-2 px-2">{po?.approval_status ?? '—'}</td>
-                    <td className="py-2 px-2 text-center">
-                      {r._ordered
-                        ? <Badge variant="outline" className="border-emerald-500/50 text-emerald-500">bestellt</Badge>
-                        : r._depositOk
-                          ? <Badge variant="outline" className="border-amber-500/50 text-amber-500">bereit</Badge>
-                          : <Badge variant="outline" className="border-muted-foreground/40 text-muted-foreground">wartet</Badge>}
-                    </td>
                     <td className="py-2 px-2">{r.finance_payment_status ?? '—'}</td>
                   </tr>
                 );
