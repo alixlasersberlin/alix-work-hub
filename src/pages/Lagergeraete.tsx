@@ -899,17 +899,25 @@ export default function Lagergeraete({
       else toast.warning('Kunden-E-Mail nicht versendet: ' + res.message);
     }
 
-    // Automatischer Versand der Vorlage "Kunde – Produktion" sobald der Status
-    // auf "Produktion" wechselt (nur wenn nicht bereits manuell oben gesendet).
-    const becameProduktion = effectiveStatus === 'Produktion' && originalDeviceStatus !== 'Produktion';
-    if (becameProduktion && finalReservedOrderId && !sendCustomerEmailOnSave) {
+    // Automatischer Versand der passenden Kunden-Vorlage bei JEDEM Statuswechsel
+    // (Bestand/Lagereingang, Shell Warehouse, Produktion, Transfer) — sofern eine
+    // Auftrags-Reservierung existiert und nicht oben bereits manuell versendet wurde.
+    const statusChanged = effectiveStatus !== originalDeviceStatus;
+    const autoTplByStatus: Record<string, 'customer_warehouse_received' | 'customer_warehouse_prepared' | 'customer_in_production' | 'customer_in_transit'> = {
+      'Bestand': 'customer_warehouse_received',
+      'Shell Warehouse': 'customer_warehouse_prepared',
+      'Produktion': 'customer_in_production',
+      'Transfer': 'customer_in_transit',
+    };
+    const autoTpl = autoTplByStatus[effectiveStatus as string];
+    if (statusChanged && autoTpl && finalReservedOrderId && !sendCustomerEmailOnSave) {
       const res = await sendCustomerShippingNotice(
         finalReservedOrderId,
         editingId ?? undefined,
         'automatisch',
-        'customer_in_production',
+        autoTpl,
       );
-      if (res.ok) toast.success('Kunden-E-Mail "Produktion" automatisch versendet');
+      if (res.ok) toast.success(`Kunden-E-Mail "${effectiveStatus}" automatisch versendet`);
       else toast.warning('Auto-E-Mail nicht versendet: ' + res.message);
     }
 

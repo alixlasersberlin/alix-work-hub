@@ -7,12 +7,24 @@ function renderTemplate(tpl: string, vars: Record<string, string>): string {
 export type ShippingNoticeTrigger = 'automatisch' | 'manuell';
 
 /**
- * Sendet eine Auftrags-bezogene E-Mail an den Kunden anhand einer Vorlage
- * aus public.email_templates. Standard-Vorlage: 'customer_warehouse_received'
- * (Lagereingang) wird automatisch bei Zubuchung versendet.
- * 'customer_shipping_notice' (Teillieferung) wird nur manuell versendet.
+ * Sendet eine auftrags-bezogene E-Mail an den Kunden anhand einer Vorlage
+ * aus public.email_templates.
  *
- * Erfolgreich versendete E-Mails werden als Notiz (note_type='email')
+ * Automatisch versendet werden (Trigger im Gerätedialog `Lagergeraete.tsx`,
+ * sobald sich der Gerätestatus mit aktiver Auftrags-Reservierung ändert):
+ *   - 'customer_warehouse_received'   → Status "Bestand" (Lagereingang)
+ *   - 'customer_warehouse_prepared'   → Status "Shell Warehouse"
+ *   - 'customer_in_production'        → Status "Produktion"
+ *   - 'customer_in_transit'           → Status "Transfer"
+ *
+ * Ebenfalls automatisch (in OrderEditDialog / OrderDetail / Orders bulk):
+ *   - 'customer_delivered'            → Auftragsstatus → "geliefert"
+ *
+ * Manuell versendet (Buttons in Lagergeraete + Vorlagen-Picker):
+ *   - 'customer_shipping_notice'      → Teillieferung
+ *   - sowie jede beliebige Vorlage via Template-Picker.
+ *
+ * Jede erfolgreich versendete E-Mail wird als Notiz (note_type='email')
  * am Auftrag protokolliert (Tab "E-Mails").
  */
 export async function sendCustomerShippingNotice(
