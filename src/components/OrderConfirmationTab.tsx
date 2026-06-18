@@ -60,7 +60,20 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
   const [deliveryWeek, setDeliveryWeek] = useState<string>('');
   const [notes, setNotes] = useState<string>('Vielen Dank für Ihre Bestellung. Wir bestätigen Ihnen hiermit den Auftrag zu den nachfolgenden Konditionen.');
   const [paymentTerms, setPaymentTerms] = useState<string>('');
+  const [confirmationNumber, setConfirmationNumber] = useState<string>('');
   const [generating, setGenerating] = useState(false);
+
+  // Zentralen Nummernkreis 'order' (Auftragsbestätigung) abfragen – Vorschau.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const nr = await peekNumber('order');
+        if (!cancelled && nr) setConfirmationNumber(nr);
+      } catch { /* ignore */ }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   // Zahlungsberechnung (aus Angebot übernommen, manuell überschreibbar)
   const [payType, setPayType] = useState<PayType>('Direktkauf');
