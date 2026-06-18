@@ -181,7 +181,11 @@ export default function Angebote() {
                   const isOrder = o.status === 'order';
                   const isSigned = o.status === 'signed';
                   return (
-                  <TableRow key={o.offerNumber}>
+                  <TableRow
+                    key={o.offerNumber}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => navigate(`/verkauf/angebot/neu?edit=${encodeURIComponent(o.offerNumber)}`)}
+                  >
                     <TableCell className="font-medium">{o.offerNumber}</TableCell>
                     <TableCell>{o.offerDate ? new Date(o.offerDate).toLocaleDateString('de-DE') : '—'}</TableCell>
                     <TableCell>{o.customer?.company_name || o.customer?.contact_name || '—'}</TableCell>
@@ -200,7 +204,15 @@ export default function Angebote() {
                         </span>
                       )}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => navigate(`/verkauf/angebot/neu?edit=${encodeURIComponent(o.offerNumber)}&download=1`)}
+                        title="PDF herunterladen"
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
                       {!isOrder && !isSigned && (
                         <Button variant="ghost" size="icon" asChild title="Bearbeiten">
                           <Link to={`/verkauf/angebot/neu?edit=${encodeURIComponent(o.offerNumber)}`}>
@@ -219,6 +231,7 @@ export default function Angebote() {
                     </TableCell>
                   </TableRow>
                   );
+
                 })}
               </TableBody>
             </Table>
