@@ -558,6 +558,9 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
       <div className="rounded-lg border border-border bg-secondary/40 p-4">
         <div className="text-xs text-muted-foreground mb-2">Vorschau der Eckdaten</div>
         <div className="grid sm:grid-cols-2 gap-x-6 gap-y-1 text-sm">
+          {confirmationNumber && (
+            <div><span className="text-muted-foreground">AB-Nr. (nächste):</span> <span className="font-medium font-mono text-primary">{confirmationNumber}</span></div>
+          )}
           <div><span className="text-muted-foreground">Auftragsnr.:</span> <span className="font-medium">{order?.order_number || '—'}</span></div>
           <div><span className="text-muted-foreground">Kunde:</span> <span className="font-medium">{customer?.company_name || customer?.contact_name || '—'}</span></div>
           <div><span className="text-muted-foreground">Positionen:</span> <span className="font-medium">{items?.length || 0}</span></div>
