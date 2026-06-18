@@ -268,6 +268,27 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
       doc.text(wrapped, LEFT, py);
       py += wrapped.length * 4.6 + 6;
 
+      // Zahlungsweise / Zahlungsbedingungen
+      if (paymentTerms && paymentTerms.trim()) {
+        if (py > BOTTOM_LIMIT - 25) {
+          doc.addPage();
+          drawTemplate();
+          py = TOP_CONTENT;
+        }
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(20, 60, 110);
+        doc.text('Zahlungsweise', LEFT, py);
+        py += 5;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9.5);
+        doc.setTextColor(60, 60, 60);
+        const ptWrapped = doc.splitTextToSize(paymentTerms.trim(), CONTENT_W);
+        doc.text(ptWrapped, LEFT, py);
+        py += ptWrapped.length * 4.6 + 6;
+      }
+
+
       // Sign-off
       if (py > BOTTOM_LIMIT - 18) {
         doc.addPage();
