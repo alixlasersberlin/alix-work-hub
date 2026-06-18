@@ -58,12 +58,17 @@ export default function Nummernkreise() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter(r =>
+    const base = !q ? rows : rows.filter(r =>
       r.label.toLowerCase().includes(q) ||
       r.code.toLowerCase().includes(q) ||
       r.prefix.toLowerCase().includes(q),
     );
+    // "case" (Vorgangs-Stammnummer) immer ganz oben anzeigen
+    return [...base].sort((a, b) => {
+      if (a.code === 'case') return -1;
+      if (b.code === 'case') return 1;
+      return a.label.localeCompare(b.label);
+    });
   }, [rows, search]);
 
   async function toggleActive(r: Range, next: boolean) {
