@@ -30,6 +30,7 @@ import OrderItemsEditDialog from '@/components/OrderItemsEditDialog';
 import OrderDeferDialog from '@/components/OrderDeferDialog';
 import MietkaufDialog from '@/components/MietkaufDialog';
 import DeliveryNoteTab from '@/components/DeliveryNoteTab';
+import AuftragsbestaetigungTab from '@/components/AuftragsbestaetigungTab';
 import { sendCustomerShippingNotice } from '@/lib/send-customer-shipping-notice';
 import { sendReviewInvitation } from '@/lib/review-invitation';
 import { VipBadge } from '@/components/VipBadge';
