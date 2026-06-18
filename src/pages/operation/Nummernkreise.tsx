@@ -13,7 +13,7 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
-import { formatDocumentNumberPreview } from '@/lib/number-ranges';
+import { formatDocumentNumberPreview, formatCaseSuffixPreview } from '@/lib/number-ranges';
 
 type Range = {
   code: string;
@@ -27,6 +27,7 @@ type Range = {
   reset_yearly: boolean;
   last_reset_year: number | null;
   active: boolean;
+  inherit_case: boolean;
   notes: string | null;
   updated_at: string;
 };
