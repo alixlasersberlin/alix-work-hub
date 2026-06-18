@@ -424,7 +424,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
     let poId = id;
     if (isEdit && id) {
       const { error } = await supabase.from('production_orders').update(payload).eq('id', id);
-      if (error) { toast.error(error.message); setSaving(false); return null; }
+      if (error) { savingRef.current = false; toast.error(error.message); setSaving(false); return null; }
       await supabase.from('production_order_items').delete().eq('production_order_id', id);
     } else {
       // Sperre: Pro Auftrag entweder Lager-Reservierung ODER Bestellung.
