@@ -64,6 +64,11 @@ Deno.serve(async (req) => {
       .from('customers').select('source_system').eq('id', customer_id).maybeSingle();
     const source_system = cust?.source_system || 'zoho_eu_1';
 
+    const payment = payload.payment || {};
+    const downPayment = Number(payment.down) || null;
+    const termMonths = payment.term != null ? Number(payment.term) : null;
+    const purchasePrice = Number(payment.price) || Number(totals.gross) || null;
+
     const { data: order, error: oErr } = await supabase
       .from('orders')
       .insert({
@@ -74,6 +79,7 @@ Deno.serve(async (req) => {
         currency: 'EUR',
         total_amount: totals.gross ?? null,
         order_date: sr.signed_at || new Date().toISOString(),
+        deposit_amount: downPayment,
         raw_data: { from_alix_sign: true, offer_payload: payload },
       })
       .select('id')
@@ -99,6 +105,23 @@ Deno.serve(async (req) => {
       const { error: iErr } = await supabase.from('order_items').insert(items);
       if (iErr) throw iErr;
     }
+
+    // Finanzierung aus Angebot übernehmen (Alix Flex, Mietkauf, Leasing etc.)
+    const paymentType = String(payment.type || '').toLowerCase();
+    const isFinancing = paymentType.includes('flex') || paymentType.includes('leasing') || paymentType.includes('mietkauf') || paymentType.includes('finanz');
+    if (isFinancing && (purchasePrice || termMonths || downPayment)) {
+      const { error: bfErr } = await supabase.from('bank_financing_requests').insert({
+        order_id: order.id,
+        request_date: (sr.signed_at || new Date().toISOString()).slice(0, 10),
+        purchase_price: purchasePrice,
+        down_payment: downPayment,
+        term_months: termMonths,
+        status: 'open',
+        decision_text: `Aus Angebot übernommen: ${payment.type || 'Finanzierung'}`,
+      });
+      if (bfErr) console.warn('bank_financing_requests insert failed', bfErr);
+    }
+
 
     return new Response(JSON.stringify({ ok: true, order_id: order.id }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
