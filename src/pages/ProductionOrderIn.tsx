@@ -172,8 +172,14 @@ export default function ProductionOrderIn() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => downloadPdf(r.pdf_path, r.production_order_number || r.order_number)}
-                        disabled={!r.pdf_path}
+                        onClick={() => {
+                          if (!r.pdf_path) {
+                            toast.error('Kein PDF verfügbar für diese Bestellung');
+                            return;
+                          }
+                          downloadPdf(r.pdf_path, r.production_order_number || r.order_number);
+                        }}
+                        className={!r.pdf_path ? 'opacity-60' : ''}
                       >
                         <Download className="w-3.5 h-3.5 mr-1.5" /> PDF
                       </Button>
@@ -188,9 +194,13 @@ export default function ProductionOrderIn() {
                         </Button>
                       )}
                       {isAdmin && (
-                        <Link to={`/order/${r.id}`}>
-                          <Button variant="ghost" size="sm">Öffnen</Button>
-                        </Link>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => navigate(`/order/${r.id}`)}
+                        >
+                          Öffnen
+                        </Button>
                       )}
                     </div>
                   </div>
