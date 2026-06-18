@@ -180,6 +180,7 @@ export default function BestellungenDashboard() {
           <table className="w-full text-xs">
             <thead className="text-[11px] text-muted-foreground border-b border-border">
               <tr>
+                <th className="py-2 px-2"></th>
                 <th className="text-left py-2 px-2">Auftrag</th>
                 <th className="text-left py-2 px-2">Kunde</th>
                 <th className="text-left py-2 px-2">Verkäufer</th>
@@ -195,7 +196,6 @@ export default function BestellungenDashboard() {
                 <th className="text-left py-2 px-2">Freigabe</th>
                 <th className="text-center py-2 px-2">Bestellung</th>
                 <th className="text-left py-2 px-2">Zahlung</th>
-                <th className="py-2 px-2"></th>
               </tr>
             </thead>
             <tbody>
@@ -204,6 +204,9 @@ export default function BestellungenDashboard() {
                 const depTotal = Number(r.deposit_amount || 0) + Number(r.deposit_additional || 0);
                 return (
                   <tr key={r.id} className="border-b border-border/40 hover:bg-muted/30">
+                    <td className="py-2 px-2">
+                      <Link to={`/order/${r.id}`} className="inline-flex items-center px-2 py-1 rounded border border-amber-500/50 text-amber-400 hover:bg-amber-500/10 text-[11px] font-semibold">Öffnen</Link>
+                    </td>
                     <td className="py-2 px-2 font-medium whitespace-nowrap">
                       {r._vip && <Crown className="inline w-3 h-3 text-amber-400 mr-1" />}
                       {num(r.order_number || r.internal_number, r.source_system)}
@@ -234,9 +237,6 @@ export default function BestellungenDashboard() {
                           : <Badge variant="outline" className="border-muted-foreground/40 text-muted-foreground">wartet</Badge>}
                     </td>
                     <td className="py-2 px-2">{r.finance_payment_status ?? '—'}</td>
-                    <td className="py-2 px-2 text-right">
-                      <Link to={`/order/${r.id}`} className="text-amber-400 hover:underline">Öffnen</Link>
-                    </td>
                   </tr>
                 );
               })}
