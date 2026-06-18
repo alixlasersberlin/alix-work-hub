@@ -15,6 +15,7 @@ import {
   ArrowLeft, ClipboardList, Building2, FileText, History, Loader2, Inbox, Send, Pencil, X, Check, Shield, Package, CalendarIcon, CalendarClock, Truck, Euro, Mail, Landmark, Plus, Trash2, ShoppingCart, ShoppingBag, CheckCircle2, Hash
 } from 'lucide-react';
 import { createRestbestellungMarker, hasPendingRestbestellung } from '@/lib/restbestellung';
+import { sendDepositReceivedNotice } from '@/lib/send-deposit-received-notice';
 import BankFinancingTab from '@/components/BankFinancingTab';
 import AtPurchaseTab from '@/components/AtPurchaseTab';
 import AtApprovalTab from '@/components/AtApprovalTab';
@@ -168,17 +169,27 @@ export default function OrderDetail() {
     }
     setSavingDeposit(true);
     const depositChanged = !!order?.deposit_ok !== depositOk || (order?.deposit_ok_by || '') !== depositBy.trim();
+    const depositJustConfirmed = depositOk && !order?.deposit_ok;
+    const parsedAmount = depositAmount.trim() ? parseFloat(depositAmount.replace(',', '.')) : null;
     const { error } = await supabase.from('orders').update({
       deposit_ok: depositOk,
       deposit_ok_by: depositOk ? depositBy.trim() : null,
       deposit_ok_at: depositOk ? (depositChanged ? new Date().toISOString() : order?.deposit_ok_at) : null,
-      deposit_amount: depositAmount.trim() ? parseFloat(depositAmount.replace(',', '.')) : null,
+      deposit_amount: parsedAmount,
       deposit_additional: depositAdditional.trim() ? parseFloat(depositAdditional.replace(',', '.')) : null,
       deposit_booking_date: depositOk && depositBookingDate ? depositBookingDate : null,
     } as any).eq('id', id!);
     setSavingDeposit(false);
     if (error) { toast.error('Fehler: ' + error.message); return; }
     toast.success('Anzahlung gespeichert');
+    if (depositJustConfirmed) {
+      const mail = await sendDepositReceivedNotice(id!, {
+        depositAmount: parsedAmount,
+        depositDate: depositBookingDate || new Date().toISOString(),
+        trigger: 'automatisch',
+      });
+      if (mail.ok) toast.success(mail.message); else toast.error('Anzahlungs-Mail nicht versendet: ' + mail.message);
+    }
     loadAll();
   }
 
@@ -187,25 +198,46 @@ export default function OrderDetail() {
     if (!Number.isFinite(amt) || amt <= 0) { toast.error('Bitte gültigen Betrag eingeben'); return; }
     if (!newAddDate) { toast.error('Bitte Datum auswählen'); return; }
     setAddingDeposit(true);
-    const { error } = await supabase.from('order_additional_deposits' as any).insert({
+    const isGeleistet = newAddGeleistet === 'ja';
+    const { data: inserted, error } = await supabase.from('order_additional_deposits' as any).insert({
       order_id: id!,
       amount: amt,
       booking_date: newAddDate,
       note: newAddNote.trim() || null,
-      geleistet: newAddGeleistet === 'ja',
+      geleistet: isGeleistet,
       created_by: user?.id ?? null,
-    } as any);
+    } as any).select('id').maybeSingle();
     setAddingDeposit(false);
     if (error) { toast.error('Fehler: ' + error.message); return; }
+    const depId = (inserted as any)?.id as string | undefined;
     setNewAddAmount(''); setNewAddDate(''); setNewAddNote(''); setNewAddGeleistet('nein');
     toast.success('Weitere Anzahlung hinzugefügt');
+    if (isGeleistet) {
+      const mail = await sendDepositReceivedNotice(id!, {
+        depositAmount: amt,
+        depositDate: newAddDate,
+        trigger: 'automatisch',
+        keySuffix: depId ? `add-${depId}` : `add-${Date.now()}`,
+      });
+      if (mail.ok) toast.success(mail.message); else toast.error('Anzahlungs-Mail nicht versendet: ' + mail.message);
+    }
     loadAll();
   }
 
   async function toggleDepositGeleistet(depId: string, value: boolean) {
+    const prev = additionalDeposits.find(d => d.id === depId);
     const { error } = await supabase.from('order_additional_deposits' as any).update({ geleistet: value } as any).eq('id', depId);
     if (error) { toast.error('Fehler: ' + error.message); return; }
-    setAdditionalDeposits(prev => prev.map(d => d.id === depId ? { ...d, geleistet: value } : d));
+    setAdditionalDeposits(p => p.map(d => d.id === depId ? { ...d, geleistet: value } : d));
+    if (value && !prev?.geleistet) {
+      const mail = await sendDepositReceivedNotice(id!, {
+        depositAmount: prev?.amount ?? null,
+        depositDate: prev?.booking_date ?? new Date().toISOString(),
+        trigger: 'automatisch',
+        keySuffix: `add-${depId}`,
+      });
+      if (mail.ok) toast.success(mail.message); else toast.error('Anzahlungs-Mail nicht versendet: ' + mail.message);
+    }
   }
 
   async function deleteAdditionalDeposit(depId: string) {

@@ -8,6 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { Loader2, X } from 'lucide-react';
 import { sendCustomerShippingNotice } from '@/lib/send-customer-shipping-notice';
+import { sendDepositReceivedNotice } from '@/lib/send-deposit-received-notice';
 import { sendReviewInvitation } from '@/lib/review-invitation';
 import { VipBadge } from '@/components/VipBadge';
 
@@ -88,6 +89,16 @@ export default function OrderEditDialog({ order, open, onClose, onSaved }: Props
       if (mail.ok) toast.success(mail.message); else toast.error('E-Mail nicht versendet: ' + mail.message);
       // Automatische Bewertungseinladung (fehlerresistent)
       sendReviewInvitation(order.id, { manual: false }).catch(() => {});
+    }
+    // Anzahlung gerade frisch bestätigt → Kunden-Mail (BCC k.trinh, natalia.p)
+    const depositJustConfirmed = form.deposit_ok && !order?.deposit_ok;
+    if (depositJustConfirmed) {
+      const mail = await sendDepositReceivedNotice(order.id, {
+        depositAmount: order?.deposit_amount ?? null,
+        depositDate: order?.deposit_booking_date ?? new Date().toISOString(),
+        trigger: 'automatisch',
+      });
+      if (mail.ok) toast.success(mail.message); else toast.error('Anzahlungs-Mail nicht versendet: ' + mail.message);
     }
 
 
