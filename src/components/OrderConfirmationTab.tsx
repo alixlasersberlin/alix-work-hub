@@ -330,6 +330,56 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
         py += ptWrapped.length * 4.6 + 6;
       }
 
+      // Zahlungsberechnung (aus Angebot)
+      {
+        const price = parseFloat(payPrice) || 0;
+        const down = parseFloat(payDown) || 0;
+        const base = Math.max(0, price - down);
+        const isFinanced = payType !== 'Direktkauf';
+        const rate = isFinanced && payTerm > 0 ? base / payTerm : 0;
+
+        if (price > 0 || isFinanced) {
+          if (py > BOTTOM_LIMIT - 45) {
+            doc.addPage();
+            drawTemplate();
+            py = TOP_CONTENT;
+          }
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(10);
+          doc.setTextColor(20, 60, 110);
+          doc.text(`Zahlungsberechnung — ${payType}${linkedOfferNr ? `  (Angebot ${linkedOfferNr})` : ''}`, LEFT, py);
+          py += 6;
+
+          const rows: Array<[string, string]> = [
+            ['Kaufpreis', fmtMoney(price, currency)],
+          ];
+          if (down > 0 || isFinanced) rows.push(['Anzahlung', fmtMoney(down, currency)]);
+          if (isFinanced) {
+            rows.push(['Laufzeit', `${payTerm} Monate`]);
+            rows.push(['Basis (Finanzierungsbetrag)', fmtMoney(base, currency)]);
+            rows.push(['Monatliche Rate', fmtMoney(rate, currency)]);
+          } else {
+            rows.push(['Zu zahlen', fmtMoney(base, currency)]);
+          }
+
+          autoTable(doc, {
+            startY: py,
+            margin: { left: LEFT, right: PAGE_W - RIGHT },
+            body: rows,
+            theme: 'grid',
+            styles: { fontSize: 9.5, cellPadding: 2, textColor: [40, 40, 40] },
+            columnStyles: {
+              0: { cellWidth: 70, fontStyle: 'bold', textColor: [20, 60, 110] },
+              1: { halign: 'right' },
+            },
+            tableWidth: CONTENT_W,
+          });
+          py = (doc as any).lastAutoTable.finalY + 8;
+        }
+      }
+
+
+
 
       // Sign-off
       if (py > BOTTOM_LIMIT - 18) {
