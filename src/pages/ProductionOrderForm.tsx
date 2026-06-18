@@ -440,15 +440,34 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
           return !isLeih;
         });
         if (blocker) {
+          savingRef.current = false;
           setSaving(false);
           toast.error(
             `Bestellung nicht möglich: Für Auftrag ${selectedOrder.order_number} ist bereits ein Lagergerät reserviert (${blocker.model_name} · SN ${blocker.serial_number}). Bitte zuerst die Reservierung im Lager aufheben.`,
           );
           return null;
         }
+
+        // Idempotenz: kein doppeltes Erfassen derselben Bestellung innerhalb von 30 s
+        const since = new Date(Date.now() - 30_000).toISOString();
+        const { data: recent } = await supabase
+          .from('production_orders')
+          .select('id, production_order_number')
+          .eq('order_id', selectedOrder.id)
+          .eq('supplier_id', form.supplier_id)
+          .gte('created_at', since)
+          .limit(1);
+        if (recent && recent.length > 0) {
+          savingRef.current = false;
+          setSaving(false);
+          toast.warning(
+            `Für Auftrag ${selectedOrder.order_number} wurde gerade eben bereits eine Bestellung erfasst (${recent[0].production_order_number ?? ''}). Doppelte Erfassung verhindert.`,
+          );
+          return null;
+        }
       }
       const { data, error } = await supabase.from('production_orders').insert(payload).select('id').single();
-      if (error || !data) { toast.error(error?.message || 'Fehler'); setSaving(false); return null; }
+      if (error || !data) { savingRef.current = false; toast.error(error?.message || 'Fehler'); setSaving(false); return null; }
       poId = data.id;
       // Falls dieser Auftrag als "Restbestellung" in Bestellung möglich markiert war, Marker erledigen
       if (selectedOrder?.id) {
