@@ -164,25 +164,34 @@ export default function Nummernkreise() {
             )}
             {filtered.map(r => {
               const nextValue = Math.max(r.current_value + 1, r.start_value);
-              const preview = formatDocumentNumberPreview({
-                prefix: r.prefix,
-                separator: r.separator,
-                include_year: r.include_year,
-                padding: r.padding,
-                value: nextValue,
-              });
+              const preview = r.inherit_case
+                ? formatCaseSuffixPreview(r.prefix, r.separator)
+                : formatDocumentNumberPreview({
+                    prefix: r.prefix,
+                    separator: r.separator,
+                    include_year: r.include_year,
+                    padding: r.padding,
+                    value: nextValue,
+                  });
               return (
                 <TableRow key={r.code} className={r.active ? '' : 'opacity-70'}>
                   <TableCell>
                     <Switch checked={r.active} onCheckedChange={(v) => toggleActive(r, v)} />
                   </TableCell>
-                  <TableCell className="font-medium">{r.label}</TableCell>
+                  <TableCell className="font-medium">
+                    {r.label}
+                    {r.inherit_case && (
+                      <span className="ml-2 inline-block rounded bg-primary/15 text-primary text-[10px] px-1.5 py-0.5 align-middle">
+                        Vorgangs-Nr
+                      </span>
+                    )}
+                  </TableCell>
                   <TableCell><code className="text-xs">{r.code}</code></TableCell>
                   <TableCell>{r.prefix || '—'}</TableCell>
-                  <TableCell>{r.include_year ? 'Ja' : 'Nein'}</TableCell>
-                  <TableCell className="text-right">{r.padding}</TableCell>
-                  <TableCell className="text-right">{r.start_value}</TableCell>
-                  <TableCell className="text-right tabular-nums">{r.current_value}</TableCell>
+                  <TableCell>{r.inherit_case ? '—' : (r.include_year ? 'Ja' : 'Nein')}</TableCell>
+                  <TableCell className="text-right">{r.inherit_case ? '—' : r.padding}</TableCell>
+                  <TableCell className="text-right">{r.inherit_case ? '—' : r.start_value}</TableCell>
+                  <TableCell className="text-right tabular-nums">{r.inherit_case ? '—' : r.current_value}</TableCell>
                   <TableCell><code className="text-xs text-primary">{preview}</code></TableCell>
                   <TableCell>
                     <Button size="sm" variant="ghost" onClick={() => setEditing({ ...r })}>
