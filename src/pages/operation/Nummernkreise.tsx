@@ -89,6 +89,7 @@ export default function Nummernkreise() {
       padding: Math.max(1, Math.min(12, editing.padding || 5)),
       start_value: Math.max(0, Number(editing.start_value) || 0),
       reset_yearly: editing.reset_yearly,
+      inherit_case: editing.inherit_case,
       notes: editing.notes || null,
     };
     // Wenn current_value < start_value-1 → auf start_value-1 ziehen, damit
