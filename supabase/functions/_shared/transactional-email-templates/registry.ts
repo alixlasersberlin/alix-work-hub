@@ -37,5 +37,6 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'sales-wizard-confirmation': salesWizardConfirmation,
   'alix-sign-invite': alixSignInvite,
   'alix-sign-confirmation': alixSignConfirmation,
+  'order-confirmation': orderConfirmation,
   'sales-lead-internal-notification': salesLeadInternalNotification,
 }
