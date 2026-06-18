@@ -18,11 +18,19 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string>('');
 
+  // Accounts, die Cloudflare Turnstile nicht zuverlässig laden können
+  // (z. B. eingeschränkter Netzwerkzugriff). Müssen auch serverseitig in
+  // verify-turnstile gewhitelisted sein.
+  const CAPTCHA_BYPASS_EMAILS = new Set<string>([
+    '2556690413@qq.com',
+  ]);
+  const isBypass = CAPTCHA_BYPASS_EMAILS.has(email.trim().toLowerCase());
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    if (!captchaToken) {
+    if (!isBypass && !captchaToken) {
       setError('Bitte bestätigen Sie das Sicherheits-Captcha.');
       return;
     }
@@ -31,7 +39,7 @@ export default function Login() {
 
     try {
       const { data, error: verifyError } = await supabase.functions.invoke('verify-turnstile', {
-        body: { token: captchaToken },
+        body: { token: captchaToken, email },
       });
       if (verifyError || !data?.success) {
         setError('Sicherheitsprüfung fehlgeschlagen. Bitte erneut versuchen.');
@@ -102,17 +110,19 @@ export default function Login() {
               />
             </div>
 
-            <Turnstile
-              theme="dark"
-              onToken={setCaptchaToken}
-              onExpire={() => setCaptchaToken('')}
-            />
+            {!isBypass && (
+              <Turnstile
+                theme="dark"
+                onToken={setCaptchaToken}
+                onExpire={() => setCaptchaToken('')}
+              />
+            )}
 
             {error && (
               <p className="text-sm text-destructive bg-destructive/10 rounded-lg p-3">{error}</p>
             )}
 
-            <Button type="submit" disabled={loading || !captchaToken} className="w-full gold-gradient font-semibold">
+            <Button type="submit" disabled={loading || (!isBypass && !captchaToken)} className="w-full gold-gradient font-semibold">
               {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               Anmelden
             </Button>
