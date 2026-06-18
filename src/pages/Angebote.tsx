@@ -51,7 +51,7 @@ export default function Angebote() {
       if (!data?.token) {
         setSignLinkError('Für dieses Angebot wurde noch kein Unterschriftslink erstellt. Öffne das Angebot und sende es zur Unterschrift.');
       } else {
-        setSignLinkUrl(`${window.location.origin}/sign/${data.token}`);
+        setSignLinkUrl(`https://alixwork.de/sign/${data.token}`);
         setSignLinkExpires(data.expires_at || null);
       }
     } catch (e: any) {
