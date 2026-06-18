@@ -376,6 +376,18 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
         <Textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3} className="bg-secondary border-border mt-1" />
       </div>
 
+      <div>
+        <Label className="text-xs text-muted-foreground">Zahlungsweise (aus Kundenkonto)</Label>
+        <Textarea
+          value={paymentTerms}
+          onChange={e => setPaymentTerms(e.target.value)}
+          rows={2}
+          placeholder="z. B. 14 Tage netto"
+          className="bg-secondary border-border mt-1"
+        />
+      </div>
+
+
       <div className="rounded-lg border border-border bg-secondary/40 p-4">
         <div className="text-xs text-muted-foreground mb-2">Vorschau der Eckdaten</div>
         <div className="grid sm:grid-cols-2 gap-x-6 gap-y-1 text-sm">
