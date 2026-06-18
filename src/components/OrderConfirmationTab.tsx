@@ -81,6 +81,7 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
   const [payDown, setPayDown] = useState<string>('');
   const [payTerm, setPayTerm] = useState<number>(24);
   const [linkedOfferNr, setLinkedOfferNr] = useState<string>('');
+  const [caseNumber, setCaseNumber] = useState<string | null>(order?.case_number || null);
 
   useEffect(() => {
     let cancelled = false;
