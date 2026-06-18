@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Pencil, Plus, Warehouse, Link2, X, Sparkles, Package, Search, ArrowUpDown, ArrowUp, ArrowDown, Mail, Send, PackageCheck, FileDown, FileText, Wrench } from 'lucide-react';
+import { Loader2, Pencil, Plus, Warehouse, Link2, Link2Off, X, Sparkles, Package, Search, ArrowUpDown, ArrowUp, ArrowDown, Mail, Send, PackageCheck, FileDown, FileText, Wrench } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { sbRepair } from '@/lib/repair/api';
 import { notifyNewRepairOrder } from '@/lib/repair/notify';
