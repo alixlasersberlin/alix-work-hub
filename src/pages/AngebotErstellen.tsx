@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import templateAsset from '@/assets/angebot-template.jpg.asset.json';
+import { upsertOffer, getOffer } from '@/lib/offers-store';
 
 type LineItem = {
   id: string;
