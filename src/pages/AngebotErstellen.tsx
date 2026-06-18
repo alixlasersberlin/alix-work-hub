@@ -801,6 +801,7 @@ export default function AngebotErstellen() {
 
   const buildOfferSnapshot = () => ({
     offerNumber,
+    caseNumber,
     offerDate,
     validUntil,
     salesAdvisor,
