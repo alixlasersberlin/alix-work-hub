@@ -2195,6 +2195,17 @@ export default function Lagergeraete({
                           <Mail className="w-4 h-4" /> E-Mail an Kunde
                         </Button>
                       )}
+                      {d.reserved_order_id && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="gap-1 text-amber-500 hover:text-amber-600"
+                          onClick={() => releaseReservation(d)}
+                          title="Reservierung aufheben und Gerät freigeben"
+                        >
+                          <Link2Off className="w-4 h-4" /> Reservierung aufheben
+                        </Button>
+                      )}
                       {getStatusFromNotes(d.notes) !== 'Ausgeliefert' && (
                         <Button
                           variant="ghost"
