@@ -141,4 +141,11 @@ verify_jwt = false
 [functions.sales-wizard-submit]
 verify_jwt = false
 
+[functions.order-confirmation-pdf]
+verify_jwt = false
+
+[functions.send-order-confirmation]
+verify_jwt = false
+
+
 
