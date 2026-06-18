@@ -237,9 +237,6 @@ export default function BestellungenDashboard() {
                           : <Badge variant="outline" className="border-muted-foreground/40 text-muted-foreground">wartet</Badge>}
                     </td>
                     <td className="py-2 px-2">{r.finance_payment_status ?? '—'}</td>
-                    <td className="py-2 px-2 text-right">
-                      <Link to={`/order/${r.id}`} className="text-amber-400 hover:underline">Öffnen</Link>
-                    </td>
                   </tr>
                 );
               })}
