@@ -1,7 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { generateProductionOrderPdf } from '@/lib/production-order-pdf';
 
-const BCC_EMAIL = 'rde@alix-lasers.com';
 const CC_EMAIL = 'natalia.p@alix-operation.de';
 const TEN_YEARS_SECONDS = 60 * 60 * 24 * 365 * 10;
 
