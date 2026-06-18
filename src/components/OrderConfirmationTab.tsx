@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { createPDF } from '@/lib/pdf-utils';
+import { peekNumber, nextNumber } from '@/lib/number-ranges';
 import autoTable from 'jspdf-autotable';
 import templateAsset from '@/assets/angebot-template.jpg.asset.json';
 
@@ -59,7 +60,20 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
   const [deliveryWeek, setDeliveryWeek] = useState<string>('');
   const [notes, setNotes] = useState<string>('Vielen Dank für Ihre Bestellung. Wir bestätigen Ihnen hiermit den Auftrag zu den nachfolgenden Konditionen.');
   const [paymentTerms, setPaymentTerms] = useState<string>('');
+  const [confirmationNumber, setConfirmationNumber] = useState<string>('');
   const [generating, setGenerating] = useState(false);
+
+  // Zentralen Nummernkreis 'order' (Auftragsbestätigung) abfragen – Vorschau.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const nr = await peekNumber('order');
+        if (!cancelled && nr) setConfirmationNumber(nr);
+      } catch { /* ignore */ }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   // Zahlungsberechnung (aus Angebot übernommen, manuell überschreibbar)
   const [payType, setPayType] = useState<PayType>('Direktkauf');
@@ -143,6 +157,12 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
     }
     setGenerating(true);
     try {
+      // Zentrale Nummer ziehen (atomar). Bei inaktivem Kreis fällt der Helper
+      // auf den lokalen Vorschauwert zurück – ist auch dieser leer, bleibt die
+      // ursprüngliche Auftragsnummer als Referenz erhalten.
+      const abNr = await nextNumber('order', () => confirmationNumber || String(order?.order_number || ''));
+      if (abNr && abNr !== confirmationNumber) setConfirmationNumber(abNr);
+
       const doc = createPDF({ unit: 'mm', format: 'a4' });
       const PAGE_W = 210;
       const PAGE_H = 297;
@@ -170,12 +190,12 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
       doc.setTextColor(60, 60, 60);
-      const meta: Array<[string, string]> = [
-        ['Auftragsnr.', String(order?.order_number || '—')],
-        ['Bestelldatum', fmtDate(order?.order_date)],
-        ['Bestätigt am', fmtDate(confirmDate)],
-        ['Kundennr.', String(customer?.external_customer_id || customer?.id?.slice(0, 8) || '—')],
-      ];
+      const meta: Array<[string, string]> = [];
+      if (abNr) meta.push(['AB-Nr.', abNr]);
+      meta.push(['Auftragsnr.', String(order?.order_number || '—')]);
+      meta.push(['Bestelldatum', fmtDate(order?.order_date)]);
+      meta.push(['Bestätigt am', fmtDate(confirmDate)]);
+      meta.push(['Kundennr.', String(customer?.external_customer_id || customer?.id?.slice(0, 8) || '—')]);
       if (deliveryWeek) meta.push(['Liefertermin', deliveryWeek]);
       if (order?.expected_shipment_date) meta.push(['Voraus. Versand', fmtDate(order.expected_shipment_date)]);
       for (const [k, v] of meta) {
@@ -538,6 +558,9 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
       <div className="rounded-lg border border-border bg-secondary/40 p-4">
         <div className="text-xs text-muted-foreground mb-2">Vorschau der Eckdaten</div>
         <div className="grid sm:grid-cols-2 gap-x-6 gap-y-1 text-sm">
+          {confirmationNumber && (
+            <div><span className="text-muted-foreground">AB-Nr. (nächste):</span> <span className="font-medium font-mono text-primary">{confirmationNumber}</span></div>
+          )}
           <div><span className="text-muted-foreground">Auftragsnr.:</span> <span className="font-medium">{order?.order_number || '—'}</span></div>
           <div><span className="text-muted-foreground">Kunde:</span> <span className="font-medium">{customer?.company_name || customer?.contact_name || '—'}</span></div>
           <div><span className="text-muted-foreground">Positionen:</span> <span className="font-medium">{items?.length || 0}</span></div>

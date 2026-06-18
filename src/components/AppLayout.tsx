@@ -5,7 +5,7 @@ import { useAtOnly } from '@/hooks/useAtOnly';
 import { supabase } from '@/integrations/supabase/client';
 import {
   LayoutDashboard, ClipboardList, MapPin, Banknote, Users, LogOut, Shield, ShieldCheck, Menu, X, ChevronLeft, Building2, Cloud, Server, ListOrdered, Sun, Moon, Gavel, Truck, PackageCheck, BarChart3, Factory, ShoppingCart, ChevronDown, TrendingUp, Workflow, AlertTriangle, Calendar, FileText, FileSignature, Warehouse, Settings, Package, FilePlus, BookOpen, Receipt, Undo2, CreditCard, CheckCircle2, FolderTree, ScrollText, Inbox, Mail, Landmark, SearchCheck, Pause, Clock, HelpCircle, Star, Lock, Globe, Wrench, Ticket,
-  PenSquare, Send, FileEdit, MessageSquare, MessageCircle, Sparkles, FileCheck2, Files, Phone, PhoneCall, CheckSquare, CalendarClock, Megaphone, Activity, MailX, HeartPulse, TestTube2, Rocket, Database, Upload, FileDown, BadgeCheck, GraduationCap, Brain, AlertOctagon, LineChart, ListChecks, Cog, Boxes, Repeat, Wallet
+  PenSquare, Send, FileEdit, MessageSquare, MessageCircle, Sparkles, FileCheck2, Files, Phone, PhoneCall, CheckSquare, CalendarClock, Megaphone, Activity, MailX, HeartPulse, TestTube2, Rocket, Database, Upload, FileDown, BadgeCheck, GraduationCap, Brain, AlertOctagon, LineChart, ListChecks, Cog, Boxes, Repeat, Wallet, Hash
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -454,6 +454,7 @@ const navItems: NavItem[] = [
       { path: '/operation/email-vorlagen', label: 'E-Mail Vorlagen', icon: Mail, roles: ['Super Admin'] },
       { path: '/portal-admin', label: 'Kundenportal', icon: Globe, roles: ['Super Admin'] },
       { path: '/operation/systemwartung', label: 'Systemwartung', icon: AlertTriangle, roles: ['Super Admin'] },
+      { path: '/operation/nummernkreise', label: 'Nummernkreise', icon: Hash, roles: ['Super Admin'] },
       { path: '/lager/doppelte-reservierungen', label: 'Doppelte Reservierungen', icon: AlertTriangle, roles: ['Super Admin'] },
       { path: '/order/timeline', label: 'Timeline Bestellungen', icon: Calendar, roles: ['Super Admin'] },
       { path: '/tickets', label: 'Ticketliste', icon: Ticket, roles: ['Super Admin'] },

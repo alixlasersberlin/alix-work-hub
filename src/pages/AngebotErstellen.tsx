@@ -16,6 +16,7 @@ import { createPDF } from '@/lib/pdf-utils';
 import autoTable from 'jspdf-autotable';
 import templateAsset from '@/assets/angebot-template.jpg.asset.json';
 import { upsertOffer, getOffer } from '@/lib/offers-store';
+import { peekNumber, nextNumber } from '@/lib/number-ranges';
 
 type LineItem = {
   id: string;
@@ -140,10 +141,19 @@ export default function AngebotErstellen() {
       setItems(i ?? []);
       setLoading(false);
 
+      const params = new URLSearchParams(window.location.search);
+      const editKey = params.get('edit');
+
+      // Zentraler Nummernkreis: wenn aktiv & Neuanlage, übernehme nächste Vorschau-Nummer
+      if (!editKey) {
+        try {
+          const nr = await peekNumber('offer');
+          if (nr) setOfferNumber(nr);
+        } catch { /* ignore */ }
+      }
+
       // Edit-Modus: Angebot aus DB laden, wenn ?edit=<offerNumber>
       try {
-        const params = new URLSearchParams(window.location.search);
-        const editKey = params.get('edit');
         if (editKey) {
           let snap: any = await getOffer(editKey);
           if (!snap) {
@@ -814,14 +824,29 @@ export default function AngebotErstellen() {
     const validLines = lines.filter(l => l.name && l.quantity > 0);
     if (validLines.length === 0) { toast.error('Bitte mindestens eine Position erfassen.'); return false; }
     try {
-      const snap = buildOfferSnapshot();
+      // Wenn das Angebot neu ist (kein Eintrag in DB), eine "echte" Nummer aus
+      // dem zentralen Nummernkreis ziehen (atomar, fortlaufend). Bei aktivem
+      // Kreis ersetzt das die zur Vorschau gezogene Nummer.
+      let effectiveOfferNumber = offerNumber;
+      try {
+        const existing = await getOffer(offerNumber);
+        if (!existing) {
+          const nr = await nextNumber('offer', () => offerNumber);
+          if (nr && nr !== offerNumber) {
+            effectiveOfferNumber = nr;
+            setOfferNumber(nr);
+          }
+        }
+      } catch { /* fallback: alte Nummer behalten */ }
+
+      const snap = { ...buildOfferSnapshot(), offerNumber: effectiveOfferNumber };
       await upsertOffer(snap as any);
       // Lokale Kopie als Fallback weiter pflegen
       try {
         const KEY = 'alix_angebote_v1';
         const raw = localStorage.getItem(KEY);
         const list = raw ? JSON.parse(raw) : [];
-        const idx = list.findIndex((o: any) => o.offerNumber === offerNumber);
+        const idx = list.findIndex((o: any) => o.offerNumber === effectiveOfferNumber);
         if (idx >= 0) list[idx] = snap; else list.unshift(snap);
         localStorage.setItem(KEY, JSON.stringify(list));
       } catch {}
