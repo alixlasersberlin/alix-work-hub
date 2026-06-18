@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
 
   const { data: r } = await admin
     .from('alix_sign_requests')
-    .select('id, offer_number, offer_payload, customer_id, customer_email, customer_name, status, expires_at')
+    .select('id, offer_number, offer_payload, customer_id, customer_email, customer_name, status, expires_at, created_by')
     .eq('token', token).maybeSingle()
   if (!r) {
     return new Response(JSON.stringify({ error: 'Token ungültig' }), {
