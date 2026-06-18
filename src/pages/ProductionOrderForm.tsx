@@ -391,7 +391,9 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
     c?.company_name || c?.contact_name || c?.email || '';
 
   const persist = async (): Promise<string | null> => {
+    if (savingRef.current) return null;
     if (!validate()) return null;
+    savingRef.current = true;
     setSaving(true);
     const customerForPo =
       selectedOrder?.customer_id
