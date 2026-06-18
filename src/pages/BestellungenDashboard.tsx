@@ -103,7 +103,7 @@ export default function BestellungenDashboard() {
   const kpis = useMemo(() => {
     const total = enriched.length;
     const depositOk = enriched.filter(r => r._depositOk).length;
-    const depositOpen = total - depositOk;
+    const depositOpen = enriched.filter(r => !r._depositOk && Number(r.total_amount || 0) >= 100).length;
     const ordered = enriched.filter(r => r._ordered).length;
     const canOrder = enriched.filter(r => r._depositOk && !r._ordered).length;
     const vip = enriched.filter(r => r._vip).length;
@@ -112,7 +112,7 @@ export default function BestellungenDashboard() {
 
   const visible = useMemo(() => {
     let list = [...enriched];
-    if (filter === 'deposit_open') list = list.filter(r => !r._depositOk);
+    if (filter === 'deposit_open') list = list.filter(r => !r._depositOk && Number(r.total_amount || 0) >= 100);
     if (filter === 'deposit_ok_no_order') list = list.filter(r => r._depositOk && !r._ordered);
     if (filter === 'ordered') list = list.filter(r => r._ordered);
     if (filter === 'vip') list = list.filter(r => r._vip);
