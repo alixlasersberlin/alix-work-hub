@@ -1,12 +1,29 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 
+// Captcha-Bypass für interne Accounts, die Cloudflare Turnstile nicht zuverlässig
+// laden können (z. B. aus Regionen mit eingeschränktem Zugriff auf
+// challenges.cloudflare.com). Bitte sparsam einsetzen.
+const CAPTCHA_BYPASS_EMAILS = new Set<string>([
+  '2556690413@qq.com', // Jerry – China-Netz, Turnstile lädt nicht
+]);
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const { token } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const token: unknown = body?.token;
+    const email = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : '';
+
+    if (email && CAPTCHA_BYPASS_EMAILS.has(email)) {
+      return new Response(JSON.stringify({ success: true, bypass: true }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     if (!token || typeof token !== 'string') {
       return new Response(JSON.stringify({ success: false, error: 'missing token' }), {
         status: 400,
@@ -40,7 +57,7 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ success: false, error: String(e?.message ?? e) }), {
+    return new Response(JSON.stringify({ success: false, error: String((e as Error)?.message ?? e) }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
