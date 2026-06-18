@@ -57,27 +57,42 @@ Deno.serve(async (req) => {
     const originalBytes = decodePdf(sig.pdf_data as unknown as string)
     const doc = await PDFDocument.load(originalBytes)
     const helvBold = await doc.embedFont(StandardFonts.HelveticaBold)
+    const helv = await doc.embedFont(StandardFonts.Helvetica)
+
+    // Security ID stamped on every page (SEC-{YEAR}-{8 HEX})
+    const rndBuf = new Uint8Array(4)
+    crypto.getRandomValues(rndBuf)
+    const hex = Array.from(rndBuf).map((b) => b.toString(16).padStart(2, '0')).join('').toUpperCase()
+    const securityId = `SEC-${new Date().getFullYear()}-${hex}`
 
     const pages = doc.getPages()
-    if (pages.length > 0) {
-      const p = pages[0]
+    pages.forEach((p, idx) => {
       const { width, height } = p.getSize()
-      // Gold band at the very top
-      p.drawRectangle({
-        x: 0,
-        y: height - 18,
-        width,
-        height: 18,
-        color: rgb(0.773, 0.631, 0.333), // #c5a155
-      })
-      p.drawText('AUFTRAGSBESTÄTIGUNG', {
+      if (idx === 0) {
+        p.drawRectangle({
+          x: 0,
+          y: height - 18,
+          width,
+          height: 18,
+          color: rgb(0.773, 0.631, 0.333),
+        })
+        p.drawText('AUFTRAGSBESTÄTIGUNG', {
+          x: 18,
+          y: height - 14,
+          size: 11,
+          font: helvBold,
+          color: rgb(1, 1, 1),
+        })
+      }
+      // Security ID top-left, just under the gold band so it stays readable
+      p.drawText(securityId, {
         x: 18,
-        y: height - 14,
-        size: 11,
-        font: helvBold,
-        color: rgb(1, 1, 1),
+        y: height - (idx === 0 ? 30 : 14),
+        size: 7,
+        font: helv,
+        color: rgb(0.55, 0.55, 0.55),
       })
-    }
+    })
 
     const out = await doc.save()
     const filename = `auftragsbestaetigung-${sig.offer_number || 'auftrag'}.pdf`
