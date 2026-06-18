@@ -792,18 +792,22 @@ export default function AngebotErstellen() {
     createdAt: new Date().toISOString(),
   });
 
-  const saveOffer = (silent = false): boolean => {
+  const saveOffer = async (silent = false): Promise<boolean> => {
     if (!selectedCustomer) { toast.error('Bitte zuerst einen Kunden auswählen.'); return false; }
     const validLines = lines.filter(l => l.name && l.quantity > 0);
     if (validLines.length === 0) { toast.error('Bitte mindestens eine Position erfassen.'); return false; }
     try {
-      const KEY = 'alix_angebote_v1';
-      const raw = localStorage.getItem(KEY);
-      const list = raw ? JSON.parse(raw) : [];
       const snap = buildOfferSnapshot();
-      const idx = list.findIndex((o: any) => o.offerNumber === offerNumber);
-      if (idx >= 0) list[idx] = snap; else list.unshift(snap);
-      localStorage.setItem(KEY, JSON.stringify(list));
+      await upsertOffer(snap as any);
+      // Lokale Kopie als Fallback weiter pflegen
+      try {
+        const KEY = 'alix_angebote_v1';
+        const raw = localStorage.getItem(KEY);
+        const list = raw ? JSON.parse(raw) : [];
+        const idx = list.findIndex((o: any) => o.offerNumber === offerNumber);
+        if (idx >= 0) list[idx] = snap; else list.unshift(snap);
+        localStorage.setItem(KEY, JSON.stringify(list));
+      } catch {}
       if (!silent) toast.success('Angebot gespeichert. Zu finden unter Sales Management → Angebote.');
       return true;
     } catch (e: any) {
