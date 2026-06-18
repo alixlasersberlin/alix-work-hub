@@ -18,6 +18,7 @@ import { isOrderVip, vipFirst } from '@/lib/vip';
 import { SidebarInfoBar } from '@/components/SidebarInfoBar';
 import { useAtOnly } from '@/hooks/useAtOnly';
 import HeadOfOperationDashboard from './HeadOfOperationDashboard';
+import RevenueByCountryCard from '@/components/RevenueByCountryCard';
 
 interface Stats {
   freePoolDevices: number;
@@ -495,6 +496,8 @@ export default function Dashboard() {
 
 
 
+
+      {isSuperAdmin && <RevenueByCountryCard />}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
