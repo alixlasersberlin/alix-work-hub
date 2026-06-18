@@ -822,7 +822,7 @@ export default function AngebotErstellen() {
     if (!email) { toast.error('Kunde hat keine E-Mail-Adresse hinterlegt.'); return; }
     const doc = await buildPDF();
     if (!doc) return;
-    saveOffer(true);
+    await saveOffer(true);
     const pdfBase64 = doc.output('datauristring').split(',')[1];
     const contactName = selectedCustomer.contact_name || selectedCustomer.company_name || 'Damen und Herren';
     const textBody = `Sehr geehrte/r ${contactName},\n\nanbei unser Angebot ${offerNumber} vom ${new Date(offerDate).toLocaleDateString('de-DE')}.\n\nGesamtbetrag: ${fmtMoney(totals.gross)}${validUntil ? `\nGültig bis: ${new Date(validUntil).toLocaleDateString('de-DE')}` : ''}\n\nBei Rückfragen stehen wir Ihnen gerne zur Verfügung.\n\nMit freundlichen Grüßen\nIhr Alix-Team`;
