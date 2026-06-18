@@ -1502,7 +1502,7 @@ export default function AngebotErstellen() {
         <Button
           variant="outline"
           className="gap-2 border-border"
-          onClick={() => saveOffer()}
+          onClick={() => { saveOffer(); }}
         >
           <Save className="w-4 h-4" />
           Speichern
@@ -1510,7 +1510,7 @@ export default function AngebotErstellen() {
         <Button
           variant="outline"
           className="gap-2 border-border"
-          onClick={() => { if (saveOffer()) navigate('/verkauf/angebote'); }}
+          onClick={async () => { if (await saveOffer()) navigate('/verkauf/angebote'); }}
         >
           <Save className="w-4 h-4" />
           Speichern + Schließen
