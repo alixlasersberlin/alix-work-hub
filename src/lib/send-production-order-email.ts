@@ -93,24 +93,26 @@ export async function sendProductionOrderEmail(poId: string): Promise<SendResult
     is_reclamation: !!po.is_reclamation,
   };
 
-  const allRecipients = Array.from(new Set([...recipients, CC_EMAIL, BCC_EMAIL]));
-  const results = await Promise.allSettled(
-    allRecipients.map(email =>
-      supabase.functions.invoke('send-transactional-email', {
-        body: {
-          templateName: 'production-order-supplier',
-          recipientEmail: email,
-          idempotencyKey: `po-send-${poId}-${email}-${Date.now()}`,
-          templateData,
-        },
-      })
-    )
-  );
-  const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && (r.value as any)?.error));
-  const sent = allRecipients.length - failed.length;
-  if (sent === 0) return { ok: false, total: allRecipients.length, sent: 0, message: 'E-Mail-Versand fehlgeschlagen' };
-  if (failed.length > 0) {
-    return { ok: true, total: allRecipients.length, sent, message: `E-Mail teilweise versendet (${sent}/${allRecipients.length})` };
+  // Ein einziger Invoke: primärer Empfänger = erster Zulieferer-Kontakt,
+  // zweite Adresse als extraCc. Natalia + RDE werden von der Edge Function
+  // automatisch als Default-Kopien hinzugefügt (mit Dedupe + Rate-Limit-Schutz).
+  const [primary, ...rest] = recipients;
+  const extraCc = rest;
+  const allRecipients = Array.from(new Set([primary, ...extraCc, CC_EMAIL, BCC_EMAIL]));
+
+  const { data, error } = await supabase.functions.invoke('send-transactional-email', {
+    body: {
+      templateName: 'production-order-supplier',
+      recipientEmail: primary,
+      idempotencyKey: `po-send-${poId}-${Date.now()}`,
+      templateData,
+      extraCc,
+    },
+  });
+
+  if (error || (data as any)?.error) {
+    const msg = error?.message || (data as any)?.error || 'E-Mail-Versand fehlgeschlagen';
+    return { ok: false, total: allRecipients.length, sent: 0, message: msg };
   }
-  return { ok: true, total: allRecipients.length, sent, message: `E-Mail an Zulieferer versendet (Kopie an ${BCC_EMAIL})` };
+  return { ok: true, total: allRecipients.length, sent: allRecipients.length, message: `E-Mail an Zulieferer versendet (Kopie an ${BCC_EMAIL})` };
 }
