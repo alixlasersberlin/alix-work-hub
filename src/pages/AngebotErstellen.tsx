@@ -852,7 +852,7 @@ export default function AngebotErstellen() {
     if (!selectedCustomer) { toast.error('Bitte zuerst einen Kunden auswählen.'); return; }
     const email = selectedCustomer.email;
     if (!email) { toast.error('Kunde hat keine E-Mail-Adresse hinterlegt.'); return; }
-    if (!saveOffer(true)) return;
+    if (!(await saveOffer(true))) return;
     const t = toast.loading('Alix Sign Anfrage wird erstellt...');
     try {
       const snap = buildOfferSnapshot();
