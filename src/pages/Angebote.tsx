@@ -222,6 +222,36 @@ export default function Angebote() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={signLinkOpen} onOpenChange={setSignLinkOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Link2 className="h-5 w-5" /> Unterschriftslink</DialogTitle>
+            <DialogDescription>
+              {signLinkOffer ? `Angebot ${signLinkOffer}` : ''}
+              {signLinkExpires ? ` · gültig bis ${new Date(signLinkExpires).toLocaleDateString('de-DE')}` : ''}
+            </DialogDescription>
+          </DialogHeader>
+          {signLinkLoading ? (
+            <div className="py-4 text-sm text-muted-foreground">Lade Link…</div>
+          ) : signLinkError ? (
+            <div className="py-2 text-sm text-destructive">{signLinkError}</div>
+          ) : signLinkUrl ? (
+            <div className="flex items-center gap-2">
+              <Input readOnly value={signLinkUrl} onFocus={(e) => e.currentTarget.select()} />
+              <Button onClick={copySignLink} className="shrink-0"><Copy className="h-4 w-4 mr-2" />Kopieren</Button>
+            </div>
+          ) : null}
+          <DialogFooter>
+            {signLinkUrl && (
+              <Button variant="outline" asChild>
+                <a href={signLinkUrl} target="_blank" rel="noreferrer">Im neuen Tab öffnen</a>
+              </Button>
+            )}
+            <Button variant="ghost" onClick={() => setSignLinkOpen(false)}>Schließen</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
