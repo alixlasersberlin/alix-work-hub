@@ -9,79 +9,60 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
-
-const KEY = 'alix_angebote_v1';
-
-type SavedOffer = {
-  offerNumber: string;
-  offerDate: string;
-  validUntil?: string;
-  customer?: { company_name?: string; contact_name?: string; email?: string } | null;
-  totals?: { net: number; tax: number; gross: number };
-  createdAt: string;
-  status?: 'draft' | 'order' | 'signed';
-  signedAt?: string;
-};
+import {
+  listOffers,
+  deleteOffer as deleteOfferDb,
+  updateOfferStatus,
+  migrateLegacyOffersOnce,
+  type OfferSnapshot,
+} from '@/lib/offers-store';
 
 const fmtMoney = (n: number) =>
   (n || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
 
 export default function Angebote() {
-  const [offers, setOffers] = useState<SavedOffer[]>([]);
+  const [offers, setOffers] = useState<OfferSnapshot[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const reload = () => {
-    try {
-      const raw = localStorage.getItem(KEY);
-      setOffers(raw ? JSON.parse(raw) : []);
-    } catch {
-      setOffers([]);
-    }
+  const reload = async () => {
+    const list = await listOffers();
+    setOffers(list);
+    setLoading(false);
   };
 
   useEffect(() => {
-    reload();
-    const h = () => reload();
-    window.addEventListener('storage', h);
-    return () => window.removeEventListener('storage', h);
+    (async () => {
+      const migrated = await migrateLegacyOffersOnce();
+      if (migrated > 0) toast.success(`${migrated} lokal gespeicherte Angebote in die zentrale Datenbank übernommen.`);
+      await reload();
+    })();
   }, []);
 
-  // Sync signed offers from alix_sign_requests (on mount, focus, visibility, interval)
+  // Sync signed offers from alix_sign_requests
   useEffect(() => {
     let cancelled = false;
     const syncSigned = async () => {
-      const raw = localStorage.getItem(KEY);
-      const current: SavedOffer[] = raw ? JSON.parse(raw) : [];
-      const numbers = current
-        .filter(o => o.status !== 'signed' && o.status !== 'order')
-        .map(o => o.offerNumber);
-      if (numbers.length === 0) return;
+      const open = offers.filter(o => o.status !== 'signed' && o.status !== 'order').map(o => o.offerNumber);
+      if (open.length === 0) return;
       const { data, error } = await supabase
         .from('alix_sign_requests')
         .select('offer_number, status, signed_at')
-        .in('offer_number', numbers)
+        .in('offer_number', open)
         .eq('status', 'unterschrieben');
       if (error || !data || cancelled || data.length === 0) return;
       const signedMap = new Map(data.map((r: any) => [r.offer_number, r.signed_at]));
-      // Trigger conversion to orders for each newly-signed offer
       await Promise.all(
         Array.from(signedMap.keys()).map((num) =>
           supabase.functions.invoke('convert-signed-offer-to-order', { body: { offer_number: num } })
             .catch((e) => console.warn('convert offer failed', num, e))
         )
       );
-      let changed = false;
-      const next = current.map(o => {
-        if (signedMap.has(o.offerNumber) && o.status !== 'signed' && o.status !== 'order') {
-          changed = true;
-          return { ...o, status: 'signed' as const, signedAt: signedMap.get(o.offerNumber) || new Date().toISOString() };
-        }
-        return o;
-      });
-      if (changed) {
-        localStorage.setItem(KEY, JSON.stringify(next));
-        setOffers(next);
-      }
-
+      await Promise.all(
+        Array.from(signedMap.entries()).map(([num, at]) =>
+          updateOfferStatus(num, 'signed', at || new Date().toISOString()).catch(() => null)
+        )
+      );
+      await reload();
     };
     syncSigned();
     const onFocus = () => syncSigned();
@@ -95,15 +76,17 @@ export default function Angebote() {
       document.removeEventListener('visibilitychange', onVisible);
       window.clearInterval(iv);
     };
-  }, []);
+  }, [offers.length]);
 
-
-  const remove = (offerNumber: string) => {
+  const remove = async (offerNumber: string) => {
     if (!confirm(`Angebot ${offerNumber} löschen?`)) return;
-    const next = offers.filter(o => o.offerNumber !== offerNumber);
-    localStorage.setItem(KEY, JSON.stringify(next));
-    setOffers(next);
-    toast.success('Angebot gelöscht.');
+    try {
+      await deleteOfferDb(offerNumber);
+      toast.success('Angebot gelöscht.');
+      reload();
+    } catch (e: any) {
+      toast.error('Löschen fehlgeschlagen: ' + (e?.message || 'Unbekannter Fehler'));
+    }
   };
 
   return (
@@ -111,7 +94,7 @@ export default function Angebote() {
       <PageHeader
         icon={FileText}
         title="Angebote"
-        subtitle="Übersicht aller erstellten Angebote."
+        subtitle="Übersicht aller von allen Mitarbeitern erstellten Angebote."
         noBreadcrumbs
         meta={<InfinityStatusBadge kind="done" label={`${offers.length}`} />}
         actions={
@@ -123,7 +106,9 @@ export default function Angebote() {
       <Card>
         <CardHeader><CardTitle>Liste ({offers.length})</CardTitle></CardHeader>
         <CardContent className="p-0">
-          {offers.length === 0 ? (
+          {loading ? (
+            <div className="p-8 text-center text-muted-foreground">Lade Angebote…</div>
+          ) : offers.length === 0 ? (
             <div className="p-8">
               <EmptyState icon={FileText} title="Noch keine Angebote" description="Sobald Angebote erstellt wurden, erscheinen sie hier." compact />
             </div>
@@ -135,6 +120,7 @@ export default function Angebote() {
                   <TableHead>Datum</TableHead>
                   <TableHead>Kunde</TableHead>
                   <TableHead>E-Mail</TableHead>
+                  <TableHead>Ersteller</TableHead>
                   <TableHead className="text-right">Gesamt</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="w-28 text-right">Aktionen</TableHead>
@@ -150,6 +136,7 @@ export default function Angebote() {
                     <TableCell>{o.offerDate ? new Date(o.offerDate).toLocaleDateString('de-DE') : '—'}</TableCell>
                     <TableCell>{o.customer?.company_name || o.customer?.contact_name || '—'}</TableCell>
                     <TableCell className="text-muted-foreground">{o.customer?.email || '—'}</TableCell>
+                    <TableCell className="text-muted-foreground">{o.createdByName || '—'}</TableCell>
                     <TableCell className="text-right font-semibold">{fmtMoney(o.totals?.gross || 0)}</TableCell>
                     <TableCell>
                       {isSigned ? (
@@ -178,7 +165,6 @@ export default function Angebote() {
                   </TableRow>
                   );
                 })}
-
               </TableBody>
             </Table>
           )}
