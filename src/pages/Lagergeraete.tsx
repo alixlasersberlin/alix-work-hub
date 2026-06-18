@@ -1439,22 +1439,26 @@ export default function Lagergeraete({
                       disabled={sendingManualEmail}
                       onClick={async () => {
                         if (!reservedOrderId) return;
-                        setSendingManualEmail(true);
-                        const tplKey = deviceStatus === 'Transfer'
+                        const defaultKey = deviceStatus === 'Transfer'
                           ? 'customer_in_transit'
                           : deviceStatus === 'Produktion'
                             ? 'customer_in_production'
                             : deviceStatus === 'Shell Warehouse'
                               ? 'customer_warehouse_prepared'
                               : 'customer_warehouse_received';
-                        const res = await sendCustomerShippingNotice(reservedOrderId, editingId, 'manuell', tplKey);
-                        setSendingManualEmail(false);
-                        if (res.ok) toast.success('Kunden-E-Mail versendet');
-                        else toast.warning('Kunden-E-Mail nicht versendet: ' + res.message);
+                        setPickedTemplate(defaultKey);
+                        if (allTemplates.length === 0) {
+                          const { data } = await supabase
+                            .from('email_templates')
+                            .select('template_key, display_name, subject')
+                            .order('display_name');
+                          setAllTemplates((data as any) || []);
+                        }
+                        setTemplatePickerOpen(true);
                       }}
                     >
                       {sendingManualEmail ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
-                      Jetzt senden
+                      E-Mail senden…
                     </Button>
                   )}
                 </div>
