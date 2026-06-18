@@ -2,6 +2,7 @@
  * Reparaturbericht – echte PDF-Erzeugung via jsPDF.
  */
 import jsPDF from 'jspdf';
+import { createPDF } from '@/lib/pdf-utils';
 import autoTable from 'jspdf-autotable';
 import alixLogo from '@/assets/alix-logo-gold.png';
 
@@ -13,7 +14,7 @@ type ReportDoc = {
 };
 
 function build({ repair, parts, history = [], technician }: ReportDoc): jsPDF {
-  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+  const doc = createPDF({ unit: 'pt', format: 'a4' });
   const W = doc.internal.pageSize.getWidth();
   const M = 40;
   const today = new Date().toLocaleDateString('de-DE');

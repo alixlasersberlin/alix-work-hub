@@ -1,5 +1,6 @@
 // Builds the final signed Alix Sign PDF (offer + signature page) client-side.
 import jsPDF from 'jspdf';
+import { createPDF } from '@/lib/pdf-utils';
 import autoTable from 'jspdf-autotable';
 import alixLogo from '@/assets/alix-logo-gold.png';
 
@@ -34,7 +35,7 @@ const fmtMoney = (n: number) =>
   new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n || 0);
 
 export function buildSignedPdfBase64(snap: Snapshot, sig: Sig): string {
-  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const doc = createPDF({ unit: 'mm', format: 'a4' });
   const PAGE_W = doc.internal.pageSize.getWidth();
   const PAGE_H = doc.internal.pageSize.getHeight();
   const LEFT = 18;
