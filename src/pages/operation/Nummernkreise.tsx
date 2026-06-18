@@ -13,7 +13,7 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
-import { formatDocumentNumberPreview } from '@/lib/number-ranges';
+import { formatDocumentNumberPreview, formatCaseSuffixPreview } from '@/lib/number-ranges';
 
 type Range = {
   code: string;
@@ -27,6 +27,7 @@ type Range = {
   reset_yearly: boolean;
   last_reset_year: number | null;
   active: boolean;
+  inherit_case: boolean;
   notes: string | null;
   updated_at: string;
 };
@@ -88,6 +89,7 @@ export default function Nummernkreise() {
       padding: Math.max(1, Math.min(12, editing.padding || 5)),
       start_value: Math.max(0, Number(editing.start_value) || 0),
       reset_yearly: editing.reset_yearly,
+      inherit_case: editing.inherit_case,
       notes: editing.notes || null,
     };
     // Wenn current_value < start_value-1 → auf start_value-1 ziehen, damit
@@ -162,25 +164,34 @@ export default function Nummernkreise() {
             )}
             {filtered.map(r => {
               const nextValue = Math.max(r.current_value + 1, r.start_value);
-              const preview = formatDocumentNumberPreview({
-                prefix: r.prefix,
-                separator: r.separator,
-                include_year: r.include_year,
-                padding: r.padding,
-                value: nextValue,
-              });
+              const preview = r.inherit_case
+                ? formatCaseSuffixPreview(r.prefix, r.separator)
+                : formatDocumentNumberPreview({
+                    prefix: r.prefix,
+                    separator: r.separator,
+                    include_year: r.include_year,
+                    padding: r.padding,
+                    value: nextValue,
+                  });
               return (
                 <TableRow key={r.code} className={r.active ? '' : 'opacity-70'}>
                   <TableCell>
                     <Switch checked={r.active} onCheckedChange={(v) => toggleActive(r, v)} />
                   </TableCell>
-                  <TableCell className="font-medium">{r.label}</TableCell>
+                  <TableCell className="font-medium">
+                    {r.label}
+                    {r.inherit_case && (
+                      <span className="ml-2 inline-block rounded bg-primary/15 text-primary text-[10px] px-1.5 py-0.5 align-middle">
+                        Vorgangs-Nr
+                      </span>
+                    )}
+                  </TableCell>
                   <TableCell><code className="text-xs">{r.code}</code></TableCell>
                   <TableCell>{r.prefix || '—'}</TableCell>
-                  <TableCell>{r.include_year ? 'Ja' : 'Nein'}</TableCell>
-                  <TableCell className="text-right">{r.padding}</TableCell>
-                  <TableCell className="text-right">{r.start_value}</TableCell>
-                  <TableCell className="text-right tabular-nums">{r.current_value}</TableCell>
+                  <TableCell>{r.inherit_case ? '—' : (r.include_year ? 'Ja' : 'Nein')}</TableCell>
+                  <TableCell className="text-right">{r.inherit_case ? '—' : r.padding}</TableCell>
+                  <TableCell className="text-right">{r.inherit_case ? '—' : r.start_value}</TableCell>
+                  <TableCell className="text-right tabular-nums">{r.inherit_case ? '—' : r.current_value}</TableCell>
                   <TableCell><code className="text-xs text-primary">{preview}</code></TableCell>
                   <TableCell>
                     <Button size="sm" variant="ghost" onClick={() => setEditing({ ...r })}>
@@ -258,6 +269,19 @@ export default function Nummernkreise() {
                 <Switch checked={editing.reset_yearly}
                         onCheckedChange={(v) => setEditing(s => s ? { ...s, reset_yearly: v } : s)} />
               </div>
+              {editing.code !== 'case' && (
+                <div className="flex items-center justify-between rounded-md border border-primary/30 bg-primary/5 px-3 py-2">
+                  <div>
+                    <div className="text-sm font-medium">An Vorgangsnummer koppeln</div>
+                    <div className="text-xs text-muted-foreground">
+                      Dokumentnummer = Präfix + Vorgangs-Stammnummer (z. B. <code>AB-2026-04217</code>).
+                      Der eigene Zähler wird nicht verwendet.
+                    </div>
+                  </div>
+                  <Switch checked={editing.inherit_case}
+                          onCheckedChange={(v) => setEditing(s => s ? { ...s, inherit_case: v } : s)} />
+                </div>
+              )}
               <div>
                 <Label className="text-xs text-muted-foreground">Notiz</Label>
                 <Textarea value={editing.notes || ''}
@@ -268,13 +292,15 @@ export default function Nummernkreise() {
               <div className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2">
                 <div className="text-xs text-muted-foreground">Nächste vergebene Nummer (Vorschau):</div>
                 <div className="font-mono text-base text-primary">
-                  {formatDocumentNumberPreview({
-                    prefix: editing.prefix,
-                    separator: editing.separator,
-                    include_year: editing.include_year,
-                    padding: editing.padding,
-                    value: Math.max(editing.current_value + 1, editing.start_value),
-                  })}
+                  {editing.inherit_case
+                    ? formatCaseSuffixPreview(editing.prefix, editing.separator)
+                    : formatDocumentNumberPreview({
+                        prefix: editing.prefix,
+                        separator: editing.separator,
+                        include_year: editing.include_year,
+                        padding: editing.padding,
+                        value: Math.max(editing.current_value + 1, editing.start_value),
+                      })}
                 </div>
               </div>
 

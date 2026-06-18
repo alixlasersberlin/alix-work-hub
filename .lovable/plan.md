@@ -1,111 +1,93 @@
-
 ## Ziel
 
-Ein neuer Menüpunkt **„Nummernkreise"** unter **OPERATIONS** (nur Super Admin), über den die Start-/Folgenummern aller Vorgangs- und Dokumentarten zentral gepflegt werden. Wird ein Kreis aktiviert, vergeben alle System-Stellen (UI, Edge Functions, PDFs) ab diesem Zeitpunkt Nummern aus diesem Kreis.
-
-## Erfasste Dokument-/Vorgangsarten (initial)
-
-| Code            | Bezeichnung                       | Beispiel-Format          |
-|-----------------|-----------------------------------|--------------------------|
-| `offer`         | Angebot                           | `ANG-{YYYY}-{00000}`     |
-| `order`         | Auftragsbestätigung               | `AB-{YYYY}-{00000}`      |
-| `delivery_note` | Lieferschein                      | `LS-{YYYY}-{00000}`      |
-| `invoice`       | Rechnung                          | `RG-{YYYY}-{00000}`      |
-| `credit_note`   | Gutschrift                        | `GU-{YYYY}-{00000}`      |
-| `repair`        | Reparaturauftrag                  | `REP-{YYYY}-{000000}`    |
-| `repair_quote`  | Reparatur-Kostenvoranschlag       | `KV-{YYYY}-{00000}`      |
-| `work_order`    | Werkstattauftrag                  | `WA-{YYYY}-{00000}`      |
-| `ticket`        | Support-Ticket                    | `TKT-{YYYY}-{000000}`    |
-| `production`    | Produktionsauftrag                | `PRD-{YYYY}-{00000}`     |
-| `purchase`      | Bestellung Lieferant              | `BST-{YYYY}-{00000}`     |
-| `goods_receipt` | Wareneingang                      | `WE-{YYYY}-{00000}`      |
-| `bank_request`  | Finanzierungsantrag               | `FIN-{YYYY}-{00000}`     |
-| `sepa_run`      | SEPA-Lauf                         | `SEPA-{YYYY}-{00000}`    |
-| `reminder`      | Mahnung                           | `MA-{YYYY}-{00000}`      |
-| `bug`           | Bug-Report (QM)                   | `BUG-{YYYY}-{00000}`     |
-| `capa`          | CAPA                              | `CAPA-{YYYY}-{00000}`    |
-| `audit`         | Audit-Finding                     | `AUD-{YYYY}-{00000}`     |
-| `pdf_security`  | PDF-Security-ID                   | `SEC-{YYYY}-{HEX8}`      |
-
-Liste erweiterbar — neue Codes werden über Migration nachgepflegt.
-
-## Datenmodell
-
-Neue Tabelle `public.number_ranges` (Super-Admin-only):
+Ab sofort bekommt **jeder neue Vorgang beim Anlegen eines Angebots** eine **einzige fortlaufende Stammnummer** (Case). Alle Folge-Dokumente (Auftragsbestätigung, Lieferschein, Rechnung, Gutschrift, Reparatur, Produktion, Mahnung usw.) übernehmen diese Stammnummer und unterscheiden sich nur durch ihren **Präfix** als Suffix-Quelle.
 
 ```text
-code            text PK         -- z. B. "offer"
-label           text            -- "Angebot"
-prefix          text            -- "ANG"
-separator       text DEFAULT '-' 
-include_year    boolean         -- true → JJJJ-Bestandteil
-padding         int             -- Stellenanzahl Zähler (z. B. 5)
-current_value   bigint          -- letzter vergebener Wert
-start_value     bigint          -- konfigurierter Startwert
-reset_yearly    boolean
-last_reset_year int
-active          boolean         -- AN = systemweit nutzen
-format_hint     text            -- Live-Preview-Beispiel, generiert
-notes           text
-updated_at/by   …
+Angebot              ANG-2026-04217
+Auftragsbestätigung  AB-2026-04217
+Lieferschein         LS-2026-04217
+Rechnung             RG-2026-04217
+Gutschrift           GU-2026-04217
+Reparatur            REP-2026-04217
+Produktion           PRD-2026-04217
+Mahnung Stufe 2      MA-2026-04217-M2
 ```
 
-Plus zentrale RPC `public.next_document_number(p_code text)`:
-- atomar (Row-Lock via `FOR UPDATE`)
-- führt Jahresreset durch, wenn `reset_yearly`
-- erhöht `current_value`, gibt formatierten String zurück
-- ist `active=false` → liefert `NULL` (Aufrufer behält Legacy-Logik)
+Bestehende Vorgänge bleiben **unverändert** – nur Neuanlagen ab Aktivierung erhalten eine Case-Nummer.
 
-Plus Helper `public.peek_document_number(p_code text)` für Vorschau ohne Increment.
+## Konzept
 
-## Frontend
+1. Neuer „Master"-Kreis `case` in `number_ranges` (Format z. B. `{YYYY}-{00000}`). Liefert die Stammnummer.
+2. Pro Kreis ein neues Flag `inherit_case` (boolean). 
+   - `false` (Default) = bisheriges Verhalten (eigener Zähler).
+   - `true` = Dokumentnummer wird aus `prefix + sep + caseNumber` gebildet, **ohne** den eigenen Zähler zu erhöhen.
+3. Stammnummer wird im Datensatz gespeichert (`offers.case_number`, `orders.case_number`) und an alle Folgevorgänge vererbt.
+4. Im Frontend gibt es **einen** Helper `nextDocumentNumber(code, { caseNumber, fallback })`, der je nach Modus die richtige Nummer liefert.
 
-### Neuer Menüeintrag
+## Datenmodell-Änderungen (Migration)
 
-`src/components/AppLayout.tsx` → OPERATIONS-Children um  
-`{ path: '/operation/nummernkreise', label: 'Nummernkreise', icon: Hash, roles: ['Super Admin'] }` ergänzen.
+```text
+ALTER TABLE public.number_ranges
+  ADD COLUMN inherit_case boolean NOT NULL DEFAULT false;
 
-### Neue Seite `src/pages/operation/Nummernkreise.tsx`
+ALTER TABLE public.offers ADD COLUMN case_number text;
+ALTER TABLE public.orders ADD COLUMN case_number text;
+CREATE INDEX ON public.offers (case_number);
+CREATE INDEX ON public.orders (case_number);
 
-- Tabelle aller Kreise mit Spalten: Aktiv (Switch), Code, Bezeichnung, Präfix, Jahr inkl., Padding, Startwert, aktueller Wert, Beispiel-Vorschau, Bearbeiten.
-- „Bearbeiten" öffnet Dialog (Präfix, Jahr, Padding, Startwert, Reset jährlich, Notizen). Live-Preview wird beim Tippen aktualisiert.
-- Schalter „Aktiv" speichert sofort und zeigt Toast „Nummernkreis ist jetzt systemweit aktiv".
-- Sicherheits-Hinweisbox: Änderungen am Startwert nur möglich, wenn `current_value <= start_value` (sonst Bestätigungsdialog mit Risiko-Hinweis).
+-- Seed: Master-Kreis "case"
+INSERT INTO public.number_ranges (code, label, prefix, separator,
+       include_year, padding, start_value, current_value,
+       reset_yearly, active, inherit_case)
+VALUES ('case','Vorgangs-Stammnummer','', '-', true, 5, 0, 0, true, false, false)
+ON CONFLICT DO NOTHING;
+```
+
+Neue RPCs:
+
+- `next_case_number()` → vergibt eine neue Stammnummer aus dem Kreis `case` (atomar, Jahresreset).
+- `next_document_number(p_code, p_case_number text DEFAULT NULL)` 
+  - wenn der Kreis `inherit_case = true` ist **und** `p_case_number` übergeben wurde:
+    Rückgabe = `prefix || separator || p_case_number`, **ohne** `current_value` zu inkrementieren.
+  - sonst Verhalten wie heute.
+
+## Frontend-Änderungen
 
 ### Helper `src/lib/number-ranges.ts`
 
 ```text
-export async function nextNumber(code: string, fallback: () => string): Promise<string>
-export async function peekNumber(code: string): Promise<string | null>
+nextDocumentNumber(code, { caseNumber?, fallback })  // ersetzt nextNumber-Aufrufe schrittweise
+ensureCaseNumber(existing?) : Promise<string>        // gibt vorhandene Case-Nr zurück oder zieht eine neue
 ```
 
-`nextNumber` ruft RPC; bei `null` (inaktiv) oder Fehler → `fallback()`. So bleibt das System rückwärtskompatibel.
+`nextNumber(code, fallback)` bleibt rückwärtskompatibel als Wrapper.
 
-### Aufrufer umstellen (Phase 1, sichtbarste Stellen)
+### Anlage-Stellen
 
-- `src/pages/AngebotErstellen.tsx` → `nextNumber('offer', legacyAngebot)`
-- `src/components/OrderConfirmationTab.tsx` → `nextNumber('order', () => order.order_number)`
-- `src/components/DeliveryNoteTab.tsx` → `nextNumber('delivery_note', …)`
-- Repair-/Quote-/Work-Order-PDFs (`src/lib/repair/*`)
-- `src/lib/pdf-utils.ts` (Security-ID `SEC-…`) → `nextNumber('pdf_security', randomHex)`
+- `src/pages/AngebotErstellen.tsx`: Beim **Neu-Anlegen** eines Angebots:
+  1. `caseNumber = await ensureCaseNumber()`
+  2. Offer-Nr = `nextDocumentNumber('offer', { caseNumber, fallback: legacy })`
+  3. `case_number` ins Offer schreiben.
+- `OrderConfirmationTab.tsx`, `DeliveryNoteTab.tsx`, Rechnungs-/Gutschrift-PDFs, Repair-/Production-PDFs, Mahnungen: ziehen `order.case_number` (Fallback: `offer.case_number` → über `offer_id`) und rufen `nextDocumentNumber(code, { caseNumber, fallback })`.
+- Konvertierung Angebot → Auftrag (`convert-signed-offer-to-order` Edge Function + UI): `case_number` vom Angebot in den Auftrag übernehmen.
 
-Weitere Stellen werden im Anschluss in derselben Form nachgezogen — der Helper ist die einzige Schnittstelle.
+### Admin-UI `Nummernkreise.tsx`
 
-## Rechte / RLS
+- Neuer Schalter pro Zeile: **„An Vorgangsnummer koppeln"** (`inherit_case`).
+- Vorschau zeigt im Suffix-Modus z. B. `AB-<Stammnummer>` statt `AB-2026-00001`.
+- Wenn `inherit_case = true`, sind „Stellen", „Startwert", „aktueller Wert" ausgegraut.
 
-- `number_ranges`: nur `Super Admin` darf SELECT/UPDATE; `authenticated` darf RPC `next_document_number` aufrufen, jedoch nicht direkt auf die Tabelle zugreifen.
-- RPC `SECURITY DEFINER`, `search_path = public`.
+## Rückwärtskompatibilität
 
-## Technische Details
-
-- Migration legt Tabelle, GRANTs, RLS und Seed-Zeilen für alle oben gelisteten Codes an (mit aktuellen Werten = 0, `active = false`, damit zunächst Legacy-Logik weiterläuft).
-- Edge Functions (`order-confirmation-pdf`, `convert-signed-offer-to-order`, `alix-sign-create` etc.) verwenden den RPC über den Service-Role-Client.
-- UI-Komponente nutzt vorhandene Infinity-/Card-Styles, keine neuen Design-Tokens.
+- `number_ranges.active = false` → wie bisher Legacy-Logik.
+- `inherit_case = false` → eigener Zähler wie bisher.
+- Bestehende Aufträge/Angebote ohne `case_number` → Helper fällt automatisch auf den unabhängigen Modus zurück (keine Migration alter Daten).
 
 ## Lieferumfang dieses Schritts
 
-1. Migration `number_ranges` + RPC + Seeds.
-2. Sidebar-Eintrag + Route.
-3. Seite `Nummernkreise.tsx` (Liste, Edit-Dialog, Aktiv-Schalter, Vorschau).
-4. Helper `src/lib/number-ranges.ts`.
-5. Erste Integration: **Angebot**, **Auftragsbestätigung**, **PDF-Security-ID** (sofort sichtbarer Effekt). Weitere Module folgen in Folge-Iterationen auf Zuruf.
+1. Migration: `inherit_case`-Spalte, `case_number`-Spalten, neue Seeds + RPCs.
+2. Helper-Erweiterung (`nextDocumentNumber`, `ensureCaseNumber`).
+3. UI-Schalter „An Vorgangsnummer koppeln" in `Nummernkreise.tsx`.
+4. Integration in **Angebotsanlage** (Case-Generierung) und **Auftragsbestätigung** (Suffix-Modus) – sofort sichtbarer Effekt.
+5. Konvertierung Angebot → Auftrag übernimmt `case_number`.
+6. Restliche Dokument-Tabs (Lieferschein, Rechnung, Gutschrift, Reparatur, Produktion, Mahnung) werden im Anschluss in derselben Form nachgezogen.

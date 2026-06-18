@@ -4,6 +4,7 @@ export type OfferStatus = 'draft' | 'order' | 'signed';
 
 export type OfferSnapshot = {
   offerNumber: string;
+  caseNumber?: string | null;
   offerDate?: string;
   validUntil?: string;
   customer?: { id?: string; company_name?: string; contact_name?: string; email?: string; phone?: string } | null;
@@ -30,6 +31,7 @@ function rowToSnapshot(row: any): OfferSnapshot {
   return {
     ...payload,
     offerNumber: row.offer_number,
+    caseNumber: row.case_number || payload.caseNumber || null,
     offerDate: row.offer_date || payload.offerDate,
     validUntil: row.valid_until || payload.validUntil,
     customer: payload.customer || (row.customer_name ? { id: row.customer_id, company_name: row.customer_name, email: row.customer_email } : null),
@@ -79,6 +81,7 @@ export async function upsertOffer(snap: OfferSnapshot): Promise<void> {
 
   const row: any = {
     offer_number: snap.offerNumber,
+    case_number: snap.caseNumber || null,
     offer_date: snap.offerDate || null,
     valid_until: snap.validUntil || null,
     customer_id: snap.customer?.id || null,

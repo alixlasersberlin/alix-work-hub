@@ -7526,6 +7526,7 @@ export type Database = {
           created_at: string
           current_value: number
           include_year: boolean
+          inherit_case: boolean
           label: string
           last_reset_year: number | null
           notes: string | null
@@ -7543,6 +7544,7 @@ export type Database = {
           created_at?: string
           current_value?: number
           include_year?: boolean
+          inherit_case?: boolean
           label: string
           last_reset_year?: number | null
           notes?: string | null
@@ -7560,6 +7562,7 @@ export type Database = {
           created_at?: string
           current_value?: number
           include_year?: boolean
+          inherit_case?: boolean
           label?: string
           last_reset_year?: number | null
           notes?: string | null
@@ -7575,6 +7578,7 @@ export type Database = {
       }
       offers: {
         Row: {
+          case_number: string | null
           created_at: string
           created_by: string | null
           created_by_name: string | null
@@ -7594,6 +7598,7 @@ export type Database = {
           valid_until: string | null
         }
         Insert: {
+          case_number?: string | null
           created_at?: string
           created_by?: string | null
           created_by_name?: string | null
@@ -7613,6 +7618,7 @@ export type Database = {
           valid_until?: string | null
         }
         Update: {
+          case_number?: string | null
           created_at?: string
           created_by?: string | null
           created_by_name?: string | null
@@ -8017,6 +8023,7 @@ export type Database = {
       orders: {
         Row: {
           billing_address: Json | null
+          case_number: string | null
           created_at: string
           currency: string | null
           customer_id: string
@@ -8051,6 +8058,7 @@ export type Database = {
         }
         Insert: {
           billing_address?: Json | null
+          case_number?: string | null
           created_at?: string
           currency?: string | null
           customer_id: string
@@ -8085,6 +8093,7 @@ export type Database = {
         }
         Update: {
           billing_address?: Json | null
+          case_number?: string | null
           created_at?: string
           currency?: string | null
           customer_id?: string
@@ -12586,7 +12595,10 @@ export type Database = {
         Args: { _duplicate_ids: string[]; _primary_id: string }
         Returns: Json
       }
-      next_document_number: { Args: { p_code: string }; Returns: string }
+      next_case_number: { Args: never; Returns: string }
+      next_document_number:
+        | { Args: { p_code: string }; Returns: string }
+        | { Args: { p_case_number: string; p_code: string }; Returns: string }
       notify_customer_event: {
         Args: {
           _customer_name: string

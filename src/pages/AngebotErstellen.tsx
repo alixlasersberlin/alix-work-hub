@@ -16,7 +16,7 @@ import { createPDF } from '@/lib/pdf-utils';
 import autoTable from 'jspdf-autotable';
 import templateAsset from '@/assets/angebot-template.jpg.asset.json';
 import { upsertOffer, getOffer } from '@/lib/offers-store';
-import { peekNumber, nextNumber } from '@/lib/number-ranges';
+import { peekNumber, nextNumber, ensureCaseNumber } from '@/lib/number-ranges';
 
 type LineItem = {
   id: string;
@@ -47,6 +47,7 @@ export default function AngebotErstellen() {
   const [customerSearch, setCustomerSearch] = useState('');
   const [itemSearch, setItemSearch] = useState('');
   const [offerNumber, setOfferNumber] = useState(`ANG-${new Date().getFullYear()}-${String(Date.now()).slice(-5)}`);
+  const [caseNumber, setCaseNumber] = useState<string | null>(null);
   const [offerDate, setOfferDate] = useState(new Date().toISOString().slice(0, 10));
   const [validUntil, setValidUntil] = useState('');
   const [salesAdvisor, setSalesAdvisor] = useState('');
@@ -164,6 +165,7 @@ export default function AngebotErstellen() {
           }
           if (snap) {
             setOfferNumber(snap.offerNumber);
+            if (snap.caseNumber) setCaseNumber(snap.caseNumber);
             if (snap.offerDate) setOfferDate(snap.offerDate);
             if (snap.validUntil) setValidUntil(snap.validUntil);
             if (snap.salesAdvisor) setSalesAdvisor(snap.salesAdvisor);
@@ -799,6 +801,7 @@ export default function AngebotErstellen() {
 
   const buildOfferSnapshot = () => ({
     offerNumber,
+    caseNumber,
     offerDate,
     validUntil,
     salesAdvisor,
@@ -828,10 +831,19 @@ export default function AngebotErstellen() {
       // dem zentralen Nummernkreis ziehen (atomar, fortlaufend). Bei aktivem
       // Kreis ersetzt das die zur Vorschau gezogene Nummer.
       let effectiveOfferNumber = offerNumber;
+      let effectiveCaseNumber = caseNumber;
       try {
         const existing = await getOffer(offerNumber);
         if (!existing) {
-          const nr = await nextNumber('offer', () => offerNumber);
+          // Stammnummer (Vorgangs-Nummer) sicherstellen – einmal pro Vorgang.
+          // Bei deaktiviertem Master-Kreis liefert ensureCaseNumber `null` und
+          // der Kreis 'offer' fällt automatisch auf seinen eigenen Zähler zurück.
+          const cn = await ensureCaseNumber(caseNumber);
+          if (cn && cn !== caseNumber) {
+            effectiveCaseNumber = cn;
+            setCaseNumber(cn);
+          }
+          const nr = await nextNumber('offer', () => offerNumber, { caseNumber: effectiveCaseNumber });
           if (nr && nr !== offerNumber) {
             effectiveOfferNumber = nr;
             setOfferNumber(nr);
@@ -839,7 +851,7 @@ export default function AngebotErstellen() {
         }
       } catch { /* fallback: alte Nummer behalten */ }
 
-      const snap = { ...buildOfferSnapshot(), offerNumber: effectiveOfferNumber };
+      const snap = { ...buildOfferSnapshot(), offerNumber: effectiveOfferNumber, caseNumber: effectiveCaseNumber };
       await upsertOffer(snap as any);
       // Lokale Kopie als Fallback weiter pflegen
       try {

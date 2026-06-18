@@ -81,6 +81,7 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
   const [payDown, setPayDown] = useState<string>('');
   const [payTerm, setPayTerm] = useState<number>(24);
   const [linkedOfferNr, setLinkedOfferNr] = useState<string>('');
+  const [caseNumber, setCaseNumber] = useState<string | null>(order?.case_number || null);
 
   useEffect(() => {
     let cancelled = false;
@@ -103,7 +104,7 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
       if (!customer?.id) return;
       const { data } = await supabase
         .from('offers')
-        .select('offer_number, status, total_gross, payload, created_at')
+        .select('offer_number, status, total_gross, payload, case_number, created_at')
         .eq('customer_id', customer.id)
         .in('status', ['order', 'signed', 'draft'])
         .order('created_at', { ascending: false })
@@ -116,9 +117,11 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
         return da - db;
       });
       const pick: any = ranked[0];
+      setLinkedOfferNr(pick?.offer_number || '');
+      // Stammnummer vom besten passenden Angebot übernehmen, falls Auftrag noch keine hat
+      if (!caseNumber && pick?.case_number) setCaseNumber(pick.case_number);
       const p = (pick?.payload as any)?.payment;
       if (!p) return;
-      setLinkedOfferNr(pick.offer_number || '');
       if (p.type) setPayType(p.type as PayType);
       if (typeof p.price === 'number') setPayPrice(String(p.price));
       else if (target) setPayPrice(String(target));
@@ -157,11 +160,24 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
     }
     setGenerating(true);
     try {
-      // Zentrale Nummer ziehen (atomar). Bei inaktivem Kreis fällt der Helper
-      // auf den lokalen Vorschauwert zurück – ist auch dieser leer, bleibt die
-      // ursprüngliche Auftragsnummer als Referenz erhalten.
-      const abNr = await nextNumber('order', () => confirmationNumber || String(order?.order_number || ''));
+      // Zentrale Nummer ziehen (atomar). Wenn der Kreis 'order' an die
+      // Vorgangs-Stammnummer gekoppelt ist, wird die Stammnummer als Suffix
+      // verwendet. Bei inaktivem Kreis fällt der Helper auf die ursprüngliche
+      // Auftragsnummer zurück.
+      const abNr = await nextNumber(
+        'order',
+        () => confirmationNumber || String(order?.order_number || ''),
+        { caseNumber },
+      );
       if (abNr && abNr !== confirmationNumber) setConfirmationNumber(abNr);
+
+      // Stammnummer auf dem Auftrag persistieren, damit Lieferschein, Rechnung
+      // usw. dieselbe Vorgangsnummer erben.
+      if (caseNumber && order?.id && !order?.case_number) {
+        try {
+          await supabase.from('orders').update({ case_number: caseNumber } as any).eq('id', order.id);
+        } catch { /* nicht kritisch */ }
+      }
 
       const doc = createPDF({ unit: 'mm', format: 'a4' });
       const PAGE_W = 210;
