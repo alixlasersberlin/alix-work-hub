@@ -426,16 +426,20 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
     } else {
       // Sperre: Pro Auftrag entweder Lager-Reservierung ODER Bestellung.
       if (selectedOrder?.id) {
-        const { data: reservedDev } = await supabase
+        const { data: reservedDevs } = await supabase
           .from('lager_devices')
-          .select('serial_number, model_name')
-          .eq('reserved_order_id', selectedOrder.id)
-          .limit(1)
-          .maybeSingle();
-        if (reservedDev) {
+          .select('serial_number, model_name, notes')
+          .eq('reserved_order_id', selectedOrder.id);
+        // Leihgeräte schließen eine Bestellung NICHT aus — sie sind nur temporär verliehen.
+        const blocker = (reservedDevs ?? []).find((d: any) => {
+          const n = d.notes ?? '';
+          const isLeih = n.includes('[Typ: Leihgerät]') || n.includes('[Leihgerät]');
+          return !isLeih;
+        });
+        if (blocker) {
           setSaving(false);
           toast.error(
-            `Bestellung nicht möglich: Für Auftrag ${selectedOrder.order_number} ist bereits ein Lagergerät reserviert (${reservedDev.model_name} · SN ${reservedDev.serial_number}). Bitte zuerst die Reservierung im Lager aufheben.`,
+            `Bestellung nicht möglich: Für Auftrag ${selectedOrder.order_number} ist bereits ein Lagergerät reserviert (${blocker.model_name} · SN ${blocker.serial_number}). Bitte zuerst die Reservierung im Lager aufheben.`,
           );
           return null;
         }
