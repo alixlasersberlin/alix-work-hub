@@ -110,17 +110,19 @@ export default function Login() {
               />
             </div>
 
-            <Turnstile
-              theme="dark"
-              onToken={setCaptchaToken}
-              onExpire={() => setCaptchaToken('')}
-            />
+            {!isBypass && (
+              <Turnstile
+                theme="dark"
+                onToken={setCaptchaToken}
+                onExpire={() => setCaptchaToken('')}
+              />
+            )}
 
             {error && (
               <p className="text-sm text-destructive bg-destructive/10 rounded-lg p-3">{error}</p>
             )}
 
-            <Button type="submit" disabled={loading || !captchaToken} className="w-full gold-gradient font-semibold">
+            <Button type="submit" disabled={loading || (!isBypass && !captchaToken)} className="w-full gold-gradient font-semibold">
               {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               Anmelden
             </Button>
