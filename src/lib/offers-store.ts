@@ -81,6 +81,7 @@ export async function upsertOffer(snap: OfferSnapshot): Promise<void> {
 
   const row: any = {
     offer_number: snap.offerNumber,
+    case_number: snap.caseNumber || null,
     offer_date: snap.offerDate || null,
     valid_until: snap.validUntil || null,
     customer_id: snap.customer?.id || null,
