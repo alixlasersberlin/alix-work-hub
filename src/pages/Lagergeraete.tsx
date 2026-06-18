@@ -765,6 +765,45 @@ export default function Lagergeraete({
 
   const markAsDelivered = (d: LagerDevice) => setDeliverDevice(d);
 
+  const performReleaseReservation = async (d: LagerDevice) => {
+    if (!d.reserved_order_id) return;
+    setReleasing(true);
+    try {
+      const orderId = d.reserved_order_id;
+      const { error } = await supabase
+        .from('lager_devices')
+        .update({ reserved_order_id: null, reservation_week: null })
+        .eq('id', d.id);
+      if (error) {
+        toast.error('Fehler: ' + error.message);
+        return;
+      }
+      // Auto-Tourenplan entfernen, falls kein anderes Gerät mehr für diesen Auftrag reserviert
+      const { data: stillReserved } = await supabase
+        .from('lager_devices')
+        .select('id')
+        .eq('reserved_order_id', orderId)
+        .limit(1);
+      if (!stillReserved || stillReserved.length === 0) {
+        await supabase
+          .from('route_plans')
+          .delete()
+          .eq('order_id', orderId)
+          .is('planned_date', null);
+      }
+      setDevices((prev) => prev.map((x) => x.id === d.id
+        ? { ...x, reserved_order_id: null, reservation_week: null, orders: null }
+        : x,
+      ));
+      toast.success(`Reservierung für ${d.serial_number} aufgehoben — Gerät wieder verfügbar.`);
+    } finally {
+      setReleasing(false);
+    }
+  };
+
+  const releaseReservation = (d: LagerDevice) => setReleaseDevice(d);
+
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
