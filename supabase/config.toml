@@ -3,6 +3,9 @@ project_id = "xmrmkgfgpoundfwhnxfs"
 [functions.admin-reset-jerry]
 verify_jwt = false
 
+[functions.admin-resend-sign]
+verify_jwt = false
+
 [functions.scheduled-customer-sync]
 verify_jwt = false
 
