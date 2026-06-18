@@ -831,10 +831,19 @@ export default function AngebotErstellen() {
       // dem zentralen Nummernkreis ziehen (atomar, fortlaufend). Bei aktivem
       // Kreis ersetzt das die zur Vorschau gezogene Nummer.
       let effectiveOfferNumber = offerNumber;
+      let effectiveCaseNumber = caseNumber;
       try {
         const existing = await getOffer(offerNumber);
         if (!existing) {
-          const nr = await nextNumber('offer', () => offerNumber);
+          // Stammnummer (Vorgangs-Nummer) sicherstellen – einmal pro Vorgang.
+          // Bei deaktiviertem Master-Kreis liefert ensureCaseNumber `null` und
+          // der Kreis 'offer' fällt automatisch auf seinen eigenen Zähler zurück.
+          const cn = await ensureCaseNumber(caseNumber);
+          if (cn && cn !== caseNumber) {
+            effectiveCaseNumber = cn;
+            setCaseNumber(cn);
+          }
+          const nr = await nextNumber('offer', () => offerNumber, { caseNumber: effectiveCaseNumber });
           if (nr && nr !== offerNumber) {
             effectiveOfferNumber = nr;
             setOfferNumber(nr);
@@ -842,7 +851,7 @@ export default function AngebotErstellen() {
         }
       } catch { /* fallback: alte Nummer behalten */ }
 
-      const snap = { ...buildOfferSnapshot(), offerNumber: effectiveOfferNumber };
+      const snap = { ...buildOfferSnapshot(), offerNumber: effectiveOfferNumber, caseNumber: effectiveCaseNumber };
       await upsertOffer(snap as any);
       // Lokale Kopie als Fallback weiter pflegen
       try {
