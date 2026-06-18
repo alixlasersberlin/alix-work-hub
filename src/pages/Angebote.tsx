@@ -193,7 +193,7 @@ export default function Angebote() {
                         </span>
                       ) : (
                         <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${isOrder ? 'bg-primary/10 text-primary' : 'bg-secondary text-muted-foreground'}`}>
-                          {isOrder ? 'Als Auftrag übernommen' : 'Entwurf'}
+                          {isOrder ? 'Als Auftrag übernommen' : 'Angebot offen'}
                         </span>
                       )}
                     </TableCell>
