@@ -471,6 +471,7 @@ function AppRoutes() {
           <Route path="/operation/logfiles" element={<ProtectedRoute requiredRoles={SYSTEM_ROLES}><Logfiles /></ProtectedRoute>} />
           <Route path="/operation/email-vorlagen" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><EmailTemplates /></ProtectedRoute>} />
           <Route path="/operation/systemwartung" element={<ProtectedRoute requiredRoles={['Super Admin']}><Systemwartung /></ProtectedRoute>} />
+          <Route path="/operation/nummernkreise" element={<ProtectedRoute requiredRoles={['Super Admin']}><Nummernkreise /></ProtectedRoute>} />
           <Route path="/mandanten" element={<ProtectedRoute requiredRoles={['Super Admin']}><Mandanten /></ProtectedRoute>} />
           <Route path="/konzern/dashboard" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><KonzernDashboard /></ProtectedRoute>} />
           <Route path="/operation/alixsmart-migration" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><AlixSmartMigration /></ProtectedRoute>} />
