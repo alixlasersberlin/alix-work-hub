@@ -1,84 +1,111 @@
+
 ## Ziel
 
-Visuelles Refresh auf „Aurora 2.0" (Light + Dark, Inter, Glass, mehr Whitespace) ohne jede Änderung an Routen, Datenbank, RLS, Edge Functions, Rollen, Business-Logik oder Seitenstruktur.
+Ein neuer Menüpunkt **„Nummernkreise"** unter **OPERATIONS** (nur Super Admin), über den die Start-/Folgenummern aller Vorgangs- und Dokumentarten zentral gepflegt werden. Wird ein Kreis aktiviert, vergeben alle System-Stellen (UI, Edge Functions, PDFs) ab diesem Zeitpunkt Nummern aus diesem Kreis.
 
-## Scope Phase 1 (dieser Schritt)
+## Erfasste Dokument-/Vorgangsarten (initial)
 
-1. **Design-Foundation**
-   - Neuer Theme-Token-Layer `aurora2` zusätzlich zu vorhandenen Themes (Black/Gold, theme-neo bleiben unangetastet als Fallback).
-   - Tokens in `src/index.css` unter `[data-theme="aurora2"]` und `[data-theme="aurora2-dark"]` exakt wie im Prompt: `--background`, `--card`, `--foreground`, `--muted-foreground`, `--border`, `--primary` (#2563EB / #60A5FA), `--success`, `--warning`, `--destructive`.
-   - Glass-Tokens: `--glass-bg`, `--glass-border`, `--shadow-elegant`.
-   - Spacing/Radius-Skala: `--radius` 14px (Forms) / 24px (Sidebar), Container `max-w-[1600px]`.
-   - Inter Variable via Google Fonts in `index.html`, in `tailwind.config.ts` als `font-sans` mit `system-ui, -apple-system, "SF Pro Display"` Fallback.
-   - Typo-Klassen: `text-h1/h2/h3/body/small/label` mit den geforderten Größen + 150% line-height.
-   - `useTheme` erweitert um Variante `aurora2` + `aurora2-dark`, persistiert in localStorage; Black/Gold bleibt wählbar.
+| Code            | Bezeichnung                       | Beispiel-Format          |
+|-----------------|-----------------------------------|--------------------------|
+| `offer`         | Angebot                           | `ANG-{YYYY}-{00000}`     |
+| `order`         | Auftragsbestätigung               | `AB-{YYYY}-{00000}`      |
+| `delivery_note` | Lieferschein                      | `LS-{YYYY}-{00000}`      |
+| `invoice`       | Rechnung                          | `RG-{YYYY}-{00000}`      |
+| `credit_note`   | Gutschrift                        | `GU-{YYYY}-{00000}`      |
+| `repair`        | Reparaturauftrag                  | `REP-{YYYY}-{000000}`    |
+| `repair_quote`  | Reparatur-Kostenvoranschlag       | `KV-{YYYY}-{00000}`      |
+| `work_order`    | Werkstattauftrag                  | `WA-{YYYY}-{00000}`      |
+| `ticket`        | Support-Ticket                    | `TKT-{YYYY}-{000000}`    |
+| `production`    | Produktionsauftrag                | `PRD-{YYYY}-{00000}`     |
+| `purchase`      | Bestellung Lieferant              | `BST-{YYYY}-{00000}`     |
+| `goods_receipt` | Wareneingang                      | `WE-{YYYY}-{00000}`      |
+| `bank_request`  | Finanzierungsantrag               | `FIN-{YYYY}-{00000}`     |
+| `sepa_run`      | SEPA-Lauf                         | `SEPA-{YYYY}-{00000}`    |
+| `reminder`      | Mahnung                           | `MA-{YYYY}-{00000}`      |
+| `bug`           | Bug-Report (QM)                   | `BUG-{YYYY}-{00000}`     |
+| `capa`          | CAPA                              | `CAPA-{YYYY}-{00000}`    |
+| `audit`         | Audit-Finding                     | `AUD-{YYYY}-{00000}`     |
+| `pdf_security`  | PDF-Security-ID                   | `SEC-{YYYY}-{HEX8}`      |
 
-2. **Sidebar Aurora 2.0**
-   - Neue Komponente `src/components/AuroraSidebar.tsx`, gleiches `navItems`-Array wie heutiges `AppLayout` (keine Route ändern).
-   - 280px breit, floating, `rounded-3xl`, Glass-Surface, gruppiert nach: Dashboard, Sales, Customers, Devices, Tickets, Service Center, Academy, Finance, Administration, AI Center.
-   - Aktiver Eintrag: blauer Glow + linke 3px-Statuslinie.
-   - Hover: 150ms ease-out fade + leichtes scale-[1.01].
-   - Kollabierbar auf 72px (Icon-Only) via shadcn `SidebarProvider` Pattern.
-   - `AppLayout` wird so umgebaut, dass es bei aktivem `aurora2`-Theme die neue Sidebar rendert, sonst die alte. Damit ist Rollback ein 1-Zeilen-Toggle.
+Liste erweiterbar — neue Codes werden über Migration nachgepflegt.
 
-3. **Dashboard Aurora 2.0**
-   - Nur `src/pages/Dashboard.tsx` betroffen.
-   - Header-Band: Begrüßung („Guten Morgen, {Vorname}"), Datum, Schnellaktionen (Neue Anfrage, Neuer Auftrag, Suche).
-   - 12-Spalten-Grid, `gap-6`, Max-Breite 1600px.
-   - KPI-Karten (existierende Datenquellen, nichts neu abfragen): Umsatz, Geräte, Tickets, Kunden, Wartungen, Garantien, Offene Aufgaben. Jede Karte: Icon, Wert, Trend-Pill (↑/↓ %), Sparkline (recharts, bereits installiert).
-   - Activity-Feed + Timeline-Sektion nutzen vorhandene Datenhooks; nur Präsentation neu.
-   - Framer Motion `fade-in`/`scale-in` 200ms beim Mount, keine durchgehenden Loops.
+## Datenmodell
 
-4. **Globale Cmd+K-Suche**
-   - Neue Komponente `src/components/CommandPalette.tsx` auf Basis von shadcn `Command` (bereits in `components/ui/command.tsx`).
-   - Trigger: globaler Hotkey `⌘K`/`Ctrl+K`, im neuen Header sichtbarer Suchbutton mit Shortcut-Hint.
-   - Quellen (alle bestehende Tabellen, keine neuen):
-     - `customers` (name, company_name, email)
-     - `lager_devices` (serial_number, model)
-     - `tickets` (subject, ticket_number)
-     - `zoho_invoices` (invoice_number, customer_name)
-     - `academy_sessions` (title)
-     - `order_documents` (file_name)
-   - Debounced `ilike`-Queries (300ms), je Quelle Limit 5, gruppiert dargestellt.
-   - Treffer routen über `useNavigate` auf die existierenden Detail-Routen — keine neue Route, keine neue Edge Function.
-   - Respektiert RLS automatisch (Queries laufen mit User-Token).
+Neue Tabelle `public.number_ranges` (Super-Admin-only):
 
-5. **Accessibility**
-   - Font-Scale-Switcher S/M/L/XL existiert bereits (`useFontScale`); nur ins neue Header-Menü integrieren.
-   - Alle neuen interaktiven Elemente: `aria-label` bei Icon-Buttons, `focus-visible:ring-2 ring-primary`, Tap-Targets ≥ 44px.
+```text
+code            text PK         -- z. B. "offer"
+label           text            -- "Angebot"
+prefix          text            -- "ANG"
+separator       text DEFAULT '-' 
+include_year    boolean         -- true → JJJJ-Bestandteil
+padding         int             -- Stellenanzahl Zähler (z. B. 5)
+current_value   bigint          -- letzter vergebener Wert
+start_value     bigint          -- konfigurierter Startwert
+reset_yearly    boolean
+last_reset_year int
+active          boolean         -- AN = systemweit nutzen
+format_hint     text            -- Live-Preview-Beispiel, generiert
+notes           text
+updated_at/by   …
+```
 
-## Out of Scope (spätere Phasen, hier explizit NICHT enthalten)
+Plus zentrale RPC `public.next_document_number(p_code text)`:
+- atomar (Row-Lock via `FOR UPDATE`)
+- führt Jahresreset durch, wenn `reset_yearly`
+- erhöht `current_value`, gibt formatierten String zurück
+- ist `active=false` → liefert `NULL` (Aufrufer behält Legacy-Logik)
 
-- Tabellen, Formulare, AI Center, Finance-Cockpits, Mobile-PWA — diese ziehen automatisch über die neuen semantischen Tokens nach, strukturell unverändert.
-- Heatmaps und neue Diagrammtypen.
-- Keine Migration, keine Edge Function, keine RLS-Policy-Änderung.
+Plus Helper `public.peek_document_number(p_code text)` für Vorschau ohne Increment.
 
-## Garantien
+## Frontend
 
-- `supabase/migrations/**` wird **nicht** angefasst.
-- `supabase/functions/**` wird **nicht** angefasst.
-- `App.tsx`-Routen bleiben Zeichen-identisch.
-- Bestehende Themes (`black-gold`, `theme-neo`, alle DesignVariants) bleiben funktionsfähig und per Switcher wählbar; Aurora 2.0 wird neuer **Default für neue Sessions**, alte Auswahl wird respektiert.
-- Rollback: ein Token-Wechsel im `useTheme`-Default reicht.
+### Neuer Menüeintrag
+
+`src/components/AppLayout.tsx` → OPERATIONS-Children um  
+`{ path: '/operation/nummernkreise', label: 'Nummernkreise', icon: Hash, roles: ['Super Admin'] }` ergänzen.
+
+### Neue Seite `src/pages/operation/Nummernkreise.tsx`
+
+- Tabelle aller Kreise mit Spalten: Aktiv (Switch), Code, Bezeichnung, Präfix, Jahr inkl., Padding, Startwert, aktueller Wert, Beispiel-Vorschau, Bearbeiten.
+- „Bearbeiten" öffnet Dialog (Präfix, Jahr, Padding, Startwert, Reset jährlich, Notizen). Live-Preview wird beim Tippen aktualisiert.
+- Schalter „Aktiv" speichert sofort und zeigt Toast „Nummernkreis ist jetzt systemweit aktiv".
+- Sicherheits-Hinweisbox: Änderungen am Startwert nur möglich, wenn `current_value <= start_value` (sonst Bestätigungsdialog mit Risiko-Hinweis).
+
+### Helper `src/lib/number-ranges.ts`
+
+```text
+export async function nextNumber(code: string, fallback: () => string): Promise<string>
+export async function peekNumber(code: string): Promise<string | null>
+```
+
+`nextNumber` ruft RPC; bei `null` (inaktiv) oder Fehler → `fallback()`. So bleibt das System rückwärtskompatibel.
+
+### Aufrufer umstellen (Phase 1, sichtbarste Stellen)
+
+- `src/pages/AngebotErstellen.tsx` → `nextNumber('offer', legacyAngebot)`
+- `src/components/OrderConfirmationTab.tsx` → `nextNumber('order', () => order.order_number)`
+- `src/components/DeliveryNoteTab.tsx` → `nextNumber('delivery_note', …)`
+- Repair-/Quote-/Work-Order-PDFs (`src/lib/repair/*`)
+- `src/lib/pdf-utils.ts` (Security-ID `SEC-…`) → `nextNumber('pdf_security', randomHex)`
+
+Weitere Stellen werden im Anschluss in derselben Form nachgezogen — der Helper ist die einzige Schnittstelle.
+
+## Rechte / RLS
+
+- `number_ranges`: nur `Super Admin` darf SELECT/UPDATE; `authenticated` darf RPC `next_document_number` aufrufen, jedoch nicht direkt auf die Tabelle zugreifen.
+- RPC `SECURITY DEFINER`, `search_path = public`.
 
 ## Technische Details
 
-- Dateien neu: `src/components/AuroraSidebar.tsx`, `src/components/AuroraHeader.tsx`, `src/components/CommandPalette.tsx`, `src/styles/aurora2.css`.
-- Dateien editiert (minimal): `src/index.css` (Import + ein Theme-Block), `src/hooks/useTheme.tsx` (neue Variante), `src/components/AppLayout.tsx` (Theme-Switch zwischen alter/neuer Sidebar+Header), `src/pages/Dashboard.tsx` (Layout-Refactor, gleiche Datenhooks), `tailwind.config.ts` (Font, Typo-Klassen), `index.html` (Inter-Link).
-- Recharts und framer-motion sind bereits installiert — keine neuen Dependencies.
+- Migration legt Tabelle, GRANTs, RLS und Seed-Zeilen für alle oben gelisteten Codes an (mit aktuellen Werten = 0, `active = false`, damit zunächst Legacy-Logik weiterläuft).
+- Edge Functions (`order-confirmation-pdf`, `convert-signed-offer-to-order`, `alix-sign-create` etc.) verwenden den RPC über den Service-Role-Client.
+- UI-Komponente nutzt vorhandene Infinity-/Card-Styles, keine neuen Design-Tokens.
 
-```text
-┌─────────────────────────────────────────────────────────────┐
-│  AuroraHeader  ⌘K Search    Tenant   Notif   User   Theme   │
-├──────────┬──────────────────────────────────────────────────┤
-│ Sidebar  │  Dashboard                                       │
-│ 280px    │  ┌─── Welcome ─────────────── Quick Actions ──┐  │
-│ floating │  └────────────────────────────────────────────┘  │
-│ glass    │  ┌── KPI ──┐ ┌── KPI ──┐ ┌── KPI ──┐ ┌── KPI ──┐ │
-│ rounded  │  └─────────┘ └─────────┘ └─────────┘ └─────────┘ │
-│ groups   │  ┌──── Activity Feed ────┐ ┌── Timeline ──────┐  │
-│          │  └────────────────────────┘ └──────────────────┘ │
-└──────────┴──────────────────────────────────────────────────┘
-```
+## Lieferumfang dieses Schritts
 
-Nach Phase 1 prüfen wir gemeinsam visuell, dann gehen Tabellen / Forms / AI Center in Phase 2.
+1. Migration `number_ranges` + RPC + Seeds.
+2. Sidebar-Eintrag + Route.
+3. Seite `Nummernkreise.tsx` (Liste, Edit-Dialog, Aktiv-Schalter, Vorschau).
+4. Helper `src/lib/number-ranges.ts`.
+5. Erste Integration: **Angebot**, **Auftragsbestätigung**, **PDF-Security-ID** (sofort sichtbarer Effekt). Weitere Module folgen in Folge-Iterationen auf Zuruf.

@@ -7519,6 +7519,60 @@ export type Database = {
         }
         Relationships: []
       }
+      number_ranges: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          current_value: number
+          include_year: boolean
+          label: string
+          last_reset_year: number | null
+          notes: string | null
+          padding: number
+          prefix: string
+          reset_yearly: boolean
+          separator: string
+          start_value: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          current_value?: number
+          include_year?: boolean
+          label: string
+          last_reset_year?: number | null
+          notes?: string | null
+          padding?: number
+          prefix?: string
+          reset_yearly?: boolean
+          separator?: string
+          start_value?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          current_value?: number
+          include_year?: boolean
+          label?: string
+          last_reset_year?: number | null
+          notes?: string | null
+          padding?: number
+          prefix?: string
+          reset_yearly?: boolean
+          separator?: string
+          start_value?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       offers: {
         Row: {
           created_at: string
@@ -12501,6 +12555,17 @@ export type Database = {
         }
         Returns: undefined
       }
+      format_document_number: {
+        Args: {
+          _include_year: boolean
+          _padding: number
+          _prefix: string
+          _separator: string
+          _value: number
+          _year: number
+        }
+        Returns: string
+      }
       get_table_columns: { Args: { _table: string }; Returns: string[] }
       has_role: { Args: { check_role: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
@@ -12521,6 +12586,7 @@ export type Database = {
         Args: { _duplicate_ids: string[]; _primary_id: string }
         Returns: Json
       }
+      next_document_number: { Args: { p_code: string }; Returns: string }
       notify_customer_event: {
         Args: {
           _customer_name: string
@@ -12534,6 +12600,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      peek_document_number: { Args: { p_code: string }; Returns: string }
       recompute_device_health: { Args: { _serial: string }; Returns: undefined }
       refresh_warranty_and_maintenance_status: {
         Args: never
