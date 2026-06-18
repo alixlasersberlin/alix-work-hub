@@ -158,7 +158,7 @@ export default function BestellungenDashboard() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           <button onClick={() => setFilter('all')} className="text-left"><KpiTile label="Aufträge gesamt" value={kpis.total} icon={ListOrdered} accent="sky" /></button>
           <button onClick={() => setFilter('deposit_open')} className="text-left"><KpiTile label="Anzahlung offen" value={kpis.depositOpen} icon={Clock} accent="rose" /></button>
-          <button onClick={() => setFilter('deposit_ok_no_order')} className="text-left"><KpiTile label="Anzahlung OK · offen" value={kpis.canOrder} icon={CheckCircle2} accent="gold" /></button>
+          <button onClick={() => setFilter('deposit_ok_no_order')} className="text-left"><KpiTile label="BESTELLUNG OFFEN" value={kpis.canOrder} icon={CheckCircle2} accent="gold" /></button>
           <button onClick={() => setFilter('ordered')} className="text-left"><KpiTile label="Bestellt" value={kpis.ordered} icon={Factory} accent="emerald" /></button>
           <KpiTile label="Anzahlung OK gesamt" value={kpis.depositOk} icon={CheckCircle2} accent="violet" />
           <button onClick={() => setFilter('vip')} className="text-left"><KpiTile label="VIP" value={kpis.vip} icon={Crown} accent="gold" /></button>
