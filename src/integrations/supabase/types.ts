@@ -7519,6 +7519,66 @@ export type Database = {
         }
         Relationships: []
       }
+      offers: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          created_by_name: string | null
+          customer_email: string | null
+          customer_id: string | null
+          customer_name: string | null
+          id: string
+          offer_date: string | null
+          offer_number: string
+          payload: Json
+          signed_at: string | null
+          status: string
+          total_gross: number | null
+          total_net: number | null
+          total_tax: number | null
+          updated_at: string
+          valid_until: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          offer_date?: string | null
+          offer_number: string
+          payload?: Json
+          signed_at?: string | null
+          status?: string
+          total_gross?: number | null
+          total_net?: number | null
+          total_tax?: number | null
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          offer_date?: string | null
+          offer_number?: string
+          payload?: Json
+          signed_at?: string | null
+          status?: string
+          total_gross?: number | null
+          total_net?: number | null
+          total_tax?: number | null
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
       order_additional_deposits: {
         Row: {
           amount: number

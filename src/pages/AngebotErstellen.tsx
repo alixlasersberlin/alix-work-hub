@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import templateAsset from '@/assets/angebot-template.jpg.asset.json';
+import { upsertOffer, getOffer } from '@/lib/offers-store';
 
 type LineItem = {
   id: string;
@@ -138,14 +139,18 @@ export default function AngebotErstellen() {
       setItems(i ?? []);
       setLoading(false);
 
-      // Edit-Modus: Angebot aus localStorage laden, wenn ?edit=<offerNumber>
+      // Edit-Modus: Angebot aus DB laden, wenn ?edit=<offerNumber>
       try {
         const params = new URLSearchParams(window.location.search);
         const editKey = params.get('edit');
         if (editKey) {
-          const rawList = localStorage.getItem('alix_angebote_v1');
-          const list = rawList ? JSON.parse(rawList) : [];
-          const snap = list.find((o: any) => o.offerNumber === editKey);
+          let snap: any = await getOffer(editKey);
+          if (!snap) {
+            // Fallback: alte Daten aus localStorage
+            const rawList = localStorage.getItem('alix_angebote_v1');
+            const list = rawList ? JSON.parse(rawList) : [];
+            snap = list.find((o: any) => o.offerNumber === editKey);
+          }
           if (snap) {
             setOfferNumber(snap.offerNumber);
             if (snap.offerDate) setOfferDate(snap.offerDate);
@@ -787,18 +792,22 @@ export default function AngebotErstellen() {
     createdAt: new Date().toISOString(),
   });
 
-  const saveOffer = (silent = false): boolean => {
+  const saveOffer = async (silent = false): Promise<boolean> => {
     if (!selectedCustomer) { toast.error('Bitte zuerst einen Kunden auswählen.'); return false; }
     const validLines = lines.filter(l => l.name && l.quantity > 0);
     if (validLines.length === 0) { toast.error('Bitte mindestens eine Position erfassen.'); return false; }
     try {
-      const KEY = 'alix_angebote_v1';
-      const raw = localStorage.getItem(KEY);
-      const list = raw ? JSON.parse(raw) : [];
       const snap = buildOfferSnapshot();
-      const idx = list.findIndex((o: any) => o.offerNumber === offerNumber);
-      if (idx >= 0) list[idx] = snap; else list.unshift(snap);
-      localStorage.setItem(KEY, JSON.stringify(list));
+      await upsertOffer(snap as any);
+      // Lokale Kopie als Fallback weiter pflegen
+      try {
+        const KEY = 'alix_angebote_v1';
+        const raw = localStorage.getItem(KEY);
+        const list = raw ? JSON.parse(raw) : [];
+        const idx = list.findIndex((o: any) => o.offerNumber === offerNumber);
+        if (idx >= 0) list[idx] = snap; else list.unshift(snap);
+        localStorage.setItem(KEY, JSON.stringify(list));
+      } catch {}
       if (!silent) toast.success('Angebot gespeichert. Zu finden unter Sales Management → Angebote.');
       return true;
     } catch (e: any) {
@@ -813,7 +822,7 @@ export default function AngebotErstellen() {
     if (!email) { toast.error('Kunde hat keine E-Mail-Adresse hinterlegt.'); return; }
     const doc = await buildPDF();
     if (!doc) return;
-    saveOffer(true);
+    await saveOffer(true);
     const pdfBase64 = doc.output('datauristring').split(',')[1];
     const contactName = selectedCustomer.contact_name || selectedCustomer.company_name || 'Damen und Herren';
     const textBody = `Sehr geehrte/r ${contactName},\n\nanbei unser Angebot ${offerNumber} vom ${new Date(offerDate).toLocaleDateString('de-DE')}.\n\nGesamtbetrag: ${fmtMoney(totals.gross)}${validUntil ? `\nGültig bis: ${new Date(validUntil).toLocaleDateString('de-DE')}` : ''}\n\nBei Rückfragen stehen wir Ihnen gerne zur Verfügung.\n\nMit freundlichen Grüßen\nIhr Alix-Team`;
@@ -843,7 +852,7 @@ export default function AngebotErstellen() {
     if (!selectedCustomer) { toast.error('Bitte zuerst einen Kunden auswählen.'); return; }
     const email = selectedCustomer.email;
     if (!email) { toast.error('Kunde hat keine E-Mail-Adresse hinterlegt.'); return; }
-    if (!saveOffer(true)) return;
+    if (!(await saveOffer(true))) return;
     const t = toast.loading('Alix Sign Anfrage wird erstellt...');
     try {
       const snap = buildOfferSnapshot();
@@ -1493,7 +1502,7 @@ export default function AngebotErstellen() {
         <Button
           variant="outline"
           className="gap-2 border-border"
-          onClick={() => saveOffer()}
+          onClick={() => { saveOffer(); }}
         >
           <Save className="w-4 h-4" />
           Speichern
@@ -1501,7 +1510,7 @@ export default function AngebotErstellen() {
         <Button
           variant="outline"
           className="gap-2 border-border"
-          onClick={() => { if (saveOffer()) navigate('/verkauf/angebote'); }}
+          onClick={async () => { if (await saveOffer()) navigate('/verkauf/angebote'); }}
         >
           <Save className="w-4 h-4" />
           Speichern + Schließen
