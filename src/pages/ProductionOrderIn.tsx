@@ -32,6 +32,7 @@ interface Row {
 }
 
 export default function ProductionOrderIn() {
+  const navigate = useNavigate();
   const { roles } = useAuth();
   const isAdmin = roles.includes('Admin') || roles.includes('Super Admin');
   const [rows, setRows] = useState<Row[]>([]);
