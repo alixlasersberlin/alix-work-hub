@@ -223,7 +223,7 @@ Deno.serve(async (req) => {
       } catch (reason: any) {
         results.push({ status: 'rejected', reason } as PromiseRejectedResult)
       }
-      if (i < recipients.length - 1) await sleep(400)
+      if (i < recipients.length - 1) await sleep(1200)
     }
 
     const failures = results
