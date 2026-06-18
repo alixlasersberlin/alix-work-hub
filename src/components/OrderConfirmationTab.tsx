@@ -1,0 +1,353 @@
+import { useMemo, useState } from 'react';
+import { FileCheck2, FileDown, Loader2, Mail } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
+import { createPDF } from '@/lib/pdf-utils';
+import autoTable from 'jspdf-autotable';
+import templateAsset from '@/assets/angebot-template.jpg.asset.json';
+
+interface Props {
+  order: any;
+  customer: any;
+  items: any[];
+}
+
+const fmtMoney = (n: number, currency = 'EUR') =>
+  (Number(n) || 0).toLocaleString('de-DE', { style: 'currency', currency });
+
+const fmtDate = (d: string | null | undefined) =>
+  d ? new Date(d).toLocaleDateString('de-DE') : '—';
+
+function addrLines(a: any): string[] {
+  if (!a || typeof a !== 'object') return [];
+  const out: string[] = [];
+  const street = a.address || a.street;
+  const street2 = a.street2 || a.address2;
+  const zipCity = [a.zip || a.postal_code || '', a.city || ''].filter(Boolean).join(' ');
+  const country = a.country;
+  if (street) out.push(String(street));
+  if (street2) out.push(String(street2));
+  if (zipCity) out.push(zipCity);
+  if (country) out.push(String(country));
+  return out;
+}
+
+let _tplCache: string | null = null;
+async function loadTemplate(): Promise<string> {
+  if (_tplCache) return _tplCache;
+  const res = await fetch(templateAsset.url);
+  const blob = await res.blob();
+  const data: string = await new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result as string);
+    r.onerror = reject;
+    r.readAsDataURL(blob);
+  });
+  _tplCache = data;
+  return data;
+}
+
+export default function OrderConfirmationTab({ order, customer, items }: Props) {
+  const [confirmDate, setConfirmDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
+  const [deliveryWeek, setDeliveryWeek] = useState<string>('');
+  const [notes, setNotes] = useState<string>('Vielen Dank für Ihre Bestellung. Wir bestätigen Ihnen hiermit den Auftrag zu den nachfolgenden Konditionen.');
+  const [generating, setGenerating] = useState(false);
+
+  const currency = order?.currency || 'EUR';
+
+  const totals = useMemo(() => {
+    let net = 0, tax = 0;
+    for (const i of items) {
+      const qty = Number(i.quantity) || 0;
+      const rate = Number(i.rate) || 0;
+      const taxPct = Number(i.tax_percentage) || 0;
+      const lineNet = qty * rate;
+      net += lineNet;
+      tax += lineNet * (taxPct / 100);
+    }
+    const gross = net + tax;
+    // Falls Auftrag bereits Gesamtbetrag hat, diesen bevorzugen (für übernommene Rabatte / Rundung)
+    const orderGross = Number(order?.total_amount);
+    return {
+      net,
+      tax,
+      gross: Number.isFinite(orderGross) && orderGross > 0 ? orderGross : gross,
+    };
+  }, [items, order]);
+
+  async function generate() {
+    if (!items || items.length === 0) {
+      toast.error('Keine Artikel im Auftrag vorhanden.');
+      return;
+    }
+    setGenerating(true);
+    try {
+      const doc = createPDF({ unit: 'mm', format: 'a4' });
+      const PAGE_W = 210;
+      const PAGE_H = 297;
+      const LEFT = 30;
+      const RIGHT = 195;
+      const CONTENT_W = RIGHT - LEFT;
+      const TOP_CONTENT = 55;
+      const BOTTOM_LIMIT = 265;
+
+      const templateUrl = await loadTemplate();
+      const drawTemplate = () => {
+        doc.addImage(templateUrl, 'JPEG', 0, 0, PAGE_W, PAGE_H, undefined, 'FAST');
+      };
+      drawTemplate();
+
+      // Title
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(20);
+      doc.setTextColor(20, 60, 110);
+      doc.text('Auftragsbestätigung', LEFT, TOP_CONTENT);
+
+      // Meta (right side)
+      const metaX = 130;
+      let metaY = TOP_CONTENT;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(60, 60, 60);
+      const meta: Array<[string, string]> = [
+        ['Auftragsnr.', String(order?.order_number || '—')],
+        ['Bestelldatum', fmtDate(order?.order_date)],
+        ['Bestätigt am', fmtDate(confirmDate)],
+        ['Kundennr.', String(customer?.external_customer_id || customer?.id?.slice(0, 8) || '—')],
+      ];
+      if (deliveryWeek) meta.push(['Liefertermin', deliveryWeek]);
+      if (order?.expected_shipment_date) meta.push(['Voraus. Versand', fmtDate(order.expected_shipment_date)]);
+      for (const [k, v] of meta) {
+        doc.setFont('helvetica', 'bold');
+        doc.text(k, metaX, metaY);
+        doc.setFont('helvetica', 'normal');
+        doc.text(v, metaX + 32, metaY);
+        metaY += 5;
+      }
+
+      // Addresses
+      let ay = TOP_CONTENT + 12;
+      const billing = customer?.billing_address || customer?.shipping_address || {};
+      const shipping = customer?.shipping_address || customer?.billing_address || {};
+      const colW = (CONTENT_W - 8) / 2;
+
+      const drawAddress = (title: string, x: number, addr: any) => {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.setTextColor(20, 60, 110);
+        doc.text(title, x, ay);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9.5);
+        doc.setTextColor(40, 40, 40);
+        let y = ay + 5;
+        if (customer?.company_name) { doc.text(String(customer.company_name), x, y); y += 4.4; }
+        if (customer?.contact_name) { doc.text(String(customer.contact_name), x, y); y += 4.4; }
+        for (const ln of addrLines(addr)) { doc.text(ln, x, y); y += 4.4; }
+        if (title.toLowerCase().includes('rechnung')) {
+          if (customer?.email) { doc.text(String(customer.email), x, y); y += 4.4; }
+          if (customer?.phone) { doc.text(String(customer.phone), x, y); y += 4.4; }
+        }
+        return y;
+      };
+
+      const yBilling = drawAddress('Rechnungsadresse', LEFT, billing);
+      const yShipping = drawAddress('Lieferadresse', LEFT + colW + 8, shipping);
+      let cy = Math.max(yBilling, yShipping) + 6;
+
+      // Intro
+      if (notes.trim()) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9.5);
+        doc.setTextColor(60, 60, 60);
+        const wrapped = doc.splitTextToSize(notes.trim(), CONTENT_W);
+        doc.text(wrapped, LEFT, cy);
+        cy += wrapped.length * 4.4 + 4;
+      }
+
+      // Items table
+      autoTable(doc, {
+        startY: cy,
+        margin: { left: LEFT, right: PAGE_W - RIGHT, top: TOP_CONTENT, bottom: PAGE_H - BOTTOM_LIMIT },
+        head: [['Pos', 'Artikel', 'Menge', 'Einzelpreis', 'MwSt', 'Summe']],
+        body: items.map((i, idx) => {
+          const name = String(i.item_name || '—');
+          const sku = i.sku ? ` (${i.sku})` : '';
+          const desc = i.description ? `\n${i.description}` : '';
+          const qty = Number(i.quantity) || 0;
+          const rate = Number(i.rate) || 0;
+          const taxPct = Number(i.tax_percentage) || 0;
+          return [
+            idx + 1,
+            `${name}${sku}${desc}`,
+            qty,
+            fmtMoney(rate, currency),
+            `${taxPct}%`,
+            fmtMoney(qty * rate, currency),
+          ];
+        }),
+        styles: { fontSize: 9, cellPadding: 2, valign: 'top' },
+        headStyles: { fillColor: [183, 217, 255], textColor: [20, 60, 110] },
+        alternateRowStyles: { fillColor: [245, 249, 255] },
+        columnStyles: {
+          0: { cellWidth: 10, halign: 'center' },
+          2: { halign: 'right', cellWidth: 16 },
+          3: { halign: 'right', cellWidth: 25 },
+          4: { halign: 'right', cellWidth: 16 },
+          5: { halign: 'right', cellWidth: 25 },
+        },
+        rowPageBreak: 'auto',
+        willDrawPage: () => {
+          const pageNo = (doc as any).internal.getCurrentPageInfo().pageNumber;
+          if (pageNo > 1) drawTemplate();
+        },
+      });
+
+      let finalY = (doc as any).lastAutoTable.finalY + 8;
+      if (finalY > BOTTOM_LIMIT - 50) {
+        doc.addPage();
+        drawTemplate();
+        finalY = TOP_CONTENT;
+      }
+
+      // Totals box
+      const totalsX = 130;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(60, 60, 60);
+      doc.text('Netto:', totalsX, finalY);
+      doc.text(fmtMoney(totals.net, currency), RIGHT, finalY, { align: 'right' });
+      doc.text('MwSt:', totalsX, finalY + 5);
+      doc.text(fmtMoney(totals.tax, currency), RIGHT, finalY + 5, { align: 'right' });
+      doc.setDrawColor(20, 60, 110);
+      doc.line(totalsX, finalY + 8, RIGHT, finalY + 8);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.setTextColor(20, 60, 110);
+      doc.text('Gesamt:', totalsX, finalY + 14);
+      doc.text(fmtMoney(totals.gross, currency), RIGHT, finalY + 14, { align: 'right' });
+
+      // Confirmation block
+      let py = finalY + 26;
+      if (py > BOTTOM_LIMIT - 20) {
+        doc.addPage();
+        drawTemplate();
+        py = TOP_CONTENT;
+      }
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(20, 60, 110);
+      doc.text('Auftragsbestätigung', LEFT, py);
+      py += 5;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9.5);
+      doc.setTextColor(60, 60, 60);
+      const confirmation =
+        'Wir bestätigen den vorstehend aufgeführten Auftrag verbindlich. Sollten Abweichungen zu Ihrer Bestellung bestehen, ' +
+        'teilen Sie uns dies bitte umgehend schriftlich mit. Es gelten unsere Allgemeinen Geschäftsbedingungen sowie die ' +
+        'getroffenen individuellen Vereinbarungen.';
+      const wrapped = doc.splitTextToSize(confirmation, CONTENT_W);
+      doc.text(wrapped, LEFT, py);
+      py += wrapped.length * 4.6 + 6;
+
+      // Sign-off
+      if (py > BOTTOM_LIMIT - 18) {
+        doc.addPage();
+        drawTemplate();
+        py = TOP_CONTENT;
+      }
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(20, 60, 110);
+      doc.text('Mit freundlichen Grüßen', LEFT, py);
+      py += 5;
+      doc.setFont('helvetica', 'bold');
+      doc.text('Alix Lasers Deutschland', LEFT, py);
+
+      // Page numbers + header on page 2+
+      const orderNo = String(order?.order_number || '');
+      const totalPages = (doc as any).internal.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        if (i > 1) {
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(9);
+          doc.setTextColor(60, 60, 60);
+          doc.text(`Auftragsbestätigung ${orderNo}`, LEFT, TOP_CONTENT - 8);
+          doc.setDrawColor(200, 200, 200);
+          doc.line(LEFT, TOP_CONTENT - 5, RIGHT, TOP_CONTENT - 5);
+        }
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(120, 120, 120);
+        doc.text(
+          `Auftragsbestätigung ${orderNo}  ·  Seite ${i} von ${totalPages}`,
+          RIGHT, PAGE_H - 4, { align: 'right' },
+        );
+      }
+
+      doc.save(`Auftragsbestaetigung_${orderNo || order?.id}.pdf`);
+      toast.success('Auftragsbestätigung erstellt.');
+    } catch (e: any) {
+      toast.error('Fehler: ' + (e?.message || 'Unbekannter Fehler'));
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  return (
+    <div className="rounded-xl border border-border bg-card p-6 card-glow space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-base font-display font-bold text-foreground flex items-center gap-2">
+          <FileCheck2 className="w-4 h-4 text-primary" /> Auftragsbestätigung
+        </h2>
+        <Button
+          onClick={generate}
+          disabled={generating || !items?.length}
+          className="gold-gradient text-primary-foreground"
+        >
+          {generating
+            ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            : <FileDown className="w-4 h-4 mr-2" />}
+          PDF herunterladen
+        </Button>
+      </div>
+
+      <div className="grid sm:grid-cols-3 gap-4">
+        <div>
+          <Label className="text-xs text-muted-foreground">Bestätigungsdatum</Label>
+          <Input type="date" value={confirmDate} onChange={e => setConfirmDate(e.target.value)} className="bg-secondary border-border mt-1" />
+        </div>
+        <div>
+          <Label className="text-xs text-muted-foreground">Liefertermin / KW (optional)</Label>
+          <Input value={deliveryWeek} onChange={e => setDeliveryWeek(e.target.value)} placeholder="z. B. KW 32 / 2026" className="bg-secondary border-border mt-1" />
+        </div>
+        <div className="flex items-end text-xs text-muted-foreground">
+          <div className="rounded-md bg-secondary/60 border border-border px-3 py-2 w-full">
+            <div className="flex items-center gap-2 mb-1">
+              <Mail className="w-3 h-3" /> Empfänger
+            </div>
+            <div className="truncate">{customer?.email || '—'}</div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <Label className="text-xs text-muted-foreground">Einleitungstext</Label>
+        <Textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3} className="bg-secondary border-border mt-1" />
+      </div>
+
+      <div className="rounded-lg border border-border bg-secondary/40 p-4">
+        <div className="text-xs text-muted-foreground mb-2">Vorschau der Eckdaten</div>
+        <div className="grid sm:grid-cols-2 gap-x-6 gap-y-1 text-sm">
+          <div><span className="text-muted-foreground">Auftragsnr.:</span> <span className="font-medium">{order?.order_number || '—'}</span></div>
+          <div><span className="text-muted-foreground">Kunde:</span> <span className="font-medium">{customer?.company_name || customer?.contact_name || '—'}</span></div>
+          <div><span className="text-muted-foreground">Positionen:</span> <span className="font-medium">{items?.length || 0}</span></div>
+          <div><span className="text-muted-foreground">Gesamt:</span> <span className="font-medium">{fmtMoney(totals.gross, currency)}</span></div>
+        </div>
+      </div>
+    </div>
+  );
+}
