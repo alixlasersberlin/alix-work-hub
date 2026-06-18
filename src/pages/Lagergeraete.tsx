@@ -2262,6 +2262,34 @@ export default function Lagergeraete({
           })()}
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={!!releaseDevice} onOpenChange={(o) => !o && !releasing && setReleaseDevice(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reservierung aufheben?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {releaseDevice?.orders?.order_number
+                ? `Die Reservierung von Gerät „${releaseDevice?.serial_number}" für Auftrag ${releaseDevice?.orders?.order_number} wird aufgehoben. Das Gerät steht danach wieder als verfügbar im Lager.`
+                : `Die Reservierung von Gerät „${releaseDevice?.serial_number}" wird aufgehoben. Das Gerät steht danach wieder als verfügbar im Lager.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={releasing}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={releasing}
+              onClick={async (e) => {
+                e.preventDefault();
+                const d = releaseDevice;
+                if (!d) return;
+                await performReleaseReservation(d);
+                setReleaseDevice(null);
+              }}
+            >
+              {releasing ? 'Wird freigegeben…' : 'Ja, freigeben'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
