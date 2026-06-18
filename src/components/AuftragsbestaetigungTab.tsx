@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, FileText, Send, ExternalLink, Inbox } from 'lucide-react';
+import { Loader2, FileText, Send, ExternalLink, Inbox, Download } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Props {
@@ -75,6 +75,26 @@ export default function AuftragsbestaetigungTab({ orderId, customerId, customerE
     }
   };
 
+  const handleDownload = async () => {
+    if (!previewUrl || !selected) return;
+    try {
+      const res = await fetch(previewUrl);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const offerNr = (selected.alix_sign_requests as any)?.offer_number || selected.offer_number || selected.id;
+      a.href = url;
+      a.download = `Auftragsbestaetigung-${offerNr}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e: any) {
+      toast.error('Download fehlgeschlagen: ' + (e?.message || 'Unbekannter Fehler'));
+    }
+  };
+
   if (loading) {
     return (
       <div className="rounded-xl border border-border bg-card p-6 card-glow flex items-center justify-center">
@@ -131,14 +151,23 @@ export default function AuftragsbestaetigungTab({ orderId, customerId, customerE
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <Label className="text-xs text-muted-foreground">Vorschau (mit „Auftragsbestätigung"-Kopfzeile)</Label>
-                <a
-                  href={previewUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-xs text-primary hover:underline inline-flex items-center gap-1"
-                >
-                  In neuem Tab öffnen <ExternalLink className="w-3 h-3" />
-                </a>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleDownload}
+                    className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+                  >
+                    <Download className="w-3 h-3" /> PDF herunterladen
+                  </button>
+                  <a
+                    href={previewUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+                  >
+                    In neuem Tab öffnen <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
               </div>
               <iframe
                 key={previewUrl}
