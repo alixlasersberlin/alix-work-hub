@@ -31,6 +31,7 @@ function rowToSnapshot(row: any): OfferSnapshot {
   return {
     ...payload,
     offerNumber: row.offer_number,
+    caseNumber: row.case_number || payload.caseNumber || null,
     offerDate: row.offer_date || payload.offerDate,
     validUntil: row.valid_until || payload.validUntil,
     customer: payload.customer || (row.customer_name ? { id: row.customer_id, company_name: row.customer_name, email: row.customer_email } : null),
