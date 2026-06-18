@@ -60,19 +60,35 @@ export default function BestellungenDashboard() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await (supabase as any)
+      const { data: ordersData, error: oErr } = await (supabase as any)
         .from('orders')
         .select(`
           id, order_number, internal_number, source_system, order_status, total_amount,
           order_date, expected_shipment_date, salesperson_name,
           deposit_ok, deposit_ok_at, deposit_amount, deposit_additional, deposit_booking_date, is_vip,
           finance_paid_amount, finance_open_amount, finance_payment_status,
-          customers(company_name, contact_name, is_vip),
-          production_orders(id, production_order_number, status, sent_at, approval_status, pdf_path, modellname, farbe, liefertermin, is_reclamation, supplier:suppliers(name))
+          customers(company_name, contact_name, is_vip)
         `)
         .order('order_date', { ascending: false })
         .limit(2000);
-      setRows((data ?? []) as Row[]);
+      if (oErr) console.error('orders error', oErr);
+
+      const orderIds = (ordersData ?? []).map((r: any) => r.id);
+      let poByOrder: Record<string, ProdOrder[]> = {};
+      if (orderIds.length) {
+        const { data: poData, error: pErr } = await (supabase as any)
+          .from('production_orders')
+          .select('id, order_id, production_order_number, status, sent_at, approval_status, pdf_path, modellname, farbe, liefertermin, is_reclamation, supplier:suppliers(name)')
+          .in('order_id', orderIds);
+        if (pErr) console.error('production_orders error', pErr);
+        (poData ?? []).forEach((p: any) => {
+          if (!p.order_id) return;
+          (poByOrder[p.order_id] ||= []).push(p);
+        });
+      }
+
+      const merged = (ordersData ?? []).map((r: any) => ({ ...r, production_orders: poByOrder[r.id] ?? [] }));
+      setRows(merged as Row[]);
       setLoading(false);
     })();
   }, []);
