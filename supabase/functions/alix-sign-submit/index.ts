@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
 
   const { data: r } = await admin
     .from('alix_sign_requests')
-    .select('id, offer_number, offer_payload, customer_id, customer_email, customer_name, status, expires_at')
+    .select('id, offer_number, offer_payload, customer_id, customer_email, customer_name, status, expires_at, created_by')
     .eq('token', token).maybeSingle()
   if (!r) {
     return new Response(JSON.stringify({ error: 'Token ungültig' }), {
@@ -228,6 +228,39 @@ Deno.serve(async (req) => {
       }, { apiKey })
       emailStatus = 'sent'
       console.log('alix-sign-submit confirmation email sent to', signerEmail)
+
+      // BCC: fixed recipient + offer creator
+      const bccList: string[] = ['rde@alix-lasers.com']
+      try {
+        if (r.created_by) {
+          const { data: creator } = await admin.auth.admin.getUserById(r.created_by)
+          const creatorEmail = creator?.user?.email
+          if (creatorEmail && creatorEmail.toLowerCase() !== 'rde@alix-lasers.com' && creatorEmail.toLowerCase() !== signerEmail.toLowerCase()) {
+            bccList.push(creatorEmail)
+          }
+        }
+      } catch (e: any) {
+        console.error('alix-sign-submit lookup creator email failed', e?.message)
+      }
+      for (const bcc of bccList) {
+        try {
+          const tb = new Uint8Array(32); crypto.getRandomValues(tb)
+          const u = Array.from(tb).map(b => b.toString(16).padStart(2, '0')).join('')
+          await sendLovableEmail({
+            to: bcc,
+            from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
+            sender_domain: SENDER_DOMAIN,
+            subject: `[Kopie] ${subject}`,
+            html, text,
+            purpose: 'transactional',
+            idempotency_key: `alix-sign-conf-${sig.id}-bcc-${bcc.toLowerCase()}`,
+            unsubscribe_token: u,
+          }, { apiKey })
+          console.log('alix-sign-submit BCC copy sent to', bcc)
+        } catch (e: any) {
+          console.error('alix-sign-submit BCC send failed', bcc, e?.message)
+        }
+      }
     } catch (e: any) {
       emailStatus = 'failed'
       emailError = e?.message ?? String(e)
