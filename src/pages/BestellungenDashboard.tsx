@@ -70,6 +70,7 @@ export default function BestellungenDashboard() {
           customers(company_name, contact_name, is_vip)
         `)
         .order('order_date', { ascending: false })
+        .not('order_status', 'ilike', 'geliefert')
         .limit(2000);
       if (oErr) console.error('orders error', oErr);
 
