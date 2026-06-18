@@ -15,6 +15,7 @@ import {
   ArrowLeft, ClipboardList, Building2, FileText, History, Loader2, Inbox, Send, Pencil, X, Check, Shield, Package, CalendarIcon, CalendarClock, Truck, Euro, Mail, Landmark, Plus, Trash2, ShoppingCart, ShoppingBag, CheckCircle2, Hash
 } from 'lucide-react';
 import { createRestbestellungMarker, hasPendingRestbestellung } from '@/lib/restbestellung';
+import { sendDepositReceivedNotice } from '@/lib/send-deposit-received-notice';
 import BankFinancingTab from '@/components/BankFinancingTab';
 import AtPurchaseTab from '@/components/AtPurchaseTab';
 import AtApprovalTab from '@/components/AtApprovalTab';
