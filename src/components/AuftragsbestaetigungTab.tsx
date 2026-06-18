@@ -151,14 +151,23 @@ export default function AuftragsbestaetigungTab({ orderId, customerId, customerE
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <Label className="text-xs text-muted-foreground">Vorschau (mit „Auftragsbestätigung"-Kopfzeile)</Label>
-                <a
-                  href={previewUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-xs text-primary hover:underline inline-flex items-center gap-1"
-                >
-                  In neuem Tab öffnen <ExternalLink className="w-3 h-3" />
-                </a>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleDownload}
+                    className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+                  >
+                    <Download className="w-3 h-3" /> PDF herunterladen
+                  </button>
+                  <a
+                    href={previewUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+                  >
+                    In neuem Tab öffnen <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
               </div>
               <iframe
                 key={previewUrl}
