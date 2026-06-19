@@ -7774,6 +7774,7 @@ export type Database = {
         Row: {
           created_at: string
           document_type: string | null
+          download_token: string | null
           file_name: string
           file_path: string
           file_type: string | null
@@ -7784,6 +7785,7 @@ export type Database = {
         Insert: {
           created_at?: string
           document_type?: string | null
+          download_token?: string | null
           file_name: string
           file_path: string
           file_type?: string | null
@@ -7794,6 +7796,7 @@ export type Database = {
         Update: {
           created_at?: string
           document_type?: string | null
+          download_token?: string | null
           file_name?: string
           file_path?: string
           file_type?: string | null
