@@ -485,16 +485,39 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         <h2 className="text-base font-display font-bold text-foreground flex items-center gap-2">
           <Receipt className="w-4 h-4 text-primary" /> AZ Rechnung (Anzahlungsrechnung)
         </h2>
-        <Button
-          onClick={generate}
-          disabled={generating || !hasDeposit}
-          className="gold-gradient text-primary-foreground"
-        >
-          {generating
-            ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            : <FileDown className="w-4 h-4 mr-2" />}
-          PDF erstellen & vermerken
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={generate}
+            disabled={generating || booking || sending || !hasDeposit}
+          >
+            {generating
+              ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              : <FileDown className="w-4 h-4 mr-2" />}
+            PDF erstellen & vermerken
+          </Button>
+          <Button
+            onClick={generateAndBook}
+            disabled={generating || booking || sending || !hasDeposit}
+            className="gold-gradient text-primary-foreground"
+          >
+            {booking
+              ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              : <BookmarkCheck className="w-4 h-4 mr-2" />}
+            ANZAHLUNG STELLEN & SPEICHERN
+          </Button>
+          <Button
+            variant="outline"
+            onClick={sendByEmail}
+            disabled={generating || booking || sending || !hasDeposit || !customer?.email}
+            title={!customer?.email ? 'Kunde hat keine E-Mail-Adresse' : undefined}
+          >
+            {sending
+              ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              : <Mail className="w-4 h-4 mr-2" />}
+            Anzahlung per E-Mail versenden
+          </Button>
+        </div>
       </div>
 
       {!hasDeposit && (
