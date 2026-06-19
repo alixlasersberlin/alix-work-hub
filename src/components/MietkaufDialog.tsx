@@ -42,6 +42,7 @@ function getCustomerAddr(order: any) {
   const parts = [
     a.address || a.street || '',
     [a.zip || a.postal_code || '', a.city || ''].filter(Boolean).join(' '),
+    a.country || '',
   ].filter(Boolean);
   return parts.join(', ');
 }
