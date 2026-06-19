@@ -511,6 +511,40 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       } catch { /* nicht kritisch */ }
 
       toast.success(`Anzahlungsrechnung an ${customer.email} versendet (mit Download-Link zur Rechnung).`);
+
+      // Verifikation: prüfe email_send_log für Primary, Copy Natalia und BCC k.trinh
+      try {
+        const sourceId = `az-invoice-${order?.id || orderNo}-${invoiceNumber}`;
+        // kurze Wartezeit, bis die Edge Function die Zeilen geschrieben hat
+        await new Promise((r) => setTimeout(r, 1500));
+        const { data: logs } = await supabase
+          .from('email_send_log')
+          .select('recipient_email, status, provider_message_id, metadata, created_at')
+          .eq('source_id', sourceId)
+          .order('created_at', { ascending: true });
+
+        const norm = (e: string) => e.trim().toLowerCase();
+        const targets = [
+          { role: 'Primary', email: norm(customer.email) },
+          { role: 'Copy Natalia', email: 'natalia.p@alix-operation.de' },
+          { role: 'BCC k.trinh', email: 'k.trinh@alix-operation.de' },
+        ];
+        const lines = targets.map((t) => {
+          const row = (logs || []).find((l: any) => norm(l.recipient_email) === t.email);
+          if (!row) return `❌ ${t.role} (${t.email}): kein Log-Eintrag`;
+          const icon = row.status === 'sent' ? '✅' : '❌';
+          const pmid = row.provider_message_id ? ` · id: ${row.provider_message_id}` : '';
+          return `${icon} ${t.role} (${row.recipient_email}): ${row.status}${pmid}`;
+        });
+        const allOk = (logs || []).length >= 3 && (logs || []).every((l: any) => l.status === 'sent');
+        const msg = lines.join('\n');
+        if (allOk) toast.success('Zustellung verifiziert:\n' + msg, { duration: 10000 });
+        else toast.warning('Versand-Verifikation:\n' + msg, { duration: 14000 });
+        console.log('[AZ-Versand Verifikation]', { sourceId, logs });
+      } catch (verifyErr) {
+        console.warn('[AZ-Versand Verifikation] Fehler:', verifyErr);
+      }
+
       onReload?.();
     } catch (e: any) {
       toast.error('Fehler beim Versenden: ' + (e?.message || 'Unbekannter Fehler'));
