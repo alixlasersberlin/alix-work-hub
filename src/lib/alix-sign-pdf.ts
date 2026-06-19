@@ -99,8 +99,24 @@ export function buildSignedPdfBase64(snap: Snapshot, sig: Sig): string {
   doc.text('Gesamt:', 130, fy + 13); doc.text(fmtMoney(snap.totals.gross), RIGHT, fy + 13, { align: 'right' });
 
   let py = fy + 24;
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
-  doc.text(`Zahlungsart: ${snap.payment.type}`, LEFT, py);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(20, 60, 110);
+  doc.text(`Zahlung: ${snap.payment.type}`, LEFT, py);
+  doc.setFont('helvetica', 'normal'); doc.setTextColor(60, 60, 60);
+  py += 5;
+  const _price = Number(snap.payment.price) || Number(snap.totals.gross) || 0;
+  const _down = Number(snap.payment.down) || 0;
+  const _term = Number(snap.payment.term) || 0;
+  const _base = Math.max(0, _price - _down);
+  if (snap.payment.type === 'Direktkauf' || !snap.payment.type) {
+    if (_down > 0) { doc.text(`Anzahlung: ${fmtMoney(_down)}`, LEFT, py); py += 5; }
+    doc.text(`Einmalzahlung: ${fmtMoney(_base > 0 ? _base : snap.totals.gross)}`, LEFT, py); py += 5;
+  } else {
+    if (_down > 0) { doc.text(`Anzahlung: ${fmtMoney(_down)}`, LEFT, py); py += 5; }
+    doc.text(`Basis: ${fmtMoney(_base)}`, LEFT, py); py += 5;
+    doc.text(`Laufzeit: ${_term} Monate`, LEFT, py); py += 5;
+    const _rate = _term > 0 ? _base / _term : 0;
+    doc.text(`Monatliche Rate: ${fmtMoney(_rate)}`, LEFT, py); py += 5;
+  }
 
   // ---------- Signature page ----------
   doc.addPage();
