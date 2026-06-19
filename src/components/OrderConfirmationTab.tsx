@@ -207,7 +207,7 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
       const templateUrl = await loadTemplate();
       const logoUrl = await loadLogo();
       // 300px @ 72dpi ≈ 105.83mm, proportional Höhe via Bild-Seitenverhältnis (1899x408)
-      const LOGO_W = 105.83 * 0.75;
+      const LOGO_W = 105.83 * 0.75 * 0.9;
       const LOGO_H = LOGO_W * (408 / 1899);
       const LOGO_X = PAGE_W - 10 - LOGO_W; // 10mm Rand rechts
       const LOGO_Y = 10;
