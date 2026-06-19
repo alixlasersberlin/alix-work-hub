@@ -237,6 +237,40 @@ Deno.serve(async (req) => {
       })))
     }
 
+    // Persist a row per recipient in email_send_log so BCC/copy delivery is auditable.
+    try {
+      const serviceClient = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+        { auth: { autoRefreshToken: false, persistSession: false } },
+      )
+      const rows = recipients.map((r, i) => {
+        const res = results[i]
+        const ok = res.status === 'fulfilled'
+        const role = i === 0 ? 'primary' : (r.subjectPrefix ? 'copy' : 'bcc')
+        const value: any = ok ? (res as PromiseFulfilledResult<any>).value : null
+        const providerMsgId = value?.id ?? value?.message_id ?? value?.messageId ?? null
+        return {
+          source_id: idempotencyKey,
+          recipient_email: r.email,
+          subject: `${r.subjectPrefix ?? ''}${baseSubject}`,
+          template: templateName,
+          status: ok ? 'sent' : 'failed',
+          provider_message_id: providerMsgId,
+          sent_at: ok ? new Date().toISOString() : null,
+          metadata: {
+            role,
+            idempotency_key: `${idempotencyKey}-${r.keySuffix}`,
+            ...(ok ? {} : { error: (res as PromiseRejectedResult).reason?.message ?? 'unknown' }),
+          },
+        }
+      })
+      const { error: logErr } = await serviceClient.from('email_send_log').insert(rows)
+      if (logErr) console.error('email_send_log insert failed', logErr.message)
+    } catch (e: any) {
+      console.error('email_send_log unexpected error', e?.message ?? e)
+    }
+
     const primaryOk = results[0].status === 'fulfilled'
     console.log('Transactional email sent', {
       templateName,
