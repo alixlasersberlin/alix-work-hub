@@ -536,8 +536,8 @@ export default function SalesWizard({ publicMode = false }: Props) {
                   )}
 
                   {step === 8 && (() => {
-                    const price = parseFloat(data.flex_price.replace(',', '.')) || 0;
-                    const down = parseFloat(data.flex_down.replace(',', '.')) || 0;
+                    const price = parseFloat(String(data.flex_price ?? '').replace(',', '.')) || 0;
+                    const down = parseFloat(String(data.flex_down ?? '').replace(',', '.')) || 0;
                     const base = Math.max(0, price - down);
                     const monthly = data.flex_term > 0 ? base / data.flex_term : 0;
                     const fmt = (v: number) => v.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
