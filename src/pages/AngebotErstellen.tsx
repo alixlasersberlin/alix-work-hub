@@ -503,6 +503,27 @@ export default function AngebotErstellen() {
     };
     drawTemplate();
 
+    // Logo top-right (400×180 px @ 96dpi → ~105.83 × 47.63 mm)
+    try {
+      const logoRes = await fetch(alixLogoAsset.url);
+      const logoBlob = await logoRes.blob();
+      const logoDataUrl: string = await new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result as string);
+        r.onerror = reject;
+        r.readAsDataURL(logoBlob);
+      });
+      const PX_TO_MM = 25.4 / 96;
+      const LOGO_W = 400 * PX_TO_MM;
+      const LOGO_H = 180 * PX_TO_MM;
+      const LOGO_X = RIGHT - LOGO_W;
+      const LOGO_Y = 10;
+      doc.addImage(logoDataUrl, 'PNG', LOGO_X, LOGO_Y, LOGO_W, LOGO_H, undefined, 'FAST');
+    } catch (err) {
+      console.error('[Angebot PDF] Logo konnte nicht geladen werden:', err);
+      toast.error('Logo konnte nicht geladen werden', { description: String((err as any)?.message || err) });
+    }
+
     // Title
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(20);
