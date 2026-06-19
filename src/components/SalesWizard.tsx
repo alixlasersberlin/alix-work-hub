@@ -159,9 +159,9 @@ export default function SalesWizard({ publicMode = false }: Props) {
       case 4: return !!data.delivery_preference;
       case 5: return !!data.first_name.trim() && !!data.last_name.trim();
       case 7: return data.phone.trim().length >= 3;
-      case 8: return /.+@.+\..+/.test(data.email.trim());
-      case 9: return !!data.consultation_type;
-      case 11: return data.consent_data && data.consent_contact && (publicMode ? !!captchaToken : true);
+      case 9: return /.+@.+\..+/.test(data.email.trim());
+      case 10: return !!data.consultation_type;
+      case 12: return data.consent_data && data.consent_contact && (publicMode ? !!captchaToken : true);
       default: return true;
     }
   }
