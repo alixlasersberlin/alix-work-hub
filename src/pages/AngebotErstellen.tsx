@@ -15,6 +15,7 @@ import jsPDF from 'jspdf';
 import { createPDF } from '@/lib/pdf-utils';
 import autoTable from 'jspdf-autotable';
 import templateAsset from '@/assets/angebot-template.jpg.asset.json';
+import alixLogoAsset from '@/assets/alix-logo-gold-angebot.png.asset.json';
 import { upsertOffer, getOffer } from '@/lib/offers-store';
 import { peekNumber, nextNumber, ensureCaseNumber } from '@/lib/number-ranges';
 
