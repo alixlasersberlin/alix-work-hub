@@ -1105,6 +1105,13 @@ export default function OrderDetail() {
         </div>
       )}
 
+      {/* SMS Versand Tab */}
+      {activeTab === 'sms' && customer && (
+        <CustomerSmsTab customer={customer} orderId={order.id} />
+      )}
+
+
+
       {/* History Tab */}
       {activeTab === 'history' && (
         <div>
