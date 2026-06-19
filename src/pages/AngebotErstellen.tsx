@@ -558,7 +558,7 @@ export default function AngebotErstellen() {
       head: [['Pos', 'Artikel', 'Menge', 'Einzelpreis', 'MwSt', 'Summe']],
       body: validLines.map((l, idx) => [
         idx + 1,
-        `${l.name}${l.sku ? ` (${l.sku})` : ''}${l.description ? `\n${l.description}` : ''}`,
+        `${l.name}${l.sku ? ` (${l.sku})` : ''}${l.description ? `\n${sanitizeDescription(l.description)}` : ''}`,
         l.quantity,
         fmtMoney(l.rate),
         `${l.tax_percentage}%`,
