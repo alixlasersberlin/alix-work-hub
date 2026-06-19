@@ -116,7 +116,7 @@ export default function InstallmentPlanDialog({ order }: Props) {
     // Logo top-right
     try {
       const logoData = await loadImageAsBase64(alixLogo);
-      doc.addImage(logoData, 'PNG', pw - 60, 8, 46, 20);
+      doc.addImage(logoData, 'PNG', pw - 60, 8, 46, 16);
     } catch {
       // logo load failed, skip
     }
