@@ -426,7 +426,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         } catch { /* optional */ }
       }
 
-      // PDF in Storage hochladen und signierten Download-Link erzeugen (30 Tage gültig)
+      // PDF in Storage hochladen und kurzen Download-Link auf alixwork.de erzeugen
       let downloadUrl = '';
       if (blob && order?.id) {
         const safeNo = String(invoiceNumber || 'AZ').replace(/[^\w.-]+/g, '_');
@@ -436,6 +436,9 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
           .upload(storagePath, blob, { contentType: 'application/pdf', upsert: true });
         if (up.error) throw up.error;
 
+        // Kurzer, eindeutiger Token (~10 Zeichen)
+        const token = (crypto.randomUUID().replace(/-/g, '').slice(0, 10));
+
         const { data: userData } = await supabase.auth.getUser();
         const { error: docErr } = await supabase.from('order_documents').insert({
           order_id: order.id,
@@ -444,14 +447,11 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
           file_type: 'application/pdf',
           document_type: 'Anzahlungsrechnung',
           uploaded_by: userData.user?.id ?? null,
+          download_token: token,
         } as any);
         if (docErr) throw docErr;
 
-        const { data: signed, error: signErr } = await supabase.storage
-          .from('order-invoices')
-          .createSignedUrl(storagePath, 60 * 60 * 24 * 30); // 30 Tage
-        if (signErr) throw signErr;
-        downloadUrl = signed?.signedUrl || '';
+        downloadUrl = `https://alixwork.de/d/${token}`;
       }
 
       const subject = `Anzahlungsrechnung ${invoiceNumber} – Auftrag ${orderNo}`;
@@ -472,10 +472,6 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         '',
         'Bitte geben Sie bei der Überweisung die Rechnungsnummer als Verwendungszweck an.',
         '',
-        downloadUrl
-          ? `Ihre Rechnung als PDF können Sie hier herunterladen (Link 30 Tage gültig):\n${downloadUrl}`
-          : 'Das PDF der Anzahlungsrechnung erhalten Sie separat als Anhang.',
-        '',
         'Mit freundlichen Grüßen',
         'Alix Lasers Deutschland',
       ].join('\n');
@@ -485,7 +481,12 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
           templateName: 'customer-shipping-notice',
           recipientEmail: customer.email,
           idempotencyKey: `az-invoice-${order?.id || orderNo}-${invoiceNumber}`,
-          templateData: { subject, body },
+          templateData: {
+            subject,
+            body,
+            downloadUrl,
+            downloadLabel: 'Anzahlungsrechnung herunterladen',
+          },
         },
       });
       if (error) throw error;

@@ -218,6 +218,7 @@ const Garantiecenter = lazy(() => import("./pages/Garantiecenter"));
 const GarantieKulanz = lazy(() => import("./pages/GarantieKulanz"));
 const AlixSignPublic = lazy(() => import("./pages/AlixSignPublic"));
 const AlixSignPdfDownload = lazy(() => import("./pages/AlixSignPdfDownload"));
+const OrderDocDownload = lazy(() => import("./pages/OrderDocDownload"));
 const WhatsAppServiceCenter = lazy(() => import("./pages/WhatsAppServiceCenter"));
 const BugCapaLayoutLazy = lazy(() => import("./pages/BugCapa/_shared").then(m => ({ default: m.BugCapaLayout })));
 const BugCapaDashboard = lazy(() => import("./pages/BugCapa/BugCapaDashboard"));
@@ -736,6 +737,7 @@ function AppRoutes() {
         <Route path="/portal/status" element={<PortalStatus />} />
         <Route path="/sign/:token" element={<AlixSignPublic />} />
         <Route path="/sign/pdf/:signatureId" element={<AlixSignPdfDownload />} />
+        <Route path="/d/:token" element={<OrderDocDownload />} />
         <Route path="/beratung" element={<PublicBeratung />} />
         <Route path="/angebot" element={<PublicBeratung />} />
         <Route path="/kunde/login" element={<CustomerPortalLogin />} />

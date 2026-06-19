@@ -1,0 +1,1 @@
+ALTER TABLE public.order_documents ADD COLUMN IF NOT EXISTS download_token text UNIQUE;
