@@ -198,22 +198,23 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
 
       let finalY = (doc as any).lastAutoTable.finalY + 8;
 
-      // Totals
-      const totalsX = 130;
+      // Totals – Label weiter links, damit Betrag rechts nicht überlappt
+      const totalsLabelX = 110;
+      const totalsValueX = RIGHT;
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
       doc.setTextColor(60, 60, 60);
-      doc.text('Netto:', totalsX, finalY);
-      doc.text(fmtMoney(netDeposit, currency), RIGHT, finalY, { align: 'right' });
-      doc.text(`MwSt (${taxPercentage}%):`, totalsX, finalY + 5);
-      doc.text(fmtMoney(taxAmount, currency), RIGHT, finalY + 5, { align: 'right' });
+      doc.text('Netto:', totalsLabelX, finalY);
+      doc.text(fmtMoney(netDeposit, currency), totalsValueX, finalY, { align: 'right' });
+      doc.text(`MwSt (${taxPercentage}%):`, totalsLabelX, finalY + 5);
+      doc.text(fmtMoney(taxAmount, currency), totalsValueX, finalY + 5, { align: 'right' });
       doc.setDrawColor(20, 60, 110);
-      doc.line(totalsX, finalY + 8, RIGHT, finalY + 8);
+      doc.line(totalsLabelX, finalY + 8, totalsValueX, finalY + 8);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(12);
       doc.setTextColor(20, 60, 110);
-      doc.text('Rechnungsbetrag (brutto):', totalsX, finalY + 14);
-      doc.text(fmtMoney(grossDeposit, currency), RIGHT, finalY + 14, { align: 'right' });
+      doc.text('Rechnungsbetrag (brutto):', totalsLabelX, finalY + 14);
+      doc.text(fmtMoney(grossDeposit, currency), totalsValueX, finalY + 14, { align: 'right' });
 
       // Hinweisblock
       let py = finalY + 26;
