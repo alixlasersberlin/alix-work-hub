@@ -415,8 +415,44 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
     }
     setSending(true);
     try {
-      // PDF lokal zum Anhängen herunterladen (Edge-Function unterstützt keine Attachments)
-      await buildPdf('download');
+      // PDF erstellen (Blob für Upload + lokaler Download als Backup)
+      const { blob, fileName } = await buildPdf('blob');
+      if (blob) {
+        try {
+          const u = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = u; a.download = fileName; document.body.appendChild(a); a.click();
+          a.remove(); setTimeout(() => URL.revokeObjectURL(u), 1000);
+        } catch { /* optional */ }
+      }
+
+      // PDF in Storage hochladen und signierten Download-Link erzeugen (30 Tage gültig)
+      let downloadUrl = '';
+      if (blob && order?.id) {
+        const safeNo = String(invoiceNumber || 'AZ').replace(/[^\w.-]+/g, '_');
+        const storagePath = `${order.id}/anzahlung/${Date.now()}_${safeNo}.pdf`;
+        const up = await supabase.storage
+          .from('order-invoices')
+          .upload(storagePath, blob, { contentType: 'application/pdf', upsert: true });
+        if (up.error) throw up.error;
+
+        const { data: userData } = await supabase.auth.getUser();
+        const { error: docErr } = await supabase.from('order_documents').insert({
+          order_id: order.id,
+          file_name: fileName,
+          file_path: storagePath,
+          file_type: 'application/pdf',
+          document_type: 'Anzahlungsrechnung',
+          uploaded_by: userData.user?.id ?? null,
+        } as any);
+        if (docErr) throw docErr;
+
+        const { data: signed, error: signErr } = await supabase.storage
+          .from('order-invoices')
+          .createSignedUrl(storagePath, 60 * 60 * 24 * 30); // 30 Tage
+        if (signErr) throw signErr;
+        downloadUrl = signed?.signedUrl || '';
+      }
 
       const subject = `Anzahlungsrechnung ${invoiceNumber} – Auftrag ${orderNo}`;
       const body = [
@@ -436,7 +472,9 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         '',
         'Bitte geben Sie bei der Überweisung die Rechnungsnummer als Verwendungszweck an.',
         '',
-        'Das PDF der Anzahlungsrechnung wurde soeben heruntergeladen und wird Ihnen separat als Anhang zugesendet.',
+        downloadUrl
+          ? `Ihre Rechnung als PDF können Sie hier herunterladen (Link 30 Tage gültig):\n${downloadUrl}`
+          : 'Das PDF der Anzahlungsrechnung erhalten Sie separat als Anhang.',
         '',
         'Mit freundlichen Grüßen',
         'Alix Lasers Deutschland',
@@ -470,7 +508,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         } as any);
       } catch { /* nicht kritisch */ }
 
-      toast.success(`Anzahlungsrechnung an ${customer.email} versendet. Das PDF wurde lokal heruntergeladen – bitte als Anhang anfügen.`);
+      toast.success(`Anzahlungsrechnung an ${customer.email} versendet (mit Download-Link zur Rechnung).`);
       onReload?.();
     } catch (e: any) {
       toast.error('Fehler beim Versenden: ' + (e?.message || 'Unbekannter Fehler'));
