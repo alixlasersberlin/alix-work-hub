@@ -1479,7 +1479,7 @@ export default function AngebotErstellen() {
               <Select value={String(payTerm)} onValueChange={v => setPayTerm(Number(v))}>
                 <SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {[12, 24, 36, 48, 60, 72].map(t => (
+                  {(payType === 'Alix Smart Impulse' ? [12, 24, 36] : [12, 24, 36, 48, 60, 72]).map(t => (
                     <SelectItem key={t} value={String(t)}>{t} Monate</SelectItem>
                   ))}
                 </SelectContent>
