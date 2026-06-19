@@ -811,6 +811,45 @@ export default function AngebotErstellen() {
     toast.success('Angebot als PDF erstellt.');
   };
 
+  // ---------- Live-Vorschau ----------
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(true);
+
+  const refreshPreview = async () => {
+    if (!selectedCustomer) return;
+    if (!lines.some((l) => l.name && l.quantity > 0)) return;
+    setPreviewLoading(true);
+    try {
+      const doc = await buildPDF();
+      if (!doc) return;
+      const blob = doc.output('blob') as Blob;
+      const url = URL.createObjectURL(blob);
+      setPreviewUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return url;
+      });
+    } catch (e) {
+      console.error('PDF preview failed', e);
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (loading) return;
+    if (!previewOpen) return;
+    const t = setTimeout(() => { refreshPreview(); }, 600);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    loading, previewOpen, selectedCustomer?.id, offerNumber, offerDate, validUntil,
+    salesAdvisor, deliveryWeek, specialOffer, notes, includeAppendix,
+    JSON.stringify(lines),
+  ]);
+
+  useEffect(() => () => { if (previewUrl) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
+
   // Auto-Download wenn aus Angebotsliste mit ?download=1 aufgerufen
   useEffect(() => {
     if (loading) return;
@@ -1620,6 +1659,42 @@ export default function AngebotErstellen() {
           Als PDF speichern
         </Button>
       </div>
+
+      {/* Live-PDF-Vorschau */}
+      <div className="mt-6 rounded-lg border border-border bg-card">
+        <div className="flex items-center justify-between px-4 py-2 border-b border-border">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <FileDown className="w-4 h-4 text-primary" />
+            Live-Vorschau (PDF)
+            {previewLoading && <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" onClick={refreshPreview} disabled={previewLoading}>
+              Aktualisieren
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setPreviewOpen((o) => !o)}>
+              {previewOpen ? 'Ausblenden' : 'Einblenden'}
+            </Button>
+          </div>
+        </div>
+        {previewOpen && (
+          <div className="bg-muted/30">
+            {previewUrl ? (
+              <iframe
+                title="Angebot Vorschau"
+                src={previewUrl}
+                className="w-full"
+                style={{ height: '80vh', border: 0 }}
+              />
+            ) : (
+              <div className="p-8 text-center text-sm text-muted-foreground">
+                Wähle einen Kunden und mindestens eine Position, dann erscheint hier die Live-Vorschau.
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
 
     </div>
   );
