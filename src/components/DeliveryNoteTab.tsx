@@ -129,7 +129,16 @@ export default function DeliveryNoteTab({ order, customer, items, onReload }: Pr
         doc.addImage(bgData, 'PNG', 0, 0, pw, ph);
       } catch { /* ignore */ }
 
-      // Title
+      // Logo top right (250px ≈ 66.15mm, proportional)
+      try {
+        const logoData = await loadImageAsBase64(alixLogoGold.url);
+        const LOGO_W = 250 * 25.4 / 96; // ≈ 66.15mm
+        const LOGO_H = LOGO_W * 347 / 1920; // ≈ 11.95mm
+        doc.addImage(logoData, 'PNG', pw - ml - LOGO_W, 12, LOGO_W, LOGO_H);
+      } catch { /* ignore */ }
+
+      // Title (shifted down for clean spacing under logo)
+      y = 40;
       doc.setFont('Inter', 'bold');
       doc.setFontSize(20);
       doc.setTextColor(0);
