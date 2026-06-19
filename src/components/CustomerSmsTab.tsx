@@ -75,7 +75,7 @@ function pickTemplate(docType: string | null | undefined): string {
 
 const ALLOWED_ROLES = ['Super Admin', 'Admin', 'Vertrieb', 'Kundenservice', 'Finance', 'Service', 'Serviceleitung', 'Reparaturannahme', 'Technik'];
 
-export default function CustomerSmsTab({ customer }: { customer: Customer }) {
+export default function CustomerSmsTab({ customer, orderId }: { customer: Customer; orderId?: string }) {
   const { hasAnyRole, isAdmin } = useAuth();
   const allowed = isAdmin || hasAnyRole(ALLOWED_ROLES);
 
