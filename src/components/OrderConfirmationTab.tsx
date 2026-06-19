@@ -11,6 +11,7 @@ import { createPDF } from '@/lib/pdf-utils';
 import { peekNumber, nextNumber } from '@/lib/number-ranges';
 import autoTable from 'jspdf-autotable';
 import templateAsset from '@/assets/angebot-template.jpg.asset.json';
+import logoAsset from '@/assets/alix-logo-gold.png.asset.json';
 
 interface Props {
   order: any;
@@ -50,6 +51,21 @@ async function loadTemplate(): Promise<string> {
     r.readAsDataURL(blob);
   });
   _tplCache = data;
+  return data;
+}
+
+let _logoCache: string | null = null;
+async function loadLogo(): Promise<string> {
+  if (_logoCache) return _logoCache;
+  const res = await fetch(logoAsset.url);
+  const blob = await res.blob();
+  const data: string = await new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result as string);
+    r.onerror = reject;
+    r.readAsDataURL(blob);
+  });
+  _logoCache = data;
   return data;
 }
 
@@ -189,8 +205,15 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
       const BOTTOM_LIMIT = 265;
 
       const templateUrl = await loadTemplate();
+      const logoUrl = await loadLogo();
+      // 300px @ 72dpi ≈ 105.83mm, proportional Höhe via Bild-Seitenverhältnis (1899x408)
+      const LOGO_W = 105.83;
+      const LOGO_H = LOGO_W * (408 / 1899);
+      const LOGO_X = PAGE_W - 10 - LOGO_W; // 10mm Rand rechts
+      const LOGO_Y = 10;
       const drawTemplate = () => {
         doc.addImage(templateUrl, 'JPEG', 0, 0, PAGE_W, PAGE_H, undefined, 'FAST');
+        doc.addImage(logoUrl, 'PNG', LOGO_X, LOGO_Y, LOGO_W, LOGO_H, undefined, 'FAST');
       };
       drawTemplate();
 
