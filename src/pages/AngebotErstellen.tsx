@@ -514,7 +514,7 @@ export default function AngebotErstellen() {
         r.readAsDataURL(logoBlob);
       });
       const PX_TO_MM = 25.4 / 96;
-      const LOGO_W = 400 * PX_TO_MM;
+      const LOGO_W = 400 * 0.75 * PX_TO_MM; // 25% kleiner
       const LOGO_H = LOGO_W * (347 / 1920); // proportional zum Original 1920×347
       const LOGO_X = RIGHT - LOGO_W;
       const LOGO_Y = 10;
