@@ -580,18 +580,31 @@ export default function SalesWizard({ publicMode = false }: Props) {
                             </select>
                           </Field>
 
-                          <div className="relative overflow-hidden rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 via-white to-amber-50 p-5 shadow-[0_15px_40px_-20px_rgba(217,119,6,0.45)]">
-                            <div className="flex items-center justify-between gap-3">
-                              <div>
-                                <div className="text-[11px] uppercase tracking-[0.2em] text-amber-700 font-semibold">Monatliche Rate</div>
-                                <div className="mt-1 text-3xl md:text-4xl font-bold text-slate-900 tabular-nums">
-                                  {fmt(monthly)}
+                          <div
+                            className="relative overflow-hidden rounded-2xl p-[1px]"
+                            style={{ background: 'linear-gradient(135deg,#f5d28a,#b8893a 50%,#f5d28a)' }}
+                          >
+                            <div
+                              className="relative rounded-[15px] p-5"
+                              style={{ background: 'linear-gradient(135deg,#fffaf0 0%,#fef3c7 55%,#fde9b3 100%)' }}
+                            >
+                              <div aria-hidden className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-white/70 blur-2xl" />
+                              <div className="relative flex items-end justify-between gap-3">
+                                <div>
+                                  <div className="text-[10px] uppercase tracking-[0.28em] font-semibold" style={{ color: '#8a6314' }}>
+                                    Monatliche Rate
+                                  </div>
+                                  <div className="mt-2 text-4xl md:text-5xl font-extrabold tabular-nums leading-none" style={{ color: '#1f2937' }}>
+                                    {fmt(monthly)}
+                                  </div>
+                                  <div className="mt-3 text-[11px]" style={{ color: '#6b5733' }}>
+                                    Finanzierungssumme <span className="font-semibold tabular-nums" style={{ color: '#1f2937' }}>{fmt(base)}</span> · {data.flex_term} Monate · 0,00 % eff. p. a.
+                                  </div>
                                 </div>
-                                <div className="mt-1 text-xs text-slate-500">
-                                  Finanzierungssumme: <span className="text-slate-700 font-medium tabular-nums">{fmt(base)}</span> · {data.flex_term} Monate · 0,00 % eff. p. a.
+                                <div className="flex h-12 w-12 items-center justify-center rounded-full shadow-[0_10px_25px_-8px_rgba(184,137,58,0.6)]" style={{ background: 'linear-gradient(135deg,#e6c275,#b8893a)' }}>
+                                  <Sparkles className="h-6 w-6 text-white" />
                                 </div>
                               </div>
-                              <Sparkles className="h-8 w-8 text-amber-500 shrink-0" />
                             </div>
                           </div>
                           <p className="text-[11px] text-slate-500 leading-relaxed">
