@@ -135,7 +135,7 @@ export function AlixsalesWebhookTester() {
         </div>
 
         <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">x-api-key (ALIXSALES_WEBHOOK_KEY)</label>
+          <label className="text-xs font-medium text-muted-foreground">x-api-key (optional – leer = als eingeloggter User testen)</label>
           <Input
             type="password"
             placeholder="Webhook-Key eingeben"
