@@ -54,10 +54,6 @@ export function AlixsalesWebhookTester() {
   }, [payload]);
 
   const send = async () => {
-    if (!apiKey.trim()) {
-      toast.error('Webhook-Key fehlt');
-      return;
-    }
     if (!parsed.ok) {
       toast.error('Ungültiges JSON: ' + parsed.error);
       return;
@@ -66,14 +62,29 @@ export function AlixsalesWebhookTester() {
     setResult(null);
     const t0 = performance.now();
     try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        apikey: ANON_KEY,
+      };
+      if (apiKey.trim()) {
+        headers['x-api-key'] = apiKey.trim();
+      } else {
+        // Fallback: als eingeloggter interner User authentifizieren
+        const { data: sess } = await supabase.auth.getSession();
+        const token = sess.session?.access_token;
+        if (!token) {
+          toast.error('Nicht eingeloggt – bitte Webhook-Key eintragen');
+          setSending(false);
+          return;
+        }
+        headers.Authorization = `Bearer ${token}`;
+      }
       const res = await fetch(ENDPOINT, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey.trim(),
-        },
+        headers,
         body: payload,
       });
+
       const text = await res.text();
       let body: any = text;
       try { body = JSON.parse(text); } catch { /* leave as text */ }
