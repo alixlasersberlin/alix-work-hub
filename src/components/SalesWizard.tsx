@@ -544,7 +544,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
                     return (
                       <Section title="Alix Flex 0%" hint="Finanzierungsrechner – 0% effektiver Jahreszins (unverbindlich)">
                         <div className="space-y-4">
-                          <Field label="Kaufpreis (€)">
+                          <Field label="Gesamtbetrag (€)">
                             <Input
                               type="number"
                               min={0}
