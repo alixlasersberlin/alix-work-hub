@@ -41,6 +41,7 @@ import { isOrderVip } from '@/lib/vip';
 export default function OrderDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user, isAdmin, hasRole, hasAnyRole } = useAuth();
 
   const canWrite = isAdmin || hasRole('Auftragsverwaltung');
