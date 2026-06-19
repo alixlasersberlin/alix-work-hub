@@ -8,6 +8,7 @@ import { FileText, Download } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { createPDF } from '@/lib/pdf-utils';
 import alixLogo from '@/assets/alix-lasers-logo.png';
+import templateAsset from '@/assets/mietkauf-template.jpg.asset.json';
 
 interface Props {
   order: any;
@@ -115,9 +116,27 @@ export default function MietkaufDialog({ order }: Props) {
   async function generatePDF() {
     const doc = createPDF({ unit: 'mm', format: 'a4' });
     const pw = doc.internal.pageSize.getWidth();
+    const ph = doc.internal.pageSize.getHeight();
     const ml = 18;
     const mr = 18;
     const cw = pw - ml - mr;
+
+    // Background template on every page
+    let templateData: string | null = null;
+    try { templateData = await loadImageAsBase64(templateAsset.url); } catch { /* skip */ }
+    const drawTemplate = () => {
+      if (templateData) {
+        try { doc.addImage(templateData, 'JPEG', 0, 0, pw, ph, undefined, 'FAST'); } catch { /* skip */ }
+      }
+    };
+    drawTemplate();
+    // Hook auto-add for subsequent pages
+    const origAddPage = doc.addPage.bind(doc);
+    (doc as any).addPage = (...args: any[]) => {
+      const r = origAddPage(...args);
+      drawTemplate();
+      return r;
+    };
 
     // Logo top-right
     try {
