@@ -105,7 +105,13 @@ export default function InstallmentPlanDialog({ order }: Props) {
     const doc = createPDF();
     const pw = doc.internal.pageSize.getWidth();
 
-    drawWatermark(doc);
+    let templateData: string | null = null;
+    try {
+      templateData = await loadImageAsBase64(ratenplanTemplate.url);
+    } catch {
+      // template load failed, continue without background
+    }
+    await drawBackground(doc, templateData);
 
     // Logo top-right
     try {
