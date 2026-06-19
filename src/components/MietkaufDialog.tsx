@@ -266,68 +266,27 @@ export default function MietkaufDialog({ order }: Props) {
     drawFinRow(y);
     doc.setFont('Inter', 'bold');
     doc.setFontSize(9);
-    doc.text('1. Rate', ml + 3, y + 5);
+    doc.text(`1. Rate (${priceLabel})`, ml + 3, y + 5);
     doc.setFont('Inter', 'normal');
     doc.text(fmtCurrency(anzahlungNum), col3 - 3, y + 5, { align: 'right' });
     y += rowH;
 
-    if (mitMwst) {
-      // zzgl. Umsatzsteuer
-      drawFinRow(y);
-      doc.text('zzgl. Umsatzsteuer', col2 - 2, y + 5);
-      doc.text(fmtCurrency(anzahlungVat), col3 - 3, y + 5, { align: 'right' });
-      y += rowH;
-
-      // zu zahlender Betrag
-      drawFinRow(y);
-      doc.setFont('Inter', 'bold');
-      doc.text('zu zahlender Betrag', col2 - 2, y + 5);
-      doc.text(fmtCurrency(anzahlungBrutto), col3 - 3, y + 5, { align: 'right' });
-      doc.setFont('Inter', 'normal');
-      y += rowH;
-    }
-
     // Monatl. Raten
     drawFinRow(y);
     doc.setFont('Inter', 'bold');
-    doc.text('Monatl. Raten:', ml + 3, y + 5);
+    doc.text(`Monatl. Raten (${priceLabel}):`, ml + 3, y + 5);
     doc.setFont('Inter', 'normal');
     doc.text(fmtCurrency(monatlicheRate), col3 - 3, y + 5, { align: 'right' });
     y += rowH;
 
-    if (mitMwst) {
-      // zzgl. Umsatzsteuer
-      drawFinRow(y);
-      doc.text('zzgl. Umsatzsteuer', col2 - 2, y + 5);
-      doc.text(fmtCurrency(rateVat), col3 - 3, y + 5, { align: 'right' });
-      y += rowH;
-
-      // Monatlich zu zahlende Rate
-      drawFinRow(y);
-      doc.setFont('Inter', 'bold');
-      doc.text('Monatlich zu zahlende Rate', col2 - 2, y + 5);
-      doc.text(fmtCurrency(rateBrutto), col3 - 3, y + 5, { align: 'right' });
-      doc.setFont('Inter', 'normal');
-      y += rowH;
-    }
-
     // Kaufpreis bei Vertragsende
     drawFinRow(y);
     doc.setFont('Inter', 'bold');
-    doc.text('Kaufpreis', ml + 3, y + 5);
+    doc.text(`Kaufpreis bei Vertragsende (${priceLabel})`, ml + 3, y + 5);
     doc.setFont('Inter', 'normal');
     doc.text(fmtCurrency(kaufpreisEndeNum), col3 - 3, y + 5, { align: 'right' });
     y += rowH;
 
-    if (mitMwst) {
-      drawFinRow(y);
-      doc.setFont('Inter', 'bold');
-      doc.text('bei Vertragsende', ml + 3, y + 5);
-      doc.setFont('Inter', 'normal');
-      doc.text('Zzgl. Umsatzsteuer', col2 - 2, y + 5);
-      doc.text(fmtCurrency(kaufpreisEndeVat), col3 - 3, y + 5, { align: 'right' });
-      y += rowH;
-    }
     y += rowH + 8;
 
     // ── Nutzungsort ──
