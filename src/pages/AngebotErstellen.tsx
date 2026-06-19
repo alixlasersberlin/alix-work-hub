@@ -447,6 +447,35 @@ export default function AngebotErstellen() {
     return dataUrl;
   };
 
+  // Säubert Item-Beschreibungen für jsPDF/Helvetica (WinAnsi):
+  // - entfernt Zero-Width-Chars
+  // - ersetzt diverse Bullet/Wingdings/Symbol-Zeichen durch "•"
+  // - normalisiert Tabs/Whitespace und Zeilenumbrüche
+  const sanitizeDescription = (raw: string): string => {
+    let s = raw
+      // Zero-width / BOM / RTL marks
+      .replace(/[\u200B-\u200F\u202A-\u202E\u2060\uFEFF]/g, '')
+      // Häufige Wingdings/Symbol-Bullets → •
+      .replace(/[\uF0A7\uF0B7\uF0A8\uF0FC\uF0E0\uF076\uF06C\uF0D8]/g, '•')
+      // Sonstige Bullet-Glyphen → •
+      .replace(/[●◦▪■□◆▶➤✓✔☑»]/g, '•')
+      // Soft hyphen entfernen
+      .replace(/\u00AD/g, '')
+      // Geschützte Leerzeichen normalisieren
+      .replace(/[\u00A0\u202F\u2007]/g, ' ')
+      // Tabs → 2 Spaces
+      .replace(/\t/g, '  ')
+      // Windows-Zeilenenden vereinheitlichen
+      .replace(/\r\n?/g, '\n');
+    // Bullets sauber am Zeilenanfang: "• Text"
+    s = s.replace(/^[ \t]*•[ \t]*/gm, '• ');
+    // Mehrfache Leerzeichen reduzieren (nicht über Zeilen hinweg)
+    s = s.replace(/[ ]{2,}/g, ' ');
+    // Mehrfache Leerzeilen begrenzen
+    s = s.replace(/\n{3,}/g, '\n\n');
+    return s.trim();
+  };
+
   const buildPDF = async (): Promise<jsPDF | null> => {
     if (!selectedCustomer) {
       toast.error('Bitte zuerst einen Kunden auswählen.');
@@ -558,7 +587,7 @@ export default function AngebotErstellen() {
       head: [['Pos', 'Artikel', 'Menge', 'Einzelpreis', 'MwSt', 'Summe']],
       body: validLines.map((l, idx) => [
         idx + 1,
-        `${l.name}${l.sku ? ` (${l.sku})` : ''}${l.description ? `\n${l.description}` : ''}`,
+        `${l.name}${l.sku ? ` (${l.sku})` : ''}${l.description ? `\n${sanitizeDescription(l.description)}` : ''}`,
         l.quantity,
         fmtMoney(l.rate),
         `${l.tax_percentage}%`,
