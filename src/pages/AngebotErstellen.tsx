@@ -515,7 +515,7 @@ export default function AngebotErstellen() {
       });
       const PX_TO_MM = 25.4 / 96;
       const LOGO_W = 400 * PX_TO_MM;
-      const LOGO_H = 180 * PX_TO_MM;
+      const LOGO_H = LOGO_W * (347 / 1920); // proportional zum Original 1920×347
       const LOGO_X = RIGHT - LOGO_W;
       const LOGO_Y = 10;
       doc.addImage(logoDataUrl, 'PNG', LOGO_X, LOGO_Y, LOGO_W, LOGO_H, undefined, 'FAST');
