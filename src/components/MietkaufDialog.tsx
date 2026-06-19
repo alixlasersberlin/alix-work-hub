@@ -365,7 +365,24 @@ export default function MietkaufDialog({ order }: Props) {
           >
             <X className="h-4 w-4" />
           </button>
-          <h2 className="font-display text-lg font-semibold leading-none tracking-tight">Mietkaufvertrag erstellen</h2>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="font-display text-lg font-semibold leading-none tracking-tight flex items-center gap-2">
+              <span className="text-xl leading-none" title={isDE ? 'Deutschland' : 'EU'}>{flag}</span>
+              Mietkaufvertrag erstellen
+            </h2>
+            <div className="flex items-center gap-1 rounded-md border border-border bg-secondary/50 p-1 text-xs">
+              <button
+                type="button"
+                onClick={() => setRegion('DE')}
+                className={`px-2 py-1 rounded ${isDE ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}
+              >🇩🇪 DE</button>
+              <button
+                type="button"
+                onClick={() => setRegion('EU')}
+                className={`px-2 py-1 rounded ${!isDE ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}
+              >🇪🇺 EU</button>
+            </div>
+          </div>
 
           <div className="space-y-4 mt-4">
             <div>
@@ -373,11 +390,11 @@ export default function MietkaufDialog({ order }: Props) {
               <Input value={geraetModell} onChange={e => setGeraetModell(e.target.value)} placeholder="z.B. Alix Pro 2000" className="bg-secondary border-border" />
             </div>
             <div>
-              <label className="text-sm text-muted-foreground">Gesamtbetrag netto (€)</label>
+              <label className="text-sm text-muted-foreground">Gesamtbetrag {priceLabel} (€)</label>
               <Input type="number" min={0} step="0.01" value={kaufpreis} onChange={e => setKaufpreis(e.target.value)} placeholder="0,00" className="bg-secondary border-border" />
             </div>
             <div>
-              <label className="text-sm text-muted-foreground">1. Rate / Anzahlung netto (€)</label>
+              <label className="text-sm text-muted-foreground">1. Rate / Anzahlung {priceLabel} (€)</label>
               <Input type="number" min={0} step="0.01" value={anzahlung} onChange={e => setAnzahlung(e.target.value)} placeholder="0,00" className="bg-secondary border-border" />
             </div>
             <div>
@@ -394,12 +411,18 @@ export default function MietkaufDialog({ order }: Props) {
               </Select>
             </div>
             <div>
-              <label className="text-sm text-muted-foreground">Kaufpreis bei Vertragsende netto (€)</label>
-              <Input type="number" min={0} step="0.01" value={kaufpreisEnde} onChange={e => setKaufpreisEnde(e.target.value)} placeholder="0,00" className="bg-secondary border-border" />
-            </div>
-            <div className="flex items-center justify-between rounded-lg bg-secondary/50 border border-border p-3">
-              <Label htmlFor="mwst-toggle" className="text-sm text-muted-foreground cursor-pointer">19% MwSt. ausweisen</Label>
-              <Switch id="mwst-toggle" checked={mitMwst} onCheckedChange={setMitMwst} />
+              <label className="text-sm text-muted-foreground">
+                Kaufpreis bei Vertragsende {priceLabel} (€)
+                {isDE && <span className="ml-1 text-xs">(automatisch = letzte monatliche Rate)</span>}
+              </label>
+              <Input
+                type="number" min={0} step="0.01"
+                value={kaufpreisEnde}
+                onChange={e => setKaufpreisEnde(e.target.value)}
+                placeholder="0,00"
+                className="bg-secondary border-border"
+                disabled={isDE}
+              />
             </div>
             <div>
               <label className="text-sm text-muted-foreground">Zusätzliche Serviceleistungen</label>
@@ -408,10 +431,11 @@ export default function MietkaufDialog({ order }: Props) {
 
             {isValid && (
               <div className="rounded-lg bg-secondary/50 border border-border p-3 text-sm space-y-1">
-                <p className="text-muted-foreground">Kaufpreis: <span className="text-foreground font-medium">{fmtCurrency(kaufpreisNum)}</span></p>
-                <p className="text-muted-foreground">1. Rate (Anzahlung): <span className="text-foreground font-medium">{fmtCurrency(anzahlungNum)} netto / {fmtCurrency(anzahlungBrutto)} brutto</span></p>
-                <p className="text-muted-foreground">Restbetrag: <span className="text-foreground font-medium">{fmtCurrency(restBetrag)}</span></p>
-                <p className="text-muted-foreground">Monatliche Rate: <span className="text-foreground font-medium">{fmtCurrency(monatlicheRate)} netto / {fmtCurrency(rateBrutto)} brutto</span></p>
+                <p className="text-muted-foreground">Gesamtbetrag ({priceLabel}): <span className="text-foreground font-medium">{fmtCurrency(kaufpreisNum)}</span></p>
+                <p className="text-muted-foreground">1. Rate / Anzahlung ({priceLabel}): <span className="text-foreground font-medium">{fmtCurrency(anzahlungNum)}</span></p>
+                <p className="text-muted-foreground">Restbetrag ({priceLabel}): <span className="text-foreground font-medium">{fmtCurrency(restBetrag)}</span></p>
+                <p className="text-muted-foreground">Monatliche Rate ({priceLabel}): <span className="text-foreground font-medium">{fmtCurrency(monatlicheRate)}</span></p>
+                <p className="text-muted-foreground">Kaufpreis bei Vertragsende ({priceLabel}): <span className="text-foreground font-medium">{fmtCurrency(kaufpreisEndeNum)}</span></p>
                 <p className="text-muted-foreground">Laufzeit: <span className="text-foreground font-medium">{term} Monate</span></p>
               </div>
             )}
