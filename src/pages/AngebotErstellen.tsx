@@ -58,7 +58,7 @@ export default function AngebotErstellen() {
   const [lines, setLines] = useState<LineItem[]>([newLine()]);
 
   // Zahlungsberechnung
-  const [payType, setPayType] = useState<'Direktkauf' | 'Ratenzahlung' | 'Leasing' | 'Mietkauf' | 'Alix Flex'>('Direktkauf');
+  const [payType, setPayType] = useState<'Direktkauf' | 'Ratenzahlung' | 'Leasing' | 'Mietkauf' | 'Alix Flex' | 'Alix Smart Impulse'>('Direktkauf');
   const [payPrice, setPayPrice] = useState<string>('');
   const [payDown, setPayDown] = useState<string>('');
   const [payTerm, setPayTerm] = useState<number>(24);
@@ -1436,7 +1436,7 @@ export default function AngebotErstellen() {
       <div className="rounded-xl border border-border bg-card card-glow p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-foreground">Zahlungsberechnung</h3>
-          <Select value={payType} onValueChange={(v: any) => setPayType(v)}>
+          <Select value={payType} onValueChange={(v: any) => { setPayType(v); if (v === 'Alix Smart Impulse' && payTerm > 36) setPayTerm(36); }}>
             <SelectTrigger className="w-48 bg-secondary border-border"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="Direktkauf">Direktkauf</SelectItem>
@@ -1444,6 +1444,7 @@ export default function AngebotErstellen() {
               <SelectItem value="Leasing">Leasing</SelectItem>
               <SelectItem value="Mietkauf">Mietkauf</SelectItem>
               <SelectItem value="Alix Flex">Alix Flex</SelectItem>
+              <SelectItem value="Alix Smart Impulse">Alix Smart Impulse</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -1478,7 +1479,7 @@ export default function AngebotErstellen() {
               <Select value={String(payTerm)} onValueChange={v => setPayTerm(Number(v))}>
                 <SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {[12, 24, 36, 48, 60, 72].map(t => (
+                  {(payType === 'Alix Smart Impulse' ? [12, 24, 36] : [12, 24, 36, 48, 60, 72]).map(t => (
                     <SelectItem key={t} value={String(t)}>{t} Monate</SelectItem>
                   ))}
                 </SelectContent>
