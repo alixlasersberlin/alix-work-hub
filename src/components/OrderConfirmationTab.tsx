@@ -54,6 +54,21 @@ async function loadTemplate(): Promise<string> {
   return data;
 }
 
+let _logoCache: string | null = null;
+async function loadLogo(): Promise<string> {
+  if (_logoCache) return _logoCache;
+  const res = await fetch(logoAsset.url);
+  const blob = await res.blob();
+  const data: string = await new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result as string);
+    r.onerror = reject;
+    r.readAsDataURL(blob);
+  });
+  _logoCache = data;
+  return data;
+}
+
 type PayType = 'Direktkauf' | 'Ratenzahlung' | 'Leasing' | 'Mietkauf' | 'Alix Flex';
 
 export default function OrderConfirmationTab({ order, customer, items }: Props) {
