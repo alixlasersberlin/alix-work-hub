@@ -82,6 +82,9 @@ type State = {
   consent_data: boolean;
   consent_contact: boolean;
   service_rating: number;
+  flex_price: string;
+  flex_down: string;
+  flex_term: number;
 };
 
 const INITIAL: State = {
@@ -105,9 +108,14 @@ const INITIAL: State = {
   consent_data: false,
   consent_contact: false,
   service_rating: 0,
+  flex_price: '',
+  flex_down: '',
+  flex_term: 24,
 };
 
-const TOTAL_STEPS = 13;
+const FLEX_TERMS = [12, 24, 36, 48, 60] as const;
+
+const TOTAL_STEPS = 14;
 
 interface Props {
   /** When true the wizard renders the full public landing chrome (logo, watermark). */
@@ -151,9 +159,9 @@ export default function SalesWizard({ publicMode = false }: Props) {
       case 4: return !!data.delivery_preference;
       case 5: return !!data.first_name.trim() && !!data.last_name.trim();
       case 7: return data.phone.trim().length >= 3;
-      case 8: return /.+@.+\..+/.test(data.email.trim());
-      case 9: return !!data.consultation_type;
-      case 11: return data.consent_data && data.consent_contact && (publicMode ? !!captchaToken : true);
+      case 9: return /.+@.+\..+/.test(data.email.trim());
+      case 10: return !!data.consultation_type;
+      case 12: return data.consent_data && data.consent_contact && (publicMode ? !!captchaToken : true);
       default: return true;
     }
   }
@@ -527,13 +535,80 @@ export default function SalesWizard({ publicMode = false }: Props) {
                     </Section>
                   )}
 
-                  {step === 8 && (
+                  {step === 8 && (() => {
+                    const price = parseFloat(data.flex_price.replace(',', '.')) || 0;
+                    const down = parseFloat(data.flex_down.replace(',', '.')) || 0;
+                    const base = Math.max(0, price - down);
+                    const monthly = data.flex_term > 0 ? base / data.flex_term : 0;
+                    const fmt = (v: number) => v.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
+                    return (
+                      <Section title="Alix Flex 0%" hint="Finanzierungsrechner – 0% effektiver Jahreszins (unverbindlich)">
+                        <div className="space-y-4">
+                          <Field label="Kaufpreis (€)">
+                            <Input
+                              type="number"
+                              min={0}
+                              step="0.01"
+                              inputMode="decimal"
+                              value={data.flex_price}
+                              onChange={(e) => setData({ ...data, flex_price: e.target.value })}
+                              placeholder="z. B. 25000"
+                              className={inputCls}
+                            />
+                          </Field>
+                          <Field label="Anzahlung (€)">
+                            <Input
+                              type="number"
+                              min={0}
+                              step="0.01"
+                              inputMode="decimal"
+                              value={data.flex_down}
+                              onChange={(e) => setData({ ...data, flex_down: e.target.value })}
+                              placeholder="z. B. 5000"
+                              className={inputCls}
+                            />
+                          </Field>
+                          <Field label="Laufzeit">
+                            <select
+                              value={String(data.flex_term)}
+                              onChange={(e) => setData({ ...data, flex_term: Number(e.target.value) })}
+                              className={selectCls}
+                            >
+                              {FLEX_TERMS.map((m) => (
+                                <option key={m} value={m}>{m} Monate</option>
+                              ))}
+                            </select>
+                          </Field>
+
+                          <div className="relative overflow-hidden rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 via-white to-amber-50 p-5 shadow-[0_15px_40px_-20px_rgba(217,119,6,0.45)]">
+                            <div className="flex items-center justify-between gap-3">
+                              <div>
+                                <div className="text-[11px] uppercase tracking-[0.2em] text-amber-700 font-semibold">Monatliche Rate</div>
+                                <div className="mt-1 text-3xl md:text-4xl font-bold text-slate-900 tabular-nums">
+                                  {fmt(monthly)}
+                                </div>
+                                <div className="mt-1 text-xs text-slate-500">
+                                  Finanzierungssumme: <span className="text-slate-700 font-medium tabular-nums">{fmt(base)}</span> · {data.flex_term} Monate · 0,00 % eff. p. a.
+                                </div>
+                              </div>
+                              <Sparkles className="h-8 w-8 text-amber-500 shrink-0" />
+                            </div>
+                          </div>
+                          <p className="text-[11px] text-slate-500 leading-relaxed">
+                            Beispielrechnung. Repräsentatives Angebot vorbehaltlich Bonitätsprüfung des Finanzierungspartners. Keine Garantie für endgültige Konditionen.
+                          </p>
+                        </div>
+                      </Section>
+                    );
+                  })()}
+
+                  {step === 9 && (
                     <Section title={t.s_email} hint={t.required}>
                       <Input type="email" value={data.email} onChange={(e) => setData({ ...data, email: e.target.value })} placeholder={t.email_placeholder} className={inputCls} />
                     </Section>
                   )}
 
-                  {step === 9 && (
+                  {step === 10 && (
                     <Section title={t.s_consultation}>
                       <RadioGroup value={data.consultation_type} onValueChange={(v) => setData({ ...data, consultation_type: v })} className="gap-2.5">
                         {CONSULTATION.map((c) => (
@@ -551,13 +626,13 @@ export default function SalesWizard({ publicMode = false }: Props) {
                     </Section>
                   )}
 
-                  {step === 10 && (
+                  {step === 11 && (
                     <Section title={t.s_notes} hint={t.s_notes_hint}>
                       <Textarea rows={5} value={data.notes} onChange={(e) => setData({ ...data, notes: e.target.value })} className={inputCls} />
                     </Section>
                   )}
 
-                  {step === 11 && (
+                  {step === 12 && (
                     <Section title={t.s_privacy}>
                       <div className="space-y-3">
                         <label className="flex items-start gap-3 cursor-pointer rounded-xl border border-slate-200/80 bg-white/70 p-3.5">
@@ -577,7 +652,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
                     </Section>
                   )}
 
-                  {step === 12 && (
+                  {step === 13 && (
                     <Section title={t.s_rating} hint={t.s_rating_hint}>
                       <div className="flex justify-center gap-2 py-3">
                         {[1, 2, 3, 4, 5].map((n) => (
@@ -630,7 +705,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
                     >
                       <ArrowLeft className="h-4 w-4" /> {t.back}
                     </Button>
-                    {step < 12 ? (
+                    {step < 13 ? (
                       <Button
                         type="button"
                         onClick={goNext}
