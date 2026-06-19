@@ -226,7 +226,6 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
       let ay = TOP_CONTENT + 12;
       const billing = customer?.billing_address || customer?.shipping_address || {};
       const shipping = customer?.shipping_address || customer?.billing_address || {};
-      const colW = (CONTENT_W - 8) / 2;
 
       const drawAddress = (title: string, x: number, addr: any, yStart: number) => {
         doc.setFont('helvetica', 'bold');
@@ -247,9 +246,11 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
         return y;
       };
 
+      // Rechnungsadresse links; Lieferadresse rechts unter dem Meta-Block (unter "Kundennr.")
       const yBilling = drawAddress('Rechnungsadresse', LEFT, billing, ay);
-      const yShipping = drawAddress('Lieferadresse', LEFT + colW + 8, shipping, ay);
+      const yShipping = drawAddress('Lieferadresse', metaX, shipping, metaY + 4);
       let cy = Math.max(yBilling, yShipping) + 8;
+
 
       // Auftragsbestätigung intro (über den Artikeln, unter der Adresse)
       doc.setFont('helvetica', 'bold');
