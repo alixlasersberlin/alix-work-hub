@@ -508,7 +508,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         } as any);
       } catch { /* nicht kritisch */ }
 
-      toast.success(`Anzahlungsrechnung an ${customer.email} versendet. Das PDF wurde lokal heruntergeladen – bitte als Anhang anfügen.`);
+      toast.success(`Anzahlungsrechnung an ${customer.email} versendet (mit Download-Link zur Rechnung).`);
       onReload?.();
     } catch (e: any) {
       toast.error('Fehler beim Versenden: ' + (e?.message || 'Unbekannter Fehler'));
