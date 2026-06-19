@@ -248,10 +248,27 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
       };
 
       const yBilling = drawAddress('Rechnungsadresse', LEFT, billing, ay);
-      const yShipping = drawAddress('Lieferadresse', LEFT + colW + 8, shipping, ay + 10);
-      let cy = Math.max(yBilling, yShipping) + 6;
+      const yShipping = drawAddress('Lieferadresse', LEFT + colW + 8, shipping, ay);
+      let cy = Math.max(yBilling, yShipping) + 8;
 
-      // Intro
+      // Auftragsbestätigung intro (über den Artikeln, unter der Adresse)
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(20, 60, 110);
+      doc.text('Auftragsbestätigung', LEFT, cy);
+      cy += 5;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9.5);
+      doc.setTextColor(60, 60, 60);
+      const introText =
+        'Wir bestätigen den vorstehend aufgeführten Auftrag verbindlich. Sollten Abweichungen zu Ihrer Bestellung ' +
+        'bestehen, teilen Sie uns dies bitte umgehend schriftlich mit. Es gelten unsere Allgemeinen ' +
+        'Geschäftsbedingungen sowie die getroffenen individuellen Vereinbarungen.';
+      const introWrapped = doc.splitTextToSize(introText, CONTENT_W);
+      doc.text(introWrapped, LEFT, cy);
+      cy += introWrapped.length * 4.4 + 4;
+
+      // Optionale freie Notizen
       if (notes.trim()) {
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(9.5);
@@ -323,28 +340,8 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
       doc.text('Gesamt:', totalsX, finalY + 14);
       doc.text(fmtMoney(totals.gross, currency), RIGHT, finalY + 14, { align: 'right' });
 
-      // Confirmation block
-      let py = finalY + 26;
-      if (py > BOTTOM_LIMIT - 20) {
-        doc.addPage();
-        drawTemplate();
-        py = TOP_CONTENT;
-      }
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(10);
-      doc.setTextColor(20, 60, 110);
-      doc.text('Auftragsbestätigung', LEFT, py);
-      py += 5;
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(9.5);
-      doc.setTextColor(60, 60, 60);
-      const confirmation =
-        'Wir bestätigen den vorstehend aufgeführten Auftrag verbindlich. Sollten Abweichungen zu Ihrer Bestellung bestehen, ' +
-        'teilen Sie uns dies bitte umgehend schriftlich mit. Es gelten unsere Allgemeinen Geschäftsbedingungen sowie die ' +
-        'getroffenen individuellen Vereinbarungen.';
-      const wrapped = doc.splitTextToSize(confirmation, CONTENT_W);
-      doc.text(wrapped, LEFT, py);
-      py += wrapped.length * 4.6 + 6;
+      // Confirmation block (oben über den Artikeln bereits gesetzt)
+      let py = finalY + 20;
 
       // Zahlungsweise / Zahlungsbedingungen
       if (paymentTerms && paymentTerms.trim()) {
