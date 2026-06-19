@@ -535,13 +535,80 @@ export default function SalesWizard({ publicMode = false }: Props) {
                     </Section>
                   )}
 
-                  {step === 8 && (
+                  {step === 8 && (() => {
+                    const price = parseFloat(data.flex_price.replace(',', '.')) || 0;
+                    const down = parseFloat(data.flex_down.replace(',', '.')) || 0;
+                    const base = Math.max(0, price - down);
+                    const monthly = data.flex_term > 0 ? base / data.flex_term : 0;
+                    const fmt = (v: number) => v.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
+                    return (
+                      <Section title="Alix Flex 0%" hint="Finanzierungsrechner – 0% effektiver Jahreszins (unverbindlich)">
+                        <div className="space-y-4">
+                          <Field label="Kaufpreis (€)">
+                            <Input
+                              type="number"
+                              min={0}
+                              step="0.01"
+                              inputMode="decimal"
+                              value={data.flex_price}
+                              onChange={(e) => setData({ ...data, flex_price: e.target.value })}
+                              placeholder="z. B. 25000"
+                              className={inputCls}
+                            />
+                          </Field>
+                          <Field label="Anzahlung (€)">
+                            <Input
+                              type="number"
+                              min={0}
+                              step="0.01"
+                              inputMode="decimal"
+                              value={data.flex_down}
+                              onChange={(e) => setData({ ...data, flex_down: e.target.value })}
+                              placeholder="z. B. 5000"
+                              className={inputCls}
+                            />
+                          </Field>
+                          <Field label="Laufzeit">
+                            <select
+                              value={String(data.flex_term)}
+                              onChange={(e) => setData({ ...data, flex_term: Number(e.target.value) })}
+                              className={selectCls}
+                            >
+                              {FLEX_TERMS.map((m) => (
+                                <option key={m} value={m}>{m} Monate</option>
+                              ))}
+                            </select>
+                          </Field>
+
+                          <div className="relative overflow-hidden rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 via-white to-amber-50 p-5 shadow-[0_15px_40px_-20px_rgba(217,119,6,0.45)]">
+                            <div className="flex items-center justify-between gap-3">
+                              <div>
+                                <div className="text-[11px] uppercase tracking-[0.2em] text-amber-700 font-semibold">Monatliche Rate</div>
+                                <div className="mt-1 text-3xl md:text-4xl font-bold text-slate-900 tabular-nums">
+                                  {fmt(monthly)}
+                                </div>
+                                <div className="mt-1 text-xs text-slate-500">
+                                  Finanzierungssumme: <span className="text-slate-700 font-medium tabular-nums">{fmt(base)}</span> · {data.flex_term} Monate · 0,00 % eff. p. a.
+                                </div>
+                              </div>
+                              <Sparkles className="h-8 w-8 text-amber-500 shrink-0" />
+                            </div>
+                          </div>
+                          <p className="text-[11px] text-slate-500 leading-relaxed">
+                            Beispielrechnung. Repräsentatives Angebot vorbehaltlich Bonitätsprüfung des Finanzierungspartners. Keine Garantie für endgültige Konditionen.
+                          </p>
+                        </div>
+                      </Section>
+                    );
+                  })()}
+
+                  {step === 9 && (
                     <Section title={t.s_email} hint={t.required}>
                       <Input type="email" value={data.email} onChange={(e) => setData({ ...data, email: e.target.value })} placeholder={t.email_placeholder} className={inputCls} />
                     </Section>
                   )}
 
-                  {step === 9 && (
+                  {step === 10 && (
                     <Section title={t.s_consultation}>
                       <RadioGroup value={data.consultation_type} onValueChange={(v) => setData({ ...data, consultation_type: v })} className="gap-2.5">
                         {CONSULTATION.map((c) => (
