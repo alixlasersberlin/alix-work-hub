@@ -1,9 +1,8 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { FileText, Download } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
@@ -82,21 +81,34 @@ export default function MietkaufDialog({ order }: Props) {
   const [geraetModell, setGeraetModell] = useState('');
   const [zusatzService, setZusatzService] = useState('');
   const [kaufpreisEnde, setKaufpreisEnde] = useState('');
-  const [mitMwst, setMitMwst] = useState(true);
+
+  // Region auto-detect from shipping/billing country
+  const detectedRegion: 'DE' | 'EU' = useMemo(() => {
+    const c = order?.customers || order?.customer;
+    const a = c?.shipping_address || c?.billing_address;
+    const country = String(a?.country || '').trim().toLowerCase();
+    if (!country) return 'DE';
+    if (['de', 'deutschland', 'germany'].includes(country)) return 'DE';
+    return 'EU';
+  }, [order]);
+  const [region, setRegion] = useState<'DE' | 'EU'>(detectedRegion);
+  useEffect(() => { setRegion(detectedRegion); }, [detectedRegion]);
+
+  const isDE = region === 'DE';
+  const flag = isDE ? '🇩🇪' : '🇪🇺';
+  const priceLabel = isDE ? 'brutto' : 'netto';
 
   const kaufpreisNum = parseFloat(kaufpreis) || 0;
   const anzahlungNum = parseFloat(anzahlung) || 0;
   const restBetrag = Math.max(0, kaufpreisNum - anzahlungNum);
   const monatlicheRate = term > 0 ? Math.round((restBetrag / term) * 100) / 100 : 0;
 
-  // VAT calculations
-  const vatRate = mitMwst ? VAT_RATE : 0;
-  const anzahlungVat = Math.round(anzahlungNum * vatRate * 100) / 100;
-  const anzahlungBrutto = Math.round((anzahlungNum + anzahlungVat) * 100) / 100;
-  const rateVat = Math.round(monatlicheRate * vatRate * 100) / 100;
-  const rateBrutto = Math.round((monatlicheRate + rateVat) * 100) / 100;
+  // DE: Kaufpreis bei Vertragsende = letzte monatliche Rate (auto)
+  useEffect(() => {
+    if (isDE) setKaufpreisEnde(monatlicheRate ? String(monatlicheRate.toFixed(2)) : '');
+  }, [isDE, monatlicheRate]);
+
   const kaufpreisEndeNum = parseFloat(kaufpreisEnde) || 0;
-  const kaufpreisEndeVat = Math.round(kaufpreisEndeNum * vatRate * 100) / 100;
 
   const isValid = kaufpreisNum > 0 && anzahlungNum >= 0 && restBetrag > 0;
 
@@ -254,68 +266,27 @@ export default function MietkaufDialog({ order }: Props) {
     drawFinRow(y);
     doc.setFont('Inter', 'bold');
     doc.setFontSize(9);
-    doc.text('1. Rate', ml + 3, y + 5);
+    doc.text(`1. Rate (${priceLabel})`, ml + 3, y + 5);
     doc.setFont('Inter', 'normal');
     doc.text(fmtCurrency(anzahlungNum), col3 - 3, y + 5, { align: 'right' });
     y += rowH;
 
-    if (mitMwst) {
-      // zzgl. Umsatzsteuer
-      drawFinRow(y);
-      doc.text('zzgl. Umsatzsteuer', col2 - 2, y + 5);
-      doc.text(fmtCurrency(anzahlungVat), col3 - 3, y + 5, { align: 'right' });
-      y += rowH;
-
-      // zu zahlender Betrag
-      drawFinRow(y);
-      doc.setFont('Inter', 'bold');
-      doc.text('zu zahlender Betrag', col2 - 2, y + 5);
-      doc.text(fmtCurrency(anzahlungBrutto), col3 - 3, y + 5, { align: 'right' });
-      doc.setFont('Inter', 'normal');
-      y += rowH;
-    }
-
     // Monatl. Raten
     drawFinRow(y);
     doc.setFont('Inter', 'bold');
-    doc.text('Monatl. Raten:', ml + 3, y + 5);
+    doc.text(`Monatl. Raten (${priceLabel}):`, ml + 3, y + 5);
     doc.setFont('Inter', 'normal');
     doc.text(fmtCurrency(monatlicheRate), col3 - 3, y + 5, { align: 'right' });
     y += rowH;
 
-    if (mitMwst) {
-      // zzgl. Umsatzsteuer
-      drawFinRow(y);
-      doc.text('zzgl. Umsatzsteuer', col2 - 2, y + 5);
-      doc.text(fmtCurrency(rateVat), col3 - 3, y + 5, { align: 'right' });
-      y += rowH;
-
-      // Monatlich zu zahlende Rate
-      drawFinRow(y);
-      doc.setFont('Inter', 'bold');
-      doc.text('Monatlich zu zahlende Rate', col2 - 2, y + 5);
-      doc.text(fmtCurrency(rateBrutto), col3 - 3, y + 5, { align: 'right' });
-      doc.setFont('Inter', 'normal');
-      y += rowH;
-    }
-
     // Kaufpreis bei Vertragsende
     drawFinRow(y);
     doc.setFont('Inter', 'bold');
-    doc.text('Kaufpreis', ml + 3, y + 5);
+    doc.text(`Kaufpreis bei Vertragsende (${priceLabel})`, ml + 3, y + 5);
     doc.setFont('Inter', 'normal');
     doc.text(fmtCurrency(kaufpreisEndeNum), col3 - 3, y + 5, { align: 'right' });
     y += rowH;
 
-    if (mitMwst) {
-      drawFinRow(y);
-      doc.setFont('Inter', 'bold');
-      doc.text('bei Vertragsende', ml + 3, y + 5);
-      doc.setFont('Inter', 'normal');
-      doc.text('Zzgl. Umsatzsteuer', col2 - 2, y + 5);
-      doc.text(fmtCurrency(kaufpreisEndeVat), col3 - 3, y + 5, { align: 'right' });
-      y += rowH;
-    }
     y += rowH + 8;
 
     // ── Nutzungsort ──
@@ -394,7 +365,24 @@ export default function MietkaufDialog({ order }: Props) {
           >
             <X className="h-4 w-4" />
           </button>
-          <h2 className="font-display text-lg font-semibold leading-none tracking-tight">Mietkaufvertrag erstellen</h2>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="font-display text-lg font-semibold leading-none tracking-tight flex items-center gap-2">
+              <span className="text-xl leading-none" title={isDE ? 'Deutschland' : 'EU'}>{flag}</span>
+              Mietkaufvertrag erstellen
+            </h2>
+            <div className="flex items-center gap-1 rounded-md border border-border bg-secondary/50 p-1 text-xs">
+              <button
+                type="button"
+                onClick={() => setRegion('DE')}
+                className={`px-2 py-1 rounded ${isDE ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}
+              >🇩🇪 DE</button>
+              <button
+                type="button"
+                onClick={() => setRegion('EU')}
+                className={`px-2 py-1 rounded ${!isDE ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}
+              >🇪🇺 EU</button>
+            </div>
+          </div>
 
           <div className="space-y-4 mt-4">
             <div>
@@ -402,11 +390,11 @@ export default function MietkaufDialog({ order }: Props) {
               <Input value={geraetModell} onChange={e => setGeraetModell(e.target.value)} placeholder="z.B. Alix Pro 2000" className="bg-secondary border-border" />
             </div>
             <div>
-              <label className="text-sm text-muted-foreground">Gesamtbetrag netto (€)</label>
+              <label className="text-sm text-muted-foreground">Gesamtbetrag {priceLabel} (€)</label>
               <Input type="number" min={0} step="0.01" value={kaufpreis} onChange={e => setKaufpreis(e.target.value)} placeholder="0,00" className="bg-secondary border-border" />
             </div>
             <div>
-              <label className="text-sm text-muted-foreground">1. Rate / Anzahlung netto (€)</label>
+              <label className="text-sm text-muted-foreground">1. Rate / Anzahlung {priceLabel} (€)</label>
               <Input type="number" min={0} step="0.01" value={anzahlung} onChange={e => setAnzahlung(e.target.value)} placeholder="0,00" className="bg-secondary border-border" />
             </div>
             <div>
@@ -423,12 +411,18 @@ export default function MietkaufDialog({ order }: Props) {
               </Select>
             </div>
             <div>
-              <label className="text-sm text-muted-foreground">Kaufpreis bei Vertragsende netto (€)</label>
-              <Input type="number" min={0} step="0.01" value={kaufpreisEnde} onChange={e => setKaufpreisEnde(e.target.value)} placeholder="0,00" className="bg-secondary border-border" />
-            </div>
-            <div className="flex items-center justify-between rounded-lg bg-secondary/50 border border-border p-3">
-              <Label htmlFor="mwst-toggle" className="text-sm text-muted-foreground cursor-pointer">19% MwSt. ausweisen</Label>
-              <Switch id="mwst-toggle" checked={mitMwst} onCheckedChange={setMitMwst} />
+              <label className="text-sm text-muted-foreground">
+                Kaufpreis bei Vertragsende {priceLabel} (€)
+                {isDE && <span className="ml-1 text-xs">(automatisch = letzte monatliche Rate)</span>}
+              </label>
+              <Input
+                type="number" min={0} step="0.01"
+                value={kaufpreisEnde}
+                onChange={e => setKaufpreisEnde(e.target.value)}
+                placeholder="0,00"
+                className="bg-secondary border-border"
+                disabled={isDE}
+              />
             </div>
             <div>
               <label className="text-sm text-muted-foreground">Zusätzliche Serviceleistungen</label>
@@ -437,10 +431,11 @@ export default function MietkaufDialog({ order }: Props) {
 
             {isValid && (
               <div className="rounded-lg bg-secondary/50 border border-border p-3 text-sm space-y-1">
-                <p className="text-muted-foreground">Kaufpreis: <span className="text-foreground font-medium">{fmtCurrency(kaufpreisNum)}</span></p>
-                <p className="text-muted-foreground">1. Rate (Anzahlung): <span className="text-foreground font-medium">{fmtCurrency(anzahlungNum)} netto / {fmtCurrency(anzahlungBrutto)} brutto</span></p>
-                <p className="text-muted-foreground">Restbetrag: <span className="text-foreground font-medium">{fmtCurrency(restBetrag)}</span></p>
-                <p className="text-muted-foreground">Monatliche Rate: <span className="text-foreground font-medium">{fmtCurrency(monatlicheRate)} netto / {fmtCurrency(rateBrutto)} brutto</span></p>
+                <p className="text-muted-foreground">Gesamtbetrag ({priceLabel}): <span className="text-foreground font-medium">{fmtCurrency(kaufpreisNum)}</span></p>
+                <p className="text-muted-foreground">1. Rate / Anzahlung ({priceLabel}): <span className="text-foreground font-medium">{fmtCurrency(anzahlungNum)}</span></p>
+                <p className="text-muted-foreground">Restbetrag ({priceLabel}): <span className="text-foreground font-medium">{fmtCurrency(restBetrag)}</span></p>
+                <p className="text-muted-foreground">Monatliche Rate ({priceLabel}): <span className="text-foreground font-medium">{fmtCurrency(monatlicheRate)}</span></p>
+                <p className="text-muted-foreground">Kaufpreis bei Vertragsende ({priceLabel}): <span className="text-foreground font-medium">{fmtCurrency(kaufpreisEndeNum)}</span></p>
                 <p className="text-muted-foreground">Laufzeit: <span className="text-foreground font-medium">{term} Monate</span></p>
               </div>
             )}
