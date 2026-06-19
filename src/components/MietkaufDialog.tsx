@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { FileText, Download } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { createPDF } from '@/lib/pdf-utils';
-import alixLogo from '@/assets/alix-logo-gold-pdf.png.asset.json';
+import alixLogo from '@/assets/alix-logo-gold-mietkauf.png.asset.json';
 import templateAsset from '@/assets/mietkauf-template.jpg.asset.json';
 
 interface Props {
