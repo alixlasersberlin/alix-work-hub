@@ -139,12 +139,14 @@ export default function MietkaufDialog({ order }: Props) {
       return r;
     };
 
-    // Logo top-right, aligned to right content margin (gold logo, aspect ~5.33:1)
+    // Logo top-right, aligned exactly to right content margin (gold logo, aspect 1920:347 ≈ 5.533)
     try {
       const logoData = await loadImageAsBase64(alixLogo.url);
-      const LOGO_W = 45;
-      const LOGO_H = LOGO_W / 5.33;
-      doc.addImage(logoData, 'PNG', pw - mr - LOGO_W, 12, LOGO_W, LOGO_H, undefined, 'FAST');
+      const LOGO_W = 50;
+      const LOGO_H = LOGO_W * (347 / 1920);
+      const LOGO_X = pw - mr - LOGO_W;
+      const LOGO_Y = 12;
+      doc.addImage(logoData, 'PNG', LOGO_X, LOGO_Y, LOGO_W, LOGO_H, undefined, 'FAST');
     } catch { /* skip */ }
 
     let y = 18;
