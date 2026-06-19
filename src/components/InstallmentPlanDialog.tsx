@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { de } from 'date-fns/locale';
 import { createPDF } from '@/lib/pdf-utils';
 import alixLogo from '@/assets/alix-lasers-logo.png';
+import ratenplanTemplate from '@/assets/ratenplan-template.jpg.asset.json';
 
 interface Props {
   order: any;
