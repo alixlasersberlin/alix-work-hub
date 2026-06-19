@@ -6,8 +6,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Send, Webhook, CheckCircle2, AlertTriangle, Copy } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const PROJECT_REF = import.meta.env.VITE_SUPABASE_PROJECT_ID as string;
+const ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
 const ENDPOINT = `https://${PROJECT_REF}.supabase.co/functions/v1/alixsales-import`;
 
 const SAMPLE = {
