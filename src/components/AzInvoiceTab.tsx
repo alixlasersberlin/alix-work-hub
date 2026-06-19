@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { FileDown, Loader2, Receipt, AlertCircle } from 'lucide-react';
+import { FileDown, Loader2, Receipt, AlertCircle, Mail, BookmarkCheck } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,8 @@ import { createPDF } from '@/lib/pdf-utils';
 import autoTable from 'jspdf-autotable';
 import templateAsset from '@/assets/az-rechnung-template.jpg.asset.json';
 import logoAsset from '@/assets/alix-logo-gold-pdf.png.asset.json';
+
+type BuildMode = 'download' | 'blob';
 
 interface Props {
   order: any;
