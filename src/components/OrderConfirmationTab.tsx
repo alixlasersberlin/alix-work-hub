@@ -248,10 +248,27 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
       };
 
       const yBilling = drawAddress('Rechnungsadresse', LEFT, billing, ay);
-      const yShipping = drawAddress('Lieferadresse', LEFT + colW + 8, shipping, ay + 10);
-      let cy = Math.max(yBilling, yShipping) + 6;
+      const yShipping = drawAddress('Lieferadresse', LEFT + colW + 8, shipping, ay);
+      let cy = Math.max(yBilling, yShipping) + 8;
 
-      // Intro
+      // Auftragsbestätigung intro (über den Artikeln, unter der Adresse)
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(20, 60, 110);
+      doc.text('Auftragsbestätigung', LEFT, cy);
+      cy += 5;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9.5);
+      doc.setTextColor(60, 60, 60);
+      const introText =
+        'Wir bestätigen den vorstehend aufgeführten Auftrag verbindlich. Sollten Abweichungen zu Ihrer Bestellung ' +
+        'bestehen, teilen Sie uns dies bitte umgehend schriftlich mit. Es gelten unsere Allgemeinen ' +
+        'Geschäftsbedingungen sowie die getroffenen individuellen Vereinbarungen.';
+      const introWrapped = doc.splitTextToSize(introText, CONTENT_W);
+      doc.text(introWrapped, LEFT, cy);
+      cy += introWrapped.length * 4.4 + 4;
+
+      // Optionale freie Notizen
       if (notes.trim()) {
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(9.5);
