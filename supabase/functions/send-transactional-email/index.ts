@@ -213,29 +213,17 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Send primary synchronously (with retries), but fire-and-forget copies
-    // to stay well under the 150s Edge Function idle timeout.
+    // Send every recipient synchronously so required copies/BCC are actually
+    // accepted by the email provider before the function returns.
     const results: PromiseSettledResult<any>[] = []
-    try {
-      const value = await sendOne(recipients[0], 4)
-      results.push({ status: 'fulfilled', value } as PromiseFulfilledResult<any>)
-    } catch (reason: any) {
-      results.push({ status: 'rejected', reason } as PromiseRejectedResult)
-    }
-
-    // Fire copies in background, spaced out, without blocking the response
-    const copies = recipients.slice(1)
-    if (copies.length > 0) {
-      ;(async () => {
-        for (let i = 0; i < copies.length; i++) {
-          try {
-            await sendOne(copies[i], 3)
-          } catch (e: any) {
-            console.error('Copy send failed', { recipient: copies[i].email, error: e?.message })
-          }
-          if (i < copies.length - 1) await sleep(1500)
-        }
-      })()
+    for (let i = 0; i < recipients.length; i++) {
+      try {
+        const value = await sendOne(recipients[i], i === 0 ? 4 : 3)
+        results.push({ status: 'fulfilled', value } as PromiseFulfilledResult<any>)
+      } catch (reason: any) {
+        results.push({ status: 'rejected', reason } as PromiseRejectedResult)
+      }
+      if (i < recipients.length - 1) await sleep(750)
     }
 
     const failures = results
@@ -255,6 +243,7 @@ Deno.serve(async (req) => {
       effectiveRecipient,
       primaryOk,
       copiesSent: results.slice(1).filter((r) => r.status === 'fulfilled').length,
+      copyRecipients: recipients.slice(1).map((r) => r.email),
     })
 
     if (!primaryOk) {
