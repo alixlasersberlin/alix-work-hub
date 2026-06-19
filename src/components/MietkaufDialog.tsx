@@ -283,32 +283,49 @@ export default function MietkaufDialog({ order }: Props) {
       doc.line(col2 + cw * 0.25, ry, col2 + cw * 0.25, ry + rowH);
     };
 
-    // 1. Rate
-    drawFinRow(y);
-    doc.setFont('Inter', 'bold');
-    doc.setFontSize(9);
-    doc.text(`1. Rate (${priceLabel})`, ml + 3, y + 5);
-    doc.setFont('Inter', 'normal');
-    doc.text(fmtCurrency(anzahlungNum), col3 - 3, y + 5, { align: 'right' });
-    y += rowH;
+    // Helper: render an amount with DE VAT breakdown (Netto / 19% MwSt / Brutto)
+    const r2 = (n: number) => Math.round(n * 100) / 100;
+    const drawAmountRows = (label: string, bruttoOrNetto: number) => {
+      if (isDE) {
+        const brutto = bruttoOrNetto;
+        const netto = r2(brutto / 1.19);
+        const mwst = r2(brutto - netto);
 
-    // Monatl. Raten
-    drawFinRow(y);
-    doc.setFont('Inter', 'bold');
-    doc.text(`Monatl. Raten (${priceLabel}):`, ml + 3, y + 5);
-    doc.setFont('Inter', 'normal');
-    doc.text(fmtCurrency(monatlicheRate), col3 - 3, y + 5, { align: 'right' });
-    y += rowH;
+        drawFinRow(y);
+        doc.setFont('Inter', 'bold');
+        doc.setFontSize(9);
+        doc.text(`${label} (netto)`, ml + 3, y + 5);
+        doc.setFont('Inter', 'normal');
+        doc.text(fmtCurrency(netto), col3 - 3, y + 5, { align: 'right' });
+        y += rowH;
 
-    // Kaufpreis bei Vertragsende
-    drawFinRow(y);
-    doc.setFont('Inter', 'bold');
-    doc.text(`Kaufpreis bei Vertragsende (${priceLabel})`, ml + 3, y + 5);
-    doc.setFont('Inter', 'normal');
-    doc.text(fmtCurrency(kaufpreisEndeNum), col3 - 3, y + 5, { align: 'right' });
-    y += rowH;
+        drawFinRow(y);
+        doc.text('zzgl. 19% MwSt.', col2 - 2, y + 5);
+        doc.text(fmtCurrency(mwst), col3 - 3, y + 5, { align: 'right' });
+        y += rowH;
 
-    y += rowH + 8;
+        drawFinRow(y);
+        doc.setFont('Inter', 'bold');
+        doc.text('Bruttobetrag', col2 - 2, y + 5);
+        doc.text(fmtCurrency(brutto), col3 - 3, y + 5, { align: 'right' });
+        doc.setFont('Inter', 'normal');
+        y += rowH;
+      } else {
+        drawFinRow(y);
+        doc.setFont('Inter', 'bold');
+        doc.setFontSize(9);
+        doc.text(`${label} (netto)`, ml + 3, y + 5);
+        doc.setFont('Inter', 'normal');
+        doc.text(fmtCurrency(bruttoOrNetto), col3 - 3, y + 5, { align: 'right' });
+        y += rowH;
+      }
+    };
+
+    drawAmountRows('1. Rate / Anzahlung', anzahlungNum);
+    drawAmountRows('Monatl. Rate', monatlicheRate);
+    drawAmountRows('Kaufpreis bei Vertragsende', kaufpreisEndeNum);
+
+    y += 4;
 
     // ── Nutzungsort ──
     doc.setFont('Inter', 'bold');
