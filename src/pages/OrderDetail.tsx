@@ -447,6 +447,7 @@ export default function OrderDetail() {
               return (
                 <button
                   key={t.key}
+                  data-tab-key={t.key}
                   title={`${group.name} · ${t.label}`}
                   className={`flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
                     active
