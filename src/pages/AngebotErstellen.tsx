@@ -1444,6 +1444,7 @@ export default function AngebotErstellen() {
               <SelectItem value="Leasing">Leasing</SelectItem>
               <SelectItem value="Mietkauf">Mietkauf</SelectItem>
               <SelectItem value="Alix Flex">Alix Flex</SelectItem>
+              <SelectItem value="Alix Smart Impulse">Alix Smart Impulse</SelectItem>
             </SelectContent>
           </Select>
         </div>
