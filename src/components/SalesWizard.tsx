@@ -637,7 +637,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
                                     {fmt(monthly)}
                                   </div>
                                   <div className="mt-3 text-[11px]" style={{ color: '#6b5733' }}>
-                                    Finanzierungssumme <span className="font-semibold tabular-nums" style={{ color: '#1f2937' }}>{fmt(base)}</span> · {data.flex_term} Monate · 0,00 % eff. p. a.
+                                    Finanzierungssumme <span className="font-semibold tabular-nums" style={{ color: '#1f2937' }}>{fmt(base)}</span> · {data.flex_term} Monate · {isSmart ? planTitle : '0,00 % eff. p. a.'}
                                   </div>
                                 </div>
                                 <div className="flex h-12 w-12 items-center justify-center rounded-full shadow-[0_10px_25px_-8px_rgba(184,137,58,0.6)]" style={{ background: 'linear-gradient(135deg,#e6c275,#b8893a)' }}>
