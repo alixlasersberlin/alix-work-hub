@@ -33,7 +33,7 @@ Deno.serve(async (req) => {
 
     const { data: signed, error: signErr } = await admin.storage
       .from('order-invoices')
-      .createSignedUrl(doc.file_path, 60 * 5, { download: doc.file_name ?? true })
+      .createSignedUrl(doc.file_path, 60 * 5)
     if (signErr || !signed?.signedUrl) {
       return new Response('Download nicht verfügbar.', { status: 500, headers: corsHeaders })
     }
