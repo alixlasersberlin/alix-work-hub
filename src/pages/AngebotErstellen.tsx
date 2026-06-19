@@ -1660,6 +1660,42 @@ export default function AngebotErstellen() {
         </Button>
       </div>
 
+      {/* Live-PDF-Vorschau */}
+      <div className="mt-6 rounded-lg border border-border bg-card">
+        <div className="flex items-center justify-between px-4 py-2 border-b border-border">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <FileDown className="w-4 h-4 text-primary" />
+            Live-Vorschau (PDF)
+            {previewLoading && <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" onClick={refreshPreview} disabled={previewLoading}>
+              Aktualisieren
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setPreviewOpen((o) => !o)}>
+              {previewOpen ? 'Ausblenden' : 'Einblenden'}
+            </Button>
+          </div>
+        </div>
+        {previewOpen && (
+          <div className="bg-muted/30">
+            {previewUrl ? (
+              <iframe
+                title="Angebot Vorschau"
+                src={previewUrl}
+                className="w-full"
+                style={{ height: '80vh', border: 0 }}
+              />
+            ) : (
+              <div className="p-8 text-center text-sm text-muted-foreground">
+                Wähle einen Kunden und mindestens eine Position, dann erscheint hier die Live-Vorschau.
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+
     </div>
   );
 }
