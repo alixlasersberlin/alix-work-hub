@@ -39,18 +39,26 @@ function addrLines(a: any): string[] {
 }
 
 let _tplCache: string | null = null;
-async function loadTemplate(): Promise<string> {
-  if (_tplCache) return _tplCache;
-  const res = await fetch(templateAsset.url);
+let _logoCache: string | null = null;
+async function loadDataUrl(url: string): Promise<string> {
+  const res = await fetch(url);
   const blob = await res.blob();
-  const data: string = await new Promise((resolve, reject) => {
+  return await new Promise((resolve, reject) => {
     const r = new FileReader();
     r.onload = () => resolve(r.result as string);
     r.onerror = reject;
     r.readAsDataURL(blob);
   });
-  _tplCache = data;
-  return data;
+}
+async function loadTemplate(): Promise<string> {
+  if (_tplCache) return _tplCache;
+  _tplCache = await loadDataUrl(templateAsset.url);
+  return _tplCache;
+}
+async function loadLogo(): Promise<string> {
+  if (_logoCache) return _logoCache;
+  _logoCache = await loadDataUrl(logoAsset.url);
+  return _logoCache;
 }
 
 export default function AzInvoiceTab({ order, customer, items, onReload }: Props) {
