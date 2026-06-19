@@ -959,16 +959,19 @@ export default function AppLayout() {
               className="h-5 w-auto object-contain max-w-full"
             />
           )}
-          {/* Close-Button auf Mobile */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="ml-auto h-8 w-8 md:hidden"
-            onClick={() => setMobileOpen(false)}
-            aria-label="Menü schließen"
-          >
-            <X className="w-4 h-4" />
-          </Button>
+          {/* Notifications + Close-Button (Mobile) */}
+          <div className="ml-auto flex items-center gap-1">
+            {(!collapsed || mobileOpen) && <NotificationCenter />}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 md:hidden"
+              onClick={() => setMobileOpen(false)}
+              aria-label="Menü schließen"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
 
 
@@ -1472,7 +1475,6 @@ export default function AppLayout() {
               <span className="font-display font-bold gold-text">AlixWork</span>
               <span className="text-muted-foreground font-mono text-xs hidden sm:inline">v{APP_VERSION}</span>
           </div>
-            <NotificationCenter />
           </div>
         </header>
         <main className="flex-1 overflow-y-auto overflow-x-hidden scroll-touch pb-safe">
