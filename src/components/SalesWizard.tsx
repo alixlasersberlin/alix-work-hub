@@ -544,9 +544,44 @@ export default function SalesWizard({ publicMode = false }: Props) {
                     const base = Math.max(0, price - down);
                     const monthly = data.flex_term > 0 ? base / data.flex_term : 0;
                     const fmt = (v: number) => v.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
+                    const isSmart = data.flex_plan === 'smart_impulse';
+                    const terms = isSmart ? SMART_IMPULSE_TERMS : FLEX_TERMS;
+                    const planTitle = isSmart ? 'Alix Smart Impulse' : 'Alix Flex 0%';
+                    const planHint = isSmart
+                      ? 'Finanzierungsrechner – Laufzeit bis max. 36 Monate (unverbindlich)'
+                      : 'Finanzierungsrechner – 0% effektiver Jahreszins (unverbindlich)';
                     return (
-                      <Section title="Alix Flex 0%" hint="Finanzierungsrechner – 0% effektiver Jahreszins (unverbindlich)">
+                      <Section title={planTitle} hint={planHint}>
                         <div className="space-y-4">
+                          <Field label="Finanzierungsmodell">
+                            <div className="grid grid-cols-2 gap-2">
+                              {([
+                                { id: 'flex0', label: 'Alix Flex 0%' },
+                                { id: 'smart_impulse', label: 'Alix Smart Impulse' },
+                              ] as const).map((p) => {
+                                const active = data.flex_plan === p.id;
+                                return (
+                                  <button
+                                    key={p.id}
+                                    type="button"
+                                    onClick={() => {
+                                      const nextTerms = p.id === 'smart_impulse' ? SMART_IMPULSE_TERMS : FLEX_TERMS;
+                                      const nextTerm = nextTerms.includes(data.flex_term as any) ? data.flex_term : nextTerms[nextTerms.length - 1];
+                                      setData({ ...data, flex_plan: p.id, flex_term: nextTerm });
+                                    }}
+                                    className={cn(
+                                      'rounded-xl border px-3 py-3 text-sm font-medium transition-all',
+                                      active
+                                        ? 'border-amber-300 bg-amber-50/80 text-slate-900 shadow-[0_8px_24px_-12px_rgba(217,119,6,0.45)]'
+                                        : 'border-slate-200/80 bg-white/80 text-slate-700 hover:border-amber-200',
+                                    )}
+                                  >
+                                    {p.label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </Field>
                           <Field label="Gesamtbetrag (€)">
                             <Input
                               type="number"
@@ -577,11 +612,12 @@ export default function SalesWizard({ publicMode = false }: Props) {
                               onChange={(e) => setData({ ...data, flex_term: Number(e.target.value) })}
                               className={selectCls}
                             >
-                              {FLEX_TERMS.map((m) => (
+                              {terms.map((m) => (
                                 <option key={m} value={m}>{m} Monate</option>
                               ))}
                             </select>
                           </Field>
+
 
                           <div
                             className="relative overflow-hidden rounded-2xl p-[1px]"
