@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Upload, ArrowLeft, CheckCircle2, AlertTriangle, FileText, FileSpreadsheet, Plus, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { AlixsalesWebhookTester } from '@/components/sales/AlixsalesWebhookTester';
 
 // Felder im sales_leads-Schema, die per Import befüllbar sind
 const TARGET_FIELDS = [
