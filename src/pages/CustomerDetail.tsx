@@ -10,7 +10,6 @@ import CustomerEditDialog from '@/components/CustomerEditDialog';
 import CustomerDeleteDialog from '@/components/CustomerDeleteDialog';
 import CustomerCommunication from '@/components/CustomerCommunication';
 import FinanceAccountTab from '@/components/finance/FinanceAccountTab';
-import CustomerSmsTab from '@/components/CustomerSmsTab';
 import { withAt } from '@/lib/atSuffix';
 
 export default function CustomerDetail() {
@@ -79,7 +78,7 @@ export default function CustomerDetail() {
           <TabsTrigger value="overview">Übersicht</TabsTrigger>
           <TabsTrigger value="communication">Kommunikation</TabsTrigger>
           <TabsTrigger value="finance">Finanzakte</TabsTrigger>
-          <TabsTrigger value="sms">SMS Versand</TabsTrigger>
+          
         </TabsList>
 
         <TabsContent value="overview" className="mt-4">
@@ -154,10 +153,6 @@ export default function CustomerDetail() {
 
         <TabsContent value="finance" className="mt-4">
           <FinanceAccountTab customerId={customer.id} />
-        </TabsContent>
-
-        <TabsContent value="sms" className="mt-4">
-          <CustomerSmsTab customer={customer} />
         </TabsContent>
       </Tabs>
 

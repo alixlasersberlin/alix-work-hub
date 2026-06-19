@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
-  ArrowLeft, ClipboardList, Building2, FileText, History, Loader2, Inbox, Send, Pencil, X, Check, Shield, Package, CalendarIcon, CalendarClock, Truck, Euro, Mail, Landmark, Plus, Trash2, ShoppingCart, ShoppingBag, CheckCircle2, Hash
+  ArrowLeft, ClipboardList, Building2, FileText, History, Loader2, Inbox, Send, Pencil, X, Check, Shield, Package, CalendarIcon, CalendarClock, Truck, Euro, Mail, Landmark, Plus, Trash2, ShoppingCart, ShoppingBag, CheckCircle2, Hash, MessageSquare
 } from 'lucide-react';
 import { createRestbestellungMarker, hasPendingRestbestellung } from '@/lib/restbestellung';
 import { sendDepositReceivedNotice } from '@/lib/send-deposit-received-notice';
@@ -33,6 +33,7 @@ import DeliveryNoteTab from '@/components/DeliveryNoteTab';
 import AuftragsbestaetigungTab from '@/components/AuftragsbestaetigungTab';
 import OrderConfirmationTab from '@/components/OrderConfirmationTab';
 import AzInvoiceTab from '@/components/AzInvoiceTab';
+import CustomerSmsTab from '@/components/CustomerSmsTab';
 import { sendCustomerShippingNotice } from '@/lib/send-customer-shipping-notice';
 import { sendReviewInvitation } from '@/lib/review-invitation';
 import { VipBadge } from '@/components/VipBadge';
@@ -55,7 +56,7 @@ export default function OrderDetail() {
   const [history, setHistory] = useState<any[]>([]);
   const [poCount, setPoCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'items' | 'serials' | 'deposit' | 'financing' | 'at_purchase' | 'at_approval' | 'packages' | 'confirmation' | 'lieferschein' | 'auftragsbestaetigung' | 'az_invoice' | 'notes' | 'emails' | 'history' | 'raw'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'items' | 'serials' | 'deposit' | 'financing' | 'at_purchase' | 'at_approval' | 'packages' | 'confirmation' | 'lieferschein' | 'auftragsbestaetigung' | 'az_invoice' | 'notes' | 'emails' | 'sms' | 'history' | 'raw'>('overview');
   const [serialDevices, setSerialDevices] = useState<Array<{ id: string; serial_number: string; model_name: string; notes: string | null; updated_at: string | null }>>([]);
   const [sendingEmail, setSendingEmail] = useState(false);
   const [depositOk, setDepositOk] = useState(false);
@@ -91,7 +92,7 @@ export default function OrderDetail() {
   }, [id]);
 
   // Auto-Tab via ?tab=az_invoice (oder anderer Key) beim Öffnen
-  const validTabs = ['overview','items','serials','deposit','financing','at_purchase','at_approval','packages','confirmation','lieferschein','auftragsbestaetigung','az_invoice','notes','emails','history','raw'] as const;
+  const validTabs = ['overview','items','serials','deposit','financing','at_purchase','at_approval','packages','confirmation','lieferschein','auftragsbestaetigung','az_invoice','notes','emails','sms','history','raw'] as const;
   useEffect(() => {
     const t = searchParams.get('tab');
     if (t && (validTabs as readonly string[]).includes(t)) {
@@ -335,6 +336,7 @@ export default function OrderDetail() {
       tabs: [
         { key: 'notes', label: 'Notizen', icon: FileText, count: generalNotes.length },
         { key: 'emails', label: 'E-Mails', icon: Mail, count: emailNotes.length },
+        { key: 'sms', label: 'SMS Versand', icon: MessageSquare },
       ],
     },
     {
@@ -1102,6 +1104,13 @@ export default function OrderDetail() {
           )}
         </div>
       )}
+
+      {/* SMS Versand Tab */}
+      {activeTab === 'sms' && customer && (
+        <CustomerSmsTab customer={customer} orderId={order.id} />
+      )}
+
+
 
       {/* History Tab */}
       {activeTab === 'history' && (
