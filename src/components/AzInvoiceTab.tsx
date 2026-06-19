@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { createPDF } from '@/lib/pdf-utils';
 import autoTable from 'jspdf-autotable';
-import templateAsset from '@/assets/angebot-template.jpg.asset.json';
+import templateAsset from '@/assets/az-rechnung-template.jpg.asset.json';
 
 interface Props {
   order: any;
