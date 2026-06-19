@@ -243,6 +243,30 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       py += 5;
       doc.setFont('helvetica', 'bold');
       doc.text('Alix Lasers Deutschland', LEFT, py);
+      py += 10;
+
+      // Bankdaten
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(20, 60, 110);
+      doc.text('Bankverbindung', LEFT, py);
+      py += 5;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9.5);
+      doc.setTextColor(60, 60, 60);
+      const bank: Array<[string, string]> = [
+        ['Kontoinhaber', 'Alix Lasers GmbH'],
+        ['Bank', 'Deutsche Bank'],
+        ['IBAN', 'DE07 1007 0100 0142 6600 00'],
+        ['SWIFT/BIC', 'DEUTDEBB101'],
+      ];
+      for (const [k, v] of bank) {
+        doc.setFont('helvetica', 'bold');
+        doc.text(k + ':', LEFT, py);
+        doc.setFont('helvetica', 'normal');
+        doc.text(v, LEFT + 28, py);
+        py += 4.6;
+      }
 
       // Seitenzahlen
       const totalPages = (doc as any).internal.getNumberOfPages();
