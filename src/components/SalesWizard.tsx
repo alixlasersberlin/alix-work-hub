@@ -85,6 +85,7 @@ type State = {
   flex_price: string;
   flex_down: string;
   flex_term: number;
+  flex_plan: 'flex0' | 'smart_impulse';
 };
 
 const INITIAL: State = {
