@@ -336,6 +336,7 @@ export default function OrderDetail() {
       tabs: [
         { key: 'notes', label: 'Notizen', icon: FileText, count: generalNotes.length },
         { key: 'emails', label: 'E-Mails', icon: Mail, count: emailNotes.length },
+        { key: 'sms', label: 'SMS Versand', icon: MessageSquare },
       ],
     },
     {
