@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { FileText, Download } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { createPDF } from '@/lib/pdf-utils';
-import alixLogo from '@/assets/alix-lasers-logo.png';
+import alixLogo from '@/assets/alix-logo-gold-pdf.png.asset.json';
 import templateAsset from '@/assets/mietkauf-template.jpg.asset.json';
 
 interface Props {
@@ -138,10 +138,12 @@ export default function MietkaufDialog({ order }: Props) {
       return r;
     };
 
-    // Logo top-right
+    // Logo top-right, aligned to right content margin (gold logo, aspect ~5.33:1)
     try {
-      const logoData = await loadImageAsBase64(alixLogo);
-      doc.addImage(logoData, 'PNG', pw - 60, 8, 46, 20);
+      const logoData = await loadImageAsBase64(alixLogo.url);
+      const LOGO_W = 45;
+      const LOGO_H = LOGO_W / 5.33;
+      doc.addImage(logoData, 'PNG', pw - mr - LOGO_W, 12, LOGO_W, LOGO_H, undefined, 'FAST');
     } catch { /* skip */ }
 
     let y = 18;
