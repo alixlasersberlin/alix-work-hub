@@ -811,6 +811,45 @@ export default function AngebotErstellen() {
     toast.success('Angebot als PDF erstellt.');
   };
 
+  // ---------- Live-Vorschau ----------
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(true);
+
+  const refreshPreview = async () => {
+    if (!selectedCustomer) return;
+    if (!lines.some((l) => l.name && l.quantity > 0)) return;
+    setPreviewLoading(true);
+    try {
+      const doc = await buildPDF();
+      if (!doc) return;
+      const blob = doc.output('blob') as Blob;
+      const url = URL.createObjectURL(blob);
+      setPreviewUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return url;
+      });
+    } catch (e) {
+      console.error('PDF preview failed', e);
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (loading) return;
+    if (!previewOpen) return;
+    const t = setTimeout(() => { refreshPreview(); }, 600);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    loading, previewOpen, selectedCustomer?.id, offerNumber, offerDate, validUntil,
+    salesAdvisor, deliveryWeek, specialOffer, notes, includeAppendix,
+    JSON.stringify(lines),
+  ]);
+
+  useEffect(() => () => { if (previewUrl) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
+
   // Auto-Download wenn aus Angebotsliste mit ?download=1 aufgerufen
   useEffect(() => {
     if (loading) return;
