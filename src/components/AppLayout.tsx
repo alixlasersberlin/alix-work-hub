@@ -439,28 +439,39 @@ const navItems: NavItem[] = [
   {
     path: '/operation', label: 'OPERATIONS', icon: Workflow, roles: ['Super Admin'],
     children: [
+      // Dashboards & Auswertungen
       { path: '/mailcenter/executive', label: 'Executive Dashboard', icon: TrendingUp, roles: ['Super Admin'] },
+      { path: '/konzern/dashboard', label: 'Konzern-Dashboard', icon: TrendingUp, roles: ['Super Admin'] },
+      { path: '/verkauf/anfragen/dashboard', label: 'Anfragen Dashboard', icon: BarChart3, roles: ['Admin', 'Super Admin', 'Vertrieb', 'Vertriebsleitung', 'Order', 'SACHBEARBEITUNG'] },
+
+      // Stammdaten & Import
       { path: '/geraetetypen', label: 'Gerätetypen', icon: BarChart3, roles: ['Super Admin'] },
       { path: '/import', label: 'Import', icon: Cloud, roles: ['Super Admin'] },
-      { path: '/system', label: 'Monitoring', icon: Server, roles: ['Super Admin'] },
-      { path: '/benutzer', label: 'Benutzer', icon: Users, roles: ['Super Admin'] },
-      { path: '/order/zulieferer', label: 'Lieferanten', icon: Users, roles: ['Super Admin'] },
-      { path: '/rollen', label: 'Rollen', icon: Shield, roles: ['Super Admin', 'Admin'] },
-      { path: '/datensicherung', label: 'Datensicherung', icon: Shield, roles: ['Super Admin'] },
-      { path: '/operation/logfiles', label: 'Logfiles', icon: ScrollText, roles: ['Super Admin'] },
-      { path: '/operation/email-vorlagen', label: 'E-Mail Vorlagen', icon: Mail, roles: ['Super Admin'] },
       { path: '/verkauf/anfragen/import', label: 'Anfragen Import', icon: Upload, roles: ['Admin', 'Super Admin', 'Vertrieb', 'Vertriebsleitung', 'Order', 'SACHBEARBEITUNG'] },
-      { path: '/verkauf/anfragen/dashboard', label: 'Anfragen Dashboard', icon: BarChart3, roles: ['Admin', 'Super Admin', 'Vertrieb', 'Vertriebsleitung', 'Order', 'SACHBEARBEITUNG'] },
       { path: '/verkauf/angebot/import', label: 'Angebote Data Import', icon: Upload, roles: ['Super Admin'] },
+
+      // Benutzer & Rechte
+      { path: '/benutzer', label: 'Benutzer', icon: Users, roles: ['Super Admin'] },
+      { path: '/rollen', label: 'Rollen', icon: Shield, roles: ['Super Admin', 'Admin'] },
+      { path: '/order/zulieferer', label: 'Lieferanten', icon: Users, roles: ['Super Admin'] },
+      { path: '/mandanten', label: 'Mandanten', icon: Building2, roles: ['Super Admin'] },
+
+      // Kommunikation & Portale
+      { path: '/operation/email-vorlagen', label: 'E-Mail Vorlagen', icon: Mail, roles: ['Super Admin'] },
       { path: '/portal-admin', label: 'Kundenportal', icon: Globe, roles: ['Super Admin'] },
-      { path: '/operation/systemwartung', label: 'Systemwartung', icon: AlertTriangle, roles: ['Super Admin'] },
-      { path: '/operation/nummernkreise', label: 'Nummernkreise', icon: Hash, roles: ['Super Admin'] },
-      { path: '/lager/doppelte-reservierungen', label: 'Doppelte Reservierungen', icon: AlertTriangle, roles: ['Super Admin'] },
-      { path: '/order/timeline', label: 'Timeline Bestellungen', icon: Calendar, roles: ['Super Admin'] },
       { path: '/tickets', label: 'Ticketliste', icon: Ticket, roles: ['Super Admin'] },
       { path: '/tickets/api-sync', label: 'API Sync Einstellungen', icon: Settings, roles: ['Super Admin'] },
-      { path: '/mandanten', label: 'Mandanten', icon: Building2, roles: ['Super Admin'] },
-      { path: '/konzern/dashboard', label: 'Konzern-Dashboard', icon: TrendingUp, roles: ['Super Admin'] },
+
+      // Operative Tools
+      { path: '/operation/nummernkreise', label: 'Nummernkreise', icon: Hash, roles: ['Super Admin'] },
+      { path: '/order/timeline', label: 'Timeline Bestellungen', icon: Calendar, roles: ['Super Admin'] },
+      { path: '/lager/doppelte-reservierungen', label: 'Doppelte Reservierungen', icon: AlertTriangle, roles: ['Super Admin'] },
+
+      // System & Wartung
+      { path: '/system', label: 'Monitoring', icon: Server, roles: ['Super Admin'] },
+      { path: '/operation/logfiles', label: 'Logfiles', icon: ScrollText, roles: ['Super Admin'] },
+      { path: '/datensicherung', label: 'Datensicherung', icon: Shield, roles: ['Super Admin'] },
+      { path: '/operation/systemwartung', label: 'Systemwartung', icon: AlertTriangle, roles: ['Super Admin'] },
     ],
   },
 
