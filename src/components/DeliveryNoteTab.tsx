@@ -204,6 +204,34 @@ export default function DeliveryNoteTab({ order, customer, items, onReload }: Pr
       doc.text(wrapped, ml, fy);
       fy += wrapped.length * 4 + 10;
 
+      // Identitätsprüfung
+      doc.setFont('Inter', 'bold');
+      doc.setFontSize(10);
+      doc.text('Identität geprüft anhand:', ml, fy);
+      fy += 7;
+      doc.setFont('Inter', 'normal');
+      doc.setFontSize(9);
+      const idFields = [
+        'Ausweisart:',
+        'Ausweisnummer:',
+        'Ausstellungsland:',
+        'Name laut Ausweis:',
+        'Geprüft am:',
+      ];
+      const lineW = pw - ml * 2;
+      idFields.forEach((label) => {
+        doc.text(label, ml, fy);
+        const labelW = doc.getTextWidth(label) + 2;
+        doc.setDrawColor(150);
+        doc.line(ml + labelW, fy + 1, ml + lineW, fy + 1);
+        fy += 7;
+      });
+      fy += 6;
+      doc.text('Unterschrift Empfänger:', ml, fy);
+      const sigLabelW = doc.getTextWidth('Unterschrift Empfänger:') + 2;
+      doc.line(ml + sigLabelW, fy + 1, ml + lineW, fy + 1);
+      fy += 10;
+
       // Signature blocks
       doc.setFontSize(10);
       const dateLabel = deliveryDate
