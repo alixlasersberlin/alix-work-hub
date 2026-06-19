@@ -8,6 +8,7 @@ import { FileText, Download } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { createPDF } from '@/lib/pdf-utils';
 import alixLogo from '@/assets/alix-lasers-logo.png';
+import templateAsset from '@/assets/mietkauf-template.jpg.asset.json';
 
 interface Props {
   order: any;
