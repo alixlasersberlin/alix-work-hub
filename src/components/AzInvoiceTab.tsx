@@ -481,6 +481,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
           templateName: 'customer-shipping-notice',
           recipientEmail: customer.email,
           idempotencyKey: `az-invoice-${order?.id || orderNo}-${invoiceNumber}`,
+          bcc: ['k.trinh@alix-operation.de'],
           templateData: {
             subject,
             body,
