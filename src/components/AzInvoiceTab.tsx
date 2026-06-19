@@ -118,8 +118,15 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       const BOTTOM_LIMIT = 265;
 
       const templateUrl = await loadTemplate();
+      const logoUrl = await loadLogo();
+      // Logo: Originalseitenverhältnis ~1920x360 → 5.33:1
+      const LOGO_W = 45;
+      const LOGO_H = LOGO_W / (1920 / 360);
+      const LOGO_X = RIGHT - LOGO_W;
+      const LOGO_Y = 12;
       const drawTemplate = () => {
         doc.addImage(templateUrl, 'JPEG', 0, 0, PAGE_W, PAGE_H, undefined, 'FAST');
+        doc.addImage(logoUrl, 'PNG', LOGO_X, LOGO_Y, LOGO_W, LOGO_H, undefined, 'FAST');
       };
       drawTemplate();
 
