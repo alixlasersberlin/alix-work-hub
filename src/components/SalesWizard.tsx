@@ -82,6 +82,9 @@ type State = {
   consent_data: boolean;
   consent_contact: boolean;
   service_rating: number;
+  flex_price: string;
+  flex_down: string;
+  flex_term: number;
 };
 
 const INITIAL: State = {
@@ -105,9 +108,14 @@ const INITIAL: State = {
   consent_data: false,
   consent_contact: false,
   service_rating: 0,
+  flex_price: '',
+  flex_down: '',
+  flex_term: 24,
 };
 
-const TOTAL_STEPS = 13;
+const FLEX_TERMS = [12, 24, 36, 48, 60] as const;
+
+const TOTAL_STEPS = 14;
 
 interface Props {
   /** When true the wizard renders the full public landing chrome (logo, watermark). */
