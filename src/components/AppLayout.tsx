@@ -1475,7 +1475,6 @@ export default function AppLayout() {
               <span className="font-display font-bold gold-text">AlixWork</span>
               <span className="text-muted-foreground font-mono text-xs hidden sm:inline">v{APP_VERSION}</span>
           </div>
-            <NotificationCenter />
           </div>
         </header>
         <main className="flex-1 overflow-y-auto overflow-x-hidden scroll-touch pb-safe">
