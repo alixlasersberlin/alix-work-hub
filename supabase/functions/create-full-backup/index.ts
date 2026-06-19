@@ -180,6 +180,20 @@ async function updateBackupMessage(
   }
 }
 
+function summarizeUpstreamError(status: number, text: string): string {
+  const trimmed = (text || "").trim();
+  // Strip HTML error pages — only keep a short hint
+  if (trimmed.startsWith("<")) {
+    return `Gateway-Fehler (HTTP ${status}, HTML-Antwort vom Edge-Runtime)`;
+  }
+  try {
+    const obj = JSON.parse(trimmed);
+    const msg = obj?.error || obj?.message || obj?.msg;
+    if (msg) return `HTTP ${status}: ${String(msg).slice(0, 240)}`;
+  } catch (_) { /* ignore */ }
+  return `HTTP ${status} ${trimmed.slice(0, 240)}`;
+}
+
 async function queueNextStep(params: {
   supabaseUrl: string;
   serviceRoleKey: string;
@@ -192,32 +206,56 @@ async function queueNextStep(params: {
   scope: "full" | "db_only";
   startedAt: string;
 }) {
-  const res = await fetch(`${params.supabaseUrl}/functions/v1/create-full-backup`, {
-    method: "POST",
-    keepalive: true,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${params.serviceRoleKey}`,
-    },
-    body: JSON.stringify({
-      internal: true,
-      backup_id: params.backupId,
-      folder_path: params.folderPath,
-      manifest_path: params.manifestPath,
-      notify: params.notify,
-      notify_email: params.notifyEmail,
-      source: params.source,
-      scope: params.scope,
-      started_at: params.startedAt,
-    }),
+  const body = JSON.stringify({
+    internal: true,
+    backup_id: params.backupId,
+    folder_path: params.folderPath,
+    manifest_path: params.manifestPath,
+    notify: params.notify,
+    notify_email: params.notifyEmail,
+    source: params.source,
+    scope: params.scope,
+    started_at: params.startedAt,
   });
 
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Nächster Backup-Schritt konnte nicht gestartet werden: HTTP ${res.status} ${text}`);
-  }
+  // Retry on transient gateway/boot errors (HTML 5xx, 502/503/504, network errors).
+  const maxAttempts = 5;
+  let lastErr = "";
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      const res = await fetch(`${params.supabaseUrl}/functions/v1/create-full-backup`, {
+        method: "POST",
+        keepalive: true,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${params.serviceRoleKey}`,
+        },
+        body,
+      });
 
-  await res.text();
+      if (res.ok) {
+        await res.text();
+        return;
+      }
+
+      const text = await res.text();
+      lastErr = summarizeUpstreamError(res.status, text);
+      const retriable = res.status >= 500 || res.status === 429;
+      console.error(`queueNextStep attempt ${attempt}/${maxAttempts} failed: ${lastErr}`);
+      if (!retriable || attempt === maxAttempts) {
+        throw new Error(`Nächster Backup-Schritt konnte nicht gestartet werden: ${lastErr}`);
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      lastErr = msg;
+      console.error(`queueNextStep attempt ${attempt}/${maxAttempts} network error: ${msg}`);
+      if (attempt === maxAttempts) {
+        throw new Error(`Nächster Backup-Schritt konnte nicht gestartet werden: ${msg}`);
+      }
+    }
+    // Exponential backoff: 500ms, 1s, 2s, 4s
+    await new Promise((r) => setTimeout(r, 500 * 2 ** (attempt - 1)));
+  }
 }
 
 function triggerNextStep(
