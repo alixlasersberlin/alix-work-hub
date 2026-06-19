@@ -368,7 +368,7 @@ export default function BankFinancingTab({ orderId }: Props) {
         <p className="text-sm font-semibold tracking-wide">FINANZIERUNGSDATEN</p>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label className="text-xs text-muted-foreground">Kaufpreis (€)</Label>
+            <Label className="text-xs text-muted-foreground">Gesamtbetrag (€)</Label>
             <Input
               type="number" step="0.01" min="0"
               value={purchasePrice}

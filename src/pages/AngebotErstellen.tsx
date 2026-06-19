@@ -1450,7 +1450,7 @@ export default function AngebotErstellen() {
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Kaufpreis (€)</Label>
+            <Label className="text-xs text-muted-foreground">Gesamtbetrag (€)</Label>
             <Input
               type="number" min={0} step="0.01"
               value={payPrice}
