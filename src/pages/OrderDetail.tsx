@@ -1,6 +1,6 @@
 import { SkeletonForm } from '@/components/infinity/Skeleton';
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -41,6 +41,7 @@ import { isOrderVip } from '@/lib/vip';
 export default function OrderDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user, isAdmin, hasRole, hasAnyRole } = useAuth();
 
   const canWrite = isAdmin || hasRole('Auftragsverwaltung');
@@ -88,6 +89,37 @@ export default function OrderDetail() {
     if (!id) return;
     hasPendingRestbestellung(id).then(setRestPending);
   }, [id]);
+
+  // Auto-Tab via ?tab=az_invoice (oder anderer Key) beim Öffnen
+  const validTabs = ['overview','items','serials','deposit','financing','at_purchase','at_approval','packages','confirmation','lieferschein','auftragsbestaetigung','az_invoice','notes','emails','history','raw'] as const;
+  useEffect(() => {
+    const t = searchParams.get('tab');
+    if (t && (validTabs as readonly string[]).includes(t)) {
+      setActiveTab(t as any);
+    }
+    // nur beim Mount auswerten
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Aktiven Tab in den sichtbaren Bereich scrollen (horizontal scrollbare Tab-Leiste)
+  useEffect(() => {
+    const el = document.querySelector(`[data-tab-key="${activeTab}"]`) as HTMLElement | null;
+    if (el) {
+      try {
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      } catch {
+        el.scrollIntoView();
+      }
+    }
+    // URL-Parameter aktuell halten, ohne History zuzumüllen
+    const current = searchParams.get('tab');
+    if (current !== activeTab) {
+      const next = new URLSearchParams(searchParams);
+      if (activeTab === 'overview') next.delete('tab');
+      else next.set('tab', activeTab);
+      setSearchParams(next, { replace: true });
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     if (!id) return;
@@ -446,6 +478,7 @@ export default function OrderDetail() {
               return (
                 <button
                   key={t.key}
+                  data-tab-key={t.key}
                   title={`${group.name} · ${t.label}`}
                   className={`flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
                     active
