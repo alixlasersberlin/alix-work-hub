@@ -144,7 +144,15 @@ export default function MietkaufDialog({ order }: Props) {
       const LOGO_X = pw - mr - LOGO_W;
       const LOGO_Y = 10;
       doc.addImage(logoData, 'PNG', LOGO_X, LOGO_Y, LOGO_W, LOGO_H, undefined, 'FAST');
-    } catch { /* skip */ }
+    } catch (err: any) {
+      const msg = err?.message || String(err);
+      console.error('[MietkaufDialog] Logo konnte nicht geladen werden:', err, 'URL:', alixLogo.url);
+      toast({
+        variant: 'destructive',
+        title: 'Logo konnte nicht geladen werden',
+        description: `${msg} — URL: ${alixLogo.url}`,
+      });
+    }
 
     let y = 18;
 
