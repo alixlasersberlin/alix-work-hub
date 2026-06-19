@@ -593,8 +593,9 @@ export default function AngebotErstellen() {
         `${l.tax_percentage}%`,
         fmtMoney(l.quantity * l.rate),
       ]),
-      styles: { fontSize: 9, cellPadding: 2 },
-      headStyles: { fillColor: [183, 217, 255], textColor: [20, 60, 110] },
+      styles: { font: 'Inter', fontStyle: 'normal', fontSize: 9, cellPadding: 2 },
+      headStyles: { font: 'Inter', fontStyle: 'bold', fillColor: [183, 217, 255], textColor: [20, 60, 110] },
+      bodyStyles: { font: 'Inter', fontStyle: 'normal' },
       alternateRowStyles: { fillColor: [245, 249, 255] },
       columnStyles: {
         0: { cellWidth: 10, halign: 'center' },
