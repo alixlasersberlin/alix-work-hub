@@ -946,6 +946,10 @@ export default function OrderDetail() {
         />
       )}
 
+      {activeTab === 'az_invoice' && (
+        <AzInvoiceTab order={order} customer={customer} items={items} onReload={loadAll} />
+      )}
+
 
 
 
