@@ -286,6 +286,7 @@ export default function OrderDetail() {
         { key: 'confirmation', label: 'Auftragsbestätigung', icon: FileText },
         { key: 'lieferschein', label: 'Lieferschein', icon: FileText },
         { key: 'auftragsbestaetigung', label: 'Auftrag Unterzeichnet', icon: FileText },
+        { key: 'az_invoice', label: 'AZ Rechnung', icon: Euro, badge: (Number(order?.deposit_amount) || 0) > 0 ? '€' : undefined },
       ],
     },
     {
