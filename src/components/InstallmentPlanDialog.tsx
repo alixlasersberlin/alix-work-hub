@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { de } from 'date-fns/locale';
 import { createPDF } from '@/lib/pdf-utils';
 import alixLogo from '@/assets/alix-lasers-logo.png';
+import ratenplanTemplate from '@/assets/ratenplan-template.jpg.asset.json';
 
 interface Props {
   order: any;
@@ -38,16 +39,15 @@ function fmtCurrency(v: number) {
   return v.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
 }
 
-function drawWatermark(doc: any) {
+async function drawBackground(doc: any, templateData: string | null) {
+  if (!templateData) return;
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
-  doc.saveGraphicsState();
-  // @ts-ignore
-  doc.setGState(new (doc as any).GState({ opacity: 0.15 }));
-  doc.setFontSize(54);
-  doc.setTextColor(80, 80, 80);
-  doc.text('Alix Lasers', pageW / 2, pageH / 2, { align: 'center', angle: 35 });
-  doc.restoreGraphicsState();
+  try {
+    doc.addImage(templateData, 'JPEG', 0, 0, pageW, pageH, undefined, 'FAST');
+  } catch {
+    // ignore
+  }
 }
 
 function getCustomerName(order: any): string {
@@ -105,7 +105,13 @@ export default function InstallmentPlanDialog({ order }: Props) {
     const doc = createPDF();
     const pw = doc.internal.pageSize.getWidth();
 
-    drawWatermark(doc);
+    let templateData: string | null = null;
+    try {
+      templateData = await loadImageAsBase64(ratenplanTemplate.url);
+    } catch {
+      // template load failed, continue without background
+    }
+    await drawBackground(doc, templateData);
 
     // Logo top-right
     try {
@@ -115,10 +121,13 @@ export default function InstallmentPlanDialog({ order }: Props) {
       // logo load failed, skip
     }
 
+    // Left margin shifted to clear the blue template stripe
+    const LX = 30;
+
     // Title
     doc.setFontSize(18);
     doc.setTextColor(40, 40, 40);
-    doc.text('Ratenplan', 14, 22);
+    doc.text('Ratenplan', LX, 22);
 
     // Customer name
     const customerName = getCustomerName(order);
@@ -127,7 +136,7 @@ export default function InstallmentPlanDialog({ order }: Props) {
       doc.setFontSize(12);
       doc.setTextColor(30, 30, 30);
       doc.setFont('Inter', 'bold');
-      doc.text(customerName, 14, addrY);
+      doc.text(customerName, LX, addrY);
       doc.setFont('Inter', 'normal');
       addrY += 7;
     }
@@ -146,31 +155,33 @@ export default function InstallmentPlanDialog({ order }: Props) {
         a.country || '',
       ].filter(Boolean);
       for (const line of lines) {
-        doc.text(line, 14, addrY);
+        doc.text(line, LX, addrY);
         addrY += 5;
       }
       addrY += 3;
     }
 
     doc.setTextColor(100, 100, 100);
-    doc.text(`Auftrag: ${order.order_number}`, 14, addrY);
-    doc.text(`Erstellt am: ${fmtDate(new Date())}`, 14, addrY + 6);
-    doc.text(`Kaufpreis: ${fmtCurrency(parseFloat(price) || 0)}`, 14, addrY + 14);
-    doc.text(`Anzahlung: ${fmtCurrency(parseFloat(downPayment) || 0)}`, 14, addrY + 20);
-    doc.text(`Basiswert: ${fmtCurrency(baseAmount)}`, 14, addrY + 26);
-    doc.text(`Laufzeit: ${term} Monate`, 14, addrY + 32);
-    doc.text(`Monatliche Rate: ${fmtCurrency(monthlyRate)}`, 14, addrY + 38);
+    doc.text(`Auftrag: ${order.order_number}`, LX, addrY);
+    doc.text(`Erstellt am: ${fmtDate(new Date())}`, LX, addrY + 6);
+    doc.text(`Kaufpreis: ${fmtCurrency(parseFloat(price) || 0)}`, LX, addrY + 14);
+    doc.text(`Anzahlung: ${fmtCurrency(parseFloat(downPayment) || 0)}`, LX, addrY + 20);
+    doc.text(`Basiswert: ${fmtCurrency(baseAmount)}`, LX, addrY + 26);
+    doc.text(`Laufzeit: ${term} Monate`, LX, addrY + 32);
+    doc.text(`Monatliche Rate: ${fmtCurrency(monthlyRate)}`, LX, addrY + 38);
     const tableStartY = addrY + 50;
+
+    const tableW = pw - LX - 14;
 
     // Table header
     let y = tableStartY;
     doc.setFontSize(9);
     doc.setTextColor(255, 255, 255);
     doc.setFillColor(30, 30, 30);
-    doc.rect(14, y - 5, pw - 28, 8, 'F');
-    doc.text('Nr.', 18, y);
-    doc.text('Fälligkeitsdatum', 40, y);
-    doc.text('Rate', 110, y, { align: 'right' });
+    doc.rect(LX, y - 5, tableW, 8, 'F');
+    doc.text('Nr.', LX + 4, y);
+    doc.text('Fälligkeitsdatum', LX + 26, y);
+    doc.text('Rate', LX + 96, y, { align: 'right' });
     doc.text('Restbetrag', pw - 18, y, { align: 'right' });
 
     y += 10;
@@ -179,14 +190,14 @@ export default function InstallmentPlanDialog({ order }: Props) {
     for (const row of schedule) {
       if (y > 270) {
         doc.addPage();
-        drawWatermark(doc);
+        await drawBackground(doc, templateData);
         y = 20;
         doc.setTextColor(255, 255, 255);
         doc.setFillColor(30, 30, 30);
-        doc.rect(14, y - 5, pw - 28, 8, 'F');
-        doc.text('Nr.', 18, y);
-        doc.text('Fälligkeitsdatum', 40, y);
-        doc.text('Rate', 110, y, { align: 'right' });
+        doc.rect(LX, y - 5, tableW, 8, 'F');
+        doc.text('Nr.', LX + 4, y);
+        doc.text('Fälligkeitsdatum', LX + 26, y);
+        doc.text('Rate', LX + 96, y, { align: 'right' });
         doc.text('Restbetrag', pw - 18, y, { align: 'right' });
         y += 10;
         doc.setTextColor(40, 40, 40);
@@ -194,12 +205,12 @@ export default function InstallmentPlanDialog({ order }: Props) {
 
       if (row.nr % 2 === 0) {
         doc.setFillColor(245, 245, 245);
-        doc.rect(14, y - 5, pw - 28, 7, 'F');
+        doc.rect(LX, y - 5, tableW, 7, 'F');
       }
 
-      doc.text(`${row.nr}`, 18, y);
-      doc.text(fmtDate(row.dueDate), 40, y);
-      doc.text(fmtCurrency(row.amount), 110, y, { align: 'right' });
+      doc.text(`${row.nr}`, LX + 4, y);
+      doc.text(fmtDate(row.dueDate), LX + 26, y);
+      doc.text(fmtCurrency(row.amount), LX + 96, y, { align: 'right' });
       doc.text(fmtCurrency(row.remaining), pw - 18, y, { align: 'right' });
       y += 7;
     }
@@ -207,10 +218,10 @@ export default function InstallmentPlanDialog({ order }: Props) {
     // Total line
     y += 4;
     doc.setDrawColor(30, 30, 30);
-    doc.line(14, y - 3, pw - 14, y - 3);
+    doc.line(LX, y - 3, pw - 14, y - 3);
     doc.setFontSize(10);
     doc.setFont('Inter', 'bold');
-    doc.text('Gesamtbetrag:', 14, y + 2);
+    doc.text('Gesamtbetrag:', LX, y + 2);
     doc.text(fmtCurrency(baseAmount), pw - 18, y + 2, { align: 'right' });
 
     doc.save(`Ratenplan_${order.order_number}.pdf`);
