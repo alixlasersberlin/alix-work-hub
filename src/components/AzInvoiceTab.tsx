@@ -93,6 +93,8 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
     'Vielen Dank für Ihre Bestellung. Vereinbarungsgemäß stellen wir Ihnen hiermit die Anzahlung in Rechnung.'
   );
   const [generating, setGenerating] = useState(false);
+  const [booking, setBooking] = useState(false);
+  const [sending, setSending] = useState(false);
 
   useEffect(() => {
     if (orderDeposit > 0) setDepositAmount(String(orderDeposit));
