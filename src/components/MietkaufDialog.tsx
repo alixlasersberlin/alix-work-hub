@@ -59,19 +59,16 @@ function getDeviceModel(order: any): string {
   return '';
 }
 
-function loadImageAsBase64(src: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      canvas.getContext('2d')!.drawImage(img, 0, 0);
-      resolve(canvas.toDataURL('image/png'));
-    };
-    img.onerror = reject;
-    img.src = src;
+async function loadImageAsBase64(src: string): Promise<string> {
+  // Fetch via blob → dataURL to avoid CORS canvas-taint issues with CDN-served assets
+  const res = await fetch(src, { mode: 'cors', credentials: 'omit' });
+  if (!res.ok) throw new Error(`Failed to load image: ${res.status}`);
+  const blob = await res.blob();
+  return await new Promise<string>((resolve, reject) => {
+    const fr = new FileReader();
+    fr.onload = () => resolve(String(fr.result));
+    fr.onerror = reject;
+    fr.readAsDataURL(blob);
   });
 }
 
