@@ -1705,6 +1705,78 @@ export type Database = {
           },
         ]
       }
+      customer_sms_logs: {
+        Row: {
+          created_at: string
+          customer_id: string | null
+          document_id: string | null
+          document_number: string | null
+          document_type: string | null
+          error_message: string | null
+          id: string
+          link_url: string | null
+          message_text: string
+          order_id: string | null
+          phone: string
+          recipient_name: string | null
+          sent_at: string
+          sent_by: string | null
+          status: string
+          twilio_sid: string | null
+        }
+        Insert: {
+          created_at?: string
+          customer_id?: string | null
+          document_id?: string | null
+          document_number?: string | null
+          document_type?: string | null
+          error_message?: string | null
+          id?: string
+          link_url?: string | null
+          message_text: string
+          order_id?: string | null
+          phone: string
+          recipient_name?: string | null
+          sent_at?: string
+          sent_by?: string | null
+          status?: string
+          twilio_sid?: string | null
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string | null
+          document_id?: string | null
+          document_number?: string | null
+          document_type?: string | null
+          error_message?: string | null
+          id?: string
+          link_url?: string | null
+          message_text?: string
+          order_id?: string | null
+          phone?: string
+          recipient_name?: string | null
+          sent_at?: string
+          sent_by?: string | null
+          status?: string
+          twilio_sid?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_sms_logs_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_sms_logs_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           bank_name: string | null
@@ -12536,6 +12608,7 @@ export type Database = {
       can_manage_warranty: { Args: never; Returns: boolean }
       can_manage_whatsapp_automation: { Args: never; Returns: boolean }
       can_run_ai_service: { Args: never; Returns: boolean }
+      can_send_customer_sms: { Args: never; Returns: boolean }
       can_send_whatsapp: { Args: never; Returns: boolean }
       can_upload_factory_invoice: { Args: never; Returns: boolean }
       can_use_alix_sign: { Args: never; Returns: boolean }
