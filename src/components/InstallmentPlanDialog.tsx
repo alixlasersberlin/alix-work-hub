@@ -39,16 +39,15 @@ function fmtCurrency(v: number) {
   return v.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
 }
 
-function drawWatermark(doc: any) {
+async function drawBackground(doc: any, templateData: string | null) {
+  if (!templateData) return;
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
-  doc.saveGraphicsState();
-  // @ts-ignore
-  doc.setGState(new (doc as any).GState({ opacity: 0.15 }));
-  doc.setFontSize(54);
-  doc.setTextColor(80, 80, 80);
-  doc.text('Alix Lasers', pageW / 2, pageH / 2, { align: 'center', angle: 35 });
-  doc.restoreGraphicsState();
+  try {
+    doc.addImage(templateData, 'JPEG', 0, 0, pageW, pageH, undefined, 'FAST');
+  } catch {
+    // ignore
+  }
 }
 
 function getCustomerName(order: any): string {
