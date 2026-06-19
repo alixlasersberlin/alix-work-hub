@@ -1070,7 +1070,7 @@ export default function AngebotErstellen() {
             value={deliveryWeek}
             onChange={e => setDeliveryWeek(e.target.value)}
             placeholder="z.B. 2026-W24"
-            className="bg-secondary border-border mt-1.5 text-white [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+            className="bg-secondary border-border mt-1.5 text-white [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:invert"
           />
         </div>
         <div className="md:col-span-3">
