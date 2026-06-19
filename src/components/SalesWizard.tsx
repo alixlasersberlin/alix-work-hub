@@ -337,7 +337,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
                     <Section title={t.s_wish_device} hint={t.s_wish_device_hint}>
                       <div className="space-y-4">
                         <div className="space-y-1.5">
-                          <Label className="text-[11px] font-semibold uppercase tracking-wide text-slate-700">{t.alix_lasers_label}</Label>
+                          <Label className="text-[11px] font-semibold uppercase tracking-wide text-black">{t.alix_lasers_label}</Label>
                           <select
                             value={data.laser_model}
                             onChange={(e) => setData({ ...data, laser_model: e.target.value })}
