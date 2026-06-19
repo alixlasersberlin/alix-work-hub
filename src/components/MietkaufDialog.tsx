@@ -81,21 +81,34 @@ export default function MietkaufDialog({ order }: Props) {
   const [geraetModell, setGeraetModell] = useState('');
   const [zusatzService, setZusatzService] = useState('');
   const [kaufpreisEnde, setKaufpreisEnde] = useState('');
-  const [mitMwst, setMitMwst] = useState(true);
+
+  // Region auto-detect from shipping/billing country
+  const detectedRegion: 'DE' | 'EU' = useMemo(() => {
+    const c = order?.customers || order?.customer;
+    const a = c?.shipping_address || c?.billing_address;
+    const country = String(a?.country || '').trim().toLowerCase();
+    if (!country) return 'DE';
+    if (['de', 'deutschland', 'germany'].includes(country)) return 'DE';
+    return 'EU';
+  }, [order]);
+  const [region, setRegion] = useState<'DE' | 'EU'>(detectedRegion);
+  useEffect(() => { setRegion(detectedRegion); }, [detectedRegion]);
+
+  const isDE = region === 'DE';
+  const flag = isDE ? '🇩🇪' : '🇪🇺';
+  const priceLabel = isDE ? 'brutto' : 'netto';
 
   const kaufpreisNum = parseFloat(kaufpreis) || 0;
   const anzahlungNum = parseFloat(anzahlung) || 0;
   const restBetrag = Math.max(0, kaufpreisNum - anzahlungNum);
   const monatlicheRate = term > 0 ? Math.round((restBetrag / term) * 100) / 100 : 0;
 
-  // VAT calculations
-  const vatRate = mitMwst ? VAT_RATE : 0;
-  const anzahlungVat = Math.round(anzahlungNum * vatRate * 100) / 100;
-  const anzahlungBrutto = Math.round((anzahlungNum + anzahlungVat) * 100) / 100;
-  const rateVat = Math.round(monatlicheRate * vatRate * 100) / 100;
-  const rateBrutto = Math.round((monatlicheRate + rateVat) * 100) / 100;
+  // DE: Kaufpreis bei Vertragsende = letzte monatliche Rate (auto)
+  useEffect(() => {
+    if (isDE) setKaufpreisEnde(monatlicheRate ? String(monatlicheRate.toFixed(2)) : '');
+  }, [isDE, monatlicheRate]);
+
   const kaufpreisEndeNum = parseFloat(kaufpreisEnde) || 0;
-  const kaufpreisEndeVat = Math.round(kaufpreisEndeNum * vatRate * 100) / 100;
 
   const isValid = kaufpreisNum > 0 && anzahlungNum >= 0 && restBetrag > 0;
 
