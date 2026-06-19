@@ -594,7 +594,7 @@ export default function AngebotErstellen() {
       doc.roundedRect(LEFT, cy, CONTENT_W, boxH, 2, 2, 'FD');
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(140, 90, 0);
-      doc.text('Sonderaktion', LEFT + 3, cy + 5);
+      doc.text('Zusätzliche Vereinbarungen', LEFT + 3, cy + 5);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(60, 40, 0);
       doc.text(lines, LEFT + 3, cy + 10);
@@ -1074,7 +1074,7 @@ export default function AngebotErstellen() {
           />
         </div>
         <div className="md:col-span-3">
-          <Label>Sonderaktion</Label>
+          <Label>Zusätzliche Vereinbarungen</Label>
           <Textarea
             value={specialOffer}
             onChange={e => setSpecialOffer(e.target.value)}
