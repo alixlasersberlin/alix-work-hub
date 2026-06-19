@@ -1074,7 +1074,7 @@ export default function AngebotErstellen() {
           />
         </div>
         <div className="md:col-span-3">
-          <Label>Sonderaktion</Label>
+          <Label>Zusätzliche Vereinbarungen</Label>
           <Textarea
             value={specialOffer}
             onChange={e => setSpecialOffer(e.target.value)}
