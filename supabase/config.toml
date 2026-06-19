@@ -138,6 +138,9 @@ verify_jwt = false
 [functions.zoho-forms-import]
 verify_jwt = false
 
+[functions.alixsales-import]
+verify_jwt = false
+
 [functions.sales-wizard-submit]
 verify_jwt = false
 
