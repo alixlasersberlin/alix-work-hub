@@ -402,7 +402,7 @@ export default function MietkaufDialog({ order }: Props) {
               <Input value={geraetModell} onChange={e => setGeraetModell(e.target.value)} placeholder="z.B. Alix Pro 2000" className="bg-secondary border-border" />
             </div>
             <div>
-              <label className="text-sm text-muted-foreground">Kaufpreis netto (€)</label>
+              <label className="text-sm text-muted-foreground">Gesamtbetrag netto (€)</label>
               <Input type="number" min={0} step="0.01" value={kaufpreis} onChange={e => setKaufpreis(e.target.value)} placeholder="0,00" className="bg-secondary border-border" />
             </div>
             <div>

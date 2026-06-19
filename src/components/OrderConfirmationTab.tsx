@@ -537,7 +537,7 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
             </Select>
           </div>
           <div>
-            <Label className="text-xs text-muted-foreground">Kaufpreis (€)</Label>
+            <Label className="text-xs text-muted-foreground">Gesamtbetrag (€)</Label>
             <Input type="number" inputMode="decimal" value={payPrice} onChange={e => setPayPrice(e.target.value)} className="bg-secondary border-border mt-1" />
           </div>
           <div>

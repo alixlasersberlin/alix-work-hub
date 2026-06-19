@@ -271,7 +271,7 @@ export default function InstallmentPlanDialog({ order }: Props) {
 
             <div className="space-y-4 mt-4">
               <div>
-                <label className="text-sm text-muted-foreground">Kaufpreis (€)</label>
+                <label className="text-sm text-muted-foreground">Gesamtbetrag (€)</label>
                 <Input type="number" min={0} step="0.01" value={price} onChange={e => setPrice(e.target.value)} placeholder="0,00" className="bg-secondary border-border" />
               </div>
               <div>
