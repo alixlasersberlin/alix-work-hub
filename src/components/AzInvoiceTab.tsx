@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { FileDown, Loader2, Receipt, AlertCircle } from 'lucide-react';
+import { FileDown, Loader2, Receipt, AlertCircle, Mail, BookmarkCheck } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,8 @@ import { createPDF } from '@/lib/pdf-utils';
 import autoTable from 'jspdf-autotable';
 import templateAsset from '@/assets/az-rechnung-template.jpg.asset.json';
 import logoAsset from '@/assets/alix-logo-gold-pdf.png.asset.json';
+
+type BuildMode = 'download' | 'blob';
 
 interface Props {
   order: any;
@@ -91,6 +93,8 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
     'Vielen Dank für Ihre Bestellung. Vereinbarungsgemäß stellen wir Ihnen hiermit die Anzahlung in Rechnung.'
   );
   const [generating, setGenerating] = useState(false);
+  const [booking, setBooking] = useState(false);
+  const [sending, setSending] = useState(false);
 
   useEffect(() => {
     if (orderDeposit > 0) setDepositAmount(String(orderDeposit));
@@ -101,14 +105,8 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
   const taxAmount = grossDeposit - netDeposit;
   const hasDeposit = grossDeposit > 0.0001;
 
-  async function generate() {
-    if (!hasDeposit) {
-      toast.error('Keine Anzahlung vereinbart – es wird keine Anzahlungsrechnung erstellt.');
-      return;
-    }
-    setGenerating(true);
-    try {
-      const doc = createPDF({ unit: 'mm', format: 'a4' });
+  async function buildPdf(mode: BuildMode): Promise<{ doc: any; fileName: string; blob?: Blob }> {
+    const doc = createPDF({ unit: 'mm', format: 'a4' });
       const PAGE_W = 210;
       const PAGE_H = 297;
       const LEFT = 30;
@@ -305,31 +303,79 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         );
       }
 
-      doc.save(`Anzahlungsrechnung_${invoiceNumber || orderNo}.pdf`);
+    const fileName = `Anzahlungsrechnung_${invoiceNumber || orderNo}.pdf`;
+    if (mode === 'download') {
+      doc.save(fileName);
+      return { doc, fileName };
+    }
+    const blob: Blob = doc.output('blob');
+    return { doc, fileName, blob };
+  }
 
-      // Vermerk im Auftrag (order_notes)
-      if (order?.id) {
-        try {
-          await supabase.from('order_notes').insert({
-            order_id: order.id,
-            note_type: 'internal',
-            note_text:
-              `Anzahlungsrechnung ${invoiceNumber} über ${fmtMoney(grossDeposit, currency)} ` +
-              `(brutto, ${taxPercentage}% MwSt) erstellt. Rechnungsdatum ${fmtDate(invoiceDate)}, ` +
-              `fällig am ${fmtDate(dueDate)}.`,
-          } as any);
-        } catch (e) {
-          console.error('order_notes insert failed', e);
-        }
-
-        // Anzahlungsbetrag im Auftrag persistieren, falls noch nicht gesetzt
-        try {
-          if (!Number.isFinite(orderDeposit) || orderDeposit <= 0) {
-            await supabase.from('orders').update({ deposit_amount: grossDeposit } as any).eq('id', order.id);
-          }
-        } catch { /* nicht kritisch */ }
+  async function recordNoteAndOrderDeposit() {
+    if (!order?.id) return;
+    try {
+      await supabase.from('order_notes').insert({
+        order_id: order.id,
+        note_type: 'internal',
+        note_text:
+          `Anzahlungsrechnung ${invoiceNumber} über ${fmtMoney(grossDeposit, currency)} ` +
+          `(brutto, ${taxPercentage}% MwSt) erstellt. Rechnungsdatum ${fmtDate(invoiceDate)}, ` +
+          `fällig am ${fmtDate(dueDate)}.`,
+      } as any);
+    } catch (e) {
+      console.error('order_notes insert failed', e);
+    }
+    try {
+      if (!Number.isFinite(orderDeposit) || orderDeposit <= 0) {
+        await supabase.from('orders').update({ deposit_amount: grossDeposit } as any).eq('id', order.id);
       }
+    } catch { /* nicht kritisch */ }
+  }
 
+  async function bookToFinance(): Promise<boolean> {
+    // Duplikate vermeiden: gleiche Referenz/Order/Typ schon vorhanden?
+    try {
+      const { data: existing } = await supabase
+        .from('finance_transactions' as any)
+        .select('id')
+        .eq('transaction_type', 'Anzahlung')
+        .eq('reference', invoiceNumber)
+        .limit(1);
+      if (existing && existing.length > 0) {
+        toast.info(`Anzahlung ${invoiceNumber} ist bereits in Finance & Controlling gebucht.`);
+        return true;
+      }
+    } catch { /* weiter */ }
+    const payload: any = {
+      customer_id: customer?.id ?? null,
+      order_id: order?.id ?? null,
+      amount: grossDeposit,
+      currency,
+      booking_date: invoiceDate,
+      reference: invoiceNumber,
+      transaction_type: 'Anzahlung',
+      notes:
+        `Anzahlungsrechnung ${invoiceNumber} – ${positionLabel || `Anzahlung Auftrag ${orderNo}`}. ` +
+        `Brutto ${fmtMoney(grossDeposit, currency)} (MwSt ${taxPercentage}%). Fällig ${fmtDate(dueDate)}.`,
+    };
+    const { error } = await supabase.from('finance_transactions' as any).insert(payload);
+    if (error) {
+      toast.error('Konnte Finance-Buchung nicht anlegen: ' + error.message);
+      return false;
+    }
+    return true;
+  }
+
+  async function generate() {
+    if (!hasDeposit) {
+      toast.error('Keine Anzahlung vereinbart – es wird keine Anzahlungsrechnung erstellt.');
+      return;
+    }
+    setGenerating(true);
+    try {
+      await buildPdf('download');
+      await recordNoteAndOrderDeposit();
       toast.success('Anzahlungsrechnung erstellt und im Auftrag vermerkt.');
       onReload?.();
     } catch (e: any) {
@@ -339,22 +385,139 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
     }
   }
 
+  async function generateAndBook() {
+    if (!hasDeposit) {
+      toast.error('Keine Anzahlung vereinbart.');
+      return;
+    }
+    setBooking(true);
+    try {
+      await buildPdf('download');
+      await recordNoteAndOrderDeposit();
+      const ok = await bookToFinance();
+      if (ok) toast.success('Anzahlung gestellt, gespeichert und in Finance & Controlling übernommen.');
+      onReload?.();
+    } catch (e: any) {
+      toast.error('Fehler: ' + (e?.message || 'Unbekannter Fehler'));
+    } finally {
+      setBooking(false);
+    }
+  }
+
+  async function sendByEmail() {
+    if (!hasDeposit) {
+      toast.error('Keine Anzahlung vereinbart.');
+      return;
+    }
+    if (!customer?.email) {
+      toast.error('Kunde hat keine E-Mail-Adresse hinterlegt.');
+      return;
+    }
+    setSending(true);
+    try {
+      // PDF lokal zum Anhängen herunterladen (Edge-Function unterstützt keine Attachments)
+      await buildPdf('download');
+
+      const subject = `Anzahlungsrechnung ${invoiceNumber} – Auftrag ${orderNo}`;
+      const body = [
+        `Sehr geehrte Damen und Herren${customer?.contact_name ? `, ${customer.contact_name}` : ''},`,
+        '',
+        `anbei erhalten Sie die Anzahlungsrechnung ${invoiceNumber} zum Auftrag ${orderNo}.`,
+        '',
+        `Rechnungsbetrag (brutto): ${fmtMoney(grossDeposit, currency)} (MwSt ${taxPercentage}%)`,
+        `Rechnungsdatum: ${fmtDate(invoiceDate)}`,
+        `Fällig am: ${fmtDate(dueDate)}`,
+        '',
+        'Bankverbindung:',
+        'Kontoinhaber: Alix Lasers GmbH',
+        'Bank: Deutsche Bank',
+        'IBAN: DE07 1007 0100 0142 6600 00',
+        'SWIFT/BIC: DEUTDEBB101',
+        '',
+        'Bitte geben Sie bei der Überweisung die Rechnungsnummer als Verwendungszweck an.',
+        '',
+        'Das PDF der Anzahlungsrechnung wurde soeben heruntergeladen und wird Ihnen separat als Anhang zugesendet.',
+        '',
+        'Mit freundlichen Grüßen',
+        'Alix Lasers Deutschland',
+      ].join('\n');
+
+      const { error } = await supabase.functions.invoke('send-transactional-email', {
+        body: {
+          templateName: 'customer-shipping-notice',
+          recipientEmail: customer.email,
+          idempotencyKey: `az-invoice-${order?.id || orderNo}-${invoiceNumber}`,
+          templateData: { subject, body },
+        },
+      });
+      if (error) throw error;
+
+      await recordNoteAndOrderDeposit();
+      try {
+        const { data: userData } = await supabase.auth.getUser();
+        await supabase.from('order_notes').insert({
+          order_id: order?.id,
+          note_type: 'email',
+          is_internal: true,
+          note_text: [
+            `[Manuell versendet] Anzahlungsrechnung ${invoiceNumber}`,
+            `An: ${customer.email}`,
+            `Betreff: ${subject}`,
+            '',
+            body,
+          ].join('\n'),
+          created_by: userData.user?.id ?? null,
+        } as any);
+      } catch { /* nicht kritisch */ }
+
+      toast.success(`Anzahlungsrechnung an ${customer.email} versendet. Das PDF wurde lokal heruntergeladen – bitte als Anhang anfügen.`);
+      onReload?.();
+    } catch (e: any) {
+      toast.error('Fehler beim Versenden: ' + (e?.message || 'Unbekannter Fehler'));
+    } finally {
+      setSending(false);
+    }
+  }
+
   return (
     <div className="rounded-xl border border-border bg-card p-6 card-glow space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-base font-display font-bold text-foreground flex items-center gap-2">
           <Receipt className="w-4 h-4 text-primary" /> AZ Rechnung (Anzahlungsrechnung)
         </h2>
-        <Button
-          onClick={generate}
-          disabled={generating || !hasDeposit}
-          className="gold-gradient text-primary-foreground"
-        >
-          {generating
-            ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            : <FileDown className="w-4 h-4 mr-2" />}
-          PDF erstellen & vermerken
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={generate}
+            disabled={generating || booking || sending || !hasDeposit}
+          >
+            {generating
+              ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              : <FileDown className="w-4 h-4 mr-2" />}
+            PDF erstellen & vermerken
+          </Button>
+          <Button
+            onClick={generateAndBook}
+            disabled={generating || booking || sending || !hasDeposit}
+            className="gold-gradient text-primary-foreground"
+          >
+            {booking
+              ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              : <BookmarkCheck className="w-4 h-4 mr-2" />}
+            ANZAHLUNG STELLEN & SPEICHERN
+          </Button>
+          <Button
+            variant="outline"
+            onClick={sendByEmail}
+            disabled={generating || booking || sending || !hasDeposit || !customer?.email}
+            title={!customer?.email ? 'Kunde hat keine E-Mail-Adresse' : undefined}
+          >
+            {sending
+              ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              : <Mail className="w-4 h-4 mr-2" />}
+            Anzahlung per E-Mail versenden
+          </Button>
+        </div>
       </div>
 
       {!hasDeposit && (
