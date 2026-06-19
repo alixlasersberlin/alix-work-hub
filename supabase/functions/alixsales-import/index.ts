@@ -31,19 +31,51 @@ Deno.serve(async (req) => {
   });
 
   try {
+    // Auth: entweder gültiger x-api-key ODER eingeloggter interner User
+    // (Super Admin / Admin / Vertriebsleitung / Vertrieb) für den In-App-Tester.
     const provided = req.headers.get("x-api-key") ?? "";
-    if (!SHARED_KEY || provided !== SHARED_KEY) {
+    let authorized = !!SHARED_KEY && provided === SHARED_KEY;
+    let authMethod: "api_key" | "user_jwt" = "api_key";
+
+    if (!authorized) {
+      const authHeader = req.headers.get("Authorization") ?? "";
+      const jwt = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+      if (jwt) {
+        const userClient = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY") ?? "", {
+          global: { headers: { Authorization: `Bearer ${jwt}` } },
+          auth: { persistSession: false },
+        });
+        const { data: claims } = await userClient.auth.getClaims(jwt);
+        const userId = claims?.claims?.sub;
+        if (userId) {
+          const { data: roleRows } = await supabase
+            .from("user_roles")
+            .select("roles!inner(name)")
+            .eq("user_id", userId);
+          const names = (roleRows ?? []).map((r: any) => r.roles?.name);
+          if (names.some((n: string) =>
+            ["Super Admin", "Admin", "Vertriebsleitung", "Vertrieb"].includes(n)
+          )) {
+            authorized = true;
+            authMethod = "user_jwt";
+          }
+        }
+      }
+    }
+
+    if (!authorized) {
       await supabase.from("integration_logs").insert({
         source: "alixsales",
         event: "webhook_auth_failed",
         status: "error",
-        message: "Invalid or missing x-api-key",
+        message: "Invalid or missing x-api-key / unauthorized user",
       });
       return new Response(JSON.stringify({ error: "unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
 
     const body = await req.json().catch(() => ({} as any));
     const data: Record<string, any> = body?.data ?? body ?? {};
