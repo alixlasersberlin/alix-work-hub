@@ -303,37 +303,179 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         );
       }
 
-      doc.save(`Anzahlungsrechnung_${invoiceNumber || orderNo}.pdf`);
+    const fileName = `Anzahlungsrechnung_${invoiceNumber || orderNo}.pdf`;
+    if (mode === 'download') {
+      doc.save(fileName);
+      return { doc, fileName };
+    }
+    const blob: Blob = doc.output('blob');
+    return { doc, fileName, blob };
+  }
 
-      // Vermerk im Auftrag (order_notes)
-      if (order?.id) {
-        try {
-          await supabase.from('order_notes').insert({
-            order_id: order.id,
-            note_type: 'internal',
-            note_text:
-              `Anzahlungsrechnung ${invoiceNumber} über ${fmtMoney(grossDeposit, currency)} ` +
-              `(brutto, ${taxPercentage}% MwSt) erstellt. Rechnungsdatum ${fmtDate(invoiceDate)}, ` +
-              `fällig am ${fmtDate(dueDate)}.`,
-          } as any);
-        } catch (e) {
-          console.error('order_notes insert failed', e);
-        }
-
-        // Anzahlungsbetrag im Auftrag persistieren, falls noch nicht gesetzt
-        try {
-          if (!Number.isFinite(orderDeposit) || orderDeposit <= 0) {
-            await supabase.from('orders').update({ deposit_amount: grossDeposit } as any).eq('id', order.id);
-          }
-        } catch { /* nicht kritisch */ }
+  async function recordNoteAndOrderDeposit() {
+    if (!order?.id) return;
+    try {
+      await supabase.from('order_notes').insert({
+        order_id: order.id,
+        note_type: 'internal',
+        note_text:
+          `Anzahlungsrechnung ${invoiceNumber} über ${fmtMoney(grossDeposit, currency)} ` +
+          `(brutto, ${taxPercentage}% MwSt) erstellt. Rechnungsdatum ${fmtDate(invoiceDate)}, ` +
+          `fällig am ${fmtDate(dueDate)}.`,
+      } as any);
+    } catch (e) {
+      console.error('order_notes insert failed', e);
+    }
+    try {
+      if (!Number.isFinite(orderDeposit) || orderDeposit <= 0) {
+        await supabase.from('orders').update({ deposit_amount: grossDeposit } as any).eq('id', order.id);
       }
+    } catch { /* nicht kritisch */ }
+  }
 
+  async function bookToFinance(): Promise<boolean> {
+    // Duplikate vermeiden: gleiche Referenz/Order/Typ schon vorhanden?
+    try {
+      const { data: existing } = await supabase
+        .from('finance_transactions' as any)
+        .select('id')
+        .eq('transaction_type', 'Anzahlung')
+        .eq('reference', invoiceNumber)
+        .limit(1);
+      if (existing && existing.length > 0) {
+        toast.info(`Anzahlung ${invoiceNumber} ist bereits in Finance & Controlling gebucht.`);
+        return true;
+      }
+    } catch { /* weiter */ }
+    const payload: any = {
+      customer_id: customer?.id ?? null,
+      order_id: order?.id ?? null,
+      amount: grossDeposit,
+      currency,
+      booking_date: invoiceDate,
+      reference: invoiceNumber,
+      transaction_type: 'Anzahlung',
+      notes:
+        `Anzahlungsrechnung ${invoiceNumber} – ${positionLabel || `Anzahlung Auftrag ${orderNo}`}. ` +
+        `Brutto ${fmtMoney(grossDeposit, currency)} (MwSt ${taxPercentage}%). Fällig ${fmtDate(dueDate)}.`,
+    };
+    const { error } = await supabase.from('finance_transactions' as any).insert(payload);
+    if (error) {
+      toast.error('Konnte Finance-Buchung nicht anlegen: ' + error.message);
+      return false;
+    }
+    return true;
+  }
+
+  async function generate() {
+    if (!hasDeposit) {
+      toast.error('Keine Anzahlung vereinbart – es wird keine Anzahlungsrechnung erstellt.');
+      return;
+    }
+    setGenerating(true);
+    try {
+      await buildPdf('download');
+      await recordNoteAndOrderDeposit();
       toast.success('Anzahlungsrechnung erstellt und im Auftrag vermerkt.');
       onReload?.();
     } catch (e: any) {
       toast.error('Fehler: ' + (e?.message || 'Unbekannter Fehler'));
     } finally {
       setGenerating(false);
+    }
+  }
+
+  async function generateAndBook() {
+    if (!hasDeposit) {
+      toast.error('Keine Anzahlung vereinbart.');
+      return;
+    }
+    setBooking(true);
+    try {
+      await buildPdf('download');
+      await recordNoteAndOrderDeposit();
+      const ok = await bookToFinance();
+      if (ok) toast.success('Anzahlung gestellt, gespeichert und in Finance & Controlling übernommen.');
+      onReload?.();
+    } catch (e: any) {
+      toast.error('Fehler: ' + (e?.message || 'Unbekannter Fehler'));
+    } finally {
+      setBooking(false);
+    }
+  }
+
+  async function sendByEmail() {
+    if (!hasDeposit) {
+      toast.error('Keine Anzahlung vereinbart.');
+      return;
+    }
+    if (!customer?.email) {
+      toast.error('Kunde hat keine E-Mail-Adresse hinterlegt.');
+      return;
+    }
+    setSending(true);
+    try {
+      // PDF lokal zum Anhängen herunterladen (Edge-Function unterstützt keine Attachments)
+      await buildPdf('download');
+
+      const subject = `Anzahlungsrechnung ${invoiceNumber} – Auftrag ${orderNo}`;
+      const body = [
+        `Sehr geehrte Damen und Herren${customer?.contact_name ? `, ${customer.contact_name}` : ''},`,
+        '',
+        `anbei erhalten Sie die Anzahlungsrechnung ${invoiceNumber} zum Auftrag ${orderNo}.`,
+        '',
+        `Rechnungsbetrag (brutto): ${fmtMoney(grossDeposit, currency)} (MwSt ${taxPercentage}%)`,
+        `Rechnungsdatum: ${fmtDate(invoiceDate)}`,
+        `Fällig am: ${fmtDate(dueDate)}`,
+        '',
+        'Bankverbindung:',
+        'Kontoinhaber: Alix Lasers GmbH',
+        'Bank: Deutsche Bank',
+        'IBAN: DE07 1007 0100 0142 6600 00',
+        'SWIFT/BIC: DEUTDEBB101',
+        '',
+        'Bitte geben Sie bei der Überweisung die Rechnungsnummer als Verwendungszweck an.',
+        '',
+        'Das PDF der Anzahlungsrechnung wurde soeben heruntergeladen und wird Ihnen separat als Anhang zugesendet.',
+        '',
+        'Mit freundlichen Grüßen',
+        'Alix Lasers Deutschland',
+      ].join('\n');
+
+      const { error } = await supabase.functions.invoke('send-transactional-email', {
+        body: {
+          templateName: 'customer-shipping-notice',
+          recipientEmail: customer.email,
+          idempotencyKey: `az-invoice-${order?.id || orderNo}-${invoiceNumber}`,
+          templateData: { subject, body },
+        },
+      });
+      if (error) throw error;
+
+      await recordNoteAndOrderDeposit();
+      try {
+        const { data: userData } = await supabase.auth.getUser();
+        await supabase.from('order_notes').insert({
+          order_id: order?.id,
+          note_type: 'email',
+          is_internal: true,
+          note_text: [
+            `[Manuell versendet] Anzahlungsrechnung ${invoiceNumber}`,
+            `An: ${customer.email}`,
+            `Betreff: ${subject}`,
+            '',
+            body,
+          ].join('\n'),
+          created_by: userData.user?.id ?? null,
+        } as any);
+      } catch { /* nicht kritisch */ }
+
+      toast.success(`Anzahlungsrechnung an ${customer.email} versendet. Das PDF wurde lokal heruntergeladen – bitte als Anhang anfügen.`);
+      onReload?.();
+    } catch (e: any) {
+      toast.error('Fehler beim Versenden: ' + (e?.message || 'Unbekannter Fehler'));
+    } finally {
+      setSending(false);
     }
   }
 
