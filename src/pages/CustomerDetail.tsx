@@ -154,10 +154,6 @@ export default function CustomerDetail() {
         <TabsContent value="finance" className="mt-4">
           <FinanceAccountTab customerId={customer.id} />
         </TabsContent>
-
-        <TabsContent value="sms" className="mt-4">
-          <CustomerSmsTab customer={customer} />
-        </TabsContent>
       </Tabs>
 
       {/* Dialogs */}
