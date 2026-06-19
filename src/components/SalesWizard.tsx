@@ -626,13 +626,13 @@ export default function SalesWizard({ publicMode = false }: Props) {
                     </Section>
                   )}
 
-                  {step === 10 && (
+                  {step === 11 && (
                     <Section title={t.s_notes} hint={t.s_notes_hint}>
                       <Textarea rows={5} value={data.notes} onChange={(e) => setData({ ...data, notes: e.target.value })} className={inputCls} />
                     </Section>
                   )}
 
-                  {step === 11 && (
+                  {step === 12 && (
                     <Section title={t.s_privacy}>
                       <div className="space-y-3">
                         <label className="flex items-start gap-3 cursor-pointer rounded-xl border border-slate-200/80 bg-white/70 p-3.5">
@@ -652,7 +652,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
                     </Section>
                   )}
 
-                  {step === 12 && (
+                  {step === 13 && (
                     <Section title={t.s_rating} hint={t.s_rating_hint}>
                       <div className="flex justify-center gap-2 py-3">
                         {[1, 2, 3, 4, 5].map((n) => (
