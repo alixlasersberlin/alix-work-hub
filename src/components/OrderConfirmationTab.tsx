@@ -205,8 +205,15 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
       const BOTTOM_LIMIT = 265;
 
       const templateUrl = await loadTemplate();
+      const logoUrl = await loadLogo();
+      // 300px @ 72dpi ≈ 105.83mm, proportional Höhe via Bild-Seitenverhältnis (1899x408)
+      const LOGO_W = 105.83;
+      const LOGO_H = LOGO_W * (408 / 1899);
+      const LOGO_X = PAGE_W - 10 - LOGO_W; // 10mm Rand rechts
+      const LOGO_Y = 10;
       const drawTemplate = () => {
         doc.addImage(templateUrl, 'JPEG', 0, 0, PAGE_W, PAGE_H, undefined, 'FAST');
+        doc.addImage(logoUrl, 'PNG', LOGO_X, LOGO_Y, LOGO_W, LOGO_H, undefined, 'FAST');
       };
       drawTemplate();
 
