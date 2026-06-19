@@ -112,9 +112,11 @@ const INITIAL: State = {
   flex_price: '',
   flex_down: '',
   flex_term: 24,
+  flex_plan: 'flex0',
 };
 
 const FLEX_TERMS = [12, 24, 36, 48, 60] as const;
+const SMART_IMPULSE_TERMS = [12, 24, 36] as const;
 
 const TOTAL_STEPS = 14;
 
