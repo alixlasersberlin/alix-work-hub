@@ -1,93 +1,45 @@
-## Ziel
+## Neuer Reiter „SMS Versand" in der Auftragskunden-Akte
 
-Ab sofort bekommt **jeder neue Vorgang beim Anlegen eines Angebots** eine **einzige fortlaufende Stammnummer** (Case). Alle Folge-Dokumente (Auftragsbestätigung, Lieferschein, Rechnung, Gutschrift, Reparatur, Produktion, Mahnung usw.) übernehmen diese Stammnummer und unterscheiden sich nur durch ihren **Präfix** als Suffix-Quelle.
+Ergänzt die bestehende Kundenakte (`/kunden/:id`) um einen weiteren Tab — ohne bestehende Tabs, PDF-Generatoren oder Datenstrukturen zu ändern.
 
-```text
-Angebot              ANG-2026-04217
-Auftragsbestätigung  AB-2026-04217
-Lieferschein         LS-2026-04217
-Rechnung             RG-2026-04217
-Gutschrift           GU-2026-04217
-Reparatur            REP-2026-04217
-Produktion           PRD-2026-04217
-Mahnung Stufe 2      MA-2026-04217-M2
-```
+### 1. Edge Function `send-customer-sms` (neu)
+- Wiederverwendet vorhandene Twilio-Secrets `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN`.
+- Neues Secret `TWILIO_SMS_FROM_NUMBER` (separat von WhatsApp-From), falls noch nicht vorhanden — sonst fällt sie auf `TWILIO_WHATSAPP_FROM_NUMBER` ohne `whatsapp:`-Präfix zurück.
+- Validiert JWT via `getClaims`, prüft Rolle serverseitig (Admin/Super Admin/Vertrieb/Kundenservice/Finance/Service/Reparaturannahme).
+- Body: `{ customer_id, document_id, document_type, document_number, recipient_name, phone, text }`.
+- Normalisiert Telefonnummer auf E.164 (`+49…`), validiert Format.
+- Erzeugt **signierten Download-Link** für das PDF:
+  - bevorzugt vorhandene `order_documents.download_token` (genutzt von `od-download`),
+  - falls keiner existiert: kurzlebigen Signed-URL aus dem passenden Storage-Bucket (`order-invoices`, `repair-*`, …) mit 30-Tage-Ablauf,
+  - kürzt via Token-Route `/d/:token` (existiert bereits über `od-download`).
+- Ersetzt `{{kunde}}` / `{{link}}` Platzhalter, sendet via Twilio `Messages.json` (SMS, kein `whatsapp:`).
+- Loggt Ergebnis in `customer_sms_logs` (success + error path).
 
-Bestehende Vorgänge bleiben **unverändert** – nur Neuanlagen ab Aktivierung erhalten eine Case-Nummer.
+### 2. Neue Tabelle `customer_sms_logs`
+Felder: `customer_id`, `order_id?`, `document_id?`, `document_type`, `document_number`, `phone`, `message_text`, `link_url`, `twilio_sid`, `status` (`queued|sent|failed|delivered|undelivered`), `error_message`, `sent_by` (uuid), `sent_at`.
+GRANTs für `authenticated` + `service_role`, RLS:
+- SELECT/INSERT für Nutzer mit den o.g. Rollen (via vorhandene Helper wie `is_admin()`, `has_role(...)`),
+- service_role darf alles (für Twilio-Status-Webhook-Updates später).
 
-## Konzept
+### 3. Frontend: neuer Tab in `src/pages/CustomerDetail.tsx`
+- Tab nur sichtbar, wenn `useAuth().isAdmin` ODER eine der freigegebenen Rollen erfüllt ist (Helper-Check über `user_roles`).
+- Neue Komponente `src/components/CustomerSmsTab.tsx`:
+  - Lädt alle Dokumente des Kunden aus `order_documents` (joined über `orders.customer_id = :id`) inkl. Typ, Nummer, `created_at`, Status, `download_token`.
+  - Lädt zusätzlich Reparatur-PDFs (`repair_orders` + `repair_quotes` + Berichte) über vorhandene Pfade.
+  - Tabelle mit Spalten: Typ · Nummer · Datum · Status · „PDF öffnen" · „per SMS senden".
+  - „PDF öffnen" nutzt vorhandene Download-Route (`/d/:token` → `od-download` Edge Function) — kein neuer Generator.
+  - „per SMS senden" öffnet Dialog (shadcn `Dialog`): Empfängername, Mobilnr. (vorbelegt aus `customers.phone`), Dokument, editierbarer Standardtext, Button „SMS senden".
+  - Validierung clientseitig (Telefon vorhanden + E.164-fähig, PDF/Token vorhanden).
+  - Templates pro Dokumenttyp wie im Briefing.
+  - Unter der Tabelle: Versandhistorie aus `customer_sms_logs` (Datum, Dokument, Nummer, Status-Badge, Text-Snippet, Button „erneut senden").
 
-1. Neuer „Master"-Kreis `case` in `number_ranges` (Format z. B. `{YYYY}-{00000}`). Liefert die Stammnummer.
-2. Pro Kreis ein neues Flag `inherit_case` (boolean). 
-   - `false` (Default) = bisheriges Verhalten (eigener Zähler).
-   - `true` = Dokumentnummer wird aus `prefix + sep + caseNumber` gebildet, **ohne** den eigenen Zähler zu erhöhen.
-3. Stammnummer wird im Datensatz gespeichert (`offers.case_number`, `orders.case_number`) und an alle Folgevorgänge vererbt.
-4. Im Frontend gibt es **einen** Helper `nextDocumentNumber(code, { caseNumber, fallback })`, der je nach Modus die richtige Nummer liefert.
+### 4. Konfiguration
+- `supabase/config.toml`: `[functions.send-customer-sms] verify_jwt = true`.
+- Memory-Eintrag `mem://features/customer-sms` + Index-Update.
 
-## Datenmodell-Änderungen (Migration)
+### Nicht angefasst
+- Keine Änderungen an bestehenden PDF-Generatoren, Tabs, Routen, RLS anderer Tabellen, WhatsApp-Function oder Storage-Policies.
 
-```text
-ALTER TABLE public.number_ranges
-  ADD COLUMN inherit_case boolean NOT NULL DEFAULT false;
-
-ALTER TABLE public.offers ADD COLUMN case_number text;
-ALTER TABLE public.orders ADD COLUMN case_number text;
-CREATE INDEX ON public.offers (case_number);
-CREATE INDEX ON public.orders (case_number);
-
--- Seed: Master-Kreis "case"
-INSERT INTO public.number_ranges (code, label, prefix, separator,
-       include_year, padding, start_value, current_value,
-       reset_yearly, active, inherit_case)
-VALUES ('case','Vorgangs-Stammnummer','', '-', true, 5, 0, 0, true, false, false)
-ON CONFLICT DO NOTHING;
-```
-
-Neue RPCs:
-
-- `next_case_number()` → vergibt eine neue Stammnummer aus dem Kreis `case` (atomar, Jahresreset).
-- `next_document_number(p_code, p_case_number text DEFAULT NULL)` 
-  - wenn der Kreis `inherit_case = true` ist **und** `p_case_number` übergeben wurde:
-    Rückgabe = `prefix || separator || p_case_number`, **ohne** `current_value` zu inkrementieren.
-  - sonst Verhalten wie heute.
-
-## Frontend-Änderungen
-
-### Helper `src/lib/number-ranges.ts`
-
-```text
-nextDocumentNumber(code, { caseNumber?, fallback })  // ersetzt nextNumber-Aufrufe schrittweise
-ensureCaseNumber(existing?) : Promise<string>        // gibt vorhandene Case-Nr zurück oder zieht eine neue
-```
-
-`nextNumber(code, fallback)` bleibt rückwärtskompatibel als Wrapper.
-
-### Anlage-Stellen
-
-- `src/pages/AngebotErstellen.tsx`: Beim **Neu-Anlegen** eines Angebots:
-  1. `caseNumber = await ensureCaseNumber()`
-  2. Offer-Nr = `nextDocumentNumber('offer', { caseNumber, fallback: legacy })`
-  3. `case_number` ins Offer schreiben.
-- `OrderConfirmationTab.tsx`, `DeliveryNoteTab.tsx`, Rechnungs-/Gutschrift-PDFs, Repair-/Production-PDFs, Mahnungen: ziehen `order.case_number` (Fallback: `offer.case_number` → über `offer_id`) und rufen `nextDocumentNumber(code, { caseNumber, fallback })`.
-- Konvertierung Angebot → Auftrag (`convert-signed-offer-to-order` Edge Function + UI): `case_number` vom Angebot in den Auftrag übernehmen.
-
-### Admin-UI `Nummernkreise.tsx`
-
-- Neuer Schalter pro Zeile: **„An Vorgangsnummer koppeln"** (`inherit_case`).
-- Vorschau zeigt im Suffix-Modus z. B. `AB-<Stammnummer>` statt `AB-2026-00001`.
-- Wenn `inherit_case = true`, sind „Stellen", „Startwert", „aktueller Wert" ausgegraut.
-
-## Rückwärtskompatibilität
-
-- `number_ranges.active = false` → wie bisher Legacy-Logik.
-- `inherit_case = false` → eigener Zähler wie bisher.
-- Bestehende Aufträge/Angebote ohne `case_number` → Helper fällt automatisch auf den unabhängigen Modus zurück (keine Migration alter Daten).
-
-## Lieferumfang dieses Schritts
-
-1. Migration: `inherit_case`-Spalte, `case_number`-Spalten, neue Seeds + RPCs.
-2. Helper-Erweiterung (`nextDocumentNumber`, `ensureCaseNumber`).
-3. UI-Schalter „An Vorgangsnummer koppeln" in `Nummernkreise.tsx`.
-4. Integration in **Angebotsanlage** (Case-Generierung) und **Auftragsbestätigung** (Suffix-Modus) – sofort sichtbarer Effekt.
-5. Konvertierung Angebot → Auftrag übernimmt `case_number`.
-6. Restliche Dokument-Tabs (Lieferschein, Rechnung, Gutschrift, Reparatur, Produktion, Mahnung) werden im Anschluss in derselben Form nachgezogen.
+### Offene Punkte
+- Bestätige bitte: Reparatur-PDFs (Kostenvoranschlag, Reparaturbericht) liegen ebenfalls in `order_documents`? Falls in eigenen Tabellen, ergänze ich die Quellen entsprechend.
+- Soll ein zusätzliches Secret `TWILIO_SMS_FROM_NUMBER` angelegt werden, oder die WhatsApp-From-Nummer als Fallback nutzen?
