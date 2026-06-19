@@ -350,7 +350,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
                           </select>
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-[11px] font-semibold uppercase tracking-wide text-slate-700">{t.alix_beauty_label}</Label>
+                          <Label className="text-[11px] font-semibold uppercase tracking-wide text-black">{t.alix_beauty_label}</Label>
                           <select
                             value={data.beauty_model}
                             onChange={(e) => setData({ ...data, beauty_model: e.target.value })}
