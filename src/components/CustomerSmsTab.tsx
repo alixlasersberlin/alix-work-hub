@@ -93,12 +93,19 @@ export default function CustomerSmsTab({ customer, orderId }: { customer: Custom
 
   async function load() {
     setLoading(true);
-    const [ordersRes, logsRes] = await Promise.all([
-      supabase.from('orders').select('id, order_number, order_status').eq('customer_id', customer.id),
-      supabase.from('customer_sms_logs').select('*').eq('customer_id', customer.id).order('sent_at', { ascending: false }).limit(100),
-    ]);
-    const orderIds = (ordersRes.data ?? []).map((o: any) => o.id);
-    const orderMap = new Map((ordersRes.data ?? []).map((o: any) => [o.id, o]));
+    const ordersQuery = supabase.from('orders').select('id, order_number, order_status').eq('customer_id', customer.id);
+    const logsQuery = supabase
+      .from('customer_sms_logs')
+      .select('*')
+      .eq('customer_id', customer.id)
+      .order('sent_at', { ascending: false })
+      .limit(100);
+    if (orderId) logsQuery.eq('order_id', orderId);
+    const [ordersRes, logsRes] = await Promise.all([ordersQuery, logsQuery]);
+    const allOrders = ordersRes.data ?? [];
+    const scopedOrders = orderId ? allOrders.filter((o: any) => o.id === orderId) : allOrders;
+    const orderIds = scopedOrders.map((o: any) => o.id);
+    const orderMap = new Map(allOrders.map((o: any) => [o.id, o]));
     let docRows: DocRow[] = [];
     if (orderIds.length > 0) {
       const { data: d } = await supabase
