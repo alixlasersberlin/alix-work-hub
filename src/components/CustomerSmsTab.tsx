@@ -126,7 +126,7 @@ export default function CustomerSmsTab({ customer, orderId }: { customer: Custom
 
   useEffect(() => {
     if (customer?.id && allowed) void load();
-  }, [customer?.id, allowed]);
+  }, [customer?.id, allowed, orderId]);
 
   function openDialog(doc: DocRow) {
     setDialogDoc(doc);
