@@ -90,6 +90,37 @@ export default function OrderDetail() {
     hasPendingRestbestellung(id).then(setRestPending);
   }, [id]);
 
+  // Auto-Tab via ?tab=az_invoice (oder anderer Key) beim Öffnen
+  const validTabs = ['overview','items','serials','deposit','financing','at_purchase','at_approval','packages','confirmation','lieferschein','auftragsbestaetigung','az_invoice','notes','emails','history','raw'] as const;
+  useEffect(() => {
+    const t = searchParams.get('tab');
+    if (t && (validTabs as readonly string[]).includes(t)) {
+      setActiveTab(t as any);
+    }
+    // nur beim Mount auswerten
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Aktiven Tab in den sichtbaren Bereich scrollen (horizontal scrollbare Tab-Leiste)
+  useEffect(() => {
+    const el = document.querySelector(`[data-tab-key="${activeTab}"]`) as HTMLElement | null;
+    if (el) {
+      try {
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      } catch {
+        el.scrollIntoView();
+      }
+    }
+    // URL-Parameter aktuell halten, ohne History zuzumüllen
+    const current = searchParams.get('tab');
+    if (current !== activeTab) {
+      const next = new URLSearchParams(searchParams);
+      if (activeTab === 'overview') next.delete('tab');
+      else next.set('tab', activeTab);
+      setSearchParams(next, { replace: true });
+    }
+  }, [activeTab]);
+
   useEffect(() => {
     if (!id) return;
     loadAll();
