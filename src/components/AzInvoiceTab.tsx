@@ -418,7 +418,12 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       // PDF erstellen (Blob für Upload + lokaler Download als Backup)
       const { blob, fileName } = await buildPdf('blob');
       if (blob) {
-        try { (await import('file-saver')).default?.saveAs?.(blob, fileName); } catch { /* optional */ }
+        try {
+          const u = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = u; a.download = fileName; document.body.appendChild(a); a.click();
+          a.remove(); setTimeout(() => URL.revokeObjectURL(u), 1000);
+        } catch { /* optional */ }
       }
 
       // PDF in Storage hochladen und signierten Download-Link erzeugen (30 Tage gültig)
