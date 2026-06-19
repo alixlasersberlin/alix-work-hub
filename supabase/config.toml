@@ -1,5 +1,8 @@
 project_id = "xmrmkgfgpoundfwhnxfs"
 
+[functions.od-download]
+verify_jwt = false
+
 [functions.admin-reset-jerry]
 verify_jwt = false
 
