@@ -450,6 +450,8 @@ const navItems: NavItem[] = [
       { path: '/datensicherung', label: 'Datensicherung', icon: Shield, roles: ['Super Admin'] },
       { path: '/operation/logfiles', label: 'Logfiles', icon: ScrollText, roles: ['Super Admin'] },
       { path: '/operation/email-vorlagen', label: 'E-Mail Vorlagen', icon: Mail, roles: ['Super Admin'] },
+      { path: '/verkauf/anfragen/import', label: 'Anfragen Import', icon: Upload, roles: ['Admin', 'Super Admin', 'Vertrieb', 'Vertriebsleitung', 'Order', 'SACHBEARBEITUNG'] },
+      { path: '/verkauf/angebot/import', label: 'Angebote Data Import', icon: Upload, roles: ['Super Admin'] },
       { path: '/portal-admin', label: 'Kundenportal', icon: Globe, roles: ['Super Admin'] },
       { path: '/operation/systemwartung', label: 'Systemwartung', icon: AlertTriangle, roles: ['Super Admin'] },
       { path: '/operation/nummernkreise', label: 'Nummernkreise', icon: Hash, roles: ['Super Admin'] },
