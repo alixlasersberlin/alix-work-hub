@@ -185,7 +185,7 @@ export default function InstallmentPlanDialog({ order }: Props) {
     for (const row of schedule) {
       if (y > 270) {
         doc.addPage();
-        drawWatermark(doc);
+        await drawBackground(doc, templateData);
         y = 20;
         doc.setTextColor(255, 255, 255);
         doc.setFillColor(30, 30, 30);
