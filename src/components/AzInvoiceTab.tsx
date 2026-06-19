@@ -105,14 +105,8 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
   const taxAmount = grossDeposit - netDeposit;
   const hasDeposit = grossDeposit > 0.0001;
 
-  async function generate() {
-    if (!hasDeposit) {
-      toast.error('Keine Anzahlung vereinbart – es wird keine Anzahlungsrechnung erstellt.');
-      return;
-    }
-    setGenerating(true);
-    try {
-      const doc = createPDF({ unit: 'mm', format: 'a4' });
+  async function buildPdf(mode: BuildMode): Promise<{ doc: any; fileName: string; blob?: Blob }> {
+    const doc = createPDF({ unit: 'mm', format: 'a4' });
       const PAGE_W = 210;
       const PAGE_H = 297;
       const LEFT = 30;
