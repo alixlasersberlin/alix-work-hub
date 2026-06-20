@@ -238,8 +238,13 @@ export default function SmsKonfiguration() {
           )}
 
           <div className="border-t border-border pt-4 space-y-3">
-            <div className="text-sm font-medium">Twilio-Zugangsdaten bearbeiten</div>
-            {cfgLoading ? (
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-medium">Twilio-Zugangsdaten bearbeiten</div>
+              <Button variant="ghost" size="sm" onClick={() => setCredsOpen((o) => !o)}>
+                {credsOpen ? 'Schließen' : 'Bearbeiten'}
+              </Button>
+            </div>
+            {credsOpen && (cfgLoading ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Loader2 className="w-4 h-4 animate-spin" /> Lädt …
               </div>
@@ -284,14 +289,17 @@ export default function SmsKonfiguration() {
                     />
                   </div>
                 </div>
-                <div className="flex justify-end">
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => { setCredsOpen(false); setShowToken(false); }}>
+                    Abbrechen
+                  </Button>
                   <Button onClick={saveSettings} disabled={cfgSaving}>
                     {cfgSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                     Speichern
                   </Button>
                 </div>
               </>
-            )}
+            ))}
           </div>
 
           <div className="border-t border-border pt-4 space-y-3">
