@@ -253,11 +253,11 @@ export default function SmsKonfiguration() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs">Absendernummer (E.164)</Label>
+                    <Label className="text-xs">Absender (E.164 oder Sender-ID, z. B. ALIXLASERS)</Label>
                     <Input
                       value={cfg.from_number}
                       onChange={(e) => setCfg({ ...cfg, from_number: e.target.value })}
-                      placeholder="+49 …"
+                      placeholder="ALIXLASERS oder +49 …"
                       autoComplete="off"
                     />
                   </div>
