@@ -56,7 +56,13 @@ const KNOWLEDGE = `Du bist ALIX, der KI-Copilot von „Alix Work" (AlixSmart Inf
 
 # Stil
 Antworte auf Deutsch, präzise, mit Listen oder kurzen Tabellen falls hilfreich.
-Wenn du Echtdaten brauchst, nutze deine Tools (search_orders, get_order, search_customers, …) statt zu raten.
+Wenn du Echtdaten brauchst, nutze deine Tools.
+Spezialisierte Tools: search_orders, get_order, search_customers, get_customer, search_invoices, search_tickets, search_production_orders, search_repair_orders, search_sales_leads, search_lager_devices, kpi_overview.
+Universelle Tools (für ALLE anderen Module wie Finance, ISO 13485, MDR, QM/Bugs/CAPA, Mail, WhatsApp, Tourenplanung, Warranty, Maintenance, Lieferanten, Dispatch, Lager, Reviews, Academy, AI-Service, Device-Lifecycle, Stammdaten usw.):
+  • list_modules() – Übersicht aller verfügbaren Tabellen mit Modul-Gruppierung
+  • describe_table(table) – Spalten einer Tabelle anzeigen (vor query_table aufrufen, wenn Struktur unbekannt)
+  • query_table(table, search?, filters?, order_by?, ascending?, limit?) – generische SELECT-Abfrage
+Vorgehen: Wenn der Nutzer eine Frage zu einem Modul stellt, das kein spezielles Tool hat → erst list_modules oder describe_table, dann query_table mit passenden Filtern.
 Wenn ein Tool 0 Treffer liefert, sage das offen und schlage einen anderen Filter vor.
 Niemals erfundene Zahlen, Auftragsnummern, Beträge oder Kunden.`;
 
@@ -206,7 +212,114 @@ const tools = [
       parameters: { type: "object", properties: {} },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "list_modules",
+      description: "Listet alle verfügbaren Tabellen/Module, die per query_table abgefragt werden können – gruppiert nach Bereich (Finance, ISO, QM, Mail, WhatsApp, Service, Lager, Tourenplanung, Stammdaten, …). Nutze dies, wenn der Nutzer eine Frage zu einem Modul ohne dediziertes Tool stellt.",
+      parameters: { type: "object", properties: {} },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "describe_table",
+      description: "Zeigt die Spalten (Name + Typ) einer Tabelle aus dem public-Schema.",
+      parameters: {
+        type: "object",
+        properties: { table: { type: "string" } },
+        required: ["table"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "query_table",
+      description: "Generische read-only SELECT-Abfrage auf eine erlaubte Tabelle. Unterstützt Filter (eq/neq/ilike/gt/gte/lt/lte/in/is) und Sortierung. Nutze dies für alle Module ohne dediziertes Tool (Finance, ISO, QM, Mail, WhatsApp, Tourenplanung, Warranty, Maintenance, Suppliers, Device-Lifecycle, Sales-Followups, MDR …).",
+      parameters: {
+        type: "object",
+        properties: {
+          table: { type: "string" },
+          search: {
+            type: "object",
+            description: "Optionale Volltextsuche: { columns: ['col1','col2'], term: 'foo' }",
+            properties: {
+              columns: { type: "array", items: { type: "string" } },
+              term: { type: "string" },
+            },
+          },
+          filters: {
+            type: "array",
+            description: "Liste von Filtern, z.B. [{column:'status',op:'eq',value:'open'}].",
+            items: {
+              type: "object",
+              properties: {
+                column: { type: "string" },
+                op: { type: "string", enum: ["eq", "neq", "ilike", "gt", "gte", "lt", "lte", "in", "is"] },
+                value: {},
+              },
+              required: ["column", "op"],
+            },
+          },
+          select: { type: "string", description: "Spaltenliste (Default '*')." },
+          order_by: { type: "string" },
+          ascending: { type: "boolean", default: false },
+          limit: { type: "number", default: 20 },
+        },
+        required: ["table"],
+      },
+    },
+  },
 ];
+
+// ---------- Tabellen-Allowlist / Modulkatalog ----------
+const BLOCKED_TABLES = new Set<string>([
+  "user_profiles", "user_roles", "roles", "user_invitations", "login_sessions",
+  "otp_challenges", "api_rate_limits", "audit_logs", "mail_audit_logs",
+  "customer_portal_users", "mobile_push_subscriptions", "backups_metadata",
+  "alix_sign_audit_log", "alix_sign_signatures", "alix_sign_requests",
+  "finance_stakeholder_access_logs", "email_unsubscribe_tokens",
+  "alixsmart_migration_logs", "alixsmart_migration_map", "migration_backup_logs",
+  "system_maintenance",
+]);
+
+const MODULE_CATALOG: Record<string, string[]> = {
+  "Stammdaten": ["customers", "customer_notes", "customer_communication_log", "suppliers", "departments", "tenants", "user_tenant_access", "number_ranges", "product_categories", "item_category_assignments"],
+  "Verkauf / Leads": ["sales_leads", "sales_followups", "sales_lead_history", "offers", "reviews", "review_email_logs"],
+  "Aufträge": ["orders", "order_items", "order_status_history", "order_notes", "order_documents", "order_at_purchase", "order_at_approval", "order_additional_deposits", "order_import_logs", "deleted_customers"],
+  "Production": ["production_orders", "production_order_items"],
+  "Reparatur": ["repair_orders", "repair_quotes", "repair_quote_items", "repair_quote_history", "repair_parts", "repair_spare_parts", "repair_communications", "repair_status_history", "repair_invoice_proposals", "repair_signatures", "repair_attachments", "repair_work_orders", "repair_delivery_handover", "repair_finance_handover", "repair_workshop_intake"],
+  "Lager / Geräte": ["lager_devices", "loaner_device_assignments", "device_lifecycle", "device_health_scores", "device_maintenance", "model_manuals", "support_videos", "technician_stock", "technician_stock_movements", "technician_skills"],
+  "Tickets / Support": ["tickets", "ticket_messages", "ticket_attachments", "ticket_category_rules", "ticket_sync_logs", "ticket_sync_alerts", "ticket_outbound_sync_logs", "customer_portal_tickets", "customer_portal_ticket_messages", "customer_portal_quote_responses", "customer_portal_document_downloads"],
+  "Tourenplanung / Dispatch": ["route_plans", "dispatch_vehicles", "dispatch_checklists", "dispatch_checklist_runs", "dispatch_used_parts", "dispatch_signatures", "dispatch_attachments"],
+  "Finance": ["finance_records", "finance_transactions", "finance_accounts", "finance_bank_accounts", "finance_bank_statements", "finance_bank_lines", "finance_reminders", "finance_reminder_items", "finance_sepa_mandates", "finance_sepa_runs", "finance_sepa_run_items", "finance_tax_filings", "finance_tax_filing_lines", "finance_assets", "finance_asset_depreciations", "finance_budgets", "finance_forecasts", "finance_cashflow_plans", "finance_cashflow_items", "finance_liquidity_entries", "finance_documents", "finance_contracts", "finance_incoming_invoices", "finance_purchase_orders", "finance_purchase_order_items", "finance_purchase_requisitions", "finance_purchase_requisition_items", "finance_goods_receipts", "finance_three_way_matches", "finance_payment_approvals", "finance_approvals", "finance_anomalies", "finance_ai_insights", "finance_intercompany_relations", "finance_intercompany_matches", "finance_consolidation_runs", "finance_consolidation_items", "finance_year_end_runs", "finance_reports", "finance_report_schedules", "finance_management_packs", "finance_fx_rates", "finance_automations", "finance_automation_runs", "finance_stakeholders", "finance_history", "bank_financing_requests"],
+  "Zoho": ["zoho_invoices", "zoho_unpaid_invoices", "zoho_items", "zoho_recurring_invoices", "zoho_recurring_profiles", "goods_receipts", "spare_part_orders", "spare_part_order_items", "spare_part_consumption"],
+  "ISO 13485 / MDR / QM": ["bugs", "capas", "capa_actions", "audit_findings", "qm_comments", "qm_attachments", "iso_audits", "iso_audit_findings_ext", "iso_change_controls", "iso_supplier_evaluations", "iso_trainings", "iso_training_records", "mdr_vigilance_reports", "academy_sessions", "academy_bookings"],
+  "Mail": ["mail_messages", "mail_attachments", "mail_recipients", "mail_templates", "mail_domains", "mail_campaigns", "mail_followups", "mail_tasks", "mail_notes", "mail_phone_notes", "mail_internal_messages", "mail_notifications", "mail_automations", "mail_automation_runs", "mail_unsubscribes", "mail_events", "email_templates", "email_send_log", "suppressed_emails"],
+  "WhatsApp / SMS": ["whatsapp_messages", "whatsapp_templates", "whatsapp_automations", "whatsapp_consents", "whatsapp_sc_conversations", "whatsapp_sc_messages", "whatsapp_sc_templates", "whatsapp_sync_logs", "customer_sms_logs", "sms_templates", "sms_settings"],
+  "Service / Warranty / Maintenance": ["warranty_records", "warranty_claims", "warranty_decisions", "warranty_cost_items", "maintenance_plans", "maintenance_confirmations", "maintenance_reminder_log", "goodwill_cases", "service_knowledge_base", "service_communication_log", "service_ai_analyses", "service_ai_repair_guides", "service_ai_feedback", "ai_service_analyses", "ai_service_logs"],
+  "AI Center / Insights": ["aic_analysis_runs", "aic_insights", "aic_forecasts", "aic_reports", "aic_report_schedules", "aic_tasks"],
+  "AlixSmart": ["alixsmart_products"],
+  "App / Sonstiges": ["app_settings", "integration_logs", "invoice_workflow_states"],
+};
+
+const ALLOWED_TABLES = new Set<string>(
+  Object.values(MODULE_CATALOG).flat().filter((t) => !BLOCKED_TABLES.has(t)),
+);
+
+function tableRequiresRole(table: string): string[] | null {
+  if (table.startsWith("finance_") || table === "zoho_invoices" || table === "zoho_unpaid_invoices" || table === "bank_financing_requests") {
+    return ["Super Admin", "Admin", "Finance"];
+  }
+  if (table.startsWith("iso_") || table === "mdr_vigilance_reports") {
+    return ["Super Admin", "Admin", "QM"];
+  }
+  if (["bugs", "capas", "capa_actions", "audit_findings", "qm_comments", "qm_attachments"].includes(table)) {
+    return ["Super Admin", "Admin", "QM"];
+  }
+  return null;
+}
 
 // ---------- Tool Implementierungen ----------
 type Ctx = { userId: string; roles: string[]; isAdmin: boolean; isFinance: boolean; tenantSources: string[] | null };
@@ -383,6 +496,82 @@ async function runTool(name: string, args: any, ctx: Ctx): Promise<unknown> {
           ueberfaellige_rechnungen: overdue.count ?? 0,
           neue_leads_7d: leads.count ?? 0,
         };
+      }
+      case "list_modules": {
+        const out: Record<string, string[]> = {};
+        for (const [mod, tables] of Object.entries(MODULE_CATALOG)) {
+          const allowed = tables.filter((t) => {
+            if (BLOCKED_TABLES.has(t)) return false;
+            const req = tableRequiresRole(t);
+            if (!req) return true;
+            return ctx.isAdmin || ctx.roles.some((r) => req.includes(r));
+          });
+          if (allowed.length > 0) out[mod] = allowed;
+        }
+        return { modules: out, blocked_for_security: Array.from(BLOCKED_TABLES) };
+      }
+      case "describe_table": {
+        const t = String(args?.table ?? "").trim();
+        if (!ALLOWED_TABLES.has(t)) return { error: `Tabelle '${t}' nicht erlaubt oder unbekannt.` };
+        const req = tableRequiresRole(t);
+        if (req && !ctx.isAdmin && !ctx.roles.some((r) => req.includes(r))) {
+          return { error: `Keine Berechtigung für '${t}'. Benötigt eine der Rollen: ${req.join(", ")}.` };
+        }
+        const { data, error } = await admin.rpc("get_table_columns", { _table: t });
+        if (error) throw error;
+        return { table: t, columns: data ?? [] };
+      }
+      case "query_table": {
+        const t = String(args?.table ?? "").trim();
+        if (!/^[a-z_][a-z0-9_]*$/i.test(t)) return { error: "Ungültiger Tabellenname." };
+        if (!ALLOWED_TABLES.has(t)) return { error: `Tabelle '${t}' nicht erlaubt. Nutze list_modules.` };
+        const req = tableRequiresRole(t);
+        if (req && !ctx.isAdmin && !ctx.roles.some((r) => req.includes(r))) {
+          return { error: `Keine Berechtigung für '${t}'. Benötigt eine der Rollen: ${req.join(", ")}.` };
+        }
+        const select = typeof args?.select === "string" && args.select.trim().length > 0 ? args.select : "*";
+        let q: any = admin.from(t).select(select).limit(limit);
+
+        // Mandantenfilter wo passend
+        if (ctx.tenantSources && ["orders", "customers", "production_orders", "zoho_invoices", "zoho_unpaid_invoices", "zoho_items", "lager_devices"].includes(t)) {
+          q = q.in("source_system", ctx.tenantSources);
+        }
+
+        if (args?.search?.term && Array.isArray(args.search.columns) && args.search.columns.length > 0) {
+          const term = String(args.search.term).replace(/[%,]/g, " ");
+          const or = args.search.columns
+            .filter((c: any) => typeof c === "string" && /^[a-z_][a-z0-9_]*$/i.test(c))
+            .map((c: string) => `${c}.ilike.%${term}%`)
+            .join(",");
+          if (or) q = q.or(or);
+        }
+
+        if (Array.isArray(args?.filters)) {
+          for (const f of args.filters) {
+            if (!f?.column || !/^[a-z_][a-z0-9_]*$/i.test(f.column)) continue;
+            const op = String(f.op);
+            const v = f.value;
+            switch (op) {
+              case "eq": q = q.eq(f.column, v); break;
+              case "neq": q = q.neq(f.column, v); break;
+              case "ilike": q = q.ilike(f.column, `%${String(v).replace(/%/g, "")}%`); break;
+              case "gt": q = q.gt(f.column, v); break;
+              case "gte": q = q.gte(f.column, v); break;
+              case "lt": q = q.lt(f.column, v); break;
+              case "lte": q = q.lte(f.column, v); break;
+              case "in": q = q.in(f.column, Array.isArray(v) ? v : [v]); break;
+              case "is": q = q.is(f.column, v); break;
+            }
+          }
+        }
+
+        if (args?.order_by && /^[a-z_][a-z0-9_]*$/i.test(String(args.order_by))) {
+          q = q.order(args.order_by, { ascending: Boolean(args.ascending) });
+        }
+
+        const { data, error, count } = await q;
+        if (error) return { error: error.message };
+        return { table: t, rows: data ?? [], row_count: (data?.length ?? 0), total_count: count ?? null };
       }
     }
     return { error: `Unbekanntes Tool: ${name}` };
