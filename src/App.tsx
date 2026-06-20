@@ -376,9 +376,13 @@ function ProtectedRoute({ children, requiredRoles, allowEmails }: { children: Re
   if (!user) return <Navigate to="/login" replace />;
   if (blockReason) return <AccountBlocked />;
 
-  if (mfaState === 'not_enrolled') return <Navigate to="/mfa-setup" replace />;
+  // MFA-Pflicht: Nur für definierte Rollen wird die Einrichtung erzwungen.
+  // Wenn MFA bereits eingerichtet wurde, MUSS der Code in jedem Fall verifiziert werden.
+  const mfaMandatory = isMfaMandatory(roles);
+  if (mfaState === 'not_enrolled' && mfaMandatory) return <Navigate to="/mfa-setup" replace />;
   if (mfaState === 'challenge_required') return <Navigate to="/mfa-challenge" replace />;
-  if (mfaState !== 'verified') return <FullscreenLoader />;
+  if (mfaState === 'unknown') return <FullscreenLoader />;
+  // mfaState ist nun 'verified' ODER 'not_enrolled' für nicht-pflichtige Rollen → Zugriff erlauben.
 
   const emailAllowed = !!allowEmails && allowEmails.map(e => e.toLowerCase()).includes((profile?.email || '').toLowerCase());
 
