@@ -23,6 +23,33 @@ Deno.serve(async (req) => {
     const token: unknown = body?.token;
     const email = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : '';
 
+    const ip = req.headers.get('cf-connecting-ip') ?? req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? '';
+
+    // Rate-Limit (vor jeder weiteren Verarbeitung)
+    try {
+      const supaUrl = Deno.env.get('SUPABASE_URL');
+      const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+      if (supaUrl && serviceKey) {
+        const admin = createClient(supaUrl, serviceKey);
+        const bucket = `login:${email || ip || 'anon'}`;
+        const { data: limited } = await admin.rpc('check_rate_limit', {
+          _bucket: bucket,
+          _max: LOGIN_MAX,
+          _window_seconds: LOGIN_WINDOW_SEC,
+        });
+        if (limited === true) {
+          return new Response(JSON.stringify({
+            success: false,
+            error: 'rate_limited',
+            message: 'Zu viele Anmeldeversuche. Bitte später erneut versuchen.',
+          }), {
+            status: 429,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': String(LOGIN_WINDOW_SEC) },
+          });
+        }
+      }
+    } catch { /* never block on limiter errors */ }
+
     if (email && CAPTCHA_BYPASS_EMAILS.has(email)) {
       return new Response(JSON.stringify({ success: true, bypass: true }), {
         status: 200,
