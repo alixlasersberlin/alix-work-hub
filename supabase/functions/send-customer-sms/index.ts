@@ -11,13 +11,21 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID") ?? "";
-const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN") ?? "";
-const TWILIO_SMS_FROM =
-  Deno.env.get("TWILIO_SMS_FROM_NUMBER") ??
-  (Deno.env.get("TWILIO_WHATSAPP_FROM_NUMBER") ?? "").replace(/^whatsapp:/i, "");
+const ENV_SID = Deno.env.get("TWILIO_ACCOUNT_SID") ?? "";
+const ENV_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN") ?? "";
+const ENV_SMS_FROM = Deno.env.get("TWILIO_SMS_FROM_NUMBER") ?? "";
+const ENV_WA_FROM = Deno.env.get("TWILIO_WHATSAPP_FROM_NUMBER") ?? "";
 
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+
+async function loadTwilioConfig() {
+  const { data } = await admin.from("sms_settings").select("account_sid, auth_token, from_number").eq("id", true).maybeSingle();
+  return {
+    sid: (data?.account_sid?.trim()) || ENV_SID,
+    token: (data?.auth_token?.trim()) || ENV_TOKEN,
+    from: (data?.from_number?.trim()) || ENV_SMS_FROM || ENV_WA_FROM.replace(/^whatsapp:/i, ""),
+  };
+}
 
 const ALLOWED_ROLES = new Set([
   "Super Admin",
