@@ -479,6 +479,7 @@ const navItems: NavItem[] = [
         path: '#portal', label: 'PORTAL', icon: SearchCheck, roles: ['Super Admin'],
         children: [
           { path: '/portal-admin', label: 'Kundenportal', icon: Globe, roles: ['Super Admin'] },
+          { path: '/operation/kundenportal', label: 'Kundenportal Konfiguration', icon: Globe, roles: ['Super Admin'] },
           { path: '/tickets', label: 'Ticketliste', icon: Ticket, roles: ['Super Admin'] },
           { path: '/order/timeline', label: 'Timeline Bestellungen', icon: Calendar, roles: ['Super Admin'] },
           { path: '/lager/doppelte-reservierungen', label: 'Doppelte Reservierungen', icon: AlertTriangle, roles: ['Super Admin'] },
