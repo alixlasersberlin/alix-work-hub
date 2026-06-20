@@ -167,6 +167,16 @@ export default function AuftragsbestaetigungTab({ orderId, customerId, customerE
                   >
                     In neuem Tab öffnen <ExternalLink className="w-3 h-3" />
                   </a>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleSend}
+                    disabled={sending || !recipient}
+                    className="gold-gradient text-primary-foreground h-7 px-3 text-xs"
+                  >
+                    {sending ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Send className="w-3 h-3 mr-1" />}
+                    Auftragsbestätigung Email
+                  </Button>
                 </div>
               </div>
               <iframe
