@@ -209,6 +209,7 @@ const AlixCopilotKonfiguration = lazy(() => import("./pages/Operation/AlixCopilo
 const AlixCopilotConfig = lazy(() => import("./pages/Operation/AlixCopilotConfig"));
 const KundenportalKonfiguration = lazy(() => import("./pages/Operation/KundenportalKonfiguration"));
 const Datensicherung = lazy(() => import("./pages/operation/Datensicherung"));
+const FortKnox = lazy(() => import("./pages/operation/FortKnox"));
 const Mandanten = lazy(() => import("./pages/Mandanten"));
 const KonzernDashboard = lazy(() => import("./pages/KonzernDashboard"));
 const MobileLayout = lazy(() => import("./pages/Mobile/Layout"));
