@@ -446,11 +446,35 @@ function SourceDialog({ open, setOpen, depts, reload }: any) {
               <Input type="date" value={form.valid_to} onChange={(e) => setForm({ ...form, valid_to: e.target.value })} />
             </div>
             {form.source_type === "url" && (
-              <div className="col-span-2">
+              <div className="col-span-2 space-y-2">
                 <Label>URL</Label>
-                <Input value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} placeholder="https://…" />
+                <div className="flex gap-2">
+                  <Input value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} placeholder="https://…" />
+                  <Button type="button" variant="outline" disabled={!form.url || busy} onClick={async () => {
+                    setBusy(true);
+                    try {
+                      const { data, error } = await supabase.functions.invoke("copilot-fetch-url", { body: { url: form.url } });
+                      if (error) throw error;
+                      if ((data as any)?.error) throw new Error((data as any).error);
+                      const txt: string = (data as any)?.text || "";
+                      const title: string = (data as any)?.title || "";
+                      setForm((f: any) => ({
+                        ...f,
+                        title: f.title || title || f.url,
+                        description: (f.description ? f.description + "\n\n" : "") + txt.slice(0, 100_000),
+                      }));
+                      toast.success(`Webseite eingelesen (${txt.length.toLocaleString()} Zeichen)`);
+                    } catch (e: any) {
+                      toast.error(e.message || "Fetch fehlgeschlagen");
+                    } finally { setBusy(false); }
+                  }}>
+                    <Globe className="w-4 h-4 mr-1" /> Einlesen
+                  </Button>
+                </div>
+                <p className="text-[11px] text-muted-foreground">Lädt die Seite serverseitig, entfernt HTML und übernimmt den Text in die Beschreibung.</p>
               </div>
             )}
+
             {["pdf","docx","xlsx","csv","text"].includes(form.source_type) && (
               <div className="col-span-2">
                 <Label>Datei (PDF/Text/CSV/JSON) – optional</Label>
