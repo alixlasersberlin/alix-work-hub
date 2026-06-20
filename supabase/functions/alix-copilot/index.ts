@@ -322,7 +322,7 @@ function tableRequiresRole(table: string): string[] | null {
 }
 
 // ---------- Tool Implementierungen ----------
-type Ctx = { userId: string; roles: string[]; isAdmin: boolean; isFinance: boolean; tenantSources: string[] | null };
+type Ctx = { userId: string; roles: string[]; isAdmin: boolean; isFinance: boolean; tenantSources: string[] | null; extraBlocked: Set<string>; disabledModules: Set<string> };
 
 function pick<T extends Record<string, unknown>>(row: T, keys: (keyof T)[]): Partial<T> {
   const o: any = {};
