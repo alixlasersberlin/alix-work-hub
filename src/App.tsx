@@ -447,6 +447,7 @@ function AppRoutes() {
         <Route path="/alix-enterprise" element={user ? <Navigate to="/dashboard" replace /> : <CovertLogin />} />
         <Route path="/passwort-setzen" element={<SetPassword />} />
         <Route path="/stakeholder/:token" element={<StakeholderPortal />} />
+        <Route path="/pdf/ab" element={<PdfAb />} />
         <Route path="/mfa-setup" element={<MfaGate expect="not_enrolled"><MfaSetup /></MfaGate>} />
         <Route path="/mfa-challenge" element={<MfaGate expect="challenge_required"><MfaChallenge /></MfaGate>} />
         <Route path="/mfa-recovery" element={<MfaGate expect="any"><MfaRecovery /></MfaGate>} />
