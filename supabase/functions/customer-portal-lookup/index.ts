@@ -2,12 +2,19 @@
 // Validates order_number + zip + email against existing records and
 // returns a SAFE, derived status payload. No auth required.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { z } from "https://esm.sh/zod@3.23.8";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
+
+const BodySchema = z.object({
+  order_number: z.string().trim().min(1).max(64),
+  zip: z.string().trim().min(2).max(16),
+  email: z.string().trim().email().max(255),
+});
 
 const STATUS_TEXTS: Record<string, { code: number; label: string; text: string }> = {
   awaiting_deposit: {
@@ -71,10 +78,16 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const body = await req.json().catch(() => ({}));
-    const orderNumber = normOrderNumber(body.order_number);
-    const zip = normZip(body.zip);
-    const email = normEmail(body.email);
+    const raw = await req.json().catch(() => ({}));
+    const parsed = BodySchema.safeParse(raw);
+    if (!parsed.success) {
+      return new Response(JSON.stringify({ ok: false, error: "invalid_input" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const orderNumber = normOrderNumber(parsed.data.order_number);
+    const zip = normZip(parsed.data.zip);
+    const email = normEmail(parsed.data.email);
 
     if (!orderNumber || !zip || !email) {
       return new Response(JSON.stringify({ ok: false, error: "missing_fields" }), {
@@ -83,6 +96,7 @@ Deno.serve(async (req) => {
     }
 
     const ip = req.headers.get('cf-connecting-ip') ?? req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? '';
+    const ua = req.headers.get('user-agent') ?? '';
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -98,6 +112,16 @@ Deno.serve(async (req) => {
         _window_seconds: PORTAL_WINDOW_SEC,
       });
       if (limited === true) {
+        try {
+          await supabase.rpc('log_audit_event', {
+            _action: 'rate_limit_hit',
+            _module: 'customer_portal',
+            _record_id: null,
+            _details: { endpoint: 'customer-portal-lookup', ip, email } as any,
+            _ip_address: ip || null,
+            _user_agent: ua || null,
+          });
+        } catch { /* ignore */ }
         return new Response(JSON.stringify({ ok: false, error: 'rate_limited' }), {
           status: 429,
           headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': String(PORTAL_WINDOW_SEC) },
