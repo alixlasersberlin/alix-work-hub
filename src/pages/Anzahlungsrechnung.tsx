@@ -4,7 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Receipt, Search, ExternalLink, RefreshCw, FileText, Wallet, Banknote, MessageSquare, Mail, Loader2 } from 'lucide-react';
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+import { Receipt, Search, ExternalLink, RefreshCw, FileText, Wallet, Banknote, MessageSquare, Mail, Loader2, ChevronDown, Settings } from 'lucide-react';
 import { EmptyState } from '@/components/infinity/EmptyState';
 import { supabase } from '@/integrations/supabase/client';
 import { withAt } from '@/lib/atSuffix';
@@ -14,6 +17,9 @@ import {
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { KpiTile } from '@/components/infinity/KpiTile';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
+
+type Stage = { id: string; name: string; days_after_due: number; enabled: boolean };
 
 type Row = {
   id: string;
@@ -36,25 +42,28 @@ const fmtDate = (d: string | null | undefined) =>
   !d ? '–' : new Date(d).toLocaleDateString('de-DE');
 
 export default function Anzahlungsrechnung() {
+  const { roles } = useAuth();
+  const isSuperAdmin = (roles ?? []).some((r: any) => (typeof r === 'string' ? r : r?.name) === 'Super Admin');
   const [rows, setRows] = useState<Row[]>([]);
   const [customers, setCustomers] = useState<Record<string, CustomerLite>>({});
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
   const [busy, setBusy] = useState<Record<string, 'sms' | 'email' | null>>({});
+  const [stages, setStages] = useState<Stage[]>([]);
 
-  const sendMahnung = async (orderId: string, channel: 'sms' | 'email') => {
-    if (!confirm(channel === 'sms'
-      ? 'SMS-Mahnung an den Kunden senden?'
-      : 'E-Mail-Mahnung an den Kunden senden?')) return;
+  const sendMahnung = async (orderId: string, channel: 'sms' | 'email', stage: Stage) => {
+    if (!confirm(
+      `${channel === 'sms' ? 'SMS' : 'E-Mail'}-Mahnung „${stage.name}" an den Kunden senden?`
+    )) return;
     setBusy((b) => ({ ...b, [orderId]: channel }));
     try {
       const { data, error } = await supabase.functions.invoke('send-anzahlung-mahnung', {
-        body: { order_id: orderId, channel },
+        body: { order_id: orderId, channel, stage_id: stage.id },
       });
       if (error || (data as any)?.error) {
         throw new Error((data as any)?.error || error?.message || 'Unbekannter Fehler');
       }
-      toast.success(channel === 'sms' ? 'SMS-Mahnung gesendet' : 'E-Mail-Mahnung gesendet');
+      toast.success(`${channel === 'sms' ? 'SMS' : 'E-Mail'}-Mahnung „${stage.name}" gesendet`);
     } catch (e: any) {
       toast.error(e.message ?? 'Versand fehlgeschlagen');
     } finally {
