@@ -25,8 +25,16 @@ export function CopilotBar() {
         setOpen(o => !o);
       }
     };
+    const onOpen = () => setOpen(true);
+    const onToggle = () => setOpen(o => !o);
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("alix-copilot:open", onOpen);
+    window.addEventListener("alix-copilot:toggle", onToggle);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("alix-copilot:open", onOpen);
+      window.removeEventListener("alix-copilot:toggle", onToggle);
+    };
   }, []);
 
   useEffect(() => {
