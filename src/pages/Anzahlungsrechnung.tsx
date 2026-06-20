@@ -293,7 +293,7 @@ export default function Anzahlungsrechnung() {
                         <TableCell>
                           <div className="flex items-center gap-1.5 justify-end">
                             <MahnungButton
-                              channel="sms"
+                               
                               label="SMS Mahnung"
                               icon={<MessageSquare className="h-4 w-4" />}
                               busy={busy[r.id] === 'sms'}
@@ -301,7 +301,7 @@ export default function Anzahlungsrechnung() {
                               onSelect={(stage) => sendMahnung(r.id, 'sms', stage)}
                             />
                             <MahnungButton
-                              channel="email"
+                               
                               label="E-Mail Mahnung"
                               icon={<Mail className="h-4 w-4" />}
                               busy={busy[r.id] === 'email'}
