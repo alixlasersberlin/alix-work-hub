@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Receipt, Search, ExternalLink, RefreshCw, FileText, Wallet, Banknote } from 'lucide-react';
+import { Receipt, Search, ExternalLink, RefreshCw, FileText, Wallet, Banknote, MessageSquare, Mail, Loader2 } from 'lucide-react';
 import { EmptyState } from '@/components/infinity/EmptyState';
 import { supabase } from '@/integrations/supabase/client';
 import { withAt } from '@/lib/atSuffix';
@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/table';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { KpiTile } from '@/components/infinity/KpiTile';
+import { toast } from 'sonner';
 
 type Row = {
   id: string;
@@ -39,6 +40,27 @@ export default function Anzahlungsrechnung() {
   const [customers, setCustomers] = useState<Record<string, CustomerLite>>({});
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
+  const [busy, setBusy] = useState<Record<string, 'sms' | 'email' | null>>({});
+
+  const sendMahnung = async (orderId: string, channel: 'sms' | 'email') => {
+    if (!confirm(channel === 'sms'
+      ? 'SMS-Mahnung an den Kunden senden?'
+      : 'E-Mail-Mahnung an den Kunden senden?')) return;
+    setBusy((b) => ({ ...b, [orderId]: channel }));
+    try {
+      const { data, error } = await supabase.functions.invoke('send-anzahlung-mahnung', {
+        body: { order_id: orderId, channel },
+      });
+      if (error || (data as any)?.error) {
+        throw new Error((data as any)?.error || error?.message || 'Unbekannter Fehler');
+      }
+      toast.success(channel === 'sms' ? 'SMS-Mahnung gesendet' : 'E-Mail-Mahnung gesendet');
+    } catch (e: any) {
+      toast.error(e.message ?? 'Versand fehlgeschlagen');
+    } finally {
+      setBusy((b) => ({ ...b, [orderId]: null }));
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -195,12 +217,38 @@ export default function Anzahlungsrechnung() {
                         <TableCell className="text-right">{fmtMoney(r.total_amount)}</TableCell>
                         <TableCell className="text-xs text-muted-foreground">{r.salesperson_name || '–'}</TableCell>
                         <TableCell>
-                          <Button asChild size="sm" className="gold-gradient text-primary-foreground">
-                            <Link to={`/auftraege/${r.id}`}>
-                              <ExternalLink className="h-4 w-4 mr-2" />
-                              BEARBEITUNG
-                            </Link>
-                          </Button>
+                          <div className="flex items-center gap-1.5 justify-end">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              title="SMS-Mahnung an den Kunden senden"
+                              disabled={busy[r.id] === 'sms'}
+                              onClick={() => sendMahnung(r.id, 'sms')}
+                            >
+                              {busy[r.id] === 'sms'
+                                ? <Loader2 className="h-4 w-4 animate-spin" />
+                                : <MessageSquare className="h-4 w-4" />}
+                              <span className="hidden lg:inline ml-1.5">SMS&nbsp;Mahnung</span>
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              title="E-Mail-Mahnung an den Kunden senden"
+                              disabled={busy[r.id] === 'email'}
+                              onClick={() => sendMahnung(r.id, 'email')}
+                            >
+                              {busy[r.id] === 'email'
+                                ? <Loader2 className="h-4 w-4 animate-spin" />
+                                : <Mail className="h-4 w-4" />}
+                              <span className="hidden lg:inline ml-1.5">E-Mail&nbsp;Mahnung</span>
+                            </Button>
+                            <Button asChild size="sm" className="gold-gradient text-primary-foreground">
+                              <Link to={`/auftraege/${r.id}`}>
+                                <ExternalLink className="h-4 w-4 mr-1" />
+                                <span className="hidden md:inline">BEARBEITUNG</span>
+                              </Link>
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
