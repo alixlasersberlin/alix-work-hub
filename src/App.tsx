@@ -67,6 +67,7 @@ const ManagementDashboard = lazy(() => import("./pages/ManagementDashboard"));
 const ExecutiveCommandCenter = lazy(() => import("./pages/ExecutiveCommandCenter"));
 const InfinityShowcase = lazy(() => import("./pages/InfinityShowcase"));
 const Personalisierung = lazy(() => import("./pages/Personalisierung"));
+const Sicherheit = lazy(() => import("./pages/Sicherheit"));
 const AiCenter = lazy(() => import("./pages/AiCenter"));
 const RoutePlanDetail = lazy(() => import("./pages/RoutePlanDetail"));
 const RoutePlanForm = lazy(() => import("./pages/RoutePlanForm"));
