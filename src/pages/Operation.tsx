@@ -26,6 +26,14 @@ export default function Operation() {
           desc: 'Enterprise-Sicherheitsüberwachung: Logins, Sitzungen, Geräte, IPs, Warnungen, Security Score.',
         }]
       : []),
+    ...(hasAnyRole(BACKUP_ROLES)
+      ? [{
+          to: '/operation/datensicherung',
+          icon: ShieldCheck,
+          title: 'Datensicherung',
+          desc: 'Backup-, Wiederherstellungs- und Versionsmanagement-Center mit GitHub & Hetzner.',
+        }]
+      : []),
   ];
   return (
     <div className="container mx-auto p-6 space-y-6">
