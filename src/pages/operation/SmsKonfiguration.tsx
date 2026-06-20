@@ -64,6 +64,11 @@ export default function SmsKonfiguration() {
   const [editing, setEditing] = useState<Partial<Template> | null>(null);
   const [saving, setSaving] = useState(false);
 
+  const [cfg, setCfg] = useState({ account_sid: '', auth_token: '', from_number: '' });
+  const [cfgLoading, setCfgLoading] = useState(true);
+  const [cfgSaving, setCfgSaving] = useState(false);
+  const [showToken, setShowToken] = useState(false);
+
   async function loadStatus() {
     setLoadingStatus(true);
     const { data, error } = await supabase.functions.invoke('sms-config-test', { body: { action: 'status' } });
@@ -73,6 +78,19 @@ export default function SmsKonfiguration() {
       setStatus((data as any).status);
     }
     setLoadingStatus(false);
+  }
+
+  async function loadSettings() {
+    setCfgLoading(true);
+    const { data, error } = await supabase
+      .from('sms_settings').select('account_sid, auth_token, from_number').eq('id', true).maybeSingle();
+    if (error) toast.error(error.message);
+    else setCfg({
+      account_sid: data?.account_sid ?? '',
+      auth_token: data?.auth_token ?? '',
+      from_number: data?.from_number ?? '',
+    });
+    setCfgLoading(false);
   }
 
   async function loadTemplates() {
@@ -89,9 +107,25 @@ export default function SmsKonfiguration() {
   useEffect(() => {
     if (isAdmin) {
       void loadStatus();
+      void loadSettings();
       void loadTemplates();
     }
   }, [isAdmin]);
+
+  async function saveSettings() {
+    setCfgSaving(true);
+    const { error } = await supabase.from('sms_settings').update({
+      account_sid: cfg.account_sid.trim() || null,
+      auth_token: cfg.auth_token.trim() || null,
+      from_number: cfg.from_number.trim() || null,
+    }).eq('id', true);
+    setCfgSaving(false);
+    if (error) toast.error(error.message);
+    else {
+      toast.success('Twilio-Verbindung gespeichert');
+      void loadStatus();
+    }
+  }
 
   async function sendTest() {
     if (!testPhone.trim()) {
