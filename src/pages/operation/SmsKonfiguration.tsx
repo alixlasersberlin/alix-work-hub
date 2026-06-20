@@ -68,6 +68,7 @@ export default function SmsKonfiguration() {
   const [cfgLoading, setCfgLoading] = useState(true);
   const [cfgSaving, setCfgSaving] = useState(false);
   const [showToken, setShowToken] = useState(false);
+  const [credsOpen, setCredsOpen] = useState(false);
 
   async function loadStatus() {
     setLoadingStatus(true);
