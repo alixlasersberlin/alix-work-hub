@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FilePlus, Plus, Trash2, Search, Loader2, FileDown, Inbox, ChevronDown, Pencil, Save, X, UserPlus } from 'lucide-react';
+import { FilePlus, Plus, Trash2, Search, Loader2, FileDown, Inbox, ChevronDown, Pencil, Save, X, UserPlus, CheckCircle2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useNavigate } from 'react-router-dom';
@@ -16,8 +16,10 @@ import { createPDF } from '@/lib/pdf-utils';
 import autoTable from 'jspdf-autotable';
 import templateAsset from '@/assets/angebot-template.jpg.asset.json';
 import alixLogoAsset from '@/assets/alix-logo-gold-angebot.png.asset.json';
-import { upsertOffer, getOffer } from '@/lib/offers-store';
+import { upsertOffer, getOffer, updateOfferStatus } from '@/lib/offers-store';
 import { peekNumber, nextNumber, ensureCaseNumber } from '@/lib/number-ranges';
+import { useAuth } from '@/hooks/useAuth';
+
 
 type LineItem = {
   id: string;
