@@ -841,7 +841,7 @@ export default function UserManagement() {
                           }));
                         }}
                       />
-                      {r.name}
+                      {displayRoleName(r.name)}
                     </label>
                   ))}
                 </div>
