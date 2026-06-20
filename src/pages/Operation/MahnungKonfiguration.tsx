@@ -60,7 +60,7 @@ export default function MahnungKonfiguration() {
     })();
   }, []);
 
-  if (!authLoading && !isSuperAdmin) return <Navigate to="/" replace />;
+  if (!authLoading && !isSuperAdmin) return <Navigate to="/dashboard" replace />;
 
   const save = async () => {
     // basic validation

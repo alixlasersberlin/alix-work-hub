@@ -50,7 +50,7 @@ export default function MfaChallenge() {
       if (vErr) throw vErr;
       markMfaVerifiedThisTab();
       await refreshMfaState();
-      navigate('/', { replace: true });
+      navigate('/dashboard', { replace: true });
     } catch (e: any) {
       setErr(e?.message ?? 'Code ungültig');
       setBusy(false);
