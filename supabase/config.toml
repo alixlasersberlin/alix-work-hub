@@ -160,3 +160,7 @@ verify_jwt = true
 
 
 
+
+[functions.sms-config-test]
+verify_jwt = true
+
