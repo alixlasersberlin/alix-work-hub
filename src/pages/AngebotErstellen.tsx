@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FilePlus, Plus, Trash2, Search, Loader2, FileDown, Inbox, ChevronDown, Pencil, Save, X, UserPlus } from 'lucide-react';
+import { FilePlus, Plus, Trash2, Search, Loader2, FileDown, Inbox, ChevronDown, Pencil, Save, X, UserPlus, CheckCircle2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useNavigate } from 'react-router-dom';
@@ -16,8 +16,10 @@ import { createPDF } from '@/lib/pdf-utils';
 import autoTable from 'jspdf-autotable';
 import templateAsset from '@/assets/angebot-template.jpg.asset.json';
 import alixLogoAsset from '@/assets/alix-logo-gold-angebot.png.asset.json';
-import { upsertOffer, getOffer } from '@/lib/offers-store';
+import { upsertOffer, getOffer, updateOfferStatus } from '@/lib/offers-store';
 import { peekNumber, nextNumber, ensureCaseNumber } from '@/lib/number-ranges';
+import { useAuth } from '@/hooks/useAuth';
+
 
 type LineItem = {
   id: string;
@@ -42,7 +44,11 @@ const newLine = (): LineItem => ({
 
 export default function AngebotErstellen() {
   const navigate = useNavigate();
+  const { roles } = useAuth();
+  const isSuperAdmin = (roles ?? []).some((r: any) => (typeof r === 'string' ? r : r?.name) === 'Super Admin');
+  const [confirming, setConfirming] = useState(false);
   const [customers, setCustomers] = useState<any[]>([]);
+
   const [items, setItems] = useState<any[]>([]);
   const [customerId, setCustomerId] = useState<string>('');
   const [customerSearch, setCustomerSearch] = useState('');
@@ -961,6 +967,83 @@ export default function AngebotErstellen() {
     }
   };
 
+  // Super-Admin: Angebot selbst bestätigen → Status = 'order' + Auftrag in `orders` anlegen
+  const confirmAsOrder = async () => {
+    if (!isSuperAdmin) { toast.error('Nur Super Admin darf Angebote selbst bestätigen.'); return; }
+    if (!selectedCustomer) { toast.error('Bitte zuerst einen Kunden auswählen.'); return; }
+    const validLines = lines.filter(l => l.name && l.quantity > 0);
+    if (validLines.length === 0) { toast.error('Bitte mindestens eine Position erfassen.'); return; }
+    if (!confirm(`Angebot ${offerNumber} jetzt anerkennen und als Auftrag übernehmen?\n\nDamit wird ein neuer Auftrag im System angelegt.`)) return;
+
+    setConfirming(true);
+    try {
+      // 1) Aktuellen Stand speichern (sichert finale Angebotsnummer / Stammnummer)
+      const ok = await saveOffer(true);
+      if (!ok) { setConfirming(false); return; }
+
+      // 2) Auftragsnummer ziehen (zentraler Nummernkreis 'order', sonst Fallback auf ANG→AUF)
+      const fallbackOrderNr = offerNumber.replace(/^ANG-/i, 'AUF-');
+      const orderNr = (await nextNumber('order', () => fallbackOrderNr, { caseNumber })) || fallbackOrderNr;
+
+      // 3) Auftrag in orders anlegen (nur wenn Auftragsnummer noch nicht existiert)
+      const { data: dupe } = await supabase.from('orders').select('id').eq('order_number', orderNr).maybeSingle();
+      if (dupe?.id) {
+        toast.error(`Auftragsnummer ${orderNr} existiert bereits.`);
+        setConfirming(false);
+        return;
+      }
+
+      const { data: orderRow, error: ordErr } = await supabase
+        .from('orders')
+        .insert({
+          customer_id: selectedCustomer.id,
+          order_number: orderNr,
+          source_system: 'internal',
+          order_status: 'offen',
+          currency: 'EUR',
+          total_amount: totals.gross,
+          order_date: new Date().toISOString(),
+          case_number: caseNumber || null,
+          salesperson_name: salesAdvisor || null,
+          billing_address: (selectedCustomer as any).billing_address || null,
+          shipping_address: (selectedCustomer as any).shipping_address || (selectedCustomer as any).billing_address || null,
+          raw_data: { source: 'offer_confirmation', offer_number: offerNumber, payment: { type: payType, price: parseFloat(payPrice) || 0, down: parseFloat(payDown) || 0, term: payTerm } } as any,
+        } as any)
+        .select('id')
+        .single();
+      if (ordErr) throw ordErr;
+
+      // 4) Order-Items übernehmen
+      const itemsPayload = validLines.map((l, idx) => ({
+        order_id: orderRow!.id,
+        item_name: l.name,
+        description: l.description || null,
+        sku: l.sku || null,
+        quantity: Number(l.quantity) || 0,
+        rate: Number(l.rate) || 0,
+        amount: (Number(l.quantity) || 0) * (Number(l.rate) || 0),
+        tax_amount: ((Number(l.quantity) || 0) * (Number(l.rate) || 0)) * ((Number(l.tax_percentage) || 0) / 100),
+        item_order: idx + 1,
+      }));
+      if (itemsPayload.length > 0) {
+        const { error: itErr } = await supabase.from('order_items').insert(itemsPayload as any);
+        if (itErr) throw itErr;
+      }
+
+      // 5) Angebot als „angenommen / in Auftrag gewandelt" markieren
+      await updateOfferStatus(offerNumber, 'order', new Date().toISOString());
+
+      toast.success(`Angebot bestätigt – Auftrag ${orderNr} wurde angelegt.`);
+      navigate('/verkauf/angebote');
+    } catch (e: any) {
+      toast.error('Bestätigung fehlgeschlagen: ' + (e?.message || 'Unbekannter Fehler'));
+    } finally {
+      setConfirming(false);
+    }
+  };
+
+
+
   const sendByEmail = async () => {
     if (!selectedCustomer) { toast.error('Bitte zuerst einen Kunden auswählen.'); return; }
     const email = selectedCustomer.email;
@@ -1677,11 +1760,23 @@ export default function AngebotErstellen() {
           <Pencil className="w-4 h-4" />
           Mit Alix Sign zur Unterschrift senden
         </Button>
+        {isSuperAdmin && (
+          <Button
+            onClick={confirmAsOrder}
+            disabled={confirming}
+            className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white border-0"
+            title="Nur Super Admin: Angebot anerkennen und in einen Auftrag wandeln"
+          >
+            {confirming ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+            Selbst bestätigen & in Auftrag wandeln
+          </Button>
+        )}
         <Button onClick={generatePDF} className="gold-gradient text-primary-foreground gap-2">
           <FileDown className="w-4 h-4" />
           Als PDF speichern
         </Button>
       </div>
+
 
       {/* Live-PDF-Vorschau */}
       <div className="mt-6 rounded-lg border border-border bg-card">
