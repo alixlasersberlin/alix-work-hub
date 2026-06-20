@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Search, ClipboardList, ArrowUpDown, Loader2, Inbox, CalendarDays, List, Car, Pencil, CalendarClock, MoveRight, CheckCircle2, PackageCheck, FileDown, FileText } from 'lucide-react';
+import { Search, ClipboardList, ArrowUpDown, Loader2, Inbox, CalendarDays, List, Car, Pencil, CalendarClock, MoveRight, CheckCircle2, PackageCheck, FileDown, FileText, Send } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { createPDF } from '@/lib/pdf-utils';
 import autoTable from 'jspdf-autotable';
@@ -65,6 +65,46 @@ export default function Orders() {
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkStatus, setBulkStatus] = useState<string>('');
   const [bulkSaving, setBulkSaving] = useState(false);
+  const [resendingId, setResendingId] = useState<string | null>(null);
+
+  async function resendOrderConfirmation(order: any) {
+    if (!order?.customer_id) { toast.error('Auftrag hat keinen Kunden'); return; }
+    setResendingId(order.id);
+    try {
+      const { data: sigs } = await supabase
+        .from('alix_sign_signatures')
+        .select('id, created_at, alix_sign_requests!inner(customer_id, signed_at)')
+        .eq('alix_sign_requests.customer_id', order.customer_id)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      const sig = (sigs || [])[0] as any;
+      if (!sig) {
+        toast.error('Kein unterzeichnetes Angebot für diesen Kunden gefunden');
+        return;
+      }
+      const { data: cust } = await supabase
+        .from('customers')
+        .select('email')
+        .eq('id', order.customer_id)
+        .maybeSingle();
+      if (!cust?.email) { toast.error('Kunde hat keine E-Mail-Adresse'); return; }
+      const { data, error } = await supabase.functions.invoke('send-order-confirmation', {
+        body: { signature_id: sig.id, order_id: order.id, recipient_email: cust.email },
+      });
+      if (error) throw error;
+      const failed = (data?.results || []).filter((r: any) => r.status !== 'sent');
+      if (failed.length > 0) {
+        toast.error(`Versand teilweise fehlgeschlagen: ${failed.map((f: any) => f.to).join(', ')}`);
+      } else {
+        toast.success(`Auftragsbestätigung an ${cust.email} versendet (BCC: rde@alix-lasers.com)`);
+      }
+    } catch (e: any) {
+      toast.error(e?.message || 'Versand fehlgeschlagen');
+    } finally {
+      setResendingId(null);
+    }
+  }
+
   const navigate = useNavigate();
   const { isAdmin, hasRole, user } = useAuth();
   const { drivingTimes, loading: drivingLoading, requestedIds, fetchDrivingTimes, retryFailed } = useDrivingTimes();
@@ -443,6 +483,17 @@ export default function Orders() {
                                 <Package className="w-3 h-3 mr-1" /> Artikel
                               </Button>
                             )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 px-2 text-xs"
+                              disabled={resendingId === o.id}
+                              onClick={() => resendOrderConfirmation(o)}
+                              title="Auftragsbestätigung erneut an Kunde senden (BCC: rde@alix-lasers.com)"
+                            >
+                              {resendingId === o.id ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Send className="w-3 h-3 mr-1" />}
+                              AB senden
+                            </Button>
                           </div>
                         )}
                       </div>
@@ -602,6 +653,18 @@ export default function Orders() {
                                   <Package className="w-3 h-3 mr-1" /> Artikel
                                 </Button>
                               )}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                                disabled={resendingId === o.id}
+                                onClick={() => resendOrderConfirmation(o)}
+                                title="Auftragsbestätigung erneut an Kunde senden (BCC: rde@alix-lasers.com)"
+                              >
+                                {resendingId === o.id ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Send className="w-3 h-3 mr-1" />}
+                                AB senden
+                              </Button>
+
                             </div>
                           </td>
                         )}
