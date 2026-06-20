@@ -10337,6 +10337,36 @@ export type Database = {
         }
         Relationships: []
       }
+      sms_settings: {
+        Row: {
+          account_sid: string | null
+          auth_token: string | null
+          from_number: string | null
+          id: boolean
+          notes: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          account_sid?: string | null
+          auth_token?: string | null
+          from_number?: string | null
+          id?: boolean
+          notes?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          account_sid?: string | null
+          auth_token?: string | null
+          from_number?: string | null
+          id?: boolean
+          notes?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       sms_templates: {
         Row: {
           active: boolean

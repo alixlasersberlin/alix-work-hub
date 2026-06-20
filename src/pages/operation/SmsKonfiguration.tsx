@@ -64,6 +64,11 @@ export default function SmsKonfiguration() {
   const [editing, setEditing] = useState<Partial<Template> | null>(null);
   const [saving, setSaving] = useState(false);
 
+  const [cfg, setCfg] = useState({ account_sid: '', auth_token: '', from_number: '' });
+  const [cfgLoading, setCfgLoading] = useState(true);
+  const [cfgSaving, setCfgSaving] = useState(false);
+  const [showToken, setShowToken] = useState(false);
+
   async function loadStatus() {
     setLoadingStatus(true);
     const { data, error } = await supabase.functions.invoke('sms-config-test', { body: { action: 'status' } });
@@ -73,6 +78,19 @@ export default function SmsKonfiguration() {
       setStatus((data as any).status);
     }
     setLoadingStatus(false);
+  }
+
+  async function loadSettings() {
+    setCfgLoading(true);
+    const { data, error } = await supabase
+      .from('sms_settings').select('account_sid, auth_token, from_number').eq('id', true).maybeSingle();
+    if (error) toast.error(error.message);
+    else setCfg({
+      account_sid: data?.account_sid ?? '',
+      auth_token: data?.auth_token ?? '',
+      from_number: data?.from_number ?? '',
+    });
+    setCfgLoading(false);
   }
 
   async function loadTemplates() {
@@ -89,9 +107,25 @@ export default function SmsKonfiguration() {
   useEffect(() => {
     if (isAdmin) {
       void loadStatus();
+      void loadSettings();
       void loadTemplates();
     }
   }, [isAdmin]);
+
+  async function saveSettings() {
+    setCfgSaving(true);
+    const { error } = await supabase.from('sms_settings').update({
+      account_sid: cfg.account_sid.trim() || null,
+      auth_token: cfg.auth_token.trim() || null,
+      from_number: cfg.from_number.trim() || null,
+    }).eq('id', true);
+    setCfgSaving(false);
+    if (error) toast.error(error.message);
+    else {
+      toast.success('Twilio-Verbindung gespeichert');
+      void loadStatus();
+    }
+  }
 
   async function sendTest() {
     if (!testPhone.trim()) {
@@ -195,10 +229,67 @@ export default function SmsKonfiguration() {
                 <StatusRow ok={!!status.effective_from} label="Effektive Absendernummer" value={status.effective_from ?? '—'} />
               </div>
               <p className="text-xs text-muted-foreground">
-                Die Twilio-Zugangsdaten werden als Supabase-Secrets verwaltet. Änderungen erfolgen in den Edge Function Secrets.
+                In der Datenbank hinterlegte Werte überschreiben die Supabase-Secrets. Leer lassen, um auf den Secret-Wert zurückzufallen.
               </p>
             </>
           )}
+
+          <div className="border-t border-border pt-4 space-y-3">
+            <div className="text-sm font-medium">Twilio-Zugangsdaten bearbeiten</div>
+            {cfgLoading ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="w-4 h-4 animate-spin" /> Lädt …
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Account SID</Label>
+                    <Input
+                      value={cfg.account_sid}
+                      onChange={(e) => setCfg({ ...cfg, account_sid: e.target.value })}
+                      placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                      autoComplete="off"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Absendernummer (E.164)</Label>
+                    <Input
+                      value={cfg.from_number}
+                      onChange={(e) => setCfg({ ...cfg, from_number: e.target.value })}
+                      placeholder="+49 …"
+                      autoComplete="off"
+                    />
+                  </div>
+                  <div className="space-y-1.5 md:col-span-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs">Auth Token</Label>
+                      <button
+                        type="button"
+                        className="text-[11px] text-muted-foreground hover:text-foreground"
+                        onClick={() => setShowToken((s) => !s)}
+                      >
+                        {showToken ? 'verbergen' : 'anzeigen'}
+                      </button>
+                    </div>
+                    <Input
+                      type={showToken ? 'text' : 'password'}
+                      value={cfg.auth_token}
+                      onChange={(e) => setCfg({ ...cfg, auth_token: e.target.value })}
+                      placeholder="••••••••"
+                      autoComplete="new-password"
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <Button onClick={saveSettings} disabled={cfgSaving}>
+                    {cfgSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                    Speichern
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
 
           <div className="border-t border-border pt-4 space-y-3">
             <div className="text-sm font-medium">Test-SMS senden</div>

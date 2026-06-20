@@ -11,13 +11,21 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID") ?? "";
-const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN") ?? "";
-const TWILIO_SMS_FROM =
-  Deno.env.get("TWILIO_SMS_FROM_NUMBER") ??
-  (Deno.env.get("TWILIO_WHATSAPP_FROM_NUMBER") ?? "").replace(/^whatsapp:/i, "");
+const ENV_SID = Deno.env.get("TWILIO_ACCOUNT_SID") ?? "";
+const ENV_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN") ?? "";
+const ENV_SMS_FROM = Deno.env.get("TWILIO_SMS_FROM_NUMBER") ?? "";
+const ENV_WA_FROM = Deno.env.get("TWILIO_WHATSAPP_FROM_NUMBER") ?? "";
 
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+
+async function loadTwilioConfig() {
+  const { data } = await admin.from("sms_settings").select("account_sid, auth_token, from_number").eq("id", true).maybeSingle();
+  return {
+    sid: (data?.account_sid?.trim()) || ENV_SID,
+    token: (data?.auth_token?.trim()) || ENV_TOKEN,
+    from: (data?.from_number?.trim()) || ENV_SMS_FROM || ENV_WA_FROM.replace(/^whatsapp:/i, ""),
+  };
+}
 
 const ALLOWED_ROLES = new Set([
   "Super Admin",
@@ -112,8 +120,9 @@ Deno.serve(async (req) => {
     const to = normalizeE164(String(phone));
     if (!to) return json({ error: "Ungültige Mobilnummer (E.164 erforderlich, z. B. +49…)." }, 400);
 
-    if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_SMS_FROM) {
-      return json({ error: "Twilio Secrets fehlen (TWILIO_ACCOUNT_SID/TWILIO_AUTH_TOKEN/TWILIO_SMS_FROM_NUMBER)." }, 500);
+    const cfg = await loadTwilioConfig();
+    if (!cfg.sid || !cfg.token || !cfg.from) {
+      return json({ error: "Twilio-Zugangsdaten unvollständig (bitte in SMS-Konfiguration setzen)." }, 500);
     }
 
     // Build signed link
@@ -127,9 +136,9 @@ Deno.serve(async (req) => {
     if (finalText.length > 1500) return json({ error: "SMS-Text zu lang." }, 400);
 
     // Send via Twilio
-    const url = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
-    const auth = btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
-    const form = new URLSearchParams({ To: to, From: TWILIO_SMS_FROM, Body: finalText });
+    const url = `https://api.twilio.com/2010-04-01/Accounts/${cfg.sid}/Messages.json`;
+    const auth = btoa(`${cfg.sid}:${cfg.token}`);
+    const form = new URLSearchParams({ To: to, From: cfg.from, Body: finalText });
 
     let twilioSid: string | null = null;
     let twilioStatus = "queued";
