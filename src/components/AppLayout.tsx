@@ -487,9 +487,10 @@ const navItems: NavItem[] = [
       },
 
       {
-        path: '#alix-ki', label: 'ALIX KI', icon: Sparkles, roles: ['Super Admin'],
+        path: '#alix-ki', label: 'ALIX KI', icon: Sparkles, roles: ['Super Admin','Admin','Geschäftsführung','QM'],
         children: [
           { path: '/operation/alix-copilot', label: 'ALIX Copilot Konfiguration', icon: Sparkles, roles: ['Super Admin'] },
+          { path: '/operations/alix-copilot-config', label: 'ALIX Copilot Steuerzentrale', icon: Sparkles, roles: ['Super Admin','Admin','Geschäftsführung','QM'] },
         ],
       },
 
