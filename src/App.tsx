@@ -477,6 +477,7 @@ function AppRoutes() {
           <Route path="/operation/systemwartung" element={<ProtectedRoute requiredRoles={['Super Admin']}><Systemwartung /></ProtectedRoute>} />
           <Route path="/operation/nummernkreise" element={<ProtectedRoute requiredRoles={['Super Admin']}><Nummernkreise /></ProtectedRoute>} />
           <Route path="/operation/sms-konfiguration" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><SmsKonfiguration /></ProtectedRoute>} />
+          <Route path="/operation/alix-copilot" element={<ProtectedRoute requiredRoles={['Super Admin']}><AlixCopilotKonfiguration /></ProtectedRoute>} />
           <Route path="/mandanten" element={<ProtectedRoute requiredRoles={['Super Admin']}><Mandanten /></ProtectedRoute>} />
           <Route path="/konzern/dashboard" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><KonzernDashboard /></ProtectedRoute>} />
           <Route path="/operation/alixsmart-migration" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><AlixSmartMigration /></ProtectedRoute>} />
