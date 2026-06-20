@@ -1,6 +1,6 @@
 import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate, useLocation } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -21,6 +21,7 @@ import { Truck as TruckIcon, Banknote as BanknoteIcon, FileSignature, CreditCard
 // Eager: Auth-/Shell-Routen (klein & für initialen Render nötig)
 import Login from "./pages/Login";
 import CovertLogin from "./pages/CovertLogin";
+import Landing from "./pages/Landing";
 import AccountBlocked from "./pages/AccountBlocked";
 import AccessDenied from "./pages/AccessDenied";
 import MfaSetup from "./pages/MfaSetup";
@@ -375,9 +376,14 @@ function FullscreenLoader() {
 
 function ProtectedRoute({ children, requiredRoles, allowEmails }: { children: React.ReactNode; requiredRoles?: string[]; allowEmails?: string[] }) {
   const { user, profile, roles, loading, blockReason, mfaState } = useAuth();
+  const location = useLocation();
 
   if (loading) return <FullscreenLoader />;
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) {
+    // Root-URL zeigt öffentliche Landing-Page statt Login-Redirect
+    if (location.pathname === '/') return <Landing />;
+    return <Navigate to="/alix-control" replace />;
+  }
   if (blockReason) return <AccountBlocked />;
 
   // MFA-Pflicht: Nur für definierte Rollen wird die Einrichtung erzwungen.
