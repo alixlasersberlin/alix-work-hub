@@ -169,7 +169,7 @@ export default function CustomerSmsTab({ customer, orderId }: { customer: Custom
           recipient_name: payload.recipient_name,
           phone: payload.phone,
           message_text: payload.message_text,
-          base_url: window.location.origin,
+          base_url: 'https://alixwork.de',
         },
       });
       if (error || (data as any)?.error) {
