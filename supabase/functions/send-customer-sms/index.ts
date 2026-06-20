@@ -120,8 +120,9 @@ Deno.serve(async (req) => {
     const to = normalizeE164(String(phone));
     if (!to) return json({ error: "Ungültige Mobilnummer (E.164 erforderlich, z. B. +49…)." }, 400);
 
-    if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_SMS_FROM) {
-      return json({ error: "Twilio Secrets fehlen (TWILIO_ACCOUNT_SID/TWILIO_AUTH_TOKEN/TWILIO_SMS_FROM_NUMBER)." }, 500);
+    const cfg = await loadTwilioConfig();
+    if (!cfg.sid || !cfg.token || !cfg.from) {
+      return json({ error: "Twilio-Zugangsdaten unvollständig (bitte in SMS-Konfiguration setzen)." }, 500);
     }
 
     // Build signed link
@@ -135,9 +136,9 @@ Deno.serve(async (req) => {
     if (finalText.length > 1500) return json({ error: "SMS-Text zu lang." }, 400);
 
     // Send via Twilio
-    const url = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
-    const auth = btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
-    const form = new URLSearchParams({ To: to, From: TWILIO_SMS_FROM, Body: finalText });
+    const url = `https://api.twilio.com/2010-04-01/Accounts/${cfg.sid}/Messages.json`;
+    const auth = btoa(`${cfg.sid}:${cfg.token}`);
+    const form = new URLSearchParams({ To: to, From: cfg.from, Body: finalText });
 
     let twilioSid: string | null = null;
     let twilioStatus = "queued";
