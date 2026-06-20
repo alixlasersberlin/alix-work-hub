@@ -439,13 +439,19 @@ const navItems: NavItem[] = [
   {
     path: '/operation', label: 'OPERATIONS', icon: Workflow, roles: ['Super Admin'],
     children: [
-      // Dashboards & Auswertungen
-      { path: '/mailcenter/executive', label: 'Executive Dashboard', icon: TrendingUp, roles: ['Super Admin'] },
-      { path: '/konzern/dashboard', label: 'Konzern-Dashboard', icon: TrendingUp, roles: ['Super Admin'] },
-      { path: '/verkauf/anfragen/dashboard', label: 'Anfragen Dashboard', icon: BarChart3, roles: ['Admin', 'Super Admin', 'Vertrieb', 'Vertriebsleitung', 'Order', 'SACHBEARBEITUNG'] },
+      // Stats
+      {
+        path: '#stats', label: 'STATS', icon: BarChart3, roles: ['Super Admin'],
+        children: [
+          { path: '/mailcenter/executive', label: 'Executive Dashboard', icon: TrendingUp, roles: ['Super Admin'] },
+          { path: '/konzern/dashboard', label: 'Konzern-Dashboard', icon: TrendingUp, roles: ['Super Admin'] },
+          { path: '/verkauf/anfragen/dashboard', label: 'Anfragen Dashboard', icon: BarChart3, roles: ['Admin', 'Super Admin', 'Vertrieb', 'Vertriebsleitung', 'Order', 'SACHBEARBEITUNG'] },
+          { path: '/geraetetypen', label: 'Gerätetypen', icon: BarChart3, roles: ['Super Admin'] },
+          { path: '/system', label: 'Monitoring', icon: Server, roles: ['Super Admin'] },
+        ],
+      },
 
       // Stammdaten & Import
-      { path: '/geraetetypen', label: 'Gerätetypen', icon: BarChart3, roles: ['Super Admin'] },
       { path: '/import', label: 'Import', icon: Cloud, roles: ['Super Admin'] },
 
       // Benutzer & Rechte
@@ -470,8 +476,6 @@ const navItems: NavItem[] = [
       { path: '/order/timeline', label: 'Timeline Bestellungen', icon: Calendar, roles: ['Super Admin'] },
       { path: '/lager/doppelte-reservierungen', label: 'Doppelte Reservierungen', icon: AlertTriangle, roles: ['Super Admin'] },
 
-      // System
-      { path: '/system', label: 'Monitoring', icon: Server, roles: ['Super Admin'] },
       {
         path: '#system', label: 'SYSTEM', icon: Cog, roles: ['Super Admin'],
         children: [
