@@ -124,6 +124,8 @@ export default function SmsKonfiguration() {
     if (error) toast.error(error.message);
     else {
       toast.success('Twilio-Verbindung gespeichert');
+      setCredsOpen(false);
+      setShowToken(false);
       void loadStatus();
     }
   }
