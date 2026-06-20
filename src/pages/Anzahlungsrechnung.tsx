@@ -240,30 +240,22 @@ export default function Anzahlungsrechnung() {
                         <TableCell className="text-xs text-muted-foreground">{r.salesperson_name || '–'}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1.5 justify-end">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              title="SMS-Mahnung an den Kunden senden"
-                              disabled={busy[r.id] === 'sms'}
-                              onClick={() => sendMahnung(r.id, 'sms')}
-                            >
-                              {busy[r.id] === 'sms'
-                                ? <Loader2 className="h-4 w-4 animate-spin" />
-                                : <MessageSquare className="h-4 w-4" />}
-                              <span className="hidden lg:inline ml-1.5">SMS&nbsp;Mahnung</span>
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              title="E-Mail-Mahnung an den Kunden senden"
-                              disabled={busy[r.id] === 'email'}
-                              onClick={() => sendMahnung(r.id, 'email')}
-                            >
-                              {busy[r.id] === 'email'
-                                ? <Loader2 className="h-4 w-4 animate-spin" />
-                                : <Mail className="h-4 w-4" />}
-                              <span className="hidden lg:inline ml-1.5">E-Mail&nbsp;Mahnung</span>
-                            </Button>
+                            <MahnungButton
+                              channel="sms"
+                              label="SMS Mahnung"
+                              icon={<MessageSquare className="h-4 w-4" />}
+                              busy={busy[r.id] === 'sms'}
+                              stages={stages}
+                              onSelect={(stage) => sendMahnung(r.id, 'sms', stage)}
+                            />
+                            <MahnungButton
+                              channel="email"
+                              label="E-Mail Mahnung"
+                              icon={<Mail className="h-4 w-4" />}
+                              busy={busy[r.id] === 'email'}
+                              stages={stages}
+                              onSelect={(stage) => sendMahnung(r.id, 'email', stage)}
+                            />
                             <Button asChild size="sm" className="gold-gradient text-primary-foreground">
                               <Link to={`/auftraege/${r.id}`}>
                                 <ExternalLink className="h-4 w-4 mr-1" />
