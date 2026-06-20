@@ -505,6 +505,7 @@ const navItems: NavItem[] = [
           { path: '/datensicherung', label: 'Datensicherung', icon: Shield, roles: ['Super Admin'] },
           { path: '/operation/systemwartung', label: 'Systemwartung', icon: AlertTriangle, roles: ['Super Admin'] },
           { path: '/operation/logfiles', label: 'Logfiles', icon: ScrollText, roles: ['Super Admin'] },
+          { path: '/operation/security-center', label: 'Alix Security Center', icon: Shield, roles: ['Super Admin', 'Admin', 'Geschäftsführung'] },
         ],
       },
     ],
