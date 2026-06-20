@@ -232,10 +232,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
-  // Idle-Auto-Logout nach 20 Minuten Inaktivität
+  // Idle-Auto-Logout nach 30 Minuten Inaktivität (Security-Baseline)
   useEffect(() => {
     if (!user) return;
-    const IDLE_MS = 180 * 60 * 1000;
+    const IDLE_MS = 30 * 60 * 1000;
     let timer: number | undefined;
 
     const reset = () => {
@@ -244,7 +244,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           // toast nur best-effort, dynamic import um Zyklen zu vermeiden
           const { toast } = await import('sonner');
-          toast.warning('Automatisch abgemeldet wegen Inaktivität (180 Min.)');
+          toast.warning('Automatisch abgemeldet wegen Inaktivität (30 Min.)');
         } catch { /* ignore */ }
         await signOut();
       }, IDLE_MS);
