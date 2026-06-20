@@ -1032,24 +1032,74 @@ function BehaviorTab({ value, setValue, reload }: { value: Settings; setValue: (
 // ============================================================
 // Permissions
 function PermissionsTab() {
+  const [q, setQ] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [answer, setAnswer] = useState<{ content: string; trace?: { name: string; args: any }[] } | null>(null);
+
+  async function runTest() {
+    if (!q.trim() || busy) return;
+    setBusy(true);
+    setAnswer(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("alix-copilot", {
+        body: { messages: [{ role: "user", content: q }], page: "/operations/alix-copilot-config", tenantSources: null },
+      });
+      if (error) throw error;
+      setAnswer({ content: (data as any)?.content || (data as any)?.error || "—", trace: (data as any)?.tool_trace ?? [] });
+    } catch (e: any) {
+      setAnswer({ content: `Fehler: ${e.message || "unbekannt"}` });
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <Card>
-      <CardHeader><CardTitle className="flex items-center gap-2"><Shield className="w-4 h-4 text-primary" /> Berechtigungen</CardTitle></CardHeader>
-      <CardContent className="space-y-3 text-sm">
-        <p>Diese Konfigurationsseite ist sichtbar für folgende Rollen:</p>
-        <div className="flex flex-wrap gap-2">
-          {ALLOWED_ROLES.map(r => <Badge key={r} variant="default">{r}</Badge>)}
+      <CardHeader><CardTitle className="flex items-center gap-2"><Shield className="w-4 h-4 text-primary" /> Berechtigungen & Live-Test</CardTitle></CardHeader>
+      <CardContent className="space-y-4 text-sm">
+        <div>
+          <p>Diese Konfigurationsseite ist sichtbar für folgende Rollen:</p>
+          <div className="flex flex-wrap gap-2 mt-2">
+            {ALLOWED_ROLES.map(r => <Badge key={r} variant="default">{r}</Badge>)}
+          </div>
         </div>
         <Separator />
         <p className="text-muted-foreground">
-          Der ALIX Copilot darf später nur Daten verwenden, die <b>aktiv</b>, <b>freigegeben</b>,
+          Der ALIX Copilot verwendet nur Daten, die <b>aktiv</b>, <b>freigegeben</b>,
           einer <b>erlaubten Abteilung</b> zugeordnet sind, innerhalb der
           <b> Rollenberechtigung</b> des aktuellen Nutzers liegen, <b>nicht abgelaufen</b> und
           <b> nicht archiviert</b> wurden.
         </p>
-        <p className="text-muted-foreground">
-          Die Anbindung dieser Steuerzentrale an die Copilot-Edge-Function erfolgt im nächsten Rollout.
-        </p>
+        <div className="rounded-md border border-emerald-500/30 bg-emerald-500/5 px-3 py-2 text-xs text-emerald-700 dark:text-emerald-300 flex items-center gap-2">
+          <CheckCircle2 className="w-3.5 h-3.5" />
+          Anbindung an Edge Function <code>alix-copilot</code> ist aktiv – Einstellungen, Wissen und Datenquellen werden bei jeder Anfrage gelesen.
+        </div>
+
+        <Separator />
+        <div className="space-y-2">
+          <Label className="text-xs text-muted-foreground">Live-Test gegen die Copilot-Funktion mit der aktuell gespeicherten Konfiguration:</Label>
+          <div className="flex gap-2">
+            <Input value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") runTest(); }} placeholder="z. B. Wie viele offene Tickets haben wir?" />
+            <Button onClick={runTest} disabled={busy || !q.trim()} className="gap-2">
+              {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />} Senden
+            </Button>
+          </div>
+          {answer && (
+            <div className="rounded-lg border border-border bg-secondary/30 p-3 space-y-2">
+              <pre className="whitespace-pre-wrap text-sm leading-relaxed font-sans">{answer.content}</pre>
+              {answer.trace && answer.trace.length > 0 && (
+                <>
+                  <Separator />
+                  <div className="flex flex-wrap gap-1">
+                    {answer.trace.map((t, i) => (
+                      <Badge key={i} variant="outline" className="text-[10px]">{t.name}</Badge>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
