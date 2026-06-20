@@ -967,6 +967,83 @@ export default function AngebotErstellen() {
     }
   };
 
+  // Super-Admin: Angebot selbst bestätigen → Status = 'order' + Auftrag in `orders` anlegen
+  const confirmAsOrder = async () => {
+    if (!isSuperAdmin) { toast.error('Nur Super Admin darf Angebote selbst bestätigen.'); return; }
+    if (!selectedCustomer) { toast.error('Bitte zuerst einen Kunden auswählen.'); return; }
+    const validLines = lines.filter(l => l.name && l.quantity > 0);
+    if (validLines.length === 0) { toast.error('Bitte mindestens eine Position erfassen.'); return; }
+    if (!confirm(`Angebot ${offerNumber} jetzt anerkennen und als Auftrag übernehmen?\n\nDamit wird ein neuer Auftrag im System angelegt.`)) return;
+
+    setConfirming(true);
+    try {
+      // 1) Aktuellen Stand speichern (sichert finale Angebotsnummer / Stammnummer)
+      const ok = await saveOffer(true);
+      if (!ok) { setConfirming(false); return; }
+
+      // 2) Auftragsnummer ziehen (zentraler Nummernkreis 'order', sonst Fallback auf ANG→AUF)
+      const fallbackOrderNr = offerNumber.replace(/^ANG-/i, 'AUF-');
+      const orderNr = (await nextNumber('order', () => fallbackOrderNr, { caseNumber })) || fallbackOrderNr;
+
+      // 3) Auftrag in orders anlegen (nur wenn Auftragsnummer noch nicht existiert)
+      const { data: dupe } = await supabase.from('orders').select('id').eq('order_number', orderNr).maybeSingle();
+      if (dupe?.id) {
+        toast.error(`Auftragsnummer ${orderNr} existiert bereits.`);
+        setConfirming(false);
+        return;
+      }
+
+      const { data: orderRow, error: ordErr } = await supabase
+        .from('orders')
+        .insert({
+          customer_id: selectedCustomer.id,
+          order_number: orderNr,
+          source_system: 'internal',
+          order_status: 'offen',
+          currency: 'EUR',
+          total_amount: totals.gross,
+          order_date: new Date().toISOString(),
+          case_number: caseNumber || null,
+          salesperson_name: salesAdvisor || null,
+          billing_address: (selectedCustomer as any).billing_address || null,
+          shipping_address: (selectedCustomer as any).shipping_address || (selectedCustomer as any).billing_address || null,
+          raw_data: { source: 'offer_confirmation', offer_number: offerNumber, payment: { type: payType, price: parseFloat(payPrice) || 0, down: parseFloat(payDown) || 0, term: payTerm } } as any,
+        } as any)
+        .select('id')
+        .single();
+      if (ordErr) throw ordErr;
+
+      // 4) Order-Items übernehmen
+      const itemsPayload = validLines.map((l, idx) => ({
+        order_id: orderRow!.id,
+        item_name: l.name,
+        description: l.description || null,
+        sku: l.sku || null,
+        quantity: Number(l.quantity) || 0,
+        rate: Number(l.rate) || 0,
+        amount: (Number(l.quantity) || 0) * (Number(l.rate) || 0),
+        tax_amount: ((Number(l.quantity) || 0) * (Number(l.rate) || 0)) * ((Number(l.tax_percentage) || 0) / 100),
+        item_order: idx + 1,
+      }));
+      if (itemsPayload.length > 0) {
+        const { error: itErr } = await supabase.from('order_items').insert(itemsPayload as any);
+        if (itErr) throw itErr;
+      }
+
+      // 5) Angebot als „angenommen / in Auftrag gewandelt" markieren
+      await updateOfferStatus(offerNumber, 'order', new Date().toISOString());
+
+      toast.success(`Angebot bestätigt – Auftrag ${orderNr} wurde angelegt.`);
+      navigate('/verkauf/angebote');
+    } catch (e: any) {
+      toast.error('Bestätigung fehlgeschlagen: ' + (e?.message || 'Unbekannter Fehler'));
+    } finally {
+      setConfirming(false);
+    }
+  };
+
+
+
   const sendByEmail = async () => {
     if (!selectedCustomer) { toast.error('Bitte zuerst einen Kunden auswählen.'); return; }
     const email = selectedCustomer.email;
