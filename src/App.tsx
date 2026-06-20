@@ -20,6 +20,7 @@ import { Truck as TruckIcon, Banknote as BanknoteIcon, FileSignature, CreditCard
 
 // Eager: Auth-/Shell-Routen (klein & für initialen Render nötig)
 import Login from "./pages/Login";
+import CovertLogin from "./pages/CovertLogin";
 import AccountBlocked from "./pages/AccountBlocked";
 import AccessDenied from "./pages/AccessDenied";
 import MfaSetup from "./pages/MfaSetup";
@@ -183,6 +184,7 @@ const Gutschriften = lazy(() => import("./pages/Gutschriften"));
 const Freigabe = lazy(() => import("./pages/Freigabe"));
 const VerkaufUebersicht = lazy(() => import("./pages/VerkaufUebersicht"));
 const Operation = lazy(() => import("./pages/Operation"));
+const SecurityCenter = lazy(() => import("./pages/SecurityCenter"));
 const Logfiles = lazy(() => import("./pages/Logfiles"));
 const EmailTemplates = lazy(() => import("./pages/EmailTemplates"));
 const Hilfe = lazy(() => import("./pages/Hilfe"));
@@ -435,6 +437,10 @@ function AppRoutes() {
     <Suspense fallback={null}>
       <Routes>
         <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
+        {/* Verdeckte Login-Aliasse (nicht im Menü, nicht in Sitemap, noindex) */}
+        <Route path="/alix-control" element={user ? <Navigate to="/" replace /> : <CovertLogin />} />
+        <Route path="/alix-secure" element={user ? <Navigate to="/" replace /> : <CovertLogin />} />
+        <Route path="/alix-enterprise" element={user ? <Navigate to="/" replace /> : <CovertLogin />} />
         <Route path="/passwort-setzen" element={<SetPassword />} />
         <Route path="/stakeholder/:token" element={<StakeholderPortal />} />
         <Route path="/mfa-setup" element={<MfaGate expect="not_enrolled"><MfaSetup /></MfaGate>} />
@@ -489,6 +495,7 @@ function AppRoutes() {
           <Route path="/operation/alix-copilot" element={<ProtectedRoute requiredRoles={['Super Admin']}><AlixCopilotKonfiguration /></ProtectedRoute>} />
           <Route path="/operations/alix-copilot-config" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','QM']}><AlixCopilotConfig /></ProtectedRoute>} />
           <Route path="/operation/kundenportal" element={<ProtectedRoute requiredRoles={['Super Admin']}><KundenportalKonfiguration /></ProtectedRoute>} />
+          <Route path="/operation/security-center" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung']}><SecurityCenter /></ProtectedRoute>} />
           <Route path="/mandanten" element={<ProtectedRoute requiredRoles={['Super Admin']}><Mandanten /></ProtectedRoute>} />
           <Route path="/konzern/dashboard" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><KonzernDashboard /></ProtectedRoute>} />
           <Route path="/operation/alixsmart-migration" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><AlixSmartMigration /></ProtectedRoute>} />
