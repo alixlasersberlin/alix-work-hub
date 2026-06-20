@@ -87,7 +87,7 @@ export const NotificationCenter = () => {
           </div>
         </div>
 
-        <ScrollArea className="max-h-[440px]">
+        <ScrollArea className="h-[440px]">
           {list.length === 0 ? (
             <div className="p-8 text-center text-sm text-muted-foreground">
               <Bell className="h-8 w-8 mx-auto mb-2 opacity-30" />
