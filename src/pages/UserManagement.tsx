@@ -684,7 +684,7 @@ export default function UserManagement() {
           <SelectTrigger><SelectValue placeholder="Rolle" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Alle Rollen</SelectItem>
-            {roles.map(r => <SelectItem key={r.id} value={r.name}>{r.name}</SelectItem>)}
+            {roles.map(r => <SelectItem key={r.id} value={r.name}>{displayRoleName(r.name)}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
