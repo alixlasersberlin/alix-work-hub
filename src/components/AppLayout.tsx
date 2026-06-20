@@ -1007,6 +1007,29 @@ export default function AppLayout() {
 
         {/* Navigation */}
         <nav className="flex-1 py-2 px-2 space-y-0.5 overflow-y-auto scroll-touch">
+          {/* ALIX Copilot – öffnet das Copilot-Panel */}
+          {(() => {
+            const isCollapsedView = collapsed && !mobileOpen;
+            return (
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new CustomEvent('alix-copilot:open'))}
+                title={isCollapsedView ? 'ALIX Copilot' : undefined}
+                className={cn(
+                  "mb-2 w-full flex items-center gap-2.5 rounded-lg border border-amber-400/30 bg-gradient-to-r from-amber-500/10 to-transparent text-amber-200 hover:border-amber-400/60 hover:from-amber-500/20 transition-all duration-150",
+                  isCollapsedView ? "md:px-0 md:py-2.5 md:justify-center px-3.5 py-2.5" : "px-3 py-2.5"
+                )}
+              >
+                <Sparkles className="w-4 h-4 flex-shrink-0 text-amber-300" />
+                {!isCollapsedView && (
+                  <>
+                    <span className="text-[13px] font-medium truncate flex-1 text-left sig-mark">ALIX Copilot</span>
+                    <kbd className="text-[10px] text-amber-200/70 border border-amber-400/30 rounded px-1.5 py-0.5">⌘J</kbd>
+                  </>
+                )}
+              </button>
+            );
+          })()}
           {/* Detailsuche – globale Suche */}
           {(() => {
             const isCollapsedView = collapsed && !mobileOpen;
