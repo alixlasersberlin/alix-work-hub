@@ -888,7 +888,7 @@ export default function UserManagement() {
                           setEditRoleIds(prev => checked ? [...prev, r.id] : prev.filter(id => id !== r.id));
                         }}
                       />
-                      {r.name}
+                      {displayRoleName(r.name)}
                       {r.description && <span className="text-xs text-muted-foreground ml-1">— {r.description}</span>}
                     </label>
                   ))}
