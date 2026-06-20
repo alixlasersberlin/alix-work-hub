@@ -290,8 +290,8 @@ function Kpi({ icon: Icon, label, value, tone }: { icon: any; label: string; val
 function Th({ children }: { children: React.ReactNode }) {
   return <th className="text-left text-xs font-medium text-muted-foreground px-3 py-2">{children}</th>;
 }
-function Td({ children }: { children: React.ReactNode }) {
-  return <td className="px-3 py-2 align-top">{children}</td>;
+function Td({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  return <td className={`px-3 py-2 align-top ${className}`}>{children}</td>;
 }
 
 function SessionTable({ rows, userMap, showStatus }: { rows: SessionRow[]; userMap: Map<string, ProfileRow>; showStatus?: boolean }) {
