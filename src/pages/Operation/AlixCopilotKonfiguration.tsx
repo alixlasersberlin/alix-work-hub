@@ -13,8 +13,10 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
   Sparkles, Save, Plus, Trash2, BookOpen, Database, Shield, Wand2,
-  Loader2, Send, Power, FileText,
+  Loader2, Send, Power, FileText, ChevronDown, ChevronRight, Search,
+  ChevronsDownUp, ChevronsUpDown,
 } from "lucide-react";
+
 import { toast } from "sonner";
 
 /** Module-Katalog – identisch zur Edge-Function, dient hier nur als UI-Liste. */
