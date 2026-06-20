@@ -41,6 +41,48 @@ const fmtMoney = (n: number | null | undefined) =>
 const fmtDate = (d: string | null | undefined) =>
   !d ? '–' : new Date(d).toLocaleDateString('de-DE');
 
+function MahnungButton({
+  label, icon, busy, stages, onSelect,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  busy: boolean;
+  stages: Stage[];
+  onSelect: (stage: Stage) => void;
+}) {
+  if (stages.length === 0) {
+    return (
+      <Button size="sm" variant="outline" disabled title="Keine Mahnstufen konfiguriert">
+        {icon}
+        <span className="hidden lg:inline ml-1.5">{label}</span>
+      </Button>
+    );
+  }
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button size="sm" variant="outline" disabled={busy} title={`${label} (Mahnstufe wählen)`}>
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : icon}
+          <span className="hidden lg:inline ml-1.5">{label}</span>
+          <ChevronDown className="h-3.5 w-3.5 ml-1 opacity-70" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-64">
+        <DropdownMenuLabel className="text-xs">Mahnstufe wählen</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {stages.map((s) => (
+          <DropdownMenuItem key={s.id} onClick={() => onSelect(s)}>
+            <div className="flex flex-col">
+              <span className="font-medium">{s.name}</span>
+              <span className="text-xs text-muted-foreground">+{s.days_after_due} Tage nach Fälligkeit</span>
+            </div>
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export default function Anzahlungsrechnung() {
   const { roles } = useAuth();
   const isSuperAdmin = (roles ?? []).some((r: any) => (typeof r === 'string' ? r : r?.name) === 'Super Admin');
@@ -287,45 +329,3 @@ export default function Anzahlungsrechnung() {
   );
 }
 
-function MahnungButton({
-  channel, label, icon, busy, stages, onSelect,
-}: {
-  channel: 'sms' | 'email';
-  label: string;
-  icon: React.ReactNode;
-  busy: boolean;
-  stages: Stage[];
-  onSelect: (stage: Stage) => void;
-}) {
-  if (stages.length === 0) {
-    return (
-      <Button size="sm" variant="outline" disabled title="Keine Mahnstufen konfiguriert">
-        {icon}
-        <span className="hidden lg:inline ml-1.5">{label}</span>
-      </Button>
-    );
-  }
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button size="sm" variant="outline" disabled={busy} title={`${label} (Mahnstufe wählen)`}>
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : icon}
-          <span className="hidden lg:inline ml-1.5">{label}</span>
-          <ChevronDown className="h-3.5 w-3.5 ml-1 opacity-70" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-64">
-        <DropdownMenuLabel className="text-xs">Mahnstufe wählen</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {stages.map((s) => (
-          <DropdownMenuItem key={s.id} onClick={() => onSelect(s)}>
-            <div className="flex flex-col">
-              <span className="font-medium">{s.name}</span>
-              <span className="text-xs text-muted-foreground">+{s.days_after_due} Tage nach Fälligkeit</span>
-            </div>
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
