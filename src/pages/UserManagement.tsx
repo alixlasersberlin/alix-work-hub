@@ -395,7 +395,7 @@ export default function UserManagement() {
                 <div className="flex flex-wrap gap-1">
                   {selectedUser.roleNames.length > 0 ? selectedUser.roleNames.map(r => (
                     <span key={r} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
-                      <Shield className="w-3 h-3" />{r}
+                      <Shield className="w-3 h-3" />{displayRoleName(r)}
                     </span>
                   )) : <span className="text-xs text-muted-foreground">Keine Rollen</span>}
                 </div>
