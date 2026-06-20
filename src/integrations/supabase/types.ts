@@ -977,6 +977,108 @@ export type Database = {
           },
         ]
       }
+      backup_notifications: {
+        Row: {
+          channel: string
+          created_at: string
+          event: string
+          id: string
+          payload: Json
+          recipient: string | null
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          event: string
+          id?: string
+          payload?: Json
+          recipient?: string | null
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          event?: string
+          id?: string
+          payload?: Json
+          recipient?: string | null
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
+      backup_schedules: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          cron: string | null
+          id: string
+          name: string
+          retention_days: number
+          schedule_type: string
+          scope: string
+          time_of_day: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          cron?: string | null
+          id?: string
+          name: string
+          retention_days?: number
+          schedule_type: string
+          scope?: string
+          time_of_day?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          cron?: string | null
+          id?: string
+          name?: string
+          retention_days?: number
+          schedule_type?: string
+          scope?: string
+          time_of_day?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      backup_settings: {
+        Row: {
+          created_at: string
+          id: string
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       backups_metadata: {
         Row: {
           backup_scope: string
@@ -9944,6 +10046,63 @@ export type Database = {
           },
         ]
       }
+      restore_jobs: {
+        Row: {
+          created_at: string
+          finished_at: string | null
+          id: string
+          message: string | null
+          requested_by: string | null
+          safety_backup_id: string | null
+          scope: string
+          source_backup_id: string | null
+          started_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          finished_at?: string | null
+          id?: string
+          message?: string | null
+          requested_by?: string | null
+          safety_backup_id?: string | null
+          scope: string
+          source_backup_id?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          finished_at?: string | null
+          id?: string
+          message?: string | null
+          requested_by?: string | null
+          safety_backup_id?: string | null
+          scope?: string
+          source_backup_id?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restore_jobs_safety_backup_id_fkey"
+            columns: ["safety_backup_id"]
+            isOneToOne: false
+            referencedRelation: "backups_metadata"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "restore_jobs_source_backup_id_fkey"
+            columns: ["source_backup_id"]
+            isOneToOne: false
+            referencedRelation: "backups_metadata"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       review_email_logs: {
         Row: {
           customer_email: string | null
@@ -13081,6 +13240,7 @@ export type Database = {
       can_access_tickets: { Args: never; Returns: boolean }
       can_access_warranty: { Args: never; Returns: boolean }
       can_approve_warranty: { Args: never; Returns: boolean }
+      can_manage_backups: { Args: never; Returns: boolean }
       can_manage_copilot_config: { Args: never; Returns: boolean }
       can_manage_mail_campaigns: { Args: never; Returns: boolean }
       can_manage_mail_domains: { Args: never; Returns: boolean }
@@ -13097,6 +13257,7 @@ export type Database = {
       can_send_whatsapp: { Args: never; Returns: boolean }
       can_upload_factory_invoice: { Args: never; Returns: boolean }
       can_use_alix_sign: { Args: never; Returns: boolean }
+      can_view_backups: { Args: never; Returns: boolean }
       can_view_finance_module: { Args: never; Returns: boolean }
       can_view_mail_audit: { Args: never; Returns: boolean }
       check_rate_limit: {

@@ -1,4 +1,4 @@
-import { Workflow, Mail, FileText, ChevronRight, Database, MessageSquare, Shield } from 'lucide-react';
+import { Workflow, Mail, FileText, ChevronRight, Database, MessageSquare, Shield, ShieldCheck } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 import { PageHeader } from '@/components/infinity/PageHeader';
@@ -12,6 +12,7 @@ const tiles = [
 ];
 
 const SECURITY_ROLES = ['Super Admin', 'Admin', 'Geschäftsführung'];
+const BACKUP_ROLES = ['Super Admin', 'Admin', 'Geschäftsführung', 'QM'];
 
 export default function Operation() {
   const { hasAnyRole } = useAuth();
@@ -23,6 +24,14 @@ export default function Operation() {
           icon: Shield,
           title: 'Alix Security Center',
           desc: 'Enterprise-Sicherheitsüberwachung: Logins, Sitzungen, Geräte, IPs, Warnungen, Security Score.',
+        }]
+      : []),
+    ...(hasAnyRole(BACKUP_ROLES)
+      ? [{
+          to: '/operation/datensicherung',
+          icon: ShieldCheck,
+          title: 'Datensicherung',
+          desc: 'Backup-, Wiederherstellungs- und Versionsmanagement-Center mit GitHub & Hetzner.',
         }]
       : []),
   ];
