@@ -1,0 +1,1 @@
+UPDATE public.user_profiles SET full_name='Chief Operations' WHERE email='homebln@icloud.com';
