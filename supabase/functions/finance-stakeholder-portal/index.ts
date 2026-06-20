@@ -1,6 +1,12 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 
+async function sha256Hex(input: string): Promise<string> {
+  const bytes = new TextEncoder().encode(input);
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
@@ -10,7 +16,13 @@ Deno.serve(async (req) => {
     }
     const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
-    const { data: sh } = await supabase.from('finance_stakeholders').select('*').eq('access_token', token).eq('enabled', true).maybeSingle();
+    const tokenHash = await sha256Hex(token);
+    const { data: sh } = await supabase
+      .from('finance_stakeholders')
+      .select('*')
+      .eq('access_token_hash', tokenHash)
+      .eq('enabled', true)
+      .maybeSingle();
     if (!sh) return new Response(JSON.stringify({ error: 'Zugriff verweigert oder Link gesperrt' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     if (sh.expires_at && new Date(sh.expires_at) < new Date()) {
       return new Response(JSON.stringify({ error: 'Zugriffslink ist abgelaufen' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });

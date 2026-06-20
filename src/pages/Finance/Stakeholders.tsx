@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Users, Plus, Trash2, Power, Copy, Link as LinkIcon } from 'lucide-react';
+import { Users, Plus, Trash2, Power, Copy, RefreshCw, KeyRound } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { DataCard } from '@/components/PageShell';
 import { PageHeader } from '@/components/infinity/PageHeader';
@@ -24,6 +24,7 @@ export default function FinanceStakeholders() {
   const [form, setForm] = useState<any>({
     name: '', email: '', role: 'viewer', allowed_reports: [], expires_at: '',
   });
+  const [revealed, setRevealed] = useState<{ name: string; url: string } | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -39,25 +40,47 @@ export default function FinanceStakeholders() {
 
   const save = async () => {
     try {
-      const payload: any = {
-        ...form,
-        expires_at: form.expires_at || null,
-      };
-      const { error } = await supabase.from('finance_stakeholders' as any).insert(payload);
+      const { data, error } = await (supabase as any).rpc('create_finance_stakeholder', {
+        p_name: form.name,
+        p_email: form.email,
+        p_role: form.role,
+        p_allowed_reports: form.allowed_reports,
+        p_expires_at: form.expires_at || null,
+      });
       if (error) throw error;
-      toast({ title: 'Stakeholder angelegt' });
+      const tokenRow = Array.isArray(data) ? data[0] : data;
+      const token = tokenRow?.access_token as string | undefined;
       setShow(false);
       setForm({ name: '', email: '', role: 'viewer', allowed_reports: [], expires_at: '' });
+      load();
+      if (token) {
+        const url = `${window.location.origin}/stakeholder/${token}`;
+        setRevealed({ name: form.name, url });
+      } else {
+        toast({ title: 'Stakeholder angelegt' });
+      }
+    } catch (e: any) {
+      toast({ title: 'Fehler', description: e.message, variant: 'destructive' });
+    }
+  };
+
+  const rotate = async (r: any) => {
+    if (!confirm(`Token für „${r.name}" neu erzeugen? Der alte Link wird sofort ungültig.`)) return;
+    try {
+      const { data, error } = await (supabase as any).rpc('rotate_finance_stakeholder_token', { p_id: r.id });
+      if (error) throw error;
+      const token = data as string;
+      const url = `${window.location.origin}/stakeholder/${token}`;
+      setRevealed({ name: r.name, url });
       load();
     } catch (e: any) {
       toast({ title: 'Fehler', description: e.message, variant: 'destructive' });
     }
   };
 
-  const copyLink = (token: string) => {
-    const url = `${window.location.origin}/stakeholder/${token}`;
+  const copy = (url: string) => {
     navigator.clipboard.writeText(url);
-    toast({ title: 'Link kopiert', description: url });
+    toast({ title: 'Link kopiert' });
   };
 
   const toggleEnabled = async (r: any) => {
@@ -101,7 +124,7 @@ export default function FinanceStakeholders() {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => copyLink(r.access_token)}><Copy className="h-4 w-4 mr-1" />Link</Button>
+                  {canEdit && <Button size="sm" variant="outline" onClick={() => rotate(r)} title="Neuen Link erzeugen (alten ungültig machen)"><RefreshCw className="h-4 w-4 mr-1" />Neuer Link</Button>}
                   {canEdit && <Button size="sm" variant="outline" onClick={() => toggleEnabled(r)}><Power className="h-4 w-4" /></Button>}
                   {isSuper && <Button size="sm" variant="ghost" onClick={() => del(r.id)}><Trash2 className="h-4 w-4" /></Button>}
                 </div>
@@ -153,6 +176,24 @@ export default function FinanceStakeholders() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setShow(false)}>Abbrechen</Button>
             <Button onClick={save} disabled={!form.name || !form.email}>Anlegen</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!revealed} onOpenChange={(o) => !o && setRevealed(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><KeyRound className="h-5 w-5 text-primary" />Zugriffslink für {revealed?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <p className="text-muted-foreground">Dieser Link wird <strong>nur einmal</strong> angezeigt. Bitte jetzt kopieren und sicher an den Stakeholder übermitteln. Aus Sicherheitsgründen wird das Token nur als Hash gespeichert und kann später nicht mehr ausgelesen werden — bei Verlust einen neuen Link erzeugen.</p>
+            <div className="flex gap-2">
+              <Input readOnly value={revealed?.url ?? ''} onFocus={(e) => e.currentTarget.select()} />
+              <Button onClick={() => revealed && copy(revealed.url)} className="gap-2"><Copy className="h-4 w-4" />Kopieren</Button>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setRevealed(null)}>Schließen</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
