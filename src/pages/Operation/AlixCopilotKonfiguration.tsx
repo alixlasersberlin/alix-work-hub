@@ -246,52 +246,14 @@ export default function AlixCopilotKonfiguration() {
           </Card>
 
           {/* Wissens-Bibliothek */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="flex items-center gap-2"><BookOpen className="w-4 h-4 text-primary" /> Wissens-Bibliothek ({cfg.knowledge_snippets.length})</CardTitle>
-              <div className="flex items-center gap-2">
-                <label className="inline-flex items-center gap-2 text-xs cursor-pointer rounded-md border border-border px-3 py-1.5 hover:bg-secondary">
-                  <FileText className="w-3.5 h-3.5" /> Datei importieren (PDF/TXT/MD/CSV/JSON)
-                  <input
-                    type="file"
-                    accept=".pdf,.txt,.md,.csv,.json,application/pdf"
-                    className="hidden"
-                    onChange={(e) => { const f = e.target.files?.[0]; if (f) onUpload(f); e.currentTarget.value = ""; }}
-                  />
-                </label>
-                <Button size="sm" variant="outline" onClick={addSnippet} className="gap-1"><Plus className="w-3.5 h-3.5" /> Neu</Button>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {cfg.knowledge_snippets.length === 0 && (
-                <p className="text-sm text-muted-foreground">
-                  Noch keine Einträge. Füge Firmenwissen, Prozessbeschreibungen, FAQ-Antworten oder Verkaufsleitlinien hinzu, die ALIX immer berücksichtigen soll.
-                </p>
-              )}
-              {cfg.knowledge_snippets.map(s => (
-                <div key={s.id} className="rounded-lg border border-border p-3 space-y-2 bg-card">
-                  <div className="flex items-center gap-2">
-                    <Input
-                      value={s.title}
-                      onChange={(e) => updateSnippet(s.id, { title: e.target.value })}
-                      placeholder="Titel"
-                      className="font-medium"
-                    />
-                    <Button size="icon" variant="ghost" onClick={() => removeSnippet(s.id)} aria-label="Eintrag löschen">
-                      <Trash2 className="w-4 h-4 text-destructive" />
-                    </Button>
-                  </div>
-                  <Textarea
-                    rows={4}
-                    value={s.content}
-                    onChange={(e) => updateSnippet(s.id, { content: e.target.value })}
-                    placeholder="Inhalt …"
-                  />
-                  <div className="text-[11px] text-muted-foreground text-right">{s.content.length.toLocaleString()} Zeichen</div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+          <KnowledgeLibrary
+            snippets={cfg.knowledge_snippets}
+            onAdd={addSnippet}
+            onUpdate={updateSnippet}
+            onRemove={removeSnippet}
+            onUpload={onUpload}
+          />
+
 
           {/* Module / Abteilungen */}
           <Card>
