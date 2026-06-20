@@ -126,6 +126,19 @@ export default function Anzahlungsrechnung() {
 
   useEffect(() => { load(); }, []);
 
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from('app_settings').select('value').eq('key', 'anzahlung_mahnung_config').maybeSingle();
+      if (data?.value) {
+        try {
+          const cfg = JSON.parse(data.value);
+          const s = (cfg.stages ?? []).filter((x: Stage) => x.enabled);
+          setStages(s);
+        } catch { /* ignore */ }
+      }
+    })();
+  }, []);
+
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
     if (!term) return rows;
