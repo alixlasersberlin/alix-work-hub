@@ -734,7 +734,7 @@ export default function UserManagement() {
                       <div className="flex flex-wrap gap-1">
                         {u.roleNames.length > 0 ? u.roleNames.map(r => (
                           <span key={r} className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary">
-                            <Shield className="w-3 h-3" />{r}
+                            <Shield className="w-3 h-3" />{displayRoleName(r)}
                           </span>
                         )) : <span className="text-muted-foreground text-xs">—</span>}
                       </div>
