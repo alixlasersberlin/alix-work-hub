@@ -497,6 +497,82 @@ async function runTool(name: string, args: any, ctx: Ctx): Promise<unknown> {
           neue_leads_7d: leads.count ?? 0,
         };
       }
+      case "list_modules": {
+        const out: Record<string, string[]> = {};
+        for (const [mod, tables] of Object.entries(MODULE_CATALOG)) {
+          const allowed = tables.filter((t) => {
+            if (BLOCKED_TABLES.has(t)) return false;
+            const req = tableRequiresRole(t);
+            if (!req) return true;
+            return ctx.isAdmin || ctx.roles.some((r) => req.includes(r));
+          });
+          if (allowed.length > 0) out[mod] = allowed;
+        }
+        return { modules: out, blocked_for_security: Array.from(BLOCKED_TABLES) };
+      }
+      case "describe_table": {
+        const t = String(args?.table ?? "").trim();
+        if (!ALLOWED_TABLES.has(t)) return { error: `Tabelle '${t}' nicht erlaubt oder unbekannt.` };
+        const req = tableRequiresRole(t);
+        if (req && !ctx.isAdmin && !ctx.roles.some((r) => req.includes(r))) {
+          return { error: `Keine Berechtigung für '${t}'. Benötigt eine der Rollen: ${req.join(", ")}.` };
+        }
+        const { data, error } = await admin.rpc("get_table_columns", { _table: t });
+        if (error) throw error;
+        return { table: t, columns: data ?? [] };
+      }
+      case "query_table": {
+        const t = String(args?.table ?? "").trim();
+        if (!/^[a-z_][a-z0-9_]*$/i.test(t)) return { error: "Ungültiger Tabellenname." };
+        if (!ALLOWED_TABLES.has(t)) return { error: `Tabelle '${t}' nicht erlaubt. Nutze list_modules.` };
+        const req = tableRequiresRole(t);
+        if (req && !ctx.isAdmin && !ctx.roles.some((r) => req.includes(r))) {
+          return { error: `Keine Berechtigung für '${t}'. Benötigt eine der Rollen: ${req.join(", ")}.` };
+        }
+        const select = typeof args?.select === "string" && args.select.trim().length > 0 ? args.select : "*";
+        let q: any = admin.from(t).select(select).limit(limit);
+
+        // Mandantenfilter wo passend
+        if (ctx.tenantSources && ["orders", "customers", "production_orders", "zoho_invoices", "zoho_unpaid_invoices", "zoho_items", "lager_devices"].includes(t)) {
+          q = q.in("source_system", ctx.tenantSources);
+        }
+
+        if (args?.search?.term && Array.isArray(args.search.columns) && args.search.columns.length > 0) {
+          const term = String(args.search.term).replace(/[%,]/g, " ");
+          const or = args.search.columns
+            .filter((c: any) => typeof c === "string" && /^[a-z_][a-z0-9_]*$/i.test(c))
+            .map((c: string) => `${c}.ilike.%${term}%`)
+            .join(",");
+          if (or) q = q.or(or);
+        }
+
+        if (Array.isArray(args?.filters)) {
+          for (const f of args.filters) {
+            if (!f?.column || !/^[a-z_][a-z0-9_]*$/i.test(f.column)) continue;
+            const op = String(f.op);
+            const v = f.value;
+            switch (op) {
+              case "eq": q = q.eq(f.column, v); break;
+              case "neq": q = q.neq(f.column, v); break;
+              case "ilike": q = q.ilike(f.column, `%${String(v).replace(/%/g, "")}%`); break;
+              case "gt": q = q.gt(f.column, v); break;
+              case "gte": q = q.gte(f.column, v); break;
+              case "lt": q = q.lt(f.column, v); break;
+              case "lte": q = q.lte(f.column, v); break;
+              case "in": q = q.in(f.column, Array.isArray(v) ? v : [v]); break;
+              case "is": q = q.is(f.column, v); break;
+            }
+          }
+        }
+
+        if (args?.order_by && /^[a-z_][a-z0-9_]*$/i.test(String(args.order_by))) {
+          q = q.order(args.order_by, { ascending: Boolean(args.ascending) });
+        }
+
+        const { data, error, count } = await q;
+        if (error) return { error: error.message };
+        return { table: t, rows: data ?? [], row_count: (data?.length ?? 0), total_count: count ?? null };
+      }
     }
     return { error: `Unbekanntes Tool: ${name}` };
   } catch (e: any) {
