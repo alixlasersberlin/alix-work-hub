@@ -23,6 +23,7 @@ type SigRow = {
 };
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const PUBLIC_BASE = 'https://alixwork.de';
 
 export default function AuftragsbestaetigungTab({ orderId, customerId, customerEmail }: Props) {
   const [loading, setLoading] = useState(true);
