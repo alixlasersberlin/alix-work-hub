@@ -461,6 +461,17 @@ export default function OrderDetail() {
                 {sendingEmail ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Mail className="w-3.5 h-3.5 mr-1.5" />}
                 E-Mail an Kunde
               </Button>
+              {hasRole('Super Admin') && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-primary/40 text-primary hover:bg-primary/10"
+                  onClick={() => setSearchParams({ tab: 'confirmation' })}
+                  title="Auftragsbestätigung per E-Mail senden"
+                >
+                  <Mail className="w-3.5 h-3.5 mr-1.5" /> Auftragsbestätigung Email
+                </Button>
+              )}
             </>
           )}
           <SepaMandatButton order={order} />
