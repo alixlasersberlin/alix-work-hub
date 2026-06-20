@@ -10,7 +10,13 @@ const ALLOWED_ORIGINS = new Set<string>([
   'https://alix-pro-hub.lovable.app',
 ]);
 function buildCors(origin: string | null) {
-  const allow = origin && (ALLOWED_ORIGINS.has(origin) || /^https:\/\/[\w-]+\.lovable(project)?\.app$/.test(origin) || origin.startsWith('http://localhost'))
+  const allow = origin && (
+      ALLOWED_ORIGINS.has(origin)
+      || /^https:\/\/[\w-]+\.lovable\.app$/.test(origin)
+      || /^https:\/\/[\w-]+\.lovableproject\.com$/.test(origin)
+      || /^https:\/\/[\w-]+\.lovable\.dev$/.test(origin)
+      || origin.startsWith('http://localhost')
+    )
     ? origin
     : 'https://alixwork.de';
   return {
