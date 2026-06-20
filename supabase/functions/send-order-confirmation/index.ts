@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
       .eq('id', sig.sign_request_id).maybeSingle()
     if (!r) return new Response(JSON.stringify({ error: 'Sign request not found' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
 
-    download_url = `${SUPABASE_URL}/functions/v1/order-confirmation-pdf?signature_id=${sig.id}&token=${encodeURIComponent(r.token)}`
+    download_url = `${PUBLIC_BASE}/pdf/ab?signature_id=${sig.id}&token=${encodeURIComponent(r.token)}`
     customer_name = r.customer_name || undefined
     customer_email_fallback = r.customer_email || sig.signer_email || undefined
     offerNumber = r.offer_number || sig.offer_number || undefined
