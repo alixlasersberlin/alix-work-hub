@@ -27,6 +27,7 @@ import MfaChallenge from "./pages/MfaChallenge";
 import MfaRecovery from "./pages/MfaRecovery";
 import AppLayout from "./components/AppLayout";
 import NotFound from "./pages/NotFound";
+import { isMfaMandatory } from "@/lib/mfa-required";
 
 // Lazy: alle Hauptseiten → Route-basiertes Code-Splitting
 const SetPassword = lazy(() => import("./pages/SetPassword"));
@@ -66,6 +67,7 @@ const ManagementDashboard = lazy(() => import("./pages/ManagementDashboard"));
 const ExecutiveCommandCenter = lazy(() => import("./pages/ExecutiveCommandCenter"));
 const InfinityShowcase = lazy(() => import("./pages/InfinityShowcase"));
 const Personalisierung = lazy(() => import("./pages/Personalisierung"));
+const Sicherheit = lazy(() => import("./pages/Sicherheit"));
 const AiCenter = lazy(() => import("./pages/AiCenter"));
 const RoutePlanDetail = lazy(() => import("./pages/RoutePlanDetail"));
 const RoutePlanForm = lazy(() => import("./pages/RoutePlanForm"));
@@ -376,9 +378,13 @@ function ProtectedRoute({ children, requiredRoles, allowEmails }: { children: Re
   if (!user) return <Navigate to="/login" replace />;
   if (blockReason) return <AccountBlocked />;
 
-  if (mfaState === 'not_enrolled') return <Navigate to="/mfa-setup" replace />;
+  // MFA-Pflicht: Nur für definierte Rollen wird die Einrichtung erzwungen.
+  // Wenn MFA bereits eingerichtet wurde, MUSS der Code in jedem Fall verifiziert werden.
+  const mfaMandatory = isMfaMandatory(roles);
+  if (mfaState === 'not_enrolled' && mfaMandatory) return <Navigate to="/mfa-setup" replace />;
   if (mfaState === 'challenge_required') return <Navigate to="/mfa-challenge" replace />;
-  if (mfaState !== 'verified') return <FullscreenLoader />;
+  if (mfaState === 'unknown') return <FullscreenLoader />;
+  // mfaState ist nun 'verified' ODER 'not_enrolled' für nicht-pflichtige Rollen → Zugriff erlauben.
 
   const emailAllowed = !!allowEmails && allowEmails.map(e => e.toLowerCase()).includes((profile?.email || '').toLowerCase());
 
@@ -438,6 +444,7 @@ function AppRoutes() {
           <Route path="/" element={<HomeRoute />} />
           <Route path="/infinity-showcase" element={<InfinityShowcase />} />
           <Route path="/einstellungen/personalisierung" element={<Personalisierung />} />
+          <Route path="/sicherheit" element={<Sicherheit />} />
           <Route path="/at-dashboard" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Österreich']}><AtDashboard /></ProtectedRoute>} />
           <Route path="/dashboard/bestellungen" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Auftragsverwaltung','Order','Bestellwesen','SACHBEARBEITUNG','Finance']}><BestellungenDashboard /></ProtectedRoute>} />
 

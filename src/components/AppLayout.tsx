@@ -1452,6 +1452,15 @@ export default function AppLayout() {
             <Button
               variant="ghost"
               className="h-8 justify-start text-[14.5px] px-2 text-muted-foreground hover:text-foreground"
+              onClick={() => navigate('/sicherheit')}
+              title="Sicherheit"
+            >
+              <ShieldCheck className="w-4 h-4" />
+              <span className="ml-1.5">Sicherheit</span>
+            </Button>
+            <Button
+              variant="ghost"
+              className="h-8 justify-start text-[14.5px] px-2 text-muted-foreground hover:text-foreground"
               onClick={() => navigate('/hilfe')}
               title="Hilfe"
             >
