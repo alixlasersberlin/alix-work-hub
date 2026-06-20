@@ -50,8 +50,11 @@ export default function AuftragsbestaetigungTab({ orderId, customerId, customerE
 
   const selected = sigs.find(s => s.id === selectedId) || null;
   const token = (selected?.alix_sign_requests as any)?.token as string | undefined;
-  const previewUrl = selected && token
+  const pdfFetchUrl = selected && token
     ? `${SUPABASE_URL}/functions/v1/order-confirmation-pdf?signature_id=${selected.id}&token=${encodeURIComponent(token)}`
+    : null;
+  const previewUrl = selected && token
+    ? `${PUBLIC_BASE}/pdf/ab?signature_id=${selected.id}&token=${encodeURIComponent(token)}`
     : null;
 
   const handleSend = async () => {
