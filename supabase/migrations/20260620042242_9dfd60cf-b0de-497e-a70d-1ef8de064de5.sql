@@ -1,0 +1,1 @@
+INSERT INTO public.sms_settings (id, from_number) VALUES (true, 'ALIXLASERS') ON CONFLICT (id) DO UPDATE SET from_number = 'ALIXLASERS', updated_at = now();
