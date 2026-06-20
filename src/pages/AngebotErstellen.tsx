@@ -44,7 +44,11 @@ const newLine = (): LineItem => ({
 
 export default function AngebotErstellen() {
   const navigate = useNavigate();
+  const { roles } = useAuth();
+  const isSuperAdmin = (roles ?? []).some((r: any) => (typeof r === 'string' ? r : r?.name) === 'Super Admin');
+  const [confirming, setConfirming] = useState(false);
   const [customers, setCustomers] = useState<any[]>([]);
+
   const [items, setItems] = useState<any[]>([]);
   const [customerId, setCustomerId] = useState<string>('');
   const [customerSearch, setCustomerSearch] = useState('');
