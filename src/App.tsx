@@ -436,7 +436,8 @@ function AppRoutes() {
   return (
     <Suspense fallback={null}>
       <Routes>
-        <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
+        {/* Alte öffentliche /login-Seite deaktiviert — leitet auf verdeckte Login-Route um */}
+        <Route path="/login" element={<Navigate to={user ? "/" : "/alix-control"} replace />} />
         {/* Verdeckte Login-Aliasse (nicht im Menü, nicht in Sitemap, noindex) */}
         <Route path="/alix-control" element={user ? <Navigate to="/" replace /> : <CovertLogin />} />
         <Route path="/alix-secure" element={user ? <Navigate to="/" replace /> : <CovertLogin />} />
