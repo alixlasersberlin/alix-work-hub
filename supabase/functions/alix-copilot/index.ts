@@ -606,12 +606,27 @@ Deno.serve(async (req) => {
       .select("roles(name)")
       .eq("user_id", user.id);
     const roles: string[] = (roleRows ?? []).map((r: any) => r.roles?.name).filter(Boolean);
+
+    // Copilot-Config aus app_settings
+    let cfg: any = {};
+    try {
+      const { data: cfgRow } = await admin
+        .from("app_settings").select("value").eq("key", "alix_copilot_config").maybeSingle();
+      if (cfgRow?.value) cfg = typeof cfgRow.value === "string" ? JSON.parse(cfgRow.value) : cfgRow.value;
+    } catch (_) { /* ignore */ }
+    const extraBlocked: Set<string> = new Set(Array.isArray(cfg?.extra_blocked_tables) ? cfg.extra_blocked_tables : []);
+    const disabledModules: Set<string> = new Set(Array.isArray(cfg?.disabled_modules) ? cfg.disabled_modules : []);
+    const promptAddon: string = typeof cfg?.system_prompt_addon === "string" ? cfg.system_prompt_addon.trim() : "";
+    const knowledgeSnippets: { title?: string; content?: string }[] = Array.isArray(cfg?.knowledge_snippets) ? cfg.knowledge_snippets : [];
+
     const ctx: Ctx = {
       userId: user.id,
       roles,
       isAdmin: roles.some((r) => r === "Super Admin" || r === "Admin"),
       isFinance: roles.some((r) => r === "Finance" || r === "Super Admin" || r === "Admin"),
       tenantSources: Array.isArray(tenantSources) && tenantSources.length > 0 ? tenantSources : null,
+      extraBlocked,
+      disabledModules,
     };
 
     const sysContext = `Aktueller Nutzer: ${user.email ?? user.id}. Rollen: ${roles.join(", ") || "(keine)"}. Aktive Seite: ${page ?? "-"}. ${ctx.tenantSources ? `Aktiver Mandant-Filter: ${ctx.tenantSources.join(",")}` : "Mandant: alle"}`;
@@ -619,8 +634,18 @@ Deno.serve(async (req) => {
     const chatMessages: any[] = [
       { role: "system", content: KNOWLEDGE },
       { role: "system", content: sysContext },
-      ...messages,
     ];
+    if (promptAddon) chatMessages.push({ role: "system", content: `# Zusätzliche Anweisungen (Admin-Konfiguration)\n${promptAddon}` });
+    if (knowledgeSnippets.length > 0) {
+      const kb = knowledgeSnippets
+        .filter((s) => (s?.content ?? "").trim().length > 0)
+        .map((s) => `## ${s.title || "Wissens-Eintrag"}\n${s.content}`).join("\n\n");
+      if (kb) chatMessages.push({ role: "system", content: `# Zusätzliches Firmenwissen\n${kb}` });
+    }
+    if (disabledModules.size > 0) {
+      chatMessages.push({ role: "system", content: `Hinweis: Folgende Module wurden vom Admin deaktiviert und dürfen NICHT durchsucht werden: ${[...disabledModules].join(", ")}.` });
+    }
+    chatMessages.push(...messages);
 
     const toolTrace: { name: string; args: any }[] = [];
 
