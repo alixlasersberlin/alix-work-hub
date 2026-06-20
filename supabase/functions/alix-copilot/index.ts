@@ -500,19 +500,20 @@ async function runTool(name: string, args: any, ctx: Ctx): Promise<unknown> {
       case "list_modules": {
         const out: Record<string, string[]> = {};
         for (const [mod, tables] of Object.entries(MODULE_CATALOG)) {
+          if (ctx.disabledModules.has(mod)) continue;
           const allowed = tables.filter((t) => {
-            if (BLOCKED_TABLES.has(t)) return false;
+            if (BLOCKED_TABLES.has(t) || ctx.extraBlocked.has(t)) return false;
             const req = tableRequiresRole(t);
             if (!req) return true;
             return ctx.isAdmin || ctx.roles.some((r) => req.includes(r));
           });
           if (allowed.length > 0) out[mod] = allowed;
         }
-        return { modules: out, blocked_for_security: Array.from(BLOCKED_TABLES) };
+        return { modules: out, blocked_for_security: [...BLOCKED_TABLES, ...ctx.extraBlocked] };
       }
       case "describe_table": {
         const t = String(args?.table ?? "").trim();
-        if (!ALLOWED_TABLES.has(t)) return { error: `Tabelle '${t}' nicht erlaubt oder unbekannt.` };
+        if (!ALLOWED_TABLES.has(t) || ctx.extraBlocked.has(t)) return { error: `Tabelle '${t}' nicht erlaubt oder unbekannt.` };
         const req = tableRequiresRole(t);
         if (req && !ctx.isAdmin && !ctx.roles.some((r) => req.includes(r))) {
           return { error: `Keine Berechtigung für '${t}'. Benötigt eine der Rollen: ${req.join(", ")}.` };
@@ -524,7 +525,7 @@ async function runTool(name: string, args: any, ctx: Ctx): Promise<unknown> {
       case "query_table": {
         const t = String(args?.table ?? "").trim();
         if (!/^[a-z_][a-z0-9_]*$/i.test(t)) return { error: "Ungültiger Tabellenname." };
-        if (!ALLOWED_TABLES.has(t)) return { error: `Tabelle '${t}' nicht erlaubt. Nutze list_modules.` };
+        if (!ALLOWED_TABLES.has(t) || ctx.extraBlocked.has(t)) return { error: `Tabelle '${t}' nicht erlaubt. Nutze list_modules.` };
         const req = tableRequiresRole(t);
         if (req && !ctx.isAdmin && !ctx.roles.some((r) => req.includes(r))) {
           return { error: `Keine Berechtigung für '${t}'. Benötigt eine der Rollen: ${req.join(", ")}.` };
