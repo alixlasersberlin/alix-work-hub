@@ -475,12 +475,16 @@ const navItems: NavItem[] = [
           { path: '/operation/anzahlung-mahnung-konfiguration', label: 'Anzahlungs-Mahnung Konfiguration', icon: Bell, roles: ['Super Admin'] },
         ],
       },
-      { path: '/portal-admin', label: 'Kundenportal', icon: Globe, roles: ['Super Admin'] },
-      { path: '/tickets', label: 'Ticketliste', icon: Ticket, roles: ['Super Admin'] },
-
-      // Operative Tools
-      { path: '/order/timeline', label: 'Timeline Bestellungen', icon: Calendar, roles: ['Super Admin'] },
-      { path: '/lager/doppelte-reservierungen', label: 'Doppelte Reservierungen', icon: AlertTriangle, roles: ['Super Admin'] },
+      // Controll Out
+      {
+        path: '#controll-out', label: 'CONTROLL OUT', icon: SearchCheck, roles: ['Super Admin'],
+        children: [
+          { path: '/portal-admin', label: 'Kundenportal', icon: Globe, roles: ['Super Admin'] },
+          { path: '/tickets', label: 'Ticketliste', icon: Ticket, roles: ['Super Admin'] },
+          { path: '/order/timeline', label: 'Timeline Bestellungen', icon: Calendar, roles: ['Super Admin'] },
+          { path: '/lager/doppelte-reservierungen', label: 'Doppelte Reservierungen', icon: AlertTriangle, roles: ['Super Admin'] },
+        ],
+      },
 
       {
         path: '#system', label: 'SYSTEM', icon: Cog, roles: ['Super Admin'],
