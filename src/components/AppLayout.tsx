@@ -457,15 +457,21 @@ const navItems: NavItem[] = [
       { path: '/mandanten', label: 'Mandanten', icon: Building2, roles: ['Super Admin'] },
 
       // Kommunikation & Portale
-      { path: '/operation/email-vorlagen', label: 'E-Mail Vorlagen', icon: Mail, roles: ['Super Admin'] },
+      {
+        path: '#sms-email-texte', label: 'SMS & E-Mail Texte', icon: Mail, roles: ['Super Admin'],
+        children: [
+          { path: '/operation/email-vorlagen', label: 'E-Mail Vorlagen', icon: Mail, roles: ['Super Admin'] },
+          { path: '/operation/sms-konfiguration', label: 'SMS Konfiguration', icon: MessageSquare, roles: ['Super Admin', 'Admin'] },
+          { path: '/operation/anzahlung-mahnung-konfiguration', label: 'Anzahlungs-Mahnung Konfiguration', icon: Bell, roles: ['Super Admin'] },
+        ],
+      },
       { path: '/portal-admin', label: 'Kundenportal', icon: Globe, roles: ['Super Admin'] },
       { path: '/tickets', label: 'Ticketliste', icon: Ticket, roles: ['Super Admin'] },
       { path: '/tickets/api-sync', label: 'API Sync Einstellungen', icon: Settings, roles: ['Super Admin'] },
 
       // Operative Tools
       { path: '/operation/nummernkreise', label: 'Nummernkreise', icon: Hash, roles: ['Super Admin'] },
-      { path: '/operation/sms-konfiguration', label: 'SMS Konfiguration', icon: MessageSquare, roles: ['Super Admin', 'Admin'] },
-      { path: '/operation/anzahlung-mahnung-konfiguration', label: 'Anzahlungs-Mahnung Konfiguration', icon: Bell, roles: ['Super Admin'] },
+      { path: '/order/timeline', label: 'Timeline Bestellungen', icon: Calendar, roles: ['Super Admin'] },
       { path: '/order/timeline', label: 'Timeline Bestellungen', icon: Calendar, roles: ['Super Admin'] },
       { path: '/lager/doppelte-reservierungen', label: 'Doppelte Reservierungen', icon: AlertTriangle, roles: ['Super Admin'] },
 
