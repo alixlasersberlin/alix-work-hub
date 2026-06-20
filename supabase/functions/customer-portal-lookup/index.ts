@@ -63,6 +63,10 @@ function normOrderNumber(v: any): string {
   return String(v ?? "").trim().replace(/-AT$/i, "");
 }
 
+// Rate-Limit für öffentlichen Portal-Lookup
+const PORTAL_MAX = 15;
+const PORTAL_WINDOW_SEC = 300; // 5 min
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -78,10 +82,28 @@ Deno.serve(async (req) => {
       });
     }
 
+    const ip = req.headers.get('cf-connecting-ip') ?? req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? '';
+
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
+
+    // Rate-Limit gegen Brute-Force auf Bestellnummern
+    try {
+      const bucket = `portal-lookup:${ip || email || 'anon'}`;
+      const { data: limited } = await supabase.rpc('check_rate_limit', {
+        _bucket: bucket,
+        _max: PORTAL_MAX,
+        _window_seconds: PORTAL_WINDOW_SEC,
+      });
+      if (limited === true) {
+        return new Response(JSON.stringify({ ok: false, error: 'rate_limited' }), {
+          status: 429,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': String(PORTAL_WINDOW_SEC) },
+        });
+      }
+    } catch { /* never block on limiter errors */ }
 
     const { data: order } = await supabase
       .from("orders")
