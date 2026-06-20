@@ -200,6 +200,7 @@ const Systemwartung = lazy(() => import("./pages/Systemwartung"));
 const Nummernkreise = lazy(() => import("./pages/operation/Nummernkreise"));
 const SmsKonfiguration = lazy(() => import("./pages/operation/SmsKonfiguration"));
 const AlixCopilotKonfiguration = lazy(() => import("./pages/Operation/AlixCopilotKonfiguration"));
+const AlixCopilotConfig = lazy(() => import("./pages/Operation/AlixCopilotConfig"));
 const KundenportalKonfiguration = lazy(() => import("./pages/Operation/KundenportalKonfiguration"));
 const Mandanten = lazy(() => import("./pages/Mandanten"));
 const KonzernDashboard = lazy(() => import("./pages/KonzernDashboard"));
