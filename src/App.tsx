@@ -1,6 +1,6 @@
 import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -376,14 +376,9 @@ function FullscreenLoader() {
 
 function ProtectedRoute({ children, requiredRoles, allowEmails }: { children: React.ReactNode; requiredRoles?: string[]; allowEmails?: string[] }) {
   const { user, profile, roles, loading, blockReason, mfaState } = useAuth();
-  const location = useLocation();
 
   if (loading) return <FullscreenLoader />;
-  if (!user) {
-    // Root-URL zeigt öffentliche Landing-Page statt Login-Redirect
-    if (location.pathname === '/') return <Landing />;
-    return <Navigate to="/alix-control" replace />;
-  }
+  if (!user) return <Navigate to="/alix-control" replace />;
   if (blockReason) return <AccountBlocked />;
 
   // MFA-Pflicht: Nur für definierte Rollen wird die Einrichtung erzwungen.
@@ -410,9 +405,9 @@ function ProtectedRoute({ children, requiredRoles, allowEmails }: { children: Re
 function MfaGate({ children, expect }: { children: React.ReactNode; expect: 'not_enrolled' | 'challenge_required' | 'any' }) {
   const { user, loading, mfaState, blockReason } = useAuth();
   if (loading) return <FullscreenLoader />;
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/alix-control" replace />;
   if (blockReason) return <AccountBlocked />;
-  if (mfaState === 'verified') return <Navigate to="/" replace />;
+  if (mfaState === 'verified') return <Navigate to="/dashboard" replace />;
   if (expect !== 'any' && mfaState !== expect && mfaState !== 'unknown') {
     if (mfaState === 'not_enrolled') return <Navigate to="/mfa-setup" replace />;
     if (mfaState === 'challenge_required') return <Navigate to="/mfa-challenge" replace />;
@@ -442,19 +437,20 @@ function AppRoutes() {
   return (
     <Suspense fallback={null}>
       <Routes>
-        {/* Alte öffentliche /login-Seite deaktiviert — leitet auf verdeckte Login-Route um */}
-        <Route path="/login" element={<Navigate to={user ? "/" : "/alix-control"} replace />} />
+        {/* Öffentliche Landing-Page: / und /login zeigen IMMER nur Landing, niemals Redirect */}
+        <Route path="/" element={<Landing />} />
+        <Route path="/login" element={<Landing />} />
         {/* Verdeckte Login-Aliasse (nicht im Menü, nicht in Sitemap, noindex) */}
-        <Route path="/alix-control" element={user ? <Navigate to="/" replace /> : <CovertLogin />} />
-        <Route path="/alix-secure" element={user ? <Navigate to="/" replace /> : <CovertLogin />} />
-        <Route path="/alix-enterprise" element={user ? <Navigate to="/" replace /> : <CovertLogin />} />
+        <Route path="/alix-control" element={user ? <Navigate to="/dashboard" replace /> : <CovertLogin />} />
+        <Route path="/alix-secure" element={user ? <Navigate to="/dashboard" replace /> : <CovertLogin />} />
+        <Route path="/alix-enterprise" element={user ? <Navigate to="/dashboard" replace /> : <CovertLogin />} />
         <Route path="/passwort-setzen" element={<SetPassword />} />
         <Route path="/stakeholder/:token" element={<StakeholderPortal />} />
         <Route path="/mfa-setup" element={<MfaGate expect="not_enrolled"><MfaSetup /></MfaGate>} />
         <Route path="/mfa-challenge" element={<MfaGate expect="challenge_required"><MfaChallenge /></MfaGate>} />
         <Route path="/mfa-recovery" element={<MfaGate expect="any"><MfaRecovery /></MfaGate>} />
         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-          <Route path="/" element={<HomeRoute />} />
+          <Route path="/dashboard" element={<HomeRoute />} />
           <Route path="/infinity-showcase" element={<InfinityShowcase />} />
           <Route path="/einstellungen/personalisierung" element={<Personalisierung />} />
           <Route path="/sicherheit" element={<Sicherheit />} />
