@@ -29,13 +29,31 @@ async function readGithubError(response: Response) {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   const token = Deno.env.get("GITHUB_TOKEN");
-  const repo = Deno.env.get("GITHUB_REPO"); // owner/name
+
+  // Prefer DB-stored repo (app_settings.github_repo), fall back to env
+  let repo: string | null = null;
+  try {
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (SUPABASE_URL && SERVICE) {
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/app_settings?key=eq.github_repo&select=value`, {
+        headers: { apikey: SERVICE, Authorization: `Bearer ${SERVICE}` },
+      });
+      if (r.ok) {
+        const rows = await r.json();
+        if (Array.isArray(rows) && rows[0]?.value) repo = String(rows[0].value);
+      }
+    }
+  } catch (_) { /* ignore */ }
+  if (!repo) repo = Deno.env.get("GITHUB_REPO") ?? null;
+
   if (!token || !repo) {
     return json({ ok: false, connected: false, configured: false, repo: repo ?? null, branch: null, commits: [], error: "GITHUB_TOKEN oder GITHUB_REPO fehlt." });
   }
   if (!/^[^/\s]+\/[^/\s]+$/.test(repo)) {
     return json({ ok: false, connected: false, configured: true, repo, branch: null, commits: [], error: "GITHUB_REPO muss im Format owner/repo gespeichert sein." });
   }
+
   try {
     const r = await fetch(`https://api.github.com/repos/${repo}`, { headers: githubHeaders(token) });
     if (!r.ok) {
