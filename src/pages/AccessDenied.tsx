@@ -17,7 +17,7 @@ export default function AccessDenied() {
           Bitte wenden Sie sich an Ihren Administrator.
         </p>
         <Button
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/dashboard')}
           className="gold-gradient font-semibold"
         >
           Zum Dashboard

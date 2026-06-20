@@ -79,7 +79,7 @@ export default function MfaSetup() {
   const finish = async () => {
     markMfaVerifiedThisTab();
     await refreshMfaState();
-    navigate('/', { replace: true });
+    navigate('/dashboard', { replace: true });
   };
 
   const copyCodes = async () => {

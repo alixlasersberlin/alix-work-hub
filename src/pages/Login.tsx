@@ -66,7 +66,7 @@ export default function Login() {
       setLoading(false);
       return;
     }
-    navigate('/', { replace: true });
+    navigate('/dashboard', { replace: true });
     setLoading(false);
   };
 

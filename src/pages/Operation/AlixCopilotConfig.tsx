@@ -161,7 +161,7 @@ export default function AlixCopilotConfig() {
   useEffect(() => { if (hasAccess) loadAll(); }, [hasAccess]);
 
   if (authLoading) return null;
-  if (!hasAccess) return <Navigate to="/" replace />;
+  if (!hasAccess) return <Navigate to="/dashboard" replace />;
 
   return (
     <div className="p-6 space-y-6 max-w-7xl">

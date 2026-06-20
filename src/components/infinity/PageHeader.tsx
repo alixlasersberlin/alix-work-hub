@@ -98,7 +98,7 @@ export const PageHeader = ({
           className="flex items-center gap-1 text-[11px] text-muted-foreground mb-3"
         >
           <Link
-            to="/"
+            to="/dashboard"
             className="flex items-center gap-1 hover:text-amber-300 transition-colors"
             aria-label="Start"
           >

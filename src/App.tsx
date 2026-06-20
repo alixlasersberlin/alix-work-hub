@@ -614,7 +614,7 @@ function AppRoutes() {
           <Route path="/executive" element={<ProtectedRoute requiredRoles={['Super Admin']}><ExecutiveCommandCenter /></ProtectedRoute>} />
           <Route path="/ai-center" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Geschäftsführung', 'Serviceleitung', 'Service', 'Technik', 'Finance', 'Österreich']}><AiCenter /></ProtectedRoute>} />
 
-          <Route path="/design-template" element={<Navigate to="/" replace />} />
+          <Route path="/design-template" element={<Navigate to="/dashboard" replace />} />
 
           <Route path="/finance/neu" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Finance']}><FinanceForm /></ProtectedRoute>} />
           <Route path="/finance/:id" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceDetail /></ProtectedRoute>} />
