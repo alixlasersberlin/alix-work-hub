@@ -105,12 +105,6 @@ Deno.serve(async (req) => {
       }
     } catch { /* never block on limiter errors */ }
 
-
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
-
     const { data: order } = await supabase
       .from("orders")
       .select("id, order_number, order_status, deposit_ok, expected_shipment_date, billing_address, shipping_address, customer_id, source_system")
