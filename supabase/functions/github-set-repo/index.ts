@@ -32,18 +32,26 @@ Deno.serve(async (req) => {
 
   const body = await req.json().catch(() => ({}));
   const repo = String(body?.repo || "").trim();
+  const force = body?.force === true;
   if (!/^[^/\s]+\/[^/\s]+$/.test(repo)) {
     return json({ ok: false, error: "Ungültiges Repo-Format (erwartet owner/name)" }, 400);
   }
 
-  // Validate against GitHub before saving
+  // Try to validate against GitHub – non-blocking when force=true
+  let meta: any = null;
+  let warning: string | null = null;
   const token = Deno.env.get("GITHUB_TOKEN");
-  if (!token) return json({ ok: false, error: "GITHUB_TOKEN fehlt" }, 400);
-  const r = await fetch(`https://api.github.com/repos/${repo}`, { headers: gh(token) });
-  if (!r.ok) {
-    return json({ ok: false, error: `Repository nicht erreichbar (${r.status}). Token-Zugriff prüfen.` }, 400);
+  if (token) {
+    const r = await fetch(`https://api.github.com/repos/${repo}`, { headers: gh(token) });
+    if (r.ok) {
+      meta = await r.json();
+    } else {
+      warning = `Repository nicht erreichbar (${r.status}). Token hat evtl. keinen Zugriff – Speichern ${force ? "erzwungen" : "abgebrochen"}.`;
+      if (!force) return json({ ok: false, error: warning, can_force: true }, 400);
+    }
+  } else {
+    warning = "GITHUB_TOKEN fehlt – Repo gespeichert, aber Verbindung kann nicht geprüft werden.";
   }
-  const meta = await r.json();
 
   const admin = createClient(SUPABASE_URL, SERVICE);
   const { error: upErr } = await admin
@@ -51,5 +59,6 @@ Deno.serve(async (req) => {
     .upsert({ key: "github_repo", value: repo, updated_by: u.user.id }, { onConflict: "key" });
   if (upErr) return json({ ok: false, error: upErr.message }, 500);
 
-  return json({ ok: true, repo, default_branch: meta.default_branch, private: meta.private });
+  return json({ ok: true, repo, default_branch: meta?.default_branch ?? null, private: meta?.private ?? null, warning });
 });
+
