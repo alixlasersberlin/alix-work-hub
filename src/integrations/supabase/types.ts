@@ -1348,6 +1348,421 @@ export type Database = {
           },
         ]
       }
+      copilot_audit_log: {
+        Row: {
+          action: string
+          after: Json | null
+          before: Json | null
+          created_at: string
+          entity: string
+          entity_id: string | null
+          id: string
+          ip: string | null
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          after?: Json | null
+          before?: Json | null
+          created_at?: string
+          entity: string
+          entity_id?: string | null
+          id?: string
+          ip?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          after?: Json | null
+          before?: Json | null
+          created_at?: string
+          entity?: string
+          entity_id?: string | null
+          id?: string
+          ip?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      copilot_departments: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          key: string
+          label: string
+          search_customers: boolean
+          search_devices: boolean
+          search_documents: boolean
+          search_invoices: boolean
+          search_maintenance: boolean
+          search_offers: boolean
+          search_repairs: boolean
+          search_tickets: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          key: string
+          label: string
+          search_customers?: boolean
+          search_devices?: boolean
+          search_documents?: boolean
+          search_invoices?: boolean
+          search_maintenance?: boolean
+          search_offers?: boolean
+          search_repairs?: boolean
+          search_tickets?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          key?: string
+          label?: string
+          search_customers?: boolean
+          search_devices?: boolean
+          search_documents?: boolean
+          search_invoices?: boolean
+          search_maintenance?: boolean
+          search_offers?: boolean
+          search_repairs?: boolean
+          search_tickets?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      copilot_import_jobs: {
+        Row: {
+          category: string | null
+          created_at: string
+          department: string | null
+          error_message: string | null
+          filename: string | null
+          finished_at: string | null
+          id: string
+          recognized_items: number | null
+          source_id: string | null
+          started_by: string | null
+          status: string
+          tags: string[] | null
+          updated_at: string
+          version: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          department?: string | null
+          error_message?: string | null
+          filename?: string | null
+          finished_at?: string | null
+          id?: string
+          recognized_items?: number | null
+          source_id?: string | null
+          started_by?: string | null
+          status?: string
+          tags?: string[] | null
+          updated_at?: string
+          version?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          department?: string | null
+          error_message?: string | null
+          filename?: string | null
+          finished_at?: string | null
+          id?: string
+          recognized_items?: number | null
+          source_id?: string | null
+          started_by?: string | null
+          status?: string
+          tags?: string[] | null
+          updated_at?: string
+          version?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "copilot_import_jobs_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "copilot_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      copilot_knowledge_entries: {
+        Row: {
+          category: string | null
+          content: string
+          created_at: string
+          created_by: string | null
+          department: string | null
+          id: string
+          priority: string
+          responsible_user_id: string | null
+          source: string | null
+          status: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+          valid_from: string | null
+          valid_to: string | null
+          version: string | null
+        }
+        Insert: {
+          category?: string | null
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          id?: string
+          priority?: string
+          responsible_user_id?: string | null
+          source?: string | null
+          status?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          valid_from?: string | null
+          valid_to?: string | null
+          version?: string | null
+        }
+        Update: {
+          category?: string | null
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          id?: string
+          priority?: string
+          responsible_user_id?: string | null
+          source?: string | null
+          status?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          valid_from?: string | null
+          valid_to?: string | null
+          version?: string | null
+        }
+        Relationships: []
+      }
+      copilot_module_access: {
+        Row: {
+          created_at: string
+          data_scope: string | null
+          enabled: boolean
+          id: string
+          label: string
+          module_key: string
+          read_allowed: boolean
+          role_restrictions: string[] | null
+          updated_at: string
+          write_allowed: boolean
+        }
+        Insert: {
+          created_at?: string
+          data_scope?: string | null
+          enabled?: boolean
+          id?: string
+          label: string
+          module_key: string
+          read_allowed?: boolean
+          role_restrictions?: string[] | null
+          updated_at?: string
+          write_allowed?: boolean
+        }
+        Update: {
+          created_at?: string
+          data_scope?: string | null
+          enabled?: boolean
+          id?: string
+          label?: string
+          module_key?: string
+          read_allowed?: boolean
+          role_restrictions?: string[] | null
+          updated_at?: string
+          write_allowed?: boolean
+        }
+        Relationships: []
+      }
+      copilot_settings: {
+        Row: {
+          auto_language: boolean
+          cite_sources: boolean
+          created_at: string
+          id: string
+          key: string
+          mark_uncertain: boolean
+          only_approved_sources: boolean
+          prioritize_internal: boolean
+          prioritize_iso: boolean
+          restrict_customer_data: boolean
+          restrict_finance_data: boolean
+          restrict_pii: boolean
+          tone: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          auto_language?: boolean
+          cite_sources?: boolean
+          created_at?: string
+          id?: string
+          key?: string
+          mark_uncertain?: boolean
+          only_approved_sources?: boolean
+          prioritize_internal?: boolean
+          prioritize_iso?: boolean
+          restrict_customer_data?: boolean
+          restrict_finance_data?: boolean
+          restrict_pii?: boolean
+          tone?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          auto_language?: boolean
+          cite_sources?: boolean
+          created_at?: string
+          id?: string
+          key?: string
+          mark_uncertain?: boolean
+          only_approved_sources?: boolean
+          prioritize_internal?: boolean
+          prioritize_iso?: boolean
+          restrict_customer_data?: boolean
+          restrict_finance_data?: boolean
+          restrict_pii?: boolean
+          tone?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      copilot_source_files: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          extracted_chars: number | null
+          filename: string | null
+          id: string
+          mime: string | null
+          pages: number | null
+          size_bytes: number | null
+          source_id: string
+          storage_path: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          extracted_chars?: number | null
+          filename?: string | null
+          id?: string
+          mime?: string | null
+          pages?: number | null
+          size_bytes?: number | null
+          source_id: string
+          storage_path?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          extracted_chars?: number | null
+          filename?: string | null
+          id?: string
+          mime?: string | null
+          pages?: number | null
+          size_bytes?: number | null
+          source_id?: string
+          storage_path?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "copilot_source_files_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "copilot_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      copilot_sources: {
+        Row: {
+          category: string | null
+          created_at: string
+          created_by: string | null
+          department: string | null
+          description: string | null
+          file_path: string | null
+          id: string
+          last_import_at: string | null
+          owner_user_id: string | null
+          source_type: string
+          status: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+          url: string | null
+          valid_from: string | null
+          valid_to: string | null
+          version: string | null
+          visible_to_copilot: boolean
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          description?: string | null
+          file_path?: string | null
+          id?: string
+          last_import_at?: string | null
+          owner_user_id?: string | null
+          source_type?: string
+          status?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          url?: string | null
+          valid_from?: string | null
+          valid_to?: string | null
+          version?: string | null
+          visible_to_copilot?: boolean
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          description?: string | null
+          file_path?: string | null
+          id?: string
+          last_import_at?: string | null
+          owner_user_id?: string | null
+          source_type?: string
+          status?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          url?: string | null
+          valid_from?: string | null
+          valid_to?: string | null
+          version?: string | null
+          visible_to_copilot?: boolean
+        }
+        Relationships: []
+      }
       customer_communication_log: {
         Row: {
           channel: string
@@ -12666,6 +13081,7 @@ export type Database = {
       can_access_tickets: { Args: never; Returns: boolean }
       can_access_warranty: { Args: never; Returns: boolean }
       can_approve_warranty: { Args: never; Returns: boolean }
+      can_manage_copilot_config: { Args: never; Returns: boolean }
       can_manage_mail_campaigns: { Args: never; Returns: boolean }
       can_manage_mail_domains: { Args: never; Returns: boolean }
       can_manage_mail_templates: { Args: never; Returns: boolean }
