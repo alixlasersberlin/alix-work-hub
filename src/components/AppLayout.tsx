@@ -501,6 +501,7 @@ const navItems: NavItem[] = [
           { path: '/datensicherung', label: 'Datensicherung', icon: Shield, roles: ['Super Admin'] },
           { path: '/operation/systemwartung', label: 'Systemwartung', icon: AlertTriangle, roles: ['Super Admin'] },
           { path: '/tickets/api-sync', label: 'API Sync Einstellungen', icon: Settings, roles: ['Super Admin'] },
+          { path: '/operation/security-center', label: 'Alix Security Center', icon: Shield, roles: ['Super Admin', 'Admin', 'Geschäftsführung'] },
         ],
       },
 
@@ -512,7 +513,6 @@ const navItems: NavItem[] = [
           { path: '/verkauf/anfragen/import', label: 'Anfragen Import', icon: Upload, roles: ['Admin', 'Super Admin', 'Vertrieb', 'Vertriebsleitung', 'Order', 'SACHBEARBEITUNG'] },
           { path: '/verkauf/angebot/import', label: 'Angebote Data Import', icon: Upload, roles: ['Super Admin'] },
           { path: '/operation/logfiles', label: 'Logfiles', icon: ScrollText, roles: ['Super Admin'] },
-          { path: '/operation/security-center', label: 'Alix Security Center', icon: Shield, roles: ['Super Admin', 'Admin', 'Geschäftsführung'] },
         ],
       },
     ],
