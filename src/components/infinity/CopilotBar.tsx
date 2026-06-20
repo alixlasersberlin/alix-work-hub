@@ -71,18 +71,7 @@ export function CopilotBar() {
 
   return (
     <>
-      {/* Floating Trigger */}
-      {!open && (
-        <button
-          onClick={() => setOpen(true)}
-          aria-label="ALIX Copilot öffnen (Strg+J)"
-          className="fixed bottom-6 right-0 z-[60] group flex items-center gap-2 rounded-l-full border border-r-0 border-amber-400/30 bg-black/70 backdrop-blur px-3 py-2 shadow-[0_10px_40px_-10px_rgba(245,158,11,0.5)] hover:border-amber-400/60 transition print:hidden"
-        >
-          <Sparkles className="h-4 w-4 text-amber-300 group-hover:rotate-12 transition" />
-          <span className="text-sm font-medium sig-mark">ALIX Copilot</span>
-          <kbd className="hidden sm:inline-block text-[10px] text-muted-foreground border border-white/15 rounded px-1.5 py-0.5">⌘J</kbd>
-        </button>
-      )}
+      {/* Floating Trigger removed – opens via sidebar entry / event */}
 
       {/* Panel */}
       {open && (
