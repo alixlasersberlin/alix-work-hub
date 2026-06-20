@@ -65,6 +65,46 @@ export default function Orders() {
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkStatus, setBulkStatus] = useState<string>('');
   const [bulkSaving, setBulkSaving] = useState(false);
+  const [resendingId, setResendingId] = useState<string | null>(null);
+
+  async function resendOrderConfirmation(order: any) {
+    if (!order?.customer_id) { toast.error('Auftrag hat keinen Kunden'); return; }
+    setResendingId(order.id);
+    try {
+      const { data: sigs } = await supabase
+        .from('alix_sign_signatures')
+        .select('id, created_at, alix_sign_requests!inner(customer_id, signed_at)')
+        .eq('alix_sign_requests.customer_id', order.customer_id)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      const sig = (sigs || [])[0] as any;
+      if (!sig) {
+        toast.error('Kein unterzeichnetes Angebot für diesen Kunden gefunden');
+        return;
+      }
+      const { data: cust } = await supabase
+        .from('customers')
+        .select('email')
+        .eq('id', order.customer_id)
+        .maybeSingle();
+      if (!cust?.email) { toast.error('Kunde hat keine E-Mail-Adresse'); return; }
+      const { data, error } = await supabase.functions.invoke('send-order-confirmation', {
+        body: { signature_id: sig.id, order_id: order.id, recipient_email: cust.email },
+      });
+      if (error) throw error;
+      const failed = (data?.results || []).filter((r: any) => r.status !== 'sent');
+      if (failed.length > 0) {
+        toast.error(`Versand teilweise fehlgeschlagen: ${failed.map((f: any) => f.to).join(', ')}`);
+      } else {
+        toast.success(`Auftragsbestätigung an ${cust.email} versendet (BCC: rde@alix-lasers.com)`);
+      }
+    } catch (e: any) {
+      toast.error(e?.message || 'Versand fehlgeschlagen');
+    } finally {
+      setResendingId(null);
+    }
+  }
+
   const navigate = useNavigate();
   const { isAdmin, hasRole, user } = useAuth();
   const { drivingTimes, loading: drivingLoading, requestedIds, fetchDrivingTimes, retryFailed } = useDrivingTimes();
