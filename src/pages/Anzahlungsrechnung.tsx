@@ -4,7 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Receipt, Search, ExternalLink, RefreshCw, FileText, Wallet, Banknote, MessageSquare, Mail, Loader2 } from 'lucide-react';
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+import { Receipt, Search, ExternalLink, RefreshCw, FileText, Wallet, Banknote, MessageSquare, Mail, Loader2, ChevronDown, Settings } from 'lucide-react';
 import { EmptyState } from '@/components/infinity/EmptyState';
 import { supabase } from '@/integrations/supabase/client';
 import { withAt } from '@/lib/atSuffix';
@@ -14,6 +17,9 @@ import {
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { KpiTile } from '@/components/infinity/KpiTile';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
+
+type Stage = { id: string; name: string; days_after_due: number; enabled: boolean };
 
 type Row = {
   id: string;
@@ -36,25 +42,28 @@ const fmtDate = (d: string | null | undefined) =>
   !d ? '–' : new Date(d).toLocaleDateString('de-DE');
 
 export default function Anzahlungsrechnung() {
+  const { roles } = useAuth();
+  const isSuperAdmin = (roles ?? []).some((r: any) => (typeof r === 'string' ? r : r?.name) === 'Super Admin');
   const [rows, setRows] = useState<Row[]>([]);
   const [customers, setCustomers] = useState<Record<string, CustomerLite>>({});
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
   const [busy, setBusy] = useState<Record<string, 'sms' | 'email' | null>>({});
+  const [stages, setStages] = useState<Stage[]>([]);
 
-  const sendMahnung = async (orderId: string, channel: 'sms' | 'email') => {
-    if (!confirm(channel === 'sms'
-      ? 'SMS-Mahnung an den Kunden senden?'
-      : 'E-Mail-Mahnung an den Kunden senden?')) return;
+  const sendMahnung = async (orderId: string, channel: 'sms' | 'email', stage: Stage) => {
+    if (!confirm(
+      `${channel === 'sms' ? 'SMS' : 'E-Mail'}-Mahnung „${stage.name}" an den Kunden senden?`
+    )) return;
     setBusy((b) => ({ ...b, [orderId]: channel }));
     try {
       const { data, error } = await supabase.functions.invoke('send-anzahlung-mahnung', {
-        body: { order_id: orderId, channel },
+        body: { order_id: orderId, channel, stage_id: stage.id },
       });
       if (error || (data as any)?.error) {
         throw new Error((data as any)?.error || error?.message || 'Unbekannter Fehler');
       }
-      toast.success(channel === 'sms' ? 'SMS-Mahnung gesendet' : 'E-Mail-Mahnung gesendet');
+      toast.success(`${channel === 'sms' ? 'SMS' : 'E-Mail'}-Mahnung „${stage.name}" gesendet`);
     } catch (e: any) {
       toast.error(e.message ?? 'Versand fehlgeschlagen');
     } finally {
@@ -117,6 +126,19 @@ export default function Anzahlungsrechnung() {
 
   useEffect(() => { load(); }, []);
 
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from('app_settings').select('value').eq('key', 'anzahlung_mahnung_config').maybeSingle();
+      if (data?.value) {
+        try {
+          const cfg = JSON.parse(data.value);
+          const s = (cfg.stages ?? []).filter((x: Stage) => x.enabled);
+          setStages(s);
+        } catch { /* ignore */ }
+      }
+    })();
+  }, []);
+
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
     if (!term) return rows;
@@ -147,10 +169,20 @@ export default function Anzahlungsrechnung() {
         subtitle="Aufträge mit bestätigter Anzahlung (Status offen / open) ohne bereits ausgelöste Bestellung."
         noBreadcrumbs
         actions={
-          <Button variant="outline" size="sm" onClick={load} disabled={loading}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Aktualisieren
-          </Button>
+          <div className="flex items-center gap-2">
+            {isSuperAdmin && (
+              <Button asChild variant="outline" size="sm">
+                <Link to="/operation/anzahlung-mahnung-konfiguration">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Mahnungs-Konfiguration
+                </Link>
+              </Button>
+            )}
+            <Button variant="outline" size="sm" onClick={load} disabled={loading}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Aktualisieren
+            </Button>
+          </div>
         }
       />
 
@@ -218,30 +250,22 @@ export default function Anzahlungsrechnung() {
                         <TableCell className="text-xs text-muted-foreground">{r.salesperson_name || '–'}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1.5 justify-end">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              title="SMS-Mahnung an den Kunden senden"
-                              disabled={busy[r.id] === 'sms'}
-                              onClick={() => sendMahnung(r.id, 'sms')}
-                            >
-                              {busy[r.id] === 'sms'
-                                ? <Loader2 className="h-4 w-4 animate-spin" />
-                                : <MessageSquare className="h-4 w-4" />}
-                              <span className="hidden lg:inline ml-1.5">SMS&nbsp;Mahnung</span>
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              title="E-Mail-Mahnung an den Kunden senden"
-                              disabled={busy[r.id] === 'email'}
-                              onClick={() => sendMahnung(r.id, 'email')}
-                            >
-                              {busy[r.id] === 'email'
-                                ? <Loader2 className="h-4 w-4 animate-spin" />
-                                : <Mail className="h-4 w-4" />}
-                              <span className="hidden lg:inline ml-1.5">E-Mail&nbsp;Mahnung</span>
-                            </Button>
+                            <MahnungButton
+                              channel="sms"
+                              label="SMS Mahnung"
+                              icon={<MessageSquare className="h-4 w-4" />}
+                              busy={busy[r.id] === 'sms'}
+                              stages={stages}
+                              onSelect={(stage) => sendMahnung(r.id, 'sms', stage)}
+                            />
+                            <MahnungButton
+                              channel="email"
+                              label="E-Mail Mahnung"
+                              icon={<Mail className="h-4 w-4" />}
+                              busy={busy[r.id] === 'email'}
+                              stages={stages}
+                              onSelect={(stage) => sendMahnung(r.id, 'email', stage)}
+                            />
                             <Button asChild size="sm" className="gold-gradient text-primary-foreground">
                               <Link to={`/auftraege/${r.id}`}>
                                 <ExternalLink className="h-4 w-4 mr-1" />
@@ -260,5 +284,48 @@ export default function Anzahlungsrechnung() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function MahnungButton({
+  channel, label, icon, busy, stages, onSelect,
+}: {
+  channel: 'sms' | 'email';
+  label: string;
+  icon: React.ReactNode;
+  busy: boolean;
+  stages: Stage[];
+  onSelect: (stage: Stage) => void;
+}) {
+  if (stages.length === 0) {
+    return (
+      <Button size="sm" variant="outline" disabled title="Keine Mahnstufen konfiguriert">
+        {icon}
+        <span className="hidden lg:inline ml-1.5">{label}</span>
+      </Button>
+    );
+  }
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button size="sm" variant="outline" disabled={busy} title={`${label} (Mahnstufe wählen)`}>
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : icon}
+          <span className="hidden lg:inline ml-1.5">{label}</span>
+          <ChevronDown className="h-3.5 w-3.5 ml-1 opacity-70" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-64">
+        <DropdownMenuLabel className="text-xs">Mahnstufe wählen</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {stages.map((s) => (
+          <DropdownMenuItem key={s.id} onClick={() => onSelect(s)}>
+            <div className="flex flex-col">
+              <span className="font-medium">{s.name}</span>
+              <span className="text-xs text-muted-foreground">+{s.days_after_due} Tage nach Fälligkeit</span>
+            </div>
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

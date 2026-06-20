@@ -323,6 +323,7 @@ const TicketByExternal = lazy(() => import("./pages/Tickets/TicketByExternal"));
 const TicketsApiSync = lazy(() => import("./pages/Tickets/ApiSyncSettings"));
 const TicketsSyncMonitor = lazy(() => import("./pages/Tickets/SyncMonitor"));
 const AiServiceCenter = lazy(() => import("./pages/AiServiceCenter"));
+const OperationMahnungKonfiguration = lazy(() => import("./pages/Operation/MahnungKonfiguration"));
 import MaintenanceGate from "./components/MaintenanceGate";
 import LeihgeraetReminder from "./components/LeihgeraetReminder";
 
@@ -538,6 +539,7 @@ function AppRoutes() {
           <Route path="/finance/mahnwesen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceMahnwesen /></ProtectedRoute>} />
           <Route path="/finance/mahnwesen/einstellungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceMahnwesenSettings /></ProtectedRoute>} />
           <Route path="/finance/mahnwesen/:customerId" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceMahnwesenDetail /></ProtectedRoute>} />
+          <Route path="/operation/anzahlung-mahnung-konfiguration" element={<ProtectedRoute requiredRoles={['Super Admin']}><OperationMahnungKonfiguration /></ProtectedRoute>} />
           <Route path="/finance/datev" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceDatev /></ProtectedRoute>} />
           <Route path="/finance/bank" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceBank /></ProtectedRoute>} />
           <Route path="/finance/sepa" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceSepa /></ProtectedRoute>} />

@@ -23,7 +23,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/h
 import { useFavorites, type FavoriteEntry } from '@/hooks/useFavorites';
 import { NotificationCenter } from '@/components/infinity/NotificationCenter';
 import { useNotificationFeed } from '@/hooks/useNotificationFeed';
-import { Briefcase } from 'lucide-react';
+import { Briefcase, Bell } from 'lucide-react';
 import alixLogo from '@/assets/alix-logo-gold.png';
 
 
@@ -465,6 +465,7 @@ const navItems: NavItem[] = [
       // Operative Tools
       { path: '/operation/nummernkreise', label: 'Nummernkreise', icon: Hash, roles: ['Super Admin'] },
       { path: '/operation/sms-konfiguration', label: 'SMS Konfiguration', icon: MessageSquare, roles: ['Super Admin', 'Admin'] },
+      { path: '/operation/anzahlung-mahnung-konfiguration', label: 'Anzahlungs-Mahnung Konfiguration', icon: Bell, roles: ['Super Admin'] },
       { path: '/order/timeline', label: 'Timeline Bestellungen', icon: Calendar, roles: ['Super Admin'] },
       { path: '/lager/doppelte-reservierungen', label: 'Doppelte Reservierungen', icon: AlertTriangle, roles: ['Super Admin'] },
 
