@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Receipt, Search, ExternalLink, RefreshCw, FileText, Wallet, Banknote } from 'lucide-react';
+import { Receipt, Search, ExternalLink, RefreshCw, FileText, Wallet, Banknote, MessageSquare, Mail, Loader2 } from 'lucide-react';
 import { EmptyState } from '@/components/infinity/EmptyState';
 import { supabase } from '@/integrations/supabase/client';
 import { withAt } from '@/lib/atSuffix';
@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/table';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { KpiTile } from '@/components/infinity/KpiTile';
+import { toast } from 'sonner';
 
 type Row = {
   id: string;
