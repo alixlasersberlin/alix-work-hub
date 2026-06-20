@@ -761,6 +761,40 @@ function ImportTab({ rows, depts, reload }: { rows: ImportJob[]; depts: Dept[]; 
       </Card>
 
       <Card>
+        <CardHeader><CardTitle className="flex items-center gap-2"><Globe className="w-4 h-4 text-primary" /> Webseite einlesen</CardTitle></CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="md:col-span-2">
+            <Label>URL</Label>
+            <Input value={urlForm.url} onChange={(e) => setUrlForm({ ...urlForm, url: e.target.value })} placeholder="https://example.com/seite" />
+          </div>
+          <div>
+            <Label>Kategorie</Label>
+            <Input value={urlForm.category} onChange={(e) => setUrlForm({ ...urlForm, category: e.target.value })} />
+          </div>
+          <div>
+            <Label>Abteilung</Label>
+            <Select value={urlForm.department} onValueChange={(v) => setUrlForm({ ...urlForm, department: v })}>
+              <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+              <SelectContent>{depts.map(d => <SelectItem key={d.key} value={d.key}>{d.label}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="md:col-span-2">
+            <Label>Tags</Label>
+            <Input value={urlForm.tags} onChange={(e) => setUrlForm({ ...urlForm, tags: e.target.value })} placeholder="komma, getrennt" />
+          </div>
+          <div className="md:col-span-2 flex justify-end">
+            <Button onClick={startUrlImport} disabled={urlBusy || !urlForm.url} className="gap-2">
+              {urlBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Globe className="w-4 h-4" />} Webseite importieren
+            </Button>
+          </div>
+          <p className="md:col-span-2 text-[11px] text-muted-foreground">
+            Die Seite wird serverseitig geladen, HTML wird entfernt und der Text (bis 200k Zeichen) als Wissensquelle gespeichert.
+          </p>
+        </CardContent>
+      </Card>
+
+
+      <Card>
         <CardHeader><CardTitle className="flex items-center gap-2"><History className="w-4 h-4 text-primary" /> Import-Historie</CardTitle></CardHeader>
         <CardContent>
           {rows.length === 0 ? <p className="text-sm text-muted-foreground">Noch keine Imports.</p> : (
