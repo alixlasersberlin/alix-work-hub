@@ -135,20 +135,49 @@ export default function AlixCopilotKonfiguration() {
     setCfg(c => ({ ...c, knowledge_snippets: c.knowledge_snippets.filter(s => s.id !== id) }));
   }
 
-  async function onUpload(file: File) {
-    if (file.size > 200_000) {
-      toast.error("Datei zu groß (max. 200 KB Text).");
-      return;
+  async function extractPdfText(file: File): Promise<string> {
+    const pdfjs: any = await import("pdfjs-dist");
+    // Worker via CDN, vermeidet Vite-Worker-Bundling
+    const workerUrl = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+    pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+    const buf = await file.arrayBuffer();
+    const doc = await pdfjs.getDocument({ data: buf }).promise;
+    let out = "";
+    const maxPages = Math.min(doc.numPages, 100);
+    for (let i = 1; i <= maxPages; i++) {
+      const page = await doc.getPage(i);
+      const content = await page.getTextContent();
+      const txt = content.items.map((it: any) => ("str" in it ? it.str : "")).join(" ");
+      out += txt + "\n\n";
+      if (out.length > 200_000) break;
     }
-    const text = await file.text();
-    setCfg(c => ({
-      ...c,
-      knowledge_snippets: [
-        ...c.knowledge_snippets,
-        { id: crypto.randomUUID(), title: file.name, content: text.slice(0, 50_000) },
-      ],
-    }));
-    toast.success("Datei als Wissens-Eintrag hinzugefügt");
+    return out.trim();
+  }
+
+  async function onUpload(file: File) {
+    try {
+      const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+      let text: string;
+      if (isPdf) {
+        if (file.size > 20_000_000) { toast.error("PDF zu groß (max. 20 MB)."); return; }
+        toast.info("PDF wird verarbeitet …");
+        text = await extractPdfText(file);
+        if (!text) { toast.error("Kein Text in PDF gefunden (evtl. gescannt – OCR nötig)."); return; }
+      } else {
+        if (file.size > 500_000) { toast.error("Datei zu groß (max. 500 KB Text)."); return; }
+        text = await file.text();
+      }
+      setCfg(c => ({
+        ...c,
+        knowledge_snippets: [
+          ...c.knowledge_snippets,
+          { id: crypto.randomUUID(), title: file.name, content: text.slice(0, 100_000) },
+        ],
+      }));
+      toast.success("Datei als Wissens-Eintrag hinzugefügt");
+    } catch (e: any) {
+      toast.error(e?.message || "Datei konnte nicht gelesen werden");
+    }
   }
 
   async function runTest() {
@@ -222,10 +251,10 @@ export default function AlixCopilotKonfiguration() {
               <CardTitle className="flex items-center gap-2"><BookOpen className="w-4 h-4 text-primary" /> Wissens-Bibliothek ({cfg.knowledge_snippets.length})</CardTitle>
               <div className="flex items-center gap-2">
                 <label className="inline-flex items-center gap-2 text-xs cursor-pointer rounded-md border border-border px-3 py-1.5 hover:bg-secondary">
-                  <FileText className="w-3.5 h-3.5" /> Textdatei importieren
+                  <FileText className="w-3.5 h-3.5" /> Datei importieren (PDF/TXT/MD/CSV/JSON)
                   <input
                     type="file"
-                    accept=".txt,.md,.csv,.json"
+                    accept=".pdf,.txt,.md,.csv,.json,application/pdf"
                     className="hidden"
                     onChange={(e) => { const f = e.target.files?.[0]; if (f) onUpload(f); e.currentTarget.value = ""; }}
                   />
