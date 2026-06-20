@@ -246,12 +246,20 @@ function RepoSelector({ currentRepo, onSaved }: { currentRepo?: string | null; o
   const save = async (repo: string) => {
     if (!/^[^/\s]+\/[^/\s]+$/.test(repo)) { toast.error("Format: owner/repo"); return; }
     setSaving(true);
-    const { data, error } = await supabase.functions.invoke("github-set-repo", { body: { repo } });
+    let { data, error } = await supabase.functions.invoke("github-set-repo", { body: { repo } });
+    if ((error || data?.ok === false) && data?.can_force) {
+      const ok = window.confirm(`${data.error}\n\nTrotzdem speichern?`);
+      if (ok) {
+        ({ data, error } = await supabase.functions.invoke("github-set-repo", { body: { repo, force: true } }));
+      } else { setSaving(false); return; }
+    }
     setSaving(false);
     if (error || data?.ok === false) { toast.error(data?.error || "Speichern fehlgeschlagen"); return; }
-    toast.success(`Repository gespeichert: ${data.repo}`);
+    toast.success(`Repository gespeichert: ${data.repo}${data.warning ? " (mit Warnung)" : ""}`);
+    if (data.warning) toast.warning(data.warning);
     onSaved();
   };
+
 
   return (
     <Card>
