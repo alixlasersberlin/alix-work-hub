@@ -1760,11 +1760,23 @@ export default function AngebotErstellen() {
           <Pencil className="w-4 h-4" />
           Mit Alix Sign zur Unterschrift senden
         </Button>
+        {isSuperAdmin && (
+          <Button
+            onClick={confirmAsOrder}
+            disabled={confirming}
+            className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white border-0"
+            title="Nur Super Admin: Angebot anerkennen und in einen Auftrag wandeln"
+          >
+            {confirming ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+            Selbst bestätigen & in Auftrag wandeln
+          </Button>
+        )}
         <Button onClick={generatePDF} className="gold-gradient text-primary-foreground gap-2">
           <FileDown className="w-4 h-4" />
           Als PDF speichern
         </Button>
       </div>
+
 
       {/* Live-PDF-Vorschau */}
       <div className="mt-6 rounded-lg border border-border bg-card">
