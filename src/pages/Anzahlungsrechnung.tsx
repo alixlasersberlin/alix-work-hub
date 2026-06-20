@@ -169,10 +169,20 @@ export default function Anzahlungsrechnung() {
         subtitle="Aufträge mit bestätigter Anzahlung (Status offen / open) ohne bereits ausgelöste Bestellung."
         noBreadcrumbs
         actions={
-          <Button variant="outline" size="sm" onClick={load} disabled={loading}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Aktualisieren
-          </Button>
+          <div className="flex items-center gap-2">
+            {isSuperAdmin && (
+              <Button asChild variant="outline" size="sm">
+                <Link to="/operation/anzahlung-mahnung-konfiguration">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Mahnungs-Konfiguration
+                </Link>
+              </Button>
+            )}
+            <Button variant="outline" size="sm" onClick={load} disabled={loading}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Aktualisieren
+            </Button>
+          </div>
         }
       />
 
