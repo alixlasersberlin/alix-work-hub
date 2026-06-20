@@ -229,10 +229,67 @@ export default function SmsKonfiguration() {
                 <StatusRow ok={!!status.effective_from} label="Effektive Absendernummer" value={status.effective_from ?? '—'} />
               </div>
               <p className="text-xs text-muted-foreground">
-                Die Twilio-Zugangsdaten werden als Supabase-Secrets verwaltet. Änderungen erfolgen in den Edge Function Secrets.
+                In der Datenbank hinterlegte Werte überschreiben die Supabase-Secrets. Leer lassen, um auf den Secret-Wert zurückzufallen.
               </p>
             </>
           )}
+
+          <div className="border-t border-border pt-4 space-y-3">
+            <div className="text-sm font-medium">Twilio-Zugangsdaten bearbeiten</div>
+            {cfgLoading ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="w-4 h-4 animate-spin" /> Lädt …
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Account SID</Label>
+                    <Input
+                      value={cfg.account_sid}
+                      onChange={(e) => setCfg({ ...cfg, account_sid: e.target.value })}
+                      placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                      autoComplete="off"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Absendernummer (E.164)</Label>
+                    <Input
+                      value={cfg.from_number}
+                      onChange={(e) => setCfg({ ...cfg, from_number: e.target.value })}
+                      placeholder="+49 …"
+                      autoComplete="off"
+                    />
+                  </div>
+                  <div className="space-y-1.5 md:col-span-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs">Auth Token</Label>
+                      <button
+                        type="button"
+                        className="text-[11px] text-muted-foreground hover:text-foreground"
+                        onClick={() => setShowToken((s) => !s)}
+                      >
+                        {showToken ? 'verbergen' : 'anzeigen'}
+                      </button>
+                    </div>
+                    <Input
+                      type={showToken ? 'text' : 'password'}
+                      value={cfg.auth_token}
+                      onChange={(e) => setCfg({ ...cfg, auth_token: e.target.value })}
+                      placeholder="••••••••"
+                      autoComplete="new-password"
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <Button onClick={saveSettings} disabled={cfgSaving}>
+                    {cfgSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                    Speichern
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
 
           <div className="border-t border-border pt-4 space-y-3">
             <div className="text-sm font-medium">Test-SMS senden</div>
