@@ -642,6 +642,18 @@ export default function Orders() {
                                   <Package className="w-3 h-3 mr-1" /> Artikel
                                 </Button>
                               )}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                                disabled={resendingId === o.id}
+                                onClick={() => resendOrderConfirmation(o)}
+                                title="Auftragsbestätigung erneut an Kunde senden (BCC: rde@alix-lasers.com)"
+                              >
+                                {resendingId === o.id ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Send className="w-3 h-3 mr-1" />}
+                                AB senden
+                              </Button>
+
                             </div>
                           </td>
                         )}
