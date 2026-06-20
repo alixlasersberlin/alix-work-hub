@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
       meta = await r.json();
     } else {
       warning = `Repository nicht erreichbar (${r.status}). Token hat evtl. keinen Zugriff – Speichern ${force ? "erzwungen" : "abgebrochen"}.`;
-      if (!force) return json({ ok: false, error: warning, can_force: true }, 400);
+      if (!force) return json({ ok: false, error: warning, can_force: true });
     }
   } else {
     warning = "GITHUB_TOKEN fehlt – Repo gespeichert, aber Verbindung kann nicht geprüft werden.";
