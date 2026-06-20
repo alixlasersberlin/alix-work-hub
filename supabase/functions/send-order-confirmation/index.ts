@@ -10,6 +10,7 @@ import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
 const SITE_NAME = 'Alix Lasers I Datacenter'
 const SENDER_DOMAIN = 'notify.alixlasers.ai'
 const FROM_DOMAIN = 'notify.alixlasers.ai'
+const PUBLIC_BASE = 'https://alixwork.de'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -78,7 +79,7 @@ Deno.serve(async (req) => {
       .eq('id', sig.sign_request_id).maybeSingle()
     if (!r) return new Response(JSON.stringify({ error: 'Sign request not found' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
 
-    download_url = `${SUPABASE_URL}/functions/v1/order-confirmation-pdf?signature_id=${sig.id}&token=${encodeURIComponent(r.token)}`
+    download_url = `${PUBLIC_BASE}/pdf/ab?signature_id=${sig.id}&token=${encodeURIComponent(r.token)}`
     customer_name = r.customer_name || undefined
     customer_email_fallback = r.customer_email || sig.signer_email || undefined
     offerNumber = r.offer_number || sig.offer_number || undefined
@@ -101,7 +102,7 @@ Deno.serve(async (req) => {
       ? await admin.from('customers').select('company_name, contact_name, email').eq('id', ord.customer_id).maybeSingle()
       : { data: null as any }
     const token = await signOrderToken(ord.id, SUPABASE_SERVICE_ROLE_KEY)
-    download_url = `${SUPABASE_URL}/functions/v1/order-fallback-pdf?order_id=${ord.id}&token=${token}`
+    download_url = `${PUBLIC_BASE}/pdf/ab?order_id=${ord.id}&token=${token}`
     orderNumber = ord.internal_number || ord.order_number || undefined
     customer_name = cust?.company_name || cust?.contact_name || (ord.billing_address as any)?.name || undefined
     customer_email_fallback = cust?.email || undefined

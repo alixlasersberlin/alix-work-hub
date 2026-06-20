@@ -126,6 +126,7 @@ const FinanceReportSchedules = lazy(() => import("./pages/Finance/ReportSchedule
 const FinanceManagementPack = lazy(() => import("./pages/Finance/ManagementPack"));
 const FinanceStakeholders = lazy(() => import("./pages/Finance/Stakeholders"));
 const StakeholderPortal = lazy(() => import("./pages/StakeholderPortal"));
+const PdfAb = lazy(() => import("./pages/PdfAb"));
 const FinanceKonsolidierung = lazy(() => import("./pages/Finance/Konsolidierung"));
 const FinanceKonsolidierungDetail = lazy(() => import("./pages/Finance/KonsolidierungDetail"));
 const FinanceIntercompany = lazy(() => import("./pages/Finance/Intercompany"));
@@ -446,6 +447,7 @@ function AppRoutes() {
         <Route path="/alix-enterprise" element={user ? <Navigate to="/dashboard" replace /> : <CovertLogin />} />
         <Route path="/passwort-setzen" element={<SetPassword />} />
         <Route path="/stakeholder/:token" element={<StakeholderPortal />} />
+        <Route path="/pdf/ab" element={<PdfAb />} />
         <Route path="/mfa-setup" element={<MfaGate expect="not_enrolled"><MfaSetup /></MfaGate>} />
         <Route path="/mfa-challenge" element={<MfaGate expect="challenge_required"><MfaChallenge /></MfaGate>} />
         <Route path="/mfa-recovery" element={<MfaGate expect="any"><MfaRecovery /></MfaGate>} />

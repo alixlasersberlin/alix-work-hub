@@ -23,6 +23,7 @@ type SigRow = {
 };
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const PUBLIC_BASE = 'https://alixwork.de';
 
 export default function AuftragsbestaetigungTab({ orderId, customerId, customerEmail }: Props) {
   const [loading, setLoading] = useState(true);
@@ -49,8 +50,11 @@ export default function AuftragsbestaetigungTab({ orderId, customerId, customerE
 
   const selected = sigs.find(s => s.id === selectedId) || null;
   const token = (selected?.alix_sign_requests as any)?.token as string | undefined;
-  const previewUrl = selected && token
+  const pdfFetchUrl = selected && token
     ? `${SUPABASE_URL}/functions/v1/order-confirmation-pdf?signature_id=${selected.id}&token=${encodeURIComponent(token)}`
+    : null;
+  const previewUrl = selected && token
+    ? `${PUBLIC_BASE}/pdf/ab?signature_id=${selected.id}&token=${encodeURIComponent(token)}`
     : null;
 
   const handleSend = async () => {
@@ -78,7 +82,8 @@ export default function AuftragsbestaetigungTab({ orderId, customerId, customerE
   const handleDownload = async () => {
     if (!previewUrl || !selected) return;
     try {
-      const res = await fetch(previewUrl);
+      if (!pdfFetchUrl) return;
+      const res = await fetch(pdfFetchUrl);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
