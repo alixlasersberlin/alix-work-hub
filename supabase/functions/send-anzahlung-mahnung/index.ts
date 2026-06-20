@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
 
     const { data: cust } = await admin
       .from('customers')
-      .select('id, company_name, contact_name, email, phone, mobile, iban, bic, bank_name')
+      .select('id, company_name, contact_name, email, phone, iban, bic, bank_name')
       .eq('id', order.customer_id).maybeSingle();
     if (!cust) return json({ error: 'Kunde nicht gefunden' }, 404);
 
