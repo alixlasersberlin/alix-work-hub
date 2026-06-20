@@ -468,7 +468,7 @@ const navItems: NavItem[] = [
 
       // Kommunikation & Portale
       {
-        path: '#sms-email-texte', label: 'SMS & E-Mail Texte', icon: Mail, roles: ['Super Admin'],
+        path: '#sms-email-texte', label: 'SMS & E-MAIL TEXTE', icon: Mail, roles: ['Super Admin'],
         children: [
           { path: '/operation/email-vorlagen', label: 'E-Mail Vorlagen', icon: Mail, roles: ['Super Admin'] },
           { path: '/operation/sms-konfiguration', label: 'SMS Konfiguration', icon: MessageSquare, roles: ['Super Admin', 'Admin'] },
