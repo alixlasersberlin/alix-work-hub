@@ -143,7 +143,10 @@ function GithubTab({ canManage }: { canManage: boolean }) {
     setLoading(true);
     const { data, error } = await supabase.functions.invoke("github-status");
     if (error) toast.error("GitHub Status nicht abrufbar");
-    else setInfo(data);
+    else {
+      setInfo(data);
+      if (data?.ok === false) toast.error(data.error || "GitHub-Verbindung nicht aktiv");
+    }
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
@@ -151,7 +154,7 @@ function GithubTab({ canManage }: { canManage: boolean }) {
   const act = async (action: string) => {
     if (!canManage) return;
     const { data, error } = await supabase.functions.invoke("github-action", { body: { action } });
-    if (error) toast.error(`Fehler: ${action}`);
+    if (error || data?.ok === false) toast.error(data?.message || `Fehler: ${action}`);
     else toast.success(`${action} ausgeführt`);
     load();
   };
@@ -161,6 +164,7 @@ function GithubTab({ canManage }: { canManage: boolean }) {
       <div className="grid gap-4 md:grid-cols-2">
         <Card><CardHeader><CardTitle className="flex items-center gap-2"><Github className="h-5 w-5" /> Repository</CardTitle></CardHeader>
           <CardContent className="space-y-2 text-sm">
+            {info?.ok === false && <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-destructive">{info.error}</div>}
             <div className="flex justify-between"><span className="text-muted-foreground">Repository</span><span className="font-medium">{info?.repo ?? "—"}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Branch</span><span className="font-medium">{info?.branch ?? "main"}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Letzter Commit</span><span className="font-mono text-xs">{info?.last_commit?.sha?.slice(0,7) ?? "—"}</span></div>
