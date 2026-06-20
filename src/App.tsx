@@ -198,6 +198,7 @@ const AuftragStatus = lazy(() => import("./pages/AuftragStatus"));
 const Geraetesperren = lazy(() => import("./pages/Geraetesperren"));
 const Systemwartung = lazy(() => import("./pages/Systemwartung"));
 const Nummernkreise = lazy(() => import("./pages/operation/Nummernkreise"));
+const SmsKonfiguration = lazy(() => import("./pages/operation/SmsKonfiguration"));
 const Mandanten = lazy(() => import("./pages/Mandanten"));
 const KonzernDashboard = lazy(() => import("./pages/KonzernDashboard"));
 const MobileLayout = lazy(() => import("./pages/Mobile/Layout"));
