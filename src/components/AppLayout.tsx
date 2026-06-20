@@ -455,10 +455,16 @@ const navItems: NavItem[] = [
       { path: '/import', label: 'Import', icon: Cloud, roles: ['Super Admin'] },
 
       // Benutzer & Rechte
-      { path: '/benutzer', label: 'Benutzer', icon: Users, roles: ['Super Admin'] },
-      { path: '/rollen', label: 'Rollen', icon: Shield, roles: ['Super Admin', 'Admin'] },
-      { path: '/order/zulieferer', label: 'Lieferanten', icon: Users, roles: ['Super Admin'] },
-      { path: '/mandanten', label: 'Mandanten', icon: Building2, roles: ['Super Admin'] },
+      // Rollen & Nutzer
+      {
+        path: '#rollen-nutzer', label: 'ROLLEN-NUTZER', icon: Users, roles: ['Super Admin'],
+        children: [
+          { path: '/benutzer', label: 'Benutzer', icon: Users, roles: ['Super Admin'] },
+          { path: '/rollen', label: 'Rollen', icon: Shield, roles: ['Super Admin', 'Admin'] },
+          { path: '/order/zulieferer', label: 'Lieferanten', icon: Users, roles: ['Super Admin'] },
+          { path: '/mandanten', label: 'Mandanten', icon: Building2, roles: ['Super Admin'] },
+        ],
+      },
 
       // Kommunikation & Portale
       {
