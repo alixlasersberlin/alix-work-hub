@@ -141,7 +141,7 @@ Deno.serve(async (req) => {
     }
 
     // SMS
-    const phoneRaw = (cust.mobile ?? cust.phone ?? '').toString();
+    const phoneRaw = (cust.phone ?? '').toString();
     const to = normE164(phoneRaw);
     if (!to) return json({ error: 'Kunde hat keine gültige Mobilnummer' }, 400);
 
