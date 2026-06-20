@@ -447,8 +447,6 @@ const navItems: NavItem[] = [
       // Stammdaten & Import
       { path: '/geraetetypen', label: 'Gerätetypen', icon: BarChart3, roles: ['Super Admin'] },
       { path: '/import', label: 'Import', icon: Cloud, roles: ['Super Admin'] },
-      { path: '/verkauf/anfragen/import', label: 'Anfragen Import', icon: Upload, roles: ['Admin', 'Super Admin', 'Vertrieb', 'Vertriebsleitung', 'Order', 'SACHBEARBEITUNG'] },
-      { path: '/verkauf/angebot/import', label: 'Angebote Data Import', icon: Upload, roles: ['Super Admin'] },
 
       // Benutzer & Rechte
       { path: '/benutzer', label: 'Benutzer', icon: Users, roles: ['Super Admin'] },
@@ -467,19 +465,25 @@ const navItems: NavItem[] = [
       },
       { path: '/portal-admin', label: 'Kundenportal', icon: Globe, roles: ['Super Admin'] },
       { path: '/tickets', label: 'Ticketliste', icon: Ticket, roles: ['Super Admin'] },
-      { path: '/tickets/api-sync', label: 'API Sync Einstellungen', icon: Settings, roles: ['Super Admin'] },
 
       // Operative Tools
-      { path: '/operation/nummernkreise', label: 'Nummernkreise', icon: Hash, roles: ['Super Admin'] },
-      { path: '/order/timeline', label: 'Timeline Bestellungen', icon: Calendar, roles: ['Super Admin'] },
       { path: '/order/timeline', label: 'Timeline Bestellungen', icon: Calendar, roles: ['Super Admin'] },
       { path: '/lager/doppelte-reservierungen', label: 'Doppelte Reservierungen', icon: AlertTriangle, roles: ['Super Admin'] },
 
-      // System & Wartung
+      // System
       { path: '/system', label: 'Monitoring', icon: Server, roles: ['Super Admin'] },
-      { path: '/operation/logfiles', label: 'Logfiles', icon: ScrollText, roles: ['Super Admin'] },
-      { path: '/datensicherung', label: 'Datensicherung', icon: Shield, roles: ['Super Admin'] },
-      { path: '/operation/systemwartung', label: 'Systemwartung', icon: AlertTriangle, roles: ['Super Admin'] },
+      {
+        path: '#system', label: 'SYSTEM', icon: Cog, roles: ['Super Admin'],
+        children: [
+          { path: '/tickets/api-sync', label: 'API Sync Einstellungen', icon: Settings, roles: ['Super Admin'] },
+          { path: '/operation/nummernkreise', label: 'Nummernkreise', icon: Hash, roles: ['Super Admin'] },
+          { path: '/verkauf/anfragen/import', label: 'Anfragen Import', icon: Upload, roles: ['Admin', 'Super Admin', 'Vertrieb', 'Vertriebsleitung', 'Order', 'SACHBEARBEITUNG'] },
+          { path: '/verkauf/angebot/import', label: 'Angebote Data Import', icon: Upload, roles: ['Super Admin'] },
+          { path: '/datensicherung', label: 'Datensicherung', icon: Shield, roles: ['Super Admin'] },
+          { path: '/operation/systemwartung', label: 'Systemwartung', icon: AlertTriangle, roles: ['Super Admin'] },
+          { path: '/operation/logfiles', label: 'Logfiles', icon: ScrollText, roles: ['Super Admin'] },
+        ],
+      },
     ],
   },
 
