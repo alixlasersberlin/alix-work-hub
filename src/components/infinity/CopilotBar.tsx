@@ -7,6 +7,23 @@ import { Sparkles, X, Send, Loader2, MessageSquareMore, Wrench } from "lucide-re
 
 type Msg = { role: "user" | "assistant"; content: string; trace?: { name: string; args: any }[] };
 
+const TOOL_LABELS: Record<string, { label: string; hint: string }> = {
+  search_customers: { label: "Kunden durchsucht", hint: "Suche in der Kundendatenbank" },
+  get_customer: { label: "Kunde geladen", hint: "Details zu einem Kunden geladen" },
+  search_orders: { label: "Aufträge durchsucht", hint: "Suche in den Aufträgen" },
+  get_order: { label: "Auftrag geladen", hint: "Details zu einem Auftrag geladen" },
+  search_invoices: { label: "Rechnungen durchsucht", hint: "Finance: Rechnungen gesucht" },
+  search_tickets: { label: "Tickets durchsucht", hint: "Support-Tickets gesucht" },
+  search_production_orders: { label: "Production durchsucht", hint: "Produktionsaufträge gesucht" },
+  search_repair_orders: { label: "Reparaturen durchsucht", hint: "Repair-Aufträge gesucht" },
+  search_sales_leads: { label: "Leads durchsucht", hint: "Sales Leads gesucht" },
+  search_lager_devices: { label: "Lager durchsucht", hint: "Geräte im Lager gesucht" },
+  kpi_overview: { label: "KPIs geladen", hint: "Kennzahlen-Übersicht geladen" },
+  list_modules: { label: "Module aufgelistet", hint: "Verfügbare Datenmodule angezeigt" },
+  describe_table: { label: "Struktur geprüft", hint: "Tabellen-Schema (Spalten) gelesen" },
+  query_table: { label: "Daten abgefragt", hint: "Generische Read-only-Abfrage auf eine erlaubte Tabelle" },
+};
+
 export function CopilotBar() {
   const { user } = useAuth();
   const { sourceFilter } = useTenant();
@@ -118,11 +135,18 @@ export function CopilotBar() {
                 </div>
                 {m.trace && m.trace.length > 0 && (
                   <div className="mt-1 flex flex-wrap gap-1 max-w-[85%]">
-                    {m.trace.map((t, ti) => (
-                      <span key={ti} className="inline-flex items-center gap-1 text-[10px] text-amber-200/70 border border-amber-400/20 rounded px-1.5 py-0.5 bg-amber-500/5">
-                        <Wrench className="h-2.5 w-2.5" />{t.name}
-                      </span>
-                    ))}
+                    {m.trace.map((t, ti) => {
+                      const label = TOOL_LABELS[t.name] ?? { label: t.name, hint: "Internes Werkzeug" };
+                      return (
+                        <span
+                          key={ti}
+                          title={`${label.label} — ${label.hint}`}
+                          className="inline-flex items-center gap-1 text-[10px] text-amber-200/70 border border-amber-400/20 rounded px-1.5 py-0.5 bg-amber-500/5 cursor-help"
+                        >
+                          <Wrench className="h-2.5 w-2.5" />{label.label}
+                        </span>
+                      );
+                    })}
                   </div>
                 )}
               </div>
