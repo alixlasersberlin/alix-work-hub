@@ -27,6 +27,7 @@ import MfaChallenge from "./pages/MfaChallenge";
 import MfaRecovery from "./pages/MfaRecovery";
 import AppLayout from "./components/AppLayout";
 import NotFound from "./pages/NotFound";
+import { isMfaMandatory } from "@/lib/mfa-required";
 
 // Lazy: alle Hauptseiten → Route-basiertes Code-Splitting
 const SetPassword = lazy(() => import("./pages/SetPassword"));
