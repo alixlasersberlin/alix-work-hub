@@ -10,6 +10,7 @@ import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
 const SITE_NAME = 'Alix Lasers I Datacenter'
 const SENDER_DOMAIN = 'notify.alixlasers.ai'
 const FROM_DOMAIN = 'notify.alixlasers.ai'
+const PUBLIC_BASE = 'https://alixwork.de'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
