@@ -123,16 +123,19 @@ Deno.serve(async (req) => {
       if (!sendRes.ok) {
         await admin.from('customer_communication_log').insert({
           customer_id: cust.id, order_id, channel: 'email', direction: 'outbound',
-          subject: `Anzahlungsrechnung Mahnung ${orderNumber}`, body_text: 'Versand fehlgeschlagen',
-          status: 'failed', error_message: JSON.stringify(sendBody), created_by: userId,
+          subject: `Anzahlungsrechnung Mahnung ${orderNumber}`,
+          preview: 'Versand fehlgeschlagen',
+          department: 'Finance', created_by: userId,
+          metadata: { type: 'anzahlung_mahnung', status: 'failed', recipient, error: sendBody },
         });
         return json({ ok: false, error: `E-Mail-Versand fehlgeschlagen (${sendRes.status})` }, 502);
       }
       await admin.from('customer_communication_log').insert({
         customer_id: cust.id, order_id, channel: 'email', direction: 'outbound',
-        recipient, subject: `Anzahlungsrechnung Mahnung ${orderNumber}`,
-        body_text: `Freundliche Erinnerung an Anzahlung ${fmtEur(depositAmount)}.`,
-        status: 'sent', external_id: sendBody?.message_id ?? null, created_by: userId,
+        subject: `Anzahlungsrechnung Mahnung ${orderNumber}`,
+        preview: `Freundliche Erinnerung an Anzahlung ${fmtEur(depositAmount)}.`,
+        department: 'Finance', created_by: userId,
+        metadata: { type: 'anzahlung_mahnung', status: 'sent', recipient, message_id: sendBody?.message_id ?? null },
       });
       return json({ ok: true, channel: 'email', recipient });
     }
