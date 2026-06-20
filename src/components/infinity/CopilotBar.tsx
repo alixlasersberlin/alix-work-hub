@@ -68,7 +68,7 @@ export function CopilotBar() {
         <button
           onClick={() => setOpen(true)}
           aria-label="ALIX Copilot öffnen (Strg+J)"
-          className="fixed bottom-6 right-6 z-[60] group flex items-center gap-2 rounded-full border border-amber-400/30 bg-black/70 backdrop-blur px-3 py-2 shadow-[0_10px_40px_-10px_rgba(245,158,11,0.5)] hover:border-amber-400/60 transition print:hidden"
+          className="fixed bottom-6 right-0 z-[60] group flex items-center gap-2 rounded-l-full border border-r-0 border-amber-400/30 bg-black/70 backdrop-blur px-3 py-2 shadow-[0_10px_40px_-10px_rgba(245,158,11,0.5)] hover:border-amber-400/60 transition print:hidden"
         >
           <Sparkles className="h-4 w-4 text-amber-300 group-hover:rotate-12 transition" />
           <span className="text-sm font-medium sig-mark">ALIX Copilot</span>
@@ -78,7 +78,7 @@ export function CopilotBar() {
 
       {/* Panel */}
       {open && (
-        <div className="fixed bottom-6 right-6 z-[60] w-[min(420px,calc(100vw-3rem))] max-h-[min(640px,calc(100vh-3rem))] flex flex-col overflow-hidden rounded-2xl border border-amber-400/25 bg-black/85 backdrop-blur-xl shadow-[0_40px_80px_-20px_rgba(0,0,0,0.9)] print:hidden">
+        <div className="fixed bottom-6 right-0 z-[60] w-[min(420px,calc(100vw-1rem))] max-h-[min(640px,calc(100vh-3rem))] flex flex-col overflow-hidden rounded-l-2xl border border-r-0 border-amber-400/25 bg-black/85 backdrop-blur-xl shadow-[0_40px_80px_-20px_rgba(0,0,0,0.9)] print:hidden">
           <div className="relative border-b border-white/10 px-4 py-3 flex items-center justify-between"
             style={{ background: "linear-gradient(90deg, hsl(38 90% 55% / 0.10), transparent 60%)" }}>
             <div className="flex items-center gap-2">
