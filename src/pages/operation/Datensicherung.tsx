@@ -136,6 +136,8 @@ function DashboardTab() {
 
 /* -------------------- GITHUB -------------------- */
 function GithubTab({ canManage }: { canManage: boolean }) {
+  const { hasRole } = useAuth() as any;
+  const isSuperAdmin = typeof hasRole === "function" ? hasRole("Super Admin") : false;
   const [info, setInfo] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
@@ -161,6 +163,8 @@ function GithubTab({ canManage }: { canManage: boolean }) {
 
   return (
     <div className="space-y-6">
+      {isSuperAdmin && <RepoSelector currentRepo={info?.repo} onSaved={load} />}
+
       <div className="grid gap-4 md:grid-cols-2">
         <Card><CardHeader><CardTitle className="flex items-center gap-2"><Github className="h-5 w-5" /> Repository</CardTitle></CardHeader>
           <CardContent className="space-y-2 text-sm">
@@ -207,6 +211,105 @@ function GithubTab({ canManage }: { canManage: boolean }) {
     </div>
   );
 }
+
+type RepoItem = { full_name: string; private: boolean; default_branch: string; updated_at: string; html_url: string };
+
+function RepoSelector({ currentRepo, onSaved }: { currentRepo?: string | null; onSaved: () => void }) {
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [repos, setRepos] = useState<RepoItem[]>([]);
+  const [filter, setFilter] = useState("");
+  const [selected, setSelected] = useState<string>("");
+  const [manual, setManual] = useState<string>("");
+
+  const fetchRepos = async () => {
+    setLoading(true);
+    const { data, error } = await supabase.functions.invoke("github-repos");
+    setLoading(false);
+    if (error || data?.ok === false) {
+      toast.error(data?.error || "GitHub-Repos nicht abrufbar");
+      return;
+    }
+    setUser(data.user);
+    setRepos(data.repos || []);
+  };
+  useEffect(() => { fetchRepos(); }, []);
+  useEffect(() => { if (currentRepo) setSelected(currentRepo); }, [currentRepo]);
+
+  const filtered = useMemo(() => {
+    const f = filter.trim().toLowerCase();
+    const list = f ? repos.filter(r => r.full_name.toLowerCase().includes(f)) : repos;
+    return list.slice(0, 200);
+  }, [repos, filter]);
+
+  const save = async (repo: string) => {
+    if (!/^[^/\s]+\/[^/\s]+$/.test(repo)) { toast.error("Format: owner/repo"); return; }
+    setSaving(true);
+    const { data, error } = await supabase.functions.invoke("github-set-repo", { body: { repo } });
+    setSaving(false);
+    if (error || data?.ok === false) { toast.error(data?.error || "Speichern fehlgeschlagen"); return; }
+    toast.success(`Repository gespeichert: ${data.repo}`);
+    onSaved();
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2"><Github className="h-5 w-5" /> GitHub-Repository auswählen</CardTitle>
+        <CardDescription>
+          Aktuell: <span className="font-mono">{currentRepo || "—"}</span>
+          {user?.login && <> · verbunden als <span className="font-mono">{user.login}</span></>}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="flex-1 min-w-[220px] space-y-1">
+            <Label>Filter</Label>
+            <Input placeholder="Repo-Namen filtern…" value={filter} onChange={(e) => setFilter(e.target.value)} />
+          </div>
+          <div className="flex-1 min-w-[260px] space-y-1">
+            <Label>Repository</Label>
+            <Select value={selected} onValueChange={setSelected}>
+              <SelectTrigger><SelectValue placeholder={loading ? "Lade…" : "Repository wählen"} /></SelectTrigger>
+              <SelectContent className="max-h-[320px]">
+                {filtered.map((r) => (
+                  <SelectItem key={r.full_name} value={r.full_name}>
+                    <span className="font-mono">{r.full_name}</span>
+                    <span className="ml-2 text-xs text-muted-foreground">
+                      {r.private ? "privat" : "public"} · {r.default_branch}
+                    </span>
+                  </SelectItem>
+                ))}
+                {!filtered.length && <div className="px-3 py-2 text-sm text-muted-foreground">Keine Repos gefunden</div>}
+              </SelectContent>
+            </Select>
+          </div>
+          <Button variant="outline" onClick={fetchRepos} disabled={loading}>
+            <RefreshCw className={`h-4 w-4 mr-1 ${loading ? "animate-spin" : ""}`} /> Neu laden
+          </Button>
+          <Button onClick={() => save(selected)} disabled={!selected || saving}>
+            <Save className="h-4 w-4 mr-1" /> Speichern
+          </Button>
+        </div>
+
+        <div className="border-t pt-3 space-y-1">
+          <Label>Oder manuell eintragen (owner/repo)</Label>
+          <div className="flex gap-2">
+            <Input placeholder="alixlasersberlin/alix-work-hub" value={manual} onChange={(e) => setManual(e.target.value)} />
+            <Button variant="outline" onClick={() => save(manual.trim())} disabled={!manual.trim() || saving}>
+              <Save className="h-4 w-4 mr-1" /> Übernehmen
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Privates Repo? Das hinterlegte GITHUB_TOKEN benötigt „Contents: Read/Write" und „Metadata: Read" auf das Ziel-Repo.
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 
 /* -------------------- HETZNER -------------------- */
 function HetznerTab({ canManage }: { canManage: boolean }) {

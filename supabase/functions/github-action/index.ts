@@ -7,12 +7,29 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   const { action } = await req.json().catch(() => ({ action: "" }));
   const token = Deno.env.get("GITHUB_TOKEN");
-  const repo = Deno.env.get("GITHUB_REPO");
+
+  let repo: string | null = null;
+  try {
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (SUPABASE_URL && SERVICE) {
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/app_settings?key=eq.github_repo&select=value`, {
+        headers: { apikey: SERVICE, Authorization: `Bearer ${SERVICE}` },
+      });
+      if (r.ok) {
+        const rows = await r.json();
+        if (Array.isArray(rows) && rows[0]?.value) repo = String(rows[0].value);
+      }
+    }
+  } catch (_) { /* ignore */ }
+  if (!repo) repo = Deno.env.get("GITHUB_REPO") ?? null;
+
   if (!token || !repo) {
     return new Response(JSON.stringify({ ok: false, message: "GitHub-Verbindung nicht konfiguriert (GITHUB_TOKEN/REPO fehlen)." }), {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+
 
   // Lovable's GitHub sync handles commit/push/pull automatically.
   // For 'tag', create a release tag from the latest commit.
