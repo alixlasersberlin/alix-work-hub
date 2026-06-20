@@ -162,14 +162,19 @@ Deno.serve(async (req) => {
     if (!res.ok) {
       await admin.from('customer_communication_log').insert({
         customer_id: cust.id, order_id, channel: 'sms', direction: 'outbound',
-        recipient: to, body_text: text, status: 'failed',
-        error_message: `Twilio ${res.status}: ${data?.message ?? ''}`, created_by: userId,
+        subject: `Anzahlungsrechnung Mahnung ${orderNumber}`,
+        preview: text.slice(0, 160),
+        department: 'Finance', created_by: userId,
+        metadata: { type: 'anzahlung_mahnung', status: 'failed', recipient: to, error: `Twilio ${res.status}: ${data?.message ?? ''}` },
       });
       return json({ ok: false, error: `Twilio ${res.status}: ${data?.message ?? ''}` }, 502);
     }
     await admin.from('customer_communication_log').insert({
       customer_id: cust.id, order_id, channel: 'sms', direction: 'outbound',
-      recipient: to, body_text: text, status: 'sent', external_id: data?.sid ?? null, created_by: userId,
+      subject: `Anzahlungsrechnung Mahnung ${orderNumber}`,
+      preview: text.slice(0, 160),
+      department: 'Finance', created_by: userId,
+      metadata: { type: 'anzahlung_mahnung', status: 'sent', recipient: to, twilio_sid: data?.sid ?? null },
     });
     return json({ ok: true, channel: 'sms', recipient: to, sid: data?.sid });
   } catch (e: any) {
