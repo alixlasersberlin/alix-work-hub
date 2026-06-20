@@ -110,10 +110,32 @@ export default function AuftragsbestaetigungTab({ orderId, customerId, customerE
       </h2>
 
       {sigs.length === 0 ? (
-        <div className="text-center py-10">
-          <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
-          <p className="text-muted-foreground">Kein unterzeichnetes Angebot für diesen Kunden gefunden.</p>
-          <p className="text-xs text-muted-foreground mt-1">Sobald ein Angebot über Alix Sign unterzeichnet wurde, erscheint es hier.</p>
+        <div className="space-y-4">
+          <div className="text-center py-6">
+            <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
+            <p className="text-muted-foreground">Kein unterzeichnetes Angebot für diesen Kunden gefunden.</p>
+            <p className="text-xs text-muted-foreground mt-1">Es wird eine Auftragsbestätigung direkt aus den Auftragsdaten erzeugt und versendet.</p>
+          </div>
+          <div className="grid sm:grid-cols-[1fr_auto] gap-3 items-end pt-2 border-t border-border">
+            <div>
+              <Label className="text-xs text-muted-foreground">Empfänger E-Mail</Label>
+              <Input
+                value={recipient}
+                onChange={e => setRecipient(e.target.value)}
+                placeholder="kunde@beispiel.de"
+                className="bg-secondary border-border mt-1"
+              />
+              <p className="text-[11px] text-muted-foreground mt-1">BCC: rde@alix-lasers.com sowie Ersteller des Auftrags</p>
+            </div>
+            <Button
+              onClick={handleSend}
+              disabled={sending || !recipient}
+              className="gold-gradient text-primary-foreground"
+            >
+              {sending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
+              Auftragsbestätigung senden
+            </Button>
+          </div>
         </div>
       ) : (
         <>
