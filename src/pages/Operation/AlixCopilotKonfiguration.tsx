@@ -354,3 +354,152 @@ export default function AlixCopilotKonfiguration() {
     </div>
   );
 }
+
+// -------- Wissens-Bibliothek (zuklappbar) --------
+function KnowledgeLibrary({
+  snippets, onAdd, onUpdate, onRemove, onUpload,
+}: {
+  snippets: KnowledgeSnippet[];
+  onAdd: () => void;
+  onUpdate: (id: string, patch: Partial<KnowledgeSnippet>) => void;
+  onRemove: (id: string) => void;
+  onUpload: (f: File) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState<Set<string>>(new Set());
+  // Bei vielen Einträgen standardmäßig kollabiert
+  const collapseByDefault = snippets.length > 3;
+
+  const isOpen = (id: string) =>
+    collapseByDefault ? open.has(id) : !open.has(`__c_${id}`);
+
+  function toggle(id: string) {
+    setOpen(prev => {
+      const next = new Set(prev);
+      const key = collapseByDefault ? id : `__c_${id}`;
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+
+  function expandAll() {
+    if (collapseByDefault) setOpen(new Set(filtered.map(s => s.id)));
+    else setOpen(new Set()); // alle "__c_*" entfernen
+  }
+  function collapseAll() {
+    if (collapseByDefault) setOpen(new Set());
+    else setOpen(new Set(filtered.map(s => `__c_${s.id}`)));
+  }
+
+  const q = query.trim().toLowerCase();
+  const filtered = q
+    ? snippets.filter(s =>
+        (s.title || "").toLowerCase().includes(q) ||
+        (s.content || "").toLowerCase().includes(q))
+    : snippets;
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between gap-2 flex-wrap">
+        <CardTitle className="flex items-center gap-2">
+          <BookOpen className="w-4 h-4 text-primary" /> Wissens-Bibliothek ({snippets.length})
+        </CardTitle>
+        <div className="flex items-center gap-2 flex-wrap">
+          {snippets.length > 1 && (
+            <>
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Suche…"
+                  className="pl-7 h-8 w-44"
+                />
+              </div>
+              <Button size="sm" variant="ghost" onClick={expandAll} className="gap-1 h-8" title="Alle aufklappen">
+                <ChevronsUpDown className="w-3.5 h-3.5" /> Alle auf
+              </Button>
+              <Button size="sm" variant="ghost" onClick={collapseAll} className="gap-1 h-8" title="Alle zuklappen">
+                <ChevronsDownUp className="w-3.5 h-3.5" /> Alle zu
+              </Button>
+            </>
+          )}
+          <label className="inline-flex items-center gap-2 text-xs cursor-pointer rounded-md border border-border px-3 py-1.5 hover:bg-secondary">
+            <FileText className="w-3.5 h-3.5" /> Datei importieren
+            <input
+              type="file"
+              accept=".pdf,.txt,.md,.csv,.json,application/pdf"
+              className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) onUpload(f); e.currentTarget.value = ""; }}
+            />
+          </label>
+          <Button size="sm" variant="outline" onClick={onAdd} className="gap-1"><Plus className="w-3.5 h-3.5" /> Neu</Button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {snippets.length === 0 && (
+          <p className="text-sm text-muted-foreground">
+            Noch keine Einträge. Füge Firmenwissen, Prozessbeschreibungen, FAQ-Antworten oder Verkaufsleitlinien hinzu, die ALIX immer berücksichtigen soll.
+          </p>
+        )}
+        {snippets.length > 0 && filtered.length === 0 && (
+          <p className="text-sm text-muted-foreground">Keine Einträge für „{query}" gefunden.</p>
+        )}
+        {filtered.map(s => {
+          const opened = isOpen(s.id);
+          const preview = (s.content || "").replace(/\s+/g, " ").slice(0, 90);
+          return (
+            <div key={s.id} className="rounded-lg border border-border bg-card">
+              <div className="flex items-center gap-2 px-2 py-1.5">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7 shrink-0"
+                  onClick={() => toggle(s.id)}
+                  aria-label={opened ? "Zuklappen" : "Aufklappen"}
+                >
+                  {opened ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                </Button>
+                <button
+                  onClick={() => toggle(s.id)}
+                  className="flex-1 min-w-0 text-left flex items-center gap-2"
+                >
+                  <span className="font-medium text-sm truncate">{s.title || "(ohne Titel)"}</span>
+                  {!opened && preview && (
+                    <span className="text-xs text-muted-foreground truncate hidden sm:inline">
+                      — {preview}{(s.content || "").length > 90 ? "…" : ""}
+                    </span>
+                  )}
+                </button>
+                <span className="text-[11px] text-muted-foreground shrink-0 tabular-nums">
+                  {(s.content || "").length.toLocaleString()} Z.
+                </span>
+                <Button size="icon" variant="ghost" onClick={() => onRemove(s.id)} aria-label="Eintrag löschen" className="h-7 w-7">
+                  <Trash2 className="w-4 h-4 text-destructive" />
+                </Button>
+              </div>
+              {opened && (
+                <div className="px-3 pb-3 space-y-2 border-t border-border pt-2">
+                  <Input
+                    value={s.title}
+                    onChange={(e) => onUpdate(s.id, { title: e.target.value })}
+                    placeholder="Titel"
+                    className="font-medium"
+                  />
+                  <Textarea
+                    rows={6}
+                    value={s.content}
+                    onChange={(e) => onUpdate(s.id, { content: e.target.value })}
+                    placeholder="Inhalt …"
+                  />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </CardContent>
+    </Card>
+  );
+}
+
