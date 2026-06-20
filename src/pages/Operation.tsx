@@ -12,7 +12,7 @@ const tiles = [
 ];
 
 const SECURITY_ROLES = ['Super Admin', 'Admin', 'Geschäftsführung'];
-const BACKUP_ROLES = ['Super Admin', 'Admin', 'Geschäftsführung', 'QM'];
+const BACKUP_ROLES = ['Super Admin'];
 
 export default function Operation() {
   const { hasAnyRole } = useAuth();
