@@ -494,7 +494,7 @@ const navItems: NavItem[] = [
         ],
       },
 
-      { path: '/operation/fort-knox', label: 'Fort Knox', icon: Lock, roles: ['Super Admin'] },
+      { path: '/operation/fort-knox', label: 'FORT KNOX', icon: Lock, roles: ['Super Admin'] },
 
       {
         path: '#system', label: 'SYSTEM', icon: Cog, roles: ['Super Admin'],
