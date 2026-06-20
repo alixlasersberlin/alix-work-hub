@@ -611,6 +611,63 @@ function ImportTab({ rows, depts, reload }: { rows: ImportJob[]; depts: Dept[]; 
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({ category: "", department: "", tags: "" });
   const [file, setFile] = useState<File | null>(null);
+  const [urlBusy, setUrlBusy] = useState(false);
+  const [urlForm, setUrlForm] = useState({ url: "", category: "", department: "", tags: "" });
+
+  async function startUrlImport() {
+    if (!urlForm.url) { toast.error("Bitte URL eingeben."); return; }
+    setUrlBusy(true);
+    let jobId: string | null = null;
+    try {
+      const tags = urlForm.tags ? urlForm.tags.split(",").map(t => t.trim()).filter(Boolean) : [];
+      const { data: job, error: jerr } = await supabase.from("copilot_import_jobs").insert({
+        filename: urlForm.url, category: urlForm.category || null,
+        department: urlForm.department || null, tags, status: "pending",
+      }).select().single();
+      if (jerr) throw jerr;
+      jobId = (job as any).id;
+
+      const { data, error } = await supabase.functions.invoke("copilot-fetch-url", { body: { url: urlForm.url } });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      const text: string = (data as any)?.text || "";
+      const title: string = (data as any)?.title || urlForm.url;
+      if (!text) throw new Error("Kein Text extrahiert.");
+
+      const { data: src, error: serr } = await supabase.from("copilot_sources").insert({
+        title: title || urlForm.url,
+        description: text.slice(0, 100_000),
+        category: urlForm.category || null,
+        department: urlForm.department || null,
+        source_type: "url",
+        url: urlForm.url,
+        status: "active", visible_to_copilot: true,
+        last_import_at: new Date().toISOString(),
+        tags,
+      }).select().single();
+      if (serr) throw serr;
+
+      await supabase.from("copilot_source_files").insert({
+        source_id: (src as any).id, filename: urlForm.url, mime: "text/html",
+        size_bytes: text.length, extracted_chars: text.length,
+      });
+      await supabase.from("copilot_import_jobs").update({
+        source_id: (src as any).id, status: "done",
+        recognized_items: 1, finished_at: new Date().toISOString(),
+      }).eq("id", jobId);
+
+      toast.success(`Webseite importiert (${text.length.toLocaleString()} Zeichen)`);
+      setUrlForm({ url: "", category: "", department: "", tags: "" });
+      reload();
+    } catch (e: any) {
+      if (jobId) await supabase.from("copilot_import_jobs").update({
+        status: "error", error_message: e.message, finished_at: new Date().toISOString(),
+      }).eq("id", jobId);
+      toast.error(e.message || "URL-Import fehlgeschlagen");
+      reload();
+    } finally { setUrlBusy(false); }
+  }
+
 
   async function startImport() {
     if (!file) { toast.error("Bitte Datei wählen."); return; }
