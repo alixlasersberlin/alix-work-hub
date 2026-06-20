@@ -1,4 +1,5 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
 // Captcha-Bypass für interne Accounts, die Cloudflare Turnstile nicht zuverlässig
 // laden können (z. B. aus Regionen mit eingeschränktem Zugriff auf
@@ -6,6 +7,11 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 const CAPTCHA_BYPASS_EMAILS = new Set<string>([
   '2556690413@qq.com', // Jerry – China-Netz, Turnstile lädt nicht
 ]);
+
+// Server-seitiges Rate-Limit für Login-Versuche.
+// Pro Identifier (Email bzw. IP-Fallback) max. N Requests pro Zeitfenster.
+const LOGIN_MAX = 10;          // max. Versuche
+const LOGIN_WINDOW_SEC = 300;  // 5 Minuten
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
