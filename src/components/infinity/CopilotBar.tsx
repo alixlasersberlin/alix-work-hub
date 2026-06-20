@@ -118,11 +118,18 @@ export function CopilotBar() {
                 </div>
                 {m.trace && m.trace.length > 0 && (
                   <div className="mt-1 flex flex-wrap gap-1 max-w-[85%]">
-                    {m.trace.map((t, ti) => (
-                      <span key={ti} className="inline-flex items-center gap-1 text-[10px] text-amber-200/70 border border-amber-400/20 rounded px-1.5 py-0.5 bg-amber-500/5">
-                        <Wrench className="h-2.5 w-2.5" />{t.name}
-                      </span>
-                    ))}
+                    {m.trace.map((t, ti) => {
+                      const label = TOOL_LABELS[t.name] ?? { label: t.name, hint: "Internes Werkzeug" };
+                      return (
+                        <span
+                          key={ti}
+                          title={`${label.label} — ${label.hint}`}
+                          className="inline-flex items-center gap-1 text-[10px] text-amber-200/70 border border-amber-400/20 rounded px-1.5 py-0.5 bg-amber-500/5 cursor-help"
+                        >
+                          <Wrench className="h-2.5 w-2.5" />{label.label}
+                        </span>
+                      );
+                    })}
                   </div>
                 )}
               </div>
