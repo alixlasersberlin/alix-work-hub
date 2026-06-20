@@ -1,45 +1,62 @@
-## Neuer Reiter „SMS Versand" in der Auftragskunden-Akte
 
-Ergänzt die bestehende Kundenakte (`/kunden/:id`) um einen weiteren Tab — ohne bestehende Tabs, PDF-Generatoren oder Datenstrukturen zu ändern.
+# ALIX Copilot – Steuerzentrale (additiv)
 
-### 1. Edge Function `send-customer-sms` (neu)
-- Wiederverwendet vorhandene Twilio-Secrets `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN`.
-- Neues Secret `TWILIO_SMS_FROM_NUMBER` (separat von WhatsApp-From), falls noch nicht vorhanden — sonst fällt sie auf `TWILIO_WHATSAPP_FROM_NUMBER` ohne `whatsapp:`-Präfix zurück.
-- Validiert JWT via `getClaims`, prüft Rolle serverseitig (Admin/Super Admin/Vertrieb/Kundenservice/Finance/Service/Reparaturannahme).
-- Body: `{ customer_id, document_id, document_type, document_number, recipient_name, phone, text }`.
-- Normalisiert Telefonnummer auf E.164 (`+49…`), validiert Format.
-- Erzeugt **signierten Download-Link** für das PDF:
-  - bevorzugt vorhandene `order_documents.download_token` (genutzt von `od-download`),
-  - falls keiner existiert: kurzlebigen Signed-URL aus dem passenden Storage-Bucket (`order-invoices`, `repair-*`, …) mit 30-Tage-Ablauf,
-  - kürzt via Token-Route `/d/:token` (existiert bereits über `od-download`).
-- Ersetzt `{{kunde}}` / `{{link}}` Platzhalter, sendet via Twilio `Messages.json` (SMS, kein `whatsapp:`).
-- Loggt Ergebnis in `customer_sms_logs` (success + error path).
+Es existiert bereits eine schlanke Seite `src/pages/Operation/AlixCopilotKonfiguration.tsx` (Route `/operation/alix-copilot`) mit Snippets in `app_settings`. Wir bauen darauf auf – **keine Strukturen verändern**, alles additiv.
 
-### 2. Neue Tabelle `customer_sms_logs`
-Felder: `customer_id`, `order_id?`, `document_id?`, `document_type`, `document_number`, `phone`, `message_text`, `link_url`, `twilio_sid`, `status` (`queued|sent|failed|delivered|undelivered`), `error_message`, `sent_by` (uuid), `sent_at`.
-GRANTs für `authenticated` + `service_role`, RLS:
-- SELECT/INSERT für Nutzer mit den o.g. Rollen (via vorhandene Helper wie `is_admin()`, `has_role(...)`),
-- service_role darf alles (für Twilio-Status-Webhook-Updates später).
+## 1. Datenbank (additiv, neue Tabellen + RLS)
 
-### 3. Frontend: neuer Tab in `src/pages/CustomerDetail.tsx`
-- Tab nur sichtbar, wenn `useAuth().isAdmin` ODER eine der freigegebenen Rollen erfüllt ist (Helper-Check über `user_roles`).
-- Neue Komponente `src/components/CustomerSmsTab.tsx`:
-  - Lädt alle Dokumente des Kunden aus `order_documents` (joined über `orders.customer_id = :id`) inkl. Typ, Nummer, `created_at`, Status, `download_token`.
-  - Lädt zusätzlich Reparatur-PDFs (`repair_orders` + `repair_quotes` + Berichte) über vorhandene Pfade.
-  - Tabelle mit Spalten: Typ · Nummer · Datum · Status · „PDF öffnen" · „per SMS senden".
-  - „PDF öffnen" nutzt vorhandene Download-Route (`/d/:token` → `od-download` Edge Function) — kein neuer Generator.
-  - „per SMS senden" öffnet Dialog (shadcn `Dialog`): Empfängername, Mobilnr. (vorbelegt aus `customers.phone`), Dokument, editierbarer Standardtext, Button „SMS senden".
-  - Validierung clientseitig (Telefon vorhanden + E.164-fähig, PDF/Token vorhanden).
-  - Templates pro Dokumenttyp wie im Briefing.
-  - Unter der Tabelle: Versandhistorie aus `customer_sms_logs` (Datum, Dokument, Nummer, Status-Badge, Text-Snippet, Button „erneut senden").
+Neue Migration mit folgenden Tabellen (alle mit `created_at`, `updated_at`, `created_by`):
 
-### 4. Konfiguration
-- `supabase/config.toml`: `[functions.send-customer-sms] verify_jwt = true`.
-- Memory-Eintrag `mem://features/customer-sms` + Index-Update.
+- `copilot_sources` — id, title, description, category, department, source_type (`pdf|docx|xlsx|csv|text|url|module`), file_path, url, status (`active|inactive`), visible_to_copilot (bool), last_import_at, owner_user_id, version, valid_from, valid_to, tags text[]
+- `copilot_source_files` — source_id fk, storage_path, filename, mime, size_bytes, pages, extracted_chars
+- `copilot_departments` — key (unique: vertrieb, finance, …), label, enabled, search_documents, search_tickets, search_customers, search_devices, search_repairs, search_offers, search_invoices, search_maintenance
+- `copilot_module_access` — module_key (unique), label, enabled, read_allowed, write_allowed (default false), data_scope text, role_restrictions text[]
+- `copilot_import_jobs` — source_id, filename, category, department, tags text[], status (`pending|approved|rejected|done|error`), recognized_items int, error_message, version, started_by, finished_at
+- `copilot_knowledge_entries` — title, content, category, department, priority (`hoch|mittel|niedrig`), source, version, status (`active|inactive|archived`), valid_from, valid_to, responsible_user_id, tags text[]
+- `copilot_settings` — singleton row (key=`global`): only_approved_sources, cite_sources, prioritize_internal, prioritize_iso, restrict_customer_data, restrict_finance_data, restrict_pii, mark_uncertain, auto_language, tone (`professional|short|detailed|support|sales`)
+- `copilot_audit_log` — entity, entity_id, action, before jsonb, after jsonb, user_id, ip, session_id
 
-### Nicht angefasst
-- Keine Änderungen an bestehenden PDF-Generatoren, Tabs, Routen, RLS anderer Tabellen, WhatsApp-Function oder Storage-Policies.
+GRANTs auf `authenticated` + `service_role` (kein `anon`), RLS aktivieren.
 
-### Offene Punkte
-- Bestätige bitte: Reparatur-PDFs (Kostenvoranschlag, Reparaturbericht) liegen ebenfalls in `order_documents`? Falls in eigenen Tabellen, ergänze ich die Quellen entsprechend.
-- Soll ein zusätzliches Secret `TWILIO_SMS_FROM_NUMBER` angelegt werden, oder die WhatsApp-From-Nummer als Fallback nutzen?
+**Policies:**
+- Lesen+Schreiben nur für `is_admin()` ODER `has_role('Geschäftsführung')` ODER `has_role('QM')` ODER `has_role('Operations')` (Operations-Rolle existiert ggf. nicht → wir prüfen über is_admin/Geschäftsführung/QM und tolerieren das).
+- `copilot_audit_log` nur SELECT für Berechtigte, INSERT nur service_role/Trigger.
+
+Storage-Bucket `copilot-sources` (private) + Policies (Berechtigte können read/write).
+
+Audit-Trigger `copilot_audit_trigger_fn()` an alle Tabellen außer `copilot_audit_log` hängen.
+
+Seed: Departments und Module-Einträge per `INSERT ... ON CONFLICT DO NOTHING` (Migration, einmalig — ist additiv).
+
+## 2. Frontend
+
+Neue Route additiv:
+- `/operations/alix-copilot-config` → neue Seite `src/pages/Operation/AlixCopilotConfig.tsx`
+- Bestehende `/operation/alix-copilot` bleibt unangetastet.
+
+Menüeintrag unter **OPERATIONS** → „ALIX Copilot Konfiguration" (neuer Eintrag zusätzlich, alter bleibt).
+
+Seite mit Tabs (shadcn `Tabs`):
+1. **Übersicht** – KPI-Karten (count(sources active), sum extracted_chars, last import, departments enabled, settings status, failed imports)
+2. **Datenquellen** – Tabelle + Dialog (Upload PDF/DOCX/XLSX/CSV, Text, URL, Modul). PDF-Text via vorhandene `pdfjs-dist`-Logik; XLSX/DOCX optional als Roh-Upload nur Metadaten.
+3. **Abteilungen** – Karten je Abteilung mit Toggle-Matrix.
+4. **Module** – Toggle pro Modul (read/write, role restrictions als Multi-Tag).
+5. **KI-Import** – Wizard (file → category → department → tags → preview → approve/reject), History-Tabelle.
+6. **Wissensdatenbank** – CRUD inkl. Status, Priorität, Gültigkeit.
+7. **Antwortverhalten** – Form auf `copilot_settings`.
+8. **Berechtigungen** – Hinweistext + Liste mit Rollen die Zugriff haben (read-only Info).
+9. **Audit Log** – Tabelle mit Filter (entity, user, Zeitraum).
+
+Komponenten unterteilt in `src/pages/Operation/copilot/` (Tabs, Dialogs, Hooks).
+
+Zugriffsschutz im Frontend: nur `Super Admin`, `Admin`, `Geschäftsführung`, `QM` → sonst `<Navigate to="/" />`.
+
+Loading-Skeletons, Toasts (sonner), Such-/Filter-Inputs, Status-Badges, Dark/Light kompatibel via design tokens.
+
+## 3. Hinweise
+
+- Keine bestehenden Tabellen, Policies oder Routen werden geändert.
+- Keine Edge-Function-Änderungen in diesem Schritt – die spätere Anbindung des Copilot-Backends an diese neuen Tabellen kann in einem Folge-Schritt erfolgen (Hinweis im UI: „Daten werden gesammelt – Copilot-Anbindung erfolgt im nächsten Rollout").
+- Mockdaten nur als Seed (Departments/Module-Liste). Alles andere live aus Supabase.
+
+Bestätige bitte mit **OK**, dann lege ich die Migration an und baue die Seite.
