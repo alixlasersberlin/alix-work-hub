@@ -72,7 +72,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    const ip = req.headers.get('cf-connecting-ip') ?? req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? '';
 
     const form = new URLSearchParams();
     form.append('secret', secret);
