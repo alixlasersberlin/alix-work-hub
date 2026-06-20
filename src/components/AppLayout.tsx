@@ -23,7 +23,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/h
 import { useFavorites, type FavoriteEntry } from '@/hooks/useFavorites';
 import { NotificationCenter } from '@/components/infinity/NotificationCenter';
 import { useNotificationFeed } from '@/hooks/useNotificationFeed';
-import { Briefcase } from 'lucide-react';
+import { Briefcase, Bell } from 'lucide-react';
 import alixLogo from '@/assets/alix-logo-gold.png';
 
 
