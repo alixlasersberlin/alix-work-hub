@@ -150,6 +150,9 @@ verify_jwt = false
 [functions.order-confirmation-pdf]
 verify_jwt = false
 
+[functions.order-fallback-pdf]
+verify_jwt = false
+
 [functions.send-order-confirmation]
 verify_jwt = false
 
