@@ -217,12 +217,38 @@ export default function Anzahlungsrechnung() {
                         <TableCell className="text-right">{fmtMoney(r.total_amount)}</TableCell>
                         <TableCell className="text-xs text-muted-foreground">{r.salesperson_name || '–'}</TableCell>
                         <TableCell>
-                          <Button asChild size="sm" className="gold-gradient text-primary-foreground">
-                            <Link to={`/auftraege/${r.id}`}>
-                              <ExternalLink className="h-4 w-4 mr-2" />
-                              BEARBEITUNG
-                            </Link>
-                          </Button>
+                          <div className="flex items-center gap-1.5 justify-end">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              title="SMS-Mahnung an den Kunden senden"
+                              disabled={busy[r.id] === 'sms'}
+                              onClick={() => sendMahnung(r.id, 'sms')}
+                            >
+                              {busy[r.id] === 'sms'
+                                ? <Loader2 className="h-4 w-4 animate-spin" />
+                                : <MessageSquare className="h-4 w-4" />}
+                              <span className="hidden lg:inline ml-1.5">SMS&nbsp;Mahnung</span>
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              title="E-Mail-Mahnung an den Kunden senden"
+                              disabled={busy[r.id] === 'email'}
+                              onClick={() => sendMahnung(r.id, 'email')}
+                            >
+                              {busy[r.id] === 'email'
+                                ? <Loader2 className="h-4 w-4 animate-spin" />
+                                : <Mail className="h-4 w-4" />}
+                              <span className="hidden lg:inline ml-1.5">E-Mail&nbsp;Mahnung</span>
+                            </Button>
+                            <Button asChild size="sm" className="gold-gradient text-primary-foreground">
+                              <Link to={`/auftraege/${r.id}`}>
+                                <ExternalLink className="h-4 w-4 mr-1" />
+                                <span className="hidden md:inline">BEARBEITUNG</span>
+                              </Link>
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
