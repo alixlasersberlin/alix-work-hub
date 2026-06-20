@@ -243,22 +243,31 @@ function RepoSelector({ currentRepo, onSaved }: { currentRepo?: string | null; o
     return list.slice(0, 200);
   }, [repos, filter]);
 
+  const callSet = async (repo: string, force: boolean) => {
+    const res = await supabase.functions.invoke("github-set-repo", { body: { repo, ...(force ? { force: true } : {}) } });
+    let data: any = res.data;
+    if (!data && res.error && (res.error as any).context?.json) {
+      try { data = await (res.error as any).context.json(); } catch { /* ignore */ }
+    }
+    return { data, error: res.error };
+  };
+
   const save = async (repo: string) => {
     if (!/^[^/\s]+\/[^/\s]+$/.test(repo)) { toast.error("Format: owner/repo"); return; }
     setSaving(true);
-    let { data, error } = await supabase.functions.invoke("github-set-repo", { body: { repo } });
-    if ((error || data?.ok === false) && data?.can_force) {
+    let { data, error } = await callSet(repo, false);
+    if ((!data?.ok) && data?.can_force) {
       const ok = window.confirm(`${data.error}\n\nTrotzdem speichern?`);
-      if (ok) {
-        ({ data, error } = await supabase.functions.invoke("github-set-repo", { body: { repo, force: true } }));
-      } else { setSaving(false); return; }
+      if (!ok) { setSaving(false); return; }
+      ({ data, error } = await callSet(repo, true));
     }
     setSaving(false);
-    if (error || data?.ok === false) { toast.error(data?.error || "Speichern fehlgeschlagen"); return; }
+    if (!data?.ok) { toast.error(data?.error || error?.message || "Speichern fehlgeschlagen"); return; }
     toast.success(`Repository gespeichert: ${data.repo}${data.warning ? " (mit Warnung)" : ""}`);
     if (data.warning) toast.warning(data.warning);
     onSaved();
   };
+
 
 
   return (
