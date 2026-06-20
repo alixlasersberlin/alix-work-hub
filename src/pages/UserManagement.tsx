@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
+import { displayRoleName } from '@/lib/role-labels';
 
 /* ─── Types ─── */
 interface EnrichedUser {
@@ -395,7 +396,7 @@ export default function UserManagement() {
                 <div className="flex flex-wrap gap-1">
                   {selectedUser.roleNames.length > 0 ? selectedUser.roleNames.map(r => (
                     <span key={r} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
-                      <Shield className="w-3 h-3" />{r}
+                      <Shield className="w-3 h-3" />{displayRoleName(r)}
                     </span>
                   )) : <span className="text-xs text-muted-foreground">Keine Rollen</span>}
                 </div>
@@ -683,7 +684,7 @@ export default function UserManagement() {
           <SelectTrigger><SelectValue placeholder="Rolle" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Alle Rollen</SelectItem>
-            {roles.map(r => <SelectItem key={r.id} value={r.name}>{r.name}</SelectItem>)}
+            {roles.map(r => <SelectItem key={r.id} value={r.name}>{displayRoleName(r.name)}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
@@ -733,7 +734,7 @@ export default function UserManagement() {
                       <div className="flex flex-wrap gap-1">
                         {u.roleNames.length > 0 ? u.roleNames.map(r => (
                           <span key={r} className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary">
-                            <Shield className="w-3 h-3" />{r}
+                            <Shield className="w-3 h-3" />{displayRoleName(r)}
                           </span>
                         )) : <span className="text-muted-foreground text-xs">—</span>}
                       </div>
@@ -840,7 +841,7 @@ export default function UserManagement() {
                           }));
                         }}
                       />
-                      {r.name}
+                      {displayRoleName(r.name)}
                     </label>
                   ))}
                 </div>
@@ -887,7 +888,7 @@ export default function UserManagement() {
                           setEditRoleIds(prev => checked ? [...prev, r.id] : prev.filter(id => id !== r.id));
                         }}
                       />
-                      {r.name}
+                      {displayRoleName(r.name)}
                       {r.description && <span className="text-xs text-muted-foreground ml-1">— {r.description}</span>}
                     </label>
                   ))}
