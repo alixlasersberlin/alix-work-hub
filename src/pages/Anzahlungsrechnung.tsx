@@ -40,6 +40,27 @@ export default function Anzahlungsrechnung() {
   const [customers, setCustomers] = useState<Record<string, CustomerLite>>({});
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
+  const [busy, setBusy] = useState<Record<string, 'sms' | 'email' | null>>({});
+
+  const sendMahnung = async (orderId: string, channel: 'sms' | 'email') => {
+    if (!confirm(channel === 'sms'
+      ? 'SMS-Mahnung an den Kunden senden?'
+      : 'E-Mail-Mahnung an den Kunden senden?')) return;
+    setBusy((b) => ({ ...b, [orderId]: channel }));
+    try {
+      const { data, error } = await supabase.functions.invoke('send-anzahlung-mahnung', {
+        body: { order_id: orderId, channel },
+      });
+      if (error || (data as any)?.error) {
+        throw new Error((data as any)?.error || error?.message || 'Unbekannter Fehler');
+      }
+      toast.success(channel === 'sms' ? 'SMS-Mahnung gesendet' : 'E-Mail-Mahnung gesendet');
+    } catch (e: any) {
+      toast.error(e.message ?? 'Versand fehlgeschlagen');
+    } finally {
+      setBusy((b) => ({ ...b, [orderId]: null }));
+    }
+  };
 
   const load = async () => {
     setLoading(true);
