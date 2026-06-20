@@ -54,13 +54,13 @@ export default function AuftragsbestaetigungTab({ orderId, customerId, customerE
     : null;
 
   const handleSend = async () => {
-    if (!selected) return;
+    if (sigs.length > 0 && !selected) return;
     if (!recipient) { toast.error('Bitte E-Mail-Adresse angeben'); return; }
     setSending(true);
     try {
-      const { data, error } = await supabase.functions.invoke('send-order-confirmation', {
-        body: { signature_id: selected.id, order_id: orderId, recipient_email: recipient },
-      });
+      const payload: any = { order_id: orderId, recipient_email: recipient };
+      if (selected) payload.signature_id = selected.id;
+      const { data, error } = await supabase.functions.invoke('send-order-confirmation', { body: payload });
       if (error) throw error;
       const failed = (data?.results || []).filter((r: any) => r.status !== 'sent');
       if (failed.length > 0) {
