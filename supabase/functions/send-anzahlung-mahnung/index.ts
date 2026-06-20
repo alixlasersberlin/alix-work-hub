@@ -1,5 +1,6 @@
 // Sendet eine Anzahlungsrechnungs-Mahnung manuell per E-Mail oder SMS.
-// Channel: 'email' | 'sms'. Logs to customer_communication_log.
+// Channel: 'email' | 'sms'. stage_id optional (sonst erste aktive Stufe).
+// Konfiguration kommt aus app_settings.key='anzahlung_mahnung_config'.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
@@ -23,6 +24,16 @@ const ALLOWED_ROLES = new Set([
   'Super Admin', 'Admin', 'Finance', 'Finanzierungen', 'Vertrieb', 'Kundenservice', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG',
 ]);
 
+type MahnStage = {
+  id: string; name: string; days_after_due: number; enabled: boolean;
+  email_subject: string; email_body: string; sms_body: string;
+};
+type MahnConfig = {
+  sender: { email_from: string; email_from_name: string; sms_sender: string };
+  bank: { account_holder: string; bank_name: string; iban: string; bic: string };
+  stages: MahnStage[];
+};
+
 function json(d: unknown, s = 200) {
   return new Response(JSON.stringify(d), { status: s, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 }
@@ -40,12 +51,23 @@ function fmtEur(n: number) {
   return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n);
 }
 
-async function loadTwilio() {
+function applyTemplate(tpl: string, vars: Record<string, string>): string {
+  return tpl.replace(/\{(\w+)\}/g, (_, k) => (vars[k] ?? ''));
+}
+
+async function loadConfig(): Promise<MahnConfig | null> {
+  const { data } = await admin.from('app_settings').select('value').eq('key', 'anzahlung_mahnung_config').maybeSingle();
+  if (!data?.value) return null;
+  try { return JSON.parse(data.value) as MahnConfig; } catch { return null; }
+}
+
+async function loadTwilio(cfgSender?: string) {
   const { data } = await admin.from('sms_settings').select('account_sid, auth_token, from_number').eq('id', true).maybeSingle();
   return {
     sid: (data?.account_sid?.trim()) || ENV_SID,
     token: (data?.auth_token?.trim()) || ENV_TOKEN,
-    from: (data?.from_number?.trim()) || ENV_SMS_FROM || ENV_WA_FROM.replace(/^whatsapp:/i, ''),
+    // Bevorzuge expliziten Sender aus Konfig (alphanumerische Sender-ID wie "ALIXLASERS")
+    from: (cfgSender?.trim()) || (data?.from_number?.trim()) || ENV_SMS_FROM || ENV_WA_FROM.replace(/^whatsapp:/i, ''),
   };
 }
 
@@ -68,10 +90,17 @@ Deno.serve(async (req) => {
     if (!roleNames.some((n: string) => ALLOWED_ROLES.has(n))) return json({ error: 'Forbidden' }, 403);
 
     const body = await req.json().catch(() => ({}));
-    const { order_id, channel } = body ?? {};
+    const { order_id, channel, stage_id } = body ?? {};
     if (!order_id || (channel !== 'email' && channel !== 'sms')) {
       return json({ error: 'order_id und channel (email|sms) erforderlich' }, 400);
     }
+
+    const cfg = await loadConfig();
+    const stages = (cfg?.stages ?? []).filter(s => s.enabled);
+    const stage = stage_id
+      ? stages.find(s => s.id === stage_id)
+      : stages[0];
+    if (!stage) return json({ error: 'Keine aktive Mahnstufe konfiguriert. Bitte in OPERATIONS → Anzahlungs-Mahnung Konfiguration anlegen.' }, 400);
 
     // Load order + customer
     const { data: order, error: oerr } = await admin
@@ -92,9 +121,23 @@ Deno.serve(async (req) => {
     const depositAmount = Number(order.deposit_amount ?? 0);
     const depositOkDate = order.deposit_ok_at ? new Date(order.deposit_ok_at).toLocaleDateString('de-DE') : '';
 
+    // Bankverbindung: Kundendaten überschreiben Konfig (falls beim Kunden gepflegt), sonst aus Konfig
+    const iban = (cust.iban ?? '') || (cfg?.bank.iban ?? '');
+    const bic = (cust.bic ?? '') || (cfg?.bank.bic ?? '');
+    const bankName = (cust.bank_name ?? '') || (cfg?.bank.bank_name ?? '');
+    const senderName = order.salesperson_name || cfg?.sender.email_from_name || 'Alix Lasers';
+
+    const vars: Record<string, string> = {
+      customerName, orderNumber, depositAmount: fmtEur(depositAmount),
+      depositOkDate, iban, bic, bankName, senderName,
+    };
+
     if (channel === 'email') {
       const recipient = (cust.email ?? '').trim();
       if (!recipient) return json({ error: 'Kunde hat keine E-Mail-Adresse' }, 400);
+
+      const subject = applyTemplate(stage.email_subject, vars);
+      const bodyText = applyTemplate(stage.email_body, vars);
 
       const sendRes = await fetch(`${SUPABASE_URL}/functions/v1/send-transactional-email`, {
         method: 'POST',
@@ -106,38 +149,32 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
           templateName: 'anzahlung-mahnung',
           recipientEmail: recipient,
-          idempotencyKey: `anz-mahnung-${order_id}-${Date.now()}`,
+          idempotencyKey: `anz-mahnung-${order_id}-${stage.id}-${Date.now()}`,
           templateData: {
-            customerName,
-            orderNumber,
-            depositAmount,
-            depositOkDate,
-            iban: cust.iban,
-            bic: cust.bic,
-            bankName: cust.bank_name,
-            senderName: order.salesperson_name || 'Alix Lasers',
+            subject,
+            bodyText,
+            stageName: stage.name,
+            customerName, orderNumber, depositAmount, depositOkDate,
+            iban, bic, bankName, senderName,
           },
         }),
       });
       const sendBody = await sendRes.json().catch(() => ({}));
-      if (!sendRes.ok) {
-        await admin.from('customer_communication_log').insert({
-          customer_id: cust.id, order_id, channel: 'email', direction: 'outbound',
-          subject: `Anzahlungsrechnung Mahnung ${orderNumber}`,
-          preview: 'Versand fehlgeschlagen',
-          department: 'Finance', created_by: userId,
-          metadata: { type: 'anzahlung_mahnung', status: 'failed', recipient, error: sendBody },
-        });
-        return json({ ok: false, error: `E-Mail-Versand fehlgeschlagen (${sendRes.status})` }, 502);
-      }
+      const ok = sendRes.ok;
       await admin.from('customer_communication_log').insert({
         customer_id: cust.id, order_id, channel: 'email', direction: 'outbound',
-        subject: `Anzahlungsrechnung Mahnung ${orderNumber}`,
-        preview: `Freundliche Erinnerung an Anzahlung ${fmtEur(depositAmount)}.`,
+        subject,
+        preview: bodyText.slice(0, 200),
         department: 'Finance', created_by: userId,
-        metadata: { type: 'anzahlung_mahnung', status: 'sent', recipient, message_id: sendBody?.message_id ?? null },
+        metadata: {
+          type: 'anzahlung_mahnung', stage_id: stage.id, stage_name: stage.name,
+          status: ok ? 'sent' : 'failed', recipient,
+          message_id: ok ? (sendBody?.message_id ?? null) : null,
+          error: ok ? null : sendBody,
+        },
       });
-      return json({ ok: true, channel: 'email', recipient });
+      if (!ok) return json({ ok: false, error: `E-Mail-Versand fehlgeschlagen (${sendRes.status})` }, 502);
+      return json({ ok: true, channel: 'email', recipient, stage: stage.name });
     }
 
     // SMS
@@ -145,38 +182,35 @@ Deno.serve(async (req) => {
     const to = normE164(phoneRaw);
     if (!to) return json({ error: 'Kunde hat keine gültige Mobilnummer' }, 400);
 
-    const cfg = await loadTwilio();
-    if (!cfg.sid || !cfg.token || !cfg.from) return json({ error: 'Twilio-Zugangsdaten unvollständig' }, 500);
+    const tw = await loadTwilio(cfg?.sender.sms_sender);
+    if (!tw.sid || !tw.token || !tw.from) return json({ error: 'Twilio-Zugangsdaten unvollständig' }, 500);
 
-    const text = `Freundliche Erinnerung: Ihre Anzahlung über ${fmtEur(depositAmount)} zu Auftrag ${orderNumber} ist noch offen. Bitte überweisen Sie zeitnah, damit wir Ihre Bestellung freigeben können. Vielen Dank! – Alix Lasers`;
+    const text = applyTemplate(stage.sms_body, vars);
 
-    const url = `https://api.twilio.com/2010-04-01/Accounts/${cfg.sid}/Messages.json`;
-    const basic = btoa(`${cfg.sid}:${cfg.token}`);
-    const form = new URLSearchParams({ To: to, From: cfg.from, Body: text });
+    const url = `https://api.twilio.com/2010-04-01/Accounts/${tw.sid}/Messages.json`;
+    const basic = btoa(`${tw.sid}:${tw.token}`);
+    const form = new URLSearchParams({ To: to, From: tw.from, Body: text });
     const res = await fetch(url, {
       method: 'POST',
       headers: { Authorization: `Basic ${basic}`, 'Content-Type': 'application/x-www-form-urlencoded' },
       body: form,
     });
     const data = await res.json();
-    if (!res.ok) {
-      await admin.from('customer_communication_log').insert({
-        customer_id: cust.id, order_id, channel: 'sms', direction: 'outbound',
-        subject: `Anzahlungsrechnung Mahnung ${orderNumber}`,
-        preview: text.slice(0, 160),
-        department: 'Finance', created_by: userId,
-        metadata: { type: 'anzahlung_mahnung', status: 'failed', recipient: to, error: `Twilio ${res.status}: ${data?.message ?? ''}` },
-      });
-      return json({ ok: false, error: `Twilio ${res.status}: ${data?.message ?? ''}` }, 502);
-    }
+    const ok = res.ok;
     await admin.from('customer_communication_log').insert({
       customer_id: cust.id, order_id, channel: 'sms', direction: 'outbound',
-      subject: `Anzahlungsrechnung Mahnung ${orderNumber}`,
+      subject: `Anzahlungs-Mahnung (${stage.name}) ${orderNumber}`,
       preview: text.slice(0, 160),
       department: 'Finance', created_by: userId,
-      metadata: { type: 'anzahlung_mahnung', status: 'sent', recipient: to, twilio_sid: data?.sid ?? null },
+      metadata: {
+        type: 'anzahlung_mahnung', stage_id: stage.id, stage_name: stage.name,
+        status: ok ? 'sent' : 'failed', recipient: to,
+        twilio_sid: ok ? (data?.sid ?? null) : null,
+        error: ok ? null : `Twilio ${res.status}: ${data?.message ?? ''}`,
+      },
     });
-    return json({ ok: true, channel: 'sms', recipient: to, sid: data?.sid });
+    if (!ok) return json({ ok: false, error: `Twilio ${res.status}: ${data?.message ?? ''}` }, 502);
+    return json({ ok: true, channel: 'sms', recipient: to, sid: data?.sid, stage: stage.name });
   } catch (e: any) {
     return json({ error: e?.message ?? 'Unbekannter Fehler' }, 500);
   }

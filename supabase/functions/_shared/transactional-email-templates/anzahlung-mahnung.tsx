@@ -6,6 +6,8 @@ import {
 import type { TemplateEntry } from './registry.ts'
 
 interface Props {
+  subject?: string
+  bodyText?: string                  // Pre-rendered body with placeholders already substituted
   customerName?: string
   orderNumber?: string
   depositAmount?: number
@@ -15,6 +17,7 @@ interface Props {
   bic?: string
   bankName?: string
   senderName?: string
+  stageName?: string
 }
 
 const fmt = (n?: number) => typeof n === 'number'
@@ -22,60 +25,81 @@ const fmt = (n?: number) => typeof n === 'number'
   : '–'
 
 const Email = ({
-  customerName, orderNumber, depositAmount, depositOkDate, invoiceLink, iban, bic, bankName, senderName,
-}: Props) => (
-  <Html lang="de" dir="ltr">
-    <Head />
-    <Preview>Erinnerung an Ihre offene Anzahlungsrechnung {orderNumber ?? ''}</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        <Heading style={h1}>Erinnerung: Anzahlungsrechnung</Heading>
-        <Text style={p}>Sehr geehrte Damen und Herren{customerName ? `, ${customerName}` : ''},</Text>
-        <Text style={p}>
-          zu Ihrer Bestellung <strong>{orderNumber ?? ''}</strong>{depositOkDate ? ` vom ${depositOkDate}` : ''} haben wir
-          Ihnen eine Anzahlungsrechnung über <strong>{fmt(depositAmount)}</strong> übermittelt. Nach unseren Unterlagen
-          ist der Betrag bisher leider noch nicht bei uns eingegangen.
-        </Text>
-        <Text style={p}>
-          Möglicherweise hat sich Ihre Überweisung mit diesem Schreiben überschnitten – in diesem Fall betrachten Sie
-          unsere Erinnerung bitte als gegenstandslos. Andernfalls bitten wir Sie, die Zahlung in den nächsten Tagen
-          vorzunehmen, damit wir Ihre Bestellung unverzüglich in die Produktion geben können.
-        </Text>
+  subject, bodyText, customerName, orderNumber, depositAmount, depositOkDate,
+  invoiceLink, iban, bic, bankName, senderName, stageName,
+}: Props) => {
+  const paragraphs = (bodyText ?? '').split(/\n{2,}/).map((s) => s.trim()).filter(Boolean)
+  const useCustomBody = paragraphs.length > 0
 
-        {invoiceLink && (
-          <Section style={ctaWrap}>
-            <a href={invoiceLink} style={cta}>Anzahlungsrechnung öffnen</a>
-          </Section>
-        )}
+  return (
+    <Html lang="de" dir="ltr">
+      <Head />
+      <Preview>{subject ?? `Erinnerung an Ihre offene Anzahlungsrechnung ${orderNumber ?? ''}`}</Preview>
+      <Body style={main}>
+        <Container style={container}>
+          <Heading style={h1}>{stageName ?? 'Erinnerung: Anzahlungsrechnung'}</Heading>
 
-        {(iban || bic || bankName) && (
-          <Section style={bankBox}>
-            <Text style={bankTitle}>Bankverbindung</Text>
-            {bankName && <Text style={bankLine}>Bank: {bankName}</Text>}
-            {iban && <Text style={bankLine}>IBAN: {iban}</Text>}
-            {bic && <Text style={bankLine}>BIC: {bic}</Text>}
-            {orderNumber && <Text style={bankLine}>Verwendungszweck: {orderNumber}</Text>}
-          </Section>
-        )}
+          {useCustomBody ? (
+            paragraphs.map((para, i) => (
+              <Text key={i} style={p}>
+                {para.split('\n').map((line, j, arr) => (
+                  <React.Fragment key={j}>
+                    {line}
+                    {j < arr.length - 1 && <br />}
+                  </React.Fragment>
+                ))}
+              </Text>
+            ))
+          ) : (
+            <>
+              <Text style={p}>Sehr geehrte Damen und Herren{customerName ? `, ${customerName}` : ''},</Text>
+              <Text style={p}>
+                zu Ihrer Bestellung <strong>{orderNumber ?? ''}</strong>{depositOkDate ? ` vom ${depositOkDate}` : ''} haben wir
+                Ihnen eine Anzahlungsrechnung über <strong>{fmt(depositAmount)}</strong> übermittelt. Nach unseren Unterlagen
+                ist der Betrag bisher leider noch nicht bei uns eingegangen.
+              </Text>
+            </>
+          )}
 
-        <Hr style={hr} />
-        <Text style={small}>
-          Bei Fragen oder Unklarheiten stehen wir Ihnen jederzeit gerne zur Verfügung.
-        </Text>
-        <Text style={small}>
-          Mit freundlichen Grüßen<br />
-          {senderName ?? 'Alix Lasers'}
-        </Text>
-      </Container>
-    </Body>
-  </Html>
-)
+          {invoiceLink && (
+            <Section style={ctaWrap}>
+              <a href={invoiceLink} style={cta}>Anzahlungsrechnung öffnen</a>
+            </Section>
+          )}
+
+          {!useCustomBody && (iban || bic || bankName) && (
+            <Section style={bankBox}>
+              <Text style={bankTitle}>Bankverbindung</Text>
+              {bankName && <Text style={bankLine}>Bank: {bankName}</Text>}
+              {iban && <Text style={bankLine}>IBAN: {iban}</Text>}
+              {bic && <Text style={bankLine}>BIC: {bic}</Text>}
+              {orderNumber && <Text style={bankLine}>Verwendungszweck: {orderNumber}</Text>}
+            </Section>
+          )}
+
+          <Hr style={hr} />
+          <Text style={small}>
+            Bei Fragen oder Unklarheiten stehen wir Ihnen jederzeit gerne zur Verfügung.
+          </Text>
+          {!useCustomBody && (
+            <Text style={small}>
+              Mit freundlichen Grüßen<br />
+              {senderName ?? 'Alix Lasers'}
+            </Text>
+          )}
+        </Container>
+      </Body>
+    </Html>
+  )
+}
 
 export const template = {
   component: Email,
-  subject: (d: Record<string, any>) => `Erinnerung: Anzahlungsrechnung ${d.orderNumber ?? ''}`.trim(),
+  subject: (d: Record<string, any>) => (d.subject as string) || `Erinnerung: Anzahlungsrechnung ${d.orderNumber ?? ''}`.trim(),
   displayName: 'Anzahlungsrechnung – Mahnung',
   previewData: {
+    subject: 'Erinnerung: Anzahlungsrechnung SO-12345',
+    bodyText: 'Sehr geehrte Damen und Herren, Mustermann GmbH,\n\nzu Ihrer Bestellung SO-12345 …\n\nMit freundlichen Grüßen\nAlix Lasers',
     customerName: 'Mustermann GmbH',
     orderNumber: 'SO-12345',
     depositAmount: 1500,
@@ -85,13 +109,14 @@ export const template = {
     bic: 'XXXDEFFXXX',
     bankName: 'Beispielbank',
     senderName: 'Alix Lasers',
+    stageName: 'Zahlungserinnerung',
   },
 } satisfies TemplateEntry
 
 const main: React.CSSProperties = { backgroundColor: '#ffffff', fontFamily: 'Arial, Helvetica, sans-serif', color: '#0b0b0b' }
 const container: React.CSSProperties = { padding: '24px 28px', maxWidth: '620px', margin: '0 auto' }
 const h1: React.CSSProperties = { fontSize: '20px', margin: '0 0 16px 0', color: '#0b0b0b' }
-const p: React.CSSProperties = { fontSize: '14px', lineHeight: '22px', margin: '0 0 12px 0' }
+const p: React.CSSProperties = { fontSize: '14px', lineHeight: '22px', margin: '0 0 12px 0', whiteSpace: 'pre-wrap' }
 const ctaWrap: React.CSSProperties = { textAlign: 'center', margin: '20px 0' }
 const cta: React.CSSProperties = { display: 'inline-block', padding: '10px 18px', backgroundColor: '#C9A24B', color: '#0b0b0b', textDecoration: 'none', borderRadius: '6px', fontWeight: 600, fontSize: '14px' }
 const bankBox: React.CSSProperties = { backgroundColor: '#f7f5ef', border: '1px solid #e6dfc8', padding: '12px 14px', borderRadius: '6px', margin: '12px 0' }
