@@ -607,7 +607,7 @@ Deno.serve(async (req) => {
       .eq("user_id", user.id);
     const roles: string[] = (roleRows ?? []).map((r: any) => r.roles?.name).filter(Boolean);
 
-    // Copilot-Config aus app_settings
+    // Copilot-Config aus app_settings (Legacy)
     let cfg: any = {};
     try {
       const { data: cfgRow } = await admin
@@ -618,6 +618,37 @@ Deno.serve(async (req) => {
     const disabledModules: Set<string> = new Set(Array.isArray(cfg?.disabled_modules) ? cfg.disabled_modules : []);
     const promptAddon: string = typeof cfg?.system_prompt_addon === "string" ? cfg.system_prompt_addon.trim() : "";
     const knowledgeSnippets: { title?: string; content?: string }[] = Array.isArray(cfg?.knowledge_snippets) ? cfg.knowledge_snippets : [];
+
+    // Steuerzentrale: copilot_settings + copilot_knowledge_entries + copilot_sources + copilot_module_access
+    let zentrale: any = null;
+    const kbFromCentral: { title: string; content: string; priority?: string; source?: string }[] = [];
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      const [stRes, kRes, srcRes, modRes] = await Promise.all([
+        admin.from("copilot_settings").select("*").eq("key", "global").maybeSingle(),
+        admin.from("copilot_knowledge_entries").select("title,content,priority,source,status,valid_from,valid_to").eq("status", "active"),
+        admin.from("copilot_sources").select("title,description,status,visible_to_copilot,valid_from,valid_to,url,source_type"),
+        admin.from("copilot_module_access").select("module_key,enabled"),
+      ]);
+      zentrale = stRes.data ?? null;
+      for (const k of (kRes.data ?? []) as any[]) {
+        if (k.valid_from && k.valid_from > today) continue;
+        if (k.valid_to && k.valid_to < today) continue;
+        if (!k.content) continue;
+        kbFromCentral.push({ title: k.title, content: k.content, priority: k.priority, source: k.source });
+      }
+      for (const s of (srcRes.data ?? []) as any[]) {
+        if (s.status !== "active" || !s.visible_to_copilot) continue;
+        if (s.valid_from && s.valid_from > today) continue;
+        if (s.valid_to && s.valid_to < today) continue;
+        if (s.description) {
+          kbFromCentral.push({ title: s.title, content: String(s.description).slice(0, 20000), source: s.url ?? s.source_type });
+        }
+      }
+      for (const m of (modRes.data ?? []) as any[]) {
+        if (m.enabled === false && m.module_key) disabledModules.add(m.module_key);
+      }
+    } catch (_) { /* tables optional */ }
 
     const ctx: Ctx = {
       userId: user.id,
@@ -636,11 +667,31 @@ Deno.serve(async (req) => {
       { role: "system", content: sysContext },
     ];
     if (promptAddon) chatMessages.push({ role: "system", content: `# Zusätzliche Anweisungen (Admin-Konfiguration)\n${promptAddon}` });
-    if (knowledgeSnippets.length > 0) {
-      const kb = knowledgeSnippets
-        .filter((s) => (s?.content ?? "").trim().length > 0)
-        .map((s) => `## ${s.title || "Wissens-Eintrag"}\n${s.content}`).join("\n\n");
-      if (kb) chatMessages.push({ role: "system", content: `# Zusätzliches Firmenwissen\n${kb}` });
+    if (zentrale) {
+      const rules: string[] = [];
+      if (zentrale.only_approved_sources) rules.push("Verwende ausschließlich freigegebene, aktive Datenquellen.");
+      if (zentrale.cite_sources) rules.push("Nenne in jeder Antwort die genutzte Quelle (Titel oder Modul).");
+      if (zentrale.prioritize_internal) rules.push("Interne AlixWork-Daten haben Vorrang vor allgemeinem Wissen.");
+      if (zentrale.prioritize_iso) rules.push("ISO-/QM-Dokumente höher priorisieren als andere Quellen.");
+      if (zentrale.restrict_customer_data) rules.push("Kundendaten nur ausgeben, wenn die Nutzerrolle es erlaubt.");
+      if (zentrale.restrict_finance_data) rules.push("Finanzdaten nur an Finance/Admin-Rollen ausgeben.");
+      if (zentrale.restrict_pii) rules.push("Personenbezogene Daten (PII) niemals unnötig preisgeben.");
+      if (zentrale.mark_uncertain) rules.push("Unsichere oder nicht belegbare Aussagen klar als unsicher markieren.");
+      if (zentrale.auto_language) rules.push("Antwortsprache automatisch an die Nutzeranfrage anpassen.");
+      if (zentrale.tone) rules.push(`Tonalität: ${zentrale.tone}.`);
+      if (rules.length) chatMessages.push({ role: "system", content: `# ALIX Copilot Steuerzentrale – Antwortverhalten\n- ${rules.join("\n- ")}` });
+    }
+    const allKb = [
+      ...knowledgeSnippets.filter((s) => (s?.content ?? "").trim().length > 0).map((s) => ({ title: s.title || "Wissens-Eintrag", content: s.content!, priority: undefined as any, source: undefined as any })),
+      ...kbFromCentral,
+    ];
+    if (allKb.length > 0) {
+      const kb = allKb
+        .sort((a, b) => (a.priority === "hoch" ? -1 : 0) - (b.priority === "hoch" ? -1 : 0))
+        .map((s) => `## ${s.title}${s.source ? ` (Quelle: ${s.source})` : ""}\n${s.content}`)
+        .join("\n\n")
+        .slice(0, 60000);
+      chatMessages.push({ role: "system", content: `# Zusätzliches Firmenwissen (Steuerzentrale)\n${kb}` });
     }
     if (disabledModules.size > 0) {
       chatMessages.push({ role: "system", content: `Hinweis: Folgende Module wurden vom Admin deaktiviert und dürfen NICHT durchsucht werden: ${[...disabledModules].join(", ")}.` });
