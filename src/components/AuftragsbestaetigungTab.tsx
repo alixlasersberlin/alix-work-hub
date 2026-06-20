@@ -82,7 +82,7 @@ export default function AuftragsbestaetigungTab({ orderId, customerId, customerE
   const handleDownload = async () => {
     if (!previewUrl || !selected) return;
     try {
-      const res = await fetch(previewUrl);
+      const res = await fetch(pdfFetchUrl!);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
