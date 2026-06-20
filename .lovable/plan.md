@@ -1,62 +1,76 @@
+# Alix Security Center — additive Erweiterung
 
-# ALIX Copilot – Steuerzentrale (additiv)
+Ziel: Enterprise-Sicherheitscenter und verdeckte Login-Routen ergänzen, ohne bestehende Tabellen, Rollen, Routen oder den bestehenden `/login`-Flow zu verändern.
 
-Es existiert bereits eine schlanke Seite `src/pages/Operation/AlixCopilotKonfiguration.tsx` (Route `/operation/alix-copilot`) mit Snippets in `app_settings`. Wir bauen darauf auf – **keine Strukturen verändern**, alles additiv.
+## 1. Neue Routen (verdeckt)
 
-## 1. Datenbank (additiv, neue Tabellen + RLS)
+Drei zusätzliche Login-Aliasse, die exakt die bestehende `Login.tsx`-Komponente rendern (kein neuer Login-Code, keine Änderung an `useAuth`):
 
-Neue Migration mit folgenden Tabellen (alle mit `created_at`, `updated_at`, `created_by`):
+- `/alix-control`
+- `/alix-secure`
+- `/alix-enterprise`
 
-- `copilot_sources` — id, title, description, category, department, source_type (`pdf|docx|xlsx|csv|text|url|module`), file_path, url, status (`active|inactive`), visible_to_copilot (bool), last_import_at, owner_user_id, version, valid_from, valid_to, tags text[]
-- `copilot_source_files` — source_id fk, storage_path, filename, mime, size_bytes, pages, extracted_chars
-- `copilot_departments` — key (unique: vertrieb, finance, …), label, enabled, search_documents, search_tickets, search_customers, search_devices, search_repairs, search_offers, search_invoices, search_maintenance
-- `copilot_module_access` — module_key (unique), label, enabled, read_allowed, write_allowed (default false), data_scope text, role_restrictions text[]
-- `copilot_import_jobs` — source_id, filename, category, department, tags text[], status (`pending|approved|rejected|done|error`), recognized_items int, error_message, version, started_by, finished_at
-- `copilot_knowledge_entries` — title, content, category, department, priority (`hoch|mittel|niedrig`), source, version, status (`active|inactive|archived`), valid_from, valid_to, responsible_user_id, tags text[]
-- `copilot_settings` — singleton row (key=`global`): only_approved_sources, cite_sources, prioritize_internal, prioritize_iso, restrict_customer_data, restrict_finance_data, restrict_pii, mark_uncertain, auto_language, tone (`professional|short|detailed|support|sales`)
-- `copilot_audit_log` — entity, entity_id, action, before jsonb, after jsonb, user_id, ip, session_id
+Maßnahmen:
+- `<Helmet>` mit `robots = noindex,nofollow` auf diesen Seiten
+- `public/robots.txt` ergänzt um `Disallow: /alix-control`, `/alix-secure`, `/alix-enterprise`
+- Keine Menü-Einträge, keine internen Links, keine Sitemap-Einträge
 
-GRANTs auf `authenticated` + `service_role` (kein `anon`), RLS aktivieren.
+Die bestehende `/login`-Seite bleibt 1:1.
 
-**Policies:**
-- Lesen+Schreiben nur für `is_admin()` ODER `has_role('Geschäftsführung')` ODER `has_role('QM')` ODER `has_role('Operations')` (Operations-Rolle existiert ggf. nicht → wir prüfen über is_admin/Geschäftsführung/QM und tolerieren das).
-- `copilot_audit_log` nur SELECT für Berechtigte, INSERT nur service_role/Trigger.
+## 2. Menüpunkt „Alix Security Center"
 
-Storage-Bucket `copilot-sources` (private) + Policies (Berechtigte können read/write).
+Unter OPERATIONS als neue Kachel, sichtbar nur für `Super Admin`, `Admin`, `Geschäftsführung`. Route: `/operation/security-center`.
 
-Audit-Trigger `copilot_audit_trigger_fn()` an alle Tabellen außer `copilot_audit_log` hängen.
+Bereiche (read-only Dashboards, keine Mutation existierender Daten):
 
-Seed: Departments und Module-Einträge per `INSERT ... ON CONFLICT DO NOTHING` (Migration, einmalig — ist additiv).
+1. Login-Historie — `login_sessions`
+2. Fehlgeschlagene Logins — `audit_logs` action `captcha_failed` + neue `failed_login`-Events
+3. Aktive Sitzungen — `login_sessions` mit `revoked_at IS NULL`
+4. Gesperrte Benutzer — `user_profiles.account_status != 'active'`
+5. Geräteübersicht — Aggregation `login_sessions.user_agent`
+6. IP-Übersicht — Aggregation `login_sessions.ip_address` + `audit_logs.ip_address`
+7. Sicherheitswarnungen — `audit_logs` mit `_action in ('rate_limit_hit','captcha_failed','admin_login','password_changed','new_device','new_location')`
+8. **Alix Security Score** (0–100, Ampel) — berechnet aus:
+   - MFA-Verbreitung Admin-Rollen
+   - Fehlversuchsrate 24h
+   - Anzahl aktiver Sessions älter als 24h
+   - Anzahl gesperrter Konten
+   - Rate-Limit-Hits 24h
 
-## 2. Frontend
+## 3. MFA / TOTP
 
-Neue Route additiv:
-- `/operations/alix-copilot-config` → neue Seite `src/pages/Operation/AlixCopilotConfig.tsx`
-- Bestehende `/operation/alix-copilot` bleibt unangetastet.
+Bereits implementiert (`Sicherheit.tsx`, `mfa-required.ts`). Im Security Center wird der MFA-Coverage-Status pro Rolle nur angezeigt. Keine Änderung am bestehenden Enforcement.
 
-Menüeintrag unter **OPERATIONS** → „ALIX Copilot Konfiguration" (neuer Eintrag zusätzlich, alter bleibt).
+Hinweis (Doku im UI): unterstützte Apps Microsoft Authenticator / Google Authenticator / Authy — Supabase TOTP ist RFC 6238, alle drei kompatibel.
 
-Seite mit Tabs (shadcn `Tabs`):
-1. **Übersicht** – KPI-Karten (count(sources active), sum extracted_chars, last import, departments enabled, settings status, failed imports)
-2. **Datenquellen** – Tabelle + Dialog (Upload PDF/DOCX/XLSX/CSV, Text, URL, Modul). PDF-Text via vorhandene `pdfjs-dist`-Logik; XLSX/DOCX optional als Roh-Upload nur Metadaten.
-3. **Abteilungen** – Karten je Abteilung mit Toggle-Matrix.
-4. **Module** – Toggle pro Modul (read/write, role restrictions als Multi-Tag).
-5. **KI-Import** – Wizard (file → category → department → tags → preview → approve/reject), History-Tabelle.
-6. **Wissensdatenbank** – CRUD inkl. Status, Priorität, Gültigkeit.
-7. **Antwortverhalten** – Form auf `copilot_settings`.
-8. **Berechtigungen** – Hinweistext + Liste mit Rollen die Zugriff haben (read-only Info).
-9. **Audit Log** – Tabelle mit Filter (entity, user, Zeitraum).
+## 4. Login-Schutz
 
-Komponenten unterteilt in `src/pages/Operation/copilot/` (Tabs, Dialogs, Hooks).
+Bereits vorhanden: Rate-Limit (`check_rate_limit`), Turnstile-Captcha, Idle-Logout 30 min.
 
-Zugriffsschutz im Frontend: nur `Super Admin`, `Admin`, `Geschäftsführung`, `QM` → sonst `<Navigate to="/" />`.
+Additiv:
+- Edge Function `security-notify` (intern), die bei kritischen `audit_logs` Events Mail-Versand triggern kann (`send-transactional-email` falls vorhanden, sonst no-op log)
+- Frontend-Settings-Panel im Security Center (rein Anzeige + write nach `app_settings` Key `security.login_protection` — `app_settings` existiert bereits): max. Fehlversuche, Sperrdauer, Notify-Empfänger
 
-Loading-Skeletons, Toasts (sonner), Such-/Filter-Inputs, Status-Badges, Dark/Light kompatibel via design tokens.
+## 5. Keine DB-Schema-Änderungen
 
-## 3. Hinweise
+Alles nutzt bestehende Tabellen (`login_sessions`, `audit_logs`, `app_settings`, `user_profiles`, `user_roles`). **Keine Migration.**
 
-- Keine bestehenden Tabellen, Policies oder Routen werden geändert.
-- Keine Edge-Function-Änderungen in diesem Schritt – die spätere Anbindung des Copilot-Backends an diese neuen Tabellen kann in einem Folge-Schritt erfolgen (Hinweis im UI: „Daten werden gesammelt – Copilot-Anbindung erfolgt im nächsten Rollout").
-- Mockdaten nur als Seed (Departments/Module-Liste). Alles andere live aus Supabase.
+## 6. Dateien
 
-Bestätige bitte mit **OK**, dann lege ich die Migration an und baue die Seite.
+Neu:
+- `src/pages/SecurityCenter.tsx`
+- `src/pages/CovertLogin.tsx` (dünner Wrapper um `Login` mit Helmet noindex)
+- `src/components/security/SecurityScoreCard.tsx`
+- `src/components/security/SessionsTable.tsx`
+- `src/components/security/AuditEventsTable.tsx`
+- `supabase/functions/security-notify/index.ts`
+
+Geändert (rein additiv):
+- `src/App.tsx` — 4 neue Routen
+- `src/pages/Operation.tsx` — eine zusätzliche Tile (nur für Admin-Rollen)
+- `public/robots.txt` — Disallow-Zeilen
+- `index.html` — keine Änderung (per-Route Helmet)
+
+## Out of scope
+
+Geo-Lookup für „Standort" wird best-effort als „—" angezeigt, sofern keine GeoIP-Quelle konfiguriert ist (kein neuer Drittanbieter ohne Rückfrage).

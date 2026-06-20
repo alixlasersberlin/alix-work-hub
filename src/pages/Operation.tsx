@@ -1,7 +1,8 @@
-import { Workflow, Mail, FileText, ChevronRight, Database, MessageSquare } from 'lucide-react';
+import { Workflow, Mail, FileText, ChevronRight, Database, MessageSquare, Shield } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 import { PageHeader } from '@/components/infinity/PageHeader';
+import { useAuth } from '@/hooks/useAuth';
 
 const tiles = [
   { to: '/operation/email-vorlagen', icon: Mail, title: 'E-Mail Vorlagen', desc: 'Inhalte automatisch versendeter E-Mails bearbeiten.' },
@@ -10,7 +11,21 @@ const tiles = [
   { to: '/operation/alixsmart-migration', icon: Database, title: 'AlixSmart Migration', desc: 'Import Engine: Verbindung, Dry-Run und Wellen-Import.' },
 ];
 
+const SECURITY_ROLES = ['Super Admin', 'Admin', 'Geschäftsführung'];
+
 export default function Operation() {
+  const { hasAnyRole } = useAuth();
+  const allTiles = [
+    ...tiles,
+    ...(hasAnyRole(SECURITY_ROLES)
+      ? [{
+          to: '/operation/security-center',
+          icon: Shield,
+          title: 'Alix Security Center',
+          desc: 'Enterprise-Sicherheitsüberwachung: Logins, Sitzungen, Geräte, IPs, Warnungen, Security Score.',
+        }]
+      : []),
+  ];
   return (
     <div className="container mx-auto p-6 space-y-6">
       <PageHeader
@@ -20,7 +35,7 @@ export default function Operation() {
         noBreadcrumbs
       />
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {tiles.map(t => (
+        {allTiles.map(t => (
           <Link key={t.to} to={t.to}>
             <Card className="hover:border-primary/60 transition-colors h-full">
               <CardHeader className="flex flex-row items-center gap-3 space-y-0">
