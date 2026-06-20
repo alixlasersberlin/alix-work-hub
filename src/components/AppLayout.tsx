@@ -475,9 +475,9 @@ const navItems: NavItem[] = [
           { path: '/operation/anzahlung-mahnung-konfiguration', label: 'Anzahlungs-Mahnung Konfiguration', icon: Bell, roles: ['Super Admin'] },
         ],
       },
-      // Controll Out
+      // Portal
       {
-        path: '#controll-out', label: 'CONTROLL OUT', icon: SearchCheck, roles: ['Super Admin'],
+        path: '#portal', label: 'PORTAL', icon: SearchCheck, roles: ['Super Admin'],
         children: [
           { path: '/portal-admin', label: 'Kundenportal', icon: Globe, roles: ['Super Admin'] },
           { path: '/tickets', label: 'Ticketliste', icon: Ticket, roles: ['Super Admin'] },
