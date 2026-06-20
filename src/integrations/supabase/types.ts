@@ -5008,7 +5008,7 @@ export type Database = {
       finance_stakeholders: {
         Row: {
           access_count: number
-          access_token: string
+          access_token_hash: string
           allowed_reports: Json
           created_at: string
           created_by: string | null
@@ -5024,7 +5024,7 @@ export type Database = {
         }
         Insert: {
           access_count?: number
-          access_token?: string
+          access_token_hash: string
           allowed_reports?: Json
           created_at?: string
           created_by?: string | null
@@ -5040,7 +5040,7 @@ export type Database = {
         }
         Update: {
           access_count?: number
-          access_token?: string
+          access_token_hash?: string
           allowed_reports?: Json
           created_at?: string
           created_by?: string | null
@@ -12692,6 +12692,19 @@ export type Database = {
         Returns: undefined
       }
       complete_password_setup: { Args: never; Returns: undefined }
+      create_finance_stakeholder: {
+        Args: {
+          p_allowed_reports?: Json
+          p_email: string
+          p_expires_at?: string
+          p_name: string
+          p_role: string
+        }
+        Returns: {
+          access_token: string
+          id: string
+        }[]
+      }
       current_portal_customer_id: { Args: never; Returns: string }
       current_supplier_id: { Args: never; Returns: string }
       dl_upsert: {
@@ -12767,6 +12780,10 @@ export type Database = {
       resolve_frei_bestellung_assignment: {
         Args: { _order_id: string }
         Returns: undefined
+      }
+      rotate_finance_stakeholder_token: {
+        Args: { p_id: string }
+        Returns: string
       }
       session_requires_reauth: { Args: never; Returns: boolean }
       set_factory_invoice_payment_ok: {
