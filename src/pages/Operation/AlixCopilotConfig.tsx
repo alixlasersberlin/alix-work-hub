@@ -446,11 +446,35 @@ function SourceDialog({ open, setOpen, depts, reload }: any) {
               <Input type="date" value={form.valid_to} onChange={(e) => setForm({ ...form, valid_to: e.target.value })} />
             </div>
             {form.source_type === "url" && (
-              <div className="col-span-2">
+              <div className="col-span-2 space-y-2">
                 <Label>URL</Label>
-                <Input value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} placeholder="https://…" />
+                <div className="flex gap-2">
+                  <Input value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} placeholder="https://…" />
+                  <Button type="button" variant="outline" disabled={!form.url || busy} onClick={async () => {
+                    setBusy(true);
+                    try {
+                      const { data, error } = await supabase.functions.invoke("copilot-fetch-url", { body: { url: form.url } });
+                      if (error) throw error;
+                      if ((data as any)?.error) throw new Error((data as any).error);
+                      const txt: string = (data as any)?.text || "";
+                      const title: string = (data as any)?.title || "";
+                      setForm((f: any) => ({
+                        ...f,
+                        title: f.title || title || f.url,
+                        description: (f.description ? f.description + "\n\n" : "") + txt.slice(0, 100_000),
+                      }));
+                      toast.success(`Webseite eingelesen (${txt.length.toLocaleString()} Zeichen)`);
+                    } catch (e: any) {
+                      toast.error(e.message || "Fetch fehlgeschlagen");
+                    } finally { setBusy(false); }
+                  }}>
+                    <Globe className="w-4 h-4 mr-1" /> Einlesen
+                  </Button>
+                </div>
+                <p className="text-[11px] text-muted-foreground">Lädt die Seite serverseitig, entfernt HTML und übernimmt den Text in die Beschreibung.</p>
               </div>
             )}
+
             {["pdf","docx","xlsx","csv","text"].includes(form.source_type) && (
               <div className="col-span-2">
                 <Label>Datei (PDF/Text/CSV/JSON) – optional</Label>
@@ -587,6 +611,63 @@ function ImportTab({ rows, depts, reload }: { rows: ImportJob[]; depts: Dept[]; 
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({ category: "", department: "", tags: "" });
   const [file, setFile] = useState<File | null>(null);
+  const [urlBusy, setUrlBusy] = useState(false);
+  const [urlForm, setUrlForm] = useState({ url: "", category: "", department: "", tags: "" });
+
+  async function startUrlImport() {
+    if (!urlForm.url) { toast.error("Bitte URL eingeben."); return; }
+    setUrlBusy(true);
+    let jobId: string | null = null;
+    try {
+      const tags = urlForm.tags ? urlForm.tags.split(",").map(t => t.trim()).filter(Boolean) : [];
+      const { data: job, error: jerr } = await supabase.from("copilot_import_jobs").insert({
+        filename: urlForm.url, category: urlForm.category || null,
+        department: urlForm.department || null, tags, status: "pending",
+      }).select().single();
+      if (jerr) throw jerr;
+      jobId = (job as any).id;
+
+      const { data, error } = await supabase.functions.invoke("copilot-fetch-url", { body: { url: urlForm.url } });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      const text: string = (data as any)?.text || "";
+      const title: string = (data as any)?.title || urlForm.url;
+      if (!text) throw new Error("Kein Text extrahiert.");
+
+      const { data: src, error: serr } = await supabase.from("copilot_sources").insert({
+        title: title || urlForm.url,
+        description: text.slice(0, 100_000),
+        category: urlForm.category || null,
+        department: urlForm.department || null,
+        source_type: "url",
+        url: urlForm.url,
+        status: "active", visible_to_copilot: true,
+        last_import_at: new Date().toISOString(),
+        tags,
+      }).select().single();
+      if (serr) throw serr;
+
+      await supabase.from("copilot_source_files").insert({
+        source_id: (src as any).id, filename: urlForm.url, mime: "text/html",
+        size_bytes: text.length, extracted_chars: text.length,
+      });
+      await supabase.from("copilot_import_jobs").update({
+        source_id: (src as any).id, status: "done",
+        recognized_items: 1, finished_at: new Date().toISOString(),
+      }).eq("id", jobId);
+
+      toast.success(`Webseite importiert (${text.length.toLocaleString()} Zeichen)`);
+      setUrlForm({ url: "", category: "", department: "", tags: "" });
+      reload();
+    } catch (e: any) {
+      if (jobId) await supabase.from("copilot_import_jobs").update({
+        status: "error", error_message: e.message, finished_at: new Date().toISOString(),
+      }).eq("id", jobId);
+      toast.error(e.message || "URL-Import fehlgeschlagen");
+      reload();
+    } finally { setUrlBusy(false); }
+  }
+
 
   async function startImport() {
     if (!file) { toast.error("Bitte Datei wählen."); return; }
@@ -678,6 +759,40 @@ function ImportTab({ rows, depts, reload }: { rows: ImportJob[]; depts: Dept[]; 
           </div>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader><CardTitle className="flex items-center gap-2"><Globe className="w-4 h-4 text-primary" /> Webseite einlesen</CardTitle></CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="md:col-span-2">
+            <Label>URL</Label>
+            <Input value={urlForm.url} onChange={(e) => setUrlForm({ ...urlForm, url: e.target.value })} placeholder="https://example.com/seite" />
+          </div>
+          <div>
+            <Label>Kategorie</Label>
+            <Input value={urlForm.category} onChange={(e) => setUrlForm({ ...urlForm, category: e.target.value })} />
+          </div>
+          <div>
+            <Label>Abteilung</Label>
+            <Select value={urlForm.department} onValueChange={(v) => setUrlForm({ ...urlForm, department: v })}>
+              <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+              <SelectContent>{depts.map(d => <SelectItem key={d.key} value={d.key}>{d.label}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="md:col-span-2">
+            <Label>Tags</Label>
+            <Input value={urlForm.tags} onChange={(e) => setUrlForm({ ...urlForm, tags: e.target.value })} placeholder="komma, getrennt" />
+          </div>
+          <div className="md:col-span-2 flex justify-end">
+            <Button onClick={startUrlImport} disabled={urlBusy || !urlForm.url} className="gap-2">
+              {urlBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Globe className="w-4 h-4" />} Webseite importieren
+            </Button>
+          </div>
+          <p className="md:col-span-2 text-[11px] text-muted-foreground">
+            Die Seite wird serverseitig geladen, HTML wird entfernt und der Text (bis 200k Zeichen) als Wissensquelle gespeichert.
+          </p>
+        </CardContent>
+      </Card>
+
 
       <Card>
         <CardHeader><CardTitle className="flex items-center gap-2"><History className="w-4 h-4 text-primary" /> Import-Historie</CardTitle></CardHeader>
