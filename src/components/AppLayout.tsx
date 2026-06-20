@@ -452,7 +452,6 @@ const navItems: NavItem[] = [
       },
 
       // Stammdaten & Import
-      { path: '/import', label: 'Import', icon: Cloud, roles: ['Super Admin'] },
 
       // Benutzer & Rechte
       // Rollen & Nutzer
@@ -489,6 +488,7 @@ const navItems: NavItem[] = [
       {
         path: '#system', label: 'SYSTEM', icon: Cog, roles: ['Super Admin'],
         children: [
+          { path: '/import', label: 'Import', icon: Cloud, roles: ['Super Admin'] },
           { path: '/tickets/api-sync', label: 'API Sync Einstellungen', icon: Settings, roles: ['Super Admin'] },
           { path: '/operation/nummernkreise', label: 'Nummernkreise', icon: Hash, roles: ['Super Admin'] },
           { path: '/verkauf/anfragen/import', label: 'Anfragen Import', icon: Upload, roles: ['Admin', 'Super Admin', 'Vertrieb', 'Vertriebsleitung', 'Order', 'SACHBEARBEITUNG'] },
