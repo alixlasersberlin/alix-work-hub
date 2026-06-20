@@ -78,7 +78,7 @@ export function CopilotBar() {
 
       {/* Panel */}
       {open && (
-        <div className="fixed bottom-3 right-3 z-[60] w-[min(420px,calc(100vw-1.5rem))] max-h-[min(640px,calc(100vh-1.5rem))] flex flex-col overflow-hidden rounded-2xl border border-amber-400/25 bg-black/85 backdrop-blur-xl shadow-[0_40px_80px_-20px_rgba(0,0,0,0.9)] print:hidden">
+        <div className="fixed bottom-6 right-6 z-[60] w-[min(420px,calc(100vw-3rem))] max-h-[min(640px,calc(100vh-3rem))] flex flex-col overflow-hidden rounded-2xl border border-amber-400/25 bg-black/85 backdrop-blur-xl shadow-[0_40px_80px_-20px_rgba(0,0,0,0.9)] print:hidden">
           <div className="relative border-b border-white/10 px-4 py-3 flex items-center justify-between"
             style={{ background: "linear-gradient(90deg, hsl(38 90% 55% / 0.10), transparent 60%)" }}>
             <div className="flex items-center gap-2">
