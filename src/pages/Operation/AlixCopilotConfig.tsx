@@ -671,61 +671,75 @@ function ImportTab({ rows, depts, reload }: { rows: ImportJob[]; depts: Dept[]; 
 
 
   async function startImport() {
-    if (!file) { toast.error("Bitte Datei wählen."); return; }
+    if (!files.length) { toast.error("Bitte mindestens eine Datei wählen."); return; }
+    if (files.length > 10) { toast.error("Maximal 10 Dateien gleichzeitig."); return; }
     setBusy(true);
-    let jobId: string | null = null;
-    try {
-      const { data: job, error: jerr } = await supabase.from("copilot_import_jobs").insert({
-        filename: file.name, category: form.category || null, department: form.department || null,
-        tags: form.tags ? form.tags.split(",").map(t => t.trim()).filter(Boolean) : [],
-        status: "pending",
-      }).select().single();
-      if (jerr) throw jerr;
-      jobId = (job as any).id;
+    setProgress({ done: 0, total: files.length });
+    let okCount = 0;
+    let errCount = 0;
+    const tags = form.tags ? form.tags.split(",").map(t => t.trim()).filter(Boolean) : [];
 
-      let text = "";
-      const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
-      if (isPdf) {
-        if (file.size > 20_000_000) throw new Error("PDF zu groß.");
-        text = await extractPdfText(file);
-      } else if (file.size <= 500_000) {
-        text = await file.text();
-      } else {
-        throw new Error("Nur PDF (≤20 MB) oder Text/CSV (≤500 KB).");
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      let jobId: string | null = null;
+      try {
+        const { data: job, error: jerr } = await supabase.from("copilot_import_jobs").insert({
+          filename: file.name, category: form.category || null, department: form.department || null,
+          tags, status: "pending",
+        }).select().single();
+        if (jerr) throw jerr;
+        jobId = (job as any).id;
+
+        let text = "";
+        const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+        if (isPdf) {
+          if (file.size > 20_000_000) throw new Error("PDF zu groß.");
+          text = await extractPdfText(file);
+        } else if (file.size <= 500_000) {
+          text = await file.text();
+        } else {
+          throw new Error("Nur PDF (≤20 MB) oder Text/CSV (≤500 KB).");
+        }
+        if (!text) throw new Error("Kein Text extrahiert.");
+
+        const { data: src, error: serr } = await supabase.from("copilot_sources").insert({
+          title: file.name,
+          description: text.slice(0, 100_000),
+          category: form.category || null,
+          department: form.department || null,
+          source_type: isPdf ? "pdf" : (file.name.endsWith(".csv") ? "csv" : "text"),
+          status: "active", visible_to_copilot: true,
+          last_import_at: new Date().toISOString(),
+          tags,
+        }).select().single();
+        if (serr) throw serr;
+
+        await supabase.from("copilot_source_files").insert({
+          source_id: (src as any).id, filename: file.name, mime: file.type,
+          size_bytes: file.size, extracted_chars: text.length,
+        });
+        await supabase.from("copilot_import_jobs").update({
+          source_id: (src as any).id, status: "done",
+          recognized_items: 1, finished_at: new Date().toISOString(),
+        }).eq("id", jobId);
+        okCount++;
+      } catch (e: any) {
+        if (jobId) await supabase.from("copilot_import_jobs").update({
+          status: "error", error_message: e.message, finished_at: new Date().toISOString(),
+        }).eq("id", jobId);
+        toast.error(`${file.name}: ${e.message || "Import fehlgeschlagen"}`);
+        errCount++;
+      } finally {
+        setProgress({ done: i + 1, total: files.length });
       }
-      if (!text) throw new Error("Kein Text extrahiert.");
+    }
 
-      const { data: src, error: serr } = await supabase.from("copilot_sources").insert({
-        title: file.name,
-        description: text.slice(0, 100_000),
-        category: form.category || null,
-        department: form.department || null,
-        source_type: isPdf ? "pdf" : (file.name.endsWith(".csv") ? "csv" : "text"),
-        status: "active", visible_to_copilot: true,
-        last_import_at: new Date().toISOString(),
-        tags: form.tags ? form.tags.split(",").map(t => t.trim()).filter(Boolean) : [],
-      }).select().single();
-      if (serr) throw serr;
-
-      await supabase.from("copilot_source_files").insert({
-        source_id: (src as any).id, filename: file.name, mime: file.type,
-        size_bytes: file.size, extracted_chars: text.length,
-      });
-      await supabase.from("copilot_import_jobs").update({
-        source_id: (src as any).id, status: "done",
-        recognized_items: 1, finished_at: new Date().toISOString(),
-      }).eq("id", jobId);
-
-      toast.success("Import erfolgreich");
-      setFile(null); setForm({ category: "", department: "", tags: "" });
-      reload();
-    } catch (e: any) {
-      if (jobId) await supabase.from("copilot_import_jobs").update({
-        status: "error", error_message: e.message, finished_at: new Date().toISOString(),
-      }).eq("id", jobId);
-      toast.error(e.message || "Import fehlgeschlagen");
-      reload();
-    } finally { setBusy(false); }
+    if (okCount) toast.success(`${okCount} Datei(en) importiert${errCount ? `, ${errCount} Fehler` : ""}.`);
+    setFiles([]);
+    setForm({ category: "", department: "", tags: "" });
+    setBusy(false);
+    setProgress(null);
+    reload();
   }
 
   return (
