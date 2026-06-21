@@ -426,12 +426,27 @@ function KnowledgeLibrary({
             </>
           )}
           <label className="inline-flex items-center gap-2 text-xs cursor-pointer rounded-md border border-border px-3 py-1.5 hover:bg-secondary">
-            <FileText className="w-3.5 h-3.5" /> Datei importieren
+            <FileText className="w-3.5 h-3.5" /> Dateien importieren (bis 10)
             <input
               type="file"
+              multiple
               accept=".pdf,.txt,.md,.csv,.json,application/pdf"
               className="hidden"
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) onUpload(f); e.currentTarget.value = ""; }}
+              onChange={async (e) => {
+                const list = Array.from(e.target.files || []);
+                e.currentTarget.value = "";
+                if (!list.length) return;
+                const slice = list.slice(0, 10);
+                if (list.length > 10) {
+                  // best-effort feedback ohne weiteren Import
+                  // (toast wird in onUpload für Einzelfehler verwendet)
+                }
+                for (const f of slice) {
+                  // sequenziell, damit setCfg-Updates nicht kollidieren
+                  // eslint-disable-next-line no-await-in-loop
+                  await onUpload(f);
+                }
+              }}
             />
           </label>
           <Button size="sm" variant="outline" onClick={onAdd} className="gap-1"><Plus className="w-3.5 h-3.5" /> Neu</Button>
