@@ -79,11 +79,15 @@ Deno.serve(async (req) => {
 
   let folderPath: string | undefined;
   let backupId: string | undefined;
+  let mirrorBuckets = false;
+  let bucketsToMirror: string[] | undefined;
   try {
     if (req.method === "POST") {
       const body = await req.json().catch(() => ({}));
       folderPath = body?.folder_path;
       backupId = body?.backup_id;
+      mirrorBuckets = body?.mirror_buckets === true;
+      if (Array.isArray(body?.buckets)) bucketsToMirror = body.buckets;
     }
   } catch (_) { /* ignore */ }
 
