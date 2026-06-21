@@ -877,6 +877,10 @@ function ImportTab({ rows, depts, reload }: { rows: ImportJob[]; depts: Dept[]; 
 // Knowledge
 function KnowledgeTab({ rows, depts, reload }: { rows: Knowledge[]; depts: Dept[]; reload: () => void }) {
   const [editing, setEditing] = useState<Partial<Knowledge> | null>(null);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
+  const bulkInputRef = useRef<HTMLInputElement>(null);
+
   async function save() {
     if (!editing?.title?.trim()) { toast.error("Titel ist Pflicht."); return; }
     const payload = {
@@ -898,13 +902,79 @@ function KnowledgeTab({ rows, depts, reload }: { rows: Knowledge[]; depts: Dept[
     const { error } = await supabase.from("copilot_knowledge_entries").delete().eq("id", id);
     if (error) toast.error(error.message); else { toast.success("Gelöscht"); reload(); }
   }
+
+  async function onBulkFiles(e: React.ChangeEvent<HTMLInputElement>) {
+    const list = Array.from(e.target.files || []);
+    if (e.target) e.target.value = "";
+    if (!list.length) return;
+    if (list.length > 10) { toast.error("Maximal 10 Dateien gleichzeitig."); return; }
+    setBulkBusy(true);
+    setBulkProgress({ done: 0, total: list.length });
+    let okCount = 0, errCount = 0;
+    for (let i = 0; i < list.length; i++) {
+      const file = list[i];
+      try {
+        let text = "";
+        const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+        if (isPdf) {
+          if (file.size > 20_000_000) throw new Error("PDF zu groß (max. 20 MB).");
+          text = await extractPdfText(file);
+        } else if (file.size <= 500_000) {
+          text = await file.text();
+        } else {
+          throw new Error("Nur PDF (≤20 MB) oder Text/CSV/JSON (≤500 KB).");
+        }
+        if (!text) throw new Error("Kein Text extrahiert.");
+        const { error } = await supabase.from("copilot_knowledge_entries").insert({
+          title: file.name.replace(/\.[^.]+$/, ""),
+          content: text.slice(0, 200_000),
+          source: file.name,
+          priority: "mittel",
+          status: "active",
+        });
+        if (error) throw error;
+        okCount++;
+      } catch (err: any) {
+        toast.error(`${file.name}: ${err.message || "Import fehlgeschlagen"}`);
+        errCount++;
+      } finally {
+        setBulkProgress({ done: i + 1, total: list.length });
+      }
+    }
+    if (okCount) toast.success(`${okCount} Wissens-Eintrag/e angelegt${errCount ? `, ${errCount} Fehler` : ""}.`);
+    setBulkBusy(false);
+    setBulkProgress(null);
+    reload();
+  }
+
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2">
         <CardTitle className="flex items-center gap-2"><BookOpen className="w-4 h-4 text-primary" /> Wissensdatenbank ({rows.length})</CardTitle>
-        <Button size="sm" onClick={() => setEditing({ priority: "mittel", status: "active" })} className="gap-1">
-          <Plus className="w-4 h-4" /> Neuer Eintrag
-        </Button>
+        <div className="flex items-center gap-2">
+          <input
+            ref={bulkInputRef}
+            type="file"
+            multiple
+            accept=".pdf,.txt,.md,.csv,.json,application/pdf"
+            className="hidden"
+            onChange={onBulkFiles}
+          />
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={bulkBusy}
+            onClick={() => bulkInputRef.current?.click()}
+            className="gap-1"
+          >
+            {bulkBusy
+              ? <><Loader2 className="w-4 h-4 animate-spin" /> {bulkProgress ? `${bulkProgress.done}/${bulkProgress.total}` : "Import …"}</>
+              : <><Upload className="w-4 h-4" /> PDFs hochladen (bis 10)</>}
+          </Button>
+          <Button size="sm" onClick={() => setEditing({ priority: "mittel", status: "active" })} className="gap-1">
+            <Plus className="w-4 h-4" /> Neuer Eintrag
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         {rows.length === 0 ? <p className="text-sm text-muted-foreground">Noch keine Einträge.</p> : (
