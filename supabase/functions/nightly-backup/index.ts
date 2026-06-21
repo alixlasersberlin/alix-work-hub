@@ -11,22 +11,35 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
-  // Restrict to authorized callers via CRON_SECRET or service role key
+  // Restrict to authorized callers via CRON_SECRET, service role key, or Super Admin JWT
   const cronSecret = Deno.env.get("CRON_SECRET");
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
   const authHeader = req.headers.get("Authorization") ?? "";
   const apiKeyHeader = req.headers.get("apikey") ?? "";
   const expected = cronSecret ? `Bearer ${cronSecret}` : null;
-  const isAuthorized =
+  let isAuthorized =
     (expected && authHeader === expected) ||
     authHeader === `Bearer ${serviceRoleKey}` ||
     apiKeyHeader === serviceRoleKey;
+
+  if (!isAuthorized && authHeader.startsWith("Bearer ")) {
+    try {
+      const userSb = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: authHeader } } });
+      const { data: u } = await userSb.auth.getUser();
+      if (u?.user) {
+        const { data: isAdmin } = await userSb.rpc("has_role", { check_role: "Super Admin" });
+        if (isAdmin) isAuthorized = true;
+      }
+    } catch (_) { /* ignore */ }
+  }
+
   if (!isAuthorized) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabase = createClient(supabaseUrl, serviceRoleKey);
 
 
