@@ -610,7 +610,8 @@ function ModulesTab({ rows, reload }: { rows: Module[]; reload: () => void }) {
 function ImportTab({ rows, depts, reload }: { rows: ImportJob[]; depts: Dept[]; reload: () => void }) {
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({ category: "", department: "", tags: "" });
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [urlBusy, setUrlBusy] = useState(false);
   const [urlForm, setUrlForm] = useState({ url: "", category: "", department: "", tags: "" });
 
