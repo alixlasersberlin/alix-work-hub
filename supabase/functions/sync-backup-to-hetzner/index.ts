@@ -79,25 +79,29 @@ Deno.serve(async (req) => {
 
   let folderPath: string | undefined;
   let backupId: string | undefined;
+  let mirrorBuckets = false;
+  let bucketsToMirror: string[] | undefined;
   try {
     if (req.method === "POST") {
       const body = await req.json().catch(() => ({}));
       folderPath = body?.folder_path;
       backupId = body?.backup_id;
+      mirrorBuckets = body?.mirror_buckets === true;
+      if (Array.isArray(body?.buckets)) bucketsToMirror = body.buckets;
     }
   } catch (_) { /* ignore */ }
 
-  // Recursively list files in the backups bucket (or under folderPath)
-  async function listAll(prefix = ""): Promise<string[]> {
+  // Recursively list files in a given Supabase Storage bucket
+  async function listAll(srcBucket: string, prefix = ""): Promise<string[]> {
     const out: string[] = [];
     const stack: string[] = [prefix];
     while (stack.length) {
       const cur = stack.pop()!;
-      const { data, error } = await supabase.storage.from("backups").list(cur, {
+      const { data, error } = await supabase.storage.from(srcBucket).list(cur, {
         limit: 1000,
         sortBy: { column: "name", order: "asc" },
       });
-      if (error) throw new Error(`list ${cur}: ${error.message}`);
+      if (error) throw new Error(`list ${srcBucket}/${cur}: ${error.message}`);
       if (!data) continue;
       for (const entry of data) {
         const path = cur ? `${cur}/${entry.name}` : entry.name;
@@ -111,6 +115,42 @@ Deno.serve(async (req) => {
     return out;
   }
 
+  // Mirror a single Supabase bucket to Hetzner under a destination prefix.
+  async function mirrorBucket(srcBucket: string, destPrefix: string) {
+    const uploaded: string[] = [];
+    const skipped: string[] = [];
+    const failed: { path: string; error: string }[] = [];
+    let totalBytes = 0;
+
+    const paths = await listAll(srcBucket, "");
+    for (const p of paths) {
+      const objectKey = destPrefix ? `${destPrefix}/${p}` : p;
+      const targetUrl = `${base}/${bucket}/${objectKey}`;
+      try {
+        const head = await aws.fetch(targetUrl, { method: "HEAD" });
+        if (head.ok) { skipped.push(p); continue; }
+      } catch (_) { /* upload */ }
+
+      const { data: blob, error: dlErr } = await supabase.storage.from(srcBucket).download(p);
+      if (dlErr || !blob) { failed.push({ path: p, error: dlErr?.message ?? "download failed" }); continue; }
+      const buf = await blob.arrayBuffer();
+      const put = await aws.fetch(targetUrl, {
+        method: "PUT",
+        body: buf,
+        headers: { "Content-Type": blob.type || "application/octet-stream" },
+      });
+      if (!put.ok) {
+        const t = await put.text();
+        failed.push({ path: p, error: formatS3Error(put.status, t, bucket, base, region) });
+        if (isFatalS3Error(put.status, t)) break;
+        continue;
+      }
+      uploaded.push(p);
+      totalBytes += buf.byteLength;
+    }
+    return { srcBucket, uploaded: uploaded.length, skipped: skipped.length, failed: failed.length, total_bytes: totalBytes, failures: failed };
+  }
+
   const startedAt = Date.now();
   try {
     const bucketCheck = await aws.fetch(`${base}/${bucket}?list-type=2&max-keys=1`, { method: "GET" });
@@ -119,7 +159,7 @@ Deno.serve(async (req) => {
       throw new Error(formatS3Error(bucketCheck.status, responseText, bucket, base, region));
     }
 
-    const paths = await listAll(folderPath ?? "");
+    const paths = await listAll("backups", folderPath ?? "");
     const uploaded: string[] = [];
     const skipped: string[] = [];
     const failed: { path: string; error: string }[] = [];
@@ -129,7 +169,7 @@ Deno.serve(async (req) => {
       const objectKey = p; // mirror layout
       const targetUrl = `${base}/${bucket}/${objectKey}`;
 
-      // Skip if already exists with same size
+      // Skip if already exists
       try {
         const head = await aws.fetch(targetUrl, { method: "HEAD" });
         if (head.ok) {
@@ -159,6 +199,23 @@ Deno.serve(async (req) => {
       totalBytes += buf.byteLength;
     }
 
+    // Optionally mirror ALL other Storage Buckets to Hetzner under `bucket-mirror/<bucket>/`.
+    const ALL_BUCKETS = [
+      "alix-sign-pdfs","bank-offers","bug-capa-attachments","finance-documents",
+      "order-invoices","production-orders","production-photos","repair-files",
+    ];
+    const targetBuckets = mirrorBuckets ? (bucketsToMirror ?? ALL_BUCKETS) : [];
+    const bucketResults: any[] = [];
+    for (const b of targetBuckets) {
+      try {
+        const r = await mirrorBucket(b, `bucket-mirror/${b}`);
+        bucketResults.push(r);
+        totalBytes += r.total_bytes;
+      } catch (e) {
+        bucketResults.push({ srcBucket: b, error: e instanceof Error ? e.message : String(e) });
+      }
+    }
+
     const result = {
       success: failed.length === 0,
       folder_path: folderPath ?? null,
@@ -171,10 +228,14 @@ Deno.serve(async (req) => {
       failed,
       endpoint: base,
       bucket,
+      mirrored_buckets: bucketResults,
     };
 
     // Mark metadata if backupId provided
     if (backupId) {
+      const extra = bucketResults.length
+        ? ` + ${bucketResults.length} Bucket-Spiegelungen`
+        : "";
       await supabase
         .from("backups_metadata")
         .update({
@@ -182,11 +243,12 @@ Deno.serve(async (req) => {
             ? `hetzner_s3:${bucket}`
             : `supabase_storage:backups (hetzner sync partial)`,
           message: failed.length === 0
-            ? `Auf Hetzner gesichert (${uploaded.length} neu, ${skipped.length} bereits vorhanden).`
-            : `Hetzner-Sync teilweise fehlgeschlagen (${failed.length} Fehler).`,
+            ? `Auf Hetzner gesichert (${uploaded.length} neu, ${skipped.length} bereits vorhanden)${extra}.`
+            : `Hetzner-Sync teilweise fehlgeschlagen (${failed.length} Fehler)${extra}.`,
         })
         .eq("id", backupId);
     }
+
 
     return json(result, failed.length === 0 ? 200 : 207);
   } catch (err) {
