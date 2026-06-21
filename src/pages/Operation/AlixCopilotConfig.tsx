@@ -747,10 +747,32 @@ function ImportTab({ rows, depts, reload }: { rows: ImportJob[]; depts: Dept[]; 
       <Card>
         <CardHeader><CardTitle className="flex items-center gap-2"><Upload className="w-4 h-4 text-primary" /> Neuer KI-Import</CardTitle></CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div>
-            <Label>Datei</Label>
-            <Input type="file" accept=".pdf,.txt,.md,.csv,.json,application/pdf"
-              onChange={(e) => setFile(e.target.files?.[0] || null)} />
+          <div className="md:col-span-2">
+            <Label>Dateien (bis zu 10, PDF/Text/CSV/JSON)</Label>
+            <Input
+              type="file"
+              multiple
+              accept=".pdf,.txt,.md,.csv,.json,application/pdf"
+              onChange={(e) => {
+                const list = Array.from(e.target.files || []);
+                if (list.length > 10) {
+                  toast.error("Maximal 10 Dateien gleichzeitig.");
+                  setFiles(list.slice(0, 10));
+                } else {
+                  setFiles(list);
+                }
+              }}
+            />
+            {files.length > 0 && (
+              <p className="text-[11px] text-muted-foreground mt-1">
+                {files.length} Datei(en) ausgewählt: {files.map(f => f.name).join(", ")}
+              </p>
+            )}
+            {progress && (
+              <p className="text-[11px] text-amber-300 mt-1">
+                Verarbeite {progress.done} / {progress.total} …
+              </p>
+            )}
           </div>
           <div>
             <Label>Kategorie</Label>
@@ -763,13 +785,14 @@ function ImportTab({ rows, depts, reload }: { rows: ImportJob[]; depts: Dept[]; 
               <SelectContent>{depts.map(d => <SelectItem key={d.key} value={d.key}>{d.label}</SelectItem>)}</SelectContent>
             </Select>
           </div>
-          <div>
+          <div className="md:col-span-2">
             <Label>Tags</Label>
             <Input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="komma, getrennt" />
           </div>
           <div className="md:col-span-2 flex justify-end">
-            <Button onClick={startImport} disabled={busy || !file} className="gap-2">
-              {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />} Import starten
+            <Button onClick={startImport} disabled={busy || files.length === 0} className="gap-2">
+              {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+              {busy && progress ? `Import läuft (${progress.done}/${progress.total})` : `Import starten${files.length > 1 ? ` (${files.length} Dateien)` : ""}`}
             </Button>
           </div>
         </CardContent>
