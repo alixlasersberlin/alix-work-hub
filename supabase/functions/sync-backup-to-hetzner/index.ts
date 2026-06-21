@@ -91,17 +91,17 @@ Deno.serve(async (req) => {
     }
   } catch (_) { /* ignore */ }
 
-  // Recursively list files in the backups bucket (or under folderPath)
-  async function listAll(prefix = ""): Promise<string[]> {
+  // Recursively list files in a given Supabase Storage bucket
+  async function listAll(srcBucket: string, prefix = ""): Promise<string[]> {
     const out: string[] = [];
     const stack: string[] = [prefix];
     while (stack.length) {
       const cur = stack.pop()!;
-      const { data, error } = await supabase.storage.from("backups").list(cur, {
+      const { data, error } = await supabase.storage.from(srcBucket).list(cur, {
         limit: 1000,
         sortBy: { column: "name", order: "asc" },
       });
-      if (error) throw new Error(`list ${cur}: ${error.message}`);
+      if (error) throw new Error(`list ${srcBucket}/${cur}: ${error.message}`);
       if (!data) continue;
       for (const entry of data) {
         const path = cur ? `${cur}/${entry.name}` : entry.name;
@@ -113,6 +113,42 @@ Deno.serve(async (req) => {
       }
     }
     return out;
+  }
+
+  // Mirror a single Supabase bucket to Hetzner under a destination prefix.
+  async function mirrorBucket(srcBucket: string, destPrefix: string) {
+    const uploaded: string[] = [];
+    const skipped: string[] = [];
+    const failed: { path: string; error: string }[] = [];
+    let totalBytes = 0;
+
+    const paths = await listAll(srcBucket, "");
+    for (const p of paths) {
+      const objectKey = destPrefix ? `${destPrefix}/${p}` : p;
+      const targetUrl = `${base}/${bucket}/${objectKey}`;
+      try {
+        const head = await aws.fetch(targetUrl, { method: "HEAD" });
+        if (head.ok) { skipped.push(p); continue; }
+      } catch (_) { /* upload */ }
+
+      const { data: blob, error: dlErr } = await supabase.storage.from(srcBucket).download(p);
+      if (dlErr || !blob) { failed.push({ path: p, error: dlErr?.message ?? "download failed" }); continue; }
+      const buf = await blob.arrayBuffer();
+      const put = await aws.fetch(targetUrl, {
+        method: "PUT",
+        body: buf,
+        headers: { "Content-Type": blob.type || "application/octet-stream" },
+      });
+      if (!put.ok) {
+        const t = await put.text();
+        failed.push({ path: p, error: formatS3Error(put.status, t, bucket, base, region) });
+        if (isFatalS3Error(put.status, t)) break;
+        continue;
+      }
+      uploaded.push(p);
+      totalBytes += buf.byteLength;
+    }
+    return { srcBucket, uploaded: uploaded.length, skipped: skipped.length, failed: failed.length, total_bytes: totalBytes, failures: failed };
   }
 
   const startedAt = Date.now();
