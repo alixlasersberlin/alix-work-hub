@@ -367,8 +367,8 @@ function KnowledgeLibrary({
 }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState<Set<string>>(new Set());
-  // Bei vielen Einträgen standardmäßig kollabiert
-  const collapseByDefault = snippets.length > 3;
+  // Alle Einträge standardmäßig eingeklappt
+  const collapseByDefault = true;
 
   const isOpen = (id: string) =>
     collapseByDefault ? open.has(id) : !open.has(`__c_${id}`);
