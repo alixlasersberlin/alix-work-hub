@@ -145,9 +145,29 @@ async function uploadJson(
 }
 
 async function readJson<T>(adminClient: BackupAdminClient, path: string): Promise<T> {
-  const { data, error } = await adminClient.storage.from("backups").download(path);
-  if (error || !data) throw new Error(`Read ${path}: ${error?.message ?? "missing file"}`);
-  return JSON.parse(await data.text()) as T;
+  // Storage download kann nach einem upsert (eventually consistent) kurzzeitig
+  // 404/leer liefern. Daher mit Backoff bis zu 5x retryen, bevor wir aufgeben.
+  let lastErr: string | null = null;
+  for (let attempt = 1; attempt <= 5; attempt += 1) {
+    const { data, error } = await adminClient.storage.from("backups").download(path);
+    if (!error && data) {
+      const text = await data.text();
+      if (text && text.trim().length > 0) {
+        try {
+          return JSON.parse(text) as T;
+        } catch (e) {
+          lastErr = `invalid JSON: ${(e as Error).message}`;
+        }
+      } else {
+        lastErr = "empty file";
+      }
+    } else {
+      const raw = error ? (error.message || JSON.stringify(error)) : "missing file";
+      lastErr = raw && raw !== "{}" ? raw : "transient storage read error";
+    }
+    await new Promise((r) => setTimeout(r, 400 * 2 ** (attempt - 1)));
+  }
+  throw new Error(`Read ${path}: ${lastErr ?? "unknown error"}`);
 }
 
 async function uploadNdjsonPart(
