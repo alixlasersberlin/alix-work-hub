@@ -610,7 +610,8 @@ function ModulesTab({ rows, reload }: { rows: Module[]; reload: () => void }) {
 function ImportTab({ rows, depts, reload }: { rows: ImportJob[]; depts: Dept[]; reload: () => void }) {
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({ category: "", department: "", tags: "" });
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [urlBusy, setUrlBusy] = useState(false);
   const [urlForm, setUrlForm] = useState({ url: "", category: "", department: "", tags: "" });
 
@@ -670,61 +671,75 @@ function ImportTab({ rows, depts, reload }: { rows: ImportJob[]; depts: Dept[]; 
 
 
   async function startImport() {
-    if (!file) { toast.error("Bitte Datei wählen."); return; }
+    if (!files.length) { toast.error("Bitte mindestens eine Datei wählen."); return; }
+    if (files.length > 10) { toast.error("Maximal 10 Dateien gleichzeitig."); return; }
     setBusy(true);
-    let jobId: string | null = null;
-    try {
-      const { data: job, error: jerr } = await supabase.from("copilot_import_jobs").insert({
-        filename: file.name, category: form.category || null, department: form.department || null,
-        tags: form.tags ? form.tags.split(",").map(t => t.trim()).filter(Boolean) : [],
-        status: "pending",
-      }).select().single();
-      if (jerr) throw jerr;
-      jobId = (job as any).id;
+    setProgress({ done: 0, total: files.length });
+    let okCount = 0;
+    let errCount = 0;
+    const tags = form.tags ? form.tags.split(",").map(t => t.trim()).filter(Boolean) : [];
 
-      let text = "";
-      const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
-      if (isPdf) {
-        if (file.size > 20_000_000) throw new Error("PDF zu groß.");
-        text = await extractPdfText(file);
-      } else if (file.size <= 500_000) {
-        text = await file.text();
-      } else {
-        throw new Error("Nur PDF (≤20 MB) oder Text/CSV (≤500 KB).");
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      let jobId: string | null = null;
+      try {
+        const { data: job, error: jerr } = await supabase.from("copilot_import_jobs").insert({
+          filename: file.name, category: form.category || null, department: form.department || null,
+          tags, status: "pending",
+        }).select().single();
+        if (jerr) throw jerr;
+        jobId = (job as any).id;
+
+        let text = "";
+        const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+        if (isPdf) {
+          if (file.size > 20_000_000) throw new Error("PDF zu groß.");
+          text = await extractPdfText(file);
+        } else if (file.size <= 500_000) {
+          text = await file.text();
+        } else {
+          throw new Error("Nur PDF (≤20 MB) oder Text/CSV (≤500 KB).");
+        }
+        if (!text) throw new Error("Kein Text extrahiert.");
+
+        const { data: src, error: serr } = await supabase.from("copilot_sources").insert({
+          title: file.name,
+          description: text.slice(0, 100_000),
+          category: form.category || null,
+          department: form.department || null,
+          source_type: isPdf ? "pdf" : (file.name.endsWith(".csv") ? "csv" : "text"),
+          status: "active", visible_to_copilot: true,
+          last_import_at: new Date().toISOString(),
+          tags,
+        }).select().single();
+        if (serr) throw serr;
+
+        await supabase.from("copilot_source_files").insert({
+          source_id: (src as any).id, filename: file.name, mime: file.type,
+          size_bytes: file.size, extracted_chars: text.length,
+        });
+        await supabase.from("copilot_import_jobs").update({
+          source_id: (src as any).id, status: "done",
+          recognized_items: 1, finished_at: new Date().toISOString(),
+        }).eq("id", jobId);
+        okCount++;
+      } catch (e: any) {
+        if (jobId) await supabase.from("copilot_import_jobs").update({
+          status: "error", error_message: e.message, finished_at: new Date().toISOString(),
+        }).eq("id", jobId);
+        toast.error(`${file.name}: ${e.message || "Import fehlgeschlagen"}`);
+        errCount++;
+      } finally {
+        setProgress({ done: i + 1, total: files.length });
       }
-      if (!text) throw new Error("Kein Text extrahiert.");
+    }
 
-      const { data: src, error: serr } = await supabase.from("copilot_sources").insert({
-        title: file.name,
-        description: text.slice(0, 100_000),
-        category: form.category || null,
-        department: form.department || null,
-        source_type: isPdf ? "pdf" : (file.name.endsWith(".csv") ? "csv" : "text"),
-        status: "active", visible_to_copilot: true,
-        last_import_at: new Date().toISOString(),
-        tags: form.tags ? form.tags.split(",").map(t => t.trim()).filter(Boolean) : [],
-      }).select().single();
-      if (serr) throw serr;
-
-      await supabase.from("copilot_source_files").insert({
-        source_id: (src as any).id, filename: file.name, mime: file.type,
-        size_bytes: file.size, extracted_chars: text.length,
-      });
-      await supabase.from("copilot_import_jobs").update({
-        source_id: (src as any).id, status: "done",
-        recognized_items: 1, finished_at: new Date().toISOString(),
-      }).eq("id", jobId);
-
-      toast.success("Import erfolgreich");
-      setFile(null); setForm({ category: "", department: "", tags: "" });
-      reload();
-    } catch (e: any) {
-      if (jobId) await supabase.from("copilot_import_jobs").update({
-        status: "error", error_message: e.message, finished_at: new Date().toISOString(),
-      }).eq("id", jobId);
-      toast.error(e.message || "Import fehlgeschlagen");
-      reload();
-    } finally { setBusy(false); }
+    if (okCount) toast.success(`${okCount} Datei(en) importiert${errCount ? `, ${errCount} Fehler` : ""}.`);
+    setFiles([]);
+    setForm({ category: "", department: "", tags: "" });
+    setBusy(false);
+    setProgress(null);
+    reload();
   }
 
   return (
@@ -732,10 +747,32 @@ function ImportTab({ rows, depts, reload }: { rows: ImportJob[]; depts: Dept[]; 
       <Card>
         <CardHeader><CardTitle className="flex items-center gap-2"><Upload className="w-4 h-4 text-primary" /> Neuer KI-Import</CardTitle></CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div>
-            <Label>Datei</Label>
-            <Input type="file" accept=".pdf,.txt,.md,.csv,.json,application/pdf"
-              onChange={(e) => setFile(e.target.files?.[0] || null)} />
+          <div className="md:col-span-2">
+            <Label>Dateien (bis zu 10, PDF/Text/CSV/JSON)</Label>
+            <Input
+              type="file"
+              multiple
+              accept=".pdf,.txt,.md,.csv,.json,application/pdf"
+              onChange={(e) => {
+                const list = Array.from(e.target.files || []);
+                if (list.length > 10) {
+                  toast.error("Maximal 10 Dateien gleichzeitig.");
+                  setFiles(list.slice(0, 10));
+                } else {
+                  setFiles(list);
+                }
+              }}
+            />
+            {files.length > 0 && (
+              <p className="text-[11px] text-muted-foreground mt-1">
+                {files.length} Datei(en) ausgewählt: {files.map(f => f.name).join(", ")}
+              </p>
+            )}
+            {progress && (
+              <p className="text-[11px] text-amber-300 mt-1">
+                Verarbeite {progress.done} / {progress.total} …
+              </p>
+            )}
           </div>
           <div>
             <Label>Kategorie</Label>
@@ -748,13 +785,14 @@ function ImportTab({ rows, depts, reload }: { rows: ImportJob[]; depts: Dept[]; 
               <SelectContent>{depts.map(d => <SelectItem key={d.key} value={d.key}>{d.label}</SelectItem>)}</SelectContent>
             </Select>
           </div>
-          <div>
+          <div className="md:col-span-2">
             <Label>Tags</Label>
             <Input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="komma, getrennt" />
           </div>
           <div className="md:col-span-2 flex justify-end">
-            <Button onClick={startImport} disabled={busy || !file} className="gap-2">
-              {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />} Import starten
+            <Button onClick={startImport} disabled={busy || files.length === 0} className="gap-2">
+              {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+              {busy && progress ? `Import läuft (${progress.done}/${progress.total})` : `Import starten${files.length > 1 ? ` (${files.length} Dateien)` : ""}`}
             </Button>
           </div>
         </CardContent>
