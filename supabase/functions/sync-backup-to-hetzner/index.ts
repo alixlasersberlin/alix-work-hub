@@ -159,7 +159,7 @@ Deno.serve(async (req) => {
       throw new Error(formatS3Error(bucketCheck.status, responseText, bucket, base, region));
     }
 
-    const paths = await listAll(folderPath ?? "");
+    const paths = await listAll("backups", folderPath ?? "");
     const uploaded: string[] = [];
     const skipped: string[] = [];
     const failed: { path: string; error: string }[] = [];
@@ -169,7 +169,7 @@ Deno.serve(async (req) => {
       const objectKey = p; // mirror layout
       const targetUrl = `${base}/${bucket}/${objectKey}`;
 
-      // Skip if already exists with same size
+      // Skip if already exists
       try {
         const head = await aws.fetch(targetUrl, { method: "HEAD" });
         if (head.ok) {
@@ -199,6 +199,23 @@ Deno.serve(async (req) => {
       totalBytes += buf.byteLength;
     }
 
+    // Optionally mirror ALL other Storage Buckets to Hetzner under `bucket-mirror/<bucket>/`.
+    const ALL_BUCKETS = [
+      "alix-sign-pdfs","bank-offers","bug-capa-attachments","finance-documents",
+      "order-invoices","production-orders","production-photos","repair-files",
+    ];
+    const targetBuckets = mirrorBuckets ? (bucketsToMirror ?? ALL_BUCKETS) : [];
+    const bucketResults: any[] = [];
+    for (const b of targetBuckets) {
+      try {
+        const r = await mirrorBucket(b, `bucket-mirror/${b}`);
+        bucketResults.push(r);
+        totalBytes += r.total_bytes;
+      } catch (e) {
+        bucketResults.push({ srcBucket: b, error: e instanceof Error ? e.message : String(e) });
+      }
+    }
+
     const result = {
       success: failed.length === 0,
       folder_path: folderPath ?? null,
@@ -211,10 +228,14 @@ Deno.serve(async (req) => {
       failed,
       endpoint: base,
       bucket,
+      mirrored_buckets: bucketResults,
     };
 
     // Mark metadata if backupId provided
     if (backupId) {
+      const extra = bucketResults.length
+        ? ` + ${bucketResults.length} Bucket-Spiegelungen`
+        : "";
       await supabase
         .from("backups_metadata")
         .update({
@@ -222,11 +243,12 @@ Deno.serve(async (req) => {
             ? `hetzner_s3:${bucket}`
             : `supabase_storage:backups (hetzner sync partial)`,
           message: failed.length === 0
-            ? `Auf Hetzner gesichert (${uploaded.length} neu, ${skipped.length} bereits vorhanden).`
-            : `Hetzner-Sync teilweise fehlgeschlagen (${failed.length} Fehler).`,
+            ? `Auf Hetzner gesichert (${uploaded.length} neu, ${skipped.length} bereits vorhanden)${extra}.`
+            : `Hetzner-Sync teilweise fehlgeschlagen (${failed.length} Fehler)${extra}.`,
         })
         .eq("id", backupId);
     }
+
 
     return json(result, failed.length === 0 ? 200 : 207);
   } catch (err) {
