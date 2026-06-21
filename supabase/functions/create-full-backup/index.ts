@@ -431,7 +431,11 @@ async function runPostBackupTasks(params: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${serviceRoleKey}`,
         },
-        body: JSON.stringify({ folder_path: folderPath, backup_id: backupId }),
+        body: JSON.stringify({
+          folder_path: folderPath,
+          backup_id: backupId,
+          mirror_buckets: true,
+        }),
       },
     );
     if (!syncRes.ok) {
