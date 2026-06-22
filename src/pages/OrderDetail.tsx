@@ -537,7 +537,8 @@ export default function OrderDetail() {
           const isLast = menuIdx === tabMenus.length - 1;
           if (!isLast) return tabMenu;
           return (
-            <>
+            <div key="kommunikation-with-actions" className="contents">
+
               {actionMenus.map((am) => {
                 const AMIcon = am.icon;
                 if (am.items.length === 0) return null;
