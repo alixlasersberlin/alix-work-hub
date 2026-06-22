@@ -31,6 +31,8 @@ export default function AuftragsbestaetigungTab({ orderId, customerId, customerE
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [recipient, setRecipient] = useState<string>(customerEmail || '');
   const [sending, setSending] = useState(false);
+  const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
 
   useEffect(() => {
     if (!customerId) { setLoading(false); return; }
@@ -56,6 +58,29 @@ export default function AuftragsbestaetigungTab({ orderId, customerId, customerE
   const previewUrl = selected && token
     ? `${PUBLIC_BASE}/pdf/ab?signature_id=${selected.id}&token=${encodeURIComponent(token)}`
     : null;
+
+  // Lade PDF als Blob für die Vorschau (umgeht Cross-Origin-iframe-Probleme im Preview)
+  useEffect(() => {
+    let revokeUrl: string | null = null;
+    setPreviewBlobUrl(null);
+    if (!pdfFetchUrl) return;
+    setPreviewLoading(true);
+    (async () => {
+      try {
+        const res = await fetch(pdfFetchUrl);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        revokeUrl = url;
+        setPreviewBlobUrl(url);
+      } catch (e) {
+        setPreviewBlobUrl(null);
+      } finally {
+        setPreviewLoading(false);
+      }
+    })();
+    return () => { if (revokeUrl) URL.revokeObjectURL(revokeUrl); };
+  }, [pdfFetchUrl]);
 
   const handleSend = async () => {
     if (sigs.length > 0 && !selected) return;
@@ -207,11 +232,16 @@ export default function AuftragsbestaetigungTab({ orderId, customerId, customerE
                 </div>
               </div>
               <iframe
-                key={previewUrl}
-                src={previewUrl}
+                key={previewBlobUrl || 'loading'}
+                src={previewBlobUrl || 'about:blank'}
                 className="w-full h-[640px] rounded-lg border border-border bg-white"
                 title="Auftragsbestätigung Vorschau"
               />
+              {previewLoading && !previewBlobUrl && (
+                <div className="text-xs text-muted-foreground -mt-1 flex items-center gap-2">
+                  <Loader2 className="w-3 h-3 animate-spin" /> Vorschau wird geladen …
+                </div>
+              )}
             </div>
           )}
 
