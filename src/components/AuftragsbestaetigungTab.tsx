@@ -232,11 +232,16 @@ export default function AuftragsbestaetigungTab({ orderId, customerId, customerE
                 </div>
               </div>
               <iframe
-                key={previewUrl}
-                src={previewUrl}
+                key={previewBlobUrl || 'loading'}
+                src={previewBlobUrl || 'about:blank'}
                 className="w-full h-[640px] rounded-lg border border-border bg-white"
                 title="Auftragsbestätigung Vorschau"
               />
+              {previewLoading && !previewBlobUrl && (
+                <div className="text-xs text-muted-foreground -mt-1 flex items-center gap-2">
+                  <Loader2 className="w-3 h-3 animate-spin" /> Vorschau wird geladen …
+                </div>
+              )}
             </div>
           )}
 
