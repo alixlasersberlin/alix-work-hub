@@ -327,7 +327,7 @@ const navItems: NavItem[] = [
   },
 
   {
-    path: '/finance', label: 'FINANCE & CONTROLLING', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance', 'Finanzierungen', 'Order'],
+    path: '/finance', label: 'FINANCE & CONTROLLING', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance', 'Finanzierungen'],
     children: [
       {
         path: '/finance/dashboard', label: 'DASHBOARD', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'],
