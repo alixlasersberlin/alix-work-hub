@@ -573,7 +573,7 @@ export default function OrderDetail() {
                 );
               })}
               {tabMenu}
-            </>
+            </div>
           );
         })}
       </div>
