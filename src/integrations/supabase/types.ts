@@ -8167,6 +8167,10 @@ export type Database = {
       }
       offers: {
         Row: {
+          approval_note: string | null
+          approval_status: string
+          approved_at: string | null
+          approved_by: string | null
           case_number: string | null
           created_at: string
           created_by: string | null
@@ -8187,6 +8191,10 @@ export type Database = {
           valid_until: string | null
         }
         Insert: {
+          approval_note?: string | null
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           case_number?: string | null
           created_at?: string
           created_by?: string | null
@@ -8207,6 +8215,10 @@ export type Database = {
           valid_until?: string | null
         }
         Update: {
+          approval_note?: string | null
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           case_number?: string | null
           created_at?: string
           created_by?: string | null
