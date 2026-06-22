@@ -308,23 +308,25 @@ export default function OrderDetail() {
   const canSeeAtPurchase = isAtOrder && (hasRole('Super Admin') || hasRole('Österreich'));
   const canSeeAtApproval = isAtOrder && (hasRole('Super Admin') || hasRole('Admin') || hasRole('Österreich'));
 
-  const tabGroups = [
+  const overviewTab = { key: 'overview', label: 'Übersicht', icon: ClipboardList };
+  const tabMenus: Array<{ name: string; icon: any; tabs: any[] }> = [
     {
-      name: 'Auftrag',
+      name: 'Artikel',
+      icon: Package,
       tabs: [
-        { key: 'overview', label: 'Übersicht', icon: ClipboardList },
         { key: 'items', label: 'Artikel', icon: Package, count: items.length },
         { key: 'serials', label: 'Seriennummer', icon: Hash, count: serialDevices.length },
         { key: 'packages', label: 'Pakete', icon: Truck, count: packages.length },
+      ],
+    },
+    {
+      name: 'Auftrag',
+      icon: FileText,
+      tabs: [
         { key: 'confirmation', label: 'Auftragsbestätigung', icon: FileText },
         { key: 'lieferschein', label: 'Lieferschein', icon: FileText },
         { key: 'auftragsbestaetigung', label: 'Auftrag Unterzeichnet', icon: FileText },
         { key: 'az_invoice', label: 'AZ Rechnung', icon: Euro, badge: (Number(order?.deposit_amount) || 0) > 0 ? '€' : undefined },
-      ],
-    },
-    {
-      name: 'Finanzen',
-      tabs: [
         { key: 'deposit', label: 'Anzahlung', icon: Euro, badge: order?.deposit_ok ? '✓' : undefined },
         { key: 'financing', label: 'Finanzierung', icon: Landmark },
         ...(canSeeAtPurchase ? [{ key: 'at_purchase', label: 'Einkauf AT', icon: ShoppingBag }] : []),
@@ -333,20 +335,16 @@ export default function OrderDetail() {
     },
     {
       name: 'Kommunikation',
+      icon: MessageSquare,
       tabs: [
         { key: 'notes', label: 'Notizen', icon: FileText, count: generalNotes.length },
         { key: 'emails', label: 'E-Mails', icon: Mail, count: emailNotes.length },
         { key: 'sms', label: 'SMS Versand', icon: MessageSquare },
-      ],
-    },
-    {
-      name: 'System',
-      tabs: [
         { key: 'history', label: 'Historie', icon: History, count: history.length },
         ...(isAdmin ? [{ key: 'raw', label: 'Rohdaten', icon: Shield }] : []),
       ],
     },
-  ] as const;
+  ];
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
