@@ -3,19 +3,22 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FileText, FilePlus, Trash2, Pencil, CheckCircle2, Link2, Copy, Download } from 'lucide-react';
+import { FileText, FilePlus, Trash2, Pencil, CheckCircle2, Link2, Copy, Download, ShieldCheck, ShieldX, Clock } from 'lucide-react';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { EmptyState } from '@/components/infinity/EmptyState';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import {
   listOffers,
   deleteOffer as deleteOfferDb,
   updateOfferStatus,
+  setOfferApproval,
   migrateLegacyOffersOnce,
   type OfferSnapshot,
 } from '@/lib/offers-store';
