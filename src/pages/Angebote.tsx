@@ -223,19 +223,29 @@ export default function Angebote() {
                   <TableHead>E-Mail</TableHead>
                   <TableHead>Ersteller</TableHead>
                   <TableHead className="text-right">Gesamt</TableHead>
+                  <TableHead>Freigabe</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="w-28 text-right">Aktionen</TableHead>
+                  <TableHead className="w-40 text-right">Aktionen</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {offers.map(o => {
                   const isOrder = o.status === 'order';
                   const isSigned = o.status === 'signed';
+                  const approval = (o.approvalStatus || 'pending') as 'pending' | 'approved' | 'rejected';
+                  const isApproved = approval === 'approved';
+                  const canEditOrSign = isApproved || isSuperAdmin;
                   return (
                   <TableRow
                     key={o.offerNumber}
                     className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => navigate(`/verkauf/angebot/neu?edit=${encodeURIComponent(o.offerNumber)}`)}
+                    onClick={() => {
+                      if (!canEditOrSign) {
+                        toast.info('Angebot wartet auf Freigabe durch den Super Admin.');
+                        return;
+                      }
+                      navigate(`/verkauf/angebot/neu?edit=${encodeURIComponent(o.offerNumber)}`);
+                    }}
                   >
                     <TableCell className="font-medium">{o.offerNumber}</TableCell>
                     <TableCell>{o.offerDate ? new Date(o.offerDate).toLocaleDateString('de-DE') : '—'}</TableCell>
@@ -243,6 +253,21 @@ export default function Angebote() {
                     <TableCell className="text-muted-foreground">{o.customer?.email || '—'}</TableCell>
                     <TableCell className="text-muted-foreground">{o.createdByName || '—'}</TableCell>
                     <TableCell className="text-right font-semibold">{fmtMoney(o.totals?.gross || 0)}</TableCell>
+                    <TableCell>
+                      {approval === 'approved' ? (
+                        <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                          <ShieldCheck className="h-3 w-3" /> Freigegeben
+                        </span>
+                      ) : approval === 'rejected' ? (
+                        <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium bg-destructive/10 text-destructive border border-destructive/20">
+                          <ShieldX className="h-3 w-3" /> Abgelehnt
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                          <Clock className="h-3 w-3" /> Wartet auf Freigabe
+                        </span>
+                      )}
+                    </TableCell>
                     <TableCell>
                       {isSigned ? (
                         <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
@@ -256,23 +281,41 @@ export default function Angebote() {
                       )}
                     </TableCell>
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                      {isSuperAdmin && approval !== 'approved' && (
+                        <Button variant="ghost" size="icon" onClick={() => openApproval(o)} title="Freigeben / Ablehnen">
+                          <ShieldCheck className="h-4 w-4 text-amber-400" />
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => navigate(`/verkauf/angebot/neu?edit=${encodeURIComponent(o.offerNumber)}&download=1`)}
-                        title="PDF herunterladen"
+                        disabled={!canEditOrSign}
+                        onClick={() => canEditOrSign && navigate(`/verkauf/angebot/neu?edit=${encodeURIComponent(o.offerNumber)}&download=1`)}
+                        title={canEditOrSign ? 'PDF herunterladen' : 'Erst nach Freigabe verfügbar'}
                       >
                         <Download className="h-4 w-4" />
                       </Button>
                       {!isOrder && !isSigned && (
-                        <Button variant="ghost" size="icon" asChild title="Bearbeiten">
-                          <Link to={`/verkauf/angebot/neu?edit=${encodeURIComponent(o.offerNumber)}`}>
+                        canEditOrSign ? (
+                          <Button variant="ghost" size="icon" asChild title="Bearbeiten">
+                            <Link to={`/verkauf/angebot/neu?edit=${encodeURIComponent(o.offerNumber)}`}>
+                              <Pencil className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        ) : (
+                          <Button variant="ghost" size="icon" disabled title="Erst nach Freigabe bearbeitbar">
                             <Pencil className="h-4 w-4" />
-                          </Link>
-                        </Button>
+                          </Button>
+                        )
                       )}
                       {!isSigned && (
-                        <Button variant="ghost" size="icon" onClick={() => openSignLink(o.offerNumber)} title="Unterschriftslink anzeigen">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          disabled={!canEditOrSign}
+                          onClick={() => canEditOrSign && openSignLink(o.offerNumber)}
+                          title={canEditOrSign ? 'Unterschriftslink anzeigen' : 'Erst nach Freigabe verfügbar'}
+                        >
                           <Link2 className="h-4 w-4" />
                         </Button>
                       )}
