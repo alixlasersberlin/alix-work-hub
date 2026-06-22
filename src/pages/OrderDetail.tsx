@@ -351,6 +351,74 @@ export default function OrderDetail() {
     },
   ];
 
+  // Aktions-Menüs (Backoffice & Bearbeitung) — vor Kommunikation
+  type ActionItem = { key: string; label: string; icon: any; onClick: () => void | Promise<void>; disabled?: boolean; title?: string };
+  const actionMenus: Array<{ name: string; icon: any; items: ActionItem[] }> = [
+    ...(canWrite ? [{
+      name: 'Backoffice',
+      icon: Briefcase,
+      items: [
+        { key: 'edit', label: 'Ändern', icon: Pencil, onClick: () => setEditOpen(true) },
+        {
+          key: 'email-kunde', label: 'E-Mail an Kunde', icon: Mail,
+          disabled: sendingEmail || !customer?.email,
+          title: !customer?.email ? 'Kunde hat keine E-Mail-Adresse' : 'Voravisierung an Kunde senden',
+          onClick: async () => {
+            setSendingEmail(true);
+            const r = await sendCustomerShippingNotice(order.id, undefined, 'manuell', 'customer_shipping_notice');
+            setSendingEmail(false);
+            if (r.ok) { toast.success(r.message); loadAll(); }
+            else toast.error(r.message);
+          },
+        },
+        ...(hasRole('Super Admin') ? [{
+          key: 'auftragsbestaetigung-email', label: 'Auftragsbestätigung Email', icon: Mail,
+          onClick: () => setSearchParams({ tab: 'confirmation' }),
+        }] : []),
+        { key: 'sepa', label: 'SEPA Mandat', icon: FileText, onClick: () => sepaRef.current?.trigger() },
+        { key: 'mietkauf', label: 'Mietkauf', icon: FileText, onClick: () => mietkaufRef.current?.open() },
+        { key: 'ratenplan', label: 'Ratenplan', icon: FileText, onClick: () => ratenplanRef.current?.open() },
+      ] as ActionItem[],
+    }] : []),
+    ...(canWrite ? [{
+      name: 'Bearbeitung',
+      icon: Wrench,
+      items: [
+        ...(order.order_status !== 'geliefert' ? [{
+          key: 'mark-delivered', label: 'Als geliefert markieren', icon: Truck,
+          onClick: async () => {
+            const { data: devs } = await supabase
+              .from('lager_devices')
+              .select('model_name, serial_number')
+              .eq('reserved_order_id', order.id);
+            const prefetchedDevices = devs || [];
+            const { error } = await supabase.from('orders').update({ order_status: 'geliefert' }).eq('id', order.id);
+            if (error) { toast.error('Fehler: ' + error.message); return; }
+            toast.success('Auftrag als geliefert markiert');
+            const mail = await sendCustomerShippingNotice(order.id, undefined, 'automatisch', 'customer_delivered', prefetchedDevices);
+            if (mail.ok) toast.success(mail.message); else toast.error('E-Mail nicht versendet: ' + mail.message);
+            sendReviewInvitation(order.id, { manual: false }).catch(() => {});
+            loadAll();
+          },
+        }] : []),
+        ...(hasRole('Super Admin') ? [{
+          key: 'review-manual', label: 'Bewertung manuell senden', icon: Mail,
+          onClick: async () => {
+            if (!order.customer_email) { toast.error('Für diesen Auftrag ist keine Kunden-E-Mail hinterlegt.'); return; }
+            const res = await sendReviewInvitation(order.id, { manual: true });
+            if (res?.ok) toast.success(res.message || 'Bewertungseinladung versendet');
+            else toast.error(res?.message || 'Bewertungseinladung fehlgeschlagen');
+          },
+        }] : []),
+        {
+          key: 'trigger-order', label: 'Bestellung auslösen', icon: ShoppingBag,
+          onClick: () => navigate(`/order/neu?order_id=${order.id}`),
+        },
+        { key: 'defer', label: 'Zurückstellen', icon: CalendarClock, onClick: () => setDeferOpen(true) },
+      ] as ActionItem[],
+    }] : []),
+  ];
+
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
       <Button variant="ghost" className="mb-4 text-muted-foreground hover:text-foreground" onClick={() => navigate(order.source_system === 'zoho_eu_2' ? '/auftraege-at' : '/auftraege')}>
