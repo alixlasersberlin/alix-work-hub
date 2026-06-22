@@ -187,161 +187,172 @@ export default function Dashboard() {
   const canSeeCustomers = isAdmin || hasAnyRole(['Auftragsverwaltung', 'Tourenplanung', 'Finance', 'Österreich']);
   const canSeeAudit = isAdmin || hasRole('Read Only Audit');
 
-  useEffect(() => {
-    async function load() {
-      try {
-        setError(null);
+  async function loadDashboard() {
+    // Lager-Geräte für die KPI-Karten (Freie Pool-Geräte + Leihgeräte gesamt)
+    const lagerRes = isAdmin
+      ? await supabase.from('lager_devices').select('notes, reserved_order_id')
+      : { data: [] as { notes: string | null; reserved_order_id: string | null }[] };
 
-        // Lager-Geräte für die KPI-Karten (Freie Pool-Geräte + Leihgeräte gesamt)
-        const lagerRes = isAdmin
-          ? await supabase.from('lager_devices').select('notes, reserved_order_id')
-          : { data: [] as { notes: string | null; reserved_order_id: string | null }[] };
+    const getStatus = (n: string | null | undefined) => {
+      const m = /\[Status:\s*([^\]]+)\]/.exec(n ?? '');
+      return (m?.[1] ?? '').trim();
+    };
+    const isLeih = (n: string | null | undefined) =>
+      (n ?? '').includes('[Typ: Leihgerät]') || (n ?? '').includes('[Leihgerät]');
 
-        const getStatus = (n: string | null | undefined) => {
-          const m = /\[Status:\s*([^\]]+)\]/.exec(n ?? '');
-          return (m?.[1] ?? '').trim();
-        };
-        const isLeih = (n: string | null | undefined) =>
-          (n ?? '').includes('[Typ: Leihgerät]') || (n ?? '').includes('[Leihgerät]');
-
-        let freePoolDevices = 0;
-        let leihgeraete = 0;
-        for (const d of (lagerRes.data ?? []) as { notes: string | null; reserved_order_id: string | null }[]) {
-          if (isLeih(d.notes)) {
-            leihgeraete++;
-            continue;
-          }
-          // Pool = alle Nicht-Leihgeräte (Bestand, Transfer, Produktion, Hold, Warehouse).
-          // Frei = nicht reserviert und nicht im Status "Hold".
-          const status = getStatus(d.notes);
-          if (d.reserved_order_id == null && status !== 'Hold') {
-            freePoolDevices++;
-          }
-        }
-
-        const [openOrdersRes, recentOrdersRes] = canSeeOrders
-          ? await Promise.all([
-              (atOnly
-                ? supabase.from('orders').select('id', { count: 'exact', head: true }).eq('order_status', 'offen').eq('source_system', 'zoho_eu_2')
-                : supabase.from('orders').select('id', { count: 'exact', head: true }).eq('order_status', 'offen')),
-              (atOnly
-                ? supabase.from('orders').select('id, order_number, order_status, total_amount, currency, order_date, expected_shipment_date').eq('source_system', 'zoho_eu_2').order('created_at', { ascending: false }).limit(7)
-                : supabase.from('orders').select('id, order_number, order_status, total_amount, currency, order_date, expected_shipment_date').order('created_at', { ascending: false }).limit(7)),
-            ])
-          : [{ count: 0 }, { data: [] }];
-
-        const shipmentOrdersRes = canSeeOrders
-          ? await (atOnly
-              ? supabase.from('orders').select('id, order_number, expected_shipment_date, order_status, shipping_address, billing_address, customers(company_name, contact_name, shipping_address, billing_address), order_items(item_name, sku, description)').eq('source_system', 'zoho_eu_2').not('expected_shipment_date', 'is', null).order('expected_shipment_date', { ascending: true }).limit(500)
-              : supabase.from('orders').select('id, order_number, expected_shipment_date, order_status, shipping_address, billing_address, customers(company_name, contact_name, shipping_address, billing_address), order_items(item_name, sku, description)').not('expected_shipment_date', 'is', null).order('expected_shipment_date', { ascending: true }).limit(500))
-          : { data: [] };
-
-        const [routesRes, routePlansRes] = canSeeRoutes
-          ? await Promise.all([
-              (atOnly
-                ? supabase.from('route_plans').select('id, orders!inner(source_system)', { count: 'exact', head: true }).eq('orders.source_system', 'zoho_eu_2')
-                : supabase.from('route_plans').select('id', { count: 'exact', head: true })),
-              (atOnly
-                ? supabase.from('route_plans').select('id, planned_date, planning_status, assigned_employee, priority, orders!inner(source_system)').eq('orders.source_system', 'zoho_eu_2').or('planning_status.eq.offen,planning_status.eq.geplant,planning_status.eq.in Bearbeitung').order('planned_date', { ascending: true }).limit(7)
-                : supabase.from('route_plans').select('id, planned_date, planning_status, assigned_employee, priority').or('planning_status.eq.offen,planning_status.eq.geplant,planning_status.eq.in Bearbeitung').order('planned_date', { ascending: true }).limit(7)),
-            ])
-          : [{ count: 0 }, { data: [] }];
-
-        const [openFinanceRes, financeRes] = canSeeFinance
-          ? await Promise.all([
-              supabase.from('finance_records').select('id', { count: 'exact', head: true }).eq('payment_status', 'offen'),
-              supabase.from('finance_records').select('id, payment_status, invoice_status, due_date, amount_due, amount_paid, currency').or('payment_status.eq.offen,payment_status.eq.teilweise bezahlt,payment_status.eq.überfällig').order('due_date', { ascending: true }).limit(7),
-            ])
-          : [{ count: 0 }, { data: [] }];
-
-        const sessionsRes = isAdmin
-          ? await supabase
-              .from('login_sessions')
-              .select('id, user_id, created_at, expires_at, ip_address, device_info, user_profiles!login_sessions_user_id_fkey(full_name, email)')
-              .eq('is_active', true)
-              .gt('expires_at', new Date().toISOString())
-              .order('created_at', { ascending: false })
-              .limit(20)
-          : { data: [] };
-
-        const incidentsRes = canSeeAudit
-          ? await supabase
-              .from('audit_logs')
-              .select('id, created_at, action, module, ip_address, details, user_profiles!audit_logs_user_id_fkey(full_name, email)')
-              .or('action.ilike.%fail%,action.ilike.%denied%,action.ilike.%unauthorized%,action.ilike.%block%,action.ilike.%suspicious%,action.ilike.%mfa%,action.ilike.%delete%,action.ilike.%reauth%,module.eq.security,module.eq.auth')
-              .order('created_at', { ascending: false })
-              .limit(15)
-          : { data: [] };
-
-        const [vipCustomersRes, vipOrdersRes] = canSeeCustomers
-          ? await Promise.all([
-              (atOnly
-                ? supabase.from('customers').select('id', { count: 'exact', head: true }).eq('is_vip', true).eq('source_system', 'zoho_eu_2')
-                : supabase.from('customers').select('id', { count: 'exact', head: true }).eq('is_vip', true)),
-              (atOnly
-                ? supabase.from('orders').select('id', { count: 'exact', head: true }).eq('is_vip', true).eq('source_system', 'zoho_eu_2')
-                : supabase.from('orders').select('id', { count: 'exact', head: true }).eq('is_vip', true)),
-            ])
-          : [{ count: 0 }, { count: 0 }];
-
-        const prioRes = canSeeOrders
-          ? await (atOnly
-              ? supabase.from('orders').select('id, order_number, order_status, expected_shipment_date, is_vip, source_system, customers(company_name, contact_name, is_vip)').not('expected_shipment_date', 'is', null).in('order_status', ['overdue','Overdue','invoiced','Invoiced','open','Open','offen','Offen','approved','Approved']).eq('source_system', 'zoho_eu_2').order('expected_shipment_date', { ascending: true }).limit(5)
-              : supabase.from('orders').select('id, order_number, order_status, expected_shipment_date, is_vip, source_system, customers(company_name, contact_name, is_vip)').not('expected_shipment_date', 'is', null).in('order_status', ['overdue','Overdue','invoiced','Invoiced','open','Open','offen','Offen','approved','Approved']).order('expected_shipment_date', { ascending: true }).limit(5))
-          : { data: [] };
-
-        setStats({
-          freePoolDevices,
-          leihgeraete,
-          openOrders: openOrdersRes.count ?? 0,
-          routes: routesRes.count ?? 0,
-          openFinance: openFinanceRes.count ?? 0,
-          vipCustomers: vipCustomersRes.count ?? 0,
-          vipOrders: vipOrdersRes.count ?? 0,
-        });
-        setRecentOrders(recentOrdersRes.data ?? []);
-        setShipmentOrders(shipmentOrdersRes.data ?? []);
-        setRoutePlans(routePlansRes.data ?? []);
-        setFinanceRecords(financeRes.data ?? []);
-        setActiveSessions((sessionsRes.data ?? []) as any);
-        setSecurityIncidents((incidentsRes.data ?? []) as any);
-        setPrioOrders(vipFirst((prioRes.data ?? []) as any[], isOrderVip));
-
-        // 14-day trend buckets (lightweight: only timestamps)
-        const DAYS = 14;
-        const since = new Date(Date.now() - DAYS * 86400000).toISOString();
-        const bucket = (rows: { created_at: string }[]): number[] => {
-          const arr = new Array(DAYS).fill(0);
-          const now = Date.now();
-          for (const r of rows) {
-            const t = new Date(r.created_at).getTime();
-            const idx = DAYS - 1 - Math.floor((now - t) / 86400000);
-            if (idx >= 0 && idx < DAYS) arr[idx]++;
-          }
-          return arr;
-        };
-        const [ordersTrend, financeTrend] = await Promise.all([
-          canSeeOrders
-            ? (atOnly
-                ? supabase.from('orders').select('created_at').eq('source_system', 'zoho_eu_2').gte('created_at', since).limit(1000)
-                : supabase.from('orders').select('created_at').gte('created_at', since).limit(1000))
-            : Promise.resolve({ data: [] as any[] }),
-          canSeeFinance
-            ? supabase.from('finance_records').select('created_at').gte('created_at', since).limit(1000)
-            : Promise.resolve({ data: [] as any[] }),
-        ]);
-        setTrends({
-          orders: bucket((ordersTrend.data ?? []) as any[]),
-          finance: bucket((financeTrend.data ?? []) as any[]),
-        });
-      } catch (e: any) {
-        setError('Daten konnten nicht geladen werden. Bitte versuchen Sie es erneut.');
-      } finally {
-        setLoading(false);
-      }
+    let freePoolDevices = 0;
+    let leihgeraete = 0;
+    for (const d of (lagerRes.data ?? []) as { notes: string | null; reserved_order_id: string | null }[]) {
+      if (isLeih(d.notes)) { leihgeraete++; continue; }
+      const status = getStatus(d.notes);
+      if (d.reserved_order_id == null && status !== 'Hold') freePoolDevices++;
     }
-    load();
-  }, [canSeeOrders, canSeeRoutes, canSeeFinance, isAdmin, canSeeAudit, canSeeCustomers, atOnly]);
+
+    const [openOrdersRes, recentOrdersRes] = canSeeOrders
+      ? await Promise.all([
+          (atOnly
+            ? supabase.from('orders').select('id', { count: 'exact', head: true }).eq('order_status', 'offen').eq('source_system', 'zoho_eu_2')
+            : supabase.from('orders').select('id', { count: 'exact', head: true }).eq('order_status', 'offen')),
+          (atOnly
+            ? supabase.from('orders').select('id, order_number, order_status, total_amount, currency, order_date, expected_shipment_date').eq('source_system', 'zoho_eu_2').order('created_at', { ascending: false }).limit(7)
+            : supabase.from('orders').select('id, order_number, order_status, total_amount, currency, order_date, expected_shipment_date').order('created_at', { ascending: false }).limit(7)),
+        ])
+      : [{ count: 0 }, { data: [] }];
+
+    const shipmentOrdersRes = canSeeOrders
+      ? await (atOnly
+          ? supabase.from('orders').select('id, order_number, expected_shipment_date, order_status, shipping_address, billing_address, customers(company_name, contact_name, shipping_address, billing_address), order_items(item_name, sku, description)').eq('source_system', 'zoho_eu_2').not('expected_shipment_date', 'is', null).order('expected_shipment_date', { ascending: true }).limit(500)
+          : supabase.from('orders').select('id, order_number, expected_shipment_date, order_status, shipping_address, billing_address, customers(company_name, contact_name, shipping_address, billing_address), order_items(item_name, sku, description)').not('expected_shipment_date', 'is', null).order('expected_shipment_date', { ascending: true }).limit(500))
+      : { data: [] };
+
+    const [routesRes, routePlansRes] = canSeeRoutes
+      ? await Promise.all([
+          (atOnly
+            ? supabase.from('route_plans').select('id, orders!inner(source_system)', { count: 'exact', head: true }).eq('orders.source_system', 'zoho_eu_2')
+            : supabase.from('route_plans').select('id', { count: 'exact', head: true })),
+          (atOnly
+            ? supabase.from('route_plans').select('id, planned_date, planning_status, assigned_employee, priority, orders!inner(source_system)').eq('orders.source_system', 'zoho_eu_2').or('planning_status.eq.offen,planning_status.eq.geplant,planning_status.eq.in Bearbeitung').order('planned_date', { ascending: true }).limit(7)
+            : supabase.from('route_plans').select('id, planned_date, planning_status, assigned_employee, priority').or('planning_status.eq.offen,planning_status.eq.geplant,planning_status.eq.in Bearbeitung').order('planned_date', { ascending: true }).limit(7)),
+        ])
+      : [{ count: 0 }, { data: [] }];
+
+    const [openFinanceRes, financeRes] = canSeeFinance
+      ? await Promise.all([
+          supabase.from('finance_records').select('id', { count: 'exact', head: true }).eq('payment_status', 'offen'),
+          supabase.from('finance_records').select('id, payment_status, invoice_status, due_date, amount_due, amount_paid, currency').or('payment_status.eq.offen,payment_status.eq.teilweise bezahlt,payment_status.eq.überfällig').order('due_date', { ascending: true }).limit(7),
+        ])
+      : [{ count: 0 }, { data: [] }];
+
+    const sessionsRes = isAdmin
+      ? await supabase
+          .from('login_sessions')
+          .select('id, user_id, created_at, expires_at, ip_address, device_info, user_profiles!login_sessions_user_id_fkey(full_name, email)')
+          .eq('is_active', true)
+          .gt('expires_at', new Date().toISOString())
+          .order('created_at', { ascending: false })
+          .limit(20)
+      : { data: [] };
+
+    const incidentsRes = canSeeAudit
+      ? await supabase
+          .from('audit_logs')
+          .select('id, created_at, action, module, ip_address, details, user_profiles!audit_logs_user_id_fkey(full_name, email)')
+          .or('action.ilike.%fail%,action.ilike.%denied%,action.ilike.%unauthorized%,action.ilike.%block%,action.ilike.%suspicious%,action.ilike.%mfa%,action.ilike.%delete%,action.ilike.%reauth%,module.eq.security,module.eq.auth')
+          .order('created_at', { ascending: false })
+          .limit(15)
+      : { data: [] };
+
+    const [vipCustomersRes, vipOrdersRes] = canSeeCustomers
+      ? await Promise.all([
+          (atOnly
+            ? supabase.from('customers').select('id', { count: 'exact', head: true }).eq('is_vip', true).eq('source_system', 'zoho_eu_2')
+            : supabase.from('customers').select('id', { count: 'exact', head: true }).eq('is_vip', true)),
+          (atOnly
+            ? supabase.from('orders').select('id', { count: 'exact', head: true }).eq('is_vip', true).eq('source_system', 'zoho_eu_2')
+            : supabase.from('orders').select('id', { count: 'exact', head: true }).eq('is_vip', true)),
+        ])
+      : [{ count: 0 }, { count: 0 }];
+
+    const prioRes = canSeeOrders
+      ? await (atOnly
+          ? supabase.from('orders').select('id, order_number, order_status, expected_shipment_date, is_vip, source_system, customers(company_name, contact_name, is_vip)').not('expected_shipment_date', 'is', null).in('order_status', ['overdue','Overdue','invoiced','Invoiced','open','Open','offen','Offen','approved','Approved']).eq('source_system', 'zoho_eu_2').order('expected_shipment_date', { ascending: true }).limit(5)
+          : supabase.from('orders').select('id, order_number, order_status, expected_shipment_date, is_vip, source_system, customers(company_name, contact_name, is_vip)').not('expected_shipment_date', 'is', null).in('order_status', ['overdue','Overdue','invoiced','Invoiced','open','Open','offen','Offen','approved','Approved']).order('expected_shipment_date', { ascending: true }).limit(5))
+      : { data: [] };
+
+    // 14-day trend buckets
+    const DAYS = 14;
+    const since = new Date(Date.now() - DAYS * 86400000).toISOString();
+    const bucket = (rows: { created_at: string }[]): number[] => {
+      const arr = new Array(DAYS).fill(0);
+      const now = Date.now();
+      for (const r of rows) {
+        const t = new Date(r.created_at).getTime();
+        const idx = DAYS - 1 - Math.floor((now - t) / 86400000);
+        if (idx >= 0 && idx < DAYS) arr[idx]++;
+      }
+      return arr;
+    };
+    const [ordersTrend, financeTrend] = await Promise.all([
+      canSeeOrders
+        ? (atOnly
+            ? supabase.from('orders').select('created_at').eq('source_system', 'zoho_eu_2').gte('created_at', since).limit(1000)
+            : supabase.from('orders').select('created_at').gte('created_at', since).limit(1000))
+        : Promise.resolve({ data: [] as any[] }),
+      canSeeFinance
+        ? supabase.from('finance_records').select('created_at').gte('created_at', since).limit(1000)
+        : Promise.resolve({ data: [] as any[] }),
+    ]);
+
+    return {
+      stats: {
+        freePoolDevices,
+        leihgeraete,
+        openOrders: openOrdersRes.count ?? 0,
+        routes: routesRes.count ?? 0,
+        openFinance: openFinanceRes.count ?? 0,
+        vipCustomers: vipCustomersRes.count ?? 0,
+        vipOrders: vipOrdersRes.count ?? 0,
+      },
+      recentOrders: (recentOrdersRes.data ?? []) as RecentOrder[],
+      shipmentOrders: (shipmentOrdersRes.data ?? []) as ShipmentOrder[],
+      routePlans: (routePlansRes.data ?? []) as RoutePlan[],
+      financeRecords: (financeRes.data ?? []) as FinanceRecord[],
+      activeSessions: (sessionsRes.data ?? []) as ActiveSession[],
+      securityIncidents: (incidentsRes.data ?? []) as SecurityIncident[],
+      prioOrders: vipFirst((prioRes.data ?? []) as any[], isOrderVip),
+      trends: {
+        orders: bucket((ordersTrend.data ?? []) as any[]),
+        finance: bucket((financeTrend.data ?? []) as any[]),
+      },
+    };
+  }
+
+  const dashboardQuery = useQuery({
+    queryKey: qk.dashboard.main({ canSeeOrders, canSeeRoutes, canSeeFinance, canSeeCustomers, canSeeAudit, isAdmin, atOnly }),
+    queryFn: loadDashboard,
+    staleTime: STALE.medium,
+  });
+
+  useEffect(() => {
+    setLoading(dashboardQuery.isPending);
+    if (dashboardQuery.error) {
+      setError('Daten konnten nicht geladen werden. Bitte versuchen Sie es erneut.');
+      return;
+    }
+    setError(null);
+    if (!dashboardQuery.data) return;
+    const d = dashboardQuery.data;
+    setStats(d.stats);
+    setRecentOrders(d.recentOrders);
+    setShipmentOrders(d.shipmentOrders);
+    setRoutePlans(d.routePlans);
+    setFinanceRecords(d.financeRecords);
+    setActiveSessions(d.activeSessions);
+    setSecurityIncidents(d.securityIncidents);
+    setPrioOrders(d.prioOrders);
+    setTrends(d.trends);
+  }, [dashboardQuery.data, dashboardQuery.isPending, dashboardQuery.error]);
+
 
   const pctChange = (arr: number[]): number | undefined => {
     if (!arr || arr.length < 4) return undefined;
