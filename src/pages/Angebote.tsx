@@ -181,11 +181,29 @@ export default function Angebote() {
         noBreadcrumbs
         meta={<InfinityStatusBadge kind="done" label={`${offers.length}`} />}
         actions={
-          <Button asChild className="gold-gradient text-black hover:opacity-90">
-            <Link to="/verkauf/angebot/neu"><FilePlus className="h-4 w-4 mr-2" />Neues Angebot</Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            {isSuperAdmin && (
+              <Button
+                variant="outline"
+                className="border-amber-500/40 text-amber-300 hover:bg-amber-500/10"
+                onClick={() => {
+                  const first = offers.find(o => (o.approvalStatus || 'pending') === 'pending');
+                  if (first) openApproval(first);
+                  else toast.info('Keine offenen Freigaben.');
+                }}
+                title="Offene Freigaben (nur Super Admin)"
+              >
+                <ShieldCheck className="h-4 w-4 mr-2" />
+                Freigaben{pendingCount > 0 ? ` (${pendingCount})` : ''}
+              </Button>
+            )}
+            <Button asChild className="gold-gradient text-black hover:opacity-90">
+              <Link to="/verkauf/angebot/neu"><FilePlus className="h-4 w-4 mr-2" />Neues Angebot</Link>
+            </Button>
+          </div>
         }
       />
+
       <Card>
         <CardHeader><CardTitle>Liste ({offers.length})</CardTitle></CardHeader>
         <CardContent className="p-0">
