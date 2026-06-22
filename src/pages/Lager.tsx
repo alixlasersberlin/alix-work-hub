@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Warehouse, PackageCheck, Truck, Factory, Package, Loader2, Search, X } from 'lucide-react';
 import { PageHeader } from '@/components/infinity/PageHeader';
@@ -10,6 +11,7 @@ import {
   PieChart, Pie, Legend,
 } from 'recharts';
 import { useAtOnly } from '@/hooks/useAtOnly';
+import { qk, STALE } from '@/lib/query-keys';
 
 type SearchHit = {
   id: string;
@@ -39,21 +41,24 @@ const COLORS = {
   Produktion: 'hsl(38 92% 50%)',
 } as const;
 
+async function fetchLagerOverview(): Promise<Row[]> {
+  const { data, error } = await supabase.from('lager_devices').select('notes, reserved_order_id');
+  if (error) throw error;
+  return (data as Row[]) ?? [];
+}
+
 export default function Lager() {
-  const [rows, setRows] = useState<Row[]>([]);
-  const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchHit[]>([]);
   const [searching, setSearching] = useState(false);
   const atOnly = useAtOnly();
 
-  useEffect(() => {
-    (async () => {
-      const { data } = await supabase.from('lager_devices').select('notes, reserved_order_id');
-      setRows((data as Row[]) ?? []);
-      setLoading(false);
-    })();
-  }, []);
+  const { data: rows = [], isPending: loading } = useQuery({
+    queryKey: qk.lager.overview,
+    queryFn: fetchLagerOverview,
+    staleTime: STALE.medium,
+  });
+
 
   const counts = useMemo(() => {
     let leih = 0, lager = 0, transfer = 0, produktion = 0;
