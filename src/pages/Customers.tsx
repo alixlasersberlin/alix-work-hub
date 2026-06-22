@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/ui/input';
@@ -15,6 +16,7 @@ import { SourceBadge, sourceLabel, sourceFlag } from '@/lib/source-system';
 import { useAtOnly } from '@/hooks/useAtOnly';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
+import { qk, STALE } from '@/lib/query-keys';
 
 type SortField = 'company_name' | 'contact_name' | 'created_at';
 type SortDir = 'asc' | 'desc';
@@ -22,50 +24,51 @@ type SortDir = 'asc' | 'desc';
 const ALPHABET = '#ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 const PAGE_SIZES = [20, 50, 100, 0] as const; // 0 = alle
 
+async function fetchAllCustomers(params: { atOnly: boolean; sortField: SortField; sortDir: SortDir }) {
+  const { atOnly, sortField, sortDir } = params;
+  const CHUNK = 1000;
+  let from = 0;
+  const all: any[] = [];
+  for (;;) {
+    let qb = supabase
+      .from('customers')
+      .select('*')
+      .order(sortField, { ascending: sortDir === 'asc' })
+      .range(from, from + CHUNK - 1);
+    if (atOnly) qb = qb.eq('source_system', 'zoho_eu_2');
+    const { data, error } = await qb;
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+    all.push(...data);
+    if (data.length < CHUNK) break;
+    from += CHUNK;
+  }
+  return all;
+}
+
 export default function Customers() {
-  const [customers, setCustomers] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [sourceFilter, setSourceFilter] = useState('all');
   const [sortField, setSortField] = useState<SortField>('company_name');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [letterFilter, setLetterFilter] = useState<string | null>(null);
   const [pageSize, setPageSize] = useState<number>(20);
   const [page, setPage] = useState(0);
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
   const atOnly = useAtOnly();
+  const queryClient = useQueryClient();
   const [editCustomer, setEditCustomer] = useState<any>(null);
   const [deleteCustomer, setDeleteCustomer] = useState<any>(null);
 
-  async function loadAll() {
-    setLoading(true);
-    setError(null);
-    const CHUNK = 1000;
-    let from = 0;
-    const all: any[] = [];
-    for (;;) {
-      let qb = supabase
-        .from('customers')
-        .select('*')
-        .order(sortField, { ascending: sortDir === 'asc' })
-        .range(from, from + CHUNK - 1);
-      if (atOnly) qb = qb.eq('source_system', 'zoho_eu_2');
-      const { data, error: err } = await qb;
-      if (err) { setError(err.message); break; }
-      if (!data || data.length === 0) break;
-      all.push(...data);
-      if (data.length < CHUNK) break;
-      from += CHUNK;
-    }
-    setCustomers(all);
-    setLoading(false);
-  }
+  const { data: customers = [], isPending: loading, error: queryError, refetch } = useQuery({
+    queryKey: qk.customers.list({ atOnly, sortField, sortDir }),
+    queryFn: () => fetchAllCustomers({ atOnly, sortField, sortDir }),
+    staleTime: STALE.long, // Stammdaten — selten geändert
+  });
+  const error = queryError ? (queryError as Error).message : null;
+  const invalidateCustomers = () => queryClient.invalidateQueries({ queryKey: qk.customers.all });
 
-  useEffect(() => {
-    loadAll();
-  }, [sortField, sortDir, atOnly]);
 
   const sources = [...new Set(customers.map(c => c.source_system).filter(Boolean))];
 
