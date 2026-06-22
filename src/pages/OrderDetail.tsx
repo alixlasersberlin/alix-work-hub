@@ -488,94 +488,96 @@ export default function OrderDetail() {
             </button>
           );
         })()}
-        {tabMenus.map((menu, menuIdx) => {
-          const tabMenu = (
-            (() => {
-              const activeChild = menu.tabs.find((t) => t.key === activeTab);
-              const isActive = !!activeChild;
-              const MIcon = menu.icon;
-              return (
-                <DropdownMenu key={menu.name}>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      className={`flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px outline-none ${
-                        isActive ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
-                      }`}
-                    >
-                      <MIcon className="w-4 h-4" />
-                      <span>{menu.name}{activeChild ? ` · ${activeChild.label}` : ''}</span>
-                      <ChevronDown className="w-3.5 h-3.5 opacity-70" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="min-w-[220px]">
-                    {menu.tabs.map((t: any) => {
-                      const TIcon = t.icon;
-                      const active = activeTab === t.key;
-                      return (
-                        <DropdownMenuItem
-                          key={t.key}
-                          data-tab-key={t.key}
-                          onSelect={() => setActiveTab(t.key as any)}
-                          className={active ? 'bg-primary/10 text-primary focus:bg-primary/15 focus:text-primary' : ''}
-                        >
-                          <TIcon className="w-4 h-4 mr-2" />
-                          <span className="flex-1">{t.label}</span>
-                          {typeof t.count === 'number' && (
-                            <span className={`text-[11px] px-1.5 py-0.5 rounded-full ml-2 ${active ? 'bg-primary/15 text-primary' : 'bg-secondary text-muted-foreground'}`}>{t.count}</span>
-                          )}
-                          {t.badge && <span className="text-emerald-400 text-xs ml-2">{t.badge}</span>}
-                        </DropdownMenuItem>
-                      );
-                    })}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              );
-            })()
-          );
-
-          // Vor dem letzten Tab-Menü ("Kommunikation") die Aktions-Menüs einfügen
-          const isLast = menuIdx === tabMenus.length - 1;
-          if (!isLast) return tabMenu;
-          return (
-            <div key="kommunikation-with-actions" className="contents">
-
-              {actionMenus.map((am) => {
-                const AMIcon = am.icon;
-                if (am.items.length === 0) return null;
-                return (
-                  <DropdownMenu key={am.name}>
-                    <DropdownMenuTrigger asChild>
-                      <button
-                        className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px outline-none border-transparent text-muted-foreground hover:text-foreground"
+        {(() => {
+          const renderTabMenu = (menu: { name: string; icon: any; tabs: any[] }) => {
+            const activeChild = menu.tabs.find((t) => t.key === activeTab);
+            const isActive = !!activeChild;
+            const MIcon = menu.icon;
+            return (
+              <DropdownMenu key={`tab-${menu.name}`}>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className={`flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px outline-none ${
+                      isActive ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <MIcon className="w-4 h-4" />
+                    <span>{menu.name}{activeChild ? ` · ${activeChild.label}` : ''}</span>
+                    <ChevronDown className="w-3.5 h-3.5 opacity-70" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="min-w-[220px]">
+                  {menu.tabs.map((t: any) => {
+                    const TIcon = t.icon;
+                    const active = activeTab === t.key;
+                    return (
+                      <DropdownMenuItem
+                        key={t.key}
+                        data-tab-key={t.key}
+                        onSelect={() => setActiveTab(t.key as any)}
+                        className={active ? 'bg-primary/10 text-primary focus:bg-primary/15 focus:text-primary' : ''}
                       >
-                        <AMIcon className="w-4 h-4" />
-                        <span>{am.name}</span>
-                        <ChevronDown className="w-3.5 h-3.5 opacity-70" />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="min-w-[240px]">
-                      {am.items.map((it) => {
-                        const ItIcon = it.icon;
-                        return (
-                          <DropdownMenuItem
-                            key={it.key}
-                            disabled={it.disabled}
-                            title={it.title}
-                            onSelect={(e) => { e.preventDefault(); it.onClick(); }}
-                          >
-                            <ItIcon className="w-4 h-4 mr-2" />
-                            <span className="flex-1">{it.label}</span>
-                          </DropdownMenuItem>
-                        );
-                      })}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                );
-              })}
-              {tabMenu}
-            </div>
+                        <TIcon className="w-4 h-4 mr-2" />
+                        <span className="flex-1">{t.label}</span>
+                        {typeof t.count === 'number' && (
+                          <span className={`text-[11px] px-1.5 py-0.5 rounded-full ml-2 ${active ? 'bg-primary/15 text-primary' : 'bg-secondary text-muted-foreground'}`}>{t.count}</span>
+                        )}
+                        {t.badge && <span className="text-emerald-400 text-xs ml-2">{t.badge}</span>}
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            );
+          };
+
+          const renderActionMenu = (name: 'Backoffice' | 'Bearbeitung') => {
+            const am = actionMenus.find((m) => m.name === name);
+            if (!am || am.items.length === 0) return null;
+            const AMIcon = am.icon;
+            return (
+              <DropdownMenu key={`act-${am.name}`}>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px outline-none border-transparent text-muted-foreground hover:text-foreground">
+                    <AMIcon className="w-4 h-4" />
+                    <span>{am.name}</span>
+                    <ChevronDown className="w-3.5 h-3.5 opacity-70" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="min-w-[240px]">
+                  {am.items.map((it) => {
+                    const ItIcon = it.icon;
+                    return (
+                      <DropdownMenuItem
+                        key={it.key}
+                        disabled={it.disabled}
+                        title={it.title}
+                        onSelect={(e) => { e.preventDefault(); it.onClick(); }}
+                      >
+                        <ItIcon className="w-4 h-4 mr-2" />
+                        <span className="flex-1">{it.label}</span>
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            );
+          };
+
+          const artikel = tabMenus.find((m) => m.name === 'Artikel');
+          const auftrag = tabMenus.find((m) => m.name === 'Auftrag');
+          const kommunikation = tabMenus.find((m) => m.name === 'Kommunikation');
+
+          return (
+            <>
+              {renderActionMenu('Bearbeitung')}
+              {artikel && renderTabMenu(artikel)}
+              {auftrag && renderTabMenu(auftrag)}
+              {renderActionMenu('Backoffice')}
+              {kommunikation && renderTabMenu(kommunikation)}
+            </>
           );
-        })}
+        })()}
       </div>
 
       {/* Overview Tab */}
