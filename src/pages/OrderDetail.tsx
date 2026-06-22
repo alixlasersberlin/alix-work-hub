@@ -481,38 +481,64 @@ export default function OrderDetail() {
 
       {/* Tabs */}
       <div className="flex flex-wrap items-stretch gap-x-1 gap-y-1 mb-6 border-b border-border">
-        {tabGroups.map((group, gi) => (
-          <div key={group.name} className="flex items-stretch">
-            {gi > 0 && <div className="self-center mx-2 h-5 w-px bg-border/70" aria-hidden />}
-            {group.tabs.map((t: any) => {
-              const active = activeTab === t.key;
-              return (
+        {(() => {
+          const overviewActive = activeTab === overviewTab.key;
+          const OvIcon = overviewTab.icon;
+          return (
+            <button
+              key={overviewTab.key}
+              data-tab-key={overviewTab.key}
+              className={`flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
+                overviewActive ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+              onClick={() => setActiveTab(overviewTab.key as any)}
+            >
+              <OvIcon className="w-4 h-4" />
+              <span>{overviewTab.label}</span>
+            </button>
+          );
+        })()}
+        {tabMenus.map((menu) => {
+          const activeChild = menu.tabs.find((t) => t.key === activeTab);
+          const isActive = !!activeChild;
+          const MIcon = menu.icon;
+          return (
+            <DropdownMenu key={menu.name}>
+              <DropdownMenuTrigger asChild>
                 <button
-                  key={t.key}
-                  data-tab-key={t.key}
-                  title={`${group.name} · ${t.label}`}
-                  className={`flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
-                    active
-                      ? 'border-primary text-primary'
-                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  className={`flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px outline-none ${
+                    isActive ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
                   }`}
-                  onClick={() => setActiveTab(t.key as any)}
                 >
-                  <t.icon className="w-4 h-4" />
-                  <span>{t.label}</span>
-                  {typeof t.count === 'number' && (
-                    <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${
-                      active ? 'bg-primary/15 text-primary' : 'bg-secondary text-muted-foreground'
-                    }`}>{t.count}</span>
-                  )}
-                  {t.badge && (
-                    <span className="text-emerald-400 text-xs">{t.badge}</span>
-                  )}
+                  <MIcon className="w-4 h-4" />
+                  <span>{menu.name}{activeChild ? ` · ${activeChild.label}` : ''}</span>
+                  <ChevronDown className="w-3.5 h-3.5 opacity-70" />
                 </button>
-              );
-            })}
-          </div>
-        ))}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="min-w-[220px]">
+                {menu.tabs.map((t: any) => {
+                  const TIcon = t.icon;
+                  const active = activeTab === t.key;
+                  return (
+                    <DropdownMenuItem
+                      key={t.key}
+                      data-tab-key={t.key}
+                      onSelect={() => setActiveTab(t.key as any)}
+                      className={active ? 'bg-primary/10 text-primary focus:bg-primary/15 focus:text-primary' : ''}
+                    >
+                      <TIcon className="w-4 h-4 mr-2" />
+                      <span className="flex-1">{t.label}</span>
+                      {typeof t.count === 'number' && (
+                        <span className={`text-[11px] px-1.5 py-0.5 rounded-full ml-2 ${active ? 'bg-primary/15 text-primary' : 'bg-secondary text-muted-foreground'}`}>{t.count}</span>
+                      )}
+                      {t.badge && <span className="text-emerald-400 text-xs ml-2">{t.badge}</span>}
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          );
+        })}
       </div>
 
       {/* Overview Tab */}
