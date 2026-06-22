@@ -23,13 +23,13 @@ import AtApprovalTab from '@/components/AtApprovalTab';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { StatusBadge } from '@/components/StatusBadge';
-import InstallmentPlanDialog from '@/components/InstallmentPlanDialog';
-import SepaMandatButton from '@/components/SepaMandatButton';
+import InstallmentPlanDialog, { type InstallmentPlanDialogHandle } from '@/components/InstallmentPlanDialog';
+import SepaMandatButton, { type SepaMandatHandle } from '@/components/SepaMandatButton';
 import OrderEditDialog from '@/components/OrderEditDialog';
 import OrderItemsEditDialog from '@/components/OrderItemsEditDialog';
 
 import OrderDeferDialog from '@/components/OrderDeferDialog';
-import MietkaufDialog from '@/components/MietkaufDialog';
+import MietkaufDialog, { type MietkaufDialogHandle } from '@/components/MietkaufDialog';
 import DeliveryNoteTab from '@/components/DeliveryNoteTab';
 import AuftragsbestaetigungTab from '@/components/AuftragsbestaetigungTab';
 import OrderConfirmationTab from '@/components/OrderConfirmationTab';
