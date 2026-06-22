@@ -508,4 +508,6 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
     )}
     </>
   );
-}
+});
+
+export default MietkaufDialog;
