@@ -370,119 +370,36 @@ export default function OrderDetail() {
           </p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
-          {canWrite && (
-            <>
-              {order.order_status !== 'geliefert' && (
-                <Button variant="outline" size="sm" className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10" onClick={async () => {
-                  // Reservierte Geräte VOR dem Status-Update einlesen (Trigger löscht reserved_order_id bei "geliefert")
-                  const { data: devs } = await supabase
-                    .from('lager_devices')
-                    .select('model_name, serial_number')
-                    .eq('reserved_order_id', order.id);
-                  const prefetchedDevices = devs || [];
-                  const { error } = await supabase.from('orders').update({ order_status: 'geliefert' }).eq('id', order.id);
-                  if (error) { toast.error('Fehler: ' + error.message); return; }
-                  toast.success('Auftrag als geliefert markiert');
-                  const mail = await sendCustomerShippingNotice(order.id, undefined, 'automatisch', 'customer_delivered', prefetchedDevices);
-                  if (mail.ok) toast.success(mail.message); else toast.error('E-Mail nicht versendet: ' + mail.message);
-                  sendReviewInvitation(order.id, { manual: false }).catch(() => {});
-                  loadAll();
-                }}>
-
-                  <Truck className="w-3.5 h-3.5 mr-1.5" /> Als geliefert markieren
-                </Button>
-              )}
-              {hasRole('Super Admin') && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
-                  onClick={async () => {
-                    if (!order.customer_email) {
-                      toast.error('Für diesen Auftrag ist keine Kunden-E-Mail hinterlegt.');
-                      return;
-                    }
-                    const res = await sendReviewInvitation(order.id, { manual: true });
-                    if (res?.ok) toast.success(res.message || 'Bewertungseinladung versendet');
-                    else toast.error(res?.message || 'Bewertungseinladung fehlgeschlagen');
-                  }}
-                >
-                  <Mail className="w-3.5 h-3.5 mr-1.5" /> Bewertung manuell senden
-                </Button>
-              )}
-              {order.order_status === 'teilgeliefert' && (
-                restPending ? (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-emerald-500/10 text-emerald-500 text-xs font-medium border border-emerald-500/30">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    In „Bestellung möglich"
-                  </span>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
-                    onClick={async () => {
-                      const { error } = await createRestbestellungMarker(order.id);
-                      if (error) { toast.error('Fehler: ' + error); return; }
-                      toast.success('Restbestellung in „Bestellung möglich" übernommen');
-                      setRestPending(true);
-                    }}
-                  >
-                    <ShoppingCart className="w-3.5 h-3.5 mr-1.5" /> Restbestellung erzeugen
-                  </Button>
-                )
-              )}
+          {canWrite && order.order_status === 'teilgeliefert' && (
+            restPending ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-emerald-500/10 text-emerald-500 text-xs font-medium border border-emerald-500/30">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                In „Bestellung möglich"
+              </span>
+            ) : (
               <Button
                 variant="outline"
                 size="sm"
-                className="border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
-                onClick={() => navigate(`/order/neu?order_id=${order.id}`)}
-                title="Produktions-/Lieferantenbestellung für diesen Auftrag anlegen"
-              >
-                <ShoppingBag className="w-3.5 h-3.5 mr-1.5" /> Bestellung auslösen
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-                <Pencil className="w-3.5 h-3.5 mr-1.5" /> Ändern
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setDeferOpen(true)}>
-                <CalendarClock className="w-3.5 h-3.5 mr-1.5" /> Zurückstellen
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="border-primary/40 text-primary hover:bg-primary/10"
-                disabled={sendingEmail || !customer?.email}
-                title={!customer?.email ? 'Kunde hat keine E-Mail-Adresse' : 'Voravisierung an Kunde senden'}
+                className="border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
                 onClick={async () => {
-                  setSendingEmail(true);
-                  const r = await sendCustomerShippingNotice(order.id, undefined, 'manuell', 'customer_shipping_notice');
-                  setSendingEmail(false);
-                  if (r.ok) { toast.success(r.message); loadAll(); }
-                  else toast.error(r.message);
+                  const { error } = await createRestbestellungMarker(order.id);
+                  if (error) { toast.error('Fehler: ' + error); return; }
+                  toast.success('Restbestellung in „Bestellung möglich" übernommen');
+                  setRestPending(true);
                 }}
               >
-                {sendingEmail ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Mail className="w-3.5 h-3.5 mr-1.5" />}
-                E-Mail an Kunde
+                <ShoppingCart className="w-3.5 h-3.5 mr-1.5" /> Restbestellung erzeugen
               </Button>
-              {hasRole('Super Admin') && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-primary/40 text-primary hover:bg-primary/10"
-                  onClick={() => setSearchParams({ tab: 'confirmation' })}
-                  title="Auftragsbestätigung per E-Mail senden"
-                >
-                  <Mail className="w-3.5 h-3.5 mr-1.5" /> Auftragsbestätigung Email
-                </Button>
-              )}
-            </>
+            )
           )}
-          <SepaMandatButton order={order} />
-          <MietkaufDialog order={order} />
-          <InstallmentPlanDialog order={order} />
+          {/* Headless mounts für Aktionen aus den Menüs */}
+          <SepaMandatButton ref={sepaRef} order={order} hideTrigger />
+          <MietkaufDialog ref={mietkaufRef} order={order} hideTrigger />
+          <InstallmentPlanDialog ref={ratenplanRef} order={order} hideTrigger />
           <StatusBadge status={order.order_status || 'offen'} />
         </div>
       </div>
+
 
       {/* Tabs */}
       <div className="flex flex-wrap items-stretch gap-x-1 gap-y-1 mb-6 border-b border-border">
