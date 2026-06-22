@@ -15,8 +15,11 @@ import { createPDF } from '@/lib/pdf-utils';
 import alixLogo from '@/assets/alix-lasers-logo.png';
 import ratenplanTemplate from '@/assets/ratenplan-template.jpg.asset.json';
 
+export type InstallmentPlanDialogHandle = { open: () => void };
+
 interface Props {
   order: any;
+  hideTrigger?: boolean;
 }
 
 const TERMS = [12, 24, 36, 48, 60] as const;
