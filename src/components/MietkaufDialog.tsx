@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,8 +10,11 @@ import { createPDF } from '@/lib/pdf-utils';
 import alixLogo from '@/assets/alix-logo-gold-mietkauf.png.asset.json';
 import templateAsset from '@/assets/mietkauf-template.jpg.asset.json';
 
+export type MietkaufDialogHandle = { open: () => void };
+
 interface Props {
   order: any;
+  hideTrigger?: boolean;
 }
 
 const TERMS = [12, 24, 36, 48, 60] as const;
@@ -72,8 +75,9 @@ async function loadImageAsBase64(src: string): Promise<string> {
   });
 }
 
-export default function MietkaufDialog({ order }: Props) {
+const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function MietkaufDialog({ order, hideTrigger }, ref) {
   const [open, setOpen] = useState(false);
+  useImperativeHandle(ref, () => ({ open: () => setOpen(true) }), []);
   const [kaufpreis, setKaufpreis] = useState('');
   const [anzahlung, setAnzahlung] = useState('');
   const [term, setTerm] = useState<number>(12);
@@ -391,15 +395,17 @@ export default function MietkaufDialog({ order }: Props) {
 
   return (
     <>
-    <Button
-      type="button"
-      variant="outline"
-      size="sm"
-      className="border-primary/30 text-primary hover:bg-primary/10"
-      onClick={() => { console.log('[MietkaufDialog] open click'); setOpen(true); }}
-    >
-      <FileText className="w-4 h-4 mr-2" /> Mietkauf
-    </Button>
+    {!hideTrigger && (
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="border-primary/30 text-primary hover:bg-primary/10"
+        onClick={() => { console.log('[MietkaufDialog] open click'); setOpen(true); }}
+      >
+        <FileText className="w-4 h-4 mr-2" /> Mietkauf
+      </Button>
+    )}
     {open && (
       <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-background/80 px-4 py-8 backdrop-blur-sm">
         <div className="relative w-full max-w-lg rounded-lg border border-border bg-background p-6 shadow-lg">
@@ -502,4 +508,6 @@ export default function MietkaufDialog({ order }: Props) {
     )}
     </>
   );
-}
+});
+
+export default MietkaufDialog;

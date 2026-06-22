@@ -1,5 +1,5 @@
 import { SkeletonForm } from '@/components/infinity/Skeleton';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import {
-  ArrowLeft, ClipboardList, Building2, FileText, History, Loader2, Inbox, Send, Pencil, X, Check, Shield, Package, CalendarIcon, CalendarClock, Truck, Euro, Mail, Landmark, Plus, Trash2, ShoppingCart, ShoppingBag, CheckCircle2, Hash, MessageSquare, ChevronDown
+  ArrowLeft, ClipboardList, Building2, FileText, History, Loader2, Inbox, Send, Pencil, X, Check, Shield, Package, CalendarIcon, CalendarClock, Truck, Euro, Mail, Landmark, Plus, Trash2, ShoppingCart, ShoppingBag, CheckCircle2, Hash, MessageSquare, ChevronDown, Briefcase, Wrench
 } from 'lucide-react';
 import { createRestbestellungMarker, hasPendingRestbestellung } from '@/lib/restbestellung';
 import { sendDepositReceivedNotice } from '@/lib/send-deposit-received-notice';
@@ -23,13 +23,13 @@ import AtApprovalTab from '@/components/AtApprovalTab';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { StatusBadge } from '@/components/StatusBadge';
-import InstallmentPlanDialog from '@/components/InstallmentPlanDialog';
-import SepaMandatButton from '@/components/SepaMandatButton';
+import InstallmentPlanDialog, { type InstallmentPlanDialogHandle } from '@/components/InstallmentPlanDialog';
+import SepaMandatButton, { type SepaMandatHandle } from '@/components/SepaMandatButton';
 import OrderEditDialog from '@/components/OrderEditDialog';
 import OrderItemsEditDialog from '@/components/OrderItemsEditDialog';
 
 import OrderDeferDialog from '@/components/OrderDeferDialog';
-import MietkaufDialog from '@/components/MietkaufDialog';
+import MietkaufDialog, { type MietkaufDialogHandle } from '@/components/MietkaufDialog';
 import DeliveryNoteTab from '@/components/DeliveryNoteTab';
 import AuftragsbestaetigungTab from '@/components/AuftragsbestaetigungTab';
 import OrderConfirmationTab from '@/components/OrderConfirmationTab';
@@ -86,6 +86,10 @@ export default function OrderDetail() {
 
   const [deferOpen, setDeferOpen] = useState(false);
   const [restPending, setRestPending] = useState(false);
+
+  const sepaRef = useRef<SepaMandatHandle>(null);
+  const mietkaufRef = useRef<MietkaufDialogHandle>(null);
+  const ratenplanRef = useRef<InstallmentPlanDialogHandle>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -347,6 +351,74 @@ export default function OrderDetail() {
     },
   ];
 
+  // Aktions-Menüs (Backoffice & Bearbeitung) — vor Kommunikation
+  type ActionItem = { key: string; label: string; icon: any; onClick: () => void | Promise<void>; disabled?: boolean; title?: string };
+  const actionMenus: Array<{ name: string; icon: any; items: ActionItem[] }> = [
+    ...(canWrite ? [{
+      name: 'Backoffice',
+      icon: Briefcase,
+      items: [
+        { key: 'edit', label: 'Ändern', icon: Pencil, onClick: () => setEditOpen(true) },
+        {
+          key: 'email-kunde', label: 'E-Mail an Kunde', icon: Mail,
+          disabled: sendingEmail || !customer?.email,
+          title: !customer?.email ? 'Kunde hat keine E-Mail-Adresse' : 'Voravisierung an Kunde senden',
+          onClick: async () => {
+            setSendingEmail(true);
+            const r = await sendCustomerShippingNotice(order.id, undefined, 'manuell', 'customer_shipping_notice');
+            setSendingEmail(false);
+            if (r.ok) { toast.success(r.message); loadAll(); }
+            else toast.error(r.message);
+          },
+        },
+        ...(hasRole('Super Admin') ? [{
+          key: 'auftragsbestaetigung-email', label: 'Auftragsbestätigung Email', icon: Mail,
+          onClick: () => setSearchParams({ tab: 'confirmation' }),
+        }] : []),
+        { key: 'sepa', label: 'SEPA Mandat', icon: FileText, onClick: () => sepaRef.current?.trigger() },
+        { key: 'mietkauf', label: 'Mietkauf', icon: FileText, onClick: () => mietkaufRef.current?.open() },
+        { key: 'ratenplan', label: 'Ratenplan', icon: FileText, onClick: () => ratenplanRef.current?.open() },
+      ] as ActionItem[],
+    }] : []),
+    ...(canWrite ? [{
+      name: 'Bearbeitung',
+      icon: Wrench,
+      items: [
+        ...(order.order_status !== 'geliefert' ? [{
+          key: 'mark-delivered', label: 'Als geliefert markieren', icon: Truck,
+          onClick: async () => {
+            const { data: devs } = await supabase
+              .from('lager_devices')
+              .select('model_name, serial_number')
+              .eq('reserved_order_id', order.id);
+            const prefetchedDevices = devs || [];
+            const { error } = await supabase.from('orders').update({ order_status: 'geliefert' }).eq('id', order.id);
+            if (error) { toast.error('Fehler: ' + error.message); return; }
+            toast.success('Auftrag als geliefert markiert');
+            const mail = await sendCustomerShippingNotice(order.id, undefined, 'automatisch', 'customer_delivered', prefetchedDevices);
+            if (mail.ok) toast.success(mail.message); else toast.error('E-Mail nicht versendet: ' + mail.message);
+            sendReviewInvitation(order.id, { manual: false }).catch(() => {});
+            loadAll();
+          },
+        }] : []),
+        ...(hasRole('Super Admin') ? [{
+          key: 'review-manual', label: 'Bewertung manuell senden', icon: Mail,
+          onClick: async () => {
+            if (!order.customer_email) { toast.error('Für diesen Auftrag ist keine Kunden-E-Mail hinterlegt.'); return; }
+            const res = await sendReviewInvitation(order.id, { manual: true });
+            if (res?.ok) toast.success(res.message || 'Bewertungseinladung versendet');
+            else toast.error(res?.message || 'Bewertungseinladung fehlgeschlagen');
+          },
+        }] : []),
+        {
+          key: 'trigger-order', label: 'Bestellung auslösen', icon: ShoppingBag,
+          onClick: () => navigate(`/order/neu?order_id=${order.id}`),
+        },
+        { key: 'defer', label: 'Zurückstellen', icon: CalendarClock, onClick: () => setDeferOpen(true) },
+      ] as ActionItem[],
+    }] : []),
+  ];
+
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
       <Button variant="ghost" className="mb-4 text-muted-foreground hover:text-foreground" onClick={() => navigate(order.source_system === 'zoho_eu_2' ? '/auftraege-at' : '/auftraege')}>
@@ -366,119 +438,36 @@ export default function OrderDetail() {
           </p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
-          {canWrite && (
-            <>
-              {order.order_status !== 'geliefert' && (
-                <Button variant="outline" size="sm" className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10" onClick={async () => {
-                  // Reservierte Geräte VOR dem Status-Update einlesen (Trigger löscht reserved_order_id bei "geliefert")
-                  const { data: devs } = await supabase
-                    .from('lager_devices')
-                    .select('model_name, serial_number')
-                    .eq('reserved_order_id', order.id);
-                  const prefetchedDevices = devs || [];
-                  const { error } = await supabase.from('orders').update({ order_status: 'geliefert' }).eq('id', order.id);
-                  if (error) { toast.error('Fehler: ' + error.message); return; }
-                  toast.success('Auftrag als geliefert markiert');
-                  const mail = await sendCustomerShippingNotice(order.id, undefined, 'automatisch', 'customer_delivered', prefetchedDevices);
-                  if (mail.ok) toast.success(mail.message); else toast.error('E-Mail nicht versendet: ' + mail.message);
-                  sendReviewInvitation(order.id, { manual: false }).catch(() => {});
-                  loadAll();
-                }}>
-
-                  <Truck className="w-3.5 h-3.5 mr-1.5" /> Als geliefert markieren
-                </Button>
-              )}
-              {hasRole('Super Admin') && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
-                  onClick={async () => {
-                    if (!order.customer_email) {
-                      toast.error('Für diesen Auftrag ist keine Kunden-E-Mail hinterlegt.');
-                      return;
-                    }
-                    const res = await sendReviewInvitation(order.id, { manual: true });
-                    if (res?.ok) toast.success(res.message || 'Bewertungseinladung versendet');
-                    else toast.error(res?.message || 'Bewertungseinladung fehlgeschlagen');
-                  }}
-                >
-                  <Mail className="w-3.5 h-3.5 mr-1.5" /> Bewertung manuell senden
-                </Button>
-              )}
-              {order.order_status === 'teilgeliefert' && (
-                restPending ? (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-emerald-500/10 text-emerald-500 text-xs font-medium border border-emerald-500/30">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    In „Bestellung möglich"
-                  </span>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
-                    onClick={async () => {
-                      const { error } = await createRestbestellungMarker(order.id);
-                      if (error) { toast.error('Fehler: ' + error); return; }
-                      toast.success('Restbestellung in „Bestellung möglich" übernommen');
-                      setRestPending(true);
-                    }}
-                  >
-                    <ShoppingCart className="w-3.5 h-3.5 mr-1.5" /> Restbestellung erzeugen
-                  </Button>
-                )
-              )}
+          {canWrite && order.order_status === 'teilgeliefert' && (
+            restPending ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-emerald-500/10 text-emerald-500 text-xs font-medium border border-emerald-500/30">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                In „Bestellung möglich"
+              </span>
+            ) : (
               <Button
                 variant="outline"
                 size="sm"
-                className="border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
-                onClick={() => navigate(`/order/neu?order_id=${order.id}`)}
-                title="Produktions-/Lieferantenbestellung für diesen Auftrag anlegen"
-              >
-                <ShoppingBag className="w-3.5 h-3.5 mr-1.5" /> Bestellung auslösen
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-                <Pencil className="w-3.5 h-3.5 mr-1.5" /> Ändern
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setDeferOpen(true)}>
-                <CalendarClock className="w-3.5 h-3.5 mr-1.5" /> Zurückstellen
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="border-primary/40 text-primary hover:bg-primary/10"
-                disabled={sendingEmail || !customer?.email}
-                title={!customer?.email ? 'Kunde hat keine E-Mail-Adresse' : 'Voravisierung an Kunde senden'}
+                className="border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
                 onClick={async () => {
-                  setSendingEmail(true);
-                  const r = await sendCustomerShippingNotice(order.id, undefined, 'manuell', 'customer_shipping_notice');
-                  setSendingEmail(false);
-                  if (r.ok) { toast.success(r.message); loadAll(); }
-                  else toast.error(r.message);
+                  const { error } = await createRestbestellungMarker(order.id);
+                  if (error) { toast.error('Fehler: ' + error); return; }
+                  toast.success('Restbestellung in „Bestellung möglich" übernommen');
+                  setRestPending(true);
                 }}
               >
-                {sendingEmail ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Mail className="w-3.5 h-3.5 mr-1.5" />}
-                E-Mail an Kunde
+                <ShoppingCart className="w-3.5 h-3.5 mr-1.5" /> Restbestellung erzeugen
               </Button>
-              {hasRole('Super Admin') && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-primary/40 text-primary hover:bg-primary/10"
-                  onClick={() => setSearchParams({ tab: 'confirmation' })}
-                  title="Auftragsbestätigung per E-Mail senden"
-                >
-                  <Mail className="w-3.5 h-3.5 mr-1.5" /> Auftragsbestätigung Email
-                </Button>
-              )}
-            </>
+            )
           )}
-          <SepaMandatButton order={order} />
-          <MietkaufDialog order={order} />
-          <InstallmentPlanDialog order={order} />
+          {/* Headless mounts für Aktionen aus den Menüs */}
+          <SepaMandatButton ref={sepaRef} order={order} hideTrigger />
+          <MietkaufDialog ref={mietkaufRef} order={order} hideTrigger />
+          <InstallmentPlanDialog ref={ratenplanRef} order={order} hideTrigger />
           <StatusBadge status={order.order_status || 'offen'} />
         </div>
       </div>
+
 
       {/* Tabs */}
       <div className="flex flex-wrap items-stretch gap-x-1 gap-y-1 mb-6 border-b border-border">
@@ -499,45 +488,92 @@ export default function OrderDetail() {
             </button>
           );
         })()}
-        {tabMenus.map((menu) => {
-          const activeChild = menu.tabs.find((t) => t.key === activeTab);
-          const isActive = !!activeChild;
-          const MIcon = menu.icon;
-          return (
-            <DropdownMenu key={menu.name}>
-              <DropdownMenuTrigger asChild>
-                <button
-                  className={`flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px outline-none ${
-                    isActive ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <MIcon className="w-4 h-4" />
-                  <span>{menu.name}{activeChild ? ` · ${activeChild.label}` : ''}</span>
-                  <ChevronDown className="w-3.5 h-3.5 opacity-70" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="min-w-[220px]">
-                {menu.tabs.map((t: any) => {
-                  const TIcon = t.icon;
-                  const active = activeTab === t.key;
-                  return (
-                    <DropdownMenuItem
-                      key={t.key}
-                      data-tab-key={t.key}
-                      onSelect={() => setActiveTab(t.key as any)}
-                      className={active ? 'bg-primary/10 text-primary focus:bg-primary/15 focus:text-primary' : ''}
+        {tabMenus.map((menu, menuIdx) => {
+          const tabMenu = (
+            (() => {
+              const activeChild = menu.tabs.find((t) => t.key === activeTab);
+              const isActive = !!activeChild;
+              const MIcon = menu.icon;
+              return (
+                <DropdownMenu key={menu.name}>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className={`flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px outline-none ${
+                        isActive ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
+                      }`}
                     >
-                      <TIcon className="w-4 h-4 mr-2" />
-                      <span className="flex-1">{t.label}</span>
-                      {typeof t.count === 'number' && (
-                        <span className={`text-[11px] px-1.5 py-0.5 rounded-full ml-2 ${active ? 'bg-primary/15 text-primary' : 'bg-secondary text-muted-foreground'}`}>{t.count}</span>
-                      )}
-                      {t.badge && <span className="text-emerald-400 text-xs ml-2">{t.badge}</span>}
-                    </DropdownMenuItem>
-                  );
-                })}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                      <MIcon className="w-4 h-4" />
+                      <span>{menu.name}{activeChild ? ` · ${activeChild.label}` : ''}</span>
+                      <ChevronDown className="w-3.5 h-3.5 opacity-70" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="min-w-[220px]">
+                    {menu.tabs.map((t: any) => {
+                      const TIcon = t.icon;
+                      const active = activeTab === t.key;
+                      return (
+                        <DropdownMenuItem
+                          key={t.key}
+                          data-tab-key={t.key}
+                          onSelect={() => setActiveTab(t.key as any)}
+                          className={active ? 'bg-primary/10 text-primary focus:bg-primary/15 focus:text-primary' : ''}
+                        >
+                          <TIcon className="w-4 h-4 mr-2" />
+                          <span className="flex-1">{t.label}</span>
+                          {typeof t.count === 'number' && (
+                            <span className={`text-[11px] px-1.5 py-0.5 rounded-full ml-2 ${active ? 'bg-primary/15 text-primary' : 'bg-secondary text-muted-foreground'}`}>{t.count}</span>
+                          )}
+                          {t.badge && <span className="text-emerald-400 text-xs ml-2">{t.badge}</span>}
+                        </DropdownMenuItem>
+                      );
+                    })}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              );
+            })()
+          );
+
+          // Vor dem letzten Tab-Menü ("Kommunikation") die Aktions-Menüs einfügen
+          const isLast = menuIdx === tabMenus.length - 1;
+          if (!isLast) return tabMenu;
+          return (
+            <div key="kommunikation-with-actions" className="contents">
+
+              {actionMenus.map((am) => {
+                const AMIcon = am.icon;
+                if (am.items.length === 0) return null;
+                return (
+                  <DropdownMenu key={am.name}>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px outline-none border-transparent text-muted-foreground hover:text-foreground"
+                      >
+                        <AMIcon className="w-4 h-4" />
+                        <span>{am.name}</span>
+                        <ChevronDown className="w-3.5 h-3.5 opacity-70" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="min-w-[240px]">
+                      {am.items.map((it) => {
+                        const ItIcon = it.icon;
+                        return (
+                          <DropdownMenuItem
+                            key={it.key}
+                            disabled={it.disabled}
+                            title={it.title}
+                            onSelect={(e) => { e.preventDefault(); it.onClick(); }}
+                          >
+                            <ItIcon className="w-4 h-4 mr-2" />
+                            <span className="flex-1">{it.label}</span>
+                          </DropdownMenuItem>
+                        );
+                      })}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                );
+              })}
+              {tabMenu}
+            </div>
           );
         })}
       </div>

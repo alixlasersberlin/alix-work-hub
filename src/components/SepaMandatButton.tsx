@@ -1,10 +1,14 @@
+import { forwardRef, useImperativeHandle } from 'react';
 import { Button } from '@/components/ui/button';
 import { FileText } from 'lucide-react';
 import { createPDF } from '@/lib/pdf-utils';
 import { toast } from 'sonner';
 
+export type SepaMandatHandle = { trigger: () => void };
+
 interface Props {
   order: any;
+  hideTrigger?: boolean;
 }
 
 const ALIX = {
@@ -23,7 +27,7 @@ function formatAddr(a: any) {
   return { street, zipCity };
 }
 
-export default function SepaMandatButton({ order }: Props) {
+const SepaMandatButton = forwardRef<SepaMandatHandle, Props>(function SepaMandatButton({ order, hideTrigger }, ref) {
   const customer = order.customers;
 
   function generateSepaMandat() {
@@ -225,9 +229,14 @@ export default function SepaMandatButton({ order }: Props) {
     }
   }
 
+  useImperativeHandle(ref, () => ({ trigger: handleClick }), []);
+
+  if (hideTrigger) return null;
   return (
     <Button variant="outline" size="sm" onClick={handleClick} className="gap-1.5">
       <FileText className="w-4 h-4" /> SEPA Mandat
     </Button>
   );
-}
+});
+
+export default SepaMandatButton;

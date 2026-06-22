@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, forwardRef, useImperativeHandle } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,8 +15,11 @@ import { createPDF } from '@/lib/pdf-utils';
 import alixLogo from '@/assets/alix-lasers-logo.png';
 import ratenplanTemplate from '@/assets/ratenplan-template.jpg.asset.json';
 
+export type InstallmentPlanDialogHandle = { open: () => void };
+
 interface Props {
   order: any;
+  hideTrigger?: boolean;
 }
 
 const TERMS = [12, 24, 36, 48, 60] as const;
@@ -72,9 +75,10 @@ function loadImageAsBase64(src: string): Promise<string> {
   });
 }
 
-export default function InstallmentPlanDialog({ order }: Props) {
+const InstallmentPlanDialog = forwardRef<InstallmentPlanDialogHandle, Props>(function InstallmentPlanDialog({ order, hideTrigger }, ref) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
+  useImperativeHandle(ref, () => ({ open: () => setOpen(true) }), []);
   const [price, setPrice] = useState('');
   const [downPayment, setDownPayment] = useState('');
   const [term, setTerm] = useState<number>(12);
@@ -258,15 +262,17 @@ export default function InstallmentPlanDialog({ order }: Props) {
 
   return (
     <>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        className="border-primary/30 text-primary hover:bg-primary/10"
-        onClick={() => { console.log('[InstallmentPlanDialog] open click'); setOpen(true); }}
-      >
-        <FileText className="w-4 h-4 mr-2" /> Ratenplan
-      </Button>
+      {!hideTrigger && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="border-primary/30 text-primary hover:bg-primary/10"
+          onClick={() => { console.log('[InstallmentPlanDialog] open click'); setOpen(true); }}
+        >
+          <FileText className="w-4 h-4 mr-2" /> Ratenplan
+        </Button>
+      )}
       {open && (
         <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-background/80 px-4 py-8 backdrop-blur-sm">
           <div className="relative w-full max-w-lg rounded-lg border border-border bg-background p-6 shadow-lg">
@@ -345,4 +351,6 @@ export default function InstallmentPlanDialog({ order }: Props) {
       )}
     </>
   );
-}
+});
+
+export default InstallmentPlanDialog;
