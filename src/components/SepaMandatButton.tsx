@@ -229,9 +229,14 @@ const SepaMandatButton = forwardRef<SepaMandatHandle, Props>(function SepaMandat
     }
   }
 
+  useImperativeHandle(ref, () => ({ trigger: handleClick }), []);
+
+  if (hideTrigger) return null;
   return (
     <Button variant="outline" size="sm" onClick={handleClick} className="gap-1.5">
       <FileText className="w-4 h-4" /> SEPA Mandat
     </Button>
   );
-}
+});
+
+export default SepaMandatButton;
