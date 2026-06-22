@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 
 export type OfferStatus = 'draft' | 'order' | 'signed';
+export type OfferApprovalStatus = 'pending' | 'approved' | 'rejected';
 
 export type OfferSnapshot = {
   offerNumber: string;
@@ -19,6 +20,11 @@ export type OfferSnapshot = {
   createdAt?: string;
   status?: OfferStatus;
   signedAt?: string;
+  // Approval workflow
+  approvalStatus?: OfferApprovalStatus;
+  approvedAt?: string | null;
+  approvedBy?: string | null;
+  approvalNote?: string | null;
   // List-only enrichments
   createdByName?: string | null;
 };
@@ -40,7 +46,27 @@ function rowToSnapshot(row: any): OfferSnapshot {
     signedAt: row.signed_at || payload.signedAt,
     createdAt: row.created_at || payload.createdAt,
     createdByName: row.created_by_name || null,
+    approvalStatus: (row.approval_status as OfferApprovalStatus) || 'pending',
+    approvedAt: row.approved_at || null,
+    approvedBy: row.approved_by || null,
+    approvalNote: row.approval_note || null,
   };
+}
+
+export async function setOfferApproval(
+  offerNumber: string,
+  approvalStatus: OfferApprovalStatus,
+  note?: string | null,
+): Promise<void> {
+  const { data: userRes } = await supabase.auth.getUser();
+  const patch: any = {
+    approval_status: approvalStatus,
+    approved_by: userRes?.user?.id || null,
+    approved_at: approvalStatus === 'pending' ? null : new Date().toISOString(),
+    approval_note: note ?? null,
+  };
+  const { error } = await supabase.from('offers').update(patch).eq('offer_number', offerNumber);
+  if (error) throw error;
 }
 
 export async function listOffers(): Promise<OfferSnapshot[]> {

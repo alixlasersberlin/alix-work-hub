@@ -3,19 +3,22 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FileText, FilePlus, Trash2, Pencil, CheckCircle2, Link2, Copy, Download } from 'lucide-react';
+import { FileText, FilePlus, Trash2, Pencil, CheckCircle2, Link2, Copy, Download, ShieldCheck, ShieldX, Clock } from 'lucide-react';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { EmptyState } from '@/components/infinity/EmptyState';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import {
   listOffers,
   deleteOffer as deleteOfferDb,
   updateOfferStatus,
+  setOfferApproval,
   migrateLegacyOffersOnce,
   type OfferSnapshot,
 } from '@/lib/offers-store';
@@ -25,6 +28,8 @@ const fmtMoney = (n: number) =>
 
 export default function Angebote() {
   const navigate = useNavigate();
+  const { hasRole } = useAuth();
+  const isSuperAdmin = hasRole('Super Admin');
   const [offers, setOffers] = useState<OfferSnapshot[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -34,6 +39,34 @@ export default function Angebote() {
   const [signLinkUrl, setSignLinkUrl] = useState<string | null>(null);
   const [signLinkExpires, setSignLinkExpires] = useState<string | null>(null);
   const [signLinkError, setSignLinkError] = useState<string | null>(null);
+
+  const [approvalOpen, setApprovalOpen] = useState(false);
+  const [approvalOffer, setApprovalOffer] = useState<OfferSnapshot | null>(null);
+  const [approvalNote, setApprovalNote] = useState('');
+  const [approvalBusy, setApprovalBusy] = useState(false);
+
+  const pendingCount = offers.filter(o => (o.approvalStatus || 'pending') === 'pending').length;
+
+  const openApproval = (o: OfferSnapshot) => {
+    setApprovalOffer(o);
+    setApprovalNote(o.approvalNote || '');
+    setApprovalOpen(true);
+  };
+
+  const submitApproval = async (decision: 'approved' | 'rejected') => {
+    if (!approvalOffer) return;
+    setApprovalBusy(true);
+    try {
+      await setOfferApproval(approvalOffer.offerNumber, decision, approvalNote.trim() || null);
+      toast.success(decision === 'approved' ? 'Angebot freigegeben.' : 'Angebot abgelehnt.');
+      setApprovalOpen(false);
+      await reload();
+    } catch (e: any) {
+      toast.error('Fehler: ' + (e?.message || 'Unbekannt'));
+    } finally {
+      setApprovalBusy(false);
+    }
+  };
 
   const openSignLink = async (offerNumber: string) => {
     setSignLinkOpen(true);
@@ -148,11 +181,29 @@ export default function Angebote() {
         noBreadcrumbs
         meta={<InfinityStatusBadge kind="done" label={`${offers.length}`} />}
         actions={
-          <Button asChild className="gold-gradient text-black hover:opacity-90">
-            <Link to="/verkauf/angebot/neu"><FilePlus className="h-4 w-4 mr-2" />Neues Angebot</Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            {isSuperAdmin && (
+              <Button
+                variant="outline"
+                className="border-amber-500/40 text-amber-300 hover:bg-amber-500/10"
+                onClick={() => {
+                  const first = offers.find(o => (o.approvalStatus || 'pending') === 'pending');
+                  if (first) openApproval(first);
+                  else toast.info('Keine offenen Freigaben.');
+                }}
+                title="Offene Freigaben (nur Super Admin)"
+              >
+                <ShieldCheck className="h-4 w-4 mr-2" />
+                Freigaben{pendingCount > 0 ? ` (${pendingCount})` : ''}
+              </Button>
+            )}
+            <Button asChild className="gold-gradient text-black hover:opacity-90">
+              <Link to="/verkauf/angebot/neu"><FilePlus className="h-4 w-4 mr-2" />Neues Angebot</Link>
+            </Button>
+          </div>
         }
       />
+
       <Card>
         <CardHeader><CardTitle>Liste ({offers.length})</CardTitle></CardHeader>
         <CardContent className="p-0">
@@ -172,19 +223,29 @@ export default function Angebote() {
                   <TableHead>E-Mail</TableHead>
                   <TableHead>Ersteller</TableHead>
                   <TableHead className="text-right">Gesamt</TableHead>
+                  <TableHead>Freigabe</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="w-28 text-right">Aktionen</TableHead>
+                  <TableHead className="w-40 text-right">Aktionen</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {offers.map(o => {
                   const isOrder = o.status === 'order';
                   const isSigned = o.status === 'signed';
+                  const approval = (o.approvalStatus || 'pending') as 'pending' | 'approved' | 'rejected';
+                  const isApproved = approval === 'approved';
+                  const canEditOrSign = isApproved || isSuperAdmin;
                   return (
                   <TableRow
                     key={o.offerNumber}
                     className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => navigate(`/verkauf/angebot/neu?edit=${encodeURIComponent(o.offerNumber)}`)}
+                    onClick={() => {
+                      if (!canEditOrSign) {
+                        toast.info('Angebot wartet auf Freigabe durch den Super Admin.');
+                        return;
+                      }
+                      navigate(`/verkauf/angebot/neu?edit=${encodeURIComponent(o.offerNumber)}`);
+                    }}
                   >
                     <TableCell className="font-medium">{o.offerNumber}</TableCell>
                     <TableCell>{o.offerDate ? new Date(o.offerDate).toLocaleDateString('de-DE') : '—'}</TableCell>
@@ -192,6 +253,21 @@ export default function Angebote() {
                     <TableCell className="text-muted-foreground">{o.customer?.email || '—'}</TableCell>
                     <TableCell className="text-muted-foreground">{o.createdByName || '—'}</TableCell>
                     <TableCell className="text-right font-semibold">{fmtMoney(o.totals?.gross || 0)}</TableCell>
+                    <TableCell>
+                      {approval === 'approved' ? (
+                        <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                          <ShieldCheck className="h-3 w-3" /> Freigegeben
+                        </span>
+                      ) : approval === 'rejected' ? (
+                        <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium bg-destructive/10 text-destructive border border-destructive/20">
+                          <ShieldX className="h-3 w-3" /> Abgelehnt
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                          <Clock className="h-3 w-3" /> Wartet auf Freigabe
+                        </span>
+                      )}
+                    </TableCell>
                     <TableCell>
                       {isSigned ? (
                         <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
@@ -205,23 +281,41 @@ export default function Angebote() {
                       )}
                     </TableCell>
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                      {isSuperAdmin && approval !== 'approved' && (
+                        <Button variant="ghost" size="icon" onClick={() => openApproval(o)} title="Freigeben / Ablehnen">
+                          <ShieldCheck className="h-4 w-4 text-amber-400" />
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => navigate(`/verkauf/angebot/neu?edit=${encodeURIComponent(o.offerNumber)}&download=1`)}
-                        title="PDF herunterladen"
+                        disabled={!canEditOrSign}
+                        onClick={() => canEditOrSign && navigate(`/verkauf/angebot/neu?edit=${encodeURIComponent(o.offerNumber)}&download=1`)}
+                        title={canEditOrSign ? 'PDF herunterladen' : 'Erst nach Freigabe verfügbar'}
                       >
                         <Download className="h-4 w-4" />
                       </Button>
                       {!isOrder && !isSigned && (
-                        <Button variant="ghost" size="icon" asChild title="Bearbeiten">
-                          <Link to={`/verkauf/angebot/neu?edit=${encodeURIComponent(o.offerNumber)}`}>
+                        canEditOrSign ? (
+                          <Button variant="ghost" size="icon" asChild title="Bearbeiten">
+                            <Link to={`/verkauf/angebot/neu?edit=${encodeURIComponent(o.offerNumber)}`}>
+                              <Pencil className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        ) : (
+                          <Button variant="ghost" size="icon" disabled title="Erst nach Freigabe bearbeitbar">
                             <Pencil className="h-4 w-4" />
-                          </Link>
-                        </Button>
+                          </Button>
+                        )
                       )}
                       {!isSigned && (
-                        <Button variant="ghost" size="icon" onClick={() => openSignLink(o.offerNumber)} title="Unterschriftslink anzeigen">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          disabled={!canEditOrSign}
+                          onClick={() => canEditOrSign && openSignLink(o.offerNumber)}
+                          title={canEditOrSign ? 'Unterschriftslink anzeigen' : 'Erst nach Freigabe verfügbar'}
+                        >
                           <Link2 className="h-4 w-4" />
                         </Button>
                       )}
@@ -238,6 +332,31 @@ export default function Angebote() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={approvalOpen} onOpenChange={setApprovalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-amber-400" /> Angebot freigeben</DialogTitle>
+            <DialogDescription>
+              {approvalOffer ? `Angebot ${approvalOffer.offerNumber} · ${approvalOffer.customer?.company_name || approvalOffer.customer?.contact_name || ''} · ${fmtMoney(approvalOffer.totals?.gross || 0)}` : ''}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <label className="text-xs text-muted-foreground">Notiz (optional)</label>
+            <Textarea rows={3} value={approvalNote} onChange={(e) => setApprovalNote(e.target.value)} placeholder="z. B. Hinweise zur Freigabe…" />
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="ghost" onClick={() => setApprovalOpen(false)} disabled={approvalBusy}>Abbrechen</Button>
+            <Button variant="outline" className="border-destructive/40 text-destructive hover:bg-destructive/10" onClick={() => submitApproval('rejected')} disabled={approvalBusy}>
+              <ShieldX className="h-4 w-4 mr-2" /> Ablehnen
+            </Button>
+            <Button className="bg-emerald-600 hover:bg-emerald-500 text-white" onClick={() => submitApproval('approved')} disabled={approvalBusy}>
+              <ShieldCheck className="h-4 w-4 mr-2" /> Freigeben
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       <Dialog open={signLinkOpen} onOpenChange={setSignLinkOpen}>
         <DialogContent>
