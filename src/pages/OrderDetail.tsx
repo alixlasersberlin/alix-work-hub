@@ -87,6 +87,10 @@ export default function OrderDetail() {
   const [deferOpen, setDeferOpen] = useState(false);
   const [restPending, setRestPending] = useState(false);
 
+  const sepaRef = useRef<SepaMandatHandle>(null);
+  const mietkaufRef = useRef<MietkaufDialogHandle>(null);
+  const ratenplanRef = useRef<InstallmentPlanDialogHandle>(null);
+
   useEffect(() => {
     if (!id) return;
     hasPendingRestbestellung(id).then(setRestPending);
