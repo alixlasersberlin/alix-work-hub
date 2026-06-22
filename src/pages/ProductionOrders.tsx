@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { qk, STALE } from '@/lib/query-keys';
+
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -114,8 +117,6 @@ function statusClasses(status: string) {
 }
 
 export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {}) {
-  const [rows, setRows] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [lang, setLang] = useState<Lang>(() => (localStorage.getItem('production_lang') as Lang) || 'de');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -127,6 +128,7 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
   const isSuperAdmin = hasRole('Super Admin');
   const atOnly = useAtOnly();
   const [lagerMatches, setLagerMatches] = useState<Record<string, LagerMatch | 'none'>>({});
+  const queryClient = useQueryClient();
 
   const t = T[lang];
   const navigate = useNavigate();
@@ -137,15 +139,14 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
 
   const tPayment = (p: string) => t[`p_${p}`] ?? p;
 
-  const load = async () => {
-    setLoading(true);
+  const loadProductionOrders = async () => {
     const { data, error } = await supabase
       .from('production_orders')
       .select('*, supplier:suppliers(name, email)')
       .eq('is_reclamation', isReclamation)
       .neq('status', 'fertig')
       .order('created_at', { ascending: false });
-    if (error) { toast.error(error.message); setLoading(false); return; }
+    if (error) throw error;
     let list = (data || []).map((r: any) => ({
       ...r,
       display_order_number: r.production_order_number || r.order_number,
@@ -166,13 +167,18 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
         related_order_status: r.order_id ? (map.get(r.order_id)?.order_status ?? null) : null,
       }));
     }
-    setRows(list);
-    setLoading(false);
+    return list;
   };
 
+  const productionQuery = useQuery({
+    queryKey: qk.productionOrders.list({ isReclamation, atOnly }),
+    queryFn: loadProductionOrders,
+    staleTime: STALE.short,
+  });
+  const rows = productionQuery.data ?? [];
+  const loading = productionQuery.isPending;
+  const load = () => queryClient.invalidateQueries({ queryKey: qk.productionOrders.all });
 
-
-  useEffect(() => { load(); }, [isReclamation, atOnly]);
 
   // Auto-Check: prüft jede Bestellung gegen freie Lagergeräte (Lager/Unterwegs/Produktion/Warehouse/Hold).
   // Bei Treffer: Gerät auf order_id reservieren + Notiz in production_orders.anmerkungen anhängen.

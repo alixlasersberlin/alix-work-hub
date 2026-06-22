@@ -341,9 +341,13 @@ import LeihgeraetReminder from "./components/LeihgeraetReminder";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 60_000,
-      gcTime: 5 * 60_000,
+      // Daten gelten 2 Minuten als frisch; danach wird im Hintergrund erneuert,
+      // während der Cache sofort angezeigt wird (kein Spinner beim Zurücknavigieren).
+      staleTime: 2 * 60_000,
+      // Caches bleiben 15 Minuten nach dem letzten Verbrauch im Speicher.
+      gcTime: 15 * 60_000,
       refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
       retry: 1,
     },
   },
