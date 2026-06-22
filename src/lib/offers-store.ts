@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 
 export type OfferStatus = 'draft' | 'order' | 'signed';
+export type OfferApprovalStatus = 'pending' | 'approved' | 'rejected';
 
 export type OfferSnapshot = {
   offerNumber: string;
@@ -19,6 +20,11 @@ export type OfferSnapshot = {
   createdAt?: string;
   status?: OfferStatus;
   signedAt?: string;
+  // Approval workflow
+  approvalStatus?: OfferApprovalStatus;
+  approvedAt?: string | null;
+  approvedBy?: string | null;
+  approvalNote?: string | null;
   // List-only enrichments
   createdByName?: string | null;
 };
