@@ -28,6 +28,8 @@ const fmtMoney = (n: number) =>
 
 export default function Angebote() {
   const navigate = useNavigate();
+  const { hasRole } = useAuth();
+  const isSuperAdmin = hasRole('Super Admin');
   const [offers, setOffers] = useState<OfferSnapshot[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -37,6 +39,34 @@ export default function Angebote() {
   const [signLinkUrl, setSignLinkUrl] = useState<string | null>(null);
   const [signLinkExpires, setSignLinkExpires] = useState<string | null>(null);
   const [signLinkError, setSignLinkError] = useState<string | null>(null);
+
+  const [approvalOpen, setApprovalOpen] = useState(false);
+  const [approvalOffer, setApprovalOffer] = useState<OfferSnapshot | null>(null);
+  const [approvalNote, setApprovalNote] = useState('');
+  const [approvalBusy, setApprovalBusy] = useState(false);
+
+  const pendingCount = offers.filter(o => (o.approvalStatus || 'pending') === 'pending').length;
+
+  const openApproval = (o: OfferSnapshot) => {
+    setApprovalOffer(o);
+    setApprovalNote(o.approvalNote || '');
+    setApprovalOpen(true);
+  };
+
+  const submitApproval = async (decision: 'approved' | 'rejected') => {
+    if (!approvalOffer) return;
+    setApprovalBusy(true);
+    try {
+      await setOfferApproval(approvalOffer.offerNumber, decision, approvalNote.trim() || null);
+      toast.success(decision === 'approved' ? 'Angebot freigegeben.' : 'Angebot abgelehnt.');
+      setApprovalOpen(false);
+      await reload();
+    } catch (e: any) {
+      toast.error('Fehler: ' + (e?.message || 'Unbekannt'));
+    } finally {
+      setApprovalBusy(false);
+    }
+  };
 
   const openSignLink = async (offerNumber: string) => {
     setSignLinkOpen(true);
