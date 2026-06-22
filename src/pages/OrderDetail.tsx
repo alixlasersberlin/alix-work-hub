@@ -431,6 +431,7 @@ export default function OrderDetail() {
           <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-3 flex-wrap">
             {isOrderVip({ ...order, customers: customer }) && <VipBadge size="lg" />}
             {primaryDisplayNumber}
+            <StatusBadge status={order.order_status || 'offen'} />
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {order.order_date ? new Date(order.order_date).toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' }) : '—'}
