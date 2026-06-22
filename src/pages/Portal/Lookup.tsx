@@ -52,7 +52,7 @@ export default function PortalLookup() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 flex flex-col">
+    <div className="light min-h-screen bg-white text-slate-900 flex flex-col" style={{ colorScheme: 'light' }}>
       <header className="border-b border-slate-200">
         <div className="max-w-3xl mx-auto px-6 py-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
