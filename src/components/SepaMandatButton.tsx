@@ -27,7 +27,7 @@ function formatAddr(a: any) {
   return { street, zipCity };
 }
 
-export default function SepaMandatButton({ order }: Props) {
+const SepaMandatButton = forwardRef<SepaMandatHandle, Props>(function SepaMandatButton({ order, hideTrigger }, ref) {
   const customer = order.customers;
 
   function generateSepaMandat() {
