@@ -1,10 +1,14 @@
+import { forwardRef, useImperativeHandle } from 'react';
 import { Button } from '@/components/ui/button';
 import { FileText } from 'lucide-react';
 import { createPDF } from '@/lib/pdf-utils';
 import { toast } from 'sonner';
 
+export type SepaMandatHandle = { trigger: () => void };
+
 interface Props {
   order: any;
+  hideTrigger?: boolean;
 }
 
 const ALIX = {
