@@ -333,6 +333,31 @@ export default function Angebote() {
         </CardContent>
       </Card>
 
+      <Dialog open={approvalOpen} onOpenChange={setApprovalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-amber-400" /> Angebot freigeben</DialogTitle>
+            <DialogDescription>
+              {approvalOffer ? `Angebot ${approvalOffer.offerNumber} · ${approvalOffer.customer?.company_name || approvalOffer.customer?.contact_name || ''} · ${fmtMoney(approvalOffer.totals?.gross || 0)}` : ''}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <label className="text-xs text-muted-foreground">Notiz (optional)</label>
+            <Textarea rows={3} value={approvalNote} onChange={(e) => setApprovalNote(e.target.value)} placeholder="z. B. Hinweise zur Freigabe…" />
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="ghost" onClick={() => setApprovalOpen(false)} disabled={approvalBusy}>Abbrechen</Button>
+            <Button variant="outline" className="border-destructive/40 text-destructive hover:bg-destructive/10" onClick={() => submitApproval('rejected')} disabled={approvalBusy}>
+              <ShieldX className="h-4 w-4 mr-2" /> Ablehnen
+            </Button>
+            <Button className="bg-emerald-600 hover:bg-emerald-500 text-white" onClick={() => submitApproval('approved')} disabled={approvalBusy}>
+              <ShieldCheck className="h-4 w-4 mr-2" /> Freigeben
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
       <Dialog open={signLinkOpen} onOpenChange={setSignLinkOpen}>
         <DialogContent>
           <DialogHeader>
