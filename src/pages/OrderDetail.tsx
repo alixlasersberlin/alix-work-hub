@@ -465,7 +465,6 @@ export default function OrderDetail() {
           <SepaMandatButton ref={sepaRef} order={order} hideTrigger />
           <MietkaufDialog ref={mietkaufRef} order={order} hideTrigger />
           <InstallmentPlanDialog ref={ratenplanRef} order={order} hideTrigger />
-          <StatusBadge status={order.order_status || 'offen'} />
         </div>
       </div>
 
