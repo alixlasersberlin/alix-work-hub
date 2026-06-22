@@ -52,7 +52,7 @@ export default function PortalLookup() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 flex flex-col">
+    <div className="light min-h-screen bg-white text-slate-900 flex flex-col" style={{ colorScheme: 'light' }}>
       <header className="border-b border-slate-200">
         <div className="max-w-3xl mx-auto px-6 py-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -78,15 +78,15 @@ export default function PortalLookup() {
           <form onSubmit={handleSubmit} className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 space-y-4">
             <div>
               <Label htmlFor="order" className="text-slate-700">Auftragsnummer</Label>
-              <Input id="order" value={orderNumber} onChange={e => setOrderNumber(e.target.value)} placeholder="z.B. SO-1234" className="mt-1.5 bg-white border-slate-300 text-slate-900" autoComplete="off" />
+              <Input id="order" value={orderNumber} onChange={e => setOrderNumber(e.target.value)} placeholder="z.B. SO-1234" className="mt-1.5 !bg-white !border-slate-300 !text-slate-900 placeholder:!text-slate-400" autoComplete="off" />
             </div>
             <div>
               <Label htmlFor="zip" className="text-slate-700">Postleitzahl</Label>
-              <Input id="zip" value={zip} onChange={e => setZip(e.target.value)} placeholder="z.B. 41160" className="mt-1.5 bg-white border-slate-300 text-slate-900" autoComplete="postal-code" inputMode="numeric" />
+              <Input id="zip" value={zip} onChange={e => setZip(e.target.value)} placeholder="z.B. 41160" className="mt-1.5 !bg-white !border-slate-300 !text-slate-900 placeholder:!text-slate-400" autoComplete="postal-code" inputMode="numeric" />
             </div>
             <div>
               <Label htmlFor="email" className="text-slate-700">E-Mail-Adresse</Label>
-              <Input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="ihre@email.de" className="mt-1.5 bg-white border-slate-300 text-slate-900" autoComplete="email" />
+              <Input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="ihre@email.de" className="mt-1.5 !bg-white !border-slate-300 !text-slate-900 placeholder:!text-slate-400" autoComplete="email" />
             </div>
 
             {error && (
