@@ -351,4 +351,6 @@ const InstallmentPlanDialog = forwardRef<InstallmentPlanDialogHandle, Props>(fun
       )}
     </>
   );
-}
+});
+
+export default InstallmentPlanDialog;
