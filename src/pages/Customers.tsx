@@ -318,7 +318,7 @@ export default function Customers() {
           customer={editCustomer}
           open={!!editCustomer}
           onClose={() => setEditCustomer(null)}
-          onSaved={() => { setEditCustomer(null); loadAll(); }}
+          onSaved={() => { setEditCustomer(null); invalidateCustomers(); }}
         />
       )}
       {deleteCustomer && (
@@ -326,7 +326,7 @@ export default function Customers() {
           customer={deleteCustomer}
           open={!!deleteCustomer}
           onClose={() => setDeleteCustomer(null)}
-          onDeleted={() => { setDeleteCustomer(null); loadAll(); }}
+          onDeleted={() => { setDeleteCustomer(null); invalidateCustomers(); }}
         />
       )}
     </div>
