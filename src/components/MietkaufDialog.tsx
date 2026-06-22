@@ -75,8 +75,9 @@ async function loadImageAsBase64(src: string): Promise<string> {
   });
 }
 
-export default function MietkaufDialog({ order }: Props) {
+const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function MietkaufDialog({ order, hideTrigger }, ref) {
   const [open, setOpen] = useState(false);
+  useImperativeHandle(ref, () => ({ open: () => setOpen(true) }), []);
   const [kaufpreis, setKaufpreis] = useState('');
   const [anzahlung, setAnzahlung] = useState('');
   const [term, setTerm] = useState<number>(12);
