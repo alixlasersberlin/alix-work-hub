@@ -10,8 +10,11 @@ import { createPDF } from '@/lib/pdf-utils';
 import alixLogo from '@/assets/alix-logo-gold-mietkauf.png.asset.json';
 import templateAsset from '@/assets/mietkauf-template.jpg.asset.json';
 
+export type MietkaufDialogHandle = { open: () => void };
+
 interface Props {
   order: any;
+  hideTrigger?: boolean;
 }
 
 const TERMS = [12, 24, 36, 48, 60] as const;
