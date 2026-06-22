@@ -1285,6 +1285,7 @@ export default function OrderDetail() {
       {deferOpen && order && (
         <OrderDeferDialog order={order} open onClose={() => setDeferOpen(false)} onSaved={loadAll} />
       )}
+      </div>
     </div>
   );
 }
