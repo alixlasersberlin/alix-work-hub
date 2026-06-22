@@ -12,8 +12,11 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
-  ArrowLeft, ClipboardList, Building2, FileText, History, Loader2, Inbox, Send, Pencil, X, Check, Shield, Package, CalendarIcon, CalendarClock, Truck, Euro, Mail, Landmark, Plus, Trash2, ShoppingCart, ShoppingBag, CheckCircle2, Hash, MessageSquare
+  ArrowLeft, ClipboardList, Building2, FileText, History, Loader2, Inbox, Send, Pencil, X, Check, Shield, Package, CalendarIcon, CalendarClock, Truck, Euro, Mail, Landmark, Plus, Trash2, ShoppingCart, ShoppingBag, CheckCircle2, Hash, MessageSquare, Share2, Printer, RefreshCw, MoreHorizontal, Sparkles, Link2
 } from 'lucide-react';
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel,
+} from '@/components/ui/dropdown-menu';
 import { createRestbestellungMarker, hasPendingRestbestellung } from '@/lib/restbestellung';
 import { sendDepositReceivedNotice } from '@/lib/send-deposit-received-notice';
 import BankFinancingTab from '@/components/BankFinancingTab';
