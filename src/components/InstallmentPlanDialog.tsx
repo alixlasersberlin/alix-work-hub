@@ -262,15 +262,17 @@ const InstallmentPlanDialog = forwardRef<InstallmentPlanDialogHandle, Props>(fun
 
   return (
     <>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        className="border-primary/30 text-primary hover:bg-primary/10"
-        onClick={() => { console.log('[InstallmentPlanDialog] open click'); setOpen(true); }}
-      >
-        <FileText className="w-4 h-4 mr-2" /> Ratenplan
-      </Button>
+      {!hideTrigger && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="border-primary/30 text-primary hover:bg-primary/10"
+          onClick={() => { console.log('[InstallmentPlanDialog] open click'); setOpen(true); }}
+        >
+          <FileText className="w-4 h-4 mr-2" /> Ratenplan
+        </Button>
+      )}
       {open && (
         <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-background/80 px-4 py-8 backdrop-blur-sm">
           <div className="relative w-full max-w-lg rounded-lg border border-border bg-background p-6 shadow-lg">
