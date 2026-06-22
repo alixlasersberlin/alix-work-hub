@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { PageHeader } from '@/components/infinity/PageHeader';
@@ -10,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import {
   ShoppingCart, CheckCircle2, Clock, Factory, ListOrdered, Search, Crown,
 } from 'lucide-react';
+import { qk, STALE } from '@/lib/query-keys';
 
 interface ProdOrder {
   id: string;
@@ -52,47 +54,47 @@ type Filter = 'all' | 'deposit_open' | 'deposit_ok_no_order' | 'ordered' | 'vip'
 
 const AT = (s?: string | null) => s === 'zoho_eu_2';
 
+async function fetchBestellungenDashboard(): Promise<Row[]> {
+  const { data: ordersData, error: oErr } = await (supabase as any)
+    .from('orders')
+    .select(`
+      id, order_number, internal_number, source_system, order_status, total_amount,
+      order_date, expected_shipment_date, salesperson_name,
+      deposit_ok, deposit_ok_at, deposit_amount, deposit_additional, deposit_booking_date, is_vip,
+      finance_paid_amount, finance_open_amount, finance_payment_status,
+      customers(company_name, contact_name, is_vip)
+    `)
+    .order('order_date', { ascending: false })
+    .not('order_status', 'ilike', 'geliefert')
+    .limit(2000);
+  if (oErr) throw oErr;
+
+  const orderIds = (ordersData ?? []).map((r: any) => r.id);
+  const poByOrder: Record<string, ProdOrder[]> = {};
+  if (orderIds.length) {
+    const { data: poData, error: pErr } = await (supabase as any)
+      .from('production_orders')
+      .select('id, order_id, production_order_number, status, sent_at, approval_status, pdf_path, modellname, farbe, liefertermin, is_reclamation, supplier:suppliers(name)')
+      .in('order_id', orderIds);
+    if (pErr) throw pErr;
+    (poData ?? []).forEach((p: any) => {
+      if (!p.order_id) return;
+      (poByOrder[p.order_id] ||= []).push(p);
+    });
+  }
+
+  return (ordersData ?? []).map((r: any) => ({ ...r, production_orders: poByOrder[r.id] ?? [] }));
+}
+
 export default function BestellungenDashboard() {
-  const [rows, setRows] = useState<Row[]>([]);
-  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<Filter>('all');
   const [q, setQ] = useState('');
+  const { data: rows = [], isPending: loading } = useQuery({
+    queryKey: qk.orders.bestellungenDashboard,
+    queryFn: fetchBestellungenDashboard,
+    staleTime: STALE.medium,
+  });
 
-  useEffect(() => {
-    (async () => {
-      const { data: ordersData, error: oErr } = await (supabase as any)
-        .from('orders')
-        .select(`
-          id, order_number, internal_number, source_system, order_status, total_amount,
-          order_date, expected_shipment_date, salesperson_name,
-          deposit_ok, deposit_ok_at, deposit_amount, deposit_additional, deposit_booking_date, is_vip,
-          finance_paid_amount, finance_open_amount, finance_payment_status,
-          customers(company_name, contact_name, is_vip)
-        `)
-        .order('order_date', { ascending: false })
-        .not('order_status', 'ilike', 'geliefert')
-        .limit(2000);
-      if (oErr) console.error('orders error', oErr);
-
-      const orderIds = (ordersData ?? []).map((r: any) => r.id);
-      let poByOrder: Record<string, ProdOrder[]> = {};
-      if (orderIds.length) {
-        const { data: poData, error: pErr } = await (supabase as any)
-          .from('production_orders')
-          .select('id, order_id, production_order_number, status, sent_at, approval_status, pdf_path, modellname, farbe, liefertermin, is_reclamation, supplier:suppliers(name)')
-          .in('order_id', orderIds);
-        if (pErr) console.error('production_orders error', pErr);
-        (poData ?? []).forEach((p: any) => {
-          if (!p.order_id) return;
-          (poByOrder[p.order_id] ||= []).push(p);
-        });
-      }
-
-      const merged = (ordersData ?? []).map((r: any) => ({ ...r, production_orders: poByOrder[r.id] ?? [] }));
-      setRows(merged as Row[]);
-      setLoading(false);
-    })();
-  }, []);
 
   const enriched = useMemo(() => rows.map(r => {
     const pos = r.production_orders ?? [];
