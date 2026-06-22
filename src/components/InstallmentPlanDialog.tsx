@@ -75,9 +75,10 @@ function loadImageAsBase64(src: string): Promise<string> {
   });
 }
 
-export default function InstallmentPlanDialog({ order }: Props) {
+const InstallmentPlanDialog = forwardRef<InstallmentPlanDialogHandle, Props>(function InstallmentPlanDialog({ order, hideTrigger }, ref) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
+  useImperativeHandle(ref, () => ({ open: () => setOpen(true) }), []);
   const [price, setPrice] = useState('');
   const [downPayment, setDownPayment] = useState('');
   const [term, setTerm] = useState<number>(12);
