@@ -11,8 +11,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import {
-  ArrowLeft, ClipboardList, Building2, FileText, History, Loader2, Inbox, Send, Pencil, X, Check, Shield, Package, CalendarIcon, CalendarClock, Truck, Euro, Mail, Landmark, Plus, Trash2, ShoppingCart, ShoppingBag, CheckCircle2, Hash, MessageSquare
+  ArrowLeft, ClipboardList, Building2, FileText, History, Loader2, Inbox, Send, Pencil, X, Check, Shield, Package, CalendarIcon, CalendarClock, Truck, Euro, Mail, Landmark, Plus, Trash2, ShoppingCart, ShoppingBag, CheckCircle2, Hash, MessageSquare, ChevronDown
 } from 'lucide-react';
 import { createRestbestellungMarker, hasPendingRestbestellung } from '@/lib/restbestellung';
 import { sendDepositReceivedNotice } from '@/lib/send-deposit-received-notice';
@@ -308,23 +309,25 @@ export default function OrderDetail() {
   const canSeeAtPurchase = isAtOrder && (hasRole('Super Admin') || hasRole('Österreich'));
   const canSeeAtApproval = isAtOrder && (hasRole('Super Admin') || hasRole('Admin') || hasRole('Österreich'));
 
-  const tabGroups = [
+  const overviewTab = { key: 'overview', label: 'Übersicht', icon: ClipboardList };
+  const tabMenus: Array<{ name: string; icon: any; tabs: any[] }> = [
     {
-      name: 'Auftrag',
+      name: 'Artikel',
+      icon: Package,
       tabs: [
-        { key: 'overview', label: 'Übersicht', icon: ClipboardList },
         { key: 'items', label: 'Artikel', icon: Package, count: items.length },
         { key: 'serials', label: 'Seriennummer', icon: Hash, count: serialDevices.length },
         { key: 'packages', label: 'Pakete', icon: Truck, count: packages.length },
+      ],
+    },
+    {
+      name: 'Auftrag',
+      icon: FileText,
+      tabs: [
         { key: 'confirmation', label: 'Auftragsbestätigung', icon: FileText },
         { key: 'lieferschein', label: 'Lieferschein', icon: FileText },
         { key: 'auftragsbestaetigung', label: 'Auftrag Unterzeichnet', icon: FileText },
         { key: 'az_invoice', label: 'AZ Rechnung', icon: Euro, badge: (Number(order?.deposit_amount) || 0) > 0 ? '€' : undefined },
-      ],
-    },
-    {
-      name: 'Finanzen',
-      tabs: [
         { key: 'deposit', label: 'Anzahlung', icon: Euro, badge: order?.deposit_ok ? '✓' : undefined },
         { key: 'financing', label: 'Finanzierung', icon: Landmark },
         ...(canSeeAtPurchase ? [{ key: 'at_purchase', label: 'Einkauf AT', icon: ShoppingBag }] : []),
@@ -333,20 +336,16 @@ export default function OrderDetail() {
     },
     {
       name: 'Kommunikation',
+      icon: MessageSquare,
       tabs: [
         { key: 'notes', label: 'Notizen', icon: FileText, count: generalNotes.length },
         { key: 'emails', label: 'E-Mails', icon: Mail, count: emailNotes.length },
         { key: 'sms', label: 'SMS Versand', icon: MessageSquare },
-      ],
-    },
-    {
-      name: 'System',
-      tabs: [
         { key: 'history', label: 'Historie', icon: History, count: history.length },
         ...(isAdmin ? [{ key: 'raw', label: 'Rohdaten', icon: Shield }] : []),
       ],
     },
-  ] as const;
+  ];
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
@@ -483,38 +482,64 @@ export default function OrderDetail() {
 
       {/* Tabs */}
       <div className="flex flex-wrap items-stretch gap-x-1 gap-y-1 mb-6 border-b border-border">
-        {tabGroups.map((group, gi) => (
-          <div key={group.name} className="flex items-stretch">
-            {gi > 0 && <div className="self-center mx-2 h-5 w-px bg-border/70" aria-hidden />}
-            {group.tabs.map((t: any) => {
-              const active = activeTab === t.key;
-              return (
+        {(() => {
+          const overviewActive = activeTab === overviewTab.key;
+          const OvIcon = overviewTab.icon;
+          return (
+            <button
+              key={overviewTab.key}
+              data-tab-key={overviewTab.key}
+              className={`flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
+                overviewActive ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+              onClick={() => setActiveTab(overviewTab.key as any)}
+            >
+              <OvIcon className="w-4 h-4" />
+              <span>{overviewTab.label}</span>
+            </button>
+          );
+        })()}
+        {tabMenus.map((menu) => {
+          const activeChild = menu.tabs.find((t) => t.key === activeTab);
+          const isActive = !!activeChild;
+          const MIcon = menu.icon;
+          return (
+            <DropdownMenu key={menu.name}>
+              <DropdownMenuTrigger asChild>
                 <button
-                  key={t.key}
-                  data-tab-key={t.key}
-                  title={`${group.name} · ${t.label}`}
-                  className={`flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
-                    active
-                      ? 'border-primary text-primary'
-                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  className={`flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px outline-none ${
+                    isActive ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
                   }`}
-                  onClick={() => setActiveTab(t.key as any)}
                 >
-                  <t.icon className="w-4 h-4" />
-                  <span>{t.label}</span>
-                  {typeof t.count === 'number' && (
-                    <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${
-                      active ? 'bg-primary/15 text-primary' : 'bg-secondary text-muted-foreground'
-                    }`}>{t.count}</span>
-                  )}
-                  {t.badge && (
-                    <span className="text-emerald-400 text-xs">{t.badge}</span>
-                  )}
+                  <MIcon className="w-4 h-4" />
+                  <span>{menu.name}{activeChild ? ` · ${activeChild.label}` : ''}</span>
+                  <ChevronDown className="w-3.5 h-3.5 opacity-70" />
                 </button>
-              );
-            })}
-          </div>
-        ))}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="min-w-[220px]">
+                {menu.tabs.map((t: any) => {
+                  const TIcon = t.icon;
+                  const active = activeTab === t.key;
+                  return (
+                    <DropdownMenuItem
+                      key={t.key}
+                      data-tab-key={t.key}
+                      onSelect={() => setActiveTab(t.key as any)}
+                      className={active ? 'bg-primary/10 text-primary focus:bg-primary/15 focus:text-primary' : ''}
+                    >
+                      <TIcon className="w-4 h-4 mr-2" />
+                      <span className="flex-1">{t.label}</span>
+                      {typeof t.count === 'number' && (
+                        <span className={`text-[11px] px-1.5 py-0.5 rounded-full ml-2 ${active ? 'bg-primary/15 text-primary' : 'bg-secondary text-muted-foreground'}`}>{t.count}</span>
+                      )}
+                      {t.badge && <span className="text-emerald-400 text-xs ml-2">{t.badge}</span>}
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          );
+        })}
       </div>
 
       {/* Overview Tab */}
