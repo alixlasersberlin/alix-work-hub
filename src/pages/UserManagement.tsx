@@ -294,40 +294,24 @@ export default function UserManagement() {
     setActionLoading(false);
   };
 
-  /* ─── Save roles + dept ─── */
+  /* ─── Save roles + dept (via Edge Function mit Service Role) ─── */
   const handleSaveRoles = async () => {
     if (!selectedUser) return;
     setSavingRoles(true);
     try {
-      // Delete existing roles
-      const { error: delErr, count: delCount } = await supabase
-        .from('user_roles')
-        .delete({ count: 'exact' })
-        .eq('user_id', selectedUser.id);
-      if (delErr) throw delErr;
-
-      // Sanity check: if the user previously had roles but nothing was deleted,
-      // RLS silently blocked the delete (e.g. acting user is not Super Admin).
-      if ((selectedUser.roleIds?.length ?? 0) > 0 && (delCount ?? 0) === 0) {
-        throw new Error('Bestehende Rollen konnten nicht entfernt werden (fehlende Berechtigung). Nur Super Admin darf Rollen löschen.');
-      }
-
-      // Insert new
-      if (editRoleIds.length > 0) {
-        const { error: insErr } = await supabase
-          .from('user_roles')
-          .insert(editRoleIds.map(role_id => ({ user_id: selectedUser.id, role_id })));
-        if (insErr) throw insErr;
-      }
-
-      // Update department + supplier
       const lieferantRoleId = roles.find(r => r.name === 'Lieferant')?.id;
       const isLieferant = lieferantRoleId ? editRoleIds.includes(lieferantRoleId) : false;
-      const { error: profErr } = await supabase.from('user_profiles').update({
-        department_id: editDeptId && editDeptId !== 'none' ? editDeptId : null,
-        supplier_id: isLieferant && editSupplierId !== 'none' ? editSupplierId : null,
-      }).eq('id', selectedUser.id);
-      if (profErr) throw profErr;
+
+      const { data, error } = await supabase.functions.invoke('update-user-roles', {
+        body: {
+          user_id: selectedUser.id,
+          role_ids: editRoleIds,
+          department_id: editDeptId && editDeptId !== 'none' ? editDeptId : null,
+          supplier_id: isLieferant && editSupplierId !== 'none' ? editSupplierId : null,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
       toast.success('Rollen, Abteilung und Lieferant gespeichert');
       setShowEditRoles(false);
@@ -337,6 +321,7 @@ export default function UserManagement() {
     }
     setSavingRoles(false);
   };
+
 
 
   const openEditRoles = (user: EnrichedUser) => {
