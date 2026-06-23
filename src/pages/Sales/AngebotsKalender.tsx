@@ -222,6 +222,19 @@ export default function AngebotsKalender() {
     }
   }
 
+  async function snoozeTask(t: Task, days: number) {
+    try {
+      const newDue = new Date(new Date(t.due_at).getTime() + days * 86400000).toISOString();
+      const { error } = await supabase.from('offer_followup_tasks')
+        .update({ due_at: newDue }).eq('id', t.id);
+      if (error) throw error;
+      toast.success(`Um ${days} Tage verschoben.`);
+      await load();
+    } catch (e: any) {
+      toast.error('Fehler: ' + (e?.message || 'unbekannt'));
+    }
+  }
+
   function renderTask(t: Task) {
     const o = offers.get(t.offer_number);
     const prio = PRIO[t.priority];
