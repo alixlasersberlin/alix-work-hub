@@ -283,6 +283,10 @@ export default function AngebotsKalender() {
                   <Link to={`/kunden/${t.customer_id}`}><User className="h-4 w-4" /></Link>
                 </Button>
               )}
+              <Button size="sm" variant="outline" className="text-amber-500 border-amber-500/30"
+                onClick={() => snoozeTask(t, 2)} title="Um 2 Tage verschieben">
+                <CalendarPlus className="h-4 w-4" />
+              </Button>
               <Button size="sm" variant="outline" className="text-emerald-500 border-emerald-500/30"
                 onClick={() => openOutcome(t.offer_number)} title="Gewonnen / Verloren">
                 <Trophy className="h-4 w-4" />
