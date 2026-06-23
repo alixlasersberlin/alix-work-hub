@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import {
   CalendarClock, AlertTriangle, CalendarDays, TrendingUp, RefreshCw,
-  Mail, MessageSquare, Phone, FileText, User, CheckCircle2, XCircle, Pencil, ExternalLink, Trophy,
+  Mail, MessageSquare, Phone, FileText, User, CheckCircle2, XCircle, Pencil, ExternalLink, Trophy, CalendarPlus,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/infinity/PageHeader';
@@ -222,6 +222,19 @@ export default function AngebotsKalender() {
     }
   }
 
+  async function snoozeTask(t: Task, days: number) {
+    try {
+      const newDue = new Date(new Date(t.due_at).getTime() + days * 86400000).toISOString();
+      const { error } = await supabase.from('offer_followup_tasks')
+        .update({ due_at: newDue }).eq('id', t.id);
+      if (error) throw error;
+      toast.success(`Um ${days} Tage verschoben.`);
+      await load();
+    } catch (e: any) {
+      toast.error('Fehler: ' + (e?.message || 'unbekannt'));
+    }
+  }
+
   function renderTask(t: Task) {
     const o = offers.get(t.offer_number);
     const prio = PRIO[t.priority];
@@ -270,6 +283,10 @@ export default function AngebotsKalender() {
                   <Link to={`/kunden/${t.customer_id}`}><User className="h-4 w-4" /></Link>
                 </Button>
               )}
+              <Button size="sm" variant="outline" className="text-amber-500 border-amber-500/30"
+                onClick={() => snoozeTask(t, 2)} title="Um 2 Tage verschieben">
+                <CalendarPlus className="h-4 w-4" />
+              </Button>
               <Button size="sm" variant="outline" className="text-emerald-500 border-emerald-500/30"
                 onClick={() => openOutcome(t.offer_number)} title="Gewonnen / Verloren">
                 <Trophy className="h-4 w-4" />
