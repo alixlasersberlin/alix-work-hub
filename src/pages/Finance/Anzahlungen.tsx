@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Wallet } from 'lucide-react';
+import { Wallet, FileText, Loader2 } from 'lucide-react';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { SkeletonTable } from '@/components/infinity/Skeleton';
 import { EmptyState } from '@/components/infinity/EmptyState';
@@ -7,6 +7,9 @@ import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/Status
 import { getTransactions } from '@/lib/finance/api';
 import { ListToolbar } from '@/components/finance/ListToolbar';
 import { matchesQuery, paginate, type PageSize } from '@/lib/finance/list-filter';
+import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 export default function FinanceAnzahlungen() {
   const [rows, setRows] = useState<any[]>([]);
