@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import {
   CalendarClock, AlertTriangle, CalendarDays, TrendingUp, RefreshCw,
-  Mail, MessageSquare, Phone, FileText, User, CheckCircle2, XCircle, Pencil, ExternalLink, Trophy,
+  Mail, MessageSquare, Phone, FileText, User, CheckCircle2, XCircle, Pencil, ExternalLink, Trophy, CalendarPlus,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/infinity/PageHeader';
