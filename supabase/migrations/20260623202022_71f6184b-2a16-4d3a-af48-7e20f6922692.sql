@@ -1,0 +1,1 @@
+CREATE POLICY "settings_insert" ON public.offer_followup_settings FOR INSERT TO authenticated WITH CHECK (public.is_admin());
