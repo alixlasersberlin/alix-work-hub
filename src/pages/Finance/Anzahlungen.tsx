@@ -16,10 +16,44 @@ export default function FinanceAnzahlungen() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [pageSize, setPageSize] = useState<PageSize>(50);
+  const [openingRef, setOpeningRef] = useState<string | null>(null);
   useEffect(() => {
     getTransactions({ transaction_type: 'Anzahlung' }).then(r => { setRows(r); setLoading(false); }).catch(() => setLoading(false));
   }, []);
   const fmt = (n: number) => Number(n || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
+
+  const openPdf = async (reference: string | null) => {
+    if (!reference) { toast({ title: 'Keine Referenz', variant: 'destructive' }); return; }
+    setOpeningRef(reference);
+    try {
+      const { data, error } = await supabase
+        .from('order_documents')
+        .select('download_token, file_path, file_name')
+        .eq('document_type', 'Anzahlungsrechnung')
+        .ilike('file_name', `%${reference}%`)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      if (error) throw error;
+      const doc: any = data?.[0];
+      if (doc?.download_token) {
+        window.open(`https://alixwork.de/d/${doc.download_token}`, '_blank', 'noopener');
+        return;
+      }
+      if (doc?.file_path) {
+        const { data: signed, error: sErr } = await supabase.storage
+          .from('order-invoices')
+          .createSignedUrl(doc.file_path, 300);
+        if (sErr) throw sErr;
+        window.open(signed.signedUrl, '_blank', 'noopener');
+        return;
+      }
+      toast({ title: 'Keine PDF gefunden', description: `Für ${reference} liegt kein Dokument vor.`, variant: 'destructive' });
+    } catch (e: any) {
+      toast({ title: 'Fehler', description: e?.message ?? String(e), variant: 'destructive' });
+    } finally {
+      setOpeningRef(null);
+    }
+  };
   const filtered = useMemo(() => rows.filter((r) => matchesQuery({ ...r, total: r.amount, balance: r.amount }, search)), [rows, search]);
   const visible = useMemo(() => paginate(filtered, pageSize), [filtered, pageSize]);
   return (
