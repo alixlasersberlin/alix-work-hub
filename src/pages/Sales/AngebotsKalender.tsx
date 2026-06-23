@@ -338,9 +338,9 @@ export default function AngebotsKalender() {
             <TabsContent value="monat">{renderList(groups.monat)}</TabsContent>
             <TabsContent value="cockpit">
               <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-                <KpiTile label="Gewonnen" value={successRate.won} icon={CheckCircle2} tone="success" />
-                <KpiTile label="Verloren" value={successRate.lost} icon={XCircle} tone="danger" />
-                <KpiTile label="Offen" value={successRate.open} icon={CalendarClock} />
+                <KpiTile label="Gewonnen" value={successRate.won} icon={CheckCircle2} accent="emerald" />
+                <KpiTile label="Verloren" value={successRate.lost} icon={XCircle} accent="rose" />
+                <KpiTile label="Offen" value={successRate.open} icon={CalendarClock} accent="gold" />
               </div>
             </TabsContent>
           </Tabs>
