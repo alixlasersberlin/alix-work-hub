@@ -8165,6 +8165,156 @@ export type Database = {
         }
         Relationships: []
       }
+      offer_contact_log: {
+        Row: {
+          body: string | null
+          channel: string
+          created_at: string
+          customer_id: string | null
+          id: string
+          offer_number: string
+          subject: string | null
+          user_id: string | null
+        }
+        Insert: {
+          body?: string | null
+          channel: string
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          offer_number: string
+          subject?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          body?: string | null
+          channel?: string
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          offer_number?: string
+          subject?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      offer_followup_settings: {
+        Row: {
+          customer_email_enabled: boolean
+          customer_sms_enabled: boolean
+          escalation_amount: number
+          escalation_days: number
+          escalation_role_names: string[]
+          id: number
+          stage_days: number[]
+          updated_at: string
+        }
+        Insert: {
+          customer_email_enabled?: boolean
+          customer_sms_enabled?: boolean
+          escalation_amount?: number
+          escalation_days?: number
+          escalation_role_names?: string[]
+          id?: number
+          stage_days?: number[]
+          updated_at?: string
+        }
+        Update: {
+          customer_email_enabled?: boolean
+          customer_sms_enabled?: boolean
+          escalation_amount?: number
+          escalation_days?: number
+          escalation_role_names?: string[]
+          id?: number
+          stage_days?: number[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      offer_followup_tasks: {
+        Row: {
+          ai_score: number | null
+          channel_done: string | null
+          created_at: string
+          customer_id: string | null
+          done_at: string | null
+          due_at: string
+          id: string
+          offer_number: string
+          owner_user_id: string | null
+          priority: string
+          reminder_sent_at: string | null
+          stage: number
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          ai_score?: number | null
+          channel_done?: string | null
+          created_at?: string
+          customer_id?: string | null
+          done_at?: string | null
+          due_at: string
+          id?: string
+          offer_number: string
+          owner_user_id?: string | null
+          priority?: string
+          reminder_sent_at?: string | null
+          stage: number
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          ai_score?: number | null
+          channel_done?: string | null
+          created_at?: string
+          customer_id?: string | null
+          done_at?: string | null
+          due_at?: string
+          id?: string
+          offer_number?: string
+          owner_user_id?: string | null
+          priority?: string
+          reminder_sent_at?: string | null
+          stage?: number
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      offer_outcomes: {
+        Row: {
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          offer_number: string
+          outcome: string
+          reason: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          offer_number: string
+          outcome?: string
+          reason?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          offer_number?: string
+          outcome?: string
+          reason?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       offers: {
         Row: {
           approval_note: string | null
