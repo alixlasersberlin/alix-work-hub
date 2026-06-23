@@ -308,12 +308,11 @@ export default function AngebotsKalender() {
       />
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <KpiTile label="Heute fällig" value={groups.heute.length} icon={CalendarClock} />
-        <KpiTile label="Überfällig" value={groups.ueberfaellig.length} icon={AlertTriangle} tone={groups.ueberfaellig.length ? 'danger' : 'default'} />
-        <KpiTile label="Diese Woche" value={groups.woche.length} icon={CalendarDays} />
-        <KpiTile label="Diesen Monat" value={groups.monat.length} icon={CalendarDays} />
-        <KpiTile label="Erfolgsquote" value={`${successRate.quote}%`} icon={TrendingUp}
-          hint={`${successRate.won} gewonnen · ${successRate.lost} verloren · ${successRate.open} offen`} />
+        <KpiTile label="Heute fällig" value={groups.heute.length} icon={CalendarClock} accent="sky" />
+        <KpiTile label="Überfällig" value={groups.ueberfaellig.length} icon={AlertTriangle} accent={groups.ueberfaellig.length ? 'rose' : 'gold'} />
+        <KpiTile label="Diese Woche" value={groups.woche.length} icon={CalendarDays} accent="gold" />
+        <KpiTile label="Diesen Monat" value={groups.monat.length} icon={CalendarDays} accent="violet" />
+        <KpiTile label="Erfolgsquote" value={`${successRate.quote}%`} icon={TrendingUp} accent="emerald" />
       </div>
 
       <Card>
