@@ -515,6 +515,8 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       // Verifikation: prüfe email_send_log für Primary, Copy Natalia und BCC k.trinh
       try {
         const sourceId = `az-invoice-${order?.id || orderNo}-${invoiceNumber}`;
+        // Verifikation: nutze Prefix-Match, da idempotencyKey jetzt einen Timestamp enthält
+        const sourceIdPrefix = sourceId;
         // kurze Wartezeit, bis die Edge Function die Zeilen geschrieben hat
         await new Promise((r) => setTimeout(r, 1500));
         const { data: logs } = await supabase
