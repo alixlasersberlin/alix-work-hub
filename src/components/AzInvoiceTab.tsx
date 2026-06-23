@@ -522,8 +522,9 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         const { data: logs } = await supabase
           .from('email_send_log')
           .select('recipient_email, status, provider_message_id, metadata, created_at')
-          .eq('source_id', sourceId)
-          .order('created_at', { ascending: true });
+          .like('source_id', `${sourceIdPrefix}%`)
+          .order('created_at', { ascending: false })
+          .limit(10);
 
         const norm = (e: string) => e.trim().toLowerCase();
         const targets = [
