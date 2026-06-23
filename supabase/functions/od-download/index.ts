@@ -1,5 +1,6 @@
-// Short-link redirector for order_documents.
-// GET /functions/v1/od-download?t=<token>  ->  302 to a freshly signed Storage URL
+// Short-link proxy for order_documents.
+// GET /functions/v1/od-download?t=<token>  ->  streams the file bytes
+// (the user-visible URL stays on alixwork.de/d/<token>; no redirect to Supabase Storage)
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
@@ -24,21 +25,33 @@ Deno.serve(async (req) => {
 
     const { data: doc, error } = await admin
       .from('order_documents')
-      .select('file_path, file_name, document_type')
+      .select('file_path, file_name, file_type, document_type')
       .eq('download_token', token)
       .maybeSingle()
     if (error || !doc) {
       return new Response('Dokument nicht gefunden oder Link abgelaufen.', { status: 404, headers: corsHeaders })
     }
 
-    const { data: signed, error: signErr } = await admin.storage
-      .from('order-invoices')
-      .createSignedUrl(doc.file_path, 60 * 5)
-    if (signErr || !signed?.signedUrl) {
+    // Direkt das Datei-Blob aus Storage laden und ausliefern.
+    // Dadurch bleibt die URL auf alixwork.de/d/<token>; keine Weiterleitung zu *.supabase.co.
+    const dl = await admin.storage.from('order-invoices').download(doc.file_path)
+    if (dl.error || !dl.data) {
       return new Response('Download nicht verfügbar.', { status: 500, headers: corsHeaders })
     }
 
-    return new Response(null, { status: 302, headers: { ...corsHeaders, Location: signed.signedUrl } })
+    const bytes = new Uint8Array(await dl.data.arrayBuffer())
+    const contentType = doc.file_type || 'application/pdf'
+    const safeName = (doc.file_name || 'dokument.pdf').replace(/[\r\n"]/g, '_')
+
+    return new Response(bytes, {
+      status: 200,
+      headers: {
+        ...corsHeaders,
+        'Content-Type': contentType,
+        'Content-Disposition': `inline; filename="${safeName}"`,
+        'Cache-Control': 'private, max-age=60',
+      },
+    })
   } catch (e) {
     return new Response('Fehler: ' + (e?.message ?? 'unbekannt'), { status: 500, headers: corsHeaders })
   }
