@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Wallet } from 'lucide-react';
+import { Wallet, FileText, Loader2 } from 'lucide-react';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { SkeletonTable } from '@/components/infinity/Skeleton';
 import { EmptyState } from '@/components/infinity/EmptyState';
@@ -7,16 +7,53 @@ import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/Status
 import { getTransactions } from '@/lib/finance/api';
 import { ListToolbar } from '@/components/finance/ListToolbar';
 import { matchesQuery, paginate, type PageSize } from '@/lib/finance/list-filter';
+import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 export default function FinanceAnzahlungen() {
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [pageSize, setPageSize] = useState<PageSize>(50);
+  const [openingRef, setOpeningRef] = useState<string | null>(null);
   useEffect(() => {
     getTransactions({ transaction_type: 'Anzahlung' }).then(r => { setRows(r); setLoading(false); }).catch(() => setLoading(false));
   }, []);
   const fmt = (n: number) => Number(n || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
+
+  const openPdf = async (reference: string | null) => {
+    if (!reference) { toast({ title: 'Keine Referenz', variant: 'destructive' }); return; }
+    setOpeningRef(reference);
+    try {
+      const { data, error } = await supabase
+        .from('order_documents')
+        .select('download_token, file_path, file_name')
+        .eq('document_type', 'Anzahlungsrechnung')
+        .ilike('file_name', `%${reference}%`)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      if (error) throw error;
+      const doc: any = data?.[0];
+      if (doc?.download_token) {
+        window.open(`https://alixwork.de/d/${doc.download_token}`, '_blank', 'noopener');
+        return;
+      }
+      if (doc?.file_path) {
+        const { data: signed, error: sErr } = await supabase.storage
+          .from('order-invoices')
+          .createSignedUrl(doc.file_path, 300);
+        if (sErr) throw sErr;
+        window.open(signed.signedUrl, '_blank', 'noopener');
+        return;
+      }
+      toast({ title: 'Keine PDF gefunden', description: `Für ${reference} liegt kein Dokument vor.`, variant: 'destructive' });
+    } catch (e: any) {
+      toast({ title: 'Fehler', description: e?.message ?? String(e), variant: 'destructive' });
+    } finally {
+      setOpeningRef(null);
+    }
+  };
   const filtered = useMemo(() => rows.filter((r) => matchesQuery({ ...r, total: r.amount, balance: r.amount }, search)), [rows, search]);
   const visible = useMemo(() => paginate(filtered, pageSize), [filtered, pageSize]);
   return (
@@ -44,7 +81,7 @@ export default function FinanceAnzahlungen() {
         ) : (
           <table className="w-full text-sm">
             <thead className="bg-secondary/50 text-muted-foreground">
-              <tr><th className="text-left px-4 py-3">Datum</th><th className="text-left px-4 py-3">Referenz</th><th className="text-right px-4 py-3">Betrag</th><th className="text-left px-4 py-3">Notiz</th></tr>
+              <tr><th className="text-left px-4 py-3">Datum</th><th className="text-left px-4 py-3">Referenz</th><th className="text-right px-4 py-3">Betrag</th><th className="text-left px-4 py-3">Notiz</th><th className="text-right px-4 py-3">PDF</th></tr>
             </thead>
             <tbody className="divide-y divide-border">
               {visible.map(r => (
@@ -53,6 +90,17 @@ export default function FinanceAnzahlungen() {
                   <td className="px-4 py-2">{r.reference || '—'}</td>
                   <td className="px-4 py-2 text-right font-medium">{fmt(r.amount)}</td>
                   <td className="px-4 py-2 text-muted-foreground">{r.notes || '—'}</td>
+                  <td className="px-4 py-2 text-right">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => openPdf(r.reference)}
+                      disabled={openingRef === r.reference}
+                    >
+                      {openingRef === r.reference ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <FileText className="w-3.5 h-3.5 mr-1.5" />}
+                      PDF Ansicht
+                    </Button>
+                  </td>
                 </tr>
               ))}
             </tbody>
