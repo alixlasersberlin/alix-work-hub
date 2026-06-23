@@ -81,7 +81,7 @@ export default function FinanceAnzahlungen() {
         ) : (
           <table className="w-full text-sm">
             <thead className="bg-secondary/50 text-muted-foreground">
-              <tr><th className="text-left px-4 py-3">Datum</th><th className="text-left px-4 py-3">Referenz</th><th className="text-right px-4 py-3">Betrag</th><th className="text-left px-4 py-3">Notiz</th></tr>
+              <tr><th className="text-left px-4 py-3">Datum</th><th className="text-left px-4 py-3">Referenz</th><th className="text-right px-4 py-3">Betrag</th><th className="text-left px-4 py-3">Notiz</th><th className="text-right px-4 py-3">PDF</th></tr>
             </thead>
             <tbody className="divide-y divide-border">
               {visible.map(r => (
@@ -90,6 +90,17 @@ export default function FinanceAnzahlungen() {
                   <td className="px-4 py-2">{r.reference || '—'}</td>
                   <td className="px-4 py-2 text-right font-medium">{fmt(r.amount)}</td>
                   <td className="px-4 py-2 text-muted-foreground">{r.notes || '—'}</td>
+                  <td className="px-4 py-2 text-right">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => openPdf(r.reference)}
+                      disabled={openingRef === r.reference}
+                    >
+                      {openingRef === r.reference ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <FileText className="w-3.5 h-3.5 mr-1.5" />}
+                      PDF Ansicht
+                    </Button>
+                  </td>
                 </tr>
               ))}
             </tbody>
