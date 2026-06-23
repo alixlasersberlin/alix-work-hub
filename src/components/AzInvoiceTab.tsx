@@ -480,7 +480,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         body: {
           templateName: 'customer-shipping-notice',
           recipientEmail: customer.email,
-          idempotencyKey: `az-invoice-${order?.id || orderNo}-${invoiceNumber}`,
+          idempotencyKey: `az-invoice-${order?.id || orderNo}-${invoiceNumber}-${Date.now()}`,
           bcc: ['k.trinh@alix-operation.de'],
           templateData: {
             subject,
@@ -515,13 +515,16 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       // Verifikation: prüfe email_send_log für Primary, Copy Natalia und BCC k.trinh
       try {
         const sourceId = `az-invoice-${order?.id || orderNo}-${invoiceNumber}`;
+        // Verifikation: nutze Prefix-Match, da idempotencyKey jetzt einen Timestamp enthält
+        const sourceIdPrefix = sourceId;
         // kurze Wartezeit, bis die Edge Function die Zeilen geschrieben hat
         await new Promise((r) => setTimeout(r, 1500));
         const { data: logs } = await supabase
           .from('email_send_log')
           .select('recipient_email, status, provider_message_id, metadata, created_at')
-          .eq('source_id', sourceId)
-          .order('created_at', { ascending: true });
+          .like('source_id', `${sourceIdPrefix}%`)
+          .order('created_at', { ascending: false })
+          .limit(10);
 
         const norm = (e: string) => e.trim().toLowerCase();
         const targets = [
