@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Search, ClipboardList, ArrowUpDown, Loader2, Inbox, CalendarDays, List, Car, Pencil, CalendarClock, MoveRight, CheckCircle2, PackageCheck, FileDown, FileText, Send } from 'lucide-react';
+import { Search, ClipboardList, ArrowUpDown, Loader2, Inbox, CalendarDays, List, Car, Pencil, CalendarClock, MoveRight, CheckCircle2, PackageCheck, FileDown, FileText, Send, Copy } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { createPDF } from '@/lib/pdf-utils';
 import autoTable from 'jspdf-autotable';
@@ -66,6 +66,69 @@ export default function Orders() {
   const [bulkStatus, setBulkStatus] = useState<string>('');
   const [bulkSaving, setBulkSaving] = useState(false);
   const [resendingId, setResendingId] = useState<string | null>(null);
+  const [duplicating, setDuplicating] = useState(false);
+
+  async function duplicateSelected() {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    if (!confirm(`${ids.length} Auftrag/Aufträge wirklich duplizieren?`)) return;
+    setDuplicating(true);
+    let ok = 0, failed = 0;
+    try {
+      const { data: origOrders, error: oerr } = await supabase
+        .from('orders').select('*').in('id', ids);
+      if (oerr) throw oerr;
+      const { data: origItems } = await supabase
+        .from('order_items').select('*').in('order_id', ids);
+      for (const o of (origOrders ?? [])) {
+        try {
+          const ts = Date.now().toString(36).toUpperCase();
+          const { id, created_at, updated_at, external_order_id, ...rest } = o as any;
+          const newOrder = {
+            ...rest,
+            order_number: `${o.order_number}-COPY-${ts}`,
+            internal_number: null,
+            external_order_id: null,
+            source_system: 'manual',
+            order_status: 'offen',
+            deposit_ok: false,
+            deposit_ok_by: null,
+            deposit_ok_at: null,
+            deposit_booking_date: null,
+            finance_paid_amount: null,
+            finance_open_amount: null,
+            finance_overdue_amount: null,
+            finance_payment_status: null,
+            order_date: new Date().toISOString(),
+          };
+          const { data: inserted, error: ierr } = await supabase
+            .from('orders').insert(newOrder).select('id').single();
+          if (ierr) throw ierr;
+          const items = (origItems ?? []).filter(it => it.order_id === o.id).map(it => {
+            const { id: _id, created_at: _c, updated_at: _u, order_id: _o, ...rstI } = it as any;
+            return { ...rstI, order_id: inserted!.id };
+          });
+          if (items.length > 0) {
+            const { error: iierr } = await supabase.from('order_items').insert(items);
+            if (iierr) throw iierr;
+          }
+          ok++;
+        } catch (e) {
+          console.error('Duplicate failed', o.id, e);
+          failed++;
+        }
+      }
+      if (ok > 0) toast.success(`${ok} Auftrag/Aufträge dupliziert${failed ? `, ${failed} fehlgeschlagen` : ''}`);
+      else toast.error('Duplizieren fehlgeschlagen');
+      setSelectedIds(new Set());
+      await load();
+    } catch (e: any) {
+      toast.error('Fehler: ' + (e?.message ?? e));
+    } finally {
+      setDuplicating(false);
+    }
+  }
+
 
   async function resendOrderConfirmation(order: any) {
     if (!order?.customer_id) { toast.error('Auftrag hat keinen Kunden'); return; }
@@ -419,6 +482,18 @@ export default function Orders() {
                   >
                     <MoveRight className="w-3.5 h-3.5" />
                     Verschieben ({selectedIds.size})
+                  </Button>
+                )}
+                {selectionMode && hasRole('Super Admin') && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-9 gap-1.5"
+                    disabled={selectedIds.size === 0 || duplicating}
+                    onClick={duplicateSelected}
+                  >
+                    {duplicating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Copy className="w-3.5 h-3.5" />}
+                    Duplizieren ({selectedIds.size})
                   </Button>
                 )}
               </div>
