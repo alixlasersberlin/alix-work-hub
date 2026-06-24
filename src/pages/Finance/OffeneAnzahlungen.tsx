@@ -368,6 +368,11 @@ export default function OffeneAnzahlungen() {
                           {r.finance_lock ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
                         </Button>
                       )}
+                      {canWrite && r.release_status !== 'auto_freigegeben' && r.release_status !== 'manuell_freigegeben' && (
+                        <Button size="sm" variant="outline" onClick={() => manualRelease(r)} title="Manuell freigeben">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                        </Button>
+                      )}
                       {canWrite && r.order_id && (
                         <Button size="sm" variant="outline" onClick={() => sendReminder(r, 'email')}
                           disabled={sendingId === r.id + 'email'} title="Anzahlungs-Erinnerung per E-Mail senden">
