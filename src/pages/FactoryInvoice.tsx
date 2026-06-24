@@ -477,7 +477,7 @@ export default function FactoryInvoice() {
           <div className="divide-y divide-border">
             {filtered.map(r => (
               <div key={r.id} className={cn("flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors", selected.has(r.id) && "bg-primary/5")}>
-                <Checkbox checked={selected.has(r.id)} onCheckedChange={() => toggleOne(r.id)} aria-label="Auswählen" />
+                <Checkbox checked={selected.has(r.id)} onCheckedChange={() => toggleOne(r.id)} aria-label="Auswählen" className="bg-white border-white data-[state=checked]:bg-white data-[state=checked]:text-black" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-medium text-sm">{r.production_order_number || r.order_number}</span>
