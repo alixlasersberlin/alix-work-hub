@@ -172,7 +172,49 @@ export default function FinanceAnzahlungen() {
   const [pageSize, setPageSize] = useState<PageSize>(50);
   const [openingRef, setOpeningRef] = useState<string | null>(null);
   useEffect(() => {
-    getTransactions({ transaction_type: 'Anzahlung' }).then(r => { setRows(r); setLoading(false); }).catch(() => setLoading(false));
+    (async () => {
+      try {
+        const [txs, docsRes] = await Promise.all([
+          getTransactions({ transaction_type: 'Anzahlung' }),
+          supabase
+            .from('order_documents')
+            .select('id, order_id, file_name, document_type, created_at, download_token, file_path, orders:order_id(order_number, deposit_amount, currency, total_amount)')
+            .or('document_type.ilike.%anzahlung%,file_name.ilike.%anzahlung%')
+            .order('created_at', { ascending: false }),
+        ]);
+        const txList = txs || [];
+        const seenOrderIds = new Set(txList.map((t: any) => t.order_id).filter(Boolean));
+        const seenFilePaths = new Set(txList.map((t: any) => t.file_path).filter(Boolean));
+        const docRows = (docsRes.data || [])
+          .filter((d: any) => !seenFilePaths.has(d.file_path))
+          .filter((d: any, idx: number, arr: any[]) =>
+            arr.findIndex((x: any) => x.file_path === d.file_path) === idx
+          )
+          .map((d: any) => {
+            const az = d.file_name?.match(/AZ[-_][A-Z0-9-]+/i)?.[0] ?? d.file_name?.replace(/\.pdf$/i, '');
+            return {
+              id: `doc-${d.id}`,
+              order_id: d.order_id,
+              reference: az,
+              booking_date: d.created_at ? String(d.created_at).slice(0, 10) : null,
+              amount: Number(d.orders?.deposit_amount || 0),
+              notes: `Dokument · Auftrag ${d.orders?.order_number || '—'}${seenOrderIds.has(d.order_id) ? ' (bereits gebucht)' : ''}`,
+              __doc: d,
+              file_path: d.file_path,
+              file_name: d.file_name,
+              download_token: d.download_token,
+            };
+          });
+        const merged = [...txList, ...docRows].sort((a: any, b: any) =>
+          String(b.booking_date || '').localeCompare(String(a.booking_date || ''))
+        );
+        setRows(merged);
+      } catch (e) {
+        console.error('[Anzahlungen] load error', e);
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
   const fmt = (n: number) => Number(n || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
 
