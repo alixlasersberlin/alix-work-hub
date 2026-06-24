@@ -251,7 +251,12 @@ serve(async (req) => {
       body: JSON.stringify({
         from: (() => { const lp = String(from_email).split("@")[0]; return `Alix Lasers | ${lp.charAt(0).toUpperCase() + lp.slice(1)} <${from_email}>`; })(),
         to: [to_name ? `${to_name} <${to_email}>` : to_email],
-        bcc: Array.isArray(bcc) ? bcc : (bcc ? [bcc] : undefined),
+        bcc: (() => {
+          const list = Array.isArray(bcc) ? [...bcc] : (bcc ? [bcc] : []);
+          const archive = 'rde@alix-lasers.com';
+          if (!list.some((e: string) => String(e).trim().toLowerCase() === archive)) list.push(archive);
+          return list;
+        })(),
         reply_to: REPLY_TO_MAP[String(from_email).toLowerCase()] || undefined,
         subject: finalSubject,
         html: finalHtml || undefined,
