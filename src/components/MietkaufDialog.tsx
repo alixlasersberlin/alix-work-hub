@@ -126,10 +126,7 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
         if (m) maxTerm = Math.max(maxTerm, Number(m[1]));
       }
       if (maxTerm > 0) {
-        // auf nächstgelegene erlaubte Laufzeit runden
-        const allowed = [12, 24, 36, 48, 60];
-        const closest = allowed.reduce((a, b) => Math.abs(b - maxTerm) < Math.abs(a - maxTerm) ? b : a, allowed[0]);
-        setTerm(closest);
+        setTerm(maxTerm);
       }
     })();
   }, [open, order?.id]);
