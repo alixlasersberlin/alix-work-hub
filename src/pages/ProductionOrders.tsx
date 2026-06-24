@@ -640,7 +640,7 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
               const blocked = r.related_order_status === 'Hold' || r.related_order_status === 'Anwalt'
                 ? r.related_order_status : null;
               return (
-                <Card key={r.id} className={cn("p-3.5 hover:border-primary/40 transition-colors", blocked && "border-destructive/60")}>
+                <Card key={r.id} className={cn("p-3.5 hover:border-primary/40 transition-colors", blocked && "border-destructive/60", selected.has(r.id) && "border-primary/60 ring-1 ring-primary/30")}>
                   {blocked && (
                     <div className="mb-2 -mt-1 -mx-1 px-3 py-1.5 rounded-md bg-destructive text-destructive-foreground text-xs font-semibold uppercase tracking-wide text-center">
                       Auftrag: {blocked}
@@ -648,6 +648,7 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
                   )}
 
                   <div className="flex items-start justify-between gap-2 mb-2">
+                    <Checkbox checked={selected.has(r.id)} onCheckedChange={() => toggleOne(r.id)} className="mt-0.5" aria-label="Auswählen" />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mb-0.5">
                         <Hash className="w-3 h-3" />
