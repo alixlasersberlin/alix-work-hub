@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { CalendarIcon, FileText, Loader2, RefreshCw, Pencil } from 'lucide-react';
+import { CalendarIcon, FileText, Loader2, RefreshCw, Pencil, X } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format, differenceInCalendarDays, parseISO } from 'date-fns';
@@ -11,14 +11,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from '@/components/ui/dialog';
 import {
   Table,
   TableBody,
@@ -92,10 +84,6 @@ const workflowBadge = (s: WorkflowStatus) => workflowOptions.find((o) => o.value
 const formatCurrency = (n: number | null, currency: string | null) =>
   new Intl.NumberFormat('de-DE', { style: 'currency', currency: currency || 'EUR' }).format(n ?? 0);
 
-const resetBodyPointerEvents = () => {
-  if (typeof document !== 'undefined') document.body.style.pointerEvents = '';
-};
-
 export default function OffenePosten() {
   const [items, setItems] = useState<OpenItem[]>([]);
   const [workflows, setWorkflows] = useState<Record<string, WorkflowState>>({});
@@ -110,6 +98,15 @@ export default function OffenePosten() {
   const [editStatus, setEditStatus] = useState<WorkflowStatus>('offen');
   const [editNote, setEditNote] = useState('');
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!editItem) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setEditItem(null);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [editItem]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -180,7 +177,6 @@ export default function OffenePosten() {
   const openEdit = (item: OpenItem) => {
     const key = `${item.source}-${item.id}`;
     const existing = workflows[key];
-    resetBodyPointerEvents();
     setEditItem(item);
     setEditStatus(existing?.workflow_status ?? 'offen');
     setEditNote(existing?.note ?? '');
@@ -188,7 +184,6 @@ export default function OffenePosten() {
 
   const closeEdit = () => {
     setEditItem(null);
-    window.setTimeout(resetBodyPointerEvents, 0);
   };
 
   const saveEdit = async () => {
@@ -389,8 +384,6 @@ export default function OffenePosten() {
                         variant="ghost"
                         onClick={(e) => {
                           e.stopPropagation();
-                          // Radix lässt nach Schließen manchmal pointer-events:none auf <body> stehen
-                          resetBodyPointerEvents();
                           openEdit(i);
                         }}
                         className="gap-1 relative z-10"
@@ -406,50 +399,70 @@ export default function OffenePosten() {
         )}
       </div>
 
-      <Dialog
-        open={!!editItem}
-        onOpenChange={(o) => {
-          if (!o) {
-            setEditItem(null);
-            // Body wieder klickbar machen (Radix Cleanup-Bug umgehen)
-            window.setTimeout(resetBodyPointerEvents, 0);
-          }
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Offenen Posten bearbeiten</DialogTitle>
-            <DialogDescription>
-              {editItem?.invoice_number} · {editItem?.customer_name}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="open-item-workflow-status">Bearbeitungsstatus</Label>
-              <select
-                id="open-item-workflow-status"
-                value={editStatus}
-                onChange={(e) => setEditStatus(e.target.value as WorkflowStatus)}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-              >
-                {workflowOptions.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
+      {editItem && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm" role="presentation" onMouseDown={closeEdit}>
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="open-item-edit-title"
+            aria-describedby="open-item-edit-description"
+            className="relative grid w-full max-w-lg gap-4 rounded-lg border border-border bg-card p-6 text-card-foreground shadow-2xl"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              aria-label="Schließen"
+              onClick={closeEdit}
+              className="absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              disabled={saving}
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            <div className="space-y-1.5 pr-10">
+              <h2 id="open-item-edit-title" className="text-lg font-semibold leading-none tracking-tight">
+                Offenen Posten bearbeiten
+              </h2>
+              <p id="open-item-edit-description" className="text-sm text-muted-foreground">
+                {editItem.invoice_number} · {editItem.customer_name}
+              </p>
             </div>
-            <div className="space-y-2">
-              <Label>Notiz</Label>
-              <Textarea value={editNote} onChange={(e) => setEditNote(e.target.value)} rows={4} placeholder="Optionale Notiz zur Bearbeitung…" />
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="open-item-workflow-status">Bearbeitungsstatus</Label>
+                <select
+                  id="open-item-workflow-status"
+                  value={editStatus}
+                  onChange={(e) => setEditStatus(e.target.value as WorkflowStatus)}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                >
+                  {workflowOptions.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="open-item-workflow-note">Notiz</Label>
+                <Textarea
+                  id="open-item-workflow-note"
+                  value={editNote}
+                  onChange={(e) => setEditNote(e.target.value)}
+                  rows={4}
+                  placeholder="Optionale Notiz zur Bearbeitung…"
+                />
+              </div>
             </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={closeEdit} disabled={saving}>Abbrechen</Button>
-            <Button onClick={saveEdit} disabled={saving} className="gap-2">
-              {saving && <Loader2 className="w-4 h-4 animate-spin" />}Speichern
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <Button variant="outline" onClick={closeEdit} disabled={saving}>Abbrechen</Button>
+              <Button onClick={saveEdit} disabled={saving} className="gap-2">
+                {saving && <Loader2 className="w-4 h-4 animate-spin" />}Speichern
+              </Button>
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 }
