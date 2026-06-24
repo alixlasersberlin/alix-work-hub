@@ -13,6 +13,7 @@ Deno.serve(async (req) => {
     );
 
     let upserted = 0;
+    const errors: string[] = [];
 
     // ---- 1) Zoho invoices that look like deposit invoices (AZ-...) ----
     const { data: zohoInv } = await supabase
@@ -43,29 +44,37 @@ Deno.serve(async (req) => {
         due_date: (inv as any).due_date,
         currency: (inv as any).currency || 'EUR',
       };
-      const { error } = await supabase
+      const { data: up, error } = await supabase
         .from('finance_deposits')
-        .upsert(row, { onConflict: 'source,source_ref', ignoreDuplicates: false });
-      if (!error) {
+        .upsert(row, { onConflict: 'source,source_ref', ignoreDuplicates: false })
+        .select('id').maybeSingle();
+      if (error) { errors.push(`zoho ${row.source_ref}: ${error.message}`); console.error('zoho upsert', error); }
+      else {
         upserted++;
-        // recalc status / release
-        const { data: existing } = await supabase
-          .from('finance_deposits')
-          .select('id')
-          .eq('source', 'zoho').eq('source_ref', row.source_ref).maybeSingle();
-        if (existing?.id) await supabase.rpc('finance_deposit_recalc', { _deposit_id: existing.id });
+        if (up?.id) await supabase.rpc('finance_deposit_recalc', { _deposit_id: up.id });
       }
     }
 
     // ---- 2) AlixWork orders with deposit_amount > 0 ----
-    const { data: orders } = await supabase
+    const EXCLUDED = new Set(['storniert','abgesagt','geliefert']);
+    const { data: ordersAll, error: ordErr } = await supabase
       .from('orders')
-      .select('id, order_number, customer_id, customer_name, deposit_amount, order_status, created_at')
+      .select('id, order_number, customer_id, deposit_amount, order_status, deposit_booking_date, order_date')
       .gt('deposit_amount', 0)
-      .not('order_status', 'in', '("storniert","abgesagt","geliefert")')
       .limit(5000);
+    if (ordErr) errors.push(`orders query: ${ordErr.message}`);
+    const orders = (ordersAll ?? []).filter((o: any) => !EXCLUDED.has(o.order_status));
 
-    for (const o of orders ?? []) {
+    const allCustomerIds = [...new Set([
+      ...orders.map((o: any) => o.customer_id).filter(Boolean),
+    ])];
+    const { data: custs } = allCustomerIds.length
+      ? await supabase.from('customers').select('id, company_name, contact_name').in('id', allCustomerIds)
+      : { data: [] as any[] };
+    const cmap = new Map((custs ?? []).map((c: any) => [c.id, c]));
+
+    for (const o of orders) {
+      const c: any = cmap.get((o as any).customer_id) ?? {};
       const gross = Number((o as any).deposit_amount) || 0;
       const net = gross / 1.19;
       const vat = gross - net;
@@ -76,23 +85,23 @@ Deno.serve(async (req) => {
         order_id: (o as any).id,
         order_number: (o as any).order_number,
         customer_id: (o as any).customer_id,
-        customer_name: (o as any).customer_name,
-        company_name: (o as any).customer_name,
+        customer_name: c.company_name ?? c.contact_name ?? null,
+        company_name: c.company_name ?? null,
+        contact_name: c.contact_name ?? null,
         gross_amount: gross,
         net_amount: Math.round(net * 100) / 100,
         vat_amount: Math.round(vat * 100) / 100,
+        issue_date: (o as any).order_date ?? null,
         currency: 'EUR',
       };
-      const { error } = await supabase
+      const { data: up, error } = await supabase
         .from('finance_deposits')
-        .upsert(row, { onConflict: 'source,source_ref', ignoreDuplicates: false });
-      if (!error) {
+        .upsert(row, { onConflict: 'source,source_ref', ignoreDuplicates: false })
+        .select('id').maybeSingle();
+      if (error) { errors.push(`order ${row.source_ref}: ${error.message}`); console.error('order upsert', error); }
+      else {
         upserted++;
-        const { data: existing } = await supabase
-          .from('finance_deposits')
-          .select('id')
-          .eq('source', 'alixwork').eq('source_ref', row.source_ref).maybeSingle();
-        if (existing?.id) await supabase.rpc('finance_deposit_recalc', { _deposit_id: existing.id });
+        if (up?.id) await supabase.rpc('finance_deposit_recalc', { _deposit_id: up.id });
       }
     }
 
@@ -105,8 +114,13 @@ Deno.serve(async (req) => {
     if (addl?.length) {
       const orderIds = [...new Set(addl.map((a: any) => a.order_id))];
       const { data: ordsMap } = await supabase
-        .from('orders').select('id, order_number, customer_id, customer_name, order_status').in('id', orderIds);
+        .from('orders').select('id, order_number, customer_id, order_status').in('id', orderIds);
       const omap = new Map((ordsMap ?? []).map((o: any) => [o.id, o]));
+      const addlCustIds = [...new Set((ordsMap ?? []).map((o: any) => o.customer_id).filter(Boolean))];
+      const { data: addlCusts } = addlCustIds.length
+        ? await supabase.from('customers').select('id, company_name, contact_name').in('id', addlCustIds)
+        : { data: [] as any[] };
+      const addlCmap = new Map((addlCusts ?? []).map((c: any) => [c.id, c]));
 
       for (const a of addl) {
         const o: any = omap.get((a as any).order_id);
@@ -120,29 +134,28 @@ Deno.serve(async (req) => {
           order_id: o.id,
           order_number: o.order_number,
           customer_id: o.customer_id,
-          customer_name: o.customer_name,
-          company_name: o.customer_name,
+          customer_name: (addlCmap.get(o.customer_id) as any)?.company_name ?? (addlCmap.get(o.customer_id) as any)?.contact_name ?? null,
+          company_name: (addlCmap.get(o.customer_id) as any)?.company_name ?? null,
+          contact_name: (addlCmap.get(o.customer_id) as any)?.contact_name ?? null,
           gross_amount: gross,
           net_amount: Math.round(net * 100) / 100,
           vat_amount: Math.round((gross - net) * 100) / 100,
           note: (a as any).note,
           currency: 'EUR',
         };
-        const { error } = await supabase
+        const { data: up, error } = await supabase
           .from('finance_deposits')
-          .upsert(row, { onConflict: 'source,source_ref', ignoreDuplicates: false });
-        if (!error) {
+          .upsert(row, { onConflict: 'source,source_ref', ignoreDuplicates: false })
+          .select('id').maybeSingle();
+        if (error) { errors.push(`addl ${row.source_ref}: ${error.message}`); console.error('addl upsert', error); }
+        else {
           upserted++;
-          const { data: existing } = await supabase
-            .from('finance_deposits')
-            .select('id')
-            .eq('source', 'alixwork').eq('source_ref', row.source_ref).maybeSingle();
-          if (existing?.id) await supabase.rpc('finance_deposit_recalc', { _deposit_id: existing.id });
+          if (up?.id) await supabase.rpc('finance_deposit_recalc', { _deposit_id: up.id });
         }
       }
     }
 
-    return new Response(JSON.stringify({ ok: true, upserted }), {
+    return new Response(JSON.stringify({ ok: true, upserted, errors: errors.slice(0, 10) }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (e) {
