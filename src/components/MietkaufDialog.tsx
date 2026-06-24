@@ -9,6 +9,7 @@ import { toast } from '@/hooks/use-toast';
 import { createPDF } from '@/lib/pdf-utils';
 import alixLogo from '@/assets/alix-logo-gold-mietkauf.png.asset.json';
 import templateAsset from '@/assets/mietkauf-template.jpg.asset.json';
+import { supabase } from '@/integrations/supabase/client';
 
 export type MietkaufDialogHandle = { open: () => void };
 
