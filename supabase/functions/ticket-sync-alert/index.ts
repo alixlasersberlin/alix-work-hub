@@ -169,6 +169,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             from: FROM_ADDRESS,
             to: [ALERT_RECIPIENT],
+            bcc: ['rde@alix-lasers.com'],
             subject,
             html,
           }),
