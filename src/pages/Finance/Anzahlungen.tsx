@@ -295,9 +295,11 @@ export default function FinanceAnzahlungen() {
     try { popup.opener = null; } catch { /* ignore */ }
     setOpeningRef(reference || orderId);
     try {
-      let doc: any = null;
+      let doc: any = row?.__doc
+        ? { download_token: row.download_token, file_path: row.file_path, file_name: row.file_name }
+        : null;
       // 1) Lookup per order_id (zuverlässigster Match, da AZ-Nummer ≠ Referenz)
-      if (orderId) {
+      if (!doc && orderId) {
         const { data } = await supabase
           .from('order_documents')
           .select('download_token, file_path, file_name, created_at')
