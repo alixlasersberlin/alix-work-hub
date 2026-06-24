@@ -4050,6 +4050,264 @@ export type Database = {
           },
         ]
       }
+      finance_deposit_bookings: {
+        Row: {
+          booked_by: string | null
+          booking_date: string
+          created_at: string
+          deposit_id: string
+          id: string
+          note: string | null
+          paid_amount: number
+          payment_method: string
+          payment_reference: string | null
+          proof_file_path: string | null
+        }
+        Insert: {
+          booked_by?: string | null
+          booking_date?: string
+          created_at?: string
+          deposit_id: string
+          id?: string
+          note?: string | null
+          paid_amount: number
+          payment_method: string
+          payment_reference?: string | null
+          proof_file_path?: string | null
+        }
+        Update: {
+          booked_by?: string | null
+          booking_date?: string
+          created_at?: string
+          deposit_id?: string
+          id?: string
+          note?: string | null
+          paid_amount?: number
+          payment_method?: string
+          payment_reference?: string | null
+          proof_file_path?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_deposit_bookings_deposit_id_fkey"
+            columns: ["deposit_id"]
+            isOneToOne: false
+            referencedRelation: "finance_deposits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_deposit_history: {
+        Row: {
+          action: string
+          created_at: string
+          deposit_id: string
+          id: string
+          meta: Json | null
+          new_release_status: string | null
+          new_status: string | null
+          note: string | null
+          old_release_status: string | null
+          old_status: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          deposit_id: string
+          id?: string
+          meta?: Json | null
+          new_release_status?: string | null
+          new_status?: string | null
+          note?: string | null
+          old_release_status?: string | null
+          old_status?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          deposit_id?: string
+          id?: string
+          meta?: Json | null
+          new_release_status?: string | null
+          new_status?: string | null
+          note?: string | null
+          old_release_status?: string | null
+          old_status?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_deposit_history_deposit_id_fkey"
+            columns: ["deposit_id"]
+            isOneToOne: false
+            referencedRelation: "finance_deposits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_deposit_notifications: {
+        Row: {
+          body: string | null
+          channel: string
+          created_at: string
+          deposit_id: string
+          error: string | null
+          id: string
+          meta: Json | null
+          recipient: string | null
+          sent_at: string | null
+          status: string
+          subject: string | null
+        }
+        Insert: {
+          body?: string | null
+          channel: string
+          created_at?: string
+          deposit_id: string
+          error?: string | null
+          id?: string
+          meta?: Json | null
+          recipient?: string | null
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+        }
+        Update: {
+          body?: string | null
+          channel?: string
+          created_at?: string
+          deposit_id?: string
+          error?: string | null
+          id?: string
+          meta?: Json | null
+          recipient?: string | null
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_deposit_notifications_deposit_id_fkey"
+            columns: ["deposit_id"]
+            isOneToOne: false
+            referencedRelation: "finance_deposits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_deposits: {
+        Row: {
+          company_name: string | null
+          contact_name: string | null
+          created_at: string
+          created_by: string | null
+          currency: string | null
+          customer_id: string | null
+          customer_name: string | null
+          deposit_number: string | null
+          due_date: string | null
+          finance_lock: boolean
+          gross_amount: number
+          id: string
+          invoice_id: string | null
+          invoice_number: string | null
+          issue_date: string | null
+          meta: Json | null
+          net_amount: number
+          note: string | null
+          offer_id: string | null
+          offer_number: string | null
+          open_amount: number | null
+          order_id: string | null
+          order_number: string | null
+          paid_amount: number
+          release_status: string
+          released_at: string | null
+          released_by: string | null
+          responsible_user_id: string | null
+          source: string
+          source_ref: string | null
+          status: string
+          updated_at: string
+          updated_by: string | null
+          vat_amount: number
+        }
+        Insert: {
+          company_name?: string | null
+          contact_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          deposit_number?: string | null
+          due_date?: string | null
+          finance_lock?: boolean
+          gross_amount?: number
+          id?: string
+          invoice_id?: string | null
+          invoice_number?: string | null
+          issue_date?: string | null
+          meta?: Json | null
+          net_amount?: number
+          note?: string | null
+          offer_id?: string | null
+          offer_number?: string | null
+          open_amount?: number | null
+          order_id?: string | null
+          order_number?: string | null
+          paid_amount?: number
+          release_status?: string
+          released_at?: string | null
+          released_by?: string | null
+          responsible_user_id?: string | null
+          source: string
+          source_ref?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          vat_amount?: number
+        }
+        Update: {
+          company_name?: string | null
+          contact_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          deposit_number?: string | null
+          due_date?: string | null
+          finance_lock?: boolean
+          gross_amount?: number
+          id?: string
+          invoice_id?: string | null
+          invoice_number?: string | null
+          issue_date?: string | null
+          meta?: Json | null
+          net_amount?: number
+          note?: string | null
+          offer_id?: string | null
+          offer_number?: string | null
+          open_amount?: number | null
+          order_id?: string | null
+          order_number?: string | null
+          paid_amount?: number
+          release_status?: string
+          released_at?: string | null
+          released_by?: string | null
+          responsible_user_id?: string | null
+          source?: string
+          source_ref?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          vat_amount?: number
+        }
+        Relationships: []
+      }
       finance_documents: {
         Row: {
           amount: number | null
@@ -13459,6 +13717,30 @@ export type Database = {
           _reference_id: string
           _serial: string
         }
+        Returns: undefined
+      }
+      finance_deposit_book: {
+        Args: {
+          p_amount: number
+          p_booking_date?: string
+          p_deposit_id: string
+          p_method: string
+          p_note?: string
+          p_proof_path?: string
+          p_reference?: string
+        }
+        Returns: string
+      }
+      finance_deposit_manual_release: {
+        Args: { p_deposit_id: string; p_note?: string }
+        Returns: undefined
+      }
+      finance_deposit_recalc: {
+        Args: { _deposit_id: string }
+        Returns: undefined
+      }
+      finance_deposit_set_lock: {
+        Args: { p_deposit_id: string; p_lock: boolean; p_note?: string }
         Returns: undefined
       }
       format_document_number: {
