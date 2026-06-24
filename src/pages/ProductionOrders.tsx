@@ -360,7 +360,22 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
 
   const { pageSize, setPageSize, page, setPage, totalPages, paged, total } = usePagination(filtered, 20);
 
-  const exportRows = () => filtered.map((r: any) => ({
+  // ===== Multi-Select =====
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const toggleOne = (id: string) => setSelected(prev => {
+    const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n;
+  });
+  const allFilteredSelected = filtered.length > 0 && filtered.every(r => selected.has(r.id));
+  const toggleAllFiltered = () => setSelected(prev => {
+    if (allFilteredSelected) {
+      const n = new Set(prev); filtered.forEach(r => n.delete(r.id)); return n;
+    }
+    const n = new Set(prev); filtered.forEach(r => n.add(r.id)); return n;
+  });
+  const clearSelection = () => setSelected(new Set());
+  const selectedRows = useMemo(() => filtered.filter(r => selected.has(r.id)), [filtered, selected]);
+
+  const exportRows = (source?: any[]) => (source ?? filtered).map((r: any) => ({
     bestellnummer: r.display_order_number || '',
     auftragsnummer: r.order_number || '',
     kunde: r.customer_name_snapshot || '',
