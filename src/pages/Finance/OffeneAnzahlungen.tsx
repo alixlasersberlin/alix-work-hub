@@ -517,16 +517,17 @@ function BookingDialog({ open, deposit, onClose, onDone }: {
           </div>
           <div>
             <Label>Zahlungsart</Label>
-            <Select value={method} onValueChange={setMethod}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ueberweisung">Überweisung</SelectItem>
-                <SelectItem value="bar">Bar</SelectItem>
-                <SelectItem value="ec">EC</SelectItem>
-                <SelectItem value="kreditkarte">Kreditkarte</SelectItem>
-                <SelectItem value="sonstige">Sonstige</SelectItem>
-              </SelectContent>
-            </Select>
+            <select
+              value={method}
+              onChange={(e) => setMethod(e.target.value)}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            >
+              <option value="ueberweisung">Überweisung</option>
+              <option value="bar">Bar</option>
+              <option value="ec">EC</option>
+              <option value="kreditkarte">Kreditkarte</option>
+              <option value="sonstige">Sonstige</option>
+            </select>
           </div>
           <div>
             <Label>Referenznummer</Label>
