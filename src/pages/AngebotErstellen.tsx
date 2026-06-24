@@ -1064,6 +1064,7 @@ export default function AngebotErstellen() {
           from_email: 'vertrieb@alixwork.de',
           from_name: 'Alix Vertrieb',
           subject: `Angebot ${offerNumber}`,
+          bcc: ['rde@alix-lasers.com'],
           body_text: textBody,
           body_html: htmlBody,
           attachments: [{ filename: `${offerNumber}.pdf`, content: pdfBase64, content_type: 'application/pdf' }],
