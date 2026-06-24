@@ -419,14 +419,14 @@ export default function OffenePosten() {
               <X className="h-4 w-4" />
             </button>
 
-            <header className="space-y-1.5 pr-10">
+            <div className="space-y-1.5 pr-10">
               <h2 id="open-item-edit-title" className="text-lg font-semibold leading-none tracking-tight">
                 Offenen Posten bearbeiten
               </h2>
               <p id="open-item-edit-description" className="text-sm text-muted-foreground">
                 {editItem.invoice_number} · {editItem.customer_name}
               </p>
-            </header>
+            </div>
 
             <div className="space-y-4">
               <div className="space-y-2">
@@ -454,12 +454,12 @@ export default function OffenePosten() {
               </div>
             </div>
 
-            <footer className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <Button variant="outline" onClick={closeEdit} disabled={saving}>Abbrechen</Button>
               <Button onClick={saveEdit} disabled={saving} className="gap-2">
                 {saving && <Loader2 className="w-4 h-4 animate-spin" />}Speichern
               </Button>
-            </footer>
+            </div>
           </section>
         </div>
       )}
