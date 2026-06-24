@@ -9,6 +9,7 @@ import { toast } from '@/hooks/use-toast';
 import { createPDF } from '@/lib/pdf-utils';
 import alixLogo from '@/assets/alix-logo-gold-mietkauf.png.asset.json';
 import templateAsset from '@/assets/mietkauf-template.jpg.asset.json';
+import { supabase } from '@/integrations/supabase/client';
 
 export type MietkaufDialogHandle = { open: () => void };
 
@@ -107,6 +108,31 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
     if (!geraetModell) setGeraetModell(getDeviceModel(order));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [order?.id, order?.order_number, open]);
+
+  // Laufzeit aus vorhandener Zahlungsberechnung (Ratenplan in finance_records) übernehmen
+  useEffect(() => {
+    if (!open || !order?.id) return;
+    (async () => {
+      const { data, error } = await supabase
+        .from('finance_records')
+        .select('finance_note')
+        .eq('order_id', order.id)
+        .ilike('finance_note', 'Ratenplan Rate %');
+      if (error || !data?.length) return;
+      // finance_note Format: "Ratenplan Rate N/M"
+      let maxTerm = 0;
+      for (const r of data) {
+        const m = String((r as any).finance_note || '').match(/Ratenplan Rate \d+\/(\d+)/i);
+        if (m) maxTerm = Math.max(maxTerm, Number(m[1]));
+      }
+      if (maxTerm > 0) {
+        // auf nächstgelegene erlaubte Laufzeit runden
+        const allowed = [12, 24, 36, 48, 60];
+        const closest = allowed.reduce((a, b) => Math.abs(b - maxTerm) < Math.abs(a - maxTerm) ? b : a, allowed[0]);
+        setTerm(closest);
+      }
+    })();
+  }, [open, order?.id]);
 
   const isDE = region === 'DE';
   const flag = isDE ? '🇩🇪' : '🇪🇺';
