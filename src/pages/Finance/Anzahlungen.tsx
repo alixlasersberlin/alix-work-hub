@@ -200,30 +200,35 @@ export default function FinanceAnzahlungen() {
     }
 
     const { blob, fileName } = await buildDepositPdf(row, order, customer);
-    const safeRef = String(row?.reference || 'AZ').replace(/[^\w.-]+/g, '_');
-    const filePath = `${orderId}/anzahlung/${Date.now()}_${safeRef}.pdf`;
-    const upload = await supabase.storage
-      .from('order-invoices')
-      .upload(filePath, blob, { contentType: 'application/pdf', upsert: true });
-    if (upload.error) throw upload.error;
+    try {
+      const safeRef = String(row?.reference || 'AZ').replace(/[^\w.-]+/g, '_');
+      const filePath = `${orderId}/anzahlung/${Date.now()}_${safeRef}.pdf`;
+      const upload = await supabase.storage
+        .from('order-invoices')
+        .upload(filePath, blob, { contentType: 'application/pdf', upsert: true });
+      if (upload.error) throw upload.error;
 
-    const token = crypto.randomUUID().replace(/-/g, '').slice(0, 10);
-    const { data: userData } = await supabase.auth.getUser();
-    const { data: inserted, error: docErr } = await supabase
-      .from('order_documents')
-      .insert({
-        order_id: orderId,
-        file_name: fileName,
-        file_path: filePath,
-        file_type: 'application/pdf',
-        document_type: 'Anzahlungsrechnung',
-        uploaded_by: userData.user?.id ?? null,
-        download_token: token,
-      } as any)
-      .select('download_token, file_path, file_name, created_at')
-      .single();
-    if (docErr) throw docErr;
-    return inserted;
+      const token = crypto.randomUUID().replace(/-/g, '').slice(0, 10);
+      const { data: userData } = await supabase.auth.getUser();
+      const { data: inserted, error: docErr } = await supabase
+        .from('order_documents')
+        .insert({
+          order_id: orderId,
+          file_name: fileName,
+          file_path: filePath,
+          file_type: 'application/pdf',
+          document_type: 'Anzahlungsrechnung',
+          uploaded_by: userData.user?.id ?? null,
+          download_token: token,
+        } as any)
+        .select('download_token, file_path, file_name, created_at')
+        .single();
+      if (docErr) throw docErr;
+      return inserted;
+    } catch (persistErr) {
+      console.warn('[Anzahlungen] PDF konnte nicht gespeichert werden, öffne direkt:', persistErr);
+      return { direct_url: URL.createObjectURL(blob), file_name: fileName };
+    }
   };
 
   const openPdf = async (row: any) => {
@@ -265,7 +270,9 @@ export default function FinanceAnzahlungen() {
         doc = await createMissingPdf(row);
       }
       let url: string | null = null;
-      if (doc?.download_token) {
+      if (doc?.direct_url) {
+        url = doc.direct_url;
+      } else if (doc?.download_token) {
         url = `/d/${doc.download_token}`;
       } else if (doc?.file_path) {
         const { data: signed, error: sErr } = await supabase.storage
