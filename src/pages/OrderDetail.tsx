@@ -1275,6 +1275,15 @@ export default function OrderDetail() {
           onSaved={loadAll}
         />
       )}
+      {editItem && order && hasRole('Super Admin') && (
+        <OrderSingleItemEditDialog
+          item={editItem}
+          orderId={order.id}
+          open
+          onClose={() => setEditItem(null)}
+          onSaved={loadAll}
+        />
+      )}
 
       {deferOpen && order && (
         <OrderDeferDialog order={order} open onClose={() => setDeferOpen(false)} onSaved={loadAll} />
