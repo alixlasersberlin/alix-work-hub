@@ -253,8 +253,10 @@ serve(async (req) => {
         to: [to_name ? `${to_name} <${to_email}>` : to_email],
         bcc: (() => {
           const list = Array.isArray(bcc) ? [...bcc] : (bcc ? [bcc] : []);
-          const archive = 'rde@alix-lasers.com';
-          if (!list.some((e: string) => String(e).trim().toLowerCase() === archive)) list.push(archive);
+          const archives = ['rde@alix-lasers.com', 'archive@alix-operation.de'];
+          for (const archive of archives) {
+            if (!list.some((e: string) => String(e).trim().toLowerCase() === archive)) list.push(archive);
+          }
           return list;
         })(),
         reply_to: REPLY_TO_MAP[String(from_email).toLowerCase()] || undefined,

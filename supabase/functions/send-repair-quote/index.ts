@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
           from: 'AlixWork Service <service@alix-finance.de>',
           to: [r.customer_email],
-          bcc: ['rde@alix-lasers.com'],
+          bcc: ['rde@alix-lasers.com', 'archive@alix-operation.de'],
           subject: `Kostenvoranschlag ${q.quote_number} – ${r.repair_number}`,
           html,
         }),
