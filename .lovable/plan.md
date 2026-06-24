@@ -1,75 +1,73 @@
-## Angebotskalender & Follow-Up Center 360°
+# Modul „Offene Anzahlungen" (Finance)
 
-Neues Modul unter **Sales Management → Angebotskalender** (`/verkauf/angebotskalender`). Es verändert keine bestehende Seite, Tabelle, Rolle oder Funktion — es ergänzt nur.
+Additives Modul ohne Änderung bestehender Strukturen. Neue Route `/finance/offene-anzahlungen`, neuer Menüeintrag unter FINANCE.
 
-### 1. Datenbank (additiv, neue Tabellen)
+## 1. Datenbank (neue Tabellen, Migration)
 
-Es wird NICHTS an `offers`, `sales_followups`, `customers`, `user_roles`, `app_settings` etc. geändert. Neu:
+**`finance_deposits`** – zentrale Anzahlungs-Registry (eine Zeile pro Anzahlungsrechnung/Anforderung):
+- `id, source` (`alixwork` | `zoho`), `source_ref` (Zoho-ID/Doc-Path), `deposit_number`
+- `customer_id`, `customer_name`, `company_name`, `contact_name`
+- `offer_id`, `order_id`, `order_number`, `invoice_id`, `invoice_number`
+- `net_amount`, `vat_amount`, `gross_amount`, `paid_amount`, `open_amount` (generated)
+- `currency`, `due_date`, `issue_date`
+- `status` (`offen|ueberfaellig|teilweise|gebucht`)
+- `release_status` (`nicht_freigegeben|wartet|teilweise|auto_freigegeben|manuell_freigegeben|gesperrt`)
+- `finance_lock` bool, `released_at`, `released_by`, `responsible_user_id`, `note`
+- `created_at, updated_at, created_by, updated_by`
+- Unique `(source, source_ref)` für Idempotenz; Trigger `set_updated_at`.
 
-- `offer_followup_tasks` — eine Aufgabe je Stufe & Angebot
-  - `id, offer_number, customer_id, owner_user_id, stage (1..5), due_at, status (offen|erledigt|übersprungen|inaktiv), priority (gruen|gelb|orange|rot), title, channel_done (email|sms|call|note|null), done_at, created_at`
-- `offer_contact_log` — alle manuellen Kontakte aus dem Kalender (E-Mail, SMS, Call, Notiz)
-  - `id, offer_number, customer_id, user_id, channel, subject, body, created_at`
-- `offer_outcomes` — Gewonnen/Verloren-Status für Erfolgsquote (Angebote bleiben unverändert)
-  - `offer_number PK, outcome (gewonnen|verloren|offen|inaktiv), reason, decided_at, decided_by`
-- `offer_followup_settings` — Mandanten-/Globalconfig
-  - Stufen-Tage (Default 2/4/7/14/21), Toggles für Kunden-E-Mail (Tag 4), Kunden-SMS (Tag 7), Eskalations-Schwelle (10.000 €, 14 Tage), Empfänger-IDs
+**`finance_deposit_bookings`** – einzelne Zahlungen:
+- `id, deposit_id, booking_date, paid_amount, payment_method` (Überweisung/Bar/EC/Kreditkarte/Sonstige), `payment_reference, proof_file_path, note, booked_by, created_at`.
+- AFTER INSERT/DELETE Trigger → aggregiert `paid_amount`, setzt `status`, ruft Freigabe-Prüfung.
 
-Alle Tabellen erhalten GRANTs + RLS (Ersteller/Owner + Super Admin + Vertriebsleitung).
+**`finance_deposit_history`** – Audit-Log:
+- `id, deposit_id, action, old_status, new_status, old_release_status, new_release_status, user_id, note, created_at`.
 
-### 2. Automatik (Edge Functions + Cron)
+**`finance_deposit_notifications`** – Outbox für künftige Kanäle (Email/SMS/Teams/Slack/3CX), jetzt nur intern via `mail_internal_messages` falls vorhanden, sonst Eintrag in Outbox.
 
-- `offer-followup-engine` (Cron stündlich): legt fehlende Stufen-Aufgaben an, setzt Prioritätsfarbe, markiert Stufe-5-Angebote als „inaktiv", triggert Eskalationsmail (> 10.000 € & > 14 Tage offen).
-- `offer-followup-daily-digest` (Cron täglich 08:00): E-Mail-Zusammenfassung je Mitarbeiter + optionale Kunden-E-Mail/SMS-Reminder. Nutzt vorhandene `send-transactional-email` + Twilio-Gateway.
-- `offer-followup-reminders` (Cron stündlich): einzelne Stufen-Mails (Tag 2/4/7/14) an Owner, Twilio-SMS auf Wunsch.
-- KI-Priorisierung: bestehende Copilot-Pipeline wird per neuer Funktion `offer-followup-ai-score` aufgerufen (Hot/Warm/Normal/Kalt/Inaktiv-Sterne) und im Task gecached.
+GRANTS: SELECT/INSERT/UPDATE für `authenticated`, ALL für `service_role`. RLS:
+- Lesen: `can_view_finance_module()`
+- Schreiben/Buchen: `can_access_finance_module()` (Super Admin, Admin, Finance, Geschäftsführung)
+- Sperre setzen: nur Super Admin/Admin/Finance/Geschäftsführung
+- DELETE: nur Super Admin
 
-Keine bestehenden Funktionen werden angefasst — alle neuen Functions liegen separat.
+Trigger `apply_deposit_release()` SECURITY DEFINER: prüft Auftrag (nicht storniert, nicht geliefert) + `finance_lock=false` + `open_amount<=0` → setzt `release_status='auto_freigegeben'`, `released_at/by`, schreibt History; bei Teilzahlung → `teilweise`.
 
-### 3. UI (nur neue Seiten/Komponenten)
+Storage Bucket `finance-deposits` (privat) für Belege.
 
-Neuer Sidebar-Eintrag unter Sales Management:
-- `src/pages/Sales/AngebotsKalender.tsx`
-  - Kopfzeile: KPI-Tiles (Heute fällig, Überfällig, Diese Woche, Monat, Erfolgsquote %)
-  - Tabs: **Kalenderansicht** (Monats-/Wochengrid) · **Liste** (Heute, Überfällig, Woche, Inaktiv) · **Cockpit**
-  - Filter: Mitarbeiter, Priorität (Ampel), Sterne (KI), Wertbereich
-- `src/pages/Sales/AngebotsCockpit.tsx` (innerhalb Tab) — Umsatz offen, gewonnen, verloren, Quote je Mitarbeiter
-- Komponenten unter `src/components/sales/followup/`:
-  - `FollowupCalendar.tsx`, `FollowupTaskCard.tsx` (mit Buttons E-Mail/SMS/Anruf/Notiz/Angebot/Kunde), `FollowupKpiBar.tsx`, `PriorityDot.tsx`, `AiStars.tsx`, `OutcomeDialog.tsx`, `ContactLogDialog.tsx`
-- Login-Popup: `SalesFollowupLoginDialog.tsx` — wird nach Auth einmal pro Tag gezeigt, wenn offene/überfällige Aufgaben vorhanden sind; Button „Jetzt bearbeiten" → Kalender.
+## 2. Zoho-Bridge (additiv)
 
-### 4. Erinnerungslogik (Stufen)
+Neue Edge Function `sync-zoho-deposits`: liest aus bereits importierten `zoho_invoices`/`zoho_recurring_invoices` alle Datensätze, deren `invoice_number` mit `AZ`/`Anzahlung` matcht **oder** `reference_number` einem Order/Offer entspricht, und upsertet sie in `finance_deposits` (`source='zoho'`, `source_ref=zoho_invoice.id`). Bezahlt-Beträge aus Zoho werden in `paid_amount` gespiegelt (nicht in `finance_deposit_bookings`, um echte interne Buchungen sauber zu trennen). Keine Änderung bestehender Sync-Funktionen. Daily Cron 04:15 UTC.
 
-| Stufe | Tage seit Angebot | Titel |
-|---|---|---|
-| 1 | +2 | Kunde kontaktieren |
-| 2 | +4 | Nachfassen (+ optional Kunden-Mail) |
-| 3 | +7 | Dringende Kontaktaufnahme (+ optional Kunden-SMS) |
-| 4 | +14 | Letzte Angebotsnachverfolgung |
-| 5 | +21 | Angebot als „Inaktiv" markieren |
+Trigger auf bestehender `order_additional_deposits` / `orders.deposit_amount` (AFTER INSERT/UPDATE) erzeugt/aktualisiert AlixWork-Einträge in `finance_deposits` (`source='alixwork'`).
 
-Ampel: grün <2 Tage zu Fälligkeit, gelb 0–1 Tag, orange Stufe 3, rot überfällig.
+## 3. UI
 
-### 5. Kanäle aus dem Kalender
+Neue Seite `src/pages/Finance/OffeneAnzahlungen.tsx`:
+- PageHeader, KPI-Kacheln (9 Karten laut Vorgabe) via Aggregat-Query
+- Filterleiste (Kunde/Firma/Status/Release/Quelle/Mitarbeiter/Zeitraum/Betrag/Überfällig/Auftrag/Angebot)
+- `InfinityTable` mit allen genannten Spalten, Quell-Badge (AlixWork/Zoho), Status-Badges (Premium Dark/Gold), Fälligkeits-Farben analog `OffenePosten.tsx`
+- Aktionen pro Zeile: **Anzahlung buchen** (Dialog), **Sperre toggeln**, **History**, **Beleg öffnen**
+- Buchungsdialog: Datum, Betrag, Zahlungsart, Referenz, Belegupload (Storage), Vermerk
 
-Pro Karte: 📧 E-Mail (öffnet vorhandenes Mail-Modul mit Vorlage), 📱 SMS (Twilio-Gateway), 📞 Anruf dokumentieren, 📝 Notiz, 📄 Angebot öffnen (`/verkauf/angebot/neu?edit=…`), 👤 Kundenakte (`/kunden/…`). Jede Aktion schreibt `offer_contact_log` und markiert die aktuelle Stufe als erledigt.
+Routing: Eintrag in App-Router + Sidebar unter FINANCE („Offene Anzahlungen").
 
-### 6. Eskalation
+## 4. Notifications
 
-`offer-followup-engine` prüft `offers.totals.gross > 10000` UND offen > 14 Tage → sendet Mail an Rollen **Vertriebsleitung**, **Head of Operations**, **Geschäftsführung** (per `user_roles`-Lookup), markiert Task als „eskaliert".
+Nach Auto-/Manuell-Freigabe: Insert in `mail_internal_messages` (falls Rolle-Routing vorhanden) an Empfänger mit Rollen *Einkauf, Bestellwesen, Operations, Geschäftsführung*. Bestellwesen-Dashboard Task: Insert in vorhandene Tasks/`mail_tasks` mit Titel „Neue Bestellung freigegeben". Email/SMS/Teams/Slack: Outbox-Tabelle vorbereitet, Versand-Hook leer (TODO-Stub).
 
-### 7. Design / Scope-Grenze
+## 5. Rollen/Rechte
 
-Aurora/Infinity-Design wie bestehende Sales-Seiten (`PageHeader`, `KpiTile`, `InfinityTable`, `StatusBadge`). Vollständig responsive.
+Nutzt bestehende SECURITY DEFINER Funktionen `can_view_finance_module()` / `can_access_finance_module()`. Keine neuen Rollen.
 
-Strikt nicht angefasst: bestehende `offers`-Tabelle, `Angebote.tsx`, `Freigabe.tsx`, `sales_followups`-Modul, Routen, Rollen, Mail-/SMS-Templates der anderen Module.
+## 6. Tech-Details
 
-### Lieferreihenfolge
+- TypeScript-Hook `useFinanceDeposits` mit React Query
+- Buchungsmutation ruft RPC `finance_deposit_book(p_deposit_id, p_amount, p_method, p_ref, p_date, p_proof, p_note)` (SECURITY DEFINER, prüft Rechte, schreibt Booking + History)
+- RPC `finance_deposit_set_lock(p_id, p_lock, p_note)`
+- RPC `finance_deposit_manual_release(p_id, p_note)`
 
-1. Migration (4 neue Tabellen + GRANTs + RLS + cron jobs)
-2. Edge Functions (engine, daily-digest, reminders, ai-score)
-3. Sidebar-Link + Route
-4. Kalender-Seite + Komponenten
-5. Cockpit-Tab
-6. Login-Popup
-7. Optional: Kunden-Mail/SMS-Templates registrieren
+## Nicht im Scope
+- Aktiver Email-/SMS-/Teams-/Slack-Versand (nur Struktur)
+- Änderungen an bestehenden Zoho-Sync, Bestell- oder Finance-Workflows
+- Mahnprozesse (Architektur vorbereitet)
