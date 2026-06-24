@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
     }
 
     // ---- 2) AlixWork orders with deposit_amount > 0 ----
-    const EXCLUDED = new Set(['storniert','abgesagt','geliefert']);
+    const EXCLUDED = new Set(['storniert','abgesagt']);
     const { data: ordersAll, error: ordErr } = await supabase
       .from('orders')
       .select('id, order_number, customer_id, deposit_amount, order_status, deposit_booking_date, order_date')
