@@ -341,9 +341,6 @@ const navItems: NavItem[] = [
       {
         path: '/finance/anzahlungen', label: 'ANZAHLUNGEN', icon: Wallet, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'],
         children: [
-          { path: '/verkauf/anzahlungsrechnung', label: 'Neue Anzahlungen', icon: Receipt, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Tourenplanung', 'Read Only Audit', 'Read Only', 'Geschäftsführung', 'Marketing', 'Technik', 'Kundenservice', 'Vertrieb', 'Reparaturannahme', 'Bestellwesen', 'Serviceleitung', 'Service', 'QM', 'SACHBEARBEITUNG'] },
-          { path: '/verkauf/anzahlungsrechnung', label: 'Anzahlungsrechnung', icon: Receipt, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
-          { path: '/finance/anzahlungen', label: 'Anzahlungen', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'] },
           { path: '/finance/offene-anzahlungen', label: 'Offene Anzahlungen', icon: Wallet, roles: ['Admin', 'Super Admin', 'Finance', 'Geschäftsführung'] },
         ],
       },
