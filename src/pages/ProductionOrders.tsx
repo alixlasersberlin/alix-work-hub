@@ -600,6 +600,29 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
         </div>
       </Card>
 
+      {/* Selektions-Toolbar */}
+      {!loading && filtered.length > 0 && (
+        <Card className="p-2.5 flex flex-wrap items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={toggleAllFiltered} className="h-8 gap-2">
+            {allFilteredSelected ? <CheckSquare className="w-4 h-4 text-primary" /> : <Square className="w-4 h-4" />}
+            {allFilteredSelected ? 'Auswahl aufheben' : 'Alle (gefiltert) auswählen'}
+          </Button>
+          <span className="text-xs text-muted-foreground">
+            {selected.size} ausgewählt
+          </span>
+          <div className="flex-1" />
+          <Button variant="outline" size="sm" disabled={selected.size === 0} onClick={() => exportCSV(selectedRows)}>
+            <FileDown className="w-4 h-4 mr-2" /> CSV (Auswahl)
+          </Button>
+          <Button variant="outline" size="sm" disabled={selected.size === 0} onClick={() => exportPDF(selectedRows)}>
+            <Download className="w-4 h-4 mr-2" /> PDF (Auswahl)
+          </Button>
+          {selected.size > 0 && (
+            <Button variant="ghost" size="sm" onClick={clearSelection} className="h-8">Zurücksetzen</Button>
+          )}
+        </Card>
+      )}
+
       {/* Liste */}
       {loading ? (
         <Card className="p-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-primary" /></Card>
