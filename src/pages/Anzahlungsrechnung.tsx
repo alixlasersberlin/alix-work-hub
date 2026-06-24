@@ -146,7 +146,26 @@ export default function Anzahlungsrechnung() {
       (delRes.data ?? []).forEach((p: any) => p.delivered_order_id && excluded.add(p.delivered_order_id));
       (rpRes.data ?? []).forEach((p: any) => p.order_id && excluded.add(p.order_id));
     }
-    const filtered = (orders ?? []).filter(o => !excluded.has(o.id)) as Row[];
+    let filtered = (orders ?? []).filter(o => !excluded.has(o.id)) as Row[];
+
+    // 2b) Add additional deposits (order_additional_deposits) to deposit_amount
+    if (filtered.length) {
+      const ids = filtered.map(o => o.id);
+      const { data: addDeps } = await supabase
+        .from('order_additional_deposits')
+        .select('order_id, amount')
+        .in('order_id', ids);
+      const sumByOrder = new Map<string, number>();
+      (addDeps ?? []).forEach((a: any) => {
+        sumByOrder.set(a.order_id, (sumByOrder.get(a.order_id) ?? 0) + Number(a.amount || 0));
+      });
+      filtered = filtered.map(o => {
+        const extra = sumByOrder.get(o.id) ?? 0;
+        if (!extra) return o;
+        return { ...o, deposit_amount: Number(o.deposit_amount || 0) + extra };
+      });
+    }
+
 
     // 3) Load customer names
     const custIds = Array.from(new Set(filtered.map(o => o.customer_id).filter(Boolean) as string[]));
