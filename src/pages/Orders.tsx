@@ -421,6 +421,18 @@ export default function Orders() {
                     Verschieben ({selectedIds.size})
                   </Button>
                 )}
+                {selectionMode && hasRole('Super Admin') && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-9 gap-1.5"
+                    disabled={selectedIds.size === 0 || duplicating}
+                    onClick={duplicateSelected}
+                  >
+                    {duplicating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Copy className="w-3.5 h-3.5" />}
+                    Duplizieren ({selectedIds.size})
+                  </Button>
+                )}
               </div>
             )}
             {!canWrite && (
