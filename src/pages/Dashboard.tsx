@@ -331,6 +331,9 @@ export default function Dashboard() {
     queryKey: qk.dashboard.main({ canSeeOrders, canSeeRoutes, canSeeFinance, canSeeCustomers, canSeeAudit, isAdmin, atOnly }),
     queryFn: loadDashboard,
     staleTime: STALE.medium,
+    refetchInterval: 60 * 60 * 1000, // stündlich automatisch neu laden
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true,
   });
 
   useEffect(() => {
