@@ -11,8 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   Plus, Loader2, Factory, Users as UsersIcon, FileText, Pencil, Trash2, AlertTriangle,
   Search, Calendar, Truck, User, Package, Hash, ArrowUpDown, CheckCircle2, XCircle, Clock, Mail,
-  Download, FileDown,
+  Download, FileDown, CheckSquare, Square,
 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { sendProductionOrderEmail } from '@/lib/send-production-order-email';
 import { toast } from 'sonner';
 import { format, differenceInCalendarDays, isValid } from 'date-fns';
