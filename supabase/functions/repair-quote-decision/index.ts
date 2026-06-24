@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             from: 'AlixWork <service@alix-finance.de>',
             to: ['service@alix-lasers.com'],
-            bcc: ['rde@alix-lasers.com'],
+            bcc: ['rde@alix-lasers.com', 'archive@alix-operation.de'],
             subject: `KV ${q.quote_number} ${newStatus} – ${r?.repair_number || ''}`,
             html: `<p>Kunde <b>${email}</b> hat den Kostenvoranschlag <b>${q.quote_number}</b> (Reparatur ${r?.repair_number}) <b>${newStatus}</b>.</p>${body.note ? `<p>Anmerkung:<br>${String(body.note).replace(/</g, '&lt;')}</p>` : ''}`,
           }),

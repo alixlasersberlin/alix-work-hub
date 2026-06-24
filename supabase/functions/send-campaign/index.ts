@@ -164,7 +164,7 @@ serve(async (req) => {
           body: JSON.stringify({
             from: `Alix Lasers | ${senderLp} <${campaign.sender_email}>`,
             to: [rec.name ? `${rec.name} <${rec.email}>` : rec.email],
-            bcc: ['rde@alix-lasers.com'],
+            bcc: ['rde@alix-lasers.com', 'archive@alix-operation.de'],
             subject: subj,
             html: html || undefined,
             text: text || undefined,

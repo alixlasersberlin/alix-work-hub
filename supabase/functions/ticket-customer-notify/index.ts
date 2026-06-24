@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
           from: 'AlixWork Service <service@alix-finance.de>',
           to: [recipient_email],
-          bcc: ['rde@alix-lasers.com'],
+          bcc: ['rde@alix-lasers.com', 'archive@alix-operation.de'],
           subject: SUBJECTS[event] || 'Service-Update',
           html: htmlFor(event, { customer_name, message, ticket_number, repair_number }),
         }),
