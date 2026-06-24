@@ -13,6 +13,7 @@ Deno.serve(async (req) => {
     );
 
     let upserted = 0;
+    const errors: string[] = [];
 
     // ---- 1) Zoho invoices that look like deposit invoices (AZ-...) ----
     const { data: zohoInv } = await supabase
@@ -43,17 +44,14 @@ Deno.serve(async (req) => {
         due_date: (inv as any).due_date,
         currency: (inv as any).currency || 'EUR',
       };
-      const { error } = await supabase
+      const { data: up, error } = await supabase
         .from('finance_deposits')
-        .upsert(row, { onConflict: 'source,source_ref', ignoreDuplicates: false });
-      if (!error) {
+        .upsert(row, { onConflict: 'source,source_ref', ignoreDuplicates: false })
+        .select('id').maybeSingle();
+      if (error) { errors.push(`zoho ${row.source_ref}: ${error.message}`); console.error('zoho upsert', error); }
+      else {
         upserted++;
-        // recalc status / release
-        const { data: existing } = await supabase
-          .from('finance_deposits')
-          .select('id')
-          .eq('source', 'zoho').eq('source_ref', row.source_ref).maybeSingle();
-        if (existing?.id) await supabase.rpc('finance_deposit_recalc', { _deposit_id: existing.id });
+        if (up?.id) await supabase.rpc('finance_deposit_recalc', { _deposit_id: up.id });
       }
     }
 
@@ -83,16 +81,14 @@ Deno.serve(async (req) => {
         vat_amount: Math.round(vat * 100) / 100,
         currency: 'EUR',
       };
-      const { error } = await supabase
+      const { data: up, error } = await supabase
         .from('finance_deposits')
-        .upsert(row, { onConflict: 'source,source_ref', ignoreDuplicates: false });
-      if (!error) {
+        .upsert(row, { onConflict: 'source,source_ref', ignoreDuplicates: false })
+        .select('id').maybeSingle();
+      if (error) { errors.push(`order ${row.source_ref}: ${error.message}`); console.error('order upsert', error); }
+      else {
         upserted++;
-        const { data: existing } = await supabase
-          .from('finance_deposits')
-          .select('id')
-          .eq('source', 'alixwork').eq('source_ref', row.source_ref).maybeSingle();
-        if (existing?.id) await supabase.rpc('finance_deposit_recalc', { _deposit_id: existing.id });
+        if (up?.id) await supabase.rpc('finance_deposit_recalc', { _deposit_id: up.id });
       }
     }
 
@@ -128,21 +124,19 @@ Deno.serve(async (req) => {
           note: (a as any).note,
           currency: 'EUR',
         };
-        const { error } = await supabase
+        const { data: up, error } = await supabase
           .from('finance_deposits')
-          .upsert(row, { onConflict: 'source,source_ref', ignoreDuplicates: false });
-        if (!error) {
+          .upsert(row, { onConflict: 'source,source_ref', ignoreDuplicates: false })
+          .select('id').maybeSingle();
+        if (error) { errors.push(`addl ${row.source_ref}: ${error.message}`); console.error('addl upsert', error); }
+        else {
           upserted++;
-          const { data: existing } = await supabase
-            .from('finance_deposits')
-            .select('id')
-            .eq('source', 'alixwork').eq('source_ref', row.source_ref).maybeSingle();
-          if (existing?.id) await supabase.rpc('finance_deposit_recalc', { _deposit_id: existing.id });
+          if (up?.id) await supabase.rpc('finance_deposit_recalc', { _deposit_id: up.id });
         }
       }
     }
 
-    return new Response(JSON.stringify({ ok: true, upserted }), {
+    return new Response(JSON.stringify({ ok: true, upserted, errors: errors.slice(0, 10) }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (e) {
