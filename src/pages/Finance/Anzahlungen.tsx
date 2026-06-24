@@ -22,19 +22,35 @@ export default function FinanceAnzahlungen() {
   }, []);
   const fmt = (n: number) => Number(n || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
 
-  const openPdf = async (reference: string | null) => {
-    if (!reference) { toast({ title: 'Keine Referenz', variant: 'destructive' }); return; }
-    setOpeningRef(reference);
+  const openPdf = async (row: any) => {
+    const reference: string | null = row?.reference ?? null;
+    const orderId: string | null = row?.order_id ?? null;
+    if (!reference && !orderId) { toast({ title: 'Keine Referenz', variant: 'destructive' }); return; }
+    setOpeningRef(reference || orderId);
     try {
-      const { data, error } = await supabase
-        .from('order_documents')
-        .select('download_token, file_path, file_name')
-        .eq('document_type', 'Anzahlungsrechnung')
-        .ilike('file_name', `%${reference}%`)
-        .order('created_at', { ascending: false })
-        .limit(1);
-      if (error) throw error;
-      const doc: any = data?.[0];
+      let doc: any = null;
+      // 1) Lookup per order_id (zuverlässigster Match, da AZ-Nummer ≠ Referenz)
+      if (orderId) {
+        const { data } = await supabase
+          .from('order_documents')
+          .select('download_token, file_path, file_name, created_at')
+          .eq('document_type', 'Anzahlungsrechnung')
+          .eq('order_id', orderId)
+          .order('created_at', { ascending: false })
+          .limit(1);
+        doc = data?.[0] ?? null;
+      }
+      // 2) Fallback: Suche per Referenz im Dateinamen
+      if (!doc && reference) {
+        const { data } = await supabase
+          .from('order_documents')
+          .select('download_token, file_path, file_name, created_at')
+          .eq('document_type', 'Anzahlungsrechnung')
+          .ilike('file_name', `%${reference}%`)
+          .order('created_at', { ascending: false })
+          .limit(1);
+        doc = data?.[0] ?? null;
+      }
       if (doc?.download_token) {
         window.open(`https://alixwork.de/d/${doc.download_token}`, '_blank', 'noopener');
         return;
@@ -47,7 +63,7 @@ export default function FinanceAnzahlungen() {
         window.open(signed.signedUrl, '_blank', 'noopener');
         return;
       }
-      toast({ title: 'Keine PDF gefunden', description: `Für ${reference} liegt kein Dokument vor.`, variant: 'destructive' });
+      toast({ title: 'Keine PDF gefunden', description: `Für ${reference || orderId} liegt kein Dokument vor.`, variant: 'destructive' });
     } catch (e: any) {
       toast({ title: 'Fehler', description: e?.message ?? String(e), variant: 'destructive' });
     } finally {
@@ -94,8 +110,8 @@ export default function FinanceAnzahlungen() {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => openPdf(r.reference)}
-                      disabled={openingRef === r.reference}
+                      onClick={() => openPdf(r)}
+                      disabled={openingRef === (r.reference || r.order_id)}
                     >
                       {openingRef === r.reference ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <FileText className="w-3.5 h-3.5 mr-1.5" />}
                       PDF Ansicht
