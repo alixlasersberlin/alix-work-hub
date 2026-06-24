@@ -20,13 +20,6 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
   Table,
   TableBody,
   TableCell,
@@ -98,6 +91,10 @@ const workflowBadge = (s: WorkflowStatus) => workflowOptions.find((o) => o.value
 
 const formatCurrency = (n: number | null, currency: string | null) =>
   new Intl.NumberFormat('de-DE', { style: 'currency', currency: currency || 'EUR' }).format(n ?? 0);
+
+const resetBodyPointerEvents = () => {
+  if (typeof document !== 'undefined') document.body.style.pointerEvents = '';
+};
 
 export default function OffenePosten() {
   const [items, setItems] = useState<OpenItem[]>([]);
@@ -183,9 +180,15 @@ export default function OffenePosten() {
   const openEdit = (item: OpenItem) => {
     const key = `${item.source}-${item.id}`;
     const existing = workflows[key];
+    resetBodyPointerEvents();
     setEditItem(item);
     setEditStatus(existing?.workflow_status ?? 'offen');
     setEditNote(existing?.note ?? '');
+  };
+
+  const closeEdit = () => {
+    setEditItem(null);
+    window.setTimeout(resetBodyPointerEvents, 0);
   };
 
   const saveEdit = async () => {
@@ -221,7 +224,7 @@ export default function OffenePosten() {
         updated_at: new Date().toISOString(),
       },
     }));
-    setEditItem(null);
+    closeEdit();
   };
 
   const filtered = useMemo(
@@ -387,7 +390,7 @@ export default function OffenePosten() {
                         onClick={(e) => {
                           e.stopPropagation();
                           // Radix lässt nach Schließen manchmal pointer-events:none auf <body> stehen
-                          document.body.style.pointerEvents = '';
+                          resetBodyPointerEvents();
                           openEdit(i);
                         }}
                         className="gap-1 relative z-10"
@@ -409,9 +412,7 @@ export default function OffenePosten() {
           if (!o) {
             setEditItem(null);
             // Body wieder klickbar machen (Radix Cleanup-Bug umgehen)
-            setTimeout(() => {
-              document.body.style.pointerEvents = '';
-            }, 0);
+            window.setTimeout(resetBodyPointerEvents, 0);
           }
         }}
       >
@@ -424,15 +425,17 @@ export default function OffenePosten() {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Bearbeitungsstatus</Label>
-              <Select value={editStatus} onValueChange={(v) => setEditStatus(v as WorkflowStatus)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {workflowOptions.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="open-item-workflow-status">Bearbeitungsstatus</Label>
+              <select
+                id="open-item-workflow-status"
+                value={editStatus}
+                onChange={(e) => setEditStatus(e.target.value as WorkflowStatus)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              >
+                {workflowOptions.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
             </div>
             <div className="space-y-2">
               <Label>Notiz</Label>
@@ -440,7 +443,7 @@ export default function OffenePosten() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditItem(null)} disabled={saving}>Abbrechen</Button>
+            <Button variant="outline" onClick={closeEdit} disabled={saving}>Abbrechen</Button>
             <Button onClick={saveEdit} disabled={saving} className="gap-2">
               {saving && <Loader2 className="w-4 h-4 animate-spin" />}Speichern
             </Button>
