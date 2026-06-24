@@ -463,7 +463,7 @@ export default function OrderDetail() {
           )}
           {/* Headless mounts für Aktionen aus den Menüs */}
           <SepaMandatButton ref={sepaRef} order={order} hideTrigger />
-          <MietkaufDialog ref={mietkaufRef} order={order} hideTrigger />
+          <MietkaufDialog ref={mietkaufRef} order={order ? { ...order, items } : order} hideTrigger />
           <InstallmentPlanDialog ref={ratenplanRef} order={order} hideTrigger />
         </div>
       </div>
