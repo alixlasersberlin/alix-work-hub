@@ -10,6 +10,160 @@ import { matchesQuery, paginate, type PageSize } from '@/lib/finance/list-filter
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { createPDF } from '@/lib/pdf-utils';
+import autoTable from 'jspdf-autotable';
+import templateAsset from '@/assets/az-rechnung-template.jpg.asset.json';
+import logoAsset from '@/assets/alix-logo-gold-pdf.png.asset.json';
+
+const fmtPdfMoney = (n: number, currency = 'EUR') =>
+  (Number(n) || 0).toLocaleString('de-DE', { style: 'currency', currency });
+
+const fmtPdfDate = (d: string | null | undefined) =>
+  d ? new Date(`${d}T00:00:00`).toLocaleDateString('de-DE') : '—';
+
+function addrLines(a: any): string[] {
+  if (!a || typeof a !== 'object') return [];
+  const zipCity = [a.zip || a.postal_code || '', a.city || ''].filter(Boolean).join(' ');
+  return [a.address || a.street, a.street2 || a.address2, zipCity, a.country].filter(Boolean).map(String);
+}
+
+let templateCache: string | null = null;
+let logoCache: string | null = null;
+
+async function loadDataUrl(url: string): Promise<string> {
+  const res = await fetch(url);
+  const blob = await res.blob();
+  return await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function buildDepositPdf(row: any, order: any, customer: any) {
+  const currency = order?.currency || 'EUR';
+  const orderNo = String(order?.order_number || '').trim();
+  const invoiceNumber = String(row?.reference || `AZ-${orderNo || 'ANZAHLUNG'}`).trim();
+  const grossDeposit = Number(row?.amount || order?.deposit_amount || 0);
+  const taxPercentage = 19;
+  const netDeposit = grossDeposit / (1 + taxPercentage / 100);
+  const taxAmount = grossDeposit - netDeposit;
+  const dueFromNotes = String(row?.notes || '').match(/Fällig\s+([^\.]+)/i)?.[1]?.trim();
+
+  const doc = createPDF({ unit: 'mm', format: 'a4' });
+  const PAGE_W = 210;
+  const PAGE_H = 297;
+  const LEFT = 30;
+  const RIGHT = 195;
+  const TOP_CONTENT = 55;
+  const CONTENT_W = RIGHT - LEFT;
+
+  templateCache ||= await loadDataUrl(templateAsset.url);
+  logoCache ||= await loadDataUrl(logoAsset.url);
+  const logoW = 54;
+  const logoH = logoW / (1920 / 360);
+  doc.addImage(templateCache, 'JPEG', 0, 0, PAGE_W, PAGE_H, undefined, 'FAST');
+  doc.addImage(logoCache, 'PNG', RIGHT - logoW, 12, logoW, logoH, undefined, 'FAST');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(20);
+  doc.setTextColor(20, 60, 110);
+  doc.text('Anzahlungsrechnung', LEFT, TOP_CONTENT);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(60, 60, 60);
+  const meta: Array<[string, string]> = [
+    ['Rechnungsnr.', invoiceNumber],
+    ['Rechnungsdatum', fmtPdfDate(row?.booking_date)],
+    ['Fällig am', dueFromNotes || '—'],
+    ['Auftragsnr.', orderNo || '—'],
+    ['Kundennr.', String(customer?.external_customer_id || customer?.id?.slice(0, 8) || '—')],
+  ];
+  let metaY = TOP_CONTENT;
+  for (const [label, value] of meta) {
+    doc.setFont('helvetica', 'bold');
+    doc.text(label, 130, metaY);
+    doc.setFont('helvetica', 'normal');
+    doc.text(value, 162, metaY);
+    metaY += 5;
+  }
+
+  let y = TOP_CONTENT + 17;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(20, 60, 110);
+  doc.text('Rechnungsadresse', LEFT, y);
+  y += 5;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9.5);
+  doc.setTextColor(40, 40, 40);
+  if (customer?.company_name) { doc.text(String(customer.company_name), LEFT, y); y += 4.4; }
+  if (customer?.contact_name && customer.contact_name !== customer.company_name) { doc.text(String(customer.contact_name), LEFT, y); y += 4.4; }
+  for (const line of addrLines(customer?.billing_address || customer?.shipping_address)) { doc.text(line, LEFT, y); y += 4.4; }
+  if (customer?.email) { doc.text(String(customer.email), LEFT, y); y += 4.4; }
+
+  const intro = 'Vielen Dank für Ihre Bestellung. Vereinbarungsgemäß stellen wir Ihnen hiermit die Anzahlung in Rechnung.';
+  y += 8;
+  doc.setTextColor(60, 60, 60);
+  const introLines = doc.splitTextToSize(intro, CONTENT_W);
+  doc.text(introLines, LEFT, y);
+  y += introLines.length * 4.4 + 4;
+
+  autoTable(doc, {
+    startY: y,
+    margin: { left: LEFT, right: PAGE_W - RIGHT },
+    head: [['Pos', 'Beschreibung', 'Menge', 'Einzelpreis netto', 'MwSt', 'Summe netto']],
+    body: [[1, `Anzahlung gemäß Auftrag ${orderNo || invoiceNumber}`, 1, fmtPdfMoney(netDeposit, currency), `${taxPercentage}%`, fmtPdfMoney(netDeposit, currency)]],
+    styles: { fontSize: 9, cellPadding: 2, valign: 'top' },
+    headStyles: { fillColor: [183, 217, 255], textColor: [20, 60, 110] },
+    columnStyles: { 0: { cellWidth: 10, halign: 'center' }, 2: { halign: 'right', cellWidth: 16 }, 3: { halign: 'right', cellWidth: 30 }, 4: { halign: 'right', cellWidth: 16 }, 5: { halign: 'right', cellWidth: 30 } },
+  });
+
+  y = (doc as any).lastAutoTable.finalY + 8;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(60, 60, 60);
+  doc.text('Netto:', 110, y);
+  doc.text(fmtPdfMoney(netDeposit, currency), RIGHT, y, { align: 'right' });
+  doc.text(`MwSt (${taxPercentage}%):`, 110, y + 5);
+  doc.text(fmtPdfMoney(taxAmount, currency), RIGHT, y + 5, { align: 'right' });
+  doc.setDrawColor(20, 60, 110);
+  doc.line(110, y + 8, RIGHT, y + 8);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.setTextColor(20, 60, 110);
+  doc.text('Rechnungsbetrag (brutto):', 110, y + 14);
+  doc.text(fmtPdfMoney(grossDeposit, currency), RIGHT, y + 14, { align: 'right' });
+
+  y += 27;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9.5);
+  doc.setTextColor(60, 60, 60);
+  const hint = `Dies ist eine Anzahlungsrechnung zum Auftrag ${orderNo || '—'}. Der Betrag von ${fmtPdfMoney(grossDeposit, currency)} (brutto) wird mit der Schlussrechnung verrechnet. Bitte geben Sie bei der Überweisung die Rechnungsnummer ${invoiceNumber} an.`;
+  const hintLines = doc.splitTextToSize(hint, CONTENT_W);
+  doc.text(hintLines, LEFT, y);
+  y += hintLines.length * 4.6 + 8;
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(20, 60, 110);
+  doc.text('Bankverbindung', LEFT, y);
+  y += 5;
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(60, 60, 60);
+  doc.text('Kontoinhaber: Alix Lasers GmbH', LEFT, y); y += 4.6;
+  doc.text('Bank: Deutsche Bank', LEFT, y); y += 4.6;
+  doc.text('IBAN: DE07 1007 0100 0142 6600 00', LEFT, y); y += 4.6;
+  doc.text('SWIFT/BIC: DEUTDEBB101', LEFT, y);
+
+  doc.setFontSize(8);
+  doc.setTextColor(120, 120, 120);
+  doc.text(`Anzahlungsrechnung ${invoiceNumber}  ·  Seite 1 von 1`, RIGHT, PAGE_H - 4, { align: 'right' });
+
+  const blob: Blob = doc.output('blob');
+  const safeInvoice = invoiceNumber.replace(/[^\w.-]+/g, '_');
+  return { blob, fileName: `Anzahlungsrechnung_${safeInvoice}.pdf` };
+}
 
 export default function FinanceAnzahlungen() {
   const [rows, setRows] = useState<any[]>([]);
@@ -22,10 +176,71 @@ export default function FinanceAnzahlungen() {
   }, []);
   const fmt = (n: number) => Number(n || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
 
+  const createMissingPdf = async (row: any) => {
+    const orderId: string | null = row?.order_id ?? null;
+    if (!orderId) return null;
+
+    const { data: order, error: orderErr } = await supabase
+      .from('orders')
+      .select('id, order_number, customer_id, currency, deposit_amount, total_amount')
+      .eq('id', orderId)
+      .maybeSingle();
+    if (orderErr) throw orderErr;
+    if (!order) return null;
+
+    let customer: any = null;
+    if ((order as any).customer_id) {
+      const { data, error } = await supabase
+        .from('customers')
+        .select('id, company_name, contact_name, email, external_customer_id, billing_address, shipping_address')
+        .eq('id', (order as any).customer_id)
+        .maybeSingle();
+      if (error) throw error;
+      customer = data;
+    }
+
+    const { blob, fileName } = await buildDepositPdf(row, order, customer);
+    try {
+      const safeRef = String(row?.reference || 'AZ').replace(/[^\w.-]+/g, '_');
+      const filePath = `${orderId}/anzahlung/${Date.now()}_${safeRef}.pdf`;
+      const upload = await supabase.storage
+        .from('order-invoices')
+        .upload(filePath, blob, { contentType: 'application/pdf', upsert: true });
+      if (upload.error) throw upload.error;
+
+      const token = crypto.randomUUID().replace(/-/g, '').slice(0, 10);
+      const { data: userData } = await supabase.auth.getUser();
+      const { data: inserted, error: docErr } = await supabase
+        .from('order_documents')
+        .insert({
+          order_id: orderId,
+          file_name: fileName,
+          file_path: filePath,
+          file_type: 'application/pdf',
+          document_type: 'Anzahlungsrechnung',
+          uploaded_by: userData.user?.id ?? null,
+          download_token: token,
+        } as any)
+        .select('download_token, file_path, file_name, created_at')
+        .single();
+      if (docErr) throw docErr;
+      return inserted;
+    } catch (persistErr) {
+      console.warn('[Anzahlungen] PDF konnte nicht gespeichert werden, öffne direkt:', persistErr);
+      return { direct_url: URL.createObjectURL(blob), file_name: fileName };
+    }
+  };
+
   const openPdf = async (row: any) => {
     const reference: string | null = row?.reference ?? null;
     const orderId: string | null = row?.order_id ?? null;
     if (!reference && !orderId) { toast({ title: 'Keine Referenz', variant: 'destructive' }); return; }
+    const popup = window.open('about:blank', '_blank');
+    if (!popup) {
+      toast({ title: 'Popup blockiert', description: 'Bitte Popups für Alix Work erlauben und erneut öffnen.', variant: 'destructive' });
+      return;
+    }
+    try { popup.opener = null; } catch { /* ignore */ }
     setOpeningRef(reference || orderId);
     try {
       let doc: any = null;
@@ -51,20 +266,29 @@ export default function FinanceAnzahlungen() {
           .limit(1);
         doc = data?.[0] ?? null;
       }
-      if (doc?.download_token) {
-        window.open(`https://alixwork.de/d/${doc.download_token}`, '_blank', 'noopener');
-        return;
+      if (!doc && orderId) {
+        doc = await createMissingPdf(row);
       }
-      if (doc?.file_path) {
+      let url: string | null = null;
+      if (doc?.direct_url) {
+        url = doc.direct_url;
+      } else if (doc?.download_token) {
+        url = `/d/${doc.download_token}`;
+      } else if (doc?.file_path) {
         const { data: signed, error: sErr } = await supabase.storage
           .from('order-invoices')
           .createSignedUrl(doc.file_path, 300);
         if (sErr) throw sErr;
-        window.open(signed.signedUrl, '_blank', 'noopener');
+        url = signed.signedUrl;
+      }
+      if (url) {
+        popup.location.href = url;
         return;
       }
+      popup.close();
       toast({ title: 'Keine PDF gefunden', description: `Für ${reference || orderId} liegt kein Dokument vor.`, variant: 'destructive' });
     } catch (e: any) {
+      popup.close();
       toast({ title: 'Fehler', description: e?.message ?? String(e), variant: 'destructive' });
     } finally {
       setOpeningRef(null);
