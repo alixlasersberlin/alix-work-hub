@@ -519,7 +519,7 @@ function BookingDialog({ open, deposit, onClose, onDone }: {
             <Label>Zahlungsart</Label>
             <Select value={method} onValueChange={setMethod}>
               <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
+              <SelectContent className="z-[100]">
                 <SelectItem value="ueberweisung">Überweisung</SelectItem>
                 <SelectItem value="bar">Bar</SelectItem>
                 <SelectItem value="ec">EC</SelectItem>
