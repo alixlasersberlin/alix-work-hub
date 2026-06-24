@@ -27,6 +27,7 @@ import InstallmentPlanDialog, { type InstallmentPlanDialogHandle } from '@/compo
 import SepaMandatButton, { type SepaMandatHandle } from '@/components/SepaMandatButton';
 import OrderEditDialog from '@/components/OrderEditDialog';
 import OrderItemsEditDialog from '@/components/OrderItemsEditDialog';
+import OrderSingleItemEditDialog from '@/components/OrderSingleItemEditDialog';
 import OrderFullEditDialog from '@/components/OrderFullEditDialog';
 
 import OrderDeferDialog from '@/components/OrderDeferDialog';
