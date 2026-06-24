@@ -5,7 +5,8 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Receipt, Search, Upload, Download, Building2, Calendar, CheckCircle2, Trash2, BadgeEuro } from 'lucide-react';
+import { Loader2, Receipt, Search, Upload, Download, Building2, Calendar, CheckCircle2, Trash2, BadgeEuro, FileDown, CheckSquare, Square } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
   AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction
@@ -13,6 +14,7 @@ import {
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { createPDF } from '@/lib/pdf-utils';
 import { useAtOnly } from '@/hooks/useAtOnly';
 
 type Lang = 'de' | 'en' | 'zh';
@@ -156,6 +158,7 @@ export default function FactoryInvoice() {
   const activeRowRef = useRef<Row | null>(null);
 
   const t = T[lang];
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   useEffect(() => { localStorage.setItem('production_lang', lang); }, [lang]);
 
@@ -185,6 +188,109 @@ export default function FactoryInvoice() {
         .toLowerCase().includes(q),
     );
   }, [rows, search]);
+
+  const toggleOne = (id: string) => setSelected(prev => {
+    const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n;
+  });
+  const allFilteredSelected = filtered.length > 0 && filtered.every(r => selected.has(r.id));
+  const toggleAllFiltered = () => setSelected(prev => {
+    if (allFilteredSelected) {
+      const n = new Set(prev); filtered.forEach(r => n.delete(r.id)); return n;
+    }
+    const n = new Set(prev); filtered.forEach(r => n.add(r.id)); return n;
+  });
+  const clearSelection = () => setSelected(new Set());
+  const selectedRows = useMemo(() => filtered.filter(r => selected.has(r.id)), [filtered, selected]);
+
+  const exportRows = (source?: Row[]) => (source ?? filtered).map(r => ({
+    bestellnummer: r.production_order_number || r.order_number || '',
+    auftragsnummer: r.order_number || '',
+    kunde: r.customer_name_snapshot || '',
+    zulieferer: r.supplier?.name || '',
+    modell: r.modellname || '',
+    farbe: r.farbe || '',
+    bearbeiter: r.bearbeiter || '',
+    liefertermin: r.liefertermin ? format(new Date(r.liefertermin), 'dd.MM.yyyy') : '',
+    status: r.status || '',
+    payment: r.payment_status || '',
+    invoice_vorhanden: r.invoice_pdf_path ? 'Ja' : 'Nein',
+    reklamation: r.is_reclamation ? 'Ja' : 'Nein',
+    freigegeben_am: r.approved_at ? format(new Date(r.approved_at), 'dd.MM.yyyy HH:mm') : '',
+  }));
+
+  const exportCSV = (source?: Row[]) => {
+    const data = exportRows(source);
+    if (data.length === 0) { toast.info('Keine Daten zum Exportieren'); return; }
+    const headers = Object.keys(data[0]);
+    const escape = (v: any) => {
+      const s = v == null ? '' : String(v);
+      return /[;"\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const csv = [
+      headers.join(';'),
+      ...data.map(row => headers.map(h => escape((row as any)[h])).join(';')),
+    ].join('\r\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `factory_invoices_${format(new Date(), 'yyyyMMdd_HHmm')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${data.length} Einträge exportiert`);
+  };
+
+  const exportPDF = (source?: Row[]) => {
+    const data = exportRows(source);
+    if (data.length === 0) { toast.info('Keine Daten zum Exportieren'); return; }
+    const doc = createPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
+    const pageW = 297, pageH = 210, marginX = 10;
+    let y = 14;
+    doc.setFont('Inter', 'bold'); doc.setFontSize(14);
+    doc.text('Factory Invoices', marginX, y);
+    doc.setFont('Inter', 'normal'); doc.setFontSize(9);
+    doc.text(`Stand: ${format(new Date(), 'dd.MM.yyyy HH:mm')}  ·  ${data.length} Einträge`, pageW - marginX, y, { align: 'right' });
+    y += 6;
+    const cols = [
+      { key: 'bestellnummer', label: 'Bestell-Nr.', w: 30 },
+      { key: 'auftragsnummer', label: 'Auftrag', w: 26 },
+      { key: 'kunde', label: 'Kunde', w: 42 },
+      { key: 'zulieferer', label: 'Zulieferer', w: 32 },
+      { key: 'modell', label: 'Modell', w: 30 },
+      { key: 'farbe', label: 'Farbe', w: 18 },
+      { key: 'liefertermin', label: 'Liefertermin', w: 22 },
+      { key: 'status', label: 'Status', w: 22 },
+      { key: 'payment', label: 'Payment', w: 18 },
+      { key: 'invoice_vorhanden', label: 'Invoice', w: 16 },
+      { key: 'reklamation', label: 'Rekl.', w: 14 },
+    ] as const;
+    const drawHeader = () => {
+      doc.setFillColor(30, 30, 30); doc.setTextColor(255, 255, 255);
+      doc.rect(marginX, y - 4, pageW - marginX * 2, 6, 'F');
+      doc.setFont('Inter', 'bold'); doc.setFontSize(8);
+      let x = marginX + 1;
+      cols.forEach(c => { doc.text(c.label, x, y); x += c.w; });
+      y += 4;
+      doc.setTextColor(0, 0, 0); doc.setFont('Inter', 'normal');
+    };
+    drawHeader();
+    doc.setFontSize(7.5);
+    data.forEach((row, idx) => {
+      const cellLines = cols.map(c => doc.splitTextToSize(String((row as any)[c.key] ?? ''), c.w - 2));
+      const rowH = Math.max(...cellLines.map(l => l.length)) * 3.2 + 1.5;
+      if (y + rowH > pageH - 10) { doc.addPage(); y = 14; drawHeader(); doc.setFontSize(7.5); }
+      if (idx % 2 === 0) {
+        doc.setFillColor(245, 245, 245);
+        doc.rect(marginX, y - 3, pageW - marginX * 2, rowH, 'F');
+      }
+      let x = marginX + 1;
+      cellLines.forEach((lines, i) => { doc.text(lines, x, y); x += cols[i].w; });
+      y += rowH;
+    });
+    doc.save(`factory_invoices_${format(new Date(), 'yyyyMMdd_HHmm')}.pdf`);
+    toast.success(`${data.length} Einträge als PDF exportiert`);
+  };
+
 
   const handlePickFile = (row: Row) => {
     if (!canUpload) return;
@@ -338,6 +444,26 @@ export default function FactoryInvoice() {
         </div>
       </Card>
 
+      {!loading && filtered.length > 0 && (
+        <Card className="p-2.5 flex flex-wrap items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={toggleAllFiltered} className="h-8 gap-2">
+            {allFilteredSelected ? <CheckSquare className="w-4 h-4 text-primary" /> : <Square className="w-4 h-4" />}
+            {allFilteredSelected ? 'Auswahl aufheben' : 'Alle (gefiltert) auswählen'}
+          </Button>
+          <span className="text-xs text-muted-foreground">{selected.size} ausgewählt</span>
+          <div className="flex-1" />
+          <Button variant="outline" size="sm" disabled={selected.size === 0} onClick={() => exportCSV(selectedRows)}>
+            <FileDown className="w-4 h-4 mr-2" /> CSV (Auswahl)
+          </Button>
+          <Button variant="outline" size="sm" disabled={selected.size === 0} onClick={() => exportPDF(selectedRows)}>
+            <Download className="w-4 h-4 mr-2" /> PDF (Auswahl)
+          </Button>
+          {selected.size > 0 && (
+            <Button variant="ghost" size="sm" onClick={clearSelection} className="h-8">Zurücksetzen</Button>
+          )}
+        </Card>
+      )}
+
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -350,7 +476,8 @@ export default function FactoryInvoice() {
         <Card className="overflow-hidden">
           <div className="divide-y divide-border">
             {filtered.map(r => (
-              <div key={r.id} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors">
+              <div key={r.id} className={cn("flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors", selected.has(r.id) && "bg-primary/5")}>
+                <Checkbox checked={selected.has(r.id)} onCheckedChange={() => toggleOne(r.id)} aria-label="Auswählen" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-medium text-sm">{r.production_order_number || r.order_number}</span>
