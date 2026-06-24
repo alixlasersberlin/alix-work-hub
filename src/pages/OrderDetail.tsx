@@ -27,6 +27,7 @@ import InstallmentPlanDialog, { type InstallmentPlanDialogHandle } from '@/compo
 import SepaMandatButton, { type SepaMandatHandle } from '@/components/SepaMandatButton';
 import OrderEditDialog from '@/components/OrderEditDialog';
 import OrderItemsEditDialog from '@/components/OrderItemsEditDialog';
+import OrderSingleItemEditDialog from '@/components/OrderSingleItemEditDialog';
 import OrderFullEditDialog from '@/components/OrderFullEditDialog';
 
 import OrderDeferDialog from '@/components/OrderDeferDialog';
@@ -84,6 +85,7 @@ export default function OrderDetail() {
   const [shipDateValue, setShipDateValue] = useState('');
   const [editOpen, setEditOpen] = useState(false);
   const [itemsEditOpen, setItemsEditOpen] = useState(false);
+  const [editItem, setEditItem] = useState<any | null>(null);
   const [fullEditOpen, setFullEditOpen] = useState(false);
 
   const [deferOpen, setDeferOpen] = useState(false);
@@ -730,6 +732,7 @@ export default function OrderDetail() {
                     <TableHead className="text-right">Rabatt</TableHead>
                     <TableHead className="text-right">Steuer</TableHead>
                     <TableHead className="text-right">Betrag</TableHead>
+                    {hasRole('Super Admin') && <TableHead className="w-10"></TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -747,6 +750,19 @@ export default function OrderDetail() {
                       <TableCell className="text-right">{item.discount != null && Number(item.discount) > 0 ? Number(item.discount).toLocaleString('de-DE', { style: 'currency', currency: order.currency || 'EUR' }) : '—'}</TableCell>
                       <TableCell className="text-right">{item.tax_amount != null && Number(item.tax_amount) > 0 ? Number(item.tax_amount).toLocaleString('de-DE', { style: 'currency', currency: order.currency || 'EUR' }) : '—'}</TableCell>
                       <TableCell className="text-right font-medium">{item.amount != null ? Number(item.amount).toLocaleString('de-DE', { style: 'currency', currency: order.currency || 'EUR' }) : '—'}</TableCell>
+                      {hasRole('Super Admin') && (
+                        <TableCell className="text-right">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 w-7 p-0"
+                            onClick={() => setEditItem(item)}
+                            title="Artikel bearbeiten"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </Button>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>
@@ -1256,6 +1272,15 @@ export default function OrderDetail() {
           orderNumber={order.order_number}
           open
           onClose={() => setItemsEditOpen(false)}
+          onSaved={loadAll}
+        />
+      )}
+      {editItem && order && hasRole('Super Admin') && (
+        <OrderSingleItemEditDialog
+          item={editItem}
+          orderId={order.id}
+          open
+          onClose={() => setEditItem(null)}
           onSaved={loadAll}
         />
       )}
