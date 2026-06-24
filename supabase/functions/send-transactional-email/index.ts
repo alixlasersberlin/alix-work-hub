@@ -10,6 +10,9 @@ const SITE_NAME = "Alix Lasers Datacenter"
 const SENDER_DOMAIN = "notify.alixlasers.ai"
 const FROM_DOMAIN = "notify.alixlasers.ai"
 
+// Globaler Archiv-BCC: erhält automatisch eine Kopie JEDER ausgehenden Mail
+const GLOBAL_ARCHIVE_BCC = ['rde@alix-lasers.com']
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers':
