@@ -27,6 +27,7 @@ import InstallmentPlanDialog, { type InstallmentPlanDialogHandle } from '@/compo
 import SepaMandatButton, { type SepaMandatHandle } from '@/components/SepaMandatButton';
 import OrderEditDialog from '@/components/OrderEditDialog';
 import OrderItemsEditDialog from '@/components/OrderItemsEditDialog';
+import OrderFullEditDialog from '@/components/OrderFullEditDialog';
 
 import OrderDeferDialog from '@/components/OrderDeferDialog';
 import MietkaufDialog, { type MietkaufDialogHandle } from '@/components/MietkaufDialog';
@@ -83,6 +84,7 @@ export default function OrderDetail() {
   const [shipDateValue, setShipDateValue] = useState('');
   const [editOpen, setEditOpen] = useState(false);
   const [itemsEditOpen, setItemsEditOpen] = useState(false);
+  const [fullEditOpen, setFullEditOpen] = useState(false);
 
   const [deferOpen, setDeferOpen] = useState(false);
   const [restPending, setRestPending] = useState(false);
@@ -584,9 +586,16 @@ export default function OrderDetail() {
       {activeTab === 'overview' && (
         <div className="grid gap-6 lg:grid-cols-2">
           <div className="rounded-xl border border-border bg-card p-6 card-glow">
-            <h2 className="text-base font-display font-bold text-foreground flex items-center gap-2 mb-4">
-              <ClipboardList className="w-4 h-4 text-primary" /> Auftragsdaten
-            </h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-display font-bold text-foreground flex items-center gap-2">
+                <ClipboardList className="w-4 h-4 text-primary" /> Auftragsdaten
+              </h2>
+              {hasRole('Super Admin') && (
+                <Button size="sm" variant="outline" onClick={() => setFullEditOpen(true)} className="gap-1.5">
+                  <Pencil className="w-3.5 h-3.5" /> Auftrag komplett bearbeiten
+                </Button>
+              )}
+            </div>
             <dl className="space-y-3 text-sm">
               {[
                 ['Auftragsnummer', displayOrderNumbers.join(', ')],
@@ -1237,6 +1246,9 @@ export default function OrderDetail() {
 
       {editOpen && order && (
         <OrderEditDialog order={order} open onClose={() => setEditOpen(false)} onSaved={loadAll} />
+      )}
+      {fullEditOpen && order && hasRole('Super Admin') && (
+        <OrderFullEditDialog order={order} open onClose={() => setFullEditOpen(false)} onSaved={loadAll} />
       )}
       {itemsEditOpen && order && (
         <OrderItemsEditDialog
