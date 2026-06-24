@@ -444,6 +444,26 @@ export default function FactoryInvoice() {
         </div>
       </Card>
 
+      {!loading && filtered.length > 0 && (
+        <Card className="p-2.5 flex flex-wrap items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={toggleAllFiltered} className="h-8 gap-2">
+            {allFilteredSelected ? <CheckSquare className="w-4 h-4 text-primary" /> : <Square className="w-4 h-4" />}
+            {allFilteredSelected ? 'Auswahl aufheben' : 'Alle (gefiltert) auswählen'}
+          </Button>
+          <span className="text-xs text-muted-foreground">{selected.size} ausgewählt</span>
+          <div className="flex-1" />
+          <Button variant="outline" size="sm" disabled={selected.size === 0} onClick={() => exportCSV(selectedRows)}>
+            <FileDown className="w-4 h-4 mr-2" /> CSV (Auswahl)
+          </Button>
+          <Button variant="outline" size="sm" disabled={selected.size === 0} onClick={() => exportPDF(selectedRows)}>
+            <Download className="w-4 h-4 mr-2" /> PDF (Auswahl)
+          </Button>
+          {selected.size > 0 && (
+            <Button variant="ghost" size="sm" onClick={clearSelection} className="h-8">Zurücksetzen</Button>
+          )}
+        </Card>
+      )}
+
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -456,7 +476,8 @@ export default function FactoryInvoice() {
         <Card className="overflow-hidden">
           <div className="divide-y divide-border">
             {filtered.map(r => (
-              <div key={r.id} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors">
+              <div key={r.id} className={cn("flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors", selected.has(r.id) && "bg-primary/5")}>
+                <Checkbox checked={selected.has(r.id)} onCheckedChange={() => toggleOne(r.id)} aria-label="Auswählen" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-medium text-sm">{r.production_order_number || r.order_number}</span>
