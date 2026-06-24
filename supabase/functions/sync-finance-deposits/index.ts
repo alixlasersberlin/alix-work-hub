@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
     }
 
     // ---- 2) AlixWork orders with deposit_amount > 0 ----
-    const EXCLUDED = new Set(['storniert','abgesagt','geliefert']);
+    const EXCLUDED = new Set(['storniert','abgesagt']);
     const { data: ordersAll, error: ordErr } = await supabase
       .from('orders')
       .select('id, order_number, customer_id, deposit_amount, order_status, deposit_booking_date, order_date')
@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
 
       for (const a of addl) {
         const o: any = omap.get((a as any).order_id);
-        if (!o || ['storniert','abgesagt','geliefert'].includes(o.order_status)) continue;
+        if (!o || ['storniert','abgesagt'].includes(o.order_status)) continue;
         const gross = Number((a as any).amount) || 0;
         const net = gross / 1.19;
         const row = {
