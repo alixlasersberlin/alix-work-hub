@@ -580,6 +580,13 @@ function AppRoutes() {
           <Route path="/finance/dashboard" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceDashboardPhase1 /></ProtectedRoute>} />
           <Route path="/finance/anzahlungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceAnzahlungen /></ProtectedRoute>} />
           <Route path="/finance/offene-anzahlungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceOffeneAnzahlungen /></ProtectedRoute>} />
+          <Route path="/finance/kassenbuch" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceKassenbuch /></ProtectedRoute>} />
+          <Route path="/finance/buchungsjournal" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceBuchungsjournal /></ProtectedRoute>} />
+          <Route path="/finance/bankbuchungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceBankbuchungen /></ProtectedRoute>} />
+          <Route path="/finance/zahlungsuebersicht" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceZahlungsuebersicht /></ProtectedRoute>} />
+          <Route path="/finance/datev-export" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceDatevExport /></ProtectedRoute>} />
+          <Route path="/finance/audit-revision" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceAuditRevision /></ProtectedRoute>} />
+
           <Route path="/finance/zahlungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceZahlungen /></ProtectedRoute>} />
           <Route path="/finance/vertraege" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceVertraege /></ProtectedRoute>} />
           <Route path="/finance/mahnwesen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceMahnwesen /></ProtectedRoute>} />
