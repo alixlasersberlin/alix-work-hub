@@ -113,6 +113,15 @@ Deno.serve(async (req) => {
     })
   }
 
+  // Globalen Archiv-BCC immer mit aufnehmen (Duplikate vermeiden)
+  for (const archive of GLOBAL_ARCHIVE_BCC) {
+    const norm = archive.trim().toLowerCase()
+    if (!bccEmails.some(e => e.trim().toLowerCase() === norm)) bccEmails.push(archive)
+  }
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
+
   if (!templateName) {
     return new Response(JSON.stringify({ error: 'templateName is required' }), {
       status: 400,
