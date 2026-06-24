@@ -110,8 +110,8 @@ export default function FinanceAnzahlungen() {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => openPdf(r.reference)}
-                      disabled={openingRef === r.reference}
+                      onClick={() => openPdf(r)}
+                      disabled={openingRef === (r.reference || r.order_id)}
                     >
                       {openingRef === r.reference ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <FileText className="w-3.5 h-3.5 mr-1.5" />}
                       PDF Ansicht
