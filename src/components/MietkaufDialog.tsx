@@ -492,8 +492,8 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {TERMS.map(t => (
-                    <SelectItem key={t} value={String(t)}>{t / 12} {t === 12 ? 'Jahr' : 'Jahre'} ({t} Monate)</SelectItem>
+                  {Array.from(new Set([...TERMS, term])).sort((a, b) => a - b).map(t => (
+                    <SelectItem key={t} value={String(t)}>{(t / 12).toFixed(t % 12 === 0 ? 0 : 1)} {t === 12 ? 'Jahr' : 'Jahre'} ({t} Monate)</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
