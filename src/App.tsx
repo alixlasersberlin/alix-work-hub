@@ -90,6 +90,7 @@ const ServiceCockpit = lazy(() => import("./pages/ServiceCockpit"));
 const FinanceForm = lazy(() => import("./pages/FinanceForm"));
 const FinanceDashboardPhase1 = lazy(() => import("./pages/Finance/Dashboard"));
 const FinanceAnzahlungen = lazy(() => import("./pages/Finance/Anzahlungen"));
+const FinanceOffeneAnzahlungen = lazy(() => import("./pages/Finance/OffeneAnzahlungen"));
 const FinanceZahlungen = lazy(() => import("./pages/Finance/Zahlungen"));
 const FinanceVertraege = lazy(() => import("./pages/Finance/Vertraege"));
 const FinanceMahnwesen = lazy(() => import("./pages/Finance/Mahnwesen"));
