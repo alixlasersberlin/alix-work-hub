@@ -89,6 +89,7 @@ serve(async (req) => {
       // mode
       is_test = false,
       attachments = [],
+      bcc = null,
     } = body ?? {};
 
     if (!to_email || !from_email) {
