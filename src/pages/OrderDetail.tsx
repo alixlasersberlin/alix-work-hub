@@ -85,6 +85,7 @@ export default function OrderDetail() {
   const [shipDateValue, setShipDateValue] = useState('');
   const [editOpen, setEditOpen] = useState(false);
   const [itemsEditOpen, setItemsEditOpen] = useState(false);
+  const [editItem, setEditItem] = useState<any | null>(null);
   const [fullEditOpen, setFullEditOpen] = useState(false);
 
   const [deferOpen, setDeferOpen] = useState(false);
