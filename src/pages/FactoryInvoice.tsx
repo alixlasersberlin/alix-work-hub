@@ -158,6 +158,7 @@ export default function FactoryInvoice() {
   const activeRowRef = useRef<Row | null>(null);
 
   const t = T[lang];
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   useEffect(() => { localStorage.setItem('production_lang', lang); }, [lang]);
 
