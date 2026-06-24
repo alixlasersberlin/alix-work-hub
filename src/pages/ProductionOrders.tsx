@@ -738,6 +738,9 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
               <table className="w-full text-sm">
                 <thead className="bg-muted/40 border-b border-border">
                   <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground">
+                    <th className="p-3 font-medium w-8">
+                      <Checkbox checked={allFilteredSelected} onCheckedChange={toggleAllFiltered} aria-label="Alle auswählen" />
+                    </th>
                     <th className="p-3 font-medium">Nummer</th>
                     <th className="p-3 font-medium">{t.intern}</th>
                     <th className="p-3 font-medium">{t.supplier}</th>
