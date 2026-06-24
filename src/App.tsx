@@ -573,6 +573,7 @@ function AppRoutes() {
           <Route path="/finance/rechnungsvorschlaege" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Rechnungsvorschlaege /></ProtectedRoute>} />
           <Route path="/finance/dashboard" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceDashboardPhase1 /></ProtectedRoute>} />
           <Route path="/finance/anzahlungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceAnzahlungen /></ProtectedRoute>} />
+          <Route path="/finance/offene-anzahlungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceOffeneAnzahlungen /></ProtectedRoute>} />
           <Route path="/finance/zahlungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceZahlungen /></ProtectedRoute>} />
           <Route path="/finance/vertraege" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceVertraege /></ProtectedRoute>} />
           <Route path="/finance/mahnwesen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceMahnwesen /></ProtectedRoute>} />
