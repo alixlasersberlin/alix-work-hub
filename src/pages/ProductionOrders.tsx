@@ -503,10 +503,10 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
         meta={<InfinityStatusBadge kind="done" label={`${filtered.length}`} />}
         actions={
           <>
-            <Button variant="outline" size="sm" onClick={exportCSV} title="Als CSV herunterladen">
+            <Button variant="outline" size="sm" onClick={() => exportCSV()} title="Als CSV herunterladen (alle gefilterten)">
               <FileDown className="w-4 h-4 mr-2" /> CSV
             </Button>
-            <Button variant="outline" size="sm" onClick={exportPDF} title="Als PDF herunterladen">
+            <Button variant="outline" size="sm" onClick={() => exportPDF()} title="Als PDF herunterladen (alle gefilterten)">
               <Download className="w-4 h-4 mr-2" /> PDF
             </Button>
             {!isReclamation && (
