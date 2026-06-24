@@ -10,6 +10,9 @@ const SITE_NAME = "Alix Lasers Datacenter"
 const SENDER_DOMAIN = "notify.alixlasers.ai"
 const FROM_DOMAIN = "notify.alixlasers.ai"
 
+// Globaler Archiv-BCC: erhält automatisch eine Kopie JEDER ausgehenden Mail
+const GLOBAL_ARCHIVE_BCC = ['rde@alix-lasers.com']
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers':
@@ -109,6 +112,13 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
+
+  // Globalen Archiv-BCC immer mit aufnehmen (Duplikate vermeiden)
+  for (const archive of GLOBAL_ARCHIVE_BCC) {
+    const norm = archive.trim().toLowerCase()
+    if (!bccEmails.some(e => e.trim().toLowerCase() === norm)) bccEmails.push(archive)
+  }
+
 
   if (!templateName) {
     return new Response(JSON.stringify({ error: 'templateName is required' }), {
