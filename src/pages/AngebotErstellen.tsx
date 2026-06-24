@@ -1007,6 +1007,7 @@ export default function AngebotErstellen() {
           salesperson_name: salesAdvisor || null,
           billing_address: (selectedCustomer as any).billing_address || null,
           shipping_address: (selectedCustomer as any).shipping_address || (selectedCustomer as any).billing_address || null,
+          deposit_amount: parseFloat(payDown) || null,
           raw_data: { source: 'offer_confirmation', offer_number: offerNumber, payment: { type: payType, price: parseFloat(payPrice) || 0, down: parseFloat(payDown) || 0, term: payTerm } } as any,
         } as any)
         .select('id')
