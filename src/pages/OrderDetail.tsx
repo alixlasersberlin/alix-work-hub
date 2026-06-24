@@ -586,9 +586,16 @@ export default function OrderDetail() {
       {activeTab === 'overview' && (
         <div className="grid gap-6 lg:grid-cols-2">
           <div className="rounded-xl border border-border bg-card p-6 card-glow">
-            <h2 className="text-base font-display font-bold text-foreground flex items-center gap-2 mb-4">
-              <ClipboardList className="w-4 h-4 text-primary" /> Auftragsdaten
-            </h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-display font-bold text-foreground flex items-center gap-2">
+                <ClipboardList className="w-4 h-4 text-primary" /> Auftragsdaten
+              </h2>
+              {hasRole('Super Admin') && (
+                <Button size="sm" variant="outline" onClick={() => setFullEditOpen(true)} className="gap-1.5">
+                  <Pencil className="w-3.5 h-3.5" /> Auftrag komplett bearbeiten
+                </Button>
+              )}
+            </div>
             <dl className="space-y-3 text-sm">
               {[
                 ['Auftragsnummer', displayOrderNumbers.join(', ')],
