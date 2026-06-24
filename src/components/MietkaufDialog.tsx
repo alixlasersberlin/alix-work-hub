@@ -109,32 +109,17 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [order?.id, order?.order_number, open]);
 
-  // Laufzeit / Preis / Anzahlung aus Zahlungsberechnung des verknüpften Angebots übernehmen
+  // Laufzeit (Monate) direkt aus dem Auftrag übernehmen
+  // Zoho liefert sie in raw_data.payment_terms_label, z.B. "Alix Flex 12" / "Alix Flex 24"
   useEffect(() => {
-    if (!open || !order?.id) return;
-    const customerId = order.customer_id || order.customers?.id || order.customer?.id;
-    if (!customerId) return;
-    (async () => {
-      const { data } = await supabase
-        .from('offers')
-        .select('offer_number, status, total_gross, payload, created_at')
-        .eq('customer_id', customerId)
-        .in('status', ['order', 'signed', 'draft'])
-        .order('created_at', { ascending: false })
-        .limit(25);
-      if (!data?.length) return;
-      const target = Number(order?.total_amount) || 0;
-      const ranked = [...data].sort((a: any, b: any) => {
-        const da = Math.abs((Number(a.total_gross) || 0) - target);
-        const db = Math.abs((Number(b.total_gross) || 0) - target);
-        return da - db;
-      });
-      const p = (ranked[0]?.payload as any)?.payment;
-      if (!p) return;
-      if (typeof p.term === 'number' && p.term > 0) setTerm(p.term);
-      if (typeof p.price === 'number') setKaufpreis(String(p.price.toFixed(2)));
-      if (typeof p.down === 'number') setAnzahlung(String(p.down.toFixed(2)));
-    })();
+    if (!open || !order) return;
+    const raw = order.raw_data || {};
+    const label: string = String(raw.payment_terms_label || raw.payment_terms_name || '');
+    const m = label.match(/(\d+)\s*$/);
+    if (m) {
+      const months = Number(m[1]);
+      if (months > 0) setTerm(months);
+    }
   }, [open, order?.id]);
 
   const isDE = region === 'DE';
