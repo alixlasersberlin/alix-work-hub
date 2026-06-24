@@ -1247,6 +1247,9 @@ export default function OrderDetail() {
       {editOpen && order && (
         <OrderEditDialog order={order} open onClose={() => setEditOpen(false)} onSaved={loadAll} />
       )}
+      {fullEditOpen && order && hasRole('Super Admin') && (
+        <OrderFullEditDialog order={order} open onClose={() => setFullEditOpen(false)} onSaved={loadAll} />
+      )}
       {itemsEditOpen && order && (
         <OrderItemsEditDialog
           orderId={order.id}
