@@ -1,73 +1,98 @@
-# Modul „Offene Anzahlungen" (Finance)
 
-Additives Modul ohne Änderung bestehender Strukturen. Neue Route `/finance/offene-anzahlungen`, neuer Menüeintrag unter FINANCE.
+# Kassenbuch & Buchungsjournal Pro — Plan
 
-## 1. Datenbank (neue Tabellen, Migration)
+Additives Finance-Submodul. **Keine** Änderungen an bestehenden Tabellen, Workflows, RLS, Rollen, Zoho-Sync oder Finance-Logik. Alles neu unter eigenem Namespace `finance_cashbook*`, `finance_journal*`, `finance_bank_postings`, `finance_audit_trail`.
 
-**`finance_deposits`** – zentrale Anzahlungs-Registry (eine Zeile pro Anzahlungsrechnung/Anforderung):
-- `id, source` (`alixwork` | `zoho`), `source_ref` (Zoho-ID/Doc-Path), `deposit_number`
-- `customer_id`, `customer_name`, `company_name`, `contact_name`
-- `offer_id`, `order_id`, `order_number`, `invoice_id`, `invoice_number`
-- `net_amount`, `vat_amount`, `gross_amount`, `paid_amount`, `open_amount` (generated)
-- `currency`, `due_date`, `issue_date`
-- `status` (`offen|ueberfaellig|teilweise|gebucht`)
-- `release_status` (`nicht_freigegeben|wartet|teilweise|auto_freigegeben|manuell_freigegeben|gesperrt`)
-- `finance_lock` bool, `released_at`, `released_by`, `responsible_user_id`, `note`
-- `created_at, updated_at, created_by, updated_by`
-- Unique `(source, source_ref)` für Idempotenz; Trigger `set_updated_at`.
+## 1. Menüstruktur (FINANCE & CONTROLLING)
 
-**`finance_deposit_bookings`** – einzelne Zahlungen:
-- `id, deposit_id, booking_date, paid_amount, payment_method` (Überweisung/Bar/EC/Kreditkarte/Sonstige), `payment_reference, proof_file_path, note, booked_by, created_at`.
-- AFTER INSERT/DELETE Trigger → aggregiert `paid_amount`, setzt `status`, ruft Freigabe-Prüfung.
+Neue Einträge unter dem bestehenden Finance-Bereich in `src/components/AppLayout.tsx`:
 
-**`finance_deposit_history`** – Audit-Log:
-- `id, deposit_id, action, old_status, new_status, old_release_status, new_release_status, user_id, note, created_at`.
+- Kassenbuch → `/finance/kassenbuch`
+- Buchungsjournal → `/finance/buchungsjournal`
+- Zahlungsübersicht → `/finance/zahlungsuebersicht`
+- Bankbuchungen → `/finance/bankbuchungen`
+- Export DATEV → `/finance/datev-export` (neue Seite; bestehende Edge Function `finance-datev-export` wird wiederverwendet)
+- Audit & Revision → `/finance/audit-revision`
 
-**`finance_deposit_notifications`** – Outbox für künftige Kanäle (Email/SMS/Teams/Slack/3CX), jetzt nur intern via `mail_internal_messages` falls vorhanden, sonst Eintrag in Outbox.
+Bestehende Punkte (Dashboard, Offene Anzahlungen, …) bleiben unverändert.
 
-GRANTS: SELECT/INSERT/UPDATE für `authenticated`, ALL für `service_role`. RLS:
-- Lesen: `can_view_finance_module()`
-- Schreiben/Buchen: `can_access_finance_module()` (Super Admin, Admin, Finance, Geschäftsführung)
-- Sperre setzen: nur Super Admin/Admin/Finance/Geschäftsführung
-- DELETE: nur Super Admin
+## 2. Neue Datenbankobjekte (Migration)
 
-Trigger `apply_deposit_release()` SECURITY DEFINER: prüft Auftrag (nicht storniert, nicht geliefert) + `finance_lock=false` + `open_amount<=0` → setzt `release_status='auto_freigegeben'`, `released_at/by`, schreibt History; bei Teilzahlung → `teilweise`.
+Alle Tabellen `public.*`, mit GRANTs + RLS. Schreibrechte: Super Admin, Admin, Finance, Geschäftsführung (über bestehende `can_access_finance_module()`). Lese-Rechte über `can_view_finance_module()`.
 
-Storage Bucket `finance-deposits` (privat) für Belege.
+### Sequenzen
+- `finance_cashbook_seq` — Buchungsnummer `KB-YYYY-00001`
+- `finance_journal_seq` — Journalnummer `JB-YYYY-000001`
+- `finance_cashbook_closure_seq` — `KA-YYYY-0001`
 
-## 2. Zoho-Bridge (additiv)
+### Tabellen
 
-Neue Edge Function `sync-zoho-deposits`: liest aus bereits importierten `zoho_invoices`/`zoho_recurring_invoices` alle Datensätze, deren `invoice_number` mit `AZ`/`Anzahlung` matcht **oder** `reference_number` einem Order/Offer entspricht, und upsertet sie in `finance_deposits` (`source='zoho'`, `source_ref=zoho_invoice.id`). Bezahlt-Beträge aus Zoho werden in `paid_amount` gespiegelt (nicht in `finance_deposit_bookings`, um echte interne Buchungen sauber zu trennen). Keine Änderung bestehender Sync-Funktionen. Daily Cron 04:15 UTC.
+**finance_cashbook** — Kassenbuch-Einträge
+booking_number, booking_date, booking_time, document_number, booking_type ('einnahme'|'ausgabe'), amount_net, amount_vat, vat_rate, amount_gross, payment_method, cost_center, description, reference, customer_id, supplier_id, attachment_path, status ('aktiv'|'storniert'|'korrigiert'), reversed_by, user_id, tenant_id
 
-Trigger auf bestehender `order_additional_deposits` / `orders.deposit_amount` (AFTER INSERT/UPDATE) erzeugt/aktualisiert AlixWork-Einträge in `finance_deposits` (`source='alixwork'`).
+**finance_cashbook_closures** — Tagesabschluss
+closure_number, closure_date, opening_balance, calculated_balance, counted_balance, difference, note, signature_data (base64 PNG), signed_by, signed_at, status ('offen'|'freigegeben'), released_by, released_at
 
-## 3. UI
+**finance_journal** — Buchungsjournal (append-only)
+journal_number, booking_date, booking_time, tenant_id, source_module ('cashbook'|'bank'|'order'|'invoice'|'deposit'|'payment'|'mahnung'|'zoho'|'po'|'credit_note'|'manual'), source_id, source_table, reference, order_number, invoice_number, document_number, customer_id, supplier_id, vorgang, amount_net, amount_vat, amount_gross, payment_method, account, contra_account, description, status ('aktiv'|'storniert'|'korrigiert'), corrects_journal_id, user_id
 
-Neue Seite `src/pages/Finance/OffeneAnzahlungen.tsx`:
-- PageHeader, KPI-Kacheln (9 Karten laut Vorgabe) via Aggregat-Query
-- Filterleiste (Kunde/Firma/Status/Release/Quelle/Mitarbeiter/Zeitraum/Betrag/Überfällig/Auftrag/Angebot)
-- `InfinityTable` mit allen genannten Spalten, Quell-Badge (AlixWork/Zoho), Status-Badges (Premium Dark/Gold), Fälligkeits-Farben analog `OffenePosten.tsx`
-- Aktionen pro Zeile: **Anzahlung buchen** (Dialog), **Sperre toggeln**, **History**, **Beleg öffnen**
-- Buchungsdialog: Datum, Betrag, Zahlungsart, Referenz, Belegupload (Storage), Vermerk
+**finance_bank_postings** — manuelle Bank-Buchungen (zusätzlich zu bestehenden bank_statements)
+posting_date, value_date, bank_account_id, posting_type ('eingang'|'ausgang'|'lastschrift'|'ruecklastschrift'|'erstattung'), amount, currency, counterparty, iban, purpose, reference, customer_id, supplier_id, invoice_id, status, user_id
 
-Routing: Eintrag in App-Router + Sidebar unter FINANCE („Offene Anzahlungen").
+**finance_audit_trail** — eigenes Audit-Log (kein Overlap mit bestehendem `audit_logs`)
+module, entity_table, entity_id, action ('insert'|'update'|'delete_logical'|'reverse'|'release'), old_data jsonb, new_data jsonb, user_id, ip_address, user_agent, created_at
 
-## 4. Notifications
+### Trigger
+- `assign_*_number` Trigger für Cashbook, Journal, Closure
+- `trg_cashbook_to_journal`: nach INSERT/UPDATE auf `finance_cashbook` automatisch `finance_journal`-Eintrag
+- `trg_bank_posting_to_journal`: dito für `finance_bank_postings`
+- `trg_audit_*`: für Cashbook, Journal, Bank, Closure → `finance_audit_trail`
+- GoBD: BEFORE DELETE Trigger auf `finance_cashbook` und `finance_journal` → RAISE EXCEPTION (kein physisches Löschen, außer Super Admin via RLS-Service-Role).
+- Stornierung: RPC `cashbook_reverse(_id, _reason)` legt Gegenbuchung an und setzt Status auf `storniert`.
 
-Nach Auto-/Manuell-Freigabe: Insert in `mail_internal_messages` (falls Rolle-Routing vorhanden) an Empfänger mit Rollen *Einkauf, Bestellwesen, Operations, Geschäftsführung*. Bestellwesen-Dashboard Task: Insert in vorhandene Tasks/`mail_tasks` mit Titel „Neue Bestellung freigegeben". Email/SMS/Teams/Slack: Outbox-Tabelle vorbereitet, Versand-Hook leer (TODO-Stub).
+### Auto-Verknüpfung in Journal
+Optionaler Helfer-RPC `journal_log(...)` als SECURITY DEFINER für Edge Functions (z. B. Zahlungseingang in `finance_transactions` → zusätzlich Journal-Eintrag), **ohne** bestehende Sync-Funktionen zu verändern. Verknüpfung wird vorerst nur für **neue** Buchungen aus dem neuen Modul aktiviert; bestehende Module bleiben unberührt (additiv). Optionaler Backfill-Edge-Function `finance-journal-backfill` (manuell triggerbar) liest read-only aus `finance_transactions`, `finance_deposits`, `finance_bank_lines` und befüllt Journal — ohne Quelltabellen zu ändern.
 
-## 5. Rollen/Rechte
+## 3. Frontend
 
-Nutzt bestehende SECURITY DEFINER Funktionen `can_view_finance_module()` / `can_access_finance_module()`. Keine neuen Rollen.
+Neue Pages unter `src/pages/Finance/`:
 
-## 6. Tech-Details
+- `Kassenbuch.tsx` — Tabelle, Neuanlage-Dialog, Storno, Beleg-Upload (Storage-Bucket `finance-cashbook`), Filter (Datum, Typ, Zahlungsart), Summen je Tag/Monat/Jahr, Soll-/Istbestand-Anzeige.
+- `KassenbuchAbschluss.tsx` (Dialog) — Tagesabschluss mit Signatur-Pad (`react-signature-canvas` bereits im Projekt? sonst Canvas-Eigenbau).
+- `Buchungsjournal.tsx` — read-only Liste mit Filter (Modul, Datum, Mandant, Kunde, Status), Detail-Drawer mit Historie/Korrekturen.
+- `Zahlungsuebersicht.tsx` — aggregiert vorhandene Daten (Rechnungen offen, Anzahlungen offen, Eingänge, Bar/Bank). Reine Read-only-Konsolidierung — keine Datenmutationen.
+- `Bankbuchungen.tsx` — CRUD auf `finance_bank_postings`, Auto-Matching-Vorschläge zu offenen Rechnungen.
+- `DatevExport.tsx` — UI für bestehende Edge Function `finance-datev-export` plus CSV/Excel/PDF-Optionen über Journal.
+- `AuditRevision.tsx` — Liste `finance_audit_trail` mit Filter & Diff-Viewer.
 
-- TypeScript-Hook `useFinanceDeposits` mit React Query
-- Buchungsmutation ruft RPC `finance_deposit_book(p_deposit_id, p_amount, p_method, p_ref, p_date, p_proof, p_note)` (SECURITY DEFINER, prüft Rechte, schreibt Booking + History)
-- RPC `finance_deposit_set_lock(p_id, p_lock, p_note)`
-- RPC `finance_deposit_manual_release(p_id, p_note)`
+Dashboard-KPIs: Erweiterung von `src/pages/Finance/Dashboard.tsx` um Kassenbestand, Bankbestand, Einnahmen/Ausgaben heute/Monat/Jahr (aus neuen Tabellen). Bestehende KPIs bleiben.
 
-## Nicht im Scope
-- Aktiver Email-/SMS-/Teams-/Slack-Versand (nur Struktur)
-- Änderungen an bestehenden Zoho-Sync, Bestell- oder Finance-Workflows
-- Mahnprozesse (Architektur vorbereitet)
+## 4. Storage
+
+Neuer privater Bucket `finance-cashbook` für Belege; RLS-Policies auf `storage.objects` analog zu bestehenden Finance-Buckets.
+
+## 5. Edge Functions
+
+- `finance-journal-backfill` (manueller Sync, optional)
+- `finance-cashbook-export` (CSV/Excel/PDF)
+- Bestehende `finance-datev-export` unverändert wiederverwenden.
+
+## 6. Rollen / RLS
+
+Reuse von `can_access_finance_module()` (Schreiben) und `can_view_finance_module()` (Lesen). DELETE nur Super Admin (Memory-Regel) — aber durch BEFORE-DELETE-Trigger blockiert; Stornierung statt Löschen.
+
+## 7. Nicht-Ziele
+
+- Keine Änderung an `finance_transactions`, `finance_deposits`, `finance_bank_lines`, Zoho-Sync, bestehenden DATEV-Settings.
+- Keine Veränderung der bestehenden Menüpunkte / Routen.
+- Kein Backfill ohne explizite User-Aktion.
+
+## Lieferreihenfolge
+
+1. Migration (Tabellen, Sequenzen, Trigger, RLS, Storage-Bucket via separate Tool).
+2. Routen + Menüeinträge.
+3. Pages: Kassenbuch → Buchungsjournal → Bankbuchungen → Zahlungsübersicht → DATEV → Audit.
+4. Dashboard-KPI-Erweiterung.
+5. Edge Functions (Export/Backfill).
+
+Soll ich so starten?
