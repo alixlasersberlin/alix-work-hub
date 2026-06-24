@@ -59,13 +59,22 @@ Deno.serve(async (req) => {
     const EXCLUDED = new Set(['storniert','abgesagt','geliefert']);
     const { data: ordersAll, error: ordErr } = await supabase
       .from('orders')
-      .select('id, order_number, customer_id, customer_name, deposit_amount, order_status, created_at')
+      .select('id, order_number, customer_id, deposit_amount, order_status, deposit_booking_date, order_date')
       .gt('deposit_amount', 0)
       .limit(5000);
     if (ordErr) errors.push(`orders query: ${ordErr.message}`);
     const orders = (ordersAll ?? []).filter((o: any) => !EXCLUDED.has(o.order_status));
 
+    const allCustomerIds = [...new Set([
+      ...orders.map((o: any) => o.customer_id).filter(Boolean),
+    ])];
+    const { data: custs } = allCustomerIds.length
+      ? await supabase.from('customers').select('id, company_name, contact_name').in('id', allCustomerIds)
+      : { data: [] as any[] };
+    const cmap = new Map((custs ?? []).map((c: any) => [c.id, c]));
+
     for (const o of orders) {
+      const c: any = cmap.get((o as any).customer_id) ?? {};
       const gross = Number((o as any).deposit_amount) || 0;
       const net = gross / 1.19;
       const vat = gross - net;
@@ -76,11 +85,13 @@ Deno.serve(async (req) => {
         order_id: (o as any).id,
         order_number: (o as any).order_number,
         customer_id: (o as any).customer_id,
-        customer_name: (o as any).customer_name,
-        company_name: (o as any).customer_name,
+        customer_name: c.company_name ?? c.contact_name ?? null,
+        company_name: c.company_name ?? null,
+        contact_name: c.contact_name ?? null,
         gross_amount: gross,
         net_amount: Math.round(net * 100) / 100,
         vat_amount: Math.round(vat * 100) / 100,
+        issue_date: (o as any).order_date ?? null,
         currency: 'EUR',
       };
       const { data: up, error } = await supabase
@@ -103,8 +114,13 @@ Deno.serve(async (req) => {
     if (addl?.length) {
       const orderIds = [...new Set(addl.map((a: any) => a.order_id))];
       const { data: ordsMap } = await supabase
-        .from('orders').select('id, order_number, customer_id, customer_name, order_status').in('id', orderIds);
+        .from('orders').select('id, order_number, customer_id, order_status').in('id', orderIds);
       const omap = new Map((ordsMap ?? []).map((o: any) => [o.id, o]));
+      const addlCustIds = [...new Set((ordsMap ?? []).map((o: any) => o.customer_id).filter(Boolean))];
+      const { data: addlCusts } = addlCustIds.length
+        ? await supabase.from('customers').select('id, company_name, contact_name').in('id', addlCustIds)
+        : { data: [] as any[] };
+      const addlCmap = new Map((addlCusts ?? []).map((c: any) => [c.id, c]));
 
       for (const a of addl) {
         const o: any = omap.get((a as any).order_id);
