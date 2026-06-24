@@ -319,7 +319,7 @@ Deno.serve(async (req) => {
     await supabase.functions.invoke("send-transactional-email", {
       body: {
         templateName: "sales-lead-internal-notification",
-        recipientEmail: "homebln@icloud.com",
+        recipientEmail: "support@alix-lasers.com",
         idempotencyKey: `sales-lead-internal-${lead.id}`,
         extraCc: ["rde@alix-lasers.com"],
         skipDefaultCopies: true,
@@ -350,14 +350,14 @@ Deno.serve(async (req) => {
     console.warn("internal lead notification failed", e);
   }
 
-  // Bestätigungs-Email an den Anfragenden (BCC an homebln@icloud.com)
+  // Bestätigungs-Email an den Anfragenden (BCC an support@alix-lasers.com)
   try {
     await supabase.functions.invoke("send-transactional-email", {
       body: {
         templateName: "sales-wizard-confirmation",
         recipientEmail: input.email,
         idempotencyKey: `sales-wizard-${lead.id}`,
-        extraCc: ["homebln@icloud.com"],
+        extraCc: ["support@alix-lasers.com"],
         skipDefaultCopies: true,
         templateData: {
           first_name: input.first_name,

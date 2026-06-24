@@ -225,9 +225,9 @@ export default function SalesLeadDetail() {
               const { error } = await supabase.functions.invoke('send-transactional-email', {
                 body: {
                   templateName: 'sales-lead-internal-notification',
-                  recipientEmail: lead.email || 'homebln@icloud.com',
+                  recipientEmail: lead.email || 'support@alix-lasers.com',
                   idempotencyKey: `sales-lead-resend-${lead.id}-${Date.now()}`,
-                  extraCc: ['homebln@icloud.com', 'rde@alix-lasers.com'].filter((e) => e !== lead.email),
+                  extraCc: ['support@alix-lasers.com', 'rde@alix-lasers.com'].filter((e) => e !== lead.email),
                   skipDefaultCopies: true,
                   templateData: {
                     lead_id: lead.id,

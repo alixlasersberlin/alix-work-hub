@@ -1,7 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { workOrderPdfBase64 } from '@/lib/repair/work-order-pdf';
 
-const REPAIR_NOTIFY_BLOCKLIST = new Set(['homebln@icloud.com']);
+const REPAIR_NOTIFY_BLOCKLIST = new Set(['support@alix-lasers.com']);
 const REPAIR_NOTIFY_RECIPIENTS = [
   'jh@alix-operation.de',
   's.galushchak@alix-operation.de',

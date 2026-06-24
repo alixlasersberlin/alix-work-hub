@@ -136,7 +136,7 @@ Deno.serve(async (req) => {
       await supabase.functions.invoke("send-transactional-email", {
         body: {
           templateName: "sales-lead-internal-notification",
-          recipientEmail: "homebln@icloud.com",
+          recipientEmail: "support@alix-lasers.com",
           idempotencyKey: `sales-lead-internal-${inserted?.id}`,
           extraCc: ["rde@alix-lasers.com"],
           skipDefaultCopies: true,
