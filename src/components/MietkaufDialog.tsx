@@ -110,16 +110,21 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
   }, [order?.id, order?.order_number, open]);
 
   // Laufzeit (Monate) direkt aus dem Auftrag übernehmen
-  // Zoho liefert sie in raw_data.payment_terms_label, z.B. "Alix Flex 12" / "Alix Flex 24"
+  // Zoho: raw_data.payment_terms_label = "Alix Flex 60" → 60 Monate
+  //       raw_data.payment_terms       = Tage (z.B. 1825 = 60 Monate)
   useEffect(() => {
     if (!open || !order) return;
     const raw = order.raw_data || {};
     const label: string = String(raw.payment_terms_label || raw.payment_terms_name || '');
+    let months = 0;
     const m = label.match(/(\d+)\s*$/);
-    if (m) {
-      const months = Number(m[1]);
-      if (months > 0) setTerm(months);
+    if (m) months = Number(m[1]);
+    if (!months) {
+      const days = Number(raw.payment_terms);
+      if (days >= 300 && days % 30 < 35) months = Math.round(days / 365 * 12);
     }
+    console.log('[MietkaufDialog] order term →', { label, raw_payment_terms: raw.payment_terms, months });
+    if (months > 0) setTerm(months);
   }, [open, order?.id]);
 
   const isDE = region === 'DE';
