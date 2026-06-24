@@ -118,9 +118,7 @@ Deno.serve(async (req) => {
     const norm = archive.trim().toLowerCase()
     if (!bccEmails.some(e => e.trim().toLowerCase() === norm)) bccEmails.push(archive)
   }
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
-  }
+
 
   if (!templateName) {
     return new Response(JSON.stringify({ error: 'templateName is required' }), {
