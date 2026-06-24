@@ -368,9 +368,20 @@ export default function OffeneAnzahlungen() {
                           {r.finance_lock ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
                         </Button>
                       )}
-                      {canWrite && r.release_status !== 'auto_freigegeben' && r.release_status !== 'manuell_freigegeben' && (
-                        <Button size="sm" variant="outline" onClick={() => manualRelease(r)} title="Manuell freigeben">
-                          <CheckCircle2 className="w-3.5 h-3.5" />
+                      {canWrite && r.order_id && (
+                        <Button size="sm" variant="outline" onClick={() => sendReminder(r, 'email')}
+                          disabled={sendingId === r.id + 'email'} title="Anzahlungs-Erinnerung per E-Mail senden">
+                          {sendingId === r.id + 'email'
+                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            : <Mail className="w-3.5 h-3.5" />}
+                        </Button>
+                      )}
+                      {canWrite && r.order_id && (
+                        <Button size="sm" variant="outline" onClick={() => sendReminder(r, 'sms')}
+                          disabled={sendingId === r.id + 'sms'} title="Anzahlungs-Erinnerung per SMS senden">
+                          {sendingId === r.id + 'sms'
+                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            : <MessageSquare className="w-3.5 h-3.5" />}
                         </Button>
                       )}
                       <Button size="sm" variant="ghost" onClick={() => openHistory(r)} title="Historie">
