@@ -732,6 +732,7 @@ export default function OrderDetail() {
                     <TableHead className="text-right">Rabatt</TableHead>
                     <TableHead className="text-right">Steuer</TableHead>
                     <TableHead className="text-right">Betrag</TableHead>
+                    {hasRole('Super Admin') && <TableHead className="w-10"></TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
