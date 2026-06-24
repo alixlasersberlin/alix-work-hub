@@ -345,6 +345,17 @@ const navItems: NavItem[] = [
         ],
       },
       {
+        path: '/finance/kassenbuch', label: 'KASSENBUCH & JOURNAL', icon: BookOpen, roles: ['Admin', 'Super Admin', 'Finance', 'Geschäftsführung'],
+        children: [
+          { path: '/finance/kassenbuch', label: 'Kassenbuch', icon: BookOpen, roles: ['Admin', 'Super Admin', 'Finance', 'Geschäftsführung'] },
+          { path: '/finance/buchungsjournal', label: 'Buchungsjournal', icon: ScrollText, roles: ['Admin', 'Super Admin', 'Finance', 'Geschäftsführung'] },
+          { path: '/finance/zahlungsuebersicht', label: 'Zahlungsübersicht', icon: Wallet, roles: ['Admin', 'Super Admin', 'Finance', 'Geschäftsführung'] },
+          { path: '/finance/bankbuchungen', label: 'Bankbuchungen', icon: Landmark, roles: ['Admin', 'Super Admin', 'Finance', 'Geschäftsführung'] },
+          { path: '/finance/datev-export', label: 'Export DATEV', icon: FileDown, roles: ['Admin', 'Super Admin', 'Finance', 'Geschäftsführung'] },
+          { path: '/finance/audit-revision', label: 'Audit & Revision', icon: ShieldCheck, roles: ['Admin', 'Super Admin', 'Finance', 'Geschäftsführung'] },
+        ],
+      },
+      {
         path: '/finance/raten', label: 'RATENZAHLER', icon: ScrollText, roles: ['Admin', 'Super Admin', 'Finance', 'Finanzierungen', 'Order'],
         children: [
           { path: '/finance/wiederkehrende-zahler', label: 'Wiederkehrende Zahler', icon: Repeat, roles: ['Admin', 'Super Admin', 'Finance'] },
