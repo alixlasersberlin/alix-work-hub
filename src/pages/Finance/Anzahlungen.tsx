@@ -174,17 +174,29 @@ export default function FinanceAnzahlungen() {
   useEffect(() => {
     (async () => {
       try {
-        const [txs, docsRes] = await Promise.all([
+        const [txs, docsRes, ordersRes, addDepRes] = await Promise.all([
           getTransactions({ transaction_type: 'Anzahlung' }),
           supabase
             .from('order_documents')
             .select('id, order_id, file_name, document_type, created_at, download_token, file_path, orders:order_id(order_number, deposit_amount, currency, total_amount)')
-            .or('document_type.ilike.%anzahlung%,file_name.ilike.%anzahlung%')
+            .or('document_type.ilike.%anzahlung%,file_name.ilike.%anzahlung%,file_name.ilike.AZ%')
             .order('created_at', { ascending: false }),
+          supabase
+            .from('orders')
+            .select('id, order_number, deposit_amount, currency, order_date, customer_name')
+            .gt('deposit_amount', 0)
+            .order('order_date', { ascending: false })
+            .limit(2000),
+          supabase
+            .from('order_additional_deposits')
+            .select('id, order_id, amount, booking_date, note, geleistet, orders:order_id(order_number, currency)')
+            .order('booking_date', { ascending: false }),
         ]);
+
         const txList = txs || [];
         const seenOrderIds = new Set(txList.map((t: any) => t.order_id).filter(Boolean));
         const seenFilePaths = new Set(txList.map((t: any) => t.file_path).filter(Boolean));
+
         const docRows = (docsRes.data || [])
           .filter((d: any) => !seenFilePaths.has(d.file_path))
           .filter((d: any, idx: number, arr: any[]) =>
@@ -205,7 +217,29 @@ export default function FinanceAnzahlungen() {
               download_token: d.download_token,
             };
           });
-        const merged = [...txList, ...docRows].sort((a: any, b: any) =>
+
+        const docOrderIds = new Set((docsRes.data || []).map((d: any) => d.order_id).filter(Boolean));
+        const orderRows = (ordersRes.data || [])
+          .filter((o: any) => !seenOrderIds.has(o.id) && !docOrderIds.has(o.id))
+          .map((o: any) => ({
+            id: `ord-${o.id}`,
+            order_id: o.id,
+            reference: `AZ-${o.order_number || ''}`,
+            booking_date: o.order_date ? String(o.order_date).slice(0, 10) : null,
+            amount: Number(o.deposit_amount || 0),
+            notes: `Auftrag ${o.order_number || '—'}${o.customer_name ? ` · ${o.customer_name}` : ''}`,
+          }));
+
+        const addDepRows = (addDepRes.data || []).map((a: any) => ({
+          id: `add-${a.id}`,
+          order_id: a.order_id,
+          reference: `AZ+ ${a.orders?.order_number || ''}`.trim(),
+          booking_date: a.booking_date ? String(a.booking_date).slice(0, 10) : null,
+          amount: Number(a.amount || 0),
+          notes: `Zusätzliche Anzahlung${a.geleistet ? ' (geleistet)' : ''}${a.note ? ` · ${a.note}` : ''}`,
+        }));
+
+        const merged = [...txList, ...docRows, ...orderRows, ...addDepRows].sort((a: any, b: any) =>
           String(b.booking_date || '').localeCompare(String(a.booking_date || ''))
         );
         setRows(merged);
