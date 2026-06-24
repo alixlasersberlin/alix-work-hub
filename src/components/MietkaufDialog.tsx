@@ -97,6 +97,17 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
   const [region, setRegion] = useState<'DE' | 'EU'>(detectedRegion);
   useEffect(() => { setRegion(detectedRegion); }, [detectedRegion]);
 
+  // Prefill aus Auftragsdaten beim Öffnen / wenn Auftrag wechselt
+  useEffect(() => {
+    if (!order) return;
+    const total = order.total ?? order.total_amount ?? order.amount ?? order.grand_total;
+    if (total != null && !kaufpreis) setKaufpreis(String(Number(total).toFixed(2)));
+    const dep = order.deposit_amount ?? order.deposit ?? order.anzahlung;
+    if (dep != null && !anzahlung) setAnzahlung(String(Number(dep).toFixed(2)));
+    if (!geraetModell) setGeraetModell(getDeviceModel(order));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [order?.id, order?.order_number, open]);
+
   const isDE = region === 'DE';
   const flag = isDE ? '🇩🇪' : '🇪🇺';
   const priceLabel = isDE ? 'brutto' : 'netto';
