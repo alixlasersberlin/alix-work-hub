@@ -56,14 +56,16 @@ Deno.serve(async (req) => {
     }
 
     // ---- 2) AlixWork orders with deposit_amount > 0 ----
-    const { data: orders } = await supabase
+    const EXCLUDED = new Set(['storniert','abgesagt','geliefert']);
+    const { data: ordersAll, error: ordErr } = await supabase
       .from('orders')
       .select('id, order_number, customer_id, customer_name, deposit_amount, order_status, created_at')
       .gt('deposit_amount', 0)
-      .not('order_status', 'in', '("storniert","abgesagt","geliefert")')
       .limit(5000);
+    if (ordErr) errors.push(`orders query: ${ordErr.message}`);
+    const orders = (ordersAll ?? []).filter((o: any) => !EXCLUDED.has(o.order_status));
 
-    for (const o of orders ?? []) {
+    for (const o of orders) {
       const gross = Number((o as any).deposit_amount) || 0;
       const net = gross / 1.19;
       const vat = gross - net;
