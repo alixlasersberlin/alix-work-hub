@@ -11,8 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   Plus, Loader2, Factory, Users as UsersIcon, FileText, Pencil, Trash2, AlertTriangle,
   Search, Calendar, Truck, User, Package, Hash, ArrowUpDown, CheckCircle2, XCircle, Clock, Mail,
-  Download, FileDown,
+  Download, FileDown, CheckSquare, Square,
 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { sendProductionOrderEmail } from '@/lib/send-production-order-email';
 import { toast } from 'sonner';
 import { format, differenceInCalendarDays, isValid } from 'date-fns';
@@ -359,7 +360,22 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
 
   const { pageSize, setPageSize, page, setPage, totalPages, paged, total } = usePagination(filtered, 20);
 
-  const exportRows = () => filtered.map((r: any) => ({
+  // ===== Multi-Select =====
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const toggleOne = (id: string) => setSelected(prev => {
+    const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n;
+  });
+  const allFilteredSelected = filtered.length > 0 && filtered.every(r => selected.has(r.id));
+  const toggleAllFiltered = () => setSelected(prev => {
+    if (allFilteredSelected) {
+      const n = new Set(prev); filtered.forEach(r => n.delete(r.id)); return n;
+    }
+    const n = new Set(prev); filtered.forEach(r => n.add(r.id)); return n;
+  });
+  const clearSelection = () => setSelected(new Set());
+  const selectedRows = useMemo(() => filtered.filter(r => selected.has(r.id)), [filtered, selected]);
+
+  const exportRows = (source?: any[]) => (source ?? filtered).map((r: any) => ({
     bestellnummer: r.display_order_number || '',
     auftragsnummer: r.order_number || '',
     kunde: r.customer_name_snapshot || '',
@@ -379,8 +395,8 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
     erstellt_am: r.created_at ? format(new Date(r.created_at), 'dd.MM.yyyy HH:mm') : '',
   }));
 
-  const exportCSV = () => {
-    const data = exportRows();
+  const exportCSV = (source?: any[]) => {
+    const data = exportRows(source);
     if (data.length === 0) { toast.info('Keine Daten zum Exportieren'); return; }
     const headers = Object.keys(data[0]);
     const escape = (v: any) => {
@@ -401,8 +417,8 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
     toast.success(`${data.length} Bestellungen exportiert`);
   };
 
-  const exportPDF = () => {
-    const data = exportRows();
+  const exportPDF = (source?: any[]) => {
+    const data = exportRows(source);
     if (data.length === 0) { toast.info('Keine Daten zum Exportieren'); return; }
     const doc = createPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
     const pageW = 297, pageH = 210, marginX = 10;
@@ -487,10 +503,10 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
         meta={<InfinityStatusBadge kind="done" label={`${filtered.length}`} />}
         actions={
           <>
-            <Button variant="outline" size="sm" onClick={exportCSV} title="Als CSV herunterladen">
+            <Button variant="outline" size="sm" onClick={() => exportCSV()} title="Als CSV herunterladen (alle gefilterten)">
               <FileDown className="w-4 h-4 mr-2" /> CSV
             </Button>
-            <Button variant="outline" size="sm" onClick={exportPDF} title="Als PDF herunterladen">
+            <Button variant="outline" size="sm" onClick={() => exportPDF()} title="Als PDF herunterladen (alle gefilterten)">
               <Download className="w-4 h-4 mr-2" /> PDF
             </Button>
             {!isReclamation && (
@@ -584,6 +600,29 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
         </div>
       </Card>
 
+      {/* Selektions-Toolbar */}
+      {!loading && filtered.length > 0 && (
+        <Card className="p-2.5 flex flex-wrap items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={toggleAllFiltered} className="h-8 gap-2">
+            {allFilteredSelected ? <CheckSquare className="w-4 h-4 text-primary" /> : <Square className="w-4 h-4" />}
+            {allFilteredSelected ? 'Auswahl aufheben' : 'Alle (gefiltert) auswählen'}
+          </Button>
+          <span className="text-xs text-muted-foreground">
+            {selected.size} ausgewählt
+          </span>
+          <div className="flex-1" />
+          <Button variant="outline" size="sm" disabled={selected.size === 0} onClick={() => exportCSV(selectedRows)}>
+            <FileDown className="w-4 h-4 mr-2" /> CSV (Auswahl)
+          </Button>
+          <Button variant="outline" size="sm" disabled={selected.size === 0} onClick={() => exportPDF(selectedRows)}>
+            <Download className="w-4 h-4 mr-2" /> PDF (Auswahl)
+          </Button>
+          {selected.size > 0 && (
+            <Button variant="ghost" size="sm" onClick={clearSelection} className="h-8">Zurücksetzen</Button>
+          )}
+        </Card>
+      )}
+
       {/* Liste */}
       {loading ? (
         <Card className="p-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-primary" /></Card>
@@ -601,7 +640,7 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
               const blocked = r.related_order_status === 'Hold' || r.related_order_status === 'Anwalt'
                 ? r.related_order_status : null;
               return (
-                <Card key={r.id} className={cn("p-3.5 hover:border-primary/40 transition-colors", blocked && "border-destructive/60")}>
+                <Card key={r.id} className={cn("p-3.5 hover:border-primary/40 transition-colors", blocked && "border-destructive/60", selected.has(r.id) && "border-primary/60 ring-1 ring-primary/30")}>
                   {blocked && (
                     <div className="mb-2 -mt-1 -mx-1 px-3 py-1.5 rounded-md bg-destructive text-destructive-foreground text-xs font-semibold uppercase tracking-wide text-center">
                       Auftrag: {blocked}
@@ -609,6 +648,7 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
                   )}
 
                   <div className="flex items-start justify-between gap-2 mb-2">
+                    <Checkbox checked={selected.has(r.id)} onCheckedChange={() => toggleOne(r.id)} className="mt-0.5" aria-label="Auswählen" />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mb-0.5">
                         <Hash className="w-3 h-3" />
@@ -698,6 +738,9 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
               <table className="w-full text-sm">
                 <thead className="bg-muted/40 border-b border-border">
                   <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground">
+                    <th className="p-3 font-medium w-8">
+                      <Checkbox checked={allFilteredSelected} onCheckedChange={toggleAllFiltered} aria-label="Alle auswählen" />
+                    </th>
                     <th className="p-3 font-medium">Nummer</th>
                     <th className="p-3 font-medium">{t.intern}</th>
                     <th className="p-3 font-medium">{t.supplier}</th>
@@ -718,7 +761,10 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
                     const blocked = r.related_order_status === 'Hold' || r.related_order_status === 'Anwalt'
                       ? r.related_order_status : null;
                     return (
-                      <tr key={r.id} className={cn("border-b border-border last:border-0 hover:bg-muted/20 transition-colors", blocked && "bg-destructive/5")}>
+                      <tr key={r.id} className={cn("border-b border-border last:border-0 hover:bg-muted/20 transition-colors", blocked && "bg-destructive/5", selected.has(r.id) && "bg-primary/5")}>
+                        <td className="p-3 align-top">
+                          <Checkbox checked={selected.has(r.id)} onCheckedChange={() => toggleOne(r.id)} aria-label="Auswählen" />
+                        </td>
                         <td className="p-3">
                           {blocked && (
                             <div className="mb-1 inline-block px-2 py-0.5 rounded bg-destructive text-destructive-foreground text-[10px] font-semibold uppercase tracking-wide">
