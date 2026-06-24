@@ -166,6 +166,27 @@ export default function OffeneAnzahlungen() {
     else { toast.success('Manuell freigegeben'); await load(); }
   };
 
+  const [sendingId, setSendingId] = useState<string | null>(null);
+  const sendReminder = async (d: Deposit, channel: 'email' | 'sms') => {
+    if (!d.order_id) { toast.error('Kein Auftrag verknüpft'); return; }
+    if (!confirm(channel === 'email'
+      ? `Anzahlungs-Erinnerung per E-Mail an ${d.company_name || d.customer_name || 'Kunde'} senden?`
+      : `Anzahlungs-Erinnerung per SMS an ${d.company_name || d.customer_name || 'Kunde'} senden?`)) return;
+    setSendingId(d.id + channel);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-anzahlung-mahnung', {
+        body: { order_id: d.order_id, channel },
+      });
+      if (error) throw error;
+      if (data && data.ok === false) throw new Error(data.error || 'Versand fehlgeschlagen');
+      toast.success(channel === 'email' ? 'E-Mail gesendet' : 'SMS gesendet');
+    } catch (e: any) {
+      toast.error('Fehler: ' + (e?.message ?? 'Unbekannt'));
+    } finally {
+      setSendingId(null);
+    }
+  };
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return rows.filter(r => {
