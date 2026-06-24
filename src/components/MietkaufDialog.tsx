@@ -408,7 +408,7 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
     )}
     {open && (
       <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-background/80 px-4 py-8 backdrop-blur-sm">
-        <div className="relative w-full max-w-lg rounded-lg border border-border bg-background p-6 shadow-lg">
+        <div className="relative w-full max-w-4xl rounded-lg border border-border bg-background p-6 shadow-lg">
           <button
             type="button"
             onClick={() => setOpen(false)}
