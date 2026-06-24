@@ -339,7 +339,7 @@ export default function Lager() {
                     outerRadius={100}
                     innerRadius={55}
                     paddingAngle={2}
-                    label={(e: { name: string; value: number }) => `${e.name}: ${e.value}`}
+                    label={(e: any) => `${e.name}: ${e.value}`}
                   >
                     {chartData.map((c, i) => (
                       <Cell key={i} fill={c.color} />
