@@ -408,7 +408,7 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
     )}
     {open && (
       <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-background/80 px-4 py-8 backdrop-blur-sm">
-        <div className="relative w-full max-w-lg rounded-lg border border-border bg-background p-6 shadow-lg">
+        <div className="relative w-full max-w-4xl rounded-lg border border-border bg-background p-6 shadow-lg">
           <button
             type="button"
             onClick={() => setOpen(false)}
@@ -436,7 +436,9 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
             </div>
           </div>
 
-          <div className="space-y-4 mt-4">
+          <div className="grid md:grid-cols-2 gap-4 mt-4 items-stretch">
+            {/* LEFT: Eingabemaske */}
+            <div className="space-y-4">
             <div>
               <label className="text-sm text-muted-foreground">Gerät Modell</label>
               <Input value={geraetModell} onChange={e => setGeraetModell(e.target.value)} placeholder="z.B. Alix Pro 2000" className="bg-secondary border-border" />
@@ -481,17 +483,6 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
               <Input value={zusatzService} onChange={e => setZusatzService(e.target.value)} placeholder="Optional" className="bg-secondary border-border" />
             </div>
 
-            {isValid && (
-              <div className="rounded-lg bg-secondary/50 border border-border p-3 text-sm space-y-1">
-                <p className="text-muted-foreground">Gesamtbetrag ({priceLabel}): <span className="text-foreground font-medium">{fmtCurrency(kaufpreisNum)}</span></p>
-                <p className="text-muted-foreground">1. Rate / Anzahlung ({priceLabel}): <span className="text-foreground font-medium">{fmtCurrency(anzahlungNum)}</span></p>
-                <p className="text-muted-foreground">Restbetrag ({priceLabel}): <span className="text-foreground font-medium">{fmtCurrency(restBetrag)}</span></p>
-                <p className="text-muted-foreground">Monatliche Rate ({priceLabel}): <span className="text-foreground font-medium">{fmtCurrency(monatlicheRate)}</span></p>
-                <p className="text-muted-foreground">Kaufpreis bei Vertragsende ({priceLabel}): <span className="text-foreground font-medium">{fmtCurrency(kaufpreisEndeNum)}</span></p>
-                <p className="text-muted-foreground">Laufzeit: <span className="text-foreground font-medium">{term} Monate</span></p>
-              </div>
-            )}
-
             <Button
               onClick={async () => {
                 await generatePDF();
@@ -502,6 +493,42 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
             >
               <Download className="w-4 h-4 mr-2" /> PDF erstellen
             </Button>
+            </div>
+
+            {/* RIGHT: Zahlungsberechnung + Artikelliste, gleiche Höhe wie links */}
+            <div className="flex flex-col gap-4 min-h-0 h-full">
+              <div className="rounded-lg bg-secondary/50 border border-border p-3 text-sm space-y-1 shrink-0">
+                <p className="font-medium text-foreground mb-1">Zahlungsberechnung</p>
+                <p className="text-muted-foreground">Gesamtbetrag ({priceLabel}): <span className="text-foreground font-medium">{fmtCurrency(kaufpreisNum)}</span></p>
+                <p className="text-muted-foreground">1. Rate / Anzahlung ({priceLabel}): <span className="text-foreground font-medium">{fmtCurrency(anzahlungNum)}</span></p>
+                <p className="text-muted-foreground">Restbetrag ({priceLabel}): <span className="text-foreground font-medium">{fmtCurrency(restBetrag)}</span></p>
+                <p className="text-muted-foreground">Monatliche Rate ({priceLabel}): <span className="text-foreground font-medium">{fmtCurrency(monatlicheRate)}</span></p>
+                <p className="text-muted-foreground">Kaufpreis bei Vertragsende ({priceLabel}): <span className="text-foreground font-medium">{fmtCurrency(kaufpreisEndeNum)}</span></p>
+                <p className="text-muted-foreground">Laufzeit: <span className="text-foreground font-medium">{term} Monate</span></p>
+              </div>
+
+              <div className="rounded-lg bg-secondary/50 border border-border p-3 text-sm flex-1 min-h-0 flex flex-col">
+                <p className="font-medium text-foreground mb-2 shrink-0">Artikelliste</p>
+                <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-2">
+                  {(order?.items && order.items.length > 0) ? order.items.map((it: any, i: number) => (
+                    <div key={i} className="flex items-start justify-between gap-2 border-b border-border/50 pb-2 last:border-0">
+                      <div className="min-w-0">
+                        <p className="text-foreground truncate">{it.item_name || it.name || '—'}</p>
+                        {it.sku && <p className="text-xs text-muted-foreground truncate">SKU: {it.sku}</p>}
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-foreground">{it.quantity ?? 1} ×</p>
+                        {typeof it.rate === 'number' && (
+                          <p className="text-xs text-muted-foreground">{fmtCurrency(it.rate)}</p>
+                        )}
+                      </div>
+                    </div>
+                  )) : (
+                    <p className="text-muted-foreground text-xs">Keine Artikel vorhanden.</p>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
