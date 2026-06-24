@@ -178,15 +178,21 @@ export default function FinanceAnzahlungen() {
 
   const createMissingPdf = async (row: any) => {
     const orderId: string | null = row?.order_id ?? null;
-    if (!orderId) return null;
+    let order: any = null;
+    if (orderId) {
+      const { data, error: orderErr } = await supabase
+        .from('orders')
+        .select('id, order_number, customer_id, currency, deposit_amount, total_amount')
+        .eq('id', orderId)
+        .maybeSingle();
+      if (orderErr) throw orderErr;
+      order = data;
+    }
 
-    const { data: order, error: orderErr } = await supabase
-      .from('orders')
-      .select('id, order_number, customer_id, currency, deposit_amount, total_amount')
-      .eq('id', orderId)
-      .maybeSingle();
-    if (orderErr) throw orderErr;
-    if (!order) return null;
+    if (!order) {
+      const orderNo = String(row?.reference || row?.notes || '').match(/SO-\d+|\d{4}-\d{5}|\d{6,}/)?.[0] ?? '';
+      order = { id: orderId, order_number: orderNo, customer_id: null, currency: 'EUR', deposit_amount: row?.amount, total_amount: row?.amount };
+    }
 
     let customer: any = null;
     if ((order as any).customer_id) {
@@ -200,6 +206,10 @@ export default function FinanceAnzahlungen() {
     }
 
     const { blob, fileName } = await buildDepositPdf(row, order, customer);
+    if (!orderId) {
+      return { direct_url: URL.createObjectURL(blob), file_name: fileName };
+    }
+
     try {
       const safeRef = String(row?.reference || 'AZ').replace(/[^\w.-]+/g, '_');
       const filePath = `${orderId}/anzahlung/${Date.now()}_${safeRef}.pdf`;
@@ -266,7 +276,7 @@ export default function FinanceAnzahlungen() {
           .limit(1);
         doc = data?.[0] ?? null;
       }
-      if (!doc && orderId) {
+      if (!doc) {
         doc = await createMissingPdf(row);
       }
       let url: string | null = null;
