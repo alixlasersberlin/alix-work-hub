@@ -126,10 +126,7 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
         if (m) maxTerm = Math.max(maxTerm, Number(m[1]));
       }
       if (maxTerm > 0) {
-        // auf nächstgelegene erlaubte Laufzeit runden
-        const allowed = [12, 24, 36, 48, 60];
-        const closest = allowed.reduce((a, b) => Math.abs(b - maxTerm) < Math.abs(a - maxTerm) ? b : a, allowed[0]);
-        setTerm(closest);
+        setTerm(maxTerm);
       }
     })();
   }, [open, order?.id]);
@@ -495,8 +492,8 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {TERMS.map(t => (
-                    <SelectItem key={t} value={String(t)}>{t / 12} {t === 12 ? 'Jahr' : 'Jahre'} ({t} Monate)</SelectItem>
+                  {Array.from(new Set([...TERMS, term])).sort((a, b) => a - b).map(t => (
+                    <SelectItem key={t} value={String(t)}>{(t / 12).toFixed(t % 12 === 0 ? 0 : 1)} {t === 12 ? 'Jahr' : 'Jahre'} ({t} Monate)</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
