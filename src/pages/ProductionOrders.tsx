@@ -761,7 +761,10 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
                     const blocked = r.related_order_status === 'Hold' || r.related_order_status === 'Anwalt'
                       ? r.related_order_status : null;
                     return (
-                      <tr key={r.id} className={cn("border-b border-border last:border-0 hover:bg-muted/20 transition-colors", blocked && "bg-destructive/5")}>
+                      <tr key={r.id} className={cn("border-b border-border last:border-0 hover:bg-muted/20 transition-colors", blocked && "bg-destructive/5", selected.has(r.id) && "bg-primary/5")}>
+                        <td className="p-3 align-top">
+                          <Checkbox checked={selected.has(r.id)} onCheckedChange={() => toggleOne(r.id)} aria-label="Auswählen" />
+                        </td>
                         <td className="p-3">
                           {blocked && (
                             <div className="mb-1 inline-block px-2 py-0.5 rounded bg-destructive text-destructive-foreground text-[10px] font-semibold uppercase tracking-wide">
