@@ -593,6 +593,8 @@ export default function OrderDetail() {
                 ['Rechnungsnummer', displayOrderNumbers.join(', ')],
                 ['Status', order.order_status || 'offen'],
                 ['Betrag', order.total_amount != null ? Number(order.total_amount).toLocaleString('de-DE', { style: 'currency', currency: order.currency || 'EUR' }) : '—'],
+                ['Vereinbarte Anzahlung', order.deposit_amount != null ? Number(order.deposit_amount).toLocaleString('de-DE', { style: 'currency', currency: order.currency || 'EUR' }) : '—'],
+                ['Anzahlung geleistet am', order.deposit_booking_date ? new Date(order.deposit_booking_date).toLocaleDateString('de-DE') : (order.deposit_ok && order.deposit_ok_at ? new Date(order.deposit_ok_at).toLocaleDateString('de-DE') : '—')],
                 ['Währung', order.currency],
                 ['Bestelldatum', order.order_date ? new Date(order.order_date).toLocaleDateString('de-DE') : '—'],
                 ['Quelle', `${sourceFlag(order.source_system)} ${sourceLabel(order.source_system)}`.trim()],
