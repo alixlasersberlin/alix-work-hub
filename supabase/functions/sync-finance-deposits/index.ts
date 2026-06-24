@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
 
       for (const a of addl) {
         const o: any = omap.get((a as any).order_id);
-        if (!o || ['storniert','abgesagt','geliefert'].includes(o.order_status)) continue;
+        if (!o || ['storniert','abgesagt'].includes(o.order_status)) continue;
         const gross = Number((a as any).amount) || 0;
         const net = gross / 1.19;
         const row = {
