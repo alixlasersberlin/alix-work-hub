@@ -3415,6 +3415,48 @@ export type Database = {
           },
         ]
       }
+      finance_audit_trail: {
+        Row: {
+          action: string
+          created_at: string
+          entity_id: string | null
+          entity_table: string
+          id: string
+          ip_address: string | null
+          module: string
+          new_data: Json | null
+          old_data: Json | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          entity_id?: string | null
+          entity_table: string
+          id?: string
+          ip_address?: string | null
+          module: string
+          new_data?: Json | null
+          old_data?: Json | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          entity_id?: string | null
+          entity_table?: string
+          id?: string
+          ip_address?: string | null
+          module?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       finance_automation_runs: {
         Row: {
           automation_id: string | null
@@ -3665,6 +3707,84 @@ export type Database = {
           },
         ]
       }
+      finance_bank_postings: {
+        Row: {
+          amount: number
+          bank_account_id: string | null
+          counterparty: string | null
+          created_at: string
+          currency: string
+          customer_id: string | null
+          iban: string | null
+          id: string
+          invoice_id: string | null
+          posting_date: string
+          posting_type: string
+          purpose: string | null
+          reference: string | null
+          status: string
+          supplier_id: string | null
+          updated_at: string
+          user_id: string | null
+          value_date: string | null
+        }
+        Insert: {
+          amount?: number
+          bank_account_id?: string | null
+          counterparty?: string | null
+          created_at?: string
+          currency?: string
+          customer_id?: string | null
+          iban?: string | null
+          id?: string
+          invoice_id?: string | null
+          posting_date?: string
+          posting_type: string
+          purpose?: string | null
+          reference?: string | null
+          status?: string
+          supplier_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+          value_date?: string | null
+        }
+        Update: {
+          amount?: number
+          bank_account_id?: string | null
+          counterparty?: string | null
+          created_at?: string
+          currency?: string
+          customer_id?: string | null
+          iban?: string | null
+          id?: string
+          invoice_id?: string | null
+          posting_date?: string
+          posting_type?: string
+          purpose?: string | null
+          reference?: string | null
+          status?: string
+          supplier_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+          value_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_bank_postings_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_bank_postings_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       finance_bank_statements: {
         Row: {
           account_name: string | null
@@ -3768,6 +3888,160 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      finance_cashbook: {
+        Row: {
+          amount_gross: number
+          amount_net: number
+          amount_vat: number
+          attachment_path: string | null
+          booking_date: string
+          booking_number: string | null
+          booking_time: string
+          booking_type: string
+          cost_center: string | null
+          created_at: string
+          customer_id: string | null
+          description: string | null
+          document_number: string | null
+          id: string
+          payment_method: string
+          reference: string | null
+          reverses_id: string | null
+          status: string
+          supplier_id: string | null
+          updated_at: string
+          user_id: string | null
+          vat_rate: number
+        }
+        Insert: {
+          amount_gross?: number
+          amount_net?: number
+          amount_vat?: number
+          attachment_path?: string | null
+          booking_date?: string
+          booking_number?: string | null
+          booking_time?: string
+          booking_type: string
+          cost_center?: string | null
+          created_at?: string
+          customer_id?: string | null
+          description?: string | null
+          document_number?: string | null
+          id?: string
+          payment_method?: string
+          reference?: string | null
+          reverses_id?: string | null
+          status?: string
+          supplier_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+          vat_rate?: number
+        }
+        Update: {
+          amount_gross?: number
+          amount_net?: number
+          amount_vat?: number
+          attachment_path?: string | null
+          booking_date?: string
+          booking_number?: string | null
+          booking_time?: string
+          booking_type?: string
+          cost_center?: string | null
+          created_at?: string
+          customer_id?: string | null
+          description?: string | null
+          document_number?: string | null
+          id?: string
+          payment_method?: string
+          reference?: string | null
+          reverses_id?: string | null
+          status?: string
+          supplier_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+          vat_rate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_cashbook_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_cashbook_reverses_id_fkey"
+            columns: ["reverses_id"]
+            isOneToOne: false
+            referencedRelation: "finance_cashbook"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_cashbook_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_cashbook_closures: {
+        Row: {
+          calculated_balance: number
+          closure_date: string
+          closure_number: string | null
+          counted_balance: number
+          created_at: string
+          difference: number
+          id: string
+          note: string | null
+          opening_balance: number
+          released_at: string | null
+          released_by: string | null
+          signature_data: string | null
+          signed_at: string | null
+          signed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          calculated_balance?: number
+          closure_date: string
+          closure_number?: string | null
+          counted_balance?: number
+          created_at?: string
+          difference?: number
+          id?: string
+          note?: string | null
+          opening_balance?: number
+          released_at?: string | null
+          released_by?: string | null
+          signature_data?: string | null
+          signed_at?: string | null
+          signed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          calculated_balance?: number
+          closure_date?: string
+          closure_number?: string | null
+          counted_balance?: number
+          created_at?: string
+          difference?: number
+          id?: string
+          note?: string | null
+          opening_balance?: number
+          released_at?: string | null
+          released_by?: string | null
+          signature_data?: string | null
+          signed_at?: string | null
+          signed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       finance_cashflow_items: {
         Row: {
@@ -4792,6 +5066,118 @@ export type Database = {
             columns: ["target_tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_journal: {
+        Row: {
+          account: string | null
+          amount_gross: number | null
+          amount_net: number | null
+          amount_vat: number | null
+          booking_date: string
+          booking_time: string
+          contra_account: string | null
+          corrects_journal_id: string | null
+          created_at: string
+          customer_id: string | null
+          description: string | null
+          document_number: string | null
+          id: string
+          invoice_number: string | null
+          journal_number: string | null
+          order_number: string | null
+          payment_method: string | null
+          reference: string | null
+          source_id: string | null
+          source_module: string
+          source_table: string | null
+          status: string
+          supplier_id: string | null
+          tenant_id: string | null
+          updated_at: string
+          user_id: string | null
+          vorgang: string | null
+        }
+        Insert: {
+          account?: string | null
+          amount_gross?: number | null
+          amount_net?: number | null
+          amount_vat?: number | null
+          booking_date?: string
+          booking_time?: string
+          contra_account?: string | null
+          corrects_journal_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          description?: string | null
+          document_number?: string | null
+          id?: string
+          invoice_number?: string | null
+          journal_number?: string | null
+          order_number?: string | null
+          payment_method?: string | null
+          reference?: string | null
+          source_id?: string | null
+          source_module: string
+          source_table?: string | null
+          status?: string
+          supplier_id?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+          vorgang?: string | null
+        }
+        Update: {
+          account?: string | null
+          amount_gross?: number | null
+          amount_net?: number | null
+          amount_vat?: number | null
+          booking_date?: string
+          booking_time?: string
+          contra_account?: string | null
+          corrects_journal_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          description?: string | null
+          document_number?: string | null
+          id?: string
+          invoice_number?: string | null
+          journal_number?: string | null
+          order_number?: string | null
+          payment_method?: string | null
+          reference?: string | null
+          source_id?: string | null
+          source_module?: string
+          source_table?: string | null
+          status?: string
+          supplier_id?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+          vorgang?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_journal_corrects_journal_id_fkey"
+            columns: ["corrects_journal_id"]
+            isOneToOne: false
+            referencedRelation: "finance_journal"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_journal_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_journal_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
         ]
@@ -13680,6 +14066,10 @@ export type Database = {
       can_view_backups: { Args: never; Returns: boolean }
       can_view_finance_module: { Args: never; Returns: boolean }
       can_view_mail_audit: { Args: never; Returns: boolean }
+      cashbook_reverse: {
+        Args: { _id: string; _reason?: string }
+        Returns: string
+      }
       check_rate_limit: {
         Args: { _bucket: string; _max: number; _window_seconds: number }
         Returns: boolean
