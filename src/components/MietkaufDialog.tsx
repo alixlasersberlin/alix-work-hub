@@ -109,25 +109,31 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [order?.id, order?.order_number, open]);
 
-  // Laufzeit aus vorhandener Zahlungsberechnung (Ratenplan in finance_records) übernehmen
+  // Laufzeit / Preis / Anzahlung aus Zahlungsberechnung des verknüpften Angebots übernehmen
   useEffect(() => {
     if (!open || !order?.id) return;
+    const customerId = order.customer_id || order.customers?.id || order.customer?.id;
+    if (!customerId) return;
     (async () => {
-      const { data, error } = await supabase
-        .from('finance_records')
-        .select('finance_note')
-        .eq('order_id', order.id)
-        .ilike('finance_note', 'Ratenplan Rate %');
-      if (error || !data?.length) return;
-      // finance_note Format: "Ratenplan Rate N/M"
-      let maxTerm = 0;
-      for (const r of data) {
-        const m = String((r as any).finance_note || '').match(/Ratenplan Rate \d+\/(\d+)/i);
-        if (m) maxTerm = Math.max(maxTerm, Number(m[1]));
-      }
-      if (maxTerm > 0) {
-        setTerm(maxTerm);
-      }
+      const { data } = await supabase
+        .from('offers')
+        .select('offer_number, status, total_gross, payload, created_at')
+        .eq('customer_id', customerId)
+        .in('status', ['order', 'signed', 'draft'])
+        .order('created_at', { ascending: false })
+        .limit(25);
+      if (!data?.length) return;
+      const target = Number(order?.total_amount) || 0;
+      const ranked = [...data].sort((a: any, b: any) => {
+        const da = Math.abs((Number(a.total_gross) || 0) - target);
+        const db = Math.abs((Number(b.total_gross) || 0) - target);
+        return da - db;
+      });
+      const p = (ranked[0]?.payload as any)?.payment;
+      if (!p) return;
+      if (typeof p.term === 'number' && p.term > 0) setTerm(p.term);
+      if (typeof p.price === 'number') setKaufpreis(String(p.price.toFixed(2)));
+      if (typeof p.down === 'number') setAnzahlung(String(p.down.toFixed(2)));
     })();
   }, [open, order?.id]);
 
