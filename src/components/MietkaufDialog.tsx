@@ -109,22 +109,31 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [order?.id, order?.order_number, open]);
 
-  // Laufzeit (Monate) direkt aus dem Auftrag übernehmen
-  // Zoho: raw_data.payment_terms_label = "Alix Flex 60" → 60 Monate
-  //       raw_data.payment_terms       = Tage (z.B. 1825 = 60 Monate)
+  // Laufzeit (Monate) aus dem verknüpften Angebot übernehmen (payload.payment.term)
   useEffect(() => {
     if (!open || !order) return;
-    const raw = order.raw_data || {};
-    const label: string = String(raw.payment_terms_label || raw.payment_terms_name || '');
-    let months = 0;
-    const m = label.match(/(\d+)\s*$/);
-    if (m) months = Number(m[1]);
-    if (!months) {
-      const days = Number(raw.payment_terms);
-      if (days >= 300 && days % 30 < 35) months = Math.round(days / 365 * 12);
-    }
-    console.log('[MietkaufDialog] order term →', { label, raw_payment_terms: raw.payment_terms, months });
-    if (months > 0) setTerm(months);
+    const customerId = order.customer_id || order.customers?.id || order.customer?.id;
+    if (!customerId) return;
+    (async () => {
+      const { data } = await supabase
+        .from('offers')
+        .select('offer_number, status, total_gross, payload, created_at')
+        .eq('customer_id', customerId)
+        .in('status', ['order', 'signed', 'draft'])
+        .order('created_at', { ascending: false })
+        .limit(25);
+      if (!data?.length) return;
+      const target = Number(order?.total_amount) || 0;
+      const ranked = [...data].sort((a: any, b: any) => {
+        const da = Math.abs((Number(a.total_gross) || 0) - target);
+        const db = Math.abs((Number(b.total_gross) || 0) - target);
+        return da - db;
+      });
+      const p = (ranked[0]?.payload as any)?.payment;
+      const months = Number(p?.term);
+      console.log('[MietkaufDialog] term from offer →', { offer: ranked[0]?.offer_number, months });
+      if (months > 0) setTerm(months);
+    })();
   }, [open, order?.id]);
 
   const isDE = region === 'DE';
