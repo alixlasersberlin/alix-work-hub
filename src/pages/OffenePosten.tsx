@@ -380,7 +380,18 @@ export default function OffenePosten() {
                     <TableCell className="text-right">{formatCurrency(i.total, i.currency)}</TableCell>
                     <TableCell className="text-right font-medium">{formatCurrency(i.balance, i.currency)}</TableCell>
                     <TableCell className="text-right">
-                      <Button size="sm" variant="ghost" onClick={() => openEdit(i)} className="gap-1">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // Radix lässt nach Schließen manchmal pointer-events:none auf <body> stehen
+                          document.body.style.pointerEvents = '';
+                          openEdit(i);
+                        }}
+                        className="gap-1 relative z-10"
+                      >
                         <Pencil className="w-3.5 h-3.5" /> Bearbeiten
                       </Button>
                     </TableCell>
