@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Wallet, Loader2, RefreshCw, Lock, Unlock, CheckCircle2, History as HistoryIcon, Upload, FileText } from 'lucide-react';
+import { Wallet, Loader2, RefreshCw, Lock, Unlock, CheckCircle2, History as HistoryIcon, Upload, FileText, Mail, MessageSquare } from 'lucide-react';
 import { format, parseISO, differenceInCalendarDays, startOfMonth, startOfWeek } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { PageHeader } from '@/components/infinity/PageHeader';
@@ -164,6 +164,27 @@ export default function OffeneAnzahlungen() {
     });
     if (error) toast.error('Fehler: ' + error.message);
     else { toast.success('Manuell freigegeben'); await load(); }
+  };
+
+  const [sendingId, setSendingId] = useState<string | null>(null);
+  const sendReminder = async (d: Deposit, channel: 'email' | 'sms') => {
+    if (!d.order_id) { toast.error('Kein Auftrag verknüpft'); return; }
+    if (!confirm(channel === 'email'
+      ? `Anzahlungs-Erinnerung per E-Mail an ${d.company_name || d.customer_name || 'Kunde'} senden?`
+      : `Anzahlungs-Erinnerung per SMS an ${d.company_name || d.customer_name || 'Kunde'} senden?`)) return;
+    setSendingId(d.id + channel);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-anzahlung-mahnung', {
+        body: { order_id: d.order_id, channel },
+      });
+      if (error) throw error;
+      if (data && data.ok === false) throw new Error(data.error || 'Versand fehlgeschlagen');
+      toast.success(channel === 'email' ? 'E-Mail gesendet' : 'SMS gesendet');
+    } catch (e: any) {
+      toast.error('Fehler: ' + (e?.message ?? 'Unbekannt'));
+    } finally {
+      setSendingId(null);
+    }
   };
 
   const filtered = useMemo(() => {
@@ -350,6 +371,22 @@ export default function OffeneAnzahlungen() {
                       {canWrite && r.release_status !== 'auto_freigegeben' && r.release_status !== 'manuell_freigegeben' && (
                         <Button size="sm" variant="outline" onClick={() => manualRelease(r)} title="Manuell freigeben">
                           <CheckCircle2 className="w-3.5 h-3.5" />
+                        </Button>
+                      )}
+                      {canWrite && r.order_id && (
+                        <Button size="sm" variant="outline" onClick={() => sendReminder(r, 'email')}
+                          disabled={sendingId === r.id + 'email'} title="Anzahlungs-Erinnerung per E-Mail senden">
+                          {sendingId === r.id + 'email'
+                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            : <Mail className="w-3.5 h-3.5" />}
+                        </Button>
+                      )}
+                      {canWrite && r.order_id && (
+                        <Button size="sm" variant="outline" onClick={() => sendReminder(r, 'sms')}
+                          disabled={sendingId === r.id + 'sms'} title="Anzahlungs-Erinnerung per SMS senden">
+                          {sendingId === r.id + 'sms'
+                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            : <MessageSquare className="w-3.5 h-3.5" />}
                         </Button>
                       )}
                       <Button size="sm" variant="ghost" onClick={() => openHistory(r)} title="Historie">
