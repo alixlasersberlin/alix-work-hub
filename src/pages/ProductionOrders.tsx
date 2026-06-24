@@ -395,8 +395,8 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
     erstellt_am: r.created_at ? format(new Date(r.created_at), 'dd.MM.yyyy HH:mm') : '',
   }));
 
-  const exportCSV = () => {
-    const data = exportRows();
+  const exportCSV = (source?: any[]) => {
+    const data = exportRows(source);
     if (data.length === 0) { toast.info('Keine Daten zum Exportieren'); return; }
     const headers = Object.keys(data[0]);
     const escape = (v: any) => {
@@ -417,8 +417,8 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
     toast.success(`${data.length} Bestellungen exportiert`);
   };
 
-  const exportPDF = () => {
-    const data = exportRows();
+  const exportPDF = (source?: any[]) => {
+    const data = exportRows(source);
     if (data.length === 0) { toast.info('Keine Daten zum Exportieren'); return; }
     const doc = createPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
     const pageW = 297, pageH = 210, marginX = 10;
