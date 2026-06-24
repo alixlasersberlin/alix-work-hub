@@ -403,7 +403,18 @@ export default function OffenePosten() {
         )}
       </div>
 
-      <Dialog open={!!editItem} onOpenChange={(o) => !o && setEditItem(null)}>
+      <Dialog
+        open={!!editItem}
+        onOpenChange={(o) => {
+          if (!o) {
+            setEditItem(null);
+            // Body wieder klickbar machen (Radix Cleanup-Bug umgehen)
+            setTimeout(() => {
+              document.body.style.pointerEvents = '';
+            }, 0);
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Offenen Posten bearbeiten</DialogTitle>
