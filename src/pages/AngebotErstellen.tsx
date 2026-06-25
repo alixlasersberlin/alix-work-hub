@@ -58,7 +58,18 @@ export default function AngebotErstellen() {
   const [offerDate, setOfferDate] = useState(new Date().toISOString().slice(0, 10));
   const [validUntil, setValidUntil] = useState('');
   const [salesAdvisor, setSalesAdvisor] = useState('');
-  const [deliveryWeek, setDeliveryWeek] = useState('');
+  const [deliveryWeek, setDeliveryWeek] = useState(() => {
+    // Default: aktuelle KW + 4 Wochen im ISO-Format YYYY-Www
+    const d = new Date();
+    d.setDate(d.getDate() + 28);
+    // ISO week calculation
+    const target = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    const dayNr = (target.getUTCDay() + 6) % 7;
+    target.setUTCDate(target.getUTCDate() - dayNr + 3);
+    const firstThursday = new Date(Date.UTC(target.getUTCFullYear(), 0, 4));
+    const weekNr = 1 + Math.round(((target.getTime() - firstThursday.getTime()) / 86400000 - 3 + ((firstThursday.getUTCDay() + 6) % 7)) / 7);
+    return `${target.getUTCFullYear()}-W${String(weekNr).padStart(2, '0')}`;
+  });
   const [specialOffer, setSpecialOffer] = useState('');
   const [notes, setNotes] = useState('');
   const [includeAppendix, setIncludeAppendix] = useState(true);
