@@ -312,6 +312,7 @@ export default function OffeneAnzahlungen() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[260px]">Aktionen</TableHead>
                 <TableHead>Kunde / Firma</TableHead>
                 <TableHead>Auftrag / Angebot</TableHead>
                 <TableHead>Anzahlungsrechnung</TableHead>
@@ -322,7 +323,6 @@ export default function OffeneAnzahlungen() {
                 <TableHead>Fällig</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Bestellfreigabe</TableHead>
-                <TableHead className="text-right">Aktionen</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
