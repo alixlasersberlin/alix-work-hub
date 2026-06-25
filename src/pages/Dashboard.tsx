@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { qk, STALE } from '@/lib/query-keys';
+import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh';
 
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -330,11 +331,21 @@ export default function Dashboard() {
   const dashboardQuery = useQuery({
     queryKey: qk.dashboard.main({ canSeeOrders, canSeeRoutes, canSeeFinance, canSeeCustomers, canSeeAudit, isAdmin, atOnly }),
     queryFn: loadDashboard,
-    staleTime: STALE.medium,
-    refetchInterval: 60 * 60 * 1000, // stündlich automatisch neu laden
+    staleTime: STALE.short,
+    refetchInterval: 60 * 1000, // Fallback: 1 min Polling, falls Realtime ausfällt
     refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
   });
+
+  // Livetime: bei jeder Änderung in einer Quelltabelle Dashboard neu laden.
+  useRealtimeRefresh(
+    [
+      'orders', 'order_items', 'route_plans', 'finance_records',
+      'customers', 'lager_devices', 'production_orders',
+      'login_sessions', 'audit_logs',
+    ],
+    () => { dashboardQuery.refetch(); },
+  );
 
   useEffect(() => {
     setLoading(dashboardQuery.isPending);
