@@ -421,8 +421,11 @@ export default function OffenePosten() {
                 const days = i.due_date ? differenceInCalendarDays(parseISO(i.due_date), new Date()) : null;
                 const wf = workflows[`${i.source}-${i.id}`];
                 const wfStatus: WorkflowStatus = wf?.workflow_status ?? 'offen';
+                const rowKey = `${i.source}-${i.id}`;
+                const booked = bookedRefs[rowKey];
+                const isBooking = bookingKey === rowKey;
                 return (
-                  <TableRow key={`${i.source}-${i.id}`} className={style.row}>
+                  <TableRow key={rowKey} className={style.row}>
                     <TableCell className="font-mono">
                       {i.invoice_number ?? '—'}
                       {i.source === 'recurring' && (
@@ -450,23 +453,46 @@ export default function OffenePosten() {
                           {wf.note}
                         </div>
                       )}
+                      {booked && (
+                        <div className="text-[11px] text-emerald-500 mt-1 flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" /> Gebucht{booked.journal_number ? ` · ${booked.journal_number}` : ''}
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell className="text-right">{formatCurrency(i.total, i.currency)}</TableCell>
                     <TableCell className="text-right font-medium">{formatCurrency(i.balance, i.currency)}</TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openEdit(i);
-                        }}
-                        className="gap-1 relative z-10"
-                      >
-                        <Pencil className="w-3.5 h-3.5" /> Bearbeiten
-                      </Button>
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant={booked ? 'outline' : 'default'}
+                          disabled={isBooking || !!booked}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            bookItem(i);
+                          }}
+                          className="gap-1 relative z-10"
+                          title={booked ? 'Bereits in Buchhaltung gebucht' : 'Rechnung in Buchhaltung buchen'}
+                        >
+                          {isBooking ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BookCheck className="w-3.5 h-3.5" />}
+                          {booked ? 'Gebucht' : 'Buchen'}
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEdit(i);
+                          }}
+                          className="gap-1 relative z-10"
+                        >
+                          <Pencil className="w-3.5 h-3.5" /> Bearbeiten
+                        </Button>
+                      </div>
                     </TableCell>
+
                   </TableRow>
                 );
               })}
