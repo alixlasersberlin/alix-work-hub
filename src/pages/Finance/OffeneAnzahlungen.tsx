@@ -312,6 +312,7 @@ export default function OffeneAnzahlungen() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[260px]">Aktionen</TableHead>
                 <TableHead>Kunde / Firma</TableHead>
                 <TableHead>Auftrag / Angebot</TableHead>
                 <TableHead>Anzahlungsrechnung</TableHead>
@@ -322,42 +323,13 @@ export default function OffeneAnzahlungen() {
                 <TableHead>Fällig</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Bestellfreigabe</TableHead>
-                <TableHead className="text-right">Aktionen</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.map((r) => (
                 <TableRow key={r.id}>
-                  <TableCell>
-                    <div className="font-medium">{r.company_name || r.customer_name || '—'}</div>
-                    {r.contact_name && <div className="text-xs text-muted-foreground">{r.contact_name}</div>}
-                  </TableCell>
-                  <TableCell className="font-mono text-xs">
-                    {r.order_number || '—'}
-                    {r.offer_number && <div className="text-muted-foreground">{r.offer_number}</div>}
-                  </TableCell>
-                  <TableCell className="font-mono text-xs">{r.invoice_number || r.deposit_number || '—'}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="text-[10px]">
-                      {r.source === 'zoho' ? 'Zoho' : 'AlixWork'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">{fmtMoney(r.gross_amount, r.currency || 'EUR')}</TableCell>
-                  <TableCell className="text-right">{fmtMoney(r.paid_amount, r.currency || 'EUR')}</TableCell>
-                  <TableCell className="text-right font-semibold">{fmtMoney(r.open_amount, r.currency || 'EUR')}</TableCell>
-                  <TableCell className="text-xs">
-                    {r.due_date ? format(parseISO(r.due_date), 'dd.MM.yyyy', { locale: de }) : '—'}
-                  </TableCell>
-                  <TableCell>
-                    <span className={cn('px-2 py-0.5 rounded text-xs', statusBadge[r.status])}>{statusLabel[r.status]}</span>
-                  </TableCell>
-                  <TableCell>
-                    <span className={cn('px-2 py-0.5 rounded text-xs', releaseBadge[r.release_status])}>
-                      {releaseLabel[r.release_status]}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
+                  <TableCell className="align-top">
+                    <div className="flex flex-wrap gap-1">
                       {canWrite && (
                         <Button size="sm" variant="default" onClick={() => setBookFor(r)} className="gap-1">
                           <Upload className="w-3.5 h-3.5" /> Buchen
@@ -393,6 +365,34 @@ export default function OffeneAnzahlungen() {
                         <HistoryIcon className="w-3.5 h-3.5" />
                       </Button>
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="font-medium">{r.company_name || r.customer_name || '—'}</div>
+                    {r.contact_name && <div className="text-xs text-muted-foreground">{r.contact_name}</div>}
+                  </TableCell>
+                  <TableCell className="font-mono text-xs">
+                    {r.order_number || '—'}
+                    {r.offer_number && <div className="text-muted-foreground">{r.offer_number}</div>}
+                  </TableCell>
+                  <TableCell className="font-mono text-xs">{r.invoice_number || r.deposit_number || '—'}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="text-[10px]">
+                      {r.source === 'zoho' ? 'Zoho' : 'AlixWork'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">{fmtMoney(r.gross_amount, r.currency || 'EUR')}</TableCell>
+                  <TableCell className="text-right">{fmtMoney(r.paid_amount, r.currency || 'EUR')}</TableCell>
+                  <TableCell className="text-right font-semibold">{fmtMoney(r.open_amount, r.currency || 'EUR')}</TableCell>
+                  <TableCell className="text-xs">
+                    {r.due_date ? format(parseISO(r.due_date), 'dd.MM.yyyy', { locale: de }) : '—'}
+                  </TableCell>
+                  <TableCell>
+                    <span className={cn('px-2 py-0.5 rounded text-xs', statusBadge[r.status])}>{statusLabel[r.status]}</span>
+                  </TableCell>
+                  <TableCell>
+                    <span className={cn('px-2 py-0.5 rounded text-xs', releaseBadge[r.release_status])}>
+                      {releaseLabel[r.release_status]}
+                    </span>
                   </TableCell>
                 </TableRow>
               ))}
