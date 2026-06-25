@@ -324,14 +324,23 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
           const desc = i.description ? `\n${i.description}` : '';
           const qty = Number(i.quantity) || 0;
           const rate = Number(i.rate) || 0;
-          const taxPct = Number(i.tax_percentage) || 0;
+          const lineNet = qty * rate;
+          const taxAmount = Number((i as any).tax_amount);
+          let taxPct = Number((i as any).tax_percentage);
+          if (!Number.isFinite(taxPct) || taxPct <= 0) {
+            if (Number.isFinite(taxAmount) && taxAmount > 0 && lineNet > 0) {
+              taxPct = Math.round((taxAmount / lineNet) * 100);
+            } else {
+              taxPct = 19;
+            }
+          }
           return [
             idx + 1,
             `${name}${sku}${desc}`,
             qty,
             fmtMoney(rate, currency),
             `${taxPct}%`,
-            fmtMoney(qty * rate, currency),
+            fmtMoney(lineNet, currency),
           ];
         }),
         styles: { fontSize: 9, cellPadding: 2, valign: 'top' },
