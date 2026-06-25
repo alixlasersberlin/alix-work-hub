@@ -185,7 +185,7 @@ async function uploadNdjsonPart(
     .from("backups")
     .upload(path, bytes, {
       contentType: "application/x-ndjson",
-      upsert: false,
+      upsert: true,
     });
   if (error) throw new Error(`Upload ${path}: ${error.message}`);
   return size;
