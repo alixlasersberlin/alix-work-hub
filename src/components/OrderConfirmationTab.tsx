@@ -154,19 +154,30 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
     for (const i of items) {
       const qty = Number(i.quantity) || 0;
       const rate = Number(i.rate) || 0;
-      const taxPct = Number(i.tax_percentage) || 0;
       const lineNet = qty * rate;
+      const taxAmount = Number((i as any).tax_amount);
+      const taxPct = Number((i as any).tax_percentage);
       net += lineNet;
-      tax += lineNet * (taxPct / 100);
+      if (Number.isFinite(taxAmount) && taxAmount > 0) {
+        tax += taxAmount;
+      } else if (Number.isFinite(taxPct) && taxPct > 0) {
+        tax += lineNet * (taxPct / 100);
+      }
     }
-    const gross = net + tax;
-    // Falls Auftrag bereits Gesamtbetrag hat, diesen bevorzugen (für übernommene Rabatte / Rundung)
+    const computedGross = net + tax;
     const orderGross = Number(order?.total_amount);
-    return {
-      net,
-      tax,
-      gross: Number.isFinite(orderGross) && orderGross > 0 ? orderGross : gross,
-    };
+    const finalGross = Number.isFinite(orderGross) && orderGross > 0 ? orderGross : computedGross;
+    // Wenn Items keine MwSt-Info haben, aus Brutto rückrechnen (Standard 19%)
+    let finalNet = net;
+    let finalTax = tax;
+    if (tax <= 0 && finalGross > 0) {
+      finalNet = finalGross / 1.19;
+      finalTax = finalGross - finalNet;
+    } else if (finalGross !== computedGross) {
+      // Auftrags-Brutto hat Vorrang (Rabatte/Rundung) – Netto entsprechend anpassen
+      finalNet = finalGross - finalTax;
+    }
+    return { net: finalNet, tax: finalTax, gross: finalGross };
   }, [items, order]);
 
   async function generate() {
@@ -313,14 +324,23 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
           const desc = i.description ? `\n${i.description}` : '';
           const qty = Number(i.quantity) || 0;
           const rate = Number(i.rate) || 0;
-          const taxPct = Number(i.tax_percentage) || 0;
+          const lineNet = qty * rate;
+          const taxAmount = Number((i as any).tax_amount);
+          let taxPct = Number((i as any).tax_percentage);
+          if (!Number.isFinite(taxPct) || taxPct <= 0) {
+            if (Number.isFinite(taxAmount) && taxAmount > 0 && lineNet > 0) {
+              taxPct = Math.round((taxAmount / lineNet) * 100);
+            } else {
+              taxPct = 19;
+            }
+          }
           return [
             idx + 1,
             `${name}${sku}${desc}`,
             qty,
             fmtMoney(rate, currency),
             `${taxPct}%`,
-            fmtMoney(qty * rate, currency),
+            fmtMoney(lineNet, currency),
           ];
         }),
         styles: { fontSize: 9, cellPadding: 2, valign: 'top' },
