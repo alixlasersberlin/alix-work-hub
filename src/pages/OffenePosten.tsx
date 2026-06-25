@@ -237,7 +237,66 @@ export default function OffenePosten() {
     closeEdit();
   };
 
-  const filtered = useMemo(
+  const bookItem = async (item: OpenItem) => {
+    const key = `${item.source}-${item.id}`;
+    if (bookedRefs[key]) {
+      toast.info('Diese Rechnung wurde bereits gebucht.');
+      return;
+    }
+    setBookingKey(key);
+    const reference = `op:${item.source}:${item.id}`;
+    const gross = Number(item.total ?? item.balance ?? 0);
+    // 19% USt aus brutto extrahieren (Annahme deutscher Standard, ohne Steuerinfo aus Zoho)
+    const net = Math.round((gross / 1.19) * 100) / 100;
+    const vat = Math.round((gross - net) * 100) / 100;
+    const { data: userRes } = await supabase.auth.getUser();
+    const uid = userRes.user?.id;
+
+    // Idempotenz: ggf. existierenden Eintrag prüfen
+    const { data: existing } = await supabase
+      .from('finance_journal')
+      .select('id, journal_number, booking_date')
+      .eq('reference', reference)
+      .maybeSingle();
+
+    if (existing) {
+      setBookedRefs((prev) => ({ ...prev, [key]: { journal_number: existing.journal_number, booking_date: existing.booking_date } }));
+      setBookingKey(null);
+      toast.info('Bereits gebucht: ' + (existing.journal_number ?? existing.id));
+      return;
+    }
+
+    const payload: Record<string, unknown> = {
+      source_module: 'offene_posten',
+      source_table: item.source === 'recurring' ? 'zoho_recurring_invoices' : 'zoho_invoices',
+      source_id: item.id,
+      reference,
+      invoice_number: item.invoice_number,
+      vorgang: 'Debitor-Rechnung',
+      amount_net: net,
+      amount_vat: vat,
+      amount_gross: gross,
+      account: '1400', // Forderungen aus Lieferungen und Leistungen
+      contra_account: '8400', // Erlöse 19% USt
+      description: `Buchung aus Offenen Posten · ${item.customer_name ?? ''} · ${item.invoice_number ?? ''}`.trim(),
+      status: 'aktiv',
+      user_id: uid,
+    };
+
+    const { data: inserted, error } = await supabase
+      .from('finance_journal')
+      .insert(payload)
+      .select('id, journal_number, booking_date')
+      .single();
+
+    setBookingKey(null);
+    if (error) {
+      toast.error('Buchen fehlgeschlagen: ' + error.message);
+      return;
+    }
+    setBookedRefs((prev) => ({ ...prev, [key]: { journal_number: inserted?.journal_number ?? null, booking_date: inserted?.booking_date ?? new Date().toISOString().slice(0, 10) } }));
+    toast.success(`Gebucht${inserted?.journal_number ? ' · ' + inserted.journal_number : ''}`);
+  };
     () => items.filter((i) => matchesQuery(i, search)),
     [items, search],
   );
