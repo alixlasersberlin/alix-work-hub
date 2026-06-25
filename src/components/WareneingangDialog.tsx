@@ -12,7 +12,11 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { createPDF } from '@/lib/pdf-utils';
 
-export type WareneingangDialogHandle = { open: () => void; generatePdf: () => void };
+export type WareneingangDialogHandle = {
+  open: () => void;
+  generatePdf: () => void;
+  generatePdfFor: (args: { order?: any; device?: { serial_number?: string | null; model_name?: string | null } }) => void;
+};
 
 interface Props {
   order: any;
@@ -297,6 +301,17 @@ const WareneingangDialog = forwardRef<WareneingangDialogHandle, Props>(({ order,
   useImperativeHandle(ref, () => ({
     open: () => setOpen(true),
     generatePdf: () => generatePdf(buildPrefilledState(createInitialState()), false),
+    generatePdfFor: ({ order: o, device }) => {
+      const base = createInitialState();
+      const prefilled: WareneingangState = {
+        ...base,
+        bestellnummer: o?.order_number || '',
+        geraetebezeichnung: device?.model_name || o?.items?.[0]?.item_name || '',
+        modell: device?.model_name || o?.items?.[0]?.item_name || '',
+        seriennummer: device?.serial_number || '',
+      };
+      generatePdf(prefilled, false);
+    },
   }));
 
   return (

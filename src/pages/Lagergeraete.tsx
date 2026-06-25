@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Pencil, Plus, Warehouse, Link2, Link2Off, X, Sparkles, Package, Search, ArrowUpDown, ArrowUp, ArrowDown, Mail, Send, PackageCheck, FileDown, FileText, Wrench } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Loader2, Pencil, Plus, Warehouse, Link2, Link2Off, X, Sparkles, Package, Search, ArrowUpDown, ArrowUp, ArrowDown, Mail, Send, PackageCheck, FileDown, FileText, Wrench, Inbox } from 'lucide-react';
+import WareneingangDialog, { type WareneingangDialogHandle } from '@/components/WareneingangDialog';
 import { useNavigate } from 'react-router-dom';
 import { sbRepair } from '@/lib/repair/api';
 import { notifyNewRepairOrder } from '@/lib/repair/notify';
@@ -156,6 +157,14 @@ export default function Lagergeraete({
   const { isAdmin, hasRole, user } = useAuth();
   const navigate = useNavigate();
   const [sendingRepair, setSendingRepair] = useState<string | null>(null);
+  const wareneingangRef = useRef<WareneingangDialogHandle>(null);
+  const isUnterwegs = (filterStatuses ?? []).includes('Transfer');
+  const handleWareneingang = (d: LagerDevice) => {
+    wareneingangRef.current?.generatePdfFor({
+      order: d.orders ? { order_number: d.orders.order_number } : undefined,
+      device: { serial_number: d.serial_number, model_name: d.model_name },
+    });
+  };
 
   const handleSendToRepair = async (d: LagerDevice) => {
     if (parseRepairId(d.notes)) {
@@ -2002,6 +2011,17 @@ export default function Lagergeraete({
                         <PackageCheck className="w-4 h-4" /> Lieferung
                       </Button>
                     )}
+                    {isUnterwegs && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleWareneingang(d)}
+                        className="gap-1 h-8 text-emerald-500 hover:text-emerald-600"
+                        title="Wareneingangsschein als PDF erzeugen"
+                      >
+                        <Inbox className="w-4 h-4" /> Wareneingang
+                      </Button>
+                    )}
                     <Button variant="ghost" size="sm" onClick={() => openEdit(d)} className="gap-1 h-8">
                       <Pencil className="w-4 h-4" /> Bearbeiten
                     </Button>
@@ -2213,6 +2233,17 @@ export default function Lagergeraete({
                           <PackageCheck className="w-4 h-4" /> Lieferung
                         </Button>
                       )}
+                      {isUnterwegs && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleWareneingang(d)}
+                          className="gap-1 text-emerald-500 hover:text-emerald-600"
+                          title="Wareneingangsschein als PDF erzeugen"
+                        >
+                          <Inbox className="w-4 h-4" /> Wareneingang
+                        </Button>
+                      )}
                       <Button variant="ghost" size="sm" onClick={() => openEdit(d)} className="gap-1">
                         <Pencil className="w-4 h-4" /> Bearbeiten
                       </Button>
@@ -2225,6 +2256,8 @@ export default function Lagergeraete({
           </Table>
         )}
       </div>
+
+      <WareneingangDialog ref={wareneingangRef} order={{}} hideTrigger />
 
       <AlertDialog open={!!deliverDevice} onOpenChange={(o) => !o && setDeliverDevice(null)}>
         <AlertDialogContent>
