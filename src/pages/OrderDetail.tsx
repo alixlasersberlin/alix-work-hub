@@ -32,6 +32,7 @@ import OrderFullEditDialog from '@/components/OrderFullEditDialog';
 
 import OrderDeferDialog from '@/components/OrderDeferDialog';
 import MietkaufDialog, { type MietkaufDialogHandle } from '@/components/MietkaufDialog';
+import WareneingangDialog, { type WareneingangDialogHandle } from '@/components/WareneingangDialog';
 import DeliveryNoteTab from '@/components/DeliveryNoteTab';
 import AuftragsbestaetigungTab from '@/components/AuftragsbestaetigungTab';
 import OrderConfirmationTab from '@/components/OrderConfirmationTab';
@@ -94,6 +95,8 @@ export default function OrderDetail() {
   const sepaRef = useRef<SepaMandatHandle>(null);
   const mietkaufRef = useRef<MietkaufDialogHandle>(null);
   const ratenplanRef = useRef<InstallmentPlanDialogHandle>(null);
+  const wareneingangRef = useRef<WareneingangDialogHandle>(null);
+
 
   useEffect(() => {
     if (!id) return;
@@ -382,6 +385,7 @@ export default function OrderDetail() {
         { key: 'sepa', label: 'SEPA Mandat', icon: FileText, onClick: () => sepaRef.current?.trigger() },
         { key: 'mietkauf', label: 'Mietkauf', icon: FileText, onClick: () => mietkaufRef.current?.open() },
         { key: 'ratenplan', label: 'Ratenplan', icon: FileText, onClick: () => ratenplanRef.current?.open() },
+        { key: 'wareneingang', label: 'Wareneingang', icon: Inbox, onClick: () => wareneingangRef.current?.open() },
       ] as ActionItem[],
     }] : []),
     ...(canWrite ? [{
@@ -469,6 +473,7 @@ export default function OrderDetail() {
           <SepaMandatButton ref={sepaRef} order={order} hideTrigger />
           <MietkaufDialog ref={mietkaufRef} order={order ? { ...order, items } : order} hideTrigger />
           <InstallmentPlanDialog ref={ratenplanRef} order={order} hideTrigger />
+          <WareneingangDialog ref={wareneingangRef} order={order ? { ...order, items } : order} customer={customer} hideTrigger />
         </div>
       </div>
 
