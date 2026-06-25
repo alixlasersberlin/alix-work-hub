@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { FileDown, Loader2, Receipt, AlertCircle, Mail, BookmarkCheck } from 'lucide-react';
+import { FileDown, Loader2, Receipt, AlertCircle, Mail, BookmarkCheck, BookOpen } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -94,6 +94,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
   );
   const [generating, setGenerating] = useState(false);
   const [booking, setBooking] = useState(false);
+  const [postingToBuchhaltung, setPostingToBuchhaltung] = useState(false);
   const [sending, setSending] = useState(false);
 
   useEffect(() => {
@@ -367,6 +368,62 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
     return true;
   }
 
+  async function postToBuchhaltung() {
+    if (!hasDeposit) {
+      toast.error('Keine Anzahlung vereinbart.');
+      return;
+    }
+    setPostingToBuchhaltung(true);
+    try {
+      // Duplikate vermeiden
+      const { data: existing } = await supabase
+        .from('finance_deposits' as any)
+        .select('id')
+        .eq('source', 'alixwork')
+        .eq('invoice_number', invoiceNumber)
+        .limit(1);
+      if (existing && existing.length > 0) {
+        toast.info(`Anzahlung ${invoiceNumber} ist bereits in der Buchhaltung erfasst.`);
+        return;
+      }
+
+      const netAmt = Number(netDeposit.toFixed(2));
+      const vatAmt = Number(taxAmount.toFixed(2));
+      const grossAmt = Number(grossDeposit.toFixed(2));
+
+      const payload: any = {
+        source: 'alixwork',
+        source_ref: order?.id ?? null,
+        deposit_number: invoiceNumber,
+        invoice_number: invoiceNumber,
+        customer_id: customer?.id ?? null,
+        customer_name: customer?.company_name || customer?.contact_name || null,
+        company_name: customer?.company_name ?? null,
+        contact_name: customer?.contact_name ?? null,
+        order_id: order?.id ?? null,
+        order_number: orderNo || null,
+        currency,
+        net_amount: netAmt,
+        vat_amount: vatAmt,
+        gross_amount: grossAmt,
+        paid_amount: 0,
+        issue_date: invoiceDate,
+        due_date: dueDate,
+        status: 'offen',
+        release_status: 'nicht_freigegeben',
+        note: `Anzahlungsrechnung ${invoiceNumber} – ${positionLabel || `Anzahlung Auftrag ${orderNo}`} (MwSt ${taxPercentage}%).`,
+      };
+      const { error } = await supabase.from('finance_deposits' as any).insert(payload);
+      if (error) throw error;
+      toast.success(`In Buchhaltung übernommen: ${invoiceNumber} wurde unter Offene Anzahlungen erfasst.`);
+      onReload?.();
+    } catch (e: any) {
+      toast.error('Konnte nicht in Buchhaltung schreiben: ' + (e?.message || 'Unbekannter Fehler'));
+    } finally {
+      setPostingToBuchhaltung(false);
+    }
+  }
+
   async function generate() {
     if (!hasDeposit) {
       toast.error('Keine Anzahlung vereinbart – es wird keine Anzahlungsrechnung erstellt.');
@@ -566,7 +623,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
           <Button
             variant="outline"
             onClick={generate}
-            disabled={generating || booking || sending || !hasDeposit}
+            disabled={generating || booking || sending || postingToBuchhaltung || !hasDeposit}
           >
             {generating
               ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -575,7 +632,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
           </Button>
           <Button
             onClick={generateAndBook}
-            disabled={generating || booking || sending || !hasDeposit}
+            disabled={generating || booking || sending || postingToBuchhaltung || !hasDeposit}
             className="gold-gradient text-primary-foreground"
           >
             {booking
@@ -584,9 +641,20 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
             ANZAHLUNG STELLEN & SPEICHERN
           </Button>
           <Button
+            onClick={postToBuchhaltung}
+            disabled={generating || booking || sending || postingToBuchhaltung || !hasDeposit}
+            className="bg-red-600 hover:bg-red-700 text-white border border-red-700 shadow-sm"
+            title="Diese Anzahlungsrechnung in Finance & Controlling / Offene Anzahlungen übernehmen"
+          >
+            {postingToBuchhaltung
+              ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              : <BookOpen className="w-4 h-4 mr-2" />}
+            In Buchhaltung schreiben
+          </Button>
+          <Button
             variant="outline"
             onClick={sendByEmail}
-            disabled={generating || booking || sending || !hasDeposit || !customer?.email}
+            disabled={generating || booking || sending || postingToBuchhaltung || !hasDeposit || !customer?.email}
             title={!customer?.email ? 'Kunde hat keine E-Mail-Adresse' : undefined}
           >
             {sending
