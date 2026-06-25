@@ -2233,6 +2233,17 @@ export default function Lagergeraete({
                           <PackageCheck className="w-4 h-4" /> Lieferung
                         </Button>
                       )}
+                      {isUnterwegs && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleWareneingang(d)}
+                          className="gap-1 text-emerald-500 hover:text-emerald-600"
+                          title="Wareneingangsschein als PDF erzeugen"
+                        >
+                          <Inbox className="w-4 h-4" /> Wareneingang
+                        </Button>
+                      )}
                       <Button variant="ghost" size="sm" onClick={() => openEdit(d)} className="gap-1">
                         <Pencil className="w-4 h-4" /> Bearbeiten
                       </Button>
