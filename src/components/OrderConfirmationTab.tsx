@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { FileCheck2, FileDown, Loader2, Mail } from 'lucide-react';
+import { FileCheck2, FileDown, Loader2, Mail, CalendarIcon } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -538,7 +540,32 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
         </div>
         <div>
           <Label className="text-xs text-muted-foreground">Liefertermin / KW (optional)</Label>
-          <Input value={deliveryWeek} onChange={e => setDeliveryWeek(e.target.value)} placeholder="z. B. KW 32 / 2026" className="bg-secondary border-border mt-1" />
+          <div className="flex gap-2 mt-1">
+            <Input value={deliveryWeek} onChange={e => setDeliveryWeek(e.target.value)} placeholder="z. B. KW 32 / 2026" className="bg-secondary border-border" />
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button type="button" variant="outline" size="icon" className="shrink-0">
+                  <CalendarIcon className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 pointer-events-auto" align="end">
+                <Calendar
+                  mode="single"
+                  initialFocus
+                  onSelect={(d) => {
+                    if (!d) return;
+                    const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+                    const dayNum = date.getUTCDay() || 7;
+                    date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+                    const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+                    const weekNr = Math.ceil(((date.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+                    setDeliveryWeek(`KW ${String(weekNr).padStart(2, '0')} / ${date.getUTCFullYear()}`);
+                  }}
+                  className="p-3 pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
         <div className="flex items-end text-xs text-muted-foreground">
           <div className="rounded-md bg-secondary/60 border border-border px-3 py-2 w-full">
