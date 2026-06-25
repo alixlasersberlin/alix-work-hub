@@ -96,6 +96,19 @@ export default function AngebotErstellen() {
     company_name: '', contact_name: '', email: '', phone: '',
     ba_address: '', ba_street2: '', ba_zip: '', ba_city: '', ba_country: 'Deutschland',
   });
+  const newCustomerAutocompleteKey = useMemo(() => Math.random().toString(36).slice(2), []);
+  const noAutofillInputProps = (field: string) => ({
+    id: `nc-${field}-${newCustomerAutocompleteKey}`,
+    name: `nc-${field}-${newCustomerAutocompleteKey}`,
+    autoComplete: 'new-password',
+    autoCorrect: 'off',
+    autoCapitalize: 'off',
+    spellCheck: false,
+    'data-1p-ignore': 'true',
+    'data-lpignore': 'true',
+    'data-bwignore': 'true',
+    'data-form-type': 'other',
+  } as const);
 
   async function createNewCustomer() {
     if (!newCustomer.company_name && !newCustomer.contact_name) {
@@ -1456,47 +1469,44 @@ export default function AngebotErstellen() {
           <DialogHeader>
             <DialogTitle>Neuen Kunden anlegen</DialogTitle>
           </DialogHeader>
-          <form className="grid gap-3 sm:grid-cols-2" autoComplete="off" onSubmit={(e) => e.preventDefault()}>
-            {/* Honeypot, um Passwort-Manager (1Password etc.) abzulenken */}
-            <input type="text" name="username" autoComplete="username" tabIndex={-1} aria-hidden="true" style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }} />
-            <input type="password" name="password" autoComplete="new-password" tabIndex={-1} aria-hidden="true" style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }} />
+          <div className="grid gap-3 sm:grid-cols-2" data-1p-ignore="true" data-lpignore="true" data-bwignore="true" data-form-type="other">
             <div className="sm:col-span-2">
               <Label>Firma</Label>
-              <Input autoComplete="off" data-1p-ignore data-lpignore="true" data-bwignore data-form-type="other" value={newCustomer.company_name} onChange={e => setNewCustomer(p => ({ ...p, company_name: e.target.value }))} className="mt-1.5" />
+              <Input {...noAutofillInputProps('company')} value={newCustomer.company_name} onChange={e => setNewCustomer(p => ({ ...p, company_name: e.target.value }))} className="mt-1.5" />
             </div>
             <div>
               <Label>Ansprechpartner</Label>
-              <Input autoComplete="off" data-1p-ignore data-lpignore="true" data-bwignore data-form-type="other" value={newCustomer.contact_name} onChange={e => setNewCustomer(p => ({ ...p, contact_name: e.target.value }))} className="mt-1.5" />
+              <Input {...noAutofillInputProps('contact')} value={newCustomer.contact_name} onChange={e => setNewCustomer(p => ({ ...p, contact_name: e.target.value }))} className="mt-1.5" />
             </div>
             <div>
               <Label>E-Mail</Label>
-              <Input type="email" autoComplete="off" data-1p-ignore data-lpignore="true" data-bwignore data-form-type="other" value={newCustomer.email} onChange={e => setNewCustomer(p => ({ ...p, email: e.target.value }))} className="mt-1.5" />
+              <Input {...noAutofillInputProps('mail')} type="text" inputMode="email" value={newCustomer.email} onChange={e => setNewCustomer(p => ({ ...p, email: e.target.value }))} className="mt-1.5" />
             </div>
             <div>
               <Label>Telefon</Label>
-              <Input autoComplete="off" data-1p-ignore data-lpignore="true" data-bwignore data-form-type="other" value={newCustomer.phone} onChange={e => setNewCustomer(p => ({ ...p, phone: e.target.value }))} className="mt-1.5" />
+              <Input {...noAutofillInputProps('phone')} type="tel" value={newCustomer.phone} onChange={e => setNewCustomer(p => ({ ...p, phone: e.target.value }))} className="mt-1.5" />
             </div>
             <div className="sm:col-span-2">
               <Label>Straße</Label>
-              <Input autoComplete="off" data-1p-ignore data-lpignore="true" data-bwignore data-form-type="other" value={newCustomer.ba_address} onChange={e => setNewCustomer(p => ({ ...p, ba_address: e.target.value }))} className="mt-1.5" />
+              <Input {...noAutofillInputProps('street')} value={newCustomer.ba_address} onChange={e => setNewCustomer(p => ({ ...p, ba_address: e.target.value }))} className="mt-1.5" />
             </div>
             <div className="sm:col-span-2">
               <Label>Adresszusatz</Label>
-              <Input autoComplete="off" data-1p-ignore data-lpignore="true" data-bwignore data-form-type="other" value={newCustomer.ba_street2} onChange={e => setNewCustomer(p => ({ ...p, ba_street2: e.target.value }))} className="mt-1.5" />
+              <Input {...noAutofillInputProps('extra')} value={newCustomer.ba_street2} onChange={e => setNewCustomer(p => ({ ...p, ba_street2: e.target.value }))} className="mt-1.5" />
             </div>
             <div>
               <Label>PLZ</Label>
-              <Input autoComplete="off" data-1p-ignore data-lpignore="true" data-bwignore data-form-type="other" value={newCustomer.ba_zip} onChange={e => setNewCustomer(p => ({ ...p, ba_zip: e.target.value }))} className="mt-1.5" />
+              <Input {...noAutofillInputProps('zip')} inputMode="numeric" value={newCustomer.ba_zip} onChange={e => setNewCustomer(p => ({ ...p, ba_zip: e.target.value }))} className="mt-1.5" />
             </div>
             <div>
               <Label>Ort</Label>
-              <Input autoComplete="off" data-1p-ignore data-lpignore="true" data-bwignore data-form-type="other" value={newCustomer.ba_city} onChange={e => setNewCustomer(p => ({ ...p, ba_city: e.target.value }))} className="mt-1.5" />
+              <Input {...noAutofillInputProps('city')} value={newCustomer.ba_city} onChange={e => setNewCustomer(p => ({ ...p, ba_city: e.target.value }))} className="mt-1.5" />
             </div>
             <div className="sm:col-span-2">
               <Label>Land</Label>
-              <Input autoComplete="off" data-1p-ignore data-lpignore="true" data-bwignore data-form-type="other" value={newCustomer.ba_country} onChange={e => setNewCustomer(p => ({ ...p, ba_country: e.target.value }))} className="mt-1.5" />
+              <Input {...noAutofillInputProps('country')} value={newCustomer.ba_country} onChange={e => setNewCustomer(p => ({ ...p, ba_country: e.target.value }))} className="mt-1.5" />
             </div>
-          </form>
+          </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setNewCustomerOpen(false)} disabled={newCustomerSaving}>Abbrechen</Button>
             <Button onClick={createNewCustomer} disabled={newCustomerSaving}>
