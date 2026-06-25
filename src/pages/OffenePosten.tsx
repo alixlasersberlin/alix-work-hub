@@ -87,6 +87,8 @@ const formatCurrency = (n: number | null, currency: string | null) =>
 export default function OffenePosten() {
   const [items, setItems] = useState<OpenItem[]>([]);
   const [workflows, setWorkflows] = useState<Record<string, WorkflowState>>({});
+  const [bookedRefs, setBookedRefs] = useState<Record<string, { journal_number: string | null; booking_date: string }>>({});
+  const [bookingKey, setBookingKey] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [search, setSearch] = useState('');
