@@ -93,11 +93,6 @@ const WareneingangDialog = forwardRef<WareneingangDialogHandle, Props>(({ order,
     } as WareneingangState;
   };
 
-  useImperativeHandle(ref, () => ({
-    open: () => setOpen(true),
-    generatePdf: () => generatePdf(buildPrefilledState(createInitialState()), false),
-  }));
-
   useEffect(() => {
     if (!open || !order?.id) return;
     setState(s => buildPrefilledState(s));
@@ -298,6 +293,11 @@ const WareneingangDialog = forwardRef<WareneingangDialogHandle, Props>(({ order,
       setGenerating(false);
     }
   };
+
+  useImperativeHandle(ref, () => ({
+    open: () => setOpen(true),
+    generatePdf: () => generatePdf(buildPrefilledState(createInitialState()), false),
+  }));
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
