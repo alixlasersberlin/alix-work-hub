@@ -2257,6 +2257,8 @@ export default function Lagergeraete({
         )}
       </div>
 
+      <WareneingangDialog ref={wareneingangRef} order={{}} hideTrigger />
+
       <AlertDialog open={!!deliverDevice} onOpenChange={(o) => !o && setDeliverDevice(null)}>
         <AlertDialogContent>
           {(() => {
