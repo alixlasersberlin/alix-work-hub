@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { CalendarIcon, FileText, Loader2, RefreshCw, Pencil, X } from 'lucide-react';
+import { CalendarIcon, FileText, Loader2, RefreshCw, Pencil, X, BookCheck, CheckCircle2 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format, differenceInCalendarDays, parseISO } from 'date-fns';
@@ -87,6 +87,8 @@ const formatCurrency = (n: number | null, currency: string | null) =>
 export default function OffenePosten() {
   const [items, setItems] = useState<OpenItem[]>([]);
   const [workflows, setWorkflows] = useState<Record<string, WorkflowState>>({});
+  const [bookedRefs, setBookedRefs] = useState<Record<string, { journal_number: string | null; booking_date: string }>>({});
+  const [bookingKey, setBookingKey] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [search, setSearch] = useState('');
@@ -110,7 +112,7 @@ export default function OffenePosten() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [{ data: invoices, error: e1 }, { data: recurring, error: e2 }, { data: wf, error: e3 }] =
+    const [{ data: invoices, error: e1 }, { data: recurring, error: e2 }, { data: wf, error: e3 }, { data: journals, error: e4 }] =
       await Promise.all([
         supabase
           .from('zoho_invoices')
@@ -128,8 +130,14 @@ export default function OffenePosten() {
           .from('invoice_workflow_states')
           .select('source, invoice_key, workflow_status, note, updated_at')
           .limit(2000),
+        supabase
+          .from('finance_journal')
+          .select('reference, journal_number, booking_date')
+          .eq('source_module', 'offene_posten')
+          .like('reference', 'op:%')
+          .limit(5000),
       ]);
-    if (e1 || e2 || e3) toast.error('Fehler beim Laden: ' + (e1?.message || e2?.message || e3?.message));
+    if (e1 || e2 || e3 || e4) toast.error('Fehler beim Laden: ' + (e1?.message || e2?.message || e3?.message || e4?.message));
     const merged: OpenItem[] = [
       ...((invoices ?? []).map((i: any) => ({ ...i, source: 'invoice' as const }))),
       ...((recurring ?? []).map((i: any) => ({ ...i, source: 'recurring' as const }))),
@@ -141,6 +149,13 @@ export default function OffenePosten() {
       map[`${w.source}-${w.invoice_key}`] = w as WorkflowState;
     });
     setWorkflows(map);
+    const booked: Record<string, { journal_number: string | null; booking_date: string }> = {};
+    (journals ?? []).forEach((j: any) => {
+      // reference format: op:<source>:<id>
+      const parts = String(j.reference || '').split(':');
+      if (parts.length >= 3) booked[`${parts[1]}-${parts[2]}`] = { journal_number: j.journal_number, booking_date: j.booking_date };
+    });
+    setBookedRefs(booked);
     setLoading(false);
   }, []);
 
@@ -220,6 +235,67 @@ export default function OffenePosten() {
       },
     }));
     closeEdit();
+  };
+
+  const bookItem = async (item: OpenItem) => {
+    const key = `${item.source}-${item.id}`;
+    if (bookedRefs[key]) {
+      toast.info('Diese Rechnung wurde bereits gebucht.');
+      return;
+    }
+    setBookingKey(key);
+    const reference = `op:${item.source}:${item.id}`;
+    const gross = Number(item.total ?? item.balance ?? 0);
+    // 19% USt aus brutto extrahieren (Annahme deutscher Standard, ohne Steuerinfo aus Zoho)
+    const net = Math.round((gross / 1.19) * 100) / 100;
+    const vat = Math.round((gross - net) * 100) / 100;
+    const { data: userRes } = await supabase.auth.getUser();
+    const uid = userRes.user?.id;
+
+    // Idempotenz: ggf. existierenden Eintrag prüfen
+    const { data: existing } = await supabase
+      .from('finance_journal')
+      .select('id, journal_number, booking_date')
+      .eq('reference', reference)
+      .maybeSingle();
+
+    if (existing) {
+      setBookedRefs((prev) => ({ ...prev, [key]: { journal_number: existing.journal_number, booking_date: existing.booking_date } }));
+      setBookingKey(null);
+      toast.info('Bereits gebucht: ' + (existing.journal_number ?? existing.id));
+      return;
+    }
+
+    const payload = {
+      source_module: 'offene_posten',
+      source_table: item.source === 'recurring' ? 'zoho_recurring_invoices' : 'zoho_invoices',
+      source_id: item.id,
+      reference,
+      invoice_number: item.invoice_number,
+      vorgang: 'Debitor-Rechnung',
+      amount_net: net,
+      amount_vat: vat,
+      amount_gross: gross,
+      account: '1400', // Forderungen aus Lieferungen und Leistungen
+      contra_account: '8400', // Erlöse 19% USt
+      description: `Buchung aus Offenen Posten · ${item.customer_name ?? ''} · ${item.invoice_number ?? ''}`.trim(),
+      status: 'aktiv',
+      user_id: uid,
+    };
+
+    const { data: inserted, error } = await supabase
+      .from('finance_journal')
+      .insert(payload)
+      .select('id, journal_number, booking_date')
+      .single();
+
+    setBookingKey(null);
+    if (error) {
+      toast.error('Buchen fehlgeschlagen: ' + error.message);
+      return;
+    }
+    setBookedRefs((prev) => ({ ...prev, [key]: { journal_number: inserted?.journal_number ?? null, booking_date: inserted?.booking_date ?? new Date().toISOString().slice(0, 10) } }));
+    toast.success(`Gebucht${inserted?.journal_number ? ' · ' + inserted.journal_number : ''}`);
   };
 
   const filtered = useMemo(
@@ -345,8 +421,11 @@ export default function OffenePosten() {
                 const days = i.due_date ? differenceInCalendarDays(parseISO(i.due_date), new Date()) : null;
                 const wf = workflows[`${i.source}-${i.id}`];
                 const wfStatus: WorkflowStatus = wf?.workflow_status ?? 'offen';
+                const rowKey = `${i.source}-${i.id}`;
+                const booked = bookedRefs[rowKey];
+                const isBooking = bookingKey === rowKey;
                 return (
-                  <TableRow key={`${i.source}-${i.id}`} className={style.row}>
+                  <TableRow key={rowKey} className={style.row}>
                     <TableCell className="font-mono">
                       {i.invoice_number ?? '—'}
                       {i.source === 'recurring' && (
@@ -374,23 +453,46 @@ export default function OffenePosten() {
                           {wf.note}
                         </div>
                       )}
+                      {booked && (
+                        <div className="text-[11px] text-emerald-500 mt-1 flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" /> Gebucht{booked.journal_number ? ` · ${booked.journal_number}` : ''}
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell className="text-right">{formatCurrency(i.total, i.currency)}</TableCell>
                     <TableCell className="text-right font-medium">{formatCurrency(i.balance, i.currency)}</TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openEdit(i);
-                        }}
-                        className="gap-1 relative z-10"
-                      >
-                        <Pencil className="w-3.5 h-3.5" /> Bearbeiten
-                      </Button>
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant={booked ? 'outline' : 'default'}
+                          disabled={isBooking || !!booked}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            bookItem(i);
+                          }}
+                          className="gap-1 relative z-10"
+                          title={booked ? 'Bereits in Buchhaltung gebucht' : 'Rechnung in Buchhaltung buchen'}
+                        >
+                          {isBooking ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BookCheck className="w-3.5 h-3.5" />}
+                          {booked ? 'Gebucht' : 'Buchen'}
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEdit(i);
+                          }}
+                          className="gap-1 relative z-10"
+                        >
+                          <Pencil className="w-3.5 h-3.5" /> Bearbeiten
+                        </Button>
+                      </div>
                     </TableCell>
+
                   </TableRow>
                 );
               })}
