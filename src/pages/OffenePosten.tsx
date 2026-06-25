@@ -482,21 +482,43 @@ export default function OffenePosten() {
                     <TableCell className="text-right font-medium">{formatCurrency(i.balance, i.currency)}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant={booked ? 'outline' : 'default'}
-                          disabled={isBooking || !!booked}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            bookItem(i);
-                          }}
-                          className="gap-1 relative z-10"
-                          title={booked ? 'Bereits in Buchhaltung gebucht' : 'Rechnung in Buchhaltung buchen'}
-                        >
-                          {isBooking ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BookCheck className="w-3.5 h-3.5" />}
-                          {booked ? 'Gebucht' : 'Buchen'}
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant={booked ? 'outline' : 'default'}
+                              disabled={isBooking || !!booked}
+                              className="gap-1 relative z-10"
+                              title={booked ? 'Bereits in Buchhaltung gebucht' : 'Rechnung in Buchhaltung buchen'}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {isBooking ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BookCheck className="w-3.5 h-3.5" />}
+                              {booked ? 'Gebucht' : 'Buchen'}
+                              {!booked && <ChevronDown className="w-3.5 h-3.5 opacity-70" />}
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="z-[10001]">
+                            <DropdownMenuLabel>Zahlungsart wählen</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            {(Object.keys(bookingMethodConfig) as Array<keyof typeof bookingMethodConfig>).map((m) => {
+                              const cfg = bookingMethodConfig[m];
+                              const Icon = cfg.icon;
+                              return (
+                                <DropdownMenuItem
+                                  key={m}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    bookItem(i, m);
+                                  }}
+                                  className="gap-2"
+                                >
+                                  <Icon className="w-4 h-4" /> {cfg.label}
+                                </DropdownMenuItem>
+                              );
+                            })}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                         <Button
                           type="button"
                           size="sm"
