@@ -250,10 +250,24 @@ const WareneingangDialog = forwardRef<WareneingangDialogHandle, Props>(({ order,
       field('Unterschrift:', state.unterschrift);
 
       const fileName = `Wareneingang_${state.seriennummer || order.order_number || 'Geraet'}.pdf`;
-      doc.save(fileName);
+      // Blob-Download statt doc.save() — funktioniert auch in sandboxed iframes
+      const blob = doc.output('blob') as Blob;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      a.rel = 'noopener';
+      a.target = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      // Zusätzlich in neuem Tab öffnen, falls Download blockiert
+      try { window.open(url, '_blank', 'noopener'); } catch { /* ignore */ }
       toast.success('Wareneingangsschein erzeugt');
       setOpen(false);
     } catch (e: any) {
+      console.error('Wareneingang PDF error:', e);
       toast.error('PDF-Erzeugung fehlgeschlagen: ' + (e?.message || e));
     } finally {
       setGenerating(false);
