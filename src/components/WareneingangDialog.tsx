@@ -12,7 +12,11 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { createPDF } from '@/lib/pdf-utils';
 
-export type WareneingangDialogHandle = { open: () => void; generatePdf: () => void };
+export type WareneingangDialogHandle = {
+  open: () => void;
+  generatePdf: () => void;
+  generatePdfFor: (args: { order?: any; device?: { serial_number?: string | null; model_name?: string | null } }) => void;
+};
 
 interface Props {
   order: any;
