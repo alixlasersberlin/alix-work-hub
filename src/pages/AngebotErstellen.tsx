@@ -852,10 +852,10 @@ export default function AngebotErstellen() {
     try {
       const doc = await buildPDF();
       if (!doc) return;
-      const blob = doc.output('blob') as Blob;
-      const url = URL.createObjectURL(blob);
+      // Data-URI statt blob: – funktioniert auch in sandboxed iframes (Lovable-Preview)
+      const url = doc.output('datauristring') as string;
       setPreviewUrl((prev) => {
-        if (prev) URL.revokeObjectURL(prev);
+        if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev);
         return url;
       });
     } catch (e) {
@@ -877,7 +877,7 @@ export default function AngebotErstellen() {
     JSON.stringify(lines),
   ]);
 
-  useEffect(() => () => { if (previewUrl) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
+  useEffect(() => () => { if (previewUrl && previewUrl.startsWith('blob:')) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
 
   // Auto-Download wenn aus Angebotsliste mit ?download=1 aufgerufen
   useEffect(() => {
