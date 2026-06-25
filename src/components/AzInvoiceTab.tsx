@@ -145,7 +145,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         ['Rechnungsdatum', fmtDate(invoiceDate)],
         ['Fällig am', fmtDate(dueDate)],
         ['Auftragsnr.', orderNo || '—'],
-        ['Kundennr.', String(customer?.external_customer_id || customer?.id?.slice(0, 8) || '—')],
+        ['Kundennr.', String((customer as any)?.raw_data?.contact_number || (customer as any)?.raw_data?.customer_number || customer?.external_customer_id || customer?.id?.slice(0, 8) || '—')],
       ];
       for (const [k, v] of meta) {
         doc.setFont('helvetica', 'bold');

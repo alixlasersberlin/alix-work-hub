@@ -79,7 +79,7 @@ async function buildDepositPdf(row: any, order: any, customer: any) {
     ['Rechnungsdatum', fmtPdfDate(row?.booking_date)],
     ['Fällig am', dueFromNotes || '—'],
     ['Auftragsnr.', orderNo || '—'],
-    ['Kundennr.', String(customer?.external_customer_id || customer?.id?.slice(0, 8) || '—')],
+    ['Kundennr.', String((customer as any)?.raw_data?.contact_number || (customer as any)?.raw_data?.customer_number || customer?.external_customer_id || customer?.id?.slice(0, 8) || '—')],
   ];
   let metaY = TOP_CONTENT;
   for (const [label, value] of meta) {
