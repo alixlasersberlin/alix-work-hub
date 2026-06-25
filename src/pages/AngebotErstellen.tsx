@@ -1163,13 +1163,38 @@ export default function AngebotErstellen() {
         </div>
         <div>
           <Label>Voraussichtlicher Liefertermin (KW)</Label>
-          <Input
-            type="week"
-            value={deliveryWeek}
-            onChange={e => setDeliveryWeek(e.target.value)}
-            placeholder="z.B. 2026-W24"
-            className="bg-secondary border-border mt-1.5 text-white [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:invert"
-          />
+          <div className="flex gap-2 mt-1.5">
+            <Input
+              type="week"
+              value={deliveryWeek}
+              onChange={e => setDeliveryWeek(e.target.value)}
+              placeholder="z.B. 2026-W24"
+              className="bg-secondary border-border text-white [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:invert"
+            />
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button type="button" variant="outline" size="icon" className="shrink-0">
+                  <CalendarIcon className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 pointer-events-auto" align="end">
+                <Calendar
+                  mode="single"
+                  initialFocus
+                  onSelect={(d) => {
+                    if (!d) return;
+                    const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+                    const dayNum = date.getUTCDay() || 7;
+                    date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+                    const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+                    const weekNr = Math.ceil(((date.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+                    setDeliveryWeek(`${date.getUTCFullYear()}-W${String(weekNr).padStart(2, '0')}`);
+                  }}
+                  className="p-3 pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
         <div className="md:col-span-3">
           <Label>Zusätzliche Vereinbarungen</Label>
