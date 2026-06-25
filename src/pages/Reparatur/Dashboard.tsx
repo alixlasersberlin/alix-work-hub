@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { sbRepair } from '@/lib/repair/api';
 import { Card } from '@/components/ui/card';
@@ -8,6 +8,7 @@ import { KpiTile } from '@/components/infinity/KpiTile';
 import { SkeletonKpiGrid } from '@/components/infinity/Skeleton';
 import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { Button } from '@/components/ui/button';
+import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh';
 
 type Counts = Record<string, number>;
 
@@ -15,18 +16,19 @@ export default function ReparaturDashboard() {
   const [counts, setCounts] = useState<Counts>({});
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    (async () => {
-      const { data } = await sbRepair.from('repair_orders').select('repair_status');
-      const c: Counts = {};
-      (data || []).forEach((r: any) => {
-        c[r.repair_status] = (c[r.repair_status] || 0) + 1;
-      });
-      c.__total = (data || []).length;
-      setCounts(c);
-      setLoading(false);
-    })();
+  const load = useCallback(async () => {
+    const { data } = await sbRepair.from('repair_orders').select('repair_status');
+    const c: Counts = {};
+    (data || []).forEach((r: any) => {
+      c[r.repair_status] = (c[r.repair_status] || 0) + 1;
+    });
+    c.__total = (data || []).length;
+    setCounts(c);
+    setLoading(false);
   }, []);
+
+  useEffect(() => { load(); }, [load]);
+  useRealtimeRefresh(['repair_orders'], load);
 
   const open = (counts.__total || 0) - (counts['Ausgeliefert'] || 0) - (counts['Storniert'] || 0);
   const kpis = [

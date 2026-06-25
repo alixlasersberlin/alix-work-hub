@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { KpiTile } from '@/components/infinity/KpiTile';
 import {
@@ -6,6 +6,7 @@ import {
   Inbox, Wrench, AlertOctagon,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh';
 
 type Kpis = {
   sentToday: number; openedToday: number; clickedToday: number;
@@ -16,45 +17,42 @@ type Kpis = {
 export default function MailCenterDashboard() {
   const [kpis, setKpis] = useState<Kpis | null>(null);
 
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      const start = new Date(); start.setHours(0, 0, 0, 0);
-      const iso = start.toISOString();
+  const load = useCallback(async () => {
+    const start = new Date(); start.setHours(0, 0, 0, 0);
+    const iso = start.toISOString();
 
-      const countFor = async (column: string) => {
-        const { count } = await supabase.from('mail_messages')
-          .select('id', { count: 'exact', head: true }).gte(column, iso);
-        return count ?? 0;
-      };
+    const countFor = async (column: string) => {
+      const { count } = await supabase.from('mail_messages')
+        .select('id', { count: 'exact', head: true }).gte(column, iso);
+      return count ?? 0;
+    };
 
-      const [sent, opened, clicked, bounced, complained, newMsgs, openReq, openRep, crit] = await Promise.all([
-        countFor('sent_at'),
-        countFor('opened_at'),
-        countFor('clicked_at'),
-        countFor('bounced_at'),
-        supabase.from('mail_messages').select('id', { count: 'exact', head: true })
-          .eq('status', 'complained').gte('updated_at', iso).then(r => r.count ?? 0),
-        supabase.from('mail_messages').select('id', { count: 'exact', head: true })
-          .eq('direction', 'inbound').eq('is_read', false).then(r => r.count ?? 0),
-        supabase.from('mail_messages').select('id', { count: 'exact', head: true })
-          .eq('direction', 'inbound').is('assigned_to', null).then(r => r.count ?? 0),
-        supabase.from('repair_orders').select('id', { count: 'exact', head: true })
-          .not('repair_status', 'ilike', '%abgeschlossen%').then(r => r.count ?? 0),
-        supabase.from('mail_messages').select('id', { count: 'exact', head: true })
-          .eq('priority', 'Kritisch').then(r => r.count ?? 0),
-      ]);
+    const [sent, opened, clicked, bounced, complained, newMsgs, openReq, openRep, crit] = await Promise.all([
+      countFor('sent_at'),
+      countFor('opened_at'),
+      countFor('clicked_at'),
+      countFor('bounced_at'),
+      supabase.from('mail_messages').select('id', { count: 'exact', head: true })
+        .eq('status', 'complained').gte('updated_at', iso).then(r => r.count ?? 0),
+      supabase.from('mail_messages').select('id', { count: 'exact', head: true })
+        .eq('direction', 'inbound').eq('is_read', false).then(r => r.count ?? 0),
+      supabase.from('mail_messages').select('id', { count: 'exact', head: true })
+        .eq('direction', 'inbound').is('assigned_to', null).then(r => r.count ?? 0),
+      supabase.from('repair_orders').select('id', { count: 'exact', head: true })
+        .not('repair_status', 'ilike', '%abgeschlossen%').then(r => r.count ?? 0),
+      supabase.from('mail_messages').select('id', { count: 'exact', head: true })
+        .eq('priority', 'Kritisch').then(r => r.count ?? 0),
+    ]);
 
-      if (mounted) {
-        setKpis({
-          sentToday: sent, openedToday: opened, clickedToday: clicked,
-          bouncedToday: bounced, complainedToday: complained,
-          newMessages: newMsgs, openRequests: openReq, openRepairs: openRep, critical: crit,
-        });
-      }
-    })();
-    return () => { mounted = false; };
+    setKpis({
+      sentToday: sent, openedToday: opened, clickedToday: clicked,
+      bouncedToday: bounced, complainedToday: complained,
+      newMessages: newMsgs, openRequests: openReq, openRepairs: openRep, critical: crit,
+    });
   }, []);
+
+  useEffect(() => { load(); }, [load]);
+  useRealtimeRefresh(['mail_messages', 'repair_orders'], load);
 
   const cards = [
     { label: 'Neue Nachrichten', value: kpis?.newMessages, icon: Inbox },
