@@ -112,7 +112,7 @@ export default function OffenePosten() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [{ data: invoices, error: e1 }, { data: recurring, error: e2 }, { data: wf, error: e3 }] =
+    const [{ data: invoices, error: e1 }, { data: recurring, error: e2 }, { data: wf, error: e3 }, { data: journals, error: e4 }] =
       await Promise.all([
         supabase
           .from('zoho_invoices')
@@ -130,8 +130,14 @@ export default function OffenePosten() {
           .from('invoice_workflow_states')
           .select('source, invoice_key, workflow_status, note, updated_at')
           .limit(2000),
+        supabase
+          .from('finance_journal')
+          .select('reference, journal_number, booking_date')
+          .eq('source_module', 'offene_posten')
+          .like('reference', 'op:%')
+          .limit(5000),
       ]);
-    if (e1 || e2 || e3) toast.error('Fehler beim Laden: ' + (e1?.message || e2?.message || e3?.message));
+    if (e1 || e2 || e3 || e4) toast.error('Fehler beim Laden: ' + (e1?.message || e2?.message || e3?.message || e4?.message));
     const merged: OpenItem[] = [
       ...((invoices ?? []).map((i: any) => ({ ...i, source: 'invoice' as const }))),
       ...((recurring ?? []).map((i: any) => ({ ...i, source: 'recurring' as const }))),
@@ -143,6 +149,13 @@ export default function OffenePosten() {
       map[`${w.source}-${w.invoice_key}`] = w as WorkflowState;
     });
     setWorkflows(map);
+    const booked: Record<string, { journal_number: string | null; booking_date: string }> = {};
+    (journals ?? []).forEach((j: any) => {
+      // reference format: op:<source>:<id>
+      const parts = String(j.reference || '').split(':');
+      if (parts.length >= 3) booked[`${parts[1]}-${parts[2]}`] = { journal_number: j.journal_number, booking_date: j.booking_date };
+    });
+    setBookedRefs(booked);
     setLoading(false);
   }, []);
 
