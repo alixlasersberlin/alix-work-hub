@@ -157,6 +157,14 @@ export default function Lagergeraete({
   const { isAdmin, hasRole, user } = useAuth();
   const navigate = useNavigate();
   const [sendingRepair, setSendingRepair] = useState<string | null>(null);
+  const wareneingangRef = useRef<WareneingangDialogHandle>(null);
+  const isUnterwegs = (filterStatuses ?? []).includes('Transfer');
+  const handleWareneingang = (d: LagerDevice) => {
+    wareneingangRef.current?.generatePdfFor({
+      order: d.orders ? { order_number: d.orders.order_number } : undefined,
+      device: { serial_number: d.serial_number, model_name: d.model_name },
+    });
+  };
 
   const handleSendToRepair = async (d: LagerDevice) => {
     if (parseRepairId(d.notes)) {
