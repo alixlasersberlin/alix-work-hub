@@ -385,7 +385,7 @@ export default function OrderDetail() {
         { key: 'sepa', label: 'SEPA Mandat', icon: FileText, onClick: () => sepaRef.current?.trigger() },
         { key: 'mietkauf', label: 'Mietkauf', icon: FileText, onClick: () => mietkaufRef.current?.open() },
         { key: 'ratenplan', label: 'Ratenplan', icon: FileText, onClick: () => ratenplanRef.current?.open() },
-        { key: 'wareneingang', label: 'Wareneingang', icon: Inbox, onClick: () => wareneingangRef.current?.open() },
+        { key: 'wareneingang', label: 'Wareneingang', icon: Inbox, onClick: () => wareneingangRef.current?.generatePdf() },
       ] as ActionItem[],
     }] : []),
     ...(canWrite ? [{
@@ -473,7 +473,7 @@ export default function OrderDetail() {
           <SepaMandatButton ref={sepaRef} order={order} hideTrigger />
           <MietkaufDialog ref={mietkaufRef} order={order ? { ...order, items } : order} hideTrigger />
           <InstallmentPlanDialog ref={ratenplanRef} order={order} hideTrigger />
-          <WareneingangDialog ref={wareneingangRef} order={order ? { ...order, items } : order} customer={customer} hideTrigger />
+          <WareneingangDialog ref={wareneingangRef} order={order ? { ...order, items } : order} customer={customer} devices={serialDevices} hideTrigger />
         </div>
       </div>
 
