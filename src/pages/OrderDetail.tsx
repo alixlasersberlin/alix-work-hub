@@ -95,6 +95,8 @@ export default function OrderDetail() {
   const sepaRef = useRef<SepaMandatHandle>(null);
   const mietkaufRef = useRef<MietkaufDialogHandle>(null);
   const ratenplanRef = useRef<InstallmentPlanDialogHandle>(null);
+  const wareneingangRef = useRef<WareneingangDialogHandle>(null);
+
 
   useEffect(() => {
     if (!id) return;
