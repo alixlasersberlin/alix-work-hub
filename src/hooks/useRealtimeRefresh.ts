@@ -38,8 +38,7 @@ export function useRealtimeRefresh(
     const channelName = `rt-refresh:${tables.slice().sort().join(',')}:${Math.random().toString(36).slice(2, 8)}`;
     let channel = supabase.channel(channelName);
     for (const table of tables) {
-      channel = channel.on(
-        // @ts-expect-error - postgres_changes is a valid Supabase realtime event
+      channel = (channel as any).on(
         'postgres_changes',
         { event: '*', schema: 'public', table },
         trigger,
