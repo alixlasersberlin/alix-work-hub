@@ -623,7 +623,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
           <Button
             variant="outline"
             onClick={generate}
-            disabled={generating || booking || sending || !hasDeposit}
+            disabled={generating || booking || sending || postingToBuchhaltung || !hasDeposit}
           >
             {generating
               ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -632,7 +632,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
           </Button>
           <Button
             onClick={generateAndBook}
-            disabled={generating || booking || sending || !hasDeposit}
+            disabled={generating || booking || sending || postingToBuchhaltung || !hasDeposit}
             className="gold-gradient text-primary-foreground"
           >
             {booking
@@ -641,9 +641,20 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
             ANZAHLUNG STELLEN & SPEICHERN
           </Button>
           <Button
+            onClick={postToBuchhaltung}
+            disabled={generating || booking || sending || postingToBuchhaltung || !hasDeposit}
+            className="bg-red-600 hover:bg-red-700 text-white border border-red-700 shadow-sm"
+            title="Diese Anzahlungsrechnung in Finance & Controlling / Offene Anzahlungen übernehmen"
+          >
+            {postingToBuchhaltung
+              ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              : <BookOpen className="w-4 h-4 mr-2" />}
+            In Buchhaltung schreiben
+          </Button>
+          <Button
             variant="outline"
             onClick={sendByEmail}
-            disabled={generating || booking || sending || !hasDeposit || !customer?.email}
+            disabled={generating || booking || sending || postingToBuchhaltung || !hasDeposit || !customer?.email}
             title={!customer?.email ? 'Kunde hat keine E-Mail-Adresse' : undefined}
           >
             {sending
