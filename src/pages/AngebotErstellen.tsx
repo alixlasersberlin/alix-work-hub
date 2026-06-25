@@ -877,7 +877,7 @@ export default function AngebotErstellen() {
     JSON.stringify(lines),
   ]);
 
-  useEffect(() => () => { if (previewUrl) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
+  useEffect(() => () => { if (previewUrl && previewUrl.startsWith('blob:')) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
 
   // Auto-Download wenn aus Angebotsliste mit ?download=1 aufgerufen
   useEffect(() => {
