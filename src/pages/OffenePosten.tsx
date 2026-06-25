@@ -297,6 +297,8 @@ export default function OffenePosten() {
     setBookedRefs((prev) => ({ ...prev, [key]: { journal_number: inserted?.journal_number ?? null, booking_date: inserted?.booking_date ?? new Date().toISOString().slice(0, 10) } }));
     toast.success(`Gebucht${inserted?.journal_number ? ' · ' + inserted.journal_number : ''}`);
   };
+
+  const filtered = useMemo(
     () => items.filter((i) => matchesQuery(i, search)),
     [items, search],
   );
