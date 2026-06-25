@@ -32,6 +32,7 @@ import OrderFullEditDialog from '@/components/OrderFullEditDialog';
 
 import OrderDeferDialog from '@/components/OrderDeferDialog';
 import MietkaufDialog, { type MietkaufDialogHandle } from '@/components/MietkaufDialog';
+import WareneingangDialog, { type WareneingangDialogHandle } from '@/components/WareneingangDialog';
 import DeliveryNoteTab from '@/components/DeliveryNoteTab';
 import AuftragsbestaetigungTab from '@/components/AuftragsbestaetigungTab';
 import OrderConfirmationTab from '@/components/OrderConfirmationTab';
