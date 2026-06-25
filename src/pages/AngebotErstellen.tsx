@@ -1456,44 +1456,47 @@ export default function AngebotErstellen() {
           <DialogHeader>
             <DialogTitle>Neuen Kunden anlegen</DialogTitle>
           </DialogHeader>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <form className="grid gap-3 sm:grid-cols-2" autoComplete="off" onSubmit={(e) => e.preventDefault()}>
+            {/* Honeypot, um Passwort-Manager (1Password etc.) abzulenken */}
+            <input type="text" name="username" autoComplete="username" tabIndex={-1} aria-hidden="true" style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }} />
+            <input type="password" name="password" autoComplete="new-password" tabIndex={-1} aria-hidden="true" style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }} />
             <div className="sm:col-span-2">
               <Label>Firma</Label>
-              <Input value={newCustomer.company_name} onChange={e => setNewCustomer(p => ({ ...p, company_name: e.target.value }))} className="mt-1.5" />
+              <Input autoComplete="off" data-1p-ignore data-lpignore="true" data-bwignore data-form-type="other" value={newCustomer.company_name} onChange={e => setNewCustomer(p => ({ ...p, company_name: e.target.value }))} className="mt-1.5" />
             </div>
             <div>
               <Label>Ansprechpartner</Label>
-              <Input value={newCustomer.contact_name} onChange={e => setNewCustomer(p => ({ ...p, contact_name: e.target.value }))} className="mt-1.5" />
+              <Input autoComplete="off" data-1p-ignore data-lpignore="true" data-bwignore data-form-type="other" value={newCustomer.contact_name} onChange={e => setNewCustomer(p => ({ ...p, contact_name: e.target.value }))} className="mt-1.5" />
             </div>
             <div>
               <Label>E-Mail</Label>
-              <Input type="email" value={newCustomer.email} onChange={e => setNewCustomer(p => ({ ...p, email: e.target.value }))} className="mt-1.5" />
+              <Input type="email" autoComplete="off" data-1p-ignore data-lpignore="true" data-bwignore data-form-type="other" value={newCustomer.email} onChange={e => setNewCustomer(p => ({ ...p, email: e.target.value }))} className="mt-1.5" />
             </div>
             <div>
               <Label>Telefon</Label>
-              <Input value={newCustomer.phone} onChange={e => setNewCustomer(p => ({ ...p, phone: e.target.value }))} className="mt-1.5" />
+              <Input autoComplete="off" data-1p-ignore data-lpignore="true" data-bwignore data-form-type="other" value={newCustomer.phone} onChange={e => setNewCustomer(p => ({ ...p, phone: e.target.value }))} className="mt-1.5" />
             </div>
             <div className="sm:col-span-2">
               <Label>Straße</Label>
-              <Input value={newCustomer.ba_address} onChange={e => setNewCustomer(p => ({ ...p, ba_address: e.target.value }))} className="mt-1.5" />
+              <Input autoComplete="off" data-1p-ignore data-lpignore="true" data-bwignore data-form-type="other" value={newCustomer.ba_address} onChange={e => setNewCustomer(p => ({ ...p, ba_address: e.target.value }))} className="mt-1.5" />
             </div>
             <div className="sm:col-span-2">
               <Label>Adresszusatz</Label>
-              <Input value={newCustomer.ba_street2} onChange={e => setNewCustomer(p => ({ ...p, ba_street2: e.target.value }))} className="mt-1.5" />
+              <Input autoComplete="off" data-1p-ignore data-lpignore="true" data-bwignore data-form-type="other" value={newCustomer.ba_street2} onChange={e => setNewCustomer(p => ({ ...p, ba_street2: e.target.value }))} className="mt-1.5" />
             </div>
             <div>
               <Label>PLZ</Label>
-              <Input value={newCustomer.ba_zip} onChange={e => setNewCustomer(p => ({ ...p, ba_zip: e.target.value }))} className="mt-1.5" />
+              <Input autoComplete="off" data-1p-ignore data-lpignore="true" data-bwignore data-form-type="other" value={newCustomer.ba_zip} onChange={e => setNewCustomer(p => ({ ...p, ba_zip: e.target.value }))} className="mt-1.5" />
             </div>
             <div>
               <Label>Ort</Label>
-              <Input value={newCustomer.ba_city} onChange={e => setNewCustomer(p => ({ ...p, ba_city: e.target.value }))} className="mt-1.5" />
+              <Input autoComplete="off" data-1p-ignore data-lpignore="true" data-bwignore data-form-type="other" value={newCustomer.ba_city} onChange={e => setNewCustomer(p => ({ ...p, ba_city: e.target.value }))} className="mt-1.5" />
             </div>
             <div className="sm:col-span-2">
               <Label>Land</Label>
-              <Input value={newCustomer.ba_country} onChange={e => setNewCustomer(p => ({ ...p, ba_country: e.target.value }))} className="mt-1.5" />
+              <Input autoComplete="off" data-1p-ignore data-lpignore="true" data-bwignore data-form-type="other" value={newCustomer.ba_country} onChange={e => setNewCustomer(p => ({ ...p, ba_country: e.target.value }))} className="mt-1.5" />
             </div>
-          </div>
+          </form>
           <DialogFooter>
             <Button variant="outline" onClick={() => setNewCustomerOpen(false)} disabled={newCustomerSaving}>Abbrechen</Button>
             <Button onClick={createNewCustomer} disabled={newCustomerSaving}>
