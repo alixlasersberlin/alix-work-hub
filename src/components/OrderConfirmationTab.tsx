@@ -258,7 +258,6 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
       meta.push(['Bestätigt am', fmtDate(confirmDate)]);
       meta.push(['Kundennr.', String(customer?.external_customer_id || customer?.id?.slice(0, 8) || '—')]);
       if (deliveryWeek) meta.push(['Liefertermin', deliveryWeek]);
-      if (order?.expected_shipment_date) meta.push(['Voraus. Versand', fmtDate(order.expected_shipment_date)]);
       for (const [k, v] of meta) {
         doc.setFont('helvetica', 'bold');
         doc.text(k, metaX, metaY);
