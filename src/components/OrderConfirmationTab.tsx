@@ -73,7 +73,18 @@ type PayType = 'Direktkauf' | 'Ratenzahlung' | 'Leasing' | 'Mietkauf' | 'Alix Fl
 
 export default function OrderConfirmationTab({ order, customer, items }: Props) {
   const [confirmDate, setConfirmDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
-  const [deliveryWeek, setDeliveryWeek] = useState<string>('');
+  const [deliveryWeek, setDeliveryWeek] = useState<string>(
+    order?.expected_shipment_date
+      ? new Date(order.expected_shipment_date).toLocaleDateString('de-DE')
+      : ''
+  );
+
+  // Liefertermin automatisch an das voraussichtliche Versanddatum angleichen
+  useEffect(() => {
+    if (order?.expected_shipment_date) {
+      setDeliveryWeek(new Date(order.expected_shipment_date).toLocaleDateString('de-DE'));
+    }
+  }, [order?.expected_shipment_date]);
   const [notes, setNotes] = useState<string>('Vielen Dank für Ihre Bestellung. Wir bestätigen Ihnen hiermit den Auftrag zu den nachfolgenden Konditionen.');
   const [paymentTerms, setPaymentTerms] = useState<string>('');
   const [confirmationNumber, setConfirmationNumber] = useState<string>('');
