@@ -20,7 +20,7 @@ const Email = (p: Props) => (
     <Body style={main}>
       <Container style={container}>
         <Heading style={h1}>Auftragsbestätigung</Heading>
-        <Text style={paragraph}>{p.customer_name || 'Sehr geehrte/r Kundin/Kunde'},</Text>
+        <Text style={paragraph}>Hallo {p.customer_name || 'Sehr geehrte/r Kundin/Kunde'},</Text>
         <Text style={paragraph}>
           vielen Dank für Ihren Auftrag. Wir bestätigen hiermit verbindlich den Eingang
           und die Annahme Ihres unterzeichneten Angebots. Anbei finden Sie Ihre Auftragsbestätigung
