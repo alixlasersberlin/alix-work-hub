@@ -219,7 +219,7 @@ const WareneingangDialog = forwardRef<WareneingangDialogHandle, Props>(({ order,
         doc.setDrawColor(0);
         doc.rect(17, y - 3.2, 3.5, 3.5);
         if (checked) {
-          doc.setFillColor(0);
+          doc.setFillColor(0, 0, 0);
           doc.rect(17.4, y - 2.8, 2.7, 2.7, 'F');
         }
         doc.text(lbl, 23, y);
