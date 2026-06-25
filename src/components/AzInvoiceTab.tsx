@@ -94,6 +94,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
   );
   const [generating, setGenerating] = useState(false);
   const [booking, setBooking] = useState(false);
+  const [postingToBuchhaltung, setPostingToBuchhaltung] = useState(false);
   const [sending, setSending] = useState(false);
 
   useEffect(() => {
