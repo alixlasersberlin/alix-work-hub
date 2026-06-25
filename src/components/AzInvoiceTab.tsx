@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { FileDown, Loader2, Receipt, AlertCircle, Mail, BookmarkCheck } from 'lucide-react';
+import { FileDown, Loader2, Receipt, AlertCircle, Mail, BookmarkCheck, BookOpen } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
