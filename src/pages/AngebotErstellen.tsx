@@ -852,10 +852,10 @@ export default function AngebotErstellen() {
     try {
       const doc = await buildPDF();
       if (!doc) return;
-      const blob = doc.output('blob') as Blob;
-      const url = URL.createObjectURL(blob);
+      // Data-URI statt blob: – funktioniert auch in sandboxed iframes (Lovable-Preview)
+      const url = doc.output('datauristring') as string;
       setPreviewUrl((prev) => {
-        if (prev) URL.revokeObjectURL(prev);
+        if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev);
         return url;
       });
     } catch (e) {
