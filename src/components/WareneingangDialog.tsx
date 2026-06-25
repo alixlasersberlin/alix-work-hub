@@ -12,18 +12,19 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { createPDF } from '@/lib/pdf-utils';
 
-export type WareneingangDialogHandle = { open: () => void };
+export type WareneingangDialogHandle = { open: () => void; generatePdf: () => void };
 
 interface Props {
   order: any;
   customer?: any;
+  devices?: Array<{ serial_number?: string | null; model_name?: string | null }>;
   hideTrigger?: boolean;
 }
 
 type JN = 'ja' | 'nein' | '';
 type Quality = 'freigegeben' | 'mit_auflage' | 'gesperrt' | 'reklamation' | 'ruecksendung' | '';
 
-const initialState = {
+const createInitialState = () => ({
   // Lieferant
   lieferant: '',
   ansprechpartner: '',
@@ -69,23 +70,41 @@ const initialState = {
   geprueft_durch: '',
   freigabe_datum: new Date().toISOString().split('T')[0],
   unterschrift: '',
-};
+});
 
-const WareneingangDialog = forwardRef<WareneingangDialogHandle, Props>(({ order, customer, hideTrigger }, ref) => {
+type WareneingangState = ReturnType<typeof createInitialState>;
+
+const WareneingangDialog = forwardRef<WareneingangDialogHandle, Props>(({ order, customer, devices = [], hideTrigger }, ref) => {
   const [open, setOpen] = useState(false);
   const [generating, setGenerating] = useState(false);
-  const [state, setState] = useState(initialState);
+  const [state, setState] = useState<WareneingangState>(() => createInitialState());
 
-  useImperativeHandle(ref, () => ({ open: () => setOpen(true) }));
+  const buildPrefilledState = (base: WareneingangState = createInitialState()) => {
+    const firstDev = devices[0];
+    const firstItem = order?.items?.[0];
+    return {
+      ...base,
+      datum_wareneingang: base.datum_wareneingang || new Date().toISOString().split('T')[0],
+      freigabe_datum: base.freigabe_datum || new Date().toISOString().split('T')[0],
+      bestellnummer: base.bestellnummer || order?.order_number || '',
+      geraetebezeichnung: base.geraetebezeichnung || firstDev?.model_name || firstItem?.item_name || '',
+      modell: base.modell || firstDev?.model_name || firstItem?.item_name || '',
+      seriennummer: base.seriennummer || firstDev?.serial_number || '',
+    } as WareneingangState;
+  };
 
   useEffect(() => {
     if (!open || !order?.id) return;
+    setState(s => buildPrefilledState(s));
+    if (devices.length > 0) return;
+    let cancelled = false;
     (async () => {
       // Prefill from order + reservierte Geräte
       const { data: devs } = await supabase
         .from('lager_devices')
         .select('serial_number, model_name')
         .eq('reserved_order_id', order.id);
+      if (cancelled) return;
       const firstDev = (devs || [])[0];
       const firstItem = order.items?.[0];
       setState(s => ({
@@ -96,7 +115,8 @@ const WareneingangDialog = forwardRef<WareneingangDialogHandle, Props>(({ order,
         seriennummer: firstDev?.serial_number || '',
       }));
     })();
-  }, [open, order?.id]);
+    return () => { cancelled = true; };
+  }, [open, order?.id, devices.length, devices[0]?.serial_number, devices[0]?.model_name]);
 
   const set = <K extends keyof typeof state>(k: K, v: (typeof state)[K]) =>
     setState(s => ({ ...s, [k]: v }));
@@ -119,7 +139,7 @@ const WareneingangDialog = forwardRef<WareneingangDialogHandle, Props>(({ order,
     </div>
   );
 
-  const generatePdf = async () => {
+  const generatePdf = async (pdfState: WareneingangState = state, closeDialog = true) => {
     setGenerating(true);
     try {
       const doc = createPDF({ unit: 'mm', format: 'a4' });
@@ -165,44 +185,44 @@ const WareneingangDialog = forwardRef<WareneingangDialogHandle, Props>(({ order,
       const jnField = (label: string, v: JN) => field(label, jn(v));
 
       section('1. Lieferantendaten');
-      field('Lieferant:', state.lieferant);
-      field('Ansprechpartner:', state.ansprechpartner);
-      field('Adresse:', state.adresse);
-      field('Telefon:', state.telefon);
-      field('E-Mail:', state.email);
+      field('Lieferant:', pdfState.lieferant);
+      field('Ansprechpartner:', pdfState.ansprechpartner);
+      field('Adresse:', pdfState.adresse);
+      field('Telefon:', pdfState.telefon);
+      field('E-Mail:', pdfState.email);
       y += 2;
 
       section('2. Lieferdaten');
-      field('Datum Wareneingang:', state.datum_wareneingang);
-      field('Lieferschein-Nr.:', state.lieferschein_nr);
-      field('Bestellnummer:', state.bestellnummer);
-      field('Versanddienstleister:', state.versanddienstleister);
+      field('Datum Wareneingang:', pdfState.datum_wareneingang);
+      field('Lieferschein-Nr.:', pdfState.lieferschein_nr);
+      field('Bestellnummer:', pdfState.bestellnummer);
+      field('Versanddienstleister:', pdfState.versanddienstleister);
       y += 2;
 
       section('3. Gerätedaten');
-      field('Gerätebezeichnung:', state.geraetebezeichnung);
-      field('Modell:', state.modell);
-      field('Hersteller:', state.hersteller);
-      field('Seriennummer:', state.seriennummer);
-      jnField('CE-Kennzeichnung vorhanden:', state.ce_kennzeichnung);
+      field('Gerätebezeichnung:', pdfState.geraetebezeichnung);
+      field('Modell:', pdfState.modell);
+      field('Hersteller:', pdfState.hersteller);
+      field('Seriennummer:', pdfState.seriennummer);
+      jnField('CE-Kennzeichnung vorhanden:', pdfState.ce_kennzeichnung);
       y += 2;
 
       section('4. Zubehörkontrolle');
-      jnField('Handstück(e):', state.handstueck);
-      jnField('Fußschalter:', state.fussschalter);
-      jnField('Netzkabel:', state.netzkabel);
-      jnField('Schutzbrillen:', state.schutzbrillen);
-      jnField('Bedienungsanleitung:', state.bedienungsanleitung);
-      jnField('Konformitätserklärung:', state.konformitaetserklaerung);
+      jnField('Handstück(e):', pdfState.handstueck);
+      jnField('Fußschalter:', pdfState.fussschalter);
+      jnField('Netzkabel:', pdfState.netzkabel);
+      jnField('Schutzbrillen:', pdfState.schutzbrillen);
+      jnField('Bedienungsanleitung:', pdfState.bedienungsanleitung);
+      jnField('Konformitätserklärung:', pdfState.konformitaetserklaerung);
       y += 2;
 
       section('5. Verpackungs- und Sichtprüfung');
-      jnField('Außenverpackung unbeschädigt:', state.aussenverpackung);
-      jnField('Durchfeuchtung:', state.durchfeuchtung);
-      jnField('Manipulationsspuren:', state.manipulationsspuren);
-      jnField('Gehäuse unbeschädigt:', state.gehaeuse);
-      jnField('Display unbeschädigt:', state.display);
-      jnField('Typenschild vorhanden:', state.typenschild);
+      jnField('Außenverpackung unbeschädigt:', pdfState.aussenverpackung);
+      jnField('Durchfeuchtung:', pdfState.durchfeuchtung);
+      jnField('Manipulationsspuren:', pdfState.manipulationsspuren);
+      jnField('Gehäuse unbeschädigt:', pdfState.gehaeuse);
+      jnField('Display unbeschädigt:', pdfState.display);
+      jnField('Typenschild vorhanden:', pdfState.typenschild);
       y += 2;
 
       section('6. Qualitätsbewertung');
@@ -215,7 +235,7 @@ const WareneingangDialog = forwardRef<WareneingangDialogHandle, Props>(({ order,
       ];
       qOpts.forEach(([k, lbl]) => {
         if (y > 280) { doc.addPage(); y = 18; }
-        const checked = state.qualitaet === k;
+        const checked = pdfState.qualitaet === k;
         doc.setDrawColor(0);
         doc.rect(17, y - 3.2, 3.5, 3.5);
         if (checked) {
@@ -228,7 +248,7 @@ const WareneingangDialog = forwardRef<WareneingangDialogHandle, Props>(({ order,
       y += 2;
 
       section('7. Bemerkungen');
-      const lines = doc.splitTextToSize(state.bemerkungen || '—', pageW - 34);
+      const lines = doc.splitTextToSize(pdfState.bemerkungen || '—', pageW - 34);
       lines.forEach((l: string) => {
         if (y > 280) { doc.addPage(); y = 18; }
         doc.text(l, 17, y);
@@ -237,19 +257,19 @@ const WareneingangDialog = forwardRef<WareneingangDialogHandle, Props>(({ order,
       y += 2;
 
       section('8. Desinfektion');
-      jnField('Geräte desinfiziert:', state.geraet_desinfiziert);
-      jnField('Zubehör desinfiziert:', state.zubehoer_desinfiziert);
-      jnField('Original Verpackung desinfiziert:', state.verpackung_desinfiziert);
-      jnField('Schutzbrillen desinfiziert:', state.brillen_desinfiziert);
-      jnField('Bedienungsanleitung:', state.anleitung_desinfiziert);
+      jnField('Geräte desinfiziert:', pdfState.geraet_desinfiziert);
+      jnField('Zubehör desinfiziert:', pdfState.zubehoer_desinfiziert);
+      jnField('Original Verpackung desinfiziert:', pdfState.verpackung_desinfiziert);
+      jnField('Schutzbrillen desinfiziert:', pdfState.brillen_desinfiziert);
+      jnField('Bedienungsanleitung:', pdfState.anleitung_desinfiziert);
       y += 2;
 
       section('9. Freigabe');
-      field('Geprüft durch:', state.geprueft_durch);
-      field('Datum:', state.freigabe_datum);
-      field('Unterschrift:', state.unterschrift);
+      field('Geprüft durch:', pdfState.geprueft_durch);
+      field('Datum:', pdfState.freigabe_datum);
+      field('Unterschrift:', pdfState.unterschrift);
 
-      const fileName = `Wareneingang_${state.seriennummer || order.order_number || 'Geraet'}.pdf`;
+      const fileName = `Wareneingang_${pdfState.seriennummer || order.order_number || 'Geraet'}.pdf`;
       // Blob-Download statt doc.save() — funktioniert auch in sandboxed iframes
       const blob = doc.output('blob') as Blob;
       const url = URL.createObjectURL(blob);
@@ -265,7 +285,7 @@ const WareneingangDialog = forwardRef<WareneingangDialogHandle, Props>(({ order,
       // Zusätzlich in neuem Tab öffnen, falls Download blockiert
       try { window.open(url, '_blank', 'noopener'); } catch { /* ignore */ }
       toast.success('Wareneingangsschein erzeugt');
-      setOpen(false);
+      if (closeDialog) setOpen(false);
     } catch (e: any) {
       console.error('Wareneingang PDF error:', e);
       toast.error('PDF-Erzeugung fehlgeschlagen: ' + (e?.message || e));
@@ -273,6 +293,11 @@ const WareneingangDialog = forwardRef<WareneingangDialogHandle, Props>(({ order,
       setGenerating(false);
     }
   };
+
+  useImperativeHandle(ref, () => ({
+    open: () => setOpen(true),
+    generatePdf: () => generatePdf(buildPrefilledState(createInitialState()), false),
+  }));
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -407,7 +432,7 @@ const WareneingangDialog = forwardRef<WareneingangDialogHandle, Props>(({ order,
 
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)} disabled={generating}>Abbrechen</Button>
-          <Button onClick={generatePdf} disabled={generating}>
+          <Button onClick={() => generatePdf(state, true)} disabled={generating}>
             {generating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileDown className="w-4 h-4 mr-2" />}
             PDF erzeugen
           </Button>
