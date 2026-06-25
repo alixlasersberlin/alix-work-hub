@@ -7,7 +7,6 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FilePlus, Plus, Trash2, Search, Loader2, FileDown, Inbox, ChevronDown, Pencil, Save, X, UserPlus, CheckCircle2, CalendarIcon } from 'lucide-react';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -1437,10 +1436,65 @@ export default function AngebotErstellen() {
                   className="pl-10 bg-secondary border-border"
                 />
               </div>
-              <Button type="button" variant="outline" onClick={() => setNewCustomerOpen(true)}>
+              <Button type="button" variant="outline" onClick={() => setNewCustomerOpen(open => !open)}>
                 <UserPlus className="w-4 h-4 mr-2" /> Neuer Kunde
               </Button>
             </div>
+            {newCustomerOpen && (
+              <div className="rounded-lg border border-border bg-secondary/40 p-4 space-y-4">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="font-semibold text-foreground">Neuen Kunden anlegen</h3>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setNewCustomerOpen(false)} disabled={newCustomerSaving}>
+                    <X className="w-4 h-4 mr-1" /> Schließen
+                  </Button>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2" data-1p-ignore="true" data-lpignore="true" data-bwignore="true" data-form-type="other">
+                  <div className="sm:col-span-2">
+                    <Label>Firma</Label>
+                    <Input {...noAutofillInputProps('company')} value={newCustomer.company_name} onChange={e => setNewCustomer(p => ({ ...p, company_name: e.target.value }))} className="mt-1.5 bg-card border-border" />
+                  </div>
+                  <div>
+                    <Label>Ansprechpartner</Label>
+                    <Input {...noAutofillInputProps('contact')} value={newCustomer.contact_name} onChange={e => setNewCustomer(p => ({ ...p, contact_name: e.target.value }))} className="mt-1.5 bg-card border-border" />
+                  </div>
+                  <div>
+                    <Label>E-Mail</Label>
+                    <Input {...noAutofillInputProps('mail')} type="text" inputMode="email" value={newCustomer.email} onChange={e => setNewCustomer(p => ({ ...p, email: e.target.value }))} className="mt-1.5 bg-card border-border" />
+                  </div>
+                  <div>
+                    <Label>Telefon</Label>
+                    <Input {...noAutofillInputProps('phone')} type="tel" value={newCustomer.phone} onChange={e => setNewCustomer(p => ({ ...p, phone: e.target.value }))} className="mt-1.5 bg-card border-border" />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label>Straße</Label>
+                    <Input {...noAutofillInputProps('street')} value={newCustomer.ba_address} onChange={e => setNewCustomer(p => ({ ...p, ba_address: e.target.value }))} className="mt-1.5 bg-card border-border" />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label>Adresszusatz</Label>
+                    <Input {...noAutofillInputProps('extra')} value={newCustomer.ba_street2} onChange={e => setNewCustomer(p => ({ ...p, ba_street2: e.target.value }))} className="mt-1.5 bg-card border-border" />
+                  </div>
+                  <div>
+                    <Label>PLZ</Label>
+                    <Input {...noAutofillInputProps('zip')} inputMode="numeric" value={newCustomer.ba_zip} onChange={e => setNewCustomer(p => ({ ...p, ba_zip: e.target.value }))} className="mt-1.5 bg-card border-border" />
+                  </div>
+                  <div>
+                    <Label>Ort</Label>
+                    <Input {...noAutofillInputProps('city')} value={newCustomer.ba_city} onChange={e => setNewCustomer(p => ({ ...p, ba_city: e.target.value }))} className="mt-1.5 bg-card border-border" />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label>Land</Label>
+                    <Input {...noAutofillInputProps('country')} value={newCustomer.ba_country} onChange={e => setNewCustomer(p => ({ ...p, ba_country: e.target.value }))} className="mt-1.5 bg-card border-border" />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2 border-t border-border pt-3">
+                  <Button variant="outline" onClick={() => setNewCustomerOpen(false)} disabled={newCustomerSaving}>Abbrechen</Button>
+                  <Button onClick={createNewCustomer} disabled={newCustomerSaving}>
+                    {newCustomerSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <UserPlus className="w-4 h-4 mr-2" />}
+                    Anlegen & übernehmen
+                  </Button>
+                </div>
+              </div>
+            )}
             {customerSearch.trim() && (
               <div className="max-h-64 overflow-auto border border-border rounded-lg divide-y divide-border">
                 {filteredCustomers.length === 0 ? (
@@ -1462,61 +1516,6 @@ export default function AngebotErstellen() {
           </>
         )}
       </div>
-
-      {/* Neuer Kunde Dialog */}
-      <Dialog open={newCustomerOpen} onOpenChange={setNewCustomerOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Neuen Kunden anlegen</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-3 sm:grid-cols-2" data-1p-ignore="true" data-lpignore="true" data-bwignore="true" data-form-type="other">
-            <div className="sm:col-span-2">
-              <Label>Firma</Label>
-              <Input {...noAutofillInputProps('company')} value={newCustomer.company_name} onChange={e => setNewCustomer(p => ({ ...p, company_name: e.target.value }))} className="mt-1.5" />
-            </div>
-            <div>
-              <Label>Ansprechpartner</Label>
-              <Input {...noAutofillInputProps('contact')} value={newCustomer.contact_name} onChange={e => setNewCustomer(p => ({ ...p, contact_name: e.target.value }))} className="mt-1.5" />
-            </div>
-            <div>
-              <Label>E-Mail</Label>
-              <Input {...noAutofillInputProps('mail')} type="text" inputMode="email" value={newCustomer.email} onChange={e => setNewCustomer(p => ({ ...p, email: e.target.value }))} className="mt-1.5" />
-            </div>
-            <div>
-              <Label>Telefon</Label>
-              <Input {...noAutofillInputProps('phone')} type="tel" value={newCustomer.phone} onChange={e => setNewCustomer(p => ({ ...p, phone: e.target.value }))} className="mt-1.5" />
-            </div>
-            <div className="sm:col-span-2">
-              <Label>Straße</Label>
-              <Input {...noAutofillInputProps('street')} value={newCustomer.ba_address} onChange={e => setNewCustomer(p => ({ ...p, ba_address: e.target.value }))} className="mt-1.5" />
-            </div>
-            <div className="sm:col-span-2">
-              <Label>Adresszusatz</Label>
-              <Input {...noAutofillInputProps('extra')} value={newCustomer.ba_street2} onChange={e => setNewCustomer(p => ({ ...p, ba_street2: e.target.value }))} className="mt-1.5" />
-            </div>
-            <div>
-              <Label>PLZ</Label>
-              <Input {...noAutofillInputProps('zip')} inputMode="numeric" value={newCustomer.ba_zip} onChange={e => setNewCustomer(p => ({ ...p, ba_zip: e.target.value }))} className="mt-1.5" />
-            </div>
-            <div>
-              <Label>Ort</Label>
-              <Input {...noAutofillInputProps('city')} value={newCustomer.ba_city} onChange={e => setNewCustomer(p => ({ ...p, ba_city: e.target.value }))} className="mt-1.5" />
-            </div>
-            <div className="sm:col-span-2">
-              <Label>Land</Label>
-              <Input {...noAutofillInputProps('country')} value={newCustomer.ba_country} onChange={e => setNewCustomer(p => ({ ...p, ba_country: e.target.value }))} className="mt-1.5" />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setNewCustomerOpen(false)} disabled={newCustomerSaving}>Abbrechen</Button>
-            <Button onClick={createNewCustomer} disabled={newCustomerSaving}>
-              {newCustomerSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <UserPlus className="w-4 h-4 mr-2" />}
-              Anlegen & übernehmen
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
 
       {/* Items */}
       <div className="rounded-xl border border-border bg-card card-glow p-6 space-y-4">
