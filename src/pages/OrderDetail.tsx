@@ -385,6 +385,7 @@ export default function OrderDetail() {
         { key: 'sepa', label: 'SEPA Mandat', icon: FileText, onClick: () => sepaRef.current?.trigger() },
         { key: 'mietkauf', label: 'Mietkauf', icon: FileText, onClick: () => mietkaufRef.current?.open() },
         { key: 'ratenplan', label: 'Ratenplan', icon: FileText, onClick: () => ratenplanRef.current?.open() },
+        { key: 'wareneingang', label: 'Wareneingang', icon: Inbox, onClick: () => wareneingangRef.current?.open() },
       ] as ActionItem[],
     }] : []),
     ...(canWrite ? [{
