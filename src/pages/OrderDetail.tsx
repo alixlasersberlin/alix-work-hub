@@ -473,6 +473,7 @@ export default function OrderDetail() {
           <SepaMandatButton ref={sepaRef} order={order} hideTrigger />
           <MietkaufDialog ref={mietkaufRef} order={order ? { ...order, items } : order} hideTrigger />
           <InstallmentPlanDialog ref={ratenplanRef} order={order} hideTrigger />
+          <WareneingangDialog ref={wareneingangRef} order={order ? { ...order, items } : order} customer={customer} hideTrigger />
         </div>
       </div>
 
