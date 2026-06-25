@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { CalendarIcon, FileText, Loader2, RefreshCw, Pencil, X, BookCheck, CheckCircle2 } from 'lucide-react';
+import { CalendarIcon, FileText, Loader2, RefreshCw, Pencil, X, BookCheck, CheckCircle2, ChevronDown, Banknote, Building2, Ban, Scale, Undo2 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format, differenceInCalendarDays, parseISO } from 'date-fns';
@@ -237,13 +245,24 @@ export default function OffenePosten() {
     closeEdit();
   };
 
-  const bookItem = async (item: OpenItem) => {
+  type BookingMethod = 'barzahlung' | 'ueberweisung' | 'keine_zahlung' | 'anwalt' | 'storno';
+
+  const bookingMethodConfig: Record<BookingMethod, { label: string; vorgang: string; contra: string | null; status: string; icon: typeof Banknote }> = {
+    barzahlung:    { label: 'Barzahlung',    vorgang: 'Zahlung Bar',        contra: '1000', status: 'aktiv',      icon: Banknote },
+    ueberweisung:  { label: 'Überweisung',   vorgang: 'Zahlung Überweisung', contra: '1200', status: 'aktiv',      icon: Building2 },
+    keine_zahlung: { label: 'Keine Zahlung', vorgang: 'Keine Zahlung',      contra: null,   status: 'aktiv',      icon: Ban },
+    anwalt:        { label: 'Anwalt',        vorgang: 'Übergabe Anwalt',    contra: null,   status: 'aktiv',      icon: Scale },
+    storno:        { label: 'Storno',        vorgang: 'Storno',             contra: '8400', status: 'storniert',  icon: Undo2 },
+  };
+
+  const bookItem = async (item: OpenItem, method: BookingMethod) => {
     const key = `${item.source}-${item.id}`;
     if (bookedRefs[key]) {
       toast.info('Diese Rechnung wurde bereits gebucht.');
       return;
     }
     setBookingKey(key);
+    const cfg = bookingMethodConfig[method];
     const reference = `op:${item.source}:${item.id}`;
     const gross = Number(item.total ?? item.balance ?? 0);
     // 19% USt aus brutto extrahieren (Annahme deutscher Standard, ohne Steuerinfo aus Zoho)
@@ -272,14 +291,14 @@ export default function OffenePosten() {
       source_id: item.id,
       reference,
       invoice_number: item.invoice_number,
-      vorgang: 'Debitor-Rechnung',
+      vorgang: cfg.vorgang,
       amount_net: net,
       amount_vat: vat,
       amount_gross: gross,
       account: '1400', // Forderungen aus Lieferungen und Leistungen
-      contra_account: '8400', // Erlöse 19% USt
-      description: `Buchung aus Offenen Posten · ${item.customer_name ?? ''} · ${item.invoice_number ?? ''}`.trim(),
-      status: 'aktiv',
+      contra_account: cfg.contra,
+      description: `${cfg.label} · ${item.customer_name ?? ''} · ${item.invoice_number ?? ''}`.trim(),
+      status: cfg.status,
       user_id: uid,
     };
 
@@ -295,7 +314,7 @@ export default function OffenePosten() {
       return;
     }
     setBookedRefs((prev) => ({ ...prev, [key]: { journal_number: inserted?.journal_number ?? null, booking_date: inserted?.booking_date ?? new Date().toISOString().slice(0, 10) } }));
-    toast.success(`Gebucht${inserted?.journal_number ? ' · ' + inserted.journal_number : ''}`);
+    toast.success(`${cfg.label} gebucht${inserted?.journal_number ? ' · ' + inserted.journal_number : ''}`);
   };
 
   const filtered = useMemo(
@@ -463,21 +482,43 @@ export default function OffenePosten() {
                     <TableCell className="text-right font-medium">{formatCurrency(i.balance, i.currency)}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant={booked ? 'outline' : 'default'}
-                          disabled={isBooking || !!booked}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            bookItem(i);
-                          }}
-                          className="gap-1 relative z-10"
-                          title={booked ? 'Bereits in Buchhaltung gebucht' : 'Rechnung in Buchhaltung buchen'}
-                        >
-                          {isBooking ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BookCheck className="w-3.5 h-3.5" />}
-                          {booked ? 'Gebucht' : 'Buchen'}
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant={booked ? 'outline' : 'default'}
+                              disabled={isBooking || !!booked}
+                              className="gap-1 relative z-10"
+                              title={booked ? 'Bereits in Buchhaltung gebucht' : 'Rechnung in Buchhaltung buchen'}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {isBooking ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BookCheck className="w-3.5 h-3.5" />}
+                              {booked ? 'Gebucht' : 'Buchen'}
+                              {!booked && <ChevronDown className="w-3.5 h-3.5 opacity-70" />}
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="z-[10001]">
+                            <DropdownMenuLabel>Zahlungsart wählen</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            {(Object.keys(bookingMethodConfig) as Array<keyof typeof bookingMethodConfig>).map((m) => {
+                              const cfg = bookingMethodConfig[m];
+                              const Icon = cfg.icon;
+                              return (
+                                <DropdownMenuItem
+                                  key={m}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    bookItem(i, m);
+                                  }}
+                                  className="gap-2"
+                                >
+                                  <Icon className="w-4 h-4" /> {cfg.label}
+                                </DropdownMenuItem>
+                              );
+                            })}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                         <Button
                           type="button"
                           size="sm"
