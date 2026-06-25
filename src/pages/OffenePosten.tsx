@@ -266,7 +266,7 @@ export default function OffenePosten() {
       return;
     }
 
-    const payload: Record<string, unknown> = {
+    const payload = {
       source_module: 'offene_posten',
       source_table: item.source === 'recurring' ? 'zoho_recurring_invoices' : 'zoho_invoices',
       source_id: item.id,
