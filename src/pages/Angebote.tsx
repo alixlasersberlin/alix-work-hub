@@ -208,6 +208,50 @@ export default function Angebote() {
         }
       />
 
+      {isSuperAdmin && pendingPanelOpen && pendingCount > 0 && (
+        <Card className="border-amber-500/40 bg-amber-500/5">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-base flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-amber-400" /> Offene Freigaben ({pendingCount})
+            </CardTitle>
+            <Button variant="ghost" size="sm" onClick={() => setPendingPanelOpen(false)}>Schließen</Button>
+          </CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Angebotsnr.</TableHead>
+                  <TableHead>Kunde</TableHead>
+                  <TableHead className="text-right">Summe</TableHead>
+                  <TableHead className="text-right">Aktion</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {pendingOffers.map(o => (
+                  <TableRow key={o.offerNumber}>
+                    <TableCell className="font-mono text-xs">{o.offerNumber}</TableCell>
+                    <TableCell>{o.customer?.company_name || o.customer?.contact_name || '—'}</TableCell>
+                    <TableCell className="text-right">{fmtMoney(o.totals?.gross || 0)}</TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-amber-500/40 text-amber-300 hover:bg-amber-500/10"
+                        onClick={() => openApproval(o)}
+                      >
+                        <ShieldCheck className="h-4 w-4 mr-2" /> Prüfen
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
+
+
       <Card>
         <CardHeader><CardTitle>Liste ({offers.length})</CardTitle></CardHeader>
         <CardContent className="p-0">
