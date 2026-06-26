@@ -44,8 +44,10 @@ export default function Angebote() {
   const [approvalOffer, setApprovalOffer] = useState<OfferSnapshot | null>(null);
   const [approvalNote, setApprovalNote] = useState('');
   const [approvalBusy, setApprovalBusy] = useState(false);
+  const [pendingPanelOpen, setPendingPanelOpen] = useState(false);
 
-  const pendingCount = offers.filter(o => (o.approvalStatus || 'pending') === 'pending').length;
+  const pendingOffers = offers.filter(o => (o.approvalStatus || 'pending') === 'pending');
+  const pendingCount = pendingOffers.length;
 
   const openApproval = (o: OfferSnapshot) => {
     setApprovalOffer(o);
@@ -187,9 +189,11 @@ export default function Angebote() {
                 variant="outline"
                 className="border-amber-500/40 text-amber-300 hover:bg-amber-500/10"
                 onClick={() => {
-                  const first = offers.find(o => (o.approvalStatus || 'pending') === 'pending');
-                  if (first) openApproval(first);
-                  else toast.info('Keine offenen Freigaben.');
+                  if (pendingCount === 0) {
+                    toast.info('Keine offenen Freigaben.');
+                    return;
+                  }
+                  setPendingPanelOpen(v => !v);
                 }}
                 title="Offene Freigaben (nur Super Admin)"
               >
@@ -203,6 +207,50 @@ export default function Angebote() {
           </div>
         }
       />
+
+      {isSuperAdmin && pendingPanelOpen && pendingCount > 0 && (
+        <Card className="border-amber-500/40 bg-amber-500/5">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-base flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-amber-400" /> Offene Freigaben ({pendingCount})
+            </CardTitle>
+            <Button variant="ghost" size="sm" onClick={() => setPendingPanelOpen(false)}>Schließen</Button>
+          </CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Angebotsnr.</TableHead>
+                  <TableHead>Kunde</TableHead>
+                  <TableHead className="text-right">Summe</TableHead>
+                  <TableHead className="text-right">Aktion</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {pendingOffers.map(o => (
+                  <TableRow key={o.offerNumber}>
+                    <TableCell className="font-mono text-xs">{o.offerNumber}</TableCell>
+                    <TableCell>{o.customer?.company_name || o.customer?.contact_name || '—'}</TableCell>
+                    <TableCell className="text-right">{fmtMoney(o.totals?.gross || 0)}</TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-amber-500/40 text-amber-300 hover:bg-amber-500/10"
+                        onClick={() => openApproval(o)}
+                      >
+                        <ShieldCheck className="h-4 w-4 mr-2" /> Prüfen
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
+
 
       <Card>
         <CardHeader><CardTitle>Liste ({offers.length})</CardTitle></CardHeader>
