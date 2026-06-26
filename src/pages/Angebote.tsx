@@ -189,9 +189,11 @@ export default function Angebote() {
                 variant="outline"
                 className="border-amber-500/40 text-amber-300 hover:bg-amber-500/10"
                 onClick={() => {
-                  const first = offers.find(o => (o.approvalStatus || 'pending') === 'pending');
-                  if (first) openApproval(first);
-                  else toast.info('Keine offenen Freigaben.');
+                  if (pendingCount === 0) {
+                    toast.info('Keine offenen Freigaben.');
+                    return;
+                  }
+                  setPendingPanelOpen(v => !v);
                 }}
                 title="Offene Freigaben (nur Super Admin)"
               >
