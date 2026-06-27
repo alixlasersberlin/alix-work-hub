@@ -306,6 +306,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
                       >
                         {t.start} <ArrowRight className="h-4 w-4" />
                       </Button>
+                      <p className="mt-3 font-bold text-slate-900">in 30 Sekunden zum perfekten Angebot</p>
                     </div>
                   )}
 
