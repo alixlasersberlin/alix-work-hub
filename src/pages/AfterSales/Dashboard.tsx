@@ -137,6 +137,34 @@ export default function AfterSalesDashboard() {
                       </div>
                       <div className="text-xs text-muted-foreground mt-0.5">{c.progress_pct ?? 0}%</div>
                     </td>
+                    {isSuperAdmin && (
+                      <td className="py-2 pr-3 text-right">
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button size="sm" variant="outline" className="gap-1" disabled={forceClose.isPending}>
+                              <ShieldCheck className="w-3.5 h-3.5" /> Schließen
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Fall ohne Bearbeitung abschließen?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Auftrag <strong>{c.order_number ?? '—'}</strong> ({c.customer_company ?? c.customer_contact ?? '—'}) wird als <strong>100 % erledigt</strong> markiert.
+                                Alle Checklisten-Punkte, offenen Rückrufe und das Mediapaket werden automatisch geschlossen. Die Aktion wird in der Timeline protokolliert.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => forceClose.mutate({ caseId: c.id, reason: 'Direkt-Schließung aus Dashboard' })}
+                              >
+                                Jetzt schließen
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
