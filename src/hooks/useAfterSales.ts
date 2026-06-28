@@ -226,20 +226,31 @@ export function useForceCloseCase() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (v: { caseId: string; reason?: string }) => {
-      const { error } = await supabase.rpc('as_force_close_case' as any, {
-        _case_id: v.caseId,
-        _reason: v.reason ?? null,
-      });
-      if (error) throw error;
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), 20000);
+      try {
+        const { error } = await supabase
+          .rpc('as_force_close_case' as any, {
+            _case_id: v.caseId,
+            _reason: v.reason ?? null,
+          })
+          .abortSignal(controller.signal);
+        if (error) throw error;
+      } finally {
+        window.clearTimeout(timeout);
+      }
     },
-    onSuccess: async (_d, v) => {
+    onSuccess: (_d, v) => {
       toast.success('Fall wurde als erledigt markiert (100%).');
-      await Promise.all([
-        qc.invalidateQueries({ queryKey: ['as-cases'] }),
-        qc.invalidateQueries({ queryKey: ['as-case', v.caseId] }),
-      ]);
-      await qc.refetchQueries({ queryKey: ['as-cases'] });
+      qc.setQueriesData<AsCaseListItem[]>({ queryKey: ['as-cases'] }, (old) =>
+        Array.isArray(old) ? old.filter((item) => item.id !== v.caseId) : old,
+      );
+      qc.invalidateQueries({ queryKey: ['as-cases'] });
+      qc.invalidateQueries({ queryKey: ['as-case', v.caseId] });
     },
-    onError: (e: any) => toast.error(e?.message ?? 'Force-Close fehlgeschlagen'),
+    onError: (e: any) => {
+      const aborted = e?.name === 'AbortError' || String(e?.message ?? '').toLowerCase().includes('abort');
+      toast.error(aborted ? 'Schließen dauert zu lange. Bitte erneut versuchen.' : e?.message ?? 'Force-Close fehlgeschlagen');
+    },
   });
 }
