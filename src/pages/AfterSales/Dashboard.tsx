@@ -1,12 +1,17 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAfterSalesCases, type AsCaseListItem, type AsTrafficLight } from '@/hooks/useAfterSales';
+import { useAfterSalesCases, useForceCloseCase, type AsCaseListItem, type AsTrafficLight } from '@/hooks/useAfterSales';
+import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
-  HeartPulse, PhoneCall, AlertTriangle, CheckCircle2, Star, Smartphone, GraduationCap, Image as ImageIcon,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import {
+  HeartPulse, PhoneCall, AlertTriangle, CheckCircle2, Star, Smartphone, GraduationCap, Image as ImageIcon, ShieldCheck,
 } from 'lucide-react';
 
 function fmtDate(s: string | null) { return s ? new Date(s).toLocaleDateString('de-DE') : '—'; }
@@ -22,6 +27,9 @@ function LightDot({ l }: { l: AsTrafficLight }) {
 
 export default function AfterSalesDashboard() {
   const { data = [], isLoading } = useAfterSalesCases({ completed: false });
+  const { hasRole } = useAuth();
+  const isSuperAdmin = hasRole('Super Admin');
+  const forceClose = useForceCloseCase();
   const [q, setQ] = useState('');
 
   const kpis = useMemo(() => {
@@ -87,6 +95,7 @@ export default function AfterSalesDashboard() {
                   <th className="text-left py-2 pr-3">Letzter Kontakt</th>
                   <th className="text-left py-2 pr-3">Nächster Rückruf</th>
                   <th className="text-left py-2 pr-3">Fortschritt</th>
+                  {isSuperAdmin && <th className="text-right py-2 pr-3">Aktion</th>}
                 </tr>
               </thead>
               <tbody>
@@ -128,6 +137,34 @@ export default function AfterSalesDashboard() {
                       </div>
                       <div className="text-xs text-muted-foreground mt-0.5">{c.progress_pct ?? 0}%</div>
                     </td>
+                    {isSuperAdmin && (
+                      <td className="py-2 pr-3 text-right">
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button size="sm" variant="outline" className="gap-1" disabled={forceClose.isPending}>
+                              <ShieldCheck className="w-3.5 h-3.5" /> Schließen
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Fall ohne Bearbeitung abschließen?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Auftrag <strong>{c.order_number ?? '—'}</strong> ({c.customer_company ?? c.customer_contact ?? '—'}) wird als <strong>100 % erledigt</strong> markiert.
+                                Alle Checklisten-Punkte, offenen Rückrufe und das Mediapaket werden automatisch geschlossen. Die Aktion wird in der Timeline protokolliert.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => forceClose.mutate({ caseId: c.id, reason: 'Direkt-Schließung aus Dashboard' })}
+                              >
+                                Jetzt schließen
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
