@@ -95,6 +95,7 @@ export default function AfterSalesDashboard() {
                   <th className="text-left py-2 pr-3">Letzter Kontakt</th>
                   <th className="text-left py-2 pr-3">Nächster Rückruf</th>
                   <th className="text-left py-2 pr-3">Fortschritt</th>
+                  {isSuperAdmin && <th className="text-right py-2 pr-3">Aktion</th>}
                 </tr>
               </thead>
               <tbody>
