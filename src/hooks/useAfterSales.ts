@@ -86,7 +86,7 @@ export function useAfterSalesCase(id: string | undefined) {
 
 async function recomputeProgress(caseId: string) {
   const { data } = await supabase.from('as_checklist_items' as any).select('checked').eq('case_id', caseId);
-  const items = (data ?? []) as Array<{ checked: boolean }>;
+  const items = ((data ?? []) as unknown) as Array<{ checked: boolean }>;
   if (items.length === 0) return;
   const pct = Math.round((items.filter(i => i.checked).length / items.length) * 100);
   const light: AsTrafficLight = pct === 100 ? 'green' : pct >= 60 ? 'yellow' : 'red';
