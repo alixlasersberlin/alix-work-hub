@@ -871,6 +871,397 @@ export type Database = {
           },
         ]
       }
+      as_callbacks: {
+        Row: {
+          case_id: string
+          created_at: string
+          created_by: string | null
+          done_at: string | null
+          done_by: string | null
+          due_at: string
+          id: string
+          priority: Database["public"]["Enums"]["as_priority"]
+          reason: string | null
+        }
+        Insert: {
+          case_id: string
+          created_at?: string
+          created_by?: string | null
+          done_at?: string | null
+          done_by?: string | null
+          due_at: string
+          id?: string
+          priority?: Database["public"]["Enums"]["as_priority"]
+          reason?: string | null
+        }
+        Update: {
+          case_id?: string
+          created_at?: string
+          created_by?: string | null
+          done_at?: string | null
+          done_by?: string | null
+          due_at?: string
+          id?: string
+          priority?: Database["public"]["Enums"]["as_priority"]
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "as_callbacks_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "as_cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "as_callbacks_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "as_cases_list_v"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      as_cases: {
+        Row: {
+          assignee_id: string | null
+          closed_at: string | null
+          closed_by: string | null
+          created_at: string
+          customer_id: string | null
+          device_id: string | null
+          health_score: number | null
+          id: string
+          last_contact_at: string | null
+          metadata: Json
+          next_callback_at: string | null
+          order_id: string
+          priority: Database["public"]["Enums"]["as_priority"]
+          progress_pct: number
+          sales_user_name: string | null
+          satisfaction_note: string | null
+          satisfaction_rating: number | null
+          status: Database["public"]["Enums"]["as_case_status"]
+          tenant_id: string | null
+          traffic_light: Database["public"]["Enums"]["as_traffic_light"]
+          updated_at: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string
+          customer_id?: string | null
+          device_id?: string | null
+          health_score?: number | null
+          id?: string
+          last_contact_at?: string | null
+          metadata?: Json
+          next_callback_at?: string | null
+          order_id: string
+          priority?: Database["public"]["Enums"]["as_priority"]
+          progress_pct?: number
+          sales_user_name?: string | null
+          satisfaction_note?: string | null
+          satisfaction_rating?: number | null
+          status?: Database["public"]["Enums"]["as_case_status"]
+          tenant_id?: string | null
+          traffic_light?: Database["public"]["Enums"]["as_traffic_light"]
+          updated_at?: string
+        }
+        Update: {
+          assignee_id?: string | null
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string
+          customer_id?: string | null
+          device_id?: string | null
+          health_score?: number | null
+          id?: string
+          last_contact_at?: string | null
+          metadata?: Json
+          next_callback_at?: string | null
+          order_id?: string
+          priority?: Database["public"]["Enums"]["as_priority"]
+          progress_pct?: number
+          sales_user_name?: string | null
+          satisfaction_note?: string | null
+          satisfaction_rating?: number | null
+          status?: Database["public"]["Enums"]["as_case_status"]
+          tenant_id?: string | null
+          traffic_light?: Database["public"]["Enums"]["as_traffic_light"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "as_cases_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "as_cases_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "lager_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "as_cases_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      as_checklist_items: {
+        Row: {
+          case_id: string
+          checked: boolean
+          checked_at: string | null
+          checked_by: string | null
+          created_at: string
+          id: string
+          item_key: string
+          label: string
+          note: string | null
+          section: Database["public"]["Enums"]["as_section"]
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          case_id: string
+          checked?: boolean
+          checked_at?: string | null
+          checked_by?: string | null
+          created_at?: string
+          id?: string
+          item_key: string
+          label: string
+          note?: string | null
+          section: Database["public"]["Enums"]["as_section"]
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          case_id?: string
+          checked?: boolean
+          checked_at?: string | null
+          checked_by?: string | null
+          created_at?: string
+          id?: string
+          item_key?: string
+          label?: string
+          note?: string | null
+          section?: Database["public"]["Enums"]["as_section"]
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "as_checklist_items_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "as_cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "as_checklist_items_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "as_cases_list_v"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      as_mediapaket_status: {
+        Row: {
+          case_id: string
+          note: string | null
+          stage: Database["public"]["Enums"]["as_mediapaket_stage"]
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          case_id: string
+          note?: string | null
+          stage?: Database["public"]["Enums"]["as_mediapaket_stage"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          case_id?: string
+          note?: string | null
+          stage?: Database["public"]["Enums"]["as_mediapaket_stage"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "as_mediapaket_status_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: true
+            referencedRelation: "as_cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "as_mediapaket_status_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: true
+            referencedRelation: "as_cases_list_v"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      as_reminders: {
+        Row: {
+          case_id: string
+          channel: string
+          created_at: string
+          id: string
+          kind: Database["public"]["Enums"]["as_reminder_kind"]
+          payload: Json
+          scheduled_at: string
+          sent_at: string | null
+        }
+        Insert: {
+          case_id: string
+          channel?: string
+          created_at?: string
+          id?: string
+          kind: Database["public"]["Enums"]["as_reminder_kind"]
+          payload?: Json
+          scheduled_at?: string
+          sent_at?: string | null
+        }
+        Update: {
+          case_id?: string
+          channel?: string
+          created_at?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["as_reminder_kind"]
+          payload?: Json
+          scheduled_at?: string
+          sent_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "as_reminders_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "as_cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "as_reminders_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "as_cases_list_v"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      as_timeline_events: {
+        Row: {
+          body: string | null
+          case_id: string
+          created_at: string
+          created_by: string | null
+          event_type: string
+          id: string
+          source: string
+          title: string
+        }
+        Insert: {
+          body?: string | null
+          case_id: string
+          created_at?: string
+          created_by?: string | null
+          event_type: string
+          id?: string
+          source?: string
+          title: string
+        }
+        Update: {
+          body?: string | null
+          case_id?: string
+          created_at?: string
+          created_by?: string | null
+          event_type?: string
+          id?: string
+          source?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "as_timeline_events_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "as_cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "as_timeline_events_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "as_cases_list_v"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      as_upsell_suggestions: {
+        Row: {
+          accepted: boolean | null
+          case_id: string
+          created_at: string
+          id: string
+          label: string
+          note: string | null
+          offer_id: string | null
+          product_key: string
+          updated_at: string
+        }
+        Insert: {
+          accepted?: boolean | null
+          case_id: string
+          created_at?: string
+          id?: string
+          label: string
+          note?: string | null
+          offer_id?: string | null
+          product_key: string
+          updated_at?: string
+        }
+        Update: {
+          accepted?: boolean | null
+          case_id?: string
+          created_at?: string
+          id?: string
+          label?: string
+          note?: string | null
+          offer_id?: string | null
+          product_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "as_upsell_suggestions_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "as_cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "as_upsell_suggestions_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "as_cases_list_v"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_findings: {
         Row: {
           area: string | null
@@ -13950,6 +14341,65 @@ export type Database = {
       }
     }
     Views: {
+      as_cases_list_v: {
+        Row: {
+          assignee_id: string | null
+          closed_at: string | null
+          created_at: string | null
+          currency: string | null
+          customer_company: string | null
+          customer_contact: string | null
+          customer_email: string | null
+          customer_id: string | null
+          customer_number: string | null
+          customer_phone: string | null
+          device_id: string | null
+          device_model: string | null
+          device_serial: string | null
+          expected_shipment_date: string | null
+          health_score: number | null
+          id: string | null
+          internal_number: string | null
+          is_vip: boolean | null
+          last_contact_at: string | null
+          next_callback_at: string | null
+          order_date: string | null
+          order_id: string | null
+          order_number: string | null
+          order_status: string | null
+          priority: Database["public"]["Enums"]["as_priority"] | null
+          progress_pct: number | null
+          sales_user_name: string | null
+          satisfaction_rating: number | null
+          status: Database["public"]["Enums"]["as_case_status"] | null
+          total_amount: number | null
+          traffic_light: Database["public"]["Enums"]["as_traffic_light"] | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "as_cases_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "as_cases_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "lager_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "as_cases_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       spare_part_stock_overview: {
         Row: {
           brand: string | null
@@ -14032,6 +14482,10 @@ export type Database = {
       }
     }
     Functions: {
+      as_seed_default_checklists: {
+        Args: { p_case: string }
+        Returns: undefined
+      }
       can_access_ai_service: { Args: never; Returns: boolean }
       can_access_finance: { Args: never; Returns: boolean }
       can_access_finance_module: { Args: never; Returns: boolean }
@@ -14210,7 +14664,44 @@ export type Database = {
       user_mailboxes: { Args: never; Returns: string[] }
     }
     Enums: {
-      [_ in never]: never
+      as_case_status:
+        | "open"
+        | "in_progress"
+        | "waiting_customer"
+        | "blocked"
+        | "completed"
+      as_mediapaket_stage:
+        | "not_started"
+        | "in_progress"
+        | "data_requested"
+        | "data_received"
+        | "graphics_done"
+        | "homepage_done"
+        | "social_done"
+        | "google_done"
+        | "done"
+        | "skipped"
+      as_priority: "low" | "normal" | "high" | "urgent"
+      as_reminder_kind:
+        | "login"
+        | "app"
+        | "nisv"
+        | "schulung"
+        | "mediapaket"
+        | "callback"
+        | "custom"
+      as_section:
+        | "erstkontakt"
+        | "geraet"
+        | "nisv"
+        | "app"
+        | "mediapaket"
+        | "schulung"
+        | "marketing"
+        | "zufriedenheit"
+        | "rueckruf"
+        | "upselling"
+      as_traffic_light: "green" | "yellow" | "red"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -14337,6 +14828,49 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      as_case_status: [
+        "open",
+        "in_progress",
+        "waiting_customer",
+        "blocked",
+        "completed",
+      ],
+      as_mediapaket_stage: [
+        "not_started",
+        "in_progress",
+        "data_requested",
+        "data_received",
+        "graphics_done",
+        "homepage_done",
+        "social_done",
+        "google_done",
+        "done",
+        "skipped",
+      ],
+      as_priority: ["low", "normal", "high", "urgent"],
+      as_reminder_kind: [
+        "login",
+        "app",
+        "nisv",
+        "schulung",
+        "mediapaket",
+        "callback",
+        "custom",
+      ],
+      as_section: [
+        "erstkontakt",
+        "geraet",
+        "nisv",
+        "app",
+        "mediapaket",
+        "schulung",
+        "marketing",
+        "zufriedenheit",
+        "rueckruf",
+        "upselling",
+      ],
+      as_traffic_light: ["green", "yellow", "red"],
+    },
   },
 } as const

@@ -344,6 +344,9 @@ const TicketsApiSync = lazy(() => import("./pages/Tickets/ApiSyncSettings"));
 const TicketsSyncMonitor = lazy(() => import("./pages/Tickets/SyncMonitor"));
 const AiServiceCenter = lazy(() => import("./pages/AiServiceCenter"));
 const OperationMahnungKonfiguration = lazy(() => import("./pages/Operation/MahnungKonfiguration"));
+const AfterSalesDashboard = lazy(() => import("./pages/AfterSales/Dashboard"));
+const AfterSalesCaseDetail = lazy(() => import("./pages/AfterSales/CaseDetail"));
+const AfterSalesCompleted = lazy(() => import("./pages/AfterSales/Completed"));
 import MaintenanceGate from "./components/MaintenanceGate";
 import LeihgeraetReminder from "./components/LeihgeraetReminder";
 
@@ -784,6 +787,10 @@ function AppRoutes() {
             </Route>
             <Route path="frontend" element={<ReviewsFrontendPreview />} />
           </Route>
+
+          <Route path="/crm/after-sales" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','After Sales','Vertrieb','Marketing','Service','Geschäftsführung','Order','SACHBEARBEITUNG','Kundenservice','Auftragsverwaltung']}><AfterSalesDashboard /></ProtectedRoute>} />
+          <Route path="/crm/after-sales/erledigt" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','After Sales','Vertrieb','Marketing','Service','Geschäftsführung','Order','SACHBEARBEITUNG','Kundenservice','Auftragsverwaltung']}><AfterSalesCompleted /></ProtectedRoute>} />
+          <Route path="/crm/after-sales/:id" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','After Sales','Vertrieb','Marketing','Service','Geschäftsführung','Order','SACHBEARBEITUNG','Kundenservice','Auftragsverwaltung']}><AfterSalesCaseDetail /></ProtectedRoute>} />
 
         </Route>
         <Route path="/unsubscribe" element={<Unsubscribe />} />

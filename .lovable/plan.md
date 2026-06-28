@@ -1,98 +1,82 @@
+# After Sales Management 2.0 für AlixWork
 
-# Kassenbuch & Buchungsjournal Pro — Plan
+Großer, eigenständiger CRM-Bereich – additiv, **ohne Eingriff in bestehende Module**. Wegen Umfang in 4 Phasen liefern, jede Phase ist nutzbar.
 
-Additives Finance-Submodul. **Keine** Änderungen an bestehenden Tabellen, Workflows, RLS, Rollen, Zoho-Sync oder Finance-Logik. Alles neu unter eigenem Namespace `finance_cashbook*`, `finance_journal*`, `finance_bank_postings`, `finance_audit_trail`.
+## Architektur-Prinzipien
 
-## 1. Menüstruktur (FINANCE & CONTROLLING)
+- Neuer Top-Menüpunkt **CRM** mit Submenü: Interessenten, Angebote, Aufträge, Kunden, Geräte, **After Sales** (bestehende Routen werden nur unter CRM neu gruppiert verlinkt, **nicht** verändert).
+- Eigene Tabellen mit `as_`-Prefix, eigene RLS-Policies, keine Änderungen an `orders`, `customers`, `lager_devices` etc.
+- Auto-Erstellung der Fälle via DB-Trigger auf `orders.status` (idempotent, ein Fall pro Auftrag).
+- Aurora-Design, vollständig responsive, Wiederverwendung von `infinity/`-Komponenten (PageHeader, KpiTile, InfinityTable, StatusBadge).
+- Rollen: Super Admin, Admin, Sales, **After Sales** (neu), Marketing, Service, Geschäftsleitung. Neue Rolle wird `app_role`-Enum hinzugefügt.
 
-Neue Einträge unter dem bestehenden Finance-Bereich in `src/components/AppLayout.tsx`:
+## Phase 1 – Fundament & Auto-Fall-Erstellung (diese Iteration)
 
-- Kassenbuch → `/finance/kassenbuch`
-- Buchungsjournal → `/finance/buchungsjournal`
-- Zahlungsübersicht → `/finance/zahlungsuebersicht`
-- Bankbuchungen → `/finance/bankbuchungen`
-- Export DATEV → `/finance/datev-export` (neue Seite; bestehende Edge Function `finance-datev-export` wird wiederverwendet)
-- Audit & Revision → `/finance/audit-revision`
+**DB-Migration**
+- Enum `as_case_status` (open, in_progress, waiting_customer, blocked, completed).
+- Enum `as_priority` (low, normal, high, urgent).
+- Enum `as_traffic_light` (green, yellow, red).
+- Tabelle `as_cases`: order_id (uniq), customer_id, device_id, assignee_id, sales_user_id, status, priority, traffic_light, progress_pct, health_score, last_contact_at, next_callback_at, satisfaction_rating, satisfaction_note, closed_at, closed_by, metadata jsonb.
+- Tabelle `as_checklist_items`: case_id, section (enum: erstkontakt, geraet, nisv, app, mediapaket, schulung, marketing, zufriedenheit, rueckruf, upselling), key, label, checked, checked_at, checked_by, note.
+- Tabelle `as_mediapaket_status`: case_id (uniq), stage enum (not_started…abgeschlossen), updated_at.
+- Tabelle `as_timeline_events`: case_id, event_type, title, body, source (system/user/integration), created_by, created_at.
+- Tabelle `as_callbacks`: case_id, due_at, priority, reason, done_at, done_by.
+- Tabelle `as_reminders`: case_id, kind (login, app, nisv, schulung, mediapaket, callback), scheduled_at, sent_at, channel (dashboard, email, sms, push).
+- Tabelle `as_upsell_suggestions`: case_id, product_key, label, accepted, offer_id.
+- Enum `app_role` erweitern um `After Sales`.
+- GRANTs für alle Tabellen (authenticated CRUD, service_role ALL).
+- RLS: lesen alle internen Rollen oben; schreiben nur eigene Rolle + Admin/Super Admin.
+- Trigger `as_create_case_on_order_status()`: Bei orders.status IN (bestätigt, anzahlung_bezahlt, produktion_gestartet, ausgeliefert, abgeschlossen) und kein Fall existiert → `as_cases` + Default-Checklisten + Timeline-Event "Fall automatisch erstellt".
+- Backfill-Insert für existierende Aufträge in diesen Status.
+- Cron: `as-daily-reminders` 06:00 UTC (Edge Function, schreibt Reminder + setzt Ampel).
 
-Bestehende Punkte (Dashboard, Offene Anzahlungen, …) bleiben unverändert.
+**Frontend**
+- Route `/crm` – Layout mit Sub-Nav (Links auf bestehende Seiten + neue After-Sales-Seiten).
+- Route `/crm/after-sales` – Dashboard (KPI-Kacheln + Filter + InfinityTable aller offenen Fälle mit allen geforderten Spalten + Ampel).
+- Route `/crm/after-sales/erledigt` – abgeschlossene Fälle.
+- Route `/crm/after-sales/:id` – After-Sales-Akte:
+  - Header (Kunde, Gerät, Garantie, Servicevertrag, Ansprechpartner)
+  - Tabs: Checkliste (große Sections mit Checkboxen), Mediapaket (Stage-Selector), Schulung/Marketing/Zufriedenheit, Upselling, Timeline, Rückrufe, Dokumente (Link auf Kundenakte).
+  - Fortschritt %, Ampel, Health-Score, "Fall abschließen"-Button (server-validiert).
+- Hook `useAsCases`, `useAsCase(id)`.
+- Reuse: `PageHeader`, `KpiTile`, `InfinityTable`, `StatusBadge`.
 
-## 2. Neue Datenbankobjekte (Migration)
+**Edge Functions**
+- `as-daily-reminders` – tägliche Erinnerungen + Ampel-Neuberechnung.
+- `as-close-case` – Validiert Abschluss-Bedingungen serverseitig.
 
-Alle Tabellen `public.*`, mit GRANTs + RLS. Schreibrechte: Super Admin, Admin, Finance, Geschäftsführung (über bestehende `can_access_finance_module()`). Lese-Rechte über `can_view_finance_module()`.
+## Phase 2 – Workflows & Kommunikation
 
-### Sequenzen
-- `finance_cashbook_seq` — Buchungsnummer `KB-YYYY-00001`
-- `finance_journal_seq` — Journalnummer `JB-YYYY-000001`
-- `finance_cashbook_closure_seq` — `KA-YYYY-0001`
+- Edge Functions: `as-send-email-reminder`, `as-send-sms-reminder` (Twilio bestehend), Push via bestehender PWA.
+- Workflows: App-fehlt (3 Tage), NiSV-fehlt, Schulung-fehlt → Kalender-Vorschlag, Mediapaket-offen → Marketing, Rückruf überfällig → Chef.
+- Integration mit bestehenden `email_templates`, `sms_templates`, `mail_*`-System.
 
-### Tabellen
+## Phase 3 – KI (AI-Service-Copilot Integration)
 
-**finance_cashbook** — Kassenbuch-Einträge
-booking_number, booking_date, booking_time, document_number, booking_type ('einnahme'|'ausgabe'), amount_net, amount_vat, vat_rate, amount_gross, payment_method, cost_center, description, reference, customer_id, supplier_id, attachment_path, status ('aktiv'|'storniert'|'korrigiert'), reversed_by, user_id, tenant_id
+- `as-ai-suggest` Edge Function: nutzt Lovable AI Gateway (`google/gemini-3-flash-preview`).
+- Liefert: Health Score (0–100), nächster Kontaktzeitpunkt, Risiko-Score, Upselling-Vorschläge, Mail/SMS-Drafts, Gesprächs-Zusammenfassung.
+- UI: KI-Panel in der Akte (analog `AiAnalysisPanel`).
 
-**finance_cashbook_closures** — Tagesabschluss
-closure_number, closure_date, opening_balance, calculated_balance, counted_balance, difference, note, signature_data (base64 PNG), signed_by, signed_at, status ('offen'|'freigegeben'), released_by, released_at
+## Phase 4 – Reporting & Premium-Charts
 
-**finance_journal** — Buchungsjournal (append-only)
-journal_number, booking_date, booking_time, tenant_id, source_module ('cashbook'|'bank'|'order'|'invoice'|'deposit'|'payment'|'mahnung'|'zoho'|'po'|'credit_note'|'manual'), source_id, source_table, reference, order_number, invoice_number, document_number, customer_id, supplier_id, vorgang, amount_net, amount_vat, amount_gross, payment_method, account, contra_account, description, status ('aktiv'|'storniert'|'korrigiert'), corrects_journal_id, user_id
+- KPIs erweitert: After-Sales-Quote, Ø Bearbeitungszeit, NPS.
+- Charts (recharts) im Dashboard.
+- Export CSV.
 
-**finance_bank_postings** — manuelle Bank-Buchungen (zusätzlich zu bestehenden bank_statements)
-posting_date, value_date, bank_account_id, posting_type ('eingang'|'ausgang'|'lastschrift'|'ruecklastschrift'|'erstattung'), amount, currency, counterparty, iban, purpose, reference, customer_id, supplier_id, invoice_id, status, user_id
+## Technische Details
 
-**finance_audit_trail** — eigenes Audit-Log (kein Overlap mit bestehendem `audit_logs`)
-module, entity_table, entity_id, action ('insert'|'update'|'delete_logical'|'reverse'|'release'), old_data jsonb, new_data jsonb, user_id, ip_address, user_agent, created_at
+- Keine Änderungen an: `orders`, `customers`, `lager_devices`, Sales-Wizard, bestehende Routen.
+- Neue Rolle `After Sales` wird in `role-labels.ts`, `has_role`-Aufrufen und `AuroraTopNav` ergänzt.
+- TenantContext wird respektiert (alle Queries filtern `tenant_id` analog zu bestehenden Tabellen).
+- Trigger ist idempotent (`ON CONFLICT (order_id) DO NOTHING`).
+- Mobile-Layout über bestehende Tailwind-Breakpoints + `useIsMobile`.
 
-### Trigger
-- `assign_*_number` Trigger für Cashbook, Journal, Closure
-- `trg_cashbook_to_journal`: nach INSERT/UPDATE auf `finance_cashbook` automatisch `finance_journal`-Eintrag
-- `trg_bank_posting_to_journal`: dito für `finance_bank_postings`
-- `trg_audit_*`: für Cashbook, Journal, Bank, Closure → `finance_audit_trail`
-- GoBD: BEFORE DELETE Trigger auf `finance_cashbook` und `finance_journal` → RAISE EXCEPTION (kein physisches Löschen, außer Super Admin via RLS-Service-Role).
-- Stornierung: RPC `cashbook_reverse(_id, _reason)` legt Gegenbuchung an und setzt Status auf `storniert`.
+## Was Phase 1 liefert (sofort sichtbar)
 
-### Auto-Verknüpfung in Journal
-Optionaler Helfer-RPC `journal_log(...)` als SECURITY DEFINER für Edge Functions (z. B. Zahlungseingang in `finance_transactions` → zusätzlich Journal-Eintrag), **ohne** bestehende Sync-Funktionen zu verändern. Verknüpfung wird vorerst nur für **neue** Buchungen aus dem neuen Modul aktiviert; bestehende Module bleiben unberührt (additiv). Optionaler Backfill-Edge-Function `finance-journal-backfill` (manuell triggerbar) liest read-only aus `finance_transactions`, `finance_deposits`, `finance_bank_lines` und befüllt Journal — ohne Quelltabellen zu ändern.
+1. Menüpunkt CRM → After Sales
+2. Automatische Fall-Erstellung + Backfill
+3. Dashboard mit KPIs + Tabelle + Ampel
+4. Akte mit kompletter Checkliste, Mediapaket, Timeline, Rückrufen, Abschluss-Button
+5. Tägliche Ampel-/Erinnerungs-Berechnung via Cron
 
-## 3. Frontend
-
-Neue Pages unter `src/pages/Finance/`:
-
-- `Kassenbuch.tsx` — Tabelle, Neuanlage-Dialog, Storno, Beleg-Upload (Storage-Bucket `finance-cashbook`), Filter (Datum, Typ, Zahlungsart), Summen je Tag/Monat/Jahr, Soll-/Istbestand-Anzeige.
-- `KassenbuchAbschluss.tsx` (Dialog) — Tagesabschluss mit Signatur-Pad (`react-signature-canvas` bereits im Projekt? sonst Canvas-Eigenbau).
-- `Buchungsjournal.tsx` — read-only Liste mit Filter (Modul, Datum, Mandant, Kunde, Status), Detail-Drawer mit Historie/Korrekturen.
-- `Zahlungsuebersicht.tsx` — aggregiert vorhandene Daten (Rechnungen offen, Anzahlungen offen, Eingänge, Bar/Bank). Reine Read-only-Konsolidierung — keine Datenmutationen.
-- `Bankbuchungen.tsx` — CRUD auf `finance_bank_postings`, Auto-Matching-Vorschläge zu offenen Rechnungen.
-- `DatevExport.tsx` — UI für bestehende Edge Function `finance-datev-export` plus CSV/Excel/PDF-Optionen über Journal.
-- `AuditRevision.tsx` — Liste `finance_audit_trail` mit Filter & Diff-Viewer.
-
-Dashboard-KPIs: Erweiterung von `src/pages/Finance/Dashboard.tsx` um Kassenbestand, Bankbestand, Einnahmen/Ausgaben heute/Monat/Jahr (aus neuen Tabellen). Bestehende KPIs bleiben.
-
-## 4. Storage
-
-Neuer privater Bucket `finance-cashbook` für Belege; RLS-Policies auf `storage.objects` analog zu bestehenden Finance-Buckets.
-
-## 5. Edge Functions
-
-- `finance-journal-backfill` (manueller Sync, optional)
-- `finance-cashbook-export` (CSV/Excel/PDF)
-- Bestehende `finance-datev-export` unverändert wiederverwenden.
-
-## 6. Rollen / RLS
-
-Reuse von `can_access_finance_module()` (Schreiben) und `can_view_finance_module()` (Lesen). DELETE nur Super Admin (Memory-Regel) — aber durch BEFORE-DELETE-Trigger blockiert; Stornierung statt Löschen.
-
-## 7. Nicht-Ziele
-
-- Keine Änderung an `finance_transactions`, `finance_deposits`, `finance_bank_lines`, Zoho-Sync, bestehenden DATEV-Settings.
-- Keine Veränderung der bestehenden Menüpunkte / Routen.
-- Kein Backfill ohne explizite User-Aktion.
-
-## Lieferreihenfolge
-
-1. Migration (Tabellen, Sequenzen, Trigger, RLS, Storage-Bucket via separate Tool).
-2. Routen + Menüeinträge.
-3. Pages: Kassenbuch → Buchungsjournal → Bankbuchungen → Zahlungsübersicht → DATEV → Audit.
-4. Dashboard-KPI-Erweiterung.
-5. Edge Functions (Export/Backfill).
-
-Soll ich so starten?
+Bitte Phase 1 freigeben, dann lege ich los. Phasen 2–4 folgen jeweils auf Zuruf.
