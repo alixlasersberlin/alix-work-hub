@@ -243,3 +243,117 @@ export default function AfterSalesCaseDetail() {
     </div>
   );
 }
+
+type ReminderKind = 'app' | 'nisv' | 'schulung' | 'mediapaket' | 'feedback' | 'callback' | 'generic';
+
+const KIND_LABELS: Array<{ value: ReminderKind; label: string; icon: any }> = [
+  { value: 'app', label: 'App-Installation', icon: Smartphone },
+  { value: 'nisv', label: 'NiSV-Nachweis', icon: ShieldCheck },
+  { value: 'schulung', label: 'Schulungstermin', icon: GraduationCap },
+  { value: 'mediapaket', label: 'Mediapaket', icon: ImageIcon },
+  { value: 'feedback', label: 'Zufriedenheits-Feedback', icon: HeartPulse },
+  { value: 'callback', label: 'Rückruf-Bitte', icon: Phone },
+  { value: 'generic', label: 'Allgemeine Nachricht', icon: Megaphone },
+];
+
+function CommunicationPanel({ caseId, email, phone }: { caseId: string; email?: string | null; phone?: string | null }) {
+  const [kind, setKind] = useState<ReminderKind>('app');
+  const [customMessage, setCustomMessage] = useState('');
+  const [customSms, setCustomSms] = useState('');
+  const [busy, setBusy] = useState<'email' | 'sms' | null>(null);
+
+  async function send(channel: 'email' | 'sms') {
+    setBusy(channel);
+    try {
+      const fn = channel === 'email' ? 'as-send-email-reminder' : 'as-send-sms-reminder';
+      const body: any = { case_id: caseId, kind };
+      if (channel === 'email' && customMessage.trim()) body.custom_message = customMessage.trim();
+      if (channel === 'sms' && customSms.trim()) body.custom_text = customSms.trim();
+      const { data, error } = await supabase.functions.invoke(fn, { body });
+      if (error || (data as any)?.error) throw new Error(error?.message ?? (data as any)?.error ?? 'Fehler');
+      toast.success(channel === 'email' ? 'Email gesendet' : 'SMS gesendet');
+    } catch (e: any) {
+      toast.error(e?.message ?? 'Versand fehlgeschlagen');
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <div className="grid md:grid-cols-2 gap-3">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm flex items-center gap-2"><Send className="w-4 h-4 text-primary" /> Erinnerung versenden</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div>
+            <label className="text-xs text-muted-foreground">Anlass</label>
+            <Select value={kind} onValueChange={(v) => setKind(v as ReminderKind)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {KIND_LABELS.map((k) => (
+                  <SelectItem key={k.value} value={k.value}>{k.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="text-xs text-muted-foreground space-y-1">
+            <div className="flex items-center gap-2"><Mail className="w-3 h-3" /> {email ?? 'keine Email hinterlegt'}</div>
+            <div className="flex items-center gap-2"><Phone className="w-3 h-3" /> {phone ?? 'keine Mobilnummer'}</div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm flex items-center gap-2"><Mail className="w-4 h-4 text-primary" /> Email-Erinnerung</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <Textarea
+            placeholder="Optionaler individueller Text (überschreibt Standard-Erinnerung)"
+            value={customMessage}
+            onChange={(e) => setCustomMessage(e.target.value)}
+            rows={4}
+          />
+          <Button size="sm" disabled={!email || busy === 'email'} onClick={() => send('email')}>
+            <Send className="w-4 h-4 mr-1" /> {busy === 'email' ? 'Sende…' : 'Email senden'}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm flex items-center gap-2"><MessageSquare className="w-4 h-4 text-primary" /> SMS-Erinnerung</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <Textarea
+            placeholder="Optionaler individueller SMS-Text"
+            value={customSms}
+            onChange={(e) => setCustomSms(e.target.value)}
+            rows={3}
+            maxLength={480}
+          />
+          <Button size="sm" variant="secondary" disabled={!phone || busy === 'sms'} onClick={() => send('sms')}>
+            <MessageSquare className="w-4 h-4 mr-1" /> {busy === 'sms' ? 'Sende…' : 'SMS senden'}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-primary" /> Automatische Workflows</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2 text-xs text-muted-foreground">
+          <p>Täglich um 07:00 UTC prüft Alix automatisch:</p>
+          <ul className="list-disc pl-4 space-y-1">
+            <li>App fehlt &gt; 3 Tage → Email-Erinnerung</li>
+            <li>NiSV fehlt &gt; 7 Tage → Email-Erinnerung</li>
+            <li>Schulung fehlt &gt; 14 Tage → Email-Vorschlag</li>
+            <li>Mediapaket offen &gt; 14 Tage → Email an Kunden</li>
+            <li>Rückruf überfällig → Eskalation (Ampel rot, Priorität dringend)</li>
+          </ul>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
