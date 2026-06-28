@@ -42,4 +42,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'order-confirmation': orderConfirmation,
   'sales-lead-internal-notification': salesLeadInternalNotification,
   'anzahlung-mahnung': anzahlungMahnung,
+  'as-customer-reminder': asCustomerReminder,
 }
