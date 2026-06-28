@@ -7,10 +7,6 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import {
   HeartPulse, PhoneCall, AlertTriangle, CheckCircle2, Star, Smartphone, GraduationCap, Image as ImageIcon, ShieldCheck,
 } from 'lucide-react';
 
@@ -31,14 +27,15 @@ export default function AfterSalesDashboard() {
   const isSuperAdmin = hasRole('Super Admin');
   const forceClose = useForceCloseCase();
   const [closingCaseId, setClosingCaseId] = useState<string | null>(null);
-  const [confirmCase, setConfirmCase] = useState<AsCaseListItem | null>(null);
   const [q, setQ] = useState('');
 
   const confirmCloseCase = async (c: AsCaseListItem) => {
+    const label = `${c.order_number ?? '—'} (${c.customer_company ?? c.customer_contact ?? '—'})`;
+    const ok = window.confirm(`Fall ${label} wirklich als 100 % erledigt schließen?`);
+    if (!ok) return;
     setClosingCaseId(c.id);
     try {
       await forceClose.mutateAsync({ caseId: c.id, reason: 'Direkt-Schließung aus Dashboard' });
-      setConfirmCase(null);
     } finally {
       setClosingCaseId(null);
     }
@@ -155,10 +152,10 @@ export default function AfterSalesDashboard() {
                           size="sm"
                           variant="outline"
                           className="gap-1"
-                          disabled={forceClose.isPending && closingCaseId === c.id}
-                          onClick={() => setConfirmCase(c)}
+                          disabled={forceClose.isPending}
+                          onClick={() => void confirmCloseCase(c)}
                         >
-                          <ShieldCheck className="w-3.5 h-3.5" /> Schließen
+                          <ShieldCheck className="w-3.5 h-3.5" /> {closingCaseId === c.id ? 'Schließt…' : 'Schließen'}
                         </Button>
                       </td>
                     )}
@@ -169,35 +166,6 @@ export default function AfterSalesDashboard() {
           )}
         </CardContent>
       </Card>
-
-      <AlertDialog
-        open={!!confirmCase}
-        onOpenChange={(open) => {
-          if (!open && !forceClose.isPending) setConfirmCase(null);
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Fall ohne Bearbeitung abschließen?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Auftrag <strong>{confirmCase?.order_number ?? '—'}</strong> ({confirmCase?.customer_company ?? confirmCase?.customer_contact ?? '—'}) wird als <strong>100 % erledigt</strong> markiert.
-              Alle Checklisten-Punkte, offenen Rückrufe und das Mediapaket werden automatisch geschlossen. Die Aktion wird in der Timeline protokolliert.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={forceClose.isPending}>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={forceClose.isPending}
-              onClick={(event) => {
-                event.preventDefault();
-                if (confirmCase) void confirmCloseCase(confirmCase);
-              }}
-            >
-              {forceClose.isPending ? 'Schließt…' : 'Jetzt schließen'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <div className="grid md:grid-cols-3 gap-3 text-xs text-muted-foreground">
         <Hint icon={<Smartphone className="w-4 h-4" />} text="App fehlt → automatische Erinnerung nach 3 Tagen" />
