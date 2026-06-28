@@ -109,12 +109,18 @@ export default function AfterSalesCaseDetail() {
       <Tabs defaultValue="checkliste" className="w-full">
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="checkliste">Checkliste</TabsTrigger>
+          <TabsTrigger value="ki">KI-Analyse</TabsTrigger>
           <TabsTrigger value="mediapaket">Mediapaket</TabsTrigger>
           <TabsTrigger value="kommunikation">Kommunikation</TabsTrigger>
           <TabsTrigger value="rueckrufe">Rückrufe</TabsTrigger>
           <TabsTrigger value="upselling">Upselling</TabsTrigger>
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="ki">
+          <AiSuggestPanel caseId={c.id} healthScore={c.health_score} />
+        </TabsContent>
+
 
         <TabsContent value="checkliste" className="space-y-3">
           {sections.map((sec) => {
