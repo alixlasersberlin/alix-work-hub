@@ -347,6 +347,7 @@ const OperationMahnungKonfiguration = lazy(() => import("./pages/Operation/Mahnu
 const AfterSalesDashboard = lazy(() => import("./pages/AfterSales/Dashboard"));
 const AfterSalesCaseDetail = lazy(() => import("./pages/AfterSales/CaseDetail"));
 const AfterSalesCompleted = lazy(() => import("./pages/AfterSales/Completed"));
+const AfterSalesReports = lazy(() => import("./pages/AfterSales/Reports"));
 import MaintenanceGate from "./components/MaintenanceGate";
 import LeihgeraetReminder from "./components/LeihgeraetReminder";
 
