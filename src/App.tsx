@@ -344,6 +344,9 @@ const TicketsApiSync = lazy(() => import("./pages/Tickets/ApiSyncSettings"));
 const TicketsSyncMonitor = lazy(() => import("./pages/Tickets/SyncMonitor"));
 const AiServiceCenter = lazy(() => import("./pages/AiServiceCenter"));
 const OperationMahnungKonfiguration = lazy(() => import("./pages/Operation/MahnungKonfiguration"));
+const AfterSalesDashboard = lazy(() => import("./pages/AfterSales/Dashboard"));
+const AfterSalesCaseDetail = lazy(() => import("./pages/AfterSales/CaseDetail"));
+const AfterSalesCompleted = lazy(() => import("./pages/AfterSales/Completed"));
 import MaintenanceGate from "./components/MaintenanceGate";
 import LeihgeraetReminder from "./components/LeihgeraetReminder";
 
