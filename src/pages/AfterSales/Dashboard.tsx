@@ -1,12 +1,17 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAfterSalesCases, type AsCaseListItem, type AsTrafficLight } from '@/hooks/useAfterSales';
+import { useAfterSalesCases, useForceCloseCase, type AsCaseListItem, type AsTrafficLight } from '@/hooks/useAfterSales';
+import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
-  HeartPulse, PhoneCall, AlertTriangle, CheckCircle2, Star, Smartphone, GraduationCap, Image as ImageIcon,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import {
+  HeartPulse, PhoneCall, AlertTriangle, CheckCircle2, Star, Smartphone, GraduationCap, Image as ImageIcon, ShieldCheck,
 } from 'lucide-react';
 
 function fmtDate(s: string | null) { return s ? new Date(s).toLocaleDateString('de-DE') : '—'; }
