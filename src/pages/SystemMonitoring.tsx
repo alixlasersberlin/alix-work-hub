@@ -32,10 +32,19 @@ function formatBytes(bytes: number | null | undefined) {
 }
 
 const BACKUP_STATUS_COLORS: Record<string, string> = {
+  success: 'bg-[hsl(var(--success))]/15 text-[hsl(var(--success))] border-[hsl(var(--success))]/30',
   completed: 'bg-[hsl(var(--success))]/15 text-[hsl(var(--success))] border-[hsl(var(--success))]/30',
   running: 'bg-[hsl(var(--warning))]/15 text-[hsl(var(--warning))] border-[hsl(var(--warning))]/30',
   failed: 'bg-destructive/15 text-destructive border-destructive/30',
   pending: 'bg-muted text-muted-foreground border-border',
+};
+
+const formatBackupStatus = (status: string) => {
+  if (status === 'success' || status === 'completed') return 'Erfolgreich';
+  if (status === 'failed') return 'Fehlgeschlagen';
+  if (status === 'running') return 'Läuft';
+  if (status === 'pending') return 'Ausstehend';
+  return status;
 };
 
 const IMPORT_STATUS_COLORS: Record<string, string> = {
@@ -106,7 +115,7 @@ export default function SystemMonitoring() {
 
   async function loadKPIs() {
     const [successBackup, failedBackup, successImport, failedImport, secEvents, blockedOtp] = await Promise.all([
-      supabase.from('backups_metadata').select('completed_at').eq('backup_status', 'completed').order('completed_at', { ascending: false }).limit(1),
+      supabase.from('backups_metadata').select('completed_at').in('backup_status', ['success', 'completed']).order('completed_at', { ascending: false }).limit(1),
       supabase.from('backups_metadata').select('started_at').eq('backup_status', 'failed').order('started_at', { ascending: false }).limit(1),
       supabase.from('order_import_logs').select('created_at').eq('import_status', 'success').order('created_at', { ascending: false }).limit(1),
       supabase.from('order_import_logs').select('created_at').eq('import_status', 'failed').order('created_at', { ascending: false }).limit(1),
@@ -321,7 +330,7 @@ export default function SystemMonitoring() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Alle Status</SelectItem>
-                <SelectItem value="completed">Abgeschlossen</SelectItem>
+                <SelectItem value="success">Erfolgreich</SelectItem>
                 <SelectItem value="running">Laufend</SelectItem>
                 <SelectItem value="failed">Fehlgeschlagen</SelectItem>
                 <SelectItem value="pending">Ausstehend</SelectItem>
@@ -369,13 +378,13 @@ export default function SystemMonitoring() {
                       <TableCell className="text-xs">{b.backup_scope}</TableCell>
                       <TableCell>
                         <Badge variant="outline" className={BACKUP_STATUS_COLORS[b.backup_status] || ''}>
-                          {b.backup_status}
+                          {formatBackupStatus(b.backup_status)}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-xs font-mono">{formatBytes(b.backup_size_bytes)}</TableCell>
                       <TableCell>
                         {b.integrity_status ? (
-                          <Badge variant="outline" className={b.integrity_status === 'valid' ? BACKUP_STATUS_COLORS.completed : BACKUP_STATUS_COLORS.failed}>
+                          <Badge variant="outline" className={b.integrity_status === 'valid' ? BACKUP_STATUS_COLORS.success : BACKUP_STATUS_COLORS.failed}>
                             {b.integrity_status}
                           </Badge>
                         ) : '–'}

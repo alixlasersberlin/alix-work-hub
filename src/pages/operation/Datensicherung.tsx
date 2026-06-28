@@ -18,6 +18,13 @@ import { toast } from "sonner";
 import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip as RTooltip, CartesianGrid } from "recharts";
 
 type Lamp = "green" | "yellow" | "red" | "gray";
+const isSuccessfulBackup = (status?: string | null) => status === "success" || status === "completed";
+const backupStatusLabel = (status?: string | null) => {
+  if (isSuccessfulBackup(status)) return "Erfolgreich";
+  if (status === "failed") return "Fehlgeschlagen";
+  if (status === "running") return "Läuft";
+  return status ?? "—";
+};
 const lampClass = (l: Lamp) =>
   l === "green" ? "bg-emerald-500" :
   l === "yellow" ? "bg-amber-500" :
@@ -94,28 +101,34 @@ function DashboardTab() {
 
   const load = async () => {
     setLoading(true);
-    const [last, schedules, files] = await Promise.all([
+    const [last, schedules, files, lastHetzner] = await Promise.all([
       supabase.from("backups_metadata").select("*").order("started_at", { ascending: false }).limit(1).maybeSingle(),
       supabase.from("backup_schedules").select("*").eq("active", true).order("time_of_day").limit(1),
       supabase.from("backups_metadata").select("backup_size_bytes,backup_status"),
+      supabase.from("backups_metadata").select("started_at,storage_location,message").ilike("storage_location", "hetzner_s3:%").order("started_at", { ascending: false }).limit(1).maybeSingle(),
     ]);
     const total = (files.data || []).reduce((a, r: any) => a + (r.backup_size_bytes || 0), 0);
     const failed = (files.data || []).filter((r: any) => r.backup_status === "failed").length;
-    setStats({ last: last.data, nextSchedule: schedules.data?.[0], totalBytes: total, failed });
+    setStats({ last: last.data, nextSchedule: schedules.data?.[0], totalBytes: total, failed, lastHetzner: lastHetzner.data });
     setLoading(false);
   };
 
   useEffect(() => { load(); }, []);
 
-  const lastLamp: Lamp = !stats.last ? "gray" : stats.last.backup_status === "success" ? "green" : stats.last.backup_status === "failed" ? "red" : "yellow";
+  const lastLamp: Lamp = !stats.last ? "gray" : isSuccessfulBackup(stats.last.backup_status) ? "green" : stats.last.backup_status === "failed" ? "red" : "yellow";
+  const hetznerAgeHours = stats.lastHetzner?.started_at ? (Date.now() - new Date(stats.lastHetzner.started_at).getTime()) / 36e5 : null;
+  const hetznerLamp: Lamp = hetznerAgeHours == null ? "gray" : hetznerAgeHours <= 36 ? "green" : hetznerAgeHours <= 72 ? "yellow" : "red";
+  const hetznerText = stats.lastHetzner?.started_at
+    ? `Hetzner: ${new Date(stats.lastHetzner.started_at).toLocaleString("de-DE")}`
+    : "Hetzner: keine aktuelle Spiegelung";
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3 flex-wrap">
-          <Pill lamp={lastLamp} text={`Backup-Status: ${stats.last?.backup_status ?? "—"}`} />
+          <Pill lamp={lastLamp} text={`Backup-Status: ${backupStatusLabel(stats.last?.backup_status)}`} />
           <Pill lamp="green" text="GitHub bereit" />
-          <Pill lamp="green" text="Hetzner erreichbar" />
+          <Pill lamp={hetznerLamp} text={hetznerText} />
         </div>
         <Button variant="outline" size="sm" onClick={load}><RefreshCw className="h-4 w-4 mr-1" /> Aktualisieren</Button>
       </div>
@@ -124,7 +137,7 @@ function DashboardTab() {
         <KpiTile icon={History} label="Letztes Backup" value={stats.last?.started_at ? new Date(stats.last.started_at).toLocaleString("de-DE") : "—"} accent={lastLamp === "green" ? "emerald" : lastLamp === "red" ? "rose" : "gold"} />
         <KpiTile icon={CalendarClock} label="Nächstes geplantes Backup" value={stats.nextSchedule?.time_of_day ?? "02:00"} unit={stats.nextSchedule ? stats.nextSchedule.schedule_type : "täglich"} accent="sky" />
         <KpiTile icon={Github} label="GitHub Status" value="verbunden" accent="emerald" />
-        <KpiTile icon={Server} label="Hetzner Status" value="online" accent="emerald" />
+        <KpiTile icon={Server} label="Letzte Hetzner-Sicherung" value={stats.lastHetzner?.started_at ? new Date(stats.lastHetzner.started_at).toLocaleDateString("de-DE") : "keine"} accent={hetznerLamp === "green" ? "emerald" : hetznerLamp === "yellow" ? "gold" : "rose"} />
         <KpiTile icon={HardDrive} label="Speicherverbrauch" value={formatBytes(stats.totalBytes)} accent="violet" />
         <KpiTile icon={Database} label="Datenbankgröße" value="~ 1,2" unit="GB" accent="sky" />
         <KpiTile icon={FolderArchive} label="Upload-Dateien" value="~ 480" unit="MB" accent="gold" />
