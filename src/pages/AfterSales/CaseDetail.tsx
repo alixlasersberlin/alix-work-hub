@@ -110,6 +110,7 @@ export default function AfterSalesCaseDetail() {
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="checkliste">Checkliste</TabsTrigger>
           <TabsTrigger value="mediapaket">Mediapaket</TabsTrigger>
+          <TabsTrigger value="kommunikation">Kommunikation</TabsTrigger>
           <TabsTrigger value="rueckrufe">Rückrufe</TabsTrigger>
           <TabsTrigger value="upselling">Upselling</TabsTrigger>
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
