@@ -24,6 +24,7 @@ import { template as alixSignConfirmation } from './alix-sign-confirmation.tsx'
 import { template as orderConfirmation } from './order-confirmation.tsx'
 import { template as salesLeadInternalNotification } from './sales-lead-internal-notification.tsx'
 import { template as anzahlungMahnung } from './anzahlung-mahnung.tsx'
+import { template as asCustomerReminder } from './as-customer-reminder.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'otp-code': otpCode,
@@ -41,4 +42,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'order-confirmation': orderConfirmation,
   'sales-lead-internal-notification': salesLeadInternalNotification,
   'anzahlung-mahnung': anzahlungMahnung,
+  'as-customer-reminder': asCustomerReminder,
 }
