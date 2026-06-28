@@ -363,3 +363,152 @@ function CommunicationPanel({ caseId, email, phone }: { caseId: string; email?: 
     </div>
   );
 }
+
+interface AiResult {
+  health_score: number;
+  risk_level: 'low' | 'medium' | 'high';
+  recommended_next_contact_at: string;
+  recommended_next_contact_days: number;
+  summary: string;
+  next_actions: string[];
+  upsell_suggestions: Array<{ product_key: string; label: string }>;
+  email_draft: string;
+  sms_draft: string;
+}
+
+function AiSuggestPanel({ caseId, healthScore }: { caseId: string; healthScore: number | null }) {
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<AiResult | null>(null);
+
+  async function analyze() {
+    setBusy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('as-ai-suggest', { body: { case_id: caseId } });
+      if (error || (data as any)?.error) throw new Error(error?.message ?? (data as any)?.error);
+      setResult(data as AiResult);
+      toast.success('KI-Analyse erstellt');
+    } catch (e: any) {
+      toast.error(e?.message ?? 'KI-Analyse fehlgeschlagen');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function copyToClipboard(text: string, label: string) {
+    try { await navigator.clipboard.writeText(text); toast.success(`${label} kopiert`); }
+    catch { toast.error('Kopieren fehlgeschlagen'); }
+  }
+
+  const riskColor = result?.risk_level === 'high' ? 'bg-rose-500'
+    : result?.risk_level === 'medium' ? 'bg-amber-400' : 'bg-emerald-500';
+  const healthColor = (h: number) => h >= 75 ? 'text-emerald-500' : h >= 50 ? 'text-amber-500' : 'text-rose-500';
+
+  return (
+    <div className="space-y-3">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-primary" /> KI-Analyse (Lovable AI · Gemini)
+          </CardTitle>
+          <div className="flex items-center gap-3">
+            {healthScore != null && (
+              <span className="text-xs text-muted-foreground">
+                Letzter Score: <span className={`font-semibold ${healthColor(healthScore)}`}>{healthScore}/100</span>
+              </span>
+            )}
+            <Button size="sm" onClick={analyze} disabled={busy}>
+              <Sparkles className="w-4 h-4 mr-1" /> {busy ? 'Analysiere…' : 'Analyse starten'}
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {!result && !busy && (
+            <p className="text-sm text-muted-foreground">
+              Die KI analysiert Checkliste, Timeline, Rückrufe und Mediapaket-Status und liefert Health-Score, Risiko-Einschätzung,
+              empfohlene Maßnahmen, Upselling-Vorschläge sowie fertige Email- und SMS-Entwürfe.
+            </p>
+          )}
+          {result && (
+            <div className="grid md:grid-cols-3 gap-3 text-sm">
+              <div className="space-y-1">
+                <div className="text-xs text-muted-foreground">Health Score</div>
+                <div className={`text-3xl font-bold ${healthColor(result.health_score)}`}>{result.health_score}<span className="text-base text-muted-foreground">/100</span></div>
+              </div>
+              <div className="space-y-1">
+                <div className="text-xs text-muted-foreground">Risiko</div>
+                <div className="flex items-center gap-2">
+                  <span className={`inline-block w-3 h-3 rounded-full ${riskColor}`} />
+                  <span className="font-semibold uppercase">{result.risk_level}</span>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <div className="text-xs text-muted-foreground">Nächster Kontakt empfohlen</div>
+                <div className="font-semibold">in {result.recommended_next_contact_days} Tagen</div>
+                <div className="text-xs text-muted-foreground">{new Date(result.recommended_next_contact_at).toLocaleDateString('de-DE')}</div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {result && (
+        <>
+          <Card>
+            <CardHeader><CardTitle className="text-sm">Zusammenfassung</CardTitle></CardHeader>
+            <CardContent>
+              <p className="text-sm whitespace-pre-line">{result.summary || '—'}</p>
+            </CardContent>
+          </Card>
+
+          {result.next_actions.length > 0 && (
+            <Card>
+              <CardHeader><CardTitle className="text-sm">Empfohlene Maßnahmen</CardTitle></CardHeader>
+              <CardContent>
+                <ol className="list-decimal pl-5 text-sm space-y-1">
+                  {result.next_actions.map((a, i) => <li key={i}>{a}</li>)}
+                </ol>
+              </CardContent>
+            </Card>
+          )}
+
+          {result.upsell_suggestions.length > 0 && (
+            <Card>
+              <CardHeader><CardTitle className="text-sm flex items-center gap-2"><TrendingUp className="w-4 h-4 text-primary" /> Upselling-Vorschläge</CardTitle></CardHeader>
+              <CardContent>
+                <ul className="space-y-1 text-sm">
+                  {result.upsell_suggestions.map((u, i) => (
+                    <li key={i} className="flex justify-between border-b py-1">
+                      <span>{u.label}</span>
+                      <Badge variant="outline">{u.product_key}</Badge>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+
+          <div className="grid md:grid-cols-2 gap-3">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-sm flex items-center gap-2"><Mail className="w-4 h-4 text-primary" /> Email-Entwurf</CardTitle>
+                <Button size="sm" variant="outline" onClick={() => copyToClipboard(result.email_draft, 'Email')}>Kopieren</Button>
+              </CardHeader>
+              <CardContent>
+                <Textarea value={result.email_draft} onChange={(e) => setResult({ ...result, email_draft: e.target.value })} rows={10} />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-sm flex items-center gap-2"><MessageSquare className="w-4 h-4 text-primary" /> SMS-Entwurf</CardTitle>
+                <Button size="sm" variant="outline" onClick={() => copyToClipboard(result.sms_draft, 'SMS')}>Kopieren</Button>
+              </CardHeader>
+              <CardContent>
+                <Textarea value={result.sms_draft} onChange={(e) => setResult({ ...result, sms_draft: e.target.value })} rows={5} maxLength={480} />
+              </CardContent>
+            </Card>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
