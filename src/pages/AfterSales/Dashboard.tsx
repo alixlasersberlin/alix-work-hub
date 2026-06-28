@@ -30,7 +30,17 @@ export default function AfterSalesDashboard() {
   const { hasRole } = useAuth();
   const isSuperAdmin = hasRole('Super Admin');
   const forceClose = useForceCloseCase();
+  const [closingCaseId, setClosingCaseId] = useState<string | null>(null);
   const [q, setQ] = useState('');
+
+  const confirmCloseCase = async (caseId: string) => {
+    setClosingCaseId(caseId);
+    try {
+      await forceClose.mutateAsync({ caseId, reason: 'Direkt-Schließung aus Dashboard' });
+    } finally {
+      setClosingCaseId(null);
+    }
+  };
 
   const kpis = useMemo(() => {
     const today = new Date(); today.setHours(0, 0, 0, 0);
@@ -141,7 +151,7 @@ export default function AfterSalesDashboard() {
                       <td className="py-2 pr-3 text-right">
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button size="sm" variant="outline" className="gap-1" disabled={forceClose.isPending}>
+                            <Button size="sm" variant="outline" className="gap-1" disabled={forceClose.isPending && closingCaseId === c.id}>
                               <ShieldCheck className="w-3.5 h-3.5" /> Schließen
                             </Button>
                           </AlertDialogTrigger>
@@ -156,9 +166,13 @@ export default function AfterSalesDashboard() {
                             <AlertDialogFooter>
                               <AlertDialogCancel>Abbrechen</AlertDialogCancel>
                               <AlertDialogAction
-                                onClick={() => forceClose.mutate({ caseId: c.id, reason: 'Direkt-Schließung aus Dashboard' })}
+                                disabled={forceClose.isPending && closingCaseId === c.id}
+                                onClick={(event) => {
+                                  event.preventDefault();
+                                  void confirmCloseCase(c.id);
+                                }}
                               >
-                                Jetzt schließen
+                                {forceClose.isPending && closingCaseId === c.id ? 'Schließt…' : 'Jetzt schließen'}
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
