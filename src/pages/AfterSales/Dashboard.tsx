@@ -27,6 +27,9 @@ function LightDot({ l }: { l: AsTrafficLight }) {
 
 export default function AfterSalesDashboard() {
   const { data = [], isLoading } = useAfterSalesCases({ completed: false });
+  const { hasRole } = useAuth();
+  const isSuperAdmin = hasRole('Super Admin');
+  const forceClose = useForceCloseCase();
   const [q, setQ] = useState('');
 
   const kpis = useMemo(() => {
