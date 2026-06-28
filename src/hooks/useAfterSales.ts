@@ -226,45 +226,19 @@ export function useForceCloseCase() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (v: { caseId: string; reason?: string }) => {
-      const u = (await supabase.auth.getUser()).data.user;
-      const now = new Date().toISOString();
-      // Mark all checklist items as done (so detail view shows 100%)
-      await supabase
-        .from('as_checklist_items' as any)
-        .update({ checked: true, checked_at: now, checked_by: u?.id ?? null })
-        .eq('case_id', v.caseId)
-        .eq('checked', false);
-      // Close any open callbacks
-      await supabase
-        .from('as_callbacks' as any)
-        .update({ done_at: now, done_by: u?.id ?? null })
-        .eq('case_id', v.caseId)
-        .is('done_at', null);
-      // Force mediapaket to skipped if not present/done
-      await supabase
-        .from('as_mediapaket_status' as any)
-        .upsert({ case_id: v.caseId, stage: 'skipped' as any, updated_by: u?.id ?? null });
-      const { error } = await supabase.from('as_cases' as any).update({
-        status: 'completed',
-        closed_at: now,
-        closed_by: u?.id ?? null,
-        progress_pct: 100,
-        traffic_light: 'green',
-      }).eq('id', v.caseId);
-      if (error) throw error;
-      await supabase.from('as_timeline_events' as any).insert({
-        case_id: v.caseId,
-        event_type: 'case_force_closed',
-        title: 'Fall durch Super Admin ohne Bearbeitung abgeschlossen',
-        body: v.reason ?? null,
-        source: 'user',
-        created_by: u?.id ?? null,
+      const { error } = await supabase.rpc('as_force_close_case' as any, {
+        _case_id: v.caseId,
+        _reason: v.reason ?? null,
       });
+      if (error) throw error;
     },
-    onSuccess: (_d, v) => {
+    onSuccess: async (_d, v) => {
       toast.success('Fall wurde als erledigt markiert (100%).');
-      qc.invalidateQueries({ queryKey: ['as-case', v.caseId] });
-      qc.invalidateQueries({ queryKey: ['as-cases'] });
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ['as-cases'] }),
+        qc.invalidateQueries({ queryKey: ['as-case', v.caseId] }),
+      ]);
+      await qc.refetchQueries({ queryKey: ['as-cases'] });
     },
     onError: (e: any) => toast.error(e?.message ?? 'Force-Close fehlgeschlagen'),
   });

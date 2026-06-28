@@ -14482,6 +14482,38 @@ export type Database = {
       }
     }
     Functions: {
+      as_force_close_case: {
+        Args: { _case_id: string; _reason?: string }
+        Returns: {
+          assignee_id: string | null
+          closed_at: string | null
+          closed_by: string | null
+          created_at: string
+          customer_id: string | null
+          device_id: string | null
+          health_score: number | null
+          id: string
+          last_contact_at: string | null
+          metadata: Json
+          next_callback_at: string | null
+          order_id: string
+          priority: Database["public"]["Enums"]["as_priority"]
+          progress_pct: number
+          sales_user_name: string | null
+          satisfaction_note: string | null
+          satisfaction_rating: number | null
+          status: Database["public"]["Enums"]["as_case_status"]
+          tenant_id: string | null
+          traffic_light: Database["public"]["Enums"]["as_traffic_light"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "as_cases"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       as_seed_default_checklists: {
         Args: { p_case: string }
         Returns: undefined
