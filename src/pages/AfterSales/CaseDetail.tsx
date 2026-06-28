@@ -153,6 +153,12 @@ export default function AfterSalesCaseDetail() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="kommunikation" className="space-y-3">
+          <CommunicationPanel caseId={c.id} email={c.customer_email} phone={c.customer_phone} />
+        </TabsContent>
+
+
+
         <TabsContent value="rueckrufe" className="space-y-3">
           <Card>
             <CardHeader><CardTitle className="text-sm">Neuen Rückruf planen</CardTitle></CardHeader>
