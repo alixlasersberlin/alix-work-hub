@@ -420,9 +420,19 @@ export default function Angebote() {
           ) : signLinkError ? (
             <div className="py-2 text-sm text-destructive">{signLinkError}</div>
           ) : signLinkUrl ? (
-            <div className="flex items-center gap-2">
-              <Input readOnly value={signLinkUrl} onFocus={(e) => e.currentTarget.select()} />
-              <Button onClick={copySignLink} className="shrink-0"><Copy className="h-4 w-4 mr-2" />Kopieren</Button>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Input readOnly value={signLinkUrl} onFocus={(e) => e.currentTarget.select()} />
+                <Button onClick={copySignLink} className="shrink-0"><Copy className="h-4 w-4 mr-2" />Kopieren</Button>
+              </div>
+              <a
+                href={signLinkUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="block break-all text-xs text-primary underline hover:no-underline"
+              >
+                {signLinkUrl}
+              </a>
             </div>
           ) : null}
           <DialogFooter>
