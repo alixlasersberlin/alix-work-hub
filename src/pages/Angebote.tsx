@@ -71,6 +71,8 @@ export default function Angebote() {
   };
 
   const openSignLink = async (offerNumber: string) => {
+    // Pre-open a tab synchronously so popup blockers allow it later.
+    const popup = typeof window !== 'undefined' ? window.open('about:blank', '_blank') : null;
     setSignLinkOpen(true);
     setSignLinkOffer(offerNumber);
     setSignLinkUrl(null);
