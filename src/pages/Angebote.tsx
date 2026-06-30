@@ -50,9 +50,12 @@ export default function Angebote() {
   const pendingCount = pendingOffers.length;
 
   const openApproval = (o: OfferSnapshot) => {
+    // Reset any stale pointer-events left over by a previously closed Radix overlay
+    try { document.body.style.pointerEvents = ''; } catch { /* noop */ }
     setApprovalOffer(o);
     setApprovalNote(o.approvalNote || '');
-    setApprovalOpen(true);
+    // Defer to next frame so state batches before the dialog mounts its portal
+    requestAnimationFrame(() => setApprovalOpen(true));
   };
 
   const submitApproval = async (decision: 'approved' | 'rejected') => {
