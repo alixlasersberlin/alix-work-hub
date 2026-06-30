@@ -87,7 +87,33 @@ export default function Angebote() {
         .maybeSingle();
       if (error) throw error;
       if (!data?.token) {
-        setSignLinkError('Für dieses Angebot wurde noch kein Unterschriftslink erstellt. Öffne das Angebot und sende es zur Unterschrift.');
+        const offer = offers.find((o) => o.offerNumber === offerNumber);
+        const customerEmail = offer?.customer?.email;
+        if (!offer || !customerEmail) {
+          setSignLinkError('Für dieses Angebot wurde noch kein Unterschriftslink erstellt und es fehlt eine Kunden-E-Mail-Adresse.');
+          return;
+        }
+
+        const { data: created, error: createError } = await supabase.functions.invoke('alix-sign-create', {
+          body: {
+            offer_number: offerNumber,
+            offer_payload: offer,
+            customer_id: offer.customer?.id || null,
+            customer_email: customerEmail,
+            customer_name: offer.customer?.contact_name || offer.customer?.company_name || null,
+            base_url: 'https://alixwork.de',
+            expires_days: 14,
+          },
+        });
+        if (createError || (created as any)?.error) {
+          throw new Error(createError?.message || (created as any)?.error || 'Link konnte nicht erstellt werden.');
+        }
+
+        const createdUrl = (created as any)?.sign_url || ((created as any)?.token ? `https://alixwork.de/sign/${(created as any).token}` : null);
+        if (!createdUrl) throw new Error('Link konnte nicht erstellt werden.');
+        setSignLinkUrl(createdUrl);
+        setSignLinkExpires((created as any)?.expires_at || null);
+        toast.success('Neuer Unterschriftslink wurde erstellt.');
       } else {
         setSignLinkUrl(`https://alixwork.de/sign/${data.token}`);
         setSignLinkExpires(data.expires_at || null);
