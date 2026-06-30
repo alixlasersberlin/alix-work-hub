@@ -71,6 +71,8 @@ export default function Angebote() {
   };
 
   const openSignLink = async (offerNumber: string) => {
+    // Pre-open a tab synchronously so popup blockers allow it later.
+    const popup = typeof window !== 'undefined' ? window.open('about:blank', '_blank') : null;
     setSignLinkOpen(true);
     setSignLinkOffer(offerNumber);
     setSignLinkUrl(null);
@@ -114,11 +116,15 @@ export default function Angebote() {
         setSignLinkUrl(createdUrl);
         setSignLinkExpires((created as any)?.expires_at || null);
         toast.success('Neuer Unterschriftslink wurde erstellt.');
+        if (popup) popup.location.href = createdUrl;
       } else {
-        setSignLinkUrl(`https://alixwork.de/sign/${data.token}`);
+        const url = `https://alixwork.de/sign/${data.token}`;
+        setSignLinkUrl(url);
         setSignLinkExpires(data.expires_at || null);
+        if (popup) popup.location.href = url;
       }
     } catch (e: any) {
+      if (popup) popup.close();
       setSignLinkError(e?.message || 'Link konnte nicht geladen werden.');
     } finally {
       setSignLinkLoading(false);
