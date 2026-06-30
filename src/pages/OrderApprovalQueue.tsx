@@ -94,38 +94,60 @@ export default function OrderApprovalQueue() {
 
     // Nach Freigabe: passendes Gerät automatisch reservieren — bevorzugt Lagergeräte (Bestand),
     // ansonsten Shell Warehouse. Bereits reservierte Geräte werden ignoriert.
+    // WICHTIG: Wenn für diesen Auftrag bereits ein passendes Gerät (Modell+Farbe) reserviert ist,
+    // KEINE zweite Reservierung anlegen — sonst doppelte Reservierung (vgl. Bug Bodylab SO-4166).
     let reservedInfo: { department: string; serial: string; model: string } | null = null;
     try {
       if (row?.order_id && row?.modellname) {
         const { findLagerMatch, deviceDepartment } = await import('@/lib/lager-match');
-        const { data: freeDevs } = await supabase
+
+        // 1) Bereits für diesen Auftrag reservierte Geräte laden und prüfen, ob schon
+        //    ein passendes Modell+Farbe-Gerät reserviert ist.
+        const { data: alreadyReserved } = await supabase
           .from('lager_devices')
           .select('id, serial_number, model_name, notes, reserved_order_id')
-          .is('reserved_order_id', null);
-        const all = (freeDevs || []) as any[];
-        // Lagergeräte zuerst, dann Warehouse
-        const bestand = all.filter((d) => deviceDepartment(d) === 'Lagergeräte');
-        const warehouse = all.filter((d) => /warehouse/i.test((/\[Status:\s*([^\]]+)\]/.exec(d.notes ?? '')?.[1] ?? '')));
-        const ordered = [...bestand, ...warehouse];
-        const match = findLagerMatch(row.modellname, row.farbe, ordered);
-        if (match) {
-          const { error: resErr } = await supabase
+          .eq('reserved_order_id', row.order_id);
+        const reservedPool = ((alreadyReserved || []) as any[])
+          .map((d) => ({ ...d, reserved_order_id: null as string | null }));
+        const alreadyHit = findLagerMatch(row.modellname, row.farbe, reservedPool);
+        if (alreadyHit) {
+          // Schon reserviert — nichts zusätzlich claimen.
+          reservedInfo = {
+            department: alreadyHit.department,
+            serial: alreadyHit.device.serial_number,
+            model: alreadyHit.device.model_name,
+          };
+        } else {
+          const { data: freeDevs } = await supabase
             .from('lager_devices')
-            .update({ reserved_order_id: row.order_id })
-            .eq('id', match.device.id)
+            .select('id, serial_number, model_name, notes, reserved_order_id')
             .is('reserved_order_id', null);
-          if (!resErr) {
-            reservedInfo = {
-              department: match.department,
-              serial: match.device.serial_number,
-              model: match.device.model_name,
-            };
+          const all = (freeDevs || []) as any[];
+          // Lagergeräte zuerst, dann Warehouse
+          const bestand = all.filter((d) => deviceDepartment(d) === 'Lagergeräte');
+          const warehouse = all.filter((d) => /warehouse/i.test((/\[Status:\s*([^\]]+)\]/.exec(d.notes ?? '')?.[1] ?? '')));
+          const ordered = [...bestand, ...warehouse];
+          const match = findLagerMatch(row.modellname, row.farbe, ordered);
+          if (match) {
+            const { error: resErr } = await supabase
+              .from('lager_devices')
+              .update({ reserved_order_id: row.order_id })
+              .eq('id', match.device.id)
+              .is('reserved_order_id', null);
+            if (!resErr) {
+              reservedInfo = {
+                department: match.department,
+                serial: match.device.serial_number,
+                model: match.device.model_name,
+              };
+            }
           }
         }
       }
     } catch (e) {
       console.error('Auto-Reservierung fehlgeschlagen', e);
     }
+
 
     setApprovingId(null);
     if (reservedInfo) {
