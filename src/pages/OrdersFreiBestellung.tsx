@@ -91,29 +91,35 @@ function colorsOf(s: string | null | undefined): Set<string> {
 
 function findMatches(items: OrderItem[], devices: FreeDevice[]): FreeDevice[] {
   if (!items.length || !devices.length) return [];
-  const haystack = items.map(i => normalize(`${i.item_name || ''} ${i.description || ''} ${i.sku || ''}`)).join(' | ');
-  const orderTokens = new Set<string>();
+  // Strenges Matching: für jeden Auftragsposten den NORMALISIERTEN Modellnamen
+  // als vollständigen Substring im Gerätenamen (oder umgekehrt) verlangen.
+  // Token-Fallbacks (ein geteiltes Wort reicht) sind absichtlich entfernt —
+  // sie führten dazu, dass dasselbe Lagergerät als Treffer für viele
+  // unpassende Aufträge gezählt wurde („mehr Geräte als vorhanden").
   const orderColors = new Set<string>();
+  const itemNeedles: string[] = [];
   for (const it of items) {
-    const text = `${it.item_name || ''} ${it.description || ''} ${it.sku || ''}`;
-    for (const t of strongTokens(text)) orderTokens.add(t);
-    for (const c of colorsOf(text)) orderColors.add(c);
+    for (const c of colorsOf(`${it.item_name || ''} ${it.description || ''} ${it.sku || ''}`)) orderColors.add(c);
+    const name = normalize(it.item_name);
+    if (name && name.length >= 3 && !MATCH_STOPWORDS.has(name)) itemNeedles.push(name);
+    const sku = normalize(it.sku);
+    if (sku && sku.length >= 3) itemNeedles.push(sku);
   }
+  if (!itemNeedles.length) return [];
+
   const seen = new Set<string>();
   const out: FreeDevice[] = [];
   for (const d of devices) {
     const m = normalize(d.model_name);
-    if (!m) continue;
-    // 1) Voller Modellname als Substring im Auftrag enthalten
-    let hit = haystack.includes(m);
-    // 2) Token-Treffer: Gerät & Auftrag teilen mind. ein starkes Produkt-Token
-    if (!hit && orderTokens.size > 0) {
-      const devTokens = strongTokens(`${d.model_name} ${d.notes || ''}`);
-      hit = devTokens.some(t => orderTokens.has(t));
-    }
+    if (!m || m.length < 3) continue;
+
+    // Vollständige Modellbezeichnung muss in beide Richtungen mindestens als
+    // Substring eines Auftragspostens auftauchen (Gerät ⊆ Posten oder Posten ⊆ Gerät).
+    const hit = itemNeedles.some(n => n.includes(m) || m.includes(n));
     if (!hit) continue;
-    // 3) Farb-Filter: wenn beide Seiten Farben nennen, müssen ALLE Gerätefarben
-    //    in den Auftragsfarben enthalten sein (z. B. „black/pink" passt nicht zu „black/gold").
+
+    // Farb-Filter: wenn beide Seiten Farben nennen, müssen ALLE Gerätefarben
+    // in den Auftragsfarben enthalten sein.
     if (orderColors.size > 0) {
       const devColors = colorsOf(`${d.model_name} ${d.notes || ''}`);
       if (devColors.size > 0) {
