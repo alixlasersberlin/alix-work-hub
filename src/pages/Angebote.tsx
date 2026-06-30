@@ -417,7 +417,7 @@ export default function Angebote() {
       </Card>
 
       <Dialog open={approvalOpen} onOpenChange={setApprovalOpen}>
-        <DialogContent>
+        <DialogContent key={approvalOffer?.offerNumber || 'none'} className="z-[100]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-amber-400" /> Angebot freigeben</DialogTitle>
             <DialogDescription>
