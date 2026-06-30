@@ -118,19 +118,34 @@ export default function PriorityList() {
       let loaded = (data ?? []) as any as PrioOrder[];
 
       // Bestellte Aufträge ausblenden: Aufträge mit genehmigter & gesendeter Produktionsbestellung entfernen
+      // ODER Aufträge, denen bereits ein Lagergerät reserviert/zugeteilt ist (egal welche Abteilung —
+      // Bestand, Unterwegs, Produktion, Warehouse, Hold). Sonst tauchen sie in der Prio-Liste auf,
+      // obwohl ein Gerät bald kommt (vgl. Bug Perles d´Argan SO-4090).
       if (loaded.length > 0) {
         const ids = loaded.map(o => o.id);
-        const { data: prod } = await supabase
-          .from('production_orders')
-          .select('order_id, approval_status, status')
-          .in('order_id', ids);
+        const [{ data: prod }, { data: reservedDevs }] = await Promise.all([
+          supabase
+            .from('production_orders')
+            .select('order_id, approval_status, status')
+            .in('order_id', ids),
+          supabase
+            .from('lager_devices')
+            .select('reserved_order_id')
+            .in('reserved_order_id', ids),
+        ]);
         const orderedIds = new Set(
           (prod ?? [])
             .filter((p: any) => p.approval_status === 'approved' && p.status && p.status !== 'entwurf')
             .map((p: any) => p.order_id)
         );
-        loaded = loaded.filter(o => !orderedIds.has(o.id));
+        const reservedIds = new Set(
+          (reservedDevs ?? [])
+            .map((d: any) => d.reserved_order_id)
+            .filter(Boolean)
+        );
+        loaded = loaded.filter(o => !orderedIds.has(o.id) && !reservedIds.has(o.id));
       }
+
 
       setOrders(loaded);
       setLoading(false);
