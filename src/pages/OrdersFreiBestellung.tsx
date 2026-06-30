@@ -33,8 +33,13 @@ function formatDate(date: string | null) {
 }
 
 function getStatus(notes: string | null | undefined): string {
-  const m = /\[Status:\s*([^\]]+)\]/.exec(notes ?? '');
-  return (m?.[1] ?? 'Bestand').trim();
+  const matches = [...(notes ?? '').matchAll(/\[Status:\s*([^\]]+)\]/g)];
+  const last = matches[matches.length - 1];
+  return (last?.[1] ?? 'Bestand').trim();
+}
+
+function isLoanerDevice(notes: string | null | undefined) {
+  return /\[Typ:\s*Leihger[äa]t\]/i.test(notes || '') || /leihger[äa]t/i.test(notes || '');
 }
 
 type FreeDevice = {
@@ -42,12 +47,17 @@ type FreeDevice = {
   serial_number: string;
   model_name: string;
   notes: string | null;
+  delivered_order_id?: string | null;
 };
 
 type OrderItem = { order_id: string; item_name: string | null; description: string | null; sku: string | null; quantity: number | null; unit: string | null };
 
 function normalize(s: string | null | undefined) {
   return (s || '').toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
+function normalizeModelName(s: string | null | undefined) {
+  return normalize(s).replace(/\s*-\s*at$/, '').trim();
 }
 
 // Stopwords that are too generic to count as product identity.
@@ -100,9 +110,9 @@ function findMatches(items: OrderItem[], devices: FreeDevice[]): FreeDevice[] {
   const itemNeedles: string[] = [];
   for (const it of items) {
     for (const c of colorsOf(`${it.item_name || ''} ${it.description || ''} ${it.sku || ''}`)) orderColors.add(c);
-    const name = normalize(it.item_name);
+    const name = normalizeModelName(it.item_name);
     if (name && name.length >= 3 && !MATCH_STOPWORDS.has(name)) itemNeedles.push(name);
-    const sku = normalize(it.sku);
+    const sku = normalizeModelName(it.sku);
     if (sku && sku.length >= 3) itemNeedles.push(sku);
   }
   if (!itemNeedles.length) return [];
@@ -110,7 +120,7 @@ function findMatches(items: OrderItem[], devices: FreeDevice[]): FreeDevice[] {
   const seen = new Set<string>();
   const out: FreeDevice[] = [];
   for (const d of devices) {
-    const m = normalize(d.model_name);
+    const m = normalizeModelName(d.model_name);
     if (!m || m.length < 3) continue;
 
     // Vollständige Modellbezeichnung muss in beide Richtungen mindestens als
@@ -201,7 +211,7 @@ export default function OrdersFreiBestellung() {
     const [{ data: existing }, { data: reservedDevs }, { data: freeDevs }, { data: hiddenNotes }] = await Promise.all([
       supabase.from('production_orders').select('order_id'),
       supabase.from('lager_devices').select('id, serial_number, model_name, notes, reserved_order_id').not('reserved_order_id', 'is', null),
-      supabase.from('lager_devices').select('id, serial_number, model_name, notes').is('reserved_order_id', null),
+      supabase.from('lager_devices').select('id, serial_number, model_name, notes, delivered_order_id').is('reserved_order_id', null).is('delivered_order_id', null),
       supabase.from('order_notes').select('order_id').eq('note_type', FREI_HIDDEN_NOTE),
     ]);
     const usedOrderIds = new Set(((existing ?? []).map((p: any) => p.order_id)));
@@ -211,7 +221,7 @@ export default function OrdersFreiBestellung() {
     const reservedOrderIds = new Set<string>();
     for (const d of (reservedDevs ?? []) as any[]) {
       if (!d.reserved_order_id) continue;
-      if (/leihger[äa]t/i.test(d.notes || '')) continue;
+      if (isLoanerDevice(d.notes)) continue;
       reservedOrderIds.add(d.reserved_order_id);
     }
     // Aufträge mit bereits angelegter Production-Order werden ausgeblendet —
@@ -233,13 +243,15 @@ export default function OrdersFreiBestellung() {
     const resMap: Record<string, { id: string; serial_number: string; model_name: string }[]> = {};
     for (const d of (reservedDevs ?? []) as any[]) {
       if (!d.reserved_order_id) continue;
-      if (/leihger[äa]t/i.test(d.notes || '')) continue;
+      if (isLoanerDevice(d.notes)) continue;
       (resMap[d.reserved_order_id] ??= []).push({ id: d.id, serial_number: d.serial_number, model_name: d.model_name });
     }
     setReservedByOrder(resMap);
 
     // Only Bestand devices
-    const bestandOnly = ((freeDevs as FreeDevice[]) ?? []).filter(d => getStatus(d.notes) === 'Bestand');
+    const bestandOnly = ((freeDevs as FreeDevice[]) ?? []).filter(d =>
+      getStatus(d.notes) === 'Bestand' && !d.delivered_order_id && !isLoanerDevice(d.notes)
+    );
     setFreeBestand(bestandOnly);
 
     // Load order items for visible orders
