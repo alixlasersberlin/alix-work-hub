@@ -49,13 +49,37 @@ export default function Angebote() {
   const pendingOffers = offers.filter(o => (o.approvalStatus || 'pending') === 'pending');
   const pendingCount = pendingOffers.length;
 
+  const clearStalePointerLock = () => {
+    try {
+      if (document.body.style.pointerEvents === 'none') document.body.style.pointerEvents = '';
+    } catch { /* noop */ }
+  };
+
+  useEffect(() => {
+    clearStalePointerLock();
+    const onFocus = () => clearStalePointerLock();
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, []);
+
+  useEffect(() => {
+    if (signLinkOpen || approvalOpen) return;
+    clearStalePointerLock();
+    const t = window.setTimeout(clearStalePointerLock, 150);
+    return () => window.clearTimeout(t);
+  }, [signLinkOpen, approvalOpen]);
+
+  const closeApproval = () => {
+    setApprovalOpen(false);
+    window.setTimeout(clearStalePointerLock, 0);
+    window.setTimeout(clearStalePointerLock, 150);
+  };
+
   const openApproval = (o: OfferSnapshot) => {
-    // Reset any stale pointer-events left over by a previously closed Radix overlay
-    try { document.body.style.pointerEvents = ''; } catch { /* noop */ }
+    clearStalePointerLock();
     setApprovalOffer(o);
     setApprovalNote(o.approvalNote || '');
-    // Defer to next frame so state batches before the dialog mounts its portal
-    requestAnimationFrame(() => setApprovalOpen(true));
+    setApprovalOpen(true);
   };
 
   const submitApproval = async (decision: 'approved' | 'rejected') => {
@@ -64,7 +88,7 @@ export default function Angebote() {
     try {
       await setOfferApproval(approvalOffer.offerNumber, decision, approvalNote.trim() || null);
       toast.success(decision === 'approved' ? 'Angebot freigegeben.' : 'Angebot abgelehnt.');
-      setApprovalOpen(false);
+      closeApproval();
       await reload();
     } catch (e: any) {
       toast.error('Fehler: ' + (e?.message || 'Unbekannt'));
@@ -416,29 +440,45 @@ export default function Angebote() {
         </CardContent>
       </Card>
 
-      <Dialog open={approvalOpen} onOpenChange={setApprovalOpen}>
-        <DialogContent key={approvalOffer?.offerNumber || 'none'} className="z-[100]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-amber-400" /> Angebot freigeben</DialogTitle>
-            <DialogDescription>
-              {approvalOffer ? `Angebot ${approvalOffer.offerNumber} · ${approvalOffer.customer?.company_name || approvalOffer.customer?.contact_name || ''} · ${fmtMoney(approvalOffer.totals?.gross || 0)}` : ''}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2">
-            <label className="text-xs text-muted-foreground">Notiz (optional)</label>
-            <Textarea rows={3} value={approvalNote} onChange={(e) => setApprovalNote(e.target.value)} placeholder="z. B. Hinweise zur Freigabe…" />
-          </div>
-          <DialogFooter className="gap-2">
-            <Button variant="ghost" onClick={() => setApprovalOpen(false)} disabled={approvalBusy}>Abbrechen</Button>
-            <Button variant="outline" className="border-destructive/40 text-destructive hover:bg-destructive/10" onClick={() => submitApproval('rejected')} disabled={approvalBusy}>
-              <ShieldX className="h-4 w-4 mr-2" /> Ablehnen
-            </Button>
-            <Button className="bg-emerald-600 hover:bg-emerald-500 text-white" onClick={() => submitApproval('approved')} disabled={approvalBusy}>
-              <ShieldCheck className="h-4 w-4 mr-2" /> Freigeben
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {approvalOpen && approvalOffer && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm"
+          role="presentation"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget && !approvalBusy) closeApproval();
+          }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="approval-dialog-title"
+            className="w-full max-w-lg rounded-lg border border-border bg-background p-6 shadow-2xl"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <div className="space-y-1.5">
+              <h2 id="approval-dialog-title" className="flex items-center gap-2 text-lg font-semibold leading-none tracking-tight">
+                <ShieldCheck className="h-5 w-5 text-amber-400" /> Angebot freigeben
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {`Angebot ${approvalOffer.offerNumber} · ${approvalOffer.customer?.company_name || approvalOffer.customer?.contact_name || ''} · ${fmtMoney(approvalOffer.totals?.gross || 0)}`}
+              </p>
+            </div>
+            <div className="mt-4 space-y-2">
+              <label className="text-xs text-muted-foreground" htmlFor="approval-note">Notiz (optional)</label>
+              <Textarea id="approval-note" rows={3} value={approvalNote} onChange={(e) => setApprovalNote(e.target.value)} placeholder="z. B. Hinweise zur Freigabe…" />
+            </div>
+            <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <Button variant="ghost" onClick={closeApproval} disabled={approvalBusy}>Abbrechen</Button>
+              <Button variant="outline" className="border-destructive/40 text-destructive hover:bg-destructive/10" onClick={() => submitApproval('rejected')} disabled={approvalBusy}>
+                <ShieldX className="h-4 w-4 mr-2" /> Ablehnen
+              </Button>
+              <Button className="bg-emerald-600 hover:bg-emerald-500 text-white" onClick={() => submitApproval('approved')} disabled={approvalBusy}>
+                <ShieldCheck className="h-4 w-4 mr-2" /> Freigeben
+              </Button>
+            </div>
+          </section>
+        </div>
+      )}
 
 
       <Dialog open={signLinkOpen} onOpenChange={setSignLinkOpen}>
