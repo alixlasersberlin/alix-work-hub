@@ -50,9 +50,12 @@ export default function Angebote() {
   const pendingCount = pendingOffers.length;
 
   const openApproval = (o: OfferSnapshot) => {
+    // Reset any stale pointer-events left over by a previously closed Radix overlay
+    try { document.body.style.pointerEvents = ''; } catch { /* noop */ }
     setApprovalOffer(o);
     setApprovalNote(o.approvalNote || '');
-    setApprovalOpen(true);
+    // Defer to next frame so state batches before the dialog mounts its portal
+    requestAnimationFrame(() => setApprovalOpen(true));
   };
 
   const submitApproval = async (decision: 'approved' | 'rejected') => {
@@ -414,7 +417,7 @@ export default function Angebote() {
       </Card>
 
       <Dialog open={approvalOpen} onOpenChange={setApprovalOpen}>
-        <DialogContent>
+        <DialogContent key={approvalOffer?.offerNumber || 'none'} className="z-[100]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-amber-400" /> Angebot freigeben</DialogTitle>
             <DialogDescription>
