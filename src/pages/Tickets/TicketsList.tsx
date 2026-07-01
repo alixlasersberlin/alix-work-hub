@@ -134,15 +134,30 @@ export default function TicketsList() {
   async function createTicket() {
     if (!nt.title.trim()) { toast.error('Titel ist erforderlich'); return; }
     setCreating(true);
+    const clean = <T extends Record<string, any>>(obj: T) => {
+      const out: Record<string, any> = {};
+      for (const [k, v] of Object.entries(obj)) {
+        if (typeof v === 'string') {
+          const t = v.trim();
+          out[k] = t === '' ? null : t;
+        } else {
+          out[k] = v;
+        }
+      }
+      return out;
+    };
+    const payload = {
+      ...clean(nt),
+      title: nt.title.trim(),
+      source_system: 'alixwork',
+      status: 'offen',
+      customer_visible_status: 'Ticket eingegangen',
+      priority: nt.priority || 'normal',
+      department: nt.department || 'service',
+    };
     const { data, error } = await supabase
       .from('tickets')
-      .insert({
-        ...nt,
-        title: nt.title.trim(),
-        source_system: 'alixwork',
-        status: 'offen',
-        customer_visible_status: 'Ticket eingegangen',
-      })
+      .insert(payload)
       .select('id')
       .single();
     setCreating(false);
