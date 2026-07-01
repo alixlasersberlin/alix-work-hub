@@ -38,7 +38,7 @@ const navItems: NavItem[] = [
     path: '/', label: 'DASHBOARDS', icon: LayoutDashboard,
     roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Read Only Audit', 'Österreich'],
     children: [
-      { path: '/', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Read Only Audit', 'Österreich'] },
+      { path: '/dashboards/verkauf', label: 'Verkauf', icon: TrendingUp, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Vertrieb', 'Vertriebsleitung', 'SACHBEARBEITUNG'] },
       { path: '/management-dashboard', label: 'Management Dashboard', icon: BarChart3, roles: ['Super Admin'] },
       { path: '/konzern/dashboard', label: 'Konzern-Dashboard', icon: TrendingUp, roles: ['Super Admin'] },
       { path: '/dashboard/bestellungen', label: 'Bestellungen', icon: ShoppingCart, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Bestellwesen', 'SACHBEARBEITUNG', 'Finance'] },
