@@ -56,6 +56,8 @@ function statusVariant(s: string): 'default' | 'secondary' | 'destructive' | 'ou
 export default function SalesLeadsList() {
   const { hasRole } = useAuth();
   const canDelete = hasRole('Super Admin');
+  const canAssign = hasRole('Super Admin');
+
   const [rows, setRows] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
