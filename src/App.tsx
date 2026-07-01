@@ -451,6 +451,7 @@ function HomeRoute() {
 
 function AppRoutes() {
   const { user, loading } = useAuth();
+  useSyncRevenueMaskGlobal();
 
   if (loading) return <FullscreenLoader />;
 
