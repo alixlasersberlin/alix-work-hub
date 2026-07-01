@@ -48,6 +48,11 @@ function isLeih(notes: string | null | undefined): boolean {
   return (notes ?? '').includes('[Typ: Leihgerät]') || (notes ?? '').includes('[Leihgerät]');
 }
 
+function isAusstellung(notes: string | null | undefined, model: string | null | undefined): boolean {
+  const hay = `${notes ?? ''} ${model ?? ''}`.toLowerCase();
+  return /ausstellung|demo(gerät|geraet)?|showroom|messe/.test(hay);
+}
+
 export function deviceDepartment(device: LagerDeviceRow): Department | null {
   const status = getStatus(device.notes);
   if (status === 'Transfer') return 'Unterwegs';
@@ -79,6 +84,7 @@ export function findLagerMatch(
 
   for (const d of devices) {
     if (d.reserved_order_id) continue;
+    if (isAusstellung(d.notes, d.model_name)) continue;
     const dep = deviceDepartment(d);
     if (!dep) continue;
     const hay = normalize(d.model_name);
