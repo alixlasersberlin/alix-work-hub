@@ -15,6 +15,65 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
+async function sendInternalSmsNotification(admin: any, signRequestId: string, offerNumber: string, signerName: string, signedAt: string) {
+  try {
+    const sid = Deno.env.get('TWILIO_ACCOUNT_SID') ?? ''
+    const tok = Deno.env.get('TWILIO_AUTH_TOKEN') ?? ''
+    let from = Deno.env.get('TWILIO_SMS_FROM_NUMBER') ?? ''
+    if (!from) from = (Deno.env.get('TWILIO_WHATSAPP_FROM_NUMBER') ?? '').replace(/^whatsapp:/i, '')
+
+    const { data: cfg } = await admin
+      .from('sms_settings')
+      .select('account_sid, auth_token, from_number')
+      .eq('id', true)
+      .maybeSingle()
+
+    const finalSid = cfg?.account_sid?.trim() || sid
+    const finalTok = cfg?.auth_token?.trim() || tok
+    const finalFrom = cfg?.from_number?.trim() || from
+
+    if (!finalSid || !finalTok || !finalFrom) {
+      await admin.from('alix_sign_audit_log').insert({
+        sign_request_id: signRequestId,
+        action: 'sms_notify_skipped',
+        details: { reason: 'Twilio credentials missing' },
+      })
+      return
+    }
+
+    const to = '+491711651000'
+    const text = `Alix Sign: Angebot ${offerNumber} wurde von ${signerName} unterzeichnet (${new Date(signedAt).toLocaleString('de-DE')}).`
+    const url = `https://api.twilio.com/2010-04-01/Accounts/${finalSid}/Messages.json`
+    const auth = btoa(`${finalSid}:${finalTok}`)
+    const form = new URLSearchParams({ To: to, From: finalFrom, Body: text })
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { Authorization: `Basic ${auth}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: form,
+    })
+    const data = await res.json().catch(() => ({}))
+    await admin.from('alix_sign_audit_log').insert({
+      sign_request_id: signRequestId,
+      action: res.ok ? 'sms_notify_sent' : 'sms_notify_failed',
+      details: {
+        to,
+        sid: data?.sid ?? null,
+        status: data?.status ?? null,
+        error: res.ok ? null : (data?.message ?? JSON.stringify(data)),
+      },
+    })
+  } catch (e: any) {
+    console.error('alix-sign-submit SMS notify failed', e?.message)
+    try {
+      await admin.from('alix_sign_audit_log').insert({
+        sign_request_id: signRequestId,
+        action: 'sms_notify_failed',
+        details: { error: e?.message ?? String(e) },
+      })
+    } catch {}
+  }
+}
+
 async function sha256Hex(data: Uint8Array): Promise<string> {
   const buf = await crypto.subtle.digest('SHA-256', data)
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('')
@@ -172,6 +231,10 @@ Deno.serve(async (req) => {
     user_agent: ua,
   })
 
+  // Wichtig: SMS sofort nach erfolgreicher Signatur senden.
+  // Der spätere PDF-/E-Mail-Teil kann speicherintensiv sein; die SMS darf davon nicht abhängen.
+  await sendInternalSmsNotification(admin, r.id, r.offer_number, signerName, now)
+
   // Send customer confirmation email (no auth context — send directly)
   // Upload signed PDF to private storage bucket and create a 90-day signed URL
   let downloadUrl: string | undefined
@@ -292,60 +355,6 @@ Deno.serve(async (req) => {
       status: 'unread',
     } as any)
   } catch { /* table column mismatch tolerated */ }
-
-  // Notify internal recipient via SMS (Twilio)
-  try {
-    const sid = Deno.env.get('TWILIO_ACCOUNT_SID') ?? ''
-    const tok = Deno.env.get('TWILIO_AUTH_TOKEN') ?? ''
-    let from = Deno.env.get('TWILIO_SMS_FROM_NUMBER') ?? ''
-    if (!from) from = (Deno.env.get('TWILIO_WHATSAPP_FROM_NUMBER') ?? '').replace(/^whatsapp:/i, '')
-    // Fallback: DB settings
-    if (!sid || !tok || !from) {
-      const { data: cfg } = await admin.from('sms_settings').select('account_sid, auth_token, from_number').eq('id', true).maybeSingle()
-      var dbSid = cfg?.account_sid?.trim() || sid
-      var dbTok = cfg?.auth_token?.trim() || tok
-      var dbFrom = cfg?.from_number?.trim() || from
-      // @ts-ignore
-      var finalSid = dbSid, finalTok = dbTok, finalFrom = dbFrom
-    } else {
-      var finalSid = sid, finalTok = tok, finalFrom = from
-    }
-    if (finalSid && finalTok && finalFrom) {
-      const to = '+491711651000'
-      const text = `Alix Sign: Angebot ${r.offer_number} wurde von ${signerName} unterzeichnet (${new Date(now).toLocaleString('de-DE')}).`
-      const url = `https://api.twilio.com/2010-04-01/Accounts/${finalSid}/Messages.json`
-      const auth = btoa(`${finalSid}:${finalTok}`)
-      const form = new URLSearchParams({ To: to, From: finalFrom, Body: text })
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { Authorization: `Basic ${auth}`, 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: form,
-      })
-      const data = await res.json()
-      await admin.from('alix_sign_audit_log').insert({
-        sign_request_id: r.id,
-        action: res.ok ? 'sms_notify_sent' : 'sms_notify_failed',
-        details: { to, sid: data?.sid ?? null, status: data?.status ?? null, error: res.ok ? null : (data?.message ?? JSON.stringify(data)) },
-      })
-    } else {
-      await admin.from('alix_sign_audit_log').insert({
-        sign_request_id: r.id,
-        action: 'sms_notify_skipped',
-        details: { reason: 'Twilio credentials missing' },
-      })
-    }
-  } catch (e: any) {
-    console.error('alix-sign-submit SMS notify failed', e?.message)
-    try {
-      await admin.from('alix_sign_audit_log').insert({
-        sign_request_id: r.id,
-        action: 'sms_notify_failed',
-        details: { error: e?.message ?? String(e) },
-      })
-    } catch {}
-  }
-
-
 
   return new Response(JSON.stringify({
     success: true,
