@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Ticket, Search, ArrowRight, Loader2, Plus, RefreshCw, Inbox } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from 'sonner';
@@ -15,6 +16,7 @@ import { PageHeader } from '@/components/infinity/PageHeader';
 import { EmptyState } from '@/components/infinity/EmptyState';
 import { SkeletonTable } from '@/components/infinity/Skeleton';
 import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
+
 
 interface TicketRow {
   id: string;
