@@ -341,7 +341,7 @@ export default function ManagementDashboard() {
                   <Tooltip />
                   <Legend />
                   <Bar yAxisId="l" dataKey="orders" name="Aufträge" fill="hsl(var(--primary))" />
-                  <Bar yAxisId="r" dataKey="revenue" name="Umsatz" fill="hsl(var(--accent))" />
+                  {!hideRevenue && <Bar yAxisId="r" dataKey="revenue" name="Umsatz" fill="hsl(var(--accent))" />}
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
