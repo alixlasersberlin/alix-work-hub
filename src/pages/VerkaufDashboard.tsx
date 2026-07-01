@@ -33,33 +33,39 @@ export default function VerkaufDashboard() {
   const [loading, setLoading] = useState(true);
   const [de, setDe] = useState({ sum: 0, count: 0 });
   const [at, setAt] = useState({ sum: 0, count: 0 });
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const since = useMemo(() => startDateFor(period).toISOString().slice(0, 10), [period]);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('orders')
-        .select('total_amount, source_system, order_date')
-        .gte('order_date', since)
-        .limit(20000);
-      if (cancelled) return;
-      if (error) { setDe({ sum: 0, count: 0 }); setAt({ sum: 0, count: 0 }); setLoading(false); return; }
-      let sde = 0, cde = 0, sat = 0, cat = 0;
-      for (const r of data || []) {
-        const amt = Number((r as any).total_amount) || 0;
-        const src = (r as any).source_system;
-        if (src === 'zoho_eu_2') { sat += amt; cat++; }
-        else { sde += amt; cde++; } // zoho_eu_1, manual, internal → DE
-      }
-      setDe({ sum: sde, count: cde });
-      setAt({ sum: sat, count: cat });
-      setLoading(false);
-    })();
-    return () => { cancelled = true; };
+  const load = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('total_amount, source_system, order_date')
+      .gte('order_date', since)
+      .limit(20000);
+    if (error) { setDe({ sum: 0, count: 0 }); setAt({ sum: 0, count: 0 }); setLoading(false); return; }
+    let sde = 0, cde = 0, sat = 0, cat = 0;
+    for (const r of data || []) {
+      const amt = Number((r as any).total_amount) || 0;
+      const src = (r as any).source_system;
+      if (src === 'zoho_eu_2') { sat += amt; cat++; }
+      else { sde += amt; cde++; }
+    }
+    setDe({ sum: sde, count: cde });
+    setAt({ sum: sat, count: cat });
+    setLastUpdated(new Date());
+    setLoading(false);
   }, [since]);
+
+  useEffect(() => {
+    setLoading(true);
+    load();
+    const iv = setInterval(load, 30_000);
+    return () => clearInterval(iv);
+  }, [load]);
+
+  useRealtimeRefresh(['orders'], load, { debounceMs: 600 });
+
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in space-y-6">
