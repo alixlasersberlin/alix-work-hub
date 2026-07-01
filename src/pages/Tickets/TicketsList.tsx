@@ -71,6 +71,14 @@ export default function TicketsList() {
   const [prioF, setPrioF] = useState<string>('all');
   const [deptF, setDeptF] = useState<string>('all');
   const [sourceF, setSourceF] = useState<string>('all');
+  const [createOpen, setCreateOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [nt, setNt] = useState({
+    title: '', description: '', customer_name: '', company_name: '',
+    customer_email: '', customer_phone: '', order_number: '',
+    device_name: '', serial_number: '',
+    priority: 'normal', department: 'service',
+  });
 
   useEffect(() => {
     let cancelled = false;
