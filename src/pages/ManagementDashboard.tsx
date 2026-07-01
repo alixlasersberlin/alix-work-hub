@@ -35,7 +35,7 @@ async function count(table: string, filter?: (q: any) => any) {
 }
 
 export default function ManagementDashboard() {
-  const { fmtEUR } = useRevenueMask();
+  const { fmtEUR, hide: hideRevenue } = useRevenueMask();
   const { hasAnyRole, isAdmin } = useAuth();
   const showFinance = isAdmin || hasAnyRole(["Geschäftsführung", "Finance"]);
   const showService = isAdmin || hasAnyRole(["Geschäftsführung", "Serviceleitung", "Service", "Technik"]);
