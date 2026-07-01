@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { Card } from '@/components/ui/card';
-import { TrendingUp, Loader2 } from 'lucide-react';
+import { TrendingUp, Loader2, Radio } from 'lucide-react';
+import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh';
+
 
 type Period = '1m' | '3m' | '6m' | '12m';
 
