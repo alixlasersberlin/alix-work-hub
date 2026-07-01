@@ -1,18 +1,71 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
-import { sendLovableEmail } from 'npm:@lovable.dev/email-js@0.0.4'
-import * as React from 'npm:react@18.3.1'
-import { renderAsync } from 'npm:@react-email/components@0.0.22'
-import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
 
 const SITE_NAME = 'Alix Lasers I Datacenter'
-const SENDER_DOMAIN = 'notify.alixlasers.ai'
-const FROM_DOMAIN = 'notify.alixlasers.ai'
 const APP_BASE_URL = 'https://www.alixwork.de'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
+}
+
+async function sendInternalSmsNotification(admin: any, signRequestId: string, offerNumber: string, signerName: string, signedAt: string) {
+  try {
+    const sid = Deno.env.get('TWILIO_ACCOUNT_SID') ?? ''
+    const tok = Deno.env.get('TWILIO_AUTH_TOKEN') ?? ''
+    let from = Deno.env.get('TWILIO_SMS_FROM_NUMBER') ?? ''
+    if (!from) from = (Deno.env.get('TWILIO_WHATSAPP_FROM_NUMBER') ?? '').replace(/^whatsapp:/i, '')
+
+    const { data: cfg } = await admin
+      .from('sms_settings')
+      .select('account_sid, auth_token, from_number')
+      .eq('id', true)
+      .maybeSingle()
+
+    const finalSid = cfg?.account_sid?.trim() || sid
+    const finalTok = cfg?.auth_token?.trim() || tok
+    const finalFrom = cfg?.from_number?.trim() || from
+
+    if (!finalSid || !finalTok || !finalFrom) {
+      await admin.from('alix_sign_audit_log').insert({
+        sign_request_id: signRequestId,
+        action: 'sms_notify_skipped',
+        details: { reason: 'Twilio credentials missing' },
+      })
+      return
+    }
+
+    const to = '+491711651000'
+    const text = `Alix Sign: Angebot ${offerNumber} wurde von ${signerName} unterzeichnet (${new Date(signedAt).toLocaleString('de-DE')}).`
+    const url = `https://api.twilio.com/2010-04-01/Accounts/${finalSid}/Messages.json`
+    const auth = btoa(`${finalSid}:${finalTok}`)
+    const form = new URLSearchParams({ To: to, From: finalFrom, Body: text })
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { Authorization: `Basic ${auth}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: form,
+    })
+    const data = await res.json().catch(() => ({}))
+    await admin.from('alix_sign_audit_log').insert({
+      sign_request_id: signRequestId,
+      action: res.ok ? 'sms_notify_sent' : 'sms_notify_failed',
+      details: {
+        to,
+        sid: data?.sid ?? null,
+        status: data?.status ?? null,
+        error: res.ok ? null : (data?.message ?? JSON.stringify(data)),
+      },
+    })
+  } catch (e: any) {
+    console.error('alix-sign-submit SMS notify failed', e?.message)
+    try {
+      await admin.from('alix_sign_audit_log').insert({
+        sign_request_id: signRequestId,
+        action: 'sms_notify_failed',
+        details: { error: e?.message ?? String(e) },
+      })
+    } catch {}
+  }
 }
 
 async function sha256Hex(data: Uint8Array): Promise<string> {
@@ -172,6 +225,10 @@ Deno.serve(async (req) => {
     user_agent: ua,
   })
 
+  // Wichtig: SMS sofort nach erfolgreicher Signatur senden.
+  // Der spätere PDF-/E-Mail-Teil kann speicherintensiv sein; die SMS darf davon nicht abhängen.
+  await sendInternalSmsNotification(admin, r.id, r.offer_number, signerName, now)
+
   // Send customer confirmation email (no auth context — send directly)
   // Upload signed PDF to private storage bucket and create a 90-day signed URL
   let downloadUrl: string | undefined
@@ -195,80 +252,59 @@ Deno.serve(async (req) => {
     })
   }
 
-  const apiKey = Deno.env.get('LOVABLE_API_KEY')
   let emailStatus: 'sent' | 'failed' | 'skipped' = 'skipped'
   let emailError: string | undefined
-  if (apiKey) {
+  try {
+    const fmt = (n: number) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n)
+    const bccList: string[] = ['rde@alix-lasers.com']
     try {
-      const tpl = TEMPLATES['alix-sign-confirmation']
-      const fmt = (n: number) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n)
-      const data = {
-        customer_name: r.customer_name,
-        offer_number: r.offer_number,
-        signer_name: signerName,
-        signed_at: new Date(now).toLocaleString('de-DE'),
-        total_amount: r.offer_payload?.totals?.gross ? fmt(Number(r.offer_payload.totals.gross)) : undefined,
-        download_url: downloadUrl,
-        pdf_hash: pdfHash,
-      }
-      const html = await renderAsync(React.createElement(tpl.component, data))
-      const text = await renderAsync(React.createElement(tpl.component, data), { plainText: true })
-      const subject = typeof tpl.subject === 'function' ? tpl.subject(data) : tpl.subject
-      const tokenBytes = new Uint8Array(32); crypto.getRandomValues(tokenBytes)
-      const unsub = Array.from(tokenBytes).map(b => b.toString(16).padStart(2, '0')).join('')
-      await sendLovableEmail({
-        to: signerEmail,
-        from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
-        sender_domain: SENDER_DOMAIN,
-        subject,
-        html, text,
-        purpose: 'transactional',
-        idempotency_key: `alix-sign-conf-${sig.id}`,
-        unsubscribe_token: unsub,
-      }, { apiKey })
-      emailStatus = 'sent'
-      console.log('alix-sign-submit confirmation email sent to', signerEmail)
-
-      // BCC: fixed recipient + offer creator
-      const bccList: string[] = ['rde@alix-lasers.com']
-      try {
-        if (r.created_by) {
-          const { data: creator } = await admin.auth.admin.getUserById(r.created_by)
-          const creatorEmail = creator?.user?.email
-          if (creatorEmail && creatorEmail.toLowerCase() !== 'rde@alix-lasers.com' && creatorEmail.toLowerCase() !== signerEmail.toLowerCase()) {
-            bccList.push(creatorEmail)
-          }
-        }
-      } catch (e: any) {
-        console.error('alix-sign-submit lookup creator email failed', e?.message)
-      }
-      for (const bcc of bccList) {
-        try {
-          const tb = new Uint8Array(32); crypto.getRandomValues(tb)
-          const u = Array.from(tb).map(b => b.toString(16).padStart(2, '0')).join('')
-          await sendLovableEmail({
-            to: bcc,
-            from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
-            sender_domain: SENDER_DOMAIN,
-            subject: `[Kopie] ${subject}`,
-            html, text,
-            purpose: 'transactional',
-            idempotency_key: `alix-sign-conf-${sig.id}-bcc-${bcc.toLowerCase()}`,
-            unsubscribe_token: u,
-          }, { apiKey })
-          console.log('alix-sign-submit BCC copy sent to', bcc)
-        } catch (e: any) {
-          console.error('alix-sign-submit BCC send failed', bcc, e?.message)
+      if (r.created_by) {
+        const { data: creator } = await admin.auth.admin.getUserById(r.created_by)
+        const creatorEmail = creator?.user?.email
+        if (creatorEmail && creatorEmail.toLowerCase() !== 'rde@alix-lasers.com' && creatorEmail.toLowerCase() !== signerEmail.toLowerCase()) {
+          bccList.push(creatorEmail)
         }
       }
     } catch (e: any) {
-      emailStatus = 'failed'
-      emailError = e?.message ?? String(e)
-      console.error('alix-sign-submit confirmation email failed', emailError)
+      console.error('alix-sign-submit lookup creator email failed', e?.message)
     }
-  } else {
-    emailError = 'LOVABLE_API_KEY missing'
-    console.error(emailError)
+
+    const emailRes = await fetch(`${SUPABASE_URL}/functions/v1/send-transactional-email`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+        apikey: SUPABASE_SERVICE_ROLE_KEY,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        templateName: 'alix-sign-confirmation',
+        recipientEmail: signerEmail,
+        idempotencyKey: `alix-sign-conf-${sig.id}`,
+        bcc: bccList,
+        skipDefaultCopies: true,
+        templateData: {
+          customer_name: r.customer_name,
+          offer_number: r.offer_number,
+          signer_name: signerName,
+          signed_at: new Date(now).toLocaleString('de-DE'),
+          total_amount: r.offer_payload?.totals?.gross ? fmt(Number(r.offer_payload.totals.gross)) : undefined,
+          download_url: downloadUrl,
+          pdf_hash: pdfHash,
+        },
+      }),
+    })
+    if (!emailRes.ok) {
+      emailStatus = 'failed'
+      emailError = (await emailRes.text()).slice(0, 500)
+      console.error('alix-sign-submit confirmation email failed', emailError)
+    } else {
+      emailStatus = 'sent'
+      console.log('alix-sign-submit confirmation email queued via send-transactional-email')
+    }
+  } catch (e: any) {
+    emailStatus = 'failed'
+    emailError = e?.message ?? String(e)
+    console.error('alix-sign-submit confirmation email failed', emailError)
   }
   await admin.from('alix_sign_audit_log').insert({
     sign_request_id: r.id,
@@ -292,60 +328,6 @@ Deno.serve(async (req) => {
       status: 'unread',
     } as any)
   } catch { /* table column mismatch tolerated */ }
-
-  // Notify internal recipient via SMS (Twilio)
-  try {
-    const sid = Deno.env.get('TWILIO_ACCOUNT_SID') ?? ''
-    const tok = Deno.env.get('TWILIO_AUTH_TOKEN') ?? ''
-    let from = Deno.env.get('TWILIO_SMS_FROM_NUMBER') ?? ''
-    if (!from) from = (Deno.env.get('TWILIO_WHATSAPP_FROM_NUMBER') ?? '').replace(/^whatsapp:/i, '')
-    // Fallback: DB settings
-    if (!sid || !tok || !from) {
-      const { data: cfg } = await admin.from('sms_settings').select('account_sid, auth_token, from_number').eq('id', true).maybeSingle()
-      var dbSid = cfg?.account_sid?.trim() || sid
-      var dbTok = cfg?.auth_token?.trim() || tok
-      var dbFrom = cfg?.from_number?.trim() || from
-      // @ts-ignore
-      var finalSid = dbSid, finalTok = dbTok, finalFrom = dbFrom
-    } else {
-      var finalSid = sid, finalTok = tok, finalFrom = from
-    }
-    if (finalSid && finalTok && finalFrom) {
-      const to = '+491711651000'
-      const text = `Alix Sign: Angebot ${r.offer_number} wurde von ${signerName} unterzeichnet (${new Date(now).toLocaleString('de-DE')}).`
-      const url = `https://api.twilio.com/2010-04-01/Accounts/${finalSid}/Messages.json`
-      const auth = btoa(`${finalSid}:${finalTok}`)
-      const form = new URLSearchParams({ To: to, From: finalFrom, Body: text })
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { Authorization: `Basic ${auth}`, 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: form,
-      })
-      const data = await res.json()
-      await admin.from('alix_sign_audit_log').insert({
-        sign_request_id: r.id,
-        action: res.ok ? 'sms_notify_sent' : 'sms_notify_failed',
-        details: { to, sid: data?.sid ?? null, status: data?.status ?? null, error: res.ok ? null : (data?.message ?? JSON.stringify(data)) },
-      })
-    } else {
-      await admin.from('alix_sign_audit_log').insert({
-        sign_request_id: r.id,
-        action: 'sms_notify_skipped',
-        details: { reason: 'Twilio credentials missing' },
-      })
-    }
-  } catch (e: any) {
-    console.error('alix-sign-submit SMS notify failed', e?.message)
-    try {
-      await admin.from('alix_sign_audit_log').insert({
-        sign_request_id: r.id,
-        action: 'sms_notify_failed',
-        details: { error: e?.message ?? String(e) },
-      })
-    } catch {}
-  }
-
-
 
   return new Response(JSON.stringify({
     success: true,
