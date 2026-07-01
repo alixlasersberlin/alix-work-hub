@@ -12,9 +12,9 @@ import { SkeletonKpiGrid } from '@/components/infinity/Skeleton';
 
 function _fmtEurBase(v: number | null | undefined) {
   if (v == null) return '–';
-  return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }
-function fmtEur(v: number | null | undefined) { return maskRevenueString(_fmtEurBase(v)); }).format(v);
+  return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v);
 }
+function fmtEur(v: number | null | undefined) { return maskRevenueString(_fmtEurBase(v)); }
 
 export default function AicDashboard() {
   const { data: runs } = useQuery({
