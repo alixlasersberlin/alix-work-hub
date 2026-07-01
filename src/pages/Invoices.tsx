@@ -57,10 +57,10 @@ function statusVariant(s: string | null) {
 
 function _fmtMoneyBase(n: number | null, c: string | null = 'EUR') {
   if (n == null) return '–';
-  try { return new Intl.NumberFormat('de-DE', { style: 'currency', currency: c || 'EUR' }
-function fmtMoney(n: number | null, c: string | null = 'EUR') { return maskRevenueString(_fmtMoneyBase(n, c)); }).format(n); }
+  try { return new Intl.NumberFormat('de-DE', { style: 'currency', currency: c || 'EUR' }).format(n); }
   catch { return `${n.toFixed(2)} ${c ?? ''}`; }
 }
+function fmtMoney(n: number | null, c: string | null = 'EUR') { return maskRevenueString(_fmtMoneyBase(n, c)); }
 function fmtDate(d: string | null) {
   if (!d) return '–';
   try { return new Date(d).toLocaleDateString('de-DE'); } catch { return d; }
