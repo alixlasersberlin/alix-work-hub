@@ -1,12 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
-import { sendLovableEmail } from 'npm:@lovable.dev/email-js@0.0.4'
-import * as React from 'npm:react@18.3.1'
-import { renderAsync } from 'npm:@react-email/components@0.0.22'
-import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
 
 const SITE_NAME = 'Alix Lasers I Datacenter'
-const SENDER_DOMAIN = 'notify.alixlasers.ai'
-const FROM_DOMAIN = 'notify.alixlasers.ai'
 const APP_BASE_URL = 'https://www.alixwork.de'
 
 const corsHeaders = {
@@ -258,80 +252,59 @@ Deno.serve(async (req) => {
     })
   }
 
-  const apiKey = Deno.env.get('LOVABLE_API_KEY')
   let emailStatus: 'sent' | 'failed' | 'skipped' = 'skipped'
   let emailError: string | undefined
-  if (apiKey) {
+  try {
+    const fmt = (n: number) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n)
+    const bccList: string[] = ['rde@alix-lasers.com']
     try {
-      const tpl = TEMPLATES['alix-sign-confirmation']
-      const fmt = (n: number) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n)
-      const data = {
-        customer_name: r.customer_name,
-        offer_number: r.offer_number,
-        signer_name: signerName,
-        signed_at: new Date(now).toLocaleString('de-DE'),
-        total_amount: r.offer_payload?.totals?.gross ? fmt(Number(r.offer_payload.totals.gross)) : undefined,
-        download_url: downloadUrl,
-        pdf_hash: pdfHash,
-      }
-      const html = await renderAsync(React.createElement(tpl.component, data))
-      const text = await renderAsync(React.createElement(tpl.component, data), { plainText: true })
-      const subject = typeof tpl.subject === 'function' ? tpl.subject(data) : tpl.subject
-      const tokenBytes = new Uint8Array(32); crypto.getRandomValues(tokenBytes)
-      const unsub = Array.from(tokenBytes).map(b => b.toString(16).padStart(2, '0')).join('')
-      await sendLovableEmail({
-        to: signerEmail,
-        from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
-        sender_domain: SENDER_DOMAIN,
-        subject,
-        html, text,
-        purpose: 'transactional',
-        idempotency_key: `alix-sign-conf-${sig.id}`,
-        unsubscribe_token: unsub,
-      }, { apiKey })
-      emailStatus = 'sent'
-      console.log('alix-sign-submit confirmation email sent to', signerEmail)
-
-      // BCC: fixed recipient + offer creator
-      const bccList: string[] = ['rde@alix-lasers.com']
-      try {
-        if (r.created_by) {
-          const { data: creator } = await admin.auth.admin.getUserById(r.created_by)
-          const creatorEmail = creator?.user?.email
-          if (creatorEmail && creatorEmail.toLowerCase() !== 'rde@alix-lasers.com' && creatorEmail.toLowerCase() !== signerEmail.toLowerCase()) {
-            bccList.push(creatorEmail)
-          }
-        }
-      } catch (e: any) {
-        console.error('alix-sign-submit lookup creator email failed', e?.message)
-      }
-      for (const bcc of bccList) {
-        try {
-          const tb = new Uint8Array(32); crypto.getRandomValues(tb)
-          const u = Array.from(tb).map(b => b.toString(16).padStart(2, '0')).join('')
-          await sendLovableEmail({
-            to: bcc,
-            from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
-            sender_domain: SENDER_DOMAIN,
-            subject: `[Kopie] ${subject}`,
-            html, text,
-            purpose: 'transactional',
-            idempotency_key: `alix-sign-conf-${sig.id}-bcc-${bcc.toLowerCase()}`,
-            unsubscribe_token: u,
-          }, { apiKey })
-          console.log('alix-sign-submit BCC copy sent to', bcc)
-        } catch (e: any) {
-          console.error('alix-sign-submit BCC send failed', bcc, e?.message)
+      if (r.created_by) {
+        const { data: creator } = await admin.auth.admin.getUserById(r.created_by)
+        const creatorEmail = creator?.user?.email
+        if (creatorEmail && creatorEmail.toLowerCase() !== 'rde@alix-lasers.com' && creatorEmail.toLowerCase() !== signerEmail.toLowerCase()) {
+          bccList.push(creatorEmail)
         }
       }
     } catch (e: any) {
-      emailStatus = 'failed'
-      emailError = e?.message ?? String(e)
-      console.error('alix-sign-submit confirmation email failed', emailError)
+      console.error('alix-sign-submit lookup creator email failed', e?.message)
     }
-  } else {
-    emailError = 'LOVABLE_API_KEY missing'
-    console.error(emailError)
+
+    const emailRes = await fetch(`${SUPABASE_URL}/functions/v1/send-transactional-email`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+        apikey: SUPABASE_SERVICE_ROLE_KEY,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        templateName: 'alix-sign-confirmation',
+        recipientEmail: signerEmail,
+        idempotencyKey: `alix-sign-conf-${sig.id}`,
+        bcc: bccList,
+        skipDefaultCopies: true,
+        templateData: {
+          customer_name: r.customer_name,
+          offer_number: r.offer_number,
+          signer_name: signerName,
+          signed_at: new Date(now).toLocaleString('de-DE'),
+          total_amount: r.offer_payload?.totals?.gross ? fmt(Number(r.offer_payload.totals.gross)) : undefined,
+          download_url: downloadUrl,
+          pdf_hash: pdfHash,
+        },
+      }),
+    })
+    if (!emailRes.ok) {
+      emailStatus = 'failed'
+      emailError = (await emailRes.text()).slice(0, 500)
+      console.error('alix-sign-submit confirmation email failed', emailError)
+    } else {
+      emailStatus = 'sent'
+      console.log('alix-sign-submit confirmation email queued via send-transactional-email')
+    }
+  } catch (e: any) {
+    emailStatus = 'failed'
+    emailError = e?.message ?? String(e)
+    console.error('alix-sign-submit confirmation email failed', emailError)
   }
   await admin.from('alix_sign_audit_log').insert({
     sign_request_id: r.id,
