@@ -2159,3 +2159,45 @@ html [data-radix-popper-content-wrapper] > * {
   pointer-events: auto !important;
 }
 
+/* =========================================================================
+   Radix Dialog / AlertDialog / Sheet — Sichtbarkeits-Sicherheitsnetz
+   Aurora 2.0 und Infinity-Templates definieren mehrere globale Layer-Regeln
+   (body > *, [class*="card"], animate-*) mit !important. In manchen
+   Kombinationen bleiben Radix-Overlays/Contents auf opacity:0 / scale(.95)
+   und werden unsichtbar (Button reagiert, Modal ist offen, aber leer).
+   Diese Regeln erzwingen sichtbaren Zustand für offene Dialoge unabhängig
+   vom aktiven Template. Die Radix-States bleiben intakt, nur Enter-/Exit-
+   Animationen werden neutralisiert. Wirkt systemweit auf alle Dialoge.
+   ========================================================================= */
+html :is([role="dialog"], [role="alertdialog"])[data-state="open"] {
+  opacity: 1 !important;
+  visibility: visible !important;
+  animation: none !important;
+  filter: none !important;
+}
+
+html [data-radix-dialog-overlay][data-state="open"],
+html [data-state="open"][class*="DialogOverlay"],
+html [data-state="open"][class*="overlay"]:not([role="dialog"]):not([role="alertdialog"]) {
+  opacity: 1 !important;
+  visibility: visible !important;
+  animation: none !important;
+  z-index: 9998 !important;
+  pointer-events: auto !important;
+}
+
+/* Sheet (Radix Dialog mit slide-in) — Position + Sichtbarkeit erzwingen */
+html [data-state="open"][class*="translate-x"],
+html [data-state="open"][class*="translate-y"] {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Portal-Wrapper darf nicht in einem niedrigeren Stacking-Context landen */
+html body > div:has(> [role="dialog"][data-state="open"]),
+html body > div:has(> [role="alertdialog"][data-state="open"]) {
+  position: relative;
+  z-index: 10000 !important;
+}
+
+
