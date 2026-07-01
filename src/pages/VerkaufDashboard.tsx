@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { TrendingUp, Loader2, Radio, Package, ExternalLink } from 'lucide-react';
 import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh';
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
+  PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
 
 type Period = '1m' | '3m' | '6m' | '12m';
