@@ -11,9 +11,8 @@ import {
   Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
 import { toast } from "sonner";
+import { useRevenueMask } from "@/lib/revenue-mask";
 
-const fmtEUR = (n: number) =>
-  new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n || 0);
 const fmtNum = (n: number) => new Intl.NumberFormat("de-DE").format(n || 0);
 const pct = (n: number) => `${(n || 0).toFixed(0)} %`;
 
@@ -23,6 +22,7 @@ function startOfYear(d = new Date()) { return new Date(d.getFullYear(), 0, 1); }
 type Top = { name: string; revenue: number; count: number };
 
 export default function ExecutiveCommandCenter() {
+  const { fmtEUR } = useRevenueMask();
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState<Date>(new Date());
   const [kpis, setKpis] = useState<any>({});
