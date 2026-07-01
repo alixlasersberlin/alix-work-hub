@@ -77,7 +77,12 @@ export default function VerkaufDashboard() {
       />
 
       <Card className="p-5 space-y-5">
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-xs mr-1">
+            <Radio className="w-3 h-3 animate-pulse" />
+            <span>Live</span>
+            {lastUpdated && <span className="text-emerald-500/70">· {lastUpdated.toLocaleTimeString('de-DE')}</span>}
+          </div>
           {PERIODS.map(p => (
             <button
               key={p.value}
