@@ -480,8 +480,10 @@ function AppRoutes() {
           <Route path="/sicherheit" element={<Sicherheit />} />
           <Route path="/at-dashboard" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Österreich']}><AtDashboard /></ProtectedRoute>} />
           <Route path="/dashboard/bestellungen" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Auftragsverwaltung','Order','Bestellwesen','SACHBEARBEITUNG','Finance']}><BestellungenDashboard /></ProtectedRoute>} />
+          <Route path="/dashboards/verkauf" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Auftragsverwaltung','Order','Vertrieb','Vertriebsleitung','SACHBEARBEITUNG']}><VerkaufDashboard /></ProtectedRoute>} />
 
           <Route path="/detailsuche" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Detailsuche /></ProtectedRoute>} />
+
           <Route path="/auftragsstatus" element={<ProtectedRoute><AuftragStatus /></ProtectedRoute>} />
           <Route path="/geraetesperren" element={<ProtectedRoute><Geraetesperren /></ProtectedRoute>} />
           <Route path="/kunden" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Customers /></ProtectedRoute>} />
