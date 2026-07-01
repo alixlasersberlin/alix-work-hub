@@ -42,15 +42,15 @@ export default function VerkaufDashboard() {
         .from('orders')
         .select('total_amount, source_system, order_date')
         .gte('order_date', since)
-        .in('source_system', ['zoho_eu_1', 'zoho_eu_2'])
         .limit(20000);
       if (cancelled) return;
       if (error) { setDe({ sum: 0, count: 0 }); setAt({ sum: 0, count: 0 }); setLoading(false); return; }
       let sde = 0, cde = 0, sat = 0, cat = 0;
       for (const r of data || []) {
         const amt = Number((r as any).total_amount) || 0;
-        if ((r as any).source_system === 'zoho_eu_1') { sde += amt; cde++; }
-        else if ((r as any).source_system === 'zoho_eu_2') { sat += amt; cat++; }
+        const src = (r as any).source_system;
+        if (src === 'zoho_eu_2') { sat += amt; cat++; }
+        else { sde += amt; cde++; } // zoho_eu_1, manual, internal → DE
       }
       setDe({ sum: sde, count: cde });
       setAt({ sum: sat, count: cat });
