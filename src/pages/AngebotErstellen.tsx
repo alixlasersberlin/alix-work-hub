@@ -859,11 +859,19 @@ export default function AngebotErstellen() {
   };
 
   const generatePDF = async () => {
+    // Angebot zuerst speichern, damit es in der Angebotsliste erscheint
+    // und die Angebotsnummer final vergeben ist, bevor das PDF heruntergeladen wird.
+    const saved = await saveOffer(true);
+    if (!saved) {
+      toast.error('Angebot konnte nicht gespeichert werden – PDF wurde nicht erstellt.');
+      return;
+    }
     const doc = await buildPDF();
     if (!doc) return;
     doc.save(`${offerNumber}.pdf`);
-    toast.success('Angebot als PDF erstellt.');
+    toast.success('Angebot gespeichert und als PDF erstellt.');
   };
+
 
   // ---------- Live-Vorschau ----------
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
