@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { TrendingUp, Loader2, Radio, Package, ExternalLink } from 'lucide-react';
 import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh';
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
+  PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
 
 type Period = '1m' | '3m' | '6m' | '12m';
@@ -19,6 +19,11 @@ const PERIODS: { value: Period; label: string }[] = [
   { value: '12m', label: 'Letztes Jahr' },
 ];
 const PAGE_SIZES: PageSize[] = [10, 20, 30, 50, 'all'];
+const PIE_COLORS = [
+  'hsl(var(--primary))',
+  '#22c55e', '#f59e0b', '#3b82f6', '#ec4899', '#a855f7',
+  '#14b8a6', '#ef4444', '#eab308', '#06b6d4', '#f97316', '#8b5cf6',
+];
 
 function startDateFor(period: Period): Date {
   const now = new Date();
@@ -136,6 +141,8 @@ export default function VerkaufDashboard() {
     for (const it of items) {
       const rawName = (it.item_name || it.sku || '—').toString();
       const name = rawName.replace(/-AT$/, '').trim() || '—';
+      // "Alix Lieferumfang"-Positionen ausblenden (Zubehör/Beipack)
+      if (/alix\s*lieferumfang/i.test(name)) continue;
       const key = name.toLowerCase();
       const qty = Number(it.quantity) || 0;
       const rev = Number(it.amount) || 0;
@@ -148,6 +155,7 @@ export default function VerkaufDashboard() {
       .sort((a, b) => b.qty - a.qty)
       .slice(0, 12);
   }, [items]);
+
 
   const totalUnits = itemStats.reduce((s, r) => s + r.qty, 0);
   const distinctItems = itemStats.length;
@@ -214,17 +222,23 @@ export default function VerkaufDashboard() {
         ) : (
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={itemStats} layout="vertical" margin={{ top: 8, right: 24, left: 8, bottom: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
-                <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={11} />
-                <YAxis
-                  type="category"
-                  dataKey="name"
-                  width={180}
-                  stroke="hsl(var(--muted-foreground))"
-                  fontSize={11}
-                  tick={{ fill: 'hsl(var(--foreground))' }}
-                />
+              <PieChart>
+                <Pie
+                  data={itemStats}
+                  dataKey="qty"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={110}
+                  innerRadius={55}
+                  paddingAngle={2}
+                  label={(e: any) => `${e.name} (${e.qty})`}
+                  labelLine={false}
+                >
+                  {itemStats.map((_, i) => (
+                    <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                  ))}
+                </Pie>
                 <Tooltip
                   contentStyle={{
                     background: 'hsl(var(--card))',
@@ -232,14 +246,15 @@ export default function VerkaufDashboard() {
                     borderRadius: 8,
                     fontSize: 12,
                   }}
-                  formatter={(v: any, key: any) => key === 'qty' ? [v, 'Stück'] : [fmtEUR(Number(v)), 'Umsatz']}
+                  formatter={(v: any, _n: any, p: any) => [`${v} Stück · ${fmtEUR(p?.payload?.revenue || 0)}`, p?.payload?.name]}
                 />
-                <Bar dataKey="qty" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
-              </BarChart>
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+              </PieChart>
             </ResponsiveContainer>
           </div>
         )}
       </Card>
+
 
       {/* Auftrags-Liste laufender Monat */}
       <Card className="p-5 space-y-4">
