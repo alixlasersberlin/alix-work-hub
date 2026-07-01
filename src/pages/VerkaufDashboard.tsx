@@ -136,6 +136,8 @@ export default function VerkaufDashboard() {
     for (const it of items) {
       const rawName = (it.item_name || it.sku || '—').toString();
       const name = rawName.replace(/-AT$/, '').trim() || '—';
+      // "Alix Lieferumfang"-Positionen ausblenden (Zubehör/Beipack)
+      if (/alix\s*lieferumfang/i.test(name)) continue;
       const key = name.toLowerCase();
       const qty = Number(it.quantity) || 0;
       const rev = Number(it.amount) || 0;
@@ -148,6 +150,7 @@ export default function VerkaufDashboard() {
       .sort((a, b) => b.qty - a.qty)
       .slice(0, 12);
   }, [items]);
+
 
   const totalUnits = itemStats.reduce((s, r) => s + r.qty, 0);
   const distinctItems = itemStats.length;
