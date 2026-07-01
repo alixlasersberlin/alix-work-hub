@@ -45,7 +45,8 @@ export default function OrderStatsBar({ orders, filteredCount, label = 'Aufträg
             <span className="font-semibold text-primary">{filteredCount}</span>
           </div>
         )}
-        {stats.sum > 0 && (
+        {/* Volumen wird für Super Admin ausgeblendet (Business-Regel) */}
+        {false && stats.sum > 0 && (
           <div className="flex items-center gap-1.5">
             <span className="text-muted-foreground">Volumen:</span>
             <span className="font-semibold text-foreground">
