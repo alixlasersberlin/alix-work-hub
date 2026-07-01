@@ -248,27 +248,35 @@ export default function SalesLeadsList() {
                   <td className="p-3 text-muted-foreground">{r.form_name || r.source}</td>
                   <td className="p-3"><Badge variant={statusVariant(r.lead_status)}>{r.lead_status}</Badge></td>
                   <td className="p-3">
-                    <Select
-                      value={r.assigned_user ?? '__none'}
-                      onValueChange={(v) => assign(r.id, v)}
-                      disabled={assigning === r.id}
-                    >
-                      <SelectTrigger className="w-[200px] h-8 text-xs">
-                        <div className="flex items-center gap-1.5 truncate">
-                          <UserCheck className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                          <span className="truncate">{userLabel(r.assigned_user) || 'Zuweisen …'}</span>
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__none">— Nicht zugewiesen —</SelectItem>
-                        {users.map((u) => (
-                          <SelectItem key={u.id} value={u.id}>
-                            {u.full_name || u.email || u.id.slice(0, 8)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    {canAssign ? (
+                      <Select
+                        value={r.assigned_user ?? '__none'}
+                        onValueChange={(v) => assign(r.id, v)}
+                        disabled={assigning === r.id}
+                      >
+                        <SelectTrigger className="w-[200px] h-8 text-xs">
+                          <div className="flex items-center gap-1.5 truncate">
+                            <UserCheck className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                            <span className="truncate">{userLabel(r.assigned_user) || 'Zuweisen …'}</span>
+                          </div>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none">— Nicht zugewiesen —</SelectItem>
+                          {users.map((u) => (
+                            <SelectItem key={u.id} value={u.id}>
+                              {u.full_name || u.email || u.id.slice(0, 8)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground" title="Zuweisung nur durch Super Admin">
+                        <UserCheck className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate max-w-[180px]">{userLabel(r.assigned_user) || '— Nicht zugewiesen —'}</span>
+                      </div>
+                    )}
                   </td>
+
                   <td className="p-3 text-right">
                     <div className="inline-flex items-center gap-1.5">
                       <Link
