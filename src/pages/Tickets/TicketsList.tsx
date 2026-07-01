@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Ticket, Search, ArrowRight, Loader2, Plus, RefreshCw, Inbox } from 'lucide-react';
@@ -305,11 +304,22 @@ export default function TicketsList() {
         })}
       </Tabs>
 
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Neues Ticket erstellen</DialogTitle>
-          </DialogHeader>
+      {createOpen && (
+        <div
+          className="fixed inset-0 z-[10000] flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm"
+          role="presentation"
+          onClick={() => !creating && setCreateOpen(false)}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="new-ticket-title"
+            className="w-full max-w-2xl rounded-lg border border-border bg-card p-6 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+          <div className="mb-4">
+            <h2 id="new-ticket-title" className="text-lg font-semibold leading-none tracking-tight">Neues Ticket erstellen</h2>
+          </div>
           <div className="grid gap-3 md:grid-cols-2">
             <div className="md:col-span-2">
               <Label className="text-xs">Titel *</Label>
@@ -366,15 +376,16 @@ export default function TicketsList() {
               </Select>
             </div>
           </div>
-          <DialogFooter>
+          <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button variant="outline" onClick={() => setCreateOpen(false)} disabled={creating}>Abbrechen</Button>
             <Button onClick={createTicket} disabled={creating}>
               {creating ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Plus className="w-4 h-4 mr-1" />}
               Ticket erstellen
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 }
