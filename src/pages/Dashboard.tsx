@@ -898,7 +898,7 @@ export default function Dashboard() {
                     <div
                       key={i.id}
                       className="flex items-start justify-between p-4 hover:bg-secondary/30 transition-colors cursor-pointer"
-                      onClick={() => navigate('/logfiles')}
+                      onClick={() => navigate('/operation/logfiles')}
                     >
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-destructive truncate">{i.action}</p>
