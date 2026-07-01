@@ -217,17 +217,23 @@ export default function VerkaufDashboard() {
         ) : (
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={itemStats} layout="vertical" margin={{ top: 8, right: 24, left: 8, bottom: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
-                <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={11} />
-                <YAxis
-                  type="category"
-                  dataKey="name"
-                  width={180}
-                  stroke="hsl(var(--muted-foreground))"
-                  fontSize={11}
-                  tick={{ fill: 'hsl(var(--foreground))' }}
-                />
+              <PieChart>
+                <Pie
+                  data={itemStats}
+                  dataKey="qty"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={110}
+                  innerRadius={55}
+                  paddingAngle={2}
+                  label={(e: any) => `${e.name} (${e.qty})`}
+                  labelLine={false}
+                >
+                  {itemStats.map((_, i) => (
+                    <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                  ))}
+                </Pie>
                 <Tooltip
                   contentStyle={{
                     background: 'hsl(var(--card))',
@@ -235,14 +241,15 @@ export default function VerkaufDashboard() {
                     borderRadius: 8,
                     fontSize: 12,
                   }}
-                  formatter={(v: any, key: any) => key === 'qty' ? [v, 'Stück'] : [fmtEUR(Number(v)), 'Umsatz']}
+                  formatter={(v: any, _n: any, p: any) => [`${v} Stück · ${fmtEUR(p?.payload?.revenue || 0)}`, p?.payload?.name]}
                 />
-                <Bar dataKey="qty" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
-              </BarChart>
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+              </PieChart>
             </ResponsiveContainer>
           </div>
         )}
       </Card>
+
 
       {/* Auftrags-Liste laufender Monat */}
       <Card className="p-5 space-y-4">
