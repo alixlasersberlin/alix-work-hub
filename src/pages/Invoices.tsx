@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { maskRevenueString } from '@/lib/revenue-mask';
 import { supabase } from '@/integrations/supabase/client';
 import { DataCard, PageError } from '@/components/PageShell';
 import { PageHeader } from '@/components/infinity/PageHeader';
@@ -54,11 +55,12 @@ function statusVariant(s: string | null) {
   return 'bg-muted text-muted-foreground border-border';
 }
 
-function fmtMoney(n: number | null, c: string | null = 'EUR') {
+function _fmtMoneyBase(n: number | null, c: string | null = 'EUR') {
   if (n == null) return '–';
   try { return new Intl.NumberFormat('de-DE', { style: 'currency', currency: c || 'EUR' }).format(n); }
   catch { return `${n.toFixed(2)} ${c ?? ''}`; }
 }
+function fmtMoney(n: number | null, c: string | null = 'EUR') { return maskRevenueString(_fmtMoneyBase(n, c)); }
 function fmtDate(d: string | null) {
   if (!d) return '–';
   try { return new Date(d).toLocaleDateString('de-DE'); } catch { return d; }

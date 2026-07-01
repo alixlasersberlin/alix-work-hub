@@ -13,12 +13,12 @@ import { KpiTile } from '@/components/infinity/KpiTile';
 import { SkeletonKpiGrid } from '@/components/infinity/Skeleton';
 import { EmptyState } from '@/components/infinity/EmptyState';
 import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
+import { useRevenueMask } from '@/lib/revenue-mask';
 
 interface KPI { label: string; value: string | number; icon: any; hint?: string; accent?: 'gold' | 'sky' | 'emerald' | 'rose' | 'violet' }
 
-function fmtEUR(n: number) { return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n || 0); }
-
 export default function ExecutiveDashboard() {
+  const { fmtEUR } = useRevenueMask();
   const [loading, setLoading] = useState(true);
   const [kpis, setKpis] = useState<KPI[]>([]);
   const [campaigns, setCampaigns] = useState<any[]>([]);

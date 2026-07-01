@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { maskRevenueString } from '@/lib/revenue-mask';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,10 +10,11 @@ import { de } from 'date-fns/locale';
 import { KpiTile } from '@/components/infinity/KpiTile';
 import { SkeletonKpiGrid } from '@/components/infinity/Skeleton';
 
-function fmtEur(v: number | null | undefined) {
+function _fmtEurBase(v: number | null | undefined) {
   if (v == null) return '–';
   return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v);
 }
+function fmtEur(v: number | null | undefined) { return maskRevenueString(_fmtEurBase(v)); }
 
 export default function AicDashboard() {
   const { data: runs } = useQuery({

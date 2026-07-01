@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { maskRevenueString } from "@/lib/revenue-mask";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -551,8 +552,8 @@ function ManagementTab() {
         <CardContent>
           {loading ? <Loader2 className="animate-spin" /> : (
             <div className="grid grid-cols-2 gap-4">
-              <Stat label="Umsatz Jahr" value={`${(Object.values(data.revenue || {}) as number[]).reduce((s: number, v) => s + Number(v || 0), 0).toFixed(0)} €`} />
-              <Stat label="Auftragsvolumen Jahr" value={`${(Object.values(data.orders || {}) as number[]).reduce((s: number, v) => s + Number(v || 0), 0).toFixed(0)} €`} />
+              <Stat label="Umsatz Jahr" value={maskRevenueString(`${(Object.values(data.revenue || {}) as number[]).reduce((s: number, v) => s + Number(v || 0), 0).toFixed(0)} €`)} />
+              <Stat label="Auftragsvolumen Jahr" value={maskRevenueString(`${(Object.values(data.orders || {}) as number[]).reduce((s: number, v) => s + Number(v || 0), 0).toFixed(0)} €`)} />
               <Stat label="Reparaturen 12 M." value={String(data.repairs ?? 0)} />
               <Stat label="Wartungen 12 M." value={String(data.maint ?? 0)} />
               <Stat label="Garantie-Entsch." value={String(data.warranty ?? 0)} />

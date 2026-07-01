@@ -1,4 +1,5 @@
 // Phase 9 shared helpers
+import { maskRevenueString } from '@/lib/revenue-mask';
 export const BUDGET_CATEGORIES = [
   'Umsatz',
   'Wareneinkauf',
@@ -31,7 +32,8 @@ export function mapIncomingCategory(c: string | null): BudgetCategory {
   return 'Sonstige Aufwendungen';
 }
 
-export const fmt = (n: number) =>
+const _fmtBase = (n: number) =>
   new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n || 0);
+export const fmt = (n: number) => maskRevenueString(_fmtBase(n));
 
 export const MONTH_NAMES = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];

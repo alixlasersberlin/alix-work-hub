@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { maskRevenueString } from '@/lib/revenue-mask';
 import { useNavigate } from 'react-router-dom';
 import { TrendingUp, Banknote, AlertTriangle, Users, ArrowRight, Inbox } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,7 +12,8 @@ import { SkeletonKpiGrid } from '@/components/infinity/Skeleton';
 import { EmptyState } from '@/components/infinity/EmptyState';
 import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 
-const fmt = (n: number) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n || 0);
+const _fmtBase = (n: number) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n || 0);
+const fmt = (n: number) => maskRevenueString(_fmtBase(n));
 
 export default function FinanceCockpit() {
   const nav = useNavigate();

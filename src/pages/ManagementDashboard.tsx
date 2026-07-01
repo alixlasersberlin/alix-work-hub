@@ -23,7 +23,7 @@ type KPI = { label: string; value: string | number; hint?: string; icon?: any; t
 function startOfDay(d = new Date()) { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; }
 function startOfMonth(d = new Date()) { return new Date(d.getFullYear(), d.getMonth(), 1); }
 function startOfYear(d = new Date()) { return new Date(d.getFullYear(), 0, 1); }
-function fmtEUR(n: number) { return new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n || 0); }
+import { useRevenueMask } from "@/lib/revenue-mask";
 function fmtNum(n: number) { return new Intl.NumberFormat("de-DE").format(n || 0); }
 
 async function count(table: string, filter?: (q: any) => any) {
@@ -35,6 +35,7 @@ async function count(table: string, filter?: (q: any) => any) {
 }
 
 export default function ManagementDashboard() {
+  const { fmtEUR, hide: hideRevenue } = useRevenueMask();
   const { hasAnyRole, isAdmin } = useAuth();
   const showFinance = isAdmin || hasAnyRole(["Geschäftsführung", "Finance"]);
   const showService = isAdmin || hasAnyRole(["Geschäftsführung", "Serviceleitung", "Service", "Technik"]);
@@ -340,7 +341,7 @@ export default function ManagementDashboard() {
                   <Tooltip />
                   <Legend />
                   <Bar yAxisId="l" dataKey="orders" name="Aufträge" fill="hsl(var(--primary))" />
-                  <Bar yAxisId="r" dataKey="revenue" name="Umsatz" fill="hsl(var(--accent))" />
+                  {!hideRevenue && <Bar yAxisId="r" dataKey="revenue" name="Umsatz" fill="hsl(var(--accent))" />}
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>

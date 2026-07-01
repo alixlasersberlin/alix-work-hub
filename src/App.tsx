@@ -5,6 +5,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { useSyncRevenueMaskGlobal } from "@/lib/revenue-mask";
 import { TenantProvider } from "@/contexts/TenantContext";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { DesignVariantProvider } from "@/hooks/useDesignVariant";
@@ -451,6 +452,7 @@ function HomeRoute() {
 
 function AppRoutes() {
   const { user, loading } = useAuth();
+  useSyncRevenueMaskGlobal();
 
   if (loading) return <FullscreenLoader />;
 

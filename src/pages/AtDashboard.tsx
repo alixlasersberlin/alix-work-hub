@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { maskRevenueString } from '@/lib/revenue-mask';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -62,8 +63,9 @@ interface FinanceRow {
   orders?: { order_number: string | null; source_system: string | null } | null;
 }
 
-const fmtEur = (n: number | null | undefined, cur = 'EUR') =>
+const _fmtEurBase = (n: number | null | undefined, cur = 'EUR') =>
   new Intl.NumberFormat('de-AT', { style: 'currency', currency: cur || 'EUR' }).format(n ?? 0);
+const fmtEur = (n: number | null | undefined, cur = 'EUR') => maskRevenueString(_fmtEurBase(n, cur));
 
 const fmtDate = (d?: string | null) =>
   d ? new Date(d).toLocaleDateString('de-AT', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—';
