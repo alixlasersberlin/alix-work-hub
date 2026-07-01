@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { maskRevenueString } from '@/lib/revenue-mask';
 import { supabase } from '@/integrations/supabase/client';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { SkeletonKpiGrid, SkeletonTable } from '@/components/infinity/Skeleton';
@@ -8,7 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Download, BarChart3, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
 
-const fmt = (n: number) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n || 0);
+const _fmtBase = (n: number) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n || 0);
+const fmt = (n: number) => maskRevenueString(_fmtBase(n));
 
 type Row = { label: string; values: number[]; total: number; emphasize?: boolean };
 

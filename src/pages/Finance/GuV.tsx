@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { maskRevenueString } from '@/lib/revenue-mask';
 import { supabase } from '@/integrations/supabase/client';
 import { DataCard } from '@/components/PageShell';
 import { PageHeader } from '@/components/infinity/PageHeader';
@@ -7,7 +8,8 @@ import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/Status
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Receipt } from 'lucide-react';
 
-const fmt = (n: number) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n || 0);
+const _fmtBase = (n: number) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n || 0);
+const fmt = (n: number) => maskRevenueString(_fmtBase(n));
 
 export default function FinanceGuV() {
   const [loading, setLoading] = useState(true);
