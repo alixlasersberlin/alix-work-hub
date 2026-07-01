@@ -19,6 +19,11 @@ const PERIODS: { value: Period; label: string }[] = [
   { value: '12m', label: 'Letztes Jahr' },
 ];
 const PAGE_SIZES: PageSize[] = [10, 20, 30, 50, 'all'];
+const PIE_COLORS = [
+  'hsl(var(--primary))',
+  '#22c55e', '#f59e0b', '#3b82f6', '#ec4899', '#a855f7',
+  '#14b8a6', '#ef4444', '#eab308', '#06b6d4', '#f97316', '#8b5cf6',
+];
 
 function startDateFor(period: Period): Date {
   const now = new Date();
