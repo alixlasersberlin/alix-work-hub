@@ -59,13 +59,17 @@ interface SessionRow {
   user_profiles?: { full_name: string | null; email: string | null } | null;
 }
 
-const fmtEur = (n: number) =>
+import { useRevenueMask } from '@/lib/revenue-mask';
+
+const fmtEurBase = (n: number) =>
   new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n ?? 0);
 
 const fmtDateTime = (d?: string | null) =>
   d ? new Date(d).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—';
 
 export default function HeadOfOperationDashboard() {
+  const { hide: hideRevenue, MASK } = useRevenueMask();
+  const fmtEur = (n: number) => (hideRevenue ? MASK : fmtEurBase(n));
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
