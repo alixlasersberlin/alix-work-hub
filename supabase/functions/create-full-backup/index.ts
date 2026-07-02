@@ -111,7 +111,22 @@ const STORAGE_BUCKETS = [
   "production-photos",
   "repair-files",
 ];
-const DB_PAGE_SIZE = 200;
+const DB_PAGE_SIZE = 100;
+// Tabellen mit großen JSON-Payloads (details/raw_data) → kleinere Seiten,
+// sonst läuft der Edge-Worker beim Serialisieren ins Memory-Limit (HTTP 546).
+const HEAVY_TABLES = new Set<string>([
+  "audit_logs",
+  "mail_audit_logs",
+  "mail_events",
+  "mail_messages",
+  "webhook_events",
+  "zoho_sync_log",
+  "ticket_messages",
+  "orders",
+]);
+const HEAVY_PAGE_SIZE = 25;
+const pageSizeFor = (table: string) =>
+  HEAVY_TABLES.has(table) ? HEAVY_PAGE_SIZE : DB_PAGE_SIZE;
 const STORAGE_LIST_LIMIT = 250;
 const encoder = new TextEncoder();
 
@@ -552,10 +567,11 @@ async function processBackupStep(params: {
         `Backup läuft: Tabelle ${table} ab Datensatz ${state.rowOffset + 1}`,
       );
 
+      const pageSize = pageSizeFor(table);
       const { data, error } = await adminClient
         .from(table)
         .select("*")
-        .range(state.rowOffset, state.rowOffset + DB_PAGE_SIZE - 1);
+        .range(state.rowOffset, state.rowOffset + pageSize - 1);
       if (error) throw new Error(`Tabelle ${table}: ${error.message}`);
 
       const pageRows = data?.length ?? 0;
@@ -578,7 +594,7 @@ async function processBackupStep(params: {
         state.totalSize += size;
         state.partIndex += 1;
 
-        if (pageRows < DB_PAGE_SIZE) {
+        if (pageRows < pageSize) {
           state.tableIndex += 1;
           state.rowOffset = 0;
           state.partIndex = 0;
