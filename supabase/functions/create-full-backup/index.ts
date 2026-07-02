@@ -567,10 +567,11 @@ async function processBackupStep(params: {
         `Backup läuft: Tabelle ${table} ab Datensatz ${state.rowOffset + 1}`,
       );
 
+      const pageSize = pageSizeFor(table);
       const { data, error } = await adminClient
         .from(table)
         .select("*")
-        .range(state.rowOffset, state.rowOffset + DB_PAGE_SIZE - 1);
+        .range(state.rowOffset, state.rowOffset + pageSize - 1);
       if (error) throw new Error(`Tabelle ${table}: ${error.message}`);
 
       const pageRows = data?.length ?? 0;
@@ -593,7 +594,7 @@ async function processBackupStep(params: {
         state.totalSize += size;
         state.partIndex += 1;
 
-        if (pageRows < DB_PAGE_SIZE) {
+        if (pageRows < pageSize) {
           state.tableIndex += 1;
           state.rowOffset = 0;
           state.partIndex = 0;
