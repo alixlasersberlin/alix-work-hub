@@ -111,7 +111,22 @@ const STORAGE_BUCKETS = [
   "production-photos",
   "repair-files",
 ];
-const DB_PAGE_SIZE = 200;
+const DB_PAGE_SIZE = 100;
+// Tabellen mit großen JSON-Payloads (details/raw_data) → kleinere Seiten,
+// sonst läuft der Edge-Worker beim Serialisieren ins Memory-Limit (HTTP 546).
+const HEAVY_TABLES = new Set<string>([
+  "audit_logs",
+  "mail_audit_logs",
+  "mail_events",
+  "mail_messages",
+  "webhook_events",
+  "zoho_sync_log",
+  "ticket_messages",
+  "orders",
+]);
+const HEAVY_PAGE_SIZE = 25;
+const pageSizeFor = (table: string) =>
+  HEAVY_TABLES.has(table) ? HEAVY_PAGE_SIZE : DB_PAGE_SIZE;
 const STORAGE_LIST_LIMIT = 250;
 const encoder = new TextEncoder();
 
