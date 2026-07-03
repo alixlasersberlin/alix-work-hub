@@ -213,6 +213,7 @@ const Detailsuche = lazy(() => import("./pages/Detailsuche"));
 const AuftragStatus = lazy(() => import("./pages/AuftragStatus"));
 const Geraetesperren = lazy(() => import("./pages/Geraetesperren"));
 const Systemwartung = lazy(() => import("./pages/Systemwartung"));
+const HealthCheck = lazy(() => import("./pages/HealthCheck"));
 const Nummernkreise = lazy(() => import("./pages/operation/Nummernkreise"));
 const AngebotsKalenderConfig = lazy(() => import("./pages/Operation/AngebotsKalenderConfig"));
 const SmsKonfiguration = lazy(() => import("./pages/operation/SmsKonfiguration"));
