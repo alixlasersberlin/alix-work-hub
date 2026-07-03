@@ -1,4 +1,4 @@
-import { Workflow, Mail, FileText, ChevronRight, Database, MessageSquare, Shield, ShieldCheck } from 'lucide-react';
+import { Workflow, Mail, FileText, ChevronRight, Database, MessageSquare, Shield, ShieldCheck, Activity } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 import { PageHeader } from '@/components/infinity/PageHeader';
