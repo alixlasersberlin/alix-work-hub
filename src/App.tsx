@@ -522,6 +522,7 @@ function AppRoutes() {
           <Route path="/operation/logfiles" element={<ProtectedRoute requiredRoles={SYSTEM_ROLES}><Logfiles /></ProtectedRoute>} />
           <Route path="/operation/email-vorlagen" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><EmailTemplates /></ProtectedRoute>} />
           <Route path="/operation/systemwartung" element={<ProtectedRoute requiredRoles={['Super Admin']}><Systemwartung /></ProtectedRoute>} />
+          <Route path="/operation/health-check" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><HealthCheck /></ProtectedRoute>} />
           <Route path="/operation/nummernkreise" element={<ProtectedRoute requiredRoles={['Super Admin']}><Nummernkreise /></ProtectedRoute>} />
           <Route path="/operation/angebotskalender-config" element={<ProtectedRoute requiredRoles={['Super Admin']}><AngebotsKalenderConfig /></ProtectedRoute>} />
           <Route path="/operation/sms-konfiguration" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><SmsKonfiguration /></ProtectedRoute>} />
