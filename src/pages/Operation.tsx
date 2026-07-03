@@ -1,4 +1,4 @@
-import { Workflow, Mail, FileText, ChevronRight, Database, MessageSquare, Shield, ShieldCheck } from 'lucide-react';
+import { Workflow, Mail, FileText, ChevronRight, Database, MessageSquare, Shield, ShieldCheck, Activity } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 import { PageHeader } from '@/components/infinity/PageHeader';
@@ -9,6 +9,7 @@ const tiles = [
   { to: '/operation/sms-konfiguration', icon: MessageSquare, title: 'SMS Konfiguration', desc: 'Twilio-Verbindung prüfen und SMS-Vorlagen verwalten.' },
   { to: '/operation/logfiles', icon: FileText, title: 'Logfiles', desc: 'System- und Audit-Logs einsehen.' },
   { to: '/operation/alixsmart-migration', icon: Database, title: 'AlixSmart Migration', desc: 'Import Engine: Verbindung, Dry-Run und Wellen-Import.' },
+  { to: '/operation/health-check', icon: Activity, title: 'Supabase Health Check', desc: 'Auth- und REST-Endpunkte live testen (Status, Latenz, Fehler).' },
 ];
 
 const SECURITY_ROLES = ['Super Admin', 'Admin', 'Geschäftsführung'];
