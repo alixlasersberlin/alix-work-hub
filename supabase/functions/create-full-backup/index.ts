@@ -111,22 +111,53 @@ const STORAGE_BUCKETS = [
   "production-photos",
   "repair-files",
 ];
-const DB_PAGE_SIZE = 100;
-// Tabellen mit großen JSON-Payloads (details/raw_data) → kleinere Seiten,
-// sonst läuft der Edge-Worker beim Serialisieren ins Memory-Limit (HTTP 546).
+const DB_PAGE_SIZE = 50;
+// Tabellen mit großen JSON-Payloads (details/raw_data/attachments) → deutlich
+// kleinere Seiten, sonst OOM (HTTP 546) im Edge-Worker beim Serialisieren.
 const HEAVY_TABLES = new Set<string>([
   "audit_logs",
   "mail_audit_logs",
   "mail_events",
   "mail_messages",
-  "webhook_events",
-  "zoho_sync_log",
+  "mail_attachments",
+  "mail_recipients",
   "ticket_messages",
+  "ticket_attachments",
   "orders",
+  "production_orders",
+  "repair_orders",
+  "sales_leads",
+  "finance_documents",
+  "finance_incoming_invoices",
+  "finance_journal",
+  "finance_history",
+  "ai_service_analyses",
+  "service_ai_analyses",
+  "service_knowledge_base",
+  "copilot_knowledge_entries",
+  "alix_sign_signatures",
+  "alix_sign_requests",
+  "alix_sign_audit_log",
+  "zoho_items",
+  "zoho_invoices",
+  "zoho_recurring_profiles",
+  "zoho_recurring_invoices",
 ]);
-const HEAVY_PAGE_SIZE = 25;
+// Extra-schwere Tabellen (sehr große jsonb-Payloads) bekommen die kleinste Seite.
+const XL_TABLES = new Set<string>([
+  "audit_logs",
+  "mail_messages",
+  "mail_attachments",
+  "finance_documents",
+  "ai_service_analyses",
+  "service_ai_analyses",
+]);
+const HEAVY_PAGE_SIZE = 10;
+const XL_PAGE_SIZE = 3;
 const pageSizeFor = (table: string) =>
-  HEAVY_TABLES.has(table) ? HEAVY_PAGE_SIZE : DB_PAGE_SIZE;
+  XL_TABLES.has(table) ? XL_PAGE_SIZE
+    : HEAVY_TABLES.has(table) ? HEAVY_PAGE_SIZE
+    : DB_PAGE_SIZE;
 const STORAGE_LIST_LIMIT = 250;
 const encoder = new TextEncoder();
 
