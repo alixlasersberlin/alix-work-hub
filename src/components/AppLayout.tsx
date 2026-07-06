@@ -615,7 +615,7 @@ export default function AppLayout() {
   // Drawer schließen, wenn die Route wechselt
   useEffect(() => {
     setMobileOpen(false);
-  }, [location.pathname]);
+  }, [location.pathname, isOrdersRoute]);
 
   // Geräte-Anzahlen für Lagerbestand-Untermenüs laden
   // - initial + bei Routenwechsel
