@@ -13,6 +13,8 @@ const corsHeaders = {
 
 const TEMPLATE_URL =
   'https://alixwork.de/__l5e/assets-v1/c17cc41b-a312-47e7-97a3-df02295e3420/auftragsbestaetigung-template.pdf'
+const LOGO_URL =
+  'https://alixwork.de/__l5e/assets-v1/92629c28-c67d-45ee-838f-4f5344690188/alix-logo-gold.png'
 
 export async function signOrderToken(orderId: string, secret: string): Promise<string> {
   const key = await crypto.subtle.importKey(
@@ -49,6 +51,19 @@ async function loadTemplate(): Promise<Uint8Array | null> {
     if (!res.ok) return null
     templateCache = new Uint8Array(await res.arrayBuffer())
     return templateCache
+  } catch {
+    return null
+  }
+}
+
+let logoCache: Uint8Array | null = null
+async function loadLogo(): Promise<Uint8Array | null> {
+  if (logoCache) return logoCache
+  try {
+    const res = await fetch(LOGO_URL)
+    if (!res.ok) return null
+    logoCache = new Uint8Array(await res.arrayBuffer())
+    return logoCache
   } catch {
     return null
   }
