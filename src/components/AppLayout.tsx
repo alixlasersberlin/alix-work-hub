@@ -667,10 +667,12 @@ export default function AppLayout() {
       }));
     };
 
-    // Initiales Laden in idle-Zeit verschieben, damit der erste Render nicht blockiert wird.
-    const ric: any = (window as any).requestIdleCallback ?? ((cb: any) => window.setTimeout(cb, isOrdersRoute ? 5000 : 200));
+    // Initiales Laden verschieben, damit der erste Render der Auftragsliste nicht blockiert wird.
+    const ric: any = (window as any).requestIdleCallback ?? ((cb: any) => window.setTimeout(cb, 200));
     const cic: any = (window as any).cancelIdleCallback ?? ((id: any) => window.clearTimeout(id));
-    const idleId = ric(() => { if (!cancelled) load(); });
+    const initialId = isOrdersRoute
+      ? window.setTimeout(() => { if (!cancelled) load(); }, 5000)
+      : ric(() => { if (!cancelled) load(); });
 
     // Periodischer Refresh
     const intervalId = window.setInterval(load, REFRESH_MS);
@@ -699,7 +701,8 @@ export default function AppLayout() {
 
     return () => {
       cancelled = true;
-      cic(idleId);
+      if (isOrdersRoute) window.clearTimeout(initialId);
+      else cic(initialId);
       window.clearInterval(intervalId);
       if (debounceId) window.clearTimeout(debounceId);
       document.removeEventListener('visibilitychange', onVisibility);
@@ -845,10 +848,12 @@ export default function AppLayout() {
         '__production_liste': factory,
       }));
     };
-    // Initiales Laden in idle-Zeit verschieben (8 parallele Queries → nicht beim ersten Render).
+    // Initiales Laden verschieben (8 parallele Queries → nicht beim ersten Render der Auftragsliste).
     const ric: any = (window as any).requestIdleCallback ?? ((cb: any) => window.setTimeout(cb, 300));
     const cic: any = (window as any).cancelIdleCallback ?? ((id: any) => window.clearTimeout(id));
-    const idleId = ric(() => { if (!cancelled) load(); });
+    const initialId = isOrdersRoute
+      ? window.setTimeout(() => { if (!cancelled) load(); }, 5000)
+      : ric(() => { if (!cancelled) load(); });
     const intervalId = window.setInterval(load, 5 * 60 * 1000);
     let debounceId: number | undefined;
     const scheduleReload = () => {
@@ -864,7 +869,8 @@ export default function AppLayout() {
     window.addEventListener('einkauf-counts-refresh', onRefresh);
     return () => {
       cancelled = true;
-      cic(idleId);
+      if (isOrdersRoute) window.clearTimeout(initialId);
+      else cic(initialId);
       window.clearInterval(intervalId);
       if (debounceId) window.clearTimeout(debounceId);
       window.removeEventListener('einkauf-counts-refresh', onRefresh);
