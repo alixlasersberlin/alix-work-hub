@@ -551,6 +551,7 @@ export default function AppLayout() {
   const isAurora = variant === 'aurora';
   const location = useLocation();
   const navigate = useNavigate();
+  const isOrdersRoute = location.pathname.startsWith('/auftraege');
   // Desktop: eingeklappt? (schmale Icon-Leiste)
   const [collapsed, setCollapsed] = useState(false);
   // Mobile: Drawer offen?
@@ -667,7 +668,7 @@ export default function AppLayout() {
     };
 
     // Initiales Laden in idle-Zeit verschieben, damit der erste Render nicht blockiert wird.
-    const ric: any = (window as any).requestIdleCallback ?? ((cb: any) => window.setTimeout(cb, 200));
+    const ric: any = (window as any).requestIdleCallback ?? ((cb: any) => window.setTimeout(cb, isOrdersRoute ? 5000 : 200));
     const cic: any = (window as any).cancelIdleCallback ?? ((id: any) => window.clearTimeout(id));
     const idleId = ric(() => { if (!cancelled) load(); });
 
@@ -704,12 +705,15 @@ export default function AppLayout() {
       document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('lager-data-refresh', onCustomRefresh);
     };
-  }, []);
+  }, [isOrdersRoute]);
 
   // Bei jedem Routenwechsel: Menüzählungen neu anfordern
   useEffect(() => {
-    window.dispatchEvent(new Event('lager-data-refresh'));
-    window.dispatchEvent(new Event('route-plans-refresh'));
+    const id = window.setTimeout(() => {
+      window.dispatchEvent(new Event('lager-data-refresh'));
+      window.dispatchEvent(new Event('route-plans-refresh'));
+    }, isOrdersRoute ? 5000 : 0);
+    return () => window.clearTimeout(id);
   }, [location.pathname]);
 
   // Anzahl bevorstehender Touren (planned_date >= heute)
@@ -723,7 +727,7 @@ export default function AppLayout() {
       if (cancelled) return;
       setLagerCounts((prev) => ({ ...prev, '/tourenplanung': count ?? 0 }));
     };
-    load();
+    const id = window.setTimeout(load, isOrdersRoute ? 5000 : 0);
     const intervalId = window.setInterval(load, 5 * 60 * 1000);
     let debounceId: number | undefined;
     const scheduleReload = () => {
@@ -738,12 +742,13 @@ export default function AppLayout() {
     window.addEventListener('route-plans-refresh', onCustomRefresh);
     return () => {
       cancelled = true;
+      window.clearTimeout(id);
       window.clearInterval(intervalId);
       if (debounceId) window.clearTimeout(debounceId);
       window.removeEventListener('route-plans-refresh', onCustomRefresh);
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [isOrdersRoute]);
 
   // Anzahl neuer / nicht zugeteilter Vertriebsanfragen (sales_leads)
   useEffect(() => {
@@ -758,7 +763,7 @@ export default function AppLayout() {
       const n = count ?? 0;
       setLagerCounts((prev) => ({ ...prev, '/verkauf/anfragen': n, '/verkauf/angebote': n }));
     };
-    load();
+    const id = window.setTimeout(load, isOrdersRoute ? 5000 : 0);
     const intervalId = window.setInterval(load, 5 * 60 * 1000);
     let debounceId: number | undefined;
     const scheduleReload = () => {
@@ -771,34 +776,35 @@ export default function AppLayout() {
       .subscribe();
     return () => {
       cancelled = true;
+      window.clearTimeout(id);
       window.clearInterval(intervalId);
       if (debounceId) window.clearTimeout(debounceId);
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [isOrdersRoute]);
 
   // Anzahl der Bestellungen (production_orders + Bestellung möglich) – Echtzeit
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
       const baseProdSel = atOnly
-        ? supabase.from('production_orders').select('*, orders!inner(source_system)', { count: 'exact', head: true }).eq('orders.source_system', 'zoho_eu_2')
-        : supabase.from('production_orders').select('*', { count: 'exact', head: true });
+        ? supabase.from('production_orders').select('id, orders!inner(source_system)', { count: 'exact', head: true }).eq('orders.source_system', 'zoho_eu_2')
+        : supabase.from('production_orders').select('id', { count: 'exact', head: true });
       const reklaProd = atOnly
-        ? supabase.from('production_orders').select('*, orders!inner(source_system)', { count: 'exact', head: true }).eq('orders.source_system', 'zoho_eu_2').eq('is_reclamation', true)
-        : supabase.from('production_orders').select('*', { count: 'exact', head: true }).eq('is_reclamation', true);
+        ? supabase.from('production_orders').select('id, orders!inner(source_system)', { count: 'exact', head: true }).eq('orders.source_system', 'zoho_eu_2').eq('is_reclamation', true)
+        : supabase.from('production_orders').select('id', { count: 'exact', head: true }).eq('is_reclamation', true);
       const factoryProd = atOnly
-        ? supabase.from('production_orders').select('*, orders!inner(source_system)', { count: 'exact', head: true }).eq('orders.source_system', 'zoho_eu_2').eq('is_reclamation', false)
-        : supabase.from('production_orders').select('*', { count: 'exact', head: true }).eq('is_reclamation', false);
+        ? supabase.from('production_orders').select('id, orders!inner(source_system)', { count: 'exact', head: true }).eq('orders.source_system', 'zoho_eu_2').eq('is_reclamation', false)
+        : supabase.from('production_orders').select('id', { count: 'exact', head: true }).eq('is_reclamation', false);
       const approvedProd = atOnly
-        ? supabase.from('production_orders').select('*, orders!inner(source_system)', { count: 'exact', head: true }).eq('orders.source_system', 'zoho_eu_2').eq('approval_status', 'approved').neq('status', 'fertig')
-        : supabase.from('production_orders').select('*', { count: 'exact', head: true }).eq('approval_status', 'approved').neq('status', 'fertig');
+        ? supabase.from('production_orders').select('id, orders!inner(source_system)', { count: 'exact', head: true }).eq('orders.source_system', 'zoho_eu_2').eq('approval_status', 'approved').neq('status', 'fertig')
+        : supabase.from('production_orders').select('id', { count: 'exact', head: true }).eq('approval_status', 'approved').neq('status', 'fertig');
       const pendingProd = atOnly
-        ? supabase.from('production_orders').select('*, orders!inner(source_system)', { count: 'exact', head: true }).eq('orders.source_system', 'zoho_eu_2').or('approval_status.is.null,approval_status.eq.pending')
-        : supabase.from('production_orders').select('*', { count: 'exact', head: true }).or('approval_status.is.null,approval_status.eq.pending');
+        ? supabase.from('production_orders').select('id, orders!inner(source_system)', { count: 'exact', head: true }).eq('orders.source_system', 'zoho_eu_2').or('approval_status.is.null,approval_status.eq.pending')
+        : supabase.from('production_orders').select('id', { count: 'exact', head: true }).or('approval_status.is.null,approval_status.eq.pending');
       const fertigProd = atOnly
-        ? supabase.from('production_orders').select('*, orders!inner(source_system)', { count: 'exact', head: true }).eq('orders.source_system', 'zoho_eu_2').eq('status', 'fertig')
-        : supabase.from('production_orders').select('*', { count: 'exact', head: true }).eq('status', 'fertig');
+        ? supabase.from('production_orders').select('id, orders!inner(source_system)', { count: 'exact', head: true }).eq('orders.source_system', 'zoho_eu_2').eq('status', 'fertig')
+        : supabase.from('production_orders').select('id', { count: 'exact', head: true }).eq('status', 'fertig');
       const freiOrdersQ = atOnly
         ? supabase.from('orders').select('id').eq('source_system', 'zoho_eu_2').eq('deposit_ok', true).not('deposit_ok_by', 'is', null).neq('deposit_ok_by', '').limit(2000)
         : supabase.from('orders').select('id').eq('deposit_ok', true).not('deposit_ok_by', 'is', null).neq('deposit_ok_by', '').limit(2000);
@@ -863,11 +869,12 @@ export default function AppLayout() {
       if (debounceId) window.clearTimeout(debounceId);
       window.removeEventListener('einkauf-counts-refresh', onRefresh);
     };
-  }, [atOnly]);
+  }, [atOnly, isOrdersRoute]);
 
   useEffect(() => {
-    window.dispatchEvent(new Event('einkauf-counts-refresh'));
-  }, [location.pathname]);
+    const id = window.setTimeout(() => window.dispatchEvent(new Event('einkauf-counts-refresh')), isOrdersRoute ? 5000 : 0);
+    return () => window.clearTimeout(id);
+  }, [location.pathname, isOrdersRoute]);
 
   const labelWithCount = (path: string, label: string) => {
     const key = path === '/production' && label === 'Liste' ? '__production_liste' : path;
