@@ -163,16 +163,24 @@ export default function AngebotErstellen() {
         allCustomers.push(...chunk);
         if (chunk.length < CHUNK) break;
       }
-      const { data: i } = await supabase
-        .from('zoho_items')
-        .select('id, name, sku, description, rate, tax_percentage, unit')
-        .eq('status', 'active')
-        .order('name')
-        .limit(2000);
+      // Load ALL active items in chunks (Supabase caps single queries at 1000 rows)
+      const allItems: any[] = [];
+      for (let from = 0; ; from += CHUNK) {
+        const { data: chunk, error: itemErr } = await supabase
+          .from('zoho_items')
+          .select('id, name, sku, description, rate, tax_percentage, unit')
+          .eq('status', 'active')
+          .order('name')
+          .range(from, from + CHUNK - 1);
+        if (itemErr || !chunk || chunk.length === 0) break;
+        allItems.push(...chunk);
+        if (chunk.length < CHUNK) break;
+      }
       const c = allCustomers;
       setCustomers(c);
-      setItems(i ?? []);
+      setItems(allItems);
       setLoading(false);
+
 
       const params = new URLSearchParams(window.location.search);
       const editKey = params.get('edit');
