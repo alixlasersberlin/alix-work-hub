@@ -141,18 +141,16 @@ export default function Orders() {
         .order('created_at', { ascending: false })
         .limit(1);
       const sig = (sigs || [])[0] as any;
-      if (!sig) {
-        toast.error('Kein unterzeichnetes Angebot für diesen Kunden gefunden');
-        return;
-      }
       const { data: cust } = await supabase
         .from('customers')
         .select('email')
         .eq('id', order.customer_id)
         .maybeSingle();
       if (!cust?.email) { toast.error('Kunde hat keine E-Mail-Adresse'); return; }
+      const payload: any = { order_id: order.id, recipient_email: cust.email };
+      if (sig) payload.signature_id = sig.id;
       const { data, error } = await supabase.functions.invoke('send-order-confirmation', {
-        body: { signature_id: sig.id, order_id: order.id, recipient_email: cust.email },
+        body: payload,
       });
       if (error) throw error;
       const failed = (data?.results || []).filter((r: any) => r.status !== 'sent');
