@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { sendCustomerShippingNotice } from '@/lib/send-customer-shipping-notice';
@@ -40,6 +40,9 @@ type SortField = 'order_number' | 'order_date' | 'total_amount' | 'created_at';
 type SortDir = 'asc' | 'desc';
 type PageSize = 20 | 30 | 50 | 'all';
 
+const QUICK_LOAD_LIMIT = 50;
+const FULL_LOAD_LIMIT = 500;
+
 export default function Orders() {
   const [orders, setOrders] = useState<any[]>([]);
   const [search, setSearch] = useState('');
@@ -67,6 +70,7 @@ export default function Orders() {
   const [bulkSaving, setBulkSaving] = useState(false);
   const [resendingId, setResendingId] = useState<string | null>(null);
   const [duplicating, setDuplicating] = useState(false);
+  const loadRequestRef = useRef(0);
 
   async function duplicateSelected() {
     const ids = Array.from(selectedIds);
@@ -227,11 +231,10 @@ export default function Orders() {
   }
 
   async function load() {
+    const requestId = ++loadRequestRef.current;
     setLoading(true);
     setError(null);
-    const { data, error: err } = await supabase
-      .from('orders')
-      .select(`
+    const orderSelect = `
         id, customer_id, external_order_id, order_number, source_system, order_status,
         currency, total_amount, order_date, expected_shipment_date, salesperson_name,
         internal_number, lawyer_reason, deposit_ok, deposit_ok_by, deposit_ok_at,
@@ -239,38 +242,79 @@ export default function Orders() {
         finance_total_amount, finance_deposit_amount, finance_remaining_amount,
         finance_open_amount, finance_paid_amount, finance_overdue_amount,
         finance_payment_status, case_number, billing_address, shipping_address,
-        customers(company_name, contact_name, shipping_address, billing_address, is_vip),
-        order_items(id, item_name, description, sku, quantity, unit, rate, amount)
-      `)
+        customers(company_name, contact_name, shipping_address, billing_address, is_vip)
+      `;
+    const fetchOrders = (limit: number) => supabase
+      .from('orders')
+      .select(orderSelect)
       .order(sortField, { ascending: sortDir === 'asc', nullsFirst: false })
-      .limit(500);
-    if (err) setError(err.message);
-    const loaded = data ?? [];
+      .limit(limit);
 
-    // Anzahl Produktionsbestellungen pro order_number ermitteln
-    const orderNumbers = Array.from(new Set(loaded.map(o => o.order_number).filter(Boolean)));
-    const poCountMap: Record<string, number> = {};
-    if (orderNumbers.length > 0) {
-      const { data: pos } = await supabase
-        .from('production_orders')
-        .select('order_number')
-        .in('order_number', orderNumbers);
-      (pos || []).forEach(p => {
+    const expandOrders = (loaded: any[]) => loaded.map(o => ({
+        ...o,
+        order_items: [],
+        _seq: 1,
+        _displayNumber: withAt(o.order_number, o.source_system),
+        _productionOrderCount: 0,
+      }));
+
+    const attachOrderDetails = async (loaded: any[]) => {
+      const orderIds = loaded.map(o => o.id).filter(Boolean);
+      const orderIdSet = new Set(orderIds);
+      const orderNumbers = Array.from(new Set(loaded.map(o => o.order_number).filter(Boolean)));
+      if (orderIds.length === 0 && orderNumbers.length === 0) return;
+
+      const [itemsRes, posRes] = await Promise.all([
+        orderIds.length > 0
+          ? supabase
+              .from('order_items')
+              .select('id, order_id, item_name, description, sku, quantity, unit, rate, amount')
+              .in('order_id', orderIds)
+          : Promise.resolve({ data: [] as any[] }),
+        orderNumbers.length > 0
+          ? supabase
+              .from('production_orders')
+              .select('order_number')
+              .in('order_number', orderNumbers)
+          : Promise.resolve({ data: [] as any[] }),
+      ]);
+      if (requestId !== loadRequestRef.current) return;
+
+      const itemsByOrder: Record<string, any[]> = {};
+      (itemsRes.data || []).forEach((item: any) => {
+        if (!item.order_id) return;
+        (itemsByOrder[item.order_id] ||= []).push(item);
+      });
+
+      const poCountMap: Record<string, number> = {};
+      (posRes.data || []).forEach((p: any) => {
         if (!p.order_number) return;
         poCountMap[p.order_number] = (poCountMap[p.order_number] || 0) + 1;
       });
-    }
 
-    // Anzeige: nur originale Zoho-Auftragsnummer, kein Suffix, keine interne Nummer
-    const expanded = loaded.map(o => ({
-      ...o,
-      _seq: 1,
-      _displayNumber: withAt(o.order_number, o.source_system),
-      _productionOrderCount: o.order_number ? (poCountMap[o.order_number] || 0) : 0,
-    }));
+      setOrders(prev => prev.map(o => orderIdSet.has(o.id) ? ({
+        ...o,
+        order_items: itemsByOrder[o.id] || o.order_items || [],
+        _productionOrderCount: o.order_number ? (poCountMap[o.order_number] || 0) : 0,
+      }) : o));
+    };
 
-    setOrders(expanded);
+    const { data, error: err } = await fetchOrders(QUICK_LOAD_LIMIT);
+    if (requestId !== loadRequestRef.current) return;
+    if (err) setError(err.message);
+    const loaded = data ?? [];
+
+    setOrders(expandOrders(loaded));
     setLoading(false);
+    attachOrderDetails(loaded);
+
+    if (err || loaded.length < QUICK_LOAD_LIMIT) return;
+    const { data: fullData, error: fullErr } = await fetchOrders(FULL_LOAD_LIMIT);
+    if (requestId !== loadRequestRef.current) return;
+    if (fullErr) return;
+    const fullLoaded = fullData ?? [];
+    setOrders(expandOrders(fullLoaded));
+    attachOrderDetails(fullLoaded);
   }
 
   useEffect(() => { load(); }, [sortField, sortDir]);
