@@ -730,19 +730,26 @@ export default function Artikel() {
       </Card>
       <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} total={total} />
 
-      <Dialog open={!!selected} onOpenChange={(o) => { if (!o) { setSelected(null); setEditing(false); } }}>
-        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <div className="flex items-center justify-between gap-2 pr-8">
-              <DialogTitle className="gold-text">
+      {selected && (
+        <div className="fixed inset-0 z-[200] flex items-start justify-center overflow-y-auto bg-background/80 px-4 py-8 backdrop-blur-sm">
+          <div className="relative w-full max-w-3xl rounded-lg border border-border bg-background p-6 shadow-2xl">
+            <button
+              onClick={() => { setSelected(null); setEditing(false); }}
+              className="absolute right-4 top-4 opacity-70 hover:opacity-100"
+              aria-label="Schließen"
+            >
+              ✕
+            </button>
+            <div className="flex items-center justify-between gap-2 pr-8 mb-4">
+              <h2 className="gold-text text-lg font-semibold">
                 {editing ? (draft.name ?? '') : selected?.name}
-              </DialogTitle>
-              {selected && !editing && (
+              </h2>
+              {!editing && (
                 <Button variant="outline" size="sm" onClick={startEdit}>
                   <Pencil className="w-4 h-4 mr-2" /> Bearbeiten
                 </Button>
               )}
-              {selected && editing && (
+              {editing && (
                 <div className="flex gap-2">
                   <Button variant="ghost" size="sm" onClick={() => setEditing(false)} disabled={saving}>
                     <X className="w-4 h-4 mr-2" /> Abbrechen
@@ -754,73 +761,73 @@ export default function Artikel() {
                 </div>
               )}
             </div>
-          </DialogHeader>
-          {selected && !editing && (
-            <div className="space-y-4 text-sm">
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="SKU" value={selected.sku} />
-                <Field label="Status" value={selected.status} />
-                <Field label="Kategorie" value={selected.category_name} />
-                <Field label="Marke" value={selected.brand} />
-                <Field label="Hersteller" value={selected.manufacturer} />
-                <Field label="Einheit" value={selected.unit} />
-                <Field label="Verkaufspreis" value={fmtMoney(selected.rate, selected.currency_code)} />
-                <Field label="Einkaufspreis" value={fmtMoney(selected.purchase_rate, selected.currency_code)} />
-                <Field label="Steuer" value={selected.tax_name ? `${selected.tax_name} (${selected.tax_percentage}%)` : null} />
-                <Field label="Produkttyp" value={selected.product_type} />
-                <Field label="Item-Typ" value={selected.item_type} />
-                <Field label="Bestand" value={selected.stock_on_hand?.toString()} />
-                <Field label="Verfügbar" value={selected.available_stock?.toString()} />
-                <Field label="Zoho ID" value={selected.zoho_item_id} />
-              </div>
-              {selected.description && (
-                <div>
-                  <div className="text-xs uppercase text-muted-foreground mb-1">Beschreibung</div>
-                  <div className="whitespace-pre-wrap">{selected.description}</div>
+            {!editing && (
+              <div className="space-y-4 text-sm">
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="SKU" value={selected.sku} />
+                  <Field label="Status" value={selected.status} />
+                  <Field label="Kategorie" value={selected.category_name} />
+                  <Field label="Marke" value={selected.brand} />
+                  <Field label="Hersteller" value={selected.manufacturer} />
+                  <Field label="Einheit" value={selected.unit} />
+                  <Field label="Verkaufspreis" value={fmtMoney(selected.rate, selected.currency_code)} />
+                  <Field label="Einkaufspreis" value={fmtMoney(selected.purchase_rate, selected.currency_code)} />
+                  <Field label="Steuer" value={selected.tax_name ? `${selected.tax_name} (${selected.tax_percentage}%)` : null} />
+                  <Field label="Produkttyp" value={selected.product_type} />
+                  <Field label="Item-Typ" value={selected.item_type} />
+                  <Field label="Bestand" value={selected.stock_on_hand?.toString()} />
+                  <Field label="Verfügbar" value={selected.available_stock?.toString()} />
+                  <Field label="Zoho ID" value={selected.zoho_item_id} />
                 </div>
-              )}
-              <div>
-                <div className="text-xs uppercase text-muted-foreground mb-1">Komplette Zoho-Daten</div>
-                <pre className="bg-muted/40 rounded p-3 text-xs overflow-x-auto max-h-80">
-                  {JSON.stringify(selected.raw_data, null, 2)}
-                </pre>
+                {selected.description && (
+                  <div>
+                    <div className="text-xs uppercase text-muted-foreground mb-1">Beschreibung</div>
+                    <div className="whitespace-pre-wrap">{selected.description}</div>
+                  </div>
+                )}
+                <div>
+                  <div className="text-xs uppercase text-muted-foreground mb-1">Komplette Zoho-Daten</div>
+                  <pre className="bg-muted/40 rounded p-3 text-xs overflow-x-auto max-h-80">
+                    {JSON.stringify(selected.raw_data, null, 2)}
+                  </pre>
+                </div>
               </div>
-            </div>
-          )}
-          {selected && editing && (
-            <div className="space-y-3 text-sm">
-              <div className="grid grid-cols-2 gap-3">
-                <EditField label="Name" value={draft.name} onChange={(v) => setDraft({ ...draft, name: v })} />
-                <EditField label="SKU" value={draft.sku} onChange={(v) => setDraft({ ...draft, sku: v })} />
-                <EditField label="Status" value={draft.status} onChange={(v) => setDraft({ ...draft, status: v })} />
-                <EditField label="Kategorie" value={draft.category_name} onChange={(v) => setDraft({ ...draft, category_name: v })} />
-                <EditField label="Marke" value={draft.brand} onChange={(v) => setDraft({ ...draft, brand: v })} />
-                <EditField label="Hersteller" value={draft.manufacturer} onChange={(v) => setDraft({ ...draft, manufacturer: v })} />
-                <EditField label="Einheit" value={draft.unit} onChange={(v) => setDraft({ ...draft, unit: v })} />
-                <EditField label="Verkaufspreis" type="number" value={draft.rate?.toString() ?? ''} onChange={(v) => setDraft({ ...draft, rate: v === '' ? null : Number(v) })} />
-                <EditField label="Einkaufspreis" type="number" value={draft.purchase_rate?.toString() ?? ''} onChange={(v) => setDraft({ ...draft, purchase_rate: v === '' ? null : Number(v) })} />
-                <EditField label="Steuer-Name" value={draft.tax_name} onChange={(v) => setDraft({ ...draft, tax_name: v })} />
-                <EditField label="Steuer-%" type="number" value={draft.tax_percentage?.toString() ?? ''} onChange={(v) => setDraft({ ...draft, tax_percentage: v === '' ? null : Number(v) })} />
-                <EditField label="Produkttyp" value={draft.product_type} onChange={(v) => setDraft({ ...draft, product_type: v })} />
-                <EditField label="Item-Typ" value={draft.item_type} onChange={(v) => setDraft({ ...draft, item_type: v })} />
-                <EditField label="Bestand" type="number" value={draft.stock_on_hand?.toString() ?? ''} onChange={(v) => setDraft({ ...draft, stock_on_hand: v === '' ? null : Number(v) })} />
-                <EditField label="Verfügbar" type="number" value={draft.available_stock?.toString() ?? ''} onChange={(v) => setDraft({ ...draft, available_stock: v === '' ? null : Number(v) })} />
+            )}
+            {editing && (
+              <div className="space-y-3 text-sm">
+                <div className="grid grid-cols-2 gap-3">
+                  <EditField label="Name" value={draft.name} onChange={(v) => setDraft({ ...draft, name: v })} />
+                  <EditField label="SKU" value={draft.sku} onChange={(v) => setDraft({ ...draft, sku: v })} />
+                  <EditField label="Status" value={draft.status} onChange={(v) => setDraft({ ...draft, status: v })} />
+                  <EditField label="Kategorie" value={draft.category_name} onChange={(v) => setDraft({ ...draft, category_name: v })} />
+                  <EditField label="Marke" value={draft.brand} onChange={(v) => setDraft({ ...draft, brand: v })} />
+                  <EditField label="Hersteller" value={draft.manufacturer} onChange={(v) => setDraft({ ...draft, manufacturer: v })} />
+                  <EditField label="Einheit" value={draft.unit} onChange={(v) => setDraft({ ...draft, unit: v })} />
+                  <EditField label="Verkaufspreis" type="number" value={draft.rate?.toString() ?? ''} onChange={(v) => setDraft({ ...draft, rate: v === '' ? null : Number(v) })} />
+                  <EditField label="Einkaufspreis" type="number" value={draft.purchase_rate?.toString() ?? ''} onChange={(v) => setDraft({ ...draft, purchase_rate: v === '' ? null : Number(v) })} />
+                  <EditField label="Steuer-Name" value={draft.tax_name} onChange={(v) => setDraft({ ...draft, tax_name: v })} />
+                  <EditField label="Steuer-%" type="number" value={draft.tax_percentage?.toString() ?? ''} onChange={(v) => setDraft({ ...draft, tax_percentage: v === '' ? null : Number(v) })} />
+                  <EditField label="Produkttyp" value={draft.product_type} onChange={(v) => setDraft({ ...draft, product_type: v })} />
+                  <EditField label="Item-Typ" value={draft.item_type} onChange={(v) => setDraft({ ...draft, item_type: v })} />
+                  <EditField label="Bestand" type="number" value={draft.stock_on_hand?.toString() ?? ''} onChange={(v) => setDraft({ ...draft, stock_on_hand: v === '' ? null : Number(v) })} />
+                  <EditField label="Verfügbar" type="number" value={draft.available_stock?.toString() ?? ''} onChange={(v) => setDraft({ ...draft, available_stock: v === '' ? null : Number(v) })} />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs uppercase text-muted-foreground">Beschreibung</Label>
+                  <Textarea
+                    value={draft.description ?? ''}
+                    onChange={(e) => setDraft({ ...draft, description: e.target.value })}
+                    rows={4}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Hinweis: Änderungen werden lokal gespeichert und beim nächsten Zoho-Sync ggf. überschrieben.
+                </p>
               </div>
-              <div className="space-y-1">
-                <Label className="text-xs uppercase text-muted-foreground">Beschreibung</Label>
-                <Textarea
-                  value={draft.description ?? ''}
-                  onChange={(e) => setDraft({ ...draft, description: e.target.value })}
-                  rows={4}
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Hinweis: Änderungen werden lokal gespeichert und beim nächsten Zoho-Sync ggf. überschrieben.
-              </p>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Bulk category assignment */}
       <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
