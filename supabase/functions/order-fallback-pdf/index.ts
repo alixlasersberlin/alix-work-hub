@@ -141,6 +141,7 @@ Deno.serve(async (req) => {
 
     // ----- Load template + build doc -----
     const templateBytes = await loadTemplate()
+    const logoBytes = await loadLogo()
     const doc = await PDFDocument.create()
     const helv = await doc.embedFont(StandardFonts.Helvetica)
     const helvB = await doc.embedFont(StandardFonts.HelveticaBold)
@@ -150,20 +151,40 @@ Deno.serve(async (req) => {
       const tpl = await PDFDocument.load(templateBytes)
       ;[templatePage] = await doc.embedPdf(tpl, [0])
     }
+    let logoImg: any = null
+    if (logoBytes) {
+      try { logoImg = await doc.embedPng(logoBytes) } catch { logoImg = null }
+    }
 
     const PAGE_W = 595
     const PAGE_H = 842
     const LEFT = 110 // space for the blue gradient sidebar
     const RIGHT = PAGE_W - 36
     const headerBlue = rgb(0.078, 0.235, 0.431)
+    const gold = rgb(0.773, 0.631, 0.333)
     const grey = rgb(0.4, 0.4, 0.4)
     const black = rgb(0.15, 0.15, 0.15)
 
+    let pageIndex = 0
     const newPage = () => {
       const p = doc.addPage([PAGE_W, PAGE_H])
       if (templatePage) {
         p.drawPage(templatePage, { x: 0, y: 0, width: PAGE_W, height: PAGE_H })
       }
+      // Gold "AUFTRAGSBESTÄTIGUNG"-Banner nur auf Seite 1
+      if (pageIndex === 0) {
+        p.drawRectangle({ x: 0, y: PAGE_H - 18, width: PAGE_W, height: 18, color: gold })
+        p.drawText('AUFTRAGSBESTÄTIGUNG', {
+          x: 18, y: PAGE_H - 14, size: 11, font: helvB, color: rgb(1, 1, 1),
+        })
+      }
+      // Alix Logo oben rechts auf jeder Seite
+      if (logoImg) {
+        const logoW = 120
+        const logoH = (logoImg.height / logoImg.width) * logoW
+        p.drawImage(logoImg, { x: RIGHT - logoW, y: PAGE_H - 30 - logoH, width: logoW, height: logoH })
+      }
+      pageIndex++
       return p
     }
 
