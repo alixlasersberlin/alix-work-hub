@@ -502,9 +502,10 @@ export default function Artikel() {
               {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
               Neu laden
             </Button>
-            <Button variant="outline" onClick={() => { setCreateDraft(emptyDraft); setCreateOpen(true); }}>
+            <Button variant="outline" onClick={() => { console.log('[Artikel] Öffne Anlegen-Dialog'); setCreateDraft(emptyDraft); setCreateOpen(true); }}>
               <Plus className="w-4 h-4 mr-2" /> Artikel anlegen
             </Button>
+
             <Button onClick={syncAll} disabled={syncing} className="gold-gradient text-primary-foreground">
               {syncing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
               Aus Zoho synchronisieren
@@ -1010,77 +1011,86 @@ export default function Artikel() {
         </DialogContent>
       </Dialog>
 
-      {/* Create new article */}
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="gold-text flex items-center gap-2">
+      {/* Create new article — manuelles Overlay (garantiert sichtbar) */}
+      {createOpen && (
+        <div className="fixed inset-0 z-[200] flex items-start justify-center overflow-y-auto bg-background/80 px-4 py-8 backdrop-blur-sm">
+          <div className="relative w-full max-w-2xl rounded-lg border border-border bg-background p-6 shadow-2xl">
+            <button
+              onClick={() => setCreateOpen(false)}
+              disabled={creating}
+              className="absolute right-4 top-4 opacity-70 hover:opacity-100"
+              aria-label="Schließen"
+            >
+              ✕
+            </button>
+            <h2 className="gold-text flex items-center gap-2 text-lg font-semibold mb-4">
               <Plus className="w-5 h-5" /> Neuen Artikel anlegen
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3 text-sm">
-            <div className="grid grid-cols-2 gap-3">
-              <EditField label="Name *" value={createDraft.name} onChange={(v) => setCreateDraft({ ...createDraft, name: v })} />
-              <EditField label="SKU" value={createDraft.sku} onChange={(v) => setCreateDraft({ ...createDraft, sku: v })} />
-              <div className="space-y-1">
-                <Label className="text-xs uppercase text-muted-foreground">Kategorie</Label>
-                <Select
-                  value={createDraft.category_name || '__none__'}
-                  onValueChange={(v) => setCreateDraft({ ...createDraft, category_name: v === '__none__' ? '' : v })}
-                >
-                  <SelectTrigger><SelectValue placeholder="Kategorie wählen" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">— ohne —</SelectItem>
-                    {categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+            </h2>
+            <div className="space-y-3 text-sm">
+              <div className="grid grid-cols-2 gap-3">
+                <EditField label="Name *" value={createDraft.name} onChange={(v) => setCreateDraft({ ...createDraft, name: v })} />
+                <EditField label="SKU" value={createDraft.sku} onChange={(v) => setCreateDraft({ ...createDraft, sku: v })} />
+                <div className="space-y-1">
+                  <Label className="text-xs uppercase text-muted-foreground">Kategorie</Label>
+                  <Select
+                    value={createDraft.category_name || '__none__'}
+                    onValueChange={(v) => setCreateDraft({ ...createDraft, category_name: v === '__none__' ? '' : v })}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Kategorie wählen" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">— ohne —</SelectItem>
+                      {categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs uppercase text-muted-foreground">Status</Label>
+                  <Select
+                    value={createDraft.status ?? 'active'}
+                    onValueChange={(v) => setCreateDraft({ ...createDraft, status: v })}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">active</SelectItem>
+                      <SelectItem value="inactive">inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <EditField label="Marke" value={createDraft.brand} onChange={(v) => setCreateDraft({ ...createDraft, brand: v })} />
+                <EditField label="Hersteller" value={createDraft.manufacturer} onChange={(v) => setCreateDraft({ ...createDraft, manufacturer: v })} />
+                <EditField label="Einheit" value={createDraft.unit} onChange={(v) => setCreateDraft({ ...createDraft, unit: v })} />
+                <EditField label="Verkaufspreis" type="number" value={createDraft.rate?.toString() ?? ''} onChange={(v) => setCreateDraft({ ...createDraft, rate: v === '' ? null : Number(v) })} />
+                <EditField label="Einkaufspreis" type="number" value={createDraft.purchase_rate?.toString() ?? ''} onChange={(v) => setCreateDraft({ ...createDraft, purchase_rate: v === '' ? null : Number(v) })} />
+                <EditField label="Steuer-Name" value={createDraft.tax_name} onChange={(v) => setCreateDraft({ ...createDraft, tax_name: v })} />
+                <EditField label="Steuer-%" type="number" value={createDraft.tax_percentage?.toString() ?? ''} onChange={(v) => setCreateDraft({ ...createDraft, tax_percentage: v === '' ? null : Number(v) })} />
+                <EditField label="Bestand" type="number" value={createDraft.stock_on_hand?.toString() ?? ''} onChange={(v) => setCreateDraft({ ...createDraft, stock_on_hand: v === '' ? null : Number(v) })} />
+                <EditField label="Verfügbar" type="number" value={createDraft.available_stock?.toString() ?? ''} onChange={(v) => setCreateDraft({ ...createDraft, available_stock: v === '' ? null : Number(v) })} />
+                <EditField label="Produkttyp" value={createDraft.product_type} onChange={(v) => setCreateDraft({ ...createDraft, product_type: v })} />
+                <EditField label="Item-Typ" value={createDraft.item_type} onChange={(v) => setCreateDraft({ ...createDraft, item_type: v })} />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs uppercase text-muted-foreground">Status</Label>
-                <Select
-                  value={createDraft.status ?? 'active'}
-                  onValueChange={(v) => setCreateDraft({ ...createDraft, status: v })}
-                >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">active</SelectItem>
-                    <SelectItem value="inactive">inactive</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label className="text-xs uppercase text-muted-foreground">Beschreibung</Label>
+                <Textarea
+                  value={createDraft.description ?? ''}
+                  onChange={(e) => setCreateDraft({ ...createDraft, description: e.target.value })}
+                  rows={3}
+                />
               </div>
-              <EditField label="Marke" value={createDraft.brand} onChange={(v) => setCreateDraft({ ...createDraft, brand: v })} />
-              <EditField label="Hersteller" value={createDraft.manufacturer} onChange={(v) => setCreateDraft({ ...createDraft, manufacturer: v })} />
-              <EditField label="Einheit" value={createDraft.unit} onChange={(v) => setCreateDraft({ ...createDraft, unit: v })} />
-              <EditField label="Verkaufspreis" type="number" value={createDraft.rate?.toString() ?? ''} onChange={(v) => setCreateDraft({ ...createDraft, rate: v === '' ? null : Number(v) })} />
-              <EditField label="Einkaufspreis" type="number" value={createDraft.purchase_rate?.toString() ?? ''} onChange={(v) => setCreateDraft({ ...createDraft, purchase_rate: v === '' ? null : Number(v) })} />
-              <EditField label="Steuer-Name" value={createDraft.tax_name} onChange={(v) => setCreateDraft({ ...createDraft, tax_name: v })} />
-              <EditField label="Steuer-%" type="number" value={createDraft.tax_percentage?.toString() ?? ''} onChange={(v) => setCreateDraft({ ...createDraft, tax_percentage: v === '' ? null : Number(v) })} />
-              <EditField label="Bestand" type="number" value={createDraft.stock_on_hand?.toString() ?? ''} onChange={(v) => setCreateDraft({ ...createDraft, stock_on_hand: v === '' ? null : Number(v) })} />
-              <EditField label="Verfügbar" type="number" value={createDraft.available_stock?.toString() ?? ''} onChange={(v) => setCreateDraft({ ...createDraft, available_stock: v === '' ? null : Number(v) })} />
-              <EditField label="Produkttyp" value={createDraft.product_type} onChange={(v) => setCreateDraft({ ...createDraft, product_type: v })} />
-              <EditField label="Item-Typ" value={createDraft.item_type} onChange={(v) => setCreateDraft({ ...createDraft, item_type: v })} />
+              <p className="text-xs text-muted-foreground">
+                Hinweis: Manuell angelegte Artikel werden lokal gespeichert (source_system = "manual") und nicht von Zoho überschrieben.
+              </p>
             </div>
-            <div className="space-y-1">
-              <Label className="text-xs uppercase text-muted-foreground">Beschreibung</Label>
-              <Textarea
-                value={createDraft.description ?? ''}
-                onChange={(e) => setCreateDraft({ ...createDraft, description: e.target.value })}
-                rows={3}
-              />
+            <div className="flex justify-end gap-2 mt-4">
+              <Button variant="ghost" onClick={() => setCreateOpen(false)} disabled={creating}>Abbrechen</Button>
+              <Button onClick={createItem} disabled={creating} className="gold-gradient text-primary-foreground">
+                {creating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                Anlegen
+              </Button>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Hinweis: Manuell angelegte Artikel werden lokal gespeichert (source_system = "manual") und nicht von Zoho überschrieben.
-            </p>
           </div>
-          <div className="flex justify-end gap-2 mt-4">
-            <Button variant="ghost" onClick={() => setCreateOpen(false)} disabled={creating}>Abbrechen</Button>
-            <Button onClick={createItem} disabled={creating} className="gold-gradient text-primary-foreground">
-              {creating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-              Anlegen
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
+
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
