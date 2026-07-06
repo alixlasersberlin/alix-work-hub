@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { notifyBus } from './useNotifications';
 import { useAuth } from './useAuth';
@@ -29,6 +30,7 @@ function saveSeen(seen: Set<string>) {
  */
 export function useNotificationFeed() {
   const { user, roles } = useAuth();
+  const location = useLocation();
   const timer = useRef<number | null>(null);
   const seenRef = useRef<Set<string>>(loadSeen());
 
@@ -123,11 +125,13 @@ export function useNotificationFeed() {
     };
 
     // initial run + interval
-    tick();
+    const initialDelay = location.pathname.startsWith('/auftraege') ? 5000 : 0;
+    const initialTimer = window.setTimeout(tick, initialDelay);
     timer.current = window.setInterval(tick, POLL_MS);
     return () => {
       cancelled = true;
+      window.clearTimeout(initialTimer);
       if (timer.current) window.clearInterval(timer.current);
     };
-  }, [user, roles]);
+  }, [user, roles, location.pathname]);
 }
