@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { sendCustomerShippingNotice } from '@/lib/send-customer-shipping-notice';
@@ -67,6 +67,7 @@ export default function Orders() {
   const [bulkSaving, setBulkSaving] = useState(false);
   const [resendingId, setResendingId] = useState<string | null>(null);
   const [duplicating, setDuplicating] = useState(false);
+  const loadRequestRef = useRef(0);
 
   async function duplicateSelected() {
     const ids = Array.from(selectedIds);
@@ -227,6 +228,7 @@ export default function Orders() {
   }
 
   async function load() {
+    const requestId = ++loadRequestRef.current;
     setLoading(true);
     setError(null);
     const { data, error: err } = await supabase
@@ -239,38 +241,63 @@ export default function Orders() {
         finance_total_amount, finance_deposit_amount, finance_remaining_amount,
         finance_open_amount, finance_paid_amount, finance_overdue_amount,
         finance_payment_status, case_number, billing_address, shipping_address,
-        customers(company_name, contact_name, shipping_address, billing_address, is_vip),
-        order_items(id, item_name, description, sku, quantity, unit, rate, amount)
+        customers(company_name, contact_name, shipping_address, billing_address, is_vip)
       `)
       .order(sortField, { ascending: sortDir === 'asc', nullsFirst: false })
       .limit(500);
+    if (requestId !== loadRequestRef.current) return;
     if (err) setError(err.message);
     const loaded = data ?? [];
-
-    // Anzahl Produktionsbestellungen pro order_number ermitteln
-    const orderNumbers = Array.from(new Set(loaded.map(o => o.order_number).filter(Boolean)));
-    const poCountMap: Record<string, number> = {};
-    if (orderNumbers.length > 0) {
-      const { data: pos } = await supabase
-        .from('production_orders')
-        .select('order_number')
-        .in('order_number', orderNumbers);
-      (pos || []).forEach(p => {
-        if (!p.order_number) return;
-        poCountMap[p.order_number] = (poCountMap[p.order_number] || 0) + 1;
-      });
-    }
 
     // Anzeige: nur originale Zoho-Auftragsnummer, kein Suffix, keine interne Nummer
     const expanded = loaded.map(o => ({
       ...o,
+      order_items: [],
       _seq: 1,
       _displayNumber: withAt(o.order_number, o.source_system),
-      _productionOrderCount: o.order_number ? (poCountMap[o.order_number] || 0) : 0,
+      _productionOrderCount: 0,
     }));
 
     setOrders(expanded);
     setLoading(false);
+
+    const orderIds = loaded.map(o => o.id).filter(Boolean);
+    const orderNumbers = Array.from(new Set(loaded.map(o => o.order_number).filter(Boolean)));
+    if (orderIds.length === 0 && orderNumbers.length === 0) return;
+
+    const [itemsRes, posRes] = await Promise.all([
+      orderIds.length > 0
+        ? supabase
+            .from('order_items')
+            .select('id, order_id, item_name, description, sku, quantity, unit, rate, amount')
+            .in('order_id', orderIds)
+        : Promise.resolve({ data: [] as any[] }),
+      orderNumbers.length > 0
+        ? supabase
+            .from('production_orders')
+            .select('order_number')
+            .in('order_number', orderNumbers)
+        : Promise.resolve({ data: [] as any[] }),
+    ]);
+    if (requestId !== loadRequestRef.current) return;
+
+    const itemsByOrder: Record<string, any[]> = {};
+    (itemsRes.data || []).forEach((item: any) => {
+      if (!item.order_id) return;
+      (itemsByOrder[item.order_id] ||= []).push(item);
+    });
+
+    const poCountMap: Record<string, number> = {};
+    (posRes.data || []).forEach((p: any) => {
+      if (!p.order_number) return;
+      poCountMap[p.order_number] = (poCountMap[p.order_number] || 0) + 1;
+    });
+
+    setOrders(prev => prev.map(o => ({
+      ...o,
+      order_items: itemsByOrder[o.id] || [],
+      _productionOrderCount: o.order_number ? (poCountMap[o.order_number] || 0) : 0,
+    })));
   }
 
   useEffect(() => { load(); }, [sortField, sortDir]);
