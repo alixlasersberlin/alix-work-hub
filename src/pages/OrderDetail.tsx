@@ -156,6 +156,16 @@ export default function OrderDetail() {
     setItems(iRes.data ?? []);
     setHistory(hRes.data ?? []);
     setAdditionalDeposits((adRes as any).data ?? []);
+    // Anzahlungsrechnung (falls vorhanden) verlinken
+    supabase
+      .from('order_documents')
+      .select('download_token, file_path, file_name, created_at')
+      .eq('order_id', id!)
+      .eq('document_type', 'Anzahlungsrechnung')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .then(({ data }) => setAzInvoiceDoc(data?.[0] ?? null));
+
     setDepositOk(!!oRes.data?.deposit_ok);
     setDepositBy(oRes.data?.deposit_ok_by || '');
     setDepositAmount(oRes.data?.deposit_amount != null ? String(oRes.data.deposit_amount) : '');
