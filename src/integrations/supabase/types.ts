@@ -14653,6 +14653,7 @@ export type Database = {
       }
       get_table_columns: { Args: { _table: string }; Returns: string[] }
       has_role: { Args: { check_role: string }; Returns: boolean }
+      has_tenant_access: { Args: { _tenant_id: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
       is_portal_customer: { Args: never; Returns: boolean }
       is_supplier: { Args: never; Returns: boolean }
