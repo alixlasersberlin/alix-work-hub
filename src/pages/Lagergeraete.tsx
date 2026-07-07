@@ -115,8 +115,8 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const isRateLimited = (msg?: string) => !!msg && /429|rate_limit|High demand/i.test(msg);
 
 function getStatusFromNotes(notes: string | null | undefined): DeviceStatus {
-  const m = /\[Status:\s*([^\]]+)\]/.exec(notes ?? '');
-  const v = m?.[1]?.trim();
+  const matches = Array.from((notes ?? '').matchAll(/\[Status:\s*([^\]]+)\]/g));
+  const v = matches.length ? matches[matches.length - 1][1].trim() : undefined;
   return (DEVICE_STATUS_OPTIONS as readonly string[]).includes(v ?? '') ? (v as DeviceStatus) : 'Bestand';
 }
 
