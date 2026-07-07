@@ -67,13 +67,15 @@ export function GlobalCommandBar() {
       try {
         const like = `%${term}%`;
         const [cust, ord, tk, rep, inv] = await Promise.all([
-          supabase.from("customers" as any).select("id,customer_name,email,city").or(
-            `customer_name.ilike.${like},email.ilike.${like},city.ilike.${like}`
+          supabase.from("customers" as any).select("id,company_name,contact_name,email").or(
+            `company_name.ilike.${like},contact_name.ilike.${like},email.ilike.${like}`
           ).limit(6),
           supabase.from("orders" as any).select("id,order_number,customer_name,source_system").or(
             `order_number.ilike.${like},customer_name.ilike.${like}`
           ).limit(6),
-          supabase.from("tickets" as any).select("id,subject,status").ilike("subject", like).limit(6),
+          supabase.from("tickets" as any).select("id,title,status,customer_name").or(
+            `title.ilike.${like},customer_name.ilike.${like}`
+          ).limit(6),
           supabase.from("repair_orders" as any).select("id,repair_number,customer_name,device_model,repair_status").or(
             `repair_number.ilike.${like},customer_name.ilike.${like},device_model.ilike.${like}`
           ).limit(6),
