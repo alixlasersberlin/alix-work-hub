@@ -540,7 +540,7 @@ function BookingDialog({ open, deposit, onClose, onDone }: {
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-md w-[95vw] h-[calc(100vh-2rem)] max-h-[calc(100vh-2rem)] overflow-y-auto top-0 translate-y-0 mt-2 data-[state=open]:slide-in-from-top-4 data-[state=closed]:slide-out-to-top-4">
+      <DialogContent className="max-w-md w-[95vw] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Anzahlung buchen</DialogTitle>
           <DialogDescription>
