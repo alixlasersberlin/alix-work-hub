@@ -1913,17 +1913,25 @@ export default function Lagergeraete({
             {filteredDevices.map((d) => {
               const s = getStatusFromNotes(d.notes);
               const inRepair = parseRepairId(d.notes);
-              const cardClass = inRepair
+              const isLawyer = (d.orders?.order_status || '').toLowerCase() === 'anwalt';
+              const cardClass = isLawyer
                 ? 'bg-red-500/15 border-red-500/60'
-                : d.reserved_order_id
-                  ? 'bg-yellow-500/10'
-                  : 'bg-card';
+                : inRepair
+                  ? 'bg-red-500/15 border-red-500/60'
+                  : d.reserved_order_id
+                    ? 'bg-yellow-500/10'
+                    : 'bg-card';
               return (
                 <div
                   key={d.id}
                   className={`rounded-lg border border-border p-3 space-y-2 hover:border-primary/40 transition-colors ${cardClass}`}
                 >
-                  {inRepair && (
+                  {isLawyer && (
+                    <div className="-mx-3 -mt-3 mb-1 px-3 py-1.5 bg-red-600 text-white text-xs font-bold tracking-wide rounded-t-lg flex items-center gap-1.5">
+                      <Gavel className="w-3.5 h-3.5" /> ANWALT{d.orders?.lawyer_reason ? ` – ${d.orders.lawyer_reason}` : ''}
+                    </div>
+                  )}
+                  {inRepair && !isLawyer && (
                     <div className="-mx-3 -mt-3 mb-1 px-3 py-1.5 bg-red-600 text-white text-xs font-bold tracking-wide rounded-t-lg flex items-center gap-1.5 animate-pulse">
                       <Wrench className="w-3.5 h-3.5" /> IN REPARATUR
                     </div>
