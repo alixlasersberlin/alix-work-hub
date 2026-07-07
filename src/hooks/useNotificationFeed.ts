@@ -77,7 +77,7 @@ export function useNotificationFeed() {
         tasks.push((async () => {
           const { data } = await supabase
             .from('finance_reminders' as any)
-            .select('id, level, customer_name, created_at')
+            .select('id, level, created_at')
             .eq('status', 'draft')
             .order('created_at', { ascending: false })
             .limit(10);
@@ -87,7 +87,7 @@ export function useNotificationFeed() {
             seen.add(key);
             notifyBus.push({
               title: `Mahnung Stufe ${r.level ?? '–'} erstellt`,
-              body: r.customer_name ?? 'Entwurf bereit zum Versand',
+              body: 'Entwurf bereit zum Versand',
               kind: 'info',
               module: 'Mahnwesen',
               href: '/finance/mahnwesen',
@@ -101,7 +101,7 @@ export function useNotificationFeed() {
         tasks.push((async () => {
           const { data } = await supabase
             .from('tickets' as any)
-            .select('id, subject, status, created_at')
+            .select('id, customer_name, company_name, status, created_at')
             .in('status', ['new', 'open'])
             .order('created_at', { ascending: false })
             .limit(10);
@@ -111,7 +111,7 @@ export function useNotificationFeed() {
             seen.add(key);
             notifyBus.push({
               title: 'Neues Ticket',
-              body: r.subject ?? 'Ticket eingegangen',
+              body: r.company_name ?? r.customer_name ?? 'Ticket eingegangen',
               kind: 'info',
               module: 'Tickets',
               href: `/tickets/${r.id}`,
