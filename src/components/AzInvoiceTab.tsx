@@ -735,10 +735,43 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
             )}
           </div>
           <div>
-            <Label className="text-xs text-muted-foreground">MwSt (%)</Label>
-            <Input type="number" inputMode="decimal" value={taxPercentage} onChange={e => setTaxPercentage(Number(e.target.value) || 0)} className="bg-secondary border-border mt-1" />
+            <div className="flex items-center justify-between gap-2">
+              <Label className="text-xs text-muted-foreground">MwSt (%)</Label>
+              <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={taxPercentage === 0}
+                  onChange={(e) => setTaxPercentage(e.target.checked ? 0 : 19)}
+                  className="accent-primary"
+                />
+                Ohne MwSt (0%)
+              </label>
+            </div>
+            <div className="flex gap-2 mt-1">
+              <Input
+                type="number"
+                inputMode="decimal"
+                value={taxPercentage}
+                onChange={e => setTaxPercentage(Number(e.target.value) || 0)}
+                className="bg-secondary border-border"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => saveTaxPercentage(false)}
+                disabled={savingTax}
+                title="MwSt-Einstellung für diesen Auftrag speichern"
+              >
+                {savingTax ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Speichern'}
+              </Button>
+            </div>
+            {order?.az_tax_percentage !== null && order?.az_tax_percentage !== undefined && (
+              <p className="text-[11px] text-muted-foreground mt-1">
+                gespeichert: {Number(order.az_tax_percentage)}%
+              </p>
+            )}
           </div>
-        </div>
         <div className="grid sm:grid-cols-3 gap-3 pt-1 text-sm">
           <div className="rounded-md bg-background/60 border border-border px-3 py-2">
             <div className="text-xs text-muted-foreground">Netto</div>
