@@ -238,6 +238,7 @@ export default function Lagergeraete({
   };
 
   const canReserve = isAdmin || hasRole('Order');
+  const canManage = isAdmin || hasRole('Order') || hasRole('Auftragsverwaltung') || hasRole('SACHBEARBEITUNG');
   const [devices, setDevices] = useState<LagerDevice[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
