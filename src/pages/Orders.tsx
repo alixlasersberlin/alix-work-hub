@@ -408,7 +408,7 @@ export default function Orders() {
   );
 
   return (
-    <div className="p-6 lg:p-8 animate-fade-in">
+    <div className="p-6 lg:p-8 animate-fade-in min-w-0 max-w-full overflow-x-hidden">
       <div className="flex items-start justify-between gap-4">
         <PageHeader
           icon={ClipboardList}
