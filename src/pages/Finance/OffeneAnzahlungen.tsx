@@ -403,7 +403,7 @@ export default function OffeneAnzahlungen() {
       </div>
       </>)}
 
-      {bookFor && <div className="fixed inset-0 z-40 bg-background" />}
+      
       <BookingDialog open={!!bookFor} deposit={bookFor} onClose={() => setBookFor(null)} onDone={load} />
 
       <Dialog open={!!historyFor} onOpenChange={(o) => !o && setHistoryFor(null)}>
