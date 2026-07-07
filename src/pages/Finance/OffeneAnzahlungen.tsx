@@ -540,14 +540,14 @@ function BookingDialog({ open, deposit, onClose, onDone }: {
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-3xl w-[95vw] max-h-[85vh] overflow-y-auto top-8 translate-y-0 data-[state=open]:slide-in-from-top-4 data-[state=closed]:slide-out-to-top-4">
+      <DialogContent className="max-w-md w-[95vw] max-h-[90vh] overflow-y-auto top-4 translate-y-0 data-[state=open]:slide-in-from-top-4 data-[state=closed]:slide-out-to-top-4">
         <DialogHeader>
           <DialogTitle>Anzahlung buchen</DialogTitle>
           <DialogDescription>
             {deposit?.invoice_number || deposit?.deposit_number} · {deposit?.customer_name}
           </DialogDescription>
         </DialogHeader>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3">
           <div>
             <Label>Buchungsdatum</Label>
             <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
