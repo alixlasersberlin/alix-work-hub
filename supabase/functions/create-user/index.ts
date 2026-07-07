@@ -40,7 +40,8 @@ Deno.serve(async (req) => {
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
-    // 1. Create auth user
+    // 1. Create auth user (or reuse if already registered)
+    let userId: string;
     const { data: authUser, error: authError } = await adminClient.auth.admin.createUser({
       email,
       password: password || undefined,
@@ -49,10 +50,27 @@ Deno.serve(async (req) => {
     });
 
     if (authError) {
-      return json({ error: `Auth error: ${authError.message}` }, 400);
+      const msg = authError.message || "";
+      const isDuplicate = /already been registered|already registered|User already registered|duplicate/i.test(msg);
+      if (!isDuplicate) {
+        return json({ error: `Auth error: ${msg}` }, 400);
+      }
+      // Look up existing auth user by email so we can attach profile/roles
+      let foundId: string | null = null;
+      for (let page = 1; page <= 20 && !foundId; page++) {
+        const { data: list, error: listErr } = await adminClient.auth.admin.listUsers({ page, perPage: 200 });
+        if (listErr) break;
+        const match = list.users.find((u) => (u.email || "").toLowerCase() === email.toLowerCase());
+        if (match) foundId = match.id;
+        if (list.users.length < 200) break;
+      }
+      if (!foundId) {
+        return json({ error: `Auth error: ${msg}` }, 400);
+      }
+      userId = foundId;
+    } else {
+      userId = authUser.user.id;
     }
-
-    const userId = authUser.user.id;
 
     // 2. Upsert user_profile
     const { error: profileError } = await adminClient
