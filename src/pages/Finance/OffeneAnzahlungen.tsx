@@ -538,18 +538,30 @@ function BookingDialog({ open, deposit, onClose, onDone }: {
   };
 
 
+  if (!open) return null;
+
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent
-        className="max-w-md w-[95vw] max-h-[calc(100dvh-2rem)] overflow-y-auto"
-        style={{ top: '1rem', transform: 'translateX(-50%)' }}
-      >
-        <DialogHeader>
-          <DialogTitle>Anzahlung buchen</DialogTitle>
-          <DialogDescription>
+    <div
+      role="dialog"
+      aria-modal="false"
+      aria-label="Anzahlung buchen"
+      className="fixed left-1/2 top-4 z-50 w-[95vw] max-w-md max-h-[calc(100dvh-2rem)] -translate-x-1/2 overflow-y-auto rounded-lg border border-border bg-background p-6 shadow-2xl"
+    >
+        <div className="mb-4 pr-8">
+          <h2 className="text-lg font-semibold leading-none tracking-tight">Anzahlung buchen</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
             {deposit?.invoice_number || deposit?.deposit_number} · {deposit?.customer_name}
-          </DialogDescription>
-        </DialogHeader>
+          </p>
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onClose}
+          className="absolute right-3 top-3 h-8 w-8 p-0"
+          aria-label="Popup schließen"
+        >
+          ×
+        </Button>
         <div className="grid grid-cols-1 gap-3">
           <div>
             <Label>Buchungsdatum</Label>
@@ -645,7 +657,7 @@ function BookingDialog({ open, deposit, onClose, onDone }: {
             )}
           </div>
         </div>
-        <DialogFooter>
+        <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button variant="outline" onClick={onClose} disabled={saving}>Abbrechen</Button>
           <Button
             onClick={save}
@@ -659,9 +671,8 @@ function BookingDialog({ open, deposit, onClose, onDone }: {
             {saving && <Loader2 className="w-4 h-4 animate-spin" />}
             {lawyerFlag ? 'An Anwalt übergeben' : altkundeFlag ? 'Nur Buchen (Altkunde)' : 'Speichern'}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </div>
   );
 }
 
