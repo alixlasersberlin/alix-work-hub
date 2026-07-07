@@ -620,11 +620,32 @@ async function processBackupStep(params: {
       );
 
       const pageSize = pageSizeFor(table);
-      const { data, error } = await adminClient
-        .from(table)
-        .select("*")
-        .range(state.rowOffset, state.rowOffset + pageSize - 1);
-      if (error) throw new Error(`Tabelle ${table}: ${error.message}`);
+      // Retry mit Backoff — fängt transiente Cloudflare-5xx (520/521/522/524) ab, die
+      // Supabase gelegentlich statt einer normalen PostgREST-Antwort liefert.
+      let data: unknown[] | null = null;
+      let lastErr: string | null = null;
+      for (let attempt = 1; attempt <= 5; attempt++) {
+        try {
+          const res = await adminClient
+            .from(table)
+            .select("*")
+            .range(state.rowOffset, state.rowOffset + pageSize - 1);
+          if (res.error) {
+            lastErr = res.error.message;
+            const transient = /520|521|522|524|<!DOCTYPE|Web server|Cloudflare|fetch failed|network|timeout/i.test(lastErr);
+            if (!transient || attempt === 5) throw new Error(`Tabelle ${table}: ${lastErr}`);
+          } else {
+            data = res.data as unknown[];
+            break;
+          }
+        } catch (e) {
+          lastErr = e instanceof Error ? e.message : String(e);
+          const transient = /520|521|522|524|<!DOCTYPE|Web server|Cloudflare|fetch failed|network|timeout/i.test(lastErr);
+          if (!transient || attempt === 5) throw new Error(`Tabelle ${table}: ${lastErr}`);
+        }
+        await new Promise((r) => setTimeout(r, Math.min(1000 * 2 ** (attempt - 1), 8000)));
+      }
+
 
       const pageRows = data?.length ?? 0;
       if (pageRows === 0) {
