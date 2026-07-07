@@ -461,6 +461,7 @@ function BookingDialog({ open, deposit, onClose, onDone }: {
   const [saving, setSaving] = useState(false);
   const [lawyerFlag, setLawyerFlag] = useState(false);
   const [lawyerReason, setLawyerReason] = useState('');
+  const [altkundeFlag, setAltkundeFlag] = useState(false);
 
   useEffect(() => {
     if (deposit) {
@@ -470,12 +471,17 @@ function BookingDialog({ open, deposit, onClose, onDone }: {
       setMethod('ueberweisung');
       setLawyerFlag(false);
       setLawyerReason('');
+      setAltkundeFlag(false);
     }
   }, [deposit]);
 
   const save = async () => {
     if (!deposit) return;
-    const n = Number(amount.replace(',', '.'));
+    // Altkunde: nur die volle Restsumme als bezahlt markieren
+    const n = altkundeFlag
+      ? Number(deposit.open_amount || 0)
+      : Number(amount.replace(',', '.'));
+
     if (lawyerFlag) {
       if (!deposit.order_id) { toast.error('Kein Auftrag verknüpft – Anwalt-Kennzeichnung nicht möglich'); return; }
       if (!lawyerReason.trim()) { toast.error('Bitte einen Grund für die Anwaltsübergabe angeben'); return; }
@@ -486,20 +492,23 @@ function BookingDialog({ open, deposit, onClose, onDone }: {
     try {
       if (n > 0) {
         let proofPath: string | null = null;
-        if (file) {
+        if (file && !altkundeFlag) {
           const path = `${deposit.id}/${Date.now()}_${file.name}`;
           const { error: upErr } = await supabase.storage.from('finance-deposits').upload(path, file, { upsert: false });
           if (upErr) throw upErr;
           proofPath = path;
         }
+        const bookingNote = altkundeFlag
+          ? `[ALTKUNDE – nur gebucht]${note ? ' — ' + note : ''}`
+          : (lawyerFlag ? `[ANWALT] ${lawyerReason}${note ? ' — ' + note : ''}` : note);
         const { error } = await supabase.rpc('finance_deposit_book' as any, {
           p_deposit_id: deposit.id,
           p_amount: n,
-          p_method: method,
-          p_reference: reference || null,
+          p_method: altkundeFlag ? 'sonstige' : method,
+          p_reference: altkundeFlag ? (reference || 'Altkunde') : (reference || null),
           p_booking_date: date,
           p_proof_path: proofPath,
-          p_note: (lawyerFlag ? `[ANWALT] ${lawyerReason}${note ? ' — ' + note : ''}` : note) || null,
+          p_note: bookingNote || null,
         });
         if (error) throw error;
       }
@@ -511,6 +520,8 @@ function BookingDialog({ open, deposit, onClose, onDone }: {
         });
         if (oErr) throw oErr;
         toast.success('Auftrag auf Anwalt gesetzt & in Anwaltsliste verschoben');
+      } else if (altkundeFlag) {
+        toast.success('Anzahlung als Altkunden-Buchung gebucht');
       } else {
         toast.success('Anzahlung gebucht');
       }
@@ -522,6 +533,7 @@ function BookingDialog({ open, deposit, onClose, onDone }: {
       setSaving(false);
     }
   };
+
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
