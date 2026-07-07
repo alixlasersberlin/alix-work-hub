@@ -130,15 +130,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function fetchRoles(userId: string) {
-    const { data } = await supabase
-      .from('user_roles')
-      .select('role_id, roles(name)')
-      .eq('user_id', userId);
-
-    if (data) {
-      const roleNames = data.map((r: any) => r.roles?.name).filter(Boolean);
-      setRoles(roleNames);
+    const { data, error } = await (supabase as any).rpc('get_current_user_role_names');
+    if (error || !Array.isArray(data)) {
+      setRoles([]);
+      return;
     }
+    setRoles(data.filter(Boolean));
   }
 
   const refreshMfaState = useCallback(async () => {
