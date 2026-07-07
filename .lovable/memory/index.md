@@ -10,6 +10,7 @@
 - Alix Austria (`source_system='zoho_eu_2'`): UI-Suffix "-AT" für Kunden- und Auftragsnummer; bei Artikeln (item_name+sku) wird "-AT" direkt beim Sync in die DB geschrieben.
 - DELETE auf allen Tabellen ist ausschließlich Super Admin erlaubt (RLS via `has_role('Super Admin')`).
 - Neue Rolle **QM** existiert ausschließlich für das Bug & CAPA Modul (`/bug-capa`).
+- Versionierung: `APP_VERSION` in `src/components/AppLayout.tsx` bei jedem Publish um 0.01 erhöhen (Start 5.0 → 5.01 → 5.02 …). Details: [App Versioning](mem://features/app-versioning)
 
 ## Memories
 - [Access Control](mem://auth/access-control) — Internal login system without public registration, strict status checks
