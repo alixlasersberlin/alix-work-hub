@@ -442,7 +442,7 @@ function HomeRoute() {
   const { roles } = useAuth();
   if (isSupplierOnly(roles)) return <Navigate to="/production" replace />;
   // Nur-Finanzierungen-Nutzer landen direkt im Finanzierungs-Bereich
-  if (roles.length > 0 && roles.every((r) => r === 'Finanzierungen', 'Order')) {
+  if (roles.length > 0 && roles.every((r) => r === 'Finanzierungen')) {
     return <Navigate to="/finanzierungen" replace />;
   }
   // Rolle Österreich (ohne Admin) bekommt dediziertes AT-Dashboard
