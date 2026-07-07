@@ -14630,6 +14630,14 @@ export type Database = {
         }
         Returns: string
       }
+      get_customer_bank_details: {
+        Args: { _customer_id: string }
+        Returns: {
+          bank_name: string
+          bic: string
+          iban: string
+        }[]
+      }
       get_table_columns: { Args: { _table: string }; Returns: string[] }
       has_role: { Args: { check_role: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
