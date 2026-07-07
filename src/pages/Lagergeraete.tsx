@@ -2185,11 +2185,19 @@ export default function Lagergeraete({
                       <TableCell>
                         {d.orders?.order_number ? (
                           <div className="space-y-1">
+                            {isLawyer && (
+                              <Badge className="bg-red-600 text-white border border-red-700 hover:bg-red-600 font-bold tracking-wide">
+                                <Gavel className="w-3 h-3 mr-1" /> ANWALT
+                              </Badge>
+                            )}
                             <Badge className="font-mono bg-yellow-500/20 text-yellow-600 dark:text-yellow-300 border border-yellow-500/40 hover:bg-yellow-500/25">
                               {d.orders.order_number}
                             </Badge>
                             {d.orders.customer_name && (
                               <div className="text-xs text-muted-foreground truncate max-w-[220px]">{d.orders.customer_name}</div>
+                            )}
+                            {isLawyer && d.orders.lawyer_reason && (
+                              <div className="text-[11px] text-red-500 truncate max-w-[220px]">{d.orders.lawyer_reason}</div>
                             )}
                           </div>
                         ) : (
