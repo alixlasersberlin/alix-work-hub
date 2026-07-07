@@ -324,7 +324,21 @@ export default function OrderDetail() {
         keySuffix: `add-${depId}`,
       });
       if (mail.ok) toast.success(mail.message); else toast.error('Anzahlungs-Mail nicht versendet: ' + mail.message);
+      if (prev?.amount) {
+        await postPaymentToJournal({
+          order_id: id!,
+          order_number: order?.order_number ?? null,
+          customer_id: order?.customer_id ?? null,
+          amount_gross: Number(prev.amount) || 0,
+          booking_date: prev?.booking_date ?? null,
+          description: `Weitere Anzahlung Auftrag ${order?.order_number || ''}${prev?.note ? ' · ' + prev.note : ''}`,
+          source_table: 'order_additional_deposits',
+          source_id: depId,
+          vorgang: 'Anzahlung',
+        });
+      }
     }
+
   }
 
   async function deleteAdditionalDeposit(depId: string) {
