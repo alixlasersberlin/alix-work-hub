@@ -582,6 +582,31 @@ function BookingDialog({ open, deposit, onClose, onDone }: {
 
           <div className={cn(
             "col-span-2 rounded-lg border p-3 space-y-2 transition-colors",
+            altkundeFlag ? "border-emerald-500/60 bg-emerald-500/10" : "border-border bg-secondary/40"
+          )}>
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                className="h-4 w-4 accent-emerald-500"
+                checked={altkundeFlag}
+                disabled={lawyerFlag}
+                onChange={(e) => setAltkundeFlag(e.target.checked)}
+              />
+              <span className="text-sm font-semibold text-emerald-500 uppercase tracking-wide">
+                Nur Buchen (Altkunde)
+              </span>
+            </label>
+            {altkundeFlag && (
+              <p className="text-[11px] text-muted-foreground">
+                Die offene Anzahlung ({fmtMoney(deposit?.open_amount ?? 0, deposit?.currency ?? 'EUR')}) wird komplett
+                als bezahlt gebucht und aus der Liste „Offene Anzahlungen" nach „Gebucht" verschoben.
+                Kein Zahlungsbeleg erforderlich.
+              </p>
+            )}
+          </div>
+
+          <div className={cn(
+            "col-span-2 rounded-lg border p-3 space-y-2 transition-colors",
             lawyerFlag ? "border-destructive/60 bg-destructive/10" : "border-border bg-secondary/40"
           )}>
             <label className="flex items-center gap-2 cursor-pointer select-none">
@@ -589,6 +614,7 @@ function BookingDialog({ open, deposit, onClose, onDone }: {
                 type="checkbox"
                 className="h-4 w-4 accent-destructive"
                 checked={lawyerFlag}
+                disabled={altkundeFlag}
                 onChange={(e) => setLawyerFlag(e.target.checked)}
               />
               <span className="text-sm font-semibold text-destructive uppercase tracking-wide">
@@ -618,13 +644,18 @@ function BookingDialog({ open, deposit, onClose, onDone }: {
           <Button
             onClick={save}
             disabled={saving}
-            className={cn("gap-2", lawyerFlag && "bg-destructive text-destructive-foreground hover:bg-destructive/90")}
+            className={cn(
+              "gap-2",
+              lawyerFlag && "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+              altkundeFlag && !lawyerFlag && "bg-emerald-600 text-white hover:bg-emerald-600/90",
+            )}
           >
             {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-            {lawyerFlag ? 'An Anwalt übergeben' : 'Speichern'}
+            {lawyerFlag ? 'An Anwalt übergeben' : altkundeFlag ? 'Nur Buchen (Altkunde)' : 'Speichern'}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
+
