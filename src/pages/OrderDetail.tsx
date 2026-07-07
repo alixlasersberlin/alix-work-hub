@@ -250,9 +250,23 @@ export default function OrderDetail() {
         trigger: 'automatisch',
       });
       if (mail.ok) toast.success(mail.message); else toast.error('Anzahlungs-Mail nicht versendet: ' + mail.message);
+      if (parsedAmount && parsedAmount > 0) {
+        await postPaymentToJournal({
+          order_id: id!,
+          order_number: order?.order_number ?? null,
+          customer_id: order?.customer_id ?? null,
+          amount_gross: parsedAmount,
+          booking_date: depositBookingDate || null,
+          description: `Anzahlung Auftrag ${order?.order_number || ''} · bestätigt von ${depositBy.trim()}`,
+          source_table: 'orders',
+          source_id: id!,
+          vorgang: 'Anzahlung',
+        });
+      }
     }
     loadAll();
   }
+
 
   async function addAdditionalDeposit() {
     const amt = newAddAmount.trim() ? parseFloat(newAddAmount.replace(',', '.')) : NaN;
