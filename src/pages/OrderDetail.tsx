@@ -834,7 +834,29 @@ export default function OrderDetail() {
           <h2 className="text-base font-display font-bold text-foreground flex items-center gap-2 mb-4">
             <Euro className="w-4 h-4 text-primary" /> Anzahlung
           </h2>
+          {(() => {
+            const cur = order.currency || 'EUR';
+            const mainAmt = parseFloat(String(depositAmount).replace(',', '.')) || 0;
+            const openMain = depositOk ? 0 : mainAmt;
+            const openAdd = additionalDeposits.reduce((s, d) => s + (d.geleistet ? 0 : Number(d.amount) || 0), 0);
+            const openTotal = openMain + openAdd;
+            const paidTotal = (depositOk ? mainAmt : 0) + additionalDeposits.reduce((s, d) => s + (d.geleistet ? Number(d.amount) || 0 : 0), 0);
+            const fmt = (n: number) => n.toLocaleString('de-DE', { style: 'currency', currency: cur });
+            return (
+              <div className="mb-4 grid grid-cols-2 gap-3">
+                <div className="rounded-lg border border-border bg-secondary/30 p-3">
+                  <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Offene Anzahlung</div>
+                  <div className={`text-lg font-bold ${openTotal > 0 ? 'text-red-400' : 'text-emerald-400'}`}>{fmt(openTotal)}</div>
+                </div>
+                <div className="rounded-lg border border-border bg-secondary/30 p-3">
+                  <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Geleistete Anzahlung</div>
+                  <div className="text-lg font-bold text-emerald-400">{fmt(paidTotal)}</div>
+                </div>
+              </div>
+            );
+          })()}
           <div className="space-y-4">
+
             <label className="flex items-center gap-3 cursor-pointer">
               <Checkbox
                 checked={depositOk}
