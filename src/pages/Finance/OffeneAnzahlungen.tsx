@@ -401,6 +401,7 @@ export default function OffeneAnzahlungen() {
           </Table>
         )}
       </div>
+      </>)}
 
       <BookingDialog open={!!bookFor} deposit={bookFor} onClose={() => setBookFor(null)} onDone={load} />
 
