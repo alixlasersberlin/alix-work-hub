@@ -772,7 +772,9 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
               </p>
             )}
           </div>
+        </div>
         <div className="grid sm:grid-cols-3 gap-3 pt-1 text-sm">
+
           <div className="rounded-md bg-background/60 border border-border px-3 py-2">
             <div className="text-xs text-muted-foreground">Netto</div>
             <div className="font-semibold text-foreground">{fmtMoney(netDeposit, currency)}</div>
