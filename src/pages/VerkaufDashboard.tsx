@@ -161,7 +161,7 @@ export default function VerkaufDashboard() {
   const distinctItems = itemStats.length;
 
   return (
-    <div className="p-6 lg:p-8 animate-fade-in space-y-6">
+    <div className="p-6 lg:p-8 animate-fade-in space-y-6 min-w-0 max-w-full overflow-x-hidden">
       <PageHeader
         icon={TrendingUp}
         title="Verkauf"
@@ -257,7 +257,7 @@ export default function VerkaufDashboard() {
 
 
       {/* Auftrags-Liste laufender Monat */}
-      <Card className="p-5 space-y-4">
+      <Card className="p-5 space-y-4 min-w-0 max-w-full overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="font-display font-semibold text-foreground">Aufträge · laufender Monat</h2>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
