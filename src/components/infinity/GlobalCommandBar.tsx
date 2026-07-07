@@ -85,14 +85,14 @@ export function GlobalCommandBar() {
         ]);
         const out: Hit[] = [];
         for (const c of (cust.data ?? []) as any[]) {
-          out.push({ kind: "customer", id: c.id, label: c.customer_name || c.email || c.id, sub: [c.email, c.city].filter(Boolean).join(" · ") });
+          out.push({ kind: "customer", id: c.id, label: c.company_name || c.contact_name || c.email || c.id, sub: [c.contact_name, c.email].filter(Boolean).join(" · ") });
         }
         for (const o of (ord.data ?? []) as any[]) {
           const at = o.source_system === "zoho_eu_2" ? "-AT" : "";
           out.push({ kind: "order", id: o.id, label: `${o.order_number || o.id}${at}`, sub: o.customer_name });
         }
         for (const t of (tk.data ?? []) as any[]) {
-          out.push({ kind: "ticket", id: t.id, label: t.subject || t.id, sub: t.status });
+          out.push({ kind: "ticket", id: t.id, label: t.title || t.id, sub: [t.customer_name, t.status].filter(Boolean).join(" · ") });
         }
         for (const r of (rep.data ?? []) as any[]) {
           out.push({ kind: "repair", id: r.id, label: r.repair_number || r.id, sub: [r.customer_name, r.device_model, r.repair_status].filter(Boolean).join(" · ") });
