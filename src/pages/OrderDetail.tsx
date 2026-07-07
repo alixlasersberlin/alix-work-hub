@@ -928,20 +928,41 @@ export default function OrderDetail() {
               const openTotal = openMain + openAdd;
               const fmt = (n: number) => n.toLocaleString('de-DE', { style: 'currency', currency: cur });
               return (
-                <div className="flex items-center justify-between pt-2 gap-3">
-                  <Link
-                    to="/finance/anzahlungen"
-                    className="text-sm text-primary hover:underline"
-                    title="Zur Anzahlungs-Übersicht"
-                  >
-                    Offene Anzahlung: <span className={openTotal > 0 ? 'font-semibold text-red-400' : 'font-semibold text-emerald-400'}>{fmt(openTotal)}</span> →
-                  </Link>
+                <div className="flex items-center justify-between pt-2 gap-3 flex-wrap">
+                  <div className="flex items-center gap-4 flex-wrap">
+                    <Link
+                      to="/finance/anzahlungen"
+                      className="text-sm text-primary hover:underline"
+                      title="Zur Anzahlungs-Übersicht"
+                    >
+                      Offene Anzahlung: <span className={openTotal > 0 ? 'font-semibold text-red-400' : 'font-semibold text-emerald-400'}>{fmt(openTotal)}</span> →
+                    </Link>
+                    {azInvoiceDoc && (
+                      <a
+                        href={azInvoiceDoc.download_token ? `/d/${azInvoiceDoc.download_token}` : '#'}
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={async (e) => {
+                          if (azInvoiceDoc.download_token) return;
+                          e.preventDefault();
+                          if (!azInvoiceDoc.file_path) return;
+                          const { data } = await supabase.storage.from('order-invoices').createSignedUrl(azInvoiceDoc.file_path, 300);
+                          if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+                        }}
+                        className="text-sm text-primary hover:underline inline-flex items-center gap-1"
+                        title={azInvoiceDoc.file_name || 'Anzahlungsrechnung öffnen'}
+                      >
+                        <FileText className="w-3.5 h-3.5" /> Anzahlungsrechnung öffnen →
+                      </a>
+                    )}
+                  </div>
                   <Button onClick={saveDeposit} disabled={savingDeposit} className="gold-gradient text-primary-foreground">
                     {savingDeposit && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                     Speichern
                   </Button>
                 </div>
               );
+
             })()}
 
 
