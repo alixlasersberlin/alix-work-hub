@@ -505,10 +505,10 @@ function BookingDialog({ open, deposit, onClose, onDone }: {
       }
 
       if (lawyerFlag && deposit.order_id) {
-        const { error: oErr } = await supabase
-          .from('orders')
-          .update({ order_status: 'anwalt', lawyer_reason: lawyerReason })
-          .eq('id', deposit.order_id);
+        const { error: oErr } = await supabase.rpc('set_order_lawyer' as any, {
+          _order_id: deposit.order_id,
+          _reason: lawyerReason,
+        });
         if (oErr) throw oErr;
         toast.success('Auftrag auf Anwalt gesetzt & in Anwaltsliste verschoben');
       } else {

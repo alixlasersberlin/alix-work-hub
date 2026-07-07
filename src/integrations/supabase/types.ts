@@ -14713,6 +14713,10 @@ export type Database = {
         Args: { _path: string; _production_order_id: string }
         Returns: undefined
       }
+      set_order_lawyer: {
+        Args: { _order_id: string; _reason: string }
+        Returns: undefined
+      }
       tenant_id_for_source: { Args: { _source: string }; Returns: string }
       user_has_tenant: { Args: { _tenant_id: string }; Returns: boolean }
       user_mailboxes: { Args: never; Returns: string[] }
