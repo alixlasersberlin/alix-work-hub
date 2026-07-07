@@ -82,7 +82,7 @@ async function buildDepositPdf(row: any, order: any, customer: any) {
     ['Kundennr.', (() => {
       const ext = (customer as any)?.external_customer_id;
       const cleanExt = ext && !String(ext).startsWith('manual-') ? String(ext) : '';
-      return String((customer as any)?.raw_data?.contact_number || (customer as any)?.raw_data?.customer_number || cleanExt || (customer as any)?.id?.slice(0, 8) || '—');
+      return String((customer as any)?.raw_data?.contact_number || (customer as any)?.raw_data?.customer_number || cleanExt || orderNo || (customer as any)?.id?.slice(0, 8) || '—');
     })()],
   ];
   let metaY = TOP_CONTENT;
