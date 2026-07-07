@@ -63,8 +63,8 @@ Deno.serve(async (req) => {
             const stage = Number(rule.condition_json?.stage ?? 2);
             const { data: rems } = await supabase
               .from("finance_reminders")
-              .select("id, stage, customer_name")
-              .gte("stage", stage)
+              .select("id, level, customer_id")
+              .gte("level", stage)
               .gte("created_at", since);
             for (const r of rems ?? []) {
               await runAction(supabase, rule, "finance_reminders", r.id, r);
