@@ -644,7 +644,7 @@ export default function Orders() {
             )
           ) : (
           <div className="rounded-xl border border-border bg-card card-glow overflow-hidden">
-            <div className="overflow-x-auto">
+            <div className="overflow-auto max-h-[calc(100vh-260px)]">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border bg-secondary/50">
