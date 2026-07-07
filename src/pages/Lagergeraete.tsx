@@ -1681,7 +1681,7 @@ export default function Lagergeraete({
         )}
       </div>
 
-      {isAdmin && (
+      {canManage && (
         <div className="flex items-center gap-3 px-1">
           <Switch
             id="selection-mode"
