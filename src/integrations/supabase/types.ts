@@ -6117,6 +6117,7 @@ export type Database = {
           amount: number
           created_at: string
           customer_id: string
+          customer_name: string | null
           due_date: string | null
           email_message_id: string | null
           fee: number
@@ -6135,6 +6136,7 @@ export type Database = {
           amount?: number
           created_at?: string
           customer_id: string
+          customer_name?: string | null
           due_date?: string | null
           email_message_id?: string | null
           fee?: number
@@ -6153,6 +6155,7 @@ export type Database = {
           amount?: number
           created_at?: string
           customer_id?: string
+          customer_name?: string | null
           due_date?: string | null
           email_message_id?: string | null
           fee?: number
@@ -12984,7 +12987,9 @@ export type Database = {
           sla_status: string | null
           source_system: string
           status: string
+          subject: string | null
           suggested_technician_id: string | null
+          ticket_number: string | null
           title: string | null
           updated_at: string
         }
@@ -13017,7 +13022,9 @@ export type Database = {
           sla_status?: string | null
           source_system?: string
           status?: string
+          subject?: string | null
           suggested_technician_id?: string | null
+          ticket_number?: string | null
           title?: string | null
           updated_at?: string
         }
@@ -13050,7 +13057,9 @@ export type Database = {
           sla_status?: string | null
           source_system?: string
           status?: string
+          subject?: string | null
           suggested_technician_id?: string | null
+          ticket_number?: string | null
           title?: string | null
           updated_at?: string
         }
