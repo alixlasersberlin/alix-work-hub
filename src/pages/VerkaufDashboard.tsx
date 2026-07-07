@@ -161,7 +161,7 @@ export default function VerkaufDashboard() {
   const distinctItems = itemStats.length;
 
   return (
-    <div className="p-6 lg:p-8 animate-fade-in space-y-6">
+    <div className="p-6 lg:p-8 animate-fade-in space-y-6 min-w-0 max-w-full overflow-x-hidden">
       <PageHeader
         icon={TrendingUp}
         title="Verkauf"
