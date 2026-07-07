@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Loader2, Pencil, Plus, Warehouse, Link2, Link2Off, X, Sparkles, Package, Search, ArrowUpDown, ArrowUp, ArrowDown, Mail, Send, PackageCheck, FileDown, FileText, Wrench, Inbox } from 'lucide-react';
+import { Loader2, Pencil, Plus, Warehouse, Link2, Link2Off, X, Sparkles, Package, Search, ArrowUpDown, ArrowUp, ArrowDown, Mail, Send, PackageCheck, FileDown, FileText, Wrench, Inbox, Gavel } from 'lucide-react';
 import WareneingangDialog, { type WareneingangDialogHandle } from '@/components/WareneingangDialog';
 import { useNavigate } from 'react-router-dom';
 import { sbRepair } from '@/lib/repair/api';
