@@ -908,14 +908,30 @@ export default function OrderDetail() {
                 {order.deposit_ok_by ? ` · ${order.deposit_ok_by}` : ''}
               </p>
             )}
-            {canWriteDeposit && (
-              <div className="flex justify-end pt-2">
-                <Button onClick={saveDeposit} disabled={savingDeposit} className="gold-gradient text-primary-foreground">
-                  {savingDeposit && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  Speichern
-                </Button>
-              </div>
-            )}
+            {canWriteDeposit && (() => {
+              const cur = order.currency || 'EUR';
+              const mainAmt = parseFloat(String(depositAmount).replace(',', '.')) || 0;
+              const openMain = depositOk ? 0 : mainAmt;
+              const openAdd = additionalDeposits.reduce((s, d) => s + (d.geleistet ? 0 : Number(d.amount) || 0), 0);
+              const openTotal = openMain + openAdd;
+              const fmt = (n: number) => n.toLocaleString('de-DE', { style: 'currency', currency: cur });
+              return (
+                <div className="flex items-center justify-between pt-2 gap-3">
+                  <Link
+                    to="/finance/anzahlungen"
+                    className="text-sm text-primary hover:underline"
+                    title="Zur Anzahlungs-Übersicht"
+                  >
+                    Offene Anzahlung: <span className={openTotal > 0 ? 'font-semibold text-red-400' : 'font-semibold text-emerald-400'}>{fmt(openTotal)}</span> →
+                  </Link>
+                  <Button onClick={saveDeposit} disabled={savingDeposit} className="gold-gradient text-primary-foreground">
+                    {savingDeposit && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                    Speichern
+                  </Button>
+                </div>
+              );
+            })()}
+
 
             {/* Weitere Anzahlungen */}
             <div className="pt-4 mt-4 border-t border-border space-y-3">
