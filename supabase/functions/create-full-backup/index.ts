@@ -331,8 +331,14 @@ async function queueNextStep(params: {
     started_at: params.startedAt,
   });
 
-  // Retry on transient gateway/boot errors (HTML 5xx, 502/503/504, network errors).
-  const maxAttempts = 5;
+  // Retry on transient gateway/boot errors (HTML 5xx, 502/503/504, 546 compute,
+  // network errors). Give the Edge Worker pool a moment to free CPU/memory
+  // between the finished step and the next boot — Supabase returns HTTP 546
+  // ("not enough compute resources") when we chain invocations too tightly.
+  const maxAttempts = 8;
+  // Cooldown BEFORE the first invocation so the current worker fully releases
+  // its compute budget before the next one boots. Fixes daily 22:00 failures.
+  await new Promise((r) => setTimeout(r, 3000));
   let lastErr = "";
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     try {
@@ -353,11 +359,18 @@ async function queueNextStep(params: {
 
       const text = await res.text();
       lastErr = summarizeUpstreamError(res.status, text);
+      // HTTP 546 = compute-exhausted on next boot → always retriable, needs long backoff.
+      const isCompute546 = res.status === 546;
       const retriable = res.status >= 500 || res.status === 429;
       console.error(`queueNextStep attempt ${attempt}/${maxAttempts} failed: ${lastErr}`);
       if (!retriable || attempt === maxAttempts) {
         throw new Error(`Nächster Backup-Schritt konnte nicht gestartet werden: ${lastErr}`);
       }
+      // Longer, less aggressive backoff for 546 to let the worker pool recover.
+      const base = isCompute546 ? 8000 : 1000;
+      const delay = Math.min(base * 2 ** (attempt - 1), 60000);
+      await new Promise((r) => setTimeout(r, delay));
+      continue;
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       lastErr = msg;
@@ -365,11 +378,12 @@ async function queueNextStep(params: {
       if (attempt === maxAttempts) {
         throw new Error(`Nächster Backup-Schritt konnte nicht gestartet werden: ${msg}`);
       }
+      const delay = Math.min(1000 * 2 ** (attempt - 1), 30000);
+      await new Promise((r) => setTimeout(r, delay));
     }
-    // Exponential backoff: 500ms, 1s, 2s, 4s
-    await new Promise((r) => setTimeout(r, 500 * 2 ** (attempt - 1)));
   }
 }
+
 
 function triggerNextStep(
   adminClient: BackupAdminClient,
