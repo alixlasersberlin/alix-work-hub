@@ -223,11 +223,6 @@ const navItems: NavItem[] = [
     path: '/crm/after-sales', label: 'AFTER SALES', icon: HeartPulse,
     roles: ['Admin', 'Super Admin', 'After Sales', 'Vertrieb', 'Marketing', 'Service', 'Geschäftsführung', 'Order', 'SACHBEARBEITUNG', 'Kundenservice', 'Auftragsverwaltung'],
     children: [
-      { path: '/verkauf/anfragen', label: 'Interessenten', icon: Inbox, roles: ['Admin','Super Admin','Vertrieb','Vertriebsleitung','Order','SACHBEARBEITUNG'] },
-      { path: '/verkauf/angebote', label: 'Angebote', icon: FileText, roles: ['Admin','Super Admin','Auftragsverwaltung','Order','Tourenplanung','Finance','Österreich','SACHBEARBEITUNG'] },
-      { path: '/auftraege', label: 'Aufträge', icon: ClipboardList, roles: ['Admin','Super Admin','Auftragsverwaltung','Order','Tourenplanung','Finance','Österreich','SACHBEARBEITUNG'] },
-      { path: '/kunden', label: 'Kunden', icon: Building2, roles: ['Admin','Super Admin','Auftragsverwaltung','Order','Tourenplanung','Finance','Österreich','SACHBEARBEITUNG'] },
-      { path: '/lager/lagergeraete', label: 'Geräte', icon: Warehouse, roles: ['Admin','Super Admin','Order','SACHBEARBEITUNG'] },
       { path: '/crm/after-sales', label: 'After Sales', icon: HeartPulse, roles: ['Admin','Super Admin','After Sales','Vertrieb','Marketing','Service','Geschäftsführung','Order','SACHBEARBEITUNG','Kundenservice','Auftragsverwaltung'] },
       { path: '/crm/after-sales/erledigt', label: 'Erledigte Fälle', icon: CheckCircle2, roles: ['Admin','Super Admin','After Sales','Vertrieb','Marketing','Service','Geschäftsführung','Order','SACHBEARBEITUNG','Kundenservice','Auftragsverwaltung'] },
       { path: '/crm/after-sales/reports', label: 'Reports & Export', icon: BarChart3, roles: ['Admin','Super Admin','After Sales','Vertrieb','Marketing','Service','Geschäftsführung','Order','SACHBEARBEITUNG','Kundenservice','Auftragsverwaltung'] },
