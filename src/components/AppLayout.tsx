@@ -1471,11 +1471,11 @@ export default function AppLayout() {
               <p className="text-[11px] text-muted-foreground truncate">{profile?.email}</p>
             </div>
           )}
-          <div className="flex gap-1 items-center">
+          <div className="flex flex-wrap gap-1 items-center">
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-foreground hidden md:inline-flex"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground hidden md:inline-flex flex-shrink-0"
               onClick={() => setCollapsed(!collapsed)}
               title={collapsed ? "Menü erweitern" : "Menü einklappen"}
             >
@@ -1483,41 +1483,43 @@ export default function AppLayout() {
             </Button>
             <Button
               variant="ghost"
-              className="h-8 justify-start text-[14.5px] px-2 text-muted-foreground hover:text-foreground"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground flex-shrink-0"
               onClick={() => navigate('/bug-capa')}
               title="Bugs"
+              aria-label="Bugs"
             >
               <Shield className="w-4 h-4" />
-              <span className="ml-1.5">Bugs</span>
             </Button>
             <Button
               variant="ghost"
-              className="h-8 justify-start text-[14.5px] px-2 text-muted-foreground hover:text-foreground"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground flex-shrink-0"
               onClick={() => navigate('/sicherheit')}
               title="Sicherheit"
+              aria-label="Sicherheit"
             >
               <ShieldCheck className="w-4 h-4" />
-              <span className="ml-1.5">Sicherheit</span>
             </Button>
             <Button
               variant="ghost"
-              className="h-8 justify-start text-[14.5px] px-2 text-muted-foreground hover:text-foreground"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground flex-shrink-0"
               onClick={() => navigate('/hilfe')}
               title="Hilfe"
+              aria-label="Hilfe"
             >
               <HelpCircle className="w-4 h-4" />
-              <span className="ml-1.5">Hilfe</span>
             </Button>
             <Button
               variant="ghost"
-              className="h-8 flex-1 justify-start text-[14.5px] px-2 text-muted-foreground hover:text-destructive"
+              className="h-8 ml-auto justify-start text-[13px] px-2 text-muted-foreground hover:text-destructive flex-shrink-0"
               onClick={signOut}
               title="Abmelden"
             >
               <LogOut className="w-4 h-4" />
               <span className="ml-1.5">Abmelden</span>
             </Button>
-            
           </div>
         </div>
 
