@@ -238,6 +238,7 @@ export default function Lagergeraete({
   };
 
   const canReserve = isAdmin || hasRole('Order');
+  const canManage = isAdmin || hasRole('Order') || hasRole('Auftragsverwaltung') || hasRole('SACHBEARBEITUNG');
   const [devices, setDevices] = useState<LagerDevice[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
@@ -1680,7 +1681,7 @@ export default function Lagergeraete({
         )}
       </div>
 
-      {isAdmin && (
+      {canManage && (
         <div className="flex items-center gap-3 px-1">
           <Switch
             id="selection-mode"
@@ -1701,7 +1702,7 @@ export default function Lagergeraete({
         </div>
       )}
 
-      {selectionMode && selectedIds.size > 0 && isAdmin && (
+      {selectionMode && selectedIds.size > 0 && canManage && (
         <div className="rounded-lg border border-primary/40 bg-primary/5 p-3 flex items-center gap-3 flex-wrap">
           <span className="text-sm font-medium">{selectedIds.size} ausgewählt</span>
           <BulkSelect value={bulkStatus} onValueChange={(v) => setBulkStatus(v as DeviceStatus)}>
