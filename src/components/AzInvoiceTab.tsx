@@ -321,6 +321,25 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
     return { doc, fileName, blob };
   }
 
+  async function saveTaxPercentage(silent = false) {
+    if (!order?.id) return false;
+    setSavingTax(true);
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ az_tax_percentage: taxPercentage } as any)
+        .eq('id', order.id);
+      if (error) throw error;
+      if (!silent) toast.success(`MwSt-Einstellung gespeichert: ${taxPercentage}%`);
+      return true;
+    } catch (e: any) {
+      toast.error('MwSt konnte nicht gespeichert werden: ' + (e?.message || 'Unbekannter Fehler'));
+      return false;
+    } finally {
+      setSavingTax(false);
+    }
+  }
+
   async function recordNoteAndOrderDeposit() {
     if (!order?.id) return;
     try {
@@ -340,6 +359,8 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         await supabase.from('orders').update({ deposit_amount: grossDeposit } as any).eq('id', order.id);
       }
     } catch { /* nicht kritisch */ }
+    // MwSt-Einstellung mitspeichern
+    await saveTaxPercentage(true);
   }
 
   async function bookToFinance(): Promise<boolean> {
