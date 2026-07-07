@@ -14633,6 +14633,7 @@ export type Database = {
         }
         Returns: string
       }
+      get_current_user_role_names: { Args: never; Returns: string[] }
       get_customer_bank_details: {
         Args: { _customer_id: string }
         Returns: {
