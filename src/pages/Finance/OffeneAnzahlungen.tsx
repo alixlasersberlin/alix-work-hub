@@ -231,6 +231,7 @@ export default function OffeneAnzahlungen() {
 
   return (
     <div className="p-4 sm:p-6 space-y-6">
+      {!bookFor && (<>
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <PageHeader
           icon={Wallet}
@@ -400,6 +401,7 @@ export default function OffeneAnzahlungen() {
           </Table>
         )}
       </div>
+      </>)}
 
       <BookingDialog open={!!bookFor} deposit={bookFor} onClose={() => setBookFor(null)} onDone={load} />
 
