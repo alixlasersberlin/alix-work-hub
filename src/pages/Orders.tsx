@@ -745,16 +745,23 @@ export default function Orders() {
                         </td>
                         <td className="px-4 py-3 text-xs">
                           {Number(o.deposit_amount) > 0 ? (
-                            <span className="inline-flex items-center gap-1.5 font-medium">
-                              <span className="text-foreground">
-                                {Number(o.deposit_amount).toLocaleString('de-DE', { style: 'currency', currency: o.currency || 'EUR' })}
+                            <div className="flex flex-col gap-0.5">
+                              <span className="inline-flex items-center gap-1.5 font-medium">
+                                <span className="text-foreground">
+                                  {Number(o.deposit_amount).toLocaleString('de-DE', { style: 'currency', currency: o.currency || 'EUR' })}
+                                </span>
+                                {o.deposit_ok ? (
+                                  <CheckCircle2 className="w-4 h-4 text-emerald-500" aria-label="bezahlt" />
+                                ) : (
+                                  <XCircle className="w-4 h-4 text-red-500" aria-label="nicht bezahlt" />
+                                )}
                               </span>
-                              {o.deposit_ok ? (
-                                <CheckCircle2 className="w-4 h-4 text-emerald-500" aria-label="bezahlt" />
-                              ) : (
-                                <XCircle className="w-4 h-4 text-red-500" aria-label="nicht bezahlt" />
+                              {o.deposit_ok && o._azInvoiceNumber && (
+                                <span className="text-[10px] text-muted-foreground" title="Anzahlungsrechnung">
+                                  Rg. {o._azInvoiceNumber}
+                                </span>
                               )}
-                            </span>
+                            </div>
                           ) : (
                             <span className="text-muted-foreground">—</span>
                           )}
