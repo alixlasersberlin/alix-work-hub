@@ -152,12 +152,19 @@ const XL_TABLES = new Set<string>([
   "ai_service_analyses",
   "service_ai_analyses",
 ]);
+// Nano-Tabellen mit potenziell mehreren MB pro Row (z. B. Base64-Bilder in einer Zelle).
+const NANO_TABLES = new Set<string>([
+  "alix_sign_signatures", // signature_image_data (data-URL) kann pro Row hunderte KB sein
+]);
 const HEAVY_PAGE_SIZE = 10;
 const XL_PAGE_SIZE = 3;
+const NANO_PAGE_SIZE = 1;
 const pageSizeFor = (table: string) =>
-  XL_TABLES.has(table) ? XL_PAGE_SIZE
+  NANO_TABLES.has(table) ? NANO_PAGE_SIZE
+    : XL_TABLES.has(table) ? XL_PAGE_SIZE
     : HEAVY_TABLES.has(table) ? HEAVY_PAGE_SIZE
     : DB_PAGE_SIZE;
+
 const STORAGE_LIST_LIMIT = 250;
 const encoder = new TextEncoder();
 
