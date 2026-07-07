@@ -108,12 +108,19 @@ Deno.serve(async (req) => {
       }
     }
 
-    await sendUserInvitationEmail({
-      adminClient,
-      callerClient,
-      userId,
-      email,
-    });
+    let emailSendWarning: string | null = null;
+    try {
+      const result = await sendUserInvitationEmail({
+        adminClient,
+        callerClient,
+        userId,
+        email,
+      });
+      emailSendWarning = result.emailSendWarning;
+    } catch (inviteErr: any) {
+      console.error("Invitation flow error (non-fatal):", inviteErr);
+      emailSendWarning = inviteErr?.message ?? "Invitation email failed";
+    }
 
     // 4. Audit log
     const { data: { user: callerUser } } = await callerClient.auth.getUser();
@@ -125,7 +132,7 @@ Deno.serve(async (req) => {
       details: { email, full_name, role_ids },
     });
 
-    return json({ success: true, user_id: userId });
+    return json({ success: true, user_id: userId, email_send_warning: emailSendWarning });
   } catch (error: any) {
     console.error("create-user error:", error);
     return json({ error: error?.message ?? "Internal server error" }, 500);

@@ -22,6 +22,7 @@ export async function sendUserInvitationEmail({
     redirectTo,
   });
 
+  let emailSendWarning: string | null = null;
   if (inviteError) {
     const { error: magicErr } = await adminClient.auth.signInWithOtp({
       email,
@@ -29,7 +30,8 @@ export async function sendUserInvitationEmail({
     });
 
     if (magicErr) {
-      throw new Error(`Invitation send error: ${inviteError.message} / ${magicErr.message}`);
+      emailSendWarning = `${inviteError.message} / ${magicErr.message}`;
+      console.warn("Invitation email not sent:", emailSendWarning);
     }
   }
 
@@ -73,5 +75,6 @@ export async function sendUserInvitationEmail({
 
   return {
     usedMagicLinkFallback: !!inviteError,
+    emailSendWarning,
   };
 }
