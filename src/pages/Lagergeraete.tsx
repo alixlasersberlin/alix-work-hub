@@ -2094,6 +2094,7 @@ export default function Lagergeraete({
                   .replace(/\[Reparatur:\s*[^\]]+\]/g, '')
                   .replace(/\s+/g, ' ')
                   .trim();
+                const inRepair = parseRepairId(d.notes);
                 const isLawyer = (d.orders?.order_status || '').toLowerCase() === 'anwalt';
                 const rowClass = isLawyer
                   ? 'bg-red-500/15 hover:bg-red-500/20 border-l-4 border-l-red-600'
