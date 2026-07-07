@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Loader2, Pencil, Plus, Warehouse, Link2, Link2Off, X, Sparkles, Package, Search, ArrowUpDown, ArrowUp, ArrowDown, Mail, Send, PackageCheck, FileDown, FileText, Wrench, Inbox } from 'lucide-react';
+import { Loader2, Pencil, Plus, Warehouse, Link2, Link2Off, X, Sparkles, Package, Search, ArrowUpDown, ArrowUp, ArrowDown, Mail, Send, PackageCheck, FileDown, FileText, Wrench, Inbox, Gavel } from 'lucide-react';
 import WareneingangDialog, { type WareneingangDialogHandle } from '@/components/WareneingangDialog';
 import { useNavigate } from 'react-router-dom';
 import { sbRepair } from '@/lib/repair/api';
@@ -63,7 +63,7 @@ type LagerDevice = {
   created_at: string;
   reserved_order_id: string | null;
   reservation_week: string | null;
-  orders?: { id: string; order_number: string; customer_name?: string | null } | null;
+  orders?: { id: string; order_number: string; customer_name?: string | null; order_status?: string | null; lawyer_reason?: string | null } | null;
 };
 
 function formatWeek(w: string | null | undefined): string {
@@ -601,17 +601,19 @@ export default function Lagergeraete({
     }
     const rows = (data ?? []) as any[];
     const orderIds = Array.from(new Set(rows.map((r) => r.reserved_order_id).filter(Boolean)));
-    let orderMap: Record<string, { id: string; order_number: string; customer_name?: string | null }> = {};
+    let orderMap: Record<string, { id: string; order_number: string; customer_name?: string | null; order_status?: string | null; lawyer_reason?: string | null }> = {};
     if (orderIds.length > 0) {
       const { data: ords } = await supabase
         .from('orders')
-        .select('id, order_number, customers(company_name, contact_name)')
+        .select('id, order_number, order_status, lawyer_reason, customers(company_name, contact_name)')
         .in('id', orderIds);
       (ords ?? []).forEach((o: any) => {
         orderMap[o.id] = {
           id: o.id,
           order_number: o.order_number,
           customer_name: o.customers?.company_name || o.customers?.contact_name || null,
+          order_status: o.order_status ?? null,
+          lawyer_reason: o.lawyer_reason ?? null,
         };
       });
     }
@@ -1911,17 +1913,25 @@ export default function Lagergeraete({
             {filteredDevices.map((d) => {
               const s = getStatusFromNotes(d.notes);
               const inRepair = parseRepairId(d.notes);
-              const cardClass = inRepair
+              const isLawyer = (d.orders?.order_status || '').toLowerCase() === 'anwalt';
+              const cardClass = isLawyer
                 ? 'bg-red-500/15 border-red-500/60'
-                : d.reserved_order_id
-                  ? 'bg-yellow-500/10'
-                  : 'bg-card';
+                : inRepair
+                  ? 'bg-red-500/15 border-red-500/60'
+                  : d.reserved_order_id
+                    ? 'bg-yellow-500/10'
+                    : 'bg-card';
               return (
                 <div
                   key={d.id}
                   className={`rounded-lg border border-border p-3 space-y-2 hover:border-primary/40 transition-colors ${cardClass}`}
                 >
-                  {inRepair && (
+                  {isLawyer && (
+                    <div className="-mx-3 -mt-3 mb-1 px-3 py-1.5 bg-red-600 text-white text-xs font-bold tracking-wide rounded-t-lg flex items-center gap-1.5">
+                      <Gavel className="w-3.5 h-3.5" /> ANWALT{d.orders?.lawyer_reason ? ` – ${d.orders.lawyer_reason}` : ''}
+                    </div>
+                  )}
+                  {inRepair && !isLawyer && (
                     <div className="-mx-3 -mt-3 mb-1 px-3 py-1.5 bg-red-600 text-white text-xs font-bold tracking-wide rounded-t-lg flex items-center gap-1.5 animate-pulse">
                       <Wrench className="w-3.5 h-3.5" /> IN REPARATUR
                     </div>
@@ -2085,11 +2095,14 @@ export default function Lagergeraete({
                   .replace(/\s+/g, ' ')
                   .trim();
                 const inRepair = parseRepairId(d.notes);
-                const rowClass = inRepair
-                  ? 'bg-red-500/15 hover:bg-red-500/20 border-l-4 border-l-red-500'
-                  : d.reserved_order_id
-                    ? 'bg-yellow-500/10 hover:bg-yellow-500/15'
-                    : (rowAccentClass ?? '');
+                const isLawyer = (d.orders?.order_status || '').toLowerCase() === 'anwalt';
+                const rowClass = isLawyer
+                  ? 'bg-red-500/15 hover:bg-red-500/20 border-l-4 border-l-red-600'
+                  : inRepair
+                    ? 'bg-red-500/15 hover:bg-red-500/20 border-l-4 border-l-red-500'
+                    : d.reserved_order_id
+                      ? 'bg-yellow-500/10 hover:bg-yellow-500/15'
+                      : (rowAccentClass ?? '');
                 return (
                 <TableRow key={d.id} className={rowClass}>
                   {selectionMode && (
@@ -2137,11 +2150,19 @@ export default function Lagergeraete({
                       <TableCell>
                         {d.orders?.order_number ? (
                           <div className="space-y-1">
+                            {isLawyer && (
+                              <Badge className="bg-red-600 text-white border border-red-700 hover:bg-red-600 font-bold tracking-wide">
+                                <Gavel className="w-3 h-3 mr-1" /> ANWALT
+                              </Badge>
+                            )}
                             <Badge className="font-mono bg-yellow-500/20 text-yellow-600 dark:text-yellow-300 border border-yellow-500/40 hover:bg-yellow-500/25">
                               {d.orders.order_number}
                             </Badge>
                             {d.orders.customer_name && (
                               <div className="text-xs text-muted-foreground truncate max-w-[220px]">{d.orders.customer_name}</div>
+                            )}
+                            {isLawyer && d.orders.lawyer_reason && (
+                              <div className="text-[11px] text-red-500 truncate max-w-[220px]">{d.orders.lawyer_reason}</div>
                             )}
                           </div>
                         ) : (
@@ -2164,11 +2185,19 @@ export default function Lagergeraete({
                       <TableCell>
                         {d.orders?.order_number ? (
                           <div className="space-y-1">
+                            {isLawyer && (
+                              <Badge className="bg-red-600 text-white border border-red-700 hover:bg-red-600 font-bold tracking-wide">
+                                <Gavel className="w-3 h-3 mr-1" /> ANWALT
+                              </Badge>
+                            )}
                             <Badge className="font-mono bg-yellow-500/20 text-yellow-600 dark:text-yellow-300 border border-yellow-500/40 hover:bg-yellow-500/25">
                               {d.orders.order_number}
                             </Badge>
                             {d.orders.customer_name && (
                               <div className="text-xs text-muted-foreground truncate max-w-[220px]">{d.orders.customer_name}</div>
+                            )}
+                            {isLawyer && d.orders.lawyer_reason && (
+                              <div className="text-[11px] text-red-500 truncate max-w-[220px]">{d.orders.lawyer_reason}</div>
                             )}
                           </div>
                         ) : (

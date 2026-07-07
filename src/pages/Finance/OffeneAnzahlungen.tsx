@@ -459,35 +459,61 @@ function BookingDialog({ open, deposit, onClose, onDone }: {
   const [note, setNote] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
+  const [lawyerFlag, setLawyerFlag] = useState(false);
+  const [lawyerReason, setLawyerReason] = useState('');
 
   useEffect(() => {
-    if (deposit) { setAmount(String(deposit.open_amount || '')); setReference(''); setNote(''); setFile(null); setDate(format(new Date(), 'yyyy-MM-dd')); setMethod('ueberweisung'); }
+    if (deposit) {
+      setAmount(String(deposit.open_amount || ''));
+      setReference(''); setNote(''); setFile(null);
+      setDate(format(new Date(), 'yyyy-MM-dd'));
+      setMethod('ueberweisung');
+      setLawyerFlag(false);
+      setLawyerReason('');
+    }
   }, [deposit]);
 
   const save = async () => {
     if (!deposit) return;
     const n = Number(amount.replace(',', '.'));
-    if (!n || n <= 0) { toast.error('Betrag ungültig'); return; }
+    if (lawyerFlag) {
+      if (!deposit.order_id) { toast.error('Kein Auftrag verknüpft – Anwalt-Kennzeichnung nicht möglich'); return; }
+      if (!lawyerReason.trim()) { toast.error('Bitte einen Grund für die Anwaltsübergabe angeben'); return; }
+    } else {
+      if (!n || n <= 0) { toast.error('Betrag ungültig'); return; }
+    }
     setSaving(true);
     try {
-      let proofPath: string | null = null;
-      if (file) {
-        const path = `${deposit.id}/${Date.now()}_${file.name}`;
-        const { error: upErr } = await supabase.storage.from('finance-deposits').upload(path, file, { upsert: false });
-        if (upErr) throw upErr;
-        proofPath = path;
+      if (n > 0) {
+        let proofPath: string | null = null;
+        if (file) {
+          const path = `${deposit.id}/${Date.now()}_${file.name}`;
+          const { error: upErr } = await supabase.storage.from('finance-deposits').upload(path, file, { upsert: false });
+          if (upErr) throw upErr;
+          proofPath = path;
+        }
+        const { error } = await supabase.rpc('finance_deposit_book' as any, {
+          p_deposit_id: deposit.id,
+          p_amount: n,
+          p_method: method,
+          p_reference: reference || null,
+          p_booking_date: date,
+          p_proof_path: proofPath,
+          p_note: (lawyerFlag ? `[ANWALT] ${lawyerReason}${note ? ' — ' + note : ''}` : note) || null,
+        });
+        if (error) throw error;
       }
-      const { error } = await supabase.rpc('finance_deposit_book' as any, {
-        p_deposit_id: deposit.id,
-        p_amount: n,
-        p_method: method,
-        p_reference: reference || null,
-        p_booking_date: date,
-        p_proof_path: proofPath,
-        p_note: note || null,
-      });
-      if (error) throw error;
-      toast.success('Anzahlung gebucht');
+
+      if (lawyerFlag && deposit.order_id) {
+        const { error: oErr } = await supabase
+          .from('orders')
+          .update({ order_status: 'anwalt', lawyer_reason: lawyerReason })
+          .eq('id', deposit.order_id);
+        if (oErr) throw oErr;
+        toast.success('Auftrag auf Anwalt gesetzt & in Anwaltsliste verschoben');
+      } else {
+        toast.success('Anzahlung gebucht');
+      }
       onDone();
       onClose();
     } catch (e: any) {
@@ -541,11 +567,49 @@ function BookingDialog({ open, deposit, onClose, onDone }: {
             <Label>Interner Vermerk</Label>
             <Textarea rows={3} value={note} onChange={(e) => setNote(e.target.value)} />
           </div>
+
+          <div className={cn(
+            "col-span-2 rounded-lg border p-3 space-y-2 transition-colors",
+            lawyerFlag ? "border-destructive/60 bg-destructive/10" : "border-border bg-secondary/40"
+          )}>
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                className="h-4 w-4 accent-destructive"
+                checked={lawyerFlag}
+                onChange={(e) => setLawyerFlag(e.target.checked)}
+              />
+              <span className="text-sm font-semibold text-destructive uppercase tracking-wide">
+                Anwalt – Auftrag auf Hold & in Anwaltsliste verschieben
+              </span>
+            </label>
+            {lawyerFlag && (
+              <div>
+                <Label className="text-xs">Grund (wird in Anwaltsliste angezeigt)</Label>
+                <Textarea
+                  rows={2}
+                  value={lawyerReason}
+                  onChange={(e) => setLawyerReason(e.target.value)}
+                  placeholder="z. B. Zahlungsverzug, Rechtsstreit …"
+                  className="mt-1"
+                />
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  Der Auftrag wird auf Status „Anwalt" gesetzt. Alle Reservierungen und Bestellungen zu diesem Auftrag
+                  werden automatisch mit einem roten Anwalt-Banner gekennzeichnet.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={saving}>Abbrechen</Button>
-          <Button onClick={save} disabled={saving} className="gap-2">
-            {saving && <Loader2 className="w-4 h-4 animate-spin" />}Speichern
+          <Button
+            onClick={save}
+            disabled={saving}
+            className={cn("gap-2", lawyerFlag && "bg-destructive text-destructive-foreground hover:bg-destructive/90")}
+          >
+            {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+            {lawyerFlag ? 'An Anwalt übergeben' : 'Speichern'}
           </Button>
         </DialogFooter>
       </DialogContent>
