@@ -149,7 +149,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         ['Kundennr.', (() => {
           const ext = customer?.external_customer_id;
           const cleanExt = ext && !String(ext).startsWith('manual-') ? String(ext) : '';
-          return String((customer as any)?.raw_data?.contact_number || (customer as any)?.raw_data?.customer_number || cleanExt || customer?.id?.slice(0, 8) || '—');
+          return String((customer as any)?.raw_data?.contact_number || (customer as any)?.raw_data?.customer_number || cleanExt || orderNo || customer?.id?.slice(0, 8) || '—');
         })()],
       ];
       for (const [k, v] of meta) {
