@@ -2094,12 +2094,14 @@ export default function Lagergeraete({
                   .replace(/\[Reparatur:\s*[^\]]+\]/g, '')
                   .replace(/\s+/g, ' ')
                   .trim();
-                const inRepair = parseRepairId(d.notes);
-                const rowClass = inRepair
-                  ? 'bg-red-500/15 hover:bg-red-500/20 border-l-4 border-l-red-500'
-                  : d.reserved_order_id
-                    ? 'bg-yellow-500/10 hover:bg-yellow-500/15'
-                    : (rowAccentClass ?? '');
+                const isLawyer = (d.orders?.order_status || '').toLowerCase() === 'anwalt';
+                const rowClass = isLawyer
+                  ? 'bg-red-500/15 hover:bg-red-500/20 border-l-4 border-l-red-600'
+                  : inRepair
+                    ? 'bg-red-500/15 hover:bg-red-500/20 border-l-4 border-l-red-500'
+                    : d.reserved_order_id
+                      ? 'bg-yellow-500/10 hover:bg-yellow-500/15'
+                      : (rowAccentClass ?? '');
                 return (
                 <TableRow key={d.id} className={rowClass}>
                   {selectionMode && (
