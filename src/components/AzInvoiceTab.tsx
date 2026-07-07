@@ -10,6 +10,7 @@ import { createPDF } from '@/lib/pdf-utils';
 import autoTable from 'jspdf-autotable';
 import templateAsset from '@/assets/az-rechnung-template.jpg.asset.json';
 import logoAsset from '@/assets/alix-logo-gold-pdf.png.asset.json';
+import { postPaymentToJournal } from '@/lib/finance/journal';
 
 type BuildMode = 'download' | 'blob';
 
@@ -442,10 +443,26 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         release_status: 'nicht_freigegeben',
         note: `Anzahlungsrechnung ${invoiceNumber} – ${positionLabel || `Anzahlung Auftrag ${orderNo}`} (MwSt ${taxPercentage}%).`,
       };
-      const { error } = await supabase.from('finance_deposits' as any).insert(payload);
+      const { data: inserted, error } = await supabase.from('finance_deposits' as any).insert(payload).select('id').maybeSingle();
       if (error) throw error;
+      await postPaymentToJournal({
+        order_id: order?.id ?? null,
+        order_number: orderNo || null,
+        customer_id: customer?.id ?? null,
+        invoice_number: invoiceNumber,
+        reference: invoiceNumber,
+        amount_gross: grossAmt,
+        amount_net: netAmt,
+        amount_vat: vatAmt,
+        booking_date: invoiceDate,
+        description: `Anzahlungsrechnung ${invoiceNumber} · Auftrag ${orderNo || '—'} (MwSt ${taxPercentage}%)`,
+        source_table: 'finance_deposits',
+        source_id: (inserted as any)?.id ?? null,
+        vorgang: 'Anzahlungsrechnung',
+      });
       toast.success(`In Buchhaltung übernommen: ${invoiceNumber} wurde unter Offene Anzahlungen erfasst.`);
       onReload?.();
+
     } catch (e: any) {
       toast.error('Konnte nicht in Buchhaltung schreiben: ' + (e?.message || 'Unbekannter Fehler'));
     } finally {

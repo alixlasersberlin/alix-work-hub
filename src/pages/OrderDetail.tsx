@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { createRestbestellungMarker, hasPendingRestbestellung } from '@/lib/restbestellung';
 import { sendDepositReceivedNotice } from '@/lib/send-deposit-received-notice';
+import { postPaymentToJournal } from '@/lib/finance/journal';
 import BankFinancingTab from '@/components/BankFinancingTab';
 import AtPurchaseTab from '@/components/AtPurchaseTab';
 import AtApprovalTab from '@/components/AtApprovalTab';
@@ -249,9 +250,23 @@ export default function OrderDetail() {
         trigger: 'automatisch',
       });
       if (mail.ok) toast.success(mail.message); else toast.error('Anzahlungs-Mail nicht versendet: ' + mail.message);
+      if (parsedAmount && parsedAmount > 0) {
+        await postPaymentToJournal({
+          order_id: id!,
+          order_number: order?.order_number ?? null,
+          customer_id: order?.customer_id ?? null,
+          amount_gross: parsedAmount,
+          booking_date: depositBookingDate || null,
+          description: `Anzahlung Auftrag ${order?.order_number || ''} · bestätigt von ${depositBy.trim()}`,
+          source_table: 'orders',
+          source_id: id!,
+          vorgang: 'Anzahlung',
+        });
+      }
     }
     loadAll();
   }
+
 
   async function addAdditionalDeposit() {
     const amt = newAddAmount.trim() ? parseFloat(newAddAmount.replace(',', '.')) : NaN;
@@ -280,7 +295,19 @@ export default function OrderDetail() {
         keySuffix: depId ? `add-${depId}` : `add-${Date.now()}`,
       });
       if (mail.ok) toast.success(mail.message); else toast.error('Anzahlungs-Mail nicht versendet: ' + mail.message);
+      await postPaymentToJournal({
+        order_id: id!,
+        order_number: order?.order_number ?? null,
+        customer_id: order?.customer_id ?? null,
+        amount_gross: amt,
+        booking_date: newAddDate,
+        description: `Weitere Anzahlung Auftrag ${order?.order_number || ''}${newAddNote.trim() ? ' · ' + newAddNote.trim() : ''}`,
+        source_table: 'order_additional_deposits',
+        source_id: depId ?? null,
+        vorgang: 'Anzahlung',
+      });
     }
+
     loadAll();
   }
 
@@ -297,7 +324,21 @@ export default function OrderDetail() {
         keySuffix: `add-${depId}`,
       });
       if (mail.ok) toast.success(mail.message); else toast.error('Anzahlungs-Mail nicht versendet: ' + mail.message);
+      if (prev?.amount) {
+        await postPaymentToJournal({
+          order_id: id!,
+          order_number: order?.order_number ?? null,
+          customer_id: order?.customer_id ?? null,
+          amount_gross: Number(prev.amount) || 0,
+          booking_date: prev?.booking_date ?? null,
+          description: `Weitere Anzahlung Auftrag ${order?.order_number || ''}${prev?.note ? ' · ' + prev.note : ''}`,
+          source_table: 'order_additional_deposits',
+          source_id: depId,
+          vorgang: 'Anzahlung',
+        });
+      }
     }
+
   }
 
   async function deleteAdditionalDeposit(depId: string) {
