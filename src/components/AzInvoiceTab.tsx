@@ -10,6 +10,7 @@ import { createPDF } from '@/lib/pdf-utils';
 import autoTable from 'jspdf-autotable';
 import templateAsset from '@/assets/az-rechnung-template.jpg.asset.json';
 import logoAsset from '@/assets/alix-logo-gold-pdf.png.asset.json';
+import { postPaymentToJournal } from '@/lib/finance/journal';
 
 type BuildMode = 'download' | 'blob';
 
