@@ -85,7 +85,11 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
     return d.toISOString().slice(0, 10);
   });
   const [depositAmount, setDepositAmount] = useState<string>(orderDeposit > 0 ? String(orderDeposit) : '');
-  const [taxPercentage, setTaxPercentage] = useState<number>(19);
+  const [taxPercentage, setTaxPercentage] = useState<number>(() => {
+    const saved = order?.az_tax_percentage;
+    return saved === null || saved === undefined ? 19 : Number(saved);
+  });
+  const [savingTax, setSavingTax] = useState(false);
   const [positionLabel, setPositionLabel] = useState<string>(
     `Anzahlung gemäß Auftrag ${orderNo}`.trim()
   );
