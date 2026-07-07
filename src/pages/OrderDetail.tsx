@@ -939,7 +939,7 @@ export default function OrderDetail() {
                     </Link>
                     {azInvoiceDoc && (
                       <a
-                        href={azInvoiceDoc.download_token ? `/d/${azInvoiceDoc.download_token}` : '#'}
+                        href={azInvoiceDoc.download_token ? `https://alixwork.de/d/${azInvoiceDoc.download_token}` : '#'}
                         target="_blank"
                         rel="noreferrer"
                         onClick={async (e) => {
@@ -955,6 +955,7 @@ export default function OrderDetail() {
                         <FileText className="w-3.5 h-3.5" /> Anzahlungsrechnung öffnen →
                       </a>
                     )}
+
                   </div>
                   <Button onClick={saveDeposit} disabled={savingDeposit} className="gold-gradient text-primary-foreground">
                     {savingDeposit && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
