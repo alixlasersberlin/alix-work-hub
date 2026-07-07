@@ -75,5 +75,6 @@ export async function sendUserInvitationEmail({
 
   return {
     usedMagicLinkFallback: !!inviteError,
+    emailSendWarning,
   };
 }
