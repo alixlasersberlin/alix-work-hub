@@ -601,17 +601,19 @@ export default function Lagergeraete({
     }
     const rows = (data ?? []) as any[];
     const orderIds = Array.from(new Set(rows.map((r) => r.reserved_order_id).filter(Boolean)));
-    let orderMap: Record<string, { id: string; order_number: string; customer_name?: string | null }> = {};
+    let orderMap: Record<string, { id: string; order_number: string; customer_name?: string | null; order_status?: string | null; lawyer_reason?: string | null }> = {};
     if (orderIds.length > 0) {
       const { data: ords } = await supabase
         .from('orders')
-        .select('id, order_number, customers(company_name, contact_name)')
+        .select('id, order_number, order_status, lawyer_reason, customers(company_name, contact_name)')
         .in('id', orderIds);
       (ords ?? []).forEach((o: any) => {
         orderMap[o.id] = {
           id: o.id,
           order_number: o.order_number,
           customer_name: o.customers?.company_name || o.customers?.contact_name || null,
+          order_status: o.order_status ?? null,
+          lawyer_reason: o.lawyer_reason ?? null,
         };
       });
     }
