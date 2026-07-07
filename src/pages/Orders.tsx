@@ -264,7 +264,7 @@ export default function Orders() {
       const orderNumbers = Array.from(new Set(loaded.map(o => o.order_number).filter(Boolean)));
       if (orderIds.length === 0 && orderNumbers.length === 0) return;
 
-      const [itemsRes, posRes] = await Promise.all([
+      const [itemsRes, posRes, depRes] = await Promise.all([
         orderIds.length > 0
           ? supabase
               .from('order_items')
@@ -276,6 +276,12 @@ export default function Orders() {
               .from('production_orders')
               .select('order_number')
               .in('order_number', orderNumbers)
+          : Promise.resolve({ data: [] as any[] }),
+        orderIds.length > 0
+          ? supabase
+              .from('finance_deposits' as any)
+              .select('order_id, invoice_number, issue_date')
+              .in('order_id', orderIds)
           : Promise.resolve({ data: [] as any[] }),
       ]);
       if (requestId !== loadRequestRef.current) return;
@@ -292,10 +298,17 @@ export default function Orders() {
         poCountMap[p.order_number] = (poCountMap[p.order_number] || 0) + 1;
       });
 
+      const azInvoiceByOrder: Record<string, string> = {};
+      (depRes.data || []).forEach((d: any) => {
+        if (!d?.order_id || !d?.invoice_number) return;
+        if (!azInvoiceByOrder[d.order_id]) azInvoiceByOrder[d.order_id] = d.invoice_number;
+      });
+
       setOrders(prev => prev.map(o => orderIdSet.has(o.id) ? ({
         ...o,
         order_items: itemsByOrder[o.id] || o.order_items || [],
         _productionOrderCount: o.order_number ? (poCountMap[o.order_number] || 0) : 0,
+        _azInvoiceNumber: azInvoiceByOrder[o.id] || o._azInvoiceNumber || null,
       }) : o));
     };
 
