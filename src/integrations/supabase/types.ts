@@ -9811,6 +9811,7 @@ export type Database = {
       }
       orders: {
         Row: {
+          az_tax_percentage: number | null
           billing_address: Json | null
           case_number: string | null
           created_at: string
@@ -9846,6 +9847,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          az_tax_percentage?: number | null
           billing_address?: Json | null
           case_number?: string | null
           created_at?: string
@@ -9881,6 +9883,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          az_tax_percentage?: number | null
           billing_address?: Json | null
           case_number?: string | null
           created_at?: string
