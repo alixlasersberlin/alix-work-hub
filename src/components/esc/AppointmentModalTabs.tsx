@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,7 +13,7 @@ import { ESC_STATUS_LABELS } from './StatusBadge';
 import { toast } from 'sonner';
 import { downloadIcs } from '@/lib/esc/ics';
 import { publicUrl } from '@/lib/esc/public-url';
-import { Download, Mail, Save, Trash2, XCircle, CheckCircle2, MoveRight, Paperclip } from 'lucide-react';
+import { Download, Mail, Save, Trash2, XCircle, CheckCircle2, Paperclip, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { CustomerSearchCombobox } from './crm/CustomerSearchCombobox';
@@ -116,6 +115,20 @@ export function AppointmentModalTabs({
     setForm(buildInitialForm(initial, defaultStart, departments));
   }, [open, initial?.id, defaultStartTime, departments]);
 
+  useEffect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [open, onClose]);
+
   const previewLink = useMemo(
     () => publicUrl(`/termin-bestaetigen/${initial?.confirmationToken || 'PREVIEW-TOKEN'}`),
     [initial?.confirmationToken],
@@ -172,18 +185,37 @@ export function AppointmentModalTabs({
     onClose();
   };
 
+  if (!open) return null;
+
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-3xl max-h-[92vh] overflow-hidden flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+    <div
+      className="fixed inset-0 z-[10000] flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm"
+      onPointerDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="esc-appointment-dialog-title"
+        aria-describedby="esc-appointment-dialog-description"
+        className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-lg border bg-card p-6 shadow-lg"
+        onPointerDown={(event) => event.stopPropagation()}
+      >
+        <header className="mb-4 flex items-start justify-between gap-3">
+          <div>
+            <h2 id="esc-appointment-dialog-title" className="flex items-center gap-2 text-lg font-semibold leading-none tracking-tight">
             {initial?.id ? 'Termin bearbeiten' : 'Neuer Termin'}
             {initial?.status && <Badge variant="outline" className="text-[10px]">{ESC_STATUS_LABELS[initial.status as EscStatus] || initial.status}</Badge>}
-          </DialogTitle>
-          <DialogDescription className="sr-only">
+            </h2>
+            <p id="esc-appointment-dialog-description" className="sr-only">
             Termin-Daten bearbeiten, Teilnehmer und Ressourcen verwalten.
-          </DialogDescription>
-        </DialogHeader>
+            </p>
+          </div>
+          <Button type="button" variant="ghost" size="icon" onClick={onClose} aria-label="Termin schließen">
+            <X className="h-4 w-4" />
+          </Button>
+        </header>
 
         <Tabs value={tab} onValueChange={setTab} className="flex-1 flex flex-col overflow-hidden">
           <TabsList className="w-full justify-start overflow-x-auto flex-wrap h-auto">
@@ -551,7 +583,7 @@ export function AppointmentModalTabs({
           </ScrollArea>
         </Tabs>
 
-        <DialogFooter className="gap-2 flex-wrap">
+        <footer className="flex flex-wrap justify-end gap-2 pt-4">
           {initial?.id && onDelete && (
             <Button variant="ghost" className="text-destructive mr-auto" onClick={async () => { await onDelete(initial.id!); onClose(); }}>
               <Trash2 className="w-4 h-4 mr-1" /> Löschen
@@ -579,8 +611,8 @@ export function AppointmentModalTabs({
           <Button onClick={() => handleSubmit()}>
             <Save className="w-4 h-4 mr-1" /> Speichern
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </footer>
+      </section>
+    </div>
   );
 }
