@@ -567,6 +567,18 @@ function AppRoutes() {
             <Route path="protokoll" element={<AiProtocol />} />
             <Route path="einstellungen" element={<AiSettingsPage />} />
           </Route>
+          <Route path="/esc/ech" element={<ProtectedRoute><EchLayout /></ProtectedRoute>}>
+            <Route index element={<EchDashboard />} />
+            <Route path="kommunikation" element={<EchCompose />} />
+            <Route path="kalender" element={<EchCalendar />} />
+            <Route path="erinnerungen" element={<EchReminders />} />
+            <Route path="meetings" element={<EchMeetings />} />
+            <Route path="benachrichtigungen" element={<EchNotifications />} />
+            <Route path="integrationen" element={<EchIntegrations />} />
+            <Route path="vorlagen" element={<EchTemplates />} />
+            <Route path="historie" element={<EchHistory />} />
+            <Route path="einstellungen" element={<EchSettingsPage />} />
+          </Route>
           <Route path="/at-dashboard" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Österreich']}><AtDashboard /></ProtectedRoute>} />
           <Route path="/dashboard/bestellungen" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Auftragsverwaltung','Order','Bestellwesen','SACHBEARBEITUNG','Finance']}><BestellungenDashboard /></ProtectedRoute>} />
           <Route path="/dashboards/verkauf" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Auftragsverwaltung','Order','Vertrieb','Vertriebsleitung','SACHBEARBEITUNG']}><VerkaufDashboard /></ProtectedRoute>} />
