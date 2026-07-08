@@ -1,0 +1,225 @@
+import { useEffect, useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import type { EscAppointment, EscDepartment, EscEmployee, EscPriority, EscStatus } from '@/lib/esc/types';
+import { ESC_STATUS_LABELS } from './StatusBadge';
+import { toast } from 'sonner';
+import { downloadIcs } from '@/lib/esc/ics';
+
+interface Props {
+  open: boolean;
+  onClose: () => void;
+  onSubmit: (payload: Omit<EscAppointment, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void> | void;
+  departments: EscDepartment[];
+  employees: EscEmployee[];
+  initial?: Partial<EscAppointment>;
+  defaultStart?: Date;
+}
+
+const PRIORITY: EscPriority[] = ['low', 'normal', 'high', 'urgent'];
+
+function toInputDate(d: Date | string | undefined): string {
+  if (!d) return '';
+  const dt = typeof d === 'string' ? new Date(d) : d;
+  const pad = (n: number) => (n < 10 ? `0${n}` : n);
+  return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+}
+
+export function AppointmentModal({ open, onClose, onSubmit, departments, employees, initial, defaultStart }: Props) {
+  const start = defaultStart || (initial?.startAt ? new Date(initial.startAt) : new Date());
+  const end = initial?.endAt ? new Date(initial.endAt) : new Date(start.getTime() + 60 * 60_000);
+
+  const [form, setForm] = useState({
+    title: initial?.title || '',
+    description: initial?.description || '',
+    departmentId: initial?.departmentId || departments[0]?.id || '',
+    kind: initial?.kind || '',
+    employeeIds: initial?.employeeIds || [],
+    customerName: initial?.customerName || '',
+    customerContact: initial?.customerContact || '',
+    customerEmail: initial?.customerEmail || '',
+    customerPhone: initial?.customerPhone || '',
+    address: initial?.address || '',
+    location: initial?.location || '',
+    room: initial?.room || '',
+    startAt: toInputDate(start),
+    endAt: toInputDate(end),
+    status: (initial?.status || 'geplant') as EscStatus,
+    priority: (initial?.priority || 'normal') as EscPriority,
+    internalNote: initial?.internalNote || '',
+    externalNote: initial?.externalNote || '',
+    confirmationRequired: initial?.confirmationRequired ?? false,
+    reminderMinutes: initial?.reminderMinutes ?? 60,
+    sendEmail: false,
+    attachIcs: false,
+  });
+
+  useEffect(() => {
+    if (!open) return;
+    setForm((f) => ({
+      ...f,
+      startAt: toInputDate(defaultStart || (initial?.startAt ? new Date(initial.startAt) : new Date())),
+      endAt: toInputDate(initial?.endAt ? new Date(initial.endAt) : new Date((defaultStart || new Date()).getTime() + 60 * 60_000)),
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  const handleSubmit = async () => {
+    if (!form.title.trim()) { toast.error('Bitte Titel angeben'); return; }
+    if (!form.departmentId) { toast.error('Bitte Abteilung wählen'); return; }
+    const payload: Omit<EscAppointment, 'id' | 'createdAt' | 'updatedAt'> = {
+      title: form.title,
+      description: form.description,
+      startAt: new Date(form.startAt).toISOString(),
+      endAt: new Date(form.endAt).toISOString(),
+      departmentId: form.departmentId,
+      kind: form.kind,
+      employeeIds: form.employeeIds,
+      customerName: form.customerName,
+      customerContact: form.customerContact,
+      customerEmail: form.customerEmail,
+      customerPhone: form.customerPhone,
+      address: form.address,
+      location: form.location,
+      room: form.room,
+      status: form.status,
+      priority: form.priority,
+      internalNote: form.internalNote,
+      externalNote: form.externalNote,
+      confirmationRequired: form.confirmationRequired,
+      reminderMinutes: form.reminderMinutes,
+    };
+    await onSubmit(payload);
+    if (form.attachIcs) {
+      downloadIcs({ ...payload, id: 'preview', createdAt: '', updatedAt: '' } as EscAppointment);
+    }
+    if (form.sendEmail) {
+      toast.info('E-Mail-Versand wird in Prompt 2 aktiviert (Edge Function esc-send-confirmation-email).');
+    }
+    onClose();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{initial?.id ? 'Termin bearbeiten' : 'Neuer Termin'}</DialogTitle>
+        </DialogHeader>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 py-2">
+          <div className="md:col-span-2">
+            <Label>Titel *</Label>
+            <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+          </div>
+
+          <div>
+            <Label>Abteilung *</Label>
+            <Select value={form.departmentId} onValueChange={(v) => setForm({ ...form, departmentId: v })}>
+              <SelectTrigger><SelectValue placeholder="Abteilung wählen" /></SelectTrigger>
+              <SelectContent>
+                {departments.map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Terminart</Label>
+            <Input value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value })} placeholder="z. B. Demo, Reparatur" />
+          </div>
+
+          <div>
+            <Label>Start</Label>
+            <Input type="datetime-local" value={form.startAt} onChange={(e) => setForm({ ...form, startAt: e.target.value })} />
+          </div>
+          <div>
+            <Label>Ende</Label>
+            <Input type="datetime-local" value={form.endAt} onChange={(e) => setForm({ ...form, endAt: e.target.value })} />
+          </div>
+
+          <div>
+            <Label>Kunde</Label>
+            <Input value={form.customerName} onChange={(e) => setForm({ ...form, customerName: e.target.value })} />
+          </div>
+          <div>
+            <Label>Ansprechpartner</Label>
+            <Input value={form.customerContact} onChange={(e) => setForm({ ...form, customerContact: e.target.value })} />
+          </div>
+          <div>
+            <Label>E-Mail</Label>
+            <Input type="email" value={form.customerEmail} onChange={(e) => setForm({ ...form, customerEmail: e.target.value })} />
+          </div>
+          <div>
+            <Label>Telefon</Label>
+            <Input value={form.customerPhone} onChange={(e) => setForm({ ...form, customerPhone: e.target.value })} />
+          </div>
+
+          <div>
+            <Label>Adresse</Label>
+            <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
+          </div>
+          <div>
+            <Label>Standort / Raum</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <Input placeholder="Standort" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
+              <Input placeholder="Raum" value={form.room} onChange={(e) => setForm({ ...form, room: e.target.value })} />
+            </div>
+          </div>
+
+          <div>
+            <Label>Status</Label>
+            <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as EscStatus })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {(Object.keys(ESC_STATUS_LABELS) as EscStatus[]).map((s) => (
+                  <SelectItem key={s} value={s}>{ESC_STATUS_LABELS[s]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Priorität</Label>
+            <Select value={form.priority} onValueChange={(v) => setForm({ ...form, priority: v as EscPriority })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {PRIORITY.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="md:col-span-2">
+            <Label>Beschreibung / externe Notiz</Label>
+            <Textarea rows={2} value={form.externalNote} onChange={(e) => setForm({ ...form, externalNote: e.target.value })} />
+          </div>
+          <div className="md:col-span-2">
+            <Label>Interne Notiz</Label>
+            <Textarea rows={2} value={form.internalNote} onChange={(e) => setForm({ ...form, internalNote: e.target.value })} />
+          </div>
+
+          <div className="md:col-span-2 flex flex-wrap gap-4 pt-2 border-t">
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox checked={form.confirmationRequired} onCheckedChange={(v) => setForm({ ...form, confirmationRequired: !!v })} />
+              Bestätigung durch Kunde erforderlich
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox checked={form.sendEmail} onCheckedChange={(v) => setForm({ ...form, sendEmail: !!v })} />
+              E-Mail an Kunde senden
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox checked={form.attachIcs} onCheckedChange={(v) => setForm({ ...form, attachIcs: !!v })} />
+              ICS-Kalenderdatei herunterladen
+            </label>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>Abbrechen</Button>
+          <Button onClick={handleSubmit}>Speichern</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

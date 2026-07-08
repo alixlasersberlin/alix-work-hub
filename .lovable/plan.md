@@ -1,82 +1,130 @@
-# After Sales Management 2.0 für AlixWork
+# Enterprise Scheduling Center (ESC) – Prompt 1: Grundmodul & Architektur
 
-Großer, eigenständiger CRM-Bereich – additiv, **ohne Eingriff in bestehende Module**. Wegen Umfang in 4 Phasen liefern, jede Phase ist nutzbar.
+Du hast angekündigt, dass **Prompt 2** die vollständige Datenbankstruktur bringt. Deshalb baue ich in Prompt 1 **nur das Frontend-Gerüst + Routing + Design-Integration**, mit lokalen TypeScript-Mock-Daten. Alle Komponenten sind so gekapselt, dass in Prompt 2 nur der Daten-Layer (Hooks/API) gegen Supabase-Tabellen ausgetauscht wird — kein UI-Umbau nötig.
 
-## Architektur-Prinzipien
+## 1. Nicht-Ziele (bewusst nicht in Prompt 1)
+- Keine neuen Supabase-Tabellen (kommt in Prompt 2)
+- Keine echte E-Mail-Versendung (Stub-UI vorhanden)
+- Keine echte Token-Auflösung serverseitig (öffentliche Seite existiert, Auflösung Prompt 2)
+- Kein echtes Audit-Log-Schreiben (UI + Interface vorbereitet)
 
-- Neuer Top-Menüpunkt **CRM** mit Submenü: Interessenten, Angebote, Aufträge, Kunden, Geräte, **After Sales** (bestehende Routen werden nur unter CRM neu gruppiert verlinkt, **nicht** verändert).
-- Eigene Tabellen mit `as_`-Prefix, eigene RLS-Policies, keine Änderungen an `orders`, `customers`, `lager_devices` etc.
-- Auto-Erstellung der Fälle via DB-Trigger auf `orders.status` (idempotent, ein Fall pro Auftrag).
-- Aurora-Design, vollständig responsive, Wiederverwendung von `infinity/`-Komponenten (PageHeader, KpiTile, InfinityTable, StatusBadge).
-- Rollen: Super Admin, Admin, Sales, **After Sales** (neu), Marketing, Service, Geschäftsleitung. Neue Rolle wird `app_role`-Enum hinzugefügt.
+## 2. Navigation
+Neuer Hauptmenüpunkt **„Teamkalender"** in AuroraTopNav / Sidebar (nur eingeloggt sichtbar) mit 8 Unterpunkten:
+Übersicht · Kalender · Ressourcen · Mitarbeiter · Abteilungen · Buchungsportal · Bestätigungen · Einstellungen.
 
-## Phase 1 – Fundament & Auto-Fall-Erstellung (diese Iteration)
+Bestehende Menüpunkte bleiben unverändert.
 
-**DB-Migration**
-- Enum `as_case_status` (open, in_progress, waiting_customer, blocked, completed).
-- Enum `as_priority` (low, normal, high, urgent).
-- Enum `as_traffic_light` (green, yellow, red).
-- Tabelle `as_cases`: order_id (uniq), customer_id, device_id, assignee_id, sales_user_id, status, priority, traffic_light, progress_pct, health_score, last_contact_at, next_callback_at, satisfaction_rating, satisfaction_note, closed_at, closed_by, metadata jsonb.
-- Tabelle `as_checklist_items`: case_id, section (enum: erstkontakt, geraet, nisv, app, mediapaket, schulung, marketing, zufriedenheit, rueckruf, upselling), key, label, checked, checked_at, checked_by, note.
-- Tabelle `as_mediapaket_status`: case_id (uniq), stage enum (not_started…abgeschlossen), updated_at.
-- Tabelle `as_timeline_events`: case_id, event_type, title, body, source (system/user/integration), created_by, created_at.
-- Tabelle `as_callbacks`: case_id, due_at, priority, reason, done_at, done_by.
-- Tabelle `as_reminders`: case_id, kind (login, app, nisv, schulung, mediapaket, callback), scheduled_at, sent_at, channel (dashboard, email, sms, push).
-- Tabelle `as_upsell_suggestions`: case_id, product_key, label, accepted, offer_id.
-- Enum `app_role` erweitern um `After Sales`.
-- GRANTs für alle Tabellen (authenticated CRUD, service_role ALL).
-- RLS: lesen alle internen Rollen oben; schreiben nur eigene Rolle + Admin/Super Admin.
-- Trigger `as_create_case_on_order_status()`: Bei orders.status IN (bestätigt, anzahlung_bezahlt, produktion_gestartet, ausgeliefert, abgeschlossen) und kein Fall existiert → `as_cases` + Default-Checklisten + Timeline-Event "Fall automatisch erstellt".
-- Backfill-Insert für existierende Aufträge in diesen Status.
-- Cron: `as-daily-reminders` 06:00 UTC (Edge Function, schreibt Reminder + setzt Ampel).
+## 3. Routen
+Interne Routen (auth-geschützt via bestehendem RequireAuth):
+```
+/esc                        → Übersicht (Dashboard-Cards)
+/esc/kalender               → Kalender (Tag/Woche/Monat/Agenda/Abteilung/Mitarbeiter/Ressource)
+/esc/ressourcen             → Ressourcen-Verwaltung
+/esc/mitarbeiter            → Mitarbeiter-Zuordnung
+/esc/abteilungen            → Abteilungen-Verwaltung
+/esc/buchungen              → interne Buchungsanfragen
+/esc/bestaetigungen         → offene externe Bestätigungen
+/esc/einstellungen          → Modul-Settings
+```
 
-**Frontend**
-- Route `/crm` – Layout mit Sub-Nav (Links auf bestehende Seiten + neue After-Sales-Seiten).
-- Route `/crm/after-sales` – Dashboard (KPI-Kacheln + Filter + InfinityTable aller offenen Fälle mit allen geforderten Spalten + Ampel).
-- Route `/crm/after-sales/erledigt` – abgeschlossene Fälle.
-- Route `/crm/after-sales/:id` – After-Sales-Akte:
-  - Header (Kunde, Gerät, Garantie, Servicevertrag, Ansprechpartner)
-  - Tabs: Checkliste (große Sections mit Checkboxen), Mediapaket (Stage-Selector), Schulung/Marketing/Zufriedenheit, Upselling, Timeline, Rückrufe, Dokumente (Link auf Kundenakte).
-  - Fortschritt %, Ampel, Health-Score, "Fall abschließen"-Button (server-validiert).
-- Hook `useAsCases`, `useAsCase(id)`.
-- Reuse: `PageHeader`, `KpiTile`, `InfinityTable`, `StatusBadge`.
+Öffentliche Routen (kein Login, laufen über `https://alixworks.de/...`):
+```
+/book                       → öffentliches Buchungsportal
+/termin-bestaetigen/:token  → Bestätigen / Ablehnen / Alternativvorschlag
+```
 
-**Edge Functions**
-- `as-daily-reminders` – tägliche Erinnerungen + Ampel-Neuberechnung.
-- `as-close-case` – Validiert Abschluss-Bedingungen serverseitig.
+## 4. Neue Dateien
+```
+src/pages/ESC/
+  Overview.tsx              KPI-Cards (heute, morgen, offen, überfällig, Service, Lieferung, Schulung, NiSV)
+  Calendar.tsx              Kalender-Container + Ansichtsumschalter
+  Resources.tsx
+  Employees.tsx
+  Departments.tsx           inkl. „Neue Abteilung"-Modal
+  Bookings.tsx              interne Buchungsanfragen
+  Confirmations.tsx         offene externe Bestätigungen
+  Settings.tsx
 
-## Phase 2 – Workflows & Kommunikation
+src/pages/ESC/public/
+  BookingPortal.tsx         /book – nur öffentlich buchbare Abteilungen
+  ConfirmAppointment.tsx    /termin-bestaetigen/:token
 
-- Edge Functions: `as-send-email-reminder`, `as-send-sms-reminder` (Twilio bestehend), Push via bestehender PWA.
-- Workflows: App-fehlt (3 Tage), NiSV-fehlt, Schulung-fehlt → Kalender-Vorschlag, Mediapaket-offen → Marketing, Rückruf überfällig → Chef.
-- Integration mit bestehenden `email_templates`, `sms_templates`, `mail_*`-System.
+src/components/esc/
+  EscLayout.tsx             Sub-Nav für alle /esc/*-Seiten (Aurora-Style)
+  AppointmentModal.tsx      Termin anlegen/bearbeiten (alle Felder aus §8)
+  AppointmentCard.tsx       Termin-Chip im Kalender
+  StatusBadge.tsx           farbige Badges für 9 Status (§9)
+  DepartmentBadge.tsx       Farbe + Icon
+  ViewSwitcher.tsx          Tag/Woche/Monat/Agenda/Abteilung/Mitarbeiter/Ressource
+  views/DayView.tsx
+  views/WeekView.tsx
+  views/MonthView.tsx
+  views/AgendaView.tsx
+  views/DepartmentView.tsx
+  views/EmployeeView.tsx
+  views/ResourceView.tsx
 
-## Phase 3 – KI (AI-Service-Copilot Integration)
+src/lib/esc/
+  types.ts                  Department, Employee, Resource, Appointment, Status, Priority …
+  mock-data.ts              Seed für Prompt 1 (wird in Prompt 2 durch Supabase-Hooks ersetzt)
+  ics.ts                    ICS-Datei-Generator (RFC 5545, VEVENT, ORGANIZER, ATTENDEE, ALARM)
+  permissions.ts            Rechte-Helper (nutzt bestehendes has_role)
+  audit.ts                  Interface für spätere Audit-Log-Einträge (no-op Stub)
+  public-url.ts             baseUrl-Helper – erzwingt https://alixworks.de für alle Public-Links
 
-- `as-ai-suggest` Edge Function: nutzt Lovable AI Gateway (`google/gemini-3-flash-preview`).
-- Liefert: Health Score (0–100), nächster Kontaktzeitpunkt, Risiko-Score, Upselling-Vorschläge, Mail/SMS-Drafts, Gesprächs-Zusammenfassung.
-- UI: KI-Panel in der Akte (analog `AiAnalysisPanel`).
+src/hooks/esc/
+  useAppointments.ts        vorerst Mock, in Prompt 2 gegen Supabase
+  useDepartments.ts
+  useEmployees.ts
+  useResources.ts
+```
 
-## Phase 4 – Reporting & Premium-Charts
+## 5. Design-Integration
+- Wiederverwendung: `PageShell`, `PageHeader`, `KpiTile`, `InfinityTable`, `StatusBadge`, `Skeleton`, bestehende Buttons/Cards/Modals aus `src/components/ui` und `src/components/infinity`.
+- Keine neuen Farben — alle Status/Abteilungsfarben werden aus semantischen Tokens gemappt (primary, secondary, muted, destructive, warning, success).
+- Sub-Navigation im gleichen Aurora-Stil wie Finance/Operation.
+- Icons aus lucide-react (bereits im Projekt).
 
-- KPIs erweitert: After-Sales-Quote, Ø Bearbeitungszeit, NPS.
-- Charts (recharts) im Dashboard.
-- Export CSV.
+## 6. Rollen & Rechte (nutzt bestehendes RBAC)
+Neue Rechte werden über eine `escPermissions`-Helperklasse aus bestehenden Rollen abgeleitet — **keine neue Rolle** in Prompt 1:
+- Super Admin, Admin: alles
+- Order/Service/Sales: eigene Termine + zugewiesene sehen
+- alle Übrigen: nur eigene Termine
 
-## Technische Details
+In Prompt 2 kann optional eine feinere Rechtematrix in DB kommen.
 
-- Keine Änderungen an: `orders`, `customers`, `lager_devices`, Sales-Wizard, bestehende Routen.
-- Neue Rolle `After Sales` wird in `role-labels.ts`, `has_role`-Aufrufen und `AuroraTopNav` ergänzt.
-- TenantContext wird respektiert (alle Queries filtern `tenant_id` analog zu bestehenden Tabellen).
-- Trigger ist idempotent (`ON CONFLICT (order_id) DO NOTHING`).
-- Mobile-Layout über bestehende Tailwind-Breakpoints + `useIsMobile`.
+## 7. Öffentliche Links & Sicherheit
+- `publicUrl(path)`-Helper baut immer `https://alixworks.de` als Basis (nie Preview-Domain, nie Supabase-URL).
+- Bestätigungs-Token: In Prompt 1 Platzhalter (`crypto.randomUUID()` clientseitig), in Prompt 2 wird serverseitig ein signiertes Token generiert (kryptographisch sicher, 32 Byte, base64url).
+- Öffentliche Bestätigungsseite akzeptiert nur Token-Route, keine ID-Route.
 
-## Was Phase 1 liefert (sofort sichtbar)
+## 8. ICS-Export
+`src/lib/esc/ics.ts` generiert Standard-konforme VEVENTs mit UID, DTSTART, DTEND, SUMMARY, DESCRIPTION, LOCATION, ORGANIZER, ATTENDEE, VALARM. Kompatibel mit Apple/iOS, Google, Outlook, Microsoft 365, Exchange, Thunderbird, Samsung, CalDAV (Import).
 
-1. Menüpunkt CRM → After Sales
-2. Automatische Fall-Erstellung + Backfill
-3. Dashboard mit KPIs + Tabelle + Ampel
-4. Akte mit kompletter Checkliste, Mediapaket, Timeline, Rückrufen, Abschluss-Button
-5. Tägliche Ampel-/Erinnerungs-Berechnung via Cron
+## 9. Kalender-Umsetzung
+- Eigene, leichtgewichtige React-Views (kein FullCalendar-Import) — passt sich exakt in Aurora-Look ein und bleibt frei von Fremd-CSS.
+- Datumsarithmetik über bereits installiertes `date-fns`.
+- Drag-to-create in Tag/Woche folgt in einer späteren Iteration; Prompt 1 nutzt Modal-Trigger per Klick auf leere Slot-Zelle.
 
-Bitte Phase 1 freigeben, dann lege ich los. Phasen 2–4 folgen jeweils auf Zuruf.
+## 10. Abnahme (Prompt 1)
+- Menüpunkt „Teamkalender" mit 8 Unterpunkten sichtbar
+- Alle 8 internen Seiten routen fehlerfrei
+- Öffentliche Seiten `/book` und `/termin-bestaetigen/:token` erreichbar mit AlixWorks-Branding, ohne Login
+- Termin-Modal mit allen Feldern aus §8, Status-Badges §9
+- Kalender-Ansichten Tag/Woche/Monat/Agenda/Abteilung/Mitarbeiter/Ressource umschaltbar
+- Abteilungen anlegen/bearbeiten (Farbe, Icon, öffentlich buchbar, Standarddauer, Vorlage)
+- Mitarbeiter zuordnen (mehrere Abteilungen möglich)
+- ICS-Download-Button pro Termin erzeugt gültige `.ics`
+- Alle Public-Links verwenden `https://alixworks.de` (Helper testbar)
+- Keine bestehenden Seiten/Routen/Migrationen verändert
+
+## 11. Was Prompt 2 dann liefert
+- Tabellen: `esc_departments`, `esc_employees`, `esc_resources`, `esc_appointments`, `esc_confirmations`, `esc_audit_log`, `esc_public_tokens`
+- RLS-Policies + GRANTs
+- Edge Function `esc-send-confirmation-email` (mit signierten Token)
+- Edge Function `esc-confirm-appointment` (Token-Auflösung + Statuswechsel)
+- Umschalten aller Hooks von Mock auf Supabase (keine UI-Änderung)
+
+---
+
+**Bestätige diesen Plan, dann baue ich das komplette Prompt-1-Gerüst in einem Zug.**
