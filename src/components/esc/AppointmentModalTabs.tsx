@@ -22,6 +22,10 @@ import { CustomerSidebar } from './crm/CustomerSidebar';
 import { ChecklistPanel } from './ChecklistPanel';
 import { DocumentActions } from './DocumentActions';
 import { getCustomerSummary } from '@/lib/esc/crm/search';
+import { emit } from '@/lib/esc/events/bus';
+import { startWorkflowEngine } from '@/lib/esc/workflows/engine';
+
+startWorkflowEngine();
 
 const PRIORITY: EscPriority[] = ['low', 'normal', 'high', 'urgent'];
 
@@ -153,6 +157,11 @@ export function AppointmentModalTabs({
 
     const payload = buildPayload();
     await onSubmit(payload);
+    void emit({
+      name: initial?.id ? 'event.updated' : 'event.created',
+      source: 'esc',
+      payload: { kind: payload.kind, departmentId: payload.departmentId, appointmentId: initial?.id },
+    });
     if (form.attachIcs) downloadIcs({ ...payload, id: initial?.id || 'preview', createdAt: '', updatedAt: '' } as EscAppointment);
     if (form.sendEmail || opts?.sendEmail) toast.info('E-Mail-Versand wird über die Bestätigungs-Edge-Function ausgeführt.');
     onClose();
