@@ -126,14 +126,14 @@ export default function EscDepartments() {
               <X className="h-4 w-4" />
             </button>
 
-            <header className="flex flex-col space-y-1.5 text-left">
+            <div className="flex flex-col space-y-1.5 text-left">
               <h2 id="esc-department-dialog-title" className="text-lg font-semibold leading-none tracking-tight">
                 {editing ? 'Abteilung bearbeiten' : 'Neue Abteilung'}
               </h2>
               <p id="esc-department-dialog-description" className="text-sm text-muted-foreground">
                 Ändern Sie die Stammdaten und Buchbarkeit dieser Abteilung.
               </p>
-            </header>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 py-2">
               <div className="md:col-span-2"><Label>Name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
