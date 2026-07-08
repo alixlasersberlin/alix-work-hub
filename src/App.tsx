@@ -490,6 +490,16 @@ function AppRoutes() {
         <Route path="/mfa-recovery" element={<MfaGate expect="any"><MfaRecovery /></MfaGate>} />
         {/* ESC – öffentliche Routen (kein Login) */}
         <Route path="/book" element={<EscBookingPortal />} />
+        {/* ESC – öffentliche Routen (kein Login) */}
+        <Route path="/book" element={<EscBookingPortal />} />
+        <Route path="/book/confirmation" element={<EscBookingPortal />} />
+        <Route path="/book/:department" element={<EscBookingPortal />} />
+        <Route path="/book/:department/:service" element={<EscBookingPortal />} />
+        <Route path="/appointment/:token" element={<EscConfirmAppointment />} />
+        <Route path="/appointment/reschedule/:token" element={<EscRescheduleAppointment />} />
+        <Route path="/appointment/cancel/:token" element={<EscCancelAppointment />} />
+        <Route path="/appointment/decline/:token" element={<EscCancelAppointment />} />
+        <Route path="/booking/:token" element={<EscConfirmAppointment />} />
         <Route path="/termin-bestaetigen/:token" element={<EscConfirmAppointment />} />
         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route path="/dashboard" element={<HomeRoute />} />
