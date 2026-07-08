@@ -245,7 +245,7 @@ export default function Capas() {
         title={detail ? `${detail.capa_number} – ${detail.title}` : ''}
       />
       <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
           <DialogHeader><DialogTitle>CAPA bearbeiten {editing?.capa_number}</DialogTitle></DialogHeader>
           <div className="grid gap-3 py-2 max-h-[70vh] overflow-y-auto pr-1">
             <div><Label>Titel *</Label><Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} /></div>
