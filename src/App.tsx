@@ -1183,6 +1183,28 @@ function AppRoutes() {
           <Route path="developer" element={<EaocDeveloper />} />
         </Route>
 
+        {/* EIG – Enterprise Integration Gateway */}
+        <Route path="/eig" element={<ProtectedRoute><EigLayout /></ProtectedRoute>}>
+          <Route index element={<EigDashboard />} />
+          <Route path="api" element={<EigApiGateway />} />
+          <Route path="explorer" element={<EigApiExplorer />} />
+          <Route path="webhooks" element={<EigWebhooks />} />
+          <Route path="events" element={<EigEventBus />} />
+          <Route path="workflows" element={<EigWorkflowEngine />} />
+          <Route path="integrations" element={<EigIntegrations />} />
+          <Route path="mappings" element={<EigMappings />} />
+          <Route path="import-export" element={<EigImportExport />} />
+          <Route path="jobs" element={<EigJobs />} />
+          <Route path="queues" element={<EigQueues />} />
+          <Route path="sync" element={<EigSync />} />
+          <Route path="plugins" element={<EigPlugins />} />
+          <Route path="api-keys" element={<EigApiKeys />} />
+          <Route path="errors" element={<EigErrors />} />
+          <Route path="monitoring" element={<EigMonitoring />} />
+          <Route path="logs" element={<EigLogs />} />
+          <Route path="developer" element={<EigDeveloper />} />
+        </Route>
+
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
