@@ -472,6 +472,27 @@ const EaocAudit = lazy(() => import("./pages/EAOC/Audit"));
 const EaocSettings = lazy(() => import("./pages/EAOC/Settings"));
 const EaocDeveloper = lazy(() => import("./pages/EAOC/Developer"));
 
+// EIG – Enterprise Integration Gateway
+const EigLayout = lazy(() => import("./components/eig/EigLayout"));
+const EigDashboard = lazy(() => import("./pages/EIG/Dashboard"));
+const EigApiGateway = lazy(() => import("./pages/EIG/ApiGateway"));
+const EigApiExplorer = lazy(() => import("./pages/EIG/ApiExplorer"));
+const EigWebhooks = lazy(() => import("./pages/EIG/Webhooks"));
+const EigEventBus = lazy(() => import("./pages/EIG/EventBus"));
+const EigWorkflowEngine = lazy(() => import("./pages/EIG/WorkflowEngine"));
+const EigIntegrations = lazy(() => import("./pages/EIG/Integrations"));
+const EigMappings = lazy(() => import("./pages/EIG/Mappings"));
+const EigImportExport = lazy(() => import("./pages/EIG/ImportExport"));
+const EigJobs = lazy(() => import("./pages/EIG/Jobs"));
+const EigQueues = lazy(() => import("./pages/EIG/Queues"));
+const EigSync = lazy(() => import("./pages/EIG/Sync"));
+const EigPlugins = lazy(() => import("./pages/EIG/Plugins"));
+const EigApiKeys = lazy(() => import("./pages/EIG/ApiKeys"));
+const EigErrors = lazy(() => import("./pages/EIG/Errors"));
+const EigMonitoring = lazy(() => import("./pages/EIG/Monitoring"));
+const EigLogs = lazy(() => import("./pages/EIG/Logs"));
+const EigDeveloper = lazy(() => import("./pages/EIG/Developer"));
+
 // ECP – Enterprise Customer Portal
 const EcpLayout = lazy(() => import("./components/ecp/EcpLayout"));
 const EcpDashboard = lazy(() => import("./pages/ECP/Dashboard"));
@@ -1160,6 +1181,28 @@ function AppRoutes() {
           <Route path="audit" element={<EaocAudit />} />
           <Route path="settings" element={<EaocSettings />} />
           <Route path="developer" element={<EaocDeveloper />} />
+        </Route>
+
+        {/* EIG – Enterprise Integration Gateway */}
+        <Route path="/eig" element={<ProtectedRoute><EigLayout /></ProtectedRoute>}>
+          <Route index element={<EigDashboard />} />
+          <Route path="api" element={<EigApiGateway />} />
+          <Route path="explorer" element={<EigApiExplorer />} />
+          <Route path="webhooks" element={<EigWebhooks />} />
+          <Route path="events" element={<EigEventBus />} />
+          <Route path="workflows" element={<EigWorkflowEngine />} />
+          <Route path="integrations" element={<EigIntegrations />} />
+          <Route path="mappings" element={<EigMappings />} />
+          <Route path="import-export" element={<EigImportExport />} />
+          <Route path="jobs" element={<EigJobs />} />
+          <Route path="queues" element={<EigQueues />} />
+          <Route path="sync" element={<EigSync />} />
+          <Route path="plugins" element={<EigPlugins />} />
+          <Route path="api-keys" element={<EigApiKeys />} />
+          <Route path="errors" element={<EigErrors />} />
+          <Route path="monitoring" element={<EigMonitoring />} />
+          <Route path="logs" element={<EigLogs />} />
+          <Route path="developer" element={<EigDeveloper />} />
         </Route>
 
         <Route path="*" element={<NotFound />} />
