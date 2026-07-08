@@ -5,7 +5,13 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Edit, Trash2, X } from 'lucide-react';
+import {
+  Plus, Edit, Trash2, X,
+  Circle, Wrench, Stethoscope, Scissors, Hammer, Briefcase, Building2, Users,
+  Calendar, Clock, Heart, Star, Truck, Package, Phone, Mail, Camera, Home,
+  Car, Coffee, ShoppingCart, Settings, Shield, Zap, Sparkles, Award, Target,
+  Activity, Pill, Syringe, Baby,
+} from 'lucide-react';
 import { useDepartments } from '@/hooks/esc/useDepartments';
 import { DepartmentBadge } from '@/components/esc/DepartmentBadge';
 import type { EscDepartment } from '@/lib/esc/types';
