@@ -159,7 +159,7 @@ export default function Capas() {
       {open && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden bg-background/80 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="new-capa-title">
           <div className="absolute inset-0" onClick={() => setOpen(false)} />
-          <div className="relative z-10 flex max-h-[calc(100vh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-md border border-border bg-card shadow-xl">
+          <div className="relative z-10 flex h-[min(90vh,780px)] w-full max-w-3xl flex-col overflow-hidden rounded-lg border border-border bg-card shadow-xl">
             <div className="flex flex-shrink-0 items-start justify-between gap-4 border-b border-border px-5 py-4">
               <div>
                 <h3 id="new-capa-title" className="text-lg font-semibold">Neue CAPA anlegen</h3>
