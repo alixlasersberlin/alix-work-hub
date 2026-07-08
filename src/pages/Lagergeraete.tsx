@@ -812,6 +812,20 @@ export default function Lagergeraete({
 
   const releaseReservation = (d: LagerDevice) => setReleaseDevice(d);
 
+  useEffect(() => {
+    if (!releaseDevice) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !releasing) setReleaseDevice(null);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [releaseDevice, releasing]);
+
 
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -2323,33 +2337,64 @@ export default function Lagergeraete({
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={!!releaseDevice} onOpenChange={(o) => !o && !releasing && setReleaseDevice(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Reservierung aufheben?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {releaseDevice?.orders?.order_number
-                ? `Die Reservierung von Gerät „${releaseDevice?.serial_number}" für Auftrag ${releaseDevice?.orders?.order_number} wird aufgehoben. Das Gerät steht danach wieder als verfügbar im Lager.`
-                : `Die Reservierung von Gerät „${releaseDevice?.serial_number}" wird aufgehoben. Das Gerät steht danach wieder als verfügbar im Lager.`}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={releasing}>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={releasing}
-              onClick={async (e) => {
-                e.preventDefault();
-                const d = releaseDevice;
-                if (!d) return;
-                await performReleaseReservation(d);
-                setReleaseDevice(null);
-              }}
-            >
-              {releasing ? 'Wird freigegeben…' : 'Ja, freigeben'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {releaseDevice && (
+        <div
+          className="fixed inset-0 z-[10000] flex items-center justify-center bg-background/85 p-4 backdrop-blur-sm"
+          role="presentation"
+          onPointerDown={(event) => {
+            if (event.target === event.currentTarget && !releasing) setReleaseDevice(null);
+          }}
+        >
+          <section
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="release-reservation-title"
+            aria-describedby="release-reservation-description"
+            className="w-full max-w-lg rounded-lg border border-border bg-card p-6 text-card-foreground shadow-2xl"
+            onPointerDown={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-2">
+                <h2 id="release-reservation-title" className="text-lg font-semibold">
+                  Reservierung aufheben?
+                </h2>
+                <p id="release-reservation-description" className="text-sm text-muted-foreground">
+                  {releaseDevice.orders?.order_number
+                    ? `Die Reservierung von Gerät „${releaseDevice.serial_number}" für Auftrag ${releaseDevice.orders.order_number} wird aufgehoben. Das Gerät steht danach wieder als verfügbar im Lager.`
+                    : `Die Reservierung von Gerät „${releaseDevice.serial_number}" wird aufgehoben. Das Gerät steht danach wieder als verfügbar im Lager.`}
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setReleaseDevice(null)}
+                disabled={releasing}
+                aria-label="Dialog schließen"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <Button type="button" variant="outline" onClick={() => setReleaseDevice(null)} disabled={releasing}>
+                Abbrechen
+              </Button>
+              <Button
+                type="button"
+                disabled={releasing}
+                onClick={async () => {
+                  const d = releaseDevice;
+                  if (!d) return;
+                  await performReleaseReservation(d);
+                  setReleaseDevice(null);
+                }}
+              >
+                {releasing ? 'Wird freigegeben…' : 'Ja, freigeben'}
+              </Button>
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 }
