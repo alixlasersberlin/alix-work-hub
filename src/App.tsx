@@ -421,6 +421,26 @@ const AbicExplorer = lazy(() => import("./pages/ABIC/DataExplorer"));
 const AbicDashboards = lazy(() => import("./pages/ABIC/Dashboards"));
 const AbicGoals = lazy(() => import("./pages/ABIC/Goals"));
 
+// ECQM – Enterprise Compliance & Quality Management Center
+const EcqmLayout = lazy(() => import("./components/ecqm/EcqmLayout"));
+const EcqmDashboard = lazy(() => import("./pages/ECQM/Dashboard"));
+const EcqmDocuments = lazy(() => import("./pages/ECQM/Documents"));
+const EcqmProcesses = lazy(() => import("./pages/ECQM/Processes"));
+const EcqmCapa = lazy(() => import("./pages/ECQM/Capa"));
+const EcqmComplaints = lazy(() => import("./pages/ECQM/Complaints"));
+const EcqmRisks = lazy(() => import("./pages/ECQM/Risks"));
+const EcqmAudits = lazy(() => import("./pages/ECQM/Audits"));
+const EcqmSuppliers = lazy(() => import("./pages/ECQM/Suppliers"));
+const EcqmChangeControl = lazy(() => import("./pages/ECQM/ChangeControl"));
+const EcqmTraceability = lazy(() => import("./pages/ECQM/Traceability"));
+const EcqmTrainings = lazy(() => import("./pages/ECQM/Trainings"));
+const EcqmQualifications = lazy(() => import("./pages/ECQM/Qualifications"));
+const EcqmManagementReview = lazy(() => import("./pages/ECQM/ManagementReview"));
+const EcqmKpis = lazy(() => import("./pages/ECQM/Kpis"));
+const EcqmApprovals = lazy(() => import("./pages/ECQM/Approvals"));
+const EcqmArchive = lazy(() => import("./pages/ECQM/Archive"));
+const EcqmSettings = lazy(() => import("./pages/ECQM/Settings"));
+
 // ECP – Enterprise Customer Portal
 const EcpLayout = lazy(() => import("./components/ecp/EcpLayout"));
 const EcpDashboard = lazy(() => import("./pages/ECP/Dashboard"));
