@@ -1,6 +1,6 @@
 // All public-facing links MUST use https://alixworks.de.
 // Never leak preview or Supabase URLs into e-mails, tokens, or public pages.
-export const ALIXWORKS_PUBLIC_BASE = 'https://alixworks.de';
+export const ALIXWORKS_PUBLIC_BASE = 'https://alixwork.de';
 
 export function publicUrl(path: string): string {
   const clean = path.startsWith('/') ? path : `/${path}`;
