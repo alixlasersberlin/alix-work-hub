@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 
 export default function EchMeetings() {
   const [provider, setProvider] = useState<'teams' | 'zoom' | 'google_meet'>('teams');
-  const [refId, setRefId] = useState(crypto.randomUUID());
+  const [refId, setRefId] = useState<string>(crypto.randomUUID());
   const [result, setResult] = useState<{ url: string; password?: string } | null>(null);
 
   const create = () => setResult(generateMeetingUrl(provider, refId));
