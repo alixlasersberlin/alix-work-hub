@@ -149,7 +149,7 @@ export default function Suppliers() {
       <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} total={total} />
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
+        <DialogContent className="z-[200]">
           <DialogHeader>
             <DialogTitle>{editing ? 'Zulieferer bearbeiten' : 'Neuer Zulieferer'}</DialogTitle>
           </DialogHeader>
