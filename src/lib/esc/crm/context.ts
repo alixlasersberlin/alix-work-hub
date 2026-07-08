@@ -133,12 +133,14 @@ async function loadTrainings(customerId: string): Promise<CrmTraining[]> {
 async function loadDocuments(customerId: string): Promise<CrmDocument[]> {
   const { data } = await supabase
     .from('customer_portal_document_downloads')
-    .select('id, document_name, document_type, downloaded_at')
+    .select('id, storage_path, document_type, downloaded_at')
     .eq('customer_id', customerId)
     .order('downloaded_at', { ascending: false })
     .limit(30);
   return (data || []).map((d: any) => ({
-    id: d.id, name: d.document_name || 'Dokument',
-    kind: d.document_type, createdAt: d.downloaded_at,
+    id: d.id,
+    name: (d.storage_path || 'Dokument').split('/').pop() || 'Dokument',
+    kind: d.document_type,
+    createdAt: d.downloaded_at,
   }));
 }
