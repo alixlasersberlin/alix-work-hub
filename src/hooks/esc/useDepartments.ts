@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { MOCK_DEPARTMENTS } from '@/lib/esc/mock-data';
 import type { EscDepartment } from '@/lib/esc/types';
 
-const STORAGE_KEY = 'esc.departments.v1';
+const STORAGE_KEY = 'esc.departments.v2';
 
 function normalizeDepartment(value: Partial<EscDepartment> | null | undefined): EscDepartment | null {
   if (!value || typeof value.id !== 'string' || typeof value.name !== 'string') return null;
