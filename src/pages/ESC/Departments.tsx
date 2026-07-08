@@ -23,8 +23,18 @@ export default function EscDepartments() {
   const [editing, setEditing] = useState<EscDepartment | null>(null);
   const [form, setForm] = useState<Omit<EscDepartment, 'id'>>(emptyForm);
 
-  const openNew = () => { setEditing(null); setForm(emptyForm); setOpen(true); };
-  const openEdit = (d: EscDepartment) => { setEditing(d); const { id, ...rest } = d; setForm(rest); setOpen(true); };
+  const openNew = () => { setEditing(null); setForm({ ...emptyForm }); setOpen(true); };
+  const openEdit = (d: EscDepartment) => {
+    const { id, ...rest } = d;
+    setEditing(d);
+    setForm({
+      ...emptyForm,
+      ...rest,
+      responsibleEmployeeIds: rest.responsibleEmployeeIds ?? [],
+    });
+    setOpen(true);
+  };
+
 
   const submit = async () => {
     if (!form.name.trim()) { toast.error('Bitte Name angeben'); return; }
