@@ -363,6 +363,8 @@ const EscConfirmations = lazy(() => import("./pages/ESC/Confirmations"));
 const EscSettings = lazy(() => import("./pages/ESC/Settings"));
 const EscBookingPortal = lazy(() => import("./pages/ESC/public/BookingPortal"));
 const EscConfirmAppointment = lazy(() => import("./pages/ESC/public/ConfirmAppointment"));
+const EscRescheduleAppointment = lazy(() => import("./pages/ESC/public/RescheduleAppointment"));
+const EscCancelAppointment = lazy(() => import("./pages/ESC/public/CancelAppointment"));
 import MaintenanceGate from "./components/MaintenanceGate";
 import LeihgeraetReminder from "./components/LeihgeraetReminder";
 
