@@ -5,11 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { StatusBadge } from '@/components/StatusBadge';
-import { Plus, MessageSquare, Pencil, CheckCircle2 } from 'lucide-react';
+import { Plus, MessageSquare, Pencil, CheckCircle2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Section, CAPA_STATUS, statusLabel } from './_shared';
 import { QmDetailDrawer } from './QmDetailDrawer';
@@ -151,16 +151,26 @@ export default function Capas() {
     <Section
       title={`CAPA (${rows.length})`}
       action={
-        <>
-        <Button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpen(true); }}>
+        <Button type="button" onClick={() => setOpen(true)} disabled={open}>
           <Plus className="h-4 w-4 mr-1" /> Neue CAPA
         </Button>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent className="max-w-2xl" onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
-
-            <DialogHeader><DialogTitle>Neue CAPA anlegen</DialogTitle></DialogHeader>
-            <div className="grid gap-3 py-2 max-h-[70vh] overflow-y-auto pr-1">
-              <div><Label>Titel *</Label><Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} /></div>
+      }
+    >
+      {open && (
+        <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-background/80 px-4 py-8 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="new-capa-title">
+          <div className="absolute inset-0" onClick={() => setOpen(false)} />
+          <div className="relative z-10 w-full max-w-2xl rounded-md border border-border bg-card p-6 shadow-xl">
+            <div className="mb-4 flex items-start justify-between gap-4">
+              <div>
+                <h3 id="new-capa-title" className="text-lg font-semibold">Neue CAPA anlegen</h3>
+                <p className="text-sm text-muted-foreground">Erfasst eine neue Korrektur- und Vorbeugemaßnahme.</p>
+              </div>
+              <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => setOpen(false)} aria-label="Schließen">
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="grid gap-3 max-h-[70vh] overflow-y-auto pr-1">
+              <div><Label>Titel *</Label><Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} autoFocus /></div>
               <div>
                 <Label>Auslöser</Label>
                 <Select value={form.trigger_type} onValueChange={v => setForm({ ...form, trigger_type: v })}>
@@ -176,15 +186,13 @@ export default function Capas() {
               <div><Label>Vorbeugemaßnahme</Label><Textarea rows={2} value={form.preventive_action} onChange={e => setForm({ ...form, preventive_action: e.target.value })} /></div>
               <div><Label>Frist</Label><Input type="date" value={form.due_date} onChange={e => setForm({ ...form, due_date: e.target.value })} /></div>
             </div>
-            <DialogFooter>
+            <div className="mt-4 flex justify-end gap-2">
               <Button variant="ghost" onClick={() => setOpen(false)}>Abbrechen</Button>
               <Button onClick={create}>Speichern</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-        </>
-      }
-    >
+            </div>
+          </div>
+        </div>
+      )}
       <div className="rounded-md border border-border">
         <Table>
           <TableHeader>
@@ -245,8 +253,11 @@ export default function Capas() {
         title={detail ? `${detail.capa_number} – ${detail.title}` : ''}
       />
       <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
-        <DialogContent className="max-w-2xl" onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
-          <DialogHeader><DialogTitle>CAPA bearbeiten {editing?.capa_number}</DialogTitle></DialogHeader>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>CAPA bearbeiten {editing?.capa_number}</DialogTitle>
+            <DialogDescription>Aktualisiert die CAPA-Stammdaten und Maßnahmenbeschreibung.</DialogDescription>
+          </DialogHeader>
           <div className="grid gap-3 py-2 max-h-[70vh] overflow-y-auto pr-1">
             <div><Label>Titel *</Label><Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} /></div>
             <div>
