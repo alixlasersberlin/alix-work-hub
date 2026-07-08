@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import { useDepartments } from '@/hooks/esc/useDepartments';
@@ -73,12 +73,14 @@ export default function EscDepartments() {
                 <TableCell className="text-right">
                   <Button
                     type="button"
-                    size="icon"
+                    size="sm"
                     variant="ghost"
-                    aria-label="Bearbeiten"
+                    aria-label={`${d.name} bearbeiten`}
+                    onPointerDown={(e) => e.stopPropagation()}
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); openEdit(d); }}
                   >
                     <Edit className="w-4 h-4" />
+                    Bearbeiten
                   </Button>
                   <Button
                     type="button"
@@ -100,7 +102,10 @@ export default function EscDepartments() {
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>{editing ? 'Abteilung bearbeiten' : 'Neue Abteilung'}</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>{editing ? 'Abteilung bearbeiten' : 'Neue Abteilung'}</DialogTitle>
+            <DialogDescription>Ändern Sie die Stammdaten und Buchbarkeit dieser Abteilung.</DialogDescription>
+          </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 py-2">
             <div className="md:col-span-2"><Label>Name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
             <div><Label>Farbe</Label><Input value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} placeholder="hsl(var(--primary))" /></div>
