@@ -193,14 +193,21 @@ async function uploadJson(
 ) {
   const bytes = encoder.encode(JSON.stringify(payload));
   const size = bytes.byteLength;
-  const { error } = await adminClient.storage
-    .from("backups")
-    .upload(path, bytes, {
-      contentType: "application/json",
-      upsert,
-    });
-  if (error) throw new Error(`Upload ${path}: ${error.message}`);
-  return size;
+  let lastErr: string | null = null;
+  for (let attempt = 1; attempt <= 6; attempt += 1) {
+    const { error } = await adminClient.storage
+      .from("backups")
+      .upload(path, bytes, {
+        contentType: "application/json",
+        upsert,
+      });
+    if (!error) return size;
+    lastErr = error.message || String(error);
+    const transient = /Service Unavailable|503|502|504|520|521|522|524|fetch failed|network|timeout|<!DOCTYPE|Web server|Cloudflare/i.test(lastErr);
+    if (!transient || attempt === 6) throw new Error(`Upload ${path}: ${lastErr}`);
+    await new Promise((r) => setTimeout(r, Math.min(500 * 2 ** (attempt - 1), 8000)));
+  }
+  throw new Error(`Upload ${path}: ${lastErr ?? "unknown error"}`);
 }
 
 async function readJson<T>(adminClient: BackupAdminClient, path: string): Promise<T> {
