@@ -111,7 +111,7 @@ const STORAGE_BUCKETS = [
   "production-photos",
   "repair-files",
 ];
-const DB_PAGE_SIZE = 50;
+const DB_PAGE_SIZE = 250;
 // Tabellen mit großen JSON-Payloads (details/raw_data/attachments) → deutlich
 // kleinere Seiten, sonst OOM (HTTP 546) im Edge-Worker beim Serialisieren.
 const HEAVY_TABLES = new Set<string>([
@@ -156,14 +156,21 @@ const XL_TABLES = new Set<string>([
 const NANO_TABLES = new Set<string>([
   "alix_sign_signatures", // signature_image_data (data-URL) kann pro Row hunderte KB sein
 ]);
-const HEAVY_PAGE_SIZE = 10;
-const XL_PAGE_SIZE = 3;
-const NANO_PAGE_SIZE = 1;
+const HEAVY_PAGE_SIZE = 30;
+const XL_PAGE_SIZE = 8;
+const NANO_PAGE_SIZE = 3;
 const pageSizeFor = (table: string) =>
   NANO_TABLES.has(table) ? NANO_PAGE_SIZE
     : XL_TABLES.has(table) ? XL_PAGE_SIZE
     : HEAVY_TABLES.has(table) ? HEAVY_PAGE_SIZE
     : DB_PAGE_SIZE;
+
+// Wie lange darf ein einzelner Worker-Aufruf Tabellen-Seiten hintereinander
+// verarbeiten, bevor wir uns selbst neu triggern? Hält uns unter dem
+// Edge-Function CPU/Memory-Budget, spart aber die 500 ms – 3 s Overhead
+// zwischen Invocations.
+const BATCH_MAX_MS = 25_000;
+const BATCH_MAX_BYTES = 40 * 1024 * 1024; // 40 MB Uploads pro Worker
 
 const STORAGE_LIST_LIMIT = 250;
 const encoder = new TextEncoder();
