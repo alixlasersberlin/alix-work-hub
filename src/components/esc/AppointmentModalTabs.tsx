@@ -56,6 +56,7 @@ export function AppointmentModalTabs({
   const end = initial?.endAt ? new Date(initial.endAt) : new Date(start.getTime() + 60 * 60_000);
 
   const [tab, setTab] = useState('general');
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [form, setForm] = useState({
     title: initial?.title || '',
     description: initial?.description || '',
