@@ -1036,6 +1036,27 @@ function AppRoutes() {
           <Route path="admin" element={<EcpAdmin />} />
         </Route>
 
+        {/* ABIC – Enterprise Analytics & Business Intelligence Center */}
+        <Route path="/abic" element={<ProtectedRoute><AbicLayout /></ProtectedRoute>}>
+          <Route index element={<AbicSection sectionKey="executive" />} />
+          <Route path="sales" element={<AbicSection sectionKey="sales" />} />
+          <Route path="service" element={<AbicSection sectionKey="service" />} />
+          <Route path="training" element={<AbicSection sectionKey="training" />} />
+          <Route path="finance" element={<AbicSection sectionKey="finance" />} />
+          <Route path="customers" element={<AbicSection sectionKey="customers" />} />
+          <Route path="operations" element={<AbicSection sectionKey="operations" />} />
+          <Route path="marketing" element={<AbicSection sectionKey="marketing" />} />
+          <Route path="devices" element={<AbicSection sectionKey="devices" />} />
+          <Route path="employees" element={<AbicSection sectionKey="employees" />} />
+          <Route path="locations" element={<AbicSection sectionKey="locations" />} />
+          <Route path="forecast" element={<AbicSection sectionKey="forecast" />} />
+          <Route path="kpi-designer" element={<AbicKpiDesigner />} />
+          <Route path="reports" element={<AbicReports />} />
+          <Route path="explorer" element={<AbicExplorer />} />
+          <Route path="dashboards" element={<AbicDashboards />} />
+          <Route path="goals" element={<AbicGoals />} />
+        </Route>
+
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
