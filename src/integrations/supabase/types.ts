@@ -3361,6 +3361,840 @@ export type Database = {
         }
         Relationships: []
       }
+      esc_audit_log: {
+        Row: {
+          action: string
+          changed_at: string
+          changed_by: string | null
+          entity_id: string
+          entity_type: string
+          id: string
+          ip_address: string | null
+          new_values_json: Json | null
+          old_values_json: Json | null
+          source: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          changed_at?: string
+          changed_by?: string | null
+          entity_id: string
+          entity_type: string
+          id?: string
+          ip_address?: string | null
+          new_values_json?: Json | null
+          old_values_json?: Json | null
+          source?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          changed_at?: string
+          changed_by?: string | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          ip_address?: string | null
+          new_values_json?: Json | null
+          old_values_json?: Json | null
+          source?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
+      esc_departments: {
+        Row: {
+          color: string
+          created_at: string
+          created_by: string | null
+          default_duration_minutes: number
+          default_email_template_id: string | null
+          default_location: string | null
+          department_lead_user_id: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          is_active: boolean
+          is_public_bookable: boolean
+          name: string
+          slug: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          created_by?: string | null
+          default_duration_minutes?: number
+          default_email_template_id?: string | null
+          default_location?: string | null
+          department_lead_user_id?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          is_public_bookable?: boolean
+          name: string
+          slug: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          created_by?: string | null
+          default_duration_minutes?: number
+          default_email_template_id?: string | null
+          default_location?: string | null
+          department_lead_user_id?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          is_public_bookable?: boolean
+          name?: string
+          slug?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "esc_dept_default_tpl_fk"
+            columns: ["default_email_template_id"]
+            isOneToOne: false
+            referencedRelation: "esc_email_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      esc_email_templates: {
+        Row: {
+          body_html: string
+          body_text: string | null
+          created_at: string
+          created_by: string | null
+          department_id: string | null
+          id: string
+          is_active: boolean
+          is_default: boolean
+          name: string
+          subject: string
+          template_type: string
+          updated_at: string
+        }
+        Insert: {
+          body_html: string
+          body_text?: string | null
+          created_at?: string
+          created_by?: string | null
+          department_id?: string | null
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          name: string
+          subject: string
+          template_type: string
+          updated_at?: string
+        }
+        Update: {
+          body_html?: string
+          body_text?: string | null
+          created_at?: string
+          created_by?: string | null
+          department_id?: string | null
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          name?: string
+          subject?: string
+          template_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "esc_email_templates_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "esc_departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      esc_employee_departments: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          department_id: string
+          id: string
+          is_primary: boolean
+          is_public_bookable: boolean
+          role_in_department: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          department_id: string
+          id?: string
+          is_primary?: boolean
+          is_public_bookable?: boolean
+          role_in_department?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          department_id?: string
+          id?: string
+          is_primary?: boolean
+          is_public_bookable?: boolean
+          role_in_department?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "esc_employee_departments_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "esc_departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      esc_employee_settings: {
+        Row: {
+          buffer_after_minutes: number
+          buffer_before_minutes: number
+          calendar_color: string
+          created_at: string
+          default_location: string | null
+          id: string
+          max_bookings_per_day: number | null
+          timezone: string
+          updated_at: string
+          user_id: string
+          visible_in_public_booking: boolean
+          working_hours_json: Json
+        }
+        Insert: {
+          buffer_after_minutes?: number
+          buffer_before_minutes?: number
+          calendar_color?: string
+          created_at?: string
+          default_location?: string | null
+          id?: string
+          max_bookings_per_day?: number | null
+          timezone?: string
+          updated_at?: string
+          user_id: string
+          visible_in_public_booking?: boolean
+          working_hours_json?: Json
+        }
+        Update: {
+          buffer_after_minutes?: number
+          buffer_before_minutes?: number
+          calendar_color?: string
+          created_at?: string
+          default_location?: string | null
+          id?: string
+          max_bookings_per_day?: number | null
+          timezone?: string
+          updated_at?: string
+          user_id?: string
+          visible_in_public_booking?: boolean
+          working_hours_json?: Json
+        }
+        Relationships: []
+      }
+      esc_event_emails: {
+        Row: {
+          clicked_at: string | null
+          created_at: string
+          error_message: string | null
+          event_id: string | null
+          id: string
+          opened_at: string | null
+          participant_id: string | null
+          provider_message_id: string | null
+          recipient_email: string
+          sent_at: string | null
+          status: string
+          subject: string
+          template_id: string | null
+        }
+        Insert: {
+          clicked_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          event_id?: string | null
+          id?: string
+          opened_at?: string | null
+          participant_id?: string | null
+          provider_message_id?: string | null
+          recipient_email: string
+          sent_at?: string | null
+          status?: string
+          subject: string
+          template_id?: string | null
+        }
+        Update: {
+          clicked_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          event_id?: string | null
+          id?: string
+          opened_at?: string | null
+          participant_id?: string | null
+          provider_message_id?: string | null
+          recipient_email?: string
+          sent_at?: string | null
+          status?: string
+          subject?: string
+          template_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "esc_event_emails_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "esc_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "esc_event_emails_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "esc_event_participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "esc_event_emails_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "esc_email_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      esc_event_participants: {
+        Row: {
+          confirmation_sent_at: string | null
+          confirmation_status: string
+          confirmation_token: string | null
+          confirmed_at: string | null
+          created_at: string
+          customer_id: string | null
+          declined_at: string | null
+          email: string | null
+          event_id: string
+          id: string
+          name: string | null
+          participant_type: string
+          phone: string | null
+          role: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          confirmation_sent_at?: string | null
+          confirmation_status?: string
+          confirmation_token?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          customer_id?: string | null
+          declined_at?: string | null
+          email?: string | null
+          event_id: string
+          id?: string
+          name?: string | null
+          participant_type: string
+          phone?: string | null
+          role?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          confirmation_sent_at?: string | null
+          confirmation_status?: string
+          confirmation_token?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          customer_id?: string | null
+          declined_at?: string | null
+          email?: string | null
+          event_id?: string
+          id?: string
+          name?: string | null
+          participant_type?: string
+          phone?: string | null
+          role?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "esc_event_participants_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "esc_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      esc_event_resources: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          event_id: string
+          id: string
+          resource_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          event_id: string
+          id?: string
+          resource_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          event_id?: string
+          id?: string
+          resource_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "esc_event_resources_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "esc_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "esc_event_resources_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "esc_resources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      esc_event_types: {
+        Row: {
+          color: string
+          created_at: string
+          created_by: string | null
+          default_duration_minutes: number
+          department_id: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          is_active: boolean
+          is_public_bookable: boolean
+          name: string
+          requires_confirmation_default: boolean
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          created_by?: string | null
+          default_duration_minutes?: number
+          department_id?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          is_public_bookable?: boolean
+          name: string
+          requires_confirmation_default?: boolean
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          created_by?: string | null
+          default_duration_minutes?: number
+          department_id?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          is_public_bookable?: boolean
+          name?: string
+          requires_confirmation_default?: boolean
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "esc_event_types_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "esc_departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      esc_events: {
+        Row: {
+          address: string | null
+          all_day: boolean
+          assigned_user_id: string | null
+          confirmation_status: string
+          confirmation_token: string | null
+          confirmation_token_expires_at: string | null
+          contact_person: string | null
+          created_at: string
+          created_by: string | null
+          customer_email: string | null
+          customer_id: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          deleted_at: string | null
+          department_id: string
+          description: string | null
+          device_id: string | null
+          end_at: string
+          event_type_id: string | null
+          external_note: string | null
+          ics_uid: string | null
+          id: string
+          internal_note: string | null
+          is_public_booking: boolean
+          is_recurring: boolean
+          location: string | null
+          parent_event_id: string | null
+          priority: string
+          public_booking_id: string | null
+          recurrence_rule: string | null
+          requires_confirmation: boolean
+          resource_id: string | null
+          room_id: string | null
+          source: string
+          start_at: string
+          status: string
+          timezone: string
+          title: string
+          updated_at: string
+          updated_by: string | null
+          vehicle_id: string | null
+        }
+        Insert: {
+          address?: string | null
+          all_day?: boolean
+          assigned_user_id?: string | null
+          confirmation_status?: string
+          confirmation_token?: string | null
+          confirmation_token_expires_at?: string | null
+          contact_person?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          deleted_at?: string | null
+          department_id: string
+          description?: string | null
+          device_id?: string | null
+          end_at: string
+          event_type_id?: string | null
+          external_note?: string | null
+          ics_uid?: string | null
+          id?: string
+          internal_note?: string | null
+          is_public_booking?: boolean
+          is_recurring?: boolean
+          location?: string | null
+          parent_event_id?: string | null
+          priority?: string
+          public_booking_id?: string | null
+          recurrence_rule?: string | null
+          requires_confirmation?: boolean
+          resource_id?: string | null
+          room_id?: string | null
+          source?: string
+          start_at: string
+          status?: string
+          timezone?: string
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+          vehicle_id?: string | null
+        }
+        Update: {
+          address?: string | null
+          all_day?: boolean
+          assigned_user_id?: string | null
+          confirmation_status?: string
+          confirmation_token?: string | null
+          confirmation_token_expires_at?: string | null
+          contact_person?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          deleted_at?: string | null
+          department_id?: string
+          description?: string | null
+          device_id?: string | null
+          end_at?: string
+          event_type_id?: string | null
+          external_note?: string | null
+          ics_uid?: string | null
+          id?: string
+          internal_note?: string | null
+          is_public_booking?: boolean
+          is_recurring?: boolean
+          location?: string | null
+          parent_event_id?: string | null
+          priority?: string
+          public_booking_id?: string | null
+          recurrence_rule?: string | null
+          requires_confirmation?: boolean
+          resource_id?: string | null
+          room_id?: string | null
+          source?: string
+          start_at?: string
+          status?: string
+          timezone?: string
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "esc_events_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "esc_departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "esc_events_event_type_id_fkey"
+            columns: ["event_type_id"]
+            isOneToOne: false
+            referencedRelation: "esc_event_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "esc_events_parent_event_id_fkey"
+            columns: ["parent_event_id"]
+            isOneToOne: false
+            referencedRelation: "esc_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "esc_events_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "esc_resources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "esc_events_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "esc_resources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "esc_events_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "esc_resources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      esc_ics_tokens: {
+        Row: {
+          created_at: string
+          department_id: string | null
+          expires_at: string
+          feed_type: string
+          id: string
+          is_active: boolean
+          revoked_at: string | null
+          token: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          department_id?: string | null
+          expires_at?: string
+          feed_type: string
+          id?: string
+          is_active?: boolean
+          revoked_at?: string | null
+          token?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          department_id?: string | null
+          expires_at?: string
+          feed_type?: string
+          id?: string
+          is_active?: boolean
+          revoked_at?: string | null
+          token?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "esc_ics_tokens_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "esc_departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      esc_public_bookings: {
+        Row: {
+          booking_number: string
+          company_name: string | null
+          confirmation_token: string
+          created_at: string
+          created_event_id: string | null
+          customer_email: string
+          customer_name: string
+          customer_phone: string | null
+          department_id: string
+          event_type_id: string | null
+          id: string
+          ip_address: string | null
+          message: string | null
+          preferred_end_at: string | null
+          preferred_start_at: string
+          source: string
+          status: string
+          timezone: string
+          updated_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          booking_number?: string
+          company_name?: string | null
+          confirmation_token?: string
+          created_at?: string
+          created_event_id?: string | null
+          customer_email: string
+          customer_name: string
+          customer_phone?: string | null
+          department_id: string
+          event_type_id?: string | null
+          id?: string
+          ip_address?: string | null
+          message?: string | null
+          preferred_end_at?: string | null
+          preferred_start_at: string
+          source?: string
+          status?: string
+          timezone?: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          booking_number?: string
+          company_name?: string | null
+          confirmation_token?: string
+          created_at?: string
+          created_event_id?: string | null
+          customer_email?: string
+          customer_name?: string
+          customer_phone?: string | null
+          department_id?: string
+          event_type_id?: string | null
+          id?: string
+          ip_address?: string | null
+          message?: string | null
+          preferred_end_at?: string | null
+          preferred_start_at?: string
+          source?: string
+          status?: string
+          timezone?: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "esc_public_bookings_created_event_id_fkey"
+            columns: ["created_event_id"]
+            isOneToOne: false
+            referencedRelation: "esc_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "esc_public_bookings_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "esc_departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "esc_public_bookings_event_type_id_fkey"
+            columns: ["event_type_id"]
+            isOneToOne: false
+            referencedRelation: "esc_event_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      esc_resources: {
+        Row: {
+          capacity: number | null
+          color: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          is_public_bookable: boolean
+          location: string | null
+          name: string
+          resource_type: string
+          updated_at: string
+        }
+        Insert: {
+          capacity?: number | null
+          color?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_public_bookable?: boolean
+          location?: string | null
+          name: string
+          resource_type: string
+          updated_at?: string
+        }
+        Update: {
+          capacity?: number | null
+          color?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_public_bookable?: boolean
+          location?: string | null
+          name?: string
+          resource_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       finance_accounts: {
         Row: {
           blocked: boolean
@@ -14607,6 +15441,13 @@ export type Database = {
         }
         Returns: undefined
       }
+      esc_generate_token: { Args: never; Returns: string }
+      esc_is_admin: { Args: never; Returns: boolean }
+      esc_is_department_lead: {
+        Args: { _department_id: string; _user_id: string }
+        Returns: boolean
+      }
+      esc_user_department_ids: { Args: { _user_id: string }; Returns: string[] }
       finance_deposit_book: {
         Args: {
           p_amount: number
