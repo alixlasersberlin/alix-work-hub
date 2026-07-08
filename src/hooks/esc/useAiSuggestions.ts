@@ -22,7 +22,10 @@ export function useAiSuggestions() {
     setItems(merged);
   }, [appointments]);
 
-  useEffect(() => subscribeAi(() => setItems(getSuggestions())), []);
+  useEffect(() => {
+    const unsub = subscribeAi(() => setItems(getSuggestions()));
+    return () => { unsub(); };
+  }, []);
 
   const open = useMemo(() => items.filter((s) => s.status === 'open'), [items]);
   return { suggestions: items, open, act: actOnSuggestion };

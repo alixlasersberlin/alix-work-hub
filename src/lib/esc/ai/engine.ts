@@ -246,7 +246,7 @@ export function computeCapacity(apps: EscAppointment[]): CapacityRow[] {
     const cap = e.maxWorkMinutes ?? 480;
     rows.push({ id: e.id, name: e.name, kind: 'employee', bookedMinutes: booked, capacityMinutes: cap, utilizationPct: Math.round((booked / cap) * 100) });
   }
-  for (const v of RM_VEHICLES) rows.push({ id: v.id, name: v.name, kind: 'vehicle', bookedMinutes: 0, capacityMinutes: 480, utilizationPct: 0 });
+  for (const v of RM_VEHICLES) rows.push({ id: v.id, name: `${v.plate} ${v.brand ?? ''} ${v.model ?? ''}`.trim(), kind: 'vehicle', bookedMinutes: 0, capacityMinutes: 480, utilizationPct: 0 });
   for (const r of RM_ROOMS) rows.push({ id: r.id, name: r.name, kind: 'room', bookedMinutes: 0, capacityMinutes: 480, utilizationPct: 0 });
   for (const d of RM_DEMO_DEVICES) rows.push({ id: d.id, name: d.name, kind: 'device', bookedMinutes: 0, capacityMinutes: 480, utilizationPct: 0 });
   return rows;

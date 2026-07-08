@@ -6,7 +6,10 @@ import { getProtocol, subscribeAi, type AiProtocolEntry } from '@/lib/esc/ai/sto
 
 export default function AiProtocol() {
   const [entries, setEntries] = useState<AiProtocolEntry[]>(getProtocol());
-  useEffect(() => subscribeAi(() => setEntries(getProtocol())), []);
+  useEffect(() => {
+    const unsub = subscribeAi(() => setEntries(getProtocol()));
+    return () => { unsub(); };
+  }, []);
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
