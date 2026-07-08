@@ -411,6 +411,30 @@ const EmpDashboard = lazy(() => import("./pages/EMP/Dashboard"));
 const EmpNotifications = lazy(() => import("./pages/EMP/Notifications"));
 const EmpSync = lazy(() => import("./pages/EMP/Sync"));
 const EmpSettingsPage = lazy(() => import("./pages/EMP/Settings"));
+
+// ECP – Enterprise Customer Portal
+const EcpLayout = lazy(() => import("./components/ecp/EcpLayout"));
+const EcpDashboard = lazy(() => import("./pages/ECP/Dashboard"));
+const EcpAppointments = lazy(() => import("./pages/ECP/Appointments"));
+const EcpDevices = lazy(() => import("./pages/ECP/Devices"));
+const EcpDeviceDetail = lazy(() => import("./pages/ECP/DeviceDetail"));
+const EcpService = lazy(() => import("./pages/ECP/Service"));
+const EcpTickets = lazy(() => import("./pages/ECP/Tickets"));
+const EcpTrainings = lazy(() => import("./pages/ECP/Trainings"));
+const EcpDocuments = lazy(() => import("./pages/ECP/Documents"));
+const EcpInvoices = lazy(() => import("./pages/ECP/Invoices"));
+const EcpQuotes = lazy(() => import("./pages/ECP/Quotes"));
+const EcpMessages = lazy(() => import("./pages/ECP/Messages"));
+const EcpDownloads = lazy(() => import("./pages/ECP/Downloads"));
+const EcpProfile = lazy(() => import("./pages/ECP/Profile"));
+const EcpLocations = lazy(() => import("./pages/ECP/Locations"));
+const EcpContacts = lazy(() => import("./pages/ECP/Contacts"));
+const EcpDealer = lazy(() => import("./pages/ECP/Dealer"));
+const EcpServicePartner = lazy(() => import("./pages/ECP/ServicePartner"));
+const EcpSupplier = lazy(() => import("./pages/ECP/Supplier"));
+const EcpSearch = lazy(() => import("./pages/ECP/Search"));
+const EcpNotifications = lazy(() => import("./pages/ECP/Notifications"));
+const EcpAdmin = lazy(() => import("./pages/ECP/Admin"));
 import MaintenanceGate from "./components/MaintenanceGate";
 import LeihgeraetReminder from "./components/LeihgeraetReminder";
 
