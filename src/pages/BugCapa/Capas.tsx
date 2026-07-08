@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { StatusBadge } from '@/components/StatusBadge';
-import { Plus, MessageSquare, Pencil, CheckCircle2, X } from 'lucide-react';
+import { Plus, MessageSquare, Pencil, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Section, CAPA_STATUS, statusLabel } from './_shared';
 import { QmDetailDrawer } from './QmDetailDrawer';
@@ -156,43 +156,35 @@ export default function Capas() {
         </Button>
       }
     >
-      {open && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden bg-background/80 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="new-capa-title">
-          <div className="absolute inset-0" onClick={() => setOpen(false)} />
-          <div className="relative z-10 flex h-[min(90vh,780px)] w-full max-w-3xl flex-col overflow-hidden rounded-lg border border-border bg-card shadow-xl">
-            <div className="flex flex-shrink-0 items-start justify-between gap-4 border-b border-border px-5 py-4">
-              <div>
-                <h3 id="new-capa-title" className="text-lg font-semibold">Neue CAPA anlegen</h3>
-                <p className="text-sm text-muted-foreground">Erfasst eine neue Korrektur- und Vorbeugemaßnahme.</p>
-              </div>
-              <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => setOpen(false)} aria-label="Schließen">
-                <X className="h-4 w-4" />
-              </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="flex max-h-[90dvh] w-[calc(100vw-2rem)] max-w-3xl flex-col gap-0 overflow-hidden p-0 sm:rounded-lg">
+          <DialogHeader className="flex-shrink-0 border-b border-border px-5 py-4 pr-12">
+            <DialogTitle>Neue CAPA anlegen</DialogTitle>
+            <DialogDescription>Erfasst eine neue Korrektur- und Vorbeugemaßnahme.</DialogDescription>
+          </DialogHeader>
+          <div className="grid min-h-0 flex-1 gap-3 overflow-y-auto px-5 py-4">
+            <div><Label>Titel *</Label><Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} autoFocus /></div>
+            <div>
+              <Label>Auslöser</Label>
+              <Select value={form.trigger_type} onValueChange={v => setForm({ ...form, trigger_type: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {['bug', 'reklamation', 'audit', 'sonstiges'].map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
-            <div className="grid min-h-0 flex-1 gap-3 overflow-y-auto px-5 py-4">
-              <div><Label>Titel *</Label><Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} autoFocus /></div>
-              <div>
-                <Label>Auslöser</Label>
-                <Select value={form.trigger_type} onValueChange={v => setForm({ ...form, trigger_type: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {['bug', 'reklamation', 'audit', 'sonstiges'].map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div><Label>Ursachenanalyse</Label><Textarea rows={3} value={form.root_cause} onChange={e => setForm({ ...form, root_cause: e.target.value })} /></div>
-              <div><Label>Sofortmaßnahme</Label><Textarea rows={2} value={form.immediate_action} onChange={e => setForm({ ...form, immediate_action: e.target.value })} /></div>
-              <div><Label>Korrekturmaßnahme</Label><Textarea rows={2} value={form.corrective_action} onChange={e => setForm({ ...form, corrective_action: e.target.value })} /></div>
-              <div><Label>Vorbeugemaßnahme</Label><Textarea rows={2} value={form.preventive_action} onChange={e => setForm({ ...form, preventive_action: e.target.value })} /></div>
-              <div><Label>Frist</Label><Input type="date" value={form.due_date} onChange={e => setForm({ ...form, due_date: e.target.value })} /></div>
-            </div>
-            <div className="flex flex-shrink-0 justify-end gap-2 border-t border-border px-5 py-4">
-              <Button variant="ghost" onClick={() => setOpen(false)}>Abbrechen</Button>
-              <Button onClick={create}>Speichern</Button>
-            </div>
+            <div><Label>Ursachenanalyse</Label><Textarea rows={3} value={form.root_cause} onChange={e => setForm({ ...form, root_cause: e.target.value })} /></div>
+            <div><Label>Sofortmaßnahme</Label><Textarea rows={2} value={form.immediate_action} onChange={e => setForm({ ...form, immediate_action: e.target.value })} /></div>
+            <div><Label>Korrekturmaßnahme</Label><Textarea rows={2} value={form.corrective_action} onChange={e => setForm({ ...form, corrective_action: e.target.value })} /></div>
+            <div><Label>Vorbeugemaßnahme</Label><Textarea rows={2} value={form.preventive_action} onChange={e => setForm({ ...form, preventive_action: e.target.value })} /></div>
+            <div><Label>Frist</Label><Input type="date" value={form.due_date} onChange={e => setForm({ ...form, due_date: e.target.value })} /></div>
           </div>
-        </div>
-      )}
+          <DialogFooter className="flex-shrink-0 border-t border-border px-5 py-4">
+            <Button variant="ghost" onClick={() => setOpen(false)}>Abbrechen</Button>
+            <Button onClick={create}>Speichern</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <div className="rounded-md border border-border">
         <Table>
           <TableHeader>
