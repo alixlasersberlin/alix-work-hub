@@ -17,6 +17,11 @@ import { publicUrl } from '@/lib/esc/public-url';
 import { Download, Mail, Save, Trash2, XCircle, CheckCircle2, MoveRight, Paperclip } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { CustomerSearchCombobox } from './crm/CustomerSearchCombobox';
+import { CustomerSidebar } from './crm/CustomerSidebar';
+import { ChecklistPanel } from './ChecklistPanel';
+import { DocumentActions } from './DocumentActions';
+import { getCustomerSummary } from '@/lib/esc/crm/search';
 
 const PRIORITY: EscPriority[] = ['low', 'normal', 'high', 'urgent'];
 
