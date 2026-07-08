@@ -36,7 +36,7 @@ export default function CancelAppointment() {
       status: 'storniert',
       externalNote: [appointment.externalNote, reason ? `Absagegrund: ${reason}` : ''].filter(Boolean).join('\n'),
     });
-    await logEscAudit({ entity: 'appointment', entityId: appointment.id, action: 'status_change', , source: 'confirmation_link' });
+    await logEscAudit({ entity: 'appointment', entityId: appointment.id, action: 'status_change', source: 'confirmation_link' });
     setDone(true);
     toast.success('Termin abgesagt.');
   };

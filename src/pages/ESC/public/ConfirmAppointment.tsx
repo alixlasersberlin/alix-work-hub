@@ -52,7 +52,7 @@ export default function ConfirmAppointment() {
 
   const act = async (kind: 'confirmed' | 'cancelled') => {
     await updateAppointment(appointment.id, { status: kind === 'confirmed' ? 'bestaetigt' : 'storniert' });
-    await logEscAudit({ entity: 'appointment', entityId: appointment.id, action: kind === 'confirmed' ? 'confirm' : 'cancel', source: 'confirmation_link' });
+    await logEscAudit({ entity: 'appointment', entityId: appointment.id, action: kind === 'confirmed' ? 'confirm' : 'status_change', source: 'confirmation_link' });
     setDone(kind);
     toast.success('Danke für Ihre Rückmeldung!');
   };
