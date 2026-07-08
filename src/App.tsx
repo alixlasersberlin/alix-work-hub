@@ -441,6 +441,37 @@ const EcqmApprovals = lazy(() => import("./pages/ECQM/Approvals"));
 const EcqmArchive = lazy(() => import("./pages/ECQM/Archive"));
 const EcqmSettings = lazy(() => import("./pages/ECQM/Settings"));
 
+// EAOC – Enterprise Administration & Organization Center
+const EaocLayout = lazy(() => import("./components/eaoc/EaocLayout"));
+const EaocDashboard = lazy(() => import("./pages/EAOC/Dashboard"));
+const EaocCompanies = lazy(() => import("./pages/EAOC/Companies"));
+const EaocTenants = lazy(() => import("./pages/EAOC/Tenants"));
+const EaocLocations = lazy(() => import("./pages/EAOC/Locations"));
+const EaocDepartments = lazy(() => import("./pages/EAOC/Departments"));
+const EaocTeams = lazy(() => import("./pages/EAOC/Teams"));
+const EaocUsers = lazy(() => import("./pages/EAOC/Users"));
+const EaocRoles = lazy(() => import("./pages/EAOC/Roles"));
+const EaocPermissions = lazy(() => import("./pages/EAOC/Permissions"));
+const EaocOrgChart = lazy(() => import("./pages/EAOC/OrgChart"));
+const EaocBranding = lazy(() => import("./pages/EAOC/Branding"));
+const EaocIntegrations = lazy(() => import("./pages/EAOC/Integrations"));
+const EaocApiKeys = lazy(() => import("./pages/EAOC/ApiKeys"));
+const EaocWebhooks = lazy(() => import("./pages/EAOC/Webhooks"));
+const EaocLicenses = lazy(() => import("./pages/EAOC/Licenses"));
+const EaocSecurity = lazy(() => import("./pages/EAOC/Security"));
+const EaocBackups = lazy(() => import("./pages/EAOC/Backups"));
+const EaocMonitoring = lazy(() => import("./pages/EAOC/Monitoring"));
+const EaocMaintenance = lazy(() => import("./pages/EAOC/Maintenance"));
+const EaocNotifications = lazy(() => import("./pages/EAOC/Notifications"));
+const EaocExport = lazy(() => import("./pages/EAOC/Export"));
+const EaocImport = lazy(() => import("./pages/EAOC/Import"));
+const EaocJobs = lazy(() => import("./pages/EAOC/Jobs"));
+const EaocSearch = lazy(() => import("./pages/EAOC/Search"));
+const EaocPrivacy = lazy(() => import("./pages/EAOC/Privacy"));
+const EaocAudit = lazy(() => import("./pages/EAOC/Audit"));
+const EaocSettings = lazy(() => import("./pages/EAOC/Settings"));
+const EaocDeveloper = lazy(() => import("./pages/EAOC/Developer"));
+
 // ECP – Enterprise Customer Portal
 const EcpLayout = lazy(() => import("./components/ecp/EcpLayout"));
 const EcpDashboard = lazy(() => import("./pages/ECP/Dashboard"));
@@ -1097,6 +1128,38 @@ function AppRoutes() {
           <Route path="freigaben" element={<EcqmApprovals />} />
           <Route path="archiv" element={<EcqmArchive />} />
           <Route path="einstellungen" element={<EcqmSettings />} />
+        </Route>
+
+        {/* EAOC – Enterprise Administration & Organization Center */}
+        <Route path="/eaoc" element={<ProtectedRoute><EaocLayout /></ProtectedRoute>}>
+          <Route index element={<EaocDashboard />} />
+          <Route path="companies" element={<EaocCompanies />} />
+          <Route path="tenants" element={<EaocTenants />} />
+          <Route path="locations" element={<EaocLocations />} />
+          <Route path="departments" element={<EaocDepartments />} />
+          <Route path="teams" element={<EaocTeams />} />
+          <Route path="users" element={<EaocUsers />} />
+          <Route path="roles" element={<EaocRoles />} />
+          <Route path="permissions" element={<EaocPermissions />} />
+          <Route path="orgchart" element={<EaocOrgChart />} />
+          <Route path="branding" element={<EaocBranding />} />
+          <Route path="integrations" element={<EaocIntegrations />} />
+          <Route path="api-keys" element={<EaocApiKeys />} />
+          <Route path="webhooks" element={<EaocWebhooks />} />
+          <Route path="licenses" element={<EaocLicenses />} />
+          <Route path="security" element={<EaocSecurity />} />
+          <Route path="backups" element={<EaocBackups />} />
+          <Route path="monitoring" element={<EaocMonitoring />} />
+          <Route path="maintenance" element={<EaocMaintenance />} />
+          <Route path="notifications" element={<EaocNotifications />} />
+          <Route path="export" element={<EaocExport />} />
+          <Route path="import" element={<EaocImport />} />
+          <Route path="jobs" element={<EaocJobs />} />
+          <Route path="search" element={<EaocSearch />} />
+          <Route path="privacy" element={<EaocPrivacy />} />
+          <Route path="audit" element={<EaocAudit />} />
+          <Route path="settings" element={<EaocSettings />} />
+          <Route path="developer" element={<EaocDeveloper />} />
         </Route>
 
         <Route path="*" element={<NotFound />} />
