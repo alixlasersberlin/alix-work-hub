@@ -363,6 +363,8 @@ const EscConfirmations = lazy(() => import("./pages/ESC/Confirmations"));
 const EscSettings = lazy(() => import("./pages/ESC/Settings"));
 const EscBookingPortal = lazy(() => import("./pages/ESC/public/BookingPortal"));
 const EscConfirmAppointment = lazy(() => import("./pages/ESC/public/ConfirmAppointment"));
+const EscRescheduleAppointment = lazy(() => import("./pages/ESC/public/RescheduleAppointment"));
+const EscCancelAppointment = lazy(() => import("./pages/ESC/public/CancelAppointment"));
 import MaintenanceGate from "./components/MaintenanceGate";
 import LeihgeraetReminder from "./components/LeihgeraetReminder";
 
@@ -488,6 +490,16 @@ function AppRoutes() {
         <Route path="/mfa-recovery" element={<MfaGate expect="any"><MfaRecovery /></MfaGate>} />
         {/* ESC – öffentliche Routen (kein Login) */}
         <Route path="/book" element={<EscBookingPortal />} />
+        {/* ESC – öffentliche Routen (kein Login) */}
+        <Route path="/book" element={<EscBookingPortal />} />
+        <Route path="/book/confirmation" element={<EscBookingPortal />} />
+        <Route path="/book/:department" element={<EscBookingPortal />} />
+        <Route path="/book/:department/:service" element={<EscBookingPortal />} />
+        <Route path="/appointment/:token" element={<EscConfirmAppointment />} />
+        <Route path="/appointment/reschedule/:token" element={<EscRescheduleAppointment />} />
+        <Route path="/appointment/cancel/:token" element={<EscCancelAppointment />} />
+        <Route path="/appointment/decline/:token" element={<EscCancelAppointment />} />
+        <Route path="/booking/:token" element={<EscConfirmAppointment />} />
         <Route path="/termin-bestaetigen/:token" element={<EscConfirmAppointment />} />
         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route path="/dashboard" element={<HomeRoute />} />
