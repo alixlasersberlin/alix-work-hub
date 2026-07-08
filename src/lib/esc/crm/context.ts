@@ -1,21 +1,19 @@
 import { supabase } from '@/integrations/supabase/client';
 import type {
   CrmCustomerContext, CrmDevice, CrmOffer, CrmInvoice, CrmTicket,
-  CrmServiceEvent, CrmTraining, CrmDocument, CrmTimelineEntry,
+  CrmServiceEvent, CrmTraining, CrmDocument, CrmTimelineEntry, CrmCustomerSummary,
 } from './types';
 import { getCustomerSummary } from './search';
 
-// Loads the full read-only customer context. Each section is fetched
-// independently so partial failures do not break the sidebar.
 export async function loadCustomerContext(customerId: string): Promise<CrmCustomerContext | null> {
   const customer = await getCustomerSummary(customerId);
   if (!customer) return null;
 
   const [devices, offers, invoices, tickets, services, trainings, documents] = await Promise.all([
-    loadDevices(customerId),
+    loadDevices(customer),
     loadOffers(customerId),
     loadInvoices(customerId),
-    loadTickets(customerId),
+    loadTickets(customer),
     loadServices(customerId),
     loadTrainings(customerId),
     loadDocuments(customerId),
@@ -32,35 +30,39 @@ export async function loadCustomerContext(customerId: string): Promise<CrmCustom
   return { customer, devices, offers, invoices, tickets, services, trainings, documents, timeline };
 }
 
-async function loadDevices(customerId: string): Promise<CrmDevice[]> {
+async function loadDevices(customer: CrmCustomerSummary): Promise<CrmDevice[]> {
+  // lager_devices has no customer_id — match by email / name
+  const filters: string[] = [];
+  if (customer.email) filters.push(`customer_email.ilike.${customer.email}`);
+  if (customer.companyName) filters.push(`customer_name.ilike.%${customer.companyName}%`);
+  if (!filters.length) return [];
   const { data } = await supabase
     .from('lager_devices')
-    .select('id, model, serial_number, status, warranty_until, installed_at, last_service_at, next_service_at')
-    .eq('customer_id', customerId)
-    .order('installed_at', { ascending: false })
+    .select('id, model_name, serial_number, device_status, last_service_date, next_service_date, commissioning_date')
+    .or(filters.join(','))
     .limit(50);
   return (data || []).map((d: any) => ({
     id: d.id,
-    model: d.model,
+    model: d.model_name,
     serialNumber: d.serial_number,
-    status: d.status,
-    warrantyUntil: d.warranty_until,
-    installedAt: d.installed_at,
-    lastServiceAt: d.last_service_at,
-    nextServiceAt: d.next_service_at,
+    status: d.device_status,
+    warrantyUntil: null,
+    installedAt: d.commissioning_date,
+    lastServiceAt: d.last_service_date,
+    nextServiceAt: d.next_service_date,
   }));
 }
 
 async function loadOffers(customerId: string): Promise<CrmOffer[]> {
   const { data } = await supabase
     .from('offers')
-    .select('id, offer_number, status, total_amount, currency, created_at')
+    .select('id, offer_number, status, total_gross, created_at')
     .eq('customer_id', customerId)
     .order('created_at', { ascending: false })
     .limit(30);
   return (data || []).map((o: any) => ({
     id: o.id, number: o.offer_number, status: o.status,
-    total: o.total_amount, currency: o.currency, createdAt: o.created_at,
+    total: o.total_gross, currency: 'EUR', createdAt: o.created_at,
   }));
 }
 
@@ -78,11 +80,16 @@ async function loadInvoices(customerId: string): Promise<CrmInvoice[]> {
   }));
 }
 
-async function loadTickets(customerId: string): Promise<CrmTicket[]> {
+async function loadTickets(customer: CrmCustomerSummary): Promise<CrmTicket[]> {
+  // tickets has no customer_id — match by email or company_name
+  const filters: string[] = [];
+  if (customer.email) filters.push(`customer_email.ilike.${customer.email}`);
+  if (customer.companyName) filters.push(`company_name.ilike.%${customer.companyName}%`);
+  if (!filters.length) return [];
   const { data } = await supabase
     .from('tickets')
     .select('id, ticket_number, subject, status, priority, created_at')
-    .eq('customer_id', customerId)
+    .or(filters.join(','))
     .order('created_at', { ascending: false })
     .limit(30);
   return (data || []).map((t: any) => ({
@@ -94,29 +101,29 @@ async function loadTickets(customerId: string): Promise<CrmTicket[]> {
 async function loadServices(customerId: string): Promise<CrmServiceEvent[]> {
   const { data } = await supabase
     .from('repair_orders')
-    .select('id, order_number, status, created_at, service_type')
+    .select('id, order_number, repair_status, created_at')
     .eq('customer_id', customerId)
     .order('created_at', { ascending: false })
     .limit(30);
   return (data || []).map((r: any) => ({
     id: r.id,
-    kind: (r.service_type as any) || 'service',
-    title: r.order_number || 'Service',
+    kind: 'reparatur',
+    title: r.order_number || 'Reparatur',
     at: r.created_at,
-    status: r.status,
+    status: r.repair_status,
   }));
 }
 
 async function loadTrainings(customerId: string): Promise<CrmTraining[]> {
   const { data } = await supabase
     .from('academy_bookings')
-    .select('id, session_id, status, attended, created_at')
+    .select('id, session_id, status, created_at')
     .eq('customer_id', customerId)
     .order('created_at', { ascending: false })
     .limit(30);
   return (data || []).map((b: any) => ({
     id: b.id,
-    title: `Schulung ${b.session_id?.slice(0, 6) || ''}`.trim(),
+    title: `Schulung ${(b.session_id || '').slice(0, 6)}`.trim(),
     status: b.status,
     at: b.created_at,
     nisv: false,
