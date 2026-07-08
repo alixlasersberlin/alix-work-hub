@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
   useAfterSalesCase, useToggleChecklistItem, useUpdateMediaStage,
-  useAddCallback, useCompleteCallback, useCloseCase, type AsSection,
+  useAddCallback, useCompleteCallback, useCloseCase, useForceCloseCase, type AsSection,
 } from '@/hooks/useAfterSales';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
