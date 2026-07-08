@@ -412,6 +412,15 @@ const EmpNotifications = lazy(() => import("./pages/EMP/Notifications"));
 const EmpSync = lazy(() => import("./pages/EMP/Sync"));
 const EmpSettingsPage = lazy(() => import("./pages/EMP/Settings"));
 
+// ABIC – Enterprise Analytics & Business Intelligence Center
+const AbicLayout = lazy(() => import("./components/abic/AbicLayout"));
+const AbicSection = lazy(() => import("./pages/ABIC/SectionPage"));
+const AbicKpiDesigner = lazy(() => import("./pages/ABIC/KpiDesigner"));
+const AbicReports = lazy(() => import("./pages/ABIC/Reports"));
+const AbicExplorer = lazy(() => import("./pages/ABIC/DataExplorer"));
+const AbicDashboards = lazy(() => import("./pages/ABIC/Dashboards"));
+const AbicGoals = lazy(() => import("./pages/ABIC/Goals"));
+
 // ECP – Enterprise Customer Portal
 const EcpLayout = lazy(() => import("./components/ecp/EcpLayout"));
 const EcpDashboard = lazy(() => import("./pages/ECP/Dashboard"));
