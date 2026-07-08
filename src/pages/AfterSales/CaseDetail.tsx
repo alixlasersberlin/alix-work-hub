@@ -53,6 +53,7 @@ export default function AfterSalesCaseDetail() {
   const addCallback = useAddCallback();
   const completeCallback = useCompleteCallback();
   const closeCase = useCloseCase();
+  const forceClose = useForceCloseCase();
 
   const [cbDate, setCbDate] = useState('');
   const [cbReason, setCbReason] = useState('');
