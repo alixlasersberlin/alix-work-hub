@@ -1,120 +1,405 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { useDepartments } from '@/hooks/esc/useDepartments';
-import { useAppointments } from '@/hooks/esc/useAppointments';
-import { DepartmentBadge } from '@/components/esc/DepartmentBadge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
+import { ArrowLeft, ArrowRight, CalendarCheck, CheckCircle2, Clock, Globe, MapPin, Users, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
-import alixLogo from '@/assets/alix-logo-gold.png';
+import { useAppointments } from '@/hooks/esc/useAppointments';
+import { useDepartments } from '@/hooks/esc/useDepartments';
+import { useEmployees } from '@/hooks/esc/useEmployees';
+import { DEFAULT_LOCATIONS, DEFAULT_BOOKING_SETTINGS, generateSlots, nextAvailableDays, customerBookingsToday } from '@/lib/esc/booking-settings';
+import { BookingLayout } from '@/components/esc/public/BookingLayout';
+import { format } from 'date-fns';
+import { de } from 'date-fns/locale';
+import { confirmUrl } from '@/lib/esc/public-url';
+
+type StepId = 'department' | 'service' | 'location' | 'time' | 'contact' | 'summary';
+const STEPS: StepId[] = ['department', 'service', 'location', 'time', 'contact', 'summary'];
+const STEP_LABEL: Record<StepId, string> = {
+  department: 'Leistung', service: 'Terminart', location: 'Standort', time: 'Zeit', contact: 'Kontakt', summary: 'Übersicht',
+};
+
+const SERVICE_PRESETS = ['Beratung', 'Online Demo', 'Vorführung', 'Geräteeinweisung', 'Produktschulung'];
 
 export default function BookingPortal() {
+  const { department: deptParam, service: serviceParam } = useParams();
+  const navigate = useNavigate();
   const { departments } = useDepartments();
-  const { createAppointment } = useAppointments();
-  const publicDepts = departments.filter((d) => d.active && d.publicBookable && d.externallyBookable);
+  const { employees } = useEmployees();
+  const { appointments, createAppointment } = useAppointments();
 
-  const [selectedDept, setSelectedDept] = useState<string>('');
-  const [form, setForm] = useState({ name: '', company: '', email: '', phone: '', location: '', desiredDate: '', desiredTime: '', message: '' });
-  const [sent, setSent] = useState(false);
+  const publicDepts = useMemo(
+    () => departments.filter((d) => d.active && d.publicBookable && d.externallyBookable),
+    [departments],
+  );
+
+  const [step, setStep] = useState<StepId>('department');
+  const [state, setState] = useState({
+    departmentId: '',
+    service: '',
+    locationId: '',
+    dayIso: '',
+    slotIso: '',
+    firstName: '',
+    lastName: '',
+    company: '',
+    email: '',
+    phone: '',
+    website: '',
+    message: '',
+    contactPersonId: '',
+    consentPrivacy: false,
+    consentEmail: false,
+    consentMarketing: false,
+    turnstileOk: true, // stub: real CAPTCHA plugs in here
+  });
+  const [waitlistOpen, setWaitlistOpen] = useState(false);
+  const [sent, setSent] = useState<{ bookingNumber: string; token: string } | null>(null);
+
+  // Pre-fill from URL
+  useEffect(() => {
+    if (deptParam && publicDepts.some((d) => d.id === deptParam)) {
+      setState((s) => ({ ...s, departmentId: deptParam, service: serviceParam || s.service }));
+      setStep(serviceParam ? 'location' : 'service');
+    }
+  }, [deptParam, serviceParam, publicDepts]);
+
+  const dept = publicDepts.find((d) => d.id === state.departmentId);
+  const duration = dept?.defaultDurationMinutes || 60;
+  const bookableEmployees = useMemo(
+    () => employees.filter((e) => e.active && e.publicBookable && e.departmentIds.includes(state.departmentId)),
+    [employees, state.departmentId],
+  );
+
+  const nextDays = useMemo(
+    () => nextAvailableDays(new Date(), 14, DEFAULT_BOOKING_SETTINGS),
+    [],
+  );
+  const slotsForDay = useMemo(() => {
+    if (!state.dayIso) return [];
+    return generateSlots(new Date(state.dayIso), duration, appointments, DEFAULT_BOOKING_SETTINGS);
+  }, [state.dayIso, duration, appointments]);
+
+  const stepIndex = STEPS.indexOf(step);
+  const goto = (s: StepId) => setStep(s);
+  const canGoNext = (() => {
+    if (step === 'department') return !!state.departmentId;
+    if (step === 'service') return !!state.service;
+    if (step === 'location') return !!state.locationId;
+    if (step === 'time') return !!state.slotIso;
+    if (step === 'contact') return state.firstName.trim() && state.lastName.trim() && state.email.trim() && state.phone.trim() && state.company.trim() && state.consentPrivacy && state.consentEmail && state.turnstileOk;
+    return true;
+  })();
 
   const submit = async () => {
-    if (!selectedDept) { toast.error('Bitte Leistung wählen'); return; }
-    if (!form.name || !form.email || !form.desiredDate) { toast.error('Name, E-Mail und Wunschdatum sind Pflicht'); return; }
-    const dept = publicDepts.find((d) => d.id === selectedDept)!;
-    const start = new Date(`${form.desiredDate}T${form.desiredTime || '09:00'}:00`);
-    const end = new Date(start.getTime() + (dept.defaultDurationMinutes || 60) * 60_000);
-    await createAppointment({
-      title: `${dept.name}: ${form.name}${form.company ? ' (' + form.company + ')' : ''}`,
-      description: form.message,
+    if (!dept || !state.slotIso) return;
+    if (customerBookingsToday(state.email, appointments, new Date(state.slotIso)) >= DEFAULT_BOOKING_SETTINGS.maxPerCustomerPerDay) {
+      toast.error('Maximale Buchungen für diesen Tag erreicht.');
+      return;
+    }
+    const start = new Date(state.slotIso);
+    const end = new Date(start.getTime() + duration * 60_000);
+    const loc = DEFAULT_LOCATIONS.find((l) => l.id === state.locationId);
+    const bookingNumber = `AW-${format(new Date(), 'yyMMdd')}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+
+    const created = await createAppointment({
+      title: `${dept.name} · ${state.service} · ${state.firstName} ${state.lastName}${state.company ? ' (' + state.company + ')' : ''}`,
+      description: state.message,
       startAt: start.toISOString(),
       endAt: end.toISOString(),
       departmentId: dept.id,
-      employeeIds: [],
-      customerName: form.name,
-      customerEmail: form.email,
-      customerPhone: form.phone,
-      location: form.location,
+      kind: state.service,
+      employeeIds: state.contactPersonId ? [state.contactPersonId] : [],
+      customerName: `${state.firstName} ${state.lastName}`.trim(),
+      customerContact: state.firstName,
+      customerEmail: state.email,
+      customerPhone: state.phone,
+      location: loc?.label || '',
+      address: '',
       status: 'angefragt',
       priority: 'normal',
+      externalNote: `Buchungsnummer: ${bookingNumber}${state.website ? '\nWebseite: ' + state.website : ''}${state.consentMarketing ? '\nMarketing-Einwilligung: ja' : ''}`,
       confirmationRequired: true,
     });
-    setSent(true);
+    setSent({ bookingNumber, token: (created as any)?.confirmationToken || bookingNumber });
+    navigate('/book/confirmation', { replace: true });
   };
 
+  if (sent) {
+    return (
+      <BookingLayout narrow>
+        <Card className="border-primary/30">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-2">
+              <CheckCircle2 className="w-8 h-8 text-primary" />
+            </div>
+            <CardTitle className="text-[18px]">Vielen Dank!</CardTitle>
+          </CardHeader>
+          <CardContent className="text-center space-y-3 text-[13.5px]">
+            <p>Ihre Buchungsanfrage ist bei uns eingegangen. Sie erhalten in Kürze eine Bestätigungs-E-Mail.</p>
+            <div className="inline-flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-1.5 text-[12px]">
+              <span className="text-muted-foreground">Buchungsnummer</span>
+              <span className="font-mono font-semibold">{sent.bookingNumber}</span>
+            </div>
+            <div className="pt-2">
+              <a href={confirmUrl(sent.token)} className="text-primary hover:underline text-[12px] break-all">{confirmUrl(sent.token)}</a>
+            </div>
+            <Button variant="outline" onClick={() => { setSent(null); setStep('department'); setState({ ...state, departmentId: '', service: '', locationId: '', dayIso: '', slotIso: '' }); }}>Weitere Buchung</Button>
+          </CardContent>
+        </Card>
+      </BookingLayout>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b bg-card/50 backdrop-blur">
-        <div className="max-w-4xl mx-auto flex items-center gap-3 px-4 py-3">
-          <img src={alixLogo} alt="AlixWorks" className="h-8" />
-          <div>
-            <div className="text-[14px] font-semibold">AlixWorks Buchungsportal</div>
-            <div className="text-[11px] text-muted-foreground">alixworks.de</div>
+    <BookingLayout step={stepIndex + 1} totalSteps={STEPS.length}>
+      <div className="hidden md:flex items-center gap-2 text-[11.5px] text-muted-foreground">
+        {STEPS.map((s, i) => (
+          <div key={s} className={`flex items-center gap-1 ${i === stepIndex ? 'text-primary font-medium' : ''}`}>
+            <span className={`w-5 h-5 rounded-full inline-flex items-center justify-center text-[10px] ${i <= stepIndex ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>{i + 1}</span>
+            <span>{STEP_LABEL[s]}</span>
+            {i < STEPS.length - 1 && <span className="mx-1 text-muted-foreground/40">›</span>}
           </div>
-        </div>
-      </header>
+        ))}
+      </div>
 
-      <main className="max-w-4xl mx-auto p-4 md:p-6 space-y-4">
-        {sent ? (
-          <Card>
-            <CardHeader><CardTitle>Vielen Dank!</CardTitle></CardHeader>
-            <CardContent className="space-y-2 text-[13px]">
-              <div>Ihre Anfrage wurde übermittelt. Sie erhalten in Kürze eine Bestätigungs-E-Mail.</div>
-              <Button variant="outline" onClick={() => { setSent(false); setForm({ name: '', company: '', email: '', phone: '', location: '', desiredDate: '', desiredTime: '', message: '' }); setSelectedDept(''); }}>Weitere Anfrage</Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <>
-            <Card>
-              <CardHeader><CardTitle className="text-[15px]">Leistung wählen</CardTitle></CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                  {publicDepts.map((d) => (
-                    <button
-                      key={d.id}
-                      onClick={() => setSelectedDept(d.id)}
-                      className={`text-left rounded-lg border p-3 transition-colors hover:border-primary ${selectedDept === d.id ? 'border-primary bg-primary/5' : 'bg-card'}`}
-                    >
-                      <div className="mb-1"><DepartmentBadge dept={d} size="md" /></div>
-                      <div className="text-[12px] text-muted-foreground">{d.description}</div>
-                      <div className="text-[11px] text-muted-foreground mt-1">Standarddauer: {d.defaultDurationMinutes} min</div>
-                    </button>
-                  ))}
-                  {publicDepts.length === 0 && <div className="text-[13px] text-muted-foreground">Aktuell sind keine Leistungen öffentlich buchbar.</div>}
+      {step === 'department' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-[16px]">Termin online buchen</CardTitle>
+            <p className="text-[12.5px] text-muted-foreground">Wählen Sie eine Leistung – Sie erhalten direkt eine Bestätigung per E-Mail.</p>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {publicDepts.map((d) => (
+                <button
+                  key={d.id}
+                  onClick={() => { setState({ ...state, departmentId: d.id }); goto('service'); }}
+                  className={`text-left rounded-xl border p-4 transition-all hover:border-primary hover:shadow-md min-h-24 ${state.departmentId === d.id ? 'border-primary bg-primary/5' : 'bg-card'}`}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ background: d.color }} />
+                    <div className="font-semibold text-[14px]">{d.name}</div>
+                  </div>
+                  <div className="text-[12px] text-muted-foreground mb-2 line-clamp-2">{d.description}</div>
+                  <div className="text-[10.5px] text-muted-foreground flex items-center gap-1"><Clock className="w-3 h-3" /> {d.defaultDurationMinutes} min</div>
+                </button>
+              ))}
+            </div>
+            {publicDepts.length === 0 && <div className="text-[13px] text-muted-foreground py-6 text-center">Aktuell sind keine Leistungen öffentlich buchbar.</div>}
+          </CardContent>
+        </Card>
+      )}
+
+      {step === 'service' && dept && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-[16px]">Terminart wählen</CardTitle>
+            <p className="text-[12.5px] text-muted-foreground">Für <b>{dept.name}</b>.</p>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {SERVICE_PRESETS.map((s) => (
+              <button
+                key={s}
+                onClick={() => { setState({ ...state, service: s }); goto('location'); }}
+                className={`text-left rounded-xl border p-4 hover:border-primary hover:shadow-md transition ${state.service === s ? 'border-primary bg-primary/5' : 'bg-card'}`}
+              >
+                <div className="font-semibold text-[14px]">{s}</div>
+                <div className="text-[11.5px] text-muted-foreground mt-1 flex items-center gap-1"><Clock className="w-3 h-3" /> ca. {duration} min</div>
+              </button>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {step === 'location' && (
+        <Card>
+          <CardHeader><CardTitle className="text-[16px]">Standort auswählen</CardTitle></CardHeader>
+          <CardContent className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {DEFAULT_LOCATIONS.map((l) => (
+              <button
+                key={l.id}
+                onClick={() => { setState({ ...state, locationId: l.id }); goto('time'); }}
+                className={`text-left rounded-xl border p-4 hover:border-primary hover:shadow-md transition ${state.locationId === l.id ? 'border-primary bg-primary/5' : 'bg-card'}`}
+              >
+                <div className="flex items-center gap-2">
+                  {l.online ? <Globe className="w-4 h-4 text-primary" /> : <MapPin className="w-4 h-4 text-primary" />}
+                  <div className="font-semibold text-[14px]">{l.label}</div>
                 </div>
-              </CardContent>
-            </Card>
+              </button>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
-            {selectedDept && (
-              <Card>
-                <CardHeader><CardTitle className="text-[15px]">Ihre Daten & Wunschtermin</CardTitle></CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div><Label>Name *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
-                    <div><Label>Firma / Praxis</Label><Input value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} /></div>
-                    <div><Label>E-Mail *</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
-                    <div><Label>Telefon</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
-                    <div><Label>Standort</Label><Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} /></div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div><Label>Datum *</Label><Input type="date" value={form.desiredDate} onChange={(e) => setForm({ ...form, desiredDate: e.target.value })} /></div>
-                      <div><Label>Uhrzeit</Label><Input type="time" value={form.desiredTime} onChange={(e) => setForm({ ...form, desiredTime: e.target.value })} /></div>
-                    </div>
-                    <div className="md:col-span-2"><Label>Nachricht</Label><Textarea rows={3} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} /></div>
+      {step === 'time' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-[16px]">Freien Termin wählen</CardTitle>
+            <p className="text-[12.5px] text-muted-foreground">Nur tatsächlich verfügbare Zeiten werden angezeigt.</p>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+              {nextDays.map((d) => {
+                const active = state.dayIso === d.toISOString();
+                return (
+                  <button
+                    key={d.toISOString()}
+                    onClick={() => setState({ ...state, dayIso: d.toISOString(), slotIso: '' })}
+                    className={`min-w-[76px] rounded-lg border p-2 text-center transition ${active ? 'border-primary bg-primary/10' : 'hover:border-primary'}`}
+                  >
+                    <div className="text-[10.5px] uppercase text-muted-foreground">{format(d, 'EE', { locale: de })}</div>
+                    <div className="text-[16px] font-semibold">{format(d, 'dd')}</div>
+                    <div className="text-[10.5px] text-muted-foreground">{format(d, 'MMM', { locale: de })}</div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {state.dayIso && (
+              <>
+                {slotsForDay.length === 0 ? (
+                  <div className="rounded-md border p-4 text-center bg-muted/30">
+                    <div className="text-[13px] mb-2">Für den gewählten Tag sind keine Zeiten verfügbar.</div>
+                    <Button variant="outline" size="sm" onClick={() => setWaitlistOpen(true)}><Users className="w-4 h-4 mr-1" />Auf Warteliste setzen</Button>
                   </div>
-                  <div className="mt-4 flex justify-end">
-                    <Button onClick={submit}>Anfrage absenden</Button>
+                ) : (
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                    {slotsForDay.map((s) => {
+                      const active = state.slotIso === s.toISOString();
+                      return (
+                        <button
+                          key={s.toISOString()}
+                          onClick={() => { setState({ ...state, slotIso: s.toISOString() }); goto('contact'); }}
+                          className={`rounded-md border py-2 text-[13px] font-medium min-h-11 hover:border-primary transition ${active ? 'border-primary bg-primary/10' : ''}`}
+                        >
+                          {format(s, 'HH:mm')}
+                        </button>
+                      );
+                    })}
                   </div>
-                </CardContent>
-              </Card>
+                )}
+              </>
             )}
-          </>
-        )}
-      </main>
 
-      <footer className="border-t mt-8 py-4 text-center text-[11px] text-muted-foreground">
-        © {new Date().getFullYear()} AlixWorks · alixworks.de
-      </footer>
+            {waitlistOpen && (
+              <div className="rounded-md border p-3 bg-muted/20 text-[12.5px]">
+                <div className="font-medium mb-1">Warteliste</div>
+                <p className="text-muted-foreground mb-2">Wir informieren Sie per E-Mail, sobald ein passender Termin frei wird.</p>
+                <div className="flex gap-2">
+                  <Input placeholder="Ihre E-Mail" value={state.email} onChange={(e) => setState({ ...state, email: e.target.value })} className="h-9" />
+                  <Button size="sm" onClick={() => { toast.success('Auf Warteliste gesetzt.'); setWaitlistOpen(false); }}>Eintragen</Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {step === 'contact' && (
+        <Card>
+          <CardHeader><CardTitle className="text-[16px]">Ihre Kontaktdaten</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div><Label>Vorname *</Label><Input value={state.firstName} onChange={(e) => setState({ ...state, firstName: e.target.value })} /></div>
+              <div><Label>Nachname *</Label><Input value={state.lastName} onChange={(e) => setState({ ...state, lastName: e.target.value })} /></div>
+              <div><Label>Firma *</Label><Input value={state.company} onChange={(e) => setState({ ...state, company: e.target.value })} /></div>
+              <div><Label>Webseite</Label><Input value={state.website} onChange={(e) => setState({ ...state, website: e.target.value })} placeholder="https://" /></div>
+              <div><Label>E-Mail *</Label><Input type="email" value={state.email} onChange={(e) => setState({ ...state, email: e.target.value })} /></div>
+              <div><Label>Telefon *</Label><Input value={state.phone} onChange={(e) => setState({ ...state, phone: e.target.value })} /></div>
+              {bookableEmployees.length > 0 && (
+                <div className="md:col-span-2">
+                  <Label>Gewünschter Ansprechpartner (optional)</Label>
+                  <div className="flex flex-wrap gap-1.5 mt-1">
+                    <button type="button" onClick={() => setState({ ...state, contactPersonId: '' })} className={`text-[12px] rounded-full border px-3 py-1 ${!state.contactPersonId ? 'border-primary bg-primary/10' : ''}`}>Egal</button>
+                    {bookableEmployees.map((e) => (
+                      <button key={e.id} type="button" onClick={() => setState({ ...state, contactPersonId: e.id })} className={`text-[12px] rounded-full border px-3 py-1 ${state.contactPersonId === e.id ? 'border-primary bg-primary/10' : ''}`}>{e.name}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="md:col-span-2">
+                <Label>Nachricht</Label>
+                <Textarea rows={3} value={state.message} onChange={(e) => setState({ ...state, message: e.target.value })} />
+              </div>
+            </div>
+            <div className="space-y-2 pt-2 border-t">
+              <label className="flex items-start gap-2 text-[12.5px]">
+                <Checkbox checked={state.consentPrivacy} onCheckedChange={(v) => setState({ ...state, consentPrivacy: !!v })} className="mt-0.5" />
+                <span>Ich habe die <a href="https://alixworks.de/datenschutz" target="_blank" rel="noreferrer" className="text-primary hover:underline">Datenschutzerklärung</a> gelesen und akzeptiere sie. *</span>
+              </label>
+              <label className="flex items-start gap-2 text-[12.5px]">
+                <Checkbox checked={state.consentEmail} onCheckedChange={(v) => setState({ ...state, consentEmail: !!v })} className="mt-0.5" />
+                <span>Ich willige in den Empfang von E-Mails zu diesem Termin ein. *</span>
+              </label>
+              <label className="flex items-start gap-2 text-[12.5px]">
+                <Checkbox checked={state.consentMarketing} onCheckedChange={(v) => setState({ ...state, consentMarketing: !!v })} className="mt-0.5" />
+                <span>Optional: Ich möchte weitere Angebote per E-Mail erhalten.</span>
+              </label>
+              <div className="flex items-center gap-2 text-[11px] text-muted-foreground pt-1">
+                <ShieldCheck className="w-3.5 h-3.5" /> Geschützt vor Spam · CAPTCHA (Cloudflare Turnstile) wird aktiviert.
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {step === 'summary' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-[16px]">Zusammenfassung</CardTitle>
+            <p className="text-[12.5px] text-muted-foreground">Bitte prüfen Sie Ihre Angaben.</p>
+          </CardHeader>
+          <CardContent className="space-y-3 text-[13px]">
+            <SumRow label="Leistung" value={dept?.name} />
+            <SumRow label="Terminart" value={state.service} />
+            <SumRow label="Standort" value={DEFAULT_LOCATIONS.find((l) => l.id === state.locationId)?.label} />
+            <SumRow label="Datum" value={state.slotIso ? format(new Date(state.slotIso), 'EEEE, dd. MMMM yyyy', { locale: de }) : ''} />
+            <SumRow label="Uhrzeit" value={state.slotIso ? `${format(new Date(state.slotIso), 'HH:mm')} · ca. ${duration} min` : ''} />
+            {state.contactPersonId && <SumRow label="Ansprechpartner" value={bookableEmployees.find((e) => e.id === state.contactPersonId)?.name} />}
+            <div className="border-t pt-2 space-y-1">
+              <SumRow label="Kontakt" value={`${state.firstName} ${state.lastName}`} />
+              <SumRow label="Firma" value={state.company} />
+              <SumRow label="E-Mail" value={state.email} />
+              <SumRow label="Telefon" value={state.phone} />
+            </div>
+            {state.message && <div className="text-[12px] text-muted-foreground italic">„{state.message}"</div>}
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="flex items-center justify-between">
+        <Button variant="outline" onClick={() => (stepIndex > 0 ? goto(STEPS[stepIndex - 1]) : null)} disabled={stepIndex === 0}>
+          <ArrowLeft className="w-4 h-4 mr-1" /> Zurück
+        </Button>
+        {step === 'summary' ? (
+          <Button size="lg" onClick={submit} disabled={!canGoNext}>
+            <CalendarCheck className="w-4 h-4 mr-1" /> Buchung absenden
+          </Button>
+        ) : (
+          <Button onClick={() => goto(STEPS[stepIndex + 1])} disabled={!canGoNext}>
+            Weiter <ArrowRight className="w-4 h-4 ml-1" />
+          </Button>
+        )}
+      </div>
+
+      <div className="text-center pt-2">
+        <Badge variant="outline" className="text-[10.5px]">alixworks.de · Sichere Verbindung</Badge>
+      </div>
+    </BookingLayout>
+  );
+}
+
+function SumRow({ label, value }: { label: string; value?: string }) {
+  return (
+    <div className="grid grid-cols-[110px_1fr] gap-2">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-medium">{value || '—'}</span>
     </div>
   );
 }
