@@ -486,11 +486,24 @@ function AppRoutes() {
         <Route path="/mfa-setup" element={<MfaGate expect="not_enrolled"><MfaSetup /></MfaGate>} />
         <Route path="/mfa-challenge" element={<MfaGate expect="challenge_required"><MfaChallenge /></MfaGate>} />
         <Route path="/mfa-recovery" element={<MfaGate expect="any"><MfaRecovery /></MfaGate>} />
+        {/* ESC – öffentliche Routen (kein Login) */}
+        <Route path="/book" element={<EscBookingPortal />} />
+        <Route path="/termin-bestaetigen/:token" element={<EscConfirmAppointment />} />
         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route path="/dashboard" element={<HomeRoute />} />
           <Route path="/infinity-showcase" element={<InfinityShowcase />} />
           <Route path="/einstellungen/personalisierung" element={<Personalisierung />} />
           <Route path="/sicherheit" element={<Sicherheit />} />
+          {/* ESC – Teamkalender */}
+          <Route path="/esc" element={<ProtectedRoute><EscLayout /></ProtectedRoute>}>
+            <Route index element={<EscOverview />} />
+            <Route path="kalender" element={<EscCalendar />} />
+            <Route path="ressourcen" element={<EscResources />} />
+            <Route path="mitarbeiter" element={<EscEmployees />} />
+            <Route path="abteilungen" element={<EscDepartments />} />
+            <Route path="buchungen" element={<EscBookings />} />
+            <Route path="bestaetigungen" element={<EscConfirmations />} />
+            <Route path="einstellungen" element={<EscSettings />} />
           <Route path="/at-dashboard" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Österreich']}><AtDashboard /></ProtectedRoute>} />
           <Route path="/dashboard/bestellungen" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Auftragsverwaltung','Order','Bestellwesen','SACHBEARBEITUNG','Finance']}><BestellungenDashboard /></ProtectedRoute>} />
           <Route path="/dashboards/verkauf" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Auftragsverwaltung','Order','Vertrieb','Vertriebsleitung','SACHBEARBEITUNG']}><VerkaufDashboard /></ProtectedRoute>} />
