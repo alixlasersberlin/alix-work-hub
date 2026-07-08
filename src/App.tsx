@@ -380,6 +380,17 @@ const AiRecommendations = lazy(() => import("./pages/ESC/ai/Recommendations"));
 const AiSearchPage = lazy(() => import("./pages/ESC/ai/Search"));
 const AiProtocol = lazy(() => import("./pages/ESC/ai/Protocol"));
 const AiSettingsPage = lazy(() => import("./pages/ESC/ai/Settings"));
+const EchLayout = lazy(() => import("./components/esc/ech/EchLayout"));
+const EchDashboard = lazy(() => import("./pages/ESC/ech/Dashboard"));
+const EchCompose = lazy(() => import("./pages/ESC/ech/Compose"));
+const EchCalendar = lazy(() => import("./pages/ESC/ech/Calendar"));
+const EchReminders = lazy(() => import("./pages/ESC/ech/Reminders"));
+const EchMeetings = lazy(() => import("./pages/ESC/ech/Meetings"));
+const EchNotifications = lazy(() => import("./pages/ESC/ech/Notifications"));
+const EchIntegrations = lazy(() => import("./pages/ESC/ech/Integrations"));
+const EchTemplates = lazy(() => import("./pages/ESC/ech/Templates"));
+const EchHistory = lazy(() => import("./pages/ESC/ech/History"));
+const EchSettingsPage = lazy(() => import("./pages/ESC/ech/Settings"));
 const EscBookingPortal = lazy(() => import("./pages/ESC/public/BookingPortal"));
 const EscConfirmAppointment = lazy(() => import("./pages/ESC/public/ConfirmAppointment"));
 const EscRescheduleAppointment = lazy(() => import("./pages/ESC/public/RescheduleAppointment"));
@@ -555,6 +566,18 @@ function AppRoutes() {
             <Route path="suche" element={<AiSearchPage />} />
             <Route path="protokoll" element={<AiProtocol />} />
             <Route path="einstellungen" element={<AiSettingsPage />} />
+          </Route>
+          <Route path="/esc/ech" element={<ProtectedRoute><EchLayout /></ProtectedRoute>}>
+            <Route index element={<EchDashboard />} />
+            <Route path="kommunikation" element={<EchCompose />} />
+            <Route path="kalender" element={<EchCalendar />} />
+            <Route path="erinnerungen" element={<EchReminders />} />
+            <Route path="meetings" element={<EchMeetings />} />
+            <Route path="benachrichtigungen" element={<EchNotifications />} />
+            <Route path="integrationen" element={<EchIntegrations />} />
+            <Route path="vorlagen" element={<EchTemplates />} />
+            <Route path="historie" element={<EchHistory />} />
+            <Route path="einstellungen" element={<EchSettingsPage />} />
           </Route>
           <Route path="/at-dashboard" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Österreich']}><AtDashboard /></ProtectedRoute>} />
           <Route path="/dashboard/bestellungen" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Auftragsverwaltung','Order','Bestellwesen','SACHBEARBEITUNG','Finance']}><BestellungenDashboard /></ProtectedRoute>} />
