@@ -69,13 +69,13 @@ async function loadOffers(customerId: string): Promise<CrmOffer[]> {
 async function loadInvoices(customerId: string): Promise<CrmInvoice[]> {
   const { data } = await supabase
     .from('zoho_invoices')
-    .select('id, invoice_number, status, total, currency_code, due_date')
+    .select('id, invoice_number, status, total, currency, due_date')
     .eq('customer_id', customerId)
     .order('due_date', { ascending: false })
     .limit(30);
   return (data || []).map((i: any) => ({
     id: i.id, number: i.invoice_number, status: i.status,
-    total: i.total, currency: i.currency_code, dueDate: i.due_date,
+    total: i.total, currency: i.currency, dueDate: i.due_date,
     paid: (i.status || '').toLowerCase() === 'paid',
   }));
 }
@@ -117,14 +117,14 @@ async function loadServices(customerId: string): Promise<CrmServiceEvent[]> {
 async function loadTrainings(customerId: string): Promise<CrmTraining[]> {
   const { data } = await supabase
     .from('academy_bookings')
-    .select('id, session_id, status, created_at')
+    .select('id, academy_session_id, booking_status, created_at')
     .eq('customer_id', customerId)
     .order('created_at', { ascending: false })
     .limit(30);
   return (data || []).map((b: any) => ({
     id: b.id,
-    title: `Schulung ${(b.session_id || '').slice(0, 6)}`.trim(),
-    status: b.status,
+    title: `Schulung ${(b.academy_session_id || '').slice(0, 6)}`.trim(),
+    status: b.booking_status,
     at: b.created_at,
     nisv: false,
   }));
