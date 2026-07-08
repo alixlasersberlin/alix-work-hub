@@ -5,6 +5,7 @@ import { useAppointments } from '@/hooks/esc/useAppointments';
 import { useDepartments } from '@/hooks/esc/useDepartments';
 import { isSameDay, addDays, isBefore } from 'date-fns';
 import { AgendaView } from '@/components/esc/views/AgendaView';
+import { EscTodayWidgets } from '@/components/esc/dashboard/EscTodayWidgets';
 import { Link } from 'react-router-dom';
 
 function Kpi({ icon: Icon, label, value, hint }: { icon: any; label: string; value: number | string; hint?: string }) {
@@ -63,6 +64,11 @@ export default function EscOverview() {
         <Kpi icon={Truck} label="Lieferungen" value={stats.lieferung} />
         <Kpi icon={GraduationCap} label="Schulungen" value={stats.schulung} />
         <Kpi icon={CheckCircle2} label="NiSV-Termine" value={stats.nisv} />
+      </div>
+
+      <div>
+        <h2 className="text-[13px] font-semibold text-muted-foreground mb-2">Heute im Überblick</h2>
+        <EscTodayWidgets appointments={appointments} />
       </div>
 
       <div>
