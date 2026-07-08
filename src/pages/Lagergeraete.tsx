@@ -2303,39 +2303,55 @@ export default function Lagergeraete({
 
       <WareneingangDialog ref={wareneingangRef} order={{}} hideTrigger />
 
-      <AlertDialog open={!!deliverDevice} onOpenChange={(o) => !o && setDeliverDevice(null)}>
-        <AlertDialogContent>
-          {(() => {
-            const isLeih = deliverDevice ? getDeviceTypeFromNotes(deliverDevice.notes) === 'Leihgerät' : false;
-            return (
-              <>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>
-                    {isLeih ? 'Leihgerät als zurückgegeben / geliefert markieren?' : 'Gerät als ausgeliefert markieren?'}
-                  </AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {isLeih
-                      ? `Leihgerät „${deliverDevice?.serial_number}" bleibt im Lagerbestand und wird wieder als verfügbar geführt (Reservierung wird aufgehoben).`
-                      : `Gerät „${deliverDevice?.serial_number}" wird aus dem Bestand entfernt und unter „Ausgeliefert" geführt.`}
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={async () => {
-                      const d = deliverDevice;
-                      setDeliverDevice(null);
-                      if (d) await performMarkAsDelivered(d);
-                    }}
-                  >
-                    {isLeih ? 'Ja, freigeben' : 'Ja, als ausgeliefert markieren'}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </>
-            );
-          })()}
-        </AlertDialogContent>
-      </AlertDialog>
+      {deliverDevice && (() => {
+        const isLeih = getDeviceTypeFromNotes(deliverDevice.notes) === 'Leihgerät';
+        return (
+          <div
+            className="fixed inset-0 z-[10000] flex items-center justify-center bg-background/85 p-4 backdrop-blur-sm"
+            role="presentation"
+            onPointerDown={(e) => { if (e.target === e.currentTarget) setDeliverDevice(null); }}
+          >
+            <section
+              role="alertdialog"
+              aria-modal="true"
+              aria-labelledby="deliver-dialog-title"
+              className="relative w-full max-w-lg rounded-lg border bg-card p-6 shadow-lg"
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                aria-label="Fenster schließen"
+                className="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100"
+                onClick={() => setDeliverDevice(null)}
+              >
+                <X className="h-4 w-4" />
+              </button>
+              <div className="space-y-2">
+                <h2 id="deliver-dialog-title" className="text-lg font-semibold">
+                  {isLeih ? 'Leihgerät als zurückgegeben / geliefert markieren?' : 'Gerät als ausgeliefert markieren?'}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {isLeih
+                    ? `Leihgerät „${deliverDevice.serial_number}" bleibt im Lagerbestand und wird wieder als verfügbar geführt (Reservierung wird aufgehoben).`
+                    : `Gerät „${deliverDevice.serial_number}" wird aus dem Bestand entfernt und unter „Ausgeliefert" geführt.`}
+                </p>
+              </div>
+              <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <Button variant="ghost" onClick={() => setDeliverDevice(null)}>Abbrechen</Button>
+                <Button
+                  onClick={async () => {
+                    const d = deliverDevice;
+                    setDeliverDevice(null);
+                    if (d) await performMarkAsDelivered(d);
+                  }}
+                >
+                  {isLeih ? 'Ja, freigeben' : 'Ja, als ausgeliefert markieren'}
+                </Button>
+              </div>
+            </section>
+          </div>
+        );
+      })()}
 
       {releaseDevice && (
         <div
