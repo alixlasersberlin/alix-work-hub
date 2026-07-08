@@ -17,8 +17,40 @@ import { DepartmentBadge } from '@/components/esc/DepartmentBadge';
 import type { EscDepartment } from '@/lib/esc/types';
 import { toast } from 'sonner';
 
+const PRESET_COLORS = [
+  '#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16', '#22c55e',
+  '#10b981', '#14b8a6', '#06b6d4', '#0ea5e9', '#3b82f6', '#6366f1',
+  '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e', '#64748b',
+  '#0f172a', '#ffffff',
+];
+
+const ICON_OPTIONS = [
+  { name: 'Circle', Icon: Circle }, { name: 'Wrench', Icon: Wrench },
+  { name: 'Stethoscope', Icon: Stethoscope }, { name: 'Scissors', Icon: Scissors },
+  { name: 'Hammer', Icon: Hammer }, { name: 'Briefcase', Icon: Briefcase },
+  { name: 'Building2', Icon: Building2 }, { name: 'Users', Icon: Users },
+  { name: 'Calendar', Icon: Calendar }, { name: 'Clock', Icon: Clock },
+  { name: 'Heart', Icon: Heart }, { name: 'Star', Icon: Star },
+  { name: 'Truck', Icon: Truck }, { name: 'Package', Icon: Package },
+  { name: 'Phone', Icon: Phone }, { name: 'Mail', Icon: Mail },
+  { name: 'Camera', Icon: Camera }, { name: 'Home', Icon: Home },
+  { name: 'Car', Icon: Car }, { name: 'Coffee', Icon: Coffee },
+  { name: 'ShoppingCart', Icon: ShoppingCart }, { name: 'Settings', Icon: Settings },
+  { name: 'Shield', Icon: Shield }, { name: 'Zap', Icon: Zap },
+  { name: 'Sparkles', Icon: Sparkles }, { name: 'Award', Icon: Award },
+  { name: 'Target', Icon: Target }, { name: 'Activity', Icon: Activity },
+  { name: 'Pill', Icon: Pill }, { name: 'Syringe', Icon: Syringe },
+  { name: 'Baby', Icon: Baby },
+];
+
+function hslOrHexToHex(v: string): string {
+  if (!v) return '#3b82f6';
+  if (v.startsWith('#')) return v.length === 7 ? v : '#3b82f6';
+  return '#3b82f6';
+}
+
 const emptyForm: Omit<EscDepartment, 'id'> = {
-  name: '', color: 'hsl(var(--primary))', icon: 'Circle', description: '', active: true, publicBookable: false,
+  name: '', color: '#3b82f6', icon: 'Circle', description: '', active: true, publicBookable: false,
   defaultDurationMinutes: 60, defaultEmailTemplate: '', responsibleEmployeeIds: [], internalVisible: true, externallyBookable: false,
 };
 
