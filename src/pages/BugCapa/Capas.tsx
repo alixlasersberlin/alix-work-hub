@@ -156,7 +156,8 @@ export default function Capas() {
           <Plus className="h-4 w-4 mr-1" /> Neue CAPA
         </Button>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl" onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
+
             <DialogHeader><DialogTitle>Neue CAPA anlegen</DialogTitle></DialogHeader>
             <div className="grid gap-3 py-2 max-h-[70vh] overflow-y-auto pr-1">
               <div><Label>Titel *</Label><Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} /></div>
