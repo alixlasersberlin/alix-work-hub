@@ -23,8 +23,18 @@ export default function EscDepartments() {
   const [editing, setEditing] = useState<EscDepartment | null>(null);
   const [form, setForm] = useState<Omit<EscDepartment, 'id'>>(emptyForm);
 
-  const openNew = () => { setEditing(null); setForm(emptyForm); setOpen(true); };
-  const openEdit = (d: EscDepartment) => { setEditing(d); const { id, ...rest } = d; setForm(rest); setOpen(true); };
+  const openNew = () => { setEditing(null); setForm({ ...emptyForm }); setOpen(true); };
+  const openEdit = (d: EscDepartment) => {
+    const { id, ...rest } = d;
+    setEditing(d);
+    setForm({
+      ...emptyForm,
+      ...rest,
+      responsibleEmployeeIds: rest.responsibleEmployeeIds ?? [],
+    });
+    setOpen(true);
+  };
+
 
   const submit = async () => {
     if (!form.name.trim()) { toast.error('Bitte Name angeben'); return; }
@@ -61,9 +71,27 @@ export default function EscDepartments() {
                 <TableCell className="text-[12px]">{d.publicBookable ? 'Ja' : 'Nein'}</TableCell>
                 <TableCell className="text-[12px]">{d.active ? 'Aktiv' : 'Inaktiv'}</TableCell>
                 <TableCell className="text-right">
-                  <Button size="icon" variant="ghost" onClick={() => openEdit(d)}><Edit className="w-4 h-4" /></Button>
-                  <Button size="icon" variant="ghost" className="text-destructive" onClick={async () => { await deleteDepartment(d.id); toast.success('Gelöscht'); }}><Trash2 className="w-4 h-4" /></Button>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    aria-label="Bearbeiten"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); openEdit(d); }}
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    aria-label="Löschen"
+                    className="text-destructive"
+                    onClick={async (e) => { e.preventDefault(); e.stopPropagation(); await deleteDepartment(d.id); toast.success('Gelöscht'); }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </TableCell>
+
               </TableRow>
             ))}
           </TableBody>
