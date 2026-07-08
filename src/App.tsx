@@ -1077,6 +1077,28 @@ function AppRoutes() {
           <Route path="goals" element={<AbicGoals />} />
         </Route>
 
+        {/* ECQM – Enterprise Compliance & Quality Management Center */}
+        <Route path="/ecqm" element={<ProtectedRoute><EcqmLayout /></ProtectedRoute>}>
+          <Route index element={<EcqmDashboard />} />
+          <Route path="dokumente" element={<EcqmDocuments />} />
+          <Route path="sops" element={<EcqmDocuments onlySop />} />
+          <Route path="prozesse" element={<EcqmProcesses />} />
+          <Route path="capa" element={<EcqmCapa />} />
+          <Route path="reklamationen" element={<EcqmComplaints />} />
+          <Route path="risiken" element={<EcqmRisks />} />
+          <Route path="audits" element={<EcqmAudits />} />
+          <Route path="lieferanten" element={<EcqmSuppliers />} />
+          <Route path="schulungen" element={<EcqmTrainings />} />
+          <Route path="qualifikationen" element={<EcqmQualifications />} />
+          <Route path="change-control" element={<EcqmChangeControl />} />
+          <Route path="rueckverfolgbarkeit" element={<EcqmTraceability />} />
+          <Route path="managementbewertung" element={<EcqmManagementReview />} />
+          <Route path="kennzahlen" element={<EcqmKpis />} />
+          <Route path="freigaben" element={<EcqmApprovals />} />
+          <Route path="archiv" element={<EcqmArchive />} />
+          <Route path="einstellungen" element={<EcqmSettings />} />
+        </Route>
+
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
