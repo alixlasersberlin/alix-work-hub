@@ -28,8 +28,8 @@ export function computeKpis(appointments: EscAppointment[], reference = new Date
   appointments.forEach((a) => a.employeeIds?.forEach((id) => { perEmployee[id] = (perEmployee[id] || 0) + 1; }));
 
   const services = appointments.filter((a) => (a.kind || '').toLowerCase().includes('service'));
-  const cancelled = appointments.filter((a) => a.status === 'abgesagt');
-  const noshow = appointments.filter((a) => (a.status as string) === 'no_show');
+  const cancelled = appointments.filter((a) => a.status === 'storniert' || a.status === 'abgelehnt');
+  const noshow = appointments.filter((a) => a.status === 'nicht_erschienen');
   const workingMinutesPerWeek = 5 * 8 * 60;
   const utilization = Math.min(1, durations.reduce((s, n) => s + n, 0) / (Math.max(1, Object.keys(perEmployee).length) * workingMinutesPerWeek));
 
