@@ -37,7 +37,7 @@ export default function RescheduleAppointment() {
   const pick = async (slot: Date) => {
     const newEnd = new Date(slot.getTime() + duration * 60_000);
     await updateAppointment(appointment.id, { startAt: slot.toISOString(), endAt: newEnd.toISOString(), status: 'verschoben' });
-    await logEscAudit({ entity: 'appointment', entityId: appointment.id, action: 'reschedule', after: { startAt: slot.toISOString() }, source: 'confirmation_link' });
+    await logEscAudit({ entity: 'appointment', entityId: appointment.id, action: 'status_change', after: { startAt: slot.toISOString() }, source: 'confirmation_link' });
     toast.success('Termin verschoben. Sie erhalten eine neue Bestätigung.');
     navigate(`/appointment/${token}`);
   };
