@@ -493,6 +493,41 @@ const EigMonitoring = lazy(() => import("./pages/EIG/Monitoring"));
 const EigLogs = lazy(() => import("./pages/EIG/Logs"));
 const EigDeveloper = lazy(() => import("./pages/EIG/Developer"));
 
+// RC1 – Enterprise Release Candidate
+const Rc1Layout = lazy(() => import("./components/rc1/Rc1Layout"));
+const Rc1Dashboard = lazy(() => import("./pages/RC1/Dashboard"));
+const Rc1GoLive = lazy(() => import("./pages/RC1/GoLive"));
+const Rc1Readiness = lazy(() => import("./pages/RC1/Readiness"));
+const Rc1TestCenter = lazy(() => import("./pages/RC1/TestCenter"));
+const Rc1Production = lazy(() => import("./pages/RC1/Production"));
+const Rc1Updates = lazy(() => import("./pages/RC1/Updates"));
+const Rc1GlobalSearch = lazy(() => import("./pages/RC1/GlobalSearch"));
+const Rc1Quality = lazy(() => import("./pages/RC1/Quality"));
+const Rc1License = lazy(() => import("./pages/RC1/License"));
+const Rc1Info = {
+  Navigation: lazy(() => import("./pages/RC1/InfoPages").then(m => ({ default: m.Rc1Navigation }))),
+  Notifications: lazy(() => import("./pages/RC1/InfoPages").then(m => ({ default: m.Rc1Notifications }))),
+  Performance: lazy(() => import("./pages/RC1/InfoPages").then(m => ({ default: m.Rc1Performance }))),
+  Database: lazy(() => import("./pages/RC1/InfoPages").then(m => ({ default: m.Rc1Database }))),
+  Security: lazy(() => import("./pages/RC1/InfoPages").then(m => ({ default: m.Rc1Security }))),
+  Permissions: lazy(() => import("./pages/RC1/InfoPages").then(m => ({ default: m.Rc1Permissions }))),
+  Accessibility: lazy(() => import("./pages/RC1/InfoPages").then(m => ({ default: m.Rc1Accessibility }))),
+  Mobile: lazy(() => import("./pages/RC1/InfoPages").then(m => ({ default: m.Rc1Mobile }))),
+  Errors: lazy(() => import("./pages/RC1/InfoPages").then(m => ({ default: m.Rc1Errors }))),
+  Logging: lazy(() => import("./pages/RC1/InfoPages").then(m => ({ default: m.Rc1Logging }))),
+  Monitoring: lazy(() => import("./pages/RC1/InfoPages").then(m => ({ default: m.Rc1Monitoring }))),
+  Releases: lazy(() => import("./pages/RC1/InfoPages").then(m => ({ default: m.Rc1Releases }))),
+  Installer: lazy(() => import("./pages/RC1/InfoPages").then(m => ({ default: m.Rc1Installer }))),
+  Migration: lazy(() => import("./pages/RC1/InfoPages").then(m => ({ default: m.Rc1Migration }))),
+  Docs: lazy(() => import("./pages/RC1/InfoPages").then(m => ({ default: m.Rc1Docs }))),
+  DevDocs: lazy(() => import("./pages/RC1/InfoPages").then(m => ({ default: m.Rc1DevDocs }))),
+  DesignReview: lazy(() => import("./pages/RC1/InfoPages").then(m => ({ default: m.Rc1DesignReview }))),
+  I18n: lazy(() => import("./pages/RC1/InfoPages").then(m => ({ default: m.Rc1I18n }))),
+  Backup: lazy(() => import("./pages/RC1/InfoPages").then(m => ({ default: m.Rc1Backup }))),
+  Startseite: lazy(() => import("./pages/RC1/InfoPages").then(m => ({ default: m.Rc1Startseite }))),
+  Future: lazy(() => import("./pages/RC1/InfoPages").then(m => ({ default: m.Rc1Future }))),
+};
+
 // ECP – Enterprise Customer Portal
 const EcpLayout = lazy(() => import("./components/ecp/EcpLayout"));
 const EcpDashboard = lazy(() => import("./pages/ECP/Dashboard"));
@@ -1203,6 +1238,40 @@ function AppRoutes() {
           <Route path="monitoring" element={<EigMonitoring />} />
           <Route path="logs" element={<EigLogs />} />
           <Route path="developer" element={<EigDeveloper />} />
+        </Route>
+
+        {/* RC1 – Enterprise Release Candidate */}
+        <Route path="/rc1" element={<ProtectedRoute><Rc1Layout /></ProtectedRoute>}>
+          <Route index element={<Rc1Dashboard />} />
+          <Route path="navigation" element={<Rc1Info.Navigation />} />
+          <Route path="search" element={<Rc1GlobalSearch />} />
+          <Route path="notifications" element={<Rc1Info.Notifications />} />
+          <Route path="performance" element={<Rc1Info.Performance />} />
+          <Route path="database" element={<Rc1Info.Database />} />
+          <Route path="security" element={<Rc1Info.Security />} />
+          <Route path="permissions" element={<Rc1Info.Permissions />} />
+          <Route path="accessibility" element={<Rc1Info.Accessibility />} />
+          <Route path="mobile" element={<Rc1Info.Mobile />} />
+          <Route path="errors" element={<Rc1Info.Errors />} />
+          <Route path="logging" element={<Rc1Info.Logging />} />
+          <Route path="monitoring" element={<Rc1Info.Monitoring />} />
+          <Route path="updates" element={<Rc1Updates />} />
+          <Route path="releases" element={<Rc1Info.Releases />} />
+          <Route path="installer" element={<Rc1Info.Installer />} />
+          <Route path="migration" element={<Rc1Info.Migration />} />
+          <Route path="docs" element={<Rc1Info.Docs />} />
+          <Route path="devdocs" element={<Rc1Info.DevDocs />} />
+          <Route path="test-center" element={<Rc1TestCenter />} />
+          <Route path="quality" element={<Rc1Quality />} />
+          <Route path="design-review" element={<Rc1Info.DesignReview />} />
+          <Route path="i18n" element={<Rc1Info.I18n />} />
+          <Route path="backup" element={<Rc1Info.Backup />} />
+          <Route path="license" element={<Rc1License />} />
+          <Route path="startseite" element={<Rc1Info.Startseite />} />
+          <Route path="go-live" element={<Rc1GoLive />} />
+          <Route path="production" element={<Rc1Production />} />
+          <Route path="readiness" element={<Rc1Readiness />} />
+          <Route path="future" element={<Rc1Info.Future />} />
         </Route>
 
         <Route path="*" element={<NotFound />} />
