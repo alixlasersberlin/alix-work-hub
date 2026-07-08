@@ -14,9 +14,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const PARALLEL = 6;                  // concurrent uploads
-const TIME_BUDGET_MS = 100_000;      // leave ~50s headroom before 150s idle timeout
-const MAX_CONTINUATIONS = 20;        // safety guard against infinite loops
+const PARALLEL = 3;                  // concurrent uploads (low to stay under 256MB worker RAM)
+const TIME_BUDGET_MS = 90_000;       // leave ~60s headroom before 150s idle timeout
+const MAX_TASKS_PER_RUN = 60;        // hard cap per invocation → force continuation before OOM
+const MAX_CONTINUATIONS = 40;        // safety guard against infinite loops
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -146,24 +147,28 @@ Deno.serve(async (req) => {
     totalBytes += buf.byteLength;
   }
 
-  // Parallel worker pool with time-budget check
-  async function runPool(tasks: Task[]): Promise<{ processed: number; timedOut: boolean }> {
+  // Parallel worker pool with time-budget + task-count cap
+  async function runPool(tasks: Task[]): Promise<{ processed: number; timedOut: boolean; capped: boolean }> {
     let idx = 0;
+    let done = 0;
     let timedOut = false;
+    let capped = false;
     const workers: Promise<void>[] = [];
     for (let w = 0; w < PARALLEL; w++) {
       workers.push((async () => {
         while (true) {
           if (fatal) return;
           if (Date.now() - startedAt > TIME_BUDGET_MS) { timedOut = true; return; }
+          if (done >= MAX_TASKS_PER_RUN) { capped = true; return; }
           const i = idx++;
           if (i >= tasks.length) return;
           await processOne(tasks[i]);
+          done++;
         }
       })());
     }
     await Promise.all(workers);
-    return { processed: Math.min(idx, tasks.length), timedOut };
+    return { processed: done, timedOut, capped };
   }
 
   try {
@@ -192,11 +197,11 @@ Deno.serve(async (req) => {
       }
     }
 
-    const { timedOut } = await runPool(tasks);
+    const { timedOut, capped } = await runPool(tasks);
 
-    // Self-continuation if time ran out and there is more work (HEAD will skip done files)
+    // Self-continuation if time/task-cap ran out and there is more work (HEAD will skip done files)
     let continued = false;
-    if (timedOut && !fatal && continuation < MAX_CONTINUATIONS) {
+    if ((timedOut || capped) && !fatal && continuation < MAX_CONTINUATIONS) {
       continued = true;
       const nextBody = { ...requestBody, continuation: continuation + 1 };
       // Fire-and-forget self invocation
