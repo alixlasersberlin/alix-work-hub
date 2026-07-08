@@ -381,9 +381,9 @@ async function queueNextStep(params: {
       if (!retriable || attempt === maxAttempts) {
         throw new Error(`Nächster Backup-Schritt konnte nicht gestartet werden: ${lastErr}`);
       }
-      // Longer, less aggressive backoff for 546 to let the worker pool recover.
-      const base = isCompute546 ? 8000 : 1000;
-      const delay = Math.min(base * 2 ** (attempt - 1), 60000);
+      // Für 546 (compute exhausted) etwas längerer Backoff, sonst kurz.
+      const base = isCompute546 ? 3000 : 400;
+      const delay = Math.min(base * 2 ** (attempt - 1), 30000);
       await new Promise((r) => setTimeout(r, delay));
       continue;
     } catch (err) {
