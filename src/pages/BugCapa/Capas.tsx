@@ -157,12 +157,12 @@ export default function Capas() {
       }
     >
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="flex max-h-[90dvh] w-[calc(100vw-2rem)] max-w-3xl flex-col gap-0 overflow-hidden p-0 sm:rounded-lg">
+        <DialogContent className="flex h-[min(760px,calc(100dvh-3rem))] max-h-[calc(100dvh-3rem)] w-[min(720px,calc(100dvw-3rem))] flex-col gap-0 overflow-hidden p-0 sm:rounded-lg">
           <DialogHeader className="flex-shrink-0 border-b border-border px-5 py-4 pr-12">
             <DialogTitle>Neue CAPA anlegen</DialogTitle>
             <DialogDescription>Erfasst eine neue Korrektur- und Vorbeugemaßnahme.</DialogDescription>
           </DialogHeader>
-          <div className="grid min-h-0 flex-1 gap-3 overflow-y-auto px-5 py-4">
+          <div className="grid min-h-0 flex-1 content-start gap-3 overflow-y-auto px-5 py-4">
             <div><Label>Titel *</Label><Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} autoFocus /></div>
             <div>
               <Label>Auslöser</Label>
@@ -245,12 +245,12 @@ export default function Capas() {
         title={detail ? `${detail.capa_number} – ${detail.title}` : ''}
       />
       <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
+        <DialogContent className="flex h-[min(760px,calc(100dvh-3rem))] max-h-[calc(100dvh-3rem)] w-[min(720px,calc(100dvw-3rem))] flex-col gap-0 overflow-hidden p-0 sm:rounded-lg">
+          <DialogHeader className="flex-shrink-0 border-b border-border px-5 py-4 pr-12">
             <DialogTitle>CAPA bearbeiten {editing?.capa_number}</DialogTitle>
             <DialogDescription>Aktualisiert die CAPA-Stammdaten und Maßnahmenbeschreibung.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-3 py-2 max-h-[70vh] overflow-y-auto pr-1">
+          <div className="grid min-h-0 flex-1 content-start gap-3 overflow-y-auto px-5 py-4">
             <div><Label>Titel *</Label><Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} /></div>
             <div>
               <Label>Auslöser</Label>
@@ -267,7 +267,7 @@ export default function Capas() {
             <div><Label>Vorbeugemaßnahme</Label><Textarea rows={2} value={form.preventive_action} onChange={e => setForm({ ...form, preventive_action: e.target.value })} /></div>
             <div><Label>Frist</Label><Input type="date" value={form.due_date} onChange={e => setForm({ ...form, due_date: e.target.value })} /></div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex-shrink-0 border-t border-border px-5 py-4">
             <Button variant="ghost" onClick={() => setEditing(null)}>Abbrechen</Button>
             <Button onClick={saveEdit}>Speichern</Button>
           </DialogFooter>
