@@ -165,11 +165,9 @@ const pageSizeFor = (table: string) =>
     : HEAVY_TABLES.has(table) ? HEAVY_PAGE_SIZE
     : DB_PAGE_SIZE;
 
-// Wie lange darf ein einzelner Worker-Aufruf Tabellen-Seiten hintereinander
-// verarbeiten, bevor wir uns selbst neu triggern? Konservativ gehalten, damit
-// wir unter dem Edge-Function CPU/Memory-Budget bleiben (HTTP 546 vermeiden).
-const BATCH_MAX_MS = 15_000;
-const BATCH_MAX_BYTES = 10 * 1024 * 1024; // 10 MB Uploads pro Worker
+// Konservativ pro Seite (Memory), aber viele Seiten pro Invocation (Speed).
+const BATCH_MAX_MS = 40_000;
+const BATCH_MAX_BYTES = 25 * 1024 * 1024; // 25 MB Uploads pro Worker
 
 const STORAGE_LIST_LIMIT = 250;
 const encoder = new TextEncoder();
