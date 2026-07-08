@@ -544,6 +544,18 @@ function AppRoutes() {
             <Route path="rm/kapazitaeten" element={<RmCapacity />} />
             <Route path="rm/einsatzplanung" element={<RmDispatch />} />
           </Route>
+          <Route path="/esc/ai" element={<ProtectedRoute><AiLayout /></ProtectedRoute>}>
+            <Route index element={<AiDashboard />} />
+            <Route path="terminassistent" element={<AiScheduler />} />
+            <Route path="ressourcen" element={<AiResourcesPage />} />
+            <Route path="touren" element={<AiRoutesPage />} />
+            <Route path="kapazitaeten" element={<AiCapacity />} />
+            <Route path="prognosen" element={<AiForecasts />} />
+            <Route path="empfehlungen" element={<AiRecommendations />} />
+            <Route path="suche" element={<AiSearchPage />} />
+            <Route path="protokoll" element={<AiProtocol />} />
+            <Route path="einstellungen" element={<AiSettingsPage />} />
+          </Route>
           <Route path="/at-dashboard" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Österreich']}><AtDashboard /></ProtectedRoute>} />
           <Route path="/dashboard/bestellungen" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Auftragsverwaltung','Order','Bestellwesen','SACHBEARBEITUNG','Finance']}><BestellungenDashboard /></ProtectedRoute>} />
           <Route path="/dashboards/verkauf" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Auftragsverwaltung','Order','Vertrieb','Vertriebsleitung','SACHBEARBEITUNG']}><VerkaufDashboard /></ProtectedRoute>} />
