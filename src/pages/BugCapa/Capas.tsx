@@ -181,6 +181,7 @@ export default function Capas() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </>
       }
     >
       <div className="rounded-md border border-border">
