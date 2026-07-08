@@ -147,24 +147,28 @@ Deno.serve(async (req) => {
     totalBytes += buf.byteLength;
   }
 
-  // Parallel worker pool with time-budget check
-  async function runPool(tasks: Task[]): Promise<{ processed: number; timedOut: boolean }> {
+  // Parallel worker pool with time-budget + task-count cap
+  async function runPool(tasks: Task[]): Promise<{ processed: number; timedOut: boolean; capped: boolean }> {
     let idx = 0;
+    let done = 0;
     let timedOut = false;
+    let capped = false;
     const workers: Promise<void>[] = [];
     for (let w = 0; w < PARALLEL; w++) {
       workers.push((async () => {
         while (true) {
           if (fatal) return;
           if (Date.now() - startedAt > TIME_BUDGET_MS) { timedOut = true; return; }
+          if (done >= MAX_TASKS_PER_RUN) { capped = true; return; }
           const i = idx++;
           if (i >= tasks.length) return;
           await processOne(tasks[i]);
+          done++;
         }
       })());
     }
     await Promise.all(workers);
-    return { processed: Math.min(idx, tasks.length), timedOut };
+    return { processed: done, timedOut, capped };
   }
 
   try {
