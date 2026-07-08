@@ -369,6 +369,17 @@ const RmRooms = lazy(() => import("./pages/ESC/rm/Rooms"));
 const RmField = lazy(() => import("./pages/ESC/rm/Field"));
 const RmCapacity = lazy(() => import("./pages/ESC/rm/Capacity"));
 const RmDispatch = lazy(() => import("./pages/ESC/rm/Dispatch"));
+const AiLayout = lazy(() => import("./components/esc/ai/AiLayout"));
+const AiDashboard = lazy(() => import("./pages/ESC/ai/Dashboard"));
+const AiScheduler = lazy(() => import("./pages/ESC/ai/Scheduler"));
+const AiResourcesPage = lazy(() => import("./pages/ESC/ai/Resources"));
+const AiRoutesPage = lazy(() => import("./pages/ESC/ai/Routes"));
+const AiCapacity = lazy(() => import("./pages/ESC/ai/Capacity"));
+const AiForecasts = lazy(() => import("./pages/ESC/ai/Forecasts"));
+const AiRecommendations = lazy(() => import("./pages/ESC/ai/Recommendations"));
+const AiSearchPage = lazy(() => import("./pages/ESC/ai/Search"));
+const AiProtocol = lazy(() => import("./pages/ESC/ai/Protocol"));
+const AiSettingsPage = lazy(() => import("./pages/ESC/ai/Settings"));
 const EscBookingPortal = lazy(() => import("./pages/ESC/public/BookingPortal"));
 const EscConfirmAppointment = lazy(() => import("./pages/ESC/public/ConfirmAppointment"));
 const EscRescheduleAppointment = lazy(() => import("./pages/ESC/public/RescheduleAppointment"));
@@ -532,6 +543,18 @@ function AppRoutes() {
             <Route path="rm/aussendienst" element={<RmField />} />
             <Route path="rm/kapazitaeten" element={<RmCapacity />} />
             <Route path="rm/einsatzplanung" element={<RmDispatch />} />
+          </Route>
+          <Route path="/esc/ai" element={<ProtectedRoute><AiLayout /></ProtectedRoute>}>
+            <Route index element={<AiDashboard />} />
+            <Route path="terminassistent" element={<AiScheduler />} />
+            <Route path="ressourcen" element={<AiResourcesPage />} />
+            <Route path="touren" element={<AiRoutesPage />} />
+            <Route path="kapazitaeten" element={<AiCapacity />} />
+            <Route path="prognosen" element={<AiForecasts />} />
+            <Route path="empfehlungen" element={<AiRecommendations />} />
+            <Route path="suche" element={<AiSearchPage />} />
+            <Route path="protokoll" element={<AiProtocol />} />
+            <Route path="einstellungen" element={<AiSettingsPage />} />
           </Route>
           <Route path="/at-dashboard" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Österreich']}><AtDashboard /></ProtectedRoute>} />
           <Route path="/dashboard/bestellungen" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Auftragsverwaltung','Order','Bestellwesen','SACHBEARBEITUNG','Finance']}><BestellungenDashboard /></ProtectedRoute>} />
