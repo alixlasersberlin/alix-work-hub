@@ -10,7 +10,7 @@ export default function EmpHome() {
     <div className="space-y-4">
       <Card className="p-4 bg-gradient-to-br from-primary/10 to-transparent border-primary/20">
         <div className="text-xs text-muted-foreground">Willkommen</div>
-        <div className="text-lg font-semibold">{profile?.first_name || 'Mitarbeiter'}</div>
+        <div className="text-lg font-semibold">{(profile as any)?.first_name || (profile as any)?.full_name || 'Mitarbeiter'}</div>
         <div className="text-xs text-muted-foreground mt-1">Rolle: {label}</div>
       </Card>
 

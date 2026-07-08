@@ -1,7 +1,7 @@
 import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { getEmpSettings, setEmpSettings, EmpSettings } from '@/lib/emp/settings';
+import { getEmpSettings, setEmpSettings, type EmpSettings } from '@/lib/emp/settings';
 import { useState } from 'react';
 
 const ROWS: Array<{ key: keyof EmpSettings; label: string; desc?: string }> = [

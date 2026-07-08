@@ -395,6 +395,22 @@ const EscBookingPortal = lazy(() => import("./pages/ESC/public/BookingPortal"));
 const EscConfirmAppointment = lazy(() => import("./pages/ESC/public/ConfirmAppointment"));
 const EscRescheduleAppointment = lazy(() => import("./pages/ESC/public/RescheduleAppointment"));
 const EscCancelAppointment = lazy(() => import("./pages/ESC/public/CancelAppointment"));
+
+// EMP – Enterprise Mobile Platform
+const EmpLayout = lazy(() => import("./components/emp/EmpLayout"));
+const EmpHome = lazy(() => import("./pages/EMP/Home"));
+const EmpCalendar = lazy(() => import("./pages/EMP/Calendar"));
+const EmpCustomers = lazy(() => import("./pages/EMP/Customers"));
+const EmpCustomerDetail = lazy(() => import("./pages/EMP/CustomerDetail"));
+const EmpTasks = lazy(() => import("./pages/EMP/Tasks"));
+const EmpMore = lazy(() => import("./pages/EMP/More"));
+const EmpAppointmentDetail = lazy(() => import("./pages/EMP/AppointmentDetail"));
+const EmpServiceReport = lazy(() => import("./pages/EMP/ServiceReport"));
+const EmpApprovals = lazy(() => import("./pages/EMP/Approvals"));
+const EmpDashboard = lazy(() => import("./pages/EMP/Dashboard"));
+const EmpNotifications = lazy(() => import("./pages/EMP/Notifications"));
+const EmpSync = lazy(() => import("./pages/EMP/Sync"));
+const EmpSettingsPage = lazy(() => import("./pages/EMP/Settings"));
 import MaintenanceGate from "./components/MaintenanceGate";
 import LeihgeraetReminder from "./components/LeihgeraetReminder";
 
@@ -943,6 +959,23 @@ function AppRoutes() {
           <Route path="einsatz/:id/fotos" element={<MobileFotos />} />
           <Route path="einsatz/:id/signatur" element={<MobileSignatur />} />
           <Route path="einsatz/:id/checkliste" element={<MobileChecklist />} />
+        </Route>
+
+        {/* EMP – Enterprise Mobile Platform (rollenbasierte mobile Oberfläche) */}
+        <Route path="/emp" element={<ProtectedRoute><EmpLayout /></ProtectedRoute>}>
+          <Route index element={<EmpHome />} />
+          <Route path="kalender" element={<EmpCalendar />} />
+          <Route path="kunden" element={<EmpCustomers />} />
+          <Route path="kunde/:id" element={<EmpCustomerDetail />} />
+          <Route path="aufgaben" element={<EmpTasks />} />
+          <Route path="mehr" element={<EmpMore />} />
+          <Route path="termin/:id" element={<EmpAppointmentDetail />} />
+          <Route path="servicebericht" element={<EmpServiceReport />} />
+          <Route path="genehmigungen" element={<EmpApprovals />} />
+          <Route path="dashboard" element={<EmpDashboard />} />
+          <Route path="benachrichtigungen" element={<EmpNotifications />} />
+          <Route path="sync" element={<EmpSync />} />
+          <Route path="einstellungen" element={<EmpSettingsPage />} />
         </Route>
 
         <Route path="*" element={<NotFound />} />
