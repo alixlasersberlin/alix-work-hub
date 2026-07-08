@@ -197,11 +197,11 @@ Deno.serve(async (req) => {
       }
     }
 
-    const { timedOut } = await runPool(tasks);
+    const { timedOut, capped } = await runPool(tasks);
 
-    // Self-continuation if time ran out and there is more work (HEAD will skip done files)
+    // Self-continuation if time/task-cap ran out and there is more work (HEAD will skip done files)
     let continued = false;
-    if (timedOut && !fatal && continuation < MAX_CONTINUATIONS) {
+    if ((timedOut || capped) && !fatal && continuation < MAX_CONTINUATIONS) {
       continued = true;
       const nextBody = { ...requestBody, continuation: continuation + 1 };
       // Fire-and-forget self invocation
