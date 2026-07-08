@@ -620,75 +620,92 @@ async function processBackupStep(params: {
         return { success: true, accepted: true, backup_id: backupId, backup_status: "running" };
       }
 
-      const table = BACKUP_TABLES[state.tableIndex];
-      await updateBackupMessage(
-        adminClient,
-        backupId,
-        `Backup läuft: Tabelle ${table} ab Datensatz ${state.rowOffset + 1}`,
-      );
+      // Batch-Loop: mehrere Seiten pro Worker-Invocation verarbeiten, bis das
+      // Zeit- oder Byte-Budget aufgebraucht ist. Spart den 500 ms – 3 s
+      // Overhead zwischen Function-Invocations pro Seite.
+      const batchStart = Date.now();
+      let batchBytes = 0;
+      let pagesProcessed = 0;
 
-      const pageSize = pageSizeFor(table);
-      // Retry mit Backoff — fängt transiente Cloudflare-5xx (520/521/522/524) ab, die
-      // Supabase gelegentlich statt einer normalen PostgREST-Antwort liefert.
-      let data: unknown[] | null = null;
-      let lastErr: string | null = null;
-      for (let attempt = 1; attempt <= 5; attempt++) {
-        try {
-          const res = await adminClient
-            .from(table)
-            .select("*")
-            .range(state.rowOffset, state.rowOffset + pageSize - 1);
-          if (res.error) {
-            lastErr = res.error.message;
+      while (state.tableIndex < BACKUP_TABLES.length) {
+        const table = BACKUP_TABLES[state.tableIndex];
+        if (pagesProcessed === 0 || pagesProcessed % 5 === 0) {
+          await updateBackupMessage(
+            adminClient,
+            backupId,
+            `Backup läuft: Tabelle ${table} ab Datensatz ${state.rowOffset + 1}`,
+          );
+        }
+
+        const pageSize = pageSizeFor(table);
+        // Retry mit Backoff — fängt transiente Cloudflare-5xx (520/521/522/524) ab.
+        let data: unknown[] | null = null;
+        let lastErr: string | null = null;
+        for (let attempt = 1; attempt <= 5; attempt++) {
+          try {
+            const res = await adminClient
+              .from(table)
+              .select("*")
+              .range(state.rowOffset, state.rowOffset + pageSize - 1);
+            if (res.error) {
+              lastErr = res.error.message;
+              const transient = /520|521|522|524|<!DOCTYPE|Web server|Cloudflare|fetch failed|network|timeout/i.test(lastErr);
+              if (!transient || attempt === 5) throw new Error(`Tabelle ${table}: ${lastErr}`);
+            } else {
+              data = res.data as unknown[];
+              break;
+            }
+          } catch (e) {
+            lastErr = e instanceof Error ? e.message : String(e);
             const transient = /520|521|522|524|<!DOCTYPE|Web server|Cloudflare|fetch failed|network|timeout/i.test(lastErr);
             if (!transient || attempt === 5) throw new Error(`Tabelle ${table}: ${lastErr}`);
-          } else {
-            data = res.data as unknown[];
-            break;
           }
-        } catch (e) {
-          lastErr = e instanceof Error ? e.message : String(e);
-          const transient = /520|521|522|524|<!DOCTYPE|Web server|Cloudflare|fetch failed|network|timeout/i.test(lastErr);
-          if (!transient || attempt === 5) throw new Error(`Tabelle ${table}: ${lastErr}`);
+          await new Promise((r) => setTimeout(r, Math.min(1000 * 2 ** (attempt - 1), 8000)));
         }
-        await new Promise((r) => setTimeout(r, Math.min(1000 * 2 ** (attempt - 1), 8000)));
-      }
 
-
-      const pageRows = data?.length ?? 0;
-      if (pageRows === 0) {
-        state.counts[table] = state.counts[table] ?? 0;
-        state.tableIndex += 1;
-        state.rowOffset = 0;
-        state.partIndex = 0;
-      } else {
-        const partName = `part-${String(state.partIndex).padStart(5, "0")}.ndjson`;
-        const partPath = `${folderPath}/tables/${table}/${partName}`;
-        const size = await uploadNdjsonPart(
-          adminClient,
-          partPath,
-          data as Record<string, unknown>[],
-        );
-
-        state.files.push({ table, path: partPath, rows: pageRows, size_bytes: size });
-        state.counts[table] = (state.counts[table] ?? 0) + pageRows;
-        state.totalSize += size;
-        state.partIndex += 1;
-
-        if (pageRows < pageSize) {
+        const pageRows = data?.length ?? 0;
+        if (pageRows === 0) {
+          state.counts[table] = state.counts[table] ?? 0;
           state.tableIndex += 1;
           state.rowOffset = 0;
           state.partIndex = 0;
         } else {
-          state.rowOffset += pageRows;
+          const partName = `part-${String(state.partIndex).padStart(5, "0")}.ndjson`;
+          const partPath = `${folderPath}/tables/${table}/${partName}`;
+          const size = await uploadNdjsonPart(
+            adminClient,
+            partPath,
+            data as Record<string, unknown>[],
+          );
+
+          state.files.push({ table, path: partPath, rows: pageRows, size_bytes: size });
+          state.counts[table] = (state.counts[table] ?? 0) + pageRows;
+          state.totalSize += size;
+          state.partIndex += 1;
+          batchBytes += size;
+
+          if (pageRows < pageSize) {
+            state.tableIndex += 1;
+            state.rowOffset = 0;
+            state.partIndex = 0;
+          } else {
+            state.rowOffset += pageRows;
+          }
         }
+
+        pagesProcessed += 1;
+        await tick();
+
+        // Budget-Check: nach großen Uploads / Zeit ausbrechen und neu triggern.
+        if (Date.now() - batchStart >= BATCH_MAX_MS) break;
+        if (batchBytes >= BATCH_MAX_BYTES) break;
       }
 
       await uploadJson(adminClient, statePath, state, true);
-      await tick();
       triggerNextStep(adminClient, params);
       return { success: true, accepted: true, backup_id: backupId, backup_status: "running" };
     }
+
 
     if (state.phase === "storage") {
       if (state.bucketIndex >= STORAGE_BUCKETS.length) {
