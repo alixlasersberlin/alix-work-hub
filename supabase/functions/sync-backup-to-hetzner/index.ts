@@ -14,9 +14,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const PARALLEL = 6;                  // concurrent uploads
-const TIME_BUDGET_MS = 100_000;      // leave ~50s headroom before 150s idle timeout
-const MAX_CONTINUATIONS = 20;        // safety guard against infinite loops
+const PARALLEL = 3;                  // concurrent uploads (low to stay under 256MB worker RAM)
+const TIME_BUDGET_MS = 90_000;       // leave ~60s headroom before 150s idle timeout
+const MAX_TASKS_PER_RUN = 60;        // hard cap per invocation → force continuation before OOM
+const MAX_CONTINUATIONS = 40;        // safety guard against infinite loops
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
