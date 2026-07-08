@@ -6,8 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Plus, Loader2, Pencil, Trash2, ArrowLeft, Users } from 'lucide-react';
+import { Plus, Loader2, Pencil, Trash2, ArrowLeft, Users, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageSizeSelector, usePagination, PaginationControls } from '@/components/PageSizeSelector';
 import { PageHeader } from '@/components/infinity/PageHeader';
@@ -41,6 +40,15 @@ export default function Suppliers() {
   };
 
   useEffect(() => { load(); }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [open]);
 
   const openNew = () => {
     setEditing(null);
@@ -137,8 +145,28 @@ export default function Suppliers() {
                   <td className="p-3">{s.phone || '—'}</td>
                   <td className="p-3 text-muted-foreground text-xs whitespace-pre-line">{s.address || '—'}</td>
                   <td className="p-3 text-right">
-                    <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); openEdit(s); }}><Pencil className="w-4 h-4" /></Button>
-                    <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); remove(s); }}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      type="button"
+                      aria-label={`${s.name} bearbeiten`}
+                      title="Bearbeiten"
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); openEdit(s); }}
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      type="button"
+                      aria-label={`${s.name} löschen`}
+                      title="Löschen"
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); remove(s); }}
+                    >
+                      <Trash2 className="w-4 h-4 text-destructive" />
+                    </Button>
                   </td>
                 </tr>
               ))}
@@ -148,25 +176,50 @@ export default function Suppliers() {
       </Card>
       <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} total={total} />
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="z-[200]">
-          <DialogHeader>
-            <DialogTitle>{editing ? 'Zulieferer bearbeiten' : 'Neuer Zulieferer'}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div><Label>Name *</Label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
-            <div><Label>E-Mail *</Label><Input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></div>
-            <div><Label>Zweite E-Mail (optional)</Label><Input type="email" value={form.email_secondary} onChange={e => setForm({ ...form, email_secondary: e.target.value })} placeholder="Versand erfolgt parallel an beide Adressen" /></div>
-            <div><Label>Telefon</Label><Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></div>
-            <div><Label>Anschrift</Label><Textarea value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} rows={3} /></div>
-            <div><Label>Notizen</Label><Textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} rows={2} /></div>
+      {open && (
+        <div
+          className="fixed inset-0 z-[10000] flex items-center justify-center overflow-y-auto bg-background/80 p-4 backdrop-blur-sm"
+          role="presentation"
+          onMouseDown={() => setOpen(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="supplier-dialog-title"
+            className="relative grid w-full max-w-lg gap-4 rounded-lg border border-border bg-card p-6 shadow-2xl"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              aria-label="Fenster schließen"
+              className="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
+              onClick={() => setOpen(false)}
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            <div className="flex flex-col space-y-1.5 text-center sm:text-left">
+              <h2 id="supplier-dialog-title" className="text-lg font-semibold leading-none tracking-tight">
+                {editing ? 'Zulieferer bearbeiten' : 'Neuer Zulieferer'}
+              </h2>
+            </div>
+
+            <div className="space-y-3">
+              <div><Label>Name *</Label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
+              <div><Label>E-Mail *</Label><Input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></div>
+              <div><Label>Zweite E-Mail (optional)</Label><Input type="email" value={form.email_secondary} onChange={e => setForm({ ...form, email_secondary: e.target.value })} placeholder="Versand erfolgt parallel an beide Adressen" /></div>
+              <div><Label>Telefon</Label><Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></div>
+              <div><Label>Anschrift</Label><Textarea value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} rows={3} /></div>
+              <div><Label>Notizen</Label><Textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} rows={2} /></div>
+            </div>
+
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
+              <Button variant="outline" onClick={() => setOpen(false)}>Abbrechen</Button>
+              <Button onClick={save}>Speichern</Button>
+            </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Abbrechen</Button>
-            <Button onClick={save}>Speichern</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
     </div>
   );
 }
