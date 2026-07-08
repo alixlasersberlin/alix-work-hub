@@ -361,6 +361,14 @@ const EscResources = lazy(() => import("./pages/ESC/Resources"));
 const EscBookings = lazy(() => import("./pages/ESC/Bookings"));
 const EscConfirmations = lazy(() => import("./pages/ESC/Confirmations"));
 const EscSettings = lazy(() => import("./pages/ESC/Settings"));
+const RmHub = lazy(() => import("./pages/ESC/rm/Hub"));
+const RmEmployees = lazy(() => import("./pages/ESC/rm/Employees"));
+const RmVehicles = lazy(() => import("./pages/ESC/rm/Vehicles"));
+const RmDevices = lazy(() => import("./pages/ESC/rm/Devices"));
+const RmRooms = lazy(() => import("./pages/ESC/rm/Rooms"));
+const RmField = lazy(() => import("./pages/ESC/rm/Field"));
+const RmCapacity = lazy(() => import("./pages/ESC/rm/Capacity"));
+const RmDispatch = lazy(() => import("./pages/ESC/rm/Dispatch"));
 const EscBookingPortal = lazy(() => import("./pages/ESC/public/BookingPortal"));
 const EscConfirmAppointment = lazy(() => import("./pages/ESC/public/ConfirmAppointment"));
 const EscRescheduleAppointment = lazy(() => import("./pages/ESC/public/RescheduleAppointment"));
@@ -516,6 +524,14 @@ function AppRoutes() {
             <Route path="buchungen" element={<EscBookings />} />
             <Route path="bestaetigungen" element={<EscConfirmations />} />
             <Route path="einstellungen" element={<EscSettings />} />
+            <Route path="rm" element={<RmHub />} />
+            <Route path="rm/mitarbeiter" element={<RmEmployees />} />
+            <Route path="rm/fahrzeuge" element={<RmVehicles />} />
+            <Route path="rm/geraete" element={<RmDevices />} />
+            <Route path="rm/raeume" element={<RmRooms />} />
+            <Route path="rm/aussendienst" element={<RmField />} />
+            <Route path="rm/kapazitaeten" element={<RmCapacity />} />
+            <Route path="rm/einsatzplanung" element={<RmDispatch />} />
           </Route>
           <Route path="/at-dashboard" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Österreich']}><AtDashboard /></ProtectedRoute>} />
           <Route path="/dashboard/bestellungen" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Auftragsverwaltung','Order','Bestellwesen','SACHBEARBEITUNG','Finance']}><BestellungenDashboard /></ProtectedRoute>} />
