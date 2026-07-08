@@ -412,6 +412,15 @@ const EmpNotifications = lazy(() => import("./pages/EMP/Notifications"));
 const EmpSync = lazy(() => import("./pages/EMP/Sync"));
 const EmpSettingsPage = lazy(() => import("./pages/EMP/Settings"));
 
+// ABIC – Enterprise Analytics & Business Intelligence Center
+const AbicLayout = lazy(() => import("./components/abic/AbicLayout"));
+const AbicSection = lazy(() => import("./pages/ABIC/SectionPage"));
+const AbicKpiDesigner = lazy(() => import("./pages/ABIC/KpiDesigner"));
+const AbicReports = lazy(() => import("./pages/ABIC/Reports"));
+const AbicExplorer = lazy(() => import("./pages/ABIC/DataExplorer"));
+const AbicDashboards = lazy(() => import("./pages/ABIC/Dashboards"));
+const AbicGoals = lazy(() => import("./pages/ABIC/Goals"));
+
 // ECP – Enterprise Customer Portal
 const EcpLayout = lazy(() => import("./components/ecp/EcpLayout"));
 const EcpDashboard = lazy(() => import("./pages/ECP/Dashboard"));
@@ -1025,6 +1034,27 @@ function AppRoutes() {
           <Route path="suche" element={<EcpSearch />} />
           <Route path="benachrichtigungen" element={<EcpNotifications />} />
           <Route path="admin" element={<EcpAdmin />} />
+        </Route>
+
+        {/* ABIC – Enterprise Analytics & Business Intelligence Center */}
+        <Route path="/abic" element={<ProtectedRoute><AbicLayout /></ProtectedRoute>}>
+          <Route index element={<AbicSection sectionKey="executive" />} />
+          <Route path="sales" element={<AbicSection sectionKey="sales" />} />
+          <Route path="service" element={<AbicSection sectionKey="service" />} />
+          <Route path="training" element={<AbicSection sectionKey="training" />} />
+          <Route path="finance" element={<AbicSection sectionKey="finance" />} />
+          <Route path="customers" element={<AbicSection sectionKey="customers" />} />
+          <Route path="operations" element={<AbicSection sectionKey="operations" />} />
+          <Route path="marketing" element={<AbicSection sectionKey="marketing" />} />
+          <Route path="devices" element={<AbicSection sectionKey="devices" />} />
+          <Route path="employees" element={<AbicSection sectionKey="employees" />} />
+          <Route path="locations" element={<AbicSection sectionKey="locations" />} />
+          <Route path="forecast" element={<AbicSection sectionKey="forecast" />} />
+          <Route path="kpi-designer" element={<AbicKpiDesigner />} />
+          <Route path="reports" element={<AbicReports />} />
+          <Route path="explorer" element={<AbicExplorer />} />
+          <Route path="dashboards" element={<AbicDashboards />} />
+          <Route path="goals" element={<AbicGoals />} />
         </Route>
 
         <Route path="*" element={<NotFound />} />
