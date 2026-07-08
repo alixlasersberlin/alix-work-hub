@@ -421,6 +421,26 @@ const AbicExplorer = lazy(() => import("./pages/ABIC/DataExplorer"));
 const AbicDashboards = lazy(() => import("./pages/ABIC/Dashboards"));
 const AbicGoals = lazy(() => import("./pages/ABIC/Goals"));
 
+// ECQM – Enterprise Compliance & Quality Management Center
+const EcqmLayout = lazy(() => import("./components/ecqm/EcqmLayout"));
+const EcqmDashboard = lazy(() => import("./pages/ECQM/Dashboard"));
+const EcqmDocuments = lazy(() => import("./pages/ECQM/Documents"));
+const EcqmProcesses = lazy(() => import("./pages/ECQM/Processes"));
+const EcqmCapa = lazy(() => import("./pages/ECQM/Capa"));
+const EcqmComplaints = lazy(() => import("./pages/ECQM/Complaints"));
+const EcqmRisks = lazy(() => import("./pages/ECQM/Risks"));
+const EcqmAudits = lazy(() => import("./pages/ECQM/Audits"));
+const EcqmSuppliers = lazy(() => import("./pages/ECQM/Suppliers"));
+const EcqmChangeControl = lazy(() => import("./pages/ECQM/ChangeControl"));
+const EcqmTraceability = lazy(() => import("./pages/ECQM/Traceability"));
+const EcqmTrainings = lazy(() => import("./pages/ECQM/Trainings"));
+const EcqmQualifications = lazy(() => import("./pages/ECQM/Qualifications"));
+const EcqmManagementReview = lazy(() => import("./pages/ECQM/ManagementReview"));
+const EcqmKpis = lazy(() => import("./pages/ECQM/Kpis"));
+const EcqmApprovals = lazy(() => import("./pages/ECQM/Approvals"));
+const EcqmArchive = lazy(() => import("./pages/ECQM/Archive"));
+const EcqmSettings = lazy(() => import("./pages/ECQM/Settings"));
+
 // ECP – Enterprise Customer Portal
 const EcpLayout = lazy(() => import("./components/ecp/EcpLayout"));
 const EcpDashboard = lazy(() => import("./pages/ECP/Dashboard"));
@@ -1055,6 +1075,28 @@ function AppRoutes() {
           <Route path="explorer" element={<AbicExplorer />} />
           <Route path="dashboards" element={<AbicDashboards />} />
           <Route path="goals" element={<AbicGoals />} />
+        </Route>
+
+        {/* ECQM – Enterprise Compliance & Quality Management Center */}
+        <Route path="/ecqm" element={<ProtectedRoute><EcqmLayout /></ProtectedRoute>}>
+          <Route index element={<EcqmDashboard />} />
+          <Route path="dokumente" element={<EcqmDocuments />} />
+          <Route path="sops" element={<EcqmDocuments onlySop />} />
+          <Route path="prozesse" element={<EcqmProcesses />} />
+          <Route path="capa" element={<EcqmCapa />} />
+          <Route path="reklamationen" element={<EcqmComplaints />} />
+          <Route path="risiken" element={<EcqmRisks />} />
+          <Route path="audits" element={<EcqmAudits />} />
+          <Route path="lieferanten" element={<EcqmSuppliers />} />
+          <Route path="schulungen" element={<EcqmTrainings />} />
+          <Route path="qualifikationen" element={<EcqmQualifications />} />
+          <Route path="change-control" element={<EcqmChangeControl />} />
+          <Route path="rueckverfolgbarkeit" element={<EcqmTraceability />} />
+          <Route path="managementbewertung" element={<EcqmManagementReview />} />
+          <Route path="kennzahlen" element={<EcqmKpis />} />
+          <Route path="freigaben" element={<EcqmApprovals />} />
+          <Route path="archiv" element={<EcqmArchive />} />
+          <Route path="einstellungen" element={<EcqmSettings />} />
         </Route>
 
         <Route path="*" element={<NotFound />} />
