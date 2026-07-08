@@ -136,7 +136,13 @@ export default function AfterSalesCaseDetail() {
                 <CardContent className="space-y-2">
                   {items.map((it: any) => (
                     <label key={it.id} className="flex items-center gap-3 text-sm cursor-pointer">
-                      <Checkbox checked={it.checked} onCheckedChange={(v) => toggle.mutate({ id: it.id, case_id: c.id, checked: !!v })} />
+                      <Checkbox checked={it.checked} onCheckedChange={(v) => {
+                        const checked = !!v;
+                        toggle.mutate({ id: it.id, case_id: c.id, checked });
+                        if (checked && it.code === 'zufrieden' && c.status !== 'completed') {
+                          forceClose.mutate({ caseId: c.id, reason: 'Kunde zufrieden – automatischer Abschluss (100%)' });
+                        }
+                      }} />
                       <span className={it.checked ? 'line-through text-muted-foreground' : ''}>{it.label}</span>
                       {it.checked_at && <span className="text-xs text-muted-foreground ml-auto">{new Date(it.checked_at).toLocaleDateString('de-DE')}</span>}
                     </label>
