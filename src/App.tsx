@@ -351,6 +351,18 @@ const AfterSalesDashboard = lazy(() => import("./pages/AfterSales/Dashboard"));
 const AfterSalesCaseDetail = lazy(() => import("./pages/AfterSales/CaseDetail"));
 const AfterSalesCompleted = lazy(() => import("./pages/AfterSales/Completed"));
 const AfterSalesReports = lazy(() => import("./pages/AfterSales/Reports"));
+// ESC – Enterprise Scheduling Center (Teamkalender)
+const EscLayout = lazy(() => import("./components/esc/EscLayout"));
+const EscOverview = lazy(() => import("./pages/ESC/Overview"));
+const EscCalendar = lazy(() => import("./pages/ESC/Calendar"));
+const EscDepartments = lazy(() => import("./pages/ESC/Departments"));
+const EscEmployees = lazy(() => import("./pages/ESC/Employees"));
+const EscResources = lazy(() => import("./pages/ESC/Resources"));
+const EscBookings = lazy(() => import("./pages/ESC/Bookings"));
+const EscConfirmations = lazy(() => import("./pages/ESC/Confirmations"));
+const EscSettings = lazy(() => import("./pages/ESC/Settings"));
+const EscBookingPortal = lazy(() => import("./pages/ESC/public/BookingPortal"));
+const EscConfirmAppointment = lazy(() => import("./pages/ESC/public/ConfirmAppointment"));
 import MaintenanceGate from "./components/MaintenanceGate";
 import LeihgeraetReminder from "./components/LeihgeraetReminder";
 
