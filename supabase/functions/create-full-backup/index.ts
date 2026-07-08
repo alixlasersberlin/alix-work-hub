@@ -111,7 +111,7 @@ const STORAGE_BUCKETS = [
   "production-photos",
   "repair-files",
 ];
-const DB_PAGE_SIZE = 250;
+const DB_PAGE_SIZE = 120;
 // Tabellen mit großen JSON-Payloads (details/raw_data/attachments) → deutlich
 // kleinere Seiten, sonst OOM (HTTP 546) im Edge-Worker beim Serialisieren.
 const HEAVY_TABLES = new Set<string>([
@@ -154,11 +154,11 @@ const XL_TABLES = new Set<string>([
 ]);
 // Nano-Tabellen mit potenziell mehreren MB pro Row (z. B. Base64-Bilder in einer Zelle).
 const NANO_TABLES = new Set<string>([
-  "alix_sign_signatures", // signature_image_data (data-URL) kann pro Row hunderte KB sein
+  "alix_sign_signatures",
 ]);
-const HEAVY_PAGE_SIZE = 30;
-const XL_PAGE_SIZE = 8;
-const NANO_PAGE_SIZE = 3;
+const HEAVY_PAGE_SIZE = 15;
+const XL_PAGE_SIZE = 4;
+const NANO_PAGE_SIZE = 2;
 const pageSizeFor = (table: string) =>
   NANO_TABLES.has(table) ? NANO_PAGE_SIZE
     : XL_TABLES.has(table) ? XL_PAGE_SIZE
@@ -166,11 +166,10 @@ const pageSizeFor = (table: string) =>
     : DB_PAGE_SIZE;
 
 // Wie lange darf ein einzelner Worker-Aufruf Tabellen-Seiten hintereinander
-// verarbeiten, bevor wir uns selbst neu triggern? Hält uns unter dem
-// Edge-Function CPU/Memory-Budget, spart aber die 500 ms – 3 s Overhead
-// zwischen Invocations.
-const BATCH_MAX_MS = 25_000;
-const BATCH_MAX_BYTES = 40 * 1024 * 1024; // 40 MB Uploads pro Worker
+// verarbeiten, bevor wir uns selbst neu triggern? Konservativ gehalten, damit
+// wir unter dem Edge-Function CPU/Memory-Budget bleiben (HTTP 546 vermeiden).
+const BATCH_MAX_MS = 15_000;
+const BATCH_MAX_BYTES = 10 * 1024 * 1024; // 10 MB Uploads pro Worker
 
 const STORAGE_LIST_LIMIT = 250;
 const encoder = new TextEncoder();
@@ -194,14 +193,21 @@ async function uploadJson(
 ) {
   const bytes = encoder.encode(JSON.stringify(payload));
   const size = bytes.byteLength;
-  const { error } = await adminClient.storage
-    .from("backups")
-    .upload(path, bytes, {
-      contentType: "application/json",
-      upsert,
-    });
-  if (error) throw new Error(`Upload ${path}: ${error.message}`);
-  return size;
+  let lastErr: string | null = null;
+  for (let attempt = 1; attempt <= 6; attempt += 1) {
+    const { error } = await adminClient.storage
+      .from("backups")
+      .upload(path, bytes, {
+        contentType: "application/json",
+        upsert,
+      });
+    if (!error) return size;
+    lastErr = error.message || String(error);
+    const transient = /Service Unavailable|503|502|504|520|521|522|524|fetch failed|network|timeout|<!DOCTYPE|Web server|Cloudflare/i.test(lastErr);
+    if (!transient || attempt === 6) throw new Error(`Upload ${path}: ${lastErr}`);
+    await new Promise((r) => setTimeout(r, Math.min(500 * 2 ** (attempt - 1), 8000)));
+  }
+  throw new Error(`Upload ${path}: ${lastErr ?? "unknown error"}`);
 }
 
 async function readJson<T>(adminClient: BackupAdminClient, path: string): Promise<T> {
@@ -241,14 +247,21 @@ async function uploadNdjsonPart(
   }
   const bytes = encoder.encode(`${lines.join("\n")}\n`);
   const size = bytes.byteLength;
-  const { error } = await adminClient.storage
-    .from("backups")
-    .upload(path, bytes, {
-      contentType: "application/x-ndjson",
-      upsert: true,
-    });
-  if (error) throw new Error(`Upload ${path}: ${error.message}`);
-  return size;
+  let lastErr: string | null = null;
+  for (let attempt = 1; attempt <= 6; attempt += 1) {
+    const { error } = await adminClient.storage
+      .from("backups")
+      .upload(path, bytes, {
+        contentType: "application/x-ndjson",
+        upsert: true,
+      });
+    if (!error) return size;
+    lastErr = error.message || String(error);
+    const transient = /Service Unavailable|503|502|504|520|521|522|524|fetch failed|network|timeout|<!DOCTYPE|Web server|Cloudflare/i.test(lastErr);
+    if (!transient || attempt === 6) throw new Error(`Upload ${path}: ${lastErr}`);
+    await new Promise((r) => setTimeout(r, Math.min(500 * 2 ** (attempt - 1), 8000)));
+  }
+  throw new Error(`Upload ${path}: ${lastErr ?? "unknown error"}`);
 }
 
 async function listBucketEntries(
