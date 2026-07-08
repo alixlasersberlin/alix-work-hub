@@ -157,10 +157,10 @@ export default function Capas() {
       }
     >
       {open && (
-        <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-background/80 px-4 py-8 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="new-capa-title">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden bg-background/80 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="new-capa-title">
           <div className="absolute inset-0" onClick={() => setOpen(false)} />
-          <div className="relative z-10 w-full max-w-2xl rounded-md border border-border bg-card p-6 shadow-xl">
-            <div className="mb-4 flex items-start justify-between gap-4">
+          <div className="relative z-10 flex max-h-[calc(100vh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-md border border-border bg-card shadow-xl">
+            <div className="flex flex-shrink-0 items-start justify-between gap-4 border-b border-border px-5 py-4">
               <div>
                 <h3 id="new-capa-title" className="text-lg font-semibold">Neue CAPA anlegen</h3>
                 <p className="text-sm text-muted-foreground">Erfasst eine neue Korrektur- und Vorbeugemaßnahme.</p>
@@ -169,7 +169,7 @@ export default function Capas() {
                 <X className="h-4 w-4" />
               </Button>
             </div>
-            <div className="grid gap-3 max-h-[70vh] overflow-y-auto pr-1">
+            <div className="grid min-h-0 flex-1 gap-3 overflow-y-auto px-5 py-4">
               <div><Label>Titel *</Label><Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} autoFocus /></div>
               <div>
                 <Label>Auslöser</Label>
@@ -186,7 +186,7 @@ export default function Capas() {
               <div><Label>Vorbeugemaßnahme</Label><Textarea rows={2} value={form.preventive_action} onChange={e => setForm({ ...form, preventive_action: e.target.value })} /></div>
               <div><Label>Frist</Label><Input type="date" value={form.due_date} onChange={e => setForm({ ...form, due_date: e.target.value })} /></div>
             </div>
-            <div className="mt-4 flex justify-end gap-2">
+            <div className="flex flex-shrink-0 justify-end gap-2 border-t border-border px-5 py-4">
               <Button variant="ghost" onClick={() => setOpen(false)}>Abbrechen</Button>
               <Button onClick={create}>Speichern</Button>
             </div>
