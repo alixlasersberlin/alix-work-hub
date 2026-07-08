@@ -1002,6 +1002,31 @@ function AppRoutes() {
           <Route path="einstellungen" element={<EmpSettingsPage />} />
         </Route>
 
+        {/* ECP – Enterprise Customer Portal (rollenbasiert: Kunde, Händler, Servicepartner, ...) */}
+        <Route path="/ecp" element={<ProtectedRoute><EcpLayout /></ProtectedRoute>}>
+          <Route index element={<EcpDashboard />} />
+          <Route path="termine" element={<EcpAppointments />} />
+          <Route path="geraete" element={<EcpDevices />} />
+          <Route path="geraete/:id" element={<EcpDeviceDetail />} />
+          <Route path="service" element={<EcpService />} />
+          <Route path="tickets" element={<EcpTickets />} />
+          <Route path="schulungen" element={<EcpTrainings />} />
+          <Route path="dokumente" element={<EcpDocuments />} />
+          <Route path="rechnungen" element={<EcpInvoices />} />
+          <Route path="angebote" element={<EcpQuotes />} />
+          <Route path="nachrichten" element={<EcpMessages />} />
+          <Route path="downloads" element={<EcpDownloads />} />
+          <Route path="profil" element={<EcpProfile />} />
+          <Route path="standorte" element={<EcpLocations />} />
+          <Route path="ansprechpartner" element={<EcpContacts />} />
+          <Route path="haendler" element={<EcpDealer />} />
+          <Route path="servicepartner" element={<EcpServicePartner />} />
+          <Route path="lieferant" element={<EcpSupplier />} />
+          <Route path="suche" element={<EcpSearch />} />
+          <Route path="benachrichtigungen" element={<EcpNotifications />} />
+          <Route path="admin" element={<EcpAdmin />} />
+        </Route>
+
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
