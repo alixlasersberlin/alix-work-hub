@@ -448,6 +448,24 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
           return null;
         }
 
+        // Sperre: pro Auftrag nur EINE reguläre Produktionsbestellung (Reklamationen ausgenommen)
+        if (!isReclamation) {
+          const { data: existing } = await supabase
+            .from('production_orders')
+            .select('id, production_order_number')
+            .eq('order_id', selectedOrder.id)
+            .eq('is_reclamation', false)
+            .limit(1);
+          if (existing && existing.length > 0) {
+            savingRef.current = false;
+            setSaving(false);
+            toast.error(
+              `Für Auftrag ${selectedOrder.order_number} existiert bereits eine Produktionsbestellung (${existing[0].production_order_number ?? ''}). Pro Auftrag ist nur eine Bestellung erlaubt.`,
+            );
+            return null;
+          }
+        }
+
         // Idempotenz: kein doppeltes Erfassen derselben Bestellung innerhalb von 30 s
         const since = new Date(Date.now() - 30_000).toISOString();
         const { data: recent } = await supabase
@@ -465,6 +483,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
           );
           return null;
         }
+
       }
       const { data, error } = await supabase.from('production_orders').insert(payload).select('id').single();
       if (error || !data) { savingRef.current = false; toast.error(error?.message || 'Fehler'); setSaving(false); return null; }
