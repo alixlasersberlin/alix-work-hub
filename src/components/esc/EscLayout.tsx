@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom';
-import { CalendarDays, LayoutDashboard, Building2, Users, Boxes, Globe, CheckCircle2, Settings, Calendar } from 'lucide-react';
+import { CalendarDays, LayoutDashboard, Building2, Users, Boxes, Globe, CheckCircle2, Settings, Calendar, Truck, Cpu, DoorOpen, Map, Gauge, ListChecks } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const TABS = [
@@ -11,6 +11,17 @@ const TABS = [
   { to: '/esc/buchungen',      label: 'Buchungsportal', icon: Globe },
   { to: '/esc/bestaetigungen', label: 'Bestätigungen',  icon: CheckCircle2 },
   { to: '/esc/einstellungen',  label: 'Einstellungen',  icon: Settings },
+];
+
+const RM_TABS = [
+  { to: '/esc/rm',                label: 'Disposition',     icon: LayoutDashboard, end: true },
+  { to: '/esc/rm/mitarbeiter',    label: 'Mitarbeiter',     icon: Users },
+  { to: '/esc/rm/fahrzeuge',      label: 'Fahrzeuge',       icon: Truck },
+  { to: '/esc/rm/geraete',        label: 'Geräte',          icon: Cpu },
+  { to: '/esc/rm/raeume',         label: 'Räume',           icon: DoorOpen },
+  { to: '/esc/rm/aussendienst',   label: 'Außendienst',     icon: Map },
+  { to: '/esc/rm/kapazitaeten',   label: 'Kapazitäten',     icon: Gauge },
+  { to: '/esc/rm/einsatzplanung', label: 'Einsatzplanung',  icon: ListChecks },
 ];
 
 export default function EscLayout() {
@@ -38,6 +49,27 @@ export default function EscLayout() {
               }
             >
               <t.icon className="w-4 h-4" />
+              {t.label}
+            </NavLink>
+          ))}
+        </nav>
+        <nav className="flex items-center gap-1 px-4 pb-2 overflow-x-auto border-t border-border/40 pt-1.5">
+          <span className="text-[10px] uppercase tracking-wide text-muted-foreground pr-2">Ressourcen &amp; Disposition</span>
+          {RM_TABS.map((t) => (
+            <NavLink
+              key={t.to}
+              to={t.to}
+              end={t.end}
+              className={({ isActive }) =>
+                cn(
+                  'flex items-center gap-1.5 px-2 py-1 text-[11.5px] rounded-md whitespace-nowrap transition-colors border border-transparent',
+                  isActive
+                    ? 'bg-primary/15 text-primary border-primary/20'
+                    : 'text-foreground/70 hover:text-primary hover:bg-primary/10',
+                )
+              }
+            >
+              <t.icon className="w-3.5 h-3.5" />
               {t.label}
             </NavLink>
           ))}
