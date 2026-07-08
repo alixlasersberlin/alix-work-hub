@@ -32,7 +32,11 @@ function readDepartments(): EscDepartment[] {
 
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [...MOCK_DEPARTMENTS];
+    if (!raw) {
+      const seeded = MOCK_DEPARTMENTS.map((department) => ({ ...department }));
+      writeDepartments(seeded);
+      return seeded;
+    }
 
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [...MOCK_DEPARTMENTS];
