@@ -5,14 +5,52 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Edit, Trash2, X } from 'lucide-react';
+import {
+  Plus, Edit, Trash2, X,
+  Circle, Wrench, Stethoscope, Scissors, Hammer, Briefcase, Building2, Users,
+  Calendar, Clock, Heart, Star, Truck, Package, Phone, Mail, Camera, Home,
+  Car, Coffee, ShoppingCart, Settings, Shield, Zap, Sparkles, Award, Target,
+  Activity, Pill, Syringe, Baby,
+} from 'lucide-react';
 import { useDepartments } from '@/hooks/esc/useDepartments';
 import { DepartmentBadge } from '@/components/esc/DepartmentBadge';
 import type { EscDepartment } from '@/lib/esc/types';
 import { toast } from 'sonner';
 
+const PRESET_COLORS = [
+  '#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16', '#22c55e',
+  '#10b981', '#14b8a6', '#06b6d4', '#0ea5e9', '#3b82f6', '#6366f1',
+  '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e', '#64748b',
+  '#0f172a', '#ffffff',
+];
+
+const ICON_OPTIONS = [
+  { name: 'Circle', Icon: Circle }, { name: 'Wrench', Icon: Wrench },
+  { name: 'Stethoscope', Icon: Stethoscope }, { name: 'Scissors', Icon: Scissors },
+  { name: 'Hammer', Icon: Hammer }, { name: 'Briefcase', Icon: Briefcase },
+  { name: 'Building2', Icon: Building2 }, { name: 'Users', Icon: Users },
+  { name: 'Calendar', Icon: Calendar }, { name: 'Clock', Icon: Clock },
+  { name: 'Heart', Icon: Heart }, { name: 'Star', Icon: Star },
+  { name: 'Truck', Icon: Truck }, { name: 'Package', Icon: Package },
+  { name: 'Phone', Icon: Phone }, { name: 'Mail', Icon: Mail },
+  { name: 'Camera', Icon: Camera }, { name: 'Home', Icon: Home },
+  { name: 'Car', Icon: Car }, { name: 'Coffee', Icon: Coffee },
+  { name: 'ShoppingCart', Icon: ShoppingCart }, { name: 'Settings', Icon: Settings },
+  { name: 'Shield', Icon: Shield }, { name: 'Zap', Icon: Zap },
+  { name: 'Sparkles', Icon: Sparkles }, { name: 'Award', Icon: Award },
+  { name: 'Target', Icon: Target }, { name: 'Activity', Icon: Activity },
+  { name: 'Pill', Icon: Pill }, { name: 'Syringe', Icon: Syringe },
+  { name: 'Baby', Icon: Baby },
+];
+
+function hslOrHexToHex(v: string): string {
+  if (!v) return '#3b82f6';
+  if (v.startsWith('#')) return v.length === 7 ? v : '#3b82f6';
+  return '#3b82f6';
+}
+
 const emptyForm: Omit<EscDepartment, 'id'> = {
-  name: '', color: 'hsl(var(--primary))', icon: 'Circle', description: '', active: true, publicBookable: false,
+  name: '', color: '#3b82f6', icon: 'Circle', description: '', active: true, publicBookable: false,
   defaultDurationMinutes: 60, defaultEmailTemplate: '', responsibleEmployeeIds: [], internalVisible: true, externallyBookable: false,
 };
 
@@ -137,8 +175,49 @@ export default function EscDepartments() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 py-2">
               <div className="md:col-span-2"><Label>Name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
-              <div><Label>Farbe</Label><Input value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} placeholder="hsl(var(--primary))" /></div>
-              <div><Label>Icon (Lucide-Name)</Label><Input value={form.icon} onChange={(e) => setForm({ ...form, icon: e.target.value })} placeholder="Wrench" /></div>
+              <div>
+                <Label>Farbe</Label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    className="h-9 w-12 cursor-pointer rounded border bg-background p-1"
+                    value={hslOrHexToHex(form.color)}
+                    onChange={(e) => setForm({ ...form, color: e.target.value })}
+                    aria-label="Farbe wählen"
+                  />
+                  <Input value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} placeholder="#3b82f6" />
+                </div>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {PRESET_COLORS.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      aria-label={`Farbe ${c}`}
+                      onClick={() => setForm({ ...form, color: c })}
+                      className={`h-6 w-6 rounded-full border-2 transition ${form.color === c ? 'border-foreground scale-110' : 'border-transparent'}`}
+                      style={{ background: c }}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div>
+                <Label>Icon</Label>
+                <Input value={form.icon} onChange={(e) => setForm({ ...form, icon: e.target.value })} placeholder="Wrench" />
+                <div className="mt-2 grid grid-cols-8 gap-1.5 max-h-40 overflow-y-auto rounded border p-2">
+                  {ICON_OPTIONS.map(({ name, Icon }) => (
+                    <button
+                      key={name}
+                      type="button"
+                      aria-label={name}
+                      title={name}
+                      onClick={() => setForm({ ...form, icon: name })}
+                      className={`flex h-8 w-8 items-center justify-center rounded border transition hover:bg-accent ${form.icon === name ? 'border-primary bg-accent' : 'border-transparent'}`}
+                    >
+                      <Icon className="h-4 w-4" />
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div className="md:col-span-2"><Label>Beschreibung</Label><Textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
               <div><Label>Standarddauer (min)</Label><Input type="number" value={form.defaultDurationMinutes} onChange={(e) => setForm({ ...form, defaultDurationMinutes: Number(e.target.value) })} /></div>
               <div><Label>Standard-E-Mail-Vorlage</Label><Input value={form.defaultEmailTemplate || ''} onChange={(e) => setForm({ ...form, defaultEmailTemplate: e.target.value })} /></div>
