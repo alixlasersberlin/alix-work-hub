@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -52,16 +52,15 @@ function toInputDate(d: Date | string | undefined) {
   return `${dt.getFullYear()}-${p(dt.getMonth() + 1)}-${p(dt.getDate())}T${p(dt.getHours())}:${p(dt.getMinutes())}`;
 }
 
-export function AppointmentModalTabs({
-  open, onClose, onSubmit, onDelete, onCancelAppointment, onComplete,
-  departments, employees, resources, initial, defaultStart, canSeeInternal, history = [],
-}: Props) {
+function buildInitialForm(
+  initial: Partial<EscAppointment> | undefined,
+  defaultStart: Date | undefined,
+  departments: EscDepartment[],
+) {
   const start = defaultStart || (initial?.startAt ? new Date(initial.startAt) : new Date());
   const end = initial?.endAt ? new Date(initial.endAt) : new Date(start.getTime() + 60 * 60_000);
 
-  const [tab, setTab] = useState('general');
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
-  const [form, setForm] = useState({
+  return {
     title: initial?.title || '',
     description: initial?.description || '',
     departmentId: initial?.departmentId || departments[0]?.id || '',
@@ -98,18 +97,24 @@ export function AppointmentModalTabs({
     recurrenceUntil: '',
     recurrenceCount: 0,
     attachments: [] as { name: string; size: number }[],
-  });
+  };
+}
+
+export function AppointmentModalTabs({
+  open, onClose, onSubmit, onDelete, onCancelAppointment, onComplete,
+  departments, employees, resources, initial, defaultStart, canSeeInternal, history = [],
+}: Props) {
+  const [tab, setTab] = useState('general');
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+  const [form, setForm] = useState(() => buildInitialForm(initial, defaultStart, departments));
+  const defaultStartTime = defaultStart?.getTime();
 
   useEffect(() => {
     if (!open) return;
     setTab('general');
-    setForm((f) => ({
-      ...f,
-      startAt: toInputDate(defaultStart || (initial?.startAt ? new Date(initial.startAt) : new Date())),
-      endAt: toInputDate(initial?.endAt ? new Date(initial.endAt) : new Date((defaultStart || new Date()).getTime() + 60 * 60_000)),
-    }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+    setSelectedCustomerId(null);
+    setForm(buildInitialForm(initial, defaultStart, departments));
+  }, [open, initial?.id, defaultStartTime, departments]);
 
   const previewLink = useMemo(
     () => publicUrl(`/termin-bestaetigen/${initial?.confirmationToken || 'PREVIEW-TOKEN'}`),
@@ -175,6 +180,9 @@ export function AppointmentModalTabs({
             {initial?.id ? 'Termin bearbeiten' : 'Neuer Termin'}
             {initial?.status && <Badge variant="outline" className="text-[10px]">{ESC_STATUS_LABELS[initial.status as EscStatus] || initial.status}</Badge>}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Termin-Daten bearbeiten, Teilnehmer und Ressourcen verwalten.
+          </DialogDescription>
         </DialogHeader>
 
         <Tabs value={tab} onValueChange={setTab} className="flex-1 flex flex-col overflow-hidden">
