@@ -137,8 +137,8 @@ export default function Suppliers() {
                   <td className="p-3">{s.phone || '—'}</td>
                   <td className="p-3 text-muted-foreground text-xs whitespace-pre-line">{s.address || '—'}</td>
                   <td className="p-3 text-right">
-                    <Button size="sm" variant="ghost" onClick={() => openEdit(s)}><Pencil className="w-4 h-4" /></Button>
-                    <Button size="sm" variant="ghost" onClick={() => remove(s)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                    <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); openEdit(s); }}><Pencil className="w-4 h-4" /></Button>
+                    <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); remove(s); }}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                   </td>
                 </tr>
               ))}
