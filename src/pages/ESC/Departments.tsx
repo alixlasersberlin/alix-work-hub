@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { type MouseEvent, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -34,7 +34,7 @@ export default function EscDepartments() {
     setOpen(true);
   };
 
-  const handleEditClick = (event: React.MouseEvent<HTMLButtonElement>, department: EscDepartment) => {
+  const handleEditClick = (event: MouseEvent<HTMLButtonElement>, department: EscDepartment) => {
     event.preventDefault();
     event.stopPropagation();
     openEdit(department);
