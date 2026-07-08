@@ -16,7 +16,11 @@ export function AppointmentCard({ appointment, department, compact, onClick }: P
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={(event) => {
+        if (!onClick) return;
+        event.stopPropagation();
+        onClick();
+      }}
       className={cn(
         'w-full text-left rounded-md border bg-card hover:bg-accent/40 transition-colors px-2 py-1.5',
         'border-l-4',

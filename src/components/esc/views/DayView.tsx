@@ -52,9 +52,8 @@ export function DayView({
                       key={a.id}
                       draggable={!!onDropAppointment}
                       onDragStart={(e) => { e.dataTransfer.setData('text/esc-id', a.id); }}
-                      onClick={(e) => { e.stopPropagation(); onAppointmentClick?.(a); }}
                     >
-                      <AppointmentCard appointment={a} department={deptOf(a.departmentId)} />
+                      <AppointmentCard appointment={a} department={deptOf(a.departmentId)} onClick={() => onAppointmentClick?.(a)} />
                     </div>
                   ))}
                 </div>

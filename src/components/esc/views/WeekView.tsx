@@ -67,9 +67,8 @@ export function WeekView({
                   key={a.id}
                   draggable={!!onDropAppointment}
                   onDragStart={(e) => { e.dataTransfer.setData('text/esc-id', a.id); e.dataTransfer.effectAllowed = 'move'; }}
-                  onClick={(e) => { e.stopPropagation(); onAppointmentClick?.(a); }}
                 >
-                  <AppointmentCard appointment={a} department={deptOf(a.departmentId)} compact />
+                  <AppointmentCard appointment={a} department={deptOf(a.departmentId)} compact onClick={() => onAppointmentClick?.(a)} />
                 </div>
               ))}
             </div>
