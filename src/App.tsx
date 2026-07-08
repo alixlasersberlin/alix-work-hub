@@ -504,6 +504,7 @@ function AppRoutes() {
             <Route path="buchungen" element={<EscBookings />} />
             <Route path="bestaetigungen" element={<EscConfirmations />} />
             <Route path="einstellungen" element={<EscSettings />} />
+          </Route>
           <Route path="/at-dashboard" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Österreich']}><AtDashboard /></ProtectedRoute>} />
           <Route path="/dashboard/bestellungen" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Auftragsverwaltung','Order','Bestellwesen','SACHBEARBEITUNG','Finance']}><BestellungenDashboard /></ProtectedRoute>} />
           <Route path="/dashboards/verkauf" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Auftragsverwaltung','Order','Vertrieb','Vertriebsleitung','SACHBEARBEITUNG']}><VerkaufDashboard /></ProtectedRoute>} />
