@@ -307,21 +307,42 @@ export function AppointmentModalTabs({
 
             <TabsContent value="customer" className="mt-3 space-y-3">
               <div>
-                <Label>Kundenname</Label>
-                <Input value={form.customerName} onChange={(e) => setForm({ ...form, customerName: e.target.value })} placeholder="Kunde suchen oder eingeben…" />
+                <Label>Kunde suchen (CRM)</Label>
+                <CustomerSearchCombobox
+                  onSelect={async (hit) => {
+                    setSelectedCustomerId(hit.customerId);
+                    setForm((f) => ({ ...f, customerName: hit.companyName }));
+                    const s = await getCustomerSummary(hit.customerId);
+                    if (s) setForm((f) => ({
+                      ...f,
+                      customerName: s.companyName,
+                      customerContact: s.contactPerson || f.customerContact,
+                      customerEmail: s.email || f.customerEmail,
+                      customerPhone: s.phone || f.customerPhone,
+                      address: [s.address, s.postalCode, s.city].filter(Boolean).join(', ') || f.address,
+                    }));
+                  }}
+                />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div><Label>Ansprechpartner</Label><Input value={form.customerContact} onChange={(e) => setForm({ ...form, customerContact: e.target.value })} /></div>
-                <div><Label>E-Mail</Label><Input type="email" value={form.customerEmail} onChange={(e) => setForm({ ...form, customerEmail: e.target.value })} /></div>
-                <div><Label>Telefon</Label><Input value={form.customerPhone} onChange={(e) => setForm({ ...form, customerPhone: e.target.value })} /></div>
-                <div><Label>Raum</Label><Input value={form.room} onChange={(e) => setForm({ ...form, room: e.target.value })} /></div>
-              </div>
-              {form.customerName && (
-                <div className="rounded-md border p-3 bg-muted/30 text-[12px] text-muted-foreground">
-                  Verknüpfung zu Kunden-, Geräte-, Ticket- und Auftragshistorie erfolgt schreibgeschützt aus den bestehenden AlixWorks-Modulen.
+              <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-4">
+                <div className="space-y-3">
+                  <div><Label>Kundenname</Label><Input value={form.customerName} onChange={(e) => setForm({ ...form, customerName: e.target.value })} placeholder="oder frei eingeben…" /></div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div><Label>Ansprechpartner</Label><Input value={form.customerContact} onChange={(e) => setForm({ ...form, customerContact: e.target.value })} /></div>
+                    <div><Label>E-Mail</Label><Input type="email" value={form.customerEmail} onChange={(e) => setForm({ ...form, customerEmail: e.target.value })} /></div>
+                    <div><Label>Telefon</Label><Input value={form.customerPhone} onChange={(e) => setForm({ ...form, customerPhone: e.target.value })} /></div>
+                    <div><Label>Raum</Label><Input value={form.room} onChange={(e) => setForm({ ...form, room: e.target.value })} /></div>
+                  </div>
+                  <ChecklistPanel kind={form.kind} />
+                  <DocumentActions kind={form.kind} context={{
+                    title: form.title, customer: form.customerName, address: form.address,
+                    date: form.startAt, employees: [], device: null, notes: form.externalNote,
+                  }} />
                 </div>
-              )}
+                <CustomerSidebar customerId={selectedCustomerId} />
+              </div>
             </TabsContent>
+
 
             <TabsContent value="resources" className="mt-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
