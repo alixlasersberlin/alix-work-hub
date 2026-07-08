@@ -350,9 +350,10 @@ async function queueNextStep(params: {
   // between the finished step and the next boot — Supabase returns HTTP 546
   // ("not enough compute resources") when we chain invocations too tightly.
   const maxAttempts = 8;
-  // Cooldown BEFORE the first invocation so the current worker fully releases
-  // its compute budget before the next one boots. Fixes daily 22:00 failures.
-  await new Promise((r) => setTimeout(r, 3000));
+  // Kurzer Cooldown vor dem ersten Invoke — reicht meist, damit der vorherige
+  // Worker seine Ressourcen freigibt. Bei 546 (compute exhausted) backen wir
+  // weiter unten länger zurück.
+  await new Promise((r) => setTimeout(r, 500));
   let lastErr = "";
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     try {
