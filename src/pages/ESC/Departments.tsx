@@ -143,8 +143,49 @@ export default function EscDepartments() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 py-2">
               <div className="md:col-span-2"><Label>Name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
-              <div><Label>Farbe</Label><Input value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} placeholder="hsl(var(--primary))" /></div>
-              <div><Label>Icon (Lucide-Name)</Label><Input value={form.icon} onChange={(e) => setForm({ ...form, icon: e.target.value })} placeholder="Wrench" /></div>
+              <div>
+                <Label>Farbe</Label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    className="h-9 w-12 cursor-pointer rounded border bg-background p-1"
+                    value={hslOrHexToHex(form.color)}
+                    onChange={(e) => setForm({ ...form, color: e.target.value })}
+                    aria-label="Farbe wählen"
+                  />
+                  <Input value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} placeholder="#3b82f6" />
+                </div>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {PRESET_COLORS.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      aria-label={`Farbe ${c}`}
+                      onClick={() => setForm({ ...form, color: c })}
+                      className={`h-6 w-6 rounded-full border-2 transition ${form.color === c ? 'border-foreground scale-110' : 'border-transparent'}`}
+                      style={{ background: c }}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div>
+                <Label>Icon</Label>
+                <Input value={form.icon} onChange={(e) => setForm({ ...form, icon: e.target.value })} placeholder="Wrench" />
+                <div className="mt-2 grid grid-cols-8 gap-1.5 max-h-40 overflow-y-auto rounded border p-2">
+                  {ICON_OPTIONS.map(({ name, Icon }) => (
+                    <button
+                      key={name}
+                      type="button"
+                      aria-label={name}
+                      title={name}
+                      onClick={() => setForm({ ...form, icon: name })}
+                      className={`flex h-8 w-8 items-center justify-center rounded border transition hover:bg-accent ${form.icon === name ? 'border-primary bg-accent' : 'border-transparent'}`}
+                    >
+                      <Icon className="h-4 w-4" />
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div className="md:col-span-2"><Label>Beschreibung</Label><Textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
               <div><Label>Standarddauer (min)</Label><Input type="number" value={form.defaultDurationMinutes} onChange={(e) => setForm({ ...form, defaultDurationMinutes: Number(e.target.value) })} /></div>
               <div><Label>Standard-E-Mail-Vorlage</Label><Input value={form.defaultEmailTemplate || ''} onChange={(e) => setForm({ ...form, defaultEmailTemplate: e.target.value })} /></div>
