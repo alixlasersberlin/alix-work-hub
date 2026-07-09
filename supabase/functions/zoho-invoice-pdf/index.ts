@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
     const path = recurring ? "recurringinvoices" : "invoices";
     const url = `${cfg.booksApiBaseUrl}/${path}/${zoho_invoice_id}?organization_id=${cfg.organizationId}&accept=pdf`;
     const res = await fetch(url, {
-      headers: { Authorization: `Zoho-oauthtoken ${token}`, Accept: "application/pdf" },
+      headers: { Authorization: `Zoho-oauthtoken ${token}` },
     });
     if (!res.ok) {
       const t = await res.text();
