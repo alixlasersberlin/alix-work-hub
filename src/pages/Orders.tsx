@@ -761,10 +761,10 @@ export default function Orders() {
                               >
                                 RE-AZ OK
                               </span>
-                            ) : (o as any).invoiced_flag ? (
+                            ) : ((o as any).invoiced_flag || (o as any)._fullInvoiceNumber) ? (
                               <span
                                 className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border bg-green-500/15 text-green-400 border-green-500/30"
-                                title="Für diesen Auftrag wurde eine vollständige Rechnung gestellt"
+                                title={`Rechnung ${(o as any)._fullInvoiceNumber || ''} gestellt`.trim()}
                               >
                                 Rechnung OK
                               </span>
