@@ -265,7 +265,7 @@ export default function Orders() {
       const orderNumbers = Array.from(new Set(loaded.map(o => o.order_number).filter(Boolean)));
       if (orderIds.length === 0 && orderNumbers.length === 0) return;
 
-      const [itemsRes, posRes, depRes] = await Promise.all([
+      const [itemsRes, posRes, depRes, zohoInvRes] = await Promise.all([
         orderIds.length > 0
           ? supabase
               .from('order_items')
@@ -283,6 +283,12 @@ export default function Orders() {
               .from('finance_deposits' as any)
               .select('order_id, invoice_number, issue_date')
               .in('order_id', orderIds)
+          : Promise.resolve({ data: [] as any[] }),
+        orderNumbers.length > 0
+          ? supabase
+              .from('zoho_invoices')
+              .select('invoice_number, reference_number')
+              .in('reference_number', orderNumbers)
           : Promise.resolve({ data: [] as any[] }),
       ]);
       if (requestId !== loadRequestRef.current) return;
@@ -305,11 +311,22 @@ export default function Orders() {
         if (!azInvoiceByOrder[d.order_id]) azInvoiceByOrder[d.order_id] = d.invoice_number;
       });
 
+      const fullInvoiceByOrderNumber: Record<string, string> = {};
+      (zohoInvRes.data || []).forEach((z: any) => {
+        const num = z?.invoice_number as string | undefined;
+        const ref = z?.reference_number as string | undefined;
+        if (!num || !ref) return;
+        // Nur echte Rechnungen berücksichtigen, keine Anzahlungsrechnungen (AZ-...)
+        if (/^AZ/i.test(num)) return;
+        if (!fullInvoiceByOrderNumber[ref]) fullInvoiceByOrderNumber[ref] = num;
+      });
+
       setOrders(prev => prev.map(o => orderIdSet.has(o.id) ? ({
         ...o,
         order_items: itemsByOrder[o.id] || o.order_items || [],
         _productionOrderCount: o.order_number ? (poCountMap[o.order_number] || 0) : 0,
         _azInvoiceNumber: azInvoiceByOrder[o.id] || o._azInvoiceNumber || null,
+        _fullInvoiceNumber: (o.order_number ? fullInvoiceByOrderNumber[o.order_number] : null) || o._fullInvoiceNumber || null,
       }) : o));
     };
 
@@ -744,10 +761,10 @@ export default function Orders() {
                               >
                                 RE-AZ OK
                               </span>
-                            ) : (o as any).invoiced_flag ? (
+                            ) : ((o as any).invoiced_flag || (o as any)._fullInvoiceNumber) ? (
                               <span
                                 className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border bg-green-500/15 text-green-400 border-green-500/30"
-                                title="Für diesen Auftrag wurde eine vollständige Rechnung gestellt"
+                                title={`Rechnung ${(o as any)._fullInvoiceNumber || ''} gestellt`.trim()}
                               >
                                 Rechnung OK
                               </span>
