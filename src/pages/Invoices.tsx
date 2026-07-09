@@ -1107,6 +1107,50 @@ export default function Invoices() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!emailRow} onOpenChange={(o) => !o && !emailSending && setEmailRow(null)}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Mail className="w-4 h-4 text-primary" />
+              Rechnung {emailRow?.invoice_number ?? ''} per E-Mail versenden
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 max-h-[70vh] overflow-y-auto">
+            {emailPreparing && (
+              <div className="text-xs text-muted-foreground flex items-center gap-2">
+                <Loader2 className="w-3 h-3 animate-spin" /> Kundendaten werden geladen…
+              </div>
+            )}
+            <div>
+              <Label htmlFor="mto">Empfänger E-Mail *</Label>
+              <Input id="mto" type="email" value={emailForm.to_email} onChange={(e) => setEmailForm((f) => ({ ...f, to_email: e.target.value }))} placeholder="kunde@example.com" />
+            </div>
+            <div>
+              <Label htmlFor="mton">Empfängername</Label>
+              <Input id="mton" value={emailForm.to_name} onChange={(e) => setEmailForm((f) => ({ ...f, to_name: e.target.value }))} />
+            </div>
+            <div>
+              <Label htmlFor="msub">Betreff</Label>
+              <Input id="msub" value={emailForm.subject} onChange={(e) => setEmailForm((f) => ({ ...f, subject: e.target.value }))} />
+            </div>
+            <div>
+              <Label htmlFor="mbody">Nachricht</Label>
+              <Textarea id="mbody" rows={8} value={emailForm.body_text} onChange={(e) => setEmailForm((f) => ({ ...f, body_text: e.target.value }))} />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Absender: <span className="font-mono">finance@alixwork.de</span> · Die Rechnung wird automatisch als PDF im Anhang beigefügt.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEmailRow(null)} disabled={emailSending}>Abbrechen</Button>
+            <Button onClick={sendEmail} disabled={emailSending || emailPreparing} className="gold-gradient text-primary-foreground">
+              {emailSending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
+              {emailSending ? 'Sende…' : 'Senden'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
