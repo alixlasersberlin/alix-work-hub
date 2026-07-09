@@ -127,6 +127,20 @@ export default function Invoices() {
   const [editRow, setEditRow] = useState<Row | null>(null);
   const [editForm, setEditForm] = useState({ reference_number: '', due_date: '', payment_status: '' });
   const [editSaving, setEditSaving] = useState(false);
+  const [viewMode, setViewMode] = useState<'accounts' | 'list'>(() => {
+    if (typeof window === 'undefined') return 'accounts';
+    return (localStorage.getItem('invoices_view_mode') as 'accounts' | 'list') || 'accounts';
+  });
+  const [listSort, setListSort] = useState<'number' | 'date'>(() => {
+    if (typeof window === 'undefined') return 'date';
+    return (localStorage.getItem('invoices_list_sort') as 'number' | 'date') || 'date';
+  });
+  const setViewModePersist = (m: 'accounts' | 'list') => {
+    setViewMode(m); try { localStorage.setItem('invoices_view_mode', m); } catch {}
+  };
+  const setListSortPersist = (s: 'number' | 'date') => {
+    setListSort(s); try { localStorage.setItem('invoices_list_sort', s); } catch {}
+  };
 
   const fetchRows = async () => {
     setLoading(true);
