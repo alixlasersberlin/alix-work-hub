@@ -300,6 +300,17 @@ export default function OffeneAnzahlungen() {
             </SelectContent>
           </Select>
         </div>
+        <div>
+          <Label className="text-xs text-muted-foreground">Land</Label>
+          <Select value={countryFilter} onValueChange={setCountryFilter}>
+            <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="alle">Alle</SelectItem>
+              <SelectItem value="DE">🇩🇪 Deutschland</SelectItem>
+              <SelectItem value="AT">🇦🇹 Österreich</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <Button variant={overdueOnly ? 'default' : 'outline'} onClick={() => setOverdueOnly(v => !v)}>
           Nur überfällig
         </Button>
