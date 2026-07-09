@@ -766,7 +766,7 @@ export default function Orders() {
                                 className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border bg-green-500/15 text-green-400 border-green-500/30"
                                 title={`Rechnung ${(o as any)._fullInvoiceNumber || ''} gestellt`.trim()}
                               >
-                                Rechnung OK
+                                Rechnung
                               </span>
                             ) : (
                               <span
