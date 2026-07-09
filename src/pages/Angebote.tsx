@@ -313,7 +313,27 @@ export default function Angebote() {
 
 
       <Card>
-        <CardHeader><CardTitle>Liste ({offers.length})</CardTitle></CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between gap-3">
+          <CardTitle>Liste ({(() => {
+            const q = search.trim().toLowerCase();
+            if (!q) return offers.length;
+            return offers.filter(o =>
+              (o.offerNumber || '').toLowerCase().includes(q) ||
+              (o.customer?.company_name || '').toLowerCase().includes(q) ||
+              (o.customer?.contact_name || '').toLowerCase().includes(q) ||
+              (o.customer?.email || '').toLowerCase().includes(q)
+            ).length;
+          })()})</CardTitle>
+          <div className="relative w-full max-w-xs">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Suche: Name oder Angebotsnr."
+              className="pl-8"
+            />
+          </div>
+        </CardHeader>
         <CardContent className="p-0">
           {loading ? (
             <div className="p-8 text-center text-muted-foreground">Lade Angebote…</div>
