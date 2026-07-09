@@ -83,6 +83,10 @@ export default function Invoices() {
   const [progress, setProgress] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [pageSize, setPageSize] = useState<PageSize>(20);
+  const [pdfLoadingId, setPdfLoadingId] = useState<string | null>(null);
+  const [editRow, setEditRow] = useState<Row | null>(null);
+  const [editForm, setEditForm] = useState({ reference_number: '', due_date: '', payment_status: '' });
+  const [editSaving, setEditSaving] = useState(false);
 
   const fetchRows = async () => {
     setLoading(true);
