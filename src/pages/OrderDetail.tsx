@@ -38,6 +38,7 @@ import DeliveryNoteTab from '@/components/DeliveryNoteTab';
 import AuftragsbestaetigungTab from '@/components/AuftragsbestaetigungTab';
 import OrderConfirmationTab from '@/components/OrderConfirmationTab';
 import AzInvoiceTab from '@/components/AzInvoiceTab';
+import CreateInvoiceDialog from '@/components/CreateInvoiceDialog';
 import CustomerSmsTab from '@/components/CustomerSmsTab';
 import { sendCustomerShippingNotice } from '@/lib/send-customer-shipping-notice';
 import { sendReviewInvitation } from '@/lib/review-invitation';
@@ -521,6 +522,9 @@ export default function OrderDetail() {
                 <ShoppingCart className="w-3.5 h-3.5 mr-1.5" /> Restbestellung erzeugen
               </Button>
             )
+          )}
+          {canWrite && (
+            <CreateInvoiceDialog order={order} customer={customer} items={items} />
           )}
           {/* Headless mounts für Aktionen aus den Menüs */}
           <SepaMandatButton ref={sepaRef} order={order} hideTrigger />
