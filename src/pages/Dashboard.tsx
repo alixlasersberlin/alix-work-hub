@@ -444,6 +444,9 @@ export default function Dashboard() {
         <ToursHeatmap />
       </div>
 
+      {/* Offene Anzahlungen (nicht für Rolle Österreich) */}
+      {!atOnly && <OpenDepositsOverview />}
+
       {/* Prio-Liste */}
       {canSeeOrders && (
         <div className="rounded-xl border border-border bg-card card-glow overflow-hidden">
