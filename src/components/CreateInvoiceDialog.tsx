@@ -271,6 +271,21 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
         <Button
           size="sm"
           type="button"
+          disabled={disabled || !!createdId || !!existingInvoice || checking}
+          onClick={openDialog}
+          className="gold-gradient text-primary-foreground"
+          title={existingInvoice ? `Für diesen Auftrag existiert bereits Rechnung ${existingInvoice.invoice_number ?? ''}` : undefined}
+        >
+          <FileText className="w-4 h-4 mr-1.5" />
+          {existingInvoice ? `Rechnung ${existingInvoice.invoice_number ?? ''} existiert` : createdId ? 'Rechnung erstellt' : 'Rechnung erstellen'}
+        </Button>
+        {(createdId || existingInvoice) && (
+          <Link to="/finance/rechnungen" className="inline-flex items-center text-sm text-primary hover:underline">
+            Zu Rechnungen <ExternalLink className="w-3.5 h-3.5 ml-1" />
+          </Link>
+        )}
+          size="sm"
+          type="button"
           disabled={disabled || !!createdId}
           onClick={openDialog}
           className="gold-gradient text-primary-foreground"
