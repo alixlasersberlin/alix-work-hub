@@ -171,7 +171,8 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
             </DialogFooter>
           </>
         )}
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
