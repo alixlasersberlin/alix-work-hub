@@ -356,6 +356,7 @@ Deno.serve(async (req) => {
       imported,
       updated,
       failed,
+      duplicates,
       profiles_processed: profilesProcessed,
       last_profile_page: pPage - 1,
       profiles_have_more: profilesHaveMore,
