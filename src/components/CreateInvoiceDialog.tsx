@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -47,6 +46,7 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
   const [saving, setSaving] = useState(false);
   const [createdId, setCreatedId] = useState<string | null>(null);
   const savingRef = useRef(false);
+  const dialogRef = useRef<HTMLDialogElement>(null);
 
   // Editable form fields
   const [invoiceNumber, setInvoiceNumber] = useState('');
@@ -64,7 +64,6 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
 
   const openDialog = useCallback(() => {
     if (disabled || createdId) return;
-    document.body.style.pointerEvents = 'auto';
     // Prefill
     setInvoiceNumber(generateInvoiceNumber(order?.source_system));
     setInvoiceDate(todayISO());
@@ -97,15 +96,24 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
 
   const closeDialog = useCallback(() => {
     setOpen(false);
-    document.body.style.pointerEvents = 'auto';
   }, []);
 
   useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeDialog(); };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [open, closeDialog]);
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+
+    if (open && !dialog.open) {
+      try {
+        dialog.showModal();
+      } catch {
+        dialog.setAttribute('open', '');
+      }
+    }
+
+    if (!open && dialog.open) {
+      dialog.close();
+    }
+  }, [open]);
 
   const subtotal = useMemo(
     () => lineItems.reduce((s, it) => s + Number(it.quantity || 0) * Number(it.rate || 0), 0),
@@ -201,16 +209,23 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
         )}
       </div>
 
-      {open && createPortal(
-        <div
-          className="fixed inset-0 flex items-start justify-center overflow-y-auto p-4"
-          style={{ zIndex: 2147483647, pointerEvents: 'auto', background: 'rgba(0,0,0,0.7)' }}
-          onClick={(e) => { if (e.target === e.currentTarget) closeDialog(); }}
-        >
-          <div className="w-full max-w-3xl my-8 rounded-xl border border-border bg-card shadow-2xl">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+      <dialog
+        ref={dialogRef}
+        aria-labelledby="create-invoice-title"
+        className="fixed inset-0 z-[2147483647] m-auto w-[min(960px,calc(100vw-2rem))] max-h-[calc(100dvh-2rem)] overflow-hidden rounded-xl border border-border bg-card p-0 text-foreground shadow-2xl backdrop:bg-background/85"
+        onClose={() => setOpen(false)}
+        onCancel={(e) => {
+          e.preventDefault();
+          closeDialog();
+        }}
+        onMouseDown={(e) => {
+          if (e.target === e.currentTarget) closeDialog();
+        }}
+      >
+          <div className="flex max-h-[calc(100dvh-2rem)] flex-col">
+            <div className="flex shrink-0 items-center justify-between px-6 py-4 border-b border-border">
               <div>
-                <h2 className="text-lg font-display font-bold">Rechnung erstellen</h2>
+                <h2 id="create-invoice-title" className="text-lg font-display font-bold">Rechnung erstellen</h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   aus Auftrag {order?.order_number ?? ''}
                 </p>
@@ -225,7 +240,7 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
               </button>
             </div>
 
-            <div className="px-6 py-4 space-y-5">
+            <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4 space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
                   <Label className="text-xs">Rechnungsnr.</Label>
@@ -322,7 +337,7 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 px-6 py-4 border-t border-border">
+            <div className="flex shrink-0 justify-end gap-2 px-6 py-4 border-t border-border">
               <Button type="button" variant="outline" onClick={closeDialog} disabled={saving}>Abbrechen</Button>
               <Button type="button" onClick={handleCreate} disabled={saving} className="gold-gradient text-primary-foreground">
                 {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
@@ -330,9 +345,7 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
               </Button>
             </div>
           </div>
-        </div>,
-        document.body
-      )}
+      </dialog>
     </>
   );
 }
