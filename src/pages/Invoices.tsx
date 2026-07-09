@@ -20,6 +20,8 @@ import { Label } from '@/components/ui/label';
 type Row = {
   id: string;
   source: 'invoice' | 'recurring';
+  zoho_invoice_id: string | null;
+  source_system: string | null;
   invoice_number: string | null;
   reference_number: string | null;
   customer_id: string | null;
