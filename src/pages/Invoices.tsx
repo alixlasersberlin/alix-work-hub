@@ -884,6 +884,15 @@ export default function Invoices() {
                           <Button size="sm" variant="ghost" title="Download PDF" disabled={pdfLoadingId === r.id} onClick={() => handleDownload(r)}>
                             {pdfLoadingId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
                           </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            title="Rechnung per E-Mail versenden"
+                            className="h-8 px-2 gap-1 border-primary/40 text-primary hover:bg-primary/10"
+                            onClick={() => openEmail(r)}
+                          >
+                            <Mail className="w-3.5 h-3.5" /> Rechnung/Email
+                          </Button>
                           {isSuperAdmin && (
                             <Button size="sm" variant="ghost" title="Löschen" className="text-destructive hover:text-destructive" onClick={() => handleDelete(r)}>
                               <Trash2 className="w-3.5 h-3.5" />
