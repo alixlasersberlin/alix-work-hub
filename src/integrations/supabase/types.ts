@@ -4210,6 +4210,7 @@ export type Database = {
           overdue_balance: number
           payment_terms: string | null
           reminder_level: number
+          tenant_id: string | null
           updated_at: string
         }
         Insert: {
@@ -4226,6 +4227,7 @@ export type Database = {
           overdue_balance?: number
           payment_terms?: string | null
           reminder_level?: number
+          tenant_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -4242,6 +4244,7 @@ export type Database = {
           overdue_balance?: number
           payment_terms?: string | null
           reminder_level?: number
+          tenant_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -4861,6 +4864,7 @@ export type Database = {
           purpose: string | null
           statement_id: string
           status: string
+          tenant_id: string | null
           updated_at: string
           value_date: string | null
         }
@@ -4883,6 +4887,7 @@ export type Database = {
           purpose?: string | null
           statement_id: string
           status?: string
+          tenant_id?: string | null
           updated_at?: string
           value_date?: string | null
         }
@@ -4905,6 +4910,7 @@ export type Database = {
           purpose?: string | null
           statement_id?: string
           status?: string
+          tenant_id?: string | null
           updated_at?: string
           value_date?: string | null
         }
@@ -4949,6 +4955,7 @@ export type Database = {
           reference: string | null
           status: string
           supplier_id: string | null
+          tenant_id: string | null
           updated_at: string
           user_id: string | null
           value_date: string | null
@@ -4969,6 +4976,7 @@ export type Database = {
           reference?: string | null
           status?: string
           supplier_id?: string | null
+          tenant_id?: string | null
           updated_at?: string
           user_id?: string | null
           value_date?: string | null
@@ -4989,6 +4997,7 @@ export type Database = {
           reference?: string | null
           status?: string
           supplier_id?: string | null
+          tenant_id?: string | null
           updated_at?: string
           user_id?: string | null
           value_date?: string | null
@@ -5026,6 +5035,7 @@ export type Database = {
           opening_balance: number | null
           period_from: string | null
           period_to: string | null
+          tenant_id: string | null
           uploaded_by: string | null
         }
         Insert: {
@@ -5043,6 +5053,7 @@ export type Database = {
           opening_balance?: number | null
           period_from?: string | null
           period_to?: string | null
+          tenant_id?: string | null
           uploaded_by?: string | null
         }
         Update: {
@@ -5060,6 +5071,7 @@ export type Database = {
           opening_balance?: number | null
           period_from?: string | null
           period_to?: string | null
+          tenant_id?: string | null
           uploaded_by?: string | null
         }
         Relationships: []
@@ -5135,6 +5147,7 @@ export type Database = {
           reverses_id: string | null
           status: string
           supplier_id: string | null
+          tenant_id: string | null
           updated_at: string
           user_id: string | null
           vat_rate: number
@@ -5159,6 +5172,7 @@ export type Database = {
           reverses_id?: string | null
           status?: string
           supplier_id?: string | null
+          tenant_id?: string | null
           updated_at?: string
           user_id?: string | null
           vat_rate?: number
@@ -5183,6 +5197,7 @@ export type Database = {
           reverses_id?: string | null
           status?: string
           supplier_id?: string | null
+          tenant_id?: string | null
           updated_at?: string
           user_id?: string | null
           vat_rate?: number
@@ -5228,6 +5243,7 @@ export type Database = {
           signed_at: string | null
           signed_by: string | null
           status: string
+          tenant_id: string | null
           updated_at: string
         }
         Insert: {
@@ -5246,6 +5262,7 @@ export type Database = {
           signed_at?: string | null
           signed_by?: string | null
           status?: string
+          tenant_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -5264,6 +5281,7 @@ export type Database = {
           signed_at?: string | null
           signed_by?: string | null
           status?: string
+          tenant_id?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -5491,6 +5509,7 @@ export type Database = {
           remaining_amount: number | null
           start_date: string | null
           status: string
+          tenant_id: string | null
           updated_at: string
         }
         Insert: {
@@ -5507,6 +5526,7 @@ export type Database = {
           remaining_amount?: number | null
           start_date?: string | null
           status?: string
+          tenant_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -5523,6 +5543,7 @@ export type Database = {
           remaining_amount?: number | null
           start_date?: string | null
           status?: string
+          tenant_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -5561,6 +5582,7 @@ export type Database = {
           payment_method: string
           payment_reference: string | null
           proof_file_path: string | null
+          tenant_id: string | null
         }
         Insert: {
           booked_by?: string | null
@@ -5573,6 +5595,7 @@ export type Database = {
           payment_method: string
           payment_reference?: string | null
           proof_file_path?: string | null
+          tenant_id?: string | null
         }
         Update: {
           booked_by?: string | null
@@ -5585,6 +5608,7 @@ export type Database = {
           payment_method?: string
           payment_reference?: string | null
           proof_file_path?: string | null
+          tenant_id?: string | null
         }
         Relationships: [
           {
@@ -5608,6 +5632,7 @@ export type Database = {
           note: string | null
           old_release_status: string | null
           old_status: string | null
+          tenant_id: string | null
           user_id: string | null
         }
         Insert: {
@@ -5621,6 +5646,7 @@ export type Database = {
           note?: string | null
           old_release_status?: string | null
           old_status?: string | null
+          tenant_id?: string | null
           user_id?: string | null
         }
         Update: {
@@ -5634,6 +5660,7 @@ export type Database = {
           note?: string | null
           old_release_status?: string | null
           old_status?: string | null
+          tenant_id?: string | null
           user_id?: string | null
         }
         Relationships: [
@@ -5659,6 +5686,7 @@ export type Database = {
           sent_at: string | null
           status: string
           subject: string | null
+          tenant_id: string | null
         }
         Insert: {
           body?: string | null
@@ -5672,6 +5700,7 @@ export type Database = {
           sent_at?: string | null
           status?: string
           subject?: string | null
+          tenant_id?: string | null
         }
         Update: {
           body?: string | null
@@ -5685,6 +5714,7 @@ export type Database = {
           sent_at?: string | null
           status?: string
           subject?: string | null
+          tenant_id?: string | null
         }
         Relationships: [
           {
@@ -5729,6 +5759,7 @@ export type Database = {
           source: string
           source_ref: string | null
           status: string
+          tenant_id: string | null
           updated_at: string
           updated_by: string | null
           vat_amount: number
@@ -5765,6 +5796,7 @@ export type Database = {
           source: string
           source_ref?: string | null
           status?: string
+          tenant_id?: string | null
           updated_at?: string
           updated_by?: string | null
           vat_amount?: number
@@ -5801,6 +5833,7 @@ export type Database = {
           source?: string
           source_ref?: string | null
           status?: string
+          tenant_id?: string | null
           updated_at?: string
           updated_by?: string | null
           vat_amount?: number
@@ -6029,6 +6062,7 @@ export type Database = {
           old_value: Json | null
           record_id: string | null
           table_name: string
+          tenant_id: string | null
           user_id: string | null
         }
         Insert: {
@@ -6039,6 +6073,7 @@ export type Database = {
           old_value?: Json | null
           record_id?: string | null
           table_name: string
+          tenant_id?: string | null
           user_id?: string | null
         }
         Update: {
@@ -6049,6 +6084,7 @@ export type Database = {
           old_value?: Json | null
           record_id?: string | null
           table_name?: string
+          tenant_id?: string | null
           user_id?: string | null
         }
         Relationships: []
@@ -6907,6 +6943,7 @@ export type Database = {
           id: string
           invoice_number: string | null
           reminder_id: string
+          tenant_id: string | null
           transaction_id: string | null
         }
         Insert: {
@@ -6917,6 +6954,7 @@ export type Database = {
           id?: string
           invoice_number?: string | null
           reminder_id: string
+          tenant_id?: string | null
           transaction_id?: string | null
         }
         Update: {
@@ -6927,6 +6965,7 @@ export type Database = {
           id?: string
           invoice_number?: string | null
           reminder_id?: string
+          tenant_id?: string | null
           transaction_id?: string | null
         }
         Relationships: [
@@ -6963,6 +7002,7 @@ export type Database = {
           sent_at: string | null
           sent_by: string | null
           status: string
+          tenant_id: string | null
           total: number
           updated_at: string
         }
@@ -6982,6 +7022,7 @@ export type Database = {
           sent_at?: string | null
           sent_by?: string | null
           status?: string
+          tenant_id?: string | null
           total?: number
           updated_at?: string
         }
@@ -7001,6 +7042,7 @@ export type Database = {
           sent_at?: string | null
           sent_by?: string | null
           status?: string
+          tenant_id?: string | null
           total?: number
           updated_at?: string
         }
