@@ -42,6 +42,7 @@ const navItems: NavItem[] = [
       { path: '/management-dashboard', label: 'Management Dashboard', icon: BarChart3, roles: ['Super Admin'] },
       { path: '/konzern/dashboard', label: 'Konzern-Dashboard', icon: TrendingUp, roles: ['Super Admin'] },
       { path: '/dashboard/bestellungen', label: 'Bestellungen', icon: ShoppingCart, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Bestellwesen', 'SACHBEARBEITUNG', 'Finance'] },
+      { path: '/finance/offene-anzahlungen', label: 'Offene Anzahlungen', icon: Wallet, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Vertrieb', 'Vertriebsleitung', 'SACHBEARBEITUNG', 'Finance', 'Tourenplanung', 'Read Only Audit'] },
     ],
   },
 
