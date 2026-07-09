@@ -195,6 +195,7 @@ export default function OffeneAnzahlungen() {
       if (statusFilter !== 'alle' && r.status !== statusFilter) return false;
       if (releaseFilter !== 'alle' && r.release_status !== releaseFilter) return false;
       if (sourceFilter !== 'alle' && r.source !== sourceFilter) return false;
+      if (countryFilter !== 'alle' && (r.country ?? 'DE') !== countryFilter) return false;
       if (overdueOnly) {
         if (!r.due_date || parseISO(r.due_date) >= new Date()) return false;
       }
@@ -205,7 +206,7 @@ export default function OffeneAnzahlungen() {
       }
       return true;
     });
-  }, [rows, search, statusFilter, releaseFilter, sourceFilter, overdueOnly]);
+  }, [rows, search, statusFilter, releaseFilter, sourceFilter, countryFilter, overdueOnly]);
 
   const kpis = useMemo(() => {
     const today = new Date(); today.setHours(0,0,0,0);
