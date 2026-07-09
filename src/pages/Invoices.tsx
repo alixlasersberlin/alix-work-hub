@@ -112,6 +112,15 @@ function fmtDate(d: string | null) {
   try { return new Date(d).toLocaleDateString('de-DE'); } catch { return d; }
 }
 
+function flatRowsForKpi(rows: Row[], search: string, statusFilter: string): number {
+  let res = rows;
+  if (statusFilter !== 'all') {
+    res = res.filter((r) => (r.payment_status ?? '').toLowerCase() === statusFilter.toLowerCase());
+  }
+  res = res.filter((r) => matchesQuery(r, search));
+  return res.reduce((s, r) => s + Number(r.balance ?? 0), 0);
+}
+
 export default function Invoices() {
   const { roles } = useAuth();
   const isSuperAdmin = roles.includes('Super Admin');
