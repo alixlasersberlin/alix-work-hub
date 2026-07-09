@@ -612,8 +612,8 @@ export default function Invoices() {
     <div className="p-4 sm:p-6">
       <PageHeader
         icon={FileText}
-        title="Rechnungen nach Kundenkonto"
-        subtitle="Konsolidierte Übersicht aller Zoho-Rechnungen (einmalig + periodisch) je Kunde"
+        title={viewMode === 'accounts' ? 'Rechnungen nach Kundenkonto' : 'Rechnungsliste'}
+        subtitle={viewMode === 'accounts' ? 'Konsolidierte Übersicht aller Zoho-Rechnungen (einmalig + periodisch) je Kunde' : 'Alle Rechnungen sortiert nach Datum oder Rechnungsnummer'}
         noBreadcrumbs
         meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${kpi.accounts} Konten`} pulse={loading} />}
         actions={
