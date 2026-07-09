@@ -215,12 +215,13 @@ Deno.serve(async (req) => {
 
         try {
           const invId = String(inv.invoice_id);
+          const invNumber: string | null = inv.invoice_number ?? null;
           const billing = inv.billing_address ?? null;
           const city = billing?.city ?? inv.billing_city ?? null;
           const payload = {
             source_system: sourceSystem,
             zoho_invoice_id: invId,
-            invoice_number: inv.invoice_number ?? null,
+            invoice_number: invNumber,
             reference_number: inv.reference_number ?? null,
             customer_name: inv.customer_name ?? null,
             customer_id: inv.customer_id?.toString() ?? null,
@@ -238,16 +239,53 @@ Deno.serve(async (req) => {
             synced_at: new Date().toISOString(),
           };
 
-          const { data: existing } = await admin.from("zoho_invoices").select("id")
-            .eq("source_system", sourceSystem).eq("zoho_invoice_id", invId).maybeSingle();
-          if (existing) {
-            const { error } = await admin.from("zoho_invoices").update(payload).eq("id", existing.id);
-            if (error) throw error;
-            updated++;
-          } else {
-            const { error } = await admin.from("zoho_invoices").insert(payload);
-            if (error) throw error;
+          // Duplikatscheck #1: gleiche Rechnungsnummer bereits unter anderer Zoho-ID im gleichen Mandanten?
+          if (invNumber) {
+            const { data: dupNum } = await admin
+              .from("zoho_invoices")
+              .select("id, zoho_invoice_id")
+              .eq("source_system", sourceSystem)
+              .eq("invoice_number", invNumber)
+              .neq("zoho_invoice_id", invId)
+              .limit(1)
+              .maybeSingle();
+            if (dupNum) {
+              console.warn(
+                `Duplikat übersprungen: invoice_number=${invNumber} existiert bereits als zoho_invoice_id=${dupNum.zoho_invoice_id} (neu: ${invId})`,
+              );
+              duplicates++;
+              continue;
+            }
+
+            // Duplikatscheck #2: gleiche Rechnungsnummer bereits in periodischen Rechnungen?
+            const { data: dupRec } = await admin
+              .from("zoho_recurring_invoices")
+              .select("id")
+              .eq("source_system", sourceSystem)
+              .eq("invoice_number", invNumber)
+              .limit(1)
+              .maybeSingle();
+            if (dupRec) {
+              console.warn(
+                `Duplikat übersprungen: invoice_number=${invNumber} existiert bereits als periodische Rechnung (neu: ${invId})`,
+              );
+              duplicates++;
+              continue;
+            }
+          }
+
+          // Atomarer Upsert über den Unique-Index (source_system, zoho_invoice_id)
+          const { data: upserted, error } = await admin
+            .from("zoho_invoices")
+            .upsert(payload, { onConflict: "source_system,zoho_invoice_id" })
+            .select("id, created_at, updated_at")
+            .single();
+          if (error) throw error;
+          if (upserted && upserted.created_at && upserted.updated_at
+              && new Date(upserted.updated_at).getTime() - new Date(upserted.created_at).getTime() < 2000) {
             imported++;
+          } else {
+            updated++;
           }
         } catch (e: any) {
           console.error("Invoice sync failed:", e?.message);
