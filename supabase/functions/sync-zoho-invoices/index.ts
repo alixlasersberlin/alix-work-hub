@@ -296,7 +296,7 @@ Deno.serve(async (req) => {
     }
 
     return json({
-      success: true, imported, updated, failed,
+      success: true, imported, updated, failed, duplicates,
       skipped_sepa: skippedSepa, skipped_recurring: skippedRecurring,
       processed, excluded_profile_count: excludedIds.size,
       last_page: page - 1, has_more: hasMore,
