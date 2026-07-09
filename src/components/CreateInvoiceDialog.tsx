@@ -1,12 +1,9 @@
-import { useMemo, useRef, useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { FileText, Loader2, ExternalLink, X } from 'lucide-react';
+import { FileText, Loader2, ExternalLink } from 'lucide-react';
 
 type Props = {
   order: any;
@@ -31,10 +28,9 @@ function generateInvoiceNumber(source: string | null | undefined) {
 }
 
 export default function CreateInvoiceDialog({ order, customer, items, disabled }: Props) {
-  const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [createdId, setCreatedId] = useState<string | null>(null);
-  const openedAtRef = useRef(0);
+  const savingRef = useRef(false);
 
   const defaultTotal = useMemo(() => {
     const t = Number(order?.total_amount ?? order?.total ?? 0);
@@ -45,63 +41,20 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
     return 0;
   }, [order, items]);
 
-  const [invoiceNumber, setInvoiceNumber] = useState(generateInvoiceNumber(order?.source_system));
-  const [invoiceDate, setInvoiceDate] = useState(todayISO());
-  const [dueDate, setDueDate] = useState(addDays(todayISO(), 14));
-  const [total, setTotal] = useState(String(defaultTotal || ''));
+  const invoiceNumber = useMemo(() => generateInvoiceNumber(order?.source_system), [order?.source_system]);
+  const invoiceDate = useMemo(() => todayISO(), []);
+  const dueDate = useMemo(() => addDays(todayISO(), 14), []);
 
   useEffect(() => {
-    if (!open) return;
-    // Reset any stale pointer-events lock from other dialogs (Radix cleanup edge cases)
     document.body.style.pointerEvents = 'auto';
-    const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') closeDialog(); };
-    window.addEventListener('keydown', onEsc);
-    return () => {
-      window.removeEventListener('keydown', onEsc);
-      document.body.style.pointerEvents = 'auto';
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  }, []);
 
-  function closeDialog() {
-    document.body.style.pointerEvents = 'auto';
-    setOpen(false);
-    setCreatedId(null);
-  }
-
-  function openDialog() {
-    // Defensively reset any pointer-events lock left behind by another dialog
-    document.body.style.pointerEvents = 'auto';
-    openedAtRef.current = Date.now();
-    console.info('[CreateInvoiceDialog] open');
-    setOpen(true);
-  }
-
-  useEffect(() => {
-    const forceOpen = (event: Event) => {
-      const target = event.target as Element | null;
-      if (!target?.closest('[data-invoice-create-trigger="true"]')) return;
-      if (disabled) return;
-      event.preventDefault();
-      event.stopPropagation();
-      if ('stopImmediatePropagation' in event) event.stopImmediatePropagation();
-      openDialog();
-    };
-    document.addEventListener('pointerdown', forceOpen, true);
-    document.addEventListener('click', forceOpen, true);
-    return () => {
-      document.removeEventListener('pointerdown', forceOpen, true);
-      document.removeEventListener('click', forceOpen, true);
-    };
-    // Native capture fallback: this button must open even if parent layers swallow React clicks.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [disabled]);
-
-  const handleCreate = async () => {
-    if (!invoiceNumber.trim()) { toast.error('Rechnungsnummer fehlt'); return; }
-    const totalNum = Number(total);
+  const handleCreate = useCallback(async () => {
+    if (disabled || savingRef.current || createdId) return;
+    const totalNum = Number(defaultTotal);
     if (!Number.isFinite(totalNum) || totalNum <= 0) { toast.error('Ungültiger Betrag'); return; }
 
+    savingRef.current = true;
     setSaving(true);
     const payload = {
       source_system: order?.source_system || 'zoho_eu_1',
@@ -134,133 +87,48 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
       .select('id')
       .single();
 
+    savingRef.current = false;
     setSaving(false);
     if (error) {
       toast.error('Rechnung konnte nicht erstellt werden: ' + error.message);
       return;
     }
     setCreatedId(data?.id ?? null);
-    toast.success(`Rechnung ${invoiceNumber} erstellt`);
-  };
+    toast.success(`Rechnung ${invoiceNumber} erstellt und festgeschrieben`);
+  }, [createdId, customer, defaultTotal, disabled, dueDate, invoiceDate, invoiceNumber, order]);
 
-  const closeFromBackdrop = () => {
-    // If the dialog opens on pointerdown, the browser can dispatch the matching
-    // pointerup/click to the newly mounted backdrop. Ignore that first click.
-    if (Date.now() - openedAtRef.current < 350) return;
-    closeDialog();
-  };
+  useEffect(() => {
+    const forceCreate = (event: Event) => {
+      const target = event.target as Element | null;
+      if (!target?.closest('[data-invoice-create-trigger="true"]')) return;
+      event.preventDefault();
+      event.stopPropagation();
+      if ('stopImmediatePropagation' in event) event.stopImmediatePropagation();
+      void handleCreate();
+    };
+    document.addEventListener('click', forceCreate, true);
+    return () => document.removeEventListener('click', forceCreate, true);
+  }, [handleCreate]);
 
   return (
-    <>
+    <div className="flex items-center gap-2 flex-wrap">
       <Button
         size="sm"
         type="button"
-        disabled={disabled}
-        onPointerDown={(e) => {
-          if (disabled) return;
-          e.preventDefault();
-          e.stopPropagation();
-          openDialog();
-        }}
-        onClick={openDialog}
+        disabled={disabled || saving || !!createdId}
+        onClick={handleCreate}
         data-invoice-create-trigger="true"
         className="gold-gradient text-primary-foreground"
       >
-        <FileText className="w-4 h-4 mr-1.5" /> Rechnung erstellen
+        {saving ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <FileText className="w-4 h-4 mr-1.5" />}
+        {createdId ? 'Rechnung erstellt' : saving ? 'Rechnung wird erstellt' : 'Rechnung erstellen'}
       </Button>
 
-      {open && typeof document !== 'undefined' && createPortal(
-        <div
-          className="fixed inset-0 flex items-center justify-center p-4"
-          style={{ pointerEvents: 'auto', zIndex: 2147483647 }}
-        >
-          <div
-            className="absolute inset-0 bg-background/85 backdrop-blur-sm"
-            onClick={closeFromBackdrop}
-            style={{ zIndex: 0 }}
-          />
-          <div
-            role="dialog"
-            aria-modal="true"
-            data-state="open"
-            className="relative w-full max-w-lg rounded-lg border border-border bg-background p-6 shadow-2xl"
-            style={{ zIndex: 1, pointerEvents: 'auto' }}
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              type="button"
-              onClick={closeDialog}
-              className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100"
-              aria-label="Schließen"
-            >
-              <X className="h-4 w-4" />
-            </button>
-            <h2 className="text-lg font-semibold leading-none tracking-tight mb-4">
-              Rechnung erstellen
-            </h2>
-
-            {createdId ? (
-              <div className="space-y-4">
-                <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm">
-                  Rechnung <b>{invoiceNumber}</b> wurde in Finance &amp; Controlling festgeschrieben.
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={closeDialog}>Schließen</Button>
-                  <Link to="/finance/rechnungen" onClick={closeDialog}>
-                    <Button className="gold-gradient text-primary-foreground">
-                      Zu Rechnungen <ExternalLink className="w-3.5 h-3.5 ml-1.5" />
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            ) : (
-              <>
-                <div className="space-y-3 text-sm">
-                  <div className="grid grid-cols-2 gap-3 text-xs">
-                    <div>
-                      <Label className="text-muted-foreground">Kunde</Label>
-                      <div className="font-medium truncate">{customer?.company_name || customer?.customer_name || order?.customer_name || '–'}</div>
-                    </div>
-                    <div>
-                      <Label className="text-muted-foreground">Auftrag</Label>
-                      <div className="font-mono">{order?.order_number || '–'}</div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label>Rechnungsnummer</Label>
-                    <Input value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label>Rechnungsdatum</Label>
-                      <Input type="date" value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)} />
-                    </div>
-                    <div>
-                      <Label>Fällig am</Label>
-                      <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
-                    </div>
-                  </div>
-                  <div>
-                    <Label>Betrag ({order?.currency || 'EUR'})</Label>
-                    <Input type="number" step="0.01" value={total} onChange={(e) => setTotal(e.target.value)} />
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-2 mt-6">
-                  <Button variant="outline" onClick={closeDialog}>Abbrechen</Button>
-                  <Button onClick={handleCreate} disabled={saving} className="gold-gradient text-primary-foreground">
-                    {saving && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />}
-                    Rechnung festschreiben
-                  </Button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>,
-        document.body,
+      {createdId && (
+        <Link to="/finance/rechnungen" className="inline-flex items-center text-sm text-primary hover:underline">
+          Zu Rechnungen <ExternalLink className="w-3.5 h-3.5 ml-1" />
+        </Link>
       )}
-    </>
+    </div>
   );
 }
