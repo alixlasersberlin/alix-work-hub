@@ -116,7 +116,7 @@ Deno.serve(async (req) => {
     if (addl?.length) {
       const orderIds = [...new Set(addl.map((a: any) => a.order_id))];
       const { data: ordsMap } = await supabase
-        .from('orders').select('id, order_number, customer_id, order_status').in('id', orderIds);
+        .from('orders').select('id, order_number, customer_id, order_status, source_system').in('id', orderIds);
       const omap = new Map((ordsMap ?? []).map((o: any) => [o.id, o]));
       const addlCustIds = [...new Set((ordsMap ?? []).map((o: any) => o.customer_id).filter(Boolean))];
       const { data: addlCusts } = addlCustIds.length
