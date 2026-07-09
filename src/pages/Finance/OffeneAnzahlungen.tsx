@@ -107,6 +107,7 @@ export default function OffeneAnzahlungen() {
   const [statusFilter, setStatusFilter] = useState<string>('alle');
   const [releaseFilter, setReleaseFilter] = useState<string>('alle');
   const [sourceFilter, setSourceFilter] = useState<string>('alle');
+  const [countryFilter, setCountryFilter] = useState<string>('alle');
   const [overdueOnly, setOverdueOnly] = useState(false);
 
   const [bookFor, setBookFor] = useState<Deposit | null>(null);
