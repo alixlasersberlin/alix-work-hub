@@ -101,10 +101,46 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
   const [booking, setBooking] = useState(false);
   const [postingToBuchhaltung, setPostingToBuchhaltung] = useState(false);
   const [sending, setSending] = useState(false);
+  const [existingInvoice, setExistingInvoice] = useState<{ invoice_number: string; issue_date?: string | null } | null>(null);
+  const [checkingExisting, setCheckingExisting] = useState(true);
 
   useEffect(() => {
     if (orderDeposit > 0) setDepositAmount(String(orderDeposit));
   }, [orderDeposit]);
+
+  // Duplikatscheck: existiert bereits eine AZ-Rechnung für diesen Auftrag?
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!order?.id && !orderNo) { setCheckingExisting(false); return; }
+      setCheckingExisting(true);
+      try {
+        let query = supabase
+          .from('finance_deposits' as any)
+          .select('invoice_number, deposit_number, issue_date, order_id, order_number')
+          .limit(1);
+        const orFilters: string[] = [];
+        if (order?.id) orFilters.push(`order_id.eq.${order.id}`);
+        if (orderNo) {
+          orFilters.push(`order_number.eq.${orderNo}`);
+          orFilters.push(`invoice_number.eq.AZ-${orderNo}`);
+          orFilters.push(`deposit_number.eq.AZ-${orderNo}`);
+        }
+        if (orFilters.length) query = query.or(orFilters.join(','));
+        const { data } = await query;
+        if (!cancelled && data && data.length > 0) {
+          const row: any = data[0];
+          setExistingInvoice({
+            invoice_number: row.invoice_number || row.deposit_number || `AZ-${orderNo}`,
+            issue_date: row.issue_date ?? null,
+          });
+        }
+      } catch { /* ignore */ }
+      finally { if (!cancelled) setCheckingExisting(false); }
+    })();
+    return () => { cancelled = true; };
+  }, [order?.id, orderNo]);
+
 
   const grossDeposit = Number(depositAmount) || 0;
   const netDeposit = grossDeposit / (1 + (taxPercentage || 0) / 100);
