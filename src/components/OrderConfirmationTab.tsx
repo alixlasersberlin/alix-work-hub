@@ -257,7 +257,7 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
       if (abNr) meta.push(['AB-Nr.', abNr]);
       meta.push(['Auftragsnr.', String(order?.order_number || '—')]);
       meta.push(['Bestelldatum', fmtDate(order?.order_date)]);
-      meta.push(['Bestätigt am', fmtDate(confirmDate)]);
+      
       meta.push(['Kundennr.', String(customer?.external_customer_id || customer?.id?.slice(0, 8) || '—')]);
       if (deliveryWeek) meta.push(['Liefertermin', deliveryWeek]);
       for (const [k, v] of meta) {
