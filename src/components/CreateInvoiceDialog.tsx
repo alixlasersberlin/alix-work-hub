@@ -109,10 +109,11 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
   const [taxRate, setTaxRate] = useState(19);
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
 
-  const openDialog = useCallback(() => {
+  const openDialog = useCallback(async () => {
     if (disabled || createdId || existingInvoice) return;
     // Prefill
-    setInvoiceNumber(generateInvoiceNumber(order?.source_system));
+    const caseNo = order?.case_number ?? (order?.order_number ? String(order.order_number).replace(/^AB-/, '') : null);
+    setInvoiceNumber(await generateInvoiceNumber(order?.source_system, caseNo));
     setInvoiceDate(todayISO());
     setDueDate(addDays(todayISO(), 14));
     const rawAddr =
