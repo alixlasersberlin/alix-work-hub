@@ -129,6 +129,10 @@ export default function Invoices() {
   const [editRow, setEditRow] = useState<Row | null>(null);
   const [editForm, setEditForm] = useState({ reference_number: '', due_date: '', payment_status: '', invoice_number: '', customer_name: '', invoice_date: '', total: '', balance: '' });
   const [editSaving, setEditSaving] = useState(false);
+  const [emailRow, setEmailRow] = useState<Row | null>(null);
+  const [emailForm, setEmailForm] = useState({ to_email: '', to_name: '', subject: '', body_text: '' });
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailPreparing, setEmailPreparing] = useState(false);
   const [viewMode, setViewMode] = useState<'accounts' | 'list'>(() => {
     if (typeof window === 'undefined') return 'accounts';
     return (localStorage.getItem('invoices_view_mode') as 'accounts' | 'list') || 'accounts';
