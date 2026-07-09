@@ -716,7 +716,77 @@ export default function Invoices() {
 
       {error && <PageError message={error} onRetry={fetchRows} />}
 
-      {loading ? <DataCard><SkeletonTable rows={8} cols={6} /></DataCard> : (
+      {loading ? <DataCard><SkeletonTable rows={8} cols={6} /></DataCard> : viewMode === 'list' ? (
+        <DataCard className="overflow-hidden">
+          {flatRows.length === 0 ? (
+            <div className="p-12 text-center text-muted-foreground">Keine Daten gefunden.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/30 text-xs uppercase text-muted-foreground">
+                  <tr>
+                    <th className="text-left px-4 py-2 font-medium">Typ</th>
+                    <th className="text-left px-4 py-2 font-medium">Rechnung</th>
+                    <th className="text-left px-4 py-2 font-medium">Kunde</th>
+                    <th className="text-left px-4 py-2 font-medium">Referenz</th>
+                    <th className="text-left px-4 py-2 font-medium">Datum</th>
+                    <th className="text-left px-4 py-2 font-medium">Fällig</th>
+                    <th className="text-right px-4 py-2 font-medium">Betrag</th>
+                    <th className="text-right px-4 py-2 font-medium">Saldo</th>
+                    <th className="text-left px-4 py-2 font-medium">Status</th>
+                    <th className="text-right px-4 py-2 font-medium">Aktion</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginate(flatRows, pageSize).map((r) => (
+                    <tr key={`${r.source}-${r.id}`} className="border-t border-border hover:bg-muted/10">
+                      <td className="px-4 py-2">
+                        {r.source === 'recurring' ? (
+                          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
+                            <Repeat className="w-3 h-3 mr-1" />Periodisch
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-muted/40">Einmalig</Badge>
+                        )}
+                      </td>
+                      <td className="px-4 py-2 font-medium">{r.invoice_number ?? '–'}</td>
+                      <td className="px-4 py-2">
+                        <div className="truncate max-w-[220px]">{r.customer_name ?? '–'}</div>
+                        {r.city && <div className="text-xs text-muted-foreground truncate max-w-[220px]">{r.city}</div>}
+                      </td>
+                      <td className="px-4 py-2">{r.reference_number ?? '–'}</td>
+                      <td className="px-4 py-2">{fmtDate(r.invoice_date)}</td>
+                      <td className="px-4 py-2">{fmtDate(r.due_date)}</td>
+                      <td className="px-4 py-2 text-right tabular-nums">{fmtMoney(r.total, r.currency)}</td>
+                      <td className="px-4 py-2 text-right tabular-nums">{fmtMoney(r.balance, r.currency)}</td>
+                      <td className="px-4 py-2">
+                        <Badge variant="outline" className={statusVariant(r.payment_status)}>
+                          {r.payment_status ?? '–'}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-2 text-right whitespace-nowrap">
+                        <div className="inline-flex items-center gap-1">
+                          {isAdmin && (
+                            <Button size="sm" variant="ghost" title="Bearbeiten" onClick={() => openEdit(r)}>
+                              <Pencil className="w-3.5 h-3.5" />
+                            </Button>
+                          )}
+                          <Button size="sm" variant="ghost" title="Drucken" disabled={pdfLoadingId === r.id} onClick={() => handlePrint(r)}>
+                            {pdfLoadingId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Printer className="w-3.5 h-3.5" />}
+                          </Button>
+                          <Button size="sm" variant="ghost" title="Download PDF" disabled={pdfLoadingId === r.id} onClick={() => handleDownload(r)}>
+                            {pdfLoadingId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </DataCard>
+      ) : (
         <div className="space-y-3">
           {accounts.length === 0 ? (
             <DataCard className="p-12 text-center text-muted-foreground">
