@@ -45,6 +45,7 @@ type Deposit = {
   released_by: string | null;
   responsible_user_id: string | null;
   note: string | null;
+  country: 'DE' | 'AT' | null;
   created_at: string;
   updated_at: string;
 };
