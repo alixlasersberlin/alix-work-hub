@@ -10671,6 +10671,7 @@ export type Database = {
           finance_total_amount: number | null
           id: string
           internal_number: string | null
+          invoiced_flag: boolean
           is_vip: boolean
           lawyer_reason: string | null
           order_date: string | null
@@ -10707,6 +10708,7 @@ export type Database = {
           finance_total_amount?: number | null
           id?: string
           internal_number?: string | null
+          invoiced_flag?: boolean
           is_vip?: boolean
           lawyer_reason?: string | null
           order_date?: string | null
@@ -10743,6 +10745,7 @@ export type Database = {
           finance_total_amount?: number | null
           id?: string
           internal_number?: string | null
+          invoiced_flag?: boolean
           is_vip?: boolean
           lawyer_reason?: string | null
           order_date?: string | null
