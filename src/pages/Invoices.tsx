@@ -212,8 +212,9 @@ export default function Invoices() {
     accounts: accounts.length,
     invoices: accounts.reduce((s, a) => s + a.totalInvoices + a.totalRecurring, 0),
     totalAmount: accounts.reduce((s, a) => s + a.totalAmount, 0),
-    totalOpen: accounts.reduce((s, a) => s + a.totalOpen, 0),
-  }), [accounts]);
+    // Offene Beträge = Live-Summe der Salden aller aktuell sichtbaren Rechnungen
+    totalOpen: flatRowsForKpi(rows, search, statusFilter),
+  }), [accounts, rows, search, statusFilter]);
 
   const flatRows = useMemo<Row[]>(() => {
     let res = rows;
