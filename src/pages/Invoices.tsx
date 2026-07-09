@@ -950,7 +950,33 @@ export default function Invoices() {
           <DialogHeader>
             <DialogTitle>Rechnung {editRow?.invoice_number ?? ''} bearbeiten</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3">
+          <div className="space-y-3 max-h-[70vh] overflow-y-auto">
+            {isSuperAdmin && (
+              <>
+                <div>
+                  <Label htmlFor="invnr">Rechnungsnummer</Label>
+                  <Input id="invnr" value={editForm.invoice_number} onChange={(e) => setEditForm((f) => ({ ...f, invoice_number: e.target.value }))} />
+                </div>
+                <div>
+                  <Label htmlFor="cust">Kunde</Label>
+                  <Input id="cust" value={editForm.customer_name} onChange={(e) => setEditForm((f) => ({ ...f, customer_name: e.target.value }))} />
+                </div>
+                <div>
+                  <Label htmlFor="idate">Rechnungsdatum</Label>
+                  <Input id="idate" type="date" value={editForm.invoice_date} onChange={(e) => setEditForm((f) => ({ ...f, invoice_date: e.target.value }))} />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="total">Betrag (€)</Label>
+                    <Input id="total" type="number" step="0.01" value={editForm.total} onChange={(e) => setEditForm((f) => ({ ...f, total: e.target.value }))} />
+                  </div>
+                  <div>
+                    <Label htmlFor="bal">Saldo (€)</Label>
+                    <Input id="bal" type="number" step="0.01" value={editForm.balance} onChange={(e) => setEditForm((f) => ({ ...f, balance: e.target.value }))} />
+                  </div>
+                </div>
+              </>
+            )}
             <div>
               <Label htmlFor="ref">Referenz / Auftragsnr.</Label>
               <Input id="ref" value={editForm.reference_number} onChange={(e) => setEditForm((f) => ({ ...f, reference_number: e.target.value }))} />
