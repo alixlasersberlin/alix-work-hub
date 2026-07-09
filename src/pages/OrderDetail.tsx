@@ -523,6 +523,9 @@ export default function OrderDetail() {
               </Button>
             )
           )}
+          {canWrite && (
+            <CreateInvoiceDialog order={order} customer={customer} items={items} />
+          )}
           {/* Headless mounts für Aktionen aus den Menüs */}
           <SepaMandatButton ref={sepaRef} order={order} hideTrigger />
           <MietkaufDialog ref={mietkaufRef} order={order ? { ...order, items } : order} hideTrigger />
