@@ -28,7 +28,7 @@ export default function OrdersInClarification() {
   const [reactivating, setReactivating] = useState<string | null>(null);
   const navigate = useNavigate();
   const { isAdmin, hasRole } = useAuth();
-  const canWrite = isAdmin || hasRole('Auftragsverwaltung');
+  const canWrite = isAdmin;
   const [viewMode, setViewMode] = useViewMode();
   const atOnly = useAtOnly();
 
