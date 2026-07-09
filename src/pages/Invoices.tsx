@@ -247,6 +247,19 @@ export default function Invoices() {
     }
   };
 
+  const handleDelete = async (r: Row) => {
+    if (!isSuperAdmin) return;
+    if (!confirm(`Rechnung ${r.invoice_number ?? ''} unwiderruflich löschen?`)) return;
+    try {
+      const table = r.source === 'recurring' ? 'zoho_recurring_invoices' : 'zoho_invoices';
+      const { error } = await supabase.from(table).delete().eq('id', r.id);
+      if (error) throw error;
+      toast({ title: 'Gelöscht', description: `Rechnung ${r.invoice_number ?? ''} gelöscht.` });
+      setRows((prev) => prev.filter((x) => !(x.id === r.id && x.source === r.source)));
+    } catch (e: any) {
+      toast({ title: 'Löschen fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
+    }
+
   const generateInternalInvoicePdf = async (r: Row): Promise<Blob | null> => {
     const { data: full, error } = await supabase
       .from('zoho_invoices')
