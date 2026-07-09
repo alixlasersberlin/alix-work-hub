@@ -16,6 +16,46 @@ import { matchesQuery, paginate, type PageSize } from '@/lib/finance/list-filter
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { createPDF } from '@/lib/pdf-utils';
+import autoTable from 'jspdf-autotable';
+import templateAsset from '@/assets/az-rechnung-template.jpg.asset.json';
+import logoAsset from '@/assets/alix-logo-gold-pdf.png.asset.json';
+
+let _tplCache: string | null = null;
+let _logoCache: string | null = null;
+async function loadDataUrl(url: string): Promise<string> {
+  const res = await fetch(url);
+  const blob = await res.blob();
+  return await new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result as string);
+    r.onerror = reject;
+    r.readAsDataURL(blob);
+  });
+}
+async function loadTemplate(): Promise<string> {
+  if (_tplCache) return _tplCache;
+  _tplCache = await loadDataUrl(templateAsset.url);
+  return _tplCache;
+}
+async function loadLogo(): Promise<string> {
+  if (_logoCache) return _logoCache;
+  _logoCache = await loadDataUrl(logoAsset.url);
+  return _logoCache;
+}
+function addrLinesFromObj(a: any): string[] {
+  if (!a || typeof a !== 'object') return [];
+  const out: string[] = [];
+  const street = a.address || a.street;
+  const street2 = a.street2 || a.address2;
+  const zipCity = [a.zip || a.postal_code || '', a.city || ''].filter(Boolean).join(' ');
+  if (street) out.push(String(street));
+  if (street2) out.push(String(street2));
+  if (zipCity) out.push(zipCity);
+  if (a.country) out.push(String(a.country));
+  return out;
+}
+
 
 type Row = {
   id: string;
