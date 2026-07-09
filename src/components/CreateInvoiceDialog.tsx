@@ -82,9 +82,21 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
     setInvoiceNumber(generateInvoiceNumber(order?.source_system));
     setInvoiceDate(todayISO());
     setDueDate(addDays(todayISO(), 14));
-    setCustomerName(customer?.company_name || customer?.customer_name || order?.customer_name || '');
-    setBillingAddress(customer?.billing_address || '');
-    setCity(customer?.city || '');
+    const rawAddr =
+      order?.billing_address ??
+      customer?.billing_address ??
+      order?.raw_data?.billing_address ??
+      customer?.raw_data?.billing_address ??
+      null;
+    setCustomerName(
+      customer?.company_name ||
+      customer?.customer_name ||
+      order?.customer_name ||
+      (rawAddr && typeof rawAddr === 'object' ? rawAddr.attention || rawAddr.company_name : '') ||
+      ''
+    );
+    setBillingAddress(formatAddress(rawAddr));
+    setCity(pickCity(rawAddr, customer?.city || order?.city));
     setCurrency(order?.currency || 'EUR');
     setStatus('sent');
     setPaymentStatus('Offen');
