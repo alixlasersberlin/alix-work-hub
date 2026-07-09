@@ -23,6 +23,7 @@ import { SidebarInfoBar } from '@/components/SidebarInfoBar';
 import { useAtOnly } from '@/hooks/useAtOnly';
 import HeadOfOperationDashboard from './HeadOfOperationDashboard';
 import RevenueByCountryCard from '@/components/RevenueByCountryCard';
+import { OpenDepositsOverview } from '@/components/dashboard/OpenDepositsOverview';
 
 interface Stats {
   freePoolDevices: number;
@@ -442,6 +443,9 @@ export default function Dashboard() {
         <ActivityHeatmap />
         <ToursHeatmap />
       </div>
+
+      {/* Offene Anzahlungen (nicht für Rolle Österreich) */}
+      {!atOnly && <OpenDepositsOverview />}
 
       {/* Prio-Liste */}
       {canSeeOrders && (
