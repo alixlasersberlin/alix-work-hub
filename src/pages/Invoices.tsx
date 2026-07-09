@@ -5,7 +5,7 @@ import { DataCard, PageError } from '@/components/PageShell';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { SkeletonTable } from '@/components/infinity/Skeleton';
 import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
-import { FileText, RefreshCw, ArrowRightLeft, ChevronDown, ChevronRight, Users, Wallet, AlertTriangle, Repeat } from 'lucide-react';
+import { FileText, RefreshCw, ArrowRightLeft, ChevronDown, ChevronRight, Users, Wallet, AlertTriangle, Repeat, Pencil, Printer, Download, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -13,10 +13,15 @@ import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { ListToolbar } from '@/components/finance/ListToolbar';
 import { matchesQuery, paginate, type PageSize } from '@/lib/finance/list-filter';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 type Row = {
   id: string;
   source: 'invoice' | 'recurring';
+  zoho_invoice_id: string | null;
+  source_system: string | null;
   invoice_number: string | null;
   reference_number: string | null;
   customer_id: string | null;
@@ -78,11 +83,15 @@ export default function Invoices() {
   const [progress, setProgress] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [pageSize, setPageSize] = useState<PageSize>(20);
+  const [pdfLoadingId, setPdfLoadingId] = useState<string | null>(null);
+  const [editRow, setEditRow] = useState<Row | null>(null);
+  const [editForm, setEditForm] = useState({ reference_number: '', due_date: '', payment_status: '' });
+  const [editSaving, setEditSaving] = useState(false);
 
   const fetchRows = async () => {
     setLoading(true);
     setError(null);
-    const cols = 'id, invoice_number, reference_number, customer_id, customer_name, city, invoice_date, due_date, total, balance, currency, status, payment_status, last_payment_date';
+    const cols = 'id, zoho_invoice_id, source_system, invoice_number, reference_number, customer_id, customer_name, city, invoice_date, due_date, total, balance, currency, status, payment_status, last_payment_date';
     const [inv, rec] = await Promise.all([
       supabase.from('zoho_invoices').select(cols).order('invoice_date', { ascending: false }).limit(10000),
       supabase.from('zoho_recurring_invoices').select(cols).order('invoice_date', { ascending: false }).limit(10000),
@@ -165,6 +174,95 @@ export default function Invoices() {
       setRows((prev) => prev.filter((x) => x.id !== r.id));
     } catch (e: any) {
       toast({ title: 'Verschieben fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
+    }
+  };
+
+  const fetchInvoicePdf = async (r: Row): Promise<Blob | null> => {
+    if (!r.zoho_invoice_id) {
+      toast({ title: 'Kein Zoho-Verweis', description: 'Für diese Rechnung ist keine Zoho-ID hinterlegt.', variant: 'destructive' });
+      return null;
+    }
+    setPdfLoadingId(r.id);
+    try {
+      const { data, error } = await supabase.functions.invoke('zoho-invoice-pdf', {
+        body: {
+          zoho_invoice_id: r.zoho_invoice_id,
+          source_system: r.source_system ?? 'zoho_eu_1',
+          recurring: r.source === 'recurring',
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      const b64 = (data as any)?.pdf_base64;
+      if (!b64) throw new Error('Kein PDF erhalten');
+      const bin = atob(b64);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return new Blob([bytes], { type: 'application/pdf' });
+    } catch (e: any) {
+      toast({ title: 'PDF fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
+      return null;
+    } finally {
+      setPdfLoadingId(null);
+    }
+  };
+
+  const handlePrint = async (r: Row) => {
+    const blob = await fetchInvoicePdf(r);
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const w = window.open(url, '_blank');
+    if (w) {
+      w.addEventListener('load', () => { try { w.print(); } catch { /* noop */ } });
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  };
+
+  const handleDownload = async (r: Row) => {
+    const blob = await fetchInvoicePdf(r);
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${r.invoice_number ?? 'rechnung'}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const openEdit = (r: Row) => {
+    setEditRow(r);
+    setEditForm({
+      reference_number: r.reference_number ?? '',
+      due_date: r.due_date ?? '',
+      payment_status: r.payment_status ?? '',
+    });
+  };
+
+  const saveEdit = async () => {
+    if (!editRow) return;
+    setEditSaving(true);
+    try {
+      const table = editRow.source === 'recurring' ? 'zoho_recurring_invoices' : 'zoho_invoices';
+      const { error } = await supabase.from(table).update({
+        reference_number: editForm.reference_number || null,
+        due_date: editForm.due_date || null,
+        payment_status: editForm.payment_status || null,
+      }).eq('id', editRow.id);
+      if (error) throw error;
+      setRows((prev) => prev.map((x) => x.id === editRow.id && x.source === editRow.source ? {
+        ...x,
+        reference_number: editForm.reference_number || null,
+        due_date: editForm.due_date || null,
+        payment_status: editForm.payment_status || null,
+      } : x));
+      toast({ title: 'Gespeichert', description: `Rechnung ${editRow.invoice_number ?? ''} aktualisiert.` });
+      setEditRow(null);
+    } catch (e: any) {
+      toast({ title: 'Speichern fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
+    } finally {
+      setEditSaving(false);
     }
   };
 
@@ -330,7 +428,7 @@ export default function Invoices() {
                           <th className="text-right px-4 py-2 font-medium">Saldo</th>
                           <th className="text-left px-4 py-2 font-medium">Letzte Zahlung</th>
                           <th className="text-left px-4 py-2 font-medium">Status</th>
-                          {isAdmin && <th className="text-right px-4 py-2 font-medium">Aktion</th>}
+                          <th className="text-right px-4 py-2 font-medium">Aktion</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -357,15 +455,38 @@ export default function Invoices() {
                                 {r.payment_status ?? '–'}
                               </Badge>
                             </td>
-                            {isAdmin && (
-                              <td className="px-4 py-2 text-right">
-                                {r.source === 'invoice' && (
+                            <td className="px-4 py-2 text-right whitespace-nowrap">
+                              <div className="inline-flex items-center gap-1">
+                                {isAdmin && (
+                                  <Button size="sm" variant="ghost" title="Bearbeiten" onClick={() => openEdit(r)}>
+                                    <Pencil className="w-3.5 h-3.5" />
+                                  </Button>
+                                )}
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  title="Drucken"
+                                  disabled={pdfLoadingId === r.id}
+                                  onClick={() => handlePrint(r)}
+                                >
+                                  {pdfLoadingId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Printer className="w-3.5 h-3.5" />}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  title="Download PDF"
+                                  disabled={pdfLoadingId === r.id}
+                                  onClick={() => handleDownload(r)}
+                                >
+                                  {pdfLoadingId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                                </Button>
+                                {isAdmin && r.source === 'invoice' && (
                                   <Button size="sm" variant="outline" onClick={() => handleMove(r)}>
                                     <ArrowRightLeft className="w-3.5 h-3.5 mr-1" /> Ratenzahler
                                   </Button>
                                 )}
-                              </td>
-                            )}
+                              </div>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -377,6 +498,43 @@ export default function Invoices() {
           })}
         </div>
       )}
+
+      <Dialog open={!!editRow} onOpenChange={(o) => !o && setEditRow(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rechnung {editRow?.invoice_number ?? ''} bearbeiten</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="ref">Referenz / Auftragsnr.</Label>
+              <Input id="ref" value={editForm.reference_number} onChange={(e) => setEditForm((f) => ({ ...f, reference_number: e.target.value }))} />
+            </div>
+            <div>
+              <Label htmlFor="due">Fälligkeit</Label>
+              <Input id="due" type="date" value={editForm.due_date} onChange={(e) => setEditForm((f) => ({ ...f, due_date: e.target.value }))} />
+            </div>
+            <div>
+              <Label htmlFor="ps">Zahlungsstatus</Label>
+              <Select value={editForm.payment_status || undefined} onValueChange={(v) => setEditForm((f) => ({ ...f, payment_status: v }))}>
+                <SelectTrigger id="ps"><SelectValue placeholder="Status wählen" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Offen">Offen</SelectItem>
+                  <SelectItem value="Bezahlt">Bezahlt</SelectItem>
+                  <SelectItem value="Teilweise bezahlt">Teilweise bezahlt</SelectItem>
+                  <SelectItem value="Überfällig">Überfällig</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <p className="text-xs text-muted-foreground">Hinweis: Änderungen wirken lokal in Alix Work. Ein Sync nach Zoho erfolgt hier nicht automatisch.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditRow(null)}>Abbrechen</Button>
+            <Button onClick={saveEdit} disabled={editSaving} className="gold-gradient text-primary-foreground">
+              {editSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}Speichern
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
