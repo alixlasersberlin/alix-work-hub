@@ -180,6 +180,24 @@ export default function Invoices() {
 
   useEffect(() => { fetchRows(); }, []);
 
+  // Realtime: aktualisiere Offene Beträge live, sobald sich Rechnungen ändern
+  useEffect(() => {
+    let debounce: ReturnType<typeof setTimeout> | null = null;
+    const trigger = () => {
+      if (debounce) clearTimeout(debounce);
+      debounce = setTimeout(() => { fetchRows(); }, 400);
+    };
+    const channel = supabase
+      .channel('invoices-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'zoho_invoices' }, trigger)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'zoho_recurring_invoices' }, trigger)
+      .subscribe();
+    return () => {
+      if (debounce) clearTimeout(debounce);
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const accounts = useMemo<Account[]>(() => {
     let res = rows;
     if (statusFilter !== 'all') {
