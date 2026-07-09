@@ -122,6 +122,16 @@ export default function AngebotErstellen() {
       city: newCustomer.ba_city || null,
       country: newCustomer.ba_country || null,
     };
+    // Vorgangs-Stammnummer zuerst ziehen – die Kundennummer teilt sich diese
+    // Basis mit Angebot/Auftrag/Rechnung, es unterscheidet sich nur der Prefix.
+    const cn = await ensureCaseNumber(caseNumber);
+    if (cn && cn !== caseNumber) setCaseNumber(cn);
+    const effectiveCase = cn || caseNumber;
+    const customerNr = await nextNumber(
+      'customer',
+      () => `manual-${crypto.randomUUID()}`,
+      { caseNumber: effectiveCase },
+    );
     const payload: any = {
       company_name: newCustomer.company_name || newCustomer.contact_name,
       contact_name: newCustomer.contact_name || null,
@@ -130,7 +140,7 @@ export default function AngebotErstellen() {
       billing_address: ba,
       shipping_address: ba,
       source_system: 'manual',
-      external_customer_id: `manual-${crypto.randomUUID()}`,
+      external_customer_id: customerNr,
     };
     const { data, error } = await supabase.from('customers').insert(payload).select('*').single();
     setNewCustomerSaving(false);
@@ -143,7 +153,7 @@ export default function AngebotErstellen() {
       company_name: '', contact_name: '', email: '', phone: '',
       ba_address: '', ba_street2: '', ba_zip: '', ba_city: '', ba_country: 'Deutschland',
     });
-    toast.success('Kunde angelegt und ausgewählt.');
+    toast.success(`Kunde angelegt (Kundennr. ${customerNr}).`);
   }
 
 
