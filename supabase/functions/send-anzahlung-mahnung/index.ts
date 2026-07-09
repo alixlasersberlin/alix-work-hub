@@ -121,10 +121,12 @@ Deno.serve(async (req) => {
     const depositAmount = Number(order.deposit_amount ?? 0);
     const depositOkDate = order.deposit_ok_at ? new Date(order.deposit_ok_at).toLocaleDateString('de-DE') : '';
 
-    // Bankverbindung: Kundendaten überschreiben Konfig (falls beim Kunden gepflegt), sonst aus Konfig
-    const iban = (cust.iban ?? '') || (cfg?.bank.iban ?? '');
-    const bic = (cust.bic ?? '') || (cfg?.bank.bic ?? '');
-    const bankName = (cust.bank_name ?? '') || (cfg?.bank.bank_name ?? '');
+    // Bankverbindung: Kundendaten überschreiben Konfig (falls beim Kunden gepflegt), sonst aus Konfig,
+    // als letzten Fallback die feste Alix Lasers GmbH Bankverbindung.
+    const DEFAULT_BANK = { name: 'Deutsche Bank', iban: 'DE07100701000142660000', bic: 'DEUTDEBB101' };
+    const iban = (cust.iban ?? '') || (cfg?.bank.iban ?? '') || DEFAULT_BANK.iban;
+    const bic = (cust.bic ?? '') || (cfg?.bank.bic ?? '') || DEFAULT_BANK.bic;
+    const bankName = (cust.bank_name ?? '') || (cfg?.bank.bank_name ?? '') || DEFAULT_BANK.name;
     const senderName = order.salesperson_name || cfg?.sender.email_from_name || 'Alix Lasers';
 
     const vars: Record<string, string> = {
