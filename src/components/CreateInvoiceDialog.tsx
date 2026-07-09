@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useRef, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -34,6 +34,7 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [createdId, setCreatedId] = useState<string | null>(null);
+  const openedAtRef = useRef(0);
 
   const defaultTotal = useMemo(() => {
     const t = Number(order?.total_amount ?? order?.total ?? 0);
@@ -52,18 +53,49 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
   useEffect(() => {
     if (!open) return;
     // Reset any stale pointer-events lock from other dialogs (Radix cleanup edge cases)
-    const prev = document.body.style.pointerEvents;
     document.body.style.pointerEvents = 'auto';
     const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') closeDialog(); };
     window.addEventListener('keydown', onEsc);
     return () => {
       window.removeEventListener('keydown', onEsc);
-      document.body.style.pointerEvents = prev;
+      document.body.style.pointerEvents = 'auto';
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  const closeDialog = () => { setOpen(false); setCreatedId(null); };
+  function closeDialog() {
+    document.body.style.pointerEvents = 'auto';
+    setOpen(false);
+    setCreatedId(null);
+  }
+
+  function openDialog() {
+    // Defensively reset any pointer-events lock left behind by another dialog
+    document.body.style.pointerEvents = 'auto';
+    openedAtRef.current = Date.now();
+    console.info('[CreateInvoiceDialog] open');
+    setOpen(true);
+  }
+
+  useEffect(() => {
+    const forceOpen = (event: Event) => {
+      const target = event.target as Element | null;
+      if (!target?.closest('[data-invoice-create-trigger="true"]')) return;
+      if (disabled) return;
+      event.preventDefault();
+      event.stopPropagation();
+      if ('stopImmediatePropagation' in event) event.stopImmediatePropagation();
+      openDialog();
+    };
+    document.addEventListener('pointerdown', forceOpen, true);
+    document.addEventListener('click', forceOpen, true);
+    return () => {
+      document.removeEventListener('pointerdown', forceOpen, true);
+      document.removeEventListener('click', forceOpen, true);
+    };
+    // Native capture fallback: this button must open even if parent layers swallow React clicks.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [disabled]);
 
   const handleCreate = async () => {
     if (!invoiceNumber.trim()) { toast.error('Rechnungsnummer fehlt'); return; }
@@ -111,10 +143,11 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
     toast.success(`Rechnung ${invoiceNumber} erstellt`);
   };
 
-  const openDialog = () => {
-    // Defensively reset any pointer-events lock left behind by another dialog
-    document.body.style.pointerEvents = 'auto';
-    setOpen(true);
+  const closeFromBackdrop = () => {
+    // If the dialog opens on pointerdown, the browser can dispatch the matching
+    // pointerup/click to the newly mounted backdrop. Ignore that first click.
+    if (Date.now() - openedAtRef.current < 350) return;
+    closeDialog();
   };
 
   return (
@@ -123,7 +156,14 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
         size="sm"
         type="button"
         disabled={disabled}
+        onPointerDown={(e) => {
+          if (disabled) return;
+          e.preventDefault();
+          e.stopPropagation();
+          openDialog();
+        }}
         onClick={openDialog}
+        data-invoice-create-trigger="true"
         className="gold-gradient text-primary-foreground"
       >
         <FileText className="w-4 h-4 mr-1.5" /> Rechnung erstellen
@@ -131,16 +171,23 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
 
       {open && typeof document !== 'undefined' && createPortal(
         <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-          style={{ pointerEvents: 'auto' }}
+          className="fixed inset-0 flex items-center justify-center p-4"
+          style={{ pointerEvents: 'auto', zIndex: 2147483647 }}
         >
           <div
             className="absolute inset-0 bg-background/85 backdrop-blur-sm"
-            onClick={closeDialog}
+            onClick={closeFromBackdrop}
+            style={{ zIndex: 0 }}
           />
-          <div className="relative w-full max-w-lg rounded-lg border border-border bg-background p-6 shadow-2xl">
+          <div
+            role="dialog"
+            aria-modal="true"
+            data-state="open"
+            className="relative w-full max-w-lg rounded-lg border border-border bg-background p-6 shadow-2xl"
+            style={{ zIndex: 1, pointerEvents: 'auto' }}
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
               type="button"
               onClick={closeDialog}
