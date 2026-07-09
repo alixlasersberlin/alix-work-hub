@@ -506,8 +506,20 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
         );
       }
 
-      doc.save(`Auftragsbestaetigung_${orderNo || order?.id}.pdf`);
-      toast.success('Auftragsbestätigung erstellt.');
+      const fileName = `Auftragsbestaetigung_${orderNo || order?.id}.pdf`;
+      if (mode === 'print') {
+        const blobUrl = doc.output('bloburl') as unknown as string;
+        const win = window.open(blobUrl, '_blank');
+        if (win) {
+          win.addEventListener('load', () => { try { win.focus(); win.print(); } catch {} });
+        } else {
+          toast.error('Popup wurde blockiert. Bitte Popups erlauben.');
+        }
+        toast.success('Druckvorschau geöffnet.');
+      } else {
+        doc.save(fileName);
+        toast.success('Auftragsbestätigung erstellt.');
+      }
     } catch (e: any) {
       toast.error('Fehler: ' + (e?.message || 'Unbekannter Fehler'));
     } finally {
