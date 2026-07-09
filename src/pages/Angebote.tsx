@@ -32,6 +32,7 @@ export default function Angebote() {
   const isSuperAdmin = hasRole('Super Admin');
   const [offers, setOffers] = useState<OfferSnapshot[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
 
   const [signLinkOpen, setSignLinkOpen] = useState(false);
   const [signLinkLoading, setSignLinkLoading] = useState(false);
