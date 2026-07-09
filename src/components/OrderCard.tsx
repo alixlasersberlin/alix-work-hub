@@ -74,7 +74,17 @@ export function OrderCard({
           <Hash className="w-3.5 h-3.5 text-primary flex-shrink-0" />
           <span className="truncate">{number}</span>
         </div>
-        <StatusBadge status={order.order_status || 'offen'} />
+        <div className="flex items-center gap-1">
+          <StatusBadge status={order.order_status || 'offen'} />
+          {(order as any).invoiced_flag && (
+            <span
+              className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border bg-blue-500/10 text-blue-400 border-blue-500/20"
+              title="Zoho hat für diesen Auftrag eine Rechnung erstellt"
+            >
+              Invoiced
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="flex items-start gap-1.5 text-sm text-foreground mb-1">

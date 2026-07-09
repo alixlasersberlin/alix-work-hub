@@ -494,6 +494,14 @@ export default function OrderDetail() {
             {isOrderVip({ ...order, customers: customer }) && <VipBadge size="lg" />}
             {primaryDisplayNumber}
             <StatusBadge status={order.order_status || 'offen'} />
+            {(order as any).invoiced_flag && (
+              <span
+                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border bg-blue-500/10 text-blue-400 border-blue-500/20"
+                title="Zoho hat für diesen Auftrag eine Rechnung erstellt"
+              >
+                Invoiced
+              </span>
+            )}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {order.order_date ? new Date(order.order_date).toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' }) : '—'}

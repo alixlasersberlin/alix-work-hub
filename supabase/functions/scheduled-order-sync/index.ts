@@ -299,14 +299,18 @@ Deno.serve(async (req: Request) => {
             if (cf) expectedShipment = cf;
           }
 
-          const orderPayload = {
+          const incomingStatus = detail.status ?? so.status ?? "offen";
+          const incomingInvoiced = ((detail as any).invoiced_status ?? (so as any).invoiced_status ?? "") === "invoiced";
+
+          const orderPayload: Record<string, unknown> = {
             external_order_id: externalOrderId,
             source_system: sourceSystem,
             customer_id: customer.id,
             order_number: detail.salesorder_number ?? so.salesorder_number ?? externalOrderId,
             order_date: nullIfEmpty(detail.date ?? so.date),
             expected_shipment_date: expectedShipment,
-            order_status: detail.status ?? so.status ?? "offen",
+            order_status: incomingStatus,
+            invoiced_flag: incomingInvoiced,
             total_amount: detail.total ?? so.total ?? null,
             currency: detail.currency_code ?? so.currency_code ?? null,
             salesperson_name: detail.salesperson_name ?? so.salesperson_name ?? null,
@@ -317,10 +321,21 @@ Deno.serve(async (req: Request) => {
 
           const { data: existing } = await adminClient
             .from("orders")
-            .select("id, raw_data")
+            .select("id, order_status, raw_data")
             .eq("external_order_id", externalOrderId)
             .eq("source_system", sourceSystem)
             .maybeSingle();
+
+          // Bereits gesetzten Liefer-Status NICHT durch Zoho "invoiced" überschreiben.
+          // Stattdessen nur den zweiten Vermerk (invoiced_flag) aktualisieren.
+          const protectedStatuses = new Set(["geliefert", "teilgeliefert"]);
+          if (
+            existing?.order_status &&
+            protectedStatuses.has(existing.order_status) &&
+            incomingStatus === "invoiced"
+          ) {
+            orderPayload.order_status = existing.order_status;
+          }
 
           // Skip if Zoho last_modified_time has not advanced since last import
           const incomingModified = (detail as any).last_modified_time ?? (so as any).last_modified_time ?? null;

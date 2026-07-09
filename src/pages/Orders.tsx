@@ -235,7 +235,7 @@ export default function Orders() {
     setLoading(true);
     setError(null);
     const orderSelect = `
-        id, customer_id, external_order_id, order_number, source_system, order_status,
+        id, customer_id, external_order_id, order_number, source_system, order_status, invoiced_flag,
         currency, total_amount, order_date, expected_shipment_date, salesperson_name,
         internal_number, lawyer_reason, deposit_ok, deposit_ok_by, deposit_ok_at,
         deposit_amount, deposit_additional, deposit_booking_date, is_vip,
@@ -734,7 +734,17 @@ export default function Orders() {
                           {o.total_amount != null ? Number(o.total_amount).toLocaleString('de-DE', { style: 'currency', currency: o.currency || 'EUR' }) : '—'}
                         </td>
                         <td className="px-4 py-3">
-                          <StatusBadge status={o.order_status || 'offen'} />
+                          <div className="flex items-center gap-1 flex-wrap">
+                            <StatusBadge status={o.order_status || 'offen'} />
+                            {(o as any).invoiced_flag && (
+                              <span
+                                className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border bg-blue-500/10 text-blue-400 border-blue-500/20"
+                                title="Zoho hat für diesen Auftrag eine Rechnung erstellt"
+                              >
+                                Invoiced
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-4 py-3 text-xs">
                           <DrivingTimeCell
