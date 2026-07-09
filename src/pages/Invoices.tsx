@@ -1012,6 +1012,15 @@ export default function Invoices() {
                                 >
                                   {pdfLoadingId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
                                 </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  title="Rechnung per E-Mail versenden"
+                                  className="h-8 px-2 gap-1 border-primary/40 text-primary hover:bg-primary/10"
+                                  onClick={() => openEmail(r)}
+                                >
+                                  <Mail className="w-3.5 h-3.5" /> Rechnung/Email
+                                </Button>
                                 {isAdmin && r.source === 'invoice' && (
                                   <Button size="sm" variant="outline" onClick={() => handleMove(r)}>
                                     <ArrowRightLeft className="w-3.5 h-3.5 mr-1" /> Ratenzahler
