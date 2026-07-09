@@ -918,6 +918,11 @@ export default function Invoices() {
                                     <ArrowRightLeft className="w-3.5 h-3.5 mr-1" /> Ratenzahler
                                   </Button>
                                 )}
+                                {isSuperAdmin && (
+                                  <Button size="sm" variant="ghost" title="Löschen" className="text-destructive hover:text-destructive" onClick={() => handleDelete(r)}>
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </Button>
+                                )}
                               </div>
                             </td>
                           </tr>
