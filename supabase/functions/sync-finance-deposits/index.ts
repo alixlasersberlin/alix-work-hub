@@ -43,6 +43,7 @@ Deno.serve(async (req) => {
         vat_amount: Math.round(vat * 100) / 100,
         due_date: (inv as any).due_date,
         currency: (inv as any).currency || 'EUR',
+        country: (inv as any).source_system === 'zoho_eu_2' ? 'AT' : 'DE',
       };
       const { data: up, error } = await supabase
         .from('finance_deposits')
