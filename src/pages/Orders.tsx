@@ -235,7 +235,7 @@ export default function Orders() {
     setLoading(true);
     setError(null);
     const orderSelect = `
-        id, customer_id, external_order_id, order_number, source_system, order_status,
+        id, customer_id, external_order_id, order_number, source_system, order_status, invoiced_flag,
         currency, total_amount, order_date, expected_shipment_date, salesperson_name,
         internal_number, lawyer_reason, deposit_ok, deposit_ok_by, deposit_ok_at,
         deposit_amount, deposit_additional, deposit_booking_date, is_vip,
