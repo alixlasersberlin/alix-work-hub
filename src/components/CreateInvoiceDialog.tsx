@@ -284,20 +284,6 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
             Zu Rechnungen <ExternalLink className="w-3.5 h-3.5 ml-1" />
           </Link>
         )}
-          size="sm"
-          type="button"
-          disabled={disabled || !!createdId}
-          onClick={openDialog}
-          className="gold-gradient text-primary-foreground"
-        >
-          <FileText className="w-4 h-4 mr-1.5" />
-          {createdId ? 'Rechnung erstellt' : 'Rechnung erstellen'}
-        </Button>
-        {createdId && (
-          <Link to="/finance/rechnungen" className="inline-flex items-center text-sm text-primary hover:underline">
-            Zu Rechnungen <ExternalLink className="w-3.5 h-3.5 ml-1" />
-          </Link>
-        )}
       </div>
 
       <dialog
