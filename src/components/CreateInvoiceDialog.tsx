@@ -186,6 +186,26 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
 
   const handleCreate = async () => {
     if (savingRef.current) return;
+    if (existingInvoice) {
+      toast.error(`Für diesen Auftrag existiert bereits Rechnung ${existingInvoice.invoice_number ?? ''}`);
+      setOpen(false);
+      return;
+    }
+    // Re-check DB right before insert to avoid races
+    if (orderNumber) {
+      const { data: dup } = await supabase
+        .from('zoho_invoices')
+        .select('id, invoice_number')
+        .eq('reference_number', orderNumber)
+        .limit(1);
+      const existing = (dup ?? [])[0];
+      if (existing) {
+        setExistingInvoice({ id: existing.id, invoice_number: existing.invoice_number });
+        toast.error(`Für diesen Auftrag existiert bereits Rechnung ${existing.invoice_number ?? ''}`);
+        setOpen(false);
+        return;
+      }
+    }
     if (!invoiceNumber.trim()) { toast.error('Rechnungsnummer fehlt'); return; }
     if (total <= 0) { toast.error('Rechnungsbetrag muss > 0 sein'); return; }
 
