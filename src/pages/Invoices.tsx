@@ -112,6 +112,15 @@ function fmtDate(d: string | null) {
   try { return new Date(d).toLocaleDateString('de-DE'); } catch { return d; }
 }
 
+function flatRowsForKpi(rows: Row[], search: string, statusFilter: string): number {
+  let res = rows;
+  if (statusFilter !== 'all') {
+    res = res.filter((r) => (r.payment_status ?? '').toLowerCase() === statusFilter.toLowerCase());
+  }
+  res = res.filter((r) => matchesQuery(r, search));
+  return res.reduce((s, r) => s + Number(r.balance ?? 0), 0);
+}
+
 export default function Invoices() {
   const { roles } = useAuth();
   const isSuperAdmin = roles.includes('Super Admin');
@@ -171,6 +180,24 @@ export default function Invoices() {
 
   useEffect(() => { fetchRows(); }, []);
 
+  // Realtime: aktualisiere Offene Beträge live, sobald sich Rechnungen ändern
+  useEffect(() => {
+    let debounce: ReturnType<typeof setTimeout> | null = null;
+    const trigger = () => {
+      if (debounce) clearTimeout(debounce);
+      debounce = setTimeout(() => { fetchRows(); }, 400);
+    };
+    const channel = supabase
+      .channel('invoices-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'zoho_invoices' }, trigger)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'zoho_recurring_invoices' }, trigger)
+      .subscribe();
+    return () => {
+      if (debounce) clearTimeout(debounce);
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const accounts = useMemo<Account[]>(() => {
     let res = rows;
     if (statusFilter !== 'all') {
@@ -212,8 +239,9 @@ export default function Invoices() {
     accounts: accounts.length,
     invoices: accounts.reduce((s, a) => s + a.totalInvoices + a.totalRecurring, 0),
     totalAmount: accounts.reduce((s, a) => s + a.totalAmount, 0),
-    totalOpen: accounts.reduce((s, a) => s + a.totalOpen, 0),
-  }), [accounts]);
+    // Offene Beträge = Live-Summe der Salden aller aktuell sichtbaren Rechnungen
+    totalOpen: flatRowsForKpi(rows, search, statusFilter),
+  }), [accounts, rows, search, statusFilter]);
 
   const flatRows = useMemo<Row[]>(() => {
     let res = rows;
