@@ -177,13 +177,83 @@ export default function Invoices() {
     }
   };
 
+  const generateInternalInvoicePdf = async (r: Row): Promise<Blob | null> => {
+    const { data: full, error } = await supabase
+      .from('zoho_invoices')
+      .select('*')
+      .eq('id', r.id)
+      .maybeSingle();
+    if (error || !full) {
+      toast({ title: 'PDF fehlgeschlagen', description: error?.message ?? 'Rechnung nicht gefunden', variant: 'destructive' });
+      return null;
+    }
+    const [{ default: jsPDF }, autoTableMod] = await Promise.all([
+      import('jspdf'),
+      import('jspdf-autotable'),
+    ]);
+    const autoTable = (autoTableMod as any).default ?? (autoTableMod as any);
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    const raw: any = full.raw_data ?? {};
+    const cur = full.currency || 'EUR';
+    const money = (n: number) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: cur }).format(n);
+
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(18);
+    doc.text('Rechnung', 40, 60);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+    doc.text(`Rechnungsnr.: ${full.invoice_number ?? ''}`, 40, 85);
+    doc.text(`Datum: ${fmtDate(full.invoice_date)}`, 40, 100);
+    doc.text(`Fällig: ${fmtDate(full.due_date)}`, 40, 115);
+    if (full.reference_number) doc.text(`Referenz: ${full.reference_number}`, 40, 130);
+
+    doc.setFont('helvetica', 'bold'); doc.text('Rechnungsempfänger', 320, 85);
+    doc.setFont('helvetica', 'normal');
+    const addrLines = String(full.billing_address ?? full.customer_name ?? '').split('\n');
+    let ay = 100;
+    if (full.customer_name && !addrLines[0]?.includes(full.customer_name)) { doc.text(full.customer_name, 320, ay); ay += 14; }
+    addrLines.forEach((l) => { if (l) { doc.text(l, 320, ay); ay += 14; } });
+
+    const items: any[] = Array.isArray(raw.line_items) ? raw.line_items : [];
+    autoTable(doc, {
+      startY: Math.max(ay, 160) + 20,
+      head: [['Pos.', 'Bezeichnung', 'Menge', 'Preis', 'Summe']],
+      body: items.length ? items.map((it, i) => [
+        String(i + 1),
+        [it.name, it.description].filter(Boolean).join('\n'),
+        String(it.quantity ?? 1),
+        money(Number(it.rate ?? 0)),
+        money(Number(it.amount ?? Number(it.quantity ?? 0) * Number(it.rate ?? 0))),
+      ]) : [['1', `Auftrag ${full.reference_number ?? ''}`, '1', money(Number(full.total ?? 0)), money(Number(full.total ?? 0))]],
+      styles: { fontSize: 9, cellPadding: 6 },
+      headStyles: { fillColor: [30, 30, 30], textColor: 255 },
+      columnStyles: { 0: { cellWidth: 30 }, 2: { halign: 'right', cellWidth: 50 }, 3: { halign: 'right', cellWidth: 80 }, 4: { halign: 'right', cellWidth: 80 } },
+    });
+    const endY = (doc as any).lastAutoTable?.finalY ?? 300;
+    const subtotal = Number(raw.subtotal ?? full.total ?? 0);
+    const taxRate = Number(raw.tax_rate ?? 0);
+    const taxAmount = Number(raw.tax_amount ?? 0);
+    const total = Number(full.total ?? subtotal + taxAmount);
+    doc.setFontSize(10);
+    doc.text(`Zwischensumme: ${money(subtotal)}`, 400, endY + 30);
+    doc.text(`USt. (${taxRate}%): ${money(taxAmount)}`, 400, endY + 46);
+    doc.setFont('helvetica', 'bold'); doc.text(`Gesamt: ${money(total)}`, 400, endY + 66);
+    if (raw.notes) { doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.text(String(raw.notes), 40, endY + 110, { maxWidth: 515 }); }
+
+    return doc.output('blob');
+  };
+
+  const isInternalInvoice = (r: Row) =>
+    r.source_system === 'internal' || (r.zoho_invoice_id?.startsWith('manual-') ?? false);
+
   const fetchInvoicePdf = async (r: Row): Promise<Blob | null> => {
     if (!r.zoho_invoice_id) {
-      toast({ title: 'Kein Zoho-Verweis', description: 'Für diese Rechnung ist keine Zoho-ID hinterlegt.', variant: 'destructive' });
+      toast({ title: 'Kein Verweis', description: 'Für diese Rechnung ist keine ID hinterlegt.', variant: 'destructive' });
       return null;
     }
     setPdfLoadingId(r.id);
     try {
+      if (isInternalInvoice(r)) {
+        return await generateInternalInvoicePdf(r);
+      }
       const { data, error } = await supabase.functions.invoke('zoho-invoice-pdf', {
         body: {
           zoho_invoice_id: r.zoho_invoice_id,
@@ -206,6 +276,7 @@ export default function Invoices() {
       setPdfLoadingId(null);
     }
   };
+
 
   const handlePrint = async (r: Row) => {
     const blob = await fetchInvoicePdf(r);
