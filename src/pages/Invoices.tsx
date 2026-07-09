@@ -498,6 +498,43 @@ export default function Invoices() {
           })}
         </div>
       )}
+
+      <Dialog open={!!editRow} onOpenChange={(o) => !o && setEditRow(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rechnung {editRow?.invoice_number ?? ''} bearbeiten</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="ref">Referenz / Auftragsnr.</Label>
+              <Input id="ref" value={editForm.reference_number} onChange={(e) => setEditForm((f) => ({ ...f, reference_number: e.target.value }))} />
+            </div>
+            <div>
+              <Label htmlFor="due">Fälligkeit</Label>
+              <Input id="due" type="date" value={editForm.due_date} onChange={(e) => setEditForm((f) => ({ ...f, due_date: e.target.value }))} />
+            </div>
+            <div>
+              <Label htmlFor="ps">Zahlungsstatus</Label>
+              <Select value={editForm.payment_status || undefined} onValueChange={(v) => setEditForm((f) => ({ ...f, payment_status: v }))}>
+                <SelectTrigger id="ps"><SelectValue placeholder="Status wählen" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Offen">Offen</SelectItem>
+                  <SelectItem value="Bezahlt">Bezahlt</SelectItem>
+                  <SelectItem value="Teilweise bezahlt">Teilweise bezahlt</SelectItem>
+                  <SelectItem value="Überfällig">Überfällig</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <p className="text-xs text-muted-foreground">Hinweis: Änderungen wirken lokal in Alix Work. Ein Sync nach Zoho erfolgt hier nicht automatisch.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditRow(null)}>Abbrechen</Button>
+            <Button onClick={saveEdit} disabled={editSaving} className="gold-gradient text-primary-foreground">
+              {editSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}Speichern
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
