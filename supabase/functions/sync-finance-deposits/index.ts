@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
     const EXCLUDED = new Set(['storniert','abgesagt']);
     const { data: ordersAll, error: ordErr } = await supabase
       .from('orders')
-      .select('id, order_number, customer_id, deposit_amount, order_status, deposit_booking_date, order_date')
+      .select('id, order_number, customer_id, deposit_amount, order_status, deposit_booking_date, order_date, source_system')
       .gt('deposit_amount', 0)
       .limit(5000);
     if (ordErr) errors.push(`orders query: ${ordErr.message}`);
