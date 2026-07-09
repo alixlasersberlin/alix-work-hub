@@ -52,18 +52,21 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
   useEffect(() => {
     if (!open) return;
     // Reset any stale pointer-events lock from other dialogs (Radix cleanup edge cases)
-    const prev = document.body.style.pointerEvents;
     document.body.style.pointerEvents = 'auto';
     const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') closeDialog(); };
     window.addEventListener('keydown', onEsc);
     return () => {
       window.removeEventListener('keydown', onEsc);
-      document.body.style.pointerEvents = prev;
+      document.body.style.pointerEvents = 'auto';
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  const closeDialog = () => { setOpen(false); setCreatedId(null); };
+  const closeDialog = () => {
+    document.body.style.pointerEvents = 'auto';
+    setOpen(false);
+    setCreatedId(null);
+  };
 
   const handleCreate = async () => {
     if (!invoiceNumber.trim()) { toast.error('Rechnungsnummer fehlt'); return; }
@@ -114,6 +117,7 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
   const openDialog = () => {
     // Defensively reset any pointer-events lock left behind by another dialog
     document.body.style.pointerEvents = 'auto';
+    console.info('[CreateInvoiceDialog] open');
     setOpen(true);
   };
 
@@ -123,7 +127,14 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
         size="sm"
         type="button"
         disabled={disabled}
+        onPointerDown={(e) => {
+          if (disabled) return;
+          e.preventDefault();
+          e.stopPropagation();
+          openDialog();
+        }}
         onClick={openDialog}
+        data-invoice-create-trigger="true"
         className="gold-gradient text-primary-foreground"
       >
         <FileText className="w-4 h-4 mr-1.5" /> Rechnung erstellen
@@ -131,16 +142,23 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
 
       {open && typeof document !== 'undefined' && createPortal(
         <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-          style={{ pointerEvents: 'auto' }}
+          className="fixed inset-0 flex items-center justify-center p-4"
+          style={{ pointerEvents: 'auto', zIndex: 2147483647 }}
         >
           <div
             className="absolute inset-0 bg-background/85 backdrop-blur-sm"
             onClick={closeDialog}
+            style={{ zIndex: 0 }}
           />
-          <div className="relative w-full max-w-lg rounded-lg border border-border bg-background p-6 shadow-2xl">
+          <div
+            role="dialog"
+            aria-modal="true"
+            data-state="open"
+            className="relative w-full max-w-lg rounded-lg border border-border bg-background p-6 shadow-2xl"
+            style={{ zIndex: 1, pointerEvents: 'auto' }}
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
               type="button"
               onClick={closeDialog}
