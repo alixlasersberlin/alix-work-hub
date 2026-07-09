@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { FileText, Loader2, ExternalLink, X, Plus, Trash2 } from 'lucide-react';
+import { nextNumber } from '@/lib/number-ranges';
 
 type Props = {
   order: any;
@@ -31,11 +32,13 @@ function addDays(iso: string, days: number) {
   d.setDate(d.getDate() + days);
   return d.toISOString().slice(0, 10);
 }
-function generateInvoiceNumber(source: string | null | undefined) {
+async function generateInvoiceNumber(source: string | null | undefined, caseNumber?: string | null) {
   const yr = new Date().getFullYear();
-  const rand = Math.floor(Math.random() * 90000 + 10000);
   const suffix = source === 'zoho_eu_2' ? '-AT' : '';
-  return `RE-${yr}-${rand}${suffix}`;
+  const fallback = () => `RE-${yr}-${Math.floor(Math.random() * 90000 + 10000)}${suffix}`;
+  const base = await nextNumber('invoice', fallback, { caseNumber: caseNumber ?? null });
+  // AT-Suffix nur anhängen, wenn nicht schon enthalten (Fallback liefert es selbst)
+  return suffix && !base.endsWith('-AT') ? `${base}${suffix}` : base;
 }
 function fmt(n: number) {
   return n.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -106,10 +109,11 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
   const [taxRate, setTaxRate] = useState(19);
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
 
-  const openDialog = useCallback(() => {
+  const openDialog = useCallback(async () => {
     if (disabled || createdId || existingInvoice) return;
     // Prefill
-    setInvoiceNumber(generateInvoiceNumber(order?.source_system));
+    const caseNo = order?.case_number ?? (order?.order_number ? String(order.order_number).replace(/^AB-/, '') : null);
+    setInvoiceNumber(await generateInvoiceNumber(order?.source_system, caseNo));
     setInvoiceDate(todayISO());
     setDueDate(addDays(todayISO(), 14));
     const rawAddr =
