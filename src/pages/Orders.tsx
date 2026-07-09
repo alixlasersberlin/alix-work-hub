@@ -737,20 +737,19 @@ export default function Orders() {
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-1 flex-wrap">
                             <StatusBadge status={o.order_status || 'offen'} />
-                            {(o as any).invoiced_flag && (
-                              <span
-                                className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border bg-blue-500/10 text-blue-400 border-blue-500/20"
-                                title="Zoho hat für diesen Auftrag eine Rechnung erstellt"
-                              >
-                                Invoiced
-                              </span>
-                            )}
                             {(o as any)._azInvoiceNumber ? (
                               <span
                                 className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border bg-green-500/15 text-green-400 border-green-500/30"
                                 title={`Anzahlungsrechnung ${(o as any)._azInvoiceNumber} gestellt`}
                               >
                                 RE-AZ OK
+                              </span>
+                            ) : (o as any).invoiced_flag ? (
+                              <span
+                                className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border bg-green-500/15 text-green-400 border-green-500/30"
+                                title="Für diesen Auftrag wurde eine vollständige Rechnung gestellt"
+                              >
+                                Rechnung OK
                               </span>
                             ) : (
                               <span
