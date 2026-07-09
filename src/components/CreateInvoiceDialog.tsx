@@ -59,8 +59,38 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [createdId, setCreatedId] = useState<string | null>(null);
+  const [existingInvoice, setExistingInvoice] = useState<{ id: string; invoice_number: string | null } | null>(null);
+  const [checking, setChecking] = useState(true);
   const savingRef = useRef(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
+
+  const orderNumber: string | null = order?.order_number ?? null;
+  const orderId: string | null = order?.id ?? null;
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!orderNumber && !orderId) { setChecking(false); return; }
+      setChecking(true);
+      let q = supabase.from('zoho_invoices').select('id, invoice_number, reference_number, raw_data').limit(1);
+      if (orderNumber) q = q.eq('reference_number', orderNumber);
+      const { data } = await q;
+      let found: any = (data ?? [])[0] ?? null;
+      if (!found && orderId) {
+        const { data: d2 } = await supabase
+          .from('zoho_invoices')
+          .select('id, invoice_number, raw_data, reference_number')
+          .contains('raw_data', { order_id: orderId } as any)
+          .limit(1);
+        found = (d2 ?? [])[0] ?? null;
+      }
+      if (!cancelled) {
+        setExistingInvoice(found ? { id: found.id, invoice_number: found.invoice_number } : null);
+        setChecking(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [orderNumber, orderId]);
 
   // Editable form fields
   const [invoiceNumber, setInvoiceNumber] = useState('');
@@ -77,7 +107,7 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
 
   const openDialog = useCallback(() => {
-    if (disabled || createdId) return;
+    if (disabled || createdId || existingInvoice) return;
     // Prefill
     setInvoiceNumber(generateInvoiceNumber(order?.source_system));
     setInvoiceDate(todayISO());
@@ -156,6 +186,26 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
 
   const handleCreate = async () => {
     if (savingRef.current) return;
+    if (existingInvoice) {
+      toast.error(`Für diesen Auftrag existiert bereits Rechnung ${existingInvoice.invoice_number ?? ''}`);
+      setOpen(false);
+      return;
+    }
+    // Re-check DB right before insert to avoid races
+    if (orderNumber) {
+      const { data: dup } = await supabase
+        .from('zoho_invoices')
+        .select('id, invoice_number')
+        .eq('reference_number', orderNumber)
+        .limit(1);
+      const existing = (dup ?? [])[0];
+      if (existing) {
+        setExistingInvoice({ id: existing.id, invoice_number: existing.invoice_number });
+        toast.error(`Für diesen Auftrag existiert bereits Rechnung ${existing.invoice_number ?? ''}`);
+        setOpen(false);
+        return;
+      }
+    }
     if (!invoiceNumber.trim()) { toast.error('Rechnungsnummer fehlt'); return; }
     if (total <= 0) { toast.error('Rechnungsbetrag muss > 0 sein'); return; }
 
@@ -221,14 +271,15 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
         <Button
           size="sm"
           type="button"
-          disabled={disabled || !!createdId}
+          disabled={disabled || !!createdId || !!existingInvoice || checking}
           onClick={openDialog}
           className="gold-gradient text-primary-foreground"
+          title={existingInvoice ? `Für diesen Auftrag existiert bereits Rechnung ${existingInvoice.invoice_number ?? ''}` : undefined}
         >
           <FileText className="w-4 h-4 mr-1.5" />
-          {createdId ? 'Rechnung erstellt' : 'Rechnung erstellen'}
+          {existingInvoice ? `Rechnung ${existingInvoice.invoice_number ?? ''} existiert` : createdId ? 'Rechnung erstellt' : 'Rechnung erstellen'}
         </Button>
-        {createdId && (
+        {(createdId || existingInvoice) && (
           <Link to="/finance/rechnungen" className="inline-flex items-center text-sm text-primary hover:underline">
             Zu Rechnungen <ExternalLink className="w-3.5 h-3.5 ml-1" />
           </Link>
