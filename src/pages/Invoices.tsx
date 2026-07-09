@@ -16,6 +16,46 @@ import { matchesQuery, paginate, type PageSize } from '@/lib/finance/list-filter
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { createPDF } from '@/lib/pdf-utils';
+import autoTable from 'jspdf-autotable';
+import templateAsset from '@/assets/az-rechnung-template.jpg.asset.json';
+import logoAsset from '@/assets/alix-logo-gold-pdf.png.asset.json';
+
+let _tplCache: string | null = null;
+let _logoCache: string | null = null;
+async function loadDataUrl(url: string): Promise<string> {
+  const res = await fetch(url);
+  const blob = await res.blob();
+  return await new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result as string);
+    r.onerror = reject;
+    r.readAsDataURL(blob);
+  });
+}
+async function loadTemplate(): Promise<string> {
+  if (_tplCache) return _tplCache;
+  _tplCache = await loadDataUrl(templateAsset.url);
+  return _tplCache;
+}
+async function loadLogo(): Promise<string> {
+  if (_logoCache) return _logoCache;
+  _logoCache = await loadDataUrl(logoAsset.url);
+  return _logoCache;
+}
+function addrLinesFromObj(a: any): string[] {
+  if (!a || typeof a !== 'object') return [];
+  const out: string[] = [];
+  const street = a.address || a.street;
+  const street2 = a.street2 || a.address2;
+  const zipCity = [a.zip || a.postal_code || '', a.city || ''].filter(Boolean).join(' ');
+  if (street) out.push(String(street));
+  if (street2) out.push(String(street2));
+  if (zipCity) out.push(zipCity);
+  if (a.country) out.push(String(a.country));
+  return out;
+}
+
 
 type Row = {
   id: string;
@@ -187,59 +227,220 @@ export default function Invoices() {
       toast({ title: 'PDF fehlgeschlagen', description: error?.message ?? 'Rechnung nicht gefunden', variant: 'destructive' });
       return null;
     }
-    const [{ default: jsPDF }, autoTableMod] = await Promise.all([
-      import('jspdf'),
-      import('jspdf-autotable'),
-    ]);
-    const autoTable = (autoTableMod as any).default ?? (autoTableMod as any);
-    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    // Optional Kunde nachladen für Adresse
+    let customer: any = null;
+    if (full.customer_id) {
+      const { data: c } = await supabase.from('customers').select('*').eq('external_customer_id', full.customer_id).maybeSingle();
+      customer = c;
+    }
     const raw: any = full.raw_data ?? {};
     const cur = full.currency || 'EUR';
-    const money = (n: number) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: cur }).format(n);
+    const money = (n: number) =>
+      new Intl.NumberFormat('de-DE', { style: 'currency', currency: cur }).format(Number(n) || 0);
 
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(18);
-    doc.text('Rechnung', 40, 60);
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
-    doc.text(`Rechnungsnr.: ${full.invoice_number ?? ''}`, 40, 85);
-    doc.text(`Datum: ${fmtDate(full.invoice_date)}`, 40, 100);
-    doc.text(`Fällig: ${fmtDate(full.due_date)}`, 40, 115);
-    if (full.reference_number) doc.text(`Referenz: ${full.reference_number}`, 40, 130);
+    const doc = createPDF({ unit: 'mm', format: 'a4' });
+    const PAGE_W = 210, PAGE_H = 297;
+    const LEFT = 30, RIGHT = 195;
+    const CONTENT_W = RIGHT - LEFT;
+    const TOP_CONTENT = 55, BOTTOM_LIMIT = 265;
+    const templateUrl = await loadTemplate();
+    const logoUrl = await loadLogo();
+    const LOGO_W = 45 * 1.2;
+    const LOGO_H = LOGO_W / (1920 / 360);
+    const LOGO_X = RIGHT - LOGO_W;
+    const LOGO_Y = 12;
+    const drawTemplate = () => {
+      doc.addImage(templateUrl, 'JPEG', 0, 0, PAGE_W, PAGE_H, undefined, 'FAST');
+      doc.addImage(logoUrl, 'PNG', LOGO_X, LOGO_Y, LOGO_W, LOGO_H, undefined, 'FAST');
+    };
+    drawTemplate();
 
-    doc.setFont('helvetica', 'bold'); doc.text('Rechnungsempfänger', 320, 85);
+    // Titel
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(20);
+    doc.setTextColor(20, 60, 110);
+    doc.text('Rechnung', LEFT, TOP_CONTENT);
+
+    // Meta rechts
+    const metaX = 130;
+    let metaY = TOP_CONTENT;
     doc.setFont('helvetica', 'normal');
-    const addrLines = String(full.billing_address ?? full.customer_name ?? '').split('\n');
-    let ay = 100;
-    if (full.customer_name && !addrLines[0]?.includes(full.customer_name)) { doc.text(full.customer_name, 320, ay); ay += 14; }
-    addrLines.forEach((l) => { if (l) { doc.text(l, 320, ay); ay += 14; } });
+    doc.setFontSize(9);
+    doc.setTextColor(60, 60, 60);
+    const meta: Array<[string, string]> = [
+      ['Rechnungsnr.', full.invoice_number || '—'],
+      ['Rechnungsdatum', fmtDate(full.invoice_date)],
+      ['Fällig am', fmtDate(full.due_date)],
+    ];
+    if (full.reference_number) meta.push(['Auftragsnr.', String(full.reference_number)]);
+    for (const [k, v] of meta) {
+      doc.setFont('helvetica', 'bold'); doc.text(k, metaX, metaY);
+      doc.setFont('helvetica', 'normal'); doc.text(v, metaX + 32, metaY);
+      metaY += 5;
+    }
 
-    const items: any[] = Array.isArray(raw.line_items) ? raw.line_items : [];
+    // Rechnungsadresse
+    const ay = TOP_CONTENT + 12;
+    const billing = customer?.billing_address || customer?.shipping_address || null;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(20, 60, 110);
+    doc.text('Rechnungsadresse', LEFT, ay);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9.5);
+    doc.setTextColor(40, 40, 40);
+    let y = ay + 5;
+    const name = customer?.company_name || customer?.contact_name || full.customer_name;
+    if (name) { doc.text(String(name), LEFT, y); y += 4.4; }
+    const addressLines = addrLinesFromObj(billing);
+    if (addressLines.length === 0 && full.billing_address) {
+      String(full.billing_address).split('\n').forEach((l) => { if (l) { doc.text(l, LEFT, y); y += 4.4; } });
+    } else {
+      addressLines.forEach((l) => { doc.text(l, LEFT, y); y += 4.4; });
+    }
+    if (customer?.email) { doc.text(String(customer.email), LEFT, y); y += 4.4; }
+    let cy = y + 6;
+
+    // Einleitung
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9.5);
+    doc.setTextColor(60, 60, 60);
+    const intro = raw.intro || 'Vielen Dank für Ihr Vertrauen. Wir stellen Ihnen die folgenden Leistungen in Rechnung.';
+    const introWrapped = doc.splitTextToSize(String(intro), CONTENT_W);
+    doc.text(introWrapped, LEFT, cy);
+    cy += introWrapped.length * 4.4 + 4;
+
+    // Positionen
+    const items: any[] = Array.isArray(raw.line_items) && raw.line_items.length
+      ? raw.line_items
+      : [{ name: `Auftrag ${full.reference_number ?? ''}`.trim() || 'Rechnungsposition', description: '', quantity: 1, rate: Number(full.total ?? 0), amount: Number(full.total ?? 0) }];
+
+    const taxRate = Number(raw.tax_rate ?? 0);
+    const subtotal = Number(raw.subtotal ?? items.reduce((s, it) => s + (Number(it.amount ?? Number(it.quantity ?? 0) * Number(it.rate ?? 0))), 0));
+    const taxAmount = Number(raw.tax_amount ?? subtotal * taxRate / 100);
+    const total = Number(full.total ?? subtotal + taxAmount);
+
     autoTable(doc, {
-      startY: Math.max(ay, 160) + 20,
-      head: [['Pos.', 'Bezeichnung', 'Menge', 'Preis', 'Summe']],
-      body: items.length ? items.map((it, i) => [
-        String(i + 1),
+      startY: cy,
+      margin: { left: LEFT, right: PAGE_W - RIGHT, top: TOP_CONTENT, bottom: PAGE_H - BOTTOM_LIMIT },
+      head: [['Pos', 'Beschreibung', 'Menge', 'Einzelpreis netto', 'MwSt', 'Summe netto']],
+      body: items.map((it, i) => [
+        i + 1,
         [it.name, it.description].filter(Boolean).join('\n'),
         String(it.quantity ?? 1),
         money(Number(it.rate ?? 0)),
+        `${taxRate}%`,
         money(Number(it.amount ?? Number(it.quantity ?? 0) * Number(it.rate ?? 0))),
-      ]) : [['1', `Auftrag ${full.reference_number ?? ''}`, '1', money(Number(full.total ?? 0)), money(Number(full.total ?? 0))]],
-      styles: { fontSize: 9, cellPadding: 6 },
-      headStyles: { fillColor: [30, 30, 30], textColor: 255 },
-      columnStyles: { 0: { cellWidth: 30 }, 2: { halign: 'right', cellWidth: 50 }, 3: { halign: 'right', cellWidth: 80 }, 4: { halign: 'right', cellWidth: 80 } },
+      ]),
+      styles: { fontSize: 9, cellPadding: 2, valign: 'top' },
+      headStyles: { fillColor: [183, 217, 255], textColor: [20, 60, 110] },
+      columnStyles: {
+        0: { cellWidth: 10, halign: 'center' },
+        2: { halign: 'right', cellWidth: 16 },
+        3: { halign: 'right', cellWidth: 30 },
+        4: { halign: 'right', cellWidth: 16 },
+        5: { halign: 'right', cellWidth: 30 },
+      },
+      willDrawPage: () => {
+        const pageNo = (doc as any).internal.getCurrentPageInfo().pageNumber;
+        if (pageNo > 1) drawTemplate();
+      },
     });
-    const endY = (doc as any).lastAutoTable?.finalY ?? 300;
-    const subtotal = Number(raw.subtotal ?? full.total ?? 0);
-    const taxRate = Number(raw.tax_rate ?? 0);
-    const taxAmount = Number(raw.tax_amount ?? 0);
-    const total = Number(full.total ?? subtotal + taxAmount);
-    doc.setFontSize(10);
-    doc.text(`Zwischensumme: ${money(subtotal)}`, 400, endY + 30);
-    doc.text(`USt. (${taxRate}%): ${money(taxAmount)}`, 400, endY + 46);
-    doc.setFont('helvetica', 'bold'); doc.text(`Gesamt: ${money(total)}`, 400, endY + 66);
-    if (raw.notes) { doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.text(String(raw.notes), 40, endY + 110, { maxWidth: 515 }); }
+    let finalY = (doc as any).lastAutoTable.finalY + 8;
 
-    return doc.output('blob');
+    // Totals
+    const totalsLabelX = 110;
+    const totalsValueX = RIGHT;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+    doc.text('Netto:', totalsLabelX, finalY);
+    doc.text(money(subtotal), totalsValueX, finalY, { align: 'right' });
+    doc.text(`MwSt (${taxRate}%):`, totalsLabelX, finalY + 5);
+    doc.text(money(taxAmount), totalsValueX, finalY + 5, { align: 'right' });
+    doc.setDrawColor(20, 60, 110);
+    doc.line(totalsLabelX, finalY + 8, totalsValueX, finalY + 8);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(20, 60, 110);
+    doc.text('Rechnungsbetrag (brutto):', totalsLabelX, finalY + 14);
+    doc.text(money(total), totalsValueX, finalY + 14, { align: 'right' });
+
+    // Zahlungshinweis
+    let py = finalY + 26;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(20, 60, 110);
+    doc.text('Zahlungshinweis', LEFT, py);
+    py += 5;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9.5);
+    doc.setTextColor(60, 60, 60);
+    const hint = `Bitte überweisen Sie den Rechnungsbetrag von ${money(total)} bis zum ${fmtDate(full.due_date)} unter Angabe der Rechnungsnummer ${full.invoice_number}.`;
+    const hintWrapped = doc.splitTextToSize(hint, CONTENT_W);
+    doc.text(hintWrapped, LEFT, py);
+    py += hintWrapped.length * 4.6 + 6;
+
+    if (raw.notes) {
+      doc.setFont('helvetica', 'bold'); doc.text('Notiz', LEFT, py); py += 5;
+      doc.setFont('helvetica', 'normal');
+      const nWrap = doc.splitTextToSize(String(raw.notes), CONTENT_W);
+      doc.text(nWrap, LEFT, py); py += nWrap.length * 4.6 + 6;
+    }
+
+    // Sign-off
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(20, 60, 110);
+    doc.text('Mit freundlichen Grüßen', LEFT, py); py += 5;
+    doc.setFont('helvetica', 'bold');
+    doc.text(full.source_system === 'zoho_eu_2' ? 'Alix Lasers Austria' : 'Alix Lasers Deutschland', LEFT, py);
+    py += 10;
+
+    // Bankdaten
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(20, 60, 110);
+    doc.text('Bankverbindung', LEFT, py); py += 5;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9.5);
+    doc.setTextColor(60, 60, 60);
+    const bank: Array<[string, string]> = [
+      ['Kontoinhaber', 'Alix Lasers GmbH'],
+      ['Bank', 'Deutsche Bank'],
+      ['IBAN', 'DE07 1007 0100 0142 6600 00'],
+      ['SWIFT/BIC', 'DEUTDEBB101'],
+    ];
+    for (const [k, v] of bank) {
+      doc.setFont('helvetica', 'bold'); doc.text(k + ':', LEFT, py);
+      doc.setFont('helvetica', 'normal'); doc.text(v, LEFT + 28, py);
+      py += 4.6;
+    }
+
+    // Seitenzahlen
+    const totalPages = (doc as any).internal.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      if (i > 1) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(60, 60, 60);
+        doc.text(`Rechnung ${full.invoice_number}`, LEFT, TOP_CONTENT - 8);
+        doc.setDrawColor(200, 200, 200);
+        doc.line(LEFT, TOP_CONTENT - 5, RIGHT, TOP_CONTENT - 5);
+      }
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(120, 120, 120);
+      doc.text(
+        `Rechnung ${full.invoice_number}  ·  Seite ${i} von ${totalPages}`,
+        RIGHT, PAGE_H - 4, { align: 'right' },
+      );
+    }
+
+    return doc.output('blob') as Blob;
   };
+
 
   const isInternalInvoice = (r: Row) =>
     r.source_system === 'internal' || (r.zoho_invoice_id?.startsWith('manual-') ?? false);
