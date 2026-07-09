@@ -259,6 +259,9 @@ export default function Invoices() {
     } catch (e: any) {
       toast({ title: 'Löschen fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
     }
+  };
+
+
 
   const generateInternalInvoicePdf = async (r: Row): Promise<Blob | null> => {
     const { data: full, error } = await supabase
