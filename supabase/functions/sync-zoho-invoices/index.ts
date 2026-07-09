@@ -182,7 +182,7 @@ Deno.serve(async (req) => {
     const authH = { Authorization: `Zoho-oauthtoken ${token}` };
     const excludedIds = await getExcludedRecurringIds(cfg, token, sourceSystem, excludeProfileName);
 
-    let imported = 0, updated = 0, failed = 0, skippedSepa = 0, skippedRecurring = 0, processed = 0;
+    let imported = 0, updated = 0, failed = 0, skippedSepa = 0, skippedRecurring = 0, processed = 0, duplicates = 0;
     let page = startPage;
     let hasMore = true;
     const startedAt = Date.now();
