@@ -332,6 +332,11 @@ export default function OffeneAnzahlungen() {
                   <TableCell className="align-top">
                     <div className="flex flex-wrap gap-1">
                       {canWrite && (
+                        <Button size="sm" variant="default" onClick={() => setBookFor(r)} className="gap-1">
+                          <Upload className="w-3.5 h-3.5" /> Buchen
+                        </Button>
+                      )}
+                      {canWrite && (
                         <Button size="sm" variant="outline" onClick={() => toggleLock(r)} title={r.finance_lock ? 'Sperre aufheben' : 'Sperren'}>
                           {r.finance_lock ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
                         </Button>
