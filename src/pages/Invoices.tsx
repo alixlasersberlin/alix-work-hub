@@ -555,6 +555,11 @@ export default function Invoices() {
       reference_number: r.reference_number ?? '',
       due_date: r.due_date ?? '',
       payment_status: r.payment_status ?? '',
+      invoice_number: r.invoice_number ?? '',
+      customer_name: r.customer_name ?? '',
+      invoice_date: r.invoice_date ?? '',
+      total: r.total != null ? String(r.total) : '',
+      balance: r.balance != null ? String(r.balance) : '',
     });
   };
 
@@ -563,18 +568,21 @@ export default function Invoices() {
     setEditSaving(true);
     try {
       const table = editRow.source === 'recurring' ? 'zoho_recurring_invoices' : 'zoho_invoices';
-      const { error } = await supabase.from(table).update({
+      const patch: any = {
         reference_number: editForm.reference_number || null,
         due_date: editForm.due_date || null,
         payment_status: editForm.payment_status || null,
-      }).eq('id', editRow.id);
+      };
+      if (isSuperAdmin) {
+        patch.invoice_number = editForm.invoice_number || null;
+        patch.customer_name = editForm.customer_name || null;
+        patch.invoice_date = editForm.invoice_date || null;
+        patch.total = editForm.total === '' ? null : Number(editForm.total);
+        patch.balance = editForm.balance === '' ? null : Number(editForm.balance);
+      }
+      const { error } = await supabase.from(table).update(patch).eq('id', editRow.id);
       if (error) throw error;
-      setRows((prev) => prev.map((x) => x.id === editRow.id && x.source === editRow.source ? {
-        ...x,
-        reference_number: editForm.reference_number || null,
-        due_date: editForm.due_date || null,
-        payment_status: editForm.payment_status || null,
-      } : x));
+      setRows((prev) => prev.map((x) => x.id === editRow.id && x.source === editRow.source ? { ...x, ...patch } : x));
       toast({ title: 'Gespeichert', description: `Rechnung ${editRow.invoice_number ?? ''} aktualisiert.` });
       setEditRow(null);
     } catch (e: any) {
