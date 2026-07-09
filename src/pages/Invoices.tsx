@@ -126,7 +126,7 @@ export default function Invoices() {
   const [pageSize, setPageSize] = useState<PageSize>(20);
   const [pdfLoadingId, setPdfLoadingId] = useState<string | null>(null);
   const [editRow, setEditRow] = useState<Row | null>(null);
-  const [editForm, setEditForm] = useState({ reference_number: '', due_date: '', payment_status: '' });
+  const [editForm, setEditForm] = useState({ reference_number: '', due_date: '', payment_status: '', invoice_number: '', customer_name: '', invoice_date: '', total: '', balance: '' });
   const [editSaving, setEditSaving] = useState(false);
   const [viewMode, setViewMode] = useState<'accounts' | 'list'>(() => {
     if (typeof window === 'undefined') return 'accounts';
@@ -555,6 +555,11 @@ export default function Invoices() {
       reference_number: r.reference_number ?? '',
       due_date: r.due_date ?? '',
       payment_status: r.payment_status ?? '',
+      invoice_number: r.invoice_number ?? '',
+      customer_name: r.customer_name ?? '',
+      invoice_date: r.invoice_date ?? '',
+      total: r.total != null ? String(r.total) : '',
+      balance: r.balance != null ? String(r.balance) : '',
     });
   };
 
@@ -563,18 +568,21 @@ export default function Invoices() {
     setEditSaving(true);
     try {
       const table = editRow.source === 'recurring' ? 'zoho_recurring_invoices' : 'zoho_invoices';
-      const { error } = await supabase.from(table).update({
+      const patch: any = {
         reference_number: editForm.reference_number || null,
         due_date: editForm.due_date || null,
         payment_status: editForm.payment_status || null,
-      }).eq('id', editRow.id);
+      };
+      if (isSuperAdmin) {
+        patch.invoice_number = editForm.invoice_number || null;
+        patch.customer_name = editForm.customer_name || null;
+        patch.invoice_date = editForm.invoice_date || null;
+        patch.total = editForm.total === '' ? null : Number(editForm.total);
+        patch.balance = editForm.balance === '' ? null : Number(editForm.balance);
+      }
+      const { error } = await supabase.from(table).update(patch).eq('id', editRow.id);
       if (error) throw error;
-      setRows((prev) => prev.map((x) => x.id === editRow.id && x.source === editRow.source ? {
-        ...x,
-        reference_number: editForm.reference_number || null,
-        due_date: editForm.due_date || null,
-        payment_status: editForm.payment_status || null,
-      } : x));
+      setRows((prev) => prev.map((x) => x.id === editRow.id && x.source === editRow.source ? { ...x, ...patch } : x));
       toast({ title: 'Gespeichert', description: `Rechnung ${editRow.invoice_number ?? ''} aktualisiert.` });
       setEditRow(null);
     } catch (e: any) {
@@ -942,7 +950,33 @@ export default function Invoices() {
           <DialogHeader>
             <DialogTitle>Rechnung {editRow?.invoice_number ?? ''} bearbeiten</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3">
+          <div className="space-y-3 max-h-[70vh] overflow-y-auto">
+            {isSuperAdmin && (
+              <>
+                <div>
+                  <Label htmlFor="invnr">Rechnungsnummer</Label>
+                  <Input id="invnr" value={editForm.invoice_number} onChange={(e) => setEditForm((f) => ({ ...f, invoice_number: e.target.value }))} />
+                </div>
+                <div>
+                  <Label htmlFor="cust">Kunde</Label>
+                  <Input id="cust" value={editForm.customer_name} onChange={(e) => setEditForm((f) => ({ ...f, customer_name: e.target.value }))} />
+                </div>
+                <div>
+                  <Label htmlFor="idate">Rechnungsdatum</Label>
+                  <Input id="idate" type="date" value={editForm.invoice_date} onChange={(e) => setEditForm((f) => ({ ...f, invoice_date: e.target.value }))} />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="total">Betrag (€)</Label>
+                    <Input id="total" type="number" step="0.01" value={editForm.total} onChange={(e) => setEditForm((f) => ({ ...f, total: e.target.value }))} />
+                  </div>
+                  <div>
+                    <Label htmlFor="bal">Saldo (€)</Label>
+                    <Input id="bal" type="number" step="0.01" value={editForm.balance} onChange={(e) => setEditForm((f) => ({ ...f, balance: e.target.value }))} />
+                  </div>
+                </div>
+              </>
+            )}
             <div>
               <Label htmlFor="ref">Referenz / Auftragsnr.</Label>
               <Input id="ref" value={editForm.reference_number} onChange={(e) => setEditForm((f) => ({ ...f, reference_number: e.target.value }))} />
