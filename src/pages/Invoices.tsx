@@ -209,6 +209,21 @@ export default function Invoices() {
     totalOpen: accounts.reduce((s, a) => s + a.totalOpen, 0),
   }), [accounts]);
 
+  const flatRows = useMemo<Row[]>(() => {
+    let res = rows;
+    if (statusFilter !== 'all') {
+      res = res.filter((r) => (r.payment_status ?? '').toLowerCase() === statusFilter.toLowerCase());
+    }
+    res = res.filter((r) => matchesQuery(r, search));
+    const sorted = [...res].sort((a, b) => {
+      if (listSort === 'number') {
+        return String(b.invoice_number ?? '').localeCompare(String(a.invoice_number ?? ''), 'de', { numeric: true });
+      }
+      return String(b.invoice_date ?? '').localeCompare(String(a.invoice_date ?? ''));
+    });
+    return sorted;
+  }, [rows, search, statusFilter, listSort]);
+
   const handleMove = async (r: Row) => {
     if (!isAdmin || r.source !== 'invoice') return;
     if (!confirm(`Rechnung ${r.invoice_number ?? ''} nach Ratenzahler verschieben?`)) return;
