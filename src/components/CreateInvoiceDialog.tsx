@@ -98,17 +98,18 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setCreatedId(null); }}>
-      <DialogTrigger asChild>
-        <Button
-          size="sm"
-          disabled={disabled}
-          className="gold-gradient text-primary-foreground"
-        >
-          <FileText className="w-4 h-4 mr-1.5" /> Rechnung erstellen
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-lg">
+    <>
+      <Button
+        size="sm"
+        type="button"
+        disabled={disabled}
+        onClick={() => setOpen(true)}
+        className="gold-gradient text-primary-foreground"
+      >
+        <FileText className="w-4 h-4 mr-1.5" /> Rechnung erstellen
+      </Button>
+      <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setCreatedId(null); }}>
+        <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Rechnung erstellen</DialogTitle>
         </DialogHeader>
@@ -170,7 +171,8 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
             </DialogFooter>
           </>
         )}
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
