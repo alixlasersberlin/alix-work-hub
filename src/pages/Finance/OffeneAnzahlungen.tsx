@@ -45,6 +45,7 @@ type Deposit = {
   released_by: string | null;
   responsible_user_id: string | null;
   note: string | null;
+  country: 'DE' | 'AT' | null;
   created_at: string;
   updated_at: string;
 };
@@ -106,6 +107,7 @@ export default function OffeneAnzahlungen() {
   const [statusFilter, setStatusFilter] = useState<string>('alle');
   const [releaseFilter, setReleaseFilter] = useState<string>('alle');
   const [sourceFilter, setSourceFilter] = useState<string>('alle');
+  const [countryFilter, setCountryFilter] = useState<string>('alle');
   const [overdueOnly, setOverdueOnly] = useState(false);
 
   const [bookFor, setBookFor] = useState<Deposit | null>(null);
@@ -193,6 +195,7 @@ export default function OffeneAnzahlungen() {
       if (statusFilter !== 'alle' && r.status !== statusFilter) return false;
       if (releaseFilter !== 'alle' && r.release_status !== releaseFilter) return false;
       if (sourceFilter !== 'alle' && r.source !== sourceFilter) return false;
+      if (countryFilter !== 'alle' && (r.country ?? 'DE') !== countryFilter) return false;
       if (overdueOnly) {
         if (!r.due_date || parseISO(r.due_date) >= new Date()) return false;
       }
@@ -203,7 +206,7 @@ export default function OffeneAnzahlungen() {
       }
       return true;
     });
-  }, [rows, search, statusFilter, releaseFilter, sourceFilter, overdueOnly]);
+  }, [rows, search, statusFilter, releaseFilter, sourceFilter, countryFilter, overdueOnly]);
 
   const kpis = useMemo(() => {
     const today = new Date(); today.setHours(0,0,0,0);
@@ -294,6 +297,17 @@ export default function OffeneAnzahlungen() {
               <SelectItem value="alle">Alle</SelectItem>
               <SelectItem value="alixwork">AlixWork</SelectItem>
               <SelectItem value="zoho">Zoho</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label className="text-xs text-muted-foreground">Land</Label>
+          <Select value={countryFilter} onValueChange={setCountryFilter}>
+            <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="alle">Alle</SelectItem>
+              <SelectItem value="DE">🇩🇪 Deutschland</SelectItem>
+              <SelectItem value="AT">🇦🇹 Österreich</SelectItem>
             </SelectContent>
           </Select>
         </div>

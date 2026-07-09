@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
     // ---- 1) Zoho invoices that look like deposit invoices (AZ-...) ----
     const { data: zohoInv } = await supabase
       .from('zoho_invoices')
-      .select('id, invoice_number, reference_number, customer_name, billing_address, due_date, total, balance, currency, status')
+      .select('id, invoice_number, reference_number, customer_name, billing_address, due_date, total, balance, currency, status, source_system')
       .or('invoice_number.ilike.AZ%,invoice_number.ilike.anzahlung%')
       .gt('balance', 0)
       .limit(5000);
@@ -43,6 +43,7 @@ Deno.serve(async (req) => {
         vat_amount: Math.round(vat * 100) / 100,
         due_date: (inv as any).due_date,
         currency: (inv as any).currency || 'EUR',
+        country: (inv as any).source_system === 'zoho_eu_2' ? 'AT' : 'DE',
       };
       const { data: up, error } = await supabase
         .from('finance_deposits')
@@ -59,7 +60,7 @@ Deno.serve(async (req) => {
     const EXCLUDED = new Set(['storniert','abgesagt']);
     const { data: ordersAll, error: ordErr } = await supabase
       .from('orders')
-      .select('id, order_number, customer_id, deposit_amount, order_status, deposit_booking_date, order_date')
+      .select('id, order_number, customer_id, deposit_amount, order_status, deposit_booking_date, order_date, source_system')
       .gt('deposit_amount', 0)
       .limit(5000);
     if (ordErr) errors.push(`orders query: ${ordErr.message}`);
@@ -93,6 +94,7 @@ Deno.serve(async (req) => {
         vat_amount: Math.round(vat * 100) / 100,
         issue_date: (o as any).order_date ?? null,
         currency: 'EUR',
+        country: (o as any).source_system === 'zoho_eu_2' ? 'AT' : 'DE',
       };
       const { data: up, error } = await supabase
         .from('finance_deposits')
@@ -114,7 +116,7 @@ Deno.serve(async (req) => {
     if (addl?.length) {
       const orderIds = [...new Set(addl.map((a: any) => a.order_id))];
       const { data: ordsMap } = await supabase
-        .from('orders').select('id, order_number, customer_id, order_status').in('id', orderIds);
+        .from('orders').select('id, order_number, customer_id, order_status, source_system').in('id', orderIds);
       const omap = new Map((ordsMap ?? []).map((o: any) => [o.id, o]));
       const addlCustIds = [...new Set((ordsMap ?? []).map((o: any) => o.customer_id).filter(Boolean))];
       const { data: addlCusts } = addlCustIds.length
@@ -142,6 +144,7 @@ Deno.serve(async (req) => {
           vat_amount: Math.round((gross - net) * 100) / 100,
           note: (a as any).note,
           currency: 'EUR',
+          country: (o as any).source_system === 'zoho_eu_2' ? 'AT' : 'DE',
         };
         const { data: up, error } = await supabase
           .from('finance_deposits')
