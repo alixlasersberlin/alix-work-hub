@@ -40,7 +40,7 @@ export default function OrdersAt() {
   const navigate = useNavigate();
   const { isAdmin, hasRole } = useAuth();
 
-  const canWrite = isAdmin || hasRole('Auftragsverwaltung');
+  const canWrite = isAdmin;
   const canEditItems = hasRole('Super Admin');
   const canSeeApproval = hasRole('Super Admin') || hasRole('Admin');
 

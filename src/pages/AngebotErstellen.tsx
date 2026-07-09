@@ -1034,6 +1034,27 @@ export default function AngebotErstellen() {
         return;
       }
 
+      // Bestelldatum & Liefertermin (KW) direkt aus dem Angebot übernehmen.
+      const orderDateIso = offerDate
+        ? new Date(`${offerDate}T00:00:00Z`).toISOString()
+        : new Date().toISOString();
+      let expectedShipmentIso: string | null = null;
+      if (deliveryWeek) {
+        const m = deliveryWeek.match(/^(\d{4})-W(\d{2})$/);
+        if (m) {
+          const year = parseInt(m[1], 10);
+          const week = parseInt(m[2], 10);
+          // ISO-Woche → Montag: 4. Januar liegt immer in KW 1
+          const jan4 = new Date(Date.UTC(year, 0, 4));
+          const jan4Dow = jan4.getUTCDay() || 7; // Mo=1..So=7
+          const week1Monday = new Date(jan4);
+          week1Monday.setUTCDate(jan4.getUTCDate() - (jan4Dow - 1));
+          const monday = new Date(week1Monday);
+          monday.setUTCDate(week1Monday.getUTCDate() + (week - 1) * 7);
+          expectedShipmentIso = monday.toISOString();
+        }
+      }
+
       const { data: orderRow, error: ordErr } = await supabase
         .from('orders')
         .insert({
@@ -1043,13 +1064,14 @@ export default function AngebotErstellen() {
           order_status: 'offen',
           currency: 'EUR',
           total_amount: totals.gross,
-          order_date: new Date().toISOString(),
+          order_date: orderDateIso,
+          expected_shipment_date: expectedShipmentIso,
           case_number: caseNumber || null,
           salesperson_name: salesAdvisor || null,
           billing_address: (selectedCustomer as any).billing_address || null,
           shipping_address: (selectedCustomer as any).shipping_address || (selectedCustomer as any).billing_address || null,
           deposit_amount: parseFloat(payDown) || null,
-          raw_data: { source: 'offer_confirmation', offer_number: offerNumber, payment: { type: payType, price: parseFloat(payPrice) || 0, down: parseFloat(payDown) || 0, term: payTerm } } as any,
+          raw_data: { source: 'offer_confirmation', offer_number: offerNumber, offer_date: offerDate, delivery_week: deliveryWeek || null, payment: { type: payType, price: parseFloat(payPrice) || 0, down: parseFloat(payDown) || 0, term: payTerm } } as any,
         } as any)
         .select('id')
         .single();

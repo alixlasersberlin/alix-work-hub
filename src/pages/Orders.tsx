@@ -175,7 +175,8 @@ export default function Orders() {
   const { drivingTimes, loading: drivingLoading, requestedIds, fetchDrivingTimes, retryFailed } = useDrivingTimes();
   const [viewMode, setViewMode] = useViewMode();
 
-  const canWrite = isAdmin || hasRole('Auftragsverwaltung');
+  // Nach Auftragserstellung dürfen nur Admin/Super Admin den Auftrag ändern.
+  const canWrite = isAdmin;
   const canEditItems = hasRole('Super Admin');
   const canExportAll = hasRole('Super Admin') || (user?.email?.toLowerCase() === 'jh@alix-operation.de');
 

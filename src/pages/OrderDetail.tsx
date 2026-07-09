@@ -49,9 +49,10 @@ export default function OrderDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { user, isAdmin, hasRole, hasAnyRole } = useAuth();
+  const { user, isAdmin, hasRole } = useAuth();
 
-  const canWrite = isAdmin || hasAnyRole(['Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG', 'Reparaturannahme']);
+  // Nach Auftragserstellung dürfen nur Admin/Super Admin den Auftrag ändern.
+  const canWrite = isAdmin;
 
   const [order, setOrder] = useState<any>(null);
   // Österreich darf Anzahlungen nur bei -AT-Aufträgen (zoho_eu_2) erfassen

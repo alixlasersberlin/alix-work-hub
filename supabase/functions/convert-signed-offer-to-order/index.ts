@@ -69,6 +69,31 @@ Deno.serve(async (req) => {
     const termMonths = payment.term != null ? Number(payment.term) : null;
     const purchasePrice = Number(payment.price) || Number(totals.gross) || null;
 
+    // Bestelldatum & Liefertermin aus dem Angebot übernehmen (Fallback: signed_at / null)
+    let orderDateIso: string = new Date().toISOString();
+    if (payload.offerDate) {
+      const d = new Date(`${payload.offerDate}T00:00:00Z`);
+      if (!isNaN(d.getTime())) orderDateIso = d.toISOString();
+    } else if (sr.signed_at) {
+      orderDateIso = sr.signed_at as string;
+    }
+
+    let expectedShipmentIso: string | null = null;
+    if (typeof payload.deliveryWeek === 'string') {
+      const m = payload.deliveryWeek.match(/^(\d{4})-W(\d{2})$/);
+      if (m) {
+        const year = parseInt(m[1], 10);
+        const week = parseInt(m[2], 10);
+        const jan4 = new Date(Date.UTC(year, 0, 4));
+        const jan4Dow = jan4.getUTCDay() || 7;
+        const week1Monday = new Date(jan4);
+        week1Monday.setUTCDate(jan4.getUTCDate() - (jan4Dow - 1));
+        const monday = new Date(week1Monday);
+        monday.setUTCDate(week1Monday.getUTCDate() + (week - 1) * 7);
+        expectedShipmentIso = monday.toISOString();
+      }
+    }
+
     const { data: order, error: oErr } = await supabase
       .from('orders')
       .insert({
@@ -78,9 +103,10 @@ Deno.serve(async (req) => {
         order_status: 'offen',
         currency: 'EUR',
         total_amount: totals.gross ?? null,
-        order_date: sr.signed_at || new Date().toISOString(),
+        order_date: orderDateIso,
+        expected_shipment_date: expectedShipmentIso,
         deposit_amount: downPayment,
-        raw_data: { from_alix_sign: true, offer_payload: payload },
+        raw_data: { from_alix_sign: true, offer_payload: payload, offer_date: payload.offerDate || null, delivery_week: payload.deliveryWeek || null },
       })
       .select('id')
       .single();
