@@ -87,7 +87,7 @@ export default function Invoices() {
   const fetchRows = async () => {
     setLoading(true);
     setError(null);
-    const cols = 'id, invoice_number, reference_number, customer_id, customer_name, city, invoice_date, due_date, total, balance, currency, status, payment_status, last_payment_date';
+    const cols = 'id, zoho_invoice_id, source_system, invoice_number, reference_number, customer_id, customer_name, city, invoice_date, due_date, total, balance, currency, status, payment_status, last_payment_date';
     const [inv, rec] = await Promise.all([
       supabase.from('zoho_invoices').select(cols).order('invoice_date', { ascending: false }).limit(10000),
       supabase.from('zoho_recurring_invoices').select(cols).order('invoice_date', { ascending: false }).limit(10000),
