@@ -32,11 +32,13 @@ function addDays(iso: string, days: number) {
   d.setDate(d.getDate() + days);
   return d.toISOString().slice(0, 10);
 }
-function generateInvoiceNumber(source: string | null | undefined) {
+async function generateInvoiceNumber(source: string | null | undefined, caseNumber?: string | null) {
   const yr = new Date().getFullYear();
-  const rand = Math.floor(Math.random() * 90000 + 10000);
   const suffix = source === 'zoho_eu_2' ? '-AT' : '';
-  return `RE-${yr}-${rand}${suffix}`;
+  const fallback = () => `RE-${yr}-${Math.floor(Math.random() * 90000 + 10000)}${suffix}`;
+  const base = await nextNumber('invoice', fallback, { caseNumber: caseNumber ?? null });
+  // AT-Suffix nur anhängen, wenn nicht schon enthalten (Fallback liefert es selbst)
+  return suffix && !base.endsWith('-AT') ? `${base}${suffix}` : base;
 }
 function fmt(n: number) {
   return n.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
