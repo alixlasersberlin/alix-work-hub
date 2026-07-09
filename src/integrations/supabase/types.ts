@@ -15537,6 +15537,14 @@ export type Database = {
           iban: string
         }[]
       }
+      get_customer_banking: {
+        Args: { _customer_id: string }
+        Returns: {
+          bank_name: string
+          bic: string
+          iban: string
+        }[]
+      }
       get_table_columns: { Args: { _table: string }; Returns: string[] }
       has_role: { Args: { check_role: string }; Returns: boolean }
       has_tenant_access: { Args: { _tenant_id: string }; Returns: boolean }
