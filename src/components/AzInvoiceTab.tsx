@@ -506,7 +506,16 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
     }
   }
 
+  function blockIfDuplicate(): boolean {
+    if (existingInvoice) {
+      toast.error(`Für diesen Auftrag wurde bereits die Anzahlungsrechnung ${existingInvoice.invoice_number} gestellt. Ein erneutes Ausstellen ist nicht möglich.`);
+      return true;
+    }
+    return false;
+  }
+
   async function generate() {
+    if (blockIfDuplicate()) return;
     if (!hasDeposit) {
       toast.error('Keine Anzahlung vereinbart – es wird keine Anzahlungsrechnung erstellt.');
       return;
@@ -525,6 +534,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
   }
 
   async function generateAndBook() {
+    if (blockIfDuplicate()) return;
     if (!hasDeposit) {
       toast.error('Keine Anzahlung vereinbart.');
       return;
@@ -544,10 +554,12 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
   }
 
   async function sendByEmail() {
+    if (blockIfDuplicate()) return;
     if (!hasDeposit) {
       toast.error('Keine Anzahlung vereinbart.');
       return;
     }
+
     if (!customer?.email) {
       toast.error('Kunde hat keine E-Mail-Adresse hinterlegt.');
       return;
