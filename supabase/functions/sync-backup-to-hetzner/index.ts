@@ -91,17 +91,40 @@ Deno.serve(async (req) => {
   } catch (_) { /* ignore */ }
 
   // Recursively list files in a given Supabase Storage bucket
+  async function listWithRetry(srcBucket: string, cur: string) {
+    // Storage-Gateway antwortet gelegentlich mit HTML (5xx/timeout). Der JS-Client
+    // versucht dann JSON.parse und wirft "Unexpected token '<'". Wir retryen
+    // transient mit exponentiellem Backoff.
+    const MAX_ATTEMPTS = 5;
+    let lastErr: string | null = null;
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      try {
+        const { data, error } = await supabase.storage.from(srcBucket).list(cur, {
+          limit: 1000,
+          sortBy: { column: "name", order: "asc" },
+        });
+        if (error) {
+          lastErr = error.message;
+        } else {
+          return data ?? [];
+        }
+      } catch (e) {
+        // JSON.parse-Fehler (HTML-Antwort vom Gateway) landen hier
+        lastErr = e instanceof Error ? e.message : String(e);
+      }
+      const isTransient = !lastErr || /Unexpected token|<html|fetch failed|network|timeout|502|503|504/i.test(lastErr);
+      if (!isTransient || attempt === MAX_ATTEMPTS) break;
+      await new Promise((r) => setTimeout(r, 500 * 2 ** (attempt - 1)));
+    }
+    throw new Error(`list ${srcBucket}/${cur}: ${lastErr ?? "unknown error"}`);
+  }
+
   async function listAll(srcBucket: string, prefix = ""): Promise<string[]> {
     const out: string[] = [];
     const stack: string[] = [prefix];
     while (stack.length) {
       const cur = stack.pop()!;
-      const { data, error } = await supabase.storage.from(srcBucket).list(cur, {
-        limit: 1000,
-        sortBy: { column: "name", order: "asc" },
-      });
-      if (error) throw new Error(`list ${srcBucket}/${cur}: ${error.message}`);
-      if (!data) continue;
+      const data = await listWithRetry(srcBucket, cur);
       for (const entry of data) {
         const path = cur ? `${cur}/${entry.name}` : entry.name;
         if (entry.id === null) stack.push(path);
