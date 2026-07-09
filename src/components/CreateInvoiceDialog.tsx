@@ -75,11 +75,11 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
       let q = supabase.from('zoho_invoices').select('id, invoice_number, reference_number, raw_data').limit(1);
       if (orderNumber) q = q.eq('reference_number', orderNumber);
       const { data } = await q;
-      let found = (data ?? [])[0] ?? null;
+      let found: any = (data ?? [])[0] ?? null;
       if (!found && orderId) {
         const { data: d2 } = await supabase
           .from('zoho_invoices')
-          .select('id, invoice_number, raw_data')
+          .select('id, invoice_number, raw_data, reference_number')
           .contains('raw_data', { order_id: orderId } as any)
           .limit(1);
         found = (d2 ?? [])[0] ?? null;
