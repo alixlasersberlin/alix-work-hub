@@ -533,16 +533,26 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
         <h2 className="text-base font-display font-bold text-foreground flex items-center gap-2">
           <FileCheck2 className="w-4 h-4 text-primary" /> Auftragsbestätigung
         </h2>
-        <Button
-          onClick={generate}
-          disabled={generating || !items?.length}
-          className="gold-gradient text-primary-foreground"
-        >
-          {generating
-            ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            : <FileDown className="w-4 h-4 mr-2" />}
-          PDF herunterladen
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            onClick={() => generate('print')}
+            disabled={generating || !items?.length}
+            variant="outline"
+          >
+            <Printer className="w-4 h-4 mr-2" />
+            Drucken
+          </Button>
+          <Button
+            onClick={() => generate('download')}
+            disabled={generating || !items?.length}
+            className="gold-gradient text-primary-foreground"
+          >
+            {generating
+              ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              : <FileDown className="w-4 h-4 mr-2" />}
+            PDF herunterladen
+          </Button>
+        </div>
       </div>
 
       <div className="grid sm:grid-cols-3 gap-4">
