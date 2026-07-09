@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { FileCheck2, FileDown, Loader2, Mail, CalendarIcon } from 'lucide-react';
+import { FileCheck2, FileDown, Loader2, Mail, CalendarIcon, Printer } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { supabase } from '@/integrations/supabase/client';
@@ -193,7 +193,7 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
     return { net: finalNet, tax: finalTax, gross: finalGross };
   }, [items, order]);
 
-  async function generate() {
+  async function generate(mode: 'download' | 'print' = 'download') {
     if (!items || items.length === 0) {
       toast.error('Keine Artikel im Auftrag vorhanden.');
       return;
@@ -506,8 +506,20 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
         );
       }
 
-      doc.save(`Auftragsbestaetigung_${orderNo || order?.id}.pdf`);
-      toast.success('Auftragsbestätigung erstellt.');
+      const fileName = `Auftragsbestaetigung_${orderNo || order?.id}.pdf`;
+      if (mode === 'print') {
+        const blobUrl = doc.output('bloburl') as unknown as string;
+        const win = window.open(blobUrl, '_blank');
+        if (win) {
+          win.addEventListener('load', () => { try { win.focus(); win.print(); } catch {} });
+        } else {
+          toast.error('Popup wurde blockiert. Bitte Popups erlauben.');
+        }
+        toast.success('Druckvorschau geöffnet.');
+      } else {
+        doc.save(fileName);
+        toast.success('Auftragsbestätigung erstellt.');
+      }
     } catch (e: any) {
       toast.error('Fehler: ' + (e?.message || 'Unbekannter Fehler'));
     } finally {
@@ -521,16 +533,26 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
         <h2 className="text-base font-display font-bold text-foreground flex items-center gap-2">
           <FileCheck2 className="w-4 h-4 text-primary" /> Auftragsbestätigung
         </h2>
-        <Button
-          onClick={generate}
-          disabled={generating || !items?.length}
-          className="gold-gradient text-primary-foreground"
-        >
-          {generating
-            ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            : <FileDown className="w-4 h-4 mr-2" />}
-          PDF herunterladen
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            onClick={() => generate('print')}
+            disabled={generating || !items?.length}
+            variant="outline"
+          >
+            <Printer className="w-4 h-4 mr-2" />
+            Drucken
+          </Button>
+          <Button
+            onClick={() => generate('download')}
+            disabled={generating || !items?.length}
+            className="gold-gradient text-primary-foreground"
+          >
+            {generating
+              ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              : <FileDown className="w-4 h-4 mr-2" />}
+            PDF herunterladen
+          </Button>
+        </div>
       </div>
 
       <div className="grid sm:grid-cols-3 gap-4">
