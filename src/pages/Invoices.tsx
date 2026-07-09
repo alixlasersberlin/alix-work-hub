@@ -428,7 +428,7 @@ export default function Invoices() {
                           <th className="text-right px-4 py-2 font-medium">Saldo</th>
                           <th className="text-left px-4 py-2 font-medium">Letzte Zahlung</th>
                           <th className="text-left px-4 py-2 font-medium">Status</th>
-                          {isAdmin && <th className="text-right px-4 py-2 font-medium">Aktion</th>}
+                          <th className="text-right px-4 py-2 font-medium">Aktion</th>
                         </tr>
                       </thead>
                       <tbody>
