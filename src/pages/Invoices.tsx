@@ -5,7 +5,7 @@ import { DataCard, PageError } from '@/components/PageShell';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { SkeletonTable } from '@/components/infinity/Skeleton';
 import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
-import { FileText, RefreshCw, ArrowRightLeft, ChevronDown, ChevronRight, Users, Wallet, AlertTriangle, Repeat, Pencil, Printer, Download, Loader2, Trash2 } from 'lucide-react';
+import { FileText, RefreshCw, ArrowRightLeft, ChevronDown, ChevronRight, Users, Wallet, AlertTriangle, Repeat, Pencil, Printer, Download, Loader2, Trash2, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -16,6 +16,7 @@ import { matchesQuery, paginate, type PageSize } from '@/lib/finance/list-filter
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { createPDF } from '@/lib/pdf-utils';
 import autoTable from 'jspdf-autotable';
 import templateAsset from '@/assets/az-rechnung-template.jpg.asset.json';
@@ -128,6 +129,10 @@ export default function Invoices() {
   const [editRow, setEditRow] = useState<Row | null>(null);
   const [editForm, setEditForm] = useState({ reference_number: '', due_date: '', payment_status: '', invoice_number: '', customer_name: '', invoice_date: '', total: '', balance: '' });
   const [editSaving, setEditSaving] = useState(false);
+  const [emailRow, setEmailRow] = useState<Row | null>(null);
+  const [emailForm, setEmailForm] = useState({ to_email: '', to_name: '', subject: '', body_text: '' });
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailPreparing, setEmailPreparing] = useState(false);
   const [viewMode, setViewMode] = useState<'accounts' | 'list'>(() => {
     if (typeof window === 'undefined') return 'accounts';
     return (localStorage.getItem('invoices_view_mode') as 'accounts' | 'list') || 'accounts';
@@ -592,6 +597,83 @@ export default function Invoices() {
     }
   };
 
+  const openEmail = async (r: Row) => {
+    setEmailPreparing(true);
+    setEmailRow(r);
+    setEmailForm({
+      to_email: '',
+      to_name: r.customer_name ?? '',
+      subject: `Rechnung ${r.invoice_number ?? ''}`.trim(),
+      body_text: `Sehr geehrte Damen und Herren,\n\nanbei erhalten Sie die Rechnung ${r.invoice_number ?? ''}${r.reference_number ? ` zum Auftrag ${r.reference_number}` : ''}.\n\nBei Rückfragen stehen wir Ihnen gerne zur Verfügung.\n\nMit freundlichen Grüßen\nAlix Lasers`,
+    });
+    try {
+      if (r.customer_id) {
+        const { data: c } = await supabase
+          .from('customers')
+          .select('email, contact_name, company_name')
+          .eq('external_customer_id', r.customer_id)
+          .maybeSingle();
+        if (c) {
+          setEmailForm((f) => ({
+            ...f,
+            to_email: c.email ?? '',
+            to_name: c.company_name ?? c.contact_name ?? f.to_name,
+          }));
+        }
+      }
+    } finally {
+      setEmailPreparing(false);
+    }
+  };
+
+  const sendEmail = async () => {
+    if (!emailRow) return;
+    if (!emailForm.to_email) {
+      toast({ title: 'Empfänger fehlt', description: 'Bitte E-Mail-Adresse angeben.', variant: 'destructive' });
+      return;
+    }
+    setEmailSending(true);
+    try {
+      const blob = await fetchInvoicePdf(emailRow);
+      if (!blob) throw new Error('PDF konnte nicht erzeugt werden');
+      const buf = await blob.arrayBuffer();
+      const bytes = new Uint8Array(buf);
+      let binary = '';
+      const chunk = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunk) {
+        binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+      }
+      const b64 = btoa(binary);
+      const { data, error } = await supabase.functions.invoke('send-mail', {
+        body: {
+          to_email: emailForm.to_email,
+          to_name: emailForm.to_name || null,
+          from_email: 'finance@alixwork.de',
+          from_name: 'Alix Lasers Finance',
+          subject: emailForm.subject,
+          body_text: emailForm.body_text,
+          body_html: `<pre style="font-family:Arial,sans-serif;font-size:14px;white-space:pre-wrap;margin:0">${emailForm.body_text.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c] as string))}</pre>`,
+          invoice_id: emailRow.zoho_invoice_id ?? null,
+          customer_id: emailRow.customer_id ?? null,
+          category: 'finance',
+          attachments: [{
+            filename: `${emailRow.invoice_number ?? 'rechnung'}.pdf`,
+            content: b64,
+            contentType: 'application/pdf',
+          }],
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast({ title: 'E-Mail versendet', description: `Rechnung ${emailRow.invoice_number ?? ''} an ${emailForm.to_email}` });
+      setEmailRow(null);
+    } catch (e: any) {
+      toast({ title: 'Versand fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
+    } finally {
+      setEmailSending(false);
+    }
+  };
+
   const handleImport = async () => {
     setImporting(true);
     setProgress('Starte Import…');
@@ -802,6 +884,15 @@ export default function Invoices() {
                           <Button size="sm" variant="ghost" title="Download PDF" disabled={pdfLoadingId === r.id} onClick={() => handleDownload(r)}>
                             {pdfLoadingId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
                           </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            title="Rechnung per E-Mail versenden"
+                            className="h-8 px-2 gap-1 border-primary/40 text-primary hover:bg-primary/10"
+                            onClick={() => openEmail(r)}
+                          >
+                            <Mail className="w-3.5 h-3.5" /> Rechnung/Email
+                          </Button>
                           {isSuperAdmin && (
                             <Button size="sm" variant="ghost" title="Löschen" className="text-destructive hover:text-destructive" onClick={() => handleDelete(r)}>
                               <Trash2 className="w-3.5 h-3.5" />
@@ -921,6 +1012,15 @@ export default function Invoices() {
                                 >
                                   {pdfLoadingId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
                                 </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  title="Rechnung per E-Mail versenden"
+                                  className="h-8 px-2 gap-1 border-primary/40 text-primary hover:bg-primary/10"
+                                  onClick={() => openEmail(r)}
+                                >
+                                  <Mail className="w-3.5 h-3.5" /> Rechnung/Email
+                                </Button>
                                 {isAdmin && r.source === 'invoice' && (
                                   <Button size="sm" variant="outline" onClick={() => handleMove(r)}>
                                     <ArrowRightLeft className="w-3.5 h-3.5 mr-1" /> Ratenzahler
@@ -1003,6 +1103,50 @@ export default function Invoices() {
             <Button variant="outline" onClick={() => setEditRow(null)}>Abbrechen</Button>
             <Button onClick={saveEdit} disabled={editSaving} className="gold-gradient text-primary-foreground">
               {editSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}Speichern
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!emailRow} onOpenChange={(o) => !o && !emailSending && setEmailRow(null)}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Mail className="w-4 h-4 text-primary" />
+              Rechnung {emailRow?.invoice_number ?? ''} per E-Mail versenden
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 max-h-[70vh] overflow-y-auto">
+            {emailPreparing && (
+              <div className="text-xs text-muted-foreground flex items-center gap-2">
+                <Loader2 className="w-3 h-3 animate-spin" /> Kundendaten werden geladen…
+              </div>
+            )}
+            <div>
+              <Label htmlFor="mto">Empfänger E-Mail *</Label>
+              <Input id="mto" type="email" value={emailForm.to_email} onChange={(e) => setEmailForm((f) => ({ ...f, to_email: e.target.value }))} placeholder="kunde@example.com" />
+            </div>
+            <div>
+              <Label htmlFor="mton">Empfängername</Label>
+              <Input id="mton" value={emailForm.to_name} onChange={(e) => setEmailForm((f) => ({ ...f, to_name: e.target.value }))} />
+            </div>
+            <div>
+              <Label htmlFor="msub">Betreff</Label>
+              <Input id="msub" value={emailForm.subject} onChange={(e) => setEmailForm((f) => ({ ...f, subject: e.target.value }))} />
+            </div>
+            <div>
+              <Label htmlFor="mbody">Nachricht</Label>
+              <Textarea id="mbody" rows={8} value={emailForm.body_text} onChange={(e) => setEmailForm((f) => ({ ...f, body_text: e.target.value }))} />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Absender: <span className="font-mono">finance@alixwork.de</span> · Die Rechnung wird automatisch als PDF im Anhang beigefügt.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEmailRow(null)} disabled={emailSending}>Abbrechen</Button>
+            <Button onClick={sendEmail} disabled={emailSending || emailPreparing} className="gold-gradient text-primary-foreground">
+              {emailSending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
+              {emailSending ? 'Sende…' : 'Senden'}
             </Button>
           </DialogFooter>
         </DialogContent>
