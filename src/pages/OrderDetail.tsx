@@ -38,6 +38,7 @@ import DeliveryNoteTab from '@/components/DeliveryNoteTab';
 import AuftragsbestaetigungTab from '@/components/AuftragsbestaetigungTab';
 import OrderConfirmationTab from '@/components/OrderConfirmationTab';
 import AzInvoiceTab from '@/components/AzInvoiceTab';
+import CreateInvoiceDialog from '@/components/CreateInvoiceDialog';
 import CustomerSmsTab from '@/components/CustomerSmsTab';
 import { sendCustomerShippingNotice } from '@/lib/send-customer-shipping-notice';
 import { sendReviewInvitation } from '@/lib/review-invitation';
