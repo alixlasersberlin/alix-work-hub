@@ -67,12 +67,12 @@ const Email = ({
             </Section>
           )}
 
-          {!useCustomBody && (iban || bic || bankName) && (
+          {(iban || bic || bankName) && (
             <Section style={bankBox}>
-              <Text style={bankTitle}>Bankverbindung</Text>
+              <Text style={bankTitle}>Bankverbindung — Alix Lasers GmbH</Text>
               {bankName && <Text style={bankLine}>Bank: {bankName}</Text>}
               {iban && <Text style={bankLine}>IBAN: {iban}</Text>}
-              {bic && <Text style={bankLine}>BIC: {bic}</Text>}
+              {bic && <Text style={bankLine}>SWIFT/BIC: {bic}</Text>}
               {orderNumber && <Text style={bankLine}>Verwendungszweck: {orderNumber}</Text>}
             </Section>
           )}
