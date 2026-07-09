@@ -182,15 +182,19 @@ export default function Lager() {
     ]),
   ];
   const displayedTotal = chartData.reduce((s, c) => s + c.value, 0);
+  // Produktion zählt nicht als Lagerbestand (Geräte sind noch beim Hersteller)
+  const lagerbestandTotal = chartData
+    .filter((c) => c.key !== 'Produktion')
+    .reduce((s, c) => s + c.value, 0);
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
       <PageHeader
         icon={Warehouse}
         title="Lagerbestand"
-        subtitle={`Übersicht aller Abteilungen · ${displayedTotal} Geräte gesamt`}
+        subtitle={`Übersicht aller Abteilungen · ${lagerbestandTotal} Geräte im Lagerbestand · ${counts.produktion} in Produktion`}
         noBreadcrumbs
-        meta={<InfinityStatusBadge kind="done" label={`${displayedTotal} Geräte`} />}
+        meta={<InfinityStatusBadge kind="done" label={`${lagerbestandTotal} Lagerbestand`} />}
       />
 
       {/* Suche */}
