@@ -3519,6 +3519,13 @@ export type Database = {
             referencedRelation: "esc_departments"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "esc_email_templates_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "esc_public_departments"
+            referencedColumns: ["id"]
+          },
         ]
       }
       esc_employee_departments: {
@@ -3558,6 +3565,13 @@ export type Database = {
             columns: ["department_id"]
             isOneToOne: false
             referencedRelation: "esc_departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "esc_employee_departments_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "esc_public_departments"
             referencedColumns: ["id"]
           },
         ]
@@ -3838,6 +3852,13 @@ export type Database = {
             referencedRelation: "esc_departments"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "esc_event_types_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "esc_public_departments"
+            referencedColumns: ["id"]
+          },
         ]
       }
       esc_events: {
@@ -3979,10 +4000,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "esc_events_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "esc_public_departments"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "esc_events_event_type_id_fkey"
             columns: ["event_type_id"]
             isOneToOne: false
             referencedRelation: "esc_event_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "esc_events_event_type_id_fkey"
+            columns: ["event_type_id"]
+            isOneToOne: false
+            referencedRelation: "esc_public_event_types"
             referencedColumns: ["id"]
           },
           {
@@ -4055,6 +4090,13 @@ export type Database = {
             columns: ["department_id"]
             isOneToOne: false
             referencedRelation: "esc_departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "esc_ics_tokens_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "esc_public_departments"
             referencedColumns: ["id"]
           },
         ]
@@ -4142,10 +4184,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "esc_public_bookings_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "esc_public_departments"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "esc_public_bookings_event_type_id_fkey"
             columns: ["event_type_id"]
             isOneToOne: false
             referencedRelation: "esc_event_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "esc_public_bookings_event_type_id_fkey"
+            columns: ["event_type_id"]
+            isOneToOne: false
+            referencedRelation: "esc_public_event_types"
             referencedColumns: ["id"]
           },
         ]
@@ -15287,6 +15343,102 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: true
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      esc_public_departments: {
+        Row: {
+          color: string | null
+          default_duration_minutes: number | null
+          default_location: string | null
+          description: string | null
+          icon: string | null
+          id: string | null
+          is_active: boolean | null
+          is_public_bookable: boolean | null
+          name: string | null
+          slug: string | null
+        }
+        Insert: {
+          color?: string | null
+          default_duration_minutes?: number | null
+          default_location?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          is_public_bookable?: boolean | null
+          name?: string | null
+          slug?: string | null
+        }
+        Update: {
+          color?: string | null
+          default_duration_minutes?: number | null
+          default_location?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          is_public_bookable?: boolean | null
+          name?: string | null
+          slug?: string | null
+        }
+        Relationships: []
+      }
+      esc_public_event_types: {
+        Row: {
+          color: string | null
+          default_duration_minutes: number | null
+          department_id: string | null
+          description: string | null
+          icon: string | null
+          id: string | null
+          is_active: boolean | null
+          is_public_bookable: boolean | null
+          name: string | null
+          requires_confirmation_default: boolean | null
+          slug: string | null
+        }
+        Insert: {
+          color?: string | null
+          default_duration_minutes?: number | null
+          department_id?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          is_public_bookable?: boolean | null
+          name?: string | null
+          requires_confirmation_default?: boolean | null
+          slug?: string | null
+        }
+        Update: {
+          color?: string | null
+          default_duration_minutes?: number | null
+          department_id?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          is_public_bookable?: boolean | null
+          name?: string | null
+          requires_confirmation_default?: boolean | null
+          slug?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "esc_event_types_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "esc_departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "esc_event_types_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "esc_public_departments"
             referencedColumns: ["id"]
           },
         ]
