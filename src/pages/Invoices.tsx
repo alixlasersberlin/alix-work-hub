@@ -645,13 +645,51 @@ export default function Invoices() {
         </DataCard>
       </div>
 
+      <div className="flex flex-wrap items-center gap-2 mb-3">
+        <div className="inline-flex items-center rounded-lg border border-border bg-secondary p-0.5">
+          <Button
+            type="button"
+            size="sm"
+            variant={viewMode === 'accounts' ? 'default' : 'ghost'}
+            className="h-8 px-3 gap-1.5"
+            onClick={() => setViewModePersist('accounts')}
+          >
+            <Users className="w-3.5 h-3.5" /> Nach Kundenkonto
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={viewMode === 'list' ? 'default' : 'ghost'}
+            className="h-8 px-3 gap-1.5"
+            onClick={() => setViewModePersist('list')}
+          >
+            <FileText className="w-3.5 h-3.5" /> Rechnungsliste
+          </Button>
+        </div>
+        {viewMode === 'list' && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">Sortierung:</span>
+            <Select value={listSort} onValueChange={(v) => setListSortPersist(v as 'number' | 'date')}>
+              <SelectTrigger className="w-[220px] h-8"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="date">Datum (absteigend)</SelectItem>
+                <SelectItem value="number">Rechnungsnummer (absteigend)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+      </div>
+
       <ListToolbar
         search={search}
         onSearchChange={setSearch}
         pageSize={pageSize}
         onPageSizeChange={setPageSize}
-        total={accounts.length}
-        visible={Math.min(accounts.length, pageSize === 'all' ? accounts.length : pageSize)}
+        total={viewMode === 'accounts' ? accounts.length : flatRows.length}
+        visible={Math.min(
+          viewMode === 'accounts' ? accounts.length : flatRows.length,
+          pageSize === 'all' ? (viewMode === 'accounts' ? accounts.length : flatRows.length) : pageSize,
+        )}
         placeholder="Suche: Rechnungsnr., Auftragsnr., Name, Stadt, PLZ, Betrag…"
       >
         <div className="flex items-center gap-2">
@@ -667,10 +705,12 @@ export default function Invoices() {
             </SelectContent>
           </Select>
         </div>
-        <div className="flex gap-2">
-          <Button size="sm" variant="outline" onClick={expandAll}>Alle öffnen</Button>
-          <Button size="sm" variant="outline" onClick={collapseAll}>Alle schließen</Button>
-        </div>
+        {viewMode === 'accounts' && (
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={expandAll}>Alle öffnen</Button>
+            <Button size="sm" variant="outline" onClick={collapseAll}>Alle schließen</Button>
+          </div>
+        )}
       </ListToolbar>
       {progress && <div className="text-xs text-primary mb-3">{progress}</div>}
 
