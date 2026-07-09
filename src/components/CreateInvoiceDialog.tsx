@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { FileText, Loader2, ExternalLink, X, Plus, Trash2 } from 'lucide-react';
+import { nextNumber } from '@/lib/number-ranges';
 
 type Props = {
   order: any;
