@@ -679,7 +679,7 @@ export default function Invoices() {
     setProgress('Starte Import…');
     try {
       let page = 1;
-      let totalImported = 0, totalUpdated = 0, totalFailed = 0, totalSkipped = 0;
+      let totalImported = 0, totalUpdated = 0, totalFailed = 0, totalSkipped = 0, totalDuplicates = 0;
       for (let i = 0; i < 100; i++) {
         const { data, error } = await supabase.functions.invoke('sync-zoho-invoices', {
           body: { source_system: 'zoho_eu_1', date_from: '2025-01-01', page, max_pages: 1, per_page: 100, exclude_profile_name: 'SEPA Ratenzahler' },
@@ -693,14 +693,15 @@ export default function Invoices() {
         totalUpdated += data?.updated ?? 0;
         totalFailed += data?.failed ?? 0;
         totalSkipped += data?.skipped_sepa ?? 0;
-        setProgress(`Seite ${page} • Neu: ${totalImported} • Aktualisiert: ${totalUpdated} • SEPA übersprungen: ${totalSkipped}`);
+        totalDuplicates += data?.duplicates ?? 0;
+        setProgress(`Seite ${page} • Neu: ${totalImported} • Aktualisiert: ${totalUpdated} • Duplikate: ${totalDuplicates} • SEPA übersprungen: ${totalSkipped}`);
         if (!data?.has_more) break;
         page = (data?.last_page ?? page) + 1;
         await new Promise((r) => setTimeout(r, 1500));
       }
       toast({
         title: 'Import abgeschlossen',
-        description: `Neu: ${totalImported} • Aktualisiert: ${totalUpdated} • SEPA übersprungen: ${totalSkipped} • Fehler: ${totalFailed}`,
+        description: `Neu: ${totalImported} • Aktualisiert: ${totalUpdated} • Duplikate übersprungen: ${totalDuplicates} • SEPA übersprungen: ${totalSkipped} • Fehler: ${totalFailed}`,
       });
       await fetchRows();
     } catch (e: any) {

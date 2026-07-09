@@ -216,7 +216,7 @@ Deno.serve(async (req) => {
 
     const authH = { Authorization: `Zoho-oauthtoken ${token}` };
 
-    let imported = 0, updated = 0, failed = 0;
+    let imported = 0, updated = 0, failed = 0, duplicates = 0;
     let profilesProcessed = 0;
     let pPage = profilesPage;
     let profilesHaveMore = true;
@@ -267,6 +267,7 @@ Deno.serve(async (req) => {
           for (const inv of invoices) {
             try {
               const invId = String(inv.invoice_id);
+              const invNumber: string | null = inv.invoice_number ?? null;
               const billing = inv.billing_address ?? null;
               const city = billing?.city ?? inv.billing_city ?? null;
 
@@ -274,7 +275,7 @@ Deno.serve(async (req) => {
                 source_system: sourceSystem,
                 zoho_invoice_id: invId,
                 zoho_recurring_invoice_id: recurringId,
-                invoice_number: inv.invoice_number ?? null,
+                invoice_number: invNumber,
                 reference_number: inv.reference_number ?? null,
                 customer_name: inv.customer_name ?? profile.customer_name ?? null,
                 customer_id: (inv.customer_id ?? profile.customer_id)?.toString() ?? null,
@@ -293,21 +294,50 @@ Deno.serve(async (req) => {
                 synced_at: new Date().toISOString(),
               };
 
-              const { data: existing } = await admin
-                .from("zoho_recurring_invoices")
-                .select("id")
-                .eq("source_system", sourceSystem)
-                .eq("zoho_invoice_id", invId)
-                .maybeSingle();
+              // Duplikatscheck: gleiche Rechnungsnummer bereits vorhanden?
+              if (invNumber) {
+                const { data: dupNum } = await admin
+                  .from("zoho_recurring_invoices")
+                  .select("id, zoho_invoice_id")
+                  .eq("source_system", sourceSystem)
+                  .eq("invoice_number", invNumber)
+                  .neq("zoho_invoice_id", invId)
+                  .limit(1)
+                  .maybeSingle();
+                if (dupNum) {
+                  console.warn(
+                    `Duplikat übersprungen (recurring): invoice_number=${invNumber} existiert bereits als zoho_invoice_id=${dupNum.zoho_invoice_id}`,
+                  );
+                  duplicates++;
+                  continue;
+                }
+                const { data: dupOnce } = await admin
+                  .from("zoho_invoices")
+                  .select("id")
+                  .eq("source_system", sourceSystem)
+                  .eq("invoice_number", invNumber)
+                  .limit(1)
+                  .maybeSingle();
+                if (dupOnce) {
+                  console.warn(
+                    `Duplikat übersprungen (recurring): invoice_number=${invNumber} existiert bereits als einmalige Rechnung`,
+                  );
+                  duplicates++;
+                  continue;
+                }
+              }
 
-              if (existing) {
-                const { error } = await admin.from("zoho_recurring_invoices").update(payload).eq("id", existing.id);
-                if (error) throw error;
-                updated++;
-              } else {
-                const { error } = await admin.from("zoho_recurring_invoices").insert(payload);
-                if (error) throw error;
+              const { data: upserted, error } = await admin
+                .from("zoho_recurring_invoices")
+                .upsert(payload, { onConflict: "source_system,zoho_invoice_id" })
+                .select("id, created_at, updated_at")
+                .single();
+              if (error) throw error;
+              if (upserted && upserted.created_at && upserted.updated_at
+                  && new Date(upserted.updated_at).getTime() - new Date(upserted.created_at).getTime() < 2000) {
                 imported++;
+              } else {
+                updated++;
               }
             } catch (e: any) {
               console.error("Recurring invoice sync failed:", e?.message);
@@ -326,6 +356,7 @@ Deno.serve(async (req) => {
       imported,
       updated,
       failed,
+      duplicates,
       profiles_processed: profilesProcessed,
       last_profile_page: pPage - 1,
       profiles_have_more: profilesHaveMore,
