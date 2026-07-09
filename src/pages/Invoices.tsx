@@ -113,7 +113,8 @@ function fmtDate(d: string | null) {
 
 export default function Invoices() {
   const { roles } = useAuth();
-  const isAdmin = roles.includes('Admin') || roles.includes('Super Admin');
+  const isSuperAdmin = roles.includes('Super Admin');
+  const isAdmin = roles.includes('Admin') || isSuperAdmin;
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
