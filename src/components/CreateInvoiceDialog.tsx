@@ -59,8 +59,38 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [createdId, setCreatedId] = useState<string | null>(null);
+  const [existingInvoice, setExistingInvoice] = useState<{ id: string; invoice_number: string | null } | null>(null);
+  const [checking, setChecking] = useState(true);
   const savingRef = useRef(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
+
+  const orderNumber: string | null = order?.order_number ?? null;
+  const orderId: string | null = order?.id ?? null;
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!orderNumber && !orderId) { setChecking(false); return; }
+      setChecking(true);
+      let q = supabase.from('zoho_invoices').select('id, invoice_number, reference_number, raw_data').limit(1);
+      if (orderNumber) q = q.eq('reference_number', orderNumber);
+      const { data } = await q;
+      let found = (data ?? [])[0] ?? null;
+      if (!found && orderId) {
+        const { data: d2 } = await supabase
+          .from('zoho_invoices')
+          .select('id, invoice_number, raw_data')
+          .contains('raw_data', { order_id: orderId } as any)
+          .limit(1);
+        found = (d2 ?? [])[0] ?? null;
+      }
+      if (!cancelled) {
+        setExistingInvoice(found ? { id: found.id, invoice_number: found.invoice_number } : null);
+        setChecking(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [orderNumber, orderId]);
 
   // Editable form fields
   const [invoiceNumber, setInvoiceNumber] = useState('');
