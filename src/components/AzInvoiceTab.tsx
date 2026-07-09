@@ -435,6 +435,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
   }
 
   async function postToBuchhaltung() {
+    if (blockIfDuplicate()) return;
     if (!hasDeposit) {
       toast.error('Keine Anzahlung vereinbart.');
       return;
