@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
     // ---- 1) Zoho invoices that look like deposit invoices (AZ-...) ----
     const { data: zohoInv } = await supabase
       .from('zoho_invoices')
-      .select('id, invoice_number, reference_number, customer_name, billing_address, due_date, total, balance, currency, status')
+      .select('id, invoice_number, reference_number, customer_name, billing_address, due_date, total, balance, currency, status, source_system')
       .or('invoice_number.ilike.AZ%,invoice_number.ilike.anzahlung%')
       .gt('balance', 0)
       .limit(5000);
