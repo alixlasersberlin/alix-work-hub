@@ -15565,6 +15565,7 @@ export type Database = {
         Returns: undefined
       }
       can_access_ai_service: { Args: never; Returns: boolean }
+      can_access_esc_module: { Args: never; Returns: boolean }
       can_access_finance: { Args: never; Returns: boolean }
       can_access_finance_module: { Args: never; Returns: boolean }
       can_access_financing: { Args: never; Returns: boolean }
