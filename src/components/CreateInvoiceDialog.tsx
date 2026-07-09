@@ -40,6 +40,20 @@ function generateInvoiceNumber(source: string | null | undefined) {
 function fmt(n: number) {
   return n.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
+function formatAddress(a: any): string {
+  if (!a) return '';
+  if (typeof a === 'string') return a;
+  if (typeof a !== 'object') return String(a);
+  const line1 = [a.attention, a.company_name].filter(Boolean).join(' · ');
+  const street = [a.address, a.street, a.street2].filter(Boolean).join(', ');
+  const cityLine = [[a.zip || a.postal_code, a.city].filter(Boolean).join(' '), a.state]
+    .filter(Boolean).join(', ');
+  return [line1, street, cityLine, a.country].filter(Boolean).join('\n');
+}
+function pickCity(a: any, fallback?: string): string {
+  if (a && typeof a === 'object' && a.city) return String(a.city);
+  return fallback || '';
+}
 
 export default function CreateInvoiceDialog({ order, customer, items, disabled }: Props) {
   const [open, setOpen] = useState(false);
