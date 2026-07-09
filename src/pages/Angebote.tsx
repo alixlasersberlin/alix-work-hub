@@ -357,7 +357,16 @@ export default function Angebote() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {offers.map(o => {
+                {offers.filter(o => {
+                  const q = search.trim().toLowerCase();
+                  if (!q) return true;
+                  return (
+                    (o.offerNumber || '').toLowerCase().includes(q) ||
+                    (o.customer?.company_name || '').toLowerCase().includes(q) ||
+                    (o.customer?.contact_name || '').toLowerCase().includes(q) ||
+                    (o.customer?.email || '').toLowerCase().includes(q)
+                  );
+                }).map(o => {
                   const isOrder = o.status === 'order';
                   const isSigned = o.status === 'signed';
                   const approval = (o.approvalStatus || 'pending') as 'pending' | 'approved' | 'rejected';
