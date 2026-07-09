@@ -745,8 +745,24 @@ export default function Orders() {
                                 Invoiced
                               </span>
                             )}
+                            {(o as any)._azInvoiceNumber ? (
+                              <span
+                                className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border bg-green-500/15 text-green-400 border-green-500/30"
+                                title={`Anzahlungsrechnung ${(o as any)._azInvoiceNumber} gestellt`}
+                              >
+                                RE-AZ OK
+                              </span>
+                            ) : (
+                              <span
+                                className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border bg-red-500/10 text-red-500 border-red-500/30"
+                                title="Für diesen Auftrag wurde noch keine Anzahlungsrechnung gestellt"
+                              >
+                                RE-AZ FEHLT
+                              </span>
+                            )}
                           </div>
                         </td>
+
                         <td className="px-4 py-3 text-xs">
                           <DrivingTimeCell
                             value={drivingTimes[o.id]}
