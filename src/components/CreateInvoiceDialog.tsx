@@ -63,11 +63,39 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  const closeDialog = () => {
+  function closeDialog() {
     document.body.style.pointerEvents = 'auto';
     setOpen(false);
     setCreatedId(null);
-  };
+  }
+
+  function openDialog() {
+    // Defensively reset any pointer-events lock left behind by another dialog
+    document.body.style.pointerEvents = 'auto';
+    openedAtRef.current = Date.now();
+    console.info('[CreateInvoiceDialog] open');
+    setOpen(true);
+  }
+
+  useEffect(() => {
+    const forceOpen = (event: Event) => {
+      const target = event.target as Element | null;
+      if (!target?.closest('[data-invoice-create-trigger="true"]')) return;
+      if (disabled) return;
+      event.preventDefault();
+      event.stopPropagation();
+      if ('stopImmediatePropagation' in event) event.stopImmediatePropagation();
+      openDialog();
+    };
+    document.addEventListener('pointerdown', forceOpen, true);
+    document.addEventListener('click', forceOpen, true);
+    return () => {
+      document.removeEventListener('pointerdown', forceOpen, true);
+      document.removeEventListener('click', forceOpen, true);
+    };
+    // Native capture fallback: this button must open even if parent layers swallow React clicks.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [disabled]);
 
   const handleCreate = async () => {
     if (!invoiceNumber.trim()) { toast.error('Rechnungsnummer fehlt'); return; }
@@ -113,14 +141,6 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
     }
     setCreatedId(data?.id ?? null);
     toast.success(`Rechnung ${invoiceNumber} erstellt`);
-  };
-
-  const openDialog = () => {
-    // Defensively reset any pointer-events lock left behind by another dialog
-    document.body.style.pointerEvents = 'auto';
-    openedAtRef.current = Date.now();
-    console.info('[CreateInvoiceDialog] open');
-    setOpen(true);
   };
 
   const closeFromBackdrop = () => {
