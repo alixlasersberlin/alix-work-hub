@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FileText, FilePlus, Trash2, Pencil, CheckCircle2, Link2, Copy, Download, ShieldCheck, ShieldX, Clock } from 'lucide-react';
+import { FileText, FilePlus, Trash2, Pencil, CheckCircle2, Link2, Copy, Download, ShieldCheck, ShieldX, Clock, Search } from 'lucide-react';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -32,6 +32,7 @@ export default function Angebote() {
   const isSuperAdmin = hasRole('Super Admin');
   const [offers, setOffers] = useState<OfferSnapshot[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
 
   const [signLinkOpen, setSignLinkOpen] = useState(false);
   const [signLinkLoading, setSignLinkLoading] = useState(false);
@@ -312,7 +313,27 @@ export default function Angebote() {
 
 
       <Card>
-        <CardHeader><CardTitle>Liste ({offers.length})</CardTitle></CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between gap-3">
+          <CardTitle>Liste ({(() => {
+            const q = search.trim().toLowerCase();
+            if (!q) return offers.length;
+            return offers.filter(o =>
+              (o.offerNumber || '').toLowerCase().includes(q) ||
+              (o.customer?.company_name || '').toLowerCase().includes(q) ||
+              (o.customer?.contact_name || '').toLowerCase().includes(q) ||
+              (o.customer?.email || '').toLowerCase().includes(q)
+            ).length;
+          })()})</CardTitle>
+          <div className="relative w-full max-w-xs">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Suche: Name oder Angebotsnr."
+              className="pl-8"
+            />
+          </div>
+        </CardHeader>
         <CardContent className="p-0">
           {loading ? (
             <div className="p-8 text-center text-muted-foreground">Lade Angebote…</div>
@@ -336,7 +357,16 @@ export default function Angebote() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {offers.map(o => {
+                {offers.filter(o => {
+                  const q = search.trim().toLowerCase();
+                  if (!q) return true;
+                  return (
+                    (o.offerNumber || '').toLowerCase().includes(q) ||
+                    (o.customer?.company_name || '').toLowerCase().includes(q) ||
+                    (o.customer?.contact_name || '').toLowerCase().includes(q) ||
+                    (o.customer?.email || '').toLowerCase().includes(q)
+                  );
+                }).map(o => {
                   const isOrder = o.status === 'order';
                   const isSigned = o.status === 'signed';
                   const approval = (o.approvalStatus || 'pending') as 'pending' | 'approved' | 'rejected';
