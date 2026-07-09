@@ -253,9 +253,12 @@ serve(async (req) => {
         to: [to_name ? `${to_name} <${to_email}>` : to_email],
         bcc: (() => {
           const list = Array.isArray(bcc) ? [...bcc] : (bcc ? [bcc] : []);
-          const archives = ['rde@alix-lasers.com', 'archive@alix-operation.de'];
+          const isInvoice = !!invoice_id || String(templateCategory ?? '').toLowerCase() === 'finance';
+          const archives = isInvoice
+            ? ['rde@alix-lasers.com', 'k.trinh@alix-operation.de']
+            : ['rde@alix-lasers.com', 'archive@alix-operation.de'];
           for (const archive of archives) {
-            if (!list.some((e: string) => String(e).trim().toLowerCase() === archive)) list.push(archive);
+            if (!list.some((e: string) => String(e).trim().toLowerCase() === archive.toLowerCase())) list.push(archive);
           }
           return list;
         })(),
