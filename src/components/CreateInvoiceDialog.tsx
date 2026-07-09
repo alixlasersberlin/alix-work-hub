@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useRef, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -34,6 +34,7 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [createdId, setCreatedId] = useState<string | null>(null);
+  const openedAtRef = useRef(0);
 
   const defaultTotal = useMemo(() => {
     const t = Number(order?.total_amount ?? order?.total ?? 0);
@@ -117,8 +118,16 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
   const openDialog = () => {
     // Defensively reset any pointer-events lock left behind by another dialog
     document.body.style.pointerEvents = 'auto';
+    openedAtRef.current = Date.now();
     console.info('[CreateInvoiceDialog] open');
     setOpen(true);
+  };
+
+  const closeFromBackdrop = () => {
+    // If the dialog opens on pointerdown, the browser can dispatch the matching
+    // pointerup/click to the newly mounted backdrop. Ignore that first click.
+    if (Date.now() - openedAtRef.current < 350) return;
+    closeDialog();
   };
 
   return (
@@ -147,7 +156,7 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
         >
           <div
             className="absolute inset-0 bg-background/85 backdrop-blur-sm"
-            onClick={closeDialog}
+            onClick={closeFromBackdrop}
             style={{ zIndex: 0 }}
           />
           <div
