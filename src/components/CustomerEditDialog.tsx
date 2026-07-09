@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { VipBadge } from '@/components/VipBadge';
+import { ensureCaseNumber, nextNumber } from '@/lib/number-ranges';
 
 interface Props {
   customer: any;
