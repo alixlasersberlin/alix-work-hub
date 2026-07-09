@@ -177,6 +177,95 @@ export default function Invoices() {
     }
   };
 
+  const fetchInvoicePdf = async (r: Row): Promise<Blob | null> => {
+    if (!r.zoho_invoice_id) {
+      toast({ title: 'Kein Zoho-Verweis', description: 'Für diese Rechnung ist keine Zoho-ID hinterlegt.', variant: 'destructive' });
+      return null;
+    }
+    setPdfLoadingId(r.id);
+    try {
+      const { data, error } = await supabase.functions.invoke('zoho-invoice-pdf', {
+        body: {
+          zoho_invoice_id: r.zoho_invoice_id,
+          source_system: r.source_system ?? 'zoho_eu_1',
+          recurring: r.source === 'recurring',
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      const b64 = (data as any)?.pdf_base64;
+      if (!b64) throw new Error('Kein PDF erhalten');
+      const bin = atob(b64);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return new Blob([bytes], { type: 'application/pdf' });
+    } catch (e: any) {
+      toast({ title: 'PDF fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
+      return null;
+    } finally {
+      setPdfLoadingId(null);
+    }
+  };
+
+  const handlePrint = async (r: Row) => {
+    const blob = await fetchInvoicePdf(r);
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const w = window.open(url, '_blank');
+    if (w) {
+      w.addEventListener('load', () => { try { w.print(); } catch { /* noop */ } });
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  };
+
+  const handleDownload = async (r: Row) => {
+    const blob = await fetchInvoicePdf(r);
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${r.invoice_number ?? 'rechnung'}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const openEdit = (r: Row) => {
+    setEditRow(r);
+    setEditForm({
+      reference_number: r.reference_number ?? '',
+      due_date: r.due_date ?? '',
+      payment_status: r.payment_status ?? '',
+    });
+  };
+
+  const saveEdit = async () => {
+    if (!editRow) return;
+    setEditSaving(true);
+    try {
+      const table = editRow.source === 'recurring' ? 'zoho_recurring_invoices' : 'zoho_invoices';
+      const { error } = await supabase.from(table).update({
+        reference_number: editForm.reference_number || null,
+        due_date: editForm.due_date || null,
+        payment_status: editForm.payment_status || null,
+      }).eq('id', editRow.id);
+      if (error) throw error;
+      setRows((prev) => prev.map((x) => x.id === editRow.id && x.source === editRow.source ? {
+        ...x,
+        reference_number: editForm.reference_number || null,
+        due_date: editForm.due_date || null,
+        payment_status: editForm.payment_status || null,
+      } : x));
+      toast({ title: 'Gespeichert', description: `Rechnung ${editRow.invoice_number ?? ''} aktualisiert.` });
+      setEditRow(null);
+    } catch (e: any) {
+      toast({ title: 'Speichern fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
   const handleImport = async () => {
     setImporting(true);
     setProgress('Starte Import…');
