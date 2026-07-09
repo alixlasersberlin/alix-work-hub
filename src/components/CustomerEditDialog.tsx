@@ -123,7 +123,15 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
     const isNew = !customer?.id;
     if (isNew) {
       payload.source_system = 'manual';
-      payload.external_customer_id = `manual-${crypto.randomUUID()}`;
+      // Kundennummer aus dem Nummernkreis „customer" ziehen. Der Kreis erbt
+      // die Vorgangs-Stammnummer, sodass Kunde/Angebot/Auftrag/Rechnung
+      // dieselbe Basisnummer teilen und sich nur der Prefix unterscheidet.
+      const cn = await ensureCaseNumber(null);
+      payload.external_customer_id = await nextNumber(
+        'customer',
+        () => `manual-${crypto.randomUUID()}`,
+        { caseNumber: cn },
+      );
     }
     const { error } = isNew
       ? await supabase.from('customers').insert(payload)
