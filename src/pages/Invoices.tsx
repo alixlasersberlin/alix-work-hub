@@ -455,15 +455,38 @@ export default function Invoices() {
                                 {r.payment_status ?? '–'}
                               </Badge>
                             </td>
-                            {isAdmin && (
-                              <td className="px-4 py-2 text-right">
-                                {r.source === 'invoice' && (
+                            <td className="px-4 py-2 text-right whitespace-nowrap">
+                              <div className="inline-flex items-center gap-1">
+                                {isAdmin && (
+                                  <Button size="sm" variant="ghost" title="Bearbeiten" onClick={() => openEdit(r)}>
+                                    <Pencil className="w-3.5 h-3.5" />
+                                  </Button>
+                                )}
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  title="Drucken"
+                                  disabled={pdfLoadingId === r.id}
+                                  onClick={() => handlePrint(r)}
+                                >
+                                  {pdfLoadingId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Printer className="w-3.5 h-3.5" />}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  title="Download PDF"
+                                  disabled={pdfLoadingId === r.id}
+                                  onClick={() => handleDownload(r)}
+                                >
+                                  {pdfLoadingId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                                </Button>
+                                {isAdmin && r.source === 'invoice' && (
                                   <Button size="sm" variant="outline" onClick={() => handleMove(r)}>
                                     <ArrowRightLeft className="w-3.5 h-3.5 mr-1" /> Ratenzahler
                                   </Button>
                                 )}
-                              </td>
-                            )}
+                              </div>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
