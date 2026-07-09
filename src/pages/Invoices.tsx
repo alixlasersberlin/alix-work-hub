@@ -597,6 +597,83 @@ export default function Invoices() {
     }
   };
 
+  const openEmail = async (r: Row) => {
+    setEmailPreparing(true);
+    setEmailRow(r);
+    setEmailForm({
+      to_email: '',
+      to_name: r.customer_name ?? '',
+      subject: `Rechnung ${r.invoice_number ?? ''}`.trim(),
+      body_text: `Sehr geehrte Damen und Herren,\n\nanbei erhalten Sie die Rechnung ${r.invoice_number ?? ''}${r.reference_number ? ` zum Auftrag ${r.reference_number}` : ''}.\n\nBei Rückfragen stehen wir Ihnen gerne zur Verfügung.\n\nMit freundlichen Grüßen\nAlix Lasers`,
+    });
+    try {
+      if (r.customer_id) {
+        const { data: c } = await supabase
+          .from('customers')
+          .select('email, contact_name, company_name')
+          .eq('external_customer_id', r.customer_id)
+          .maybeSingle();
+        if (c) {
+          setEmailForm((f) => ({
+            ...f,
+            to_email: c.email ?? '',
+            to_name: c.company_name ?? c.contact_name ?? f.to_name,
+          }));
+        }
+      }
+    } finally {
+      setEmailPreparing(false);
+    }
+  };
+
+  const sendEmail = async () => {
+    if (!emailRow) return;
+    if (!emailForm.to_email) {
+      toast({ title: 'Empfänger fehlt', description: 'Bitte E-Mail-Adresse angeben.', variant: 'destructive' });
+      return;
+    }
+    setEmailSending(true);
+    try {
+      const blob = await fetchInvoicePdf(emailRow);
+      if (!blob) throw new Error('PDF konnte nicht erzeugt werden');
+      const buf = await blob.arrayBuffer();
+      const bytes = new Uint8Array(buf);
+      let binary = '';
+      const chunk = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunk) {
+        binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+      }
+      const b64 = btoa(binary);
+      const { data, error } = await supabase.functions.invoke('send-mail', {
+        body: {
+          to_email: emailForm.to_email,
+          to_name: emailForm.to_name || null,
+          from_email: 'finance@alixwork.de',
+          from_name: 'Alix Lasers Finance',
+          subject: emailForm.subject,
+          body_text: emailForm.body_text,
+          body_html: `<pre style="font-family:Arial,sans-serif;font-size:14px;white-space:pre-wrap;margin:0">${emailForm.body_text.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c] as string))}</pre>`,
+          invoice_id: emailRow.zoho_invoice_id ?? null,
+          customer_id: emailRow.customer_id ?? null,
+          category: 'finance',
+          attachments: [{
+            filename: `${emailRow.invoice_number ?? 'rechnung'}.pdf`,
+            content: b64,
+            contentType: 'application/pdf',
+          }],
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast({ title: 'E-Mail versendet', description: `Rechnung ${emailRow.invoice_number ?? ''} an ${emailForm.to_email}` });
+      setEmailRow(null);
+    } catch (e: any) {
+      toast({ title: 'Versand fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
+    } finally {
+      setEmailSending(false);
+    }
+  };
+
   const handleImport = async () => {
     setImporting(true);
     setProgress('Starte Import…');
