@@ -107,7 +107,7 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
 
   const openDialog = useCallback(() => {
-    if (disabled || createdId) return;
+    if (disabled || createdId || existingInvoice) return;
     // Prefill
     setInvoiceNumber(generateInvoiceNumber(order?.source_system));
     setInvoiceDate(todayISO());
