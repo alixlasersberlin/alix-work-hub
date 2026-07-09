@@ -230,7 +230,7 @@ export default function Invoices() {
     // Optional Kunde nachladen für Adresse
     let customer: any = null;
     if (full.customer_id) {
-      const { data: c } = await supabase.from('customers').select('*').eq('zoho_customer_id', full.customer_id).maybeSingle();
+      const { data: c } = await supabase.from('customers').select('*').eq('external_customer_id', full.customer_id).maybeSingle();
       customer = c;
     }
     const raw: any = full.raw_data ?? {};
