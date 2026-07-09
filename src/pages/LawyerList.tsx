@@ -40,7 +40,7 @@ export default function LawyerList() {
   const [reasonFilter, setReasonFilter] = useState<string>('all');
   const navigate = useNavigate();
   const { hasRole } = useAuth();
-  const canEdit = hasRole('Admin') || hasRole('Super Admin') || hasRole('Auftragsverwaltung');
+  const canEdit = hasRole('Admin') || hasRole('Super Admin');
   const atOnly = useAtOnly();
 
   useEffect(() => {
