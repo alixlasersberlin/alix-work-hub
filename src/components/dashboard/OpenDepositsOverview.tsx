@@ -93,7 +93,7 @@ export function OpenDepositsOverview() {
               <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Lade…
             </div>
           ) : rows.length === 0 ? (
-            <EmptyState icon={Wallet} message="Keine offenen Anzahlungen." />
+            <EmptyState icon={Wallet} title="Keine offenen Anzahlungen." compact />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
