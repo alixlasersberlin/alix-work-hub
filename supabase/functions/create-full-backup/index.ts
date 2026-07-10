@@ -201,7 +201,7 @@ async function uploadJson(
       });
     if (!error) return size;
     lastErr = error.message || String(error);
-    const transient = /Service Unavailable|503|502|504|520|521|522|524|fetch failed|network|timeout|<!DOCTYPE|Web server|Cloudflare/i.test(lastErr);
+    const transient = /Service Unavailable|503|502|504|520|521|522|524|fetch failed|network|timeout|<!DOCTYPE|<html|Web server|Cloudflare|Unexpected token|not valid JSON/i.test(lastErr);
     if (!transient || attempt === 6) throw new Error(`Upload ${path}: ${lastErr}`);
     await new Promise((r) => setTimeout(r, Math.min(500 * 2 ** (attempt - 1), 8000)));
   }
@@ -255,7 +255,7 @@ async function uploadNdjsonPart(
       });
     if (!error) return size;
     lastErr = error.message || String(error);
-    const transient = /Service Unavailable|503|502|504|520|521|522|524|fetch failed|network|timeout|<!DOCTYPE|Web server|Cloudflare/i.test(lastErr);
+    const transient = /Service Unavailable|503|502|504|520|521|522|524|fetch failed|network|timeout|<!DOCTYPE|<html|Web server|Cloudflare|Unexpected token|not valid JSON/i.test(lastErr);
     if (!transient || attempt === 6) throw new Error(`Upload ${path}: ${lastErr}`);
     await new Promise((r) => setTimeout(r, Math.min(500 * 2 ** (attempt - 1), 8000)));
   }
@@ -660,7 +660,7 @@ async function processBackupStep(params: {
               .range(state.rowOffset, state.rowOffset + pageSize - 1);
             if (res.error) {
               lastErr = res.error.message;
-              const transient = /520|521|522|524|<!DOCTYPE|Web server|Cloudflare|fetch failed|network|timeout/i.test(lastErr);
+              const transient = /502|503|504|520|521|522|524|<!DOCTYPE|<html|Web server|Cloudflare|fetch failed|network|timeout|Unexpected token|not valid JSON/i.test(lastErr);
               if (!transient || attempt === 5) throw new Error(`Tabelle ${table}: ${lastErr}`);
             } else {
               data = res.data as unknown[];
@@ -668,7 +668,7 @@ async function processBackupStep(params: {
             }
           } catch (e) {
             lastErr = e instanceof Error ? e.message : String(e);
-            const transient = /520|521|522|524|<!DOCTYPE|Web server|Cloudflare|fetch failed|network|timeout/i.test(lastErr);
+            const transient = /502|503|504|520|521|522|524|<!DOCTYPE|<html|Web server|Cloudflare|fetch failed|network|timeout|Unexpected token|not valid JSON/i.test(lastErr);
             if (!transient || attempt === 5) throw new Error(`Tabelle ${table}: ${lastErr}`);
           }
           await new Promise((r) => setTimeout(r, Math.min(1000 * 2 ** (attempt - 1), 8000)));
@@ -817,7 +817,20 @@ async function processBackupStep(params: {
     };
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : String(err);
-    console.error("Backup failed:", errorMsg);
+    console.error("Backup step failed:", errorMsg);
+    const transient = /502|503|504|520|521|522|524|<!DOCTYPE|<html|Web server|Cloudflare|fetch failed|network|timeout|Unexpected token|not valid JSON|invalid JSON|empty file|transient storage/i.test(errorMsg);
+    if (transient) {
+      // Re-queue instead of marking the whole run failed — Supabase Storage /
+      // Cloudflare gateway HTML responses are recoverable.
+      await updateBackupMessage(
+        adminClient,
+        backupId,
+        `Transienter Fehler, wird erneut versucht: ${errorMsg.slice(0, 200)}`,
+      );
+      await new Promise((r) => setTimeout(r, 5000));
+      triggerNextStep(adminClient, params);
+      return { success: true, accepted: true, backup_id: backupId, backup_status: "running" };
+    }
     await failBackup({ adminClient, backupId, source, scope, errorMsg });
     throw err;
   }
