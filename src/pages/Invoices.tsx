@@ -1328,7 +1328,7 @@ export default function Invoices() {
       </Dialog>
 
       <Dialog open={!!bookRow} onOpenChange={(o) => !o && !bookSaving && setBookRow(null)}>
-        <DialogContent onInteractOutside={(e) => e.preventDefault()}>
+        <DialogContent onInteractOutside={(e) => e.preventDefault()} onPointerDownOutside={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-400" />
