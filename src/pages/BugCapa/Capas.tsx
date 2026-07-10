@@ -157,7 +157,7 @@ export default function Capas() {
       }
     >
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="flex h-auto max-h-[calc(100dvh-2rem)] w-[min(720px,calc(100dvw-2rem))] flex-col gap-0 overflow-hidden p-0 sm:rounded-lg">
+        <DialogContent className="flex h-auto max-h-[calc(100dvh-2rem)] w-[min(720px,calc(100dvw-2rem))] max-w-none flex-col gap-0 overflow-hidden p-0 sm:rounded-lg">
           <DialogHeader className="flex-shrink-0 border-b border-border px-5 py-4 pr-12">
             <DialogTitle>Neue CAPA anlegen</DialogTitle>
             <DialogDescription>Erfasst eine neue Korrektur- und Vorbeugemaßnahme.</DialogDescription>
@@ -245,7 +245,7 @@ export default function Capas() {
         title={detail ? `${detail.capa_number} – ${detail.title}` : ''}
       />
       <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
-        <DialogContent className="flex h-auto max-h-[calc(100dvh-2rem)] w-[min(720px,calc(100dvw-2rem))] flex-col gap-0 overflow-hidden p-0 sm:rounded-lg">
+        <DialogContent className="flex h-auto max-h-[calc(100dvh-2rem)] w-[min(720px,calc(100dvw-2rem))] max-w-none flex-col gap-0 overflow-hidden p-0 sm:rounded-lg">
           <DialogHeader className="flex-shrink-0 border-b border-border px-5 py-4 pr-12">
             <DialogTitle>CAPA bearbeiten {editing?.capa_number}</DialogTitle>
             <DialogDescription>Aktualisiert die CAPA-Stammdaten und Maßnahmenbeschreibung.</DialogDescription>
