@@ -486,7 +486,17 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
 
       }
       const { data, error } = await supabase.from('production_orders').insert(payload).select('id').single();
-      if (error || !data) { savingRef.current = false; toast.error(error?.message || 'Fehler'); setSaving(false); return null; }
+      if (error || !data) {
+        savingRef.current = false;
+        const msg = (error?.message || '').toLowerCase();
+        if (msg.includes('production_orders_unique_regular_per_order') || (error?.code === '23505' && msg.includes('order_id'))) {
+          toast.error(`Für Auftrag ${selectedOrder?.order_number ?? ''} existiert bereits eine Produktionsbestellung. Pro Auftrag ist nur eine reguläre Bestellung erlaubt (Reklamationen ausgenommen).`);
+        } else {
+          toast.error(error?.message || 'Fehler');
+        }
+        setSaving(false);
+        return null;
+      }
       poId = data.id;
       // Falls dieser Auftrag als "Restbestellung" in Bestellung möglich markiert war, Marker erledigen
       if (selectedOrder?.id) {
