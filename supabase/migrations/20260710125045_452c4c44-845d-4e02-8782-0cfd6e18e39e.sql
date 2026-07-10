@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "finance_deposits_select_dashboard" ON public.finance_deposits;
