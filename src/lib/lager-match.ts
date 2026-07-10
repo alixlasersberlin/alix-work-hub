@@ -53,6 +53,11 @@ function isAusstellung(notes: string | null | undefined, model: string | null | 
   return /ausstellung|demo(gerät|geraet)?|showroom|messe/.test(hay);
 }
 
+function isInReparatur(notes: string | null | undefined): boolean {
+  return /\[Reparatur:\s*[^\]]+\]/i.test(notes ?? '');
+}
+
+
 export function deviceDepartment(device: LagerDeviceRow): Department | null {
   const status = getStatus(device.notes);
   if (status === 'Transfer') return 'Unterwegs';
