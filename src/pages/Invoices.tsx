@@ -607,6 +607,7 @@ export default function Invoices() {
         due_date: editForm.due_date || null,
         payment_status: editForm.payment_status || null,
       };
+      if (editForm.status) patch.status = editForm.status;
       if (isSuperAdmin) {
         patch.invoice_number = editForm.invoice_number || null;
         patch.customer_name = editForm.customer_name || null;
