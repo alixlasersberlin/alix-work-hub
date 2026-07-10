@@ -479,7 +479,7 @@ export default function Detailsuche() {
       <PageHeader
         icon={SearchCheck}
         title="Detailsuche"
-        subtitle="Suche nach Name, PLZ, Wohnort, Auftragsnummer, Telefonnummer, Modell oder Seriennummer"
+        subtitle="Suche nach Name, PLZ, Wohnort, Auftragsnummer, Telefonnummer, Modell, Seriennummer oder Notiz-Stichwort"
         noBreadcrumbs
       />
 
