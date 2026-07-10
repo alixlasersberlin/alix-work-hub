@@ -593,6 +593,7 @@ export default function Invoices() {
       invoice_date: r.invoice_date ?? '',
       total: r.total != null ? String(r.total) : '',
       balance: r.balance != null ? String(r.balance) : '',
+      status: r.status ?? '',
     });
   };
 
