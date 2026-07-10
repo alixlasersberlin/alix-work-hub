@@ -784,6 +784,57 @@ export default function Invoices() {
   const expandAll = () => setExpanded(Object.fromEntries(accounts.map((a) => [a.key, true])));
   const collapseAll = () => setExpanded({});
 
+  const openBook = (r: Row) => {
+    setBookRow(r);
+    setBookMethod('Überweisung');
+    setBookDate(new Date().toISOString().slice(0, 10));
+  };
+
+  const submitBook = async () => {
+    if (!bookRow) return;
+    setBookSaving(true);
+    try {
+      const table = bookRow.source === 'recurring' ? 'zoho_recurring_invoices' : 'zoho_invoices';
+      const patch: any = {
+        payment_status: 'Bezahlt',
+        balance: 0,
+        last_payment_date: bookDate,
+      };
+      const { error } = await (supabase as any).from(table).update(patch).eq('id', bookRow.id);
+      if (error) throw error;
+
+      const gross = Number(bookRow.total ?? 0);
+      const net = +(gross / 1.19).toFixed(2);
+      const vat = +(gross - net).toFixed(2);
+      const jr = await postPaymentToJournal({
+        customer_id: bookRow.customer_id,
+        invoice_number: bookRow.invoice_number,
+        reference: bookRow.invoice_number,
+        amount_gross: gross,
+        amount_net: net,
+        amount_vat: vat,
+        booking_date: bookDate,
+        description: `Zahlung Rechnung ${bookRow.invoice_number ?? ''} (${bookMethod}) – ${bookRow.customer_name ?? ''}`.trim(),
+        source_table: table,
+        source_id: bookRow.id,
+        vorgang: 'Zahlung',
+        payment_method: bookMethod,
+      });
+      if (!jr.ok) throw new Error(jr.error || 'Journal-Buchung fehlgeschlagen');
+
+      setRows((prev) => prev.map((x) => (x.id === bookRow.id && x.source === bookRow.source
+        ? { ...x, payment_status: 'Bezahlt', balance: 0, last_payment_date: bookDate }
+        : x)));
+      toast({ title: 'Gebucht', description: `Rechnung ${bookRow.invoice_number ?? ''} als bezahlt markiert und im Buchungsjournal verbucht.` });
+      setBookRow(null);
+    } catch (e: any) {
+      toast({ title: 'Fehler', description: e?.message || String(e), variant: 'destructive' });
+    } finally {
+      setBookSaving(false);
+    }
+  };
+
+
   return (
     <div className="p-4 sm:p-6">
       <PageHeader
