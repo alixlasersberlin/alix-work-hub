@@ -229,21 +229,45 @@ export default function OrdersFreiBestellung() {
     ]);
     const usedOrderIds = new Set(((existing ?? []).map((p: any) => p.order_id)));
     const hiddenOrderIds = new Set(((hiddenNotes ?? []) as any[]).map(n => n.order_id));
-    // Aufträge mit bereits reservierten Lagergeräten (außer Leihgeräten) ausblenden —
-    // die Reservierung ersetzt die Bestellung.
-    const reservedOrderIds = new Set<string>();
+    // Reservierte Gerätezählung pro Auftrag (Leihgeräte ausgenommen).
+    const reservedCountByOrder = new Map<string, number>();
     for (const d of (reservedDevs ?? []) as any[]) {
       if (!d.reserved_order_id) continue;
       if (isLoanerDevice(d.notes)) continue;
-      reservedOrderIds.add(d.reserved_order_id);
+      reservedCountByOrder.set(d.reserved_order_id, (reservedCountByOrder.get(d.reserved_order_id) ?? 0) + 1);
     }
+
+    // Erforderliche Gerätestückzahl pro Auftrag (Summe der order_items.quantity).
+    // Wir laden Items schon jetzt, damit wir Aufträge nur dann ausblenden, wenn
+    // ALLE Geräte reserviert sind (sonst bleiben sie sichtbar).
+    const candidateIds = Array.from(new Set([
+      ...((data ?? []) as any[]).map((o: any) => o.id),
+      ...((restData ?? []) as any[]).map((o: any) => o.id),
+    ]));
+    const requiredByOrder = new Map<string, number>();
+    if (candidateIds.length > 0) {
+      const { data: qtyRows } = await supabase
+        .from('order_items')
+        .select('order_id, quantity')
+        .in('order_id', candidateIds);
+      for (const r of (qtyRows ?? []) as any[]) {
+        const q = Number(r.quantity ?? 1) || 1;
+        requiredByOrder.set(r.order_id, (requiredByOrder.get(r.order_id) ?? 0) + q);
+      }
+    }
+    const isFullyReserved = (orderId: string) => {
+      const req = requiredByOrder.get(orderId) ?? 0;
+      const res = reservedCountByOrder.get(orderId) ?? 0;
+      return req > 0 && res >= req;
+    };
+
     // Aufträge mit bereits angelegter Production-Order werden ausgeblendet —
     // sie liegen jetzt bei „Factory Orders". Ausnahme: Restbestellung-Marker
     // (Teilgeliefert) sollen weiterhin sichtbar bleiben.
     const baseFiltered = (data ?? []).filter((o: any) =>
-      !pendingRestIds.has(o.id) && !hiddenOrderIds.has(o.id) && !usedOrderIds.has(o.id) && !reservedOrderIds.has(o.id)
+      !pendingRestIds.has(o.id) && !hiddenOrderIds.has(o.id) && !usedOrderIds.has(o.id) && !isFullyReserved(o.id)
     );
-    const restMapped = (restData ?? []).map((o: any) => ({ ...o, _isRestbestellung: true })).filter((o: any) => !hiddenOrderIds.has(o.id) && !reservedOrderIds.has(o.id));
+    const restMapped = (restData ?? []).map((o: any) => ({ ...o, _isRestbestellung: true })).filter((o: any) => !hiddenOrderIds.has(o.id) && !isFullyReserved(o.id));
     const combined = [...restMapped, ...baseFiltered];
 
 
