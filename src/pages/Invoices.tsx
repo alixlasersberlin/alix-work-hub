@@ -633,6 +633,26 @@ export default function Invoices() {
     openEdit(r);
   };
 
+  const commitDraft = async (r: Row) => {
+    if (!isDraftInvoice(r)) return;
+    try {
+      const table = r.source === 'recurring' ? 'zoho_recurring_invoices' : 'zoho_invoices';
+      const raw = r.raw_data && typeof r.raw_data === 'object' && !Array.isArray(r.raw_data) ? (r.raw_data as any) : {};
+      const patch: any = {
+        status: 'sent',
+        raw_data: { ...raw, is_draft: false },
+      };
+      const { error } = await (supabase as any).from(table).update(patch).eq('id', r.id);
+      if (error) throw error;
+      setRows((prev) => prev.map((x) => (x.id === r.id && x.source === r.source
+        ? { ...x, status: 'sent', raw_data: patch.raw_data }
+        : x)));
+      toast({ title: 'Festgeschrieben', description: `Rechnung ${r.invoice_number ?? ''} wurde festgeschrieben.` });
+    } catch (e: any) {
+      toast({ title: 'Fehler', description: e?.message || String(e), variant: 'destructive' });
+    }
+  };
+
   const saveEdit = async () => {
     if (!editRow) return;
     setEditSaving(true);
@@ -1028,7 +1048,19 @@ export default function Invoices() {
                           <Button size="sm" variant="ghost" title="Download PDF" disabled={pdfLoadingId === r.id} onClick={() => handleDownload(r)}>
                             {pdfLoadingId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
                           </Button>
+                          {isAdmin && isDraftInvoice(r) && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              title="Entwurf festschreiben"
+                              className="h-8 px-2 gap-1 border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
+                              onClick={() => commitDraft(r)}
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5" /> Festschreiben
+                            </Button>
+                          )}
                           {isAdmin && (r.payment_status ?? '').toLowerCase() !== 'bezahlt' && (
+
                             <Button
                               size="sm"
                               variant="outline"
@@ -1176,6 +1208,17 @@ export default function Invoices() {
                                 >
                                   {pdfLoadingId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
                                 </Button>
+                                {isAdmin && isDraftInvoice(r) && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    title="Entwurf festschreiben"
+                                    className="h-8 px-2 gap-1 border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
+                                    onClick={() => commitDraft(r)}
+                                  >
+                                    <CheckCircle2 className="w-3.5 h-3.5" /> Festschreiben
+                                  </Button>
+                                )}
                                 {isAdmin && (r.payment_status ?? '').toLowerCase() !== 'bezahlt' && (
                                   <Button
                                     size="sm"
