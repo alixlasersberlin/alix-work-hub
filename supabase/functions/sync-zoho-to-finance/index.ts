@@ -47,6 +47,10 @@ Deno.serve(async (req) => {
     const lastPaymentByCustomer = new Map<string, string>();
 
     for (const inv of invoices ?? []) {
+      // Entwürfe (draft) werden NICHT an Finance übergeben
+      const invStatus = String((inv as any).status ?? '').toLowerCase();
+      const isDraft = invStatus === 'draft' || (inv as any).raw_data?.is_draft === true;
+      if (isDraft) { txSkipped++; continue; }
       const localCustomerId = inv.customer_id ? custMap.get(String(inv.customer_id)) : null;
       if (!localCustomerId) { txSkipped++; continue; }
       const reference = `zoho:invoice:${inv.source_system ?? 'eu1'}:${inv.zoho_invoice_id}`;
