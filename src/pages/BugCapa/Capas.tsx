@@ -157,27 +157,27 @@ export default function Capas() {
       }
     >
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="flex h-[min(760px,calc(100dvh-3rem))] max-h-[calc(100dvh-3rem)] w-[min(720px,calc(100dvw-3rem))] flex-col gap-0 overflow-hidden p-0 sm:rounded-lg">
+        <DialogContent className="flex h-auto max-h-[calc(100dvh-2rem)] w-[min(720px,calc(100dvw-2rem))] flex-col gap-0 overflow-hidden p-0 sm:rounded-lg">
           <DialogHeader className="flex-shrink-0 border-b border-border px-5 py-4 pr-12">
             <DialogTitle>Neue CAPA anlegen</DialogTitle>
             <DialogDescription>Erfasst eine neue Korrektur- und Vorbeugemaßnahme.</DialogDescription>
           </DialogHeader>
           <div className="grid min-h-0 flex-1 content-start gap-3 overflow-y-auto px-5 py-4">
-            <div><Label>Titel *</Label><Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} autoFocus /></div>
+            <div><Label htmlFor="new-capa-title">Titel *</Label><Input id="new-capa-title" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} autoFocus /></div>
             <div>
-              <Label>Auslöser</Label>
+              <Label htmlFor="new-capa-trigger">Auslöser</Label>
               <Select value={form.trigger_type} onValueChange={v => setForm({ ...form, trigger_type: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger id="new-capa-trigger"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {['bug', 'reklamation', 'audit', 'sonstiges'].map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
-            <div><Label>Ursachenanalyse</Label><Textarea rows={3} value={form.root_cause} onChange={e => setForm({ ...form, root_cause: e.target.value })} /></div>
-            <div><Label>Sofortmaßnahme</Label><Textarea rows={2} value={form.immediate_action} onChange={e => setForm({ ...form, immediate_action: e.target.value })} /></div>
-            <div><Label>Korrekturmaßnahme</Label><Textarea rows={2} value={form.corrective_action} onChange={e => setForm({ ...form, corrective_action: e.target.value })} /></div>
-            <div><Label>Vorbeugemaßnahme</Label><Textarea rows={2} value={form.preventive_action} onChange={e => setForm({ ...form, preventive_action: e.target.value })} /></div>
-            <div><Label>Frist</Label><Input type="date" value={form.due_date} onChange={e => setForm({ ...form, due_date: e.target.value })} /></div>
+            <div><Label htmlFor="new-capa-root-cause">Ursachenanalyse</Label><Textarea id="new-capa-root-cause" rows={3} value={form.root_cause} onChange={e => setForm({ ...form, root_cause: e.target.value })} /></div>
+            <div><Label htmlFor="new-capa-immediate-action">Sofortmaßnahme</Label><Textarea id="new-capa-immediate-action" rows={2} value={form.immediate_action} onChange={e => setForm({ ...form, immediate_action: e.target.value })} /></div>
+            <div><Label htmlFor="new-capa-corrective-action">Korrekturmaßnahme</Label><Textarea id="new-capa-corrective-action" rows={2} value={form.corrective_action} onChange={e => setForm({ ...form, corrective_action: e.target.value })} /></div>
+            <div><Label htmlFor="new-capa-preventive-action">Vorbeugemaßnahme</Label><Textarea id="new-capa-preventive-action" rows={2} value={form.preventive_action} onChange={e => setForm({ ...form, preventive_action: e.target.value })} /></div>
+            <div><Label htmlFor="new-capa-due-date">Frist</Label><Input id="new-capa-due-date" type="date" value={form.due_date} onChange={e => setForm({ ...form, due_date: e.target.value })} /></div>
           </div>
           <DialogFooter className="flex-shrink-0 border-t border-border px-5 py-4">
             <Button variant="ghost" onClick={() => setOpen(false)}>Abbrechen</Button>
@@ -245,27 +245,27 @@ export default function Capas() {
         title={detail ? `${detail.capa_number} – ${detail.title}` : ''}
       />
       <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
-        <DialogContent className="flex h-[min(760px,calc(100dvh-3rem))] max-h-[calc(100dvh-3rem)] w-[min(720px,calc(100dvw-3rem))] flex-col gap-0 overflow-hidden p-0 sm:rounded-lg">
+        <DialogContent className="flex h-auto max-h-[calc(100dvh-2rem)] w-[min(720px,calc(100dvw-2rem))] flex-col gap-0 overflow-hidden p-0 sm:rounded-lg">
           <DialogHeader className="flex-shrink-0 border-b border-border px-5 py-4 pr-12">
             <DialogTitle>CAPA bearbeiten {editing?.capa_number}</DialogTitle>
             <DialogDescription>Aktualisiert die CAPA-Stammdaten und Maßnahmenbeschreibung.</DialogDescription>
           </DialogHeader>
           <div className="grid min-h-0 flex-1 content-start gap-3 overflow-y-auto px-5 py-4">
-            <div><Label>Titel *</Label><Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} /></div>
+            <div><Label htmlFor="edit-capa-title">Titel *</Label><Input id="edit-capa-title" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} /></div>
             <div>
-              <Label>Auslöser</Label>
+              <Label htmlFor="edit-capa-trigger">Auslöser</Label>
               <Select value={form.trigger_type} onValueChange={v => setForm({ ...form, trigger_type: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger id="edit-capa-trigger"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {['bug', 'reklamation', 'audit', 'sonstiges'].map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
-            <div><Label>Ursachenanalyse</Label><Textarea rows={3} value={form.root_cause} onChange={e => setForm({ ...form, root_cause: e.target.value })} /></div>
-            <div><Label>Sofortmaßnahme</Label><Textarea rows={2} value={form.immediate_action} onChange={e => setForm({ ...form, immediate_action: e.target.value })} /></div>
-            <div><Label>Korrekturmaßnahme</Label><Textarea rows={2} value={form.corrective_action} onChange={e => setForm({ ...form, corrective_action: e.target.value })} /></div>
-            <div><Label>Vorbeugemaßnahme</Label><Textarea rows={2} value={form.preventive_action} onChange={e => setForm({ ...form, preventive_action: e.target.value })} /></div>
-            <div><Label>Frist</Label><Input type="date" value={form.due_date} onChange={e => setForm({ ...form, due_date: e.target.value })} /></div>
+            <div><Label htmlFor="edit-capa-root-cause">Ursachenanalyse</Label><Textarea id="edit-capa-root-cause" rows={3} value={form.root_cause} onChange={e => setForm({ ...form, root_cause: e.target.value })} /></div>
+            <div><Label htmlFor="edit-capa-immediate-action">Sofortmaßnahme</Label><Textarea id="edit-capa-immediate-action" rows={2} value={form.immediate_action} onChange={e => setForm({ ...form, immediate_action: e.target.value })} /></div>
+            <div><Label htmlFor="edit-capa-corrective-action">Korrekturmaßnahme</Label><Textarea id="edit-capa-corrective-action" rows={2} value={form.corrective_action} onChange={e => setForm({ ...form, corrective_action: e.target.value })} /></div>
+            <div><Label htmlFor="edit-capa-preventive-action">Vorbeugemaßnahme</Label><Textarea id="edit-capa-preventive-action" rows={2} value={form.preventive_action} onChange={e => setForm({ ...form, preventive_action: e.target.value })} /></div>
+            <div><Label htmlFor="edit-capa-due-date">Frist</Label><Input id="edit-capa-due-date" type="date" value={form.due_date} onChange={e => setForm({ ...form, due_date: e.target.value })} /></div>
           </div>
           <DialogFooter className="flex-shrink-0 border-t border-border px-5 py-4">
             <Button variant="ghost" onClick={() => setEditing(null)}>Abbrechen</Button>
