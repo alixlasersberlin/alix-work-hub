@@ -154,6 +154,7 @@ export default function Invoices() {
   const [bookMethod, setBookMethod] = useState<'Überweisung' | 'Bar' | 'Lastschrift' | 'SEPA'>('Überweisung');
   const [bookDate, setBookDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [bookSaving, setBookSaving] = useState(false);
+  const [bookAmount, setBookAmount] = useState<string>('0');
   const [viewMode, setViewMode] = useState<'accounts' | 'list'>(() => {
     if (typeof window === 'undefined') return 'accounts';
     return (localStorage.getItem('invoices_view_mode') as 'accounts' | 'list') || 'accounts';
