@@ -978,6 +978,7 @@ export default function AngebotErstellen() {
   });
 
   const saveOffer = async (silent = false): Promise<boolean> => {
+    if (isLockedForEdit) { toast.error('Bereits erstelltes Angebot – Änderungen benötigen Freigabe durch Admin oder Super Admin.'); return false; }
     if (!selectedCustomer) { toast.error('Bitte zuerst einen Kunden auswählen.'); return false; }
     const validLines = lines.filter(l => l.name && l.quantity > 0);
     if (validLines.length === 0) { toast.error('Bitte mindestens eine Position erfassen.'); return false; }
