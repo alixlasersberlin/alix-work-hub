@@ -1161,6 +1161,17 @@ export default function Invoices() {
                                 >
                                   {pdfLoadingId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
                                 </Button>
+                                {isAdmin && (r.payment_status ?? '').toLowerCase() !== 'bezahlt' && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    title="Als bezahlt buchen"
+                                    className="h-8 px-2 gap-1 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
+                                    onClick={() => openBook(r)}
+                                  >
+                                    <CheckCircle2 className="w-3.5 h-3.5" /> Buchen
+                                  </Button>
+                                )}
                                 <Button
                                   size="sm"
                                   variant="outline"
