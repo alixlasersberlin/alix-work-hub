@@ -250,7 +250,10 @@ export default function OrdersFreiBestellung() {
 
     // Only Bestand devices
     const bestandOnly = ((freeDevs as FreeDevice[]) ?? []).filter(d =>
-      getStatus(d.notes) === 'Bestand' && !d.delivered_order_id && !isLoanerDevice(d.notes)
+      getStatus(d.notes) === 'Bestand'
+      && !d.delivered_order_id
+      && !isLoanerDevice(d.notes)
+      && !/\[Reparatur:\s*[^\]]+\]/i.test(d.notes ?? '')
     );
     setFreeBestand(bestandOnly);
 
