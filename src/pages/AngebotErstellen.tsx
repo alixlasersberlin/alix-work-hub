@@ -1852,6 +1852,8 @@ export default function AngebotErstellen() {
           variant="outline"
           className="gap-2 border-border"
           onClick={() => { saveOffer(); }}
+          disabled={isLockedForEdit}
+          title={isLockedForEdit ? 'Gesperrt – benötigt Freigabe von Admin/Super Admin' : undefined}
         >
           <Save className="w-4 h-4" />
           Speichern
@@ -1860,6 +1862,8 @@ export default function AngebotErstellen() {
           variant="outline"
           className="gap-2 border-border"
           onClick={async () => { if (await saveOffer()) navigate('/verkauf/angebote'); }}
+          disabled={isLockedForEdit}
+          title={isLockedForEdit ? 'Gesperrt – benötigt Freigabe von Admin/Super Admin' : undefined}
         >
           <Save className="w-4 h-4" />
           Speichern + Schließen
@@ -1868,6 +1872,7 @@ export default function AngebotErstellen() {
           variant="outline"
           className="gap-2 border-border"
           onClick={sendByEmail}
+          disabled={isLockedForEdit}
         >
           <Inbox className="w-4 h-4" />
           Per E-Mail versenden
@@ -1876,6 +1881,7 @@ export default function AngebotErstellen() {
         <Button
           className="gap-2 bg-green-600 hover:bg-green-700 text-white border-0"
           onClick={sendForSignature}
+          disabled={isLockedForEdit}
         >
           <Pencil className="w-4 h-4" />
           Mit Alix Sign zur Unterschrift senden
@@ -1891,11 +1897,17 @@ export default function AngebotErstellen() {
             Selbst bestätigen & in Auftrag wandeln
           </Button>
         )}
-        <Button onClick={generatePDF} className="gold-gradient text-primary-foreground gap-2">
+        <Button
+          onClick={generatePDF}
+          className="gold-gradient text-primary-foreground gap-2"
+          disabled={isLockedForEdit}
+          title={isLockedForEdit ? 'Gesperrt – benötigt Freigabe von Admin/Super Admin' : undefined}
+        >
           <FileDown className="w-4 h-4" />
           Als PDF speichern
         </Button>
       </div>
+
 
 
       {/* Live-PDF-Vorschau */}
