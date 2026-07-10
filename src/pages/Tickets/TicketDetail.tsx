@@ -159,6 +159,7 @@ export default function TicketDetail() {
     if (t.error) { console.error(t.error); toast.error('Ticket nicht gefunden'); }
     const tk = (t.data as Ticket) || null;
     setTicket(tk);
+    setInternalNoteDraft(tk?.internal_note || '');
     setMessages((m.data as Msg[]) || []);
     setAttachments((a.data as Att[]) || []);
     loadLinkedRepair(tk?.repair_order_id || null);
