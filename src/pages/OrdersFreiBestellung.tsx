@@ -315,6 +315,36 @@ export default function OrdersFreiBestellung() {
 
   useEffect(() => { reload(); }, [atOnly]);
 
+  // Live-Aktualisierung: Änderungen an Lager-Reservierungen oder Production Orders
+  // sofort in die Ansicht übernehmen, damit „Bestellung möglich" den echten
+  // Reservierungsstand widerspiegelt (auch nach externem Refresh in anderen Tabs).
+  useEffect(() => {
+    let scheduled = false;
+    const trigger = () => {
+      if (scheduled) return;
+      scheduled = true;
+      setTimeout(() => { scheduled = false; reload(); }, 400);
+    };
+    const channel = supabase
+      .channel('orders-frei-bestellung-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'lager_devices' }, trigger)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'production_orders' }, trigger)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'order_items' }, trigger)
+      .subscribe();
+
+    const onFocus = () => reload();
+    const onVisibility = () => { if (document.visibilityState === 'visible') reload(); };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibility);
+
+    return () => {
+      supabase.removeChannel(channel);
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [atOnly]);
+
   const matchesByOrder = useMemo(() => {
     const m: Record<string, FreeDevice[]> = {};
     for (const o of orders) {
