@@ -281,8 +281,40 @@ export default function Detailsuche() {
             standaloneLager.push({ id: r.id, serial_number: r.serial_number, model_name: r.model_name, notes: r.notes });
           }
         }
+        // route_plans (ausgelieferte / geplante Touren mit Seriennummer)
+        const { data: rpSer } = await supabase
+          .from('route_plans')
+          .select('order_id')
+          .ilike('device_serial_number', `%${trimmed.serial}%`)
+          .not('order_id', 'is', null)
+          .limit(2000);
+        for (const r of (rpSer || []) as any[]) if (r.order_id) serialOrderIds.add(r.order_id);
+
+        // goods_receipts.serial_numbers (Array)
+        const { data: grSer } = await supabase
+          .from('goods_receipts')
+          .select('order_id, serial_numbers')
+          .contains('serial_numbers', [trimmed.serial])
+          .not('order_id', 'is', null)
+          .limit(2000);
+        for (const r of (grSer || []) as any[]) if (r.order_id) serialOrderIds.add(r.order_id);
+        // Fallback: unscharfe Suche über Array via cs-Ähnlichkeit nicht möglich → zusätzlich alle Einträge scannen
+        if (trimmed.serial.length >= 3) {
+          const { data: grAll } = await supabase
+            .from('goods_receipts')
+            .select('order_id, serial_numbers')
+            .not('order_id', 'is', null)
+            .not('serial_numbers', 'is', null)
+            .limit(2000);
+          const kw = trimmed.serial.toLowerCase();
+          for (const r of (grAll || []) as any[]) {
+            const sns: string[] = Array.isArray(r.serial_numbers) ? r.serial_numbers : [];
+            if (sns.some(s => (s || '').toLowerCase().includes(kw))) serialOrderIds.add(r.order_id);
+          }
+        }
+
         setUnassignedLager(standaloneLager);
-        if (serialOrderIds.size === 0) { setHits([]); setLoading(false); return; }
+        if (serialOrderIds.size === 0 && standaloneLager.length === 0) { setHits([]); setLoading(false); return; }
       }
 
       // 1c) Order-IDs via Notiz-Stichwort (order_notes, customer_notes, lager_devices.notes)
