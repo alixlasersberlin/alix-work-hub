@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { FileCheck2, FileDown, Loader2, Mail, CalendarIcon, Printer } from 'lucide-react';
+import { FileCheck2, FileDown, Loader2, Mail, CalendarIcon, Printer, Eye } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { supabase } from '@/integrations/supabase/client';
