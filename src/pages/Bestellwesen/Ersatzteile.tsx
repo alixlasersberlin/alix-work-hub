@@ -277,6 +277,51 @@ export default function BestellwesenErsatzteile() {
           </table>
         </div>
       </Card>
+
+      <Dialog open={!!editRow} onOpenChange={(o) => !o && setEditRow(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Bestellvorschlag ändern</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2">
+              <Label>Teil</Label>
+              <Input value={editForm.part_name || ''} onChange={e => setEditForm({ ...editForm, part_name: e.target.value })} />
+            </div>
+            <div>
+              <Label>Teilenummer</Label>
+              <Input value={editForm.part_number || ''} onChange={e => setEditForm({ ...editForm, part_number: e.target.value })} />
+            </div>
+            <div>
+              <Label>Menge</Label>
+              <Input type="number" min={1} value={editForm.quantity ?? 1} onChange={e => setEditForm({ ...editForm, quantity: e.target.value })} />
+            </div>
+            <div>
+              <Label>Lieferant</Label>
+              <Input value={editForm.supplier || ''} onChange={e => setEditForm({ ...editForm, supplier: e.target.value })} />
+            </div>
+            <div>
+              <Label>Priorität</Label>
+              <Select value={editForm.priority || 'normal'} onValueChange={(v) => setEditForm({ ...editForm, priority: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {['dringend', 'hoch', 'normal', 'niedrig'].map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="col-span-2">
+              <Label>Notiz</Label>
+              <Textarea rows={3} value={editForm.notes || ''} onChange={e => setEditForm({ ...editForm, notes: e.target.value })} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditRow(null)}>Abbrechen</Button>
+            <Button onClick={saveEdit} disabled={savingEdit} className="gold-gradient text-primary-foreground">
+              {savingEdit ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Speichern'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
