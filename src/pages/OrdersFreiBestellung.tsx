@@ -143,13 +143,18 @@ function findMatches(items: OrderItem[], devices: FreeDevice[]): FreeDevice[] {
 
     // Farb-Filter: wenn beide Seiten Farben nennen, müssen ALLE Gerätefarben
     // in den Auftragsfarben enthalten sein.
+    // Farb-Filter: wenn der Auftrag Farben nennt, muss das Gerät exakt
+    // dieselben Farben nennen — sowohl fehlende Farben (z. B. Auftrag
+    // „Black/Gold", Gerät nur „Black") als auch zusätzliche/andere Farben
+    // (Gerät „Black/Pink") führen zum Ausschluss.
     if (orderColors.size > 0) {
       const devColors = colorsOf(`${d.model_name} ${d.notes || ''}`);
-      if (devColors.size > 0) {
-        let allMatch = true;
-        for (const c of devColors) if (!orderColors.has(c)) { allMatch = false; break; }
-        if (!allMatch) continue;
-      }
+      if (devColors.size !== orderColors.size) continue;
+      let allMatch = true;
+      for (const c of devColors) if (!orderColors.has(c)) { allMatch = false; break; }
+      if (!allMatch) continue;
+      for (const c of orderColors) if (!devColors.has(c)) { allMatch = false; break; }
+      if (!allMatch) continue;
     }
 
     if (!seen.has(d.id)) {
