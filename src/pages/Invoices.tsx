@@ -154,6 +154,7 @@ export default function Invoices() {
   const [bookMethod, setBookMethod] = useState<'Überweisung' | 'Bar' | 'Lastschrift' | 'SEPA'>('Überweisung');
   const [bookDate, setBookDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [bookSaving, setBookSaving] = useState(false);
+  const [bookAmount, setBookAmount] = useState<string>('0');
   const [viewMode, setViewMode] = useState<'accounts' | 'list'>(() => {
     if (typeof window === 'undefined') return 'accounts';
     return (localStorage.getItem('invoices_view_mode') as 'accounts' | 'list') || 'accounts';
@@ -788,6 +789,8 @@ export default function Invoices() {
     setBookRow(r);
     setBookMethod('Überweisung');
     setBookDate(new Date().toISOString().slice(0, 10));
+    const open = Number(r.balance ?? r.total ?? 0);
+    setBookAmount(open > 0 ? open.toFixed(2) : '0.00');
   };
 
   const handleBookClick = (event: React.MouseEvent<HTMLButtonElement>, r: Row) => {
@@ -800,16 +803,21 @@ export default function Invoices() {
     if (!bookRow) return;
     setBookSaving(true);
     try {
+      const openBefore = Number(bookRow.balance ?? bookRow.total ?? 0);
+      const pay = Math.max(0, Number(String(bookAmount).replace(',', '.')) || 0);
+      if (pay <= 0) throw new Error('Bitte einen Zahlbetrag größer 0 eingeben.');
+      const newBalance = Math.max(0, +(openBefore - pay).toFixed(2));
+      const fullyPaid = newBalance <= 0.0049;
       const table = bookRow.source === 'recurring' ? 'zoho_recurring_invoices' : 'zoho_invoices';
       const patch: any = {
-        payment_status: 'Bezahlt',
-        balance: 0,
+        payment_status: fullyPaid ? 'Bezahlt' : 'Teilweise bezahlt',
+        balance: newBalance,
         last_payment_date: bookDate,
       };
       const { error } = await (supabase as any).from(table).update(patch).eq('id', bookRow.id);
       if (error) throw error;
 
-      const gross = Number(bookRow.total ?? 0);
+      const gross = +pay.toFixed(2);
       const net = +(gross / 1.19).toFixed(2);
       const vat = +(gross - net).toFixed(2);
       const jr = await postPaymentToJournal({
@@ -820,7 +828,7 @@ export default function Invoices() {
         amount_net: net,
         amount_vat: vat,
         booking_date: bookDate,
-        description: `Zahlung Rechnung ${bookRow.invoice_number ?? ''} (${bookMethod}) – ${bookRow.customer_name ?? ''}`.trim(),
+        description: `Zahlung Rechnung ${bookRow.invoice_number ?? ''} (${bookMethod})${fullyPaid ? '' : ' – Teilzahlung'} – ${bookRow.customer_name ?? ''}`.trim(),
         source_table: table,
         source_id: bookRow.id,
         vorgang: 'Zahlung',
@@ -829,9 +837,9 @@ export default function Invoices() {
       if (!jr.ok) throw new Error(jr.error || 'Journal-Buchung fehlgeschlagen');
 
       setRows((prev) => prev.map((x) => (x.id === bookRow.id && x.source === bookRow.source
-        ? { ...x, payment_status: 'Bezahlt', balance: 0, last_payment_date: bookDate }
+        ? { ...x, payment_status: patch.payment_status, balance: newBalance, last_payment_date: bookDate }
         : x)));
-      toast({ title: 'Gebucht', description: `Rechnung ${bookRow.invoice_number ?? ''} als bezahlt markiert und im Buchungsjournal verbucht.` });
+      toast({ title: 'Gebucht', description: `Zahlung ${fmtMoney(gross, bookRow.currency)} für Rechnung ${bookRow.invoice_number ?? ''} verbucht.${fullyPaid ? '' : ` Restsaldo: ${fmtMoney(newBalance, bookRow.currency)}`}` });
       setBookRow(null);
     } catch (e: any) {
       toast({ title: 'Fehler', description: e?.message || String(e), variant: 'destructive' });
@@ -1375,11 +1383,36 @@ export default function Invoices() {
                 </select>
               </div>
               <div>
+                <Label htmlFor="bka">Betrag der Zahlung</Label>
+                <Input
+                  id="bka"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={bookAmount}
+                  onChange={(e) => setBookAmount(e.target.value)}
+                />
+              </div>
+              {(() => {
+                const openBefore = Number(bookRow.balance ?? bookRow.total ?? 0);
+                const pay = Math.max(0, Number(String(bookAmount).replace(',', '.')) || 0);
+                const remaining = Math.max(0, +(openBefore - pay).toFixed(2));
+                const fullyPaid = remaining <= 0.0049;
+                return (
+                  <div className="rounded-md border border-border bg-muted/10 p-3 text-sm flex items-center justify-between">
+                    <span className="text-muted-foreground">Offener Saldo nach Buchung:</span>
+                    <span className={fullyPaid ? 'text-emerald-500 font-medium' : 'text-amber-500 font-medium'}>
+                      {fmtMoney(remaining, bookRow.currency)}{fullyPaid ? ' – vollständig bezahlt' : ' – Teilzahlung'}
+                    </span>
+                  </div>
+                );
+              })()}
+              <div>
                 <Label htmlFor="bkd">Zahlungsdatum</Label>
                 <Input id="bkd" type="date" value={bookDate} onChange={(e) => setBookDate(e.target.value)} />
               </div>
               <p className="text-xs text-muted-foreground">
-                Die Rechnung wird als <strong>Bezahlt</strong> markiert und ein Eintrag im Buchungsjournal erstellt.
+                Die Rechnung wird entsprechend dem Zahlbetrag als <strong>Bezahlt</strong> oder <strong>Teilweise bezahlt</strong> markiert und im Buchungsjournal verbucht.
               </p>
             </div>
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
