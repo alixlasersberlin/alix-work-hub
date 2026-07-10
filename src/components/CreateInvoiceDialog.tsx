@@ -236,6 +236,7 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
         created_from: 'order',
         order_id: order?.id,
         order_number: order?.order_number,
+        is_draft: status === 'draft',
         created_at: new Date().toISOString(),
         subtotal: Number(subtotal.toFixed(2)),
         tax_rate: Number(taxRate),
