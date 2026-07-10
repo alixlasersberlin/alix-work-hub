@@ -85,7 +85,7 @@ export default function TicketDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, isAdmin, hasAnyRole } = useAuth();
-  const canEdit = isAdmin || hasAnyRole(['Kundenservice', 'Technik', 'Service', 'Reparaturannahme', 'Order']);
+  const canEdit = isAdmin || hasAnyRole(['Kundenservice', 'Technik', 'Service', 'Reparaturannahme', 'Order', 'SACHBEARBEITUNG', 'Auftragsverwaltung', 'Tourenplanung', 'Serviceleitung']);
 
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -100,6 +100,8 @@ export default function TicketDetail() {
   const [linkedRepair, setLinkedRepair] = useState<LinkedRepair | null>(null);
   const [users, setUsers] = useState<{ id: string; label: string }[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [internalNoteDraft, setInternalNoteDraft] = useState('');
+  const [savingInternalNote, setSavingInternalNote] = useState(false);
 
   async function loadLinkedRepair(repairId: string | null) {
     if (!repairId) { setLinkedRepair(null); return; }
@@ -157,6 +159,7 @@ export default function TicketDetail() {
     if (t.error) { console.error(t.error); toast.error('Ticket nicht gefunden'); }
     const tk = (t.data as Ticket) || null;
     setTicket(tk);
+    setInternalNoteDraft(tk?.internal_note || '');
     setMessages((m.data as Msg[]) || []);
     setAttachments((a.data as Att[]) || []);
     loadLinkedRepair(tk?.repair_order_id || null);
@@ -603,12 +606,31 @@ export default function TicketDetail() {
                 />
               </Field>
               <Field label="Interne Notiz">
-                <Textarea
-                  defaultValue={ticket.internal_note || ''}
-                  rows={3}
-                  disabled={!canEdit || saving}
-                  onBlur={e => { if (e.target.value !== (ticket.internal_note || '')) patch({ internal_note: e.target.value }); }}
-                />
+                <div className="space-y-2">
+                  <Textarea
+                    value={internalNoteDraft}
+                    onChange={e => setInternalNoteDraft(e.target.value)}
+                    rows={3}
+                    disabled={!canEdit || saving}
+                    placeholder="Nur intern sichtbar…"
+                  />
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      {internalNoteDraft !== (ticket.internal_note || '') ? 'Nicht gespeicherte Änderungen' : 'Gespeichert'}
+                    </span>
+                    <Button
+                      size="sm"
+                      disabled={!canEdit || savingInternalNote || internalNoteDraft === (ticket.internal_note || '')}
+                      onClick={async () => {
+                        setSavingInternalNote(true);
+                        await patch({ internal_note: internalNoteDraft });
+                        setSavingInternalNote(false);
+                      }}
+                    >
+                      {savingInternalNote ? 'Speichere…' : 'Notiz speichern'}
+                    </Button>
+                  </div>
+                </div>
               </Field>
             </div>
           </div>
