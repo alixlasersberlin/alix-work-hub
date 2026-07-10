@@ -1326,6 +1326,52 @@ export default function Invoices() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!bookRow} onOpenChange={(o) => !o && !bookSaving && setBookRow(null)}>
+        <DialogContent onInteractOutside={(e) => e.preventDefault()}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              Rechnung {bookRow?.invoice_number ?? ''} buchen
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="rounded-md border border-border bg-muted/20 p-3 text-sm">
+              <div><span className="text-muted-foreground">Kunde:</span> {bookRow?.customer_name ?? '–'}</div>
+              <div><span className="text-muted-foreground">Betrag:</span> {fmtMoney(bookRow?.total ?? 0, bookRow?.currency)}</div>
+              <div><span className="text-muted-foreground">Offener Saldo:</span> {fmtMoney(bookRow?.balance ?? 0, bookRow?.currency)}</div>
+            </div>
+            <div>
+              <Label htmlFor="bkm">Zahlungsart</Label>
+              <select
+                id="bkm"
+                value={bookMethod}
+                onChange={(e) => setBookMethod(e.target.value as any)}
+                className="mt-1 w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="Überweisung">Überweisung</option>
+                <option value="Bar">Bar</option>
+                <option value="Lastschrift">Lastschrift</option>
+                <option value="SEPA">SEPA</option>
+              </select>
+            </div>
+            <div>
+              <Label htmlFor="bkd">Zahlungsdatum</Label>
+              <Input id="bkd" type="date" value={bookDate} onChange={(e) => setBookDate(e.target.value)} />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Die Rechnung wird als <strong>Bezahlt</strong> markiert und ein Eintrag im Buchungsjournal erstellt.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBookRow(null)} disabled={bookSaving}>Abbrechen</Button>
+            <Button onClick={submitBook} disabled={bookSaving} className="bg-emerald-600 hover:bg-emerald-500 text-white">
+              {bookSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
+              Buchen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
