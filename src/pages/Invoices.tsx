@@ -789,6 +789,8 @@ export default function Invoices() {
     setBookRow(r);
     setBookMethod('Überweisung');
     setBookDate(new Date().toISOString().slice(0, 10));
+    const open = Number(r.balance ?? r.total ?? 0);
+    setBookAmount(open > 0 ? open.toFixed(2) : '0.00');
   };
 
   const handleBookClick = (event: React.MouseEvent<HTMLButtonElement>, r: Row) => {
