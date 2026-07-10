@@ -53,6 +53,11 @@ function isAusstellung(notes: string | null | undefined, model: string | null | 
   return /ausstellung|demo(gerät|geraet)?|showroom|messe/.test(hay);
 }
 
+function isInReparatur(notes: string | null | undefined): boolean {
+  return /\[Reparatur:\s*[^\]]+\]/i.test(notes ?? '');
+}
+
+
 export function deviceDepartment(device: LagerDeviceRow): Department | null {
   const status = getStatus(device.notes);
   if (status === 'Transfer') return 'Unterwegs';
@@ -85,9 +90,11 @@ export function findLagerMatch(
   for (const d of devices) {
     if (d.reserved_order_id) continue;
     if (isAusstellung(d.notes, d.model_name)) continue;
+    if (isInReparatur(d.notes)) continue;
     const dep = deviceDepartment(d);
     if (!dep) continue;
     const hay = normalize(d.model_name);
+
     if (!hay.includes(needle) && !needle.includes(hay)) continue;
     if (wantColors.size > 0) {
       const haveColors = canonicalColors(`${d.model_name} ${d.notes ?? ''}`);
