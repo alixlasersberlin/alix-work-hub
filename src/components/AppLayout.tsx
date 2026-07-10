@@ -72,6 +72,20 @@ const navItems: NavItem[] = [
     ],
   },
   {
+    path: '/esc', label: 'TEAMKALENDER', icon: CalendarDays,
+    roles: null,
+    children: [
+      { path: '/esc',                label: 'Übersicht',      icon: LayoutDashboard, roles: null },
+      { path: '/esc/kalender',       label: 'Kalender',       icon: CalendarDays,    roles: null },
+      { path: '/esc/ressourcen',     label: 'Ressourcen',     icon: Boxes,           roles: null },
+      { path: '/esc/mitarbeiter',    label: 'Mitarbeiter',    icon: Users,           roles: null },
+      { path: '/esc/abteilungen',    label: 'Abteilungen',    icon: Building2,       roles: ['Admin', 'Super Admin', 'Geschäftsführung'] },
+      { path: '/esc/buchungen',      label: 'Buchungsportal', icon: Globe,           roles: null },
+      { path: '/esc/bestaetigungen', label: 'Bestätigungen',  icon: CheckCircle2,    roles: null },
+      { path: '/esc/einstellungen',  label: 'Einstellungen',  icon: Settings,        roles: ['Admin', 'Super Admin'] },
+    ],
+  },
+  {
     path: '/mailcenter', label: 'CUSTOMER SERVICE', icon: HelpCircle,
     roles: ['Admin', 'Super Admin', 'Geschäftsführung', 'Marketing', 'Finance', 'Technik', 'Kundenservice', 'Vertrieb', 'Reparaturannahme', 'Serviceleitung', 'Service', 'Tourenplanung', 'Bestellwesen', 'Order', 'Auftragsverwaltung', 'QM', 'Read Only', 'Read Only Audit', 'Österreich', 'SACHBEARBEITUNG'],
     children: [
