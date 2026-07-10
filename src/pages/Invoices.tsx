@@ -579,6 +579,7 @@ export default function Invoices() {
       for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
       return new Blob([bytes], { type: 'application/pdf' });
     } catch (e: any) {
+      console.error('[Invoices] fetchInvoicePdf failed', e);
       toast({ title: 'PDF fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
       return null;
     } finally {
