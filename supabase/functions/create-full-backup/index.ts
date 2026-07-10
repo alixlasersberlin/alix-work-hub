@@ -668,7 +668,7 @@ async function processBackupStep(params: {
             }
           } catch (e) {
             lastErr = e instanceof Error ? e.message : String(e);
-            const transient = /520|521|522|524|<!DOCTYPE|Web server|Cloudflare|fetch failed|network|timeout/i.test(lastErr);
+            const transient = /502|503|504|520|521|522|524|<!DOCTYPE|<html|Web server|Cloudflare|fetch failed|network|timeout|Unexpected token|not valid JSON/i.test(lastErr);
             if (!transient || attempt === 5) throw new Error(`Tabelle ${table}: ${lastErr}`);
           }
           await new Promise((r) => setTimeout(r, Math.min(1000 * 2 ** (attempt - 1), 8000)));
