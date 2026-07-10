@@ -85,7 +85,7 @@ export default function TicketDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, isAdmin, hasAnyRole } = useAuth();
-  const canEdit = isAdmin || hasAnyRole(['Kundenservice', 'Technik', 'Service', 'Reparaturannahme', 'Order']);
+  const canEdit = isAdmin || hasAnyRole(['Kundenservice', 'Technik', 'Service', 'Reparaturannahme', 'Order', 'SACHBEARBEITUNG', 'Auftragsverwaltung', 'Tourenplanung', 'Serviceleitung']);
 
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
