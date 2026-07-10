@@ -254,6 +254,16 @@ export default function BestellwesenErsatzteile() {
                               : <><ShoppingCart className="w-4 h-4 mr-1" /> Bestellung auslösen</>}
                           </Button>
                         )}
+                        {r.status === 'Bestellvorschlag' && canEditProposal && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => openEdit(r)}
+                            title="Bestellvorschlag ändern"
+                          >
+                            <Pencil className="w-4 h-4 mr-1" /> Ändern
+                          </Button>
+                        )}
                         <Select value={r.status} onValueChange={(v) => setStatus(r.id, v)}>
                           <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
                           <SelectContent>{STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
