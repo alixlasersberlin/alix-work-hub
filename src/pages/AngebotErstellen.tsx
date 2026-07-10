@@ -47,6 +47,12 @@ export default function AngebotErstellen() {
   const navigate = useNavigate();
   const { roles } = useAuth();
   const isSuperAdmin = (roles ?? []).some((r: any) => (typeof r === 'string' ? r : r?.name) === 'Super Admin');
+  const isAdmin = (roles ?? []).some((r: any) => {
+    const n = typeof r === 'string' ? r : r?.name;
+    return n === 'Super Admin' || n === 'Admin';
+  });
+  const [existingApproval, setExistingApproval] = useState<'pending' | 'approved' | 'rejected' | null>(null);
+  const isLockedForEdit = !isAdmin && existingApproval !== null && existingApproval !== 'approved';
   const [confirming, setConfirming] = useState(false);
   const [customers, setCustomers] = useState<any[]>([]);
 
