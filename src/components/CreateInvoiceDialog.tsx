@@ -236,6 +236,7 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
         created_from: 'order',
         order_id: order?.id,
         order_number: order?.order_number,
+        is_draft: status === 'draft',
         created_at: new Date().toISOString(),
         subtotal: Number(subtotal.toFixed(2)),
         tax_rate: Number(taxRate),
@@ -265,7 +266,11 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
       return;
     }
     setCreatedId(data?.id ?? null);
-    toast.success(`Rechnung ${invoiceNumber} erstellt und festgeschrieben`);
+    if (status === 'draft') {
+      toast.success(`Entwurf ${invoiceNumber} gespeichert (keine Übergabe an Finance)`);
+    } else {
+      toast.success(`Rechnung ${invoiceNumber} erstellt und festgeschrieben`);
+    }
     setOpen(false);
   };
 
@@ -422,7 +427,7 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
               <Button type="button" variant="outline" onClick={closeDialog} disabled={saving}>Abbrechen</Button>
               <Button type="button" onClick={handleCreate} disabled={saving} className="gold-gradient text-primary-foreground">
                 {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                Rechnung festschreiben
+                {status === 'draft' ? 'Als Entwurf speichern' : 'Rechnung festschreiben'}
               </Button>
             </div>
           </div>

@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
     // 2) Fetch zoho_invoices since last sync (last 5000)
     const { data: invoices, error: invErr } = await admin
       .from('zoho_invoices')
-      .select('zoho_invoice_id, invoice_number, customer_id, customer_name, invoice_date, due_date, total, balance, currency, payment_status, last_payment_date, source_system')
+      .select('zoho_invoice_id, invoice_number, customer_id, customer_name, invoice_date, due_date, total, balance, currency, status, payment_status, last_payment_date, source_system, raw_data')
       .order('invoice_date', { ascending: false })
       .limit(5000);
     if (invErr) throw invErr;
@@ -47,6 +47,10 @@ Deno.serve(async (req) => {
     const lastPaymentByCustomer = new Map<string, string>();
 
     for (const inv of invoices ?? []) {
+      // Entwürfe (draft) werden NICHT an Finance übergeben
+      const invStatus = String((inv as any).status ?? '').toLowerCase();
+      const isDraft = invStatus === 'draft' || (inv as any).raw_data?.is_draft === true;
+      if (isDraft) { txSkipped++; continue; }
       const localCustomerId = inv.customer_id ? custMap.get(String(inv.customer_id)) : null;
       if (!localCustomerId) { txSkipped++; continue; }
       const reference = `zoho:invoice:${inv.source_system ?? 'eu1'}:${inv.zoho_invoice_id}`;
