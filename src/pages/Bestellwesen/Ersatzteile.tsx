@@ -8,8 +8,12 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, RefreshCw, Package, ExternalLink, ShoppingCart } from 'lucide-react';
+import { Loader2, RefreshCw, Package, ExternalLink, ShoppingCart, Pencil } from 'lucide-react';
 import { PageHeader } from '@/components/infinity/PageHeader';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { useAuth } from '@/hooks/useAuth';
 
 const STATUSES = ['Bestellvorschlag', 'offen', 'bestellt', 'erhalten', 'storniert'];
 
@@ -34,6 +38,43 @@ export default function BestellwesenErsatzteile() {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('Bestellvorschlag');
   const [q, setQ] = useState('');
+  const { hasAnyRole, profile } = useAuth();
+  const isNatalia = (profile?.full_name || '').toLowerCase().includes('natalia')
+    || (profile?.email || '').toLowerCase().includes('natalia');
+  const canEditProposal = hasAnyRole(['Super Admin', 'Admin']) || isNatalia;
+  const [editRow, setEditRow] = useState<any | null>(null);
+  const [editForm, setEditForm] = useState<any>({});
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  const openEdit = (r: any) => {
+    setEditRow(r);
+    setEditForm({
+      part_name: r.part_name || '',
+      part_number: r.part_number || '',
+      quantity: r.quantity ?? 1,
+      supplier: r.supplier || '',
+      priority: r.priority || 'normal',
+      notes: r.notes || '',
+    });
+  };
+
+  const saveEdit = async () => {
+    if (!editRow) return;
+    setSavingEdit(true);
+    const { error } = await sbRepair.from('repair_spare_parts').update({
+      part_name: editForm.part_name,
+      part_number: editForm.part_number || null,
+      quantity: Number(editForm.quantity) || 1,
+      supplier: editForm.supplier || null,
+      priority: editForm.priority,
+      notes: editForm.notes || null,
+    }).eq('id', editRow.id);
+    setSavingEdit(false);
+    if (error) return toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
+    toast({ title: 'Bestellvorschlag aktualisiert' });
+    setEditRow(null);
+    load();
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -213,6 +254,16 @@ export default function BestellwesenErsatzteile() {
                               : <><ShoppingCart className="w-4 h-4 mr-1" /> Bestellung auslösen</>}
                           </Button>
                         )}
+                        {r.status === 'Bestellvorschlag' && canEditProposal && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => openEdit(r)}
+                            title="Bestellvorschlag ändern"
+                          >
+                            <Pencil className="w-4 h-4 mr-1" /> Ändern
+                          </Button>
+                        )}
                         <Select value={r.status} onValueChange={(v) => setStatus(r.id, v)}>
                           <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
                           <SelectContent>{STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
@@ -226,6 +277,51 @@ export default function BestellwesenErsatzteile() {
           </table>
         </div>
       </Card>
+
+      <Dialog open={!!editRow} onOpenChange={(o) => !o && setEditRow(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Bestellvorschlag ändern</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2">
+              <Label>Teil</Label>
+              <Input value={editForm.part_name || ''} onChange={e => setEditForm({ ...editForm, part_name: e.target.value })} />
+            </div>
+            <div>
+              <Label>Teilenummer</Label>
+              <Input value={editForm.part_number || ''} onChange={e => setEditForm({ ...editForm, part_number: e.target.value })} />
+            </div>
+            <div>
+              <Label>Menge</Label>
+              <Input type="number" min={1} value={editForm.quantity ?? 1} onChange={e => setEditForm({ ...editForm, quantity: e.target.value })} />
+            </div>
+            <div>
+              <Label>Lieferant</Label>
+              <Input value={editForm.supplier || ''} onChange={e => setEditForm({ ...editForm, supplier: e.target.value })} />
+            </div>
+            <div>
+              <Label>Priorität</Label>
+              <Select value={editForm.priority || 'normal'} onValueChange={(v) => setEditForm({ ...editForm, priority: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {['dringend', 'hoch', 'normal', 'niedrig'].map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="col-span-2">
+              <Label>Notiz</Label>
+              <Textarea rows={3} value={editForm.notes || ''} onChange={e => setEditForm({ ...editForm, notes: e.target.value })} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditRow(null)}>Abbrechen</Button>
+            <Button onClick={saveEdit} disabled={savingEdit} className="gold-gradient text-primary-foreground">
+              {savingEdit ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Speichern'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
