@@ -5,7 +5,7 @@ import { DataCard, PageError } from '@/components/PageShell';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { SkeletonTable } from '@/components/infinity/Skeleton';
 import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
-import { FileText, RefreshCw, ArrowRightLeft, ChevronDown, ChevronRight, Users, Wallet, AlertTriangle, Repeat, Pencil, Printer, Download, Loader2, Trash2, Mail, CheckCircle2 } from 'lucide-react';
+import { FileText, RefreshCw, ArrowRightLeft, ChevronDown, ChevronRight, Users, Wallet, AlertTriangle, Repeat, Pencil, Printer, Download, Loader2, Trash2, Mail, CheckCircle2, X as LucideXIcon } from 'lucide-react';
 import { postPaymentToJournal } from '@/lib/finance/journal';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
