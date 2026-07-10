@@ -790,6 +790,12 @@ export default function Invoices() {
     setBookDate(new Date().toISOString().slice(0, 10));
   };
 
+  const handleBookClick = (event: React.MouseEvent<HTMLButtonElement>, r: Row) => {
+    event.preventDefault();
+    event.stopPropagation();
+    openBook(r);
+  };
+
   const submitBook = async () => {
     if (!bookRow) return;
     setBookSaving(true);
@@ -1019,7 +1025,7 @@ export default function Invoices() {
                               variant="outline"
                               title="Als bezahlt buchen"
                               className="h-8 px-2 gap-1 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
-                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.setTimeout(() => openBook(r), 0); }}
+                              onClick={(event) => handleBookClick(event, r)}
                             >
                               <CheckCircle2 className="w-3.5 h-3.5" /> Buchen
                             </Button>
@@ -1167,7 +1173,7 @@ export default function Invoices() {
                                     variant="outline"
                                     title="Als bezahlt buchen"
                                     className="h-8 px-2 gap-1 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
-                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.setTimeout(() => openBook(r), 0); }}
+                                    onClick={(event) => handleBookClick(event, r)}
                                   >
                                     <CheckCircle2 className="w-3.5 h-3.5" /> Buchen
                                   </Button>
@@ -1327,57 +1333,65 @@ export default function Invoices() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!bookRow} onOpenChange={(o) => !o && !bookSaving && setBookRow(null)}>
-        <DialogContent
-          className="z-[200]"
-          onInteractOutside={(e) => e.preventDefault()}
-          onPointerDownOutside={(e) => e.preventDefault()}
-          aria-describedby="book-desc"
-        >
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              Rechnung {bookRow?.invoice_number ?? ''} buchen
-            </DialogTitle>
-            <p id="book-desc" className="text-xs text-muted-foreground">Zahlungsart wählen und als bezahlt buchen.</p>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div className="rounded-md border border-border bg-muted/20 p-3 text-sm">
-              <div><span className="text-muted-foreground">Kunde:</span> {bookRow?.customer_name ?? '–'}</div>
-              <div><span className="text-muted-foreground">Betrag:</span> {fmtMoney(bookRow?.total ?? 0, bookRow?.currency)}</div>
-              <div><span className="text-muted-foreground">Offener Saldo:</span> {fmtMoney(bookRow?.balance ?? 0, bookRow?.currency)}</div>
+      {bookRow && (
+        <div className="fixed inset-0 z-[2147483646] flex items-center justify-center bg-background/85 p-4 backdrop-blur-sm" role="presentation">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="book-title"
+            aria-describedby="book-desc"
+            className="grid w-[calc(100dvw-2rem)] max-w-lg gap-4 rounded-lg border border-border bg-background p-6 shadow-lg"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 id="book-title" className="flex items-center gap-2 text-lg font-semibold leading-none tracking-tight">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  Rechnung {bookRow.invoice_number ?? ''} buchen
+                </h2>
+                <p id="book-desc" className="mt-2 text-xs text-muted-foreground">Zahlungsart wählen und als bezahlt buchen.</p>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => !bookSaving && setBookRow(null)} disabled={bookSaving} aria-label="Schließen">
+                ×
+              </Button>
             </div>
-            <div>
-              <Label htmlFor="bkm">Zahlungsart</Label>
-              <select
-                id="bkm"
-                value={bookMethod}
-                onChange={(e) => setBookMethod(e.target.value as any)}
-                className="mt-1 w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <option value="Überweisung">Überweisung</option>
-                <option value="Bar">Bar</option>
-                <option value="Lastschrift">Lastschrift</option>
-                <option value="SEPA">SEPA</option>
-              </select>
+            <div className="space-y-3">
+              <div className="rounded-md border border-border bg-muted/20 p-3 text-sm">
+                <div><span className="text-muted-foreground">Kunde:</span> {bookRow.customer_name ?? '–'}</div>
+                <div><span className="text-muted-foreground">Betrag:</span> {fmtMoney(bookRow.total ?? 0, bookRow.currency)}</div>
+                <div><span className="text-muted-foreground">Offener Saldo:</span> {fmtMoney(bookRow.balance ?? 0, bookRow.currency)}</div>
+              </div>
+              <div>
+                <Label htmlFor="bkm">Zahlungsart</Label>
+                <select
+                  id="bkm"
+                  value={bookMethod}
+                  onChange={(e) => setBookMethod(e.target.value as any)}
+                  className="mt-1 w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <option value="Überweisung">Überweisung</option>
+                  <option value="Bar">Bar</option>
+                  <option value="Lastschrift">Lastschrift</option>
+                  <option value="SEPA">SEPA</option>
+                </select>
+              </div>
+              <div>
+                <Label htmlFor="bkd">Zahlungsdatum</Label>
+                <Input id="bkd" type="date" value={bookDate} onChange={(e) => setBookDate(e.target.value)} />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Die Rechnung wird als <strong>Bezahlt</strong> markiert und ein Eintrag im Buchungsjournal erstellt.
+              </p>
             </div>
-            <div>
-              <Label htmlFor="bkd">Zahlungsdatum</Label>
-              <Input id="bkd" type="date" value={bookDate} onChange={(e) => setBookDate(e.target.value)} />
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <Button variant="outline" onClick={() => setBookRow(null)} disabled={bookSaving}>Abbrechen</Button>
+              <Button onClick={submitBook} disabled={bookSaving} className="bg-emerald-600 hover:bg-emerald-500 text-white">
+                {bookSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
+                Buchen
+              </Button>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Die Rechnung wird als <strong>Bezahlt</strong> markiert und ein Eintrag im Buchungsjournal erstellt.
-            </p>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setBookRow(null)} disabled={bookSaving}>Abbrechen</Button>
-            <Button onClick={submitBook} disabled={bookSaving} className="bg-emerald-600 hover:bg-emerald-500 text-white">
-              {bookSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
-              Buchen
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
     </div>
   );
 }
