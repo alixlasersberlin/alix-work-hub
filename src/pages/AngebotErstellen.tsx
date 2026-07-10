@@ -1206,7 +1206,19 @@ export default function AngebotErstellen() {
         <p className="text-sm text-muted-foreground mt-1">Erstellen Sie ein neues Angebot für einen Kunden.</p>
       </div>
 
-      {/* Header */}
+      {isLockedForEdit && (
+        <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200 flex items-start gap-2">
+          <span className="text-lg leading-none">🔒</span>
+          <div>
+            <div className="font-semibold">Angebot gesperrt</div>
+            <div className="text-amber-200/80">
+              Dieses Angebot wurde bereits erstellt. Änderungen können nur von <b>Admin</b> oder <b>Super Admin</b> vorgenommen werden.
+              Bitte fordere eine Freigabe an – nach Freigabe kannst du das Angebot erneut speichern oder als PDF herunterladen.
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="rounded-xl border border-border bg-card card-glow p-6 grid gap-4 md:grid-cols-3">
         <div>
           <Label>Angebotsnummer</Label>
