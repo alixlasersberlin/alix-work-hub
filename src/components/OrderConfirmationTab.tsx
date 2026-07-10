@@ -193,7 +193,7 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
     return { net: finalNet, tax: finalTax, gross: finalGross };
   }, [items, order]);
 
-  async function generate(mode: 'download' | 'print' = 'download') {
+  async function generate(mode: 'download' | 'print' | 'view' = 'download') {
     if (!items || items.length === 0) {
       toast.error('Keine Artikel im Auftrag vorhanden.');
       return;
