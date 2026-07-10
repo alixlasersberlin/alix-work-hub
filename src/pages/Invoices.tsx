@@ -515,9 +515,25 @@ export default function Invoices() {
         doc.setDrawColor(200, 200, 200);
         doc.line(LEFT, TOP_CONTENT - 5, RIGHT, TOP_CONTENT - 5);
       }
+      // Impressum / Firmenangaben zentriert
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8);
+      doc.setFontSize(7);
       doc.setTextColor(120, 120, 120);
+      const centerX = PAGE_W / 2;
+      doc.text(
+        'Alix Lasers GmbH  ·  Buchsbaumweg 53  ·  12357 Berlin  ·  Deutschland  ·  Telefon: +49 30 577 127 45  ·  Fax: +49 30 577 127 46',
+        centerX, PAGE_H - 16, { align: 'center' },
+      );
+      doc.text(
+        'Vertreten durch die Geschäftsführerin: ABLM Management UG (haftungsbeschränkt)  ·  Registergericht: Amtsgericht Berlin-Charlottenburg',
+        centerX, PAGE_H - 13, { align: 'center' },
+      );
+      doc.text(
+        'Handelsregisternummer: HRB 245388  ·  Umsatzsteuer-Identifikationsnummer gemäß § 27a Umsatzsteuergesetz: DE321691012',
+        centerX, PAGE_H - 10, { align: 'center' },
+      );
+
+      doc.setFontSize(8);
       doc.text(
         `Rechnung ${full.invoice_number}  ·  Seite ${i} von ${totalPages}`,
         RIGHT, PAGE_H - 4, { align: 'right' },
