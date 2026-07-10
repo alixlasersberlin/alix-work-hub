@@ -885,7 +885,16 @@ export default function Invoices() {
                           <Badge variant="outline" className="bg-muted/40">Einmalig</Badge>
                         )}
                       </td>
-                      <td className="px-4 py-2 font-medium">{r.invoice_number ?? '–'}</td>
+                      <td className="px-4 py-2 font-medium">
+                        <div className="flex items-center gap-2">
+                          <span>{r.invoice_number ?? '–'}</span>
+                          {r.status === 'draft' && (
+                            <Badge variant="outline" className="bg-amber-500/15 text-amber-400 border-amber-500/40 text-[10px] uppercase tracking-wide">
+                              Entwurf
+                            </Badge>
+                          )}
+                        </div>
+                      </td>
                       <td className="px-4 py-2">
                         <div className="truncate max-w-[220px]">{r.customer_name ?? '–'}</div>
                         {r.city && <div className="text-xs text-muted-foreground truncate max-w-[220px]">{r.city}</div>}
