@@ -12,6 +12,7 @@ type Deposit = {
   deposit_number: string | null;
   customer_name: string | null;
   company_name: string | null;
+  order_id: string | null;
   order_number: string | null;
   offer_number: string | null;
   invoice_number: string | null;
@@ -22,6 +23,7 @@ type Deposit = {
   due_date: string | null;
   status: 'offen' | 'ueberfaellig' | 'teilweise' | 'gebucht';
 };
+
 
 const fmtMoney = (n: number, c = 'EUR') =>
   new Intl.NumberFormat('de-DE', { style: 'currency', currency: c || 'EUR' }).format(Number(n) || 0);
