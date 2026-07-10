@@ -51,6 +51,8 @@ export default function BestellwesenErsatzteile() {
 
   useEffect(() => { load(); }, [load]);
 
+  const [triggering, setTriggering] = useState<string | null>(null);
+
   const setStatus = async (id: string, status: string) => {
     const patch: any = { status };
     if (status === 'bestellt') patch.ordered_at = new Date().toISOString();
@@ -59,6 +61,45 @@ export default function BestellwesenErsatzteile() {
     if (error) return toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
     toast({ title: 'Status aktualisiert', description: `→ ${status}` });
     load();
+  };
+
+  const triggerOrder = async (r: any) => {
+    setTriggering(r.id);
+    try {
+      // Reparatur-Bestellung: keine Freigabe nötig → direkt Status 'offen' ("Bestellung möglich")
+      const repairNo = r.repair_orders?.repair_number || r.repair_order_id?.slice(0, 8) || '';
+      const { data: order, error } = await (supabase.from('spare_part_orders' as any) as any).insert({
+        supplier_name: r.supplier || null,
+        status: 'offen',
+        notes: `Reparatur-Bestellung aus ${repairNo}${r.part_number ? ` · ${r.part_number}` : ''}${r.notes ? `\n${r.notes}` : ''}`,
+      }).select().single();
+      if (error || !order) throw new Error(error?.message || 'Bestellung konnte nicht angelegt werden');
+
+      const { error: e2 } = await (supabase.from('spare_part_order_items' as any) as any).insert({
+        order_id: (order as any).id,
+        item_name: r.part_name || 'Ersatzteil',
+        sku: r.part_number || null,
+        quantity: r.quantity ?? 1,
+      });
+      if (e2) throw new Error(e2.message);
+
+      // Bestellvorschlag als „bestellt" markieren und mit Bestellnummer verknüpfen
+      await sbRepair.from('repair_spare_parts').update({
+        status: 'bestellt',
+        ordered_at: new Date().toISOString(),
+        notes: [r.notes, `Bestellung ${(order as any).order_number ?? ''}`.trim()].filter(Boolean).join('\n'),
+      }).eq('id', r.id);
+
+      toast({
+        title: 'Bestellung ausgelöst',
+        description: `${(order as any).order_number ?? 'Bestellung'} in „Bestellung möglich" übernommen (ohne Freigabe – Reparaturbestellung).`,
+      });
+      load();
+    } catch (e: any) {
+      toast({ title: 'Fehler', description: e?.message || String(e), variant: 'destructive' });
+    } finally {
+      setTriggering(null);
+    }
   };
 
   const filtered = rows.filter(r => {
