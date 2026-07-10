@@ -136,7 +136,7 @@ export default function Invoices() {
   const [pageSize, setPageSize] = useState<PageSize>(20);
   const [pdfLoadingId, setPdfLoadingId] = useState<string | null>(null);
   const [editRow, setEditRow] = useState<Row | null>(null);
-  const [editForm, setEditForm] = useState({ reference_number: '', due_date: '', payment_status: '', invoice_number: '', customer_name: '', invoice_date: '', total: '', balance: '' });
+  const [editForm, setEditForm] = useState({ reference_number: '', due_date: '', payment_status: '', invoice_number: '', customer_name: '', invoice_date: '', total: '', balance: '', status: '' });
   const [editSaving, setEditSaving] = useState(false);
   const [emailRow, setEmailRow] = useState<Row | null>(null);
   const [emailForm, setEmailForm] = useState({ to_email: '', to_name: '', subject: '', body_text: '' });
