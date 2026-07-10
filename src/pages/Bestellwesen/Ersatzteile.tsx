@@ -199,10 +199,25 @@ export default function BestellwesenErsatzteile() {
                       <Badge variant="outline" className={STATUS_BADGE[r.status] || ''}>{r.status}</Badge>
                     </td>
                     <td className="p-3 text-right">
-                      <Select value={r.status} onValueChange={(v) => setStatus(r.id, v)}>
-                        <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
-                        <SelectContent>{STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                      </Select>
+                      <div className="inline-flex items-center gap-2 justify-end">
+                        {r.status === 'Bestellvorschlag' && (
+                          <Button
+                            size="sm"
+                            className="gold-gradient text-primary-foreground"
+                            disabled={triggering === r.id}
+                            onClick={() => triggerOrder(r)}
+                            title="Bestellung anlegen und in „Bestellung möglich" übernehmen (ohne Freigabe – Reparaturbestellung)"
+                          >
+                            {triggering === r.id
+                              ? <Loader2 className="w-4 h-4 animate-spin" />
+                              : <><ShoppingCart className="w-4 h-4 mr-1" /> Bestellung auslösen</>}
+                          </Button>
+                        )}
+                        <Select value={r.status} onValueChange={(v) => setStatus(r.id, v)}>
+                          <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+                          <SelectContent>{STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                        </Select>
+                      </div>
                     </td>
                   </tr>
                 );
