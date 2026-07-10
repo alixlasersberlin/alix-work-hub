@@ -136,7 +136,7 @@ export default function Invoices() {
   const [pageSize, setPageSize] = useState<PageSize>(20);
   const [pdfLoadingId, setPdfLoadingId] = useState<string | null>(null);
   const [editRow, setEditRow] = useState<Row | null>(null);
-  const [editForm, setEditForm] = useState({ reference_number: '', due_date: '', payment_status: '', invoice_number: '', customer_name: '', invoice_date: '', total: '', balance: '' });
+  const [editForm, setEditForm] = useState({ reference_number: '', due_date: '', payment_status: '', invoice_number: '', customer_name: '', invoice_date: '', total: '', balance: '', status: '' });
   const [editSaving, setEditSaving] = useState(false);
   const [emailRow, setEmailRow] = useState<Row | null>(null);
   const [emailForm, setEmailForm] = useState({ to_email: '', to_name: '', subject: '', body_text: '' });
@@ -593,6 +593,7 @@ export default function Invoices() {
       invoice_date: r.invoice_date ?? '',
       total: r.total != null ? String(r.total) : '',
       balance: r.balance != null ? String(r.balance) : '',
+      status: r.status ?? '',
     });
   };
 
@@ -606,6 +607,7 @@ export default function Invoices() {
         due_date: editForm.due_date || null,
         payment_status: editForm.payment_status || null,
       };
+      if (editForm.status) patch.status = editForm.status;
       if (isSuperAdmin) {
         patch.invoice_number = editForm.invoice_number || null;
         patch.customer_name = editForm.customer_name || null;
@@ -885,7 +887,16 @@ export default function Invoices() {
                           <Badge variant="outline" className="bg-muted/40">Einmalig</Badge>
                         )}
                       </td>
-                      <td className="px-4 py-2 font-medium">{r.invoice_number ?? '–'}</td>
+                      <td className="px-4 py-2 font-medium">
+                        <div className="flex items-center gap-2">
+                          <span>{r.invoice_number ?? '–'}</span>
+                          {r.status === 'draft' && (
+                            <Badge variant="outline" className="bg-amber-500/15 text-amber-400 border-amber-500/40 text-[10px] uppercase tracking-wide">
+                              Entwurf
+                            </Badge>
+                          )}
+                        </div>
+                      </td>
                       <td className="px-4 py-2">
                         <div className="truncate max-w-[220px]">{r.customer_name ?? '–'}</div>
                         {r.city && <div className="text-xs text-muted-foreground truncate max-w-[220px]">{r.city}</div>}
@@ -1123,6 +1134,16 @@ export default function Invoices() {
                   <SelectItem value="Bezahlt">Bezahlt</SelectItem>
                   <SelectItem value="Teilweise bezahlt">Teilweise bezahlt</SelectItem>
                   <SelectItem value="Überfällig">Überfällig</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="rstatus">Rechnungsstatus</Label>
+              <Select value={editForm.status || 'sent'} onValueChange={(v) => setEditForm((f) => ({ ...f, status: v }))}>
+                <SelectTrigger id="rstatus"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="draft">Entwurf (nicht an Finance)</SelectItem>
+                  <SelectItem value="sent">Festgeschrieben (versendet)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
