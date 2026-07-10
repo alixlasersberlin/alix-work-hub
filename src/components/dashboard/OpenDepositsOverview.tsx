@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Wallet, ChevronDown, Loader2 } from 'lucide-react';
+import { Wallet, ChevronDown, Loader2, Download } from 'lucide-react';
 import { parseISO } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { EmptyState } from '@/components/infinity/EmptyState';
+
 
 type Deposit = {
   id: string;
