@@ -47,20 +47,38 @@ export function OpenDepositsOverview() {
   const [open, setOpen] = useState(true);
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<Deposit[]>([]);
+  const [docTokens, setDocTokens] = useState<Record<string, string>>({});
 
   useEffect(() => {
     (async () => {
       setLoading(true);
       const { data } = await supabase
         .from('finance_deposits')
-        .select('id, source, deposit_number, customer_name, company_name, order_number, offer_number, invoice_number, currency, gross_amount, paid_amount, open_amount, due_date, status')
+        .select('id, source, deposit_number, customer_name, company_name, order_id, order_number, offer_number, invoice_number, currency, gross_amount, paid_amount, open_amount, due_date, status')
         .neq('status', 'gebucht')
         .order('due_date', { ascending: true, nullsFirst: false })
         .limit(500);
-      setRows((data ?? []) as any);
+      const list = (data ?? []) as any as Deposit[];
+      setRows(list);
+
+      const orderIds = Array.from(new Set(list.map(r => r.order_id).filter(Boolean))) as string[];
+      if (orderIds.length) {
+        const { data: docs } = await supabase
+          .from('order_documents')
+          .select('order_id, download_token, created_at')
+          .in('order_id', orderIds)
+          .eq('document_type', 'Anzahlungsrechnung')
+          .order('created_at', { ascending: false });
+        const map: Record<string, string> = {};
+        (docs ?? []).forEach((d: any) => {
+          if (d.order_id && d.download_token && !map[d.order_id]) map[d.order_id] = d.download_token;
+        });
+        setDocTokens(map);
+      }
       setLoading(false);
     })();
   }, []);
+
 
   const totalOpen = rows.reduce((s, r) => s + Number(r.open_amount || 0), 0);
   const overdue = rows.filter(r => r.due_date && parseISO(r.due_date) < new Date()).length;
