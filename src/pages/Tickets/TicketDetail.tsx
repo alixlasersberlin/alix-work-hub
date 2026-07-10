@@ -606,12 +606,31 @@ export default function TicketDetail() {
                 />
               </Field>
               <Field label="Interne Notiz">
-                <Textarea
-                  defaultValue={ticket.internal_note || ''}
-                  rows={3}
-                  disabled={!canEdit || saving}
-                  onBlur={e => { if (e.target.value !== (ticket.internal_note || '')) patch({ internal_note: e.target.value }); }}
-                />
+                <div className="space-y-2">
+                  <Textarea
+                    value={internalNoteDraft}
+                    onChange={e => setInternalNoteDraft(e.target.value)}
+                    rows={3}
+                    disabled={!canEdit || saving}
+                    placeholder="Nur intern sichtbar…"
+                  />
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      {internalNoteDraft !== (ticket.internal_note || '') ? 'Nicht gespeicherte Änderungen' : 'Gespeichert'}
+                    </span>
+                    <Button
+                      size="sm"
+                      disabled={!canEdit || savingInternalNote || internalNoteDraft === (ticket.internal_note || '')}
+                      onClick={async () => {
+                        setSavingInternalNote(true);
+                        await patch({ internal_note: internalNoteDraft });
+                        setSavingInternalNote(false);
+                      }}
+                    >
+                      {savingInternalNote ? 'Speichere…' : 'Notiz speichern'}
+                    </Button>
+                  </div>
+                </div>
               </Field>
             </div>
           </div>
