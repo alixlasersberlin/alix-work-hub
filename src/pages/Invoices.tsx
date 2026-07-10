@@ -150,6 +150,10 @@ export default function Invoices() {
   const [emailForm, setEmailForm] = useState({ to_email: '', to_name: '', subject: '', body_text: '' });
   const [emailSending, setEmailSending] = useState(false);
   const [emailPreparing, setEmailPreparing] = useState(false);
+  const [bookRow, setBookRow] = useState<Row | null>(null);
+  const [bookMethod, setBookMethod] = useState<'Überweisung' | 'Bar' | 'Lastschrift' | 'SEPA'>('Überweisung');
+  const [bookDate, setBookDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
+  const [bookSaving, setBookSaving] = useState(false);
   const [viewMode, setViewMode] = useState<'accounts' | 'list'>(() => {
     if (typeof window === 'undefined') return 'accounts';
     return (localStorage.getItem('invoices_view_mode') as 'accounts' | 'list') || 'accounts';
