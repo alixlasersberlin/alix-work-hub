@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { FileCheck2, FileDown, Loader2, Mail, CalendarIcon, Printer } from 'lucide-react';
+import { FileCheck2, FileDown, Loader2, Mail, CalendarIcon, Printer, Eye } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { supabase } from '@/integrations/supabase/client';
@@ -193,7 +193,7 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
     return { net: finalNet, tax: finalTax, gross: finalGross };
   }, [items, order]);
 
-  async function generate(mode: 'download' | 'print' = 'download') {
+  async function generate(mode: 'download' | 'print' | 'view' = 'download') {
     if (!items || items.length === 0) {
       toast.error('Keine Artikel im Auftrag vorhanden.');
       return;
@@ -516,6 +516,14 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
           toast.error('Popup wurde blockiert. Bitte Popups erlauben.');
         }
         toast.success('Druckvorschau geöffnet.');
+      } else if (mode === 'view') {
+        const blobUrl = doc.output('bloburl') as unknown as string;
+        const win = window.open(blobUrl, '_blank');
+        if (!win) {
+          toast.error('Popup wurde blockiert. Bitte Popups erlauben.');
+        } else {
+          toast.success('Auftragsbestätigung geöffnet.');
+        }
       } else {
         doc.save(fileName);
         toast.success('Auftragsbestätigung erstellt.');
@@ -534,6 +542,14 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
           <FileCheck2 className="w-4 h-4 text-primary" /> Auftragsbestätigung
         </h2>
         <div className="flex flex-wrap items-center gap-2">
+          <Button
+            onClick={() => generate('view')}
+            disabled={generating || !items?.length}
+            variant="outline"
+          >
+            <Eye className="w-4 h-4 mr-2" />
+            Auftrag anzeigen
+          </Button>
           <Button
             onClick={() => generate('print')}
             disabled={generating || !items?.length}
