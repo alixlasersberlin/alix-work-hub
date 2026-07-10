@@ -1137,6 +1137,16 @@ export default function Invoices() {
                 </SelectContent>
               </Select>
             </div>
+            <div>
+              <Label htmlFor="rstatus">Rechnungsstatus</Label>
+              <Select value={editForm.status || 'sent'} onValueChange={(v) => setEditForm((f) => ({ ...f, status: v }))}>
+                <SelectTrigger id="rstatus"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="draft">Entwurf (nicht an Finance)</SelectItem>
+                  <SelectItem value="sent">Festgeschrieben (versendet)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <p className="text-xs text-muted-foreground">Hinweis: Änderungen wirken lokal in Alix Work. Ein Sync nach Zoho erfolgt hier nicht automatisch.</p>
           </div>
           <DialogFooter>
