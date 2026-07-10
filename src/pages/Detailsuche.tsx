@@ -57,7 +57,7 @@ type Hit = {
   related: Related;
 };
 
-const EMPTY = { name: '', zip: '', city: '', orderNumber: '', phone: '', model: '', serial: '' };
+const EMPTY = { name: '', zip: '', city: '', orderNumber: '', phone: '', model: '', serial: '', notes: '' };
 
 function formatDate(d: string | null) {
   return d ? new Date(d).toLocaleDateString('de-DE') : '—';
@@ -285,6 +285,60 @@ export default function Detailsuche() {
         if (serialOrderIds.size === 0) { setHits([]); setLoading(false); return; }
       }
 
+      // 1c) Order-IDs via Notiz-Stichwort (order_notes, customer_notes, lager_devices.notes)
+      let notesOrderIds: Set<string> | null = null;
+      if (trimmed.notes) {
+        notesOrderIds = new Set<string>();
+        const kw = trimmed.notes;
+
+        // order_notes direkt am Auftrag
+        const { data: onRows, error: onErr } = await supabase
+          .from('order_notes')
+          .select('order_id')
+          .ilike('note_text', `%${kw}%`)
+          .not('order_id', 'is', null)
+          .limit(2000);
+        if (onErr) throw onErr;
+        for (const r of (onRows || []) as any[]) if (r.order_id) notesOrderIds.add(r.order_id);
+
+        // customer_notes → Aufträge des Kunden
+        const { data: cnRows } = await supabase
+          .from('customer_notes')
+          .select('customer_id')
+          .ilike('note_text', `%${kw}%`)
+          .not('customer_id', 'is', null)
+          .limit(2000);
+        const noteCustomerIds = Array.from(new Set(((cnRows || []) as any[]).map(r => r.customer_id).filter(Boolean)));
+        if (noteCustomerIds.length > 0) {
+          const { data: ordByCust } = await supabase
+            .from('orders')
+            .select('id')
+            .in('customer_id', noteCustomerIds)
+            .limit(2000);
+          for (const r of (ordByCust || []) as any[]) if (r.id) notesOrderIds.add(r.id);
+        }
+
+        // lager_devices.notes → über reserved_order_id, sonst standalone
+        const { data: lagNotes } = await supabase
+          .from('lager_devices')
+          .select('id, serial_number, model_name, reserved_order_id, notes')
+          .ilike('notes', `%${kw}%`)
+          .limit(2000);
+        for (const r of (lagNotes || []) as any[]) {
+          const isLeih = /\[Typ:\s*Leihgerät\]|\[Leihgerät\]/.test(r.notes ?? '');
+          if (isLeih) continue;
+          if (r.reserved_order_id) {
+            notesOrderIds.add(r.reserved_order_id);
+          } else if (!standaloneLager.some(s => s.id === r.id)) {
+            standaloneLager.push({ id: r.id, serial_number: r.serial_number, model_name: r.model_name, notes: r.notes });
+          }
+        }
+        setUnassignedLager(standaloneLager);
+        if (notesOrderIds.size === 0 && standaloneLager.length === 0) { setHits([]); setLoading(false); return; }
+      }
+
+
+
 
       // 2) Kunden-IDs nach Name / Telefon
       let customerIds: Set<string> | null = null;
@@ -313,6 +367,7 @@ export default function Detailsuche() {
       if (customerIds) q = q.in('customer_id', Array.from(customerIds));
       if (modelOrderIds) q = q.in('id', Array.from(modelOrderIds));
       if (serialOrderIds) q = q.in('id', Array.from(serialOrderIds));
+      if (notesOrderIds) q = q.in('id', Array.from(notesOrderIds));
       // Rolle Österreich: ausschließlich Aufträge aus Zoho EU 2 (-AT)
       if (atOnly) q = q.eq('source_system', 'zoho_eu_2');
 
@@ -424,7 +479,7 @@ export default function Detailsuche() {
       <PageHeader
         icon={SearchCheck}
         title="Detailsuche"
-        subtitle="Suche nach Name, PLZ, Wohnort, Auftragsnummer, Telefonnummer, Modell oder Seriennummer"
+        subtitle="Suche nach Name, PLZ, Wohnort, Auftragsnummer, Telefonnummer, Modell, Seriennummer oder Notiz-Stichwort"
         noBreadcrumbs
       />
 
@@ -449,6 +504,8 @@ export default function Detailsuche() {
             </datalist></div>
           <div><Label>Seriennummer</Label>
             <Input value={form.serial} onChange={update('serial')} placeholder="z. B. SN-12345" autoComplete="off" data-1p-ignore data-lpignore="true" data-form-type="other" name="serial-search" /></div>
+          <div className="md:col-span-2 lg:col-span-3"><Label>Notizen (Stichwort)</Label>
+            <Input value={form.notes} onChange={update('notes')} placeholder="z. B. Star, Reklamation, Retoure – sucht in Auftrags-, Kunden- und Lagernotizen" /></div>
         </div>
         <div className="flex flex-wrap gap-2 pt-2">
           <Button onClick={runSearch} disabled={loading}>
