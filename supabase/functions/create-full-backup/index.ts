@@ -660,7 +660,7 @@ async function processBackupStep(params: {
               .range(state.rowOffset, state.rowOffset + pageSize - 1);
             if (res.error) {
               lastErr = res.error.message;
-              const transient = /520|521|522|524|<!DOCTYPE|Web server|Cloudflare|fetch failed|network|timeout/i.test(lastErr);
+              const transient = /502|503|504|520|521|522|524|<!DOCTYPE|<html|Web server|Cloudflare|fetch failed|network|timeout|Unexpected token|not valid JSON/i.test(lastErr);
               if (!transient || attempt === 5) throw new Error(`Tabelle ${table}: ${lastErr}`);
             } else {
               data = res.data as unknown[];
