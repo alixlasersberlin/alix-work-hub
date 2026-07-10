@@ -58,7 +58,7 @@ export async function postPaymentToJournal(input: JournalPaymentInput): Promise<
       amount_vat: input.amount_vat != null ? Number(input.amount_vat) : null,
       payment_method: input.payment_method ?? null,
       description: input.description,
-      status: 'gebucht',
+      status: 'aktiv',
       user_id: user?.id ?? null,
     };
 
