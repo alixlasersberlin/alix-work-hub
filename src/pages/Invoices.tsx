@@ -630,7 +630,7 @@ export default function Invoices() {
   const handleEditClick = (event: { preventDefault: () => void; stopPropagation: () => void }, r: Row) => {
     event.preventDefault();
     event.stopPropagation();
-    window.setTimeout(() => openEdit(r), 0);
+    openEdit(r);
   };
 
   const saveEdit = async () => {
