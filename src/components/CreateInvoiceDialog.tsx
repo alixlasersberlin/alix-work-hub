@@ -426,7 +426,7 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
               <Button type="button" variant="outline" onClick={closeDialog} disabled={saving}>Abbrechen</Button>
               <Button type="button" onClick={handleCreate} disabled={saving} className="gold-gradient text-primary-foreground">
                 {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                Rechnung festschreiben
+                {status === 'draft' ? 'Als Entwurf speichern' : 'Rechnung festschreiben'}
               </Button>
             </div>
           </div>
