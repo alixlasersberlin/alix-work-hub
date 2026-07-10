@@ -38,6 +38,43 @@ export default function BestellwesenErsatzteile() {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('Bestellvorschlag');
   const [q, setQ] = useState('');
+  const { hasAnyRole, profile } = useAuth();
+  const isNatalia = (profile?.full_name || '').toLowerCase().includes('natalia')
+    || (profile?.email || '').toLowerCase().includes('natalia');
+  const canEditProposal = hasAnyRole(['Super Admin', 'Admin']) || isNatalia;
+  const [editRow, setEditRow] = useState<any | null>(null);
+  const [editForm, setEditForm] = useState<any>({});
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  const openEdit = (r: any) => {
+    setEditRow(r);
+    setEditForm({
+      part_name: r.part_name || '',
+      part_number: r.part_number || '',
+      quantity: r.quantity ?? 1,
+      supplier: r.supplier || '',
+      priority: r.priority || 'normal',
+      notes: r.notes || '',
+    });
+  };
+
+  const saveEdit = async () => {
+    if (!editRow) return;
+    setSavingEdit(true);
+    const { error } = await sbRepair.from('repair_spare_parts').update({
+      part_name: editForm.part_name,
+      part_number: editForm.part_number || null,
+      quantity: Number(editForm.quantity) || 1,
+      supplier: editForm.supplier || null,
+      priority: editForm.priority,
+      notes: editForm.notes || null,
+    }).eq('id', editRow.id);
+    setSavingEdit(false);
+    if (error) return toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
+    toast({ title: 'Bestellvorschlag aktualisiert' });
+    setEditRow(null);
+    load();
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
