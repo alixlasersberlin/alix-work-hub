@@ -1328,12 +1328,18 @@ export default function Invoices() {
       </Dialog>
 
       <Dialog open={!!bookRow} onOpenChange={(o) => !o && !bookSaving && setBookRow(null)}>
-        <DialogContent onInteractOutside={(e) => e.preventDefault()} onPointerDownOutside={(e) => e.preventDefault()}>
+        <DialogContent
+          className="z-[200]"
+          onInteractOutside={(e) => e.preventDefault()}
+          onPointerDownOutside={(e) => e.preventDefault()}
+          aria-describedby="book-desc"
+        >
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-400" />
               Rechnung {bookRow?.invoice_number ?? ''} buchen
             </DialogTitle>
+            <p id="book-desc" className="text-xs text-muted-foreground">Zahlungsart wählen und als bezahlt buchen.</p>
           </DialogHeader>
           <div className="space-y-3">
             <div className="rounded-md border border-border bg-muted/20 p-3 text-sm">
