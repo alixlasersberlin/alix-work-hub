@@ -5,7 +5,7 @@ import { DataCard, PageError } from '@/components/PageShell';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { SkeletonTable } from '@/components/infinity/Skeleton';
 import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
-import { FileText, RefreshCw, ArrowRightLeft, ChevronDown, ChevronRight, Users, Wallet, AlertTriangle, Repeat, Pencil, Printer, Download, Loader2, Trash2, Mail, CheckCircle2 } from 'lucide-react';
+import { FileText, RefreshCw, ArrowRightLeft, ChevronDown, ChevronRight, Users, Wallet, AlertTriangle, Repeat, Pencil, Printer, Download, Loader2, Trash2, Mail, CheckCircle2, X as LucideXIcon } from 'lucide-react';
 import { postPaymentToJournal } from '@/lib/finance/journal';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -579,6 +579,7 @@ export default function Invoices() {
       for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
       return new Blob([bytes], { type: 'application/pdf' });
     } catch (e: any) {
+      console.error('[Invoices] fetchInvoicePdf failed', e);
       toast({ title: 'PDF fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
       return null;
     } finally {
@@ -629,7 +630,7 @@ export default function Invoices() {
   const handleEditClick = (event: { preventDefault: () => void; stopPropagation: () => void }, r: Row) => {
     event.preventDefault();
     event.stopPropagation();
-    window.setTimeout(() => openEdit(r), 0);
+    openEdit(r);
   };
 
   const saveEdit = async () => {
@@ -1219,83 +1220,93 @@ export default function Invoices() {
         </div>
       )}
 
-      <Dialog open={!!editRow} onOpenChange={(o) => !o && setEditRow(null)}>
-        <DialogContent onInteractOutside={(event) => event.preventDefault()}>
-          <DialogHeader>
-            <DialogTitle>Rechnung {editRow?.invoice_number ?? ''} bearbeiten</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3 max-h-[70vh] overflow-y-auto">
-            {isSuperAdmin && (
-              <>
-                <div>
-                  <Label htmlFor="invnr">Rechnungsnummer</Label>
-                  <Input id="invnr" value={editForm.invoice_number} onChange={(e) => setEditForm((f) => ({ ...f, invoice_number: e.target.value }))} />
-                </div>
-                <div>
-                  <Label htmlFor="cust">Kunde</Label>
-                  <Input id="cust" value={editForm.customer_name} onChange={(e) => setEditForm((f) => ({ ...f, customer_name: e.target.value }))} />
-                </div>
-                <div>
-                  <Label htmlFor="idate">Rechnungsdatum</Label>
-                  <Input id="idate" type="date" value={editForm.invoice_date} onChange={(e) => setEditForm((f) => ({ ...f, invoice_date: e.target.value }))} />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
+      {editRow && (
+        <div
+          className="fixed inset-0 z-[2147483646] flex items-center justify-center bg-black/70 p-4"
+          onClick={(e) => { if (e.target === e.currentTarget && !editSaving) setEditRow(null); }}
+        >
+          <div className="w-full max-w-lg rounded-lg border border-border bg-background p-6 shadow-2xl">
+            <div className="mb-4 flex items-start justify-between">
+              <h2 className="text-lg font-semibold text-foreground">
+                Rechnung {editRow.invoice_number ?? ''} bearbeiten
+              </h2>
+              <Button variant="ghost" size="sm" onClick={() => !editSaving && setEditRow(null)} disabled={editSaving} aria-label="Schließen">
+                <LucideXIcon className="w-4 h-4" />
+              </Button>
+            </div>
+            <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
+              {isSuperAdmin && (
+                <>
                   <div>
-                    <Label htmlFor="total">Betrag (€)</Label>
-                    <Input id="total" type="number" step="0.01" value={editForm.total} onChange={(e) => setEditForm((f) => ({ ...f, total: e.target.value }))} />
+                    <Label htmlFor="invnr">Rechnungsnummer</Label>
+                    <Input id="invnr" value={editForm.invoice_number} onChange={(e) => setEditForm((f) => ({ ...f, invoice_number: e.target.value }))} />
                   </div>
                   <div>
-                    <Label htmlFor="bal">Saldo (€)</Label>
-                    <Input id="bal" type="number" step="0.01" value={editForm.balance} onChange={(e) => setEditForm((f) => ({ ...f, balance: e.target.value }))} />
+                    <Label htmlFor="cust">Kunde</Label>
+                    <Input id="cust" value={editForm.customer_name} onChange={(e) => setEditForm((f) => ({ ...f, customer_name: e.target.value }))} />
                   </div>
-                </div>
-              </>
-            )}
-            <div>
-              <Label htmlFor="ref">Referenz / Auftragsnr.</Label>
-              <Input id="ref" value={editForm.reference_number} onChange={(e) => setEditForm((f) => ({ ...f, reference_number: e.target.value }))} />
+                  <div>
+                    <Label htmlFor="idate">Rechnungsdatum</Label>
+                    <Input id="idate" type="date" value={editForm.invoice_date} onChange={(e) => setEditForm((f) => ({ ...f, invoice_date: e.target.value }))} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label htmlFor="total">Betrag (€)</Label>
+                      <Input id="total" type="number" step="0.01" value={editForm.total} onChange={(e) => setEditForm((f) => ({ ...f, total: e.target.value }))} />
+                    </div>
+                    <div>
+                      <Label htmlFor="bal">Saldo (€)</Label>
+                      <Input id="bal" type="number" step="0.01" value={editForm.balance} onChange={(e) => setEditForm((f) => ({ ...f, balance: e.target.value }))} />
+                    </div>
+                  </div>
+                </>
+              )}
+              <div>
+                <Label htmlFor="ref">Referenz / Auftragsnr.</Label>
+                <Input id="ref" value={editForm.reference_number} onChange={(e) => setEditForm((f) => ({ ...f, reference_number: e.target.value }))} />
+              </div>
+              <div>
+                <Label htmlFor="due">Fälligkeit</Label>
+                <Input id="due" type="date" value={editForm.due_date} onChange={(e) => setEditForm((f) => ({ ...f, due_date: e.target.value }))} />
+              </div>
+              <div>
+                <Label htmlFor="ps">Zahlungsstatus</Label>
+                <select
+                  id="ps"
+                  value={editForm.payment_status}
+                  onChange={(e) => setEditForm((f) => ({ ...f, payment_status: e.target.value }))}
+                  className="mt-1 w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  <option value="">Status wählen</option>
+                  <option value="Offen">Offen</option>
+                  <option value="Bezahlt">Bezahlt</option>
+                  <option value="Teilweise bezahlt">Teilweise bezahlt</option>
+                  <option value="Überfällig">Überfällig</option>
+                </select>
+              </div>
+              <div>
+                <Label htmlFor="rstatus">Rechnungsstatus</Label>
+                <select
+                  id="rstatus"
+                  value={editForm.status || 'sent'}
+                  onChange={(e) => setEditForm((f) => ({ ...f, status: e.target.value }))}
+                  className="mt-1 w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  <option value="draft">Entwurf (nicht an Finance)</option>
+                  <option value="sent">Festgeschrieben (versendet)</option>
+                </select>
+              </div>
+              <p className="text-xs text-muted-foreground">Hinweis: Änderungen wirken lokal in Alix Work. Ein Sync nach Zoho erfolgt hier nicht automatisch.</p>
             </div>
-            <div>
-              <Label htmlFor="due">Fälligkeit</Label>
-              <Input id="due" type="date" value={editForm.due_date} onChange={(e) => setEditForm((f) => ({ ...f, due_date: e.target.value }))} />
+            <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <Button variant="outline" onClick={() => setEditRow(null)} disabled={editSaving}>Abbrechen</Button>
+              <Button onClick={saveEdit} disabled={editSaving} className="gold-gradient text-primary-foreground">
+                {editSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}Speichern
+              </Button>
             </div>
-            <div>
-              <Label htmlFor="ps">Zahlungsstatus</Label>
-              <select
-                id="ps"
-                value={editForm.payment_status}
-                onChange={(e) => setEditForm((f) => ({ ...f, payment_status: e.target.value }))}
-                className="mt-1 w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              >
-                <option value="">Status wählen</option>
-                <option value="Offen">Offen</option>
-                <option value="Bezahlt">Bezahlt</option>
-                <option value="Teilweise bezahlt">Teilweise bezahlt</option>
-                <option value="Überfällig">Überfällig</option>
-              </select>
-            </div>
-            <div>
-              <Label htmlFor="rstatus">Rechnungsstatus</Label>
-              <select
-                id="rstatus"
-                value={editForm.status || 'sent'}
-                onChange={(e) => setEditForm((f) => ({ ...f, status: e.target.value }))}
-                className="mt-1 w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              >
-                <option value="draft">Entwurf (nicht an Finance)</option>
-                <option value="sent">Festgeschrieben (versendet)</option>
-              </select>
-            </div>
-            <p className="text-xs text-muted-foreground">Hinweis: Änderungen wirken lokal in Alix Work. Ein Sync nach Zoho erfolgt hier nicht automatisch.</p>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditRow(null)}>Abbrechen</Button>
-            <Button onClick={saveEdit} disabled={editSaving} className="gold-gradient text-primary-foreground">
-              {editSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}Speichern
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
 
       <Dialog open={!!emailRow} onOpenChange={(o) => !o && !emailSending && setEmailRow(null)}>
         <DialogContent className="max-w-xl">
