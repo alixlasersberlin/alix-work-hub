@@ -1019,7 +1019,7 @@ export default function Invoices() {
                               variant="outline"
                               title="Als bezahlt buchen"
                               className="h-8 px-2 gap-1 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
-                              onClick={() => openBook(r)}
+                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.setTimeout(() => openBook(r), 0); }}
                             >
                               <CheckCircle2 className="w-3.5 h-3.5" /> Buchen
                             </Button>
