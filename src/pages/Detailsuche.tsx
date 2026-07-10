@@ -504,6 +504,8 @@ export default function Detailsuche() {
             </datalist></div>
           <div><Label>Seriennummer</Label>
             <Input value={form.serial} onChange={update('serial')} placeholder="z. B. SN-12345" autoComplete="off" data-1p-ignore data-lpignore="true" data-form-type="other" name="serial-search" /></div>
+          <div className="md:col-span-2 lg:col-span-3"><Label>Notizen (Stichwort)</Label>
+            <Input value={form.notes} onChange={update('notes')} placeholder="z. B. Star, Reklamation, Retoure – sucht in Auftrags-, Kunden- und Lagernotizen" /></div>
         </div>
         <div className="flex flex-wrap gap-2 pt-2">
           <Button onClick={runSearch} disabled={loading}>
