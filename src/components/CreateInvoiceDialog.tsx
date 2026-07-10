@@ -265,7 +265,11 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
       return;
     }
     setCreatedId(data?.id ?? null);
-    toast.success(`Rechnung ${invoiceNumber} erstellt und festgeschrieben`);
+    if (status === 'draft') {
+      toast.success(`Entwurf ${invoiceNumber} gespeichert (keine Übergabe an Finance)`);
+    } else {
+      toast.success(`Rechnung ${invoiceNumber} erstellt und festgeschrieben`);
+    }
     setOpen(false);
   };
 
