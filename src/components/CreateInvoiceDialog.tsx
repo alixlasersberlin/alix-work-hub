@@ -401,13 +401,14 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
                 </div>
                 <div>
                   <Label className="text-xs">Status</Label>
-                  <Select value={status} onValueChange={(v: any) => setStatus(v)}>
-                    <SelectTrigger className="mt-1 bg-secondary border-border"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="draft">Entwurf</SelectItem>
-                      <SelectItem value="sent">Festgeschrieben (versendet)</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <select
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value as 'draft' | 'sent')}
+                    className="mt-1 w-full h-10 rounded-md border border-border bg-secondary px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="draft">Entwurf</option>
+                    <option value="sent">Festgeschrieben (versendet)</option>
+                  </select>
                 </div>
               </div>
 
