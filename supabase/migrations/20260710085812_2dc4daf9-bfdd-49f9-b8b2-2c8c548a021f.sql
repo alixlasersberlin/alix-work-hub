@@ -1,0 +1,1 @@
+CREATE POLICY finance_deposits_select_dashboard ON public.finance_deposits FOR SELECT TO authenticated USING (NOT has_role('Österreich'));
