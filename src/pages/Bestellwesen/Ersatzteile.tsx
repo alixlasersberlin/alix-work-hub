@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { sbRepair } from '@/lib/repair/api';
+import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, RefreshCw, Package, ExternalLink } from 'lucide-react';
+import { Loader2, RefreshCw, Package, ExternalLink, ShoppingCart } from 'lucide-react';
 import { PageHeader } from '@/components/infinity/PageHeader';
 
 const STATUSES = ['Bestellvorschlag', 'offen', 'bestellt', 'erhalten', 'storniert'];
