@@ -42,11 +42,24 @@ function isLoanerDevice(notes: string | null | undefined) {
   return /\[Typ:\s*Leihger[äa]t\]/i.test(notes || '') || /leihger[äa]t/i.test(notes || '');
 }
 
+function isInRepair(notes: string | null | undefined) {
+  return /\[Reparatur:\s*[^\]]+\]/i.test(notes || '');
+}
+
+function isReservableBestandDevice(device: Pick<FreeDevice, 'notes' | 'delivered_order_id'> & { reserved_order_id?: string | null }) {
+  return getStatus(device.notes) === 'Bestand'
+    && !device.reserved_order_id
+    && !device.delivered_order_id
+    && !isLoanerDevice(device.notes)
+    && !isInRepair(device.notes);
+}
+
 type FreeDevice = {
   id: string;
   serial_number: string;
   model_name: string;
   notes: string | null;
+  reserved_order_id?: string | null;
   delivered_order_id?: string | null;
 };
 
@@ -249,12 +262,7 @@ export default function OrdersFreiBestellung() {
     setReservedByOrder(resMap);
 
     // Only Bestand devices
-    const bestandOnly = ((freeDevs as FreeDevice[]) ?? []).filter(d =>
-      getStatus(d.notes) === 'Bestand'
-      && !d.delivered_order_id
-      && !isLoanerDevice(d.notes)
-      && !/\[Reparatur:\s*[^\]]+\]/i.test(d.notes ?? '')
-    );
+    const bestandOnly = ((freeDevs as FreeDevice[]) ?? []).filter(isReservableBestandDevice);
     setFreeBestand(bestandOnly);
 
     // Load order items for visible orders
@@ -308,10 +316,27 @@ export default function OrdersFreiBestellung() {
   const confirmReserve = async () => {
     if (!reserveOrder || !reserveDeviceId) return;
     setReserving(true);
+    const { data: currentDevice, error: checkErr } = await supabase
+      .from('lager_devices')
+      .select('id, notes, reserved_order_id, delivered_order_id')
+      .eq('id', reserveDeviceId)
+      .maybeSingle();
+
+    if (checkErr || !currentDevice || !isReservableBestandDevice(currentDevice)) {
+      setReserving(false);
+      toast.error('Dieses Gerät ist nicht mehr reservierbar (z. B. in Reparatur oder bereits zugeordnet).');
+      setReserveOrder(null);
+      setReserveDeviceId('');
+      reload();
+      return;
+    }
+
     const { error: upErr } = await supabase
       .from('lager_devices')
       .update({ reserved_order_id: reserveOrder.id })
-      .eq('id', reserveDeviceId);
+      .eq('id', reserveDeviceId)
+      .is('reserved_order_id', null)
+      .is('delivered_order_id', null);
     setReserving(false);
     if (upErr) {
       toast.error('Reservierung fehlgeschlagen: ' + upErr.message);
