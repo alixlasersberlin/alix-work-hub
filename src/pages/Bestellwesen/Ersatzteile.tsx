@@ -8,8 +8,12 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, RefreshCw, Package, ExternalLink, ShoppingCart } from 'lucide-react';
+import { Loader2, RefreshCw, Package, ExternalLink, ShoppingCart, Pencil } from 'lucide-react';
 import { PageHeader } from '@/components/infinity/PageHeader';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { useAuth } from '@/hooks/useAuth';
 
 const STATUSES = ['Bestellvorschlag', 'offen', 'bestellt', 'erhalten', 'storniert'];
 
