@@ -1019,7 +1019,7 @@ export default function Invoices() {
                               variant="outline"
                               title="Als bezahlt buchen"
                               className="h-8 px-2 gap-1 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
-                              onClick={() => openBook(r)}
+                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.setTimeout(() => openBook(r), 0); }}
                             >
                               <CheckCircle2 className="w-3.5 h-3.5" /> Buchen
                             </Button>
@@ -1167,7 +1167,7 @@ export default function Invoices() {
                                     variant="outline"
                                     title="Als bezahlt buchen"
                                     className="h-8 px-2 gap-1 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
-                                    onClick={() => openBook(r)}
+                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.setTimeout(() => openBook(r), 0); }}
                                   >
                                     <CheckCircle2 className="w-3.5 h-3.5" /> Buchen
                                   </Button>
@@ -1328,7 +1328,7 @@ export default function Invoices() {
       </Dialog>
 
       <Dialog open={!!bookRow} onOpenChange={(o) => !o && !bookSaving && setBookRow(null)}>
-        <DialogContent onInteractOutside={(e) => e.preventDefault()}>
+        <DialogContent onInteractOutside={(e) => e.preventDefault()} onPointerDownOutside={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-400" />
