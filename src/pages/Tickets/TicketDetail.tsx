@@ -100,6 +100,8 @@ export default function TicketDetail() {
   const [linkedRepair, setLinkedRepair] = useState<LinkedRepair | null>(null);
   const [users, setUsers] = useState<{ id: string; label: string }[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [internalNoteDraft, setInternalNoteDraft] = useState('');
+  const [savingInternalNote, setSavingInternalNote] = useState(false);
 
   async function loadLinkedRepair(repairId: string | null) {
     if (!repairId) { setLinkedRepair(null); return; }
