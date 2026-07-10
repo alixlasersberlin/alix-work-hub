@@ -128,10 +128,13 @@ export function OpenDepositsOverview() {
                     <th className="text-right px-4 py-2 font-medium">Offen</th>
                     <th className="text-left px-4 py-2 font-medium">Fällig</th>
                     <th className="text-left px-4 py-2 font-medium">Status</th>
+                    <th className="text-right px-4 py-2 font-medium">Rechnung</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {rows.slice(0, 25).map((r) => (
+                  {rows.slice(0, 25).map((r) => {
+                    const token = r.order_id ? docTokens[r.order_id] : null;
+                    return (
                     <tr
                       key={r.id}
                       className="hover:bg-secondary/30 transition-colors cursor-pointer"
@@ -151,9 +154,26 @@ export function OpenDepositsOverview() {
                           {statusLabel[r.status]}
                         </span>
                       </td>
+                      <td className="px-4 py-2 text-right" onClick={(e) => e.stopPropagation()}>
+                        {token ? (
+                          <a
+                            href={`/d/${token}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-border text-primary hover:bg-primary/10"
+                            title="Anzahlungsrechnung öffnen"
+                          >
+                            <Download className="w-3 h-3" /> PDF
+                          </a>
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground">—</span>
+                        )}
+                      </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
+
               </table>
               {rows.length > 25 && (
                 <div className="p-3 text-center text-xs text-muted-foreground border-t border-border">
