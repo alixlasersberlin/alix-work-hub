@@ -855,7 +855,7 @@ export default function Invoices() {
         booking_date: bookDate,
         description: `Zahlung Rechnung ${bookRow.invoice_number ?? ''} (${bookMethod})${fullyPaid ? '' : ' – Teilzahlung'} – ${bookRow.customer_name ?? ''}`.trim(),
         source_table: table,
-        source_id: `${bookRow.id}:${bookDate}:${Date.now()}`,
+        source_id: (globalThis.crypto?.randomUUID?.() ?? bookRow.id),
         vorgang: 'Zahlung',
         payment_method: bookMethod,
       });
