@@ -1112,7 +1112,7 @@ export default function Invoices() {
       )}
 
       <Dialog open={!!editRow} onOpenChange={(o) => !o && setEditRow(null)}>
-        <DialogContent>
+        <DialogContent onInteractOutside={(event) => event.preventDefault()}>
           <DialogHeader>
             <DialogTitle>Rechnung {editRow?.invoice_number ?? ''} bearbeiten</DialogTitle>
           </DialogHeader>
