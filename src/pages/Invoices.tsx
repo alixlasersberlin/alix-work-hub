@@ -5,7 +5,8 @@ import { DataCard, PageError } from '@/components/PageShell';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { SkeletonTable } from '@/components/infinity/Skeleton';
 import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
-import { FileText, RefreshCw, ArrowRightLeft, ChevronDown, ChevronRight, Users, Wallet, AlertTriangle, Repeat, Pencil, Printer, Download, Loader2, Trash2, Mail } from 'lucide-react';
+import { FileText, RefreshCw, ArrowRightLeft, ChevronDown, ChevronRight, Users, Wallet, AlertTriangle, Repeat, Pencil, Printer, Download, Loader2, Trash2, Mail, CheckCircle2 } from 'lucide-react';
+import { postPaymentToJournal } from '@/lib/finance/journal';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -149,6 +150,10 @@ export default function Invoices() {
   const [emailForm, setEmailForm] = useState({ to_email: '', to_name: '', subject: '', body_text: '' });
   const [emailSending, setEmailSending] = useState(false);
   const [emailPreparing, setEmailPreparing] = useState(false);
+  const [bookRow, setBookRow] = useState<Row | null>(null);
+  const [bookMethod, setBookMethod] = useState<'Überweisung' | 'Bar' | 'Lastschrift' | 'SEPA'>('Überweisung');
+  const [bookDate, setBookDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
+  const [bookSaving, setBookSaving] = useState(false);
   const [viewMode, setViewMode] = useState<'accounts' | 'list'>(() => {
     if (typeof window === 'undefined') return 'accounts';
     return (localStorage.getItem('invoices_view_mode') as 'accounts' | 'list') || 'accounts';
@@ -779,6 +784,57 @@ export default function Invoices() {
   const expandAll = () => setExpanded(Object.fromEntries(accounts.map((a) => [a.key, true])));
   const collapseAll = () => setExpanded({});
 
+  const openBook = (r: Row) => {
+    setBookRow(r);
+    setBookMethod('Überweisung');
+    setBookDate(new Date().toISOString().slice(0, 10));
+  };
+
+  const submitBook = async () => {
+    if (!bookRow) return;
+    setBookSaving(true);
+    try {
+      const table = bookRow.source === 'recurring' ? 'zoho_recurring_invoices' : 'zoho_invoices';
+      const patch: any = {
+        payment_status: 'Bezahlt',
+        balance: 0,
+        last_payment_date: bookDate,
+      };
+      const { error } = await (supabase as any).from(table).update(patch).eq('id', bookRow.id);
+      if (error) throw error;
+
+      const gross = Number(bookRow.total ?? 0);
+      const net = +(gross / 1.19).toFixed(2);
+      const vat = +(gross - net).toFixed(2);
+      const jr = await postPaymentToJournal({
+        customer_id: bookRow.customer_id,
+        invoice_number: bookRow.invoice_number,
+        reference: bookRow.invoice_number,
+        amount_gross: gross,
+        amount_net: net,
+        amount_vat: vat,
+        booking_date: bookDate,
+        description: `Zahlung Rechnung ${bookRow.invoice_number ?? ''} (${bookMethod}) – ${bookRow.customer_name ?? ''}`.trim(),
+        source_table: table,
+        source_id: bookRow.id,
+        vorgang: 'Zahlung',
+        payment_method: bookMethod,
+      });
+      if (!jr.ok) throw new Error(jr.error || 'Journal-Buchung fehlgeschlagen');
+
+      setRows((prev) => prev.map((x) => (x.id === bookRow.id && x.source === bookRow.source
+        ? { ...x, payment_status: 'Bezahlt', balance: 0, last_payment_date: bookDate }
+        : x)));
+      toast({ title: 'Gebucht', description: `Rechnung ${bookRow.invoice_number ?? ''} als bezahlt markiert und im Buchungsjournal verbucht.` });
+      setBookRow(null);
+    } catch (e: any) {
+      toast({ title: 'Fehler', description: e?.message || String(e), variant: 'destructive' });
+    } finally {
+      setBookSaving(false);
+    }
+  };
+
+
   return (
     <div className="p-4 sm:p-6">
       <PageHeader
@@ -957,6 +1013,17 @@ export default function Invoices() {
                           <Button size="sm" variant="ghost" title="Download PDF" disabled={pdfLoadingId === r.id} onClick={() => handleDownload(r)}>
                             {pdfLoadingId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
                           </Button>
+                          {isAdmin && (r.payment_status ?? '').toLowerCase() !== 'bezahlt' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              title="Als bezahlt buchen"
+                              className="h-8 px-2 gap-1 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
+                              onClick={() => openBook(r)}
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5" /> Buchen
+                            </Button>
+                          )}
                           <Button
                             size="sm"
                             variant="outline"
@@ -1094,6 +1161,17 @@ export default function Invoices() {
                                 >
                                   {pdfLoadingId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
                                 </Button>
+                                {isAdmin && (r.payment_status ?? '').toLowerCase() !== 'bezahlt' && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    title="Als bezahlt buchen"
+                                    className="h-8 px-2 gap-1 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
+                                    onClick={() => openBook(r)}
+                                  >
+                                    <CheckCircle2 className="w-3.5 h-3.5" /> Buchen
+                                  </Button>
+                                )}
                                 <Button
                                   size="sm"
                                   variant="outline"
@@ -1244,6 +1322,52 @@ export default function Invoices() {
             <Button onClick={sendEmail} disabled={emailSending || emailPreparing} className="gold-gradient text-primary-foreground">
               {emailSending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
               {emailSending ? 'Sende…' : 'Senden'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!bookRow} onOpenChange={(o) => !o && !bookSaving && setBookRow(null)}>
+        <DialogContent onInteractOutside={(e) => e.preventDefault()}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              Rechnung {bookRow?.invoice_number ?? ''} buchen
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="rounded-md border border-border bg-muted/20 p-3 text-sm">
+              <div><span className="text-muted-foreground">Kunde:</span> {bookRow?.customer_name ?? '–'}</div>
+              <div><span className="text-muted-foreground">Betrag:</span> {fmtMoney(bookRow?.total ?? 0, bookRow?.currency)}</div>
+              <div><span className="text-muted-foreground">Offener Saldo:</span> {fmtMoney(bookRow?.balance ?? 0, bookRow?.currency)}</div>
+            </div>
+            <div>
+              <Label htmlFor="bkm">Zahlungsart</Label>
+              <select
+                id="bkm"
+                value={bookMethod}
+                onChange={(e) => setBookMethod(e.target.value as any)}
+                className="mt-1 w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="Überweisung">Überweisung</option>
+                <option value="Bar">Bar</option>
+                <option value="Lastschrift">Lastschrift</option>
+                <option value="SEPA">SEPA</option>
+              </select>
+            </div>
+            <div>
+              <Label htmlFor="bkd">Zahlungsdatum</Label>
+              <Input id="bkd" type="date" value={bookDate} onChange={(e) => setBookDate(e.target.value)} />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Die Rechnung wird als <strong>Bezahlt</strong> markiert und ein Eintrag im Buchungsjournal erstellt.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBookRow(null)} disabled={bookSaving}>Abbrechen</Button>
+            <Button onClick={submitBook} disabled={bookSaving} className="bg-emerald-600 hover:bg-emerald-500 text-white">
+              {bookSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
+              Buchen
             </Button>
           </DialogFooter>
         </DialogContent>
