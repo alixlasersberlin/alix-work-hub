@@ -1383,11 +1383,36 @@ export default function Invoices() {
                 </select>
               </div>
               <div>
+                <Label htmlFor="bka">Betrag der Zahlung</Label>
+                <Input
+                  id="bka"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={bookAmount}
+                  onChange={(e) => setBookAmount(e.target.value)}
+                />
+              </div>
+              {(() => {
+                const openBefore = Number(bookRow.balance ?? bookRow.total ?? 0);
+                const pay = Math.max(0, Number(String(bookAmount).replace(',', '.')) || 0);
+                const remaining = Math.max(0, +(openBefore - pay).toFixed(2));
+                const fullyPaid = remaining <= 0.0049;
+                return (
+                  <div className="rounded-md border border-border bg-muted/10 p-3 text-sm flex items-center justify-between">
+                    <span className="text-muted-foreground">Offener Saldo nach Buchung:</span>
+                    <span className={fullyPaid ? 'text-emerald-500 font-medium' : 'text-amber-500 font-medium'}>
+                      {fmtMoney(remaining, bookRow.currency)}{fullyPaid ? ' – vollständig bezahlt' : ' – Teilzahlung'}
+                    </span>
+                  </div>
+                );
+              })()}
+              <div>
                 <Label htmlFor="bkd">Zahlungsdatum</Label>
                 <Input id="bkd" type="date" value={bookDate} onChange={(e) => setBookDate(e.target.value)} />
               </div>
               <p className="text-xs text-muted-foreground">
-                Die Rechnung wird als <strong>Bezahlt</strong> markiert und ein Eintrag im Buchungsjournal erstellt.
+                Die Rechnung wird entsprechend dem Zahlbetrag als <strong>Bezahlt</strong> oder <strong>Teilweise bezahlt</strong> markiert und im Buchungsjournal verbucht.
               </p>
             </div>
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
