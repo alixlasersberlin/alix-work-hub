@@ -1078,9 +1078,10 @@ export default function Invoices() {
                           <Button
                             size="sm"
                             variant="outline"
+                            type="button"
                             title="Rechnung per E-Mail versenden"
                             className="h-8 px-2 gap-1 border-primary/40 text-primary hover:bg-primary/10"
-                            onClick={() => openEmail(r)}
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); openEmail(r); }}
                           >
                             <Mail className="w-3.5 h-3.5" /> Rechnung/Email
                           </Button>
