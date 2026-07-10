@@ -29,7 +29,7 @@ const fmtMoney = (n: number) =>
 export default function Angebote() {
   const navigate = useNavigate();
   const { hasRole } = useAuth();
-  const isSuperAdmin = hasRole('Super Admin');
+  const isSuperAdmin = hasRole('Super Admin') || hasRole('Admin');
   const [offers, setOffers] = useState<OfferSnapshot[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
