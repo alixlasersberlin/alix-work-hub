@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
     // 2) Fetch zoho_invoices since last sync (last 5000)
     const { data: invoices, error: invErr } = await admin
       .from('zoho_invoices')
-      .select('zoho_invoice_id, invoice_number, customer_id, customer_name, invoice_date, due_date, total, balance, currency, payment_status, last_payment_date, source_system')
+      .select('zoho_invoice_id, invoice_number, customer_id, customer_name, invoice_date, due_date, total, balance, currency, status, payment_status, last_payment_date, source_system, raw_data')
       .order('invoice_date', { ascending: false })
       .limit(5000);
     if (invErr) throw invErr;
