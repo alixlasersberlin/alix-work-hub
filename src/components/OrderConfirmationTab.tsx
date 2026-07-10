@@ -543,6 +543,14 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
         </h2>
         <div className="flex flex-wrap items-center gap-2">
           <Button
+            onClick={() => generate('view')}
+            disabled={generating || !items?.length}
+            variant="outline"
+          >
+            <Eye className="w-4 h-4 mr-2" />
+            Auftrag anzeigen
+          </Button>
+          <Button
             onClick={() => generate('print')}
             disabled={generating || !items?.length}
             variant="outline"
