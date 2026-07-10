@@ -255,7 +255,7 @@ async function uploadNdjsonPart(
       });
     if (!error) return size;
     lastErr = error.message || String(error);
-    const transient = /Service Unavailable|503|502|504|520|521|522|524|fetch failed|network|timeout|<!DOCTYPE|Web server|Cloudflare/i.test(lastErr);
+    const transient = /Service Unavailable|503|502|504|520|521|522|524|fetch failed|network|timeout|<!DOCTYPE|<html|Web server|Cloudflare|Unexpected token|not valid JSON/i.test(lastErr);
     if (!transient || attempt === 6) throw new Error(`Upload ${path}: ${lastErr}`);
     await new Promise((r) => setTimeout(r, Math.min(500 * 2 ** (attempt - 1), 8000)));
   }
