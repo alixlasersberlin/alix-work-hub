@@ -688,6 +688,7 @@ export default function Invoices() {
   };
 
   const openEmail = async (r: Row) => {
+    console.log('[Invoices] openEmail clicked', { id: r.id, invoice_number: r.invoice_number });
     setEmailPreparing(true);
     setEmailRow(r);
     setEmailForm({
@@ -698,11 +699,12 @@ export default function Invoices() {
     });
     try {
       if (r.customer_id) {
-        const { data: c } = await supabase
+        const { data: c, error } = await supabase
           .from('customers')
           .select('email, contact_name, company_name')
           .eq('external_customer_id', r.customer_id)
           .maybeSingle();
+        if (error) console.warn('[Invoices] customer lookup failed', error);
         if (c) {
           setEmailForm((f) => ({
             ...f,
@@ -711,6 +713,8 @@ export default function Invoices() {
           }));
         }
       }
+    } catch (e) {
+      console.error('[Invoices] openEmail error', e);
     } finally {
       setEmailPreparing(false);
     }
@@ -1074,9 +1078,10 @@ export default function Invoices() {
                           <Button
                             size="sm"
                             variant="outline"
+                            type="button"
                             title="Rechnung per E-Mail versenden"
                             className="h-8 px-2 gap-1 border-primary/40 text-primary hover:bg-primary/10"
-                            onClick={() => openEmail(r)}
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); openEmail(r); }}
                           >
                             <Mail className="w-3.5 h-3.5" /> Rechnung/Email
                           </Button>
@@ -1233,9 +1238,10 @@ export default function Invoices() {
                                 <Button
                                   size="sm"
                                   variant="outline"
+                                  type="button"
                                   title="Rechnung per E-Mail versenden"
                                   className="h-8 px-2 gap-1 border-primary/40 text-primary hover:bg-primary/10"
-                                  onClick={() => openEmail(r)}
+                                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); openEmail(r); }}
                                 >
                                   <Mail className="w-3.5 h-3.5" /> Rechnung/Email
                                 </Button>
