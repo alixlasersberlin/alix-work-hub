@@ -47,6 +47,12 @@ export default function AngebotErstellen() {
   const navigate = useNavigate();
   const { roles } = useAuth();
   const isSuperAdmin = (roles ?? []).some((r: any) => (typeof r === 'string' ? r : r?.name) === 'Super Admin');
+  const isAdmin = (roles ?? []).some((r: any) => {
+    const n = typeof r === 'string' ? r : r?.name;
+    return n === 'Super Admin' || n === 'Admin';
+  });
+  const [existingApproval, setExistingApproval] = useState<'pending' | 'approved' | 'rejected' | null>(null);
+  const isLockedForEdit = !isAdmin && existingApproval !== null && existingApproval !== 'approved';
   const [confirming, setConfirming] = useState(false);
   const [customers, setCustomers] = useState<any[]>([]);
 
@@ -221,6 +227,7 @@ export default function AngebotErstellen() {
             if (snap.salesAdvisor) setSalesAdvisor(snap.salesAdvisor);
             if (snap.deliveryWeek) setDeliveryWeek(snap.deliveryWeek);
             if (snap.specialOffer) setSpecialOffer(snap.specialOffer);
+            setExistingApproval((snap.approvalStatus as any) || 'pending');
             if (snap.notes) setNotes(snap.notes);
             if (typeof snap.includeAppendix === 'boolean') setIncludeAppendix(snap.includeAppendix);
             if (snap.customer?.id) setCustomerId(snap.customer.id);
@@ -971,6 +978,7 @@ export default function AngebotErstellen() {
   });
 
   const saveOffer = async (silent = false): Promise<boolean> => {
+    if (isLockedForEdit) { toast.error('Bereits erstelltes Angebot – Änderungen benötigen Freigabe durch Admin oder Super Admin.'); return false; }
     if (!selectedCustomer) { toast.error('Bitte zuerst einen Kunden auswählen.'); return false; }
     const validLines = lines.filter(l => l.name && l.quantity > 0);
     if (validLines.length === 0) { toast.error('Bitte mindestens eine Position erfassen.'); return false; }
@@ -1198,7 +1206,19 @@ export default function AngebotErstellen() {
         <p className="text-sm text-muted-foreground mt-1">Erstellen Sie ein neues Angebot für einen Kunden.</p>
       </div>
 
-      {/* Header */}
+      {isLockedForEdit && (
+        <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200 flex items-start gap-2">
+          <span className="text-lg leading-none">🔒</span>
+          <div>
+            <div className="font-semibold">Angebot gesperrt</div>
+            <div className="text-amber-200/80">
+              Dieses Angebot wurde bereits erstellt. Änderungen können nur von <b>Admin</b> oder <b>Super Admin</b> vorgenommen werden.
+              Bitte fordere eine Freigabe an – nach Freigabe kannst du das Angebot erneut speichern oder als PDF herunterladen.
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="rounded-xl border border-border bg-card card-glow p-6 grid gap-4 md:grid-cols-3">
         <div>
           <Label>Angebotsnummer</Label>
@@ -1832,6 +1852,8 @@ export default function AngebotErstellen() {
           variant="outline"
           className="gap-2 border-border"
           onClick={() => { saveOffer(); }}
+          disabled={isLockedForEdit}
+          title={isLockedForEdit ? 'Gesperrt – benötigt Freigabe von Admin/Super Admin' : undefined}
         >
           <Save className="w-4 h-4" />
           Speichern
@@ -1840,6 +1862,8 @@ export default function AngebotErstellen() {
           variant="outline"
           className="gap-2 border-border"
           onClick={async () => { if (await saveOffer()) navigate('/verkauf/angebote'); }}
+          disabled={isLockedForEdit}
+          title={isLockedForEdit ? 'Gesperrt – benötigt Freigabe von Admin/Super Admin' : undefined}
         >
           <Save className="w-4 h-4" />
           Speichern + Schließen
@@ -1848,6 +1872,7 @@ export default function AngebotErstellen() {
           variant="outline"
           className="gap-2 border-border"
           onClick={sendByEmail}
+          disabled={isLockedForEdit}
         >
           <Inbox className="w-4 h-4" />
           Per E-Mail versenden
@@ -1856,6 +1881,7 @@ export default function AngebotErstellen() {
         <Button
           className="gap-2 bg-green-600 hover:bg-green-700 text-white border-0"
           onClick={sendForSignature}
+          disabled={isLockedForEdit}
         >
           <Pencil className="w-4 h-4" />
           Mit Alix Sign zur Unterschrift senden
@@ -1871,11 +1897,17 @@ export default function AngebotErstellen() {
             Selbst bestätigen & in Auftrag wandeln
           </Button>
         )}
-        <Button onClick={generatePDF} className="gold-gradient text-primary-foreground gap-2">
+        <Button
+          onClick={generatePDF}
+          className="gold-gradient text-primary-foreground gap-2"
+          disabled={isLockedForEdit}
+          title={isLockedForEdit ? 'Gesperrt – benötigt Freigabe von Admin/Super Admin' : undefined}
+        >
           <FileDown className="w-4 h-4" />
           Als PDF speichern
         </Button>
       </div>
+
 
 
       {/* Live-PDF-Vorschau */}
