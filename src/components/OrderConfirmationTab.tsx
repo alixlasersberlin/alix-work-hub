@@ -516,6 +516,14 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
           toast.error('Popup wurde blockiert. Bitte Popups erlauben.');
         }
         toast.success('Druckvorschau geöffnet.');
+      } else if (mode === 'view') {
+        const blobUrl = doc.output('bloburl') as unknown as string;
+        const win = window.open(blobUrl, '_blank');
+        if (!win) {
+          toast.error('Popup wurde blockiert. Bitte Popups erlauben.');
+        } else {
+          toast.success('Auftragsbestätigung geöffnet.');
+        }
       } else {
         doc.save(fileName);
         toast.success('Auftragsbestätigung erstellt.');
