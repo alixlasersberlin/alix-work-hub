@@ -817,7 +817,20 @@ async function processBackupStep(params: {
     };
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : String(err);
-    console.error("Backup failed:", errorMsg);
+    console.error("Backup step failed:", errorMsg);
+    const transient = /502|503|504|520|521|522|524|<!DOCTYPE|<html|Web server|Cloudflare|fetch failed|network|timeout|Unexpected token|not valid JSON|invalid JSON|empty file|transient storage/i.test(errorMsg);
+    if (transient) {
+      // Re-queue instead of marking the whole run failed — Supabase Storage /
+      // Cloudflare gateway HTML responses are recoverable.
+      await updateBackupMessage(
+        adminClient,
+        backupId,
+        `Transienter Fehler, wird erneut versucht: ${errorMsg.slice(0, 200)}`,
+      );
+      await new Promise((r) => setTimeout(r, 5000));
+      triggerNextStep(adminClient, params);
+      return { success: true, accepted: true, backup_id: backupId, backup_status: "running" };
+    }
     await failBackup({ adminClient, backupId, source, scope, errorMsg });
     throw err;
   }
