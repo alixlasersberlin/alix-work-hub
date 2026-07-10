@@ -803,16 +803,21 @@ export default function Invoices() {
     if (!bookRow) return;
     setBookSaving(true);
     try {
+      const openBefore = Number(bookRow.balance ?? bookRow.total ?? 0);
+      const pay = Math.max(0, Number(String(bookAmount).replace(',', '.')) || 0);
+      if (pay <= 0) throw new Error('Bitte einen Zahlbetrag größer 0 eingeben.');
+      const newBalance = Math.max(0, +(openBefore - pay).toFixed(2));
+      const fullyPaid = newBalance <= 0.0049;
       const table = bookRow.source === 'recurring' ? 'zoho_recurring_invoices' : 'zoho_invoices';
       const patch: any = {
-        payment_status: 'Bezahlt',
-        balance: 0,
+        payment_status: fullyPaid ? 'Bezahlt' : 'Teilweise bezahlt',
+        balance: newBalance,
         last_payment_date: bookDate,
       };
       const { error } = await (supabase as any).from(table).update(patch).eq('id', bookRow.id);
       if (error) throw error;
 
-      const gross = Number(bookRow.total ?? 0);
+      const gross = +pay.toFixed(2);
       const net = +(gross / 1.19).toFixed(2);
       const vat = +(gross - net).toFixed(2);
       const jr = await postPaymentToJournal({
@@ -823,7 +828,7 @@ export default function Invoices() {
         amount_net: net,
         amount_vat: vat,
         booking_date: bookDate,
-        description: `Zahlung Rechnung ${bookRow.invoice_number ?? ''} (${bookMethod}) – ${bookRow.customer_name ?? ''}`.trim(),
+        description: `Zahlung Rechnung ${bookRow.invoice_number ?? ''} (${bookMethod})${fullyPaid ? '' : ' – Teilzahlung'} – ${bookRow.customer_name ?? ''}`.trim(),
         source_table: table,
         source_id: bookRow.id,
         vorgang: 'Zahlung',
@@ -832,9 +837,9 @@ export default function Invoices() {
       if (!jr.ok) throw new Error(jr.error || 'Journal-Buchung fehlgeschlagen');
 
       setRows((prev) => prev.map((x) => (x.id === bookRow.id && x.source === bookRow.source
-        ? { ...x, payment_status: 'Bezahlt', balance: 0, last_payment_date: bookDate }
+        ? { ...x, payment_status: patch.payment_status, balance: newBalance, last_payment_date: bookDate }
         : x)));
-      toast({ title: 'Gebucht', description: `Rechnung ${bookRow.invoice_number ?? ''} als bezahlt markiert und im Buchungsjournal verbucht.` });
+      toast({ title: 'Gebucht', description: `Zahlung ${fmtMoney(gross, bookRow.currency)} für Rechnung ${bookRow.invoice_number ?? ''} verbucht.${fullyPaid ? '' : ` Restsaldo: ${fmtMoney(newBalance, bookRow.currency)}`}` });
       setBookRow(null);
     } catch (e: any) {
       toast({ title: 'Fehler', description: e?.message || String(e), variant: 'destructive' });
