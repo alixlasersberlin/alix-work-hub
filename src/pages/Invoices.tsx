@@ -76,6 +76,7 @@ type Row = {
   status: string | null;
   payment_status: string | null;
   last_payment_date: string | null;
+  raw_data?: any;
 };
 
 type Account = {
@@ -110,6 +111,12 @@ function fmtMoney(n: number | null, c: string | null = 'EUR') { return maskReven
 function fmtDate(d: string | null) {
   if (!d) return '–';
   try { return new Date(d).toLocaleDateString('de-DE'); } catch { return d; }
+}
+
+function isDraftInvoice(r: Pick<Row, 'status' | 'payment_status' | 'raw_data'>) {
+  const status = String(r.status ?? '').toLowerCase();
+  const paymentStatus = String(r.payment_status ?? '').toLowerCase();
+  return status === 'draft' || status === 'entwurf' || paymentStatus === 'entwurf' || r.raw_data?.is_draft === true;
 }
 
 function flatRowsForKpi(rows: Row[], search: string, statusFilter: string): number {
@@ -160,7 +167,7 @@ export default function Invoices() {
   const fetchRows = async () => {
     setLoading(true);
     setError(null);
-    const cols = 'id, zoho_invoice_id, source_system, invoice_number, reference_number, customer_id, customer_name, city, invoice_date, due_date, total, balance, currency, status, payment_status, last_payment_date';
+    const cols = 'id, zoho_invoice_id, source_system, invoice_number, reference_number, customer_id, customer_name, city, invoice_date, due_date, total, balance, currency, status, payment_status, last_payment_date, raw_data';
     const [inv, rec] = await Promise.all([
       supabase.from('zoho_invoices').select(cols).order('invoice_date', { ascending: false }).limit(10000),
       supabase.from('zoho_recurring_invoices').select(cols).order('invoice_date', { ascending: false }).limit(10000),
@@ -593,8 +600,14 @@ export default function Invoices() {
       invoice_date: r.invoice_date ?? '',
       total: r.total != null ? String(r.total) : '',
       balance: r.balance != null ? String(r.balance) : '',
-      status: r.status ?? '',
+      status: isDraftInvoice(r) ? 'draft' : 'sent',
     });
+  };
+
+  const handleEditClick = (event: { preventDefault: () => void; stopPropagation: () => void }, r: Row) => {
+    event.preventDefault();
+    event.stopPropagation();
+    window.setTimeout(() => openEdit(r), 0);
   };
 
   const saveEdit = async () => {
@@ -607,7 +620,11 @@ export default function Invoices() {
         due_date: editForm.due_date || null,
         payment_status: editForm.payment_status || null,
       };
-      if (editForm.status) patch.status = editForm.status;
+      if (editForm.status) {
+        patch.status = editForm.status;
+        const raw = editRow.raw_data && typeof editRow.raw_data === 'object' && !Array.isArray(editRow.raw_data) ? editRow.raw_data : {};
+        patch.raw_data = { ...raw, is_draft: editForm.status === 'draft' };
+      }
       if (isSuperAdmin) {
         patch.invoice_number = editForm.invoice_number || null;
         patch.customer_name = editForm.customer_name || null;
@@ -890,7 +907,7 @@ export default function Invoices() {
                       <td className="px-4 py-2 font-medium">
                         <div className="flex items-center gap-2">
                           <span>{r.invoice_number ?? '–'}</span>
-                          {r.status === 'draft' && (
+                          {isDraftInvoice(r) && (
                             <Badge variant="outline" className="bg-amber-500/15 text-amber-400 border-amber-500/40 text-[10px] uppercase tracking-wide">
                               Entwurf
                             </Badge>
@@ -914,7 +931,7 @@ export default function Invoices() {
                       <td className="px-4 py-2 text-right whitespace-nowrap">
                         <div className="inline-flex items-center gap-1">
                           {isAdmin && (
-                            <Button size="sm" variant="ghost" title="Bearbeiten" onClick={() => openEdit(r)}>
+                            <Button size="sm" variant="ghost" title="Bearbeiten" onClick={(event) => handleEditClick(event, r)}>
                               <Pencil className="w-3.5 h-3.5" />
                             </Button>
                           )}
@@ -1015,7 +1032,16 @@ export default function Invoices() {
                                 <Badge variant="outline" className="bg-muted/40">Einmalig</Badge>
                               )}
                             </td>
-                            <td className="px-4 py-2 font-medium">{r.invoice_number ?? '–'}</td>
+                            <td className="px-4 py-2 font-medium">
+                              <div className="flex items-center gap-2">
+                                <span>{r.invoice_number ?? '–'}</span>
+                                {isDraftInvoice(r) && (
+                                  <Badge variant="outline" className="bg-amber-500/15 text-amber-400 border-amber-500/40 text-[10px] uppercase tracking-wide">
+                                    Entwurf
+                                  </Badge>
+                                )}
+                              </div>
+                            </td>
                             <td className="px-4 py-2">{r.reference_number ?? '–'}</td>
                             <td className="px-4 py-2">{fmtDate(r.invoice_date)}</td>
                             <td className="px-4 py-2">{fmtDate(r.due_date)}</td>
@@ -1030,7 +1056,7 @@ export default function Invoices() {
                             <td className="px-4 py-2 text-right whitespace-nowrap">
                               <div className="inline-flex items-center gap-1">
                                 {isAdmin && (
-                                  <Button size="sm" variant="ghost" title="Bearbeiten" onClick={() => openEdit(r)}>
+                                  <Button size="sm" variant="ghost" title="Bearbeiten" onClick={(event) => handleEditClick(event, r)}>
                                     <Pencil className="w-3.5 h-3.5" />
                                   </Button>
                                 )}
@@ -1127,25 +1153,30 @@ export default function Invoices() {
             </div>
             <div>
               <Label htmlFor="ps">Zahlungsstatus</Label>
-              <Select value={editForm.payment_status || undefined} onValueChange={(v) => setEditForm((f) => ({ ...f, payment_status: v }))}>
-                <SelectTrigger id="ps"><SelectValue placeholder="Status wählen" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Offen">Offen</SelectItem>
-                  <SelectItem value="Bezahlt">Bezahlt</SelectItem>
-                  <SelectItem value="Teilweise bezahlt">Teilweise bezahlt</SelectItem>
-                  <SelectItem value="Überfällig">Überfällig</SelectItem>
-                </SelectContent>
-              </Select>
+              <select
+                id="ps"
+                value={editForm.payment_status}
+                onChange={(e) => setEditForm((f) => ({ ...f, payment_status: e.target.value }))}
+                className="mt-1 w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <option value="">Status wählen</option>
+                <option value="Offen">Offen</option>
+                <option value="Bezahlt">Bezahlt</option>
+                <option value="Teilweise bezahlt">Teilweise bezahlt</option>
+                <option value="Überfällig">Überfällig</option>
+              </select>
             </div>
             <div>
               <Label htmlFor="rstatus">Rechnungsstatus</Label>
-              <Select value={editForm.status || 'sent'} onValueChange={(v) => setEditForm((f) => ({ ...f, status: v }))}>
-                <SelectTrigger id="rstatus"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="draft">Entwurf (nicht an Finance)</SelectItem>
-                  <SelectItem value="sent">Festgeschrieben (versendet)</SelectItem>
-                </SelectContent>
-              </Select>
+              <select
+                id="rstatus"
+                value={editForm.status || 'sent'}
+                onChange={(e) => setEditForm((f) => ({ ...f, status: e.target.value }))}
+                className="mt-1 w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <option value="draft">Entwurf (nicht an Finance)</option>
+                <option value="sent">Festgeschrieben (versendet)</option>
+              </select>
             </div>
             <p className="text-xs text-muted-foreground">Hinweis: Änderungen wirken lokal in Alix Work. Ein Sync nach Zoho erfolgt hier nicht automatisch.</p>
           </div>
