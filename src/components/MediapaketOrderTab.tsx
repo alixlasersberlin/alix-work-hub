@@ -329,6 +329,49 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
             </Button>
           </div>
         </div>
+        {/* Assignment + Due date */}
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="flex items-center gap-2">
+            <UserPlus className="w-4 h-4 text-muted-foreground shrink-0" />
+            <div className="flex-1 min-w-0">
+              <label className="text-[10px] uppercase tracking-wide text-muted-foreground">Zuständig</label>
+              <Select value={mp.assigned_user_id ?? '__none__'} onValueChange={(v) => assignUser(v === '__none__' ? null : v)}>
+                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Nicht zugewiesen" /></SelectTrigger>
+                <SelectContent className="max-h-72">
+                  <SelectItem value="__none__">— Nicht zugewiesen —</SelectItem>
+                  {staffList.map(s => <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <CalendarClock className={cn('w-4 h-4 shrink-0', mp.due_date && new Date(mp.due_date) < new Date() && mp.status !== 'completed' ? 'text-red-500' : 'text-muted-foreground')} />
+            <div className="flex-1 min-w-0">
+              <label className="text-[10px] uppercase tracking-wide text-muted-foreground">Frist</label>
+              <div className="flex items-center gap-1">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className={cn('h-8 text-xs justify-start flex-1', !mp.due_date && 'text-muted-foreground')}>
+                      {mp.due_date ? format(new Date(mp.due_date), 'dd.MM.yyyy') : 'Frist setzen'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={mp.due_date ? new Date(mp.due_date) : undefined} onSelect={setDueDate} initialFocus className={cn('p-3 pointer-events-auto')} />
+                  </PopoverContent>
+                </Popover>
+                {mp.due_date && (
+                  <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => setDueDate(undefined)}>×</Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+        {mp.due_date && new Date(mp.due_date) < new Date() && mp.status !== 'completed' && (
+          <div className="mt-3 flex items-center gap-2 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2">
+            <AlertTriangle className="w-4 h-4 text-red-500" />
+            <span className="text-xs text-red-400">Frist überschritten seit {format(new Date(mp.due_date), 'dd.MM.yyyy')}</span>
+          </div>
+        )}
         {/* Progress */}
         <div className="mt-4">
           <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
