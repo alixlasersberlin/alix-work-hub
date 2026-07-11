@@ -257,7 +257,7 @@ Deno.serve(async (req) => {
         .select('id, customer_id').eq('id', mpId).maybeSingle();
       if (!mp) return json({ error: 'forbidden' }, 403);
       const { data: cust } = await admin.from('customers')
-        .select('email, name').eq('id', mp.customer_id).maybeSingle();
+        .select('email, company_name, contact_name').eq('id', mp.customer_id).maybeSingle();
       if (!cust?.email) return json({ error: 'customer has no email' }, 400);
       const token = await signToken(mpId);
       const link = `${baseUrl}/book/mediapaket?token=${encodeURIComponent(token)}`;
@@ -317,7 +317,7 @@ Deno.serve(async (req) => {
         .select('id, customer_id').eq('id', mpId).maybeSingle();
       if (!mp) return json({ error: 'forbidden' }, 403);
       const { data: cust } = await admin.from('customers')
-        .select('email, name').eq('id', mp.customer_id).maybeSingle();
+        .select('email, company_name, contact_name').eq('id', mp.customer_id).maybeSingle();
       if (!cust?.email) return json({ error: 'customer has no email' }, 400);
       const { data: comment } = await admin.from('media_package_comments')
         .select('subject, comment').eq('id', commentId).eq('media_package_id', mpId).maybeSingle();
@@ -388,7 +388,7 @@ Deno.serve(async (req) => {
       }).select('id').single();
       // Email customer if we have an email
       if (mp.customer_id) {
-        const { data: cust } = await admin.from('customers').select('email, name').eq('id', mp.customer_id).maybeSingle();
+        const { data: cust } = await admin.from('customers').select('email, company_name, contact_name').eq('id', mp.customer_id).maybeSingle();
         if (cust?.email) {
           const token = await signToken(mpId);
           const link = `${baseUrl}/book/mediapaket?token=${encodeURIComponent(token)}`;
@@ -426,7 +426,7 @@ Deno.serve(async (req) => {
       if (!mpId || !newStatus) return json({ error: 'required' }, 400);
       const { data: mp } = await admin.from('media_packages').select('customer_id').eq('id', mpId).maybeSingle();
       if (!mp?.customer_id) return json({ ok: true, skipped: 'no customer' });
-      const { data: cust } = await admin.from('customers').select('email, name').eq('id', mp.customer_id).maybeSingle();
+      const { data: cust } = await admin.from('customers').select('email, company_name, contact_name').eq('id', mp.customer_id).maybeSingle();
       if (!cust?.email) return json({ ok: true, skipped: 'no email' });
       const LABELS: Record<string, string> = {
         in_review: 'wird geprüft', in_production: 'ist in Produktion', completed: 'ist abgeschlossen',
