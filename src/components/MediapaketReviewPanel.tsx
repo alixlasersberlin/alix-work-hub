@@ -117,6 +117,7 @@ export default function MediapaketReviewPanel({ mpId, currentStatus, onChanged }
     }
     setNewComment('');
     setNewSubject('');
+    setNewSection('__none__');
     setPosting(false);
     load();
   };
