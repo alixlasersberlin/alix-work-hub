@@ -273,7 +273,7 @@ function QuestionsBanner({ questions, token, onChange }: { questions: any[]; tok
 
 /* =============== STEP COMPONENTS =============== */
 
-function StepPrep() {
+function StepPrep({ introText }: { introText?: string }) {
   const items = [
     'Logo und Name des Studios',
     'genauer Modellname des Alix-Lasers-Gerätes',
@@ -288,6 +288,9 @@ function StepPrep() {
   ];
   return (
     <div className="space-y-3">
+      {introText && (
+        <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm whitespace-pre-wrap">{introText}</div>
+      )}
       <p className="text-sm text-muted-foreground">Bitte prüfen Sie, ob folgende Unterlagen vollständig vorliegen. Sie können jederzeit unterbrechen und später fortsetzen.</p>
       <ul className="space-y-1.5">
         {items.map(i => <li key={i} className="flex items-center gap-2 text-sm"><CheckCircle2 className="w-4 h-4 text-muted-foreground" /> {i}</li>)}
