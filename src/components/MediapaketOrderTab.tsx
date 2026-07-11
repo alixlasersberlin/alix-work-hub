@@ -101,6 +101,22 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
     }
   };
 
+  const [emailing, setEmailing] = useState(false);
+  const emailCustomerLink = async () => {
+    if (!mp?.id) return;
+    if (!confirm('Kundenlink per E-Mail an den Kunden versenden?')) return;
+    setEmailing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('mediapaket-portal', {
+        body: { action: 'notify_customer', mp_id: mp.id, base_url: window.location.origin },
+      });
+      if (error || !data?.ok) throw new Error(error?.message || data?.error || 'Fehler');
+      toast.success('E-Mail gesendet an ' + data.email);
+      load();
+    } catch (e: any) { toast.error(e.message); }
+    finally { setEmailing(false); }
+  };
+
   if (loading) {
     return <div className="flex items-center gap-2 text-muted-foreground p-8"><Loader2 className="w-4 h-4 animate-spin" /> Lade Mediapaket...</div>;
   }
