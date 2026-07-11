@@ -8,9 +8,10 @@ interface Props {
   step?: number;
   totalSteps?: number;
   narrow?: boolean;
+  hideLegalLinks?: boolean;
 }
 
-export function BookingLayout({ children, step, totalSteps, narrow }: Props) {
+export function BookingLayout({ children, step, totalSteps, narrow, hideLegalLinks }: Props) {
   const progress = step && totalSteps ? Math.round((step / totalSteps) * 100) : 0;
   return (
     <div className="min-h-dvh flex flex-col bg-gradient-to-b from-background via-background to-muted/30 text-foreground">
