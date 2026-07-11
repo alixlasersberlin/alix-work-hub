@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import MediapaketReviewPanel, { SECTION_LABEL } from './MediapaketReviewPanel';
+import MediapaketExtrasPanel from './MediapaketExtrasPanel';
 import { notifyBus } from '@/hooks/useNotifications';
 
 interface Props {
@@ -471,6 +472,9 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
           </div>
         </div>
       </div>
+
+      {/* Extras: Workflow, Timeline, Versionen, Tools */}
+      <MediapaketExtrasPanel mpId={mp.id} status={mp.status} onChanged={load} />
 
       {/* Review-Panel: Status, Kommentare, Rückfragen, Verlauf */}
       <MediapaketReviewPanel mpId={mp.id} currentStatus={mp.status} onChanged={load} />

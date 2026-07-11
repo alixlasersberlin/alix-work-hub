@@ -186,6 +186,56 @@ Deno.serve(async (req) => {
       return json({ token, url: `/book/mediapaket?token=${encodeURIComponent(token)}` });
     }
 
+    // Staff duplicate endpoint: copies all sections (without files) to a new package
+    if (action === 'duplicate') {
+      const auth = req.headers.get('Authorization');
+      if (!auth) return json({ error: 'unauthorized' }, 401);
+      const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, {
+        global: { headers: { Authorization: auth } }, auth: { persistSession: false }
+      });
+      const { data: userData } = await userClient.auth.getUser();
+      if (!userData?.user) return json({ error: 'unauthorized' }, 401);
+      const body = await req.json();
+      const srcId = body.mp_id;
+      const targetOrderId = body.target_order_id || null;
+      if (!srcId) return json({ error: 'mp_id required' }, 400);
+      const { data: src } = await userClient.from('media_packages').select('*').eq('id', srcId).maybeSingle();
+      if (!src) return json({ error: 'forbidden' }, 403);
+
+      // Create new package
+      const insertPayload: any = {
+        customer_id: src.customer_id,
+        order_id: targetOrderId ?? src.order_id,
+        studio_name: (src.studio_name ? `${src.studio_name} (Kopie)` : null),
+        status: 'not_started',
+        created_by: userData.user.id,
+      };
+      const { data: newMp, error: insErr } = await admin.from('media_packages').insert(insertPayload).select('id, order_id').single();
+      if (insErr) return json({ error: insErr.message }, 400);
+      const newId = newMp.id;
+
+      const tablesToCopy = [
+        'media_package_services', 'media_package_studio_data', 'media_package_devices',
+        'media_package_prices', 'media_package_contact_data', 'media_package_opening_hours',
+        'media_package_treatments', 'media_package_team_members', 'media_package_branding',
+      ];
+      for (const t of tablesToCopy) {
+        const { data: rows } = await admin.from(t).select('*').eq('media_package_id', srcId);
+        if (rows && rows.length) {
+          const cleaned = rows.map((r: any) => {
+            const { id, created_at, updated_at, ...rest } = r;
+            return { ...rest, media_package_id: newId };
+          });
+          await admin.from(t).insert(cleaned as any);
+        }
+      }
+      await admin.from('media_package_history').insert({
+        media_package_id: newId, user_id: userData.user.id, action: 'duplicated_from',
+        entity_id: srcId, new_value: { source_id: srcId } as any,
+      });
+      return json({ ok: true, new_mp_id: newId, order_id: newMp.order_id });
+    }
+
     // Staff notify-customer endpoint: sends email with wizard link
     if (action === 'notify_customer') {
       const auth = req.headers.get('Authorization');
