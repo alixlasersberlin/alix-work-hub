@@ -404,6 +404,14 @@ Deno.serve(async (req) => {
           action: 'submitted',
           new_value: full as any,
         });
+        await notifyStaff({
+          mpId,
+          subject: 'Mediapaket zur Freigabe eingereicht',
+          headline: 'Kunde hat das Media Paket final eingereicht',
+          innerHtml: `<p style="color:#333">Alle Angaben wurden vom Kunden bestätigt und freigegeben. Bitte prüfen und den Produktionsprozess anstoßen.</p>`,
+          action: 'submit_email_sent',
+          base_url: body.base_url,
+        });
         return json({ ok: true });
       }
 
