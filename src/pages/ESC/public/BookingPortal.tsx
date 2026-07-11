@@ -19,14 +19,13 @@ import { de } from 'date-fns/locale';
 import { confirmUrl } from '@/lib/esc/public-url';
 import { supabase } from '@/integrations/supabase/client';
 import type { EscDepartment } from '@/lib/esc/types';
+import type { EscAppointmentKind } from '@/lib/esc/appointment-kinds';
 
 type StepId = 'department' | 'service' | 'location' | 'time' | 'contact' | 'summary';
 const STEPS: StepId[] = ['department', 'service', 'location', 'time', 'contact', 'summary'];
 const STEP_LABEL: Record<StepId, string> = {
   department: 'Leistung', service: 'Terminart', location: 'Standort', time: 'Zeit', contact: 'Kontakt', summary: 'Übersicht',
 };
-
-const SERVICE_PRESETS = ['Beratung', 'Online Demo', 'Vorführung', 'Geräteeinweisung', 'Produktschulung'];
 
 export default function BookingPortal() {
   const { department: deptParam, service: serviceParam } = useParams();
