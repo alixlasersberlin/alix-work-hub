@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Truck, Cpu, DoorOpen, Map, Gauge, ArrowRight, ListChecks } from 'lucide-react';
 import { LiveAvailability } from '@/components/esc/resources/LiveAvailability';
+import { RmQuickActions } from '@/components/esc/resources/RmQuickActions';
 
 const TILES = [
   { to: '/esc/rm/mitarbeiter', label: 'Mitarbeiter', icon: Users, desc: 'Qualifikationen, Schichten, Standort, Vertretung' },
