@@ -62,6 +62,9 @@ export function AppointmentModal({ open, onClose, onSubmit, departments, employe
   const start = defaultStart || (initial?.startAt ? new Date(initial.startAt) : new Date());
   const end = initial?.endAt ? new Date(initial.endAt) : new Date(start.getTime() + 60 * 60_000);
 
+  const [entryType, setEntryType] = useState<EntryType>(detectEntryType(initial?.kind));
+  const isInternal = entryType !== 'termin';
+
   const [form, setForm] = useState({
     title: initial?.title || '',
     description: initial?.description || '',
@@ -86,6 +89,27 @@ export function AppointmentModal({ open, onClose, onSubmit, departments, employe
     sendEmail: false,
     attachIcs: false,
   });
+
+  const handleEntryTypeChange = (t: EntryType) => {
+    setEntryType(t);
+    const def = ENTRY_TYPES.find((e) => e.value === t)!;
+    setForm((f) => ({
+      ...f,
+      kind: t === 'termin' ? (detectEntryType(f.kind) === 'termin' ? f.kind : '') : def.kind,
+      // internal entries: strip customer-facing data
+      ...(t !== 'termin'
+        ? {
+            customerName: '',
+            customerContact: '',
+            customerEmail: '',
+            customerPhone: '',
+            externalNote: '',
+            confirmationRequired: false,
+            sendEmail: false,
+          }
+        : {}),
+    }));
+  };
 
   useEffect(() => {
     if (!open) return;
