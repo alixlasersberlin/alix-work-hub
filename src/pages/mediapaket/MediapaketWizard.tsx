@@ -114,7 +114,34 @@ export default function MediapaketWizard() {
   }, [token, reload]);
 
   if (loading) return <BookingLayout><div className="flex items-center gap-2 p-8"><Loader2 className="w-4 h-4 animate-spin" /> Wird geladen…</div></BookingLayout>;
-  if (err) return <BookingLayout><Card><CardContent className="p-6 text-sm text-destructive">{err}</CardContent></Card></BookingLayout>;
+  if (err) {
+    const noToken = !token;
+    return (
+      <BookingLayout>
+        <Card>
+          <CardContent className="p-8 space-y-4 text-center">
+            <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+              <MessageSquare className="w-6 h-6 text-primary" />
+            </div>
+            <div className="text-lg font-semibold">
+              {noToken ? 'Persönlicher Zugangslink erforderlich' : 'Zugriff nicht möglich'}
+            </div>
+            <div className="text-sm text-muted-foreground max-w-md mx-auto">
+              {noToken ? (
+                <>Diese Seite ist nur über Ihren <strong>persönlichen Link</strong> aus unserer E-Mail erreichbar.
+                Bitte öffnen Sie die Nachricht von <strong>vertrieb@alixwork.de</strong> und klicken Sie auf den enthaltenen Button.</>
+              ) : err}
+            </div>
+            <div className="text-xs text-muted-foreground pt-2">
+              Link nicht erhalten oder abgelaufen? Schreiben Sie uns an{' '}
+              <a href="mailto:vertrieb@alixwork.de" className="text-primary hover:underline">vertrieb@alixwork.de</a>{' '}
+              oder rufen Sie uns an.
+            </div>
+          </CardContent>
+        </Card>
+      </BookingLayout>
+    );
+  }
   if (!data) return null;
 
   if (submitted) {
