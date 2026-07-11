@@ -284,7 +284,7 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
       <MediapaketReviewPanel mpId={mp.id} currentStatus={mp.status} onChanged={load} />
 
       {/* Sections */}
-      <SectionCard sectionKey="services" title="Leistungsauswahl" empty={!sections.services?.length} comments={commentsBySection.services}>
+      <SectionCard sectionKey="services" title="Leistungsauswahl" empty={!sections.services?.length} comments={commentsBySection.services} onMarkRead={markIdsRead}>
         {sections.services?.map((s: any) => (
           <div key={s.id} className="flex justify-between text-sm">
             <span>{s.service_type}</span>
@@ -293,11 +293,11 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
         ))}
       </SectionCard>
 
-      <SectionCard sectionKey="studio" title="Studio-Daten" empty={!sections.studio} comments={commentsBySection.studio}>
+      <SectionCard sectionKey="studio" title="Studio-Daten" empty={!sections.studio} comments={commentsBySection.studio} onMarkRead={markIdsRead}>
         {sections.studio && <KV data={sections.studio} skip={['id','media_package_id','created_at','updated_at']} />}
       </SectionCard>
 
-      <SectionCard sectionKey="devices" title="Geräte" empty={!sections.devices?.length} comments={commentsBySection.devices}>
+      <SectionCard sectionKey="devices" title="Geräte" empty={!sections.devices?.length} comments={commentsBySection.devices} onMarkRead={markIdsRead}>
         {sections.devices?.map((d: any) => (
           <div key={d.id} className="text-sm">
             <span className="font-medium">{d.entered_model_name || '—'}</span>
@@ -306,7 +306,7 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
         ))}
       </SectionCard>
 
-      <SectionCard sectionKey="prices" title="Preisliste" empty={!sections.prices?.length} comments={commentsBySection.prices}>
+      <SectionCard sectionKey="prices" title="Preisliste" empty={!sections.prices?.length} comments={commentsBySection.prices} onMarkRead={markIdsRead}>
         {sections.prices?.map((p: any) => (
           <div key={p.id} className="flex justify-between text-sm">
             <span>{p.description || p.category}</span>
@@ -315,11 +315,11 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
         ))}
       </SectionCard>
 
-      <SectionCard sectionKey="contact" title="Kontaktdaten" empty={!sections.contact} comments={commentsBySection.contact}>
+      <SectionCard sectionKey="contact" title="Kontaktdaten" empty={!sections.contact} comments={commentsBySection.contact} onMarkRead={markIdsRead}>
         {sections.contact && <KV data={sections.contact} skip={['id','media_package_id','created_at','updated_at']} />}
       </SectionCard>
 
-      <SectionCard sectionKey="hours" title="Öffnungszeiten" empty={!sections.hours?.length} comments={commentsBySection.hours}>
+      <SectionCard sectionKey="hours" title="Öffnungszeiten" empty={!sections.hours?.length} comments={commentsBySection.hours} onMarkRead={markIdsRead}>
         {sections.hours?.map((h: any) => (
           <div key={h.id} className="flex justify-between text-sm">
             <span>Tag {h.weekday}</span>
@@ -330,13 +330,13 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
         ))}
       </SectionCard>
 
-      <SectionCard sectionKey="treatments" title="Fremdbehandlungen" empty={!sections.treatments?.length} comments={commentsBySection.treatments}>
+      <SectionCard sectionKey="treatments" title="Fremdbehandlungen" empty={!sections.treatments?.length} comments={commentsBySection.treatments} onMarkRead={markIdsRead}>
         {sections.treatments?.map((t: any) => (
           <div key={t.id} className="text-sm">{t.description || t.category}</div>
         ))}
       </SectionCard>
 
-      <SectionCard sectionKey="team" title="Team / Über mich" empty={!sections.team?.length && !sections.branding?.about_me} comments={commentsBySection.team}>
+      <SectionCard sectionKey="team" title="Team / Über mich" empty={!sections.team?.length && !sections.branding?.about_me} comments={commentsBySection.team} onMarkRead={markIdsRead}>
         {sections.branding?.about_me && <p className="text-sm whitespace-pre-wrap">{sections.branding.about_me}</p>}
         {sections.team?.map((m: any) => (
           <div key={m.id} className="text-sm">
@@ -346,11 +346,11 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
         ))}
       </SectionCard>
 
-      <SectionCard sectionKey="branding" title="Branding / Anmerkungen" empty={!sections.branding} comments={commentsBySection.branding}>
+      <SectionCard sectionKey="branding" title="Branding / Anmerkungen" empty={!sections.branding} comments={commentsBySection.branding} onMarkRead={markIdsRead}>
         {sections.branding && <KV data={sections.branding} skip={['id','media_package_id','created_at','updated_at']} />}
       </SectionCard>
 
-      <SectionCard sectionKey="files" title="Dateien" empty={!sections.files?.length} comments={commentsBySection.files}>
+      <SectionCard sectionKey="files" title="Dateien" empty={!sections.files?.length} comments={commentsBySection.files} onMarkRead={markIdsRead}>
         {sections.files?.map((f: any) => (
           <div key={f.id} className="flex items-center justify-between text-sm">
             <span>{f.original_filename} <span className="text-muted-foreground">({f.category})</span></span>
@@ -359,7 +359,7 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
         ))}
       </SectionCard>
 
-      <SectionCard sectionKey="consents" title="Einwilligungen" empty={!sections.consents?.length} comments={commentsBySection.consents}>
+      <SectionCard sectionKey="consents" title="Einwilligungen" empty={!sections.consents?.length} comments={commentsBySection.consents} onMarkRead={markIdsRead}>
         {sections.consents?.map((c: any) => (
           <div key={c.id} className="flex justify-between text-sm">
             <span>{c.consent_type}</span>
