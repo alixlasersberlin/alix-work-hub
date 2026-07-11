@@ -694,6 +694,9 @@ function StepSummary({ data, onSubmit, confirmText }: any) {
           Bitte akzeptieren Sie noch die folgenden Pflicht-Einwilligungen im Schritt „Freigaben": {missing.join(', ')}
         </div>
       )}
+      {confirmText && (
+        <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-xs whitespace-pre-wrap text-muted-foreground">{confirmText}</div>
+      )}
       <Button className="w-full" size="lg" disabled={!canSubmit} onClick={onSubmit}>
         <CheckCircle2 className="w-4 h-4 mr-2" /> Mediapaket verbindlich absenden
       </Button>
