@@ -155,6 +155,10 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={load}><RefreshCw className="w-4 h-4 mr-2" />Aktualisieren</Button>
+            <Button variant="outline" size="sm" onClick={emailCustomerLink} disabled={emailing}>
+              {emailing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
+              Per E-Mail senden
+            </Button>
             <Button size="sm" onClick={copyCustomerLink} disabled={issuing} className="gold-gradient text-primary-foreground">
               {issuing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Copy className="w-4 h-4 mr-2" />}
               Kundenlink kopieren
