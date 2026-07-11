@@ -201,29 +201,41 @@ export default function BookingPortal() {
 
       {step === 'department' && (
         <Card>
-          <CardHeader>
-            <CardTitle className="text-[16px]">Alle Anfragen rasch erledigt</CardTitle>
-            <p className="text-[12.5px] text-muted-foreground">Wählen Sie eine Leistung – Sie erhalten direkt eine Bestätigung per E-Mail.</p>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {publicDepts.map((d) => (
-                <button
-                  key={d.id}
-                  onClick={() => { setState({ ...state, departmentId: d.id }); goto('service'); }}
-                  className={`text-left rounded-xl border p-4 transition-all hover:border-primary hover:shadow-md min-h-24 ${state.departmentId === d.id ? 'border-primary bg-primary/5' : 'bg-card'}`}
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ background: d.color }} />
-                    <div className="font-semibold text-[14px]">{d.name}</div>
-                  </div>
-                  <div className="text-[12px] text-muted-foreground mb-2 line-clamp-2">{d.description}</div>
-                  <div className="text-[10.5px] text-muted-foreground flex items-center gap-1"><Clock className="w-3 h-3" /> {d.defaultDurationMinutes} min</div>
-                </button>
-              ))}
-            </div>
-            {publicDepts.length === 0 && <div className="text-[13px] text-muted-foreground py-6 text-center">Aktuell sind keine Leistungen öffentlich buchbar.</div>}
-          </CardContent>
+          <button
+            type="button"
+            onClick={() => setDeptOpen((v) => !v)}
+            className="w-full text-left"
+            aria-expanded={deptOpen}
+          >
+            <CardHeader className="flex-row items-center justify-between gap-3 space-y-0">
+              <div>
+                <CardTitle className="text-[16px]">Alle Anfragen rasch erledigt</CardTitle>
+                <p className="text-[12.5px] text-muted-foreground">Wählen Sie eine Leistung – Sie erhalten direkt eine Bestätigung per E-Mail.</p>
+              </div>
+              <ChevronDown className={`w-5 h-5 text-muted-foreground shrink-0 transition-transform ${deptOpen ? 'rotate-180' : ''}`} />
+            </CardHeader>
+          </button>
+          {deptOpen && (
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {publicDepts.map((d) => (
+                  <button
+                    key={d.id}
+                    onClick={() => { setState({ ...state, departmentId: d.id }); goto('service'); }}
+                    className={`text-left rounded-xl border p-4 transition-all hover:border-primary hover:shadow-md min-h-24 ${state.departmentId === d.id ? 'border-primary bg-primary/5' : 'bg-card'}`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ background: d.color }} />
+                      <div className="font-semibold text-[14px]">{d.name}</div>
+                    </div>
+                    <div className="text-[12px] text-muted-foreground mb-2 line-clamp-2">{d.description}</div>
+                    <div className="text-[10.5px] text-muted-foreground flex items-center gap-1"><Clock className="w-3 h-3" /> {d.defaultDurationMinutes} min</div>
+                  </button>
+                ))}
+              </div>
+              {publicDepts.length === 0 && <div className="text-[13px] text-muted-foreground py-6 text-center">Aktuell sind keine Leistungen öffentlich buchbar.</div>}
+            </CardContent>
+          )}
         </Card>
       )}
 
