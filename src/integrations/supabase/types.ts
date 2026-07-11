@@ -3468,6 +3468,99 @@ export type Database = {
           },
         ]
       }
+      esc_ech_messages: {
+        Row: {
+          body: string | null
+          channel: string
+          created_at: string
+          delivered_at: string | null
+          error: string | null
+          event_id: string | null
+          id: string
+          language: string | null
+          recipient: string
+          refs: Json | null
+          retry_count: number
+          sent_at: string | null
+          status: string
+          subject: string | null
+          template_slug: string | null
+          updated_at: string
+        }
+        Insert: {
+          body?: string | null
+          channel: string
+          created_at?: string
+          delivered_at?: string | null
+          error?: string | null
+          event_id?: string | null
+          id?: string
+          language?: string | null
+          recipient: string
+          refs?: Json | null
+          retry_count?: number
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+          template_slug?: string | null
+          updated_at?: string
+        }
+        Update: {
+          body?: string | null
+          channel?: string
+          created_at?: string
+          delivered_at?: string | null
+          error?: string | null
+          event_id?: string | null
+          id?: string
+          language?: string | null
+          recipient?: string
+          refs?: Json | null
+          retry_count?: number
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+          template_slug?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      esc_ech_templates: {
+        Row: {
+          body: string
+          channel: string
+          created_at: string
+          id: string
+          is_active: boolean
+          language: string
+          slug: string
+          subject: string | null
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          channel: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          language?: string
+          slug: string
+          subject?: string | null
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          channel?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          language?: string
+          slug?: string
+          subject?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       esc_email_templates: {
         Row: {
           body_html: string
@@ -4087,35 +4180,44 @@ export type Database = {
       }
       esc_ics_tokens: {
         Row: {
+          action: string | null
           created_at: string
           department_id: string | null
+          event_id: string | null
           expires_at: string
           feed_type: string
           id: string
           is_active: boolean
           revoked_at: string | null
+          signature: string | null
           token: string
           user_id: string | null
         }
         Insert: {
+          action?: string | null
           created_at?: string
           department_id?: string | null
+          event_id?: string | null
           expires_at?: string
           feed_type: string
           id?: string
           is_active?: boolean
           revoked_at?: string | null
+          signature?: string | null
           token?: string
           user_id?: string | null
         }
         Update: {
+          action?: string | null
           created_at?: string
           department_id?: string | null
+          event_id?: string | null
           expires_at?: string
           feed_type?: string
           id?: string
           is_active?: boolean
           revoked_at?: string | null
+          signature?: string | null
           token?: string
           user_id?: string | null
         }
