@@ -157,6 +157,9 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
         </div>
       </div>
 
+      {/* Review-Panel: Status, Kommentare, Rückfragen, Verlauf */}
+      <MediapaketReviewPanel mpId={mp.id} currentStatus={mp.status} onChanged={load} />
+
       {/* Sections */}
       <SectionCard title="Leistungsauswahl" empty={!sections.services?.length}>
         {sections.services?.map((s: any) => (
