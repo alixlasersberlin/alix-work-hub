@@ -38,6 +38,7 @@ export default function EscCalendar() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<EscAppointment | null>(null);
   const [defaultStart, setDefaultStart] = useState<Date | undefined>();
+  const [presetKind, setPresetKind] = useState<'Erinnerung' | 'Wiedervorlage' | undefined>();
   const [filters, setFilters] = useState<EscFilterState>(EMPTY_FILTER);
 
   const { appointments, createAppointment, updateAppointment, deleteAppointment } = useAppointments();
