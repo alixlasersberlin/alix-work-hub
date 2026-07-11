@@ -11,15 +11,15 @@ interface Props {
 }
 
 const STATUS_LABEL: Record<string, string> = {
-  draft: 'Entwurf',
-  invited: 'Kunde eingeladen',
+  not_started: 'Nicht begonnen',
   in_progress: 'In Bearbeitung',
+  question_required: 'Rückfrage nötig',
+  customer_correction: 'Korrektur beim Kunden',
   submitted: 'Eingereicht',
   in_review: 'In Prüfung',
-  approved: 'Freigegeben',
-  rejected: 'Abgelehnt',
-  live: 'Live',
-  archived: 'Archiviert',
+  approval_pending: 'Freigabe ausstehend',
+  in_production: 'In Produktion',
+  completed: 'Abgeschlossen',
 };
 
 export default function MediapaketOrderTab({ orderId, customerId }: Props) {
