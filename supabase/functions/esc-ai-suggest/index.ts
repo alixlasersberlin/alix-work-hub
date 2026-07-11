@@ -56,7 +56,7 @@ Verfügbare Mitarbeiter (${employees?.length ?? 0}):
 ${JSON.stringify(employees ?? [], null, 0).slice(0, 4000)}
 
 Bereits geplante Termine im Zeitraum:
-${JSON.stringify((events ?? []).map(e => ({ s: e.start_at, e: e.end_at, u: e.assigned_to, plz: e.postal_code, city: e.city })), null, 0).slice(0, 6000)}
+${JSON.stringify((events ?? []).map(e => ({ s: e.start_at, e: e.end_at, u: e.assigned_user_id, adr: e.address, loc: e.location })), null, 0).slice(0, 6000)}
 
 Ressourcen: ${JSON.stringify(resources ?? []).slice(0, 1500)}
 
