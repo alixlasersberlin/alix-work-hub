@@ -201,7 +201,7 @@ export default function BookingPortal() {
       {step === 'department' && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-[16px]">Termin online buchen</CardTitle>
+            <CardTitle className="text-[16px]">Alle Anfragen rasch erledigt</CardTitle>
             <p className="text-[12.5px] text-muted-foreground">Wählen Sie eine Leistung – Sie erhalten direkt eine Bestätigung per E-Mail.</p>
           </CardHeader>
           <CardContent>
