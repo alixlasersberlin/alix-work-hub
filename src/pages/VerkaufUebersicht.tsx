@@ -118,26 +118,28 @@ export default function VerkaufUebersicht() {
       }])
     : TILES;
 
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      setLoading(true);
-      const entries = await Promise.all(
-        visibleTiles.map(async (t) => {
-          try {
-            const v = await t.load();
-            return [t.key, v] as const;
-          } catch {
-            return [t.key, null] as const;
-          }
-        })
-      );
-      if (!alive) return;
-      setCounts(Object.fromEntries(entries));
-      setLoading(false);
-    })();
-    return () => { alive = false; };
+  const reload = useCallback(async () => {
+    const entries = await Promise.all(
+      visibleTiles.map(async (t) => {
+        try {
+          const v = await t.load();
+          return [t.key, v] as const;
+        } catch {
+          return [t.key, null] as const;
+        }
+      })
+    );
+    setCounts(Object.fromEntries(entries));
+    setLoading(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [atOnly]);
+
+  useEffect(() => {
+    setLoading(true);
+    reload();
+  }, [reload]);
+
+  useRealtimeRefresh(['offers', 'orders', 'customers'], reload, { debounceMs: 600 });
 
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6 animate-fade-in">
