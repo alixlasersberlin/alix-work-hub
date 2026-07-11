@@ -251,7 +251,7 @@ Deno.serve(async (req) => {
       const mpId = body.mp_id;
       const subject = body.subject || 'Ihr Media Paket bei Alix Lasers';
       const introMessage = body.message || 'Sie können Ihre Angaben jetzt online ausfüllen.';
-      const baseUrl = body.base_url || 'https://alixwork.de';
+      const baseUrl = 'https://alixwork.de';
       if (!mpId) return json({ error: 'mp_id required' }, 400);
       const { data: mp } = await userClient.from('media_packages')
         .select('id, customer_id').eq('id', mpId).maybeSingle();
