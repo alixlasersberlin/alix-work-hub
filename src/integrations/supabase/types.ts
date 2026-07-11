@@ -4409,6 +4409,62 @@ export type Database = {
         }
         Relationships: []
       }
+      esc_signatures: {
+        Row: {
+          checkin_at: string | null
+          checkout_at: string | null
+          created_at: string
+          created_by: string | null
+          event_id: string
+          geo_lat: number | null
+          geo_lng: number | null
+          id: string
+          notes: string | null
+          signature_data_url: string
+          signer_name: string
+          signer_role: string
+          updated_at: string
+        }
+        Insert: {
+          checkin_at?: string | null
+          checkout_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          event_id: string
+          geo_lat?: number | null
+          geo_lng?: number | null
+          id?: string
+          notes?: string | null
+          signature_data_url: string
+          signer_name: string
+          signer_role?: string
+          updated_at?: string
+        }
+        Update: {
+          checkin_at?: string | null
+          checkout_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          event_id?: string
+          geo_lat?: number | null
+          geo_lng?: number | null
+          id?: string
+          notes?: string | null
+          signature_data_url?: string
+          signer_name?: string
+          signer_role?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "esc_signatures_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "esc_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       finance_accounts: {
         Row: {
           blocked: boolean
