@@ -68,24 +68,37 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [orderId]);
 
-  // Comments (realtime): unread customer answers + section-grouped thread
+  // Comments (realtime): unread customer answers + section-grouped thread + internal staff thread
   const [unread, setUnread] = useState<any[]>([]);
   const [commentsBySection, setCommentsBySection] = useState<Record<string, any[]>>({});
+  const [internalThread, setInternalThread] = useState<any[]>([]);
+  const [authorNames, setAuthorNames] = useState<Record<string, string>>({});
   const loadComments = useCallback(async (mpId: string) => {
     const { data } = await supabase
       .from('media_package_comments')
-      .select('id, subject, comment, created_at, read_at, answered_at, author_type, recipient_type, internal_only, related_field')
+      .select('id, subject, comment, created_at, read_at, answered_at, author_type, recipient_type, internal_only, related_field, author_id')
       .eq('media_package_id', mpId)
       .order('created_at', { ascending: false });
     const all = data || [];
     setUnread(all.filter(c => c.author_type === 'customer' && c.recipient_type === 'staff' && !c.internal_only && !c.read_at));
     const grouped: Record<string, any[]> = {};
     for (const c of all) {
+      if (c.internal_only) continue;
       const key = c.related_field && SECTION_LABEL[c.related_field] ? c.related_field : null;
       if (!key) continue;
       (grouped[key] ||= []).push(c);
     }
     setCommentsBySection(grouped);
+    const internals = all.filter(c => c.internal_only).sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    setInternalThread(internals);
+    // Resolve author display names
+    const uids = Array.from(new Set(internals.map(c => c.author_id).filter(Boolean))) as string[];
+    if (uids.length) {
+      const { data: profs } = await supabase.from('user_profiles').select('id, full_name, email').in('id', uids);
+      const map: Record<string, string> = {};
+      (profs || []).forEach((p: any) => { map[p.id] = p.full_name || p.email || 'Mitarbeiter'; });
+      setAuthorNames(prev => ({ ...prev, ...map }));
+    }
   }, []);
 
   const notifiedIdsRef = useRef<Set<string>>(new Set());
@@ -202,6 +215,29 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
     finally { setEmailing(false); }
   };
 
+  // Internal staff-only thread
+  const [internalDraft, setInternalDraft] = useState('');
+  const [postingInternal, setPostingInternal] = useState(false);
+  const postInternal = async () => {
+    const text = internalDraft.trim();
+    if (!text || !mp?.id) return;
+    setPostingInternal(true);
+    const { data: userData } = await supabase.auth.getUser();
+    const { error } = await supabase.from('media_package_comments').insert({
+      media_package_id: mp.id,
+      author_id: userData.user?.id ?? null,
+      author_type: 'staff',
+      recipient_type: 'staff',
+      internal_only: true,
+      subject: null,
+      comment: text,
+    });
+    setPostingInternal(false);
+    if (error) { toast.error(error.message); return; }
+    setInternalDraft('');
+    loadComments(mp.id);
+  };
+
   if (loading) {
     return <div className="flex items-center gap-2 text-muted-foreground p-8"><Loader2 className="w-4 h-4 animate-spin" /> Lade Mediapaket...</div>;
   }
@@ -310,6 +346,48 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
         </div>
       )}
 
+      {/* Interner Staff-Thread (nicht sichtbar für Kunde) */}
+      <div className="rounded-xl border border-sky-500/30 bg-sky-500/5 p-4 card-glow">
+        <div className="flex items-center gap-2 mb-3">
+          <Lock className="w-4 h-4 text-sky-400" />
+          <h4 className="text-sm font-semibold text-foreground">Interne Notizen (nur Team)</h4>
+          <Badge variant="outline" className="text-[10px] border-sky-500/40 text-sky-400">
+            {internalThread.length} {internalThread.length === 1 ? 'Notiz' : 'Notizen'}
+          </Badge>
+        </div>
+        {internalThread.length === 0 ? (
+          <p className="text-xs text-muted-foreground mb-3">Noch keine internen Notizen. Nutze diesen Bereich für Absprachen — Kunden sehen nichts davon.</p>
+        ) : (
+          <div className="space-y-2 mb-3 max-h-64 overflow-y-auto pr-1">
+            {internalThread.map(c => (
+              <div key={c.id} className="rounded-lg border border-sky-500/20 bg-background/60 p-2">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-medium text-foreground">
+                    {c.author_id ? (authorNames[c.author_id] || 'Mitarbeiter') : 'System'}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground ml-auto">{new Date(c.created_at).toLocaleString('de-DE')}</span>
+                </div>
+                <p className="text-xs text-muted-foreground whitespace-pre-wrap">{c.comment}</p>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="flex flex-col gap-2">
+          <textarea
+            value={internalDraft}
+            onChange={(e) => setInternalDraft(e.target.value)}
+            placeholder="Interne Notiz schreiben (nur intern sichtbar)…"
+            rows={2}
+            className="w-full text-sm rounded-lg border border-sky-500/30 bg-background/60 p-2 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+          />
+          <div className="flex justify-end">
+            <Button size="sm" onClick={postInternal} disabled={!internalDraft.trim() || postingInternal}>
+              {postingInternal ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Lock className="w-4 h-4 mr-2" />}
+              Interne Notiz posten
+            </Button>
+          </div>
+        </div>
+      </div>
 
       {/* Review-Panel: Status, Kommentare, Rückfragen, Verlauf */}
       <MediapaketReviewPanel mpId={mp.id} currentStatus={mp.status} onChanged={load} />
