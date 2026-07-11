@@ -31,6 +31,14 @@ let store: RmState = {
 const listeners = new Set<() => void>();
 const notify = () => listeners.forEach((l) => l());
 
+const upsert = <T extends { id: string }>(arr: T[], item: T): T[] => {
+  const i = arr.findIndex((x) => x.id === item.id);
+  if (i === -1) return [...arr, item];
+  const copy = [...arr];
+  copy[i] = item;
+  return copy;
+};
+
 export function useResourceMgmt() {
   const [state, setState] = useState<RmState>(store);
   useEffect(() => {
@@ -40,7 +48,7 @@ export function useResourceMgmt() {
   }, []);
 
   const upsertAbsence = useCallback((a: RmAbsence) => {
-    store = { ...store, absences: [...store.absences.filter((x) => x.id !== a.id), a] };
+    store = { ...store, absences: upsert(store.absences, a) };
     notify();
   }, []);
   const removeAbsence = useCallback((id: string) => {
@@ -48,11 +56,42 @@ export function useResourceMgmt() {
     notify();
   }, []);
 
+  const upsertEmployee = useCallback((e: RmEmployeeExt) => {
+    store = { ...store, employees: upsert(store.employees, e) }; notify();
+  }, []);
+  const removeEmployee = useCallback((id: string) => {
+    store = { ...store, employees: store.employees.filter((x) => x.id !== id) }; notify();
+  }, []);
+
+  const upsertVehicle = useCallback((v: RmVehicle) => {
+    store = { ...store, vehicles: upsert(store.vehicles, v) }; notify();
+  }, []);
+  const removeVehicle = useCallback((id: string) => {
+    store = { ...store, vehicles: store.vehicles.filter((x) => x.id !== id) }; notify();
+  }, []);
+
+  const upsertRoom = useCallback((r: RmRoom) => {
+    store = { ...store, rooms: upsert(store.rooms, r) }; notify();
+  }, []);
+  const removeRoom = useCallback((id: string) => {
+    store = { ...store, rooms: store.rooms.filter((x) => x.id !== id) }; notify();
+  }, []);
+
+  const upsertDemoDevice = useCallback((d: RmDemoDevice) => {
+    store = { ...store, demoDevices: upsert(store.demoDevices, d) }; notify();
+  }, []);
+  const removeDemoDevice = useCallback((id: string) => {
+    store = { ...store, demoDevices: store.demoDevices.filter((x) => x.id !== id) }; notify();
+  }, []);
+
   return {
     ...state,
     locations: RM_LOCATIONS,
     qualifications: RM_QUALIFICATIONS,
-    upsertAbsence,
-    removeAbsence,
+    upsertAbsence, removeAbsence,
+    upsertEmployee, removeEmployee,
+    upsertVehicle, removeVehicle,
+    upsertRoom, removeRoom,
+    upsertDemoDevice, removeDemoDevice,
   };
 }
