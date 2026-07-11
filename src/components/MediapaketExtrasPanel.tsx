@@ -1,12 +1,13 @@
-// Mediapaket Extras Panel: Timeline (Phase 28), Versionen (Phase 25), Workflow-Übergabe (Phase 26)
+// Mediapaket Extras Panel: Timeline (25), Versionen, Workflow, Chat (31), Sign-Off & Audit (35)
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, History as HistoryIcon, GitBranch, Send, Package, CheckCircle2, PlayCircle, Eye, Download, MessageCircle, Upload, Mail, Copy as CopyIcon } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Loader2, History as HistoryIcon, GitBranch, Send, Package, CheckCircle2, PlayCircle, Eye, Download, MessageCircle, Upload, Mail, Copy as CopyIcon, PenTool, FileDown } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Props {
@@ -78,6 +79,19 @@ export default function MediapaketExtrasPanel({ mpId, status, onChanged }: Props
         media_package_id: mpId, action: 'status_changed', user_id: userData.user?.id ?? null,
         old_value: { status } as any, new_value: { status: next } as any,
       });
+      // Phase 34 — Production Handoff: auf 'completed' automatisch Grafik-Task erzeugen
+      if (next === 'completed') {
+        try {
+          await supabase.functions.invoke('mediapaket-portal', { body: { action: 'handoff_production', mp_id: mpId } });
+          toast.success('Grafik-Team benachrichtigt');
+        } catch (e) { /* nicht kritisch */ }
+      }
+      // Phase 31 — Kunde informieren bei relevantem Status
+      if (['in_review', 'in_production', 'completed'].includes(next)) {
+        try {
+          await supabase.functions.invoke('mediapaket-portal', { body: { action: 'notify_customer_status', mp_id: mpId, new_status: next } });
+        } catch (e) { /* nicht kritisch */ }
+      }
       toast.success(`Status: ${label}`);
       onChanged(); load();
     } else toast.error(error.message);
@@ -132,15 +146,94 @@ export default function MediapaketExtrasPanel({ mpId, status, onChanged }: Props
     } catch (e: any) { toast.error(e.message); }
   };
 
+  // Phase 31 — Chat: Nachricht an Kunde
+  const [chatText, setChatText] = useState('');
+  const [chatSending, setChatSending] = useState(false);
+  const sendChat = async () => {
+    if (!chatText.trim()) return;
+    setChatSending(true);
+    try {
+      const { error } = await supabase.functions.invoke('mediapaket-portal', {
+        body: { action: 'staff_message', mp_id: mpId, message: chatText },
+      });
+      if (error) throw error;
+      setChatText('');
+      toast.success('Nachricht an Kunde gesendet');
+      load();
+    } catch (e: any) { toast.error(e.message); }
+    finally { setChatSending(false); }
+  };
+
+  // Phase 35 — Sign-Off (Canvas)
+  const sigRef = useRef<HTMLCanvasElement | null>(null);
+  const drawing = useRef(false);
+  const [signerName, setSignerName] = useState('');
+  const [signing, setSigning] = useState(false);
+  const canvasStart = (e: React.PointerEvent) => {
+    drawing.current = true;
+    const ctx = sigRef.current?.getContext('2d'); if (!ctx) return;
+    const r = sigRef.current!.getBoundingClientRect();
+    ctx.beginPath(); ctx.moveTo(e.clientX - r.left, e.clientY - r.top);
+  };
+  const canvasMove = (e: React.PointerEvent) => {
+    if (!drawing.current) return;
+    const ctx = sigRef.current?.getContext('2d'); if (!ctx) return;
+    const r = sigRef.current!.getBoundingClientRect();
+    ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.strokeStyle = '#d4af37';
+    ctx.lineTo(e.clientX - r.left, e.clientY - r.top); ctx.stroke();
+  };
+  const canvasEnd = () => { drawing.current = false; };
+  const clearSig = () => {
+    const c = sigRef.current; if (!c) return;
+    c.getContext('2d')?.clearRect(0, 0, c.width, c.height);
+  };
+  const saveSignature = async () => {
+    if (!signerName.trim()) { toast.error('Name fehlt'); return; }
+    const c = sigRef.current; if (!c) return;
+    const dataUrl = c.toDataURL('image/png');
+    setSigning(true);
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const { error } = await supabase.from('media_package_history').insert({
+        media_package_id: mpId, action: 'signed_off', user_id: userData.user?.id ?? null,
+        new_value: { signer_name: signerName, signature_png: dataUrl, signed_at: new Date().toISOString() } as any,
+      });
+      if (error) throw error;
+      toast.success('Freigabe signiert');
+      setSignerName(''); clearSig(); load();
+    } catch (e: any) { toast.error(e.message); }
+    finally { setSigning(false); }
+  };
+
+  // Phase 35 — Audit-CSV Export
+  const exportAuditCsv = () => {
+    const rows = timeline.map(e => {
+      const meta = ACTION_LABEL[e.action] || { label: e.action };
+      let detail = '';
+      if (e.kind === 'download') detail = (e.data as any).media_package_files?.original_filename || '';
+      else if (e.kind === 'comment') detail = ((e.data as any).subject || (e.data as any).comment || '').slice(0, 200);
+      else if (e.kind === 'history') detail = JSON.stringify((e.data as any).new_value || {}).slice(0, 200);
+      return [new Date(e.at).toISOString(), e.action, meta.label, detail.replace(/"/g, '""')];
+    });
+    const csv = ['Zeitpunkt,Aktion,Label,Details', ...rows.map(r => r.map(c => `"${c}"`).join(','))].join('\n');
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = `mediapaket-audit-${mpId}.csv`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+    toast.success('Audit-Protokoll exportiert');
+  };
+
   const nextActions = NEXT_STATUS[status] || [];
 
   return (
     <div className="rounded-xl border border-border bg-card p-4 card-glow">
       <Tabs defaultValue="workflow">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="workflow"><GitBranch className="w-3 h-3 mr-1" />Workflow</TabsTrigger>
           <TabsTrigger value="timeline"><HistoryIcon className="w-3 h-3 mr-1" />Timeline</TabsTrigger>
-          <TabsTrigger value="versions"><Package className="w-3 h-3 mr-1" />Versionen ({snapshots.length})</TabsTrigger>
+          <TabsTrigger value="versions"><Package className="w-3 h-3 mr-1" />V. ({snapshots.length})</TabsTrigger>
+          <TabsTrigger value="chat"><MessageCircle className="w-3 h-3 mr-1" />Chat</TabsTrigger>
+          <TabsTrigger value="signoff"><PenTool className="w-3 h-3 mr-1" />Sign-Off</TabsTrigger>
           <TabsTrigger value="tools">Extras</TabsTrigger>
         </TabsList>
 
@@ -167,7 +260,71 @@ export default function MediapaketExtrasPanel({ mpId, status, onChanged }: Props
           </div>
         </TabsContent>
 
-        {/* TIMELINE / Phase 28 */}
+        {/* CHAT / Phase 31 */}
+        <TabsContent value="chat" className="pt-3 space-y-3">
+          <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
+            {comments.length === 0 ? (
+              <p className="text-xs text-muted-foreground">Noch keine Nachrichten.</p>
+            ) : comments.slice().reverse().map((c: any) => (
+              <div key={c.id} className={`text-xs rounded-lg p-2 ${c.author_type === 'customer' ? 'bg-amber-500/10 border border-amber-500/30' : 'bg-primary/10 border border-primary/30'}`}>
+                <div className="flex items-center gap-2 mb-0.5">
+                  <Badge variant="outline" className="text-[9px]">{c.author_type === 'customer' ? 'Kunde' : 'Team'}</Badge>
+                  <span className="text-[10px] text-muted-foreground">{new Date(c.created_at).toLocaleString('de-DE')}</span>
+                  {c.internal_only && <Badge variant="secondary" className="text-[9px]">intern</Badge>}
+                </div>
+                {c.subject && <div className="font-medium">{c.subject}</div>}
+                <div className="whitespace-pre-wrap">{c.comment}</div>
+              </div>
+            ))}
+          </div>
+          <div className="border-t border-border/40 pt-2 space-y-2">
+            <Textarea rows={3} value={chatText} onChange={e => setChatText(e.target.value)} placeholder="Nachricht an den Kunden…" />
+            <div className="flex justify-end">
+              <Button size="sm" onClick={sendChat} disabled={chatSending || !chatText.trim()} className="gap-2">
+                {chatSending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+                An Kunden senden
+              </Button>
+            </div>
+            <p className="text-[10px] text-muted-foreground">Der Kunde erhält eine E-Mail mit Link zum Portal und sieht die Nachricht dort.</p>
+          </div>
+        </TabsContent>
+
+        {/* SIGN-OFF / Phase 35 */}
+        <TabsContent value="signoff" className="pt-3 space-y-3">
+          <p className="text-xs text-muted-foreground">ISO-13485-konforme Freigabe-Signatur. Die Signatur wird im Audit-Trail gespeichert.</p>
+          <div className="space-y-2">
+            <input
+              value={signerName}
+              onChange={e => setSignerName(e.target.value)}
+              placeholder="Name des Unterzeichners"
+              className="w-full h-9 rounded-md border border-input bg-background px-2 text-sm"
+            />
+            <canvas
+              ref={sigRef}
+              width={520}
+              height={140}
+              className="w-full rounded-lg border border-border bg-background touch-none cursor-crosshair"
+              onPointerDown={canvasStart}
+              onPointerMove={canvasMove}
+              onPointerUp={canvasEnd}
+              onPointerLeave={canvasEnd}
+            />
+            <div className="flex justify-between">
+              <Button variant="ghost" size="sm" onClick={clearSig}>Löschen</Button>
+              <Button size="sm" onClick={saveSignature} disabled={signing || !signerName.trim()} className="gap-2 gold-gradient text-primary-foreground">
+                {signing ? <Loader2 className="w-3 h-3 animate-spin" /> : <PenTool className="w-3 h-3" />}
+                Signatur speichern
+              </Button>
+            </div>
+          </div>
+          <div className="pt-2 border-t border-border/40">
+            <Button variant="outline" size="sm" onClick={exportAuditCsv} className="gap-2">
+              <FileDown className="w-3 h-3" />Audit-Protokoll (CSV) exportieren
+            </Button>
+          </div>
+        </TabsContent>
+
+
         <TabsContent value="timeline" className="pt-3">
           {loading ? (
             <div className="flex items-center gap-2 text-xs text-muted-foreground"><Loader2 className="w-3 h-3 animate-spin" />Lade…</div>

@@ -108,10 +108,11 @@ export default function MediapaketAdmin() {
 
   return (
     <div className="p-6 space-y-6 max-w-4xl">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <SettingsIcon className="w-6 h-6 text-primary" />
         <h1 className="text-2xl font-semibold text-foreground">Mediapaket-Konfigurator</h1>
         <Badge variant="outline">Super Admin</Badge>
+        <a href="/mediapaket/templates" className="ml-auto text-xs underline text-primary hover:text-primary/80">Vorlagen verwalten →</a>
       </div>
 
       {/* Stats */}
