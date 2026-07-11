@@ -260,7 +260,71 @@ export default function MediapaketExtrasPanel({ mpId, status, onChanged }: Props
           </div>
         </TabsContent>
 
-        {/* TIMELINE / Phase 28 */}
+        {/* CHAT / Phase 31 */}
+        <TabsContent value="chat" className="pt-3 space-y-3">
+          <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
+            {comments.length === 0 ? (
+              <p className="text-xs text-muted-foreground">Noch keine Nachrichten.</p>
+            ) : comments.slice().reverse().map((c: any) => (
+              <div key={c.id} className={`text-xs rounded-lg p-2 ${c.author_type === 'customer' ? 'bg-amber-500/10 border border-amber-500/30' : 'bg-primary/10 border border-primary/30'}`}>
+                <div className="flex items-center gap-2 mb-0.5">
+                  <Badge variant="outline" className="text-[9px]">{c.author_type === 'customer' ? 'Kunde' : 'Team'}</Badge>
+                  <span className="text-[10px] text-muted-foreground">{new Date(c.created_at).toLocaleString('de-DE')}</span>
+                  {c.internal_only && <Badge variant="secondary" className="text-[9px]">intern</Badge>}
+                </div>
+                {c.subject && <div className="font-medium">{c.subject}</div>}
+                <div className="whitespace-pre-wrap">{c.comment}</div>
+              </div>
+            ))}
+          </div>
+          <div className="border-t border-border/40 pt-2 space-y-2">
+            <Textarea rows={3} value={chatText} onChange={e => setChatText(e.target.value)} placeholder="Nachricht an den Kunden…" />
+            <div className="flex justify-end">
+              <Button size="sm" onClick={sendChat} disabled={chatSending || !chatText.trim()} className="gap-2">
+                {chatSending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+                An Kunden senden
+              </Button>
+            </div>
+            <p className="text-[10px] text-muted-foreground">Der Kunde erhält eine E-Mail mit Link zum Portal und sieht die Nachricht dort.</p>
+          </div>
+        </TabsContent>
+
+        {/* SIGN-OFF / Phase 35 */}
+        <TabsContent value="signoff" className="pt-3 space-y-3">
+          <p className="text-xs text-muted-foreground">ISO-13485-konforme Freigabe-Signatur. Die Signatur wird im Audit-Trail gespeichert.</p>
+          <div className="space-y-2">
+            <input
+              value={signerName}
+              onChange={e => setSignerName(e.target.value)}
+              placeholder="Name des Unterzeichners"
+              className="w-full h-9 rounded-md border border-input bg-background px-2 text-sm"
+            />
+            <canvas
+              ref={sigRef}
+              width={520}
+              height={140}
+              className="w-full rounded-lg border border-border bg-background touch-none cursor-crosshair"
+              onPointerDown={canvasStart}
+              onPointerMove={canvasMove}
+              onPointerUp={canvasEnd}
+              onPointerLeave={canvasEnd}
+            />
+            <div className="flex justify-between">
+              <Button variant="ghost" size="sm" onClick={clearSig}>Löschen</Button>
+              <Button size="sm" onClick={saveSignature} disabled={signing || !signerName.trim()} className="gap-2 gold-gradient text-primary-foreground">
+                {signing ? <Loader2 className="w-3 h-3 animate-spin" /> : <PenTool className="w-3 h-3" />}
+                Signatur speichern
+              </Button>
+            </div>
+          </div>
+          <div className="pt-2 border-t border-border/40">
+            <Button variant="outline" size="sm" onClick={exportAuditCsv} className="gap-2">
+              <FileDown className="w-3 h-3" />Audit-Protokoll (CSV) exportieren
+            </Button>
+          </div>
+        </TabsContent>
+
+
         <TabsContent value="timeline" className="pt-3">
           {loading ? (
             <div className="flex items-center gap-2 text-xs text-muted-foreground"><Loader2 className="w-3 h-3 animate-spin" />Lade…</div>
