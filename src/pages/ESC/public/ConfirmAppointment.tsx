@@ -30,7 +30,8 @@ export default function ConfirmAppointment() {
 
   useEffect(() => {
     if (!token) return;
-    QRCode.toDataURL(`https://alixworks.de/checkin/${token}`, { width: 220, margin: 1 })
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    QRCode.toDataURL(`${origin}/checkin/${token}`, { width: 220, margin: 1 })
       .then(setQrDataUrl)
       .catch(() => setQrDataUrl(null));
   }, [token]);
