@@ -185,7 +185,7 @@ export default function MediapaketWizard() {
             {step.id === 'design' && <StepDesign data={data} save={save} />}
             {step.id === 'notes' && <StepNotes data={data} save={save} upload={uploadFile} />}
             {step.id === 'consents' && <StepConsents data={data} save={save} />}
-            {step.id === 'summary' && <StepSummary data={data} onSubmit={async () => {
+            {step.id === 'summary' && <StepSummary data={data} confirmText={data.settings?.['mediapaket.submit_confirm_text']} onSubmit={async () => {
               try { await call('submit', token); toast.success('Mediapaket eingereicht'); await reload(); }
               catch (e: any) { toast.error(e.message); }
             }} />}
