@@ -629,9 +629,11 @@ export function AppointmentModalTabs({
             </Button>
           )}
           <Button variant="ghost" onClick={onClose}>Abbrechen</Button>
-          <Button variant="outline" onClick={() => handleSubmit({ sendEmail: true })}>
-            <Mail className="w-4 h-4 mr-1" /> Speichern &amp; E-Mail
-          </Button>
+          {mode === 'extern' && (
+            <Button variant="outline" onClick={() => handleSubmit({ sendEmail: true })}>
+              <Mail className="w-4 h-4 mr-1" /> Speichern &amp; E-Mail
+            </Button>
+          )}
           <Button onClick={() => handleSubmit()}>
             <Save className="w-4 h-4 mr-1" /> Speichern
           </Button>
