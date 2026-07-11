@@ -109,7 +109,7 @@ export default function OrderDetail() {
   }, [id]);
 
   // Auto-Tab via ?tab=az_invoice (oder anderer Key) beim Öffnen
-  const validTabs = ['overview','items','serials','deposit','financing','at_purchase','at_approval','packages','confirmation','lieferschein','auftragsbestaetigung','az_invoice','notes','emails','sms','history','raw'] as const;
+  const validTabs = ['overview','items','serials','deposit','financing','at_purchase','at_approval','packages','confirmation','lieferschein','auftragsbestaetigung','az_invoice','mediapaket','notes','emails','sms','history','raw'] as const;
   useEffect(() => {
     const t = searchParams.get('tab');
     if (t && (validTabs as readonly string[]).includes(t)) {
