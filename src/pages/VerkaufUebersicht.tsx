@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
@@ -6,6 +6,7 @@ import { Building2, FileText, ClipboardList, Receipt, Undo2, TrendingUp, Loader2
 import { cn } from '@/lib/utils';
 import { useAtOnly } from '@/hooks/useAtOnly';
 import { PageHeader } from '@/components/infinity/PageHeader';
+import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh';
 
 type Tile = {
   key: string;
@@ -34,7 +35,13 @@ const TILES: Tile[] = [
     icon: FileText,
     to: '/verkauf/angebote',
     accent: 'from-amber-500/20 to-amber-500/5 border-amber-500/30',
-    load: async () => null,
+    load: async () => {
+      const { count } = await supabase
+        .from('offers')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'draft');
+      return count ?? 0;
+    },
   },
   {
     key: 'auftraege',
@@ -72,7 +79,15 @@ const TILES: Tile[] = [
     icon: Receipt,
     to: '/verkauf/anzahlungsrechnung',
     accent: 'from-purple-500/20 to-purple-500/5 border-purple-500/30',
-    load: async () => null,
+    load: async () => {
+      const { count } = await supabase
+        .from('orders')
+        .select('*', { count: 'exact', head: true })
+        .in('order_status', ['open', 'offen'])
+        .eq('deposit_ok', true)
+        .neq('source_system', 'zoho_eu_2');
+      return count ?? 0;
+    },
   },
   {
     key: 'gutschriften',
@@ -103,26 +118,28 @@ export default function VerkaufUebersicht() {
       }])
     : TILES;
 
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      setLoading(true);
-      const entries = await Promise.all(
-        visibleTiles.map(async (t) => {
-          try {
-            const v = await t.load();
-            return [t.key, v] as const;
-          } catch {
-            return [t.key, null] as const;
-          }
-        })
-      );
-      if (!alive) return;
-      setCounts(Object.fromEntries(entries));
-      setLoading(false);
-    })();
-    return () => { alive = false; };
+  const reload = useCallback(async () => {
+    const entries = await Promise.all(
+      visibleTiles.map(async (t) => {
+        try {
+          const v = await t.load();
+          return [t.key, v] as const;
+        } catch {
+          return [t.key, null] as const;
+        }
+      })
+    );
+    setCounts(Object.fromEntries(entries));
+    setLoading(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [atOnly]);
+
+  useEffect(() => {
+    setLoading(true);
+    reload();
+  }, [reload]);
+
+  useRealtimeRefresh(['offers', 'orders', 'customers'], reload, { debounceMs: 600 });
 
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6 animate-fade-in">
