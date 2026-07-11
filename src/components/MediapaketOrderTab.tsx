@@ -632,3 +632,137 @@ function KV({ data, skip = [] }: { data: Record<string, any>; skip?: string[] })
     </div>
   );
 }
+
+function FileRow({ file, mpId }: { file: any; mpId: string }) {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [logs, setLogs] = useState<any[] | null>(null);
+  const [logsOpen, setLogsOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const isImage = (file.mime_type || '').startsWith('image/');
+  const isPdf = file.mime_type === 'application/pdf';
+
+  const getSignedUrl = async (): Promise<string | null> => {
+    const { data, error } = await supabase.storage.from('mediapaket-files').createSignedUrl(file.storage_path, 3600);
+    if (error || !data?.signedUrl) { toast.error(error?.message || 'Signed URL fehlgeschlagen'); return null; }
+    return data.signedUrl;
+  };
+
+  const logDownload = async () => {
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user?.id) return;
+    await supabase.from('media_package_file_downloads').insert({
+      file_id: file.id,
+      media_package_id: mpId,
+      downloaded_by: userData.user.id,
+      downloader_type: 'staff',
+      user_agent: navigator.userAgent.slice(0, 500),
+    });
+  };
+
+  const preview = async () => {
+    setBusy(true);
+    const url = await getSignedUrl();
+    setBusy(false);
+    if (!url) return;
+    setPreviewUrl(url);
+    setPreviewOpen(true);
+    logDownload();
+  };
+
+  const download = async () => {
+    setBusy(true);
+    const url = await getSignedUrl();
+    setBusy(false);
+    if (!url) return;
+    logDownload();
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = file.original_filename || 'download';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
+
+  const loadLogs = async () => {
+    setLogsOpen(true);
+    const { data } = await supabase
+      .from('media_package_file_downloads')
+      .select('id, downloaded_by, downloader_type, created_at, user_agent')
+      .eq('file_id', file.id)
+      .order('created_at', { ascending: false })
+      .limit(50);
+    const rows = data || [];
+    const uids = Array.from(new Set(rows.map((r: any) => r.downloaded_by).filter(Boolean))) as string[];
+    let names: Record<string, string> = {};
+    if (uids.length) {
+      const { data: profs } = await supabase.from('user_profiles').select('id, full_name, email').in('id', uids);
+      (profs || []).forEach((p: any) => { names[p.id] = p.full_name || p.email || 'Mitarbeiter'; });
+    }
+    setLogs(rows.map((r: any) => ({ ...r, _name: r.downloaded_by ? (names[r.downloaded_by] || 'Mitarbeiter') : 'System' })));
+  };
+
+  return (
+    <div className="flex items-center justify-between gap-2 text-sm py-1 border-b border-border/30 last:border-0">
+      <div className="min-w-0 flex-1">
+        <div className="truncate">
+          {file.original_filename}
+          <span className="text-muted-foreground text-xs ml-2">({file.category})</span>
+        </div>
+        <div className="text-[10px] text-muted-foreground">
+          {file.file_size ? `${Math.round(file.file_size / 1024)} KB` : ''}
+          {file.mime_type ? ` · ${file.mime_type}` : ''}
+          {file.version ? ` · v${file.version}` : ''}
+        </div>
+      </div>
+      <div className="flex items-center gap-1 shrink-0">
+        {(isImage || isPdf) && (
+          <Button size="sm" variant="ghost" className="h-7 px-2" onClick={preview} disabled={busy} title="Vorschau">
+            <Eye className="w-3.5 h-3.5" />
+          </Button>
+        )}
+        <Button size="sm" variant="ghost" className="h-7 px-2" onClick={download} disabled={busy} title="Herunterladen">
+          <Download className="w-3.5 h-3.5" />
+        </Button>
+        <Button size="sm" variant="ghost" className="h-7 px-2" onClick={loadLogs} title="Download-Historie">
+          <HistoryIcon className="w-3.5 h-3.5" />
+        </Button>
+      </div>
+
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader><DialogTitle className="truncate">{file.original_filename}</DialogTitle></DialogHeader>
+          {previewUrl && isImage && <img src={previewUrl} alt={file.original_filename} className="max-h-[75vh] w-full object-contain rounded" />}
+          {previewUrl && isPdf && <iframe src={previewUrl} title={file.original_filename} className="w-full h-[75vh] rounded border border-border" />}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={logsOpen} onOpenChange={setLogsOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader><DialogTitle>Download-Historie · {file.original_filename}</DialogTitle></DialogHeader>
+          {logs === null ? (
+            <div className="flex items-center gap-2 text-muted-foreground text-sm"><Loader2 className="w-4 h-4 animate-spin" /> Lade…</div>
+          ) : logs.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Noch keine Downloads protokolliert.</p>
+          ) : (
+            <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+              {logs.map(l => (
+                <div key={l.id} className="rounded-lg border border-border p-2">
+                  <div className="flex items-center justify-between gap-2 text-sm">
+                    <span className="font-medium">{l._name}</span>
+                    <span className="text-xs text-muted-foreground">{new Date(l.created_at).toLocaleString('de-DE')}</span>
+                  </div>
+                  <div className="text-[10px] text-muted-foreground">
+                    <Badge variant="outline" className="text-[10px] mr-1">{l.downloader_type}</Badge>
+                    {l.user_agent && <span className="truncate inline-block max-w-full align-middle">{l.user_agent}</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
