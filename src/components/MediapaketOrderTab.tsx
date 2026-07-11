@@ -100,16 +100,25 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
     return () => { supabase.removeChannel(ch); };
   }, [mp?.id, loadComments]);
 
-  const markAllRead = async () => {
-    if (!mp?.id || !unread.length) return;
-    const ids = unread.map(u => u.id);
+  const markIdsRead = useCallback(async (ids: string[]) => {
+    if (!ids.length) return;
     const { error } = await supabase
       .from('media_package_comments')
       .update({ read_at: new Date().toISOString() })
       .in('id', ids);
     if (error) { toast.error(error.message); return; }
-    setUnread([]);
-    toast.success('Als gelesen markiert');
+    if (mp?.id) loadComments(mp.id);
+    toast.success(ids.length === 1 ? 'Als gelesen markiert' : `${ids.length} als gelesen markiert`);
+  }, [mp?.id, loadComments]);
+
+  const markAllRead = () => markIdsRead(unread.map(u => u.id));
+
+  const scrollToSection = (key: string) => {
+    const el = document.getElementById(`mp-section-${key}`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    el.classList.add('ring-2', 'ring-amber-500/60');
+    window.setTimeout(() => el.classList.remove('ring-2', 'ring-amber-500/60'), 1800);
   };
 
   const createPackage = async () => {
