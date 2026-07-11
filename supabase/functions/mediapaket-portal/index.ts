@@ -463,21 +463,15 @@ Deno.serve(async (req) => {
         // Move back to in_progress so staff sees pending review
         await admin.from('media_packages').update({ status: 'in_progress' as any }).eq('id', mpId);
 
-        // Notify staff by email (best-effort, don't fail on error)
+        // Notify staff by email (best-effort). Helper resolves studio/customer.
         {
-          const { data: cust } = mp?.customer_id
-            ? await admin.from('customers').select('name').eq('id', mp.customer_id).maybeSingle()
-            : { data: null };
-          const studioLabel = (await admin.from('media_packages').select('studio_name').eq('id', mpId).maybeSingle()).data?.studio_name || cust?.name || 'Kunde';
-          const subject = parent?.subject
-            ? `Kundenantwort: ${parent.subject} – ${studioLabel}`
-            : `Kundenantwort im Media Paket – ${studioLabel}`;
+          const subjectSuffix = parent?.subject ? `Kundenantwort: ${parent.subject}` : 'Kundenantwort im Media Paket';
           const innerHtml = `
             ${parent?.subject ? `<p style="color:#666">Betreff Rückfrage: ${String(parent.subject).replace(/</g,'&lt;')}</p>` : ''}
             <blockquote style="border-left:3px solid #d4af37;padding:8px 12px;background:#faf7ee;margin:16px 0;white-space:pre-wrap">${answerText.replace(/</g,'&lt;')}</blockquote>`;
           await notifyStaff({
             mpId,
-            subject,
+            subject: subjectSuffix,
             headline: 'Kunde hat geantwortet',
             innerHtml,
             action: 'answer_email_sent',
