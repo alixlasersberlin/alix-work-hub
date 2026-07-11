@@ -264,7 +264,7 @@ Deno.serve(async (req) => {
       const html = `
         <div style="font-family: Arial, sans-serif; max-width: 560px; margin: auto; color:#222">
           <h2 style="color:#111">Ihr Media Paket</h2>
-          <p>Hallo ${cust.name || ''},</p>
+          <p>Hallo ${(cust.contact_name || cust.company_name) || ''},</p>
           <p>${introMessage.replace(/\n/g, '<br>')}</p>
           <p style="margin: 24px 0">
             <a href="${link}" style="background:#000;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block;font-weight:600">
@@ -278,7 +278,7 @@ Deno.serve(async (req) => {
       const { error: sendErr } = await userClient.functions.invoke('send-mail', {
         body: {
           to_email: cust.email,
-          to_name: cust.name || null,
+          to_name: (cust.contact_name || cust.company_name) || null,
           from_email: 'vertrieb@alixwork.de',
           subject,
           body_html: html,
@@ -328,7 +328,7 @@ Deno.serve(async (req) => {
       const html = `
         <div style="font-family: Arial, sans-serif; max-width: 560px; margin: auto; color:#222">
           <h2 style="color:#111">Wir haben eine Rückfrage</h2>
-          <p>Hallo ${cust.name || ''},</p>
+          <p>Hallo ${(cust.contact_name || cust.company_name) || ''},</p>
           <p>zu Ihrem Media Paket haben wir folgende Rückfrage:</p>
           <blockquote style="border-left:3px solid #d4af37;padding:8px 12px;background:#faf7ee;margin:16px 0;white-space:pre-wrap">${String(comment.comment).replace(/</g,'&lt;')}</blockquote>
           <p style="margin: 24px 0">
@@ -341,7 +341,7 @@ Deno.serve(async (req) => {
       const { error: sendErr } = await userClient.functions.invoke('send-mail', {
         body: {
           to_email: cust.email,
-          to_name: cust.name || null,
+          to_name: (cust.contact_name || cust.company_name) || null,
           from_email: 'vertrieb@alixwork.de',
           subject,
           body_html: html,
@@ -394,14 +394,14 @@ Deno.serve(async (req) => {
           const link = `${baseUrl}/book/mediapaket?token=${encodeURIComponent(token)}`;
           const html = `<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#222">
             <h2>Neue Nachricht zu Ihrem Media Paket</h2>
-            <p>Hallo ${cust.name || ''},</p>
+            <p>Hallo ${(cust.contact_name || cust.company_name) || ''},</p>
             <blockquote style="border-left:3px solid #d4af37;padding:8px 12px;background:#faf7ee;margin:16px 0;white-space:pre-wrap">${message.replace(/</g,'&lt;')}</blockquote>
             <p style="margin:24px 0"><a href="${link}" style="background:#000;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">Portal öffnen &amp; antworten</a></p>
           </div>`;
           await userClient.functions.invoke('send-mail', {
             body: {
               to_email: cust.email,
-              to_name: cust.name || null,
+              to_name: (cust.contact_name || cust.company_name) || null,
               from_email: 'vertrieb@alixwork.de',
               subject: 'Nachricht zu Ihrem Media Paket',
               body_html: html,
@@ -436,7 +436,7 @@ Deno.serve(async (req) => {
       const link = `${baseUrl}/preview/mediapaket?token=${encodeURIComponent(token)}`;
       const html = `<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#222">
         <h2>Ihr Media Paket ${label}</h2>
-        <p>Hallo ${cust.name || ''},</p>
+        <p>Hallo ${(cust.contact_name || cust.company_name) || ''},</p>
         <p>Statusaktualisierung: Ihr Mediapaket <strong>${label}</strong>.</p>
         <p style="margin:24px 0"><a href="${link}" style="background:#000;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">Vorschau öffnen</a></p>
       </div>`;
@@ -462,14 +462,14 @@ Deno.serve(async (req) => {
               order_id: mpFull.order_id,
               customer_id: mp.customer_id,
               customer_email: cust.email,
-              customer_name: cust.name || null,
+              customer_name: (cust.contact_name || cust.company_name) || null,
               product_name: mpFull.studio_name || 'Mediapaket',
               invitation_status: 'sent',
               invitation_sent_at: new Date().toISOString(),
             });
             const reviewHtml = `<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#222">
               <h2>Wie zufrieden sind Sie?</h2>
-              <p>Hallo ${cust.name || ''},</p>
+              <p>Hallo ${(cust.contact_name || cust.company_name) || ''},</p>
               <p>Ihr Mediapaket ist fertiggestellt. Wir würden uns über eine kurze Rückmeldung freuen.</p>
               <p style="margin:24px 0"><a href="${baseUrl}/portal" style="background:#d4af37;color:#000;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">Feedback geben</a></p>
             </div>`;
