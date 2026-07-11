@@ -113,6 +113,7 @@ export function AppointmentModalTabs({
   const [mode, setMode] = useState<'intern' | 'extern' | 'erinnerung' | 'wiedervorlage'>(detectMode());
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [form, setForm] = useState(() => buildInitialForm(initial, defaultStart, departments));
+  const { kinds: kindOptions } = useAppointmentKinds();
   const defaultStartTime = defaultStart?.getTime();
 
   useEffect(() => {
