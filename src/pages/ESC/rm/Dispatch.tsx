@@ -12,6 +12,7 @@ export default function RmDispatch() {
           Termine per Drag &amp; Drop auf Mitarbeiter, Fahrzeuge, Räume oder Vorführgeräte ziehen. Konflikte, Qualifikationen und Standorte werden automatisch geprüft.
         </p>
       </div>
+      <RmQuickActions />
       <DispatchBoard appointments={appointments} />
     </div>
   );
