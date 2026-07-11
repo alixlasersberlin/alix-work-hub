@@ -582,8 +582,265 @@ Deno.serve(async (req) => {
       return json({ ok: true, new_mp_id: newId });
     }
 
+    // ============ Phase 44 — Versionierung ============
+    if (action === 'snapshot') {
+      const authH = req.headers.get('Authorization');
+      if (!authH) return json({ error: 'unauthorized' }, 401);
+      const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: authH } }, auth: { persistSession: false } });
+      const { data: userData } = await userClient.auth.getUser();
+      if (!userData?.user) return json({ error: 'unauthorized' }, 401);
+      const body = await req.json();
+      const mpId = body.mp_id;
+      const label = body.label || 'manual';
+      if (!mpId) return json({ error: 'mp_id required' }, 400);
+      const { data: mp } = await userClient.from('media_packages').select('id').eq('id', mpId).maybeSingle();
+      if (!mp) return json({ error: 'forbidden' }, 403);
+      const full = await getFull(mpId);
+      await admin.from('media_package_history').insert({
+        media_package_id: mpId, user_id: userData.user.id, action: 'snapshot',
+        new_value: { label, snapshot: full } as any,
+      });
+      return json({ ok: true });
+    }
 
-    // All other actions are token-based (customer portal)
+    if (action === 'list_snapshots') {
+      const authH = req.headers.get('Authorization');
+      if (!authH) return json({ error: 'unauthorized' }, 401);
+      const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: authH } }, auth: { persistSession: false } });
+      const { data: userData } = await userClient.auth.getUser();
+      if (!userData?.user) return json({ error: 'unauthorized' }, 401);
+      const body = await req.json();
+      const mpId = body.mp_id;
+      if (!mpId) return json({ error: 'mp_id required' }, 400);
+      const { data: mp } = await userClient.from('media_packages').select('id').eq('id', mpId).maybeSingle();
+      if (!mp) return json({ error: 'forbidden' }, 403);
+      const { data } = await admin.from('media_package_history')
+        .select('id, action, created_at, user_id, new_value')
+        .eq('media_package_id', mpId)
+        .in('action', ['snapshot', 'submitted', 'status_changed'])
+        .order('created_at', { ascending: false }).limit(50);
+      const items = (data || []).map((r: any) => ({
+        id: r.id, action: r.action, created_at: r.created_at, user_id: r.user_id,
+        label: r.new_value?.label || (r.new_value?.snapshot ? 'auto' : null),
+        has_snapshot: !!r.new_value?.snapshot,
+      }));
+      return json({ snapshots: items });
+    }
+
+    if (action === 'rollback') {
+      const authH = req.headers.get('Authorization');
+      if (!authH) return json({ error: 'unauthorized' }, 401);
+      const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: authH } }, auth: { persistSession: false } });
+      const { data: userData } = await userClient.auth.getUser();
+      if (!userData?.user) return json({ error: 'unauthorized' }, 401);
+      const { data: roleRow } = await admin.from('user_roles').select('role').eq('user_id', userData.user.id).eq('role', 'Super Admin').maybeSingle();
+      if (!roleRow) return json({ error: 'Super Admin required' }, 403);
+      const body = await req.json();
+      const { mp_id, snapshot_id } = body;
+      if (!mp_id || !snapshot_id) return json({ error: 'mp_id & snapshot_id required' }, 400);
+      const { data: snapRow } = await admin.from('media_package_history').select('new_value').eq('id', snapshot_id).eq('media_package_id', mp_id).maybeSingle();
+      const snap = (snapRow as any)?.new_value?.snapshot;
+      if (!snap) return json({ error: 'snapshot not found' }, 404);
+      // Save current state before rollback
+      const before = await getFull(mp_id);
+      await admin.from('media_package_history').insert({
+        media_package_id: mp_id, user_id: userData.user.id, action: 'snapshot',
+        new_value: { label: 'pre_rollback', snapshot: before } as any,
+      });
+      // Restore root fields (limited set)
+      if (snap.root) {
+        const { id, created_at, updated_at, ...rootRest } = snap.root;
+        await admin.from('media_packages').update(rootRest).eq('id', mp_id);
+      }
+      // Restore multi-row sections
+      const SECT_MULTI: Array<[string, string]> = [
+        ['services', 'media_package_services'],
+        ['devices', 'media_package_devices'],
+        ['prices', 'media_package_prices'],
+        ['hours', 'media_package_opening_hours'],
+        ['treatments', 'media_package_treatments'],
+        ['team', 'media_package_team_members'],
+        ['consents', 'media_package_consents'],
+      ];
+      for (const [key, table] of SECT_MULTI) {
+        await admin.from(table).delete().eq('media_package_id', mp_id);
+        const rows = (snap[key] || []).map((r: any) => {
+          const { id, created_at, updated_at, ...rest } = r;
+          return { ...rest, media_package_id: mp_id };
+        });
+        if (rows.length) await admin.from(table).insert(rows);
+      }
+      // Single-row sections
+      const SECT_SINGLE: Array<[string, string]> = [
+        ['studio', 'media_package_studio_data'],
+        ['contact', 'media_package_contact_data'],
+        ['branding', 'media_package_branding'],
+      ];
+      for (const [key, table] of SECT_SINGLE) {
+        await admin.from(table).delete().eq('media_package_id', mp_id);
+        if (snap[key]) {
+          const { id, created_at, updated_at, ...rest } = snap[key];
+          await admin.from(table).insert({ ...rest, media_package_id: mp_id });
+        }
+      }
+      await admin.from('media_package_history').insert({
+        media_package_id: mp_id, user_id: userData.user.id, action: 'rollback_applied',
+        entity_id: snapshot_id, new_value: { snapshot_id } as any,
+      });
+      return json({ ok: true });
+    }
+
+    // ============ Phase 45 — Showcase Toggle ============
+    if (action === 'toggle_showcase') {
+      const authH = req.headers.get('Authorization');
+      if (!authH) return json({ error: 'unauthorized' }, 401);
+      const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: authH } }, auth: { persistSession: false } });
+      const { data: userData } = await userClient.auth.getUser();
+      if (!userData?.user) return json({ error: 'unauthorized' }, 401);
+      const body = await req.json();
+      const { mp_id, enabled } = body;
+      if (!mp_id) return json({ error: 'mp_id required' }, 400);
+      const { data: mp } = await userClient.from('media_packages').select('id').eq('id', mp_id).maybeSingle();
+      if (!mp) return json({ error: 'forbidden' }, 403);
+      const key = `mediapaket.showcase.${mp_id}`;
+      const { data: existing } = await admin.from('app_settings').select('value').eq('key', key).maybeSingle();
+      let cfg: any = {};
+      try { cfg = JSON.parse((existing as any)?.value || '{}'); } catch {}
+      if (!cfg.token) {
+        const bytes = new Uint8Array(24); crypto.getRandomValues(bytes);
+        cfg.token = b64url(bytes);
+        cfg.created_at = new Date().toISOString();
+      }
+      cfg.enabled = !!enabled;
+      await (admin.from('app_settings') as any).upsert({ key, value: JSON.stringify(cfg), updated_by: userData.user.id, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+      await admin.from('media_package_history').insert({
+        media_package_id: mp_id, user_id: userData.user.id, action: enabled ? 'showcase_enabled' : 'showcase_disabled',
+        new_value: { enabled } as any,
+      });
+      return json({ ok: true, token: cfg.token, enabled: cfg.enabled });
+    }
+
+    if (action === 'get_showcase_config') {
+      const authH = req.headers.get('Authorization');
+      if (!authH) return json({ error: 'unauthorized' }, 401);
+      const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: authH } }, auth: { persistSession: false } });
+      const { data: userData } = await userClient.auth.getUser();
+      if (!userData?.user) return json({ error: 'unauthorized' }, 401);
+      const body = await req.json();
+      const { mp_id } = body;
+      if (!mp_id) return json({ error: 'mp_id required' }, 400);
+      const { data: mp } = await userClient.from('media_packages').select('id').eq('id', mp_id).maybeSingle();
+      if (!mp) return json({ error: 'forbidden' }, 403);
+      const { data: existing } = await admin.from('app_settings').select('value').eq('key', `mediapaket.showcase.${mp_id}`).maybeSingle();
+      let cfg: any = { enabled: false, token: null };
+      try { cfg = { ...cfg, ...JSON.parse((existing as any)?.value || '{}') }; } catch {}
+      return json(cfg);
+    }
+
+    // ============ Phase 47 — DSGVO Export & Löschanfrage ============
+    if (action === 'gdpr_export') {
+      const authH = req.headers.get('Authorization');
+      if (!authH) return json({ error: 'unauthorized' }, 401);
+      const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: authH } }, auth: { persistSession: false } });
+      const { data: userData } = await userClient.auth.getUser();
+      if (!userData?.user) return json({ error: 'unauthorized' }, 401);
+      const body = await req.json();
+      const { mp_id } = body;
+      if (!mp_id) return json({ error: 'mp_id required' }, 400);
+      const { data: mp } = await userClient.from('media_packages').select('id, customer_id').eq('id', mp_id).maybeSingle();
+      if (!mp) return json({ error: 'forbidden' }, 403);
+      const full = await getFull(mp_id);
+      const [cust, history, comments, files] = await Promise.all([
+        mp.customer_id ? admin.from('customers').select('*').eq('id', mp.customer_id).maybeSingle() : Promise.resolve({ data: null }),
+        admin.from('media_package_history').select('*').eq('media_package_id', mp_id).order('created_at'),
+        admin.from('media_package_comments').select('*').eq('media_package_id', mp_id).order('created_at'),
+        admin.from('media_package_files').select('*').eq('media_package_id', mp_id).order('created_at'),
+      ]);
+      await admin.from('media_package_history').insert({
+        media_package_id: mp_id, user_id: userData.user.id, action: 'gdpr_export',
+        new_value: { by: userData.user.email || userData.user.id } as any,
+      });
+      return json({
+        exported_at: new Date().toISOString(),
+        customer: (cust as any)?.data || null,
+        package: full,
+        history: history.data || [],
+        comments: comments.data || [],
+        files: files.data || [],
+      });
+    }
+
+    if (action === 'request_deletion') {
+      // Kunden-Token-basiert (aus Portal)
+      const body = await req.json().catch(() => ({}));
+      const tok = body.token;
+      const reason = body.reason || '';
+      if (!tok) return json({ error: 'token required' }, 401);
+      const mpId = await verifyToken(tok);
+      if (!mpId) return json({ error: 'invalid token' }, 401);
+      await admin.from('media_package_history').insert({
+        media_package_id: mpId, action: 'gdpr_deletion_requested',
+        new_value: { reason, requested_at: new Date().toISOString() } as any,
+      });
+      // Staff-Benachrichtigung
+      const staffInbox = Deno.env.get('MEDIAPAKET_STAFF_INBOX') || 'vertrieb@alixwork.de';
+      await fetch(`${SUPABASE_URL}/functions/v1/send-mail`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${SERVICE_ROLE}`, apikey: SERVICE_ROLE },
+        body: JSON.stringify({
+          to: staffInbox,
+          subject: '🛑 DSGVO-Löschanfrage: Mediapaket',
+          html: `<p>Ein Kunde hat die Löschung seiner Mediapaket-Daten beantragt.</p><p><strong>Mediapaket:</strong> ${mpId}</p><p><strong>Grund:</strong> ${String(reason).replace(/</g, '&lt;') || '—'}</p><p>Bitte im Admin-Bereich bearbeiten.</p>`,
+          from: 'vertrieb@alixwork.de',
+        }),
+      });
+      return json({ ok: true });
+    }
+
+    if (action === 'anonymize') {
+      const authH = req.headers.get('Authorization');
+      if (!authH) return json({ error: 'unauthorized' }, 401);
+      const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: authH } }, auth: { persistSession: false } });
+      const { data: userData } = await userClient.auth.getUser();
+      if (!userData?.user) return json({ error: 'unauthorized' }, 401);
+      const { data: roleRow } = await admin.from('user_roles').select('role').eq('user_id', userData.user.id).eq('role', 'Super Admin').maybeSingle();
+      if (!roleRow) return json({ error: 'Super Admin required' }, 403);
+      const body = await req.json();
+      const { mp_id } = body;
+      if (!mp_id) return json({ error: 'mp_id required' }, 400);
+      // Snapshot vor Anonymisierung
+      const full = await getFull(mp_id);
+      await admin.from('media_package_history').insert({
+        media_package_id: mp_id, user_id: userData.user.id, action: 'snapshot',
+        new_value: { label: 'pre_anonymize', snapshot: full } as any,
+      });
+      // Anonymisieren: PII in contact & team leeren
+      await admin.from('media_package_contact_data').update({
+        contact_person: 'ANONYMISIERT', email: null, phone: null, mobile: null,
+        website: null, instagram: null, facebook: null, tiktok: null,
+      } as any).eq('media_package_id', mp_id);
+      await admin.from('media_package_team_members').update({
+        name: 'ANONYMISIERT', email: null, phone: null, bio: null,
+      } as any).eq('media_package_id', mp_id);
+      await admin.from('media_packages').update({
+        studio_name: 'ANONYMISIERT', status: 'completed' as any,
+      }).eq('id', mp_id);
+      // Showcase deaktivieren
+      const key = `mediapaket.showcase.${mp_id}`;
+      const { data: existing } = await admin.from('app_settings').select('value').eq('key', key).maybeSingle();
+      if (existing) {
+        let cfg: any = {}; try { cfg = JSON.parse((existing as any).value || '{}'); } catch {}
+        cfg.enabled = false;
+        await (admin.from('app_settings') as any).upsert({ key, value: JSON.stringify(cfg), updated_at: new Date().toISOString() }, { onConflict: 'key' });
+      }
+      await admin.from('media_package_history').insert({
+        media_package_id: mp_id, user_id: userData.user.id, action: 'anonymized',
+        new_value: { by: userData.user.email } as any,
+      });
+      return json({ ok: true });
+    }
+
+
     const body = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
     const token = body.token || url.searchParams.get('token');
     if (!token) return json({ error: 'token required' }, 401);
