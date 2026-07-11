@@ -3403,6 +3403,57 @@ export type Database = {
         }
         Relationships: []
       }
+      esc_calendar_connections: {
+        Row: {
+          access_token: string | null
+          account_email: string | null
+          calendar_id: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          last_sync_at: string | null
+          provider: string
+          refresh_token: string | null
+          scope: string | null
+          status: string
+          sync_token: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          account_email?: string | null
+          calendar_id?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          last_sync_at?: string | null
+          provider: string
+          refresh_token?: string | null
+          scope?: string | null
+          status?: string
+          sync_token?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string | null
+          account_email?: string | null
+          calendar_id?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          last_sync_at?: string | null
+          provider?: string
+          refresh_token?: string | null
+          scope?: string | null
+          status?: string
+          sync_token?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       esc_departments: {
         Row: {
           color: string
@@ -4241,6 +4292,62 @@ export type Database = {
             columns: ["department_id"]
             isOneToOne: false
             referencedRelation: "esc_public_departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      esc_message_log: {
+        Row: {
+          body: string | null
+          channel: string
+          created_at: string
+          created_by: string | null
+          error: string | null
+          event_id: string | null
+          id: string
+          provider_message_id: string | null
+          recipient: string
+          status: string
+          subject: string | null
+          template_key: string | null
+          updated_at: string
+        }
+        Insert: {
+          body?: string | null
+          channel: string
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          event_id?: string | null
+          id?: string
+          provider_message_id?: string | null
+          recipient: string
+          status?: string
+          subject?: string | null
+          template_key?: string | null
+          updated_at?: string
+        }
+        Update: {
+          body?: string | null
+          channel?: string
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          event_id?: string | null
+          id?: string
+          provider_message_id?: string | null
+          recipient?: string
+          status?: string
+          subject?: string | null
+          template_key?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "esc_message_log_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "esc_events"
             referencedColumns: ["id"]
           },
         ]
