@@ -45,22 +45,43 @@ export default function MediapaketAdmin() {
       (data || []).forEach((r: any) => { if (r.value !== null) map[r.key] = r.value; });
       setValues(map);
       // Stats
-      const [mps, files, downloads] = await Promise.all([
-        supabase.from('media_packages').select('status, progress_percent'),
+      const [mps, files, downloads, profiles] = await Promise.all([
+        supabase.from('media_packages').select('status, progress_percent, due_date, submitted_at, created_at, assigned_user_id'),
         supabase.from('media_package_files').select('id', { count: 'exact', head: true }),
         supabase.from('media_package_file_downloads').select('id', { count: 'exact', head: true }),
+        supabase.from('user_profiles').select('id, first_name, last_name, email'),
       ]);
+      const nameById: Record<string, string> = {};
+      (profiles.data || []).forEach((p: any) => {
+        nameById[p.id] = [p.first_name, p.last_name].filter(Boolean).join(' ') || p.email || p.id.slice(0, 6);
+      });
       const byStatus: Record<string, number> = {};
-      let progSum = 0, progN = 0;
+      const byAssignee: Record<string, number> = {};
+      let progSum = 0, progN = 0, overdue = 0, submitDaysSum = 0, submitDaysN = 0, assigned = 0;
+      const now = Date.now();
       (mps.data || []).forEach((r: any) => {
         byStatus[r.status] = (byStatus[r.status] || 0) + 1;
         if (typeof r.progress_percent === 'number') { progSum += r.progress_percent; progN++; }
+        if (r.due_date && new Date(r.due_date).getTime() < now && r.status !== 'completed') overdue++;
+        if (r.submitted_at && r.created_at) {
+          const d = (new Date(r.submitted_at).getTime() - new Date(r.created_at).getTime()) / 86400000;
+          if (d >= 0) { submitDaysSum += d; submitDaysN++; }
+        }
+        if (r.assigned_user_id) { assigned++; byAssignee[r.assigned_user_id] = (byAssignee[r.assigned_user_id] || 0) + 1; }
       });
+      const total = (mps.data || []).length;
+      const topAssignees = Object.entries(byAssignee)
+        .map(([id, count]) => ({ name: nameById[id] || id.slice(0, 6), count }))
+        .sort((a, b) => b.count - a.count).slice(0, 5);
       setStats({
         byStatus,
         totalFiles: files.count || 0,
         totalDownloads: downloads.count || 0,
         avgProgress: progN ? Math.round(progSum / progN) : 0,
+        overdue,
+        avgSubmitDays: submitDaysN ? Math.round((submitDaysSum / submitDaysN) * 10) / 10 : null,
+        assignedShare: total ? Math.round((assigned / total) * 100) : 0,
+        topAssignees,
       });
       setLoading(false);
     })();
