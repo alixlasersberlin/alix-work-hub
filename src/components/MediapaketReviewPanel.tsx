@@ -22,6 +22,24 @@ const STATUS_OPTIONS = [
   { value: 'completed', label: 'Abgeschlossen' },
 ];
 
+export const SECTION_OPTIONS = [
+  { value: 'services', label: 'Leistungsauswahl' },
+  { value: 'studio', label: 'Studio-Daten' },
+  { value: 'devices', label: 'Geräte' },
+  { value: 'prices', label: 'Preisliste' },
+  { value: 'contact', label: 'Kontaktdaten' },
+  { value: 'hours', label: 'Öffnungszeiten' },
+  { value: 'treatments', label: 'Fremdbehandlungen' },
+  { value: 'team', label: 'Team / Über mich' },
+  { value: 'branding', label: 'Branding / Anmerkungen' },
+  { value: 'files', label: 'Dateien' },
+  { value: 'consents', label: 'Einwilligungen' },
+];
+
+export const SECTION_LABEL: Record<string, string> = Object.fromEntries(
+  SECTION_OPTIONS.map(o => [o.value, o.label])
+);
+
 interface Props {
   mpId: string;
   currentStatus: string;
