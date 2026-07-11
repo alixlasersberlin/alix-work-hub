@@ -10948,6 +10948,54 @@ export type Database = {
           },
         ]
       }
+      media_package_file_downloads: {
+        Row: {
+          created_at: string
+          downloaded_by: string | null
+          downloader_type: string
+          file_id: string
+          id: string
+          ip_address: string | null
+          media_package_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          downloaded_by?: string | null
+          downloader_type?: string
+          file_id: string
+          id?: string
+          ip_address?: string | null
+          media_package_id: string
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          downloaded_by?: string | null
+          downloader_type?: string
+          file_id?: string
+          id?: string
+          ip_address?: string | null
+          media_package_id?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_package_file_downloads_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "media_package_files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "media_package_file_downloads_media_package_id_fkey"
+            columns: ["media_package_id"]
+            isOneToOne: false
+            referencedRelation: "media_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       media_package_files: {
         Row: {
           approval_status: string | null
