@@ -16345,6 +16345,13 @@ export type Database = {
         Args: { _department_id: string; _user_id: string }
         Returns: boolean
       }
+      esc_public_departments: {
+        Args: never
+        Returns: {
+          data: Json
+          id: string
+        }[]
+      }
       esc_user_department_ids: { Args: { _user_id: string }; Returns: string[] }
       finance_deposit_book: {
         Args: {
