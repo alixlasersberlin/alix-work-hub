@@ -309,13 +309,17 @@ export default function MediapaketExtrasPanel({ mpId, status, onChanged }: Props
           </div>
           <div className="border-t border-border/40 pt-2 space-y-2">
             <Textarea rows={3} value={chatText} onChange={e => setChatText(e.target.value)} placeholder="Nachricht an den Kunden…" />
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-2">
+              <Button size="sm" variant="outline" onClick={sendWhatsApp} disabled={waSending || !chatText.trim()} className="gap-2">
+                {waSending ? <Loader2 className="w-3 h-3 animate-spin" /> : <MessageCircle className="w-3 h-3" />}
+                Per WhatsApp
+              </Button>
               <Button size="sm" onClick={sendChat} disabled={chatSending || !chatText.trim()} className="gap-2">
                 {chatSending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
                 An Kunden senden
               </Button>
             </div>
-            <p className="text-[10px] text-muted-foreground">Der Kunde erhält eine E-Mail mit Link zum Portal und sieht die Nachricht dort.</p>
+            <p className="text-[10px] text-muted-foreground">E-Mail mit Portal-Link ODER WhatsApp direkt an die Kunden-Telefonnummer.</p>
           </div>
         </TabsContent>
 
