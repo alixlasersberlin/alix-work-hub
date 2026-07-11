@@ -541,10 +541,7 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
 
       <SectionCard sectionKey="files" title="Dateien" empty={!sections.files?.length} comments={commentsBySection.files} onMarkRead={markIdsRead}>
         {sections.files?.map((f: any) => (
-          <div key={f.id} className="flex items-center justify-between text-sm">
-            <span>{f.original_filename} <span className="text-muted-foreground">({f.category})</span></span>
-            <span className="text-muted-foreground text-xs">{f.file_size ? `${Math.round(f.file_size / 1024)} KB` : ''}</span>
-          </div>
+          <FileRow key={f.id} file={f} mpId={mp.id} />
         ))}
       </SectionCard>
 
