@@ -80,6 +80,49 @@ export function AppointmentModal({ open, onClose, onSubmit, departments, employe
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState<AiSuggestion[]>([]);
+
+  const runAiSuggest = async () => {
+    setAiLoading(true);
+    setAiSuggestions([]);
+    try {
+      const startMs = new Date(form.startAt).getTime();
+      const endMs = new Date(form.endAt).getTime();
+      const duration = Math.max(15, Math.round((endMs - startMs) / 60000)) || 60;
+      const { data, error } = await supabase.functions.invoke('esc-ai-suggest', {
+        body: {
+          title: form.title,
+          kind: form.kind,
+          duration_minutes: duration,
+          department_id: form.departmentId,
+          customer_name: form.customerName,
+          address: form.address,
+          preferred_from: new Date(form.startAt).toISOString(),
+        },
+      });
+      if (error) throw error;
+      const list: AiSuggestion[] = (data as any)?.suggestions || [];
+      if (!list.length) toast.info('Keine Vorschläge gefunden');
+      setAiSuggestions(list);
+    } catch (e: any) {
+      console.error(e);
+      toast.error('KI-Vorschlag fehlgeschlagen: ' + (e?.message || e));
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const applySuggestion = (s: AiSuggestion) => {
+    setForm((f) => ({
+      ...f,
+      startAt: toInputDate(new Date(s.start_at)),
+      endAt: toInputDate(new Date(s.end_at)),
+      employeeIds: s.employee_id ? [s.employee_id] : f.employeeIds,
+    }));
+    toast.success('Vorschlag übernommen');
+  };
+
   const handleSubmit = async () => {
     if (!form.title.trim()) { toast.error('Bitte Titel angeben'); return; }
     if (!form.departmentId) { toast.error('Bitte Abteilung wählen'); return; }
