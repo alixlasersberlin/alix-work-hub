@@ -297,7 +297,25 @@ export function AppointmentModalTabs({
                 </div>
                 <div>
                   <Label>Terminart *</Label>
-                  <Input value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value })} placeholder="z. B. Demo, Reparatur" />
+                  <Input
+                    list="esc-kind-options"
+                    value={form.kind}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      const match = kindOptions.find((k) => k.name === v);
+                      setForm((f) => ({
+                        ...f,
+                        kind: v,
+                        ...(match?.color ? {} : {}),
+                      }));
+                    }}
+                    placeholder="Auswählen oder tippen (z. B. Beratung)"
+                  />
+                  <datalist id="esc-kind-options">
+                    {kindOptions
+                      .filter((k) => k.active && (k.departmentIds.length === 0 || k.departmentIds.includes(form.departmentId)))
+                      .map((k) => <option key={k.id} value={k.name}>{k.description || ''}</option>)}
+                  </datalist>
                 </div>
                 <div>
                   <Label>Status</Label>
