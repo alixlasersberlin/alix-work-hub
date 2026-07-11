@@ -44,6 +44,7 @@ import { sendCustomerShippingNotice } from '@/lib/send-customer-shipping-notice'
 import { sendReviewInvitation } from '@/lib/review-invitation';
 import { VipBadge } from '@/components/VipBadge';
 import { isOrderVip } from '@/lib/vip';
+import MediapaketOrderTab from '@/components/MediapaketOrderTab';
 
 export default function OrderDetail() {
   const { id } = useParams<{ id: string }>();
