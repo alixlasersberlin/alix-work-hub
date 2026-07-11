@@ -175,3 +175,15 @@ verify_jwt = true
 [functions.send-anzahlung-mahnung]
 verify_jwt = true
 
+[functions.esc-send-message]
+verify_jwt = true
+
+[functions.esc-whatsapp-inbound]
+verify_jwt = false
+
+[functions.esc-calendar-sync]
+verify_jwt = true
+
+[functions.esc-calendar-oauth]
+verify_jwt = false
+
