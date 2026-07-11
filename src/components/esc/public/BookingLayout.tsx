@@ -22,7 +22,7 @@ export function BookingLayout({ children, step, totalSteps, narrow, hideLegalLin
             <div className="text-[14px] font-semibold tracking-tight">Alix Lasers</div>
             <div className="text-[11px] text-muted-foreground">alix-lasers.com</div>
           </div>
-          <a href={`${ALIXWORKS_PUBLIC_BASE}/kontakt`} className="text-[12px] text-muted-foreground hover:text-primary hidden sm:inline">Kontakt</a>
+          
         </div>
         {step && totalSteps && (
           <div className="max-w-5xl mx-auto px-4 pb-2">
