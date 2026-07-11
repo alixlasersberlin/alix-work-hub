@@ -216,8 +216,22 @@ export function AppointmentModal({ open, onClose, onSubmit, departments, employe
           </div>
         )}
 
+        {conflicts.length > 0 && (
+          <div className="rounded-md border border-destructive/40 bg-destructive/5 p-2.5 text-xs">
+            <div className="flex items-center gap-1.5 font-medium text-destructive">
+              <AlertTriangle className="w-3.5 h-3.5" /> {conflicts.length} Konflikt(e) erkannt
+            </div>
+            <ul className="mt-1 space-y-0.5 text-[11px] text-muted-foreground">
+              {conflicts.slice(0, 4).map((c, i) => (
+                <li key={i}>
+                  · {c.kind === 'employee' ? 'Mitarbeiter' : c.kind === 'resource' ? 'Ressource' : 'Abteilung'} „{c.refLabel}" belegt durch „{c.otherAppointment.title}"
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 py-2">
+
           <div className="md:col-span-2">
             <Label>Titel *</Label>
             <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
