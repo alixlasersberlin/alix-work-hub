@@ -54,6 +54,74 @@ async function verifyToken(token: string): Promise<string | null> {
   } catch { return null; }
 }
 
+async function notifyStaff(opts: {
+  mpId: string;
+  subject: string;
+  headline: string;
+  innerHtml: string;
+  action: string;
+  entity_id?: string | null;
+  base_url?: string;
+  extraRecipientUserIds?: (string | null | undefined)[];
+}) {
+  try {
+    const { data: mp } = await admin.from('media_packages')
+      .select('id, customer_id, order_id, studio_name, assigned_to').eq('id', opts.mpId).maybeSingle();
+    const { data: cust } = mp?.customer_id
+      ? await admin.from('customers').select('name, email').eq('id', mp.customer_id).maybeSingle()
+      : { data: null };
+    const recipients = new Set<string>();
+    const staffInbox = Deno.env.get('MEDIAPAKET_STAFF_INBOX') || 'vertrieb@alixwork.de';
+    const uids = [(mp as any)?.assigned_to, ...(opts.extraRecipientUserIds || [])];
+    for (const uid of uids) {
+      if (!uid) continue;
+      const { data: prof } = await admin.from('user_profiles').select('email').eq('id', uid).maybeSingle();
+      if (prof?.email) recipients.add(prof.email);
+    }
+    if (recipients.size === 0) recipients.add(staffInbox);
+    const studioLabel = (mp as any)?.studio_name || cust?.name || 'Kunde';
+    const base = (opts.base_url || 'https://alixwork.de').replace(/\/$/, '');
+    const orderLink = mp?.order_id ? `${base}/auftraege/${mp.order_id}?tab=mediapaket` : `${base}/`;
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 560px; margin: auto; color:#222">
+        <h2 style="color:#111">${opts.headline}</h2>
+        <p><strong>${studioLabel}</strong>${cust?.email ? ` &lt;${cust.email}&gt;` : ''}</p>
+        ${opts.innerHtml}
+        <p style="margin: 24px 0">
+          <a href="${orderLink}" style="background:#000;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block;font-weight:600">
+            Media Paket öffnen
+          </a>
+        </p>
+        <p style="font-size:12px;color:#666"><a href="${orderLink}">${orderLink}</a></p>
+      </div>`;
+    const to = Array.from(recipients);
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/send-mail`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${SERVICE_ROLE}`,
+        apikey: SERVICE_ROLE,
+      },
+      body: JSON.stringify({ to, subject: opts.subject, html, from: 'vertrieb@alixwork.de' }),
+    });
+    if (!resp.ok) {
+      const t = await resp.text();
+      console.error('notifyStaff: send-mail failed', resp.status, t);
+      return { ok: false };
+    }
+    await admin.from('media_package_history').insert({
+      media_package_id: opts.mpId,
+      action: opts.action,
+      entity_id: opts.entity_id ?? null,
+      new_value: { to, subject: opts.subject } as any,
+    });
+    return { ok: true, to };
+  } catch (e: any) {
+    console.error('notifyStaff error', e?.message || e);
+    return { ok: false };
+  }
+}
+
 const SECTIONS: Record<string, { table: string; single: boolean }> = {
   root:      { table: 'media_packages',              single: true },
   services:  { table: 'media_package_services',      single: false },
