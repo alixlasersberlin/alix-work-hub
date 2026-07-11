@@ -87,7 +87,7 @@ export default function MediapaketOverview() {
   const bulkUpdate = async (patch: Record<string, any>, label: string) => {
     if (selected.size === 0) return;
     setBulkBusy(true);
-    const { error } = await supabase.from('media_packages').update(patch).in('id', Array.from(selected));
+    const { error } = await (supabase.from('media_packages') as any).update(patch).in('id', Array.from(selected));
     setBulkBusy(false);
     if (error) { toast.error(error.message); return; }
     toast.success(`${selected.size} Pakete: ${label}`);
