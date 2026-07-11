@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 export type EscStoreTable =
   | 'esc_store_appointments'
+  | 'esc_store_appointment_kinds'
   | 'esc_store_departments'
   | 'esc_store_employees'
   | 'esc_store_rm_employees'
