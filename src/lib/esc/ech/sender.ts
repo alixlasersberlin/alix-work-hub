@@ -74,11 +74,29 @@ export function sendMessage(input: SendInput): EchMessage {
   };
   appendMessage(msg);
 
-  // Simulated async transport – real providers plug in here.
-  setTimeout(() => {
-    patchMessage(msg.id, { status: 'sent', sentAt: new Date().toISOString() });
-    setTimeout(() => patchMessage(msg.id, { status: 'delivered' }), 400);
-  }, 250);
+  // Real transport for email/calendar_invite via edge function; other channels remain simulated.
+  if (input.channel === 'email' || input.channel === 'calendar_invite') {
+    import('@/integrations/supabase/client').then(({ supabase }) =>
+      supabase.functions.invoke('esc-send-email', {
+        body: {
+          template_slug: input.templateSlug,
+          language: lang,
+          recipient: input.recipient,
+          context: (input.ctx.extras ?? {}),
+          event_id: input.ctx.appointment?.id,
+          subject, body,
+        },
+      }).then(({ error }) => {
+        if (error) patchMessage(msg.id, { status: 'failed', error: error.message });
+        else patchMessage(msg.id, { status: 'sent', sentAt: new Date().toISOString() });
+      }).catch((e) => patchMessage(msg.id, { status: 'failed', error: e?.message }))
+    );
+  } else {
+    setTimeout(() => {
+      patchMessage(msg.id, { status: 'sent', sentAt: new Date().toISOString() });
+      setTimeout(() => patchMessage(msg.id, { status: 'delivered' }), 400);
+    }, 250);
+  }
 
   return msg;
 }

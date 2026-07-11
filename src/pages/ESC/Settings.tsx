@@ -35,9 +35,20 @@ export default function EscSettings() {
       </Card>
 
       <Card>
+        <CardHeader><CardTitle className="text-[14px]">Sicherheit & Revision</CardTitle></CardHeader>
+        <CardContent className="text-[13px] space-y-2">
+          <div className="text-muted-foreground text-[12.5px]">
+            Persistente DB, HMAC-signierte öffentliche Tokens, produktiver E-Mail-Versand und
+            vollständiges Audit-Log für alle Termin-, Teilnehmer- und Buchungsänderungen.
+          </div>
+          <a href="/esc/audit" className="text-primary hover:underline text-[13px]">→ Audit-Log öffnen</a>
+        </CardContent>
+      </Card>
+
+      <Card>
         <CardHeader><CardTitle className="text-[14px]">Nächste Ausbaustufen</CardTitle></CardHeader>
         <CardContent className="text-[12.5px] text-muted-foreground space-y-1">
-          <div>• Prompt 2: Persistente Datenbank, signierte Tokens, E-Mail-Versand, Audit-Log.</div>
+          <div>• Erledigt (Prompt 2): Persistente Datenbank, signierte Tokens, E-Mail-Versand, Audit-Log.</div>
           <div>• Später: KI-Planung, Tourenplanung, Ressourcenplanung, QR-Check-in, digitale Unterschrift, WhatsApp / SMS, Google / Microsoft Two-Way-Sync.</div>
         </CardContent>
       </Card>
