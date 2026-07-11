@@ -54,7 +54,7 @@ export default function PortalLookup() {
   }
 
   return (
-    <BookingLayout narrow step={1} totalSteps={2}>
+    <BookingLayout hideLegalLinks narrow step={1} totalSteps={2}>
       <div className="text-center mb-2">
         <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Bestellstatus abfragen</h1>
         <p className="text-sm text-muted-foreground mt-2">

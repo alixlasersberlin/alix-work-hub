@@ -8,9 +8,10 @@ interface Props {
   step?: number;
   totalSteps?: number;
   narrow?: boolean;
+  hideLegalLinks?: boolean;
 }
 
-export function BookingLayout({ children, step, totalSteps, narrow }: Props) {
+export function BookingLayout({ children, step, totalSteps, narrow, hideLegalLinks }: Props) {
   const progress = step && totalSteps ? Math.round((step / totalSteps) * 100) : 0;
   return (
     <div className="min-h-dvh flex flex-col bg-gradient-to-b from-background via-background to-muted/30 text-foreground">
@@ -40,10 +41,14 @@ export function BookingLayout({ children, step, totalSteps, narrow }: Props) {
       <footer className="border-t bg-card/40">
         <div className="max-w-5xl mx-auto px-4 py-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
           <span>© {new Date().getFullYear()} Alix Lasers · AlixWorks</span>
-          <a href={`${ALIXWORKS_PUBLIC_BASE}/impressum`} className="hover:text-primary">Impressum</a>
-          <a href={`${ALIXWORKS_PUBLIC_BASE}/datenschutz`} className="hover:text-primary">Datenschutz</a>
-          <a href={`${ALIXWORKS_PUBLIC_BASE}/agb`} className="hover:text-primary">AGB</a>
-          <Link to="/book" className="hover:text-primary ml-auto">Neue Buchung</Link>
+          {!hideLegalLinks && (
+            <>
+              <a href={`${ALIXWORKS_PUBLIC_BASE}/impressum`} className="hover:text-primary">Impressum</a>
+              <a href={`${ALIXWORKS_PUBLIC_BASE}/datenschutz`} className="hover:text-primary">Datenschutz</a>
+              <a href={`${ALIXWORKS_PUBLIC_BASE}/agb`} className="hover:text-primary">AGB</a>
+              <Link to="/book" className="hover:text-primary ml-auto">Neue Buchung</Link>
+            </>
+          )}
         </div>
       </footer>
     </div>

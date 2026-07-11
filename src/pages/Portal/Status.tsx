@@ -44,7 +44,7 @@ export default function PortalStatus() {
   const isNeedsInfo = data.status_code === 10;
 
   return (
-    <BookingLayout narrow step={2} totalSteps={2}>
+    <BookingLayout hideLegalLinks narrow step={2} totalSteps={2}>
       <div className="mb-2 text-sm text-muted-foreground">Auftragsnummer</div>
       <div className="text-2xl font-semibold tracking-tight mb-1">{data.order_number}</div>
       {data.customer_name && <div className="text-sm text-muted-foreground mb-4">{data.customer_name}</div>}
