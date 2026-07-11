@@ -706,6 +706,7 @@ function AppRoutes() {
             <Route path="ressourcen" element={<EscResources />} />
             <Route path="mitarbeiter" element={<EscEmployees />} />
             <Route path="abteilungen" element={<EscDepartments />} />
+            <Route path="terminarten" element={<EscAppointmentKinds />} />
             <Route path="buchungen" element={<EscBookings />} />
             <Route path="bestaetigungen" element={<EscConfirmations />} />
             <Route path="einstellungen" element={<EscSettings />} />
