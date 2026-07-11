@@ -61,7 +61,72 @@ export default function MediapaketExtrasPanel({ mpId, status, onChanged }: Props
 
   useEffect(() => { load(); }, [load]);
 
-  const snapshots = history.filter(h => h.action === 'submitted' && h.new_value);
+  const snapshots = history.filter(h => (h.action === 'submitted' || h.action === 'snapshot') && h.new_value);
+  const [showcaseCfg, setShowcaseCfg] = useState<{ enabled: boolean; token: string | null }>({ enabled: false, token: null });
+  const [showcaseBusy, setShowcaseBusy] = useState(false);
+  const [gdprBusy, setGdprBusy] = useState(false);
+  const [snapBusy, setSnapBusy] = useState(false);
+  const [rollbackBusy, setRollbackBusy] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.functions.invoke('mediapaket-portal', { body: { action: 'get_showcase_config', mp_id: mpId } });
+      if (data) setShowcaseCfg({ enabled: !!(data as any).enabled, token: (data as any).token || null });
+    })();
+  }, [mpId]);
+
+  const manualSnapshot = async () => {
+    setSnapBusy(true);
+    const { error } = await supabase.functions.invoke('mediapaket-portal', { body: { action: 'snapshot', mp_id: mpId, label: 'manual' } });
+    setSnapBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Snapshot erstellt');
+    load();
+  };
+  const doRollback = async (snapshotId: string) => {
+    if (!confirm('Wirklich auf diese Version zurücksetzen? Der aktuelle Stand wird zuvor als Snapshot gesichert.')) return;
+    setRollbackBusy(snapshotId);
+    const { error } = await supabase.functions.invoke('mediapaket-portal', { body: { action: 'rollback', mp_id: mpId, snapshot_id: snapshotId } });
+    setRollbackBusy(null);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Rollback ausgeführt');
+    onChanged(); load();
+  };
+  const toggleShowcase = async (enabled: boolean) => {
+    setShowcaseBusy(true);
+    const { data, error } = await supabase.functions.invoke('mediapaket-portal', { body: { action: 'toggle_showcase', mp_id: mpId, enabled } });
+    setShowcaseBusy(false);
+    if (error) { toast.error(error.message); return; }
+    setShowcaseCfg({ enabled: !!(data as any).enabled, token: (data as any).token });
+    toast.success(enabled ? 'Showcase aktiviert' : 'Showcase deaktiviert');
+  };
+  const copyShowcaseLink = () => {
+    if (!showcaseCfg.token) return;
+    const url = `${window.location.origin}/mediapaket/showcase/${showcaseCfg.token}`;
+    navigator.clipboard.writeText(url);
+    toast.success('Showcase-Link kopiert');
+  };
+  const gdprExport = async () => {
+    setGdprBusy(true);
+    const { data, error } = await supabase.functions.invoke('mediapaket-portal', { body: { action: 'gdpr_export', mp_id: mpId } });
+    setGdprBusy(false);
+    if (error) { toast.error(error.message); return; }
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `mediapaket-${mpId}-dsgvo-export-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    toast.success('DSGVO-Export heruntergeladen');
+  };
+  const anonymize = async () => {
+    if (!confirm('Wirklich anonymisieren? Alle Kontakt- & Teamdaten werden entfernt. Ein Snapshot wird vorher gesichert. Aktion nur für Super Admins.')) return;
+    setGdprBusy(true);
+    const { error } = await supabase.functions.invoke('mediapaket-portal', { body: { action: 'anonymize', mp_id: mpId } });
+    setGdprBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Mediapaket anonymisiert');
+    onChanged(); load();
+  };
 
   const timeline = [
     ...history.map(h => ({ kind: 'history' as const, id: h.id, at: h.created_at, action: h.action, data: h })),
