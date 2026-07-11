@@ -396,6 +396,7 @@ const EchTemplates = lazy(() => import("./pages/ESC/ech/Templates"));
 const EchHistory = lazy(() => import("./pages/ESC/ech/History"));
 const EchSettingsPage = lazy(() => import("./pages/ESC/ech/Settings"));
 const EscBookingPortal = lazy(() => import("./pages/ESC/public/BookingPortal"));
+const MediapaketWizard = lazy(() => import("./pages/mediapaket/MediapaketWizard"));
 const EscConfirmAppointment = lazy(() => import("./pages/ESC/public/ConfirmAppointment"));
 const EscRescheduleAppointment = lazy(() => import("./pages/ESC/public/RescheduleAppointment"));
 const EscCancelAppointment = lazy(() => import("./pages/ESC/public/CancelAppointment"));
@@ -683,6 +684,7 @@ function AppRoutes() {
         <Route path="/book" element={<EscBookingPortal />} />
         {/* ESC – öffentliche Routen (kein Login) */}
         <Route path="/book" element={<EscBookingPortal />} />
+        <Route path="/book/mediapaket" element={<MediapaketWizard />} />
         <Route path="/book/confirmation" element={<EscBookingPortal />} />
         <Route path="/book/:department" element={<EscBookingPortal />} />
         <Route path="/book/:department/:service" element={<EscBookingPortal />} />
