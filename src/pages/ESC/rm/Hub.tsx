@@ -21,6 +21,7 @@ export default function RmHub() {
         <h1 className="text-lg font-semibold">Ressourcen &amp; Disposition</h1>
         <p className="text-xs text-muted-foreground">Zentrale Planung für Mitarbeiter, Fahrzeuge, Geräte, Räume und Außendienst.</p>
       </div>
+      <RmQuickActions />
       <LiveAvailability />
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
         {TILES.map((t) => (
