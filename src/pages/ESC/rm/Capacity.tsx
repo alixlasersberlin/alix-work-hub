@@ -11,6 +11,7 @@ export default function RmCapacity() {
   return (
     <div className="space-y-4">
       <h1 className="text-lg font-semibold">Kapazitäten &amp; Auslastung</h1>
+      <RmQuickActions />
       <LiveAvailability />
       <Card>
         <CardHeader className="pb-1"><CardTitle className="text-sm">Heatmap – nächste 14 Tage</CardTitle></CardHeader>
