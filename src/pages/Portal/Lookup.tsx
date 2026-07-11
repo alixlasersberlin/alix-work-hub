@@ -55,6 +55,11 @@ export default function PortalLookup() {
 
   return (
     <BookingLayout hideLegalLinks narrow step={1} totalSteps={2}>
+      <div className="mb-2">
+        <Button variant="ghost" size="sm" onClick={() => navigate('/book')} className="-ml-2">
+          <ArrowLeft className="w-4 h-4 mr-1.5" /> Zurück
+        </Button>
+      </div>
       <div className="text-center mb-2">
         <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Bestellstatus abfragen</h1>
         <p className="text-sm text-muted-foreground mt-2">
