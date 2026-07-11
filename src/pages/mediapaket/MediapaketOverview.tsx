@@ -266,12 +266,49 @@ export default function MediapaketOverview() {
           <AlertTriangle className="w-4 h-4 mr-1" /> Nur überfällig
         </Button>
         <Button variant="outline" size="sm" onClick={load}>Aktualisieren</Button>
+        <Button variant="outline" size="sm" onClick={() => exportCsv(filtered)}><Download className="w-4 h-4 mr-1" /> CSV Export</Button>
       </div>
+
+      {/* Bulk action bar */}
+      {selected.size > 0 && (
+        <div className="rounded-xl border border-primary/40 bg-primary/5 p-3 flex flex-wrap items-center gap-2 sticky top-2 z-10 backdrop-blur">
+          <Badge className="bg-primary/20 text-primary border-primary/40">{selected.size} ausgewählt</Badge>
+          <Select onValueChange={(v) => bulkUpdate({ status: v }, `Status → ${STATUS_LABEL[v]}`)}>
+            <SelectTrigger className="w-[200px] h-8 text-xs" disabled={bulkBusy}><SelectValue placeholder="Status setzen…" /></SelectTrigger>
+            <SelectContent>
+              {STATUS_ORDER.map(s => <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select onValueChange={(v) => bulkUpdate({ assigned_user_id: v === '__none__' ? null : v }, v === '__none__' ? 'Zuweisung entfernt' : 'Zugewiesen')}>
+            <SelectTrigger className="w-[220px] h-8 text-xs" disabled={bulkBusy}><SelectValue placeholder="Zuständigen setzen…" /></SelectTrigger>
+            <SelectContent className="max-h-72">
+              <SelectItem value="__none__">— Nicht zugewiesen —</SelectItem>
+              {staffList.map(s => <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="h-8 text-xs" disabled={bulkBusy}><CalendarClock className="w-3.5 h-3.5 mr-1" /> Frist setzen</Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar mode="single" onSelect={(d) => d && bulkUpdate({ due_date: format(d, 'yyyy-MM-dd') }, `Frist ${format(d, 'dd.MM.yyyy')}`)} initialFocus className={cn('p-3 pointer-events-auto')} />
+            </PopoverContent>
+          </Popover>
+          <Button variant="outline" size="sm" className="h-8 text-xs" disabled={bulkBusy} onClick={() => bulkUpdate({ due_date: null }, 'Frist entfernt')}>Frist entfernen</Button>
+          <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => exportCsv(filtered.filter(r => selected.has(r.id)))}>
+            <Download className="w-3.5 h-3.5 mr-1" /> Auswahl exportieren
+          </Button>
+          <div className="ml-auto flex items-center gap-1">
+            {bulkBusy && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+            <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => setSelected(new Set())}><X className="w-4 h-4" /></Button>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="flex items-center gap-2 p-8 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" /> Lade…</div>
       ) : view === 'list' ? (
-        <ListView rows={filtered} />
+        <ListView rows={filtered} selected={selected} onToggle={toggleOne} onToggleAll={(checked) => toggleAll(filtered.map(r => r.id), checked)} />
       ) : (
         <KanbanView grouped={grouped} />
       )}
