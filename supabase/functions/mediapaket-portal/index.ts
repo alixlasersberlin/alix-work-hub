@@ -276,7 +276,14 @@ Deno.serve(async (req) => {
         </div>`;
       // Delegate to shared mailer with staff auth
       const { error: sendErr } = await userClient.functions.invoke('send-mail', {
-        body: { to: cust.email, subject, html, from: 'vertrieb@alixwork.de' },
+        body: {
+          to_email: cust.email,
+          to_name: cust.name || null,
+          from_email: 'vertrieb@alixwork.de',
+          subject,
+          body_html: html,
+          customer_id: mp.customer_id,
+        },
       });
       if (sendErr) return json({ error: sendErr.message }, 502);
       await admin.from('media_package_history').insert({
