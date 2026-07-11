@@ -45,13 +45,14 @@ Deno.serve(async (req) => {
         admin.from('media_package_services').select('service_name').eq('media_package_id', mpId),
         admin.from('media_package_treatments').select('treatment_name').eq('media_package_id', mpId),
         admin.from('media_package_team_members').select('name, role').eq('media_package_id', mpId),
-        admin.from('media_package_branding').select('brand_story, tagline').eq('media_package_id', mpId).maybeSingle(),
+        admin.from('media_package_branding').select('slogan, about_me, main_message').eq('media_package_id', mpId).maybeSingle(),
       ]);
+      const br: any = branding.data || {};
       return json({
         package: {
           studio_name: mp.studio_name,
-          tagline: (branding.data as any)?.tagline || null,
-          brand_story: (branding.data as any)?.brand_story || null,
+          tagline: br.slogan || br.main_message || null,
+          brand_story: br.about_me || null,
           services: (services.data || []).map((r: any) => r.service_name).filter(Boolean),
           treatments: (treatments.data || []).map((r: any) => r.treatment_name).filter(Boolean),
           team: (team.data || []).map((r: any) => ({ name: r.name, role: r.role })).filter((t: any) => t.name),
