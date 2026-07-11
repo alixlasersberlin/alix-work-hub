@@ -415,6 +415,27 @@ export default function MediapaketExtrasPanel({ mpId, status, onChanged }: Props
         </TabsContent>
 
         {/* EXTRAS / Phase 27 & 30 */}
+        {/* AI / Phase 40 */}
+        <TabsContent value="ai" className="pt-3 space-y-3">
+          <p className="text-xs text-muted-foreground">KI-gestützte Analyse dieses Mediapakets (via Lovable AI).</p>
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="outline" onClick={() => callAi('summarize')} disabled={!!aiLoading} className="gap-2">
+              {aiLoading === 'summarize' ? <Loader2 className="w-3 h-3 animate-spin" /> : '📝'} Zusammenfassung
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => callAi('suggest')} disabled={!!aiLoading} className="gap-2">
+              {aiLoading === 'suggest' ? <Loader2 className="w-3 h-3 animate-spin" /> : '💡'} Vorschläge
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => callAi('diff')} disabled={!!aiLoading} className="gap-2">
+              {aiLoading === 'diff' ? <Loader2 className="w-3 h-3 animate-spin" /> : '🔀'} Version-Diff
+            </Button>
+          </div>
+          {aiText && (
+            <div className="text-xs whitespace-pre-wrap rounded-lg border border-primary/30 bg-primary/5 p-3 max-h-96 overflow-y-auto">
+              {aiText}
+            </div>
+          )}
+        </TabsContent>
+
         <TabsContent value="tools" className="pt-3 space-y-3">
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" size="sm" onClick={duplicate} disabled={duplicating} className="gap-2">
