@@ -104,6 +104,9 @@ export function AppointmentModalTabs({
   departments, employees, resources, initial, defaultStart, canSeeInternal, history = [],
 }: Props) {
   const [tab, setTab] = useState('general');
+  const [mode, setMode] = useState<'intern' | 'extern'>(
+    initial?.customerEmail || initial?.customerName || initial?.confirmationRequired ? 'extern' : 'intern'
+  );
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [form, setForm] = useState(() => buildInitialForm(initial, defaultStart, departments));
   const defaultStartTime = defaultStart?.getTime();
@@ -111,9 +114,14 @@ export function AppointmentModalTabs({
   useEffect(() => {
     if (!open) return;
     setTab('general');
+    setMode(initial?.customerEmail || initial?.customerName || initial?.confirmationRequired ? 'extern' : 'intern');
     setSelectedCustomerId(null);
     setForm(buildInitialForm(initial, defaultStart, departments));
   }, [open, initial?.id, defaultStartTime, departments]);
+
+  useEffect(() => {
+    if (mode === 'intern' && (tab === 'customer' || tab === 'confirmation')) setTab('general');
+  }, [mode, tab]);
 
   useEffect(() => {
     if (!open) return;
@@ -211,6 +219,22 @@ export function AppointmentModalTabs({
             <p id="esc-appointment-dialog-description" className="sr-only">
             Termin-Daten bearbeiten, Teilnehmer und Ressourcen verwalten.
             </p>
+            <div className="mt-2 inline-flex rounded-md border p-0.5 bg-muted/40" role="tablist" aria-label="Termintyp">
+              <button
+                type="button"
+                onClick={() => setMode('intern')}
+                className={`px-3 py-1 text-[12px] rounded-sm transition ${mode === 'intern' ? 'bg-background shadow-sm font-medium' : 'text-muted-foreground'}`}
+              >
+                Intern
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode('extern')}
+                className={`px-3 py-1 text-[12px] rounded-sm transition ${mode === 'extern' ? 'bg-background shadow-sm font-medium' : 'text-muted-foreground'}`}
+              >
+                Extern
+              </button>
+            </div>
           </div>
           <Button type="button" variant="ghost" size="icon" onClick={onClose} aria-label="Termin schließen">
             <X className="h-4 w-4" />
@@ -221,10 +245,10 @@ export function AppointmentModalTabs({
           <TabsList className="w-full justify-start overflow-x-auto flex-wrap h-auto">
             <TabsTrigger value="general">Allgemein</TabsTrigger>
             <TabsTrigger value="participants">Teilnehmer</TabsTrigger>
-            <TabsTrigger value="customer">Kunde</TabsTrigger>
+            {mode === 'extern' && <TabsTrigger value="customer">Kunde</TabsTrigger>}
             <TabsTrigger value="resources">Ressourcen</TabsTrigger>
             <TabsTrigger value="recurrence">Wiederholung</TabsTrigger>
-            <TabsTrigger value="confirmation">Bestätigung</TabsTrigger>
+            {mode === 'extern' && <TabsTrigger value="confirmation">Bestätigung</TabsTrigger>}
             <TabsTrigger value="notes">Notizen</TabsTrigger>
             <TabsTrigger value="attachments">Anhänge</TabsTrigger>
             <TabsTrigger value="history">Verlauf</TabsTrigger>
@@ -328,6 +352,7 @@ export function AppointmentModalTabs({
                 )}
               </section>
 
+              {mode === 'extern' && (
               <section className="pt-3 border-t">
                 <div className="flex items-center justify-between mb-2">
                   <div className="text-[12px] font-semibold uppercase tracking-wide text-muted-foreground">Externe Teilnehmer</div>
@@ -358,6 +383,7 @@ export function AppointmentModalTabs({
                   ))}
                 </div>
               </section>
+              )}
             </TabsContent>
 
             <TabsContent value="customer" className="mt-3 space-y-3">
@@ -530,11 +556,13 @@ export function AppointmentModalTabs({
               ) : (
                 <div className="text-[12px] text-muted-foreground italic">Keine Berechtigung, interne Notizen zu sehen.</div>
               )}
-              <div>
-                <Label>Externe Notiz</Label>
-                <Textarea rows={4} value={form.externalNote} onChange={(e) => setForm({ ...form, externalNote: e.target.value })} />
-                <div className="text-[11px] text-muted-foreground mt-1">Kann in Bestätigungs-E-Mails und im Buchungsportal erscheinen.</div>
-              </div>
+              {mode === 'extern' && (
+                <div>
+                  <Label>Externe Notiz</Label>
+                  <Textarea rows={4} value={form.externalNote} onChange={(e) => setForm({ ...form, externalNote: e.target.value })} />
+                  <div className="text-[11px] text-muted-foreground mt-1">Kann in Bestätigungs-E-Mails und im Buchungsportal erscheinen.</div>
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="attachments" className="mt-3 space-y-3">
@@ -605,9 +633,11 @@ export function AppointmentModalTabs({
             </Button>
           )}
           <Button variant="ghost" onClick={onClose}>Abbrechen</Button>
-          <Button variant="outline" onClick={() => handleSubmit({ sendEmail: true })}>
-            <Mail className="w-4 h-4 mr-1" /> Speichern &amp; E-Mail
-          </Button>
+          {mode === 'extern' && (
+            <Button variant="outline" onClick={() => handleSubmit({ sendEmail: true })}>
+              <Mail className="w-4 h-4 mr-1" /> Speichern &amp; E-Mail
+            </Button>
+          )}
           <Button onClick={() => handleSubmit()}>
             <Save className="w-4 h-4 mr-1" /> Speichern
           </Button>
