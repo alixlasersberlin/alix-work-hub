@@ -200,28 +200,26 @@ export default function BookingPortal() {
       </div>
 
       {step === 'department' && (
-        <Card>
+        <div className="space-y-3">
           <button
             type="button"
             onClick={() => setDeptOpen((v) => !v)}
-            className="w-full text-left"
             aria-expanded={deptOpen}
+            className="w-full text-left rounded-xl border p-4 bg-card hover:border-primary hover:shadow-md transition-all flex items-start gap-3"
           >
-            <CardHeader className="flex-row items-start justify-between gap-3 space-y-0">
-              <div className="flex items-start gap-3 flex-1">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                  <Mail className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <CardTitle className="text-[16px]">Alle Anfragen rasch erledigt</CardTitle>
-                  <p className="text-[12.5px] text-muted-foreground mt-0.5">Wählen Sie eine Leistung – Sie erhalten direkt eine Bestätigung per E-Mail.</p>
-                </div>
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <Mail className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1">
+              <div className="font-semibold text-[14px]">Alle Anfragen rasch erledigt</div>
+              <div className="text-[12px] text-muted-foreground mt-0.5">
+                Wählen Sie eine Leistung – Sie erhalten direkt eine Bestätigung per E-Mail.
               </div>
-              <ChevronDown className={`w-5 h-5 text-muted-foreground shrink-0 mt-1 transition-transform ${deptOpen ? 'rotate-180' : ''}`} />
-            </CardHeader>
+            </div>
+            <ChevronDown className={`w-4 h-4 text-muted-foreground mt-1 shrink-0 transition-transform ${deptOpen ? 'rotate-180' : ''}`} />
           </button>
           {deptOpen && (
-            <CardContent>
+            <div className="rounded-xl border bg-card p-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {publicDepts.map((d) => (
                   <button
@@ -239,9 +237,9 @@ export default function BookingPortal() {
                 ))}
               </div>
               {publicDepts.length === 0 && <div className="text-[13px] text-muted-foreground py-6 text-center">Aktuell sind keine Leistungen öffentlich buchbar.</div>}
-            </CardContent>
+            </div>
           )}
-        </Card>
+        </div>
       )}
 
       {step === 'department' && (
