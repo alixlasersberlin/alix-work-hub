@@ -276,7 +276,14 @@ Deno.serve(async (req) => {
         </div>`;
       // Delegate to shared mailer with staff auth
       const { error: sendErr } = await userClient.functions.invoke('send-mail', {
-        body: { to: cust.email, subject, html, from: 'vertrieb@alixwork.de' },
+        body: {
+          to_email: cust.email,
+          to_name: cust.name || null,
+          from_email: 'vertrieb@alixwork.de',
+          subject,
+          body_html: html,
+          customer_id: mp.customer_id,
+        },
       });
       if (sendErr) return json({ error: sendErr.message }, 502);
       await admin.from('media_package_history').insert({
@@ -332,7 +339,14 @@ Deno.serve(async (req) => {
           <p style="font-size:12px;color:#666">Falls der Button nicht funktioniert:<br><a href="${link}">${link}</a></p>
         </div>`;
       const { error: sendErr } = await userClient.functions.invoke('send-mail', {
-        body: { to: cust.email, subject, html, from: 'vertrieb@alixwork.de' },
+        body: {
+          to_email: cust.email,
+          to_name: cust.name || null,
+          from_email: 'vertrieb@alixwork.de',
+          subject,
+          body_html: html,
+          customer_id: mp.customer_id,
+        },
       });
       if (sendErr) return json({ error: sendErr.message }, 502);
       await admin.from('media_package_history').insert({
@@ -385,7 +399,14 @@ Deno.serve(async (req) => {
             <p style="margin:24px 0"><a href="${link}" style="background:#000;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">Portal öffnen &amp; antworten</a></p>
           </div>`;
           await userClient.functions.invoke('send-mail', {
-            body: { to: cust.email, subject: 'Nachricht zu Ihrem Media Paket', html, from: 'vertrieb@alixwork.de' },
+            body: {
+              to_email: cust.email,
+              to_name: cust.name || null,
+              from_email: 'vertrieb@alixwork.de',
+              subject: 'Nachricht zu Ihrem Media Paket',
+              body_html: html,
+              customer_id: mp.customer_id,
+            },
           });
         }
       }
