@@ -100,16 +100,25 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
     return () => { supabase.removeChannel(ch); };
   }, [mp?.id, loadComments]);
 
-  const markAllRead = async () => {
-    if (!mp?.id || !unread.length) return;
-    const ids = unread.map(u => u.id);
+  const markIdsRead = useCallback(async (ids: string[]) => {
+    if (!ids.length) return;
     const { error } = await supabase
       .from('media_package_comments')
       .update({ read_at: new Date().toISOString() })
       .in('id', ids);
     if (error) { toast.error(error.message); return; }
-    setUnread([]);
-    toast.success('Als gelesen markiert');
+    if (mp?.id) loadComments(mp.id);
+    toast.success(ids.length === 1 ? 'Als gelesen markiert' : `${ids.length} als gelesen markiert`);
+  }, [mp?.id, loadComments]);
+
+  const markAllRead = () => markIdsRead(unread.map(u => u.id));
+
+  const scrollToSection = (key: string) => {
+    const el = document.getElementById(`mp-section-${key}`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    el.classList.add('ring-2', 'ring-amber-500/60');
+    window.setTimeout(() => el.classList.remove('ring-2', 'ring-amber-500/60'), 1800);
   };
 
   const createPackage = async () => {
@@ -243,15 +252,28 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
             </Button>
           </div>
           <div className="space-y-2">
-            {unread.slice(0, 3).map(u => (
-              <div key={u.id} className="rounded-lg border border-amber-500/30 bg-background/60 p-2">
-                {u.subject && <div className="text-xs font-medium text-foreground">{u.subject}</div>}
-                <p className="text-xs text-muted-foreground line-clamp-2 whitespace-pre-wrap">{u.comment}</p>
-                <div className="text-[10px] text-muted-foreground mt-1">{new Date(u.created_at).toLocaleString('de-DE')}</div>
-              </div>
-            ))}
-            {unread.length > 3 && (
-              <p className="text-xs text-muted-foreground">…und {unread.length - 3} weitere im Kommentarverlauf unten.</p>
+            {unread.slice(0, 5).map(u => {
+              const key = u.related_field && SECTION_LABEL[u.related_field] ? u.related_field : null;
+              return (
+                <button
+                  key={u.id}
+                  type="button"
+                  onClick={() => key ? scrollToSection(key) : undefined}
+                  className={`w-full text-left rounded-lg border border-amber-500/30 bg-background/60 p-2 ${key ? 'hover:bg-background/80 hover:border-amber-500/50 cursor-pointer' : ''} transition`}
+                >
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    {key && (
+                      <Badge variant="secondary" className="text-[10px]">Bezug: {SECTION_LABEL[key]}</Badge>
+                    )}
+                    <span className="text-[10px] text-muted-foreground ml-auto">{new Date(u.created_at).toLocaleString('de-DE')}</span>
+                  </div>
+                  {u.subject && <div className="text-xs font-medium text-foreground">{u.subject}</div>}
+                  <p className="text-xs text-muted-foreground line-clamp-2 whitespace-pre-wrap">{u.comment}</p>
+                </button>
+              );
+            })}
+            {unread.length > 5 && (
+              <p className="text-xs text-muted-foreground">…und {unread.length - 5} weitere im Kommentarverlauf unten.</p>
             )}
           </div>
         </div>
@@ -262,7 +284,7 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
       <MediapaketReviewPanel mpId={mp.id} currentStatus={mp.status} onChanged={load} />
 
       {/* Sections */}
-      <SectionCard sectionKey="services" title="Leistungsauswahl" empty={!sections.services?.length} comments={commentsBySection.services}>
+      <SectionCard sectionKey="services" title="Leistungsauswahl" empty={!sections.services?.length} comments={commentsBySection.services} onMarkRead={markIdsRead}>
         {sections.services?.map((s: any) => (
           <div key={s.id} className="flex justify-between text-sm">
             <span>{s.service_type}</span>
@@ -271,11 +293,11 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
         ))}
       </SectionCard>
 
-      <SectionCard sectionKey="studio" title="Studio-Daten" empty={!sections.studio} comments={commentsBySection.studio}>
+      <SectionCard sectionKey="studio" title="Studio-Daten" empty={!sections.studio} comments={commentsBySection.studio} onMarkRead={markIdsRead}>
         {sections.studio && <KV data={sections.studio} skip={['id','media_package_id','created_at','updated_at']} />}
       </SectionCard>
 
-      <SectionCard sectionKey="devices" title="Geräte" empty={!sections.devices?.length} comments={commentsBySection.devices}>
+      <SectionCard sectionKey="devices" title="Geräte" empty={!sections.devices?.length} comments={commentsBySection.devices} onMarkRead={markIdsRead}>
         {sections.devices?.map((d: any) => (
           <div key={d.id} className="text-sm">
             <span className="font-medium">{d.entered_model_name || '—'}</span>
@@ -284,7 +306,7 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
         ))}
       </SectionCard>
 
-      <SectionCard sectionKey="prices" title="Preisliste" empty={!sections.prices?.length} comments={commentsBySection.prices}>
+      <SectionCard sectionKey="prices" title="Preisliste" empty={!sections.prices?.length} comments={commentsBySection.prices} onMarkRead={markIdsRead}>
         {sections.prices?.map((p: any) => (
           <div key={p.id} className="flex justify-between text-sm">
             <span>{p.description || p.category}</span>
@@ -293,11 +315,11 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
         ))}
       </SectionCard>
 
-      <SectionCard sectionKey="contact" title="Kontaktdaten" empty={!sections.contact} comments={commentsBySection.contact}>
+      <SectionCard sectionKey="contact" title="Kontaktdaten" empty={!sections.contact} comments={commentsBySection.contact} onMarkRead={markIdsRead}>
         {sections.contact && <KV data={sections.contact} skip={['id','media_package_id','created_at','updated_at']} />}
       </SectionCard>
 
-      <SectionCard sectionKey="hours" title="Öffnungszeiten" empty={!sections.hours?.length} comments={commentsBySection.hours}>
+      <SectionCard sectionKey="hours" title="Öffnungszeiten" empty={!sections.hours?.length} comments={commentsBySection.hours} onMarkRead={markIdsRead}>
         {sections.hours?.map((h: any) => (
           <div key={h.id} className="flex justify-between text-sm">
             <span>Tag {h.weekday}</span>
@@ -308,13 +330,13 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
         ))}
       </SectionCard>
 
-      <SectionCard sectionKey="treatments" title="Fremdbehandlungen" empty={!sections.treatments?.length} comments={commentsBySection.treatments}>
+      <SectionCard sectionKey="treatments" title="Fremdbehandlungen" empty={!sections.treatments?.length} comments={commentsBySection.treatments} onMarkRead={markIdsRead}>
         {sections.treatments?.map((t: any) => (
           <div key={t.id} className="text-sm">{t.description || t.category}</div>
         ))}
       </SectionCard>
 
-      <SectionCard sectionKey="team" title="Team / Über mich" empty={!sections.team?.length && !sections.branding?.about_me} comments={commentsBySection.team}>
+      <SectionCard sectionKey="team" title="Team / Über mich" empty={!sections.team?.length && !sections.branding?.about_me} comments={commentsBySection.team} onMarkRead={markIdsRead}>
         {sections.branding?.about_me && <p className="text-sm whitespace-pre-wrap">{sections.branding.about_me}</p>}
         {sections.team?.map((m: any) => (
           <div key={m.id} className="text-sm">
@@ -324,11 +346,11 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
         ))}
       </SectionCard>
 
-      <SectionCard sectionKey="branding" title="Branding / Anmerkungen" empty={!sections.branding} comments={commentsBySection.branding}>
+      <SectionCard sectionKey="branding" title="Branding / Anmerkungen" empty={!sections.branding} comments={commentsBySection.branding} onMarkRead={markIdsRead}>
         {sections.branding && <KV data={sections.branding} skip={['id','media_package_id','created_at','updated_at']} />}
       </SectionCard>
 
-      <SectionCard sectionKey="files" title="Dateien" empty={!sections.files?.length} comments={commentsBySection.files}>
+      <SectionCard sectionKey="files" title="Dateien" empty={!sections.files?.length} comments={commentsBySection.files} onMarkRead={markIdsRead}>
         {sections.files?.map((f: any) => (
           <div key={f.id} className="flex items-center justify-between text-sm">
             <span>{f.original_filename} <span className="text-muted-foreground">({f.category})</span></span>
@@ -337,7 +359,7 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
         ))}
       </SectionCard>
 
-      <SectionCard sectionKey="consents" title="Einwilligungen" empty={!sections.consents?.length} comments={commentsBySection.consents}>
+      <SectionCard sectionKey="consents" title="Einwilligungen" empty={!sections.consents?.length} comments={commentsBySection.consents} onMarkRead={markIdsRead}>
         {sections.consents?.map((c: any) => (
           <div key={c.id} className="flex justify-between text-sm">
             <span>{c.consent_type}</span>
@@ -349,22 +371,31 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
   );
 }
 
-function SectionCard({ title, empty, children, comments, sectionKey }: {
+function SectionCard({ title, empty, children, comments, sectionKey, onMarkRead }: {
   title: string; empty?: boolean; children: React.ReactNode;
   comments?: any[]; sectionKey?: string;
+  onMarkRead?: (ids: string[]) => void;
 }) {
   const list = comments || [];
   const openQuestions = list.filter(c => c.author_type === 'staff' && !c.internal_only && !c.answered_at).length;
-  const unreadAnswers = list.filter(c => c.author_type === 'customer' && !c.read_at).length;
+  const unreadIds = list.filter(c => c.author_type === 'customer' && !c.read_at).map(c => c.id);
+  const unreadAnswers = unreadIds.length;
   return (
-    <div className="rounded-xl border border-border bg-card p-4 card-glow">
+    <div id={sectionKey ? `mp-section-${sectionKey}` : undefined} className="rounded-xl border border-border bg-card p-4 card-glow transition-shadow scroll-mt-24">
       <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
         <h4 className="text-sm font-semibold text-foreground">{title}</h4>
         <div className="flex items-center gap-1.5">
           {unreadAnswers > 0 && (
-            <Badge className="bg-amber-500/20 text-amber-500 border-amber-500/40 animate-pulse text-[10px]">
-              <MessageCircle className="w-3 h-3 mr-1" />{unreadAnswers} neue Antwort{unreadAnswers === 1 ? '' : 'en'}
-            </Badge>
+            <>
+              <Badge className="bg-amber-500/20 text-amber-500 border-amber-500/40 animate-pulse text-[10px]">
+                <MessageCircle className="w-3 h-3 mr-1" />{unreadAnswers} neue Antwort{unreadAnswers === 1 ? '' : 'en'}
+              </Badge>
+              {onMarkRead && (
+                <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]" onClick={() => onMarkRead(unreadIds)}>
+                  <Check className="w-3 h-3 mr-1" /> gelesen
+                </Button>
+              )}
+            </>
           )}
           {openQuestions > 0 && (
             <Badge variant="outline" className="text-[10px]">
