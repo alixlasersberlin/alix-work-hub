@@ -54,6 +54,74 @@ async function verifyToken(token: string): Promise<string | null> {
   } catch { return null; }
 }
 
+async function notifyStaff(opts: {
+  mpId: string;
+  subject: string;
+  headline: string;
+  innerHtml: string;
+  action: string;
+  entity_id?: string | null;
+  base_url?: string;
+  extraRecipientUserIds?: (string | null | undefined)[];
+}) {
+  try {
+    const { data: mp } = await admin.from('media_packages')
+      .select('id, customer_id, order_id, studio_name, assigned_to').eq('id', opts.mpId).maybeSingle();
+    const { data: cust } = mp?.customer_id
+      ? await admin.from('customers').select('name, email').eq('id', mp.customer_id).maybeSingle()
+      : { data: null };
+    const recipients = new Set<string>();
+    const staffInbox = Deno.env.get('MEDIAPAKET_STAFF_INBOX') || 'vertrieb@alixwork.de';
+    const uids = [(mp as any)?.assigned_to, ...(opts.extraRecipientUserIds || [])];
+    for (const uid of uids) {
+      if (!uid) continue;
+      const { data: prof } = await admin.from('user_profiles').select('email').eq('id', uid).maybeSingle();
+      if (prof?.email) recipients.add(prof.email);
+    }
+    if (recipients.size === 0) recipients.add(staffInbox);
+    const studioLabel = (mp as any)?.studio_name || cust?.name || 'Kunde';
+    const base = (opts.base_url || 'https://alixwork.de').replace(/\/$/, '');
+    const orderLink = mp?.order_id ? `${base}/auftraege/${mp.order_id}?tab=mediapaket` : `${base}/`;
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 560px; margin: auto; color:#222">
+        <h2 style="color:#111">${opts.headline}</h2>
+        <p><strong>${studioLabel}</strong>${cust?.email ? ` &lt;${cust.email}&gt;` : ''}</p>
+        ${opts.innerHtml}
+        <p style="margin: 24px 0">
+          <a href="${orderLink}" style="background:#000;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block;font-weight:600">
+            Media Paket öffnen
+          </a>
+        </p>
+        <p style="font-size:12px;color:#666"><a href="${orderLink}">${orderLink}</a></p>
+      </div>`;
+    const to = Array.from(recipients);
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/send-mail`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${SERVICE_ROLE}`,
+        apikey: SERVICE_ROLE,
+      },
+      body: JSON.stringify({ to, subject: opts.subject, html, from: 'vertrieb@alixwork.de' }),
+    });
+    if (!resp.ok) {
+      const t = await resp.text();
+      console.error('notifyStaff: send-mail failed', resp.status, t);
+      return { ok: false };
+    }
+    await admin.from('media_package_history').insert({
+      media_package_id: opts.mpId,
+      action: opts.action,
+      entity_id: opts.entity_id ?? null,
+      new_value: { to, subject: opts.subject } as any,
+    });
+    return { ok: true, to };
+  } catch (e: any) {
+    console.error('notifyStaff error', e?.message || e);
+    return { ok: false };
+  }
+}
+
 const SECTIONS: Record<string, { table: string; single: boolean }> = {
   root:      { table: 'media_packages',              single: true },
   services:  { table: 'media_package_services',      single: false },
@@ -336,6 +404,14 @@ Deno.serve(async (req) => {
           action: 'submitted',
           new_value: full as any,
         });
+        await notifyStaff({
+          mpId,
+          subject: 'Mediapaket zur Freigabe eingereicht',
+          headline: 'Kunde hat das Media Paket final eingereicht',
+          innerHtml: `<p style="color:#333">Alle Angaben wurden vom Kunden bestätigt und freigegeben. Bitte prüfen und den Produktionsprozess anstoßen.</p>`,
+          action: 'submit_email_sent',
+          base_url: body.base_url,
+        });
         return json({ ok: true });
       }
 
@@ -387,65 +463,22 @@ Deno.serve(async (req) => {
         // Move back to in_progress so staff sees pending review
         await admin.from('media_packages').update({ status: 'in_progress' as any }).eq('id', mpId);
 
-        // Notify staff by email (best-effort, don't fail on error)
-        try {
-          const { data: mp } = await admin.from('media_packages')
-            .select('id, customer_id, order_id, studio_name, assigned_to').eq('id', mpId).maybeSingle();
-          const { data: cust } = mp?.customer_id
-            ? await admin.from('customers').select('name, email').eq('id', mp.customer_id).maybeSingle()
-            : { data: null };
-          // Recipient priority: original question author → assigned staff → default inbox
-          const recipients = new Set<string>();
-          const staffInbox = Deno.env.get('MEDIAPAKET_STAFF_INBOX') || 'vertrieb@alixwork.de';
-          for (const uid of [parent?.author_id, (mp as any)?.assigned_to]) {
-            if (!uid) continue;
-            const { data: prof } = await admin.from('user_profiles').select('email').eq('id', uid).maybeSingle();
-            if (prof?.email) recipients.add(prof.email);
-          }
-          if (recipients.size === 0) recipients.add(staffInbox);
-          const studioLabel = (mp as any)?.studio_name || cust?.name || 'Kunde';
-          const subject = parent?.subject
-            ? `Kundenantwort: ${parent.subject} – ${studioLabel}`
-            : `Kundenantwort im Media Paket – ${studioLabel}`;
-          const orderLink = mp?.order_id
-            ? `${(body.base_url || 'https://alixwork.de')}/orders/${mp.order_id}?tab=mediapaket`
-            : `${(body.base_url || 'https://alixwork.de')}/`;
-          const html = `
-            <div style="font-family: Arial, sans-serif; max-width: 560px; margin: auto; color:#222">
-              <h2 style="color:#111">Kunde hat geantwortet</h2>
-              <p><strong>${studioLabel}</strong>${cust?.email ? ` &lt;${cust.email}&gt;` : ''}</p>
-              ${parent?.subject ? `<p style="color:#666">Betreff Rückfrage: ${String(parent.subject).replace(/</g,'&lt;')}</p>` : ''}
-              <blockquote style="border-left:3px solid #d4af37;padding:8px 12px;background:#faf7ee;margin:16px 0;white-space:pre-wrap">${answerText.replace(/</g,'&lt;')}</blockquote>
-              <p style="margin: 24px 0">
-                <a href="${orderLink}" style="background:#000;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block;font-weight:600">
-                  Media Paket öffnen
-                </a>
-              </p>
-              <p style="font-size:12px;color:#666"><a href="${orderLink}">${orderLink}</a></p>
-            </div>`;
-          const to = Array.from(recipients);
-          const resp = await fetch(`${SUPABASE_URL}/functions/v1/send-mail`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${SERVICE_ROLE}`,
-              apikey: SERVICE_ROLE,
-            },
-            body: JSON.stringify({ to, subject, html, from: 'vertrieb@alixwork.de' }),
+        // Notify staff by email (best-effort). Helper resolves studio/customer.
+        {
+          const subjectSuffix = parent?.subject ? `Kundenantwort: ${parent.subject}` : 'Kundenantwort im Media Paket';
+          const innerHtml = `
+            ${parent?.subject ? `<p style="color:#666">Betreff Rückfrage: ${String(parent.subject).replace(/</g,'&lt;')}</p>` : ''}
+            <blockquote style="border-left:3px solid #d4af37;padding:8px 12px;background:#faf7ee;margin:16px 0;white-space:pre-wrap">${answerText.replace(/</g,'&lt;')}</blockquote>`;
+          await notifyStaff({
+            mpId,
+            subject: subjectSuffix,
+            headline: 'Kunde hat geantwortet',
+            innerHtml,
+            action: 'answer_email_sent',
+            entity_id: question_id,
+            base_url: body.base_url,
+            extraRecipientUserIds: [parent?.author_id],
           });
-          if (!resp.ok) {
-            const t = await resp.text();
-            console.error('answer_question: send-mail failed', resp.status, t);
-          } else {
-            await admin.from('media_package_history').insert({
-              media_package_id: mpId,
-              action: 'answer_email_sent',
-              entity_id: question_id,
-              new_value: { to, subject } as any,
-            });
-          }
-        } catch (e: any) {
-          console.error('answer_question: notify staff error', e?.message || e);
         }
 
         return json({ ok: true });
