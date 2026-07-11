@@ -256,9 +256,10 @@ Deno.serve(async (req) => {
       const { data: mp } = await userClient.from('media_packages')
         .select('id, customer_id').eq('id', mpId).maybeSingle();
       if (!mp) return json({ error: 'forbidden' }, 403);
-      const { data: cust } = await admin.from('customers')
+      const { data: cust, error: custErr } = await admin.from('customers')
         .select('email, company_name, contact_name').eq('id', mp.customer_id).maybeSingle();
-      if (!cust?.email) return json({ error: 'customer has no email' }, 400);
+      console.log('notify_customer lookup', { mp_id: mpId, customer_id: mp.customer_id, cust, custErr });
+      if (!cust?.email) return json({ error: 'customer has no email', debug: { customer_id: mp.customer_id, custErr: custErr?.message ?? null, cust } }, 400);
       const token = await signToken(mpId);
       const link = `${baseUrl}/book/mediapaket?token=${encodeURIComponent(token)}`;
       const html = `
