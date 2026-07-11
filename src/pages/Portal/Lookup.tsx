@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Search, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Loader2, Search, ShieldCheck } from 'lucide-react';
 import { BookingLayout } from '@/components/esc/public/BookingLayout';
 import { Card, CardContent } from '@/components/ui/card';
 
