@@ -215,6 +215,29 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
     finally { setEmailing(false); }
   };
 
+  // Internal staff-only thread
+  const [internalDraft, setInternalDraft] = useState('');
+  const [postingInternal, setPostingInternal] = useState(false);
+  const postInternal = async () => {
+    const text = internalDraft.trim();
+    if (!text || !mp?.id) return;
+    setPostingInternal(true);
+    const { data: userData } = await supabase.auth.getUser();
+    const { error } = await supabase.from('media_package_comments').insert({
+      media_package_id: mp.id,
+      author_id: userData.user?.id ?? null,
+      author_type: 'staff',
+      recipient_type: 'staff',
+      internal_only: true,
+      subject: null,
+      comment: text,
+    });
+    setPostingInternal(false);
+    if (error) { toast.error(error.message); return; }
+    setInternalDraft('');
+    loadComments(mp.id);
+  };
+
   if (loading) {
     return <div className="flex items-center gap-2 text-muted-foreground p-8"><Loader2 className="w-4 h-4 animate-spin" /> Lade Mediapaket...</div>;
   }
