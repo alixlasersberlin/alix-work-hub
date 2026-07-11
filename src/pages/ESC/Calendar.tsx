@@ -64,8 +64,9 @@ export default function EscCalendar() {
     else if (view === 'month') setCursor((c) => (dir === 1 ? addMonths(c, 1) : subMonths(c, 1)));
   };
 
-  const openNew = (start?: Date) => { setEditing(null); setDefaultStart(start); setModalOpen(true); };
-  const openEdit = (a: EscAppointment) => { setEditing(a); setDefaultStart(undefined); setModalOpen(true); };
+  const openNew = (start?: Date) => { setEditing(null); setDefaultStart(start); setPresetKind(undefined); setModalOpen(true); };
+  const openNewKind = (kind: 'Erinnerung' | 'Wiedervorlage') => { setEditing(null); setDefaultStart(undefined); setPresetKind(kind); setModalOpen(true); };
+  const openEdit = (a: EscAppointment) => { setEditing(a); setDefaultStart(undefined); setPresetKind(undefined); setModalOpen(true); };
 
   const handleSubmit = async (payload: Omit<EscAppointment, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (editing) {
