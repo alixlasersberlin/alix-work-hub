@@ -146,15 +146,94 @@ export default function MediapaketExtrasPanel({ mpId, status, onChanged }: Props
     } catch (e: any) { toast.error(e.message); }
   };
 
+  // Phase 31 — Chat: Nachricht an Kunde
+  const [chatText, setChatText] = useState('');
+  const [chatSending, setChatSending] = useState(false);
+  const sendChat = async () => {
+    if (!chatText.trim()) return;
+    setChatSending(true);
+    try {
+      const { error } = await supabase.functions.invoke('mediapaket-portal', {
+        body: { action: 'staff_message', mp_id: mpId, message: chatText },
+      });
+      if (error) throw error;
+      setChatText('');
+      toast.success('Nachricht an Kunde gesendet');
+      load();
+    } catch (e: any) { toast.error(e.message); }
+    finally { setChatSending(false); }
+  };
+
+  // Phase 35 — Sign-Off (Canvas)
+  const sigRef = useRef<HTMLCanvasElement | null>(null);
+  const drawing = useRef(false);
+  const [signerName, setSignerName] = useState('');
+  const [signing, setSigning] = useState(false);
+  const canvasStart = (e: React.PointerEvent) => {
+    drawing.current = true;
+    const ctx = sigRef.current?.getContext('2d'); if (!ctx) return;
+    const r = sigRef.current!.getBoundingClientRect();
+    ctx.beginPath(); ctx.moveTo(e.clientX - r.left, e.clientY - r.top);
+  };
+  const canvasMove = (e: React.PointerEvent) => {
+    if (!drawing.current) return;
+    const ctx = sigRef.current?.getContext('2d'); if (!ctx) return;
+    const r = sigRef.current!.getBoundingClientRect();
+    ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.strokeStyle = '#d4af37';
+    ctx.lineTo(e.clientX - r.left, e.clientY - r.top); ctx.stroke();
+  };
+  const canvasEnd = () => { drawing.current = false; };
+  const clearSig = () => {
+    const c = sigRef.current; if (!c) return;
+    c.getContext('2d')?.clearRect(0, 0, c.width, c.height);
+  };
+  const saveSignature = async () => {
+    if (!signerName.trim()) { toast.error('Name fehlt'); return; }
+    const c = sigRef.current; if (!c) return;
+    const dataUrl = c.toDataURL('image/png');
+    setSigning(true);
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const { error } = await supabase.from('media_package_history').insert({
+        media_package_id: mpId, action: 'signed_off', user_id: userData.user?.id ?? null,
+        new_value: { signer_name: signerName, signature_png: dataUrl, signed_at: new Date().toISOString() } as any,
+      });
+      if (error) throw error;
+      toast.success('Freigabe signiert');
+      setSignerName(''); clearSig(); load();
+    } catch (e: any) { toast.error(e.message); }
+    finally { setSigning(false); }
+  };
+
+  // Phase 35 — Audit-CSV Export
+  const exportAuditCsv = () => {
+    const rows = timeline.map(e => {
+      const meta = ACTION_LABEL[e.action] || { label: e.action };
+      let detail = '';
+      if (e.kind === 'download') detail = (e.data as any).media_package_files?.original_filename || '';
+      else if (e.kind === 'comment') detail = ((e.data as any).subject || (e.data as any).comment || '').slice(0, 200);
+      else if (e.kind === 'history') detail = JSON.stringify((e.data as any).new_value || {}).slice(0, 200);
+      return [new Date(e.at).toISOString(), e.action, meta.label, detail.replace(/"/g, '""')];
+    });
+    const csv = ['Zeitpunkt,Aktion,Label,Details', ...rows.map(r => r.map(c => `"${c}"`).join(','))].join('\n');
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = `mediapaket-audit-${mpId}.csv`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+    toast.success('Audit-Protokoll exportiert');
+  };
+
   const nextActions = NEXT_STATUS[status] || [];
 
   return (
     <div className="rounded-xl border border-border bg-card p-4 card-glow">
       <Tabs defaultValue="workflow">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="workflow"><GitBranch className="w-3 h-3 mr-1" />Workflow</TabsTrigger>
           <TabsTrigger value="timeline"><HistoryIcon className="w-3 h-3 mr-1" />Timeline</TabsTrigger>
-          <TabsTrigger value="versions"><Package className="w-3 h-3 mr-1" />Versionen ({snapshots.length})</TabsTrigger>
+          <TabsTrigger value="versions"><Package className="w-3 h-3 mr-1" />V. ({snapshots.length})</TabsTrigger>
+          <TabsTrigger value="chat"><MessageCircle className="w-3 h-3 mr-1" />Chat</TabsTrigger>
+          <TabsTrigger value="signoff"><PenTool className="w-3 h-3 mr-1" />Sign-Off</TabsTrigger>
           <TabsTrigger value="tools">Extras</TabsTrigger>
         </TabsList>
 
