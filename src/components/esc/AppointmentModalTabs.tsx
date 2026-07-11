@@ -120,6 +120,10 @@ export function AppointmentModalTabs({
   }, [open, initial?.id, defaultStartTime, departments]);
 
   useEffect(() => {
+    if (mode === 'intern' && (tab === 'customer' || tab === 'confirmation')) setTab('general');
+  }, [mode, tab]);
+
+  useEffect(() => {
     if (!open) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
