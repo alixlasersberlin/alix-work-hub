@@ -402,6 +402,8 @@ const MediapaketAdmin = lazy(() => import("./pages/mediapaket/MediapaketAdmin"))
 const MediapaketPrint = lazy(() => import("./pages/mediapaket/MediapaketPrint"));
 const MediapaketPreview = lazy(() => import("./pages/mediapaket/MediapaketPreview"));
 const MediapaketTemplates = lazy(() => import("./pages/mediapaket/MediapaketTemplates"));
+const MediapaketAnalytics = lazy(() => import("./pages/mediapaket/MediapaketAnalytics"));
+const MediapaketShowcase = lazy(() => import("./pages/mediapaket/MediapaketShowcase"));
 const EscConfirmAppointment = lazy(() => import("./pages/ESC/public/ConfirmAppointment"));
 const EscRescheduleAppointment = lazy(() => import("./pages/ESC/public/RescheduleAppointment"));
 const EscCancelAppointment = lazy(() => import("./pages/ESC/public/CancelAppointment"));
@@ -691,6 +693,7 @@ function AppRoutes() {
         <Route path="/book" element={<EscBookingPortal />} />
         <Route path="/book/mediapaket" element={<MediapaketWizard />} />
         <Route path="/preview/mediapaket" element={<MediapaketPreview />} />
+        <Route path="/mediapaket/showcase/:token" element={<MediapaketShowcase />} />
         <Route path="/book/confirmation" element={<EscBookingPortal />} />
         <Route path="/book/:department" element={<EscBookingPortal />} />
         <Route path="/book/:department/:service" element={<EscBookingPortal />} />
@@ -774,6 +777,7 @@ function AppRoutes() {
           <Route path="/mediapaket/admin" element={<ProtectedRoute requiredRoles={['Super Admin']}><MediapaketAdmin /></ProtectedRoute>} />
           <Route path="/mediapaket/templates" element={<ProtectedRoute requiredRoles={['Super Admin']}><MediapaketTemplates /></ProtectedRoute>} />
           <Route path="/mediapaket/print/:mpId" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Order', 'Mediapaket', 'Auftragsverwaltung', 'SACHBEARBEITUNG']}><MediapaketPrint /></ProtectedRoute>} />
+          <Route path="/mediapaket/analytics" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin']}><MediapaketAnalytics /></ProtectedRoute>} />
           <Route path="/verkauf/artikel" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Artikel /></ProtectedRoute>} />
           <Route path="/verkauf/artikel/katalog" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Katalog /></ProtectedRoute>} />
           <Route path="/verkauf/artikel/kategorie" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Kategorie /></ProtectedRoute>} />
