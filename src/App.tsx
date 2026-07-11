@@ -356,6 +356,7 @@ const EscLayout = lazy(() => import("./components/esc/EscLayout"));
 const EscOverview = lazy(() => import("./pages/ESC/Overview"));
 const EscCalendar = lazy(() => import("./pages/ESC/Calendar"));
 const EscDepartments = lazy(() => import("./pages/ESC/Departments"));
+const EscAppointmentKinds = lazy(() => import("./pages/ESC/AppointmentKinds"));
 const EscEmployees = lazy(() => import("./pages/ESC/Employees"));
 const EscResources = lazy(() => import("./pages/ESC/Resources"));
 const EscBookings = lazy(() => import("./pages/ESC/Bookings"));
