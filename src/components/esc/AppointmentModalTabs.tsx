@@ -215,6 +215,22 @@ export function AppointmentModalTabs({
             <p id="esc-appointment-dialog-description" className="sr-only">
             Termin-Daten bearbeiten, Teilnehmer und Ressourcen verwalten.
             </p>
+            <div className="mt-2 inline-flex rounded-md border p-0.5 bg-muted/40" role="tablist" aria-label="Termintyp">
+              <button
+                type="button"
+                onClick={() => setMode('intern')}
+                className={`px-3 py-1 text-[12px] rounded-sm transition ${mode === 'intern' ? 'bg-background shadow-sm font-medium' : 'text-muted-foreground'}`}
+              >
+                Intern
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode('extern')}
+                className={`px-3 py-1 text-[12px] rounded-sm transition ${mode === 'extern' ? 'bg-background shadow-sm font-medium' : 'text-muted-foreground'}`}
+              >
+                Extern
+              </button>
+            </div>
           </div>
           <Button type="button" variant="ghost" size="icon" onClick={onClose} aria-label="Termin schließen">
             <X className="h-4 w-4" />
