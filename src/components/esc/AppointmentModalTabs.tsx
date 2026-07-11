@@ -23,6 +23,7 @@ import { DocumentActions } from './DocumentActions';
 import { getCustomerSummary } from '@/lib/esc/crm/search';
 import { emit } from '@/lib/esc/events/bus';
 import { startWorkflowEngine } from '@/lib/esc/workflows/engine';
+import { useAppointmentKinds } from '@/hooks/esc/useAppointmentKinds';
 
 startWorkflowEngine();
 
