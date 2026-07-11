@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
@@ -6,6 +6,7 @@ import { Building2, FileText, ClipboardList, Receipt, Undo2, TrendingUp, Loader2
 import { cn } from '@/lib/utils';
 import { useAtOnly } from '@/hooks/useAtOnly';
 import { PageHeader } from '@/components/infinity/PageHeader';
+import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh';
 
 type Tile = {
   key: string;
