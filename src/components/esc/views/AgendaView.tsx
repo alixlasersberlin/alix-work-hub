@@ -35,9 +35,8 @@ export function AgendaView({
           </div>
           <DepartmentBadge dept={deptOf(a.departmentId)} />
           <EscStatusBadge status={a.status} />
-          <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); downloadIcs(a); }} title="ICS herunterladen">
-            <Download className="w-4 h-4" />
-          </Button>
+          <AddToCalendarMenu appointment={a} size="sm" variant="ghost" label="" />
+
         </div>
       ))}
     </div>
