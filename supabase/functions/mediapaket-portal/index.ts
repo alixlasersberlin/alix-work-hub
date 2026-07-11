@@ -343,6 +343,162 @@ Deno.serve(async (req) => {
       return json({ ok: true, email: cust.email });
     }
 
+    // Phase 31 — Staff sends chat message to customer (also emails link)
+    if (action === 'staff_message') {
+      const auth = req.headers.get('Authorization');
+      if (!auth) return json({ error: 'unauthorized' }, 401);
+      const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, {
+        global: { headers: { Authorization: auth } }, auth: { persistSession: false }
+      });
+      const { data: userData } = await userClient.auth.getUser();
+      if (!userData?.user) return json({ error: 'unauthorized' }, 401);
+      const body = await req.json();
+      const mpId = body.mp_id;
+      const message = String(body.message || '').trim();
+      const baseUrl = body.base_url || 'https://alixwork.de';
+      if (!mpId || !message) return json({ error: 'mp_id and message required' }, 400);
+      const { data: mp } = await userClient.from('media_packages')
+        .select('id, customer_id').eq('id', mpId).maybeSingle();
+      if (!mp) return json({ error: 'forbidden' }, 403);
+      // Store as comment
+      const { data: comment } = await admin.from('media_package_comments').insert({
+        media_package_id: mpId,
+        author_type: 'staff',
+        author_id: userData.user.id,
+        recipient_type: 'customer',
+        subject: 'Nachricht vom Team',
+        comment: message,
+        internal_only: false,
+      }).select('id').single();
+      // Email customer if we have an email
+      if (mp.customer_id) {
+        const { data: cust } = await admin.from('customers').select('email, name').eq('id', mp.customer_id).maybeSingle();
+        if (cust?.email) {
+          const token = await signToken(mpId);
+          const link = `${baseUrl}/book/mediapaket?token=${encodeURIComponent(token)}`;
+          const html = `<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#222">
+            <h2>Neue Nachricht zu Ihrem Media Paket</h2>
+            <p>Hallo ${cust.name || ''},</p>
+            <blockquote style="border-left:3px solid #d4af37;padding:8px 12px;background:#faf7ee;margin:16px 0;white-space:pre-wrap">${message.replace(/</g,'&lt;')}</blockquote>
+            <p style="margin:24px 0"><a href="${link}" style="background:#000;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">Portal öffnen &amp; antworten</a></p>
+          </div>`;
+          await userClient.functions.invoke('send-mail', {
+            body: { to: cust.email, subject: 'Nachricht zu Ihrem Media Paket', html, from: 'vertrieb@alixwork.de' },
+          });
+        }
+      }
+      await admin.from('media_package_history').insert({
+        media_package_id: mpId, user_id: userData.user.id, action: 'question_email_sent',
+        entity_id: comment?.id ?? null, new_value: { message: message.slice(0, 200) } as any,
+      });
+      return json({ ok: true });
+    }
+
+    // Phase 31 — Notify customer of status change
+    if (action === 'notify_customer_status') {
+      const body = await req.json();
+      const mpId = body.mp_id;
+      const newStatus = body.new_status;
+      const baseUrl = body.base_url || 'https://alixwork.de';
+      if (!mpId || !newStatus) return json({ error: 'required' }, 400);
+      const { data: mp } = await admin.from('media_packages').select('customer_id').eq('id', mpId).maybeSingle();
+      if (!mp?.customer_id) return json({ ok: true, skipped: 'no customer' });
+      const { data: cust } = await admin.from('customers').select('email, name').eq('id', mp.customer_id).maybeSingle();
+      if (!cust?.email) return json({ ok: true, skipped: 'no email' });
+      const LABELS: Record<string, string> = {
+        in_review: 'wird geprüft', in_production: 'ist in Produktion', completed: 'ist abgeschlossen',
+      };
+      const label = LABELS[newStatus] || newStatus;
+      const token = await signToken(mpId);
+      const link = `${baseUrl}/preview/mediapaket?token=${encodeURIComponent(token)}`;
+      const html = `<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#222">
+        <h2>Ihr Media Paket ${label}</h2>
+        <p>Hallo ${cust.name || ''},</p>
+        <p>Statusaktualisierung: Ihr Mediapaket <strong>${label}</strong>.</p>
+        <p style="margin:24px 0"><a href="${link}" style="background:#000;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">Vorschau öffnen</a></p>
+      </div>`;
+      await fetch(`${SUPABASE_URL}/functions/v1/send-mail`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${SERVICE_ROLE}`, apikey: SERVICE_ROLE },
+        body: JSON.stringify({ to: cust.email, subject: `Media Paket: ${label}`, html, from: 'vertrieb@alixwork.de' }),
+      });
+      await admin.from('media_package_history').insert({
+        media_package_id: mpId, action: 'status_customer_notified',
+        new_value: { email: cust.email, status: newStatus } as any,
+      });
+      return json({ ok: true });
+    }
+
+    // Phase 34 — Production Handoff: create mail_task for graphic team
+    if (action === 'handoff_production') {
+      const body = await req.json();
+      const mpId = body.mp_id;
+      if (!mpId) return json({ error: 'mp_id required' }, 400);
+      const { data: mp } = await admin.from('media_packages')
+        .select('customer_id, order_id, studio_name, assigned_to').eq('id', mpId).maybeSingle();
+      if (!mp) return json({ error: 'not found' }, 404);
+      const { data: cust } = mp.customer_id
+        ? await admin.from('customers').select('name').eq('id', mp.customer_id).maybeSingle()
+        : { data: null };
+      const title = `Mediapaket freigegeben — Grafik: ${mp.studio_name || cust?.name || 'Kunde'}`;
+      const description = `Das Mediapaket wurde final freigegeben und ist bereit für die Grafik-Produktion.\nMediapaket-ID: ${mpId}`;
+      await admin.from('mail_tasks').insert({
+        title, description, department: 'Grafik', priority: 'high', status: 'open',
+        customer_id: mp.customer_id, order_id: mp.order_id, assigned_to: mp.assigned_to,
+      });
+      await admin.from('media_package_history').insert({
+        media_package_id: mpId, action: 'handoff_production',
+        new_value: { title } as any,
+      });
+      return json({ ok: true });
+    }
+
+    // Phase 32 — Create new mediapaket from template
+    if (action === 'create_from_template') {
+      const auth = req.headers.get('Authorization');
+      if (!auth) return json({ error: 'unauthorized' }, 401);
+      const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, {
+        global: { headers: { Authorization: auth } }, auth: { persistSession: false }
+      });
+      const { data: userData } = await userClient.auth.getUser();
+      if (!userData?.user) return json({ error: 'unauthorized' }, 401);
+      const body = await req.json();
+      const { template_id, customer_id, order_id } = body;
+      if (!template_id || !customer_id) return json({ error: 'template_id and customer_id required' }, 400);
+      const { data: setting } = await admin.from('app_settings').select('value').eq('key', 'mediapaket.templates').maybeSingle();
+      let tmpls: any[] = [];
+      try { tmpls = JSON.parse((setting as any)?.value || '[]'); } catch {}
+      const tmpl = tmpls.find(t => t.id === template_id);
+      if (!tmpl) return json({ error: 'template not found' }, 404);
+      const { data: newMp, error: insErr } = await admin.from('media_packages').insert({
+        customer_id, order_id: order_id ?? null,
+        studio_name: tmpl.defaults?.studio_name ?? null,
+        status: 'not_started', created_by: userData.user.id,
+      }).select('id').single();
+      if (insErr) return json({ error: insErr.message }, 400);
+      const newId = newMp.id;
+      // Seed services/treatments/devices
+      const seedList = async (table: string, key: string, field: string) => {
+        const arr: string[] = tmpl.defaults?.[key] || [];
+        if (!arr.length) return;
+        await admin.from(table).insert(arr.map(v => ({ media_package_id: newId, [field]: v })));
+      };
+      await seedList('media_package_services', 'services', 'service_name').catch(() => {});
+      await seedList('media_package_treatments', 'treatments', 'treatment_name').catch(() => {});
+      await seedList('media_package_devices', 'devices', 'device_name').catch(() => {});
+      if (tmpl.defaults?.branding_notes) {
+        await admin.from('media_package_branding').insert({
+          media_package_id: newId, brand_story: tmpl.defaults.branding_notes,
+        }).catch(() => {});
+      }
+      await admin.from('media_package_history').insert({
+        media_package_id: newId, user_id: userData.user.id, action: 'created_from_template',
+        new_value: { template_id, template_name: tmpl.name } as any,
+      });
+      return json({ ok: true, new_mp_id: newId });
+    }
+
+
     // All other actions are token-based (customer portal)
     const body = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
     const token = body.token || url.searchParams.get('token');
