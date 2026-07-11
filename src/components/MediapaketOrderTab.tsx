@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Plus, Copy, ExternalLink, RefreshCw, Package as PackageIcon, CheckCircle2, Mail } from 'lucide-react';
+import { Loader2, Plus, Copy, RefreshCw, Package as PackageIcon, CheckCircle2, Mail, MessageCircle, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import MediapaketReviewPanel from './MediapaketReviewPanel';
 
@@ -66,6 +66,46 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
   };
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [orderId]);
+
+  // Unread customer answers (badge + realtime)
+  const [unread, setUnread] = useState<any[]>([]);
+  const loadUnread = useCallback(async (mpId: string) => {
+    const { data } = await supabase
+      .from('media_package_comments')
+      .select('id, subject, comment, created_at')
+      .eq('media_package_id', mpId)
+      .eq('author_type', 'customer')
+      .eq('recipient_type', 'staff')
+      .eq('internal_only', false)
+      .is('read_at', null)
+      .order('created_at', { ascending: false });
+    setUnread(data || []);
+  }, []);
+
+  useEffect(() => {
+    if (!mp?.id) { setUnread([]); return; }
+    loadUnread(mp.id);
+    const ch = supabase
+      .channel(`mp-comments-${mp.id}`)
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'media_package_comments',
+        filter: `media_package_id=eq.${mp.id}`,
+      }, () => loadUnread(mp.id))
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [mp?.id, loadUnread]);
+
+  const markAllRead = async () => {
+    if (!mp?.id || !unread.length) return;
+    const ids = unread.map(u => u.id);
+    const { error } = await supabase
+      .from('media_package_comments')
+      .update({ read_at: new Date().toISOString() })
+      .in('id', ids);
+    if (error) { toast.error(error.message); return; }
+    setUnread([]);
+    toast.success('Als gelesen markiert');
+  };
 
   const createPackage = async () => {
     setCreating(true);
@@ -145,11 +185,17 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
       <div className="rounded-xl border border-border bg-card p-4 card-glow">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
               <PackageIcon className="w-4 h-4 text-primary" />
               <h3 className="text-sm font-semibold text-foreground">Mediapaket</h3>
               <Badge variant="outline">{statusLabel}</Badge>
               {mp.submitted_at && <Badge className="bg-green-500/20 text-green-500 border-green-500/30"><CheckCircle2 className="w-3 h-3 mr-1" /> Eingereicht</Badge>}
+              {unread.length > 0 && (
+                <Badge className="bg-amber-500/20 text-amber-500 border-amber-500/40 animate-pulse">
+                  <MessageCircle className="w-3 h-3 mr-1" />
+                  {unread.length} neue Kundenantwort{unread.length === 1 ? '' : 'en'}
+                </Badge>
+              )}
             </div>
             <p className="text-xs text-muted-foreground">ID: {mp.id}</p>
           </div>
@@ -176,6 +222,36 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
           </div>
         </div>
       </div>
+
+      {/* Unread customer answers banner */}
+      {unread.length > 0 && (
+        <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 card-glow">
+          <div className="flex items-center justify-between gap-3 flex-wrap mb-2">
+            <div className="flex items-center gap-2">
+              <MessageCircle className="w-4 h-4 text-amber-500" />
+              <h4 className="text-sm font-semibold text-foreground">
+                {unread.length} ungelesene Kundenantwort{unread.length === 1 ? '' : 'en'}
+              </h4>
+            </div>
+            <Button size="sm" variant="outline" onClick={markAllRead}>
+              <Check className="w-4 h-4 mr-2" /> Alle als gelesen markieren
+            </Button>
+          </div>
+          <div className="space-y-2">
+            {unread.slice(0, 3).map(u => (
+              <div key={u.id} className="rounded-lg border border-amber-500/30 bg-background/60 p-2">
+                {u.subject && <div className="text-xs font-medium text-foreground">{u.subject}</div>}
+                <p className="text-xs text-muted-foreground line-clamp-2 whitespace-pre-wrap">{u.comment}</p>
+                <div className="text-[10px] text-muted-foreground mt-1">{new Date(u.created_at).toLocaleString('de-DE')}</div>
+              </div>
+            ))}
+            {unread.length > 3 && (
+              <p className="text-xs text-muted-foreground">…und {unread.length - 3} weitere im Kommentarverlauf unten.</p>
+            )}
+          </div>
+        </div>
+      )}
+
 
       {/* Review-Panel: Status, Kommentare, Rückfragen, Verlauf */}
       <MediapaketReviewPanel mpId={mp.id} currentStatus={mp.status} onChanged={load} />
