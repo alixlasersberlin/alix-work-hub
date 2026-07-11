@@ -2,19 +2,39 @@ import { NavLink, Outlet } from 'react-router-dom';
 import { CalendarDays, LayoutDashboard, Building2, Users, Boxes, Globe, CheckCircle2, Settings, Calendar, Truck, Cpu, DoorOpen, Map, Gauge, ListChecks, Sparkles, Radio, Route, Mail } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const TABS = [
-  { to: '/esc',                label: 'Übersicht',      icon: LayoutDashboard, end: true },
-  { to: '/esc/kalender',       label: 'Kalender',       icon: CalendarDays },
-  { to: '/esc/ressourcen',     label: 'Ressourcen',     icon: Boxes },
-  { to: '/esc/mitarbeiter',    label: 'Mitarbeiter',    icon: Users },
-  { to: '/esc/abteilungen',    label: 'Abteilungen',    icon: Building2 },
-  { to: '/esc/buchungen',      label: 'Buchungsportal', icon: Globe },
-  { to: '/esc/bestaetigungen', label: 'Bestätigungen',  icon: CheckCircle2 },
-  { to: '/esc/touren',         label: 'Touren',         icon: Route },
-  { to: '/esc/ai',             label: 'Alix AI',        icon: Sparkles },
-  { to: '/esc/ech',            label: 'Comm Hub',       icon: Radio },
-  { to: '/esc/einstellungen/email-vorlagen', label: 'E-Mail-Vorlagen', icon: Mail },
-  { to: '/esc/einstellungen',  label: 'Einstellungen',  icon: Settings, end: true },
+const TAB_GROUPS: { label: string; items: { to: string; label: string; icon: any; end?: boolean }[] }[] = [
+  {
+    label: 'Planung',
+    items: [
+      { to: '/esc',           label: 'Übersicht', icon: LayoutDashboard, end: true },
+      { to: '/esc/kalender',  label: 'Kalender',  icon: CalendarDays },
+      { to: '/esc/touren',    label: 'Touren',    icon: Route },
+    ],
+  },
+  {
+    label: 'Stammdaten',
+    items: [
+      { to: '/esc/ressourcen',  label: 'Ressourcen',  icon: Boxes },
+      { to: '/esc/mitarbeiter', label: 'Mitarbeiter', icon: Users },
+      { to: '/esc/abteilungen', label: 'Abteilungen', icon: Building2 },
+    ],
+  },
+  {
+    label: 'Kundenkontakt',
+    items: [
+      { to: '/esc/buchungen',      label: 'Buchungsportal', icon: Globe },
+      { to: '/esc/bestaetigungen', label: 'Bestätigungen',  icon: CheckCircle2 },
+      { to: '/esc/ech',            label: 'Comm Hub',       icon: Radio },
+      { to: '/esc/ai',             label: 'Alix AI',        icon: Sparkles },
+    ],
+  },
+  {
+    label: 'Einstellungen',
+    items: [
+      { to: '/esc/einstellungen/email-vorlagen', label: 'E-Mail-Vorlagen', icon: Mail },
+      { to: '/esc/einstellungen',                label: 'Einstellungen',   icon: Settings, end: true },
+    ],
+  },
 ];
 
 const RM_TABS = [
