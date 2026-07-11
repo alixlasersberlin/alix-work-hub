@@ -61,6 +61,15 @@ export default function MediapaketWizard() {
   const [stepIdx, setStepIdx] = useState(0);
   const [saving, setSaving] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [questions, setQuestions] = useState<any[]>([]);
+
+  const loadQuestions = useCallback(async () => {
+    if (!token) return;
+    try {
+      const q = await call('list_questions', token);
+      setQuestions(q.questions || []);
+    } catch { /* noop */ }
+  }, [token]);
 
   const reload = useCallback(async () => {
     if (!token) { setErr('Kein Zugriffs-Token angegeben.'); setLoading(false); return; }
@@ -68,10 +77,11 @@ export default function MediapaketWizard() {
       const d = await call('get', token);
       setData(d);
       if (d.root?.status === 'submitted' || d.root?.status === 'completed') setSubmitted(true);
+      await loadQuestions();
     } catch (e: any) {
       setErr(e.message || 'Fehler beim Laden');
     } finally { setLoading(false); }
-  }, [token]);
+  }, [token, loadQuestions]);
 
   useEffect(() => { reload(); }, [reload]);
 
