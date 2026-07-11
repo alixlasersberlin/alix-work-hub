@@ -333,16 +333,21 @@ function StatusBadge({ status }: { status: string }) {
   return <Badge variant="outline" className={cn('text-[10px]', STATUS_TONE[status])}>{STATUS_LABEL[status] || status}</Badge>;
 }
 
-function ListView({ rows }: { rows: MpRow[] }) {
+function ListView({ rows, selected, onToggle, onToggleAll }: { rows: MpRow[]; selected: Set<string>; onToggle: (id: string) => void; onToggleAll: (checked: boolean) => void }) {
   if (rows.length === 0) {
     return <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">Keine Mediapakete gefunden.</div>;
   }
+  const allChecked = rows.length > 0 && rows.every(r => selected.has(r.id));
+  const someChecked = rows.some(r => selected.has(r.id));
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden card-glow">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-secondary/50">
             <tr className="text-left text-xs text-muted-foreground">
+              <th className="p-3 w-8">
+                <Checkbox checked={allChecked ? true : someChecked ? 'indeterminate' : false} onCheckedChange={(c) => onToggleAll(!!c)} />
+              </th>
               <th className="p-3">Auftrag</th>
               <th className="p-3">Kunde / Studio</th>
               <th className="p-3">Status</th>
@@ -357,7 +362,8 @@ function ListView({ rows }: { rows: MpRow[] }) {
             {rows.map(r => {
               const overdue = r.due_date && r.status !== 'completed' && new Date(r.due_date) < new Date();
               return (
-                <tr key={r.id} className="border-t border-border hover:bg-secondary/30 transition">
+                <tr key={r.id} className={cn('border-t border-border hover:bg-secondary/30 transition', selected.has(r.id) && 'bg-primary/5')}>
+                  <td className="p-3"><Checkbox checked={selected.has(r.id)} onCheckedChange={() => onToggle(r.id)} /></td>
                   <td className="p-3 font-medium">{r._order_number || '—'}</td>
                   <td className="p-3">
                     <div className="truncate max-w-[220px]">{r._customer_name || '—'}</div>
