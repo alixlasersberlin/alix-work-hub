@@ -39,7 +39,8 @@ export function useNotificationFeed() {
     const isAdmin = roles.includes('Super Admin') || roles.includes('Admin');
     const isFinance = isAdmin || roles.includes('Finance');
     const isTicketUser = isAdmin || roles.includes('Order') || roles.includes('QM');
-    if (!isAdmin && !isFinance && !isTicketUser) return;
+    const isMediapaketUser = isAdmin || roles.includes('Order') || roles.includes('QM');
+    if (!isAdmin && !isFinance && !isTicketUser && !isMediapaketUser) return;
 
     let cancelled = false;
 
