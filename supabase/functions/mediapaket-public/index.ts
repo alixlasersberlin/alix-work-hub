@@ -79,13 +79,6 @@ Deno.serve(async (req) => {
       });
       return json({ ok: true });
     }
-      if (leadErr) return json({ error: leadErr.message }, 400);
-      await admin.from('media_package_history').insert({
-        media_package_id: mpId, action: 'showcase_lead_created',
-        new_value: { name: lead.name, email: lead.email } as any,
-      });
-      return json({ ok: true });
-    }
 
     return json({ error: 'unknown action' }, 400);
   } catch (e: any) {
