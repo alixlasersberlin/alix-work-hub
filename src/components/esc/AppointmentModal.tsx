@@ -231,6 +231,9 @@ export function AppointmentModal({ open, onClose, onSubmit, departments, employe
           </div>
         )}
 
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 py-2">
+
+
 
           <div className="md:col-span-2">
             <Label>Titel *</Label>
