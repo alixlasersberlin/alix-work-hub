@@ -252,15 +252,28 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
             </Button>
           </div>
           <div className="space-y-2">
-            {unread.slice(0, 3).map(u => (
-              <div key={u.id} className="rounded-lg border border-amber-500/30 bg-background/60 p-2">
-                {u.subject && <div className="text-xs font-medium text-foreground">{u.subject}</div>}
-                <p className="text-xs text-muted-foreground line-clamp-2 whitespace-pre-wrap">{u.comment}</p>
-                <div className="text-[10px] text-muted-foreground mt-1">{new Date(u.created_at).toLocaleString('de-DE')}</div>
-              </div>
-            ))}
-            {unread.length > 3 && (
-              <p className="text-xs text-muted-foreground">…und {unread.length - 3} weitere im Kommentarverlauf unten.</p>
+            {unread.slice(0, 5).map(u => {
+              const key = u.related_field && SECTION_LABEL[u.related_field] ? u.related_field : null;
+              return (
+                <button
+                  key={u.id}
+                  type="button"
+                  onClick={() => key ? scrollToSection(key) : undefined}
+                  className={`w-full text-left rounded-lg border border-amber-500/30 bg-background/60 p-2 ${key ? 'hover:bg-background/80 hover:border-amber-500/50 cursor-pointer' : ''} transition`}
+                >
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    {key && (
+                      <Badge variant="secondary" className="text-[10px]">Bezug: {SECTION_LABEL[key]}</Badge>
+                    )}
+                    <span className="text-[10px] text-muted-foreground ml-auto">{new Date(u.created_at).toLocaleString('de-DE')}</span>
+                  </div>
+                  {u.subject && <div className="text-xs font-medium text-foreground">{u.subject}</div>}
+                  <p className="text-xs text-muted-foreground line-clamp-2 whitespace-pre-wrap">{u.comment}</p>
+                </button>
+              );
+            })}
+            {unread.length > 5 && (
+              <p className="text-xs text-muted-foreground">…und {unread.length - 5} weitere im Kommentarverlauf unten.</p>
             )}
           </div>
         </div>
