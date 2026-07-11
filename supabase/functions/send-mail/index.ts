@@ -221,18 +221,20 @@ serve(async (req) => {
     let finalHtml = replaceVariables(baseHtml);
     let finalText = replaceVariables(baseText);
 
-    // Login-Name für die Signatur ermitteln
+    // Login-Name für die Signatur ermitteln (nur Klarname – niemals E-Mail-Adresse in der Signatur)
     const { data: senderProfile } = await supabase
       .from("user_profiles")
-      .select("full_name, first_name, last_name, email")
+      .select("full_name, email")
       .eq("id", userData.user.id)
       .maybeSingle();
-    const loginName =
-      senderProfile?.full_name ||
-      [senderProfile?.first_name, senderProfile?.last_name].filter(Boolean).join(" ") ||
-      senderProfile?.email ||
-      userData.user.email ||
-      "Alix Lasers Team";
+    const rawName = senderProfile?.full_name?.trim();
+    // Fallback: lokaler Teil der E-Mail (vor dem @) – so wird nie die volle Adresse in der Signatur angezeigt
+    const emailLocalPart = (senderProfile?.email || userData.user.email || "")
+      .split("@")[0]
+      .replace(/[._-]+/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase())
+      .trim();
+    const loginName = rawName || emailLocalPart || "Alix Lasers Team";
     const withSig = appendSignature(finalHtml, finalText, loginName);
     finalHtml = withSig.html;
     finalText = withSig.text;
