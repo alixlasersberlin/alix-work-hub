@@ -35,7 +35,13 @@ const TILES: Tile[] = [
     icon: FileText,
     to: '/verkauf/angebote',
     accent: 'from-amber-500/20 to-amber-500/5 border-amber-500/30',
-    load: async () => null,
+    load: async () => {
+      const { count } = await supabase
+        .from('offers')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'draft');
+      return count ?? 0;
+    },
   },
   {
     key: 'auftraege',
