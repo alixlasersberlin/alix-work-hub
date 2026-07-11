@@ -9,7 +9,7 @@ import { BookingLayout } from '@/components/esc/public/BookingLayout';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { toast } from 'sonner';
-import { downloadIcs } from '@/lib/esc/ics';
+import { AddToCalendarMenu } from '@/components/esc/AddToCalendarMenu';
 import { logEscAudit } from '@/lib/esc/audit';
 import { cancelUrl, rescheduleUrl } from '@/lib/esc/public-url';
 import { CalendarCheck, CalendarClock, CalendarX, Download, MapPin, QrCode as QrIcon, Clock } from 'lucide-react';
