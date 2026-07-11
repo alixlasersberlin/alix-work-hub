@@ -15,7 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BookingLayout } from '@/components/esc/public/BookingLayout';
 import { toast } from 'sonner';
-import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, Plus, Trash2, Upload, X, FileText, Image as ImageIcon, Save } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, Plus, Trash2, Upload, X, FileText, Image as ImageIcon, Save, MessageSquare, Send } from 'lucide-react';
 
 const FN_URL = `${(import.meta as any).env.VITE_SUPABASE_URL}/functions/v1/mediapaket-portal`;
 const ANON = (import.meta as any).env.VITE_SUPABASE_PUBLISHABLE_KEY;
