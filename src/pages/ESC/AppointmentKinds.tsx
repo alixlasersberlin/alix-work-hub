@@ -185,7 +185,7 @@ export default function EscAppointmentKindsPage() {
               </div>
             </div>
 
-            <footer className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <footer className="sticky bottom-0 -mx-6 -mb-6 px-6 py-3 bg-card border-t flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <Button variant="ghost" onClick={() => setOpen(false)}>Abbrechen</Button>
               <Button onClick={submit}>Speichern</Button>
             </footer>
