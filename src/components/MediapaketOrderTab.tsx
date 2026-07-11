@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import MediapaketReviewPanel, { SECTION_LABEL } from './MediapaketReviewPanel';
+import MediapaketExtrasPanel from './MediapaketExtrasPanel';
 import { notifyBus } from '@/hooks/useNotifications';
 
 interface Props {
