@@ -219,7 +219,7 @@ function QuestionsBanner({ questions, token, onChange }: { questions: any[]; tok
     if (!text) return;
     setSending(id);
     try {
-      await call('answer_question', token, { question_id: id, answer: text });
+      await call('answer_question', token, { question_id: id, answer: text, base_url: window.location.origin });
       setAnswers(a => ({ ...a, [id]: '' }));
       toast.success('Antwort gesendet');
       onChange();
