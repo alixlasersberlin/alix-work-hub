@@ -6,6 +6,8 @@ import { ALIXWORKS_PUBLIC_BASE, bookingUrl } from '@/lib/esc/public-url';
 import { issueFeedToken } from '@/lib/esc/calendar-sync';
 import { Copy, Link as LinkIcon, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
+import { CalendarConnectionsCard } from '@/components/esc/CalendarConnectionsCard';
+
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 
