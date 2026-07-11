@@ -371,22 +371,31 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
   );
 }
 
-function SectionCard({ title, empty, children, comments, sectionKey }: {
+function SectionCard({ title, empty, children, comments, sectionKey, onMarkRead }: {
   title: string; empty?: boolean; children: React.ReactNode;
   comments?: any[]; sectionKey?: string;
+  onMarkRead?: (ids: string[]) => void;
 }) {
   const list = comments || [];
   const openQuestions = list.filter(c => c.author_type === 'staff' && !c.internal_only && !c.answered_at).length;
-  const unreadAnswers = list.filter(c => c.author_type === 'customer' && !c.read_at).length;
+  const unreadIds = list.filter(c => c.author_type === 'customer' && !c.read_at).map(c => c.id);
+  const unreadAnswers = unreadIds.length;
   return (
-    <div className="rounded-xl border border-border bg-card p-4 card-glow">
+    <div id={sectionKey ? `mp-section-${sectionKey}` : undefined} className="rounded-xl border border-border bg-card p-4 card-glow transition-shadow scroll-mt-24">
       <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
         <h4 className="text-sm font-semibold text-foreground">{title}</h4>
         <div className="flex items-center gap-1.5">
           {unreadAnswers > 0 && (
-            <Badge className="bg-amber-500/20 text-amber-500 border-amber-500/40 animate-pulse text-[10px]">
-              <MessageCircle className="w-3 h-3 mr-1" />{unreadAnswers} neue Antwort{unreadAnswers === 1 ? '' : 'en'}
-            </Badge>
+            <>
+              <Badge className="bg-amber-500/20 text-amber-500 border-amber-500/40 animate-pulse text-[10px]">
+                <MessageCircle className="w-3 h-3 mr-1" />{unreadAnswers} neue Antwort{unreadAnswers === 1 ? '' : 'en'}
+              </Badge>
+              {onMarkRead && (
+                <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]" onClick={() => onMarkRead(unreadIds)}>
+                  <Check className="w-3 h-3 mr-1" /> gelesen
+                </Button>
+              )}
+            </>
           )}
           {openQuestions > 0 && (
             <Badge variant="outline" className="text-[10px]">
