@@ -689,6 +689,7 @@ function AppRoutes() {
         {/* ESC – öffentliche Routen (kein Login) */}
         <Route path="/book" element={<EscBookingPortal />} />
         <Route path="/book/mediapaket" element={<MediapaketWizard />} />
+        <Route path="/preview/mediapaket" element={<MediapaketPreview />} />
         <Route path="/book/confirmation" element={<EscBookingPortal />} />
         <Route path="/book/:department" element={<EscBookingPortal />} />
         <Route path="/book/:department/:service" element={<EscBookingPortal />} />
