@@ -64,6 +64,66 @@ export default function MediapaketOverview() {
   const [statusFilter, setStatusFilter] = useState<string>('__all__');
   const [assigneeFilter, setAssigneeFilter] = useState<string>('__all__');
   const [overdueOnly, setOverdueOnly] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [staffList, setStaffList] = useState<Array<{ id: string; label: string }>>([]);
+  const [bulkBusy, setBulkBusy] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from('user_profiles').select('id, full_name, email, is_active').eq('is_active', true).order('full_name');
+      setStaffList((data || []).map((p: any) => ({ id: p.id, label: p.full_name || p.email || 'Unbenannt' })));
+    })();
+  }, []);
+
+  const toggleOne = (id: string) => setSelected(prev => {
+    const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n;
+  });
+  const toggleAll = (ids: string[], checked: boolean) => setSelected(prev => {
+    const n = new Set(prev);
+    ids.forEach(id => checked ? n.add(id) : n.delete(id));
+    return n;
+  });
+
+  const bulkUpdate = async (patch: Record<string, any>, label: string) => {
+    if (selected.size === 0) return;
+    setBulkBusy(true);
+    const { error } = await supabase.from('media_packages').update(patch).in('id', Array.from(selected));
+    setBulkBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`${selected.size} Pakete: ${label}`);
+    setSelected(new Set());
+    load();
+  };
+
+  const exportCsv = (list: MpRow[]) => {
+    if (list.length === 0) { toast.info('Keine Zeilen zum Exportieren'); return; }
+    const header = ['Auftrag', 'Kunde', 'Studio', 'Status', 'Fortschritt %', 'Frist', 'Zuständig', 'Ungelesen', 'Aktualisiert'];
+    const esc = (v: any) => {
+      const s = v == null ? '' : String(v);
+      return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const lines = [header.join(';')];
+    list.forEach(r => {
+      lines.push([
+        r._order_number || '',
+        r._customer_name || '',
+        r.studio_name || '',
+        STATUS_LABEL[r.status] || r.status,
+        r.progress_percent ?? 0,
+        r.due_date || '',
+        r._assignee_name || '',
+        r._unread_count ?? 0,
+        r.updated_at,
+      ].map(esc).join(';'));
+    });
+    const blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `mediapakete_${format(new Date(), 'yyyy-MM-dd_HHmm')}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    toast.success(`${list.length} Zeilen exportiert`);
+  };
 
   const load = async () => {
     setLoading(true);
