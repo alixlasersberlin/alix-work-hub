@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Edit, Trash2 } from 'lucide-react';
@@ -33,11 +33,9 @@ export default function EscResources() {
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h1 className="text-lg font-semibold">Ressourcen</h1>
-          <DialogTrigger asChild>
-            <Button size="sm" onClick={openNew}>
-              <Plus className="w-4 h-4 mr-1" /> Neue Ressource
-            </Button>
-          </DialogTrigger>
+          <Button size="sm" type="button" onClick={openNew}>
+            <Plus className="w-4 h-4 mr-1" /> Neue Ressource
+          </Button>
         </div>
         <div className="rounded-lg border bg-card">
           <Table>
@@ -75,8 +73,11 @@ export default function EscResources() {
           </Table>
         </div>
 
-        <DialogContent>
-          <DialogHeader><DialogTitle>{form.id ? 'Ressource bearbeiten' : 'Neue Ressource'}</DialogTitle></DialogHeader>
+        {open && <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{form.id ? 'Ressource bearbeiten' : 'Neue Ressource'}</DialogTitle>
+            <DialogDescription>Ressource für Räume, Geräte, Fahrzeuge oder sonstige Planungseinheiten anlegen.</DialogDescription>
+          </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 py-2">
             <div><Label>Name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
             <div>
@@ -99,7 +100,7 @@ export default function EscResources() {
             <Button variant="ghost" onClick={() => setOpen(false)}>Abbrechen</Button>
             <Button onClick={submit}>Speichern</Button>
           </DialogFooter>
-        </DialogContent>
+        </DialogContent>}
       </div>
     </Dialog>
   );
