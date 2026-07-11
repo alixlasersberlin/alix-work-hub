@@ -1,5 +1,6 @@
 import { CapacityHeatmap } from '@/components/esc/resources/CapacityHeatmap';
 import { LiveAvailability } from '@/components/esc/resources/LiveAvailability';
+import { RmQuickActions } from '@/components/esc/resources/RmQuickActions';
 import { useResourceMgmt } from '@/hooks/esc/useResourceMgmt';
 import { useAppointments } from '@/hooks/esc/useAppointments';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +11,7 @@ export default function RmCapacity() {
   return (
     <div className="space-y-4">
       <h1 className="text-lg font-semibold">Kapazitäten &amp; Auslastung</h1>
+      <RmQuickActions />
       <LiveAvailability />
       <Card>
         <CardHeader className="pb-1"><CardTitle className="text-sm">Heatmap – nächste 14 Tage</CardTitle></CardHeader>

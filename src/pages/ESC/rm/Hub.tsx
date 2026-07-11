@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Truck, Cpu, DoorOpen, Map, Gauge, ArrowRight, ListChecks } from 'lucide-react';
 import { LiveAvailability } from '@/components/esc/resources/LiveAvailability';
+import { RmQuickActions } from '@/components/esc/resources/RmQuickActions';
 
 const TILES = [
   { to: '/esc/rm/mitarbeiter', label: 'Mitarbeiter', icon: Users, desc: 'Qualifikationen, Schichten, Standort, Vertretung' },
@@ -20,6 +21,7 @@ export default function RmHub() {
         <h1 className="text-lg font-semibold">Ressourcen &amp; Disposition</h1>
         <p className="text-xs text-muted-foreground">Zentrale Planung für Mitarbeiter, Fahrzeuge, Geräte, Räume und Außendienst.</p>
       </div>
+      <RmQuickActions />
       <LiveAvailability />
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
         {TILES.map((t) => (

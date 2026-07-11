@@ -1,4 +1,5 @@
 import { FieldMapPlaceholder } from '@/components/esc/resources/FieldMap';
+import { RmQuickActions } from '@/components/esc/resources/RmQuickActions';
 import { useResourceMgmt } from '@/hooks/esc/useResourceMgmt';
 import { useAppointments } from '@/hooks/esc/useAppointments';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +13,7 @@ export default function RmField() {
   return (
     <div className="space-y-4">
       <h1 className="text-lg font-semibold">Außendienst</h1>
+      <RmQuickActions />
       <FieldMapPlaceholder />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <Card>

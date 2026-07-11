@@ -42,7 +42,7 @@ export default function RmRooms() {
               <div key={r.id} className="border-b pb-2 last:border-b-0 last:pb-0 group">
                 <div className="flex items-start justify-between">
                   <div className="font-medium">{r.name}</div>
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition">
+                  <div className="flex gap-1 opacity-100 transition">
                     <button onClick={() => setEditing({ ...r })} className="p-1 rounded hover:bg-muted"><Pencil className="h-3 w-3" /></button>
                     <button onClick={() => removeRoom(r.id)} className="p-1 rounded hover:bg-muted text-destructive"><Trash2 className="h-3 w-3" /></button>
                   </div>
