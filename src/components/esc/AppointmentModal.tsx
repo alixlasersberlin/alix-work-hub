@@ -36,6 +36,21 @@ interface Props {
 
 const PRIORITY: EscPriority[] = ['low', 'normal', 'high', 'urgent'];
 
+type EntryType = 'termin' | 'erinnerung' | 'wiedervorlage';
+
+const ENTRY_TYPES: { value: EntryType; label: string; kind: string }[] = [
+  { value: 'termin', label: 'Termin', kind: '' },
+  { value: 'erinnerung', label: 'Erinnerung (intern)', kind: 'Erinnerung' },
+  { value: 'wiedervorlage', label: 'Wiedervorlage (intern)', kind: 'Wiedervorlage' },
+];
+
+function detectEntryType(kind?: string): EntryType {
+  const k = (kind || '').toLowerCase();
+  if (k.startsWith('erinnerung')) return 'erinnerung';
+  if (k.startsWith('wiedervorlage')) return 'wiedervorlage';
+  return 'termin';
+}
+
 function toInputDate(d: Date | string | undefined): string {
   if (!d) return '';
   const dt = typeof d === 'string' ? new Date(d) : d;
