@@ -118,6 +118,12 @@ export default function EscCalendar() {
         <div className="text-[13px] font-medium">{title}</div>
         <div className="ml-auto flex items-center gap-2 flex-wrap">
           <ViewSwitcher value={view} onChange={setView} />
+          <Button size="sm" variant="outline" onClick={() => openNewKind('Erinnerung')} title="Interne Erinnerung anlegen">
+            <Bell className="w-4 h-4 mr-1" /> Erinnerung
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => openNewKind('Wiedervorlage')} title="Interne Wiedervorlage anlegen">
+            <ClipboardList className="w-4 h-4 mr-1" /> Wiedervorlage
+          </Button>
           <Button size="sm" onClick={() => openNew()}>
             <Plus className="w-4 h-4 mr-1" /> Neuer Termin
           </Button>
