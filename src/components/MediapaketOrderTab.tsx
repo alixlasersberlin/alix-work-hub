@@ -185,11 +185,17 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
       <div className="rounded-xl border border-border bg-card p-4 card-glow">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
               <PackageIcon className="w-4 h-4 text-primary" />
               <h3 className="text-sm font-semibold text-foreground">Mediapaket</h3>
               <Badge variant="outline">{statusLabel}</Badge>
               {mp.submitted_at && <Badge className="bg-green-500/20 text-green-500 border-green-500/30"><CheckCircle2 className="w-3 h-3 mr-1" /> Eingereicht</Badge>}
+              {unread.length > 0 && (
+                <Badge className="bg-amber-500/20 text-amber-500 border-amber-500/40 animate-pulse">
+                  <MessageCircle className="w-3 h-3 mr-1" />
+                  {unread.length} neue Kundenantwort{unread.length === 1 ? '' : 'en'}
+                </Badge>
+              )}
             </div>
             <p className="text-xs text-muted-foreground">ID: {mp.id}</p>
           </div>
