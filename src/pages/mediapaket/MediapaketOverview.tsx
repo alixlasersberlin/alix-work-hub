@@ -222,6 +222,7 @@ export default function MediapaketOverview() {
           <Badge variant="outline">{filtered.length} / {rows.length}</Badge>
         </div>
         <div className="flex items-center gap-2">
+          <Link to="/mediapaket/analytics" className="text-xs px-3 py-1.5 rounded-md border border-primary/40 text-primary hover:bg-primary/10">📊 Analytics</Link>
           <div className="inline-flex rounded-md border border-border overflow-hidden">
             <Button variant={view === 'list' ? 'default' : 'ghost'} size="sm" className="rounded-none" onClick={() => setView('list')}>
               <ListIcon className="w-4 h-4 mr-1" /> Liste
