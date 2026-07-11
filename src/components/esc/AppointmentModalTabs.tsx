@@ -287,7 +287,9 @@ export function AppointmentModalTabs({
                   <Select value={form.departmentId} onValueChange={(v) => setForm({ ...form, departmentId: v })}>
                     <SelectTrigger><SelectValue placeholder="Abteilung wählen" /></SelectTrigger>
                     <SelectContent>
-                      {departments.map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+                      {departments
+                        .filter((d) => mode === 'extern' ? (d.active && d.publicBookable && d.externallyBookable) : d.active)
+                        .map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
