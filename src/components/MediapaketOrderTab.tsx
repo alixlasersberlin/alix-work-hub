@@ -173,7 +173,7 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
       <SectionCard title="Geräte" empty={!sections.devices?.length}>
         {sections.devices?.map((d: any) => (
           <div key={d.id} className="text-sm">
-            <span className="font-medium">{d.model_name || '—'}</span>
+            <span className="font-medium">{d.entered_model_name || '—'}</span>
             {d.serial_number && <span className="text-muted-foreground"> · SN: {d.serial_number}</span>}
           </div>
         ))}
@@ -182,8 +182,8 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
       <SectionCard title="Preisliste" empty={!sections.prices?.length}>
         {sections.prices?.map((p: any) => (
           <div key={p.id} className="flex justify-between text-sm">
-            <span>{p.treatment_name}</span>
-            <span className="text-muted-foreground">{p.price_eur ? `${p.price_eur} €` : '—'}</span>
+            <span>{p.description || p.category}</span>
+            <span className="text-muted-foreground">{p.price != null ? `${p.price} €` : '—'}</span>
           </div>
         ))}
       </SectionCard>
@@ -196,22 +196,24 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
         {sections.hours?.map((h: any) => (
           <div key={h.id} className="flex justify-between text-sm">
             <span>Tag {h.weekday}</span>
-            <span className="text-muted-foreground">{h.closed ? 'Geschlossen' : `${h.open_time ?? ''} – ${h.close_time ?? ''}`}</span>
+            <span className="text-muted-foreground">
+              {h.closed ? 'Geschlossen' : `${h.first_start ?? ''}–${h.first_end ?? ''}${h.second_start ? ` / ${h.second_start}–${h.second_end ?? ''}` : ''}`}
+            </span>
           </div>
         ))}
       </SectionCard>
 
       <SectionCard title="Fremdbehandlungen" empty={!sections.treatments?.length}>
         {sections.treatments?.map((t: any) => (
-          <div key={t.id} className="text-sm">{t.name}</div>
+          <div key={t.id} className="text-sm">{t.description || t.category}</div>
         ))}
       </SectionCard>
 
-      <SectionCard title="Team / Über mich" empty={!sections.team?.length && !sections.branding?.about_text}>
-        {sections.branding?.about_text && <p className="text-sm whitespace-pre-wrap">{sections.branding.about_text}</p>}
+      <SectionCard title="Team / Über mich" empty={!sections.team?.length && !sections.branding?.about_me}>
+        {sections.branding?.about_me && <p className="text-sm whitespace-pre-wrap">{sections.branding.about_me}</p>}
         {sections.team?.map((m: any) => (
           <div key={m.id} className="text-sm">
-            <span className="font-medium">{m.name}</span>
+            <span className="font-medium">{[m.first_name, m.last_name].filter(Boolean).join(' ')}</span>
             {m.role && <span className="text-muted-foreground"> · {m.role}</span>}
           </div>
         ))}
@@ -224,7 +226,7 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
       <SectionCard title="Dateien" empty={!sections.files?.length}>
         {sections.files?.map((f: any) => (
           <div key={f.id} className="flex items-center justify-between text-sm">
-            <span>{f.file_name} <span className="text-muted-foreground">({f.category})</span></span>
+            <span>{f.original_filename} <span className="text-muted-foreground">({f.category})</span></span>
             <span className="text-muted-foreground text-xs">{f.file_size ? `${Math.round(f.file_size / 1024)} KB` : ''}</span>
           </div>
         ))}
@@ -234,7 +236,7 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
         {sections.consents?.map((c: any) => (
           <div key={c.id} className="flex justify-between text-sm">
             <span>{c.consent_type}</span>
-            <span className="text-muted-foreground">{c.granted ? '✓ erteilt' : '—'}</span>
+            <span className="text-muted-foreground">{c.accepted ? '✓ erteilt' : '—'}</span>
           </div>
         ))}
       </SectionCard>
