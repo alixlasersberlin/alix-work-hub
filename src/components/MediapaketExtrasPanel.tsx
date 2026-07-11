@@ -228,12 +228,13 @@ export default function MediapaketExtrasPanel({ mpId, status, onChanged }: Props
   return (
     <div className="rounded-xl border border-border bg-card p-4 card-glow">
       <Tabs defaultValue="workflow">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="workflow"><GitBranch className="w-3 h-3 mr-1" />Workflow</TabsTrigger>
           <TabsTrigger value="timeline"><HistoryIcon className="w-3 h-3 mr-1" />Timeline</TabsTrigger>
           <TabsTrigger value="versions"><Package className="w-3 h-3 mr-1" />V. ({snapshots.length})</TabsTrigger>
           <TabsTrigger value="chat"><MessageCircle className="w-3 h-3 mr-1" />Chat</TabsTrigger>
           <TabsTrigger value="signoff"><PenTool className="w-3 h-3 mr-1" />Sign-Off</TabsTrigger>
+          <TabsTrigger value="ai">✨ AI</TabsTrigger>
           <TabsTrigger value="tools">Extras</TabsTrigger>
         </TabsList>
 
