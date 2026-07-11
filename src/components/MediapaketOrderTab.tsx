@@ -72,7 +72,7 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
     const { data, error } = await supabase.from('media_packages').insert({
       order_id: orderId,
       customer_id: customerId,
-      status: 'draft',
+      status: 'not_started',
       created_by: userData.user?.id,
     }).select().single();
     setCreating(false);
