@@ -38,6 +38,7 @@ export default function MediapaketReviewPanel({ mpId, currentStatus, onChanged }
 
   const [newSubject, setNewSubject] = useState('');
   const [newComment, setNewComment] = useState('');
+  const [newSection, setNewSection] = useState<string>('__none__');
   const [internalOnly, setInternalOnly] = useState(false);
   const [posting, setPosting] = useState(false);
 
