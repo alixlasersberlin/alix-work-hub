@@ -93,6 +93,9 @@ export default function EscSettings() {
         </CardContent>
       </Card>
 
+      <CalendarConnectionsCard />
+
+
 
       <Card>
         <CardHeader><CardTitle className="text-[14px]">Sicherheit & Revision</CardTitle></CardHeader>
