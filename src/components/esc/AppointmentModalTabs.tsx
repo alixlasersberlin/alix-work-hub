@@ -104,9 +104,12 @@ export function AppointmentModalTabs({
   departments, employees, resources, initial, defaultStart, canSeeInternal, history = [],
 }: Props) {
   const [tab, setTab] = useState('general');
-  const [mode, setMode] = useState<'intern' | 'extern'>(
-    initial?.customerEmail || initial?.customerName || initial?.confirmationRequired ? 'extern' : 'intern'
-  );
+  const detectMode = (): 'intern' | 'extern' | 'erinnerung' | 'wiedervorlage' => {
+    if (initial?.kind === 'Erinnerung') return 'erinnerung';
+    if (initial?.kind === 'Wiedervorlage') return 'wiedervorlage';
+    return initial?.customerEmail || initial?.customerName || initial?.confirmationRequired ? 'extern' : 'intern';
+  };
+  const [mode, setMode] = useState<'intern' | 'extern' | 'erinnerung' | 'wiedervorlage'>(detectMode());
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [form, setForm] = useState(() => buildInitialForm(initial, defaultStart, departments));
   const defaultStartTime = defaultStart?.getTime();
@@ -114,13 +117,17 @@ export function AppointmentModalTabs({
   useEffect(() => {
     if (!open) return;
     setTab('general');
-    setMode(initial?.customerEmail || initial?.customerName || initial?.confirmationRequired ? 'extern' : 'intern');
+    setMode(detectMode());
     setSelectedCustomerId(null);
     setForm(buildInitialForm(initial, defaultStart, departments));
   }, [open, initial?.id, defaultStartTime, departments]);
 
+  // Bei Modus-Wechsel: Terminart automatisch setzen und irrelevante Tabs verlassen
   useEffect(() => {
-    if (mode === 'intern' && (tab === 'customer' || tab === 'confirmation')) setTab('general');
+    if (mode === 'erinnerung') setForm((f) => ({ ...f, kind: 'Erinnerung', confirmationRequired: false }));
+    else if (mode === 'wiedervorlage') setForm((f) => ({ ...f, kind: 'Wiedervorlage', confirmationRequired: false }));
+    else if (mode === 'intern') setForm((f) => (f.kind === 'Erinnerung' || f.kind === 'Wiedervorlage' ? { ...f, kind: '' } : f));
+    if (mode !== 'extern' && (tab === 'customer' || tab === 'confirmation')) setTab('general');
   }, [mode, tab]);
 
   useEffect(() => {
