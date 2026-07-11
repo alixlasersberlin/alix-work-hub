@@ -1,5 +1,6 @@
 import { CapacityHeatmap } from '@/components/esc/resources/CapacityHeatmap';
 import { LiveAvailability } from '@/components/esc/resources/LiveAvailability';
+import { RmQuickActions } from '@/components/esc/resources/RmQuickActions';
 import { useResourceMgmt } from '@/hooks/esc/useResourceMgmt';
 import { useAppointments } from '@/hooks/esc/useAppointments';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
