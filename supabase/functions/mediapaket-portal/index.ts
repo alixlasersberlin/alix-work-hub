@@ -232,6 +232,55 @@ Deno.serve(async (req) => {
         return json({ ok: true });
       }
 
+      case 'list_questions': {
+        const { data, error } = await admin
+          .from('media_package_comments')
+          .select('id, subject, comment, related_field, created_at, read_at, answered_at, author_type, recipient_type, internal_only')
+          .eq('media_package_id', mpId)
+          .eq('internal_only', false)
+          .order('created_at', { ascending: false });
+        if (error) return json({ error: error.message }, 400);
+        return json({ questions: data || [] });
+      }
+
+      case 'mark_read': {
+        const { question_id } = body;
+        if (!question_id) return json({ error: 'question_id required' }, 400);
+        await admin.from('media_package_comments')
+          .update({ read_at: new Date().toISOString() })
+          .eq('id', question_id).eq('media_package_id', mpId).is('read_at', null);
+        return json({ ok: true });
+      }
+
+      case 'answer_question': {
+        const { question_id, answer } = body;
+        if (!question_id || !answer?.trim()) return json({ error: 'question_id and answer required' }, 400);
+        // Mark original as answered
+        await admin.from('media_package_comments')
+          .update({ answered_at: new Date().toISOString() })
+          .eq('id', question_id).eq('media_package_id', mpId);
+        // Insert customer reply
+        const { data: parent } = await admin.from('media_package_comments')
+          .select('subject, related_field').eq('id', question_id).maybeSingle();
+        await admin.from('media_package_comments').insert({
+          media_package_id: mpId,
+          author_type: 'customer',
+          recipient_type: 'staff',
+          subject: parent?.subject ? `Re: ${parent.subject}` : 'Antwort des Kunden',
+          comment: String(answer).trim(),
+          related_field: parent?.related_field ?? null,
+          internal_only: false,
+        });
+        await admin.from('media_package_history').insert({
+          media_package_id: mpId,
+          action: 'customer_answered',
+          entity_id: question_id,
+        });
+        // Move back to in_progress so staff sees pending review
+        await admin.from('media_packages').update({ status: 'in_progress' as any }).eq('id', mpId);
+        return json({ ok: true });
+      }
+
       default:
         return json({ error: 'unknown action' }, 400);
     }
