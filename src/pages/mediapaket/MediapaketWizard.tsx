@@ -668,7 +668,7 @@ function StepConsents({ data, save }: any) {
   );
 }
 
-function StepSummary({ data, onSubmit }: any) {
+function StepSummary({ data, onSubmit, confirmText }: any) {
   const requiredConsents = ['data_correct','file_rights','usage','privacy'];
   const missing = requiredConsents.filter(k => !data.consents?.find((c: any) => c.consent_type === k && c.accepted));
   const canSubmit = missing.length === 0;
