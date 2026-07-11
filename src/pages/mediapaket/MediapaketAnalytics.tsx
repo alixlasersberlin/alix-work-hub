@@ -160,7 +160,7 @@ export default function MediapaketAnalytics() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Section title="Refresh-Zyklen" icon={<RefreshCw className="w-4 h-4 text-primary"/>}>
           <div className="flex gap-4 text-sm">
-            <div><div className="text-2xl font-semibold">{kpis.refreshCandidates}</div><div className="text-xs text-muted-foreground">Kandidaten (>12 Mon.)</div></div>
+            <div><div className="text-2xl font-semibold">{kpis.refreshCandidates}</div><div className="text-xs text-muted-foreground">Kandidaten (&gt;12 Mon.)</div></div>
             <div><div className="text-2xl font-semibold">{kpis.refreshDone}</div><div className="text-xs text-muted-foreground">Reminder versendet</div></div>
             <div><div className="text-2xl font-semibold">{kpis.refreshCandidates ? Math.round(kpis.refreshDone / Math.max(kpis.refreshCandidates, 1) * 100) : 0}%</div><div className="text-xs text-muted-foreground">Quote</div></div>
           </div>
