@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Plus, Copy, ExternalLink, RefreshCw, Package as PackageIcon, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
+import MediapaketReviewPanel from './MediapaketReviewPanel';
 
 interface Props {
   orderId: string;
@@ -155,6 +156,9 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
           </div>
         </div>
       </div>
+
+      {/* Review-Panel: Status, Kommentare, Rückfragen, Verlauf */}
+      <MediapaketReviewPanel mpId={mp.id} currentStatus={mp.status} onChanged={load} />
 
       {/* Sections */}
       <SectionCard title="Leistungsauswahl" empty={!sections.services?.length}>
