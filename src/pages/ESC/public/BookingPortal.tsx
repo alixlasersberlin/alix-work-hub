@@ -211,7 +211,7 @@ export default function BookingPortal() {
               <Mail className="w-5 h-5 text-primary" />
             </div>
             <div className="flex-1">
-              <div className="font-semibold text-[14px]">Alle Anfragen rasch erledigt</div>
+              <div className="font-semibold text-[14px]">Anfragen und Rückruf schnell erledigt</div>
               <div className="text-[12px] text-muted-foreground mt-0.5">
                 Wählen Sie eine Leistung – Sie erhalten direkt eine Bestätigung per E-Mail.
               </div>
