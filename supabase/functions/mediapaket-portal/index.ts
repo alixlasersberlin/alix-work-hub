@@ -178,7 +178,7 @@ Deno.serve(async (req) => {
       if (!userData?.user) return json({ error: 'unauthorized' }, 401);
       const { data: canManage } = await admin.rpc('can_manage_media_packages').single().then(r => r).catch(() => ({ data: null }));
       // fallback: check via user client (RLS)
-      const body = await req.json();
+      const body = parsedBody;
       const mpId = body.mp_id;
       if (!mpId) return json({ error: 'mp_id required' }, 400);
       // Ensure user can access it
@@ -197,7 +197,7 @@ Deno.serve(async (req) => {
       });
       const { data: userData } = await userClient.auth.getUser();
       if (!userData?.user) return json({ error: 'unauthorized' }, 401);
-      const body = await req.json();
+      const body = parsedBody;
       const srcId = body.mp_id;
       const targetOrderId = body.target_order_id || null;
       if (!srcId) return json({ error: 'mp_id required' }, 400);
@@ -247,7 +247,7 @@ Deno.serve(async (req) => {
       });
       const { data: userData } = await userClient.auth.getUser();
       if (!userData?.user) return json({ error: 'unauthorized' }, 401);
-      const body = await req.json();
+      const body = parsedBody;
       const mpId = body.mp_id;
       const subject = body.subject || 'Ihr Media Paket bei Alix Lasers';
       const introMessage = body.message || 'Sie können Ihre Angaben jetzt online ausfüllen.';
@@ -301,7 +301,7 @@ Deno.serve(async (req) => {
       });
       const { data: userData } = await userClient.auth.getUser();
       if (!userData?.user) return json({ error: 'unauthorized' }, 401);
-      const body = await req.json();
+      const body = parsedBody;
       const mpId = body.mp_id;
       const commentId = body.comment_id;
       const baseUrl = body.base_url || 'https://alixwork.de';
@@ -354,7 +354,7 @@ Deno.serve(async (req) => {
       });
       const { data: userData } = await userClient.auth.getUser();
       if (!userData?.user) return json({ error: 'unauthorized' }, 401);
-      const body = await req.json();
+      const body = parsedBody;
       const mpId = body.mp_id;
       const message = String(body.message || '').trim();
       const baseUrl = body.base_url || 'https://alixwork.de';
@@ -398,7 +398,7 @@ Deno.serve(async (req) => {
 
     // Phase 31 — Notify customer of status change
     if (action === 'notify_customer_status') {
-      const body = await req.json();
+      const body = parsedBody;
       const mpId = body.mp_id;
       const newStatus = body.new_status;
       const baseUrl = body.base_url || 'https://alixwork.de';
@@ -474,7 +474,7 @@ Deno.serve(async (req) => {
       const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: authH } }, auth: { persistSession: false } });
       const { data: userData } = await userClient.auth.getUser();
       if (!userData?.user) return json({ error: 'unauthorized' }, 401);
-      const body = await req.json();
+      const body = parsedBody;
       const { mp_id, message } = body;
       if (!mp_id || !String(message || '').trim()) return json({ error: 'mp_id and message required' }, 400);
       const { data: mp } = await userClient.from('media_packages').select('customer_id, order_id').eq('id', mp_id).maybeSingle();
@@ -499,7 +499,7 @@ Deno.serve(async (req) => {
       const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: authH } }, auth: { persistSession: false } });
       const { data: userData } = await userClient.auth.getUser();
       if (!userData?.user) return json({ error: 'unauthorized' }, 401);
-      const body = await req.json();
+      const body = parsedBody;
       const { mp_id, watcher_user_id } = body;
       if (!mp_id || !watcher_user_id) return json({ error: 'required' }, 400);
       await admin.from('media_package_history').insert({
@@ -517,7 +517,7 @@ Deno.serve(async (req) => {
 
     // Phase 34 — Production Handoff: create mail_task for graphic team
     if (action === 'handoff_production') {
-      const body = await req.json();
+      const body = parsedBody;
       const mpId = body.mp_id;
       if (!mpId) return json({ error: 'mp_id required' }, 400);
       const { data: mp } = await admin.from('media_packages')
@@ -548,7 +548,7 @@ Deno.serve(async (req) => {
       });
       const { data: userData } = await userClient.auth.getUser();
       if (!userData?.user) return json({ error: 'unauthorized' }, 401);
-      const body = await req.json();
+      const body = parsedBody;
       const { template_id, customer_id, order_id } = body;
       if (!template_id || !customer_id) return json({ error: 'template_id and customer_id required' }, 400);
       const { data: setting } = await admin.from('app_settings').select('value').eq('key', 'mediapaket.templates').maybeSingle();
@@ -591,7 +591,7 @@ Deno.serve(async (req) => {
       const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: authH } }, auth: { persistSession: false } });
       const { data: userData } = await userClient.auth.getUser();
       if (!userData?.user) return json({ error: 'unauthorized' }, 401);
-      const body = await req.json();
+      const body = parsedBody;
       const mpId = body.mp_id;
       const label = body.label || 'manual';
       if (!mpId) return json({ error: 'mp_id required' }, 400);
@@ -611,7 +611,7 @@ Deno.serve(async (req) => {
       const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: authH } }, auth: { persistSession: false } });
       const { data: userData } = await userClient.auth.getUser();
       if (!userData?.user) return json({ error: 'unauthorized' }, 401);
-      const body = await req.json();
+      const body = parsedBody;
       const mpId = body.mp_id;
       if (!mpId) return json({ error: 'mp_id required' }, 400);
       const { data: mp } = await userClient.from('media_packages').select('id').eq('id', mpId).maybeSingle();
@@ -637,7 +637,7 @@ Deno.serve(async (req) => {
       if (!userData?.user) return json({ error: 'unauthorized' }, 401);
       const { data: roleRow } = await admin.from('user_roles').select('role').eq('user_id', userData.user.id).eq('role', 'Super Admin').maybeSingle();
       if (!roleRow) return json({ error: 'Super Admin required' }, 403);
-      const body = await req.json();
+      const body = parsedBody;
       const { mp_id, snapshot_id } = body;
       if (!mp_id || !snapshot_id) return json({ error: 'mp_id & snapshot_id required' }, 400);
       const { data: snapRow } = await admin.from('media_package_history').select('new_value').eq('id', snapshot_id).eq('media_package_id', mp_id).maybeSingle();
@@ -699,7 +699,7 @@ Deno.serve(async (req) => {
       const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: authH } }, auth: { persistSession: false } });
       const { data: userData } = await userClient.auth.getUser();
       if (!userData?.user) return json({ error: 'unauthorized' }, 401);
-      const body = await req.json();
+      const body = parsedBody;
       const { mp_id, enabled } = body;
       if (!mp_id) return json({ error: 'mp_id required' }, 400);
       const { data: mp } = await userClient.from('media_packages').select('id').eq('id', mp_id).maybeSingle();
@@ -728,7 +728,7 @@ Deno.serve(async (req) => {
       const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: authH } }, auth: { persistSession: false } });
       const { data: userData } = await userClient.auth.getUser();
       if (!userData?.user) return json({ error: 'unauthorized' }, 401);
-      const body = await req.json();
+      const body = parsedBody;
       const { mp_id } = body;
       if (!mp_id) return json({ error: 'mp_id required' }, 400);
       const { data: mp } = await userClient.from('media_packages').select('id').eq('id', mp_id).maybeSingle();
@@ -746,7 +746,7 @@ Deno.serve(async (req) => {
       const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: authH } }, auth: { persistSession: false } });
       const { data: userData } = await userClient.auth.getUser();
       if (!userData?.user) return json({ error: 'unauthorized' }, 401);
-      const body = await req.json();
+      const body = parsedBody;
       const { mp_id } = body;
       if (!mp_id) return json({ error: 'mp_id required' }, 400);
       const { data: mp } = await userClient.from('media_packages').select('id, customer_id').eq('id', mp_id).maybeSingle();
@@ -774,7 +774,7 @@ Deno.serve(async (req) => {
 
     if (action === 'request_deletion') {
       // Kunden-Token-basiert (aus Portal)
-      const body = await req.json().catch(() => ({}));
+      const body = parsedBody;
       const tok = body.token;
       const reason = body.reason || '';
       if (!tok) return json({ error: 'token required' }, 401);
@@ -807,7 +807,7 @@ Deno.serve(async (req) => {
       if (!userData?.user) return json({ error: 'unauthorized' }, 401);
       const { data: roleRow } = await admin.from('user_roles').select('role').eq('user_id', userData.user.id).eq('role', 'Super Admin').maybeSingle();
       if (!roleRow) return json({ error: 'Super Admin required' }, 403);
-      const body = await req.json();
+      const body = parsedBody;
       const { mp_id } = body;
       if (!mp_id) return json({ error: 'mp_id required' }, 400);
       // Snapshot vor Anonymisierung
