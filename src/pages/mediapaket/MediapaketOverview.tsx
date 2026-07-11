@@ -4,10 +4,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Package as PackageIcon, Search, LayoutGrid, List as ListIcon, AlertTriangle, CalendarClock, ExternalLink, User } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { Loader2, Package as PackageIcon, Search, LayoutGrid, List as ListIcon, AlertTriangle, CalendarClock, ExternalLink, User, Download, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 const STATUS_LABEL: Record<string, string> = {
   not_started: 'Nicht begonnen',
@@ -60,6 +64,66 @@ export default function MediapaketOverview() {
   const [statusFilter, setStatusFilter] = useState<string>('__all__');
   const [assigneeFilter, setAssigneeFilter] = useState<string>('__all__');
   const [overdueOnly, setOverdueOnly] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [staffList, setStaffList] = useState<Array<{ id: string; label: string }>>([]);
+  const [bulkBusy, setBulkBusy] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from('user_profiles').select('id, full_name, email, is_active').eq('is_active', true).order('full_name');
+      setStaffList((data || []).map((p: any) => ({ id: p.id, label: p.full_name || p.email || 'Unbenannt' })));
+    })();
+  }, []);
+
+  const toggleOne = (id: string) => setSelected(prev => {
+    const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n;
+  });
+  const toggleAll = (ids: string[], checked: boolean) => setSelected(prev => {
+    const n = new Set(prev);
+    ids.forEach(id => checked ? n.add(id) : n.delete(id));
+    return n;
+  });
+
+  const bulkUpdate = async (patch: Record<string, any>, label: string) => {
+    if (selected.size === 0) return;
+    setBulkBusy(true);
+    const { error } = await (supabase.from('media_packages') as any).update(patch).in('id', Array.from(selected));
+    setBulkBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`${selected.size} Pakete: ${label}`);
+    setSelected(new Set());
+    load();
+  };
+
+  const exportCsv = (list: MpRow[]) => {
+    if (list.length === 0) { toast.info('Keine Zeilen zum Exportieren'); return; }
+    const header = ['Auftrag', 'Kunde', 'Studio', 'Status', 'Fortschritt %', 'Frist', 'Zuständig', 'Ungelesen', 'Aktualisiert'];
+    const esc = (v: any) => {
+      const s = v == null ? '' : String(v);
+      return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const lines = [header.join(';')];
+    list.forEach(r => {
+      lines.push([
+        r._order_number || '',
+        r._customer_name || '',
+        r.studio_name || '',
+        STATUS_LABEL[r.status] || r.status,
+        r.progress_percent ?? 0,
+        r.due_date || '',
+        r._assignee_name || '',
+        r._unread_count ?? 0,
+        r.updated_at,
+      ].map(esc).join(';'));
+    });
+    const blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `mediapakete_${format(new Date(), 'yyyy-MM-dd_HHmm')}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    toast.success(`${list.length} Zeilen exportiert`);
+  };
 
   const load = async () => {
     setLoading(true);
@@ -202,12 +266,49 @@ export default function MediapaketOverview() {
           <AlertTriangle className="w-4 h-4 mr-1" /> Nur überfällig
         </Button>
         <Button variant="outline" size="sm" onClick={load}>Aktualisieren</Button>
+        <Button variant="outline" size="sm" onClick={() => exportCsv(filtered)}><Download className="w-4 h-4 mr-1" /> CSV Export</Button>
       </div>
+
+      {/* Bulk action bar */}
+      {selected.size > 0 && (
+        <div className="rounded-xl border border-primary/40 bg-primary/5 p-3 flex flex-wrap items-center gap-2 sticky top-2 z-10 backdrop-blur">
+          <Badge className="bg-primary/20 text-primary border-primary/40">{selected.size} ausgewählt</Badge>
+          <Select onValueChange={(v) => bulkUpdate({ status: v }, `Status → ${STATUS_LABEL[v]}`)}>
+            <SelectTrigger className="w-[200px] h-8 text-xs" disabled={bulkBusy}><SelectValue placeholder="Status setzen…" /></SelectTrigger>
+            <SelectContent>
+              {STATUS_ORDER.map(s => <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select onValueChange={(v) => bulkUpdate({ assigned_user_id: v === '__none__' ? null : v }, v === '__none__' ? 'Zuweisung entfernt' : 'Zugewiesen')}>
+            <SelectTrigger className="w-[220px] h-8 text-xs" disabled={bulkBusy}><SelectValue placeholder="Zuständigen setzen…" /></SelectTrigger>
+            <SelectContent className="max-h-72">
+              <SelectItem value="__none__">— Nicht zugewiesen —</SelectItem>
+              {staffList.map(s => <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="h-8 text-xs" disabled={bulkBusy}><CalendarClock className="w-3.5 h-3.5 mr-1" /> Frist setzen</Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar mode="single" onSelect={(d) => d && bulkUpdate({ due_date: format(d, 'yyyy-MM-dd') }, `Frist ${format(d, 'dd.MM.yyyy')}`)} initialFocus className={cn('p-3 pointer-events-auto')} />
+            </PopoverContent>
+          </Popover>
+          <Button variant="outline" size="sm" className="h-8 text-xs" disabled={bulkBusy} onClick={() => bulkUpdate({ due_date: null }, 'Frist entfernt')}>Frist entfernen</Button>
+          <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => exportCsv(filtered.filter(r => selected.has(r.id)))}>
+            <Download className="w-3.5 h-3.5 mr-1" /> Auswahl exportieren
+          </Button>
+          <div className="ml-auto flex items-center gap-1">
+            {bulkBusy && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+            <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => setSelected(new Set())}><X className="w-4 h-4" /></Button>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="flex items-center gap-2 p-8 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" /> Lade…</div>
       ) : view === 'list' ? (
-        <ListView rows={filtered} />
+        <ListView rows={filtered} selected={selected} onToggle={toggleOne} onToggleAll={(checked) => toggleAll(filtered.map(r => r.id), checked)} />
       ) : (
         <KanbanView grouped={grouped} />
       )}
@@ -232,16 +333,21 @@ function StatusBadge({ status }: { status: string }) {
   return <Badge variant="outline" className={cn('text-[10px]', STATUS_TONE[status])}>{STATUS_LABEL[status] || status}</Badge>;
 }
 
-function ListView({ rows }: { rows: MpRow[] }) {
+function ListView({ rows, selected, onToggle, onToggleAll }: { rows: MpRow[]; selected: Set<string>; onToggle: (id: string) => void; onToggleAll: (checked: boolean) => void }) {
   if (rows.length === 0) {
     return <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">Keine Mediapakete gefunden.</div>;
   }
+  const allChecked = rows.length > 0 && rows.every(r => selected.has(r.id));
+  const someChecked = rows.some(r => selected.has(r.id));
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden card-glow">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-secondary/50">
             <tr className="text-left text-xs text-muted-foreground">
+              <th className="p-3 w-8">
+                <Checkbox checked={allChecked ? true : someChecked ? 'indeterminate' : false} onCheckedChange={(c) => onToggleAll(!!c)} />
+              </th>
               <th className="p-3">Auftrag</th>
               <th className="p-3">Kunde / Studio</th>
               <th className="p-3">Status</th>
@@ -256,7 +362,8 @@ function ListView({ rows }: { rows: MpRow[] }) {
             {rows.map(r => {
               const overdue = r.due_date && r.status !== 'completed' && new Date(r.due_date) < new Date();
               return (
-                <tr key={r.id} className="border-t border-border hover:bg-secondary/30 transition">
+                <tr key={r.id} className={cn('border-t border-border hover:bg-secondary/30 transition', selected.has(r.id) && 'bg-primary/5')}>
+                  <td className="p-3"><Checkbox checked={selected.has(r.id)} onCheckedChange={() => onToggle(r.id)} /></td>
                   <td className="p-3 font-medium">{r._order_number || '—'}</td>
                   <td className="p-3">
                     <div className="truncate max-w-[220px]">{r._customer_name || '—'}</div>
