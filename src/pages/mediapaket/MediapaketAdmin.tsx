@@ -126,14 +126,38 @@ export default function MediapaketAdmin() {
             <StatBox label="Dateien gesamt" value={stats.totalFiles} />
             <StatBox label="Downloads gesamt" value={stats.totalDownloads} />
             <StatBox label="Pakete gesamt" value={Object.values(stats.byStatus).reduce((a, b) => a + b, 0)} />
+            <StatBox label="Überfällig" value={stats.overdue} />
+            <StatBox label="Ø Bearbeitungstage" value={stats.avgSubmitDays != null ? `${stats.avgSubmitDays} T` : '—'} />
+            <StatBox label="Zugewiesen" value={`${stats.assignedShare}%`} />
+            <StatBox label="Top-Zuständige" value={stats.topAssignees.length} />
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-            {Object.entries(stats.byStatus).sort((a, b) => b[1] - a[1]).map(([s, n]) => (
-              <div key={s} className="flex items-center justify-between text-xs border border-border/50 rounded-lg px-2 py-1">
-                <span className="text-muted-foreground truncate">{s}</span>
-                <span className="font-medium">{n}</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <div className="text-xs text-muted-foreground mb-1.5">Status-Verteilung</div>
+              <div className="grid grid-cols-2 gap-2">
+                {Object.entries(stats.byStatus).sort((a, b) => b[1] - a[1]).map(([s, n]) => (
+                  <div key={s} className="flex items-center justify-between text-xs border border-border/50 rounded-lg px-2 py-1">
+                    <span className="text-muted-foreground truncate">{s}</span>
+                    <span className="font-medium">{n}</span>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground mb-1.5">Auslastung Zuständige</div>
+              {stats.topAssignees.length === 0 ? (
+                <p className="text-xs text-muted-foreground">Keine Zuweisungen.</p>
+              ) : (
+                <div className="space-y-1">
+                  {stats.topAssignees.map(a => (
+                    <div key={a.name} className="flex items-center justify-between text-xs border border-border/50 rounded-lg px-2 py-1">
+                      <span className="truncate">{a.name}</span>
+                      <span className="font-medium">{a.count}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
