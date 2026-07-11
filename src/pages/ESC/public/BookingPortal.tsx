@@ -207,12 +207,17 @@ export default function BookingPortal() {
             className="w-full text-left"
             aria-expanded={deptOpen}
           >
-            <CardHeader className="flex-row items-center justify-between gap-3 space-y-0">
-              <div>
-                <CardTitle className="text-[16px]">Alle Anfragen rasch erledigt</CardTitle>
-                <p className="text-[12.5px] text-muted-foreground">Wählen Sie eine Leistung – Sie erhalten direkt eine Bestätigung per E-Mail.</p>
+            <CardHeader className="flex-row items-start justify-between gap-3 space-y-0">
+              <div className="flex items-start gap-3 flex-1">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <Mail className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="text-[16px]">Alle Anfragen rasch erledigt</CardTitle>
+                  <p className="text-[12.5px] text-muted-foreground mt-0.5">Wählen Sie eine Leistung – Sie erhalten direkt eine Bestätigung per E-Mail.</p>
+                </div>
               </div>
-              <ChevronDown className={`w-5 h-5 text-muted-foreground shrink-0 transition-transform ${deptOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`w-5 h-5 text-muted-foreground shrink-0 mt-1 transition-transform ${deptOpen ? 'rotate-180' : ''}`} />
             </CardHeader>
           </button>
           {deptOpen && (
