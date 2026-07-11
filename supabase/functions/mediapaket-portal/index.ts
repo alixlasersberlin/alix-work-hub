@@ -161,9 +161,11 @@ Deno.serve(async (req) => {
 
   try {
     const url = new URL(req.url);
-    const action = url.searchParams.get('action') || (await (async () => {
-      try { return (await req.clone().json())?.action; } catch { return null; }
-    })());
+    // Body EINMAL parsen (POST) — verhindert Body-Stream-Locking bei mehrfachem req.json()
+    const parsedBody: any = req.method === 'POST'
+      ? await req.json().catch(() => ({}))
+      : {};
+    const action = url.searchParams.get('action') || parsedBody?.action || null;
 
     // Staff issue-token endpoint (requires authenticated staff)
     if (action === 'issue_token') {
