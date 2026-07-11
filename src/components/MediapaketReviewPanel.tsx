@@ -79,7 +79,7 @@ export default function MediapaketReviewPanel({ mpId, currentStatus, onChanged }
     if (!newComment.trim()) return;
     setPosting(true);
     const { data: userData } = await supabase.auth.getUser();
-    const { error } = await supabase.from('media_package_comments').insert({
+    const { data: inserted, error } = await supabase.from('media_package_comments').insert({
       media_package_id: mpId,
       author_id: userData.user?.id,
       author_type: 'staff',
@@ -87,7 +87,7 @@ export default function MediapaketReviewPanel({ mpId, currentStatus, onChanged }
       subject: newSubject || null,
       comment: newComment.trim(),
       internal_only: internalOnly,
-    });
+    }).select('id').single();
     if (error) { toast.error(error.message); setPosting(false); return; }
     await supabase.from('media_package_history').insert({
       media_package_id: mpId,
@@ -99,9 +99,22 @@ export default function MediapaketReviewPanel({ mpId, currentStatus, onChanged }
       await supabase.from('media_packages').update({ status: 'question_required' as any }).eq('id', mpId);
       onChanged();
     }
+    // Auto-notify customer by email
+    if (!internalOnly && inserted?.id) {
+      try {
+        const { error: mailErr } = await supabase.functions.invoke('mediapaket-portal?action=notify_question', {
+          body: { mp_id: mpId, comment_id: inserted.id, base_url: window.location.origin },
+        });
+        if (mailErr) toast.warning(`Kommentar gespeichert, E-Mail-Versand fehlgeschlagen: ${mailErr.message}`);
+        else toast.success('Rückfrage an Kunde gesendet (per E-Mail benachrichtigt)');
+      } catch (e: any) {
+        toast.warning(`Kommentar gespeichert, E-Mail-Versand fehlgeschlagen: ${e.message}`);
+      }
+    } else {
+      toast.success(internalOnly ? 'Interner Kommentar gespeichert' : 'Rückfrage an Kunde gespeichert');
+    }
     setNewComment('');
     setNewSubject('');
-    toast.success(internalOnly ? 'Interner Kommentar gespeichert' : 'Rückfrage an Kunde gespeichert');
     setPosting(false);
     load();
   };

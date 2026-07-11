@@ -172,6 +172,59 @@ Deno.serve(async (req) => {
       return json({ ok: true, email: cust.email });
     }
 
+    // Staff notify-question endpoint: sends question email to customer
+    if (action === 'notify_question') {
+      const auth = req.headers.get('Authorization');
+      if (!auth) return json({ error: 'unauthorized' }, 401);
+      const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, {
+        global: { headers: { Authorization: auth } }, auth: { persistSession: false }
+      });
+      const { data: userData } = await userClient.auth.getUser();
+      if (!userData?.user) return json({ error: 'unauthorized' }, 401);
+      const body = await req.json();
+      const mpId = body.mp_id;
+      const commentId = body.comment_id;
+      const baseUrl = body.base_url || 'https://alixwork.de';
+      if (!mpId || !commentId) return json({ error: 'mp_id and comment_id required' }, 400);
+      const { data: mp } = await userClient.from('media_packages')
+        .select('id, customer_id').eq('id', mpId).maybeSingle();
+      if (!mp) return json({ error: 'forbidden' }, 403);
+      const { data: cust } = await admin.from('customers')
+        .select('email, name').eq('id', mp.customer_id).maybeSingle();
+      if (!cust?.email) return json({ error: 'customer has no email' }, 400);
+      const { data: comment } = await admin.from('media_package_comments')
+        .select('subject, comment').eq('id', commentId).eq('media_package_id', mpId).maybeSingle();
+      if (!comment) return json({ error: 'comment not found' }, 404);
+      const token = await signToken(mpId);
+      const link = `${baseUrl}/book/mediapaket?token=${encodeURIComponent(token)}`;
+      const subject = comment.subject ? `Rückfrage: ${comment.subject}` : 'Rückfrage zu Ihrem Media Paket';
+      const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 560px; margin: auto; color:#222">
+          <h2 style="color:#111">Wir haben eine Rückfrage</h2>
+          <p>Hallo ${cust.name || ''},</p>
+          <p>zu Ihrem Media Paket haben wir folgende Rückfrage:</p>
+          <blockquote style="border-left:3px solid #d4af37;padding:8px 12px;background:#faf7ee;margin:16px 0;white-space:pre-wrap">${String(comment.comment).replace(/</g,'&lt;')}</blockquote>
+          <p style="margin: 24px 0">
+            <a href="${link}" style="background:#000;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block;font-weight:600">
+              Jetzt beantworten
+            </a>
+          </p>
+          <p style="font-size:12px;color:#666">Falls der Button nicht funktioniert:<br><a href="${link}">${link}</a></p>
+        </div>`;
+      const { error: sendErr } = await userClient.functions.invoke('send-mail', {
+        body: { to: cust.email, subject, html, from: 'vertrieb@alixwork.de' },
+      });
+      if (sendErr) return json({ error: sendErr.message }, 502);
+      await admin.from('media_package_history').insert({
+        media_package_id: mpId,
+        user_id: userData.user.id,
+        action: 'question_email_sent',
+        entity_id: commentId,
+        new_value: { email: cust.email, subject } as any,
+      });
+      return json({ ok: true, email: cust.email });
+    }
+
     // All other actions are token-based (customer portal)
     const body = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
     const token = body.token || url.searchParams.get('token');
