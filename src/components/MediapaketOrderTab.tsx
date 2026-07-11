@@ -223,6 +223,36 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
         </div>
       </div>
 
+      {/* Unread customer answers banner */}
+      {unread.length > 0 && (
+        <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 card-glow">
+          <div className="flex items-center justify-between gap-3 flex-wrap mb-2">
+            <div className="flex items-center gap-2">
+              <MessageCircle className="w-4 h-4 text-amber-500" />
+              <h4 className="text-sm font-semibold text-foreground">
+                {unread.length} ungelesene Kundenantwort{unread.length === 1 ? '' : 'en'}
+              </h4>
+            </div>
+            <Button size="sm" variant="outline" onClick={markAllRead}>
+              <Check className="w-4 h-4 mr-2" /> Alle als gelesen markieren
+            </Button>
+          </div>
+          <div className="space-y-2">
+            {unread.slice(0, 3).map(u => (
+              <div key={u.id} className="rounded-lg border border-amber-500/30 bg-background/60 p-2">
+                {u.subject && <div className="text-xs font-medium text-foreground">{u.subject}</div>}
+                <p className="text-xs text-muted-foreground line-clamp-2 whitespace-pre-wrap">{u.comment}</p>
+                <div className="text-[10px] text-muted-foreground mt-1">{new Date(u.created_at).toLocaleString('de-DE')}</div>
+              </div>
+            ))}
+            {unread.length > 3 && (
+              <p className="text-xs text-muted-foreground">…und {unread.length - 3} weitere im Kommentarverlauf unten.</p>
+            )}
+          </div>
+        </div>
+      )}
+
+
       {/* Review-Panel: Status, Kommentare, Rückfragen, Verlauf */}
       <MediapaketReviewPanel mpId={mp.id} currentStatus={mp.status} onChanged={load} />
 
