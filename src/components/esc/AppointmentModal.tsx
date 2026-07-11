@@ -222,7 +222,7 @@ export function AppointmentModal({ open, onClose, onSubmit, departments, employe
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between gap-2">
-            <span>{initial?.id ? 'Termin bearbeiten' : 'Neuer Termin'}</span>
+            <span>{initial?.id ? `${ENTRY_TYPES.find(e=>e.value===entryType)!.label.replace(' (intern)','')} bearbeiten` : `Neu: ${ENTRY_TYPES.find(e=>e.value===entryType)!.label}`}</span>
             <Button type="button" size="sm" variant="outline" onClick={runAiSuggest} disabled={aiLoading} className="gap-1.5">
               {aiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 text-primary" />}
               KI-Vorschlag
