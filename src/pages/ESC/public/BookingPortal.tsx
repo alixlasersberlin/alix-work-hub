@@ -89,6 +89,7 @@ export default function BookingPortal() {
     turnstileOk: true, // stub: real CAPTCHA plugs in here
   });
   const [waitlistOpen, setWaitlistOpen] = useState(false);
+  const [deptOpen, setDeptOpen] = useState(false);
   const [sent, setSent] = useState<{ bookingNumber: string; token: string } | null>(null);
 
   // Pre-fill from URL
