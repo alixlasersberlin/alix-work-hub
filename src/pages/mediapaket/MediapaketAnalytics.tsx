@@ -30,7 +30,7 @@ export default function MediapaketAnalytics() {
         supabase.from('media_package_history').select('media_package_id, action, created_at, new_value').in('action', ['status_changed', 'submitted', 'customer_answered', 'refresh_reminder_sent']).order('created_at', { ascending: true }).limit(5000),
         supabase.from('user_profiles').select('id, first_name, last_name, email'),
         supabase.from('customers').select('id, name'),
-        supabase.from('reviews').select('id, rating, nps_score, customer_id, created_at, product_name').ilike('product_name', '%Mediapaket%'),
+        supabase.from('reviews').select('id, rating_delivery, rating_driver_friendliness, customer_id, created_at, product_name').ilike('product_name', '%Mediapaket%'),
       ]);
       setMps(mpRes.data || []);
       setHistory(hRes.data || []);
@@ -84,11 +84,13 @@ export default function MediapaketAnalytics() {
     const refreshCandidates = mps.filter(m => m.status === 'completed' && new Date(m.updated_at).getTime() < cutoff.getTime()).length;
     const refreshDone = history.filter(h => h.action === 'refresh_reminder_sent').length;
 
-    // NPS-Trend (letzte 6 Monate)
+    // NPS-Trend (Ø aus vorhandenen Ratings 1-5, hochgerechnet auf 0-10)
     const npsByMonth: Record<string, { sum: number; n: number }> = {};
-    reviews.forEach(r => {
-      const score = r.nps_score ?? (r.rating != null ? (r.rating * 2) : null);
-      if (score == null) return;
+    reviews.forEach((r: any) => {
+      const vals = [r.rating_delivery, r.rating_driver_friendliness].filter((v: any) => typeof v === 'number');
+      if (vals.length === 0) return;
+      const avg = vals.reduce((a: number, b: number) => a + b, 0) / vals.length;
+      const score = Math.round(avg * 2 * 10) / 10;
       const m = new Date(r.created_at).toISOString().slice(0, 7);
       npsByMonth[m] = npsByMonth[m] || { sum: 0, n: 0 };
       npsByMonth[m].sum += score; npsByMonth[m].n += 1;
