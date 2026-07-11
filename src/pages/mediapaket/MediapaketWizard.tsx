@@ -173,7 +173,7 @@ export default function MediapaketWizard() {
         <Card>
           <CardHeader><CardTitle className="text-[16px]">{stepIdx + 1}. {step.label}</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            {step.id === 'prep' && <StepPrep />}
+            {step.id === 'prep' && <StepPrep introText={data.settings?.['mediapaket.customer_intro_text']} />}
             {step.id === 'services' && <StepServices data={data} save={save} />}
             {step.id === 'studio' && <StepStudio data={data} save={save} upload={uploadFile} />}
             {step.id === 'devices' && <StepDevices data={data} save={save} del={deleteRow} />}
@@ -185,7 +185,7 @@ export default function MediapaketWizard() {
             {step.id === 'design' && <StepDesign data={data} save={save} />}
             {step.id === 'notes' && <StepNotes data={data} save={save} upload={uploadFile} />}
             {step.id === 'consents' && <StepConsents data={data} save={save} />}
-            {step.id === 'summary' && <StepSummary data={data} onSubmit={async () => {
+            {step.id === 'summary' && <StepSummary data={data} confirmText={data.settings?.['mediapaket.submit_confirm_text']} onSubmit={async () => {
               try { await call('submit', token); toast.success('Mediapaket eingereicht'); await reload(); }
               catch (e: any) { toast.error(e.message); }
             }} />}
@@ -273,7 +273,7 @@ function QuestionsBanner({ questions, token, onChange }: { questions: any[]; tok
 
 /* =============== STEP COMPONENTS =============== */
 
-function StepPrep() {
+function StepPrep({ introText }: { introText?: string }) {
   const items = [
     'Logo und Name des Studios',
     'genauer Modellname des Alix-Lasers-Gerätes',
@@ -288,6 +288,9 @@ function StepPrep() {
   ];
   return (
     <div className="space-y-3">
+      {introText && (
+        <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm whitespace-pre-wrap">{introText}</div>
+      )}
       <p className="text-sm text-muted-foreground">Bitte prüfen Sie, ob folgende Unterlagen vollständig vorliegen. Sie können jederzeit unterbrechen und später fortsetzen.</p>
       <ul className="space-y-1.5">
         {items.map(i => <li key={i} className="flex items-center gap-2 text-sm"><CheckCircle2 className="w-4 h-4 text-muted-foreground" /> {i}</li>)}
@@ -665,7 +668,7 @@ function StepConsents({ data, save }: any) {
   );
 }
 
-function StepSummary({ data, onSubmit }: any) {
+function StepSummary({ data, onSubmit, confirmText }: any) {
   const requiredConsents = ['data_correct','file_rights','usage','privacy'];
   const missing = requiredConsents.filter(k => !data.consents?.find((c: any) => c.consent_type === k && c.accepted));
   const canSubmit = missing.length === 0;
@@ -690,6 +693,9 @@ function StepSummary({ data, onSubmit }: any) {
         <div className="p-3 bg-destructive/10 border border-destructive/30 rounded text-xs text-destructive">
           Bitte akzeptieren Sie noch die folgenden Pflicht-Einwilligungen im Schritt „Freigaben": {missing.join(', ')}
         </div>
+      )}
+      {confirmText && (
+        <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-xs whitespace-pre-wrap text-muted-foreground">{confirmText}</div>
       )}
       <Button className="w-full" size="lg" disabled={!canSubmit} onClick={onSubmit}>
         <CheckCircle2 className="w-4 h-4 mr-2" /> Mediapaket verbindlich absenden

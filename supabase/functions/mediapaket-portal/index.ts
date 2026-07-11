@@ -304,7 +304,12 @@ Deno.serve(async (req) => {
       case 'get': {
         const data = await getFull(mpId);
         if (!data) return json({ error: 'not found' }, 404);
-        return json({ mp_id: mpId, ...data });
+        // include public portal settings
+        const { data: settingsRows } = await admin.from('app_settings').select('key, value')
+          .in('key', ['mediapaket.customer_intro_text', 'mediapaket.submit_confirm_text']);
+        const settings: Record<string, string> = {};
+        (settingsRows || []).forEach((r: any) => { settings[r.key] = r.value; });
+        return json({ mp_id: mpId, ...data, settings });
       }
 
       case 'save_section': {
