@@ -131,8 +131,11 @@ export default function EscCalendar() {
           <Button size="sm" variant="outline" onClick={() => openNewKind('Wiedervorlage')} title="Interne Wiedervorlage anlegen">
             <ClipboardList className="w-4 h-4 mr-1" /> Wiedervorlage
           </Button>
-          <Button size="sm" onClick={() => openNew()}>
-            <Plus className="w-4 h-4 mr-1" /> Neuer Termin
+          <Button size="sm" variant="outline" onClick={() => openNew(undefined, 'intern')} title="Interner Termin (nur Team)">
+            <Plus className="w-4 h-4 mr-1" /> Neuer Termin (intern)
+          </Button>
+          <Button size="sm" onClick={() => openNew(undefined, 'extern')} title="Externer Termin mit Kunde/Partner">
+            <Plus className="w-4 h-4 mr-1" /> Neuer Termin (extern)
           </Button>
         </div>
       </div>
