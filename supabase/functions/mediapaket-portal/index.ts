@@ -251,7 +251,7 @@ Deno.serve(async (req) => {
       const mpId = body.mp_id;
       const subject = body.subject || 'Ihr Media Paket bei Alix Lasers';
       const introMessage = body.message || 'Sie können Ihre Angaben jetzt online ausfüllen.';
-      const baseUrl = body.base_url || 'https://alixwork.de';
+      const baseUrl = 'https://alixwork.de';
       if (!mpId) return json({ error: 'mp_id required' }, 400);
       const { data: mp } = await userClient.from('media_packages')
         .select('id, customer_id').eq('id', mpId).maybeSingle();
@@ -312,7 +312,7 @@ Deno.serve(async (req) => {
       const body = parsedBody;
       const mpId = body.mp_id;
       const commentId = body.comment_id;
-      const baseUrl = body.base_url || 'https://alixwork.de';
+      const baseUrl = 'https://alixwork.de';
       if (!mpId || !commentId) return json({ error: 'mp_id and comment_id required' }, 400);
       const { data: mp } = await userClient.from('media_packages')
         .select('id, customer_id').eq('id', mpId).maybeSingle();
@@ -372,7 +372,7 @@ Deno.serve(async (req) => {
       const body = parsedBody;
       const mpId = body.mp_id;
       const message = String(body.message || '').trim();
-      const baseUrl = body.base_url || 'https://alixwork.de';
+      const baseUrl = 'https://alixwork.de';
       if (!mpId || !message) return json({ error: 'mp_id and message required' }, 400);
       const { data: mp } = await userClient.from('media_packages')
         .select('id, customer_id').eq('id', mpId).maybeSingle();
@@ -423,7 +423,7 @@ Deno.serve(async (req) => {
       const body = parsedBody;
       const mpId = body.mp_id;
       const newStatus = body.new_status;
-      const baseUrl = body.base_url || 'https://alixwork.de';
+      const baseUrl = 'https://alixwork.de';
       if (!mpId || !newStatus) return json({ error: 'required' }, 400);
       const { data: mp } = await admin.from('media_packages').select('customer_id').eq('id', mpId).maybeSingle();
       if (!mp?.customer_id) return json({ ok: true, skipped: 'no customer' });
