@@ -163,6 +163,35 @@ export default function MediapaketExtrasPanel({ mpId, status, onChanged }: Props
     } catch (e: any) { toast.error(e.message); }
     finally { setChatSending(false); }
   };
+  // Phase 41 — WhatsApp
+  const [waSending, setWaSending] = useState(false);
+  const sendWhatsApp = async () => {
+    if (!chatText.trim()) { toast.error('Nachricht leer'); return; }
+    setWaSending(true);
+    try {
+      const { error } = await supabase.functions.invoke('mediapaket-portal', {
+        body: { action: 'send_whatsapp', mp_id: mpId, message: chatText },
+      });
+      if (error) throw error;
+      setChatText(''); toast.success('WhatsApp gesendet'); load();
+    } catch (e: any) { toast.error(e.message); }
+    finally { setWaSending(false); }
+  };
+
+  // Phase 40 — AI Assistant
+  const [aiText, setAiText] = useState('');
+  const [aiLoading, setAiLoading] = useState<string | null>(null);
+  const callAi = async (kind: 'summarize' | 'suggest' | 'diff') => {
+    setAiLoading(kind); setAiText('');
+    try {
+      const { data, error } = await supabase.functions.invoke('mediapaket-ai', {
+        body: { mp_id: mpId, action: kind },
+      });
+      if (error) throw error;
+      setAiText((data as any)?.text || '');
+    } catch (e: any) { toast.error(e.message); }
+    finally { setAiLoading(null); }
+  };
 
   // Phase 35 — Sign-Off (Canvas)
   const sigRef = useRef<HTMLCanvasElement | null>(null);
@@ -228,12 +257,13 @@ export default function MediapaketExtrasPanel({ mpId, status, onChanged }: Props
   return (
     <div className="rounded-xl border border-border bg-card p-4 card-glow">
       <Tabs defaultValue="workflow">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="workflow"><GitBranch className="w-3 h-3 mr-1" />Workflow</TabsTrigger>
           <TabsTrigger value="timeline"><HistoryIcon className="w-3 h-3 mr-1" />Timeline</TabsTrigger>
           <TabsTrigger value="versions"><Package className="w-3 h-3 mr-1" />V. ({snapshots.length})</TabsTrigger>
           <TabsTrigger value="chat"><MessageCircle className="w-3 h-3 mr-1" />Chat</TabsTrigger>
           <TabsTrigger value="signoff"><PenTool className="w-3 h-3 mr-1" />Sign-Off</TabsTrigger>
+          <TabsTrigger value="ai">✨ AI</TabsTrigger>
           <TabsTrigger value="tools">Extras</TabsTrigger>
         </TabsList>
 
@@ -279,13 +309,17 @@ export default function MediapaketExtrasPanel({ mpId, status, onChanged }: Props
           </div>
           <div className="border-t border-border/40 pt-2 space-y-2">
             <Textarea rows={3} value={chatText} onChange={e => setChatText(e.target.value)} placeholder="Nachricht an den Kunden…" />
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-2">
+              <Button size="sm" variant="outline" onClick={sendWhatsApp} disabled={waSending || !chatText.trim()} className="gap-2">
+                {waSending ? <Loader2 className="w-3 h-3 animate-spin" /> : <MessageCircle className="w-3 h-3" />}
+                Per WhatsApp
+              </Button>
               <Button size="sm" onClick={sendChat} disabled={chatSending || !chatText.trim()} className="gap-2">
                 {chatSending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
                 An Kunden senden
               </Button>
             </div>
-            <p className="text-[10px] text-muted-foreground">Der Kunde erhält eine E-Mail mit Link zum Portal und sieht die Nachricht dort.</p>
+            <p className="text-[10px] text-muted-foreground">E-Mail mit Portal-Link ODER WhatsApp direkt an die Kunden-Telefonnummer.</p>
           </div>
         </TabsContent>
 
@@ -381,6 +415,27 @@ export default function MediapaketExtrasPanel({ mpId, status, onChanged }: Props
         </TabsContent>
 
         {/* EXTRAS / Phase 27 & 30 */}
+        {/* AI / Phase 40 */}
+        <TabsContent value="ai" className="pt-3 space-y-3">
+          <p className="text-xs text-muted-foreground">KI-gestützte Analyse dieses Mediapakets (via Lovable AI).</p>
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="outline" onClick={() => callAi('summarize')} disabled={!!aiLoading} className="gap-2">
+              {aiLoading === 'summarize' ? <Loader2 className="w-3 h-3 animate-spin" /> : '📝'} Zusammenfassung
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => callAi('suggest')} disabled={!!aiLoading} className="gap-2">
+              {aiLoading === 'suggest' ? <Loader2 className="w-3 h-3 animate-spin" /> : '💡'} Vorschläge
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => callAi('diff')} disabled={!!aiLoading} className="gap-2">
+              {aiLoading === 'diff' ? <Loader2 className="w-3 h-3 animate-spin" /> : '🔀'} Version-Diff
+            </Button>
+          </div>
+          {aiText && (
+            <div className="text-xs whitespace-pre-wrap rounded-lg border border-primary/30 bg-primary/5 p-3 max-h-96 overflow-y-auto">
+              {aiText}
+            </div>
+          )}
+        </TabsContent>
+
         <TabsContent value="tools" className="pt-3 space-y-3">
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" size="sm" onClick={duplicate} disabled={duplicating} className="gap-2">

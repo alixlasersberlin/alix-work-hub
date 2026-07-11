@@ -426,8 +426,92 @@ Deno.serve(async (req) => {
         media_package_id: mpId, action: 'status_customer_notified',
         new_value: { email: cust.email, status: newStatus } as any,
       });
+
+      // Phase 36 — Bewertungs-Anfrage bei 'completed' (reviews-Tabelle)
+      if (newStatus === 'completed') {
+        const { data: mpFull } = await admin.from('media_packages')
+          .select('order_id, studio_name').eq('id', mpId).maybeSingle();
+        if (mpFull?.order_id) {
+          const { data: existing } = await admin.from('reviews')
+            .select('id').eq('order_id', mpFull.order_id).limit(1);
+          if (!existing?.length) {
+            await admin.from('reviews').insert({
+              order_id: mpFull.order_id,
+              customer_id: mp.customer_id,
+              customer_email: cust.email,
+              customer_name: cust.name || null,
+              product_name: mpFull.studio_name || 'Mediapaket',
+              invitation_status: 'sent',
+              invitation_sent_at: new Date().toISOString(),
+            });
+            const reviewHtml = `<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#222">
+              <h2>Wie zufrieden sind Sie?</h2>
+              <p>Hallo ${cust.name || ''},</p>
+              <p>Ihr Mediapaket ist fertiggestellt. Wir würden uns über eine kurze Rückmeldung freuen.</p>
+              <p style="margin:24px 0"><a href="${baseUrl}/portal" style="background:#d4af37;color:#000;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">Feedback geben</a></p>
+            </div>`;
+            await fetch(`${SUPABASE_URL}/functions/v1/send-mail`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${SERVICE_ROLE}`, apikey: SERVICE_ROLE },
+              body: JSON.stringify({ to: cust.email, subject: 'Ihr Feedback zum Mediapaket', html: reviewHtml, from: 'vertrieb@alixwork.de' }),
+            });
+            await admin.from('media_package_history').insert({
+              media_package_id: mpId, action: 'review_requested',
+              new_value: { email: cust.email } as any,
+            });
+          }
+        }
+      }
       return json({ ok: true });
     }
+
+    // Phase 41 — WhatsApp Nachricht an Kunde
+    if (action === 'send_whatsapp') {
+      const authH = req.headers.get('Authorization');
+      if (!authH) return json({ error: 'unauthorized' }, 401);
+      const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: authH } }, auth: { persistSession: false } });
+      const { data: userData } = await userClient.auth.getUser();
+      if (!userData?.user) return json({ error: 'unauthorized' }, 401);
+      const body = await req.json();
+      const { mp_id, message } = body;
+      if (!mp_id || !String(message || '').trim()) return json({ error: 'mp_id and message required' }, 400);
+      const { data: mp } = await userClient.from('media_packages').select('customer_id, order_id').eq('id', mp_id).maybeSingle();
+      if (!mp?.customer_id) return json({ error: 'no customer' }, 400);
+      const { data: cust } = await admin.from('customers').select('phone, name').eq('id', mp.customer_id).maybeSingle();
+      if (!cust?.phone) return json({ error: 'customer has no phone' }, 400);
+      const { error: sendErr } = await userClient.functions.invoke('whatsapp-send', {
+        body: { to: cust.phone, message, customer_id: mp.customer_id, order_id: mp.order_id, department: 'Mediapaket' },
+      });
+      if (sendErr) return json({ error: sendErr.message }, 502);
+      await admin.from('media_package_history').insert({
+        media_package_id: mp_id, user_id: userData.user.id, action: 'whatsapp_sent',
+        new_value: { phone: cust.phone, message: String(message).slice(0, 200) } as any,
+      });
+      return json({ ok: true });
+    }
+
+    // Phase 39 — Beobachter (Watcher) hinzufügen
+    if (action === 'add_watcher') {
+      const authH = req.headers.get('Authorization');
+      if (!authH) return json({ error: 'unauthorized' }, 401);
+      const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: authH } }, auth: { persistSession: false } });
+      const { data: userData } = await userClient.auth.getUser();
+      if (!userData?.user) return json({ error: 'unauthorized' }, 401);
+      const body = await req.json();
+      const { mp_id, watcher_user_id } = body;
+      if (!mp_id || !watcher_user_id) return json({ error: 'required' }, 400);
+      await admin.from('media_package_history').insert({
+        media_package_id: mp_id, user_id: userData.user.id, action: 'watcher_added',
+        entity_id: watcher_user_id, new_value: { watcher_user_id } as any,
+      });
+      await admin.from('mail_notifications').insert({
+        recipient_id: watcher_user_id, type: 'mediapaket_watcher',
+        title: 'Sie beobachten jetzt ein Mediapaket',
+        message: `Mediapaket-ID: ${mp_id}`, entity_id: mp_id,
+      } as any).catch(() => {});
+      return json({ ok: true });
+    }
+
 
     // Phase 34 — Production Handoff: create mail_task for graphic team
     if (action === 'handoff_production') {
