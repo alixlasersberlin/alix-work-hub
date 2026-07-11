@@ -769,6 +769,7 @@ function AppRoutes() {
           <Route path="/auftraege/:id" element={<ProtectedRoute requiredRoles={[...ORDER_ROLES, 'Finanzierungen', 'Order']}><OrderDetail /></ProtectedRoute>} />
           <Route path="/mediapaket" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Order', 'Mediapaket', 'Auftragsverwaltung', 'SACHBEARBEITUNG']}><MediapaketOverview /></ProtectedRoute>} />
           <Route path="/mediapaket/admin" element={<ProtectedRoute requiredRoles={['Super Admin']}><MediapaketAdmin /></ProtectedRoute>} />
+          <Route path="/mediapaket/print/:mpId" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Order', 'Mediapaket', 'Auftragsverwaltung', 'SACHBEARBEITUNG']}><MediapaketPrint /></ProtectedRoute>} />
           <Route path="/verkauf/artikel" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Artikel /></ProtectedRoute>} />
           <Route path="/verkauf/artikel/katalog" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Katalog /></ProtectedRoute>} />
           <Route path="/verkauf/artikel/kategorie" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Kategorie /></ProtectedRoute>} />
