@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { addDays, addMonths, addWeeks, differenceInMinutes, format, subDays, subMonths, subWeeks } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Plus, CalendarDays } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, CalendarDays, Bell, ClipboardList } from 'lucide-react';
 import { ViewSwitcher } from '@/components/esc/ViewSwitcher';
 import { DayView } from '@/components/esc/views/DayView';
 import { WeekView } from '@/components/esc/views/WeekView';
