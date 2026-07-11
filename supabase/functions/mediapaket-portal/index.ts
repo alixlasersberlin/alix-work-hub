@@ -843,7 +843,7 @@ Deno.serve(async (req) => {
     }
 
 
-    const body = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
+    const body = parsedBody;
     const token = body.token || url.searchParams.get('token');
     if (!token) return json({ error: 'token required' }, 401);
     const mpId = await verifyToken(token);
