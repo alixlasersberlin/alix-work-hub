@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom';
-import { CalendarDays, LayoutDashboard, Building2, Users, Boxes, Globe, CheckCircle2, Settings, Calendar, Truck, Cpu, DoorOpen, Map, Gauge, ListChecks, Sparkles, Radio, Route } from 'lucide-react';
+import { CalendarDays, LayoutDashboard, Building2, Users, Boxes, Globe, CheckCircle2, Settings, Calendar, Truck, Cpu, DoorOpen, Map, Gauge, ListChecks, Sparkles, Radio, Route, Mail } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const TABS = [
@@ -13,7 +13,8 @@ const TABS = [
   { to: '/esc/touren',         label: 'Touren',         icon: Route },
   { to: '/esc/ai',             label: 'Alix AI',        icon: Sparkles },
   { to: '/esc/ech',            label: 'Comm Hub',       icon: Radio },
-  { to: '/esc/einstellungen',  label: 'Einstellungen',  icon: Settings },
+  { to: '/esc/einstellungen/email-vorlagen', label: 'E-Mail-Vorlagen', icon: Mail },
+  { to: '/esc/einstellungen',  label: 'Einstellungen',  icon: Settings, end: true },
 ];
 
 const RM_TABS = [
