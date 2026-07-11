@@ -233,16 +233,26 @@ export default function BookingPortal() {
             <p className="text-[12.5px] text-muted-foreground">Für <b>{dept.name}</b>.</p>
           </CardHeader>
           <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {SERVICE_PRESETS.map((s) => (
-              <button
-                key={s}
-                onClick={() => { setState({ ...state, service: s }); goto('location'); }}
-                className={`text-left rounded-xl border p-4 hover:border-primary hover:shadow-md transition ${state.service === s ? 'border-primary bg-primary/5' : 'bg-card'}`}
-              >
-                <div className="font-semibold text-[14px]">{s}</div>
-                <div className="text-[11.5px] text-muted-foreground mt-1 flex items-center gap-1"><Clock className="w-3 h-3" /> ca. {duration} min</div>
-              </button>
-            ))}
+            {(() => {
+              const kindsForDept = remoteKinds.filter((k) => k.departmentIds.length === 0 || k.departmentIds.includes(dept.id));
+              const list = kindsForDept.length
+                ? kindsForDept.map((k) => ({ name: k.name, description: k.description, color: k.color, duration: k.defaultDurationMinutes || duration }))
+                : ['Beratung', 'Online Demo', 'Vorführung', 'Geräteeinweisung', 'Produktschulung'].map((n) => ({ name: n, description: undefined as string | undefined, color: undefined as string | undefined, duration }));
+              return list.map((s) => (
+                <button
+                  key={s.name}
+                  onClick={() => { setState({ ...state, service: s.name }); goto('location'); }}
+                  className={`text-left rounded-xl border p-4 hover:border-primary hover:shadow-md transition ${state.service === s.name ? 'border-primary bg-primary/5' : 'bg-card'}`}
+                >
+                  <div className="flex items-center gap-2">
+                    {s.color && <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ background: s.color }} />}
+                    <div className="font-semibold text-[14px]">{s.name}</div>
+                  </div>
+                  {s.description && <div className="text-[11.5px] text-muted-foreground mt-1 line-clamp-2">{s.description}</div>}
+                  <div className="text-[11.5px] text-muted-foreground mt-1 flex items-center gap-1"><Clock className="w-3 h-3" /> ca. {s.duration} min</div>
+                </button>
+              ));
+            })()}
           </CardContent>
         </Card>
       )}
