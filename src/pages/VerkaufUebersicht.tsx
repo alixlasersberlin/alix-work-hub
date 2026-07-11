@@ -79,7 +79,15 @@ const TILES: Tile[] = [
     icon: Receipt,
     to: '/verkauf/anzahlungsrechnung',
     accent: 'from-purple-500/20 to-purple-500/5 border-purple-500/30',
-    load: async () => null,
+    load: async () => {
+      const { count } = await supabase
+        .from('orders')
+        .select('*', { count: 'exact', head: true })
+        .in('order_status', ['open', 'offen'])
+        .eq('deposit_ok', true)
+        .neq('source_system', 'zoho_eu_2');
+      return count ?? 0;
+    },
   },
   {
     key: 'gutschriften',
