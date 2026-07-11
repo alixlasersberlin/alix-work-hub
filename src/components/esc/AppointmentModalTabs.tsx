@@ -556,11 +556,13 @@ export function AppointmentModalTabs({
               ) : (
                 <div className="text-[12px] text-muted-foreground italic">Keine Berechtigung, interne Notizen zu sehen.</div>
               )}
-              <div>
-                <Label>Externe Notiz</Label>
-                <Textarea rows={4} value={form.externalNote} onChange={(e) => setForm({ ...form, externalNote: e.target.value })} />
-                <div className="text-[11px] text-muted-foreground mt-1">Kann in Bestätigungs-E-Mails und im Buchungsportal erscheinen.</div>
-              </div>
+              {mode === 'extern' && (
+                <div>
+                  <Label>Externe Notiz</Label>
+                  <Textarea rows={4} value={form.externalNote} onChange={(e) => setForm({ ...form, externalNote: e.target.value })} />
+                  <div className="text-[11px] text-muted-foreground mt-1">Kann in Bestätigungs-E-Mails und im Buchungsportal erscheinen.</div>
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="attachments" className="mt-3 space-y-3">
