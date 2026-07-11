@@ -36,6 +36,21 @@ interface Props {
 
 const PRIORITY: EscPriority[] = ['low', 'normal', 'high', 'urgent'];
 
+type EntryType = 'termin' | 'erinnerung' | 'wiedervorlage';
+
+const ENTRY_TYPES: { value: EntryType; label: string; kind: string }[] = [
+  { value: 'termin', label: 'Termin', kind: '' },
+  { value: 'erinnerung', label: 'Erinnerung (intern)', kind: 'Erinnerung' },
+  { value: 'wiedervorlage', label: 'Wiedervorlage (intern)', kind: 'Wiedervorlage' },
+];
+
+function detectEntryType(kind?: string): EntryType {
+  const k = (kind || '').toLowerCase();
+  if (k.startsWith('erinnerung')) return 'erinnerung';
+  if (k.startsWith('wiedervorlage')) return 'wiedervorlage';
+  return 'termin';
+}
+
 function toInputDate(d: Date | string | undefined): string {
   if (!d) return '';
   const dt = typeof d === 'string' ? new Date(d) : d;
@@ -46,6 +61,9 @@ function toInputDate(d: Date | string | undefined): string {
 export function AppointmentModal({ open, onClose, onSubmit, departments, employees, initial, defaultStart }: Props) {
   const start = defaultStart || (initial?.startAt ? new Date(initial.startAt) : new Date());
   const end = initial?.endAt ? new Date(initial.endAt) : new Date(start.getTime() + 60 * 60_000);
+
+  const [entryType, setEntryType] = useState<EntryType>(detectEntryType(initial?.kind));
+  const isInternal = entryType !== 'termin';
 
   const [form, setForm] = useState({
     title: initial?.title || '',
@@ -71,6 +89,27 @@ export function AppointmentModal({ open, onClose, onSubmit, departments, employe
     sendEmail: false,
     attachIcs: false,
   });
+
+  const handleEntryTypeChange = (t: EntryType) => {
+    setEntryType(t);
+    const def = ENTRY_TYPES.find((e) => e.value === t)!;
+    setForm((f) => ({
+      ...f,
+      kind: t === 'termin' ? (detectEntryType(f.kind) === 'termin' ? f.kind : '') : def.kind,
+      // internal entries: strip customer-facing data
+      ...(t !== 'termin'
+        ? {
+            customerName: '',
+            customerContact: '',
+            customerEmail: '',
+            customerPhone: '',
+            externalNote: '',
+            confirmationRequired: false,
+            sendEmail: false,
+          }
+        : {}),
+    }));
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -183,7 +222,7 @@ export function AppointmentModal({ open, onClose, onSubmit, departments, employe
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between gap-2">
-            <span>{initial?.id ? 'Termin bearbeiten' : 'Neuer Termin'}</span>
+            <span>{initial?.id ? `${ENTRY_TYPES.find(e=>e.value===entryType)!.label.replace(' (intern)','')} bearbeiten` : `Neu: ${ENTRY_TYPES.find(e=>e.value===entryType)!.label}`}</span>
             <Button type="button" size="sm" variant="outline" onClick={runAiSuggest} disabled={aiLoading} className="gap-1.5">
               {aiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 text-primary" />}
               KI-Vorschlag
@@ -233,7 +272,32 @@ export function AppointmentModal({ open, onClose, onSubmit, departments, employe
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 py-2">
 
-
+          <div className="md:col-span-2">
+            <Label>Typ</Label>
+            <div className="flex flex-wrap gap-1 rounded-md bg-muted p-1">
+              {ENTRY_TYPES.map((t) => (
+                <button
+                  key={t.value}
+                  type="button"
+                  onClick={() => handleEntryTypeChange(t.value)}
+                  className={`flex-1 min-w-[120px] px-3 py-1.5 rounded text-sm font-medium transition ${
+                    entryType === t.value
+                      ? 'bg-background shadow-sm text-foreground'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+            {isInternal && (
+              <p className="text-xs text-muted-foreground mt-1.5">
+                {entryType === 'erinnerung'
+                  ? 'Interne Erinnerung – nur im Team sichtbar, kein Kundenversand.'
+                  : 'Interne Wiedervorlage – nur im Team sichtbar, kein Kundenversand.'}
+              </p>
+            )}
+          </div>
 
           <div className="md:col-span-2">
             <Label>Titel *</Label>
@@ -249,48 +313,54 @@ export function AppointmentModal({ open, onClose, onSubmit, departments, employe
               </SelectContent>
             </Select>
           </div>
-          <div>
-            <Label>Terminart</Label>
-            <Input value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value })} placeholder="z. B. Demo, Reparatur" />
-          </div>
+          {!isInternal && (
+            <div>
+              <Label>Terminart</Label>
+              <Input value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value })} placeholder="z. B. Demo, Reparatur" />
+            </div>
+          )}
 
           <div>
-            <Label>Start</Label>
+            <Label>{isInternal ? 'Fällig am' : 'Start'}</Label>
             <Input type="datetime-local" value={form.startAt} onChange={(e) => setForm({ ...form, startAt: e.target.value })} />
           </div>
           <div>
-            <Label>Ende</Label>
+            <Label>{isInternal ? 'Erledigen bis' : 'Ende'}</Label>
             <Input type="datetime-local" value={form.endAt} onChange={(e) => setForm({ ...form, endAt: e.target.value })} />
           </div>
 
-          <div>
-            <Label>Kunde</Label>
-            <Input value={form.customerName} onChange={(e) => setForm({ ...form, customerName: e.target.value })} />
-          </div>
-          <div>
-            <Label>Ansprechpartner</Label>
-            <Input value={form.customerContact} onChange={(e) => setForm({ ...form, customerContact: e.target.value })} />
-          </div>
-          <div>
-            <Label>E-Mail</Label>
-            <Input type="email" value={form.customerEmail} onChange={(e) => setForm({ ...form, customerEmail: e.target.value })} />
-          </div>
-          <div>
-            <Label>Telefon</Label>
-            <Input value={form.customerPhone} onChange={(e) => setForm({ ...form, customerPhone: e.target.value })} />
-          </div>
+          {!isInternal && (
+            <>
+              <div>
+                <Label>Kunde</Label>
+                <Input value={form.customerName} onChange={(e) => setForm({ ...form, customerName: e.target.value })} />
+              </div>
+              <div>
+                <Label>Ansprechpartner</Label>
+                <Input value={form.customerContact} onChange={(e) => setForm({ ...form, customerContact: e.target.value })} />
+              </div>
+              <div>
+                <Label>E-Mail</Label>
+                <Input type="email" value={form.customerEmail} onChange={(e) => setForm({ ...form, customerEmail: e.target.value })} />
+              </div>
+              <div>
+                <Label>Telefon</Label>
+                <Input value={form.customerPhone} onChange={(e) => setForm({ ...form, customerPhone: e.target.value })} />
+              </div>
 
-          <div>
-            <Label>Adresse</Label>
-            <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
-          </div>
-          <div>
-            <Label>Standort / Raum</Label>
-            <div className="grid grid-cols-2 gap-2">
-              <Input placeholder="Standort" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
-              <Input placeholder="Raum" value={form.room} onChange={(e) => setForm({ ...form, room: e.target.value })} />
-            </div>
-          </div>
+              <div>
+                <Label>Adresse</Label>
+                <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
+              </div>
+              <div>
+                <Label>Standort / Raum</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Input placeholder="Standort" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
+                  <Input placeholder="Raum" value={form.room} onChange={(e) => setForm({ ...form, room: e.target.value })} />
+                </div>
+              </div>
+            </>
+          )}
 
           <div>
             <Label>Status</Label>
@@ -313,24 +383,30 @@ export function AppointmentModal({ open, onClose, onSubmit, departments, employe
             </Select>
           </div>
 
+          {!isInternal && (
+            <div className="md:col-span-2">
+              <Label>Beschreibung / externe Notiz</Label>
+              <Textarea rows={2} value={form.externalNote} onChange={(e) => setForm({ ...form, externalNote: e.target.value })} />
+            </div>
+          )}
           <div className="md:col-span-2">
-            <Label>Beschreibung / externe Notiz</Label>
-            <Textarea rows={2} value={form.externalNote} onChange={(e) => setForm({ ...form, externalNote: e.target.value })} />
-          </div>
-          <div className="md:col-span-2">
-            <Label>Interne Notiz</Label>
-            <Textarea rows={2} value={form.internalNote} onChange={(e) => setForm({ ...form, internalNote: e.target.value })} />
+            <Label>{isInternal ? 'Notiz (intern)' : 'Interne Notiz'}</Label>
+            <Textarea rows={isInternal ? 3 : 2} value={form.internalNote} onChange={(e) => setForm({ ...form, internalNote: e.target.value })} />
           </div>
 
           <div className="md:col-span-2 flex flex-wrap gap-4 pt-2 border-t">
-            <label className="flex items-center gap-2 text-sm">
-              <Checkbox checked={form.confirmationRequired} onCheckedChange={(v) => setForm({ ...form, confirmationRequired: !!v })} />
-              Bestätigung durch Kunde erforderlich
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <Checkbox checked={form.sendEmail} onCheckedChange={(v) => setForm({ ...form, sendEmail: !!v })} />
-              E-Mail an Kunde senden
-            </label>
+            {!isInternal && (
+              <>
+                <label className="flex items-center gap-2 text-sm">
+                  <Checkbox checked={form.confirmationRequired} onCheckedChange={(v) => setForm({ ...form, confirmationRequired: !!v })} />
+                  Bestätigung durch Kunde erforderlich
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <Checkbox checked={form.sendEmail} onCheckedChange={(v) => setForm({ ...form, sendEmail: !!v })} />
+                  E-Mail an Kunde senden
+                </label>
+              </>
+            )}
             <label className="flex items-center gap-2 text-sm">
               <Checkbox checked={form.attachIcs} onCheckedChange={(v) => setForm({ ...form, attachIcs: !!v })} />
               ICS-Kalenderdatei herunterladen
