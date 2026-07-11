@@ -129,7 +129,40 @@ Deno.serve(async (req) => {
     }
   }
 
-  return new Response(JSON.stringify({ ok: true, checked: mps?.length || 0, customerSent, staffSent }), {
+  // Phase 37 — Refresh-Reminder: 'completed' Pakete älter als X Monate erinnern
+  const refreshMonths = parseInt(await getSetting('mediapaket.refresh_after_months', '12')) || 12;
+  let refreshSent = 0;
+  const refreshCutoff = new Date(); refreshCutoff.setMonth(refreshCutoff.getMonth() - refreshMonths);
+  const { data: doneMps } = await admin.from('media_packages')
+    .select('id, customer_id, studio_name, updated_at, submitted_at')
+    .eq('status', 'completed')
+    .lt('updated_at', refreshCutoff.toISOString())
+    .limit(500);
+  for (const mp of doneMps || []) {
+    const action = 'refresh_reminder_sent';
+    // Nur 1× pro 30 Tage
+    const since30 = new Date(); since30.setDate(since30.getDate() - 30);
+    const { data: recent } = await admin.from('media_package_history')
+      .select('id').eq('media_package_id', mp.id).eq('action', action).gte('created_at', since30.toISOString()).limit(1);
+    if (recent?.length) continue;
+    if (!mp.customer_id) continue;
+    const { data: cust } = await admin.from('customers').select('email, name').eq('id', mp.customer_id).maybeSingle();
+    if (!cust?.email) continue;
+    const html = `<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#222">
+      <h2>Zeit für ein Update?</h2>
+      <p>Hallo ${cust.name || ''},</p>
+      <p>Ihr Mediapaket ist inzwischen über ${refreshMonths} Monate alt. Möchten Sie es aktualisieren (neue Angebote, Team-Änderungen, neue Behandlungen)?</p>
+      <p style="margin:24px 0"><a href="${baseUrl}/portal" style="background:#000;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">Kontakt aufnehmen</a></p>
+    </div>`;
+    if (await sendMail(cust.email, 'Mediapaket-Refresh: Zeit für Aktualisierung?', html)) {
+      refreshSent++;
+      await admin.from('media_package_history').insert({
+        media_package_id: mp.id, action, new_value: { email: cust.email, age_months: refreshMonths } as any,
+      });
+    }
+  }
+
+  return new Response(JSON.stringify({ ok: true, checked: mps?.length || 0, customerSent, staffSent, refreshSent }), {
     status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
 });
