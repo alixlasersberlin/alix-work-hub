@@ -1,5 +1,8 @@
 project_id = "xmrmkgfgpoundfwhnxfs"
 
+[functions.mediapaket-portal]
+verify_jwt = false
+
 [functions.esc-ics]
 verify_jwt = false
 
