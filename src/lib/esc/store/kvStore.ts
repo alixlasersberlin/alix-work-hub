@@ -75,7 +75,7 @@ async function migrateLegacy<T>(s: StoreInternals<T>): Promise<T[]> {
   } catch {}
   if (migrated.length) {
     const rows = migrated.map((it) => ({ id: s.getId(it), data: it as any }));
-    await supabase.from(s.table).upsert(rows, { onConflict: 'id' });
+    await (supabase as any).from(s.table).upsert(rows, { onConflict: 'id' });
   }
   localStorage.setItem(flagKey, '1');
   // Clean up legacy keys after successful migration
@@ -87,10 +87,10 @@ async function migrateLegacy<T>(s: StoreInternals<T>): Promise<T[]> {
 
 async function seedIfEmpty<T>(s: StoreInternals<T>) {
   if (!s.seed?.length) return;
-  const { count } = await supabase.from(s.table).select('id', { count: 'exact', head: true });
+  const { count } = await (supabase as any).from(s.table).select('id', { count: 'exact', head: true });
   if ((count ?? 0) > 0) return;
   const rows = s.seed.map((it) => ({ id: s.getId(it), data: it as any }));
-  await supabase.from(s.table).upsert(rows, { onConflict: 'id' });
+  await (supabase as any).from(s.table).upsert(rows, { onConflict: 'id' });
 }
 
 async function initStore<T>(s: StoreInternals<T>): Promise<void> {
@@ -107,7 +107,7 @@ async function initStore<T>(s: StoreInternals<T>): Promise<void> {
       }
       await migrateLegacy(s);
       await seedIfEmpty(s);
-      const { data, error } = await supabase.from(s.table).select('id,data');
+      const { data, error } = await (supabase as any).from(s.table).select('id,data');
       if (!error && data) {
         s.state.items.clear();
         for (const row of data as any[]) s.state.items.set(row.id, row.data as T);
@@ -163,7 +163,7 @@ export function useEscStore<T>(opts: {
     const id = s.getId(item);
     s.state.items.set(id, item);
     notify(s);
-    const { error } = await supabase.from(s.table).upsert({ id, data: item as any }, { onConflict: 'id' });
+    const { error } = await (supabase as any).from(s.table).upsert({ id, data: item as any }, { onConflict: 'id' });
     if (error) console.error('[esc-store] upsert', s.table, error);
     return item;
   };
@@ -171,7 +171,7 @@ export function useEscStore<T>(opts: {
   const remove = async (id: string) => {
     s.state.items.delete(id);
     notify(s);
-    const { error } = await supabase.from(s.table).delete().eq('id', id);
+    const { error } = await (supabase as any).from(s.table).delete().eq('id', id);
     if (error) console.error('[esc-store] delete', s.table, error);
   };
 
