@@ -42,17 +42,17 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
       const { data: prog } = await supabase.rpc('calc_media_package_progress', { _mp_id: data.id });
       setProgress(Number(prog) || 0);
       const [services, studio, devices, prices, contact, hours, treatments, team, branding, files, consents] = await Promise.all([
-        supabase.from('media_package_services').select('*').eq('mp_id', data.id),
-        supabase.from('media_package_studio_data').select('*').eq('mp_id', data.id).maybeSingle(),
-        supabase.from('media_package_devices').select('*').eq('mp_id', data.id),
-        supabase.from('media_package_prices').select('*').eq('mp_id', data.id),
-        supabase.from('media_package_contact_data').select('*').eq('mp_id', data.id).maybeSingle(),
-        supabase.from('media_package_opening_hours').select('*').eq('mp_id', data.id).order('weekday'),
-        supabase.from('media_package_treatments').select('*').eq('mp_id', data.id),
-        supabase.from('media_package_team_members').select('*').eq('mp_id', data.id),
-        supabase.from('media_package_branding').select('*').eq('mp_id', data.id).maybeSingle(),
-        supabase.from('media_package_files').select('*').eq('mp_id', data.id),
-        supabase.from('media_package_consents').select('*').eq('mp_id', data.id),
+        supabase.from('media_package_services').select('*').eq('media_package_id', data.id),
+        supabase.from('media_package_studio_data').select('*').eq('media_package_id', data.id).maybeSingle(),
+        supabase.from('media_package_devices').select('*').eq('media_package_id', data.id),
+        supabase.from('media_package_prices').select('*').eq('media_package_id', data.id),
+        supabase.from('media_package_contact_data').select('*').eq('media_package_id', data.id).maybeSingle(),
+        supabase.from('media_package_opening_hours').select('*').eq('media_package_id', data.id).order('weekday'),
+        supabase.from('media_package_treatments').select('*').eq('media_package_id', data.id),
+        supabase.from('media_package_team_members').select('*').eq('media_package_id', data.id),
+        supabase.from('media_package_branding').select('*').eq('media_package_id', data.id).maybeSingle(),
+        supabase.from('media_package_files').select('*').eq('media_package_id', data.id),
+        supabase.from('media_package_consents').select('*').eq('media_package_id', data.id),
       ]);
       setSections({
         services: services.data || [], studio: studio.data, devices: devices.data || [],
@@ -167,7 +167,7 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
       </SectionCard>
 
       <SectionCard title="Studio-Daten" empty={!sections.studio}>
-        {sections.studio && <KV data={sections.studio} skip={['id','mp_id','created_at','updated_at']} />}
+        {sections.studio && <KV data={sections.studio} skip={['id','media_package_id','created_at','updated_at']} />}
       </SectionCard>
 
       <SectionCard title="Geräte" empty={!sections.devices?.length}>
@@ -189,7 +189,7 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
       </SectionCard>
 
       <SectionCard title="Kontaktdaten" empty={!sections.contact}>
-        {sections.contact && <KV data={sections.contact} skip={['id','mp_id','created_at','updated_at']} />}
+        {sections.contact && <KV data={sections.contact} skip={['id','media_package_id','created_at','updated_at']} />}
       </SectionCard>
 
       <SectionCard title="Öffnungszeiten" empty={!sections.hours?.length}>
@@ -218,7 +218,7 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
       </SectionCard>
 
       <SectionCard title="Branding / Anmerkungen" empty={!sections.branding}>
-        {sections.branding && <KV data={sections.branding} skip={['id','mp_id','created_at','updated_at']} />}
+        {sections.branding && <KV data={sections.branding} skip={['id','media_package_id','created_at','updated_at']} />}
       </SectionCard>
 
       <SectionCard title="Dateien" empty={!sections.files?.length}>
