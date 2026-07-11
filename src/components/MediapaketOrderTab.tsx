@@ -2,7 +2,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Plus, Copy, RefreshCw, Package as PackageIcon, CheckCircle2, Mail, MessageCircle, Check, Lock } from 'lucide-react';
+import { Loader2, Plus, Copy, RefreshCw, Package as PackageIcon, CheckCircle2, Mail, MessageCircle, Check, Lock, UserPlus, CalendarClock, AlertTriangle, Download, Eye, History as HistoryIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import MediapaketReviewPanel, { SECTION_LABEL } from './MediapaketReviewPanel';
 import { notifyBus } from '@/hooks/useNotifications';
@@ -100,6 +106,37 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
       setAuthorNames(prev => ({ ...prev, ...map }));
     }
   }, []);
+
+  // Staff list for assignment
+  const [staffList, setStaffList] = useState<Array<{ id: string; label: string }>>([]);
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from('user_profiles')
+        .select('id, full_name, email, is_active')
+        .eq('is_active', true)
+        .order('full_name', { ascending: true });
+      setStaffList((data || []).map((p: any) => ({ id: p.id, label: p.full_name || p.email || 'Unbenannt' })));
+    })();
+  }, []);
+
+  const assignUser = async (userId: string | null) => {
+    if (!mp?.id) return;
+    const { error } = await supabase.from('media_packages').update({ assigned_user_id: userId }).eq('id', mp.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success(userId ? 'Mitarbeiter zugewiesen' : 'Zuweisung entfernt');
+    load();
+  };
+
+  const setDueDate = async (d: Date | undefined) => {
+    if (!mp?.id) return;
+    const iso = d ? format(d, 'yyyy-MM-dd') : null;
+    const { error } = await supabase.from('media_packages').update({ due_date: iso }).eq('id', mp.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success(iso ? `Frist gesetzt: ${format(d as Date, 'dd.MM.yyyy')}` : 'Frist entfernt');
+    load();
+  };
+
 
   const notifiedIdsRef = useRef<Set<string>>(new Set());
   const initializedRef = useRef(false);
@@ -292,6 +329,49 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
             </Button>
           </div>
         </div>
+        {/* Assignment + Due date */}
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="flex items-center gap-2">
+            <UserPlus className="w-4 h-4 text-muted-foreground shrink-0" />
+            <div className="flex-1 min-w-0">
+              <label className="text-[10px] uppercase tracking-wide text-muted-foreground">Zuständig</label>
+              <Select value={mp.assigned_user_id ?? '__none__'} onValueChange={(v) => assignUser(v === '__none__' ? null : v)}>
+                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Nicht zugewiesen" /></SelectTrigger>
+                <SelectContent className="max-h-72">
+                  <SelectItem value="__none__">— Nicht zugewiesen —</SelectItem>
+                  {staffList.map(s => <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <CalendarClock className={cn('w-4 h-4 shrink-0', mp.due_date && new Date(mp.due_date) < new Date() && mp.status !== 'completed' ? 'text-red-500' : 'text-muted-foreground')} />
+            <div className="flex-1 min-w-0">
+              <label className="text-[10px] uppercase tracking-wide text-muted-foreground">Frist</label>
+              <div className="flex items-center gap-1">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className={cn('h-8 text-xs justify-start flex-1', !mp.due_date && 'text-muted-foreground')}>
+                      {mp.due_date ? format(new Date(mp.due_date), 'dd.MM.yyyy') : 'Frist setzen'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={mp.due_date ? new Date(mp.due_date) : undefined} onSelect={setDueDate} initialFocus className={cn('p-3 pointer-events-auto')} />
+                  </PopoverContent>
+                </Popover>
+                {mp.due_date && (
+                  <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => setDueDate(undefined)}>×</Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+        {mp.due_date && new Date(mp.due_date) < new Date() && mp.status !== 'completed' && (
+          <div className="mt-3 flex items-center gap-2 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2">
+            <AlertTriangle className="w-4 h-4 text-red-500" />
+            <span className="text-xs text-red-400">Frist überschritten seit {format(new Date(mp.due_date), 'dd.MM.yyyy')}</span>
+          </div>
+        )}
         {/* Progress */}
         <div className="mt-4">
           <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
@@ -461,10 +541,7 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
 
       <SectionCard sectionKey="files" title="Dateien" empty={!sections.files?.length} comments={commentsBySection.files} onMarkRead={markIdsRead}>
         {sections.files?.map((f: any) => (
-          <div key={f.id} className="flex items-center justify-between text-sm">
-            <span>{f.original_filename} <span className="text-muted-foreground">({f.category})</span></span>
-            <span className="text-muted-foreground text-xs">{f.file_size ? `${Math.round(f.file_size / 1024)} KB` : ''}</span>
-          </div>
+          <FileRow key={f.id} file={f} mpId={mp.id} />
         ))}
       </SectionCard>
 
@@ -552,6 +629,140 @@ function KV({ data, skip = [] }: { data: Record<string, any>; skip?: string[] })
           <span className="text-right truncate max-w-[60%]">{typeof v === 'object' ? JSON.stringify(v) : String(v)}</span>
         </div>
       ))}
+    </div>
+  );
+}
+
+function FileRow({ file, mpId }: { file: any; mpId: string }) {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [logs, setLogs] = useState<any[] | null>(null);
+  const [logsOpen, setLogsOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const isImage = (file.mime_type || '').startsWith('image/');
+  const isPdf = file.mime_type === 'application/pdf';
+
+  const getSignedUrl = async (): Promise<string | null> => {
+    const { data, error } = await supabase.storage.from('mediapaket-files').createSignedUrl(file.storage_path, 3600);
+    if (error || !data?.signedUrl) { toast.error(error?.message || 'Signed URL fehlgeschlagen'); return null; }
+    return data.signedUrl;
+  };
+
+  const logDownload = async () => {
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user?.id) return;
+    await supabase.from('media_package_file_downloads').insert({
+      file_id: file.id,
+      media_package_id: mpId,
+      downloaded_by: userData.user.id,
+      downloader_type: 'staff',
+      user_agent: navigator.userAgent.slice(0, 500),
+    });
+  };
+
+  const preview = async () => {
+    setBusy(true);
+    const url = await getSignedUrl();
+    setBusy(false);
+    if (!url) return;
+    setPreviewUrl(url);
+    setPreviewOpen(true);
+    logDownload();
+  };
+
+  const download = async () => {
+    setBusy(true);
+    const url = await getSignedUrl();
+    setBusy(false);
+    if (!url) return;
+    logDownload();
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = file.original_filename || 'download';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
+
+  const loadLogs = async () => {
+    setLogsOpen(true);
+    const { data } = await supabase
+      .from('media_package_file_downloads')
+      .select('id, downloaded_by, downloader_type, created_at, user_agent')
+      .eq('file_id', file.id)
+      .order('created_at', { ascending: false })
+      .limit(50);
+    const rows = data || [];
+    const uids = Array.from(new Set(rows.map((r: any) => r.downloaded_by).filter(Boolean))) as string[];
+    let names: Record<string, string> = {};
+    if (uids.length) {
+      const { data: profs } = await supabase.from('user_profiles').select('id, full_name, email').in('id', uids);
+      (profs || []).forEach((p: any) => { names[p.id] = p.full_name || p.email || 'Mitarbeiter'; });
+    }
+    setLogs(rows.map((r: any) => ({ ...r, _name: r.downloaded_by ? (names[r.downloaded_by] || 'Mitarbeiter') : 'System' })));
+  };
+
+  return (
+    <div className="flex items-center justify-between gap-2 text-sm py-1 border-b border-border/30 last:border-0">
+      <div className="min-w-0 flex-1">
+        <div className="truncate">
+          {file.original_filename}
+          <span className="text-muted-foreground text-xs ml-2">({file.category})</span>
+        </div>
+        <div className="text-[10px] text-muted-foreground">
+          {file.file_size ? `${Math.round(file.file_size / 1024)} KB` : ''}
+          {file.mime_type ? ` · ${file.mime_type}` : ''}
+          {file.version ? ` · v${file.version}` : ''}
+        </div>
+      </div>
+      <div className="flex items-center gap-1 shrink-0">
+        {(isImage || isPdf) && (
+          <Button size="sm" variant="ghost" className="h-7 px-2" onClick={preview} disabled={busy} title="Vorschau">
+            <Eye className="w-3.5 h-3.5" />
+          </Button>
+        )}
+        <Button size="sm" variant="ghost" className="h-7 px-2" onClick={download} disabled={busy} title="Herunterladen">
+          <Download className="w-3.5 h-3.5" />
+        </Button>
+        <Button size="sm" variant="ghost" className="h-7 px-2" onClick={loadLogs} title="Download-Historie">
+          <HistoryIcon className="w-3.5 h-3.5" />
+        </Button>
+      </div>
+
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader><DialogTitle className="truncate">{file.original_filename}</DialogTitle></DialogHeader>
+          {previewUrl && isImage && <img src={previewUrl} alt={file.original_filename} className="max-h-[75vh] w-full object-contain rounded" />}
+          {previewUrl && isPdf && <iframe src={previewUrl} title={file.original_filename} className="w-full h-[75vh] rounded border border-border" />}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={logsOpen} onOpenChange={setLogsOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader><DialogTitle>Download-Historie · {file.original_filename}</DialogTitle></DialogHeader>
+          {logs === null ? (
+            <div className="flex items-center gap-2 text-muted-foreground text-sm"><Loader2 className="w-4 h-4 animate-spin" /> Lade…</div>
+          ) : logs.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Noch keine Downloads protokolliert.</p>
+          ) : (
+            <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+              {logs.map(l => (
+                <div key={l.id} className="rounded-lg border border-border p-2">
+                  <div className="flex items-center justify-between gap-2 text-sm">
+                    <span className="font-medium">{l._name}</span>
+                    <span className="text-xs text-muted-foreground">{new Date(l.created_at).toLocaleString('de-DE')}</span>
+                  </div>
+                  <div className="text-[10px] text-muted-foreground">
+                    <Badge variant="outline" className="text-[10px] mr-1">{l.downloader_type}</Badge>
+                    {l.user_agent && <span className="truncate inline-block max-w-full align-middle">{l.user_agent}</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
