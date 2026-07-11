@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Plus, Copy, ExternalLink, RefreshCw, Package as PackageIcon, CheckCircle2 } from 'lucide-react';
+import { Loader2, Plus, Copy, ExternalLink, RefreshCw, Package as PackageIcon, CheckCircle2, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import MediapaketReviewPanel from './MediapaketReviewPanel';
 
@@ -101,6 +101,22 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
     }
   };
 
+  const [emailing, setEmailing] = useState(false);
+  const emailCustomerLink = async () => {
+    if (!mp?.id) return;
+    if (!confirm('Kundenlink per E-Mail an den Kunden versenden?')) return;
+    setEmailing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('mediapaket-portal', {
+        body: { action: 'notify_customer', mp_id: mp.id, base_url: window.location.origin },
+      });
+      if (error || !data?.ok) throw new Error(error?.message || data?.error || 'Fehler');
+      toast.success('E-Mail gesendet an ' + data.email);
+      load();
+    } catch (e: any) { toast.error(e.message); }
+    finally { setEmailing(false); }
+  };
+
   if (loading) {
     return <div className="flex items-center gap-2 text-muted-foreground p-8"><Loader2 className="w-4 h-4 animate-spin" /> Lade Mediapaket...</div>;
   }
@@ -139,6 +155,10 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={load}><RefreshCw className="w-4 h-4 mr-2" />Aktualisieren</Button>
+            <Button variant="outline" size="sm" onClick={emailCustomerLink} disabled={emailing}>
+              {emailing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
+              Per E-Mail senden
+            </Button>
             <Button size="sm" onClick={copyCustomerLink} disabled={issuing} className="gold-gradient text-primary-foreground">
               {issuing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Copy className="w-4 h-4 mr-2" />}
               Kundenlink kopieren

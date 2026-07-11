@@ -118,6 +118,60 @@ Deno.serve(async (req) => {
       return json({ token, url: `/book/mediapaket?token=${encodeURIComponent(token)}` });
     }
 
+    // Staff notify-customer endpoint: sends email with wizard link
+    if (action === 'notify_customer') {
+      const auth = req.headers.get('Authorization');
+      if (!auth) return json({ error: 'unauthorized' }, 401);
+      const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, {
+        global: { headers: { Authorization: auth } }, auth: { persistSession: false }
+      });
+      const { data: userData } = await userClient.auth.getUser();
+      if (!userData?.user) return json({ error: 'unauthorized' }, 401);
+      const body = await req.json();
+      const mpId = body.mp_id;
+      const subject = body.subject || 'Ihr Media Paket bei Alix Lasers';
+      const introMessage = body.message || 'Sie können Ihre Angaben jetzt online ausfüllen.';
+      const baseUrl = body.base_url || 'https://alixwork.de';
+      if (!mpId) return json({ error: 'mp_id required' }, 400);
+      const { data: mp } = await userClient.from('media_packages')
+        .select('id, customer_id').eq('id', mpId).maybeSingle();
+      if (!mp) return json({ error: 'forbidden' }, 403);
+      const { data: cust } = await admin.from('customers')
+        .select('email, name').eq('id', mp.customer_id).maybeSingle();
+      if (!cust?.email) return json({ error: 'customer has no email' }, 400);
+      const token = await signToken(mpId);
+      const link = `${baseUrl}/book/mediapaket?token=${encodeURIComponent(token)}`;
+      const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 560px; margin: auto; color:#222">
+          <h2 style="color:#111">Ihr Media Paket</h2>
+          <p>Hallo ${cust.name || ''},</p>
+          <p>${introMessage.replace(/\n/g, '<br>')}</p>
+          <p style="margin: 24px 0">
+            <a href="${link}" style="background:#000;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block;font-weight:600">
+              Media Paket öffnen
+            </a>
+          </p>
+          <p style="font-size:12px;color:#666">Falls der Button nicht funktioniert:<br><a href="${link}">${link}</a></p>
+          <p style="font-size:12px;color:#666">Der Link ist personalisiert – bitte nicht weitergeben.</p>
+        </div>`;
+      // Delegate to shared mailer with staff auth
+      const { error: sendErr } = await userClient.functions.invoke('send-mail', {
+        body: { to: cust.email, subject, html, from: 'vertrieb@alixwork.de' },
+      });
+      if (sendErr) return json({ error: sendErr.message }, 502);
+      await admin.from('media_package_history').insert({
+        media_package_id: mpId,
+        user_id: userData.user.id,
+        action: 'customer_link_sent',
+        new_value: { email: cust.email, subject } as any,
+      });
+      // Status invited → in_progress-ähnlich: keep or bump if not_started
+      await admin.from('media_packages')
+        .update({ status: 'in_progress' as any })
+        .eq('id', mpId).eq('status', 'not_started');
+      return json({ ok: true, email: cust.email });
+    }
+
     // All other actions are token-based (customer portal)
     const body = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
     const token = body.token || url.searchParams.get('token');
