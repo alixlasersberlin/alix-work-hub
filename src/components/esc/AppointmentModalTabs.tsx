@@ -104,6 +104,9 @@ export function AppointmentModalTabs({
   departments, employees, resources, initial, defaultStart, canSeeInternal, history = [],
 }: Props) {
   const [tab, setTab] = useState('general');
+  const [mode, setMode] = useState<'intern' | 'extern'>(
+    initial?.customerEmail || initial?.customerName || initial?.confirmationRequired ? 'extern' : 'intern'
+  );
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [form, setForm] = useState(() => buildInitialForm(initial, defaultStart, departments));
   const defaultStartTime = defaultStart?.getTime();
@@ -111,6 +114,7 @@ export function AppointmentModalTabs({
   useEffect(() => {
     if (!open) return;
     setTab('general');
+    setMode(initial?.customerEmail || initial?.customerName || initial?.confirmationRequired ? 'extern' : 'intern');
     setSelectedCustomerId(null);
     setForm(buildInitialForm(initial, defaultStart, departments));
   }, [open, initial?.id, defaultStartTime, departments]);
