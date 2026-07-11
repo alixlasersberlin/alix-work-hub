@@ -460,21 +460,35 @@ export default function MediapaketExtrasPanel({ mpId, status, onChanged }: Props
           )}
         </TabsContent>
 
-        {/* VERSIONEN / Phase 25 */}
-        <TabsContent value="versions" className="pt-3">
+        {/* VERSIONEN / Phase 25 + 44 */}
+        <TabsContent value="versions" className="pt-3 space-y-2">
+          <div className="flex justify-end">
+            <Button variant="outline" size="sm" onClick={manualSnapshot} disabled={snapBusy} className="gap-2">
+              {snapBusy ? <Loader2 className="w-3 h-3 animate-spin" /> : <Package className="w-3 h-3" />}
+              Snapshot jetzt sichern
+            </Button>
+          </div>
           {snapshots.length === 0 ? (
-            <p className="text-xs text-muted-foreground">Noch keine Snapshots. Ein Snapshot wird automatisch beim Einreichen erstellt.</p>
+            <p className="text-xs text-muted-foreground">Noch keine Snapshots.</p>
           ) : (
             <div className="space-y-1.5">
-              {snapshots.map((s, i) => (
-                <div key={s.id} className="flex items-center justify-between gap-2 border border-border/40 rounded-lg p-2">
-                  <div className="text-xs">
-                    <div className="font-medium text-foreground">Version {snapshots.length - i} · {new Date(s.created_at).toLocaleString('de-DE')}</div>
-                    <div className="text-muted-foreground">Snapshot beim Einreichen</div>
+              {snapshots.map((s, i) => {
+                const label = s.new_value?.label || (s.action === 'submitted' ? 'Einreichung' : 'Snapshot');
+                return (
+                  <div key={s.id} className="flex items-center justify-between gap-2 border border-border/40 rounded-lg p-2">
+                    <div className="text-xs">
+                      <div className="font-medium text-foreground">Version {snapshots.length - i} · {new Date(s.created_at).toLocaleString('de-DE')}</div>
+                      <div className="text-muted-foreground">{label}</div>
+                    </div>
+                    <div className="flex gap-1">
+                      <Button variant="outline" size="sm" onClick={() => setSnapshotOpen(s)}><Eye className="w-3 h-3 mr-1" />Ansehen</Button>
+                      <Button variant="outline" size="sm" onClick={() => doRollback(s.id)} disabled={rollbackBusy === s.id} className="border-orange-500/40 text-orange-500 hover:bg-orange-500/10">
+                        {rollbackBusy === s.id ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Rollback'}
+                      </Button>
+                    </div>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => setSnapshotOpen(s)}><Eye className="w-3 h-3 mr-1" />Ansehen</Button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </TabsContent>
