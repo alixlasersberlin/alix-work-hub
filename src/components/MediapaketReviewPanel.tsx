@@ -226,6 +226,9 @@ export default function MediapaketReviewPanel({ mpId, currentStatus, onChanged }
                       <Badge className="bg-blue-500/20 text-blue-500 border-blue-500/30"><Mail className="w-3 h-3 mr-1" />An {c.recipient_type}</Badge>
                     )}
                     {c.answered_at && <Badge className="bg-green-500/20 text-green-500 border-green-500/30">beantwortet</Badge>}
+                    {c.related_field && SECTION_LABEL[c.related_field] && (
+                      <Badge variant="secondary" className="text-[10px]">Bezug: {SECTION_LABEL[c.related_field]}</Badge>
+                    )}
                   </div>
                   <span className="text-[11px] text-muted-foreground">{new Date(c.created_at).toLocaleString('de-DE')}</span>
                 </div>
