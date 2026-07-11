@@ -67,33 +67,38 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [orderId]);
 
-  // Unread customer answers (badge + realtime)
+  // Comments (realtime): unread customer answers + section-grouped thread
   const [unread, setUnread] = useState<any[]>([]);
-  const loadUnread = useCallback(async (mpId: string) => {
+  const [commentsBySection, setCommentsBySection] = useState<Record<string, any[]>>({});
+  const loadComments = useCallback(async (mpId: string) => {
     const { data } = await supabase
       .from('media_package_comments')
-      .select('id, subject, comment, created_at')
+      .select('id, subject, comment, created_at, read_at, answered_at, author_type, recipient_type, internal_only, related_field')
       .eq('media_package_id', mpId)
-      .eq('author_type', 'customer')
-      .eq('recipient_type', 'staff')
-      .eq('internal_only', false)
-      .is('read_at', null)
       .order('created_at', { ascending: false });
-    setUnread(data || []);
+    const all = data || [];
+    setUnread(all.filter(c => c.author_type === 'customer' && c.recipient_type === 'staff' && !c.internal_only && !c.read_at));
+    const grouped: Record<string, any[]> = {};
+    for (const c of all) {
+      const key = c.related_field && SECTION_LABEL[c.related_field] ? c.related_field : null;
+      if (!key) continue;
+      (grouped[key] ||= []).push(c);
+    }
+    setCommentsBySection(grouped);
   }, []);
 
   useEffect(() => {
-    if (!mp?.id) { setUnread([]); return; }
-    loadUnread(mp.id);
+    if (!mp?.id) { setUnread([]); setCommentsBySection({}); return; }
+    loadComments(mp.id);
     const ch = supabase
       .channel(`mp-comments-${mp.id}`)
       .on('postgres_changes', {
         event: '*', schema: 'public', table: 'media_package_comments',
         filter: `media_package_id=eq.${mp.id}`,
-      }, () => loadUnread(mp.id))
+      }, () => loadComments(mp.id))
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [mp?.id, loadUnread]);
+  }, [mp?.id, loadComments]);
 
   const markAllRead = async () => {
     if (!mp?.id || !unread.length) return;
