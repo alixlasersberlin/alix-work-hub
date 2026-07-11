@@ -352,6 +352,7 @@ export function AppointmentModalTabs({
                 )}
               </section>
 
+              {mode === 'extern' && (
               <section className="pt-3 border-t">
                 <div className="flex items-center justify-between mb-2">
                   <div className="text-[12px] font-semibold uppercase tracking-wide text-muted-foreground">Externe Teilnehmer</div>
@@ -382,6 +383,7 @@ export function AppointmentModalTabs({
                   ))}
                 </div>
               </section>
+              )}
             </TabsContent>
 
             <TabsContent value="customer" className="mt-3 space-y-3">
