@@ -272,7 +272,32 @@ export function AppointmentModal({ open, onClose, onSubmit, departments, employe
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 py-2">
 
-
+          <div className="md:col-span-2">
+            <Label>Typ</Label>
+            <div className="flex flex-wrap gap-1 rounded-md bg-muted p-1">
+              {ENTRY_TYPES.map((t) => (
+                <button
+                  key={t.value}
+                  type="button"
+                  onClick={() => handleEntryTypeChange(t.value)}
+                  className={`flex-1 min-w-[120px] px-3 py-1.5 rounded text-sm font-medium transition ${
+                    entryType === t.value
+                      ? 'bg-background shadow-sm text-foreground'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+            {isInternal && (
+              <p className="text-xs text-muted-foreground mt-1.5">
+                {entryType === 'erinnerung'
+                  ? 'Interne Erinnerung – nur im Team sichtbar, kein Kundenversand.'
+                  : 'Interne Wiedervorlage – nur im Team sichtbar, kein Kundenversand.'}
+              </p>
+            )}
+          </div>
 
           <div className="md:col-span-2">
             <Label>Titel *</Label>
@@ -288,48 +313,54 @@ export function AppointmentModal({ open, onClose, onSubmit, departments, employe
               </SelectContent>
             </Select>
           </div>
-          <div>
-            <Label>Terminart</Label>
-            <Input value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value })} placeholder="z. B. Demo, Reparatur" />
-          </div>
+          {!isInternal && (
+            <div>
+              <Label>Terminart</Label>
+              <Input value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value })} placeholder="z. B. Demo, Reparatur" />
+            </div>
+          )}
 
           <div>
-            <Label>Start</Label>
+            <Label>{isInternal ? 'Fällig am' : 'Start'}</Label>
             <Input type="datetime-local" value={form.startAt} onChange={(e) => setForm({ ...form, startAt: e.target.value })} />
           </div>
           <div>
-            <Label>Ende</Label>
+            <Label>{isInternal ? 'Erledigen bis' : 'Ende'}</Label>
             <Input type="datetime-local" value={form.endAt} onChange={(e) => setForm({ ...form, endAt: e.target.value })} />
           </div>
 
-          <div>
-            <Label>Kunde</Label>
-            <Input value={form.customerName} onChange={(e) => setForm({ ...form, customerName: e.target.value })} />
-          </div>
-          <div>
-            <Label>Ansprechpartner</Label>
-            <Input value={form.customerContact} onChange={(e) => setForm({ ...form, customerContact: e.target.value })} />
-          </div>
-          <div>
-            <Label>E-Mail</Label>
-            <Input type="email" value={form.customerEmail} onChange={(e) => setForm({ ...form, customerEmail: e.target.value })} />
-          </div>
-          <div>
-            <Label>Telefon</Label>
-            <Input value={form.customerPhone} onChange={(e) => setForm({ ...form, customerPhone: e.target.value })} />
-          </div>
+          {!isInternal && (
+            <>
+              <div>
+                <Label>Kunde</Label>
+                <Input value={form.customerName} onChange={(e) => setForm({ ...form, customerName: e.target.value })} />
+              </div>
+              <div>
+                <Label>Ansprechpartner</Label>
+                <Input value={form.customerContact} onChange={(e) => setForm({ ...form, customerContact: e.target.value })} />
+              </div>
+              <div>
+                <Label>E-Mail</Label>
+                <Input type="email" value={form.customerEmail} onChange={(e) => setForm({ ...form, customerEmail: e.target.value })} />
+              </div>
+              <div>
+                <Label>Telefon</Label>
+                <Input value={form.customerPhone} onChange={(e) => setForm({ ...form, customerPhone: e.target.value })} />
+              </div>
 
-          <div>
-            <Label>Adresse</Label>
-            <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
-          </div>
-          <div>
-            <Label>Standort / Raum</Label>
-            <div className="grid grid-cols-2 gap-2">
-              <Input placeholder="Standort" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
-              <Input placeholder="Raum" value={form.room} onChange={(e) => setForm({ ...form, room: e.target.value })} />
-            </div>
-          </div>
+              <div>
+                <Label>Adresse</Label>
+                <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
+              </div>
+              <div>
+                <Label>Standort / Raum</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Input placeholder="Standort" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
+                  <Input placeholder="Raum" value={form.room} onChange={(e) => setForm({ ...form, room: e.target.value })} />
+                </div>
+              </div>
+            </>
+          )}
 
           <div>
             <Label>Status</Label>
