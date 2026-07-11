@@ -401,6 +401,7 @@ const MediapaketOverview = lazy(() => import("./pages/mediapaket/MediapaketOverv
 const MediapaketAdmin = lazy(() => import("./pages/mediapaket/MediapaketAdmin"));
 const MediapaketPrint = lazy(() => import("./pages/mediapaket/MediapaketPrint"));
 const MediapaketPreview = lazy(() => import("./pages/mediapaket/MediapaketPreview"));
+const MediapaketTemplates = lazy(() => import("./pages/mediapaket/MediapaketTemplates"));
 const EscConfirmAppointment = lazy(() => import("./pages/ESC/public/ConfirmAppointment"));
 const EscRescheduleAppointment = lazy(() => import("./pages/ESC/public/RescheduleAppointment"));
 const EscCancelAppointment = lazy(() => import("./pages/ESC/public/CancelAppointment"));
