@@ -1,63 +1,63 @@
+# Teamkalender systemweit persistieren
 
-# ESC Ausbaustufe 3 – Umsetzung in 4 Phasen
+Ziel: Alle Änderungen im Teamkalender (Termine, Abteilungen, Mitarbeiter, Fahrzeuge, Räume, Vorführgeräte, Abwesenheiten, Qualifikationen) landen dauerhaft in Supabase und sind für alle Nutzer sichtbar. Bestehende Browser-Daten werden einmalig übernommen und `localStorage` danach geleert.
 
-Alle Phasen bauen auf dem bestehenden ESC-Kern (Events, Ressourcen, Teilnehmer, Audit-Log, ICS-Feed) auf. Jede Phase wird einzeln geliefert und kann sofort genutzt werden.
+## Schritte
 
-## Phase A – KI-Planung (Auto-Scheduling)
+### 1. Datenbank (Migration)
+Bestehende Tabellen weiterverwenden:
+- `esc_events` → Termine
+- `esc_departments` → Abteilungen
+- `esc_resources` → generische Ressourcen (bereits vorhanden, aber unspezifisch)
+- `esc_employee_departments`, `esc_employee_settings` → Mitarbeiterzuordnung
 
-Ziel: „Termin am besten planen lassen" – die KI schlägt Datum, Uhrzeit, Techniker und Ressource vor.
+Neu anlegen (mit GRANTs + RLS für `authenticated`):
+- `rm_locations` (Standorte)
+- `rm_qualifications` (Qualifikationen)
+- `rm_employees` (Mitarbeiter-Erweiterung: role, location, color, qualifications[], max*)
+- `rm_vehicles`
+- `rm_rooms`
+- `rm_demo_devices`
+- `rm_absences`
+- `rm_maintenance_tasks`
 
-- Neuer Button „🪄 KI-Vorschlag" im Termin-Erstellen-Dialog.
-- Edge Function `esc-ai-suggest` ruft Lovable AI (`google/gemini-3-flash-preview`) mit Tool-Calling auf.
-- Kontext, den die KI bekommt:
-  - Termin-Typ, Dauer, Kunde/Adresse
-  - Freie Slots pro Mitarbeiter (nächste 14 Tage, aus `esc_events` + `esc_employee_settings.working_hours`)
-  - Skills/Abteilungen (`esc_employee_departments`)
-  - Bereits geplante Touren am Zieltag (Region-Clustering aus `route_plans`)
-  - Ressourcen-Auslastung (`esc_event_resources`)
-- Rückgabe: 3 gerankte Vorschläge mit Begründung („Techniker X ist am 14.7. eh in PLZ 8010 unterwegs").
-- UI: Vorschlagskarten mit „Übernehmen"-Button, füllt das Formular vor.
+RLS-Policy pro neuer Tabelle: Lesen/Schreiben für alle eingeloggten Nutzer (`auth.uid() IS NOT NULL`), volle Rechte für `service_role`. Delete zusätzlich nur Super Admin (per `has_role`).
 
-## Phase B – Tourenplanung + Ressourcen
+Standard-Seeds (Locations Berlin/Wien/…, Qualifikationen NiSV/Laser/…) werden in der Migration eingespielt, damit die DB nach dem Deploy funktionsfähig ist.
 
-- Neue Ansicht `/esc/touren`: Karte + Tages-Timeline pro Techniker.
-- Reihenfolge-Optimierung per Nearest-Neighbor (clientseitig, PLZ-basiert) – kein externer Kartendienst nötig.
-- Konflikt-Checker: Ressource doppelt gebucht → Warnbanner im Termin-Dialog (Edge Function `esc-conflict-check`).
-- Overlay im Kalender: Termine derselben Tour bekommen gleiche Farbrand-Kennung.
+### 2. Hooks umstellen (Frontend)
+Jeder Store wird von in-memory/localStorage auf Supabase umgestellt, API-Signaturen (`upsertX`, `removeX`, …) bleiben identisch, damit UI-Komponenten unverändert bleiben:
 
-## Phase C – QR-Check-in + digitale Unterschrift
+- `useAppointments` → `esc_events`
+- `useDepartments` → `esc_departments`
+- `useEmployees` → `esc_employee_settings` + `esc_employee_departments`
+- `useResourceMgmt` → neue `rm_*`-Tabellen
 
-- Jeder Termin bekommt QR-Code (`/esc/checkin/{token}` – nutzt bestehendes `esc_ics_tokens`-System, action=`checkin`).
-- Public-Seite ohne Login: Kunde/Techniker sieht Terminübersicht, drückt „Check-in" → Zeitstempel + Geolocation optional.
-- Signature-Pad (react-signature-canvas) → PNG in Storage `esc-signatures`, Referenz in neuer Tabelle `esc_signatures`.
-- PDF-Protokoll (jsPDF) mit Termin + Signatur + Check-in-Zeit, per E-Mail versendbar.
+Jeder Hook:
+1. Initial `select` beim Mount, State in React Query o. `useState`.
+2. Realtime-Channel (`postgres_changes`) für Live-Updates aller Sessions.
+3. `upsert`/`delete` schreibt direkt in Supabase, Realtime aktualisiert lokal.
 
-## Phase D – WhatsApp/SMS + Google/Microsoft Two-Way-Sync
+### 3. Einmalige Migration der Browser-Daten
+Neue Utility `src/lib/esc/migrate-local-to-supabase.ts`:
+- Läuft einmal beim ersten Login (Flag `esc.migrated.v1` in `localStorage`).
+- Liest bestehende Keys (`esc.employees.v2`, `esc.departments.v2`, evtl. weitere) und ruft die neuen Supabase-`upsert`-Funktionen auf.
+- Bei Erfolg: `localStorage.removeItem` für alle migrierten Keys, Flag setzen.
+- Trigger im `EscLayout` beim Mount, nur wenn Nutzer eingeloggt.
 
-WhatsApp/SMS
-- Nutzt vorhandene Twilio + GatewayAPI Connectoren.
-- Erweitert `esc-send-email` zu generischem `esc-send-message` mit Kanal-Switch (`email` | `sms` | `whatsapp`).
-- Templates in `esc_ech_templates` (Kanal-Feld existiert bereits).
-- Eingehende Antworten (Twilio Webhook `esc-whatsapp-inbound`) → Status `confirmed` auf Termin.
+### 4. Aufräumen
+- Mock-Daten (`MOCK_APPOINTMENTS`, `MOCK_EMPLOYEES`, `RM_*`) bleiben nur noch als Seed-Vorlage für die Migration, nicht mehr im Runtime-Pfad.
+- Kein `localStorage`-Fallback mehr; bei fehlender Auth zeigt der Kalender leeren Zustand mit Hinweis.
 
-Kalender Two-Way-Sync (Beides: pro Mitarbeiter + Firmenkalender)
-- **Pro Mitarbeiter**: OAuth-Flow in `/esc/einstellungen` – Buttons „Google verbinden" / „Microsoft verbinden".
-  - Google: eigene OAuth-App (User legt Client-ID/Secret als Projekt-Secret ab, alternativ Lovable-Connector `google_calendar` als Firmenkonto).
-  - Microsoft: Graph API OAuth (Delegated `Calendars.ReadWrite`).
-  - Tokens verschlüsselt in neuer Tabelle `esc_calendar_connections` (user_id, provider, access_token, refresh_token, expires_at, calendar_id).
-- **Firmenkalender**: Ein zentrales Konto via Lovable Connector (`google_calendar` bereits verfügbar; für M365 den Connector `microsoft_outlook` bzw. neuen Graph-Zugang).
-- Sync-Engine (Edge Function `esc-calendar-sync`, Cron alle 5 Min):
-  - Outbound: neue/geänderte ESC-Events → Provider (INSERT/UPDATE/DELETE).
-  - Inbound: Provider-Events (nur die vom Connector-User erstellten Tags/Kategorie „ESC") → ESC-Events.
-  - Konflikt-Regel: ESC ist Source of Truth, Provider-Änderungen erzeugen `esc_audit_log` Eintrag.
+## Technische Details
 
-## Technische Anmerkungen
+- Neue Tabellen erhalten `id uuid`, `created_at`, `updated_at`, `created_by uuid` (default `auth.uid()`) plus `update_updated_at_column`-Trigger.
+- Realtime wird für alle betroffenen Tabellen per `ALTER PUBLICATION supabase_realtime ADD TABLE …` aktiviert.
+- Delete-Restriction Super Admin per Policy `USING (public.has_role(auth.uid(), 'Super Admin'))` gemäß Projekt-Memory.
+- Migration nur `CREATE TABLE IF NOT EXISTS` + `INSERT … ON CONFLICT DO NOTHING`, damit sie idempotent bleibt.
+- Rollout: Erst Migration ausführen → Types werden regeneriert → dann Hook-Refactor.
 
-- Keine neuen Basistabellen wo möglich; nur `esc_signatures` und `esc_calendar_connections` sind neu.
-- RLS: Beide neuen Tabellen strikt user_id-scoped + Super Admin/Admin.
-- Alle Edge Functions mit CORS + JWT-Validierung, außer `esc-checkin/*` und `esc-whatsapp-inbound` (public/webhook).
-- Secrets, die evtl. angefragt werden: `GOOGLE_OAUTH_CLIENT_ID/SECRET`, `MS_OAUTH_CLIENT_ID/SECRET/TENANT` (nur wenn User pro-Mitarbeiter-Sync ohne Firmenkonto will).
-
-## Vorgehen
-
-Ich starte jetzt mit **Phase A (KI-Planung)** und liefere sie komplett. Nach Freigabe / Test der Phase folgen B, C, D nacheinander in eigenen Nachrichten. Das hält Migrations und Änderungen überschaubar und reviewbar.
+## Umfang / Risiken
+- Großer Refactor über ~10 Dateien; UI-Komponenten bleiben unverändert.
+- Erste Nutzer, die noch Browser-Daten haben, sehen kurz einen Migrations-Toast, danach sind ihre Einträge in Supabase.
+- Neue RLS erfordert eingeloggten Nutzer — der öffentliche Buchungsbereich (`/esc/booking`) läuft weiterhin über bestehende Edge-Function-Pfade und wird nicht angerührt.
