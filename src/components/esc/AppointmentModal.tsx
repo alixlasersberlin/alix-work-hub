@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,8 +10,10 @@ import type { EscAppointment, EscDepartment, EscEmployee, EscPriority, EscStatus
 import { ESC_STATUS_LABELS } from './StatusBadge';
 import { toast } from 'sonner';
 import { downloadIcs } from '@/lib/esc/ics';
-import { Sparkles, Loader2, Check } from 'lucide-react';
+import { Sparkles, Loader2, Check, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { findConflicts } from '@/lib/esc/conflicts';
+import { useAppointments } from '@/hooks/esc/useAppointments';
 
 interface AiSuggestion {
   start_at: string;
@@ -82,6 +84,24 @@ export function AppointmentModal({ open, onClose, onSubmit, departments, employe
 
   const [aiLoading, setAiLoading] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState<AiSuggestion[]>([]);
+  const { appointments: allAppointments } = useAppointments();
+
+  const conflicts = useMemo(() => {
+    if (!form.startAt || !form.endAt) return [];
+    try {
+      return findConflicts(
+        {
+          id: initial?.id || 'new',
+          startAt: new Date(form.startAt).toISOString(),
+          endAt: new Date(form.endAt).toISOString(),
+          employeeIds: form.employeeIds,
+          departmentId: form.departmentId,
+        },
+        allAppointments,
+        { employees: employees.map((e) => ({ id: e.id, name: e.name })) },
+      );
+    } catch { return []; }
+  }, [form.startAt, form.endAt, form.employeeIds, form.departmentId, allAppointments, employees, initial?.id]);
 
   const runAiSuggest = async () => {
     setAiLoading(true);
