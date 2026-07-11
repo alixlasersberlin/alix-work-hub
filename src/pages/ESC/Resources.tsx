@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Edit, Trash2 } from 'lucide-react';
@@ -29,42 +29,52 @@ export default function EscResources() {
   };
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold">Ressourcen</h1>
-        <Button size="sm" onClick={openNew}><Plus className="w-4 h-4 mr-1" /> Neue Ressource</Button>
-      </div>
-      <div className="rounded-lg border bg-card">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Typ</TableHead>
-              <TableHead>Standort</TableHead>
-              <TableHead>Kapazität</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Aktionen</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {resources.map((r) => (
-              <TableRow key={r.id}>
-                <TableCell className="text-[13px] font-medium">{r.name}</TableCell>
-                <TableCell className="text-[12px]">{r.type}</TableCell>
-                <TableCell className="text-[12px]">{r.location || '—'}</TableCell>
-                <TableCell className="text-[12px]">{r.capacity ?? '—'}</TableCell>
-                <TableCell className="text-[12px]">{r.active ? 'Aktiv' : 'Inaktiv'}</TableCell>
-                <TableCell className="text-right">
-                  <Button size="icon" variant="ghost" onClick={() => openEdit(r)}><Edit className="w-4 h-4" /></Button>
-                  <Button size="icon" variant="ghost" className="text-destructive" onClick={async () => { await deleteResource(r.id); toast.success('Gelöscht'); }}><Trash2 className="w-4 h-4" /></Button>
-                </TableCell>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h1 className="text-lg font-semibold">Ressourcen</h1>
+          <DialogTrigger asChild>
+            <Button size="sm" onClick={openNew}>
+              <Plus className="w-4 h-4 mr-1" /> Neue Ressource
+            </Button>
+          </DialogTrigger>
+        </div>
+        <div className="rounded-lg border bg-card">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Typ</TableHead>
+                <TableHead>Standort</TableHead>
+                <TableHead>Kapazität</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Aktionen</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {resources.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-8">
+                    Noch keine Ressourcen angelegt.
+                  </TableCell>
+                </TableRow>
+              ) : resources.map((r) => (
+                <TableRow key={r.id}>
+                  <TableCell className="text-[13px] font-medium">{r.name}</TableCell>
+                  <TableCell className="text-[12px]">{r.type}</TableCell>
+                  <TableCell className="text-[12px]">{r.location || '—'}</TableCell>
+                  <TableCell className="text-[12px]">{r.capacity ?? '—'}</TableCell>
+                  <TableCell className="text-[12px]">{r.active ? 'Aktiv' : 'Inaktiv'}</TableCell>
+                  <TableCell className="text-right">
+                    <Button size="icon" variant="ghost" onClick={() => openEdit(r)}><Edit className="w-4 h-4" /></Button>
+                    <Button size="icon" variant="ghost" className="text-destructive" onClick={async () => { await deleteResource(r.id); toast.success('Gelöscht'); }}><Trash2 className="w-4 h-4" /></Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
 
-      <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>{form.id ? 'Ressource bearbeiten' : 'Neue Ressource'}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 py-2">
@@ -90,7 +100,7 @@ export default function EscResources() {
             <Button onClick={submit}>Speichern</Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
-    </div>
+      </div>
+    </Dialog>
   );
 }
