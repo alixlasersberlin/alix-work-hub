@@ -383,24 +383,30 @@ export function AppointmentModal({ open, onClose, onSubmit, departments, employe
             </Select>
           </div>
 
+          {!isInternal && (
+            <div className="md:col-span-2">
+              <Label>Beschreibung / externe Notiz</Label>
+              <Textarea rows={2} value={form.externalNote} onChange={(e) => setForm({ ...form, externalNote: e.target.value })} />
+            </div>
+          )}
           <div className="md:col-span-2">
-            <Label>Beschreibung / externe Notiz</Label>
-            <Textarea rows={2} value={form.externalNote} onChange={(e) => setForm({ ...form, externalNote: e.target.value })} />
-          </div>
-          <div className="md:col-span-2">
-            <Label>Interne Notiz</Label>
-            <Textarea rows={2} value={form.internalNote} onChange={(e) => setForm({ ...form, internalNote: e.target.value })} />
+            <Label>{isInternal ? 'Notiz (intern)' : 'Interne Notiz'}</Label>
+            <Textarea rows={isInternal ? 3 : 2} value={form.internalNote} onChange={(e) => setForm({ ...form, internalNote: e.target.value })} />
           </div>
 
           <div className="md:col-span-2 flex flex-wrap gap-4 pt-2 border-t">
-            <label className="flex items-center gap-2 text-sm">
-              <Checkbox checked={form.confirmationRequired} onCheckedChange={(v) => setForm({ ...form, confirmationRequired: !!v })} />
-              Bestätigung durch Kunde erforderlich
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <Checkbox checked={form.sendEmail} onCheckedChange={(v) => setForm({ ...form, sendEmail: !!v })} />
-              E-Mail an Kunde senden
-            </label>
+            {!isInternal && (
+              <>
+                <label className="flex items-center gap-2 text-sm">
+                  <Checkbox checked={form.confirmationRequired} onCheckedChange={(v) => setForm({ ...form, confirmationRequired: !!v })} />
+                  Bestätigung durch Kunde erforderlich
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <Checkbox checked={form.sendEmail} onCheckedChange={(v) => setForm({ ...form, sendEmail: !!v })} />
+                  E-Mail an Kunde senden
+                </label>
+              </>
+            )}
             <label className="flex items-center gap-2 text-sm">
               <Checkbox checked={form.attachIcs} onCheckedChange={(v) => setForm({ ...form, attachIcs: !!v })} />
               ICS-Kalenderdatei herunterladen
