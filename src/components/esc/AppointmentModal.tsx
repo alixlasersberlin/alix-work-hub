@@ -10,6 +10,17 @@ import type { EscAppointment, EscDepartment, EscEmployee, EscPriority, EscStatus
 import { ESC_STATUS_LABELS } from './StatusBadge';
 import { toast } from 'sonner';
 import { downloadIcs } from '@/lib/esc/ics';
+import { Sparkles, Loader2, Check } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+
+interface AiSuggestion {
+  start_at: string;
+  end_at: string;
+  employee_id?: string | null;
+  employee_name?: string;
+  reason?: string;
+  score?: number;
+}
 
 interface Props {
   open: boolean;
