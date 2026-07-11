@@ -1,4 +1,5 @@
 import { FieldMapPlaceholder } from '@/components/esc/resources/FieldMap';
+import { RmQuickActions } from '@/components/esc/resources/RmQuickActions';
 import { useResourceMgmt } from '@/hooks/esc/useResourceMgmt';
 import { useAppointments } from '@/hooks/esc/useAppointments';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
