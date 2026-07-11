@@ -50,7 +50,7 @@ export default function RmDevices() {
                 </div>
                 <div className="flex items-center gap-1">
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted">{STATUS_LABELS[d.status] || d.status}</span>
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition">
+                  <div className="flex gap-1 opacity-100 transition">
                     <button onClick={() => setEditing({ ...d })} className="p-1 rounded hover:bg-muted"><Pencil className="h-3 w-3" /></button>
                     <button onClick={() => removeDemoDevice(d.id)} className="p-1 rounded hover:bg-muted text-destructive"><Trash2 className="h-3 w-3" /></button>
                   </div>
