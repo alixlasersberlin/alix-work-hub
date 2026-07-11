@@ -184,7 +184,7 @@ export function AppointmentModalTabs({
   const handleSubmit = async (opts?: { sendEmail?: boolean }) => {
     if (!form.title.trim()) { toast.error('Bitte Titel angeben'); return; }
     if (!form.departmentId) { toast.error('Bitte Abteilung wählen'); return; }
-    if (!form.kind.trim()) { toast.error('Bitte Terminart angeben'); return; }
+    if (!form.kind.trim() && mode !== 'erinnerung' && mode !== 'wiedervorlage') { toast.error('Bitte Terminart angeben'); return; }
     if (!form.startAt || !form.endAt) { toast.error('Bitte Start und Ende angeben'); return; }
     if (new Date(form.endAt) <= new Date(form.startAt)) { toast.error('Ende muss nach Start liegen'); return; }
 
