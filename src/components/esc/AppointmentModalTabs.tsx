@@ -23,6 +23,7 @@ import { DocumentActions } from './DocumentActions';
 import { getCustomerSummary } from '@/lib/esc/crm/search';
 import { emit } from '@/lib/esc/events/bus';
 import { startWorkflowEngine } from '@/lib/esc/workflows/engine';
+import { useAppointmentKinds } from '@/hooks/esc/useAppointmentKinds';
 
 startWorkflowEngine();
 
@@ -112,6 +113,7 @@ export function AppointmentModalTabs({
   const [mode, setMode] = useState<'intern' | 'extern' | 'erinnerung' | 'wiedervorlage'>(detectMode());
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [form, setForm] = useState(() => buildInitialForm(initial, defaultStart, departments));
+  const { kinds: kindOptions } = useAppointmentKinds();
   const defaultStartTime = defaultStart?.getTime();
 
   useEffect(() => {
@@ -295,7 +297,25 @@ export function AppointmentModalTabs({
                 </div>
                 <div>
                   <Label>Terminart *</Label>
-                  <Input value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value })} placeholder="z. B. Demo, Reparatur" />
+                  <Input
+                    list="esc-kind-options"
+                    value={form.kind}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      const match = kindOptions.find((k) => k.name === v);
+                      setForm((f) => ({
+                        ...f,
+                        kind: v,
+                        ...(match?.color ? {} : {}),
+                      }));
+                    }}
+                    placeholder="Auswählen oder tippen (z. B. Beratung)"
+                  />
+                  <datalist id="esc-kind-options">
+                    {kindOptions
+                      .filter((k) => k.active && (k.departmentIds.length === 0 || k.departmentIds.includes(form.departmentId)))
+                      .map((k) => <option key={k.id} value={k.name}>{k.description || ''}</option>)}
+                  </datalist>
                 </div>
                 <div>
                   <Label>Status</Label>

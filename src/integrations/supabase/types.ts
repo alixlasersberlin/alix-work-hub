@@ -4572,6 +4572,30 @@ export type Database = {
           },
         ]
       }
+      esc_store_appointment_kinds: {
+        Row: {
+          created_at: string
+          data: Json
+          id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          data: Json
+          id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       esc_store_appointments: {
         Row: {
           created_at: string
@@ -16344,6 +16368,13 @@ export type Database = {
       esc_is_department_lead: {
         Args: { _department_id: string; _user_id: string }
         Returns: boolean
+      }
+      esc_public_appointment_kinds: {
+        Args: never
+        Returns: {
+          data: Json
+          id: string
+        }[]
       }
       esc_public_departments: {
         Args: never

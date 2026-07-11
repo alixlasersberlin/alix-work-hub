@@ -356,6 +356,7 @@ const EscLayout = lazy(() => import("./components/esc/EscLayout"));
 const EscOverview = lazy(() => import("./pages/ESC/Overview"));
 const EscCalendar = lazy(() => import("./pages/ESC/Calendar"));
 const EscDepartments = lazy(() => import("./pages/ESC/Departments"));
+const EscAppointmentKinds = lazy(() => import("./pages/ESC/AppointmentKinds"));
 const EscEmployees = lazy(() => import("./pages/ESC/Employees"));
 const EscResources = lazy(() => import("./pages/ESC/Resources"));
 const EscBookings = lazy(() => import("./pages/ESC/Bookings"));
@@ -705,6 +706,7 @@ function AppRoutes() {
             <Route path="ressourcen" element={<EscResources />} />
             <Route path="mitarbeiter" element={<EscEmployees />} />
             <Route path="abteilungen" element={<EscDepartments />} />
+            <Route path="terminarten" element={<EscAppointmentKinds />} />
             <Route path="buchungen" element={<EscBookings />} />
             <Route path="bestaetigungen" element={<EscConfirmations />} />
             <Route path="einstellungen" element={<EscSettings />} />
