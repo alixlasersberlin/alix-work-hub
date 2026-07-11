@@ -241,10 +241,10 @@ export function AppointmentModalTabs({
           <TabsList className="w-full justify-start overflow-x-auto flex-wrap h-auto">
             <TabsTrigger value="general">Allgemein</TabsTrigger>
             <TabsTrigger value="participants">Teilnehmer</TabsTrigger>
-            <TabsTrigger value="customer">Kunde</TabsTrigger>
+            {mode === 'extern' && <TabsTrigger value="customer">Kunde</TabsTrigger>}
             <TabsTrigger value="resources">Ressourcen</TabsTrigger>
             <TabsTrigger value="recurrence">Wiederholung</TabsTrigger>
-            <TabsTrigger value="confirmation">Bestätigung</TabsTrigger>
+            {mode === 'extern' && <TabsTrigger value="confirmation">Bestätigung</TabsTrigger>}
             <TabsTrigger value="notes">Notizen</TabsTrigger>
             <TabsTrigger value="attachments">Anhänge</TabsTrigger>
             <TabsTrigger value="history">Verlauf</TabsTrigger>
