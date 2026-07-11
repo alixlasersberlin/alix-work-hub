@@ -816,11 +816,11 @@ Deno.serve(async (req) => {
       });
       // Anonymisieren: PII in contact & team leeren
       await admin.from('media_package_contact_data').update({
-        contact_person: 'ANONYMISIERT', email: null, phone: null, mobile: null,
-        website: null, instagram: null, facebook: null, tiktok: null,
+        contact_name: 'ANONYMISIERT', email: null, phone: null, mobile: null, whatsapp: null,
+        secondary_email: null, website: null, instagram: null, facebook: null, tiktok: null, youtube: null, linkedin: null,
       } as any).eq('media_package_id', mp_id);
       await admin.from('media_package_team_members').update({
-        name: 'ANONYMISIERT', email: null, phone: null, bio: null,
+        first_name: 'ANONYMISIERT', last_name: null, biography: null,
       } as any).eq('media_package_id', mp_id);
       await admin.from('media_packages').update({
         studio_name: 'ANONYMISIERT', status: 'completed' as any,
