@@ -68,24 +68,37 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [orderId]);
 
-  // Comments (realtime): unread customer answers + section-grouped thread
+  // Comments (realtime): unread customer answers + section-grouped thread + internal staff thread
   const [unread, setUnread] = useState<any[]>([]);
   const [commentsBySection, setCommentsBySection] = useState<Record<string, any[]>>({});
+  const [internalThread, setInternalThread] = useState<any[]>([]);
+  const [authorNames, setAuthorNames] = useState<Record<string, string>>({});
   const loadComments = useCallback(async (mpId: string) => {
     const { data } = await supabase
       .from('media_package_comments')
-      .select('id, subject, comment, created_at, read_at, answered_at, author_type, recipient_type, internal_only, related_field')
+      .select('id, subject, comment, created_at, read_at, answered_at, author_type, recipient_type, internal_only, related_field, author_id')
       .eq('media_package_id', mpId)
       .order('created_at', { ascending: false });
     const all = data || [];
     setUnread(all.filter(c => c.author_type === 'customer' && c.recipient_type === 'staff' && !c.internal_only && !c.read_at));
     const grouped: Record<string, any[]> = {};
     for (const c of all) {
+      if (c.internal_only) continue;
       const key = c.related_field && SECTION_LABEL[c.related_field] ? c.related_field : null;
       if (!key) continue;
       (grouped[key] ||= []).push(c);
     }
     setCommentsBySection(grouped);
+    const internals = all.filter(c => c.internal_only).sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    setInternalThread(internals);
+    // Resolve author display names
+    const uids = Array.from(new Set(internals.map(c => c.author_id).filter(Boolean))) as string[];
+    if (uids.length) {
+      const { data: profs } = await supabase.from('user_profiles').select('id, full_name, email').in('id', uids);
+      const map: Record<string, string> = {};
+      (profs || []).forEach((p: any) => { map[p.id] = p.full_name || p.email || 'Mitarbeiter'; });
+      setAuthorNames(prev => ({ ...prev, ...map }));
+    }
   }, []);
 
   const notifiedIdsRef = useRef<Set<string>>(new Set());
