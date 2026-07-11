@@ -16276,6 +16276,7 @@ export type Database = {
       can_approve_warranty: { Args: never; Returns: boolean }
       can_manage_backups: { Args: never; Returns: boolean }
       can_manage_copilot_config: { Args: never; Returns: boolean }
+      can_manage_esc_master: { Args: never; Returns: boolean }
       can_manage_mail_campaigns: { Args: never; Returns: boolean }
       can_manage_mail_domains: { Args: never; Returns: boolean }
       can_manage_mail_templates: { Args: never; Returns: boolean }
@@ -16294,6 +16295,7 @@ export type Database = {
       can_view_backups: { Args: never; Returns: boolean }
       can_view_finance_module: { Args: never; Returns: boolean }
       can_view_mail_audit: { Args: never; Returns: boolean }
+      can_write_esc_operational: { Args: never; Returns: boolean }
       cashbook_reverse: {
         Args: { _id: string; _reason?: string }
         Returns: string
