@@ -17,10 +17,10 @@ export function BookingLayout({ children, step, totalSteps, narrow, hideLegalLin
     <div className="min-h-dvh flex flex-col bg-gradient-to-b from-background via-background to-muted/30 text-foreground">
       <header className="border-b bg-card/70 backdrop-blur sticky top-0 z-10">
         <div className="max-w-5xl mx-auto flex items-center gap-3 px-4 py-3">
-          <img src={alixLogo} alt="AlixWorks · Alix Lasers" className="h-9 w-auto" />
+          <img src={alixLogo} alt="Alix Smart" className="h-9 w-auto" />
           <div className="flex-1">
-            <div className="text-[14px] font-semibold tracking-tight">Alix Lasers</div>
-            <div className="text-[11px] text-muted-foreground">alix-lasers.com</div>
+            <div className="text-[14px] font-semibold tracking-tight">Alix Smart</div>
+            <div className="text-[11px] text-muted-foreground">dein interaktives Lasersystem</div>
           </div>
           
         </div>
