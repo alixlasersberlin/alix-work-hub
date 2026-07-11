@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { addDays, addMonths, addWeeks, differenceInMinutes, format, subDays, subMonths, subWeeks } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Plus, CalendarDays } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, CalendarDays, Bell, ClipboardList } from 'lucide-react';
 import { ViewSwitcher } from '@/components/esc/ViewSwitcher';
 import { DayView } from '@/components/esc/views/DayView';
 import { WeekView } from '@/components/esc/views/WeekView';
@@ -38,6 +38,7 @@ export default function EscCalendar() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<EscAppointment | null>(null);
   const [defaultStart, setDefaultStart] = useState<Date | undefined>();
+  const [presetKind, setPresetKind] = useState<'Erinnerung' | 'Wiedervorlage' | undefined>();
   const [filters, setFilters] = useState<EscFilterState>(EMPTY_FILTER);
 
   const { appointments, createAppointment, updateAppointment, deleteAppointment } = useAppointments();
@@ -63,8 +64,9 @@ export default function EscCalendar() {
     else if (view === 'month') setCursor((c) => (dir === 1 ? addMonths(c, 1) : subMonths(c, 1)));
   };
 
-  const openNew = (start?: Date) => { setEditing(null); setDefaultStart(start); setModalOpen(true); };
-  const openEdit = (a: EscAppointment) => { setEditing(a); setDefaultStart(undefined); setModalOpen(true); };
+  const openNew = (start?: Date) => { setEditing(null); setDefaultStart(start); setPresetKind(undefined); setModalOpen(true); };
+  const openNewKind = (kind: 'Erinnerung' | 'Wiedervorlage') => { setEditing(null); setDefaultStart(undefined); setPresetKind(kind); setModalOpen(true); };
+  const openEdit = (a: EscAppointment) => { setEditing(a); setDefaultStart(undefined); setPresetKind(undefined); setModalOpen(true); };
 
   const handleSubmit = async (payload: Omit<EscAppointment, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (editing) {
@@ -116,6 +118,12 @@ export default function EscCalendar() {
         <div className="text-[13px] font-medium">{title}</div>
         <div className="ml-auto flex items-center gap-2 flex-wrap">
           <ViewSwitcher value={view} onChange={setView} />
+          <Button size="sm" variant="outline" onClick={() => openNewKind('Erinnerung')} title="Interne Erinnerung anlegen">
+            <Bell className="w-4 h-4 mr-1" /> Erinnerung
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => openNewKind('Wiedervorlage')} title="Interne Wiedervorlage anlegen">
+            <ClipboardList className="w-4 h-4 mr-1" /> Wiedervorlage
+          </Button>
           <Button size="sm" onClick={() => openNew()}>
             <Plus className="w-4 h-4 mr-1" /> Neuer Termin
           </Button>
@@ -143,7 +151,7 @@ export default function EscCalendar() {
         departments={departments}
         employees={employees}
         resources={resources}
-        initial={editing || undefined}
+        initial={editing || (presetKind ? { kind: presetKind } as Partial<EscAppointment> : undefined)}
         defaultStart={defaultStart}
         canSeeInternal={canSeeInternal}
       />

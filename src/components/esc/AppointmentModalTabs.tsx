@@ -104,9 +104,12 @@ export function AppointmentModalTabs({
   departments, employees, resources, initial, defaultStart, canSeeInternal, history = [],
 }: Props) {
   const [tab, setTab] = useState('general');
-  const [mode, setMode] = useState<'intern' | 'extern'>(
-    initial?.customerEmail || initial?.customerName || initial?.confirmationRequired ? 'extern' : 'intern'
-  );
+  const detectMode = (): 'intern' | 'extern' | 'erinnerung' | 'wiedervorlage' => {
+    if (initial?.kind === 'Erinnerung') return 'erinnerung';
+    if (initial?.kind === 'Wiedervorlage') return 'wiedervorlage';
+    return initial?.customerEmail || initial?.customerName || initial?.confirmationRequired ? 'extern' : 'intern';
+  };
+  const [mode, setMode] = useState<'intern' | 'extern' | 'erinnerung' | 'wiedervorlage'>(detectMode());
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [form, setForm] = useState(() => buildInitialForm(initial, defaultStart, departments));
   const defaultStartTime = defaultStart?.getTime();
@@ -114,13 +117,17 @@ export function AppointmentModalTabs({
   useEffect(() => {
     if (!open) return;
     setTab('general');
-    setMode(initial?.customerEmail || initial?.customerName || initial?.confirmationRequired ? 'extern' : 'intern');
+    setMode(detectMode());
     setSelectedCustomerId(null);
     setForm(buildInitialForm(initial, defaultStart, departments));
   }, [open, initial?.id, defaultStartTime, departments]);
 
+  // Bei Modus-Wechsel: Terminart automatisch setzen und irrelevante Tabs verlassen
   useEffect(() => {
-    if (mode === 'intern' && (tab === 'customer' || tab === 'confirmation')) setTab('general');
+    if (mode === 'erinnerung') setForm((f) => ({ ...f, kind: 'Erinnerung', confirmationRequired: false }));
+    else if (mode === 'wiedervorlage') setForm((f) => ({ ...f, kind: 'Wiedervorlage', confirmationRequired: false }));
+    else if (mode === 'intern') setForm((f) => (f.kind === 'Erinnerung' || f.kind === 'Wiedervorlage' ? { ...f, kind: '' } : f));
+    if (mode !== 'extern' && (tab === 'customer' || tab === 'confirmation')) setTab('general');
   }, [mode, tab]);
 
   useEffect(() => {
@@ -177,7 +184,7 @@ export function AppointmentModalTabs({
   const handleSubmit = async (opts?: { sendEmail?: boolean }) => {
     if (!form.title.trim()) { toast.error('Bitte Titel angeben'); return; }
     if (!form.departmentId) { toast.error('Bitte Abteilung wählen'); return; }
-    if (!form.kind.trim()) { toast.error('Bitte Terminart angeben'); return; }
+    if (!form.kind.trim() && mode !== 'erinnerung' && mode !== 'wiedervorlage') { toast.error('Bitte Terminart angeben'); return; }
     if (!form.startAt || !form.endAt) { toast.error('Bitte Start und Ende angeben'); return; }
     if (new Date(form.endAt) <= new Date(form.startAt)) { toast.error('Ende muss nach Start liegen'); return; }
 
@@ -213,28 +220,42 @@ export function AppointmentModalTabs({
         <header className="mb-4 flex items-start justify-between gap-3">
           <div>
             <h2 id="esc-appointment-dialog-title" className="flex items-center gap-2 text-lg font-semibold leading-none tracking-tight">
-            {initial?.id ? 'Termin bearbeiten' : 'Neuer Termin'}
+            {initial?.id
+              ? (mode === 'erinnerung' ? 'Erinnerung bearbeiten'
+                : mode === 'wiedervorlage' ? 'Wiedervorlage bearbeiten'
+                : 'Termin bearbeiten')
+              : (mode === 'erinnerung' ? 'Neue Erinnerung'
+                : mode === 'wiedervorlage' ? 'Neue Wiedervorlage'
+                : 'Neuer Termin')}
             {initial?.status && <Badge variant="outline" className="text-[10px]">{ESC_STATUS_LABELS[initial.status as EscStatus] || initial.status}</Badge>}
             </h2>
             <p id="esc-appointment-dialog-description" className="sr-only">
             Termin-Daten bearbeiten, Teilnehmer und Ressourcen verwalten.
             </p>
-            <div className="mt-2 inline-flex rounded-md border p-0.5 bg-muted/40" role="tablist" aria-label="Termintyp">
-              <button
-                type="button"
-                onClick={() => setMode('intern')}
-                className={`px-3 py-1 text-[12px] rounded-sm transition ${mode === 'intern' ? 'bg-background shadow-sm font-medium' : 'text-muted-foreground'}`}
-              >
-                Intern
-              </button>
-              <button
-                type="button"
-                onClick={() => setMode('extern')}
-                className={`px-3 py-1 text-[12px] rounded-sm transition ${mode === 'extern' ? 'bg-background shadow-sm font-medium' : 'text-muted-foreground'}`}
-              >
-                Extern
-              </button>
+            <div className="mt-2 inline-flex rounded-md border p-0.5 bg-muted/40 flex-wrap" role="tablist" aria-label="Eintragsart">
+              {([
+                { key: 'intern', label: 'Termin (intern)' },
+                { key: 'extern', label: 'Termin (extern)' },
+                { key: 'erinnerung', label: 'Erinnerung' },
+                { key: 'wiedervorlage', label: 'Wiedervorlage' },
+              ] as const).map((m) => (
+                <button
+                  key={m.key}
+                  type="button"
+                  onClick={() => setMode(m.key)}
+                  className={`px-3 py-1 text-[12px] rounded-sm transition ${mode === m.key ? 'bg-background shadow-sm font-medium' : 'text-muted-foreground'}`}
+                >
+                  {m.label}
+                </button>
+              ))}
             </div>
+            {(mode === 'erinnerung' || mode === 'wiedervorlage') && (
+              <p className="mt-2 text-[11px] text-muted-foreground">
+                {mode === 'erinnerung'
+                  ? 'Interne Erinnerung – nur im Team sichtbar, kein Kundenversand.'
+                  : 'Interne Wiedervorlage – nur im Team sichtbar, kein Kundenversand.'}
+              </p>
+            )}
           </div>
           <Button type="button" variant="ghost" size="icon" onClick={onClose} aria-label="Termin schließen">
             <X className="h-4 w-4" />
