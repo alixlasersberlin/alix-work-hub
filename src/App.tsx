@@ -397,6 +397,7 @@ const EchHistory = lazy(() => import("./pages/ESC/ech/History"));
 const EchSettingsPage = lazy(() => import("./pages/ESC/ech/Settings"));
 const EscBookingPortal = lazy(() => import("./pages/ESC/public/BookingPortal"));
 const MediapaketWizard = lazy(() => import("./pages/mediapaket/MediapaketWizard"));
+const MediapaketOverview = lazy(() => import("./pages/mediapaket/MediapaketOverview"));
 const EscConfirmAppointment = lazy(() => import("./pages/ESC/public/ConfirmAppointment"));
 const EscRescheduleAppointment = lazy(() => import("./pages/ESC/public/RescheduleAppointment"));
 const EscCancelAppointment = lazy(() => import("./pages/ESC/public/CancelAppointment"));
@@ -764,6 +765,7 @@ function AppRoutes() {
           <Route path="/auftraege-ch" element={<ProtectedRoute><OrdersCh /></ProtectedRoute>} />
           <Route path="/auftraege/in-klaerung" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><OrdersInClarification /></ProtectedRoute>} />
           <Route path="/auftraege/:id" element={<ProtectedRoute requiredRoles={[...ORDER_ROLES, 'Finanzierungen', 'Order']}><OrderDetail /></ProtectedRoute>} />
+          <Route path="/mediapaket" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Order', 'Mediapaket', 'Auftragsverwaltung', 'SACHBEARBEITUNG']}><MediapaketOverview /></ProtectedRoute>} />
           <Route path="/verkauf/artikel" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Artikel /></ProtectedRoute>} />
           <Route path="/verkauf/artikel/katalog" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Katalog /></ProtectedRoute>} />
           <Route path="/verkauf/artikel/kategorie" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Kategorie /></ProtectedRoute>} />
