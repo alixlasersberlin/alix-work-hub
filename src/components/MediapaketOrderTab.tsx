@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Plus, Copy, RefreshCw, Package as PackageIcon, CheckCircle2, Mail, MessageCircle, Check, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import MediapaketReviewPanel, { SECTION_LABEL } from './MediapaketReviewPanel';
+import { notifyBus } from '@/hooks/useNotifications';
 
 interface Props {
   orderId: string;
@@ -87,18 +88,48 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
     setCommentsBySection(grouped);
   }, []);
 
+  const notifiedIdsRef = useRef<Set<string>>(new Set());
+  const initializedRef = useRef(false);
   useEffect(() => {
-    if (!mp?.id) { setUnread([]); setCommentsBySection({}); return; }
-    loadComments(mp.id);
+    if (!mp?.id) { setUnread([]); setCommentsBySection({}); notifiedIdsRef.current.clear(); initializedRef.current = false; return; }
+    initializedRef.current = false;
+    loadComments(mp.id).then(() => { initializedRef.current = true; });
     const ch = supabase
       .channel(`mp-comments-${mp.id}`)
       .on('postgres_changes', {
-        event: '*', schema: 'public', table: 'media_package_comments',
+        event: 'INSERT', schema: 'public', table: 'media_package_comments',
+        filter: `media_package_id=eq.${mp.id}`,
+      }, (payload) => {
+        const row: any = payload.new;
+        if (
+          initializedRef.current &&
+          row &&
+          row.author_type === 'customer' &&
+          row.recipient_type === 'staff' &&
+          !row.internal_only &&
+          !row.read_at &&
+          !notifiedIdsRef.current.has(row.id)
+        ) {
+          notifiedIdsRef.current.add(row.id);
+          const sectionLabel = row.related_field ? SECTION_LABEL[row.related_field] : null;
+          notifyBus.push({
+            title: 'Neue Kundenantwort (Mediapaket)',
+            body: sectionLabel ? `${sectionLabel}: ${row.subject || row.comment || ''}` : (row.subject || row.comment || ''),
+            kind: 'warning',
+            module: 'Mediapaket',
+            href: `/auftraege/${orderId}?tab=mediapaket`,
+          });
+          toast.info('Neue Kundenantwort eingetroffen');
+        }
+        loadComments(mp.id);
+      })
+      .on('postgres_changes', {
+        event: 'UPDATE', schema: 'public', table: 'media_package_comments',
         filter: `media_package_id=eq.${mp.id}`,
       }, () => loadComments(mp.id))
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [mp?.id, loadComments]);
+  }, [mp?.id, loadComments, orderId]);
 
   const markIdsRead = useCallback(async (ids: string[]) => {
     if (!ids.length) return;

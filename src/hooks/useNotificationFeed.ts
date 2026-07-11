@@ -39,7 +39,8 @@ export function useNotificationFeed() {
     const isAdmin = roles.includes('Super Admin') || roles.includes('Admin');
     const isFinance = isAdmin || roles.includes('Finance');
     const isTicketUser = isAdmin || roles.includes('Order') || roles.includes('QM');
-    if (!isAdmin && !isFinance && !isTicketUser) return;
+    const isMediapaketUser = isAdmin || roles.includes('Order') || roles.includes('QM');
+    if (!isAdmin && !isFinance && !isTicketUser && !isMediapaketUser) return;
 
     let cancelled = false;
 
@@ -115,6 +116,44 @@ export function useNotificationFeed() {
               kind: 'info',
               module: 'Tickets',
               href: `/tickets/${r.id}`,
+            });
+          });
+        })());
+      }
+
+      // 4) New unread customer answers on Mediapaket (Admin/Order/QM)
+      if (isMediapaketUser) {
+        tasks.push((async () => {
+          const { data } = await supabase
+            .from('media_package_comments' as any)
+            .select('id, subject, comment, media_package_id, related_field, created_at')
+            .eq('author_type', 'customer')
+            .eq('recipient_type', 'staff')
+            .eq('internal_only', false)
+            .is('read_at', null)
+            .order('created_at', { ascending: false })
+            .limit(10);
+          const rows = data ?? [];
+          const mpIds = Array.from(new Set(rows.map((r: any) => r.media_package_id).filter(Boolean)));
+          let orderByMp: Record<string, string> = {};
+          if (mpIds.length) {
+            const { data: mps } = await supabase
+              .from('media_packages' as any)
+              .select('id, order_id')
+              .in('id', mpIds);
+            (mps ?? []).forEach((m: any) => { orderByMp[m.id] = m.order_id; });
+          }
+          rows.forEach((r: any) => {
+            const key = `mp-comment:${r.id}`;
+            if (seen.has(key)) return;
+            seen.add(key);
+            const orderId = orderByMp[r.media_package_id];
+            notifyBus.push({
+              title: 'Neue Kundenantwort (Mediapaket)',
+              body: (r.subject || r.comment || '').slice(0, 140),
+              kind: 'warning',
+              module: 'Mediapaket',
+              href: orderId ? `/auftraege/${orderId}?tab=mediapaket` : '/auftraege',
             });
           });
         })());
