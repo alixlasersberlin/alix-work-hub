@@ -67,6 +67,46 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [orderId]);
 
+  // Unread customer answers (badge + realtime)
+  const [unread, setUnread] = useState<any[]>([]);
+  const loadUnread = useCallback(async (mpId: string) => {
+    const { data } = await supabase
+      .from('media_package_comments')
+      .select('id, subject, comment, created_at')
+      .eq('media_package_id', mpId)
+      .eq('author_type', 'customer')
+      .eq('recipient_type', 'staff')
+      .eq('internal_only', false)
+      .is('read_at', null)
+      .order('created_at', { ascending: false });
+    setUnread(data || []);
+  }, []);
+
+  useEffect(() => {
+    if (!mp?.id) { setUnread([]); return; }
+    loadUnread(mp.id);
+    const ch = supabase
+      .channel(`mp-comments-${mp.id}`)
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'media_package_comments',
+        filter: `media_package_id=eq.${mp.id}`,
+      }, () => loadUnread(mp.id))
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [mp?.id, loadUnread]);
+
+  const markAllRead = async () => {
+    if (!mp?.id || !unread.length) return;
+    const ids = unread.map(u => u.id);
+    const { error } = await supabase
+      .from('media_package_comments')
+      .update({ read_at: new Date().toISOString() })
+      .in('id', ids);
+    if (error) { toast.error(error.message); return; }
+    setUnread([]);
+    toast.success('Als gelesen markiert');
+  };
+
   const createPackage = async () => {
     setCreating(true);
     const { data: userData } = await supabase.auth.getUser();
