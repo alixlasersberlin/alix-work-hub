@@ -1,4 +1,5 @@
 import { DispatchBoard } from '@/components/esc/resources/DispatchBoard';
+import { RmQuickActions } from '@/components/esc/resources/RmQuickActions';
 import { useAppointments } from '@/hooks/esc/useAppointments';
 
 export default function RmDispatch() {
