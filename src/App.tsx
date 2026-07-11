@@ -397,6 +397,7 @@ const EscBookingPortal = lazy(() => import("./pages/ESC/public/BookingPortal"));
 const EscConfirmAppointment = lazy(() => import("./pages/ESC/public/ConfirmAppointment"));
 const EscRescheduleAppointment = lazy(() => import("./pages/ESC/public/RescheduleAppointment"));
 const EscCancelAppointment = lazy(() => import("./pages/ESC/public/CancelAppointment"));
+const EscCheckin = lazy(() => import("./pages/ESC/public/Checkin"));
 
 // EMP – Enterprise Mobile Platform
 const EmpLayout = lazy(() => import("./components/emp/EmpLayout"));
@@ -689,6 +690,8 @@ function AppRoutes() {
         <Route path="/appointment/decline/:token" element={<EscCancelAppointment />} />
         <Route path="/booking/:token" element={<EscConfirmAppointment />} />
         <Route path="/termin-bestaetigen/:token" element={<EscConfirmAppointment />} />
+        <Route path="/checkin/:token" element={<EscCheckin />} />
+        <Route path="/esc/checkin/:token" element={<EscCheckin />} />
         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route path="/dashboard" element={<HomeRoute />} />
           <Route path="/infinity-showcase" element={<InfinityShowcase />} />
