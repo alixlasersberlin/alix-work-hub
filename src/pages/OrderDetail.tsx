@@ -1219,6 +1219,10 @@ export default function OrderDetail() {
         <AzInvoiceTab order={order} customer={customer} items={items} onReload={loadAll} />
       )}
 
+      {activeTab === 'mediapaket' && id && (
+        <MediapaketOrderTab orderId={id} customerId={order?.customer_id ?? null} />
+      )}
+
 
 
 
