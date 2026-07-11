@@ -79,6 +79,19 @@ export default function MediapaketExtrasPanel({ mpId, status, onChanged }: Props
         media_package_id: mpId, action: 'status_changed', user_id: userData.user?.id ?? null,
         old_value: { status } as any, new_value: { status: next } as any,
       });
+      // Phase 34 — Production Handoff: auf 'completed' automatisch Grafik-Task erzeugen
+      if (next === 'completed') {
+        try {
+          await supabase.functions.invoke('mediapaket-portal', { body: { action: 'handoff_production', mp_id: mpId } });
+          toast.success('Grafik-Team benachrichtigt');
+        } catch (e) { /* nicht kritisch */ }
+      }
+      // Phase 31 — Kunde informieren bei relevantem Status
+      if (['in_review', 'in_production', 'completed'].includes(next)) {
+        try {
+          await supabase.functions.invoke('mediapaket-portal', { body: { action: 'notify_customer_status', mp_id: mpId, new_status: next } });
+        } catch (e) { /* nicht kritisch */ }
+      }
       toast.success(`Status: ${label}`);
       onChanged(); load();
     } else toast.error(error.message);
