@@ -17,6 +17,8 @@ import { BookingLayout } from '@/components/esc/public/BookingLayout';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { confirmUrl } from '@/lib/esc/public-url';
+import { supabase } from '@/integrations/supabase/client';
+import type { EscDepartment } from '@/lib/esc/types';
 
 type StepId = 'department' | 'service' | 'location' | 'time' | 'contact' | 'summary';
 const STEPS: StepId[] = ['department', 'service', 'location', 'time', 'contact', 'summary'];
@@ -33,10 +35,28 @@ export default function BookingPortal() {
   const { employees } = useEmployees();
   const { appointments, createAppointment } = useAppointments();
 
+  // Public departments: fetched directly from Supabase so anonymous visitors on /book
+  // see the real, admin-managed list instead of local mock seed data.
+  const [remoteDepts, setRemoteDepts] = useState<EscDepartment[] | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await (supabase as any)
+        .from('esc_store_departments')
+        .select('id,data');
+      if (cancelled) return;
+      if (error || !data) { setRemoteDepts([]); return; }
+      setRemoteDepts((data as any[]).map((r) => r.data as EscDepartment));
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const sourceDepts = remoteDepts && remoteDepts.length ? remoteDepts : departments;
   const publicDepts = useMemo(
-    () => departments.filter((d) => d.active && d.publicBookable && d.externallyBookable),
-    [departments],
+    () => sourceDepts.filter((d) => d.active && d.publicBookable && d.externallyBookable),
+    [sourceDepts],
   );
+
 
   const [step, setStep] = useState<StepId>('department');
   const [state, setState] = useState({
