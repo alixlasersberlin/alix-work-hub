@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { MOCK_EMPLOYEES } from '@/lib/esc/mock-data';
 import type { EscEmployee } from '@/lib/esc/types';
 
-const LS_KEY = 'esc.employees.v1';
+const LS_KEY = 'esc.employees.v2';
+try { localStorage.removeItem('esc.employees.v1'); } catch {}
 
 const load = (): EscEmployee[] => {
   try {
