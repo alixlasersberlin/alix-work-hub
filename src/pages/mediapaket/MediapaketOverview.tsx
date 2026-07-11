@@ -4,10 +4,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Package as PackageIcon, Search, LayoutGrid, List as ListIcon, AlertTriangle, CalendarClock, ExternalLink, User } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { Loader2, Package as PackageIcon, Search, LayoutGrid, List as ListIcon, AlertTriangle, CalendarClock, ExternalLink, User, Download, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 const STATUS_LABEL: Record<string, string> = {
   not_started: 'Nicht begonnen',
