@@ -88,6 +88,7 @@ export default function MediapaketReviewPanel({ mpId, currentStatus, onChanged }
       subject: newSubject || null,
       comment: newComment.trim(),
       internal_only: internalOnly,
+      related_field: newSection && newSection !== '__none__' ? newSection : null,
     }).select('id').single();
     if (error) { toast.error(error.message); setPosting(false); return; }
     await supabase.from('media_package_history').insert({
