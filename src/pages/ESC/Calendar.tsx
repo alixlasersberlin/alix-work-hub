@@ -39,6 +39,7 @@ export default function EscCalendar() {
   const [editing, setEditing] = useState<EscAppointment | null>(null);
   const [defaultStart, setDefaultStart] = useState<Date | undefined>();
   const [presetKind, setPresetKind] = useState<'Erinnerung' | 'Wiedervorlage' | undefined>();
+  const [presetMode, setPresetMode] = useState<'intern' | 'extern' | undefined>();
   const [filters, setFilters] = useState<EscFilterState>(EMPTY_FILTER);
 
   const { appointments, createAppointment, updateAppointment, deleteAppointment } = useAppointments();
@@ -64,9 +65,15 @@ export default function EscCalendar() {
     else if (view === 'month') setCursor((c) => (dir === 1 ? addMonths(c, 1) : subMonths(c, 1)));
   };
 
-  const openNew = (start?: Date) => { setEditing(null); setDefaultStart(start); setPresetKind(undefined); setModalOpen(true); };
-  const openNewKind = (kind: 'Erinnerung' | 'Wiedervorlage') => { setEditing(null); setDefaultStart(undefined); setPresetKind(kind); setModalOpen(true); };
-  const openEdit = (a: EscAppointment) => { setEditing(a); setDefaultStart(undefined); setPresetKind(undefined); setModalOpen(true); };
+  const openNew = (start?: Date, mode: 'intern' | 'extern' = 'intern') => {
+    setEditing(null); setDefaultStart(start); setPresetKind(undefined); setPresetMode(mode); setModalOpen(true);
+  };
+  const openNewKind = (kind: 'Erinnerung' | 'Wiedervorlage') => {
+    setEditing(null); setDefaultStart(undefined); setPresetKind(kind); setPresetMode(undefined); setModalOpen(true);
+  };
+  const openEdit = (a: EscAppointment) => {
+    setEditing(a); setDefaultStart(undefined); setPresetKind(undefined); setPresetMode(undefined); setModalOpen(true);
+  };
 
   const handleSubmit = async (payload: Omit<EscAppointment, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (editing) {
@@ -124,8 +131,11 @@ export default function EscCalendar() {
           <Button size="sm" variant="outline" onClick={() => openNewKind('Wiedervorlage')} title="Interne Wiedervorlage anlegen">
             <ClipboardList className="w-4 h-4 mr-1" /> Wiedervorlage
           </Button>
-          <Button size="sm" onClick={() => openNew()}>
-            <Plus className="w-4 h-4 mr-1" /> Neuer Termin
+          <Button size="sm" variant="outline" onClick={() => openNew(undefined, 'intern')} title="Interner Termin (nur Team)">
+            <Plus className="w-4 h-4 mr-1" /> Neuer Termin (intern)
+          </Button>
+          <Button size="sm" onClick={() => openNew(undefined, 'extern')} title="Externer Termin mit Kunde/Partner">
+            <Plus className="w-4 h-4 mr-1" /> Neuer Termin (extern)
           </Button>
         </div>
       </div>
@@ -151,7 +161,11 @@ export default function EscCalendar() {
         departments={departments}
         employees={employees}
         resources={resources}
-        initial={editing || (presetKind ? { kind: presetKind } as Partial<EscAppointment> : undefined)}
+        initial={
+          editing
+            || (presetKind ? { kind: presetKind } as Partial<EscAppointment> : undefined)
+            || (presetMode === 'extern' ? { confirmationRequired: true } as Partial<EscAppointment> : undefined)
+        }
         defaultStart={defaultStart}
         canSeeInternal={canSeeInternal}
       />
