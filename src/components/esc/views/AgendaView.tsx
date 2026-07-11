@@ -3,9 +3,8 @@ import { de } from 'date-fns/locale';
 import type { EscAppointment, EscDepartment } from '@/lib/esc/types';
 import { EscStatusBadge } from '../StatusBadge';
 import { DepartmentBadge } from '../DepartmentBadge';
-import { Button } from '@/components/ui/button';
-import { Download } from 'lucide-react';
-import { downloadIcs } from '@/lib/esc/ics';
+import { AddToCalendarMenu } from '../AddToCalendarMenu';
+
 
 export function AgendaView({
   appointments, departments, onAppointmentClick,
@@ -35,9 +34,8 @@ export function AgendaView({
           </div>
           <DepartmentBadge dept={deptOf(a.departmentId)} />
           <EscStatusBadge status={a.status} />
-          <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); downloadIcs(a); }} title="ICS herunterladen">
-            <Download className="w-4 h-4" />
-          </Button>
+          <AddToCalendarMenu appointment={a} size="sm" variant="ghost" label="" />
+
         </div>
       ))}
     </div>

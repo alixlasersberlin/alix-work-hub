@@ -9,7 +9,7 @@ import { BookingLayout } from '@/components/esc/public/BookingLayout';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { toast } from 'sonner';
-import { downloadIcs } from '@/lib/esc/ics';
+import { AddToCalendarMenu } from '@/components/esc/AddToCalendarMenu';
 import { logEscAudit } from '@/lib/esc/audit';
 import { cancelUrl, rescheduleUrl } from '@/lib/esc/public-url';
 import { CalendarCheck, CalendarClock, CalendarX, Download, MapPin, QrCode as QrIcon, Clock } from 'lucide-react';
@@ -97,9 +97,8 @@ export default function ConfirmAppointment() {
           )}
 
           <div className="flex flex-col sm:flex-row gap-3 pt-3 border-t">
-            <Button variant="outline" onClick={() => downloadIcs(appointment)} className="min-h-11">
-              <Download className="w-4 h-4 mr-1" /> In Kalender übernehmen
-            </Button>
+            <AddToCalendarMenu appointment={appointment} variant="outline" size="default" />
+
             {qrDataUrl && (
               <div className="flex items-center gap-3 text-[11.5px] text-muted-foreground">
                 <img src={qrDataUrl} alt="QR-Code für Check-in" className="w-20 h-20 rounded border bg-white p-1" />
