@@ -13,6 +13,7 @@ export default function RmField() {
   return (
     <div className="space-y-4">
       <h1 className="text-lg font-semibold">Außendienst</h1>
+      <RmQuickActions />
       <FieldMapPlaceholder />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <Card>
