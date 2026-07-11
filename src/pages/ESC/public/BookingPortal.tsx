@@ -48,6 +48,19 @@ export default function BookingPortal() {
     return () => { cancelled = true; };
   }, []);
 
+  // Öffentlich buchbare Terminarten (RPC, für anonyme Besucher).
+  const [remoteKinds, setRemoteKinds] = useState<EscAppointmentKind[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await (supabase as any).rpc('esc_public_appointment_kinds');
+      if (cancelled) return;
+      if (error || !data) { setRemoteKinds([]); return; }
+      setRemoteKinds((data as any[]).map((r) => r.data as EscAppointmentKind));
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   const sourceDepts = remoteDepts && remoteDepts.length ? remoteDepts : departments;
   const publicDepts = useMemo(
     () => sourceDepts.filter((d) => d.active && d.publicBookable && d.externallyBookable),
