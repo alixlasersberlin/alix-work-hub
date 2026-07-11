@@ -157,6 +157,16 @@ export default function MediapaketReviewPanel({ mpId, currentStatus, onChanged }
           onChange={e => setNewSubject(e.target.value)}
           className="bg-secondary border-border mb-2"
         />
+        <div className="mb-2">
+          <Label className="text-xs text-muted-foreground">Bezug (optional)</Label>
+          <Select value={newSection} onValueChange={setNewSection}>
+            <SelectTrigger className="bg-secondary border-border"><SelectValue placeholder="Kein Bezug" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__none__">Kein Bezug</SelectItem>
+              {SECTION_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
         <Textarea
           placeholder={internalOnly ? 'Interne Notiz für Team...' : 'Rückfrage an den Kunden formulieren...'}
           value={newComment}
