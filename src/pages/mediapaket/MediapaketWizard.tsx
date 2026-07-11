@@ -206,6 +206,71 @@ export default function MediapaketWizard() {
   );
 }
 
+/* =============== QUESTIONS BANNER =============== */
+
+function QuestionsBanner({ questions, token, onChange }: { questions: any[]; token: string; onChange: () => void }) {
+  const open = questions.filter(q => q.author_type === 'staff' && !q.answered_at);
+  const answered = questions.filter(q => q.author_type === 'staff' && q.answered_at);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [sending, setSending] = useState<string | null>(null);
+
+  const send = async (id: string) => {
+    const text = (answers[id] || '').trim();
+    if (!text) return;
+    setSending(id);
+    try {
+      await call('answer_question', token, { question_id: id, answer: text });
+      setAnswers(a => ({ ...a, [id]: '' }));
+      toast.success('Antwort gesendet');
+      onChange();
+    } catch (e: any) { toast.error(e.message); }
+    finally { setSending(null); }
+  };
+
+  if (open.length === 0 && answered.length === 0) return null;
+
+  return (
+    <div className="rounded-xl border border-amber-500/40 bg-amber-500/5 p-4 space-y-3">
+      <div className="flex items-center gap-2 text-sm font-semibold">
+        <MessageSquare className="w-4 h-4 text-amber-500" />
+        Rückfragen von Alix Lasers ({open.length} offen)
+      </div>
+      {open.map(q => (
+        <div key={q.id} className="rounded-lg border border-amber-500/30 bg-card p-3 space-y-2">
+          {q.subject && <div className="text-sm font-medium">{q.subject}</div>}
+          <p className="text-sm text-muted-foreground whitespace-pre-wrap">{q.comment}</p>
+          <Textarea
+            placeholder="Ihre Antwort..."
+            value={answers[q.id] || ''}
+            onChange={e => setAnswers(a => ({ ...a, [q.id]: e.target.value }))}
+            rows={2}
+          />
+          <div className="flex justify-end">
+            <Button size="sm" onClick={() => send(q.id)} disabled={sending === q.id || !(answers[q.id] || '').trim()}>
+              {sending === q.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
+              Antworten
+            </Button>
+          </div>
+        </div>
+      ))}
+      {answered.length > 0 && (
+        <details className="text-xs text-muted-foreground">
+          <summary className="cursor-pointer">Beantwortete Rückfragen ({answered.length})</summary>
+          <div className="mt-2 space-y-2">
+            {answered.map(q => (
+              <div key={q.id} className="rounded border border-border/40 p-2">
+                {q.subject && <div className="font-medium">{q.subject}</div>}
+                <p className="whitespace-pre-wrap">{q.comment}</p>
+                <div className="text-[10px] mt-1">Beantwortet am {new Date(q.answered_at).toLocaleString('de-DE')}</div>
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
+    </div>
+  );
+}
+
 /* =============== STEP COMPONENTS =============== */
 
 function StepPrep() {
