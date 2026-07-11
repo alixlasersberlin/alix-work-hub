@@ -346,6 +346,48 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
         </div>
       )}
 
+      {/* Interner Staff-Thread (nicht sichtbar für Kunde) */}
+      <div className="rounded-xl border border-sky-500/30 bg-sky-500/5 p-4 card-glow">
+        <div className="flex items-center gap-2 mb-3">
+          <Lock className="w-4 h-4 text-sky-400" />
+          <h4 className="text-sm font-semibold text-foreground">Interne Notizen (nur Team)</h4>
+          <Badge variant="outline" className="text-[10px] border-sky-500/40 text-sky-400">
+            {internalThread.length} {internalThread.length === 1 ? 'Notiz' : 'Notizen'}
+          </Badge>
+        </div>
+        {internalThread.length === 0 ? (
+          <p className="text-xs text-muted-foreground mb-3">Noch keine internen Notizen. Nutze diesen Bereich für Absprachen — Kunden sehen nichts davon.</p>
+        ) : (
+          <div className="space-y-2 mb-3 max-h-64 overflow-y-auto pr-1">
+            {internalThread.map(c => (
+              <div key={c.id} className="rounded-lg border border-sky-500/20 bg-background/60 p-2">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-medium text-foreground">
+                    {c.author_id ? (authorNames[c.author_id] || 'Mitarbeiter') : 'System'}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground ml-auto">{new Date(c.created_at).toLocaleString('de-DE')}</span>
+                </div>
+                <p className="text-xs text-muted-foreground whitespace-pre-wrap">{c.comment}</p>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="flex flex-col gap-2">
+          <textarea
+            value={internalDraft}
+            onChange={(e) => setInternalDraft(e.target.value)}
+            placeholder="Interne Notiz schreiben (nur intern sichtbar)…"
+            rows={2}
+            className="w-full text-sm rounded-lg border border-sky-500/30 bg-background/60 p-2 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+          />
+          <div className="flex justify-end">
+            <Button size="sm" onClick={postInternal} disabled={!internalDraft.trim() || postingInternal}>
+              {postingInternal ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Lock className="w-4 h-4 mr-2" />}
+              Interne Notiz posten
+            </Button>
+          </div>
+        </div>
+      </div>
 
       {/* Review-Panel: Status, Kommentare, Rückfragen, Verlauf */}
       <MediapaketReviewPanel mpId={mp.id} currentStatus={mp.status} onChanged={load} />
