@@ -397,6 +397,7 @@ const EchHistory = lazy(() => import("./pages/ESC/ech/History"));
 const EchSettingsPage = lazy(() => import("./pages/ESC/ech/Settings"));
 const EscBookingPortal = lazy(() => import("./pages/ESC/public/BookingPortal"));
 const MediapaketWizard = lazy(() => import("./pages/mediapaket/MediapaketWizard"));
+const MediapaketOverview = lazy(() => import("./pages/mediapaket/MediapaketOverview"));
 const EscConfirmAppointment = lazy(() => import("./pages/ESC/public/ConfirmAppointment"));
 const EscRescheduleAppointment = lazy(() => import("./pages/ESC/public/RescheduleAppointment"));
 const EscCancelAppointment = lazy(() => import("./pages/ESC/public/CancelAppointment"));
