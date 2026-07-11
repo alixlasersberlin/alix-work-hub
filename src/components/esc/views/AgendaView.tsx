@@ -3,9 +3,8 @@ import { de } from 'date-fns/locale';
 import type { EscAppointment, EscDepartment } from '@/lib/esc/types';
 import { EscStatusBadge } from '../StatusBadge';
 import { DepartmentBadge } from '../DepartmentBadge';
-import { Button } from '@/components/ui/button';
-import { Download } from 'lucide-react';
-import { downloadIcs } from '@/lib/esc/ics';
+import { AddToCalendarMenu } from '../AddToCalendarMenu';
+
 
 export function AgendaView({
   appointments, departments, onAppointmentClick,
