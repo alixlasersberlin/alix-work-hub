@@ -41,9 +41,7 @@ export default function BookingPortal() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data, error } = await (supabase as any)
-        .from('esc_store_departments')
-        .select('id,data');
+      const { data, error } = await (supabase as any).rpc('esc_public_departments');
       if (cancelled) return;
       if (error || !data) { setRemoteDepts([]); return; }
       setRemoteDepts((data as any[]).map((r) => r.data as EscDepartment));
