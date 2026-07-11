@@ -2,9 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Plus, Copy, RefreshCw, Package as PackageIcon, CheckCircle2, Mail, MessageCircle, Check } from 'lucide-react';
+import { Loader2, Plus, Copy, RefreshCw, Package as PackageIcon, CheckCircle2, Mail, MessageCircle, Check, Lock } from 'lucide-react';
 import { toast } from 'sonner';
-import MediapaketReviewPanel from './MediapaketReviewPanel';
+import MediapaketReviewPanel, { SECTION_LABEL } from './MediapaketReviewPanel';
 
 interface Props {
   orderId: string;
