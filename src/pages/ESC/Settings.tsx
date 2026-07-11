@@ -31,6 +31,14 @@ export default function EscSettings() {
       <h1 className="text-lg font-semibold">Einstellungen</h1>
 
       <Card>
+        <CardHeader><CardTitle className="text-[14px] flex items-center gap-2"><LinkIcon className="w-4 h-4" /> E-Mail-Vorlagen</CardTitle></CardHeader>
+        <CardContent className="text-[13px] space-y-2">
+          <div>Pro Abteilung eigene Vorlagen für Bestätigungen, Erinnerungen, Verschiebungen, Absagen und mehr.</div>
+          <a href="/esc/einstellungen/email-vorlagen" className="text-primary hover:underline text-[13px]">→ E-Mail-Vorlagen verwalten</a>
+        </CardContent>
+      </Card>
+
+      <Card>
         <CardHeader><CardTitle className="text-[14px]">Öffentliche Basis-URL</CardTitle></CardHeader>
         <CardContent className="text-[13px] space-y-2">
           <div>Alle öffentlichen Links (Buchungsportal, Bestätigungen, ICS-Downloads für externe Empfänger) laufen ausschließlich über:</div>
