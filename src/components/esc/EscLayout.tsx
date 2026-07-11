@@ -57,24 +57,30 @@ export default function EscLayout() {
           <div className="text-[15px] font-semibold">Teamkalender · Enterprise Scheduling Center</div>
           <div className="ml-auto text-[11px] text-muted-foreground">AlixWorks · ESC</div>
         </div>
-        <nav className="flex items-center gap-1 px-4 pt-2 pb-1 overflow-x-auto">
-          {TABS.map((t) => (
-            <NavLink
-              key={t.to}
-              to={t.to}
-              end={t.end}
-              className={({ isActive }) =>
-                cn(
-                  'flex items-center gap-1.5 px-2.5 py-1.5 text-[12.5px] rounded-md whitespace-nowrap transition-colors border border-transparent',
-                  isActive
-                    ? 'bg-primary/15 text-primary border-primary/20'
-                    : 'text-foreground/75 hover:text-primary hover:bg-primary/10',
-                )
-              }
-            >
-              <t.icon className="w-4 h-4" />
-              {t.label}
-            </NavLink>
+        <nav className="flex items-center gap-1 px-4 pt-2 pb-1.5 overflow-x-auto">
+          {TAB_GROUPS.map((group, gi) => (
+            <div key={group.label} className="flex items-center gap-1">
+              {gi > 0 && <span className="mx-1.5 h-5 w-px bg-border/60" aria-hidden />}
+              <span className="text-[10px] uppercase tracking-wide text-muted-foreground pr-1 whitespace-nowrap">{group.label}</span>
+              {group.items.map((t) => (
+                <NavLink
+                  key={t.to}
+                  to={t.to}
+                  end={t.end}
+                  className={({ isActive }) =>
+                    cn(
+                      'flex items-center gap-1.5 px-2.5 py-1.5 text-[12.5px] rounded-md whitespace-nowrap transition-colors border border-transparent',
+                      isActive
+                        ? 'bg-primary/15 text-primary border-primary/20'
+                        : 'text-foreground/75 hover:text-primary hover:bg-primary/10',
+                    )
+                  }
+                >
+                  <t.icon className="w-4 h-4" />
+                  {t.label}
+                </NavLink>
+              ))}
+            </div>
           ))}
         </nav>
         <nav className="flex items-center gap-1 px-4 pb-2 overflow-x-auto border-t border-border/40 pt-1.5">
