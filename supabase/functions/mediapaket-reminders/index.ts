@@ -162,7 +162,88 @@ Deno.serve(async (req) => {
     }
   }
 
-  return new Response(JSON.stringify({ ok: true, checked: mps?.length || 0, customerSent, staffSent, refreshSent }), {
+  // ===== Phase 43 — SLA-Eskalation =====
+  // Konfig-Keys: mediapaket.sla.<status>_hours (z. B. mediapaket.sla.in_review_hours = 48)
+  const SLA_STATUSES = ['in_review', 'approval_pending', 'in_production', 'question_required'];
+  let slaEscalated = 0;
+  const { data: slaSettings } = await admin.from('app_settings').select('key, value').like('key', 'mediapaket.sla.%');
+  const slaHours: Record<string, number> = {};
+  (slaSettings || []).forEach((r: any) => {
+    const m = r.key.match(/^mediapaket\.sla\.(.+)_hours$/);
+    if (m) slaHours[m[1]] = parseInt(r.value) || 0;
+  });
+  const { data: slaMps } = await admin.from('media_packages')
+    .select('id, status, updated_at, assigned_user_id, studio_name, order_id, customer_id')
+    .in('status', SLA_STATUSES).limit(500);
+  for (const mp of slaMps || []) {
+    const hrs = slaHours[(mp as any).status];
+    if (!hrs) continue;
+    const ageH = (now.getTime() - new Date((mp as any).updated_at).getTime()) / 3600000;
+    if (ageH < hrs) continue;
+    const action = 'sla_escalated';
+    // 1× pro 24h
+    const since24 = new Date(); since24.setDate(since24.getDate() - 1);
+    const { data: recent } = await admin.from('media_package_history')
+      .select('id').eq('media_package_id', mp.id).eq('action', action).gte('created_at', since24.toISOString()).limit(1);
+    if (recent?.length) continue;
+    // Super Admins ermitteln
+    const { data: admins } = await admin.from('user_roles').select('user_id').eq('role', 'Super Admin');
+    const adminIds = (admins || []).map((r: any) => r.user_id);
+    const recipients = new Set<string>();
+    for (const uid of adminIds) {
+      const { data: prof } = await admin.from('user_profiles').select('email').eq('id', uid).maybeSingle();
+      if (prof?.email) recipients.add(prof.email);
+    }
+    if ((mp as any).assigned_user_id) {
+      const { data: prof } = await admin.from('user_profiles').select('email').eq('id', (mp as any).assigned_user_id).maybeSingle();
+      if (prof?.email) recipients.add(prof.email);
+    }
+    if (recipients.size === 0) recipients.add(STAFF_INBOX_FALLBACK);
+    const link = `${baseUrl}/auftraege/${(mp as any).order_id}?tab=mediapaket`;
+    const subj = `⏰ SLA überschritten: ${(mp as any).studio_name || 'Kunde'} (${(mp as any).status})`;
+    const html = `<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#222">
+      <h2 style="color:#c60">SLA überschritten</h2>
+      <p><strong>${(mp as any).studio_name || 'Kunde'}</strong></p>
+      <p>Status: <strong>${(mp as any).status}</strong> seit ${Math.round(ageH)}h (SLA: ${hrs}h).</p>
+      <p style="margin:24px 0"><a href="${link}" style="background:#c60;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">Öffnen</a></p>
+    </div>`;
+    if (await sendMail(Array.from(recipients), subj, html)) {
+      slaEscalated++;
+      await admin.from('media_package_history').insert({
+        media_package_id: mp.id, action, new_value: { to: Array.from(recipients), status: (mp as any).status, age_hours: Math.round(ageH), sla_hours: hrs } as any,
+      });
+    }
+  }
+
+  // ===== Phase 47 — DSGVO Auto-Anonymisierung =====
+  const anonMonths = parseInt(await getSetting('mediapaket.gdpr_anonymize_after_months', '0')) || 0;
+  let anonymized = 0;
+  if (anonMonths > 0) {
+    const cutoff = new Date(); cutoff.setMonth(cutoff.getMonth() - anonMonths);
+    const { data: oldMps } = await admin.from('media_packages')
+      .select('id, updated_at, studio_name')
+      .eq('status', 'completed')
+      .lt('updated_at', cutoff.toISOString())
+      .neq('studio_name', 'ANONYMISIERT')
+      .limit(100);
+    for (const mp of oldMps || []) {
+      await admin.from('media_package_contact_data').update({
+        contact_name: 'ANONYMISIERT', email: null, phone: null, mobile: null, whatsapp: null,
+        secondary_email: null, website: null, instagram: null, facebook: null, tiktok: null, youtube: null, linkedin: null,
+      } as any).eq('media_package_id', mp.id);
+      await admin.from('media_package_team_members').update({
+        first_name: 'ANONYMISIERT', last_name: null, biography: null,
+      } as any).eq('media_package_id', mp.id);
+      await admin.from('media_packages').update({ studio_name: 'ANONYMISIERT' }).eq('id', mp.id);
+      await admin.from('media_package_history').insert({
+        media_package_id: mp.id, action: 'anonymized_auto',
+        new_value: { age_months: anonMonths, previous_name: (mp as any).studio_name } as any,
+      });
+      anonymized++;
+    }
+  }
+
+  return new Response(JSON.stringify({ ok: true, checked: mps?.length || 0, customerSent, staffSent, refreshSent, slaEscalated, anonymized }), {
     status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
 });

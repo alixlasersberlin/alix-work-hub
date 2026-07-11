@@ -17,6 +17,11 @@ const KEYS = {
   staffInbox: 'mediapaket.staff_inbox',
   customerIntroText: 'mediapaket.customer_intro_text',
   submitConfirmText: 'mediapaket.submit_confirm_text',
+  slaInReview: 'mediapaket.sla.in_review_hours',
+  slaApprovalPending: 'mediapaket.sla.approval_pending_hours',
+  slaInProduction: 'mediapaket.sla.in_production_hours',
+  slaQuestionRequired: 'mediapaket.sla.question_required_hours',
+  gdprAnonymizeMonths: 'mediapaket.gdpr_anonymize_after_months',
 } as const;
 
 const DEFAULTS: Record<string, string> = {
@@ -27,6 +32,11 @@ const DEFAULTS: Record<string, string> = {
   [KEYS.staffInbox]: 'vertrieb@alixwork.de',
   [KEYS.customerIntroText]: 'Willkommen! Bitte fülle dein Mediapaket vollständig aus, damit wir mit deiner Website / deinem Flyer starten können.',
   [KEYS.submitConfirmText]: 'Mit dem Absenden bestätigst du, dass alle Angaben vollständig und korrekt sind.',
+  [KEYS.slaInReview]: '48',
+  [KEYS.slaApprovalPending]: '24',
+  [KEYS.slaInProduction]: '120',
+  [KEYS.slaQuestionRequired]: '72',
+  [KEYS.gdprAnonymizeMonths]: '0',
 };
 
 export default function MediapaketAdmin() {
@@ -196,6 +206,29 @@ export default function MediapaketAdmin() {
         <Field label="Bestätigungs-Text beim Absenden">
           <Textarea rows={3} value={values[KEYS.submitConfirmText]} onChange={e => setV(KEYS.submitConfirmText, e.target.value)} />
         </Field>
+      </div>
+
+      {/* Phase 43 — SLA */}
+      <div className="rounded-xl border border-border bg-card p-4 card-glow space-y-4">
+        <h2 className="text-sm font-semibold">SLA & Eskalation (Stunden pro Status)</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Field label="In Prüfung"><Input type="number" min={0} value={values[KEYS.slaInReview]} onChange={e => setV(KEYS.slaInReview, e.target.value)} /></Field>
+          <Field label="Freigabe ausstehend"><Input type="number" min={0} value={values[KEYS.slaApprovalPending]} onChange={e => setV(KEYS.slaApprovalPending, e.target.value)} /></Field>
+          <Field label="In Produktion"><Input type="number" min={0} value={values[KEYS.slaInProduction]} onChange={e => setV(KEYS.slaInProduction, e.target.value)} /></Field>
+          <Field label="Rückfrage nötig"><Input type="number" min={0} value={values[KEYS.slaQuestionRequired]} onChange={e => setV(KEYS.slaQuestionRequired, e.target.value)} /></Field>
+        </div>
+        <p className="text-[10px] text-muted-foreground">0 = deaktiviert. Bei Überschreitung wird täglich an Super Admins &amp; Zuständige eskaliert.</p>
+      </div>
+
+      {/* Phase 47 — DSGVO */}
+      <div className="rounded-xl border border-border bg-card p-4 card-glow space-y-4">
+        <h2 className="text-sm font-semibold">DSGVO / Datenschutz</h2>
+        <Field label="Auto-Anonymisierung nach (Monaten)" hint="0 = aus. Betrifft nur 'completed' Pakete. Snapshot wird vor Anonymisierung gespeichert.">
+          <Input type="number" min={0} value={values[KEYS.gdprAnonymizeMonths]} onChange={e => setV(KEYS.gdprAnonymizeMonths, e.target.value)} />
+        </Field>
+        <div className="flex flex-wrap gap-2 text-xs">
+          <a href="/mediapaket/analytics" className="text-primary hover:underline">→ Analytics öffnen</a>
+        </div>
       </div>
 
       <div className="flex justify-end">

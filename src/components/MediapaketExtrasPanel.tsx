@@ -61,7 +61,72 @@ export default function MediapaketExtrasPanel({ mpId, status, onChanged }: Props
 
   useEffect(() => { load(); }, [load]);
 
-  const snapshots = history.filter(h => h.action === 'submitted' && h.new_value);
+  const snapshots = history.filter(h => (h.action === 'submitted' || h.action === 'snapshot') && h.new_value);
+  const [showcaseCfg, setShowcaseCfg] = useState<{ enabled: boolean; token: string | null }>({ enabled: false, token: null });
+  const [showcaseBusy, setShowcaseBusy] = useState(false);
+  const [gdprBusy, setGdprBusy] = useState(false);
+  const [snapBusy, setSnapBusy] = useState(false);
+  const [rollbackBusy, setRollbackBusy] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.functions.invoke('mediapaket-portal', { body: { action: 'get_showcase_config', mp_id: mpId } });
+      if (data) setShowcaseCfg({ enabled: !!(data as any).enabled, token: (data as any).token || null });
+    })();
+  }, [mpId]);
+
+  const manualSnapshot = async () => {
+    setSnapBusy(true);
+    const { error } = await supabase.functions.invoke('mediapaket-portal', { body: { action: 'snapshot', mp_id: mpId, label: 'manual' } });
+    setSnapBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Snapshot erstellt');
+    load();
+  };
+  const doRollback = async (snapshotId: string) => {
+    if (!confirm('Wirklich auf diese Version zurücksetzen? Der aktuelle Stand wird zuvor als Snapshot gesichert.')) return;
+    setRollbackBusy(snapshotId);
+    const { error } = await supabase.functions.invoke('mediapaket-portal', { body: { action: 'rollback', mp_id: mpId, snapshot_id: snapshotId } });
+    setRollbackBusy(null);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Rollback ausgeführt');
+    onChanged(); load();
+  };
+  const toggleShowcase = async (enabled: boolean) => {
+    setShowcaseBusy(true);
+    const { data, error } = await supabase.functions.invoke('mediapaket-portal', { body: { action: 'toggle_showcase', mp_id: mpId, enabled } });
+    setShowcaseBusy(false);
+    if (error) { toast.error(error.message); return; }
+    setShowcaseCfg({ enabled: !!(data as any).enabled, token: (data as any).token });
+    toast.success(enabled ? 'Showcase aktiviert' : 'Showcase deaktiviert');
+  };
+  const copyShowcaseLink = () => {
+    if (!showcaseCfg.token) return;
+    const url = `${window.location.origin}/mediapaket/showcase/${showcaseCfg.token}`;
+    navigator.clipboard.writeText(url);
+    toast.success('Showcase-Link kopiert');
+  };
+  const gdprExport = async () => {
+    setGdprBusy(true);
+    const { data, error } = await supabase.functions.invoke('mediapaket-portal', { body: { action: 'gdpr_export', mp_id: mpId } });
+    setGdprBusy(false);
+    if (error) { toast.error(error.message); return; }
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `mediapaket-${mpId}-dsgvo-export-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    toast.success('DSGVO-Export heruntergeladen');
+  };
+  const anonymize = async () => {
+    if (!confirm('Wirklich anonymisieren? Alle Kontakt- & Teamdaten werden entfernt. Ein Snapshot wird vorher gesichert. Aktion nur für Super Admins.')) return;
+    setGdprBusy(true);
+    const { error } = await supabase.functions.invoke('mediapaket-portal', { body: { action: 'anonymize', mp_id: mpId } });
+    setGdprBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Mediapaket anonymisiert');
+    onChanged(); load();
+  };
 
   const timeline = [
     ...history.map(h => ({ kind: 'history' as const, id: h.id, at: h.created_at, action: h.action, data: h })),
@@ -395,21 +460,35 @@ export default function MediapaketExtrasPanel({ mpId, status, onChanged }: Props
           )}
         </TabsContent>
 
-        {/* VERSIONEN / Phase 25 */}
-        <TabsContent value="versions" className="pt-3">
+        {/* VERSIONEN / Phase 25 + 44 */}
+        <TabsContent value="versions" className="pt-3 space-y-2">
+          <div className="flex justify-end">
+            <Button variant="outline" size="sm" onClick={manualSnapshot} disabled={snapBusy} className="gap-2">
+              {snapBusy ? <Loader2 className="w-3 h-3 animate-spin" /> : <Package className="w-3 h-3" />}
+              Snapshot jetzt sichern
+            </Button>
+          </div>
           {snapshots.length === 0 ? (
-            <p className="text-xs text-muted-foreground">Noch keine Snapshots. Ein Snapshot wird automatisch beim Einreichen erstellt.</p>
+            <p className="text-xs text-muted-foreground">Noch keine Snapshots.</p>
           ) : (
             <div className="space-y-1.5">
-              {snapshots.map((s, i) => (
-                <div key={s.id} className="flex items-center justify-between gap-2 border border-border/40 rounded-lg p-2">
-                  <div className="text-xs">
-                    <div className="font-medium text-foreground">Version {snapshots.length - i} · {new Date(s.created_at).toLocaleString('de-DE')}</div>
-                    <div className="text-muted-foreground">Snapshot beim Einreichen</div>
+              {snapshots.map((s, i) => {
+                const label = s.new_value?.label || (s.action === 'submitted' ? 'Einreichung' : 'Snapshot');
+                return (
+                  <div key={s.id} className="flex items-center justify-between gap-2 border border-border/40 rounded-lg p-2">
+                    <div className="text-xs">
+                      <div className="font-medium text-foreground">Version {snapshots.length - i} · {new Date(s.created_at).toLocaleString('de-DE')}</div>
+                      <div className="text-muted-foreground">{label}</div>
+                    </div>
+                    <div className="flex gap-1">
+                      <Button variant="outline" size="sm" onClick={() => setSnapshotOpen(s)}><Eye className="w-3 h-3 mr-1" />Ansehen</Button>
+                      <Button variant="outline" size="sm" onClick={() => doRollback(s.id)} disabled={rollbackBusy === s.id} className="border-orange-500/40 text-orange-500 hover:bg-orange-500/10">
+                        {rollbackBusy === s.id ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Rollback'}
+                      </Button>
+                    </div>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => setSnapshotOpen(s)}><Eye className="w-3 h-3 mr-1" />Ansehen</Button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </TabsContent>
@@ -436,7 +515,7 @@ export default function MediapaketExtrasPanel({ mpId, status, onChanged }: Props
           )}
         </TabsContent>
 
-        <TabsContent value="tools" className="pt-3 space-y-3">
+        <TabsContent value="tools" className="pt-3 space-y-4">
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" size="sm" onClick={duplicate} disabled={duplicating} className="gap-2">
               {duplicating ? <Loader2 className="w-3 h-3 animate-spin" /> : <CopyIcon className="w-3 h-3" />}
@@ -446,8 +525,43 @@ export default function MediapaketExtrasPanel({ mpId, status, onChanged }: Props
               <Eye className="w-3 h-3" />Kunden-Vorschau-Link
             </Button>
           </div>
+
+          {/* Phase 45 — Showcase */}
+          <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <div className="text-xs font-semibold flex items-center gap-1">🌐 Public Showcase</div>
+                <div className="text-[11px] text-muted-foreground">Öffentliche Referenz-Seite ohne interne Daten, mit Lead-Formular.</div>
+              </div>
+              <Button size="sm" variant={showcaseCfg.enabled ? 'default' : 'outline'} disabled={showcaseBusy} onClick={() => toggleShowcase(!showcaseCfg.enabled)}>
+                {showcaseBusy ? <Loader2 className="w-3 h-3 animate-spin" /> : (showcaseCfg.enabled ? 'Aktiv — deaktivieren' : 'Aktivieren')}
+              </Button>
+            </div>
+            {showcaseCfg.enabled && showcaseCfg.token && (
+              <div className="flex items-center gap-2">
+                <code className="text-[10px] bg-background/60 px-2 py-1 rounded flex-1 truncate">{window.location.origin}/mediapaket/showcase/{showcaseCfg.token}</code>
+                <Button size="sm" variant="ghost" onClick={copyShowcaseLink}><CopyIcon className="w-3 h-3" /></Button>
+              </div>
+            )}
+          </div>
+
+          {/* Phase 47 — DSGVO */}
+          <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3 space-y-2">
+            <div className="text-xs font-semibold">🛡 DSGVO / Datenschutz</div>
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" variant="outline" onClick={gdprExport} disabled={gdprBusy} className="gap-2">
+                {gdprBusy ? <Loader2 className="w-3 h-3 animate-spin" /> : <FileDown className="w-3 h-3" />}
+                Vollständiger Datenexport (JSON)
+              </Button>
+              <Button size="sm" variant="outline" onClick={anonymize} disabled={gdprBusy} className="gap-2 border-red-500/40 text-red-500 hover:bg-red-500/10">
+                Anonymisieren (Super Admin)
+              </Button>
+            </div>
+            <p className="text-[10px] text-muted-foreground">Export enthält Kunde, Paket, Historie, Kommentare und Datei-Metadaten (Art. 20 DSGVO).</p>
+          </div>
+
           <p className="text-[11px] text-muted-foreground">
-            <strong>Duplizieren</strong>: kopiert alle Angaben (ohne Dateien) in ein neues Paket für einen anderen Auftrag.<br />
+            <strong>Duplizieren</strong>: kopiert alle Angaben (ohne Dateien) in ein neues Paket.<br />
             <strong>Vorschau-Link</strong>: schreibgeschützte Ansicht für den Kunden zur Endabnahme.
           </p>
         </TabsContent>
