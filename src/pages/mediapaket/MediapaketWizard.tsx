@@ -156,6 +156,9 @@ export default function MediapaketWizard() {
           </div>
         </div>
 
+        {/* Offene Rückfragen */}
+        <QuestionsBanner questions={questions} token={token} onChange={loadQuestions} />
+
         {/* Step-Navigation */}
         <div className="flex flex-wrap gap-1.5">
           {STEPS.map((s, i) => (
