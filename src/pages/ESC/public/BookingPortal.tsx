@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, ArrowRight, CalendarCheck, CheckCircle2, Clock, Globe, MapPin, Users, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CalendarCheck, CheckCircle2, Clock, Globe, MapPin, Users, ShieldCheck, PackageSearch } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAppointments } from '@/hooks/esc/useAppointments';
 import { useDepartments } from '@/hooks/esc/useDepartments';
@@ -224,6 +224,24 @@ export default function BookingPortal() {
             {publicDepts.length === 0 && <div className="text-[13px] text-muted-foreground py-6 text-center">Aktuell sind keine Leistungen öffentlich buchbar.</div>}
           </CardContent>
         </Card>
+      )}
+
+      {step === 'department' && (
+        <button
+          onClick={() => navigate('/portal')}
+          className="w-full text-left rounded-xl border p-4 bg-card hover:border-primary hover:shadow-md transition-all flex items-start gap-3"
+        >
+          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            <PackageSearch className="w-5 h-5 text-primary" />
+          </div>
+          <div className="flex-1">
+            <div className="font-semibold text-[14px]">Bestellstatus abfragen</div>
+            <div className="text-[12px] text-muted-foreground mt-0.5">
+              Sie haben bereits bestellt? Prüfen Sie den aktuellen Bearbeitungsstand Ihrer Bestellung mit Auftragsnummer, PLZ und E-Mail.
+            </div>
+          </div>
+          <ArrowRight className="w-4 h-4 text-muted-foreground mt-1 shrink-0" />
+        </button>
       )}
 
       {step === 'service' && dept && (
