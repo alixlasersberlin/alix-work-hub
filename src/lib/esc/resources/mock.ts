@@ -28,33 +28,7 @@ export const RM_QUALIFICATIONS: RmQualification[] = [
   { id: 'q-admin', name: 'Administrator', category: 'other' },
 ];
 
-export const RM_EMPLOYEES: RmEmployeeExt[] = [
-  {
-    id: 'e-anna', name: 'Anna Weber', role: 'Servicetechnikerin',
-    locationId: 'berlin', qualifications: ['q-tech', 'q-elektronik', 'q-mp'],
-    shifts: [1,2,3,4,5].map((w) => ({ weekday: w, from: '08:00', to: '17:00' })),
-    color: '#4f46e5', driverLicense: ['B'], languages: ['de', 'en'],
-    maxAppointmentsPerDay: 4, maxTravelMinutes: 240, maxWorkMinutes: 540, active: true,
-  },
-  {
-    id: 'e-tobias', name: 'Tobias Meyer', role: 'Sales',
-    locationId: 'berlin', qualifications: ['q-vertrieb', 'q-nisv'],
-    shifts: [1,2,3,4,5].map((w) => ({ weekday: w, from: '09:00', to: '18:00' })),
-    color: '#0ea5e9', languages: ['de', 'en'], active: true,
-  },
-  {
-    id: 'e-lena', name: 'Lena Hofer', role: 'Trainerin',
-    locationId: 'wien', qualifications: ['q-nisv', 'q-laser'],
-    shifts: [1,2,3,4,5].map((w) => ({ weekday: w, from: '08:30', to: '17:30' })),
-    color: '#22c55e', languages: ['de', 'en'], active: true,
-  },
-  {
-    id: 'e-jamal', name: 'Jamal Al-Farsi', role: 'Sales International',
-    locationId: 'dubai', qualifications: ['q-vertrieb'],
-    shifts: [0,1,2,3,4].map((w) => ({ weekday: w, from: '09:00', to: '18:00' })),
-    color: '#f59e0b', languages: ['ar', 'en'], active: true,
-  },
-];
+export const RM_EMPLOYEES: RmEmployeeExt[] = [];
 
 export const RM_VEHICLES: RmVehicle[] = [
   { id: 'v-01', plate: 'B-AW 100', brand: 'VW', model: 'Transporter', year: 2023, mileageKm: 42000, tuvUntil: '2027-04-01', nextServiceAt: '2026-09-01', locationId: 'berlin', color: '#0ea5e9', status: 'available', gpsEnabled: true },
