@@ -107,6 +107,37 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
     }
   }, []);
 
+  // Staff list for assignment
+  const [staffList, setStaffList] = useState<Array<{ id: string; label: string }>>([]);
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from('user_profiles')
+        .select('id, full_name, email, is_active')
+        .eq('is_active', true)
+        .order('full_name', { ascending: true });
+      setStaffList((data || []).map((p: any) => ({ id: p.id, label: p.full_name || p.email || 'Unbenannt' })));
+    })();
+  }, []);
+
+  const assignUser = async (userId: string | null) => {
+    if (!mp?.id) return;
+    const { error } = await supabase.from('media_packages').update({ assigned_user_id: userId }).eq('id', mp.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success(userId ? 'Mitarbeiter zugewiesen' : 'Zuweisung entfernt');
+    load();
+  };
+
+  const setDueDate = async (d: Date | undefined) => {
+    if (!mp?.id) return;
+    const iso = d ? format(d, 'yyyy-MM-dd') : null;
+    const { error } = await supabase.from('media_packages').update({ due_date: iso }).eq('id', mp.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success(iso ? `Frist gesetzt: ${format(d as Date, 'dd.MM.yyyy')}` : 'Frist entfernt');
+    load();
+  };
+
+
   const notifiedIdsRef = useRef<Set<string>>(new Set());
   const initializedRef = useRef(false);
   useEffect(() => {
