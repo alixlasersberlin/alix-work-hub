@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
     // gather context
     const [{ data: employees }, { data: events }, { data: depts }, { data: resources }] = await Promise.all([
       supabase.from('esc_employee_settings').select('user_id, display_name, working_hours, skills').limit(50),
-      supabase.from('esc_events').select('id, start_at, end_at, assigned_to, department_id, address, city, postal_code').gte('start_at', from).lte('start_at', to).limit(500),
+      supabase.from('esc_events').select('id, start_at, end_at, assigned_user_id, department_id, address, location').gte('start_at', from).lte('start_at', to).limit(500),
       supabase.from('esc_departments').select('id, name').limit(50),
       supabase.from('esc_resources').select('id, name, type').limit(50),
     ]);
