@@ -161,7 +161,11 @@ export default function EscCalendar() {
         departments={departments}
         employees={employees}
         resources={resources}
-        initial={editing || (presetKind ? { kind: presetKind } as Partial<EscAppointment> : undefined)}
+        initial={
+          editing
+            || (presetKind ? { kind: presetKind } as Partial<EscAppointment> : undefined)
+            || (presetMode === 'extern' ? { confirmationRequired: true } as Partial<EscAppointment> : undefined)
+        }
         defaultStart={defaultStart}
         canSeeInternal={canSeeInternal}
       />
