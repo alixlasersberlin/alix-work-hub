@@ -163,6 +163,35 @@ export default function MediapaketExtrasPanel({ mpId, status, onChanged }: Props
     } catch (e: any) { toast.error(e.message); }
     finally { setChatSending(false); }
   };
+  // Phase 41 — WhatsApp
+  const [waSending, setWaSending] = useState(false);
+  const sendWhatsApp = async () => {
+    if (!chatText.trim()) { toast.error('Nachricht leer'); return; }
+    setWaSending(true);
+    try {
+      const { error } = await supabase.functions.invoke('mediapaket-portal', {
+        body: { action: 'send_whatsapp', mp_id: mpId, message: chatText },
+      });
+      if (error) throw error;
+      setChatText(''); toast.success('WhatsApp gesendet'); load();
+    } catch (e: any) { toast.error(e.message); }
+    finally { setWaSending(false); }
+  };
+
+  // Phase 40 — AI Assistant
+  const [aiText, setAiText] = useState('');
+  const [aiLoading, setAiLoading] = useState<string | null>(null);
+  const callAi = async (kind: 'summarize' | 'suggest' | 'diff') => {
+    setAiLoading(kind); setAiText('');
+    try {
+      const { data, error } = await supabase.functions.invoke('mediapaket-ai', {
+        body: { mp_id: mpId, action: kind },
+      });
+      if (error) throw error;
+      setAiText((data as any)?.text || '');
+    } catch (e: any) { toast.error(e.message); }
+    finally { setAiLoading(null); }
+  };
 
   // Phase 35 — Sign-Off (Canvas)
   const sigRef = useRef<HTMLCanvasElement | null>(null);
