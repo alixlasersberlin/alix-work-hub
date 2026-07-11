@@ -18,8 +18,8 @@ export function BookingLayout({ children, step, totalSteps, narrow }: Props) {
         <div className="max-w-5xl mx-auto flex items-center gap-3 px-4 py-3">
           <img src={alixLogo} alt="AlixWorks · Alix Lasers" className="h-9 w-auto" />
           <div className="flex-1">
-            <div className="text-[14px] font-semibold tracking-tight">AlixWorks Buchungsportal</div>
-            <div className="text-[11px] text-muted-foreground">Alix Lasers · alixworks.de</div>
+            <div className="text-[14px] font-semibold tracking-tight">Alix Lasers</div>
+            <div className="text-[11px] text-muted-foreground">alix-lasers.com</div>
           </div>
           <a href={`${ALIXWORKS_PUBLIC_BASE}/kontakt`} className="text-[12px] text-muted-foreground hover:text-primary hidden sm:inline">Kontakt</a>
         </div>
