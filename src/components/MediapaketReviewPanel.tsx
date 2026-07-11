@@ -22,6 +22,24 @@ const STATUS_OPTIONS = [
   { value: 'completed', label: 'Abgeschlossen' },
 ];
 
+export const SECTION_OPTIONS = [
+  { value: 'services', label: 'Leistungsauswahl' },
+  { value: 'studio', label: 'Studio-Daten' },
+  { value: 'devices', label: 'Geräte' },
+  { value: 'prices', label: 'Preisliste' },
+  { value: 'contact', label: 'Kontaktdaten' },
+  { value: 'hours', label: 'Öffnungszeiten' },
+  { value: 'treatments', label: 'Fremdbehandlungen' },
+  { value: 'team', label: 'Team / Über mich' },
+  { value: 'branding', label: 'Branding / Anmerkungen' },
+  { value: 'files', label: 'Dateien' },
+  { value: 'consents', label: 'Einwilligungen' },
+];
+
+export const SECTION_LABEL: Record<string, string> = Object.fromEntries(
+  SECTION_OPTIONS.map(o => [o.value, o.label])
+);
+
 interface Props {
   mpId: string;
   currentStatus: string;
@@ -38,6 +56,7 @@ export default function MediapaketReviewPanel({ mpId, currentStatus, onChanged }
 
   const [newSubject, setNewSubject] = useState('');
   const [newComment, setNewComment] = useState('');
+  const [newSection, setNewSection] = useState<string>('__none__');
   const [internalOnly, setInternalOnly] = useState(false);
   const [posting, setPosting] = useState(false);
 
@@ -87,6 +106,7 @@ export default function MediapaketReviewPanel({ mpId, currentStatus, onChanged }
       subject: newSubject || null,
       comment: newComment.trim(),
       internal_only: internalOnly,
+      related_field: newSection && newSection !== '__none__' ? newSection : null,
     }).select('id').single();
     if (error) { toast.error(error.message); setPosting(false); return; }
     await supabase.from('media_package_history').insert({
@@ -115,6 +135,7 @@ export default function MediapaketReviewPanel({ mpId, currentStatus, onChanged }
     }
     setNewComment('');
     setNewSubject('');
+    setNewSection('__none__');
     setPosting(false);
     load();
   };
@@ -154,6 +175,16 @@ export default function MediapaketReviewPanel({ mpId, currentStatus, onChanged }
           onChange={e => setNewSubject(e.target.value)}
           className="bg-secondary border-border mb-2"
         />
+        <div className="mb-2">
+          <Label className="text-xs text-muted-foreground">Bezug (optional)</Label>
+          <Select value={newSection} onValueChange={setNewSection}>
+            <SelectTrigger className="bg-secondary border-border"><SelectValue placeholder="Kein Bezug" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__none__">Kein Bezug</SelectItem>
+              {SECTION_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
         <Textarea
           placeholder={internalOnly ? 'Interne Notiz für Team...' : 'Rückfrage an den Kunden formulieren...'}
           value={newComment}
@@ -195,6 +226,9 @@ export default function MediapaketReviewPanel({ mpId, currentStatus, onChanged }
                       <Badge className="bg-blue-500/20 text-blue-500 border-blue-500/30"><Mail className="w-3 h-3 mr-1" />An {c.recipient_type}</Badge>
                     )}
                     {c.answered_at && <Badge className="bg-green-500/20 text-green-500 border-green-500/30">beantwortet</Badge>}
+                    {c.related_field && SECTION_LABEL[c.related_field] && (
+                      <Badge variant="secondary" className="text-[10px]">Bezug: {SECTION_LABEL[c.related_field]}</Badge>
+                    )}
                   </div>
                   <span className="text-[11px] text-muted-foreground">{new Date(c.created_at).toLocaleString('de-DE')}</span>
                 </div>

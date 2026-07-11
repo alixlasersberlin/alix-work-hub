@@ -2,9 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Plus, Copy, RefreshCw, Package as PackageIcon, CheckCircle2, Mail, MessageCircle, Check } from 'lucide-react';
+import { Loader2, Plus, Copy, RefreshCw, Package as PackageIcon, CheckCircle2, Mail, MessageCircle, Check, Lock } from 'lucide-react';
 import { toast } from 'sonner';
-import MediapaketReviewPanel from './MediapaketReviewPanel';
+import MediapaketReviewPanel, { SECTION_LABEL } from './MediapaketReviewPanel';
 
 interface Props {
   orderId: string;
@@ -67,33 +67,38 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [orderId]);
 
-  // Unread customer answers (badge + realtime)
+  // Comments (realtime): unread customer answers + section-grouped thread
   const [unread, setUnread] = useState<any[]>([]);
-  const loadUnread = useCallback(async (mpId: string) => {
+  const [commentsBySection, setCommentsBySection] = useState<Record<string, any[]>>({});
+  const loadComments = useCallback(async (mpId: string) => {
     const { data } = await supabase
       .from('media_package_comments')
-      .select('id, subject, comment, created_at')
+      .select('id, subject, comment, created_at, read_at, answered_at, author_type, recipient_type, internal_only, related_field')
       .eq('media_package_id', mpId)
-      .eq('author_type', 'customer')
-      .eq('recipient_type', 'staff')
-      .eq('internal_only', false)
-      .is('read_at', null)
       .order('created_at', { ascending: false });
-    setUnread(data || []);
+    const all = data || [];
+    setUnread(all.filter(c => c.author_type === 'customer' && c.recipient_type === 'staff' && !c.internal_only && !c.read_at));
+    const grouped: Record<string, any[]> = {};
+    for (const c of all) {
+      const key = c.related_field && SECTION_LABEL[c.related_field] ? c.related_field : null;
+      if (!key) continue;
+      (grouped[key] ||= []).push(c);
+    }
+    setCommentsBySection(grouped);
   }, []);
 
   useEffect(() => {
-    if (!mp?.id) { setUnread([]); return; }
-    loadUnread(mp.id);
+    if (!mp?.id) { setUnread([]); setCommentsBySection({}); return; }
+    loadComments(mp.id);
     const ch = supabase
       .channel(`mp-comments-${mp.id}`)
       .on('postgres_changes', {
         event: '*', schema: 'public', table: 'media_package_comments',
         filter: `media_package_id=eq.${mp.id}`,
-      }, () => loadUnread(mp.id))
+      }, () => loadComments(mp.id))
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [mp?.id, loadUnread]);
+  }, [mp?.id, loadComments]);
 
   const markAllRead = async () => {
     if (!mp?.id || !unread.length) return;
@@ -257,7 +262,7 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
       <MediapaketReviewPanel mpId={mp.id} currentStatus={mp.status} onChanged={load} />
 
       {/* Sections */}
-      <SectionCard title="Leistungsauswahl" empty={!sections.services?.length}>
+      <SectionCard sectionKey="services" title="Leistungsauswahl" empty={!sections.services?.length} comments={commentsBySection.services}>
         {sections.services?.map((s: any) => (
           <div key={s.id} className="flex justify-between text-sm">
             <span>{s.service_type}</span>
@@ -266,11 +271,11 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
         ))}
       </SectionCard>
 
-      <SectionCard title="Studio-Daten" empty={!sections.studio}>
+      <SectionCard sectionKey="studio" title="Studio-Daten" empty={!sections.studio} comments={commentsBySection.studio}>
         {sections.studio && <KV data={sections.studio} skip={['id','media_package_id','created_at','updated_at']} />}
       </SectionCard>
 
-      <SectionCard title="Geräte" empty={!sections.devices?.length}>
+      <SectionCard sectionKey="devices" title="Geräte" empty={!sections.devices?.length} comments={commentsBySection.devices}>
         {sections.devices?.map((d: any) => (
           <div key={d.id} className="text-sm">
             <span className="font-medium">{d.entered_model_name || '—'}</span>
@@ -279,7 +284,7 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
         ))}
       </SectionCard>
 
-      <SectionCard title="Preisliste" empty={!sections.prices?.length}>
+      <SectionCard sectionKey="prices" title="Preisliste" empty={!sections.prices?.length} comments={commentsBySection.prices}>
         {sections.prices?.map((p: any) => (
           <div key={p.id} className="flex justify-between text-sm">
             <span>{p.description || p.category}</span>
@@ -288,11 +293,11 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
         ))}
       </SectionCard>
 
-      <SectionCard title="Kontaktdaten" empty={!sections.contact}>
+      <SectionCard sectionKey="contact" title="Kontaktdaten" empty={!sections.contact} comments={commentsBySection.contact}>
         {sections.contact && <KV data={sections.contact} skip={['id','media_package_id','created_at','updated_at']} />}
       </SectionCard>
 
-      <SectionCard title="Öffnungszeiten" empty={!sections.hours?.length}>
+      <SectionCard sectionKey="hours" title="Öffnungszeiten" empty={!sections.hours?.length} comments={commentsBySection.hours}>
         {sections.hours?.map((h: any) => (
           <div key={h.id} className="flex justify-between text-sm">
             <span>Tag {h.weekday}</span>
@@ -303,13 +308,13 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
         ))}
       </SectionCard>
 
-      <SectionCard title="Fremdbehandlungen" empty={!sections.treatments?.length}>
+      <SectionCard sectionKey="treatments" title="Fremdbehandlungen" empty={!sections.treatments?.length} comments={commentsBySection.treatments}>
         {sections.treatments?.map((t: any) => (
           <div key={t.id} className="text-sm">{t.description || t.category}</div>
         ))}
       </SectionCard>
 
-      <SectionCard title="Team / Über mich" empty={!sections.team?.length && !sections.branding?.about_me}>
+      <SectionCard sectionKey="team" title="Team / Über mich" empty={!sections.team?.length && !sections.branding?.about_me} comments={commentsBySection.team}>
         {sections.branding?.about_me && <p className="text-sm whitespace-pre-wrap">{sections.branding.about_me}</p>}
         {sections.team?.map((m: any) => (
           <div key={m.id} className="text-sm">
@@ -319,11 +324,11 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
         ))}
       </SectionCard>
 
-      <SectionCard title="Branding / Anmerkungen" empty={!sections.branding}>
+      <SectionCard sectionKey="branding" title="Branding / Anmerkungen" empty={!sections.branding} comments={commentsBySection.branding}>
         {sections.branding && <KV data={sections.branding} skip={['id','media_package_id','created_at','updated_at']} />}
       </SectionCard>
 
-      <SectionCard title="Dateien" empty={!sections.files?.length}>
+      <SectionCard sectionKey="files" title="Dateien" empty={!sections.files?.length} comments={commentsBySection.files}>
         {sections.files?.map((f: any) => (
           <div key={f.id} className="flex items-center justify-between text-sm">
             <span>{f.original_filename} <span className="text-muted-foreground">({f.category})</span></span>
@@ -332,7 +337,7 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
         ))}
       </SectionCard>
 
-      <SectionCard title="Einwilligungen" empty={!sections.consents?.length}>
+      <SectionCard sectionKey="consents" title="Einwilligungen" empty={!sections.consents?.length} comments={commentsBySection.consents}>
         {sections.consents?.map((c: any) => (
           <div key={c.id} className="flex justify-between text-sm">
             <span>{c.consent_type}</span>
@@ -344,11 +349,56 @@ export default function MediapaketOrderTab({ orderId, customerId }: Props) {
   );
 }
 
-function SectionCard({ title, empty, children }: { title: string; empty?: boolean; children: React.ReactNode }) {
+function SectionCard({ title, empty, children, comments, sectionKey }: {
+  title: string; empty?: boolean; children: React.ReactNode;
+  comments?: any[]; sectionKey?: string;
+}) {
+  const list = comments || [];
+  const openQuestions = list.filter(c => c.author_type === 'staff' && !c.internal_only && !c.answered_at).length;
+  const unreadAnswers = list.filter(c => c.author_type === 'customer' && !c.read_at).length;
   return (
     <div className="rounded-xl border border-border bg-card p-4 card-glow">
-      <h4 className="text-sm font-semibold text-foreground mb-3">{title}</h4>
+      <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
+        <h4 className="text-sm font-semibold text-foreground">{title}</h4>
+        <div className="flex items-center gap-1.5">
+          {unreadAnswers > 0 && (
+            <Badge className="bg-amber-500/20 text-amber-500 border-amber-500/40 animate-pulse text-[10px]">
+              <MessageCircle className="w-3 h-3 mr-1" />{unreadAnswers} neue Antwort{unreadAnswers === 1 ? '' : 'en'}
+            </Badge>
+          )}
+          {openQuestions > 0 && (
+            <Badge variant="outline" className="text-[10px]">
+              {openQuestions} offene Rückfrage{openQuestions === 1 ? '' : 'n'}
+            </Badge>
+          )}
+        </div>
+      </div>
       {empty ? <p className="text-xs text-muted-foreground">— Noch keine Angaben —</p> : <div className="space-y-1.5">{children}</div>}
+      {list.length > 0 && (
+        <div className="mt-3 pt-3 border-t border-border/60 space-y-2">
+          {list.slice(0, 4).map(c => (
+            <div key={c.id} className={`rounded-lg border p-2 text-xs ${
+              c.author_type === 'customer' && !c.read_at
+                ? 'border-amber-500/40 bg-amber-500/10'
+                : c.internal_only
+                  ? 'border-border/40 bg-secondary/40'
+                  : 'border-border/40 bg-background/40'
+            }`}>
+              <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                <Badge variant="outline" className="capitalize text-[10px]">{c.author_type}</Badge>
+                {c.internal_only && <Badge className="bg-amber-500/20 text-amber-500 border-amber-500/30 text-[10px]"><Lock className="w-2.5 h-2.5 mr-1" />intern</Badge>}
+                {c.answered_at && <Badge className="bg-green-500/20 text-green-500 border-green-500/30 text-[10px]">beantwortet</Badge>}
+                <span className="text-[10px] text-muted-foreground ml-auto">{new Date(c.created_at).toLocaleString('de-DE')}</span>
+              </div>
+              {c.subject && <div className="text-xs font-medium text-foreground">{c.subject}</div>}
+              <p className="text-xs text-muted-foreground whitespace-pre-wrap line-clamp-3">{c.comment}</p>
+            </div>
+          ))}
+          {list.length > 4 && (
+            <p className="text-[10px] text-muted-foreground">…{list.length - 4} weitere im Kommentarverlauf.</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
