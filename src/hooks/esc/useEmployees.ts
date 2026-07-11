@@ -2,9 +2,22 @@ import { useCallback, useEffect, useState } from 'react';
 import { MOCK_EMPLOYEES } from '@/lib/esc/mock-data';
 import type { EscEmployee } from '@/lib/esc/types';
 
-let store: EscEmployee[] = [...MOCK_EMPLOYEES];
+const LS_KEY = 'esc.employees.v1';
+
+const load = (): EscEmployee[] => {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return [...MOCK_EMPLOYEES];
+};
+const save = (list: EscEmployee[]) => {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(list)); } catch {}
+};
+
+let store: EscEmployee[] = load();
 const listeners = new Set<() => void>();
-const notify = () => listeners.forEach((l) => l());
+const notify = () => { save(store); listeners.forEach((l) => l()); };
 
 export function useEmployees() {
   const [items, setItems] = useState<EscEmployee[]>(store);
