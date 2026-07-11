@@ -10558,6 +10558,995 @@ export type Database = {
           },
         ]
       }
+      media_package_branding: {
+        Row: {
+          about_me: string | null
+          certificates: string | null
+          claims: string | null
+          company_philosophy: string | null
+          corporate_design_notes: string | null
+          created_at: string
+          excluded_colors: string | null
+          focus_areas: string | null
+          id: string
+          languages: string | null
+          legally_reviewed_claims: boolean | null
+          main_message: string | null
+          media_package_id: string
+          other_requirements: string | null
+          preferred_colors: string | null
+          preferred_fonts: string | null
+          preferred_salutation: string | null
+          preferred_styles: string[] | null
+          preferred_tone: string | null
+          preferred_writing_style: string | null
+          professional_experience: string | null
+          qualifications: string | null
+          regional_focus: string | null
+          slogan: string | null
+          studio_description: string | null
+          target_age_group: string | null
+          target_group: string | null
+          team_intro: string | null
+          unique_selling_points: string | null
+          updated_at: string
+          visual_language: string | null
+          website_examples_negative: string | null
+          website_examples_positive: string | null
+        }
+        Insert: {
+          about_me?: string | null
+          certificates?: string | null
+          claims?: string | null
+          company_philosophy?: string | null
+          corporate_design_notes?: string | null
+          created_at?: string
+          excluded_colors?: string | null
+          focus_areas?: string | null
+          id?: string
+          languages?: string | null
+          legally_reviewed_claims?: boolean | null
+          main_message?: string | null
+          media_package_id: string
+          other_requirements?: string | null
+          preferred_colors?: string | null
+          preferred_fonts?: string | null
+          preferred_salutation?: string | null
+          preferred_styles?: string[] | null
+          preferred_tone?: string | null
+          preferred_writing_style?: string | null
+          professional_experience?: string | null
+          qualifications?: string | null
+          regional_focus?: string | null
+          slogan?: string | null
+          studio_description?: string | null
+          target_age_group?: string | null
+          target_group?: string | null
+          team_intro?: string | null
+          unique_selling_points?: string | null
+          updated_at?: string
+          visual_language?: string | null
+          website_examples_negative?: string | null
+          website_examples_positive?: string | null
+        }
+        Update: {
+          about_me?: string | null
+          certificates?: string | null
+          claims?: string | null
+          company_philosophy?: string | null
+          corporate_design_notes?: string | null
+          created_at?: string
+          excluded_colors?: string | null
+          focus_areas?: string | null
+          id?: string
+          languages?: string | null
+          legally_reviewed_claims?: boolean | null
+          main_message?: string | null
+          media_package_id?: string
+          other_requirements?: string | null
+          preferred_colors?: string | null
+          preferred_fonts?: string | null
+          preferred_salutation?: string | null
+          preferred_styles?: string[] | null
+          preferred_tone?: string | null
+          preferred_writing_style?: string | null
+          professional_experience?: string | null
+          qualifications?: string | null
+          regional_focus?: string | null
+          slogan?: string | null
+          studio_description?: string | null
+          target_age_group?: string | null
+          target_group?: string | null
+          team_intro?: string | null
+          unique_selling_points?: string | null
+          updated_at?: string
+          visual_language?: string | null
+          website_examples_negative?: string | null
+          website_examples_positive?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_package_branding_media_package_id_fkey"
+            columns: ["media_package_id"]
+            isOneToOne: true
+            referencedRelation: "media_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      media_package_comments: {
+        Row: {
+          answered_at: string | null
+          attachment_id: string | null
+          author_id: string | null
+          author_type: string
+          comment: string
+          created_at: string
+          id: string
+          internal_only: boolean | null
+          media_package_id: string
+          read_at: string | null
+          recipient_type: string
+          related_field: string | null
+          subject: string | null
+          updated_at: string
+        }
+        Insert: {
+          answered_at?: string | null
+          attachment_id?: string | null
+          author_id?: string | null
+          author_type?: string
+          comment: string
+          created_at?: string
+          id?: string
+          internal_only?: boolean | null
+          media_package_id: string
+          read_at?: string | null
+          recipient_type?: string
+          related_field?: string | null
+          subject?: string | null
+          updated_at?: string
+        }
+        Update: {
+          answered_at?: string | null
+          attachment_id?: string | null
+          author_id?: string | null
+          author_type?: string
+          comment?: string
+          created_at?: string
+          id?: string
+          internal_only?: boolean | null
+          media_package_id?: string
+          read_at?: string | null
+          recipient_type?: string
+          related_field?: string | null
+          subject?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_package_comments_attachment_id_fkey"
+            columns: ["attachment_id"]
+            isOneToOne: false
+            referencedRelation: "media_package_files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "media_package_comments_media_package_id_fkey"
+            columns: ["media_package_id"]
+            isOneToOne: false
+            referencedRelation: "media_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      media_package_consents: {
+        Row: {
+          accepted: boolean
+          accepted_at: string | null
+          accepted_by: string | null
+          consent_text_version: string | null
+          consent_type: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          media_package_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          accepted?: boolean
+          accepted_at?: string | null
+          accepted_by?: string | null
+          consent_text_version?: string | null
+          consent_type: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          media_package_id: string
+          user_agent?: string | null
+        }
+        Update: {
+          accepted?: boolean
+          accepted_at?: string | null
+          accepted_by?: string | null
+          consent_text_version?: string | null
+          consent_type?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          media_package_id?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_package_consents_media_package_id_fkey"
+            columns: ["media_package_id"]
+            isOneToOne: false
+            referencedRelation: "media_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      media_package_contact_data: {
+        Row: {
+          address_extra: string | null
+          address_line: string | null
+          booking_url: string | null
+          city: string | null
+          company_name: string | null
+          contact_name: string | null
+          country: string | null
+          created_at: string
+          email: string | null
+          facebook: string | null
+          google_business_url: string | null
+          house_number: string | null
+          id: string
+          instagram: string | null
+          linkedin: string | null
+          media_package_id: string
+          mobile: string | null
+          phone: string | null
+          postal_code: string | null
+          preferred_contact_channel: string | null
+          secondary_email: string | null
+          state: string | null
+          street: string | null
+          studio_name: string | null
+          sync_mode: string | null
+          tiktok: string | null
+          updated_at: string
+          website: string | null
+          whatsapp: string | null
+          youtube: string | null
+        }
+        Insert: {
+          address_extra?: string | null
+          address_line?: string | null
+          booking_url?: string | null
+          city?: string | null
+          company_name?: string | null
+          contact_name?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          facebook?: string | null
+          google_business_url?: string | null
+          house_number?: string | null
+          id?: string
+          instagram?: string | null
+          linkedin?: string | null
+          media_package_id: string
+          mobile?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          preferred_contact_channel?: string | null
+          secondary_email?: string | null
+          state?: string | null
+          street?: string | null
+          studio_name?: string | null
+          sync_mode?: string | null
+          tiktok?: string | null
+          updated_at?: string
+          website?: string | null
+          whatsapp?: string | null
+          youtube?: string | null
+        }
+        Update: {
+          address_extra?: string | null
+          address_line?: string | null
+          booking_url?: string | null
+          city?: string | null
+          company_name?: string | null
+          contact_name?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          facebook?: string | null
+          google_business_url?: string | null
+          house_number?: string | null
+          id?: string
+          instagram?: string | null
+          linkedin?: string | null
+          media_package_id?: string
+          mobile?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          preferred_contact_channel?: string | null
+          secondary_email?: string | null
+          state?: string | null
+          street?: string | null
+          studio_name?: string | null
+          sync_mode?: string | null
+          tiktok?: string | null
+          updated_at?: string
+          website?: string | null
+          whatsapp?: string | null
+          youtube?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_package_contact_data_media_package_id_fkey"
+            columns: ["media_package_id"]
+            isOneToOne: true
+            referencedRelation: "media_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      media_package_devices: {
+        Row: {
+          confirmed: boolean | null
+          created_at: string
+          device_id: string | null
+          discrepancy_note: string | null
+          entered_model_name: string | null
+          id: string
+          media_package_id: string
+          notes: string | null
+          serial_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          confirmed?: boolean | null
+          created_at?: string
+          device_id?: string | null
+          discrepancy_note?: string | null
+          entered_model_name?: string | null
+          id?: string
+          media_package_id: string
+          notes?: string | null
+          serial_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          confirmed?: boolean | null
+          created_at?: string
+          device_id?: string | null
+          discrepancy_note?: string | null
+          entered_model_name?: string | null
+          id?: string
+          media_package_id?: string
+          notes?: string | null
+          serial_number?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_package_devices_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "lager_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "media_package_devices_media_package_id_fkey"
+            columns: ["media_package_id"]
+            isOneToOne: false
+            referencedRelation: "media_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      media_package_files: {
+        Row: {
+          approval_status: string | null
+          category: string
+          created_at: string
+          customer_id: string | null
+          description: string | null
+          file_size: number | null
+          id: string
+          internal_note: string | null
+          media_package_id: string
+          mime_type: string | null
+          order_id: string | null
+          original_filename: string
+          scope: string | null
+          storage_path: string
+          updated_at: string
+          uploaded_at: string
+          uploaded_by: string | null
+          version: number | null
+        }
+        Insert: {
+          approval_status?: string | null
+          category: string
+          created_at?: string
+          customer_id?: string | null
+          description?: string | null
+          file_size?: number | null
+          id?: string
+          internal_note?: string | null
+          media_package_id: string
+          mime_type?: string | null
+          order_id?: string | null
+          original_filename: string
+          scope?: string | null
+          storage_path: string
+          updated_at?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+          version?: number | null
+        }
+        Update: {
+          approval_status?: string | null
+          category?: string
+          created_at?: string
+          customer_id?: string | null
+          description?: string | null
+          file_size?: number | null
+          id?: string
+          internal_note?: string | null
+          media_package_id?: string
+          mime_type?: string | null
+          order_id?: string | null
+          original_filename?: string
+          scope?: string | null
+          storage_path?: string
+          updated_at?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+          version?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_package_files_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "media_package_files_media_package_id_fkey"
+            columns: ["media_package_id"]
+            isOneToOne: false
+            referencedRelation: "media_packages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "media_package_files_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      media_package_history: {
+        Row: {
+          action: string
+          created_at: string
+          entity: string | null
+          entity_id: string | null
+          field_name: string | null
+          id: string
+          media_package_id: string
+          new_value: Json | null
+          old_value: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          entity?: string | null
+          entity_id?: string | null
+          field_name?: string | null
+          id?: string
+          media_package_id: string
+          new_value?: Json | null
+          old_value?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          entity?: string | null
+          entity_id?: string | null
+          field_name?: string | null
+          id?: string
+          media_package_id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_package_history_media_package_id_fkey"
+            columns: ["media_package_id"]
+            isOneToOne: false
+            referencedRelation: "media_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      media_package_opening_hours: {
+        Row: {
+          booking_link: string | null
+          by_appointment: boolean | null
+          closed: boolean
+          created_at: string
+          first_end: string | null
+          first_start: string | null
+          holiday_note: string | null
+          id: string
+          media_package_id: string
+          mode: string | null
+          notes: string | null
+          second_end: string | null
+          second_start: string | null
+          updated_at: string
+          weekday: number
+        }
+        Insert: {
+          booking_link?: string | null
+          by_appointment?: boolean | null
+          closed?: boolean
+          created_at?: string
+          first_end?: string | null
+          first_start?: string | null
+          holiday_note?: string | null
+          id?: string
+          media_package_id: string
+          mode?: string | null
+          notes?: string | null
+          second_end?: string | null
+          second_start?: string | null
+          updated_at?: string
+          weekday: number
+        }
+        Update: {
+          booking_link?: string | null
+          by_appointment?: boolean | null
+          closed?: boolean
+          created_at?: string
+          first_end?: string | null
+          first_start?: string | null
+          holiday_note?: string | null
+          id?: string
+          media_package_id?: string
+          mode?: string | null
+          notes?: string | null
+          second_end?: string | null
+          second_start?: string | null
+          updated_at?: string
+          weekday?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_package_opening_hours_media_package_id_fkey"
+            columns: ["media_package_id"]
+            isOneToOne: false
+            referencedRelation: "media_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      media_package_prices: {
+        Row: {
+          active: boolean | null
+          body_area: string | null
+          category: string | null
+          created_at: string
+          description: string | null
+          device_id: string | null
+          duration_minutes: number | null
+          id: string
+          media_package_id: string
+          notes: string | null
+          package_price: number | null
+          promotional_price: number | null
+          regular_price: number | null
+          sort_order: number | null
+          source: string | null
+          target_group: string | null
+          treatment_name: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean | null
+          body_area?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          device_id?: string | null
+          duration_minutes?: number | null
+          id?: string
+          media_package_id: string
+          notes?: string | null
+          package_price?: number | null
+          promotional_price?: number | null
+          regular_price?: number | null
+          sort_order?: number | null
+          source?: string | null
+          target_group?: string | null
+          treatment_name: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean | null
+          body_area?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          device_id?: string | null
+          duration_minutes?: number | null
+          id?: string
+          media_package_id?: string
+          notes?: string | null
+          package_price?: number | null
+          promotional_price?: number | null
+          regular_price?: number | null
+          sort_order?: number | null
+          source?: string | null
+          target_group?: string | null
+          treatment_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_package_prices_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "lager_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "media_package_prices_media_package_id_fkey"
+            columns: ["media_package_id"]
+            isOneToOne: false
+            referencedRelation: "media_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      media_package_services: {
+        Row: {
+          assigned_department: string | null
+          assigned_user_id: string | null
+          completed_at: string | null
+          created_at: string
+          due_date: string | null
+          id: string
+          media_package_id: string
+          selected: boolean
+          service_type: Database["public"]["Enums"]["media_package_service_type"]
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_department?: string | null
+          assigned_user_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          media_package_id: string
+          selected?: boolean
+          service_type: Database["public"]["Enums"]["media_package_service_type"]
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_department?: string | null
+          assigned_user_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          media_package_id?: string
+          selected?: boolean
+          service_type?: Database["public"]["Enums"]["media_package_service_type"]
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_package_services_media_package_id_fkey"
+            columns: ["media_package_id"]
+            isOneToOne: false
+            referencedRelation: "media_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      media_package_studio_data: {
+        Row: {
+          alternative_domain: string | null
+          company_name_print: string | null
+          company_name_website: string | null
+          contact_name: string | null
+          created_at: string
+          desired_domain: string | null
+          domain_registered: string | null
+          existing_domain: string | null
+          id: string
+          media_package_id: string
+          preferred_salutation: string | null
+          preferred_tone: string | null
+          slogan: string | null
+          studio_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          alternative_domain?: string | null
+          company_name_print?: string | null
+          company_name_website?: string | null
+          contact_name?: string | null
+          created_at?: string
+          desired_domain?: string | null
+          domain_registered?: string | null
+          existing_domain?: string | null
+          id?: string
+          media_package_id: string
+          preferred_salutation?: string | null
+          preferred_tone?: string | null
+          slogan?: string | null
+          studio_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          alternative_domain?: string | null
+          company_name_print?: string | null
+          company_name_website?: string | null
+          contact_name?: string | null
+          created_at?: string
+          desired_domain?: string | null
+          domain_registered?: string | null
+          existing_domain?: string | null
+          id?: string
+          media_package_id?: string
+          preferred_salutation?: string | null
+          preferred_tone?: string | null
+          slogan?: string | null
+          studio_name?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_package_studio_data_media_package_id_fkey"
+            columns: ["media_package_id"]
+            isOneToOne: true
+            referencedRelation: "media_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      media_package_team_members: {
+        Row: {
+          biography: string | null
+          created_at: string
+          first_name: string | null
+          id: string
+          last_name: string | null
+          media_package_id: string
+          profile_file_id: string | null
+          qualifications: string | null
+          role: string | null
+          show_on_flyer: boolean | null
+          show_on_social_media: boolean | null
+          show_on_website: boolean | null
+          sort_order: number | null
+          treatments: string | null
+          updated_at: string
+        }
+        Insert: {
+          biography?: string | null
+          created_at?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          media_package_id: string
+          profile_file_id?: string | null
+          qualifications?: string | null
+          role?: string | null
+          show_on_flyer?: boolean | null
+          show_on_social_media?: boolean | null
+          show_on_website?: boolean | null
+          sort_order?: number | null
+          treatments?: string | null
+          updated_at?: string
+        }
+        Update: {
+          biography?: string | null
+          created_at?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          media_package_id?: string
+          profile_file_id?: string | null
+          qualifications?: string | null
+          role?: string | null
+          show_on_flyer?: boolean | null
+          show_on_social_media?: boolean | null
+          show_on_website?: boolean | null
+          sort_order?: number | null
+          treatments?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_mpteam_profile_file"
+            columns: ["profile_file_id"]
+            isOneToOne: false
+            referencedRelation: "media_package_files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "media_package_team_members_media_package_id_fkey"
+            columns: ["media_package_id"]
+            isOneToOne: false
+            referencedRelation: "media_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      media_package_treatments: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          device_or_method: string | null
+          duration_minutes: number | null
+          id: string
+          media_package_id: string
+          price: number | null
+          show_on_flyer: boolean | null
+          show_on_social_media: boolean | null
+          show_on_website: boolean | null
+          sort_order: number | null
+          target_group: string | null
+          treatment_name: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          device_or_method?: string | null
+          duration_minutes?: number | null
+          id?: string
+          media_package_id: string
+          price?: number | null
+          show_on_flyer?: boolean | null
+          show_on_social_media?: boolean | null
+          show_on_website?: boolean | null
+          sort_order?: number | null
+          target_group?: string | null
+          treatment_name: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          device_or_method?: string | null
+          duration_minutes?: number | null
+          id?: string
+          media_package_id?: string
+          price?: number | null
+          show_on_flyer?: boolean | null
+          show_on_social_media?: boolean | null
+          show_on_website?: boolean | null
+          sort_order?: number | null
+          target_group?: string | null
+          treatment_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_package_treatments_media_package_id_fkey"
+            columns: ["media_package_id"]
+            isOneToOne: false
+            referencedRelation: "media_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      media_packages: {
+        Row: {
+          assigned_user_id: string | null
+          completed_at: string | null
+          country: string | null
+          created_at: string
+          created_by: string | null
+          current_version: number
+          customer_id: string
+          due_date: string | null
+          id: string
+          internal_notes: string | null
+          language: string | null
+          order_id: string | null
+          priority: string | null
+          progress_percent: number
+          reviewed_at: string | null
+          source: string | null
+          status: Database["public"]["Enums"]["media_package_status"]
+          studio_name: string | null
+          submitted_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_user_id?: string | null
+          completed_at?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          current_version?: number
+          customer_id: string
+          due_date?: string | null
+          id?: string
+          internal_notes?: string | null
+          language?: string | null
+          order_id?: string | null
+          priority?: string | null
+          progress_percent?: number
+          reviewed_at?: string | null
+          source?: string | null
+          status?: Database["public"]["Enums"]["media_package_status"]
+          studio_name?: string | null
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_user_id?: string | null
+          completed_at?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          current_version?: number
+          customer_id?: string
+          due_date?: string | null
+          id?: string
+          internal_notes?: string | null
+          language?: string | null
+          order_id?: string | null
+          priority?: string | null
+          progress_percent?: number
+          reviewed_at?: string | null
+          source?: string | null
+          status?: Database["public"]["Enums"]["media_package_status"]
+          studio_name?: string | null
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_packages_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "media_packages_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       migration_backup_logs: {
         Row: {
           batch_id: string
@@ -16283,6 +17272,7 @@ export type Database = {
         Args: { p_case: string }
         Returns: undefined
       }
+      calc_media_package_progress: { Args: { _mp_id: string }; Returns: number }
       can_access_ai_service: { Args: never; Returns: boolean }
       can_access_esc_module: { Args: never; Returns: boolean }
       can_access_finance: { Args: never; Returns: boolean }
@@ -16291,6 +17281,7 @@ export type Database = {
       can_access_import_logs: { Args: never; Returns: boolean }
       can_access_mail: { Args: never; Returns: boolean }
       can_access_maintenance: { Args: never; Returns: boolean }
+      can_access_media_package: { Args: { _mp_id: string }; Returns: boolean }
       can_access_orders: { Args: never; Returns: boolean }
       can_access_planning: { Args: never; Returns: boolean }
       can_access_qm: { Args: never; Returns: boolean }
@@ -16305,12 +17296,14 @@ export type Database = {
       can_manage_mail_domains: { Args: never; Returns: boolean }
       can_manage_mail_templates: { Args: never; Returns: boolean }
       can_manage_maintenance: { Args: never; Returns: boolean }
+      can_manage_media_packages: { Args: never; Returns: boolean }
       can_manage_orders: { Args: never; Returns: boolean }
       can_manage_planning: { Args: never; Returns: boolean }
       can_manage_repair: { Args: never; Returns: boolean }
       can_manage_tickets: { Args: never; Returns: boolean }
       can_manage_warranty: { Args: never; Returns: boolean }
       can_manage_whatsapp_automation: { Args: never; Returns: boolean }
+      can_read_media_packages: { Args: never; Returns: boolean }
       can_run_ai_service: { Args: never; Returns: boolean }
       can_send_customer_sms: { Args: never; Returns: boolean }
       can_send_whatsapp: { Args: never; Returns: boolean }
@@ -16320,6 +17313,7 @@ export type Database = {
       can_view_finance_module: { Args: never; Returns: boolean }
       can_view_mail_audit: { Args: never; Returns: boolean }
       can_write_esc_operational: { Args: never; Returns: boolean }
+      can_write_media_package: { Args: { _mp_id: string }; Returns: boolean }
       cashbook_reverse: {
         Args: { _id: string; _reason?: string }
         Returns: string
@@ -16546,6 +17540,17 @@ export type Database = {
         | "rueckruf"
         | "upselling"
       as_traffic_light: "green" | "yellow" | "red"
+      media_package_service_type: "website" | "flyer" | "social_media"
+      media_package_status:
+        | "not_started"
+        | "in_progress"
+        | "question_required"
+        | "submitted"
+        | "in_review"
+        | "in_production"
+        | "customer_correction"
+        | "approval_pending"
+        | "completed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -16715,6 +17720,18 @@ export const Constants = {
         "upselling",
       ],
       as_traffic_light: ["green", "yellow", "red"],
+      media_package_service_type: ["website", "flyer", "social_media"],
+      media_package_status: [
+        "not_started",
+        "in_progress",
+        "question_required",
+        "submitted",
+        "in_review",
+        "in_production",
+        "customer_correction",
+        "approval_pending",
+        "completed",
+      ],
     },
   },
 } as const
