@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
       const [services, treatments, team, branding] = await Promise.all([
         admin.from('media_package_services').select('service_name').eq('media_package_id', mpId),
         admin.from('media_package_treatments').select('treatment_name').eq('media_package_id', mpId),
-        admin.from('media_package_team_members').select('name, role').eq('media_package_id', mpId),
+        admin.from('media_package_team_members').select('first_name, last_name, role').eq('media_package_id', mpId),
         admin.from('media_package_branding').select('slogan, about_me, main_message').eq('media_package_id', mpId).maybeSingle(),
       ]);
       const br: any = branding.data || {};
@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
           brand_story: br.about_me || null,
           services: (services.data || []).map((r: any) => r.service_name).filter(Boolean),
           treatments: (treatments.data || []).map((r: any) => r.treatment_name).filter(Boolean),
-          team: (team.data || []).map((r: any) => ({ name: r.name, role: r.role })).filter((t: any) => t.name),
+          team: (team.data || []).map((r: any) => ({ name: [r.first_name, r.last_name].filter(Boolean).join(' '), role: r.role })).filter((t: any) => t.name),
         },
       });
     }
