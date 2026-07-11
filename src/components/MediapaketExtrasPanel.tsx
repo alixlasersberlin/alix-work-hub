@@ -1,12 +1,13 @@
-// Mediapaket Extras Panel: Timeline (Phase 28), Versionen (Phase 25), Workflow-Übergabe (Phase 26)
+// Mediapaket Extras Panel: Timeline (25), Versionen, Workflow, Chat (31), Sign-Off & Audit (35)
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, History as HistoryIcon, GitBranch, Send, Package, CheckCircle2, PlayCircle, Eye, Download, MessageCircle, Upload, Mail, Copy as CopyIcon } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Loader2, History as HistoryIcon, GitBranch, Send, Package, CheckCircle2, PlayCircle, Eye, Download, MessageCircle, Upload, Mail, Copy as CopyIcon, PenTool, FileDown } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Props {
