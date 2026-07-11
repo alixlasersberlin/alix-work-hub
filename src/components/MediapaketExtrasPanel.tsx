@@ -515,7 +515,7 @@ export default function MediapaketExtrasPanel({ mpId, status, onChanged }: Props
           )}
         </TabsContent>
 
-        <TabsContent value="tools" className="pt-3 space-y-3">
+        <TabsContent value="tools" className="pt-3 space-y-4">
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" size="sm" onClick={duplicate} disabled={duplicating} className="gap-2">
               {duplicating ? <Loader2 className="w-3 h-3 animate-spin" /> : <CopyIcon className="w-3 h-3" />}
@@ -525,8 +525,43 @@ export default function MediapaketExtrasPanel({ mpId, status, onChanged }: Props
               <Eye className="w-3 h-3" />Kunden-Vorschau-Link
             </Button>
           </div>
+
+          {/* Phase 45 — Showcase */}
+          <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <div className="text-xs font-semibold flex items-center gap-1">🌐 Public Showcase</div>
+                <div className="text-[11px] text-muted-foreground">Öffentliche Referenz-Seite ohne interne Daten, mit Lead-Formular.</div>
+              </div>
+              <Button size="sm" variant={showcaseCfg.enabled ? 'default' : 'outline'} disabled={showcaseBusy} onClick={() => toggleShowcase(!showcaseCfg.enabled)}>
+                {showcaseBusy ? <Loader2 className="w-3 h-3 animate-spin" /> : (showcaseCfg.enabled ? 'Aktiv — deaktivieren' : 'Aktivieren')}
+              </Button>
+            </div>
+            {showcaseCfg.enabled && showcaseCfg.token && (
+              <div className="flex items-center gap-2">
+                <code className="text-[10px] bg-background/60 px-2 py-1 rounded flex-1 truncate">{window.location.origin}/mediapaket/showcase/{showcaseCfg.token}</code>
+                <Button size="sm" variant="ghost" onClick={copyShowcaseLink}><CopyIcon className="w-3 h-3" /></Button>
+              </div>
+            )}
+          </div>
+
+          {/* Phase 47 — DSGVO */}
+          <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3 space-y-2">
+            <div className="text-xs font-semibold">🛡 DSGVO / Datenschutz</div>
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" variant="outline" onClick={gdprExport} disabled={gdprBusy} className="gap-2">
+                {gdprBusy ? <Loader2 className="w-3 h-3 animate-spin" /> : <FileDown className="w-3 h-3" />}
+                Vollständiger Datenexport (JSON)
+              </Button>
+              <Button size="sm" variant="outline" onClick={anonymize} disabled={gdprBusy} className="gap-2 border-red-500/40 text-red-500 hover:bg-red-500/10">
+                Anonymisieren (Super Admin)
+              </Button>
+            </div>
+            <p className="text-[10px] text-muted-foreground">Export enthält Kunde, Paket, Historie, Kommentare und Datei-Metadaten (Art. 20 DSGVO).</p>
+          </div>
+
           <p className="text-[11px] text-muted-foreground">
-            <strong>Duplizieren</strong>: kopiert alle Angaben (ohne Dateien) in ein neues Paket für einen anderen Auftrag.<br />
+            <strong>Duplizieren</strong>: kopiert alle Angaben (ohne Dateien) in ein neues Paket.<br />
             <strong>Vorschau-Link</strong>: schreibgeschützte Ansicht für den Kunden zur Endabnahme.
           </p>
         </TabsContent>
