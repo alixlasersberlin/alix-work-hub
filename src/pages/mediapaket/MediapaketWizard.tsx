@@ -173,7 +173,7 @@ export default function MediapaketWizard() {
         <Card>
           <CardHeader><CardTitle className="text-[16px]">{stepIdx + 1}. {step.label}</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            {step.id === 'prep' && <StepPrep />}
+            {step.id === 'prep' && <StepPrep introText={data.settings?.['mediapaket.customer_intro_text']} />}
             {step.id === 'services' && <StepServices data={data} save={save} />}
             {step.id === 'studio' && <StepStudio data={data} save={save} upload={uploadFile} />}
             {step.id === 'devices' && <StepDevices data={data} save={save} del={deleteRow} />}
