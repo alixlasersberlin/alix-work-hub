@@ -35,7 +35,7 @@ export default function MediapaketAdmin() {
   const [values, setValues] = useState<Record<string, string>>({ ...DEFAULTS });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [stats, setStats] = useState<{ byStatus: Record<string, number>; totalFiles: number; totalDownloads: number; avgProgress: number } | null>(null);
+  const [stats, setStats] = useState<{ byStatus: Record<string, number>; totalFiles: number; totalDownloads: number; avgProgress: number; overdue: number; avgSubmitDays: number | null; assignedShare: number; topAssignees: { name: string; count: number }[] } | null>(null);
 
   useEffect(() => {
     (async () => {
