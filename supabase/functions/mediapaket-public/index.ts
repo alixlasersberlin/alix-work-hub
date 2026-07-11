@@ -63,16 +63,22 @@ Deno.serve(async (req) => {
       const { lead } = body;
       if (!lead?.name || !lead?.email) return json({ error: 'name & email required' }, 400);
       const { data: mp } = await admin.from('media_packages').select('studio_name').eq('id', mpId).maybeSingle();
-      const notes = `Anfrage über Mediapaket-Showcase (${mp?.studio_name || mpId})\n${lead.message || ''}`;
+      const parts = String(lead.name).trim().split(/\s+/);
+      const first_name = parts[0] || lead.name;
+      const last_name = parts.slice(1).join(' ') || null;
+      const notes = `Anfrage über Mediapaket-Showcase (${mp?.studio_name || mpId})`;
       const { error: leadErr } = await admin.from('sales_leads').insert({
-        name: lead.name,
-        email: lead.email,
-        phone: lead.phone || null,
-        source: 'mediapaket_showcase',
-        status: 'new',
-        notes,
-        interest: 'Mediapaket',
+        first_name, last_name, email: lead.email, phone: lead.phone || null,
+        source: 'mediapaket_showcase', lead_status: 'new',
+        message: lead.message || null, notes, interests: ['Mediapaket'],
       } as any);
+      if (leadErr) return json({ error: leadErr.message }, 400);
+      await admin.from('media_package_history').insert({
+        media_package_id: mpId, action: 'showcase_lead_created',
+        new_value: { name: lead.name, email: lead.email } as any,
+      });
+      return json({ ok: true });
+    }
       if (leadErr) return json({ error: leadErr.message }, 400);
       await admin.from('media_package_history').insert({
         media_package_id: mpId, action: 'showcase_lead_created',
