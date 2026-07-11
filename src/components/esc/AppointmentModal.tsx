@@ -162,8 +162,40 @@ export function AppointmentModal({ open, onClose, onSubmit, departments, employe
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{initial?.id ? 'Termin bearbeiten' : 'Neuer Termin'}</DialogTitle>
+          <DialogTitle className="flex items-center justify-between gap-2">
+            <span>{initial?.id ? 'Termin bearbeiten' : 'Neuer Termin'}</span>
+            <Button type="button" size="sm" variant="outline" onClick={runAiSuggest} disabled={aiLoading} className="gap-1.5">
+              {aiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 text-primary" />}
+              KI-Vorschlag
+            </Button>
+          </DialogTitle>
         </DialogHeader>
+
+        {aiSuggestions.length > 0 && (
+          <div className="rounded-md border border-primary/30 bg-primary/5 p-3 space-y-2">
+            <div className="text-xs font-medium text-primary flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5" /> KI-Vorschläge
+            </div>
+            {aiSuggestions.map((s, i) => (
+              <div key={i} className="flex items-start gap-3 rounded border bg-background p-2 text-sm">
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium">
+                    {new Date(s.start_at).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' })}
+                    {' → '}
+                    {new Date(s.end_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+                    {' · '}{s.employee_name}
+                    {typeof s.score === 'number' && <span className="ml-2 text-xs text-muted-foreground">Score {s.score}</span>}
+                  </div>
+                  {s.reason && <div className="text-xs text-muted-foreground mt-0.5">{s.reason}</div>}
+                </div>
+                <Button size="sm" variant="ghost" onClick={() => applySuggestion(s)} className="gap-1">
+                  <Check className="w-3.5 h-3.5" /> Übernehmen
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 py-2">
           <div className="md:col-span-2">
