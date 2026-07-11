@@ -1,63 +1,89 @@
-# Teamkalender systemweit persistieren
 
-Ziel: Alle Änderungen im Teamkalender (Termine, Abteilungen, Mitarbeiter, Fahrzeuge, Räume, Vorführgeräte, Abwesenheiten, Qualifikationen) landen dauerhaft in Supabase und sind für alle Nutzer sichtbar. Bestehende Browser-Daten werden einmalig übernommen und `localStorage` danach geleert.
+# Mediapaket-Integration in AlixWork
 
-## Schritte
+Ziel: Das externe Mediapaket (mediapaket.alix-lasers.com) wird als natives, produktionsfähiges Modul in AlixWork übernommen – mit voller Anbindung an Kunde, Auftrag, Gerät, Rollen, RLS, Storage, Audit und Benachrichtigungen. Bestehende Funktionen bleiben unverändert.
 
-### 1. Datenbank (Migration)
-Bestehende Tabellen weiterverwenden:
-- `esc_events` → Termine
-- `esc_departments` → Abteilungen
-- `esc_resources` → generische Ressourcen (bereits vorhanden, aber unspezifisch)
-- `esc_employee_departments`, `esc_employee_settings` → Mitarbeiterzuordnung
+Wegen des enormen Umfangs schlage ich eine **phasenweise Umsetzung in 6 Phasen** vor. Jede Phase wird einzeln ausgeliefert und getestet, bevor die nächste startet. Ich möchte dazu vorab ein paar Punkte klären, weil einige Anforderungen Auswirkungen auf Struktur, Rechte und Budget haben.
 
-Neu anlegen (mit GRANTs + RLS für `authenticated`):
-- `rm_locations` (Standorte)
-- `rm_qualifications` (Qualifikationen)
-- `rm_employees` (Mitarbeiter-Erweiterung: role, location, color, qualifications[], max*)
-- `rm_vehicles`
-- `rm_rooms`
-- `rm_demo_devices`
-- `rm_absences`
-- `rm_maintenance_tasks`
+---
 
-RLS-Policy pro neuer Tabelle: Lesen/Schreiben für alle eingeloggten Nutzer (`auth.uid() IS NOT NULL`), volle Rechte für `service_role`. Delete zusätzlich nur Super Admin (per `has_role`).
+## Rückfragen vor Umsetzung
 
-Standard-Seeds (Locations Berlin/Wien/…, Qualifikationen NiSV/Laser/…) werden in der Migration eingespielt, damit die DB nach dem Deploy funktionsfähig ist.
+1. **Externer Datenimport**  
+   Existiert ein Zugang (Datenbank-Dump, CSV-Export, API) zum bestehenden `mediapaket.alix-lasers.com`? Ohne Export-Quelle kann Phase 6 (Migration Altbestand) nicht sauber umgesetzt werden – ich würde dann eine leere Import-Maske vorbereiten, die später gespeist wird.
 
-### 2. Hooks umstellen (Frontend)
-Jeder Store wird von in-memory/localStorage auf Supabase umgestellt, API-Signaturen (`upsertX`, `removeX`, …) bleiben identisch, damit UI-Komponenten unverändert bleiben:
+2. **Kundenauthentifizierung auf `/book`**  
+   `/book` liegt aktuell im ESC-Public-Bereich (BookingPortal), offenbar ohne Login. Mediapaket setzt aber einen erkannten AlixWork-Kunden voraus. Zwei Optionen:  
+   a) Mediapaket-Kachel nur nach Login (via Customer-Portal `/portal` Flow, das existiert bereits) sichtbar.  
+   b) Zugang über Magic-Link aus AlixWork/E-Mail statt Passwort.  
+   Meine Empfehlung: **(b) Magic-Link pro Auftrag** – der Kunde bekommt aus AlixWork einen personalisierten Link. Passt zur bestehenden Customer-Portal-Struktur.
 
-- `useAppointments` → `esc_events`
-- `useDepartments` → `esc_departments`
-- `useEmployees` → `esc_employee_settings` + `esc_employee_departments`
-- `useResourceMgmt` → neue `rm_*`-Tabellen
+3. **Neue Rolle „Mediapaket-Mitarbeiter"**  
+   Soll ich eine neue Rolle `Mediapaket` in `user_roles` anlegen, oder reichen bestehende Rollen (`Order`, `Super Admin`, `Admin`)? Nach der Rollen-Memory würde ich `Mediapaket` als eigene, enge Rolle ergänzen (nur Mediapaket-Modul + Auftragsreiter lesend).
 
-Jeder Hook:
-1. Initial `select` beim Mount, State in React Query o. `useState`.
-2. Realtime-Channel (`postgres_changes`) für Live-Updates aller Sessions.
-3. `upsert`/`delete` schreibt direkt in Supabase, Realtime aktualisiert lokal.
+4. **Ausbaustufe für Start**  
+   Der Prompt umfasst ~20 neue Tabellen, Wizard mit 13 Schritten, PDF-Export, Storage, Migration, Admin-Konfigurator, Übersichtsseite, Benachrichtigungen. Realistisch sind das mehrere Arbeitstage. Soll ich:  
+   a) **Alles nach Plan** in 6 Phasen umsetzen (empfohlen, größerer Credits-Verbrauch), oder  
+   b) einen **MVP** (Phasen 1–4 ohne PDF, ohne Admin-Konfigurator, ohne Alt-Import) zuerst, danach Ausbau?
 
-### 3. Einmalige Migration der Browser-Daten
-Neue Utility `src/lib/esc/migrate-local-to-supabase.ts`:
-- Läuft einmal beim ersten Login (Flag `esc.migrated.v1` in `localStorage`).
-- Liest bestehende Keys (`esc.employees.v2`, `esc.departments.v2`, evtl. weitere) und ruft die neuen Supabase-`upsert`-Funktionen auf.
-- Bei Erfolg: `localStorage.removeItem` für alle migrierten Keys, Flag setzen.
-- Trigger im `EscLayout` beim Mount, nur wenn Nutzer eingeloggt.
+---
 
-### 4. Aufräumen
-- Mock-Daten (`MOCK_APPOINTMENTS`, `MOCK_EMPLOYEES`, `RM_*`) bleiben nur noch als Seed-Vorlage für die Migration, nicht mehr im Runtime-Pfad.
-- Kein `localStorage`-Fallback mehr; bei fehlender Auth zeigt der Kalender leeren Zustand mit Hinweis.
+## Umsetzungsplan (6 Phasen)
+
+### Phase 1 – Datenbank & Storage-Fundament
+- Neue Tabellen (alle unter `public`, mit GRANTs + RLS + Audit-Trigger):  
+  `media_packages`, `media_package_services`, `media_package_studio_data`, `media_package_devices`, `media_package_prices`, `media_package_contact_data`, `media_package_opening_hours`, `media_package_treatments`, `media_package_team_members`, `media_package_branding`, `media_package_files`, `media_package_consents`, `media_package_history`, `media_package_comments`.
+- Fremdschlüssel: `customer_id → customers`, `order_id → orders`, `device_id → lager_devices`, `assigned_user_id → user_profiles`.
+- Neuer Enum `media_package_status` (Noch nicht begonnen / In Bearbeitung / Rückfrage / Eingereicht / In Prüfung / In Umsetzung / Korrektur / Freigabe ausstehend / Abgeschlossen).
+- Neue Rolle `Mediapaket` in `app_role` (falls Rückfrage 3 = ja).
+- Storage-Bucket `mediapaket-files` (privat), Struktur `customers/{cid}/orders/{oid}/media-package/{mpid}/{category}/{version}/{filename}`.
+- RLS: Kunde nur eigene (`customer_id` via Portal-Token oder Auth), Mitarbeiter je nach Rolle, Super Admin alles.
+- Trigger für `updated_at`, Audit-Trigger auf allen Tabellen → `media_package_history`.
+
+### Phase 2 – Kundenformular (Wizard)
+- Route `/book/mediapaket` (integriert in bestehendes BookingLayout, gleiches Design).
+- Kachel auf `/book` „Mein Media Paket" mit Live-Statusanzeige (Fortschritt, letzte Bearbeitung, offene Rückfragen).
+- Kundenerkennung via Customer-Portal-Session bzw. Magic-Link-Token → Auftragsauswahl bei mehreren Aufträgen.
+- Wizard mit 13 Schritten (siehe Prompt Kap. 6–18), Auto-Save nach jedem Feld/Blur, Prozent-Fortschritt.
+- Upload-Komponente mit MIME-/Größenprüfung, Vorschau, Versionierung.
+- Zusammenfassung + verbindliches Absenden (setzt Status `Vollständig eingereicht`, erzeugt immutable Snapshot in `media_package_history`).
+- Vollständig responsiv (Mobile-first).
+
+### Phase 3 – Auftragsreiter „Mediapaket"
+- Neuer Tab in bestehender Auftragsdetailseite (parallel zu existierenden Reitern).
+- Kopfbereich, Aktionsleiste (Öffnen, Bearbeiten, Kundenlink kopieren, Rückfrage, Mitarbeiter zuweisen, Status ändern, Download, Historie, Freigabe anfordern, Abschließen).
+- Interne Sub-Bereiche: Übersicht, Webseite, Flyer, Social Media, Studiodaten, Preise, Texte, Dateien, Rückfragen, Aufgaben, Freigaben, Historie.
+- Rückfrage-Panel → schreibt in `media_package_comments`, benachrichtigt Kunde via bestehendes Notification-System.
+
+### Phase 4 – Mediapaket-Übersicht & Rollen
+- Neue Route `/mediapaket` mit Tabelle aller Mediapakete, Filter, Suche, Bulk-Aktionen.
+- Sidebar-Eintrag nur für Rollen `Mediapaket`, `Admin`, `Super Admin`, `Order`.
+- Kanban-optional (Status-Spalten).
+
+### Phase 5 – Admin-Konfigurator & PDF
+- Route `/mediapaket/admin` (Super Admin): Feldkonfiguration, Pflichtfelder, Hilfetexte, Leistungen, Status, Fristen, Einwilligungstexte, E-Mail-Vorlagen, Dateigrößen.
+- PDF-Export via Edge Function `mediapaket-pdf` (React-PDF / pdf-lib) im AlixWork-Design.
+- Einwilligungs-Versionierung.
+
+### Phase 6 – Altdaten-Import
+- Edge Function `mediapaket-import` mit Vorschau, Matching-Reihenfolge (Auftrag → E-Mail → Kundennr → Name → Studio → Telefon → Gerät → manuell), idempotent.
+- Import-UI unter `/mediapaket/admin/import`.
+- Dublettenprüfung, Fehlerprotokoll, Wiederholbarkeit.
+
+---
 
 ## Technische Details
 
-- Neue Tabellen erhalten `id uuid`, `created_at`, `updated_at`, `created_by uuid` (default `auth.uid()`) plus `update_updated_at_column`-Trigger.
-- Realtime wird für alle betroffenen Tabellen per `ALTER PUBLICATION supabase_realtime ADD TABLE …` aktiviert.
-- Delete-Restriction Super Admin per Policy `USING (public.has_role(auth.uid(), 'Super Admin'))` gemäß Projekt-Memory.
-- Migration nur `CREATE TABLE IF NOT EXISTS` + `INSERT … ON CONFLICT DO NOTHING`, damit sie idempotent bleibt.
-- Rollout: Erst Migration ausführen → Types werden regeneriert → dann Hook-Refactor.
+- **Frontend:** React 18 + Vite, bestehende shadcn/ui-Komponenten, Tailwind-Tokens aus `index.css`. Kein neues Design-System.
+- **State:** React Hook Form + Zod pro Wizard-Schritt, Auto-Save via `useEffect` + debounced Supabase-Upsert.
+- **Storage:** Supabase Storage privat, signierte URLs (1h) für Downloads, MIME-Whitelist serverseitig geprüft.
+- **RLS-Muster:** Security-Definer-Function `public.can_access_media_package(_mp_id uuid)` → verhindert Rekursion; Policies referenzieren nur diese Function.
+- **Audit:** Generischer Trigger `public.log_media_package_change()` schreibt bei UPDATE/INSERT/DELETE in `media_package_history` (field-level diff via `hstore`).
+- **Benachrichtigungen:** Wiederverwendung von `mail_internal_messages` + `customer_communication_log` (bestehend), keine neue Architektur.
+- **Kunden-Login `/book`:** Wiederverwendung von `customer_portal_users` + `customer-portal-lookup` Edge Function, Erweiterung um Magic-Link für Mediapaket.
+- **Fortschrittsberechnung:** Serverseitige Function `public.calc_media_package_progress(_mp_id uuid)` – Gewichtung wie in Prompt Kap. 30, überspringt nicht ausgewählte Leistungen.
+- **Keine Breaking Changes:** Keine Änderungen an `customers`, `orders`, `lager_devices`, `user_roles`-Policies, `esc_*`-Tabellen.
 
-## Umfang / Risiken
-- Großer Refactor über ~10 Dateien; UI-Komponenten bleiben unverändert.
-- Erste Nutzer, die noch Browser-Daten haben, sehen kurz einen Migrations-Toast, danach sind ihre Einträge in Supabase.
-- Neue RLS erfordert eingeloggten Nutzer — der öffentliche Buchungsbereich (`/esc/booking`) läuft weiterhin über bestehende Edge-Function-Pfade und wird nicht angerührt.
+---
+
+**Bitte beantworte die 4 Rückfragen oben, dann starte ich mit Phase 1 (Datenbank + Storage) als erste Migration.**
