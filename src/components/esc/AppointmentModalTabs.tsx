@@ -220,28 +220,42 @@ export function AppointmentModalTabs({
         <header className="mb-4 flex items-start justify-between gap-3">
           <div>
             <h2 id="esc-appointment-dialog-title" className="flex items-center gap-2 text-lg font-semibold leading-none tracking-tight">
-            {initial?.id ? 'Termin bearbeiten' : 'Neuer Termin'}
+            {initial?.id
+              ? (mode === 'erinnerung' ? 'Erinnerung bearbeiten'
+                : mode === 'wiedervorlage' ? 'Wiedervorlage bearbeiten'
+                : 'Termin bearbeiten')
+              : (mode === 'erinnerung' ? 'Neue Erinnerung'
+                : mode === 'wiedervorlage' ? 'Neue Wiedervorlage'
+                : 'Neuer Termin')}
             {initial?.status && <Badge variant="outline" className="text-[10px]">{ESC_STATUS_LABELS[initial.status as EscStatus] || initial.status}</Badge>}
             </h2>
             <p id="esc-appointment-dialog-description" className="sr-only">
             Termin-Daten bearbeiten, Teilnehmer und Ressourcen verwalten.
             </p>
-            <div className="mt-2 inline-flex rounded-md border p-0.5 bg-muted/40" role="tablist" aria-label="Termintyp">
-              <button
-                type="button"
-                onClick={() => setMode('intern')}
-                className={`px-3 py-1 text-[12px] rounded-sm transition ${mode === 'intern' ? 'bg-background shadow-sm font-medium' : 'text-muted-foreground'}`}
-              >
-                Intern
-              </button>
-              <button
-                type="button"
-                onClick={() => setMode('extern')}
-                className={`px-3 py-1 text-[12px] rounded-sm transition ${mode === 'extern' ? 'bg-background shadow-sm font-medium' : 'text-muted-foreground'}`}
-              >
-                Extern
-              </button>
+            <div className="mt-2 inline-flex rounded-md border p-0.5 bg-muted/40 flex-wrap" role="tablist" aria-label="Eintragsart">
+              {([
+                { key: 'intern', label: 'Termin (intern)' },
+                { key: 'extern', label: 'Termin (extern)' },
+                { key: 'erinnerung', label: 'Erinnerung' },
+                { key: 'wiedervorlage', label: 'Wiedervorlage' },
+              ] as const).map((m) => (
+                <button
+                  key={m.key}
+                  type="button"
+                  onClick={() => setMode(m.key)}
+                  className={`px-3 py-1 text-[12px] rounded-sm transition ${mode === m.key ? 'bg-background shadow-sm font-medium' : 'text-muted-foreground'}`}
+                >
+                  {m.label}
+                </button>
+              ))}
             </div>
+            {(mode === 'erinnerung' || mode === 'wiedervorlage') && (
+              <p className="mt-2 text-[11px] text-muted-foreground">
+                {mode === 'erinnerung'
+                  ? 'Interne Erinnerung – nur im Team sichtbar, kein Kundenversand.'
+                  : 'Interne Wiedervorlage – nur im Team sichtbar, kein Kundenversand.'}
+              </p>
+            )}
           </div>
           <Button type="button" variant="ghost" size="icon" onClick={onClose} aria-label="Termin schließen">
             <X className="h-4 w-4" />
