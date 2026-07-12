@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, Trash2, Loader2, Camera, FileSignature, ClipboardCheck, Route as RouteIcon, AlertCircle } from 'lucide-react';
-import { list as outboxList, flush, remove, OutboxItem } from '@/lib/mobile/outbox';
+import { list as outboxList, flush, remove, retryNow, MAX_ATTEMPTS, OutboxItem } from '@/lib/mobile/outbox';
 import { toast } from 'sonner';
 
 const KIND_META: Record<string, { icon: any; label: string }> = {
@@ -32,8 +32,14 @@ export default function MobileSync() {
     setBusy(true);
     const r = await flush();
     await reload();
-    toast.success(`${r.ok} ok · ${r.failed} offen`);
+    toast.success(`${r.ok} ok · ${r.failed} fehlgeschlagen · ${r.deferred} später`);
     setBusy(false);
+  };
+
+  const onRetry = async (id: number) => {
+    await retryNow(id);
+    await reload();
+    toast.info('Wird beim nächsten Sync erneut versucht.');
   };
 
   const failed = items.filter(i => i.attempts > 0).length;
@@ -63,10 +69,19 @@ export default function MobileSync() {
             <div className="flex items-start gap-3">
               <Icon className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
               <div className="min-w-0 flex-1">
-                <div className="font-medium">{meta.label}</div>
+                <div className="font-medium flex items-center gap-2">
+                  {meta.label}
+                  {it.attempts >= MAX_ATTEMPTS && <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-destructive/15 text-destructive">Blockiert</span>}
+                  {it.next_retry_at && it.next_retry_at > Date.now() && it.attempts < MAX_ATTEMPTS && (
+                    <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-muted text-muted-foreground">Wartet</span>
+                  )}
+                </div>
                 <div className="text-xs text-muted-foreground">
                   {new Date(it.created_at).toLocaleString('de-DE')}
-                  {it.attempts > 0 && <span className="text-destructive"> · {it.attempts} Versuch(e)</span>}
+                  {it.attempts > 0 && <span className="text-destructive"> · {it.attempts}/{MAX_ATTEMPTS} Versuch(e)</span>}
+                  {it.next_retry_at && it.next_retry_at > Date.now() && (
+                    <span> · nächster Versuch {new Date(it.next_retry_at).toLocaleTimeString('de-DE')}</span>
+                  )}
                 </div>
                 {it.last_error && (
                   <div className="text-xs text-destructive mt-1 break-all bg-destructive/5 rounded p-1.5">
@@ -74,6 +89,11 @@ export default function MobileSync() {
                   </div>
                 )}
               </div>
+              {(it.attempts >= MAX_ATTEMPTS || (it.next_retry_at && it.next_retry_at > Date.now())) && it.id != null && (
+                <Button variant="ghost" size="sm" onClick={() => onRetry(it.id!)}>
+                  <RefreshCw className="w-4 h-4" />
+                </Button>
+              )}
               <Button variant="ghost" size="icon" onClick={async () => { if (it.id != null) { await remove(it.id); reload(); } }}>
                 <Trash2 className="w-4 h-4" />
               </Button>

@@ -25,6 +25,13 @@ export interface OutboxItem {
   created_at: number;
   attempts: number;
   last_error?: string;
+  next_retry_at?: number;
+}
+
+export const MAX_ATTEMPTS = 8;
+// Exponential backoff up to ~10 minutes.
+function backoffMs(attempts: number): number {
+  return Math.min(600_000, 5_000 * Math.pow(2, Math.max(0, attempts - 1)));
 }
 
 let dbPromise: Promise<IDBPDatabase> | null = null;
@@ -62,6 +69,17 @@ export async function updateAttempt(id: number, err?: string) {
   if (!cur) return;
   cur.attempts = (cur.attempts || 0) + 1;
   cur.last_error = err;
+  cur.next_retry_at = Date.now() + backoffMs(cur.attempts);
+  await db.put(STORE, cur);
+}
+
+export async function retryNow(id: number) {
+  const db = await getDb();
+  const cur = (await db.get(STORE, id)) as OutboxItem | undefined;
+  if (!cur) return;
+  cur.next_retry_at = 0;
+  cur.attempts = Math.min(cur.attempts, MAX_ATTEMPTS - 1);
+  cur.last_error = undefined;
   await db.put(STORE, cur);
 }
 
@@ -104,10 +122,13 @@ async function processOne(item: OutboxItem) {
   throw new Error('Unbekannter Outbox-Typ');
 }
 
-export async function flush(): Promise<{ ok: number; failed: number }> {
+export async function flush(): Promise<{ ok: number; failed: number; deferred: number }> {
   const items = await list();
-  let ok = 0, failed = 0;
+  const now = Date.now();
+  let ok = 0, failed = 0, deferred = 0;
   for (const it of items) {
+    if (it.attempts >= MAX_ATTEMPTS) { deferred++; continue; }
+    if (it.next_retry_at && it.next_retry_at > now) { deferred++; continue; }
     try {
       await processOne(it);
       if (it.id != null) await remove(it.id);
@@ -117,7 +138,7 @@ export async function flush(): Promise<{ ok: number; failed: number }> {
       if (it.id != null) await updateAttempt(it.id, err?.message || String(err));
     }
   }
-  return { ok, failed };
+  return { ok, failed, deferred };
 }
 
 let listening = false;
