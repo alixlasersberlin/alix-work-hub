@@ -178,12 +178,23 @@ export default function MailCenterPosteingang() {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-display font-semibold text-foreground">Posteingang</h2>
-          <p className="text-sm text-muted-foreground">Eingehende E-Mails aller Abteilungs-Postfächer.</p>
+          <h2 className="text-lg font-display font-semibold text-foreground">Posteingang (Archiv)</h2>
+          <p className="text-sm text-muted-foreground">
+            Eingehende E-Mails werden jetzt automatisch als Tickets in{' '}
+            <button className="underline text-primary" onClick={() => navigate('/tickets')}>
+              CUSTOMER SERVICE / Ticketliste
+            </button>{' '}
+            angelegt. Diese Ansicht zeigt nur noch das bestehende Mail-Archiv.
+          </p>
         </div>
-        <Button variant="outline" size="sm" onClick={load}>
-          <RefreshCw className="w-4 h-4 mr-2" /> Aktualisieren
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="default" size="sm" onClick={() => navigate('/tickets')}>
+            <Inbox className="w-4 h-4 mr-2" /> Zur Ticketliste
+          </Button>
+          <Button variant="outline" size="sm" onClick={load}>
+            <RefreshCw className="w-4 h-4 mr-2" /> Aktualisieren
+          </Button>
+        </div>
       </div>
 
       <Card className="card-glow">
@@ -213,10 +224,9 @@ export default function MailCenterPosteingang() {
           ) : filtered.length === 0 ? (
             <div className="flex flex-col items-center py-12 text-muted-foreground">
               <Inbox className="w-10 h-10 opacity-40 mb-3" />
-              <p className="text-sm">Keine eingehenden E-Mails.</p>
+              <p className="text-sm">Keine eingehenden E-Mails im Archiv.</p>
               <p className="text-xs mt-2 max-w-md text-center">
-                Eingehende Mails erscheinen hier, sobald der Inbound-Webhook (`inbound-mail`)
-                bei Resend hinterlegt ist.
+                Neue eingehende Mails erscheinen automatisch als Tickets in der Ticketliste.
               </p>
             </div>
           ) : (
