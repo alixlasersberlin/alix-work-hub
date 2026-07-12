@@ -14475,8 +14475,11 @@ export type Database = {
           description: string | null
           id: string
           name: string
+          parent_campaign_id: string | null
           period_end: string
           period_start: string
+          recurrence: string
+          reminder_days_before: number
           status: string
         }
         Insert: {
@@ -14486,8 +14489,11 @@ export type Database = {
           description?: string | null
           id?: string
           name: string
+          parent_campaign_id?: string | null
           period_end: string
           period_start?: string
+          recurrence?: string
+          reminder_days_before?: number
           status?: string
         }
         Update: {
@@ -14497,11 +14503,22 @@ export type Database = {
           description?: string | null
           id?: string
           name?: string
+          parent_campaign_id?: string | null
           period_end?: string
           period_start?: string
+          recurrence?: string
+          reminder_days_before?: number
           status?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "role_recert_campaigns_parent_campaign_id_fkey"
+            columns: ["parent_campaign_id"]
+            isOneToOne: false
+            referencedRelation: "role_recert_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       role_recert_items: {
         Row: {
@@ -14512,6 +14529,8 @@ export type Database = {
           decision: string | null
           id: string
           note: string | null
+          reminded_at: string | null
+          reviewer_id: string | null
           role_id: string
           role_name: string | null
           user_id: string
@@ -14524,6 +14543,8 @@ export type Database = {
           decision?: string | null
           id?: string
           note?: string | null
+          reminded_at?: string | null
+          reviewer_id?: string | null
           role_id: string
           role_name?: string | null
           user_id: string
@@ -14536,6 +14557,8 @@ export type Database = {
           decision?: string | null
           id?: string
           note?: string | null
+          reminded_at?: string | null
+          reviewer_id?: string | null
           role_id?: string
           role_name?: string | null
           user_id?: string
@@ -19260,6 +19283,10 @@ export type Database = {
         Args: { _decision: string; _item_id: string; _note: string }
         Returns: Json
       }
+      delegate_recert_item: {
+        Args: { _item_id: string; _reviewer_id: string }
+        Returns: Json
+      }
       dl_upsert: {
         Args: {
           _customer_id: string
@@ -19448,6 +19475,7 @@ export type Database = {
         Args: { _permission_key: string; _user_id: string }
         Returns: boolean
       }
+      send_recert_reminders: { Args: { _campaign_id: string }; Returns: Json }
       session_requires_reauth: { Args: never; Returns: boolean }
       set_factory_invoice_payment_ok: {
         Args: { _ok: boolean; _production_order_id: string }
