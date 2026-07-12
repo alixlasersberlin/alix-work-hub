@@ -70,6 +70,21 @@ Deno.serve(async (req) => {
     });
   });
 
+  // 5) Storage buckets without any policies
+  const { data: bucketAudit } = await (supabase as any).from('security_scan_bucket_audit').select('*');
+  (bucketAudit ?? []).forEach((b: any) => {
+    if (b.status === 'no_policies') {
+      findings.push({
+        category: 'storage', target: `bucket:${b.id}`, severity: 'high',
+        title: 'Bucket ohne Zugriffsregeln',
+        detail: `Bucket "${b.id}" hat keine RLS-Policies auf storage.objects; jeder authentifizierte Nutzer könnte darauf zugreifen.`,
+        recommendation: 'Restriktive Policies (SELECT/INSERT/UPDATE/DELETE) auf storage.objects mit bucket_id-Filter definieren.',
+        status: 'open',
+      });
+    }
+  });
+
+
   // Upsert-style: mark previous auto-scan findings as resolved if not seen anymore
   await (supabase as any).from('security_audit_findings')
     .update({ status: 'resolved' })
