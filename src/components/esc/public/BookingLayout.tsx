@@ -22,7 +22,7 @@ export function BookingLayout({ children, step, totalSteps, narrow, hideLegalLin
           <div className="flex-1 min-w-0">
             <div className="text-[13px] font-normal tracking-tight truncate">Alix Smart dein interaktives Lasersystem</div>
           </div>
-          <WizardLanguageSwitcher variant="light" />
+          <WizardLanguageSwitcher variant="transparent" />
         </div>
 
         {step && totalSteps && (
