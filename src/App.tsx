@@ -284,6 +284,7 @@ const ReviewsFrontendPreview = lazy(() => import("./pages/Reviews/FrontendPrevie
 const PublicReviewForm = lazy(() => import("./pages/PublicReview/ReviewForm"));
 const ReviewThanks = lazy(() => import("./pages/PublicReview/ReviewThanks"));
 const PortalLookup = lazy(() => import("./pages/Portal/Lookup"));
+const TicketCsat = lazy(() => import("./pages/Public/TicketCsat"));
 const PortalStatus = lazy(() => import("./pages/Portal/Status"));
 const PortalAdmin = lazy(() => import("./pages/PortalAdmin"));
 const MailCenterLayout = lazy(() => import("./pages/MailCenter/Layout"));
