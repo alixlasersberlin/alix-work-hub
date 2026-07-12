@@ -15572,6 +15572,56 @@ export type Database = {
           },
         ]
       }
+      ticket_notifications: {
+        Row: {
+          actor_id: string | null
+          actor_name: string | null
+          created_at: string
+          id: string
+          is_read: boolean
+          kind: string
+          message: string | null
+          read_at: string | null
+          ticket_id: string
+          title: string | null
+          user_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_name?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          kind: string
+          message?: string | null
+          read_at?: string | null
+          ticket_id: string
+          title?: string | null
+          user_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          actor_name?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          kind?: string
+          message?: string | null
+          read_at?: string | null
+          ticket_id?: string
+          title?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_notifications_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ticket_outbound_sync_logs: {
         Row: {
           action: string
@@ -15615,6 +15665,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "ticket_outbound_sync_logs_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_participants: {
+        Row: {
+          added_at: string
+          added_by: string | null
+          id: string
+          note: string | null
+          role: string
+          ticket_id: string
+          user_id: string
+        }
+        Insert: {
+          added_at?: string
+          added_by?: string | null
+          id?: string
+          note?: string | null
+          role: string
+          ticket_id: string
+          user_id: string
+        }
+        Update: {
+          added_at?: string
+          added_by?: string | null
+          id?: string
+          note?: string | null
+          role?: string
+          ticket_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_participants_ticket_id_fkey"
             columns: ["ticket_id"]
             isOneToOne: false
             referencedRelation: "tickets"

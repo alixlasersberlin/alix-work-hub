@@ -16,6 +16,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AiAnalysisPanel } from '@/components/ai-service/AiAnalysisPanel';
 import { CreateAppointmentFromTicket } from '@/components/tickets/CreateAppointmentFromTicket';
 import { TicketHistoryTimeline } from '@/components/tickets/TicketHistoryTimeline';
+import { TicketParticipants } from '@/components/tickets/TicketParticipants';
+import { TicketHandoverDialog } from '@/components/tickets/TicketHandoverDialog';
+import { ArrowRightLeft } from 'lucide-react';
 
 interface Ticket {
   id: string;
@@ -105,6 +108,7 @@ export default function TicketDetail() {
   const [uploading, setUploading] = useState(false);
   const [internalNoteDraft, setInternalNoteDraft] = useState('');
   const [savingInternalNote, setSavingInternalNote] = useState(false);
+  const [handoverOpen, setHandoverOpen] = useState(false);
 
   async function loadLinkedRepair(repairId: string | null) {
     if (!repairId) { setLinkedRepair(null); return; }
@@ -345,7 +349,7 @@ export default function TicketDetail() {
             ticket_id: ticket.id,
             action: 'email_sent',
             actor_id: user?.id || null,
-            actor_name: user?.email || null,
+            actor_label: user?.email || null,
             meta: { to: ticket.customer_email, from: fromEmail, subject },
           } as any);
         }
@@ -353,8 +357,35 @@ export default function TicketDetail() {
         console.error('send-mail exception', e);
       }
     }
+    // @-Mentions in internen Notizen erkennen → Benachrichtigungen
+    if (msgInternal) {
+      const tokens = Array.from(messageText.matchAll(/@([\wäöüÄÖÜß.\-]{2,})/gi)).map(m => m[1].toLowerCase());
+      if (tokens.length) {
+        const mentioned = users.filter(u => {
+          const first = String(u.label || '').split(/\s+/)[0]?.toLowerCase() || '';
+          const emailLocal = String(u.label || '').split('@')[0]?.toLowerCase() || '';
+          return tokens.some(t => first.startsWith(t) || emailLocal.startsWith(t) || u.label.toLowerCase().includes(t));
+        });
+        const uniqueIds = Array.from(new Set(mentioned.map(m => m.id))).filter(uid => uid !== user?.id);
+        if (uniqueIds.length) {
+          await supabase.from('ticket_notifications').insert(
+            uniqueIds.map(uid => ({
+              user_id: uid,
+              ticket_id: ticket.id,
+              kind: 'mention',
+              title: `${myProfile?.full_name || user?.email || 'Ein Kollege'} hat Sie erwähnt`,
+              message: messageText.slice(0, 200),
+              actor_id: user?.id || null,
+              actor_name: user?.email || null,
+            }))
+          );
+          toast.success(`${uniqueIds.length} Kollege(n) benachrichtigt`);
+        }
+      }
+    }
     load();
   }
+
 
   async function handover(dept: string, statusLabel: string) {
     await patch({ department: dept, customer_visible_status: statusLabel });
@@ -561,6 +592,12 @@ export default function TicketDetail() {
 
           <CreateAppointmentFromTicket ticketId={ticket.id} ticketNumber={(ticket as any).ticket_number ?? ticket.external_ticket_id} />
 
+          {canEdit && (
+            <Button size="sm" variant="outline" onClick={() => setHandoverOpen(true)}>
+              <ArrowRightLeft className="w-4 h-4 mr-1" /> Ticket übergeben
+            </Button>
+          )}
+
           <Button
             size="sm"
             variant="outline"
@@ -715,6 +752,7 @@ export default function TicketDetail() {
 
         {/* Rechte Spalte: Aktionen */}
         <div className="space-y-6">
+          <TicketParticipants ticketId={ticket.id} users={users} canEdit={canEdit} />
           <div className="rounded-xl border border-border bg-card p-6 space-y-4">
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Bearbeitung</h2>
             <div className="space-y-3">
@@ -875,6 +913,17 @@ export default function TicketDetail() {
           <Save className="w-4 h-4 animate-pulse" /> Speichert...
         </div>
       )}
+
+      <TicketHandoverDialog
+        open={handoverOpen}
+        onOpenChange={setHandoverOpen}
+        ticketId={ticket.id}
+        currentDepartment={ticket.department}
+        currentAssignee={ticket.assigned_to}
+        users={users}
+        departments={DEPARTMENT}
+        onDone={() => load()}
+      />
     </div>
   );
 }
