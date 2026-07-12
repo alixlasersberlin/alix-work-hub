@@ -219,7 +219,17 @@ export default function BookingPortal() {
               <Sparkles className="w-5 h-5 text-primary" />
             </div>
             <div className="flex-1">
-              <div className="font-semibold text-[14px]">Verkaufsberatung</div>
+              <div className="font-semibold text-[14px] flex items-center gap-2">
+                <span>Verkaufsberatung</span>
+                {showAngebotBubble && (
+                  <span
+                    className="relative inline-flex items-center rounded-full bg-primary text-primary-foreground px-2.5 py-0.5 text-[11px] font-medium shadow-md animate-fade-in
+                      before:content-[''] before:absolute before:-left-1.5 before:top-1/2 before:-translate-y-1/2 before:border-y-[5px] before:border-y-transparent before:border-r-[6px] before:border-r-primary"
+                  >
+                    Angebot
+                  </span>
+                )}
+              </div>
               <div className="text-[12px] text-muted-foreground mt-0.5">
                 Unterschrift, Angebot, Finanzierung, Kataloge, Setpreise, Vermietung – individuell für Sie.
               </div>
