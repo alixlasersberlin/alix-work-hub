@@ -289,7 +289,13 @@ export default function TicketsList() {
                           className="cursor-pointer hover:bg-muted/40"
                         >
                           <TableCell>
-                            <div className="font-medium text-foreground">{r.title || r.external_ticket_id || r.id.slice(0, 8)}</div>
+                            <div className="font-medium text-foreground">
+                              {r.title || r.external_ticket_id || r.id.slice(0, 8)}
+                              {slaBadge(r.sla_status)}
+                              {(r.escalation_count || 0) > 0 && (
+                                <span className="ml-1 text-[10px] text-red-400">·{r.escalation_count}×esk.</span>
+                              )}
+                            </div>
                             <div className="text-xs text-muted-foreground">{r.external_ticket_id || r.source_system}</div>
                           </TableCell>
                           <TableCell>
