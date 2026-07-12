@@ -681,6 +681,14 @@ export default function TicketDetail() {
         </div>
       )}
 
+      <TicketDuplicateAlert
+        ticketId={ticket.id}
+        customerEmail={ticket.customer_email}
+        onMerged={() => load()}
+      />
+
+
+
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Linke Spalte */}
