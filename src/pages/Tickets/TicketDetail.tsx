@@ -256,8 +256,8 @@ export default function TicketDetail() {
     if (error) { toast.error(error.message); return; }
     setNewMsg('');
     toast.success(msgInternal ? 'Interne Notiz hinzugefügt' : 'Nachricht hinzugefügt');
-    // Only sync public messages to AlixSmart
-    if (!msgInternal && ticket.external_ticket_id && data?.id) {
+    // Only sync public messages to AlixSmart (source_system === 'alixsmart')
+    if (!msgInternal && ticket.external_ticket_id && ticket.source_system === 'alixsmart' && data?.id) {
       syncToAlixSmart('new_public_message', data.id);
     }
     load();
