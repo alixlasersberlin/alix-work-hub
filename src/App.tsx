@@ -320,6 +320,12 @@ const RfAnalytics = lazy(() => import("./pages/RollenFreigaben/Analytics"));
 const RfBreakGlass = lazy(() => import("./pages/RollenFreigaben/BreakGlass"));
 const RfContext = lazy(() => import("./pages/RollenFreigaben/ContextPolicies"));
 const RfSoD = lazy(() => import("./pages/RollenFreigaben/SoD"));
+const RfSSO = lazy(() => import("./pages/RollenFreigaben/SSO"));
+const RfScheduled = lazy(() => import("./pages/RollenFreigaben/ScheduledGrants"));
+const RfChains = lazy(() => import("./pages/RollenFreigaben/ApprovalChains"));
+const RfLifecycle = lazy(() => import("./pages/RollenFreigaben/LifecycleDashboard"));
+const RfAuditExport = lazy(() => import("./pages/RollenFreigaben/AuditExport"));
+const SelfServiceRoles = lazy(() => import("./pages/SelfService/Roles"));
 
 const SecurityFindings = lazy(() => import("./pages/SecurityCenter/Findings"));
 const SecurityPentest = lazy(() => import("./pages/SecurityCenter/Pentest"));
@@ -1045,8 +1051,17 @@ function AppRoutes() {
             <Route path="break-glass" element={<RfBreakGlass />} />
             <Route path="kontext" element={<RfContext />} />
             <Route path="sod" element={<RfSoD />} />
+            <Route path="sso" element={<RfSSO />} />
+            <Route path="geplant" element={<RfScheduled />} />
+            <Route path="ketten" element={<RfChains />} />
+            <Route path="lifecycle" element={<RfLifecycle />} />
+            <Route path="exporte" element={<RfAuditExport />} />
             <Route path="protokoll" element={<RfLog />} />
           </Route>
+
+          <Route path="/self-service/rollen" element={<ProtectedRoute><SelfServiceRoles /></ProtectedRoute>} />
+
+
 
           <Route path="/auftragsverwaltung/bestellungen" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><BestellwesenOverview /></ProtectedRoute>} />
           <Route path="/order" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><ProductionOrders /></ProtectedRoute>} />

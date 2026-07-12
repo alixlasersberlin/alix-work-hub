@@ -14211,6 +14211,41 @@ export type Database = {
         }
         Relationships: []
       }
+      role_approval_chains: {
+        Row: {
+          created_at: string
+          id: string
+          min_approvals: number
+          required_role_name: string
+          role_id: string
+          step_no: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          min_approvals?: number
+          required_role_name: string
+          role_id: string
+          step_no: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          min_approvals?: number
+          required_role_name?: string
+          role_id?: string
+          step_no?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_approval_chains_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       role_audit_log: {
         Row: {
           actor_user_id: string | null
@@ -14569,6 +14604,47 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "role_recert_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      role_request_approvals: {
+        Row: {
+          approver_id: string
+          approver_role_name: string | null
+          created_at: string
+          decision: string
+          id: string
+          note: string | null
+          request_id: string
+          step_no: number
+        }
+        Insert: {
+          approver_id: string
+          approver_role_name?: string | null
+          created_at?: string
+          decision: string
+          id?: string
+          note?: string | null
+          request_id: string
+          step_no: number
+        }
+        Update: {
+          approver_id?: string
+          approver_role_name?: string | null
+          created_at?: string
+          decision?: string
+          id?: string
+          note?: string | null
+          request_id?: string
+          step_no?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_request_approvals_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "role_change_requests"
             referencedColumns: ["id"]
           },
         ]
@@ -15135,6 +15211,47 @@ export type Database = {
             columns: ["converted_customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scim_tokens: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          last_used_at: string | null
+          name: string
+          provider_id: string
+          token_hash: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          last_used_at?: string | null
+          name: string
+          provider_id: string
+          token_hash: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          last_used_at?: string | null
+          name?: string
+          provider_id?: string
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scim_tokens_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "sso_providers"
             referencedColumns: ["id"]
           },
         ]
@@ -15921,6 +16038,104 @@ export type Database = {
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sso_group_mappings: {
+        Row: {
+          created_at: string
+          external_group: string
+          id: string
+          is_active: boolean
+          provider_id: string
+          role_id: string
+        }
+        Insert: {
+          created_at?: string
+          external_group: string
+          id?: string
+          is_active?: boolean
+          provider_id: string
+          role_id: string
+        }
+        Update: {
+          created_at?: string
+          external_group?: string
+          id?: string
+          is_active?: boolean
+          provider_id?: string
+          role_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sso_group_mappings_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "sso_providers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sso_group_mappings_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sso_providers: {
+        Row: {
+          client_id: string | null
+          client_secret_ref: string | null
+          created_at: string
+          created_by: string | null
+          default_role_id: string | null
+          id: string
+          is_active: boolean
+          issuer_url: string | null
+          jit_provisioning: boolean
+          metadata_url: string | null
+          name: string
+          provider_type: string
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          client_secret_ref?: string | null
+          created_at?: string
+          created_by?: string | null
+          default_role_id?: string | null
+          id?: string
+          is_active?: boolean
+          issuer_url?: string | null
+          jit_provisioning?: boolean
+          metadata_url?: string | null
+          name: string
+          provider_type: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          client_secret_ref?: string | null
+          created_at?: string
+          created_by?: string | null
+          default_role_id?: string | null
+          id?: string
+          is_active?: boolean
+          issuer_url?: string | null
+          jit_provisioning?: boolean
+          metadata_url?: string | null
+          name?: string
+          provider_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sso_providers_default_role_id_fkey"
+            columns: ["default_role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
             referencedColumns: ["id"]
           },
         ]
@@ -19451,6 +19666,7 @@ export type Database = {
         Returns: Json
       }
       peek_document_number: { Args: { p_code: string }; Returns: string }
+      process_scheduled_grants: { Args: never; Returns: Json }
       recompute_device_health: { Args: { _serial: string }; Returns: undefined }
       refresh_warranty_and_maintenance_status: {
         Args: never
@@ -19468,6 +19684,16 @@ export type Database = {
       }
       rotate_finance_stakeholder_token: {
         Args: { p_id: string }
+        Returns: string
+      }
+      schedule_role_grant: {
+        Args: {
+          _reason: string
+          _role_id: string
+          _user_id: string
+          _valid_from: string
+          _valid_until: string
+        }
         Returns: string
       }
       security_deactivate_stale_sessions: { Args: never; Returns: number }
