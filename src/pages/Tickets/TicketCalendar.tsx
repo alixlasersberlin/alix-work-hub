@@ -300,7 +300,13 @@ export default function TicketCalendar() {
               const dayEvents = eventsByDay.get(key) ?? [];
               const inMonth = view === 'week' || isSameMonth(day, cursor);
               return (
-                <div key={key} className={`border-b border-r p-1 flex flex-col gap-0.5 min-h-[112px] ${inMonth ? '' : 'bg-muted/20 text-muted-foreground'}`}>
+                <div
+                  key={key}
+                  onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setDragOverKey(key); }}
+                  onDragLeave={() => setDragOverKey(k => k === key ? null : k)}
+                  onDrop={(e) => onDropOnDay(key, e)}
+                  className={`border-b border-r p-1 flex flex-col gap-0.5 min-h-[112px] transition-colors ${inMonth ? '' : 'bg-muted/20 text-muted-foreground'} ${dragOverKey === key ? 'bg-primary/10 ring-1 ring-inset ring-primary/40' : ''}`}
+                >
                   <div className={`text-[11px] font-medium flex items-center justify-between ${isToday(day) ? 'text-primary' : ''}`}>
                     <span className={isToday(day) ? 'bg-primary text-primary-foreground rounded-full w-5 h-5 flex items-center justify-center' : ''}>
                       {format(day, 'd')}
@@ -312,16 +318,20 @@ export default function TicketCalendar() {
                       const dept = e.department_id ? deptById[e.department_id] : null;
                       const color = dept?.color ?? 'hsl(var(--primary))';
                       const tone = STATUS_TONE[e.appointment_status ?? ''] ?? STATUS_TONE.geplant;
+                      const assignee = e.assigned_user_id ? userById[e.assigned_user_id] : null;
                       return (
                         <button
                           key={e.id}
+                          draggable
+                          onDragStart={(ev) => { ev.dataTransfer.setData('text/event-id', e.id); ev.dataTransfer.effectAllowed = 'move'; }}
                           onClick={() => setSelected(e)}
-                          className={`w-full text-left text-[10.5px] leading-tight rounded px-1 py-0.5 ring-1 ${tone.bg} ${tone.text} ${tone.ring} hover:opacity-90 truncate`}
+                          className={`w-full text-left text-[10.5px] leading-tight rounded px-1 py-0.5 ring-1 cursor-grab active:cursor-grabbing ${tone.bg} ${tone.text} ${tone.ring} hover:opacity-90 truncate`}
                           style={{ borderLeft: `3px solid ${color}` }}
-                          title={e.title}
+                          title={`${e.title}${assignee ? ` · ${assignee.full_name || assignee.email}` : ''}`}
                         >
                           <span className="font-medium">{format(new Date(e.start_at), 'HH:mm')}</span>{' '}
                           <span className="truncate">{e.tickets?.ticket_number ?? ''} {e.title}</span>
+                          {assignee && <span className="ml-1 opacity-70">· {(assignee.full_name || assignee.email || '').split(' ')[0]}</span>}
                         </button>
                       );
                     })}
