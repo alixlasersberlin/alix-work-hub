@@ -2,7 +2,7 @@ import { NavLink, Outlet } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import {
   LayoutDashboard, Grid3x3, Users2, ShieldCheck, ClipboardCheck,
-  UserCog, FileClock, GitCompare, Eye, Shield,
+  UserCog, FileClock, GitCompare, Eye, Shield, Clock, Database,
 } from 'lucide-react';
 
 const NAV = [
@@ -11,8 +11,11 @@ const NAV = [
   { to: '/admin/rollen-freigaben/rollen', label: 'Rollen', icon: ShieldCheck },
   { to: '/admin/rollen-freigaben/mitarbeiter', label: 'Mitarbeiter', icon: Users2 },
   { to: '/admin/rollen-freigaben/effektiv', label: 'Effektiver Zugriff', icon: Eye },
+  { to: '/admin/rollen-freigaben/ansicht-als', label: 'Ansicht als (Simulation)', icon: Eye },
   { to: '/admin/rollen-freigaben/vergleich', label: 'Rollen-Vergleich', icon: GitCompare },
   { to: '/admin/rollen-freigaben/antraege', label: 'Freigabeanträge', icon: UserCog },
+  { to: '/admin/rollen-freigaben/befristet', label: 'Befristete Rechte', icon: Clock },
+  { to: '/admin/rollen-freigaben/datenklassen', label: 'Datenklassen', icon: Database },
   { to: '/admin/rollen-freigaben/pruefung', label: 'Sicherheitsprüfung', icon: ClipboardCheck },
   { to: '/admin/rollen-freigaben/protokoll', label: 'Änderungsprotokoll', icon: FileClock },
 ];

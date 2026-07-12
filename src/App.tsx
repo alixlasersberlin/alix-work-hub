@@ -309,6 +309,9 @@ const RfCompare = lazy(() => import("./pages/RollenFreigaben/RoleCompare"));
 const RfRequests = lazy(() => import("./pages/RollenFreigaben/Requests"));
 const RfAudit = lazy(() => import("./pages/RollenFreigaben/SecurityAudit"));
 const RfLog = lazy(() => import("./pages/RollenFreigaben/AuditLog"));
+const RfViewAs = lazy(() => import("./pages/RollenFreigaben/ViewAs"));
+const RfTempGrants = lazy(() => import("./pages/RollenFreigaben/TempGrants"));
+const RfDataClasses = lazy(() => import("./pages/RollenFreigaben/DataClasses"));
 
 const SecurityFindings = lazy(() => import("./pages/SecurityCenter/Findings"));
 const SecurityPentest = lazy(() => import("./pages/SecurityCenter/Pentest"));
