@@ -67,9 +67,11 @@ export default function EscCalendar() {
   };
 
   const openNew = (start?: Date, mode: 'intern' | 'extern' = 'intern') => {
+    if (!canCreate) { toast.error('Neue Termine dürfen ausschließlich vom Super Admin angelegt werden.'); return; }
     setEditing(null); setDefaultStart(start); setPresetKind(undefined); setPresetMode(mode); setModalOpen(true);
   };
   const openNewKind = (kind: 'Erinnerung' | 'Wiedervorlage') => {
+    if (!canCreate) { toast.error('Neue Termine dürfen ausschließlich vom Super Admin angelegt werden.'); return; }
     setEditing(null); setDefaultStart(undefined); setPresetKind(kind); setPresetMode(undefined); setModalOpen(true);
   };
   const openEdit = (a: EscAppointment) => {
