@@ -277,20 +277,25 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
             <Field label="Land" field="billing_country" />
           </div>
 
-          <h3 className="text-sm font-medium text-foreground pt-2">Bankdaten</h3>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2">
-              <Label className="text-xs text-muted-foreground">IBAN</Label>
-              <Input
-                value={form.iban}
-                onChange={e => handleIbanChange(e.target.value)}
-                className="bg-secondary border-border mt-1"
-                placeholder="DE89 3704 0044 0532 0130 00"
-              />
-            </div>
-            <Field label="BIC" field="bic" />
-            <Field label="Bank" field="bank_name" />
-          </div>
+          {canEditBank && (
+            <>
+              <h3 className="text-sm font-medium text-foreground pt-2">Bankdaten <span className="text-xs text-muted-foreground font-normal">(nur Finance)</span></h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="col-span-2">
+                  <Label className="text-xs text-muted-foreground">IBAN</Label>
+                  <Input
+                    value={form.iban}
+                    onChange={e => handleIbanChange(e.target.value)}
+                    className="bg-secondary border-border mt-1"
+                    placeholder="DE89 3704 0044 0532 0130 00"
+                  />
+                </div>
+                <Field label="BIC" field="bic" />
+                <Field label="Bank" field="bank_name" />
+              </div>
+            </>
+          )}
+
 
           <h3 className="text-sm font-medium text-foreground pt-2">Lieferadresse</h3>
           <div className="grid grid-cols-2 gap-3">
