@@ -301,7 +301,7 @@ export default function BookingPortal() {
                   </button>
                 ))}
               </div>
-              {publicDepts.length === 0 && <div className="text-[13px] text-muted-foreground py-6 text-center">Aktuell sind keine Leistungen öffentlich buchbar.</div>}
+              {publicDepts.length === 0 && <div className="text-[13px] text-muted-foreground py-6 text-center">{t.cards.no_public}</div>}
             </div>
           )}
         </div>
