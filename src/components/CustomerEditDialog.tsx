@@ -137,9 +137,6 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
         city: form.shipping_city,
         country: form.shipping_country,
       },
-      iban: form.iban || null,
-      bic: form.bic || null,
-      bank_name: form.bank_name || null,
       birth_date: form.birth_date || null,
       is_vip: form.is_vip,
       contact_tenant_id: form.contact_tenant_id || null,
@@ -158,15 +155,32 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
         { caseNumber: cn },
       );
     }
-    const { error } = isNew
-      ? await supabase.from('customers').insert(payload)
-      : await supabase.from('customers').update(payload).eq('id', customer.id);
+    const saveRes = isNew
+      ? await supabase.from('customers').insert(payload).select('id').maybeSingle()
+      : await supabase.from('customers').update(payload).eq('id', customer.id).select('id').maybeSingle();
+    if (saveRes.error) { setSaving(false); toast.error('Fehler beim Speichern: ' + saveRes.error.message); return; }
+    const savedId = (saveRes.data as any)?.id ?? customer?.id;
+
+    // Bank-Daten sind Finance-only und liegen in einer separaten Tabelle.
+    if (canEditBank && savedId) {
+      const bankPayload = {
+        customer_id: savedId,
+        iban: form.iban || null,
+        bic: form.bic || null,
+        bank_name: form.bank_name || null,
+      };
+      const { error: bErr } = await supabase
+        .from('customer_bank_details')
+        .upsert(bankPayload, { onConflict: 'customer_id' });
+      if (bErr) { setSaving(false); toast.error('Bankdaten konnten nicht gespeichert werden: ' + bErr.message); return; }
+    }
+
     setSaving(false);
-    if (error) { toast.error('Fehler beim Speichern: ' + error.message); return; }
     toast.success(isNew ? 'Kunde angelegt' : 'Kundendaten aktualisiert');
     onSaved();
     onClose();
   }
+
 
 
   const Field = ({ label, field }: { label: string; field: string }) => (
