@@ -18,12 +18,27 @@ const SEV: Record<string, string> = {
 
 export default function SecurityFindings() {
   const [rows, setRows] = useState<Finding[]>([]);
-  const [filter, setFilter] = useState<'all' | 'open' | 'resolved'>('all');
+  const [filter, setFilter] = useState<'all' | 'open' | 'resolved'>('open');
+  const [scanning, setScanning] = useState(false);
   const load = async () => {
     const { data } = await (supabase as any).from('security_findings_overview').select('*').order('severity').order('created_at', { ascending: false });
     setRows((data ?? []) as Finding[]);
   };
   useEffect(() => { load(); }, []);
+
+  const runScan = async () => {
+    setScanning(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('security-auto-scan');
+      if (error) throw error;
+      toast.success(`Scan ok – ${(data as any)?.count ?? 0} potentielle Findings`);
+      await load();
+    } catch (e: any) {
+      toast.error(e.message ?? 'Scan fehlgeschlagen');
+    } finally {
+      setScanning(false);
+    }
+  };
 
   const setStatus = async (id: string, status: string) => {
     const { error } = await (supabase as any).from('security_audit_findings').update({ status }).eq('id', id);
