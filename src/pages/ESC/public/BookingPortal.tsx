@@ -316,7 +316,7 @@ export default function BookingPortal() {
             <PackageSearch className="w-5 h-5 text-primary" />
           </div>
           <div className="flex-1">
-            <div className="font-semibold text-[14px]">Bestellstatus abfragen</div>
+            <div className="font-semibold text-[14px]">Mein Bestellstatus abfragen</div>
             <div className="text-[12px] text-muted-foreground mt-0.5">
               Sie haben bereits bestellt? Prüfen Sie den aktuellen Bearbeitungsstand Ihrer Bestellung mit Auftragsnummer, PLZ und E-Mail.
             </div>
