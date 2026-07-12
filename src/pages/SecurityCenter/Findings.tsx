@@ -50,12 +50,15 @@ export default function SecurityFindings() {
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
-          {rows.map(f => (
+          {visible.map(f => (
             <div key={f.id} className="rounded-md border p-3 text-sm space-y-2">
               <div className="flex items-center gap-2 flex-wrap">
                 <Badge variant="outline" className={SEV[f.severity]}>{f.severity}</Badge>
                 <Badge variant="secondary">{f.category}</Badge>
                 <span className="font-mono text-xs text-muted-foreground">{f.target}</span>
+                {typeof f.age_days === 'number' && (
+                  <span className="text-[10px] text-muted-foreground">{Math.round(f.age_days)}d</span>
+                )}
                 <span className="ml-auto">
                   <Select value={f.status} onValueChange={(v) => setStatus(f.id, v)}>
                     <SelectTrigger className="h-7 w-[160px] text-xs"><SelectValue /></SelectTrigger>
@@ -74,7 +77,7 @@ export default function SecurityFindings() {
               {f.recommendation && <div className="text-xs"><span className="text-muted-foreground">Empfehlung:</span> {f.recommendation}</div>}
             </div>
           ))}
-          {!rows.length && <div className="text-sm text-muted-foreground">Keine Findings.</div>}
+          {!visible.length && <div className="text-sm text-muted-foreground">Keine Findings.</div>}
         </div>
       </CardContent>
     </Card>
