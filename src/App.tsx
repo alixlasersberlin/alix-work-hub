@@ -312,6 +312,10 @@ const RfLog = lazy(() => import("./pages/RollenFreigaben/AuditLog"));
 const RfViewAs = lazy(() => import("./pages/RollenFreigaben/ViewAs"));
 const RfTempGrants = lazy(() => import("./pages/RollenFreigaben/TempGrants"));
 const RfDataClasses = lazy(() => import("./pages/RollenFreigaben/DataClasses"));
+const RfNotifications = lazy(() => import("./pages/RollenFreigaben/Notifications"));
+const RfBulk = lazy(() => import("./pages/RollenFreigaben/BulkImportExport"));
+const RfRecert = lazy(() => import("./pages/RollenFreigaben/Recertification"));
+const RfTemplates = lazy(() => import("./pages/RollenFreigaben/TemplatesOnboarding"));
 
 const SecurityFindings = lazy(() => import("./pages/SecurityCenter/Findings"));
 const SecurityPentest = lazy(() => import("./pages/SecurityCenter/Pentest"));
@@ -1029,6 +1033,10 @@ function AppRoutes() {
             <Route path="ansicht-als" element={<RfViewAs />} />
             <Route path="befristet" element={<RfTempGrants />} />
             <Route path="datenklassen" element={<RfDataClasses />} />
+            <Route path="benachrichtigungen" element={<RfNotifications />} />
+            <Route path="bulk" element={<RfBulk />} />
+            <Route path="rezertifizierung" element={<RfRecert />} />
+            <Route path="vorlagen" element={<RfTemplates />} />
             <Route path="protokoll" element={<RfLog />} />
           </Route>
 
