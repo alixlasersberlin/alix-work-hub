@@ -14211,6 +14211,41 @@ export type Database = {
         }
         Relationships: []
       }
+      role_approval_chains: {
+        Row: {
+          created_at: string
+          id: string
+          min_approvals: number
+          required_role_name: string
+          role_id: string
+          step_no: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          min_approvals?: number
+          required_role_name: string
+          role_id: string
+          step_no: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          min_approvals?: number
+          required_role_name?: string
+          role_id?: string
+          step_no?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_approval_chains_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       role_audit_log: {
         Row: {
           actor_user_id: string | null
@@ -14569,6 +14604,47 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "role_recert_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      role_request_approvals: {
+        Row: {
+          approver_id: string
+          approver_role_name: string | null
+          created_at: string
+          decision: string
+          id: string
+          note: string | null
+          request_id: string
+          step_no: number
+        }
+        Insert: {
+          approver_id: string
+          approver_role_name?: string | null
+          created_at?: string
+          decision: string
+          id?: string
+          note?: string | null
+          request_id: string
+          step_no: number
+        }
+        Update: {
+          approver_id?: string
+          approver_role_name?: string | null
+          created_at?: string
+          decision?: string
+          id?: string
+          note?: string | null
+          request_id?: string
+          step_no?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_request_approvals_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "role_change_requests"
             referencedColumns: ["id"]
           },
         ]
@@ -19590,6 +19666,7 @@ export type Database = {
         Returns: Json
       }
       peek_document_number: { Args: { p_code: string }; Returns: string }
+      process_scheduled_grants: { Args: never; Returns: Json }
       recompute_device_health: { Args: { _serial: string }; Returns: undefined }
       refresh_warranty_and_maintenance_status: {
         Args: never
@@ -19607,6 +19684,16 @@ export type Database = {
       }
       rotate_finance_stakeholder_token: {
         Args: { p_id: string }
+        Returns: string
+      }
+      schedule_role_grant: {
+        Args: {
+          _reason: string
+          _role_id: string
+          _user_id: string
+          _valid_from: string
+          _valid_until: string
+        }
         Returns: string
       }
       security_deactivate_stale_sessions: { Args: never; Returns: number }
