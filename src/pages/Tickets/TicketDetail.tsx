@@ -95,7 +95,8 @@ export default function TicketDetail() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [newMsg, setNewMsg] = useState('');
-  const [msgInternal, setMsgInternal] = useState(true);
+  const [msgInternal, setMsgInternal] = useState(false);
+  const [myProfile, setMyProfile] = useState<{ full_name: string | null; job_title: string | null; avatar_url: string | null } | null>(null);
   const [outboundLogs, setOutboundLogs] = useState<OutboundLog[]>([]);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
