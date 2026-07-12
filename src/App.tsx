@@ -292,6 +292,7 @@ const SecurityRoles = lazy(() => import("./pages/SecurityCenter/Roles"));
 const SecurityPermissions = lazy(() => import("./pages/SecurityCenter/Permissions"));
 const SecurityPolicies = lazy(() => import("./pages/SecurityCenter/Policies"));
 const SecurityStorage = lazy(() => import("./pages/SecurityCenter/Storage"));
+const SecurityMfa = lazy(() => import("./pages/SecurityCenter/Mfa"));
 const SecurityFindings = lazy(() => import("./pages/SecurityCenter/Findings"));
 const SecuritySimulate = lazy(() => import("./pages/SecurityCenter/Simulate"));
 const SecurityPlan = lazy(() => import("./pages/SecurityCenter/Plan"));
@@ -983,6 +984,7 @@ function AppRoutes() {
             <Route path="permissions" element={<SecurityPermissions />} />
             <Route path="policies" element={<SecurityPolicies />} />
             <Route path="storage" element={<SecurityStorage />} />
+            <Route path="mfa" element={<SecurityMfa />} />
             <Route path="findings" element={<SecurityFindings />} />
             <Route path="simulate" element={<SecuritySimulate />} />
             <Route path="plan" element={<SecurityPlan />} />

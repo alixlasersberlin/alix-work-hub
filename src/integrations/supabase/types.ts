@@ -18246,6 +18246,15 @@ export type Database = {
         }
         Relationships: []
       }
+      security_scan_mfa_coverage: {
+        Row: {
+          role: string | null
+          users: number | null
+          with_mfa: number | null
+          without_mfa: number | null
+        }
+        Relationships: []
+      }
       security_scan_open_policies: {
         Row: {
           cmd: string | null
@@ -18255,6 +18264,23 @@ export type Database = {
           tablename: unknown
         }
         Relationships: []
+      }
+      security_scan_privileged_no_mfa: {
+        Row: {
+          email: string | null
+          full_name: string | null
+          role: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       security_scan_public_buckets: {
         Row: {
@@ -18273,6 +18299,25 @@ export type Database = {
           public?: boolean | null
         }
         Relationships: []
+      }
+      security_scan_stale_sessions: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          expires_at: string | null
+          full_name: string | null
+          ip_address: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "login_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       security_scan_tables_without_rls: {
         Row: {

@@ -3,7 +3,7 @@ import { NavLink, Outlet } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Shield, Database, KeyRound, AlertTriangle, Users, ClipboardList, HardDrive, PlayCircle, ListChecks } from 'lucide-react';
+import { Shield, Database, KeyRound, AlertTriangle, Users, ClipboardList, HardDrive, PlayCircle, ListChecks, ShieldCheck } from 'lucide-react';
 
 const NAV = [
   { to: '/security-center', end: true, label: 'Übersicht', icon: Shield },
@@ -12,6 +12,7 @@ const NAV = [
   { to: '/security-center/permissions', label: 'Berechtigungen', icon: KeyRound },
   { to: '/security-center/policies', label: 'RLS-Status', icon: ListChecks },
   { to: '/security-center/storage', label: 'Storage', icon: HardDrive },
+  { to: '/security-center/mfa', label: 'MFA & Sessions', icon: ShieldCheck },
   { to: '/security-center/findings', label: 'Sicherheitsereignisse', icon: AlertTriangle },
   { to: '/security-center/simulate', label: 'Zugriffs-Simulation', icon: PlayCircle },
   { to: '/security-center/plan', label: 'Migrationsplan', icon: ClipboardList },
