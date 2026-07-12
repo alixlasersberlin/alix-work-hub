@@ -15,6 +15,7 @@ import NataliaWelcomeOverlay from '@/components/NataliaWelcomeOverlay';
 import SalesLeadAssignmentOverlay from '@/components/SalesLeadAssignmentOverlay';
 import { SidebarInfoBar } from '@/components/SidebarInfoBar';
 import TenantSwitcher from '@/components/TenantSwitcher';
+import { TicketNotificationBell } from '@/components/tickets/TicketNotificationBell';
 import AuroraPrioTicker from '@/components/AuroraPrioTicker';
 import AuroraTopNav from '@/components/AuroraTopNav';
 import CommandPalette from '@/components/CommandPalette';
@@ -1617,6 +1618,7 @@ export default function AppLayout() {
             <div className="hidden lg:block flex-shrink-0">
               <TenantSwitcher />
             </div>
+            <TicketNotificationBell />
             <div className="flex items-center gap-2 text-sm flex-shrink-0">
               <span className="font-display font-bold gold-text">AlixWork</span>
               <span className="text-muted-foreground font-mono text-xs hidden sm:inline">v{APP_VERSION}</span>
