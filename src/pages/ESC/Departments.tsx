@@ -227,6 +227,20 @@ export default function EscDepartments() {
               <div className="md:col-span-2"><Label>Beschreibung</Label><Textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
               <div><Label>Standarddauer (min)</Label><Input type="number" value={form.defaultDurationMinutes} onChange={(e) => setForm({ ...form, defaultDurationMinutes: Number(e.target.value) })} /></div>
               <div><Label>Standard-E-Mail-Vorlage</Label><Input value={form.defaultEmailTemplate || ''} onChange={(e) => setForm({ ...form, defaultEmailTemplate: e.target.value })} /></div>
+              <div className="md:col-span-2">
+                <Label>Reihenfolge (Nummer)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={form.sortOrder ?? ''}
+                  onChange={(e) => setForm({ ...form, sortOrder: e.target.value === '' ? undefined : Number(e.target.value) })}
+                  placeholder="z. B. 10, 20, 30 …"
+                />
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  Kleinere Zahlen erscheinen zuerst – gilt auch auf der öffentlichen Buchungsseite.
+                </p>
+              </div>
               <div className="md:col-span-2 flex flex-wrap gap-4 pt-1 border-t">
                 <label className="flex items-center gap-2 text-sm"><Checkbox checked={form.active} onCheckedChange={(v) => setForm({ ...form, active: !!v })} />Aktiv</label>
                 <label className="flex items-center gap-2 text-sm"><Checkbox checked={form.publicBookable} onCheckedChange={(v) => setForm({ ...form, publicBookable: !!v })} />Öffentlich buchbar</label>
