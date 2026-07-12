@@ -44,4 +44,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'sales-lead-internal-notification': salesLeadInternalNotification,
   'anzahlung-mahnung': anzahlungMahnung,
   'as-customer-reminder': asCustomerReminder,
+  'ticket-csat': ticketCsat,
 }
