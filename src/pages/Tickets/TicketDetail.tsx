@@ -20,6 +20,7 @@ import { TicketHistoryTimeline } from '@/components/tickets/TicketHistoryTimelin
 import { TicketParticipants } from '@/components/tickets/TicketParticipants';
 import { TicketHandoverDialog } from '@/components/tickets/TicketHandoverDialog';
 import { PhoneNoteDialog } from '@/components/tickets/PhoneNoteDialog';
+import { TicketDuplicateAlert } from './TicketDuplicateAlert';
 import { ArrowRightLeft } from 'lucide-react';
 
 interface Ticket {
