@@ -139,15 +139,43 @@ export default function BookingPortal() {
 
   const submit = async () => {
     if (!dept) return;
-    if (!isTicket && !state.slotIso) return;
-    if (!isTicket && customerBookingsToday(state.email, appointments, new Date(state.slotIso)) >= DEFAULT_BOOKING_SETTINGS.maxPerCustomerPerDay) {
+    const bookingNumber = `AW-${format(new Date(), 'yyMMdd')}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+
+    // Ticket-Anfragen landen NICHT im Kalender, sondern direkt als Ticket
+    // in der CUSTOMER SERVICE / Ticketliste mit 2-Tage-Wiedervorlage.
+    if (isTicket) {
+      const { data, error } = await supabase.functions.invoke('public-book-ticket', {
+        body: {
+          firstName: state.firstName,
+          lastName: state.lastName,
+          email: state.email,
+          phone: state.phone,
+          company: state.company,
+          website: state.website,
+          service: state.service,
+          department: dept.name,
+          message: state.message,
+          consentMarketing: state.consentMarketing,
+          bookingNumber,
+        },
+      });
+      if (error || (data as any)?.error) {
+        toast.error(((data as any)?.error) || error?.message || 'Ticket konnte nicht angelegt werden.');
+        return;
+      }
+      setSent({ bookingNumber, token: bookingNumber });
+      navigate('/book/confirmation', { replace: true });
+      return;
+    }
+
+    if (!state.slotIso) return;
+    if (customerBookingsToday(state.email, appointments, new Date(state.slotIso)) >= DEFAULT_BOOKING_SETTINGS.maxPerCustomerPerDay) {
       toast.error(t.errors.max_per_day);
       return;
     }
-    const start = isTicket ? new Date() : new Date(state.slotIso);
+    const start = new Date(state.slotIso);
     const end = new Date(start.getTime() + duration * 60_000);
-    const loc = isTicket ? undefined : DEFAULT_LOCATIONS.find((l) => l.id === state.locationId);
-    const bookingNumber = `AW-${format(new Date(), 'yyMMdd')}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+    const loc = DEFAULT_LOCATIONS.find((l) => l.id === state.locationId);
 
     const created = await createAppointment({
       title: `${dept.name} · ${state.service} · ${state.firstName} ${state.lastName}${state.company ? ' (' + state.company + ')' : ''}`,
@@ -165,12 +193,13 @@ export default function BookingPortal() {
       address: '',
       status: 'angefragt',
       priority: 'normal',
-      externalNote: `${isTicket ? 'Ticket-Anfrage\n' : ''}Buchungsnummer: ${bookingNumber}${state.website ? '\nWebseite: ' + state.website : ''}${state.consentMarketing ? '\nMarketing-Einwilligung: ja' : ''}`,
+      externalNote: `Buchungsnummer: ${bookingNumber}${state.website ? '\nWebseite: ' + state.website : ''}${state.consentMarketing ? '\nMarketing-Einwilligung: ja' : ''}`,
       confirmationRequired: true,
     });
     setSent({ bookingNumber, token: (created as any)?.confirmationToken || bookingNumber });
     navigate('/book/confirmation', { replace: true });
   };
+
 
   if (sent) {
     return (

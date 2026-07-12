@@ -15628,6 +15628,7 @@ export type Database = {
           description: string | null
           device_name: string | null
           external_ticket_id: string | null
+          follow_up_at: string | null
           id: string
           internal_note: string | null
           last_outbound_sync_at: string | null
@@ -15663,6 +15664,7 @@ export type Database = {
           description?: string | null
           device_name?: string | null
           external_ticket_id?: string | null
+          follow_up_at?: string | null
           id?: string
           internal_note?: string | null
           last_outbound_sync_at?: string | null
@@ -15698,6 +15700,7 @@ export type Database = {
           description?: string | null
           device_name?: string | null
           external_ticket_id?: string | null
+          follow_up_at?: string | null
           id?: string
           internal_note?: string | null
           last_outbound_sync_at?: string | null
