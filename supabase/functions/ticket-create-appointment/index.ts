@@ -1,0 +1,118 @@
+// Erstellt aus einem Ticket heraus einen Kalendertermin (esc_events) mit
+// Bestätigungs-Token und liefert die alixwork.de-Aktionslinks zurück.
+// Aufruf: POST { ticket_id, start_at, end_at?, event_kind, title?, requires_confirmation? }
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+const PUBLIC_BASE = "https://alixwork.de";
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  try {
+    const {
+      ticket_id, start_at, end_at, event_kind = "kundentermin",
+      title, requires_confirmation = true,
+    } = await req.json();
+
+    if (!ticket_id || !start_at) return j({ error: "ticket_id & start_at required" }, 400);
+
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+
+    const { data: ticket, error: tErr } = await supabase
+      .from("tickets")
+      .select("id, ticket_number, title, department, customer_name, customer_email, customer_phone, assigned_to, priority")
+      .eq("id", ticket_id)
+      .single();
+    if (tErr || !ticket) return j({ error: "ticket not found" }, 404);
+
+    // esc_department per Name-Match auflösen (Fallback: erste vorhandene).
+    let escDeptId: string | null = null;
+    if (ticket.department) {
+      const { data: d } = await supabase
+        .from("esc_departments").select("id").ilike("name", ticket.department).maybeSingle();
+      escDeptId = (d as any)?.id ?? null;
+    }
+    if (!escDeptId) {
+      const { data: fallback } = await supabase.from("esc_departments").select("id").limit(1).maybeSingle();
+      escDeptId = (fallback as any)?.id ?? null;
+    }
+    if (!escDeptId) return j({ error: "Keine ESC-Abteilung vorhanden — bitte in ESC → Abteilungen anlegen." }, 400);
+
+    const start = new Date(start_at);
+    const end = end_at ? new Date(end_at) : new Date(start.getTime() + 30 * 60 * 1000);
+
+    const token = crypto.randomUUID().replace(/-/g, "");
+    const tokenExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+    const { data: ev, error: evErr } = await supabase.from("esc_events").insert({
+      ticket_id,
+      event_kind,
+      title: title ?? `${ticket.ticket_number ?? "Ticket"} · ${ticket.title ?? ticket.customer_name ?? ""}`,
+      description: `Erstellt aus Ticket ${ticket.ticket_number ?? ticket_id}`,
+      start_at: start.toISOString(),
+      end_at: end.toISOString(),
+      department_id: escDeptId,
+      status: "planned",
+      priority: (ticket.priority ?? "normal").toLowerCase(),
+      customer_name: ticket.customer_name,
+      customer_email: ticket.customer_email,
+      customer_phone: ticket.customer_phone,
+      assigned_user_id: ticket.assigned_to,
+      requires_confirmation,
+      confirmation_status: requires_confirmation ? "pending" : "not_required",
+      confirmation_token: token,
+      confirmation_token_expires_at: tokenExpires,
+      appointment_status: requires_confirmation ? "bestaetigung_ausstehend" : "geplant",
+      source: "ticket",
+    }).select("id").single();
+    if (evErr) throw evErr;
+
+    // Ticket-Felder synchronisieren
+    const ticketPatch: Record<string, unknown> = {};
+    if (event_kind === "frist" || event_kind === "rueckruf" || event_kind === "eskalation") {
+      ticketPatch.due_at = start.toISOString();
+    } else if (event_kind === "wiedervorlage") {
+      ticketPatch.follow_up_at = start.toISOString();
+    } else {
+      ticketPatch.appointment_at = start.toISOString();
+      ticketPatch.status = "Termin vereinbart";
+    }
+    if (Object.keys(ticketPatch).length) {
+      await supabase.from("tickets").update(ticketPatch).eq("id", ticket_id);
+    }
+
+    await supabase.from("ticket_history").insert({
+      ticket_id,
+      action: "appointment_created",
+      field: "event_id",
+      new_value: (ev as any).id,
+      meta: { event_kind, start_at: start.toISOString() },
+    });
+
+    const links = {
+      confirm: `${PUBLIC_BASE}/termin/bestaetigen/${token}`,
+      reschedule: `${PUBLIC_BASE}/termin/verschieben/${token}`,
+      cancel: `${PUBLIC_BASE}/termin/ablehnen/${token}`,
+    };
+
+    return j({ success: true, event_id: (ev as any).id, token, links });
+  } catch (err) {
+    console.error("ticket-create-appointment error", err);
+    return j({ error: String((err as Error)?.message ?? err) }, 500);
+  }
+});
+
+function j(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
