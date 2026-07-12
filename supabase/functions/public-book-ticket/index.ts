@@ -27,6 +27,8 @@ serve(async (req) => {
       message = "",
       consentMarketing = false,
       bookingNumber = "",
+      priority = "Normal",
+      attachments = [],
     } = body || {};
 
     if (!email || !firstName) {
