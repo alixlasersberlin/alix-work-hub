@@ -108,7 +108,7 @@ export default function TicketsDashboard() {
     const from14 = subDays(startOfDay(now), 13);
     const [{ data: created }, { data: closed }] = await Promise.all([
       supabase.from("tickets").select("created_at").gte("created_at", from14.toISOString()).limit(2000),
-      supabase.from("tickets").select("updated_at").gte("updated_at", from14.toISOString()).in("status", ["Geschlossen", "Erledigt"]).limit(2000),
+      supabase.from("tickets").select("updated_at").gte("updated_at", from14.toISOString()).in("status", CLOSED_STATUS).limit(2000),
     ]);
     const days: Record<string, { neu: number; geschlossen: number }> = {};
     for (let i = 0; i < 14; i++) {
