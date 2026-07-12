@@ -537,6 +537,7 @@ export default function TicketDetail() {
             <TabsList>
               <TabsTrigger value="messages"><MessageSquare className="w-4 h-4 mr-1" /> Nachrichten ({messages.length})</TabsTrigger>
               <TabsTrigger value="attachments"><Paperclip className="w-4 h-4 mr-1" /> Anhänge ({attachments.length})</TabsTrigger>
+              <TabsTrigger value="history"><Activity className="w-4 h-4 mr-1" /> Verlauf</TabsTrigger>
             </TabsList>
             <TabsContent value="messages" className="space-y-3">
               {messages.length === 0 && <div className="text-sm text-muted-foreground p-4">Noch keine Nachrichten.</div>}
