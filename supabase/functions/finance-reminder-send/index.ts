@@ -26,8 +26,9 @@ Deno.serve(async (req) => {
     }
 
     const { data: items } = await admin.from('finance_reminder_items').select('invoice_number, amount, due_date, days_overdue').eq('reminder_id', reminder_id);
-    const { data: cust } = await admin.from('customers').select('id, company_name, contact_name, email, iban, bic, bank_name').eq('id', rem.customer_id).maybeSingle();
+    const { data: cust } = await admin.from('customers').select('id, company_name, contact_name, email').eq('id', rem.customer_id).maybeSingle();
     if (!cust?.email) throw new Error('Kunde hat keine E-Mail-Adresse');
+    const { data: bank } = await admin.from('customer_bank_details').select('iban, bic, bank_name').eq('customer_id', rem.customer_id).maybeSingle();
 
     const fmtDate = (d: string | null) => d ? new Date(d).toLocaleDateString('de-DE') : '';
 
@@ -40,10 +41,11 @@ Deno.serve(async (req) => {
       total: Number(rem.total),
       dueDate: fmtDate(rem.due_date),
       items: (items ?? []).map((i) => ({ ...i, due_date: fmtDate(i.due_date) })),
-      iban: cust.iban,
-      bic: cust.bic,
-      bankName: cust.bank_name,
+      iban: bank?.iban ?? null,
+      bic: bank?.bic ?? null,
+      bankName: bank?.bank_name ?? null,
     };
+
 
     // Forward to send-transactional-email using the caller JWT
     const sendRes = await fetch(`${SUPABASE_URL}/functions/v1/send-transactional-email`, {
