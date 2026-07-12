@@ -45,9 +45,9 @@ export default function WizardLanguageSwitcher({ className, variant = 'dark' }: 
       {open && (
         <div className={cn(
           'absolute right-0 mt-2 w-48 rounded-xl border p-1 shadow-2xl z-50',
-          variant === 'dark'
-            ? 'border-white/15 bg-[#0b1228]/95 text-white backdrop-blur-xl'
-            : 'border-slate-200 bg-white text-slate-800',
+          variant === 'dark' && 'border-white/15 bg-[#0b1228]/95 text-white backdrop-blur-xl',
+          variant === 'light' && 'border-slate-200 bg-white text-slate-800',
+          variant === 'transparent' && 'border-foreground/15 bg-popover/90 text-popover-foreground backdrop-blur-xl',
         )}>
           {LANGS.map(l => (
             <button
