@@ -475,8 +475,8 @@ export default function BookingPortal() {
               <>
                 {slotsForDay.length === 0 ? (
                   <div className="rounded-md border p-4 text-center bg-muted/30">
-                    <div className="text-[13px] mb-2">Für den gewählten Tag sind keine Zeiten verfügbar.</div>
-                    <Button variant="outline" size="sm" onClick={() => setWaitlistOpen(true)}><Users className="w-4 h-4 mr-1" />Auf Warteliste setzen</Button>
+                    <div className="text-[13px] mb-2">{t.time.none}</div>
+                    <Button variant="outline" size="sm" onClick={() => setWaitlistOpen(true)}><Users className="w-4 h-4 mr-1" />{t.time.waitlist_btn}</Button>
                   </div>
                 ) : (
                   <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
