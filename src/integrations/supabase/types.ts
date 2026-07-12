@@ -18216,6 +18216,23 @@ export type Database = {
         }
         Relationships: []
       }
+      security_findings_trend_30d: {
+        Row: {
+          cnt: number | null
+          day: string | null
+          severity: string | null
+        }
+        Relationships: []
+      }
+      security_last_scan_info: {
+        Row: {
+          findings_critical_open: number | null
+          findings_last_7d: number | null
+          findings_open: number | null
+          last_scan_at: string | null
+        }
+        Relationships: []
+      }
       security_policy_details: {
         Row: {
           check_expr: string | null

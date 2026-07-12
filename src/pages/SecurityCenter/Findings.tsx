@@ -40,6 +40,32 @@ export default function SecurityFindings() {
     }
   };
 
+  const sendAlerts = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('security-alert-notify', { body: { lookback_minutes: 1440 } });
+      if (error) throw error;
+      const d: any = data;
+      toast.success(d?.sent ? `Alert an ${d.recipients} Super Admin(s) versandt (${d.sent} Findings)` : `Keine Mail: ${d?.reason ?? 'ok'}`);
+    } catch (e: any) { toast.error(e.message ?? 'Fehler'); }
+  };
+
+  const cleanupSessions = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('security-remediate', { body: { action: 'deactivate_stale_sessions' } });
+      if (error) throw error;
+      toast.success(`${(data as any)?.affected ?? 0} veraltete Sessions deaktiviert`);
+    } catch (e: any) { toast.error(e.message ?? 'Fehler'); }
+  };
+
+  const resolveFinding = async (id: string) => {
+    try {
+      const { error } = await supabase.functions.invoke('security-remediate', { body: { action: 'mark_finding_resolved', finding_id: id } });
+      if (error) throw error;
+      toast.success('Finding geschlossen');
+      await load();
+    } catch (e: any) { toast.error(e.message ?? 'Fehler'); }
+  };
+
   const setStatus = async (id: string, status: string) => {
     const { error } = await (supabase as any).from('security_audit_findings').update({ status }).eq('id', id);
     if (error) return toast.error(error.message);
@@ -57,10 +83,12 @@ export default function SecurityFindings() {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-2">
         <CardTitle className="text-base">Auto-Review — {visible.length} / {rows.length}</CardTitle>
-        <div className="flex gap-1 items-center">
+        <div className="flex gap-1 items-center flex-wrap">
           <Button size="sm" variant="secondary" onClick={runScan} disabled={scanning}>
             {scanning ? 'Scan läuft…' : 'Jetzt scannen'}
           </Button>
+          <Button size="sm" variant="secondary" onClick={sendAlerts}>Alert senden</Button>
+          <Button size="sm" variant="secondary" onClick={cleanupSessions}>Sessions bereinigen</Button>
           <div className="w-2" />
           <Button size="sm" variant={filter === 'all' ? 'default' : 'outline'} onClick={() => setFilter('all')}>Alle ({rows.length})</Button>
           <Button size="sm" variant={filter === 'open' ? 'default' : 'outline'} onClick={() => setFilter('open')}>Offen ({counts.open})</Button>
@@ -94,6 +122,11 @@ export default function SecurityFindings() {
               <div className="font-medium">{f.title}</div>
               {f.detail && <div className="text-xs text-muted-foreground">{f.detail}</div>}
               {f.recommendation && <div className="text-xs"><span className="text-muted-foreground">Empfehlung:</span> {f.recommendation}</div>}
+              {f.status !== 'resolved' && (
+                <div className="flex justify-end pt-1">
+                  <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => resolveFinding(f.id)}>Als behoben markieren</Button>
+                </div>
+              )}
             </div>
           ))}
           {!visible.length && <div className="text-sm text-muted-foreground">Keine Findings.</div>}
