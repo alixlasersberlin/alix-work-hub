@@ -280,18 +280,28 @@ export default function TicketDetail() {
   async function addMessage() {
     if (!ticket || !newMsg.trim()) return;
     const messageText = newMsg.trim();
+    // Absender-Identität: bei zugewiesenem Ticket = persönlich (Name), sonst = Abteilung
+    const isAssignedToMe = !!ticket.assigned_to && ticket.assigned_to === user?.id;
+    const hasAssignee = !!ticket.assigned_to;
+    const senderIsPersonal = !msgInternal ? (hasAssignee && isAssignedToMe) : true;
+    const publicName = hasAssignee
+      ? (myProfile?.full_name || user?.email || 'Mitarbeiter')
+      : departmentDisplayName(ticket.department);
+    const displayName = msgInternal
+      ? (myProfile?.full_name || user?.email || 'Mitarbeiter')
+      : publicName;
     const { data, error } = await supabase.from('ticket_messages').insert({
       ticket_id: ticket.id,
-      sender_type: 'agent',
-      sender_name: user?.email || 'Mitarbeiter',
-      sender_email: user?.email || null,
+      sender_type: msgInternal ? 'agent' : (hasAssignee ? 'agent' : 'department'),
+      sender_name: displayName,
+      sender_email: msgInternal ? (user?.email || null) : null,
       message: messageText,
       is_internal: msgInternal,
       source_system: 'alixwork',
     }).select('id').single();
     if (error) { toast.error(error.message); return; }
     setNewMsg('');
-    toast.success(msgInternal ? 'Interne Notiz hinzugefügt' : 'Nachricht hinzugefügt');
+    toast.success(msgInternal ? 'Interne Notiz gespeichert' : 'Antwort an Kunde gesendet');
     // Only sync public messages to AlixSmart (source_system === 'alixsmart')
     if (!msgInternal && ticket.external_ticket_id && ticket.source_system === 'alixsmart' && data?.id) {
       syncToAlixSmart('new_public_message', data.id);
