@@ -122,7 +122,7 @@ export default function CustomerPortalTickets() {
     const list = Array.from(fs).slice(0, 10 - files.length);
     for (const f of list) {
       const v = validateTicketAttachment(f);
-      if (!v.ok) { toast.error(v.reason); return; }
+      if (v.ok === false) { toast.error(v.reason); return; }
     }
     setFiles(prev => [...prev, ...list].slice(0, 10));
   };
