@@ -224,6 +224,7 @@ const Datensicherung = lazy(() => import("./pages/operation/Datensicherung"));
 const FortKnox = lazy(() => import("./pages/operation/FortKnox"));
 const Mandanten = lazy(() => import("./pages/Mandanten"));
 const TicketDepartments = lazy(() => import("./pages/Operation/TicketDepartments"));
+const AppointmentAction = lazy(() => import("./pages/PublicAppointment/AppointmentAction"));
 const KonzernDashboard = lazy(() => import("./pages/KonzernDashboard"));
 const MobileLayout = lazy(() => import("./pages/Mobile/Layout"));
 const MobileHome = lazy(() => import("./pages/Mobile/Home"));
