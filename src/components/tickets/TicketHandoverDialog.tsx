@@ -76,7 +76,7 @@ export function TicketHandoverDialog({ open, onOpenChange, ticketId, currentDepa
         old_value: currentDepartment,
         new_value: newDept,
         actor_id: user?.id || null,
-        actor_name: user?.email || null,
+        actor_label: user?.email || null,
         meta: { reason, status, next_action: nextAction, deadline: deadline || null, customer_informed: customerInformed === 'yes' },
       } as any);
 
