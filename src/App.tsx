@@ -373,6 +373,7 @@ const RmRooms = lazy(() => import("./pages/ESC/rm/Rooms"));
 const RmField = lazy(() => import("./pages/ESC/rm/Field"));
 const RmCapacity = lazy(() => import("./pages/ESC/rm/Capacity"));
 const RmDispatch = lazy(() => import("./pages/ESC/rm/Dispatch"));
+const RmLocations = lazy(() => import("./pages/ESC/rm/Locations"));
 const AiLayout = lazy(() => import("./components/esc/ai/AiLayout"));
 const AiDashboard = lazy(() => import("./pages/ESC/ai/Dashboard"));
 const AiScheduler = lazy(() => import("./pages/ESC/ai/Scheduler"));
@@ -732,6 +733,7 @@ function AppRoutes() {
             <Route path="rm/aussendienst" element={<RmField />} />
             <Route path="rm/kapazitaeten" element={<RmCapacity />} />
             <Route path="rm/einsatzplanung" element={<RmDispatch />} />
+            <Route path="rm/standorte" element={<RmLocations />} />
           </Route>
           <Route path="/esc/ai" element={<ProtectedRoute><AiLayout /></ProtectedRoute>}>
             <Route index element={<AiDashboard />} />
