@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, Trash2, Loader2, Camera, FileSignature, ClipboardCheck, Route as RouteIcon, AlertCircle } from 'lucide-react';
-import { list as outboxList, flush, remove, OutboxItem } from '@/lib/mobile/outbox';
+import { list as outboxList, flush, remove, retryNow, MAX_ATTEMPTS, OutboxItem } from '@/lib/mobile/outbox';
 import { toast } from 'sonner';
 
 const KIND_META: Record<string, { icon: any; label: string }> = {
