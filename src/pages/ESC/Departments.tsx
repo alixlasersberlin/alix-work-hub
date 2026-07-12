@@ -64,7 +64,12 @@ export default function EscDepartments() {
   const [editing, setEditing] = useState<EscDepartment | null>(null);
   const [form, setForm] = useState<Omit<EscDepartment, 'id'>>(emptyForm);
 
-  const openNew = () => { setEditing(null); setForm({ ...emptyForm }); setOpen(true); };
+  const openNew = () => {
+    const nextOrder = departments.length ? Math.max(...departments.map((d) => d.sortOrder ?? 0)) + 1 : 1;
+    setEditing(null);
+    setForm({ ...emptyForm, sortOrder: nextOrder });
+    setOpen(true);
+  };
   const openEdit = (d: EscDepartment) => {
     const { id, ...rest } = d;
     setEditing(d);
