@@ -138,14 +138,15 @@ export default function BookingPortal() {
   })();
 
   const submit = async () => {
-    if (!dept || !state.slotIso) return;
-    if (customerBookingsToday(state.email, appointments, new Date(state.slotIso)) >= DEFAULT_BOOKING_SETTINGS.maxPerCustomerPerDay) {
+    if (!dept) return;
+    if (!isTicket && !state.slotIso) return;
+    if (!isTicket && customerBookingsToday(state.email, appointments, new Date(state.slotIso)) >= DEFAULT_BOOKING_SETTINGS.maxPerCustomerPerDay) {
       toast.error(t.errors.max_per_day);
       return;
     }
-    const start = new Date(state.slotIso);
+    const start = isTicket ? new Date() : new Date(state.slotIso);
     const end = new Date(start.getTime() + duration * 60_000);
-    const loc = DEFAULT_LOCATIONS.find((l) => l.id === state.locationId);
+    const loc = isTicket ? undefined : DEFAULT_LOCATIONS.find((l) => l.id === state.locationId);
     const bookingNumber = `AW-${format(new Date(), 'yyMMdd')}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
 
     const created = await createAppointment({
@@ -164,7 +165,7 @@ export default function BookingPortal() {
       address: '',
       status: 'angefragt',
       priority: 'normal',
-      externalNote: `Buchungsnummer: ${bookingNumber}${state.website ? '\nWebseite: ' + state.website : ''}${state.consentMarketing ? '\nMarketing-Einwilligung: ja' : ''}`,
+      externalNote: `${isTicket ? 'Ticket-Anfrage\n' : ''}Buchungsnummer: ${bookingNumber}${state.website ? '\nWebseite: ' + state.website : ''}${state.consentMarketing ? '\nMarketing-Einwilligung: ja' : ''}`,
       confirmationRequired: true,
     });
     setSent({ bookingNumber, token: (created as any)?.confirmationToken || bookingNumber });
