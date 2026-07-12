@@ -86,7 +86,7 @@ serve(async (req) => {
         ticket_department_id: ticketDepartmentId,
         category: service || null,
         status: "Neu",
-        priority: "Normal",
+        priority: priority || "Normal",
         customer_visible_status: "Ticket eingegangen",
         title,
         description: message || null,
