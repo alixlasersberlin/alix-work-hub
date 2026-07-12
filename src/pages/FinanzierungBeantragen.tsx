@@ -104,9 +104,21 @@ export default function FinanzierungBeantragen() {
           .order('item_order', { ascending: true }),
       ]);
       setOrderFull(ord);
-      setCustomer((ord?.customers ?? null) as FullCustomer | null);
+      const baseCust = (ord?.customers ?? null) as any;
+      let bank: { iban: string | null; bic: string | null; bank_name: string | null } = { iban: null, bic: null, bank_name: null };
+      if (baseCust?.id) {
+        // Nur Finance / Financing / Admin dürfen bank_details lesen – bei fehlender Berechtigung liefert Supabase leeres Ergebnis.
+        const { data: bd } = await supabase
+          .from('customer_bank_details')
+          .select('iban, bic, bank_name')
+          .eq('customer_id', baseCust.id)
+          .maybeSingle();
+        if (bd) bank = bd as any;
+      }
+      setCustomer(baseCust ? ({ ...baseCust, ...bank } as FullCustomer) : null);
       setItems((its ?? []) as OrderItem[]);
       setDetailLoading(false);
+
     })();
   }, [selected]);
 
