@@ -47,6 +47,7 @@ const RM_TABS = [
   { to: '/esc/rm/aussendienst',   label: 'Außendienst',     icon: Map },
   { to: '/esc/rm/kapazitaeten',   label: 'Kapazitäten',     icon: Gauge },
   { to: '/esc/rm/einsatzplanung', label: 'Einsatzplanung',  icon: ListChecks },
+  { to: '/esc/rm/standorte',      label: 'Standorte',       icon: MapPin },
 ];
 
 export default function EscLayout() {
