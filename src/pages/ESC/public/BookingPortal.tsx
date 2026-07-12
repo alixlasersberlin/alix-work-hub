@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, ArrowRight, CalendarCheck, CheckCircle2, Clock, Globe, MapPin, Users, ShieldCheck, PackageSearch, Cpu, ChevronDown, Mail } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CalendarCheck, CheckCircle2, Clock, Globe, MapPin, Users, ShieldCheck, PackageSearch, Cpu, ChevronDown, Mail, Sparkles, FileText, Banknote, BookOpen, Tag, KeyRound, PenLine } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAppointments } from '@/hooks/esc/useAppointments';
 import { useDepartments } from '@/hooks/esc/useDepartments';
@@ -92,6 +92,7 @@ export default function BookingPortal() {
   });
   const [waitlistOpen, setWaitlistOpen] = useState(false);
   const [deptOpen, setDeptOpen] = useState(false);
+  const [salesOpen, setSalesOpen] = useState(false);
   const [sent, setSent] = useState<{ bookingNumber: string; token: string } | null>(null);
 
   // Pre-fill from URL
@@ -200,6 +201,58 @@ export default function BookingPortal() {
           </div>
         ))}
       </div>
+
+      {step === 'department' && (
+        <div className="space-y-3">
+          <button
+            type="button"
+            onClick={() => setSalesOpen((v) => !v)}
+            aria-expanded={salesOpen}
+            className="w-full text-left rounded-xl border p-4 bg-card hover:border-primary hover:shadow-md transition-all flex items-start gap-3"
+          >
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <Sparkles className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1">
+              <div className="font-semibold text-[14px]">Verkaufsberatung</div>
+              <div className="text-[12px] text-muted-foreground mt-0.5">
+                Unterschrift, Angebot, Finanzierung, Kataloge, Setpreise, Vermietung – individuell für Sie.
+              </div>
+            </div>
+            <ChevronDown className={`w-4 h-4 text-muted-foreground mt-1 shrink-0 transition-transform ${salesOpen ? 'rotate-180' : ''}`} />
+          </button>
+          {salesOpen && (
+            <div className="rounded-xl border bg-card p-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {[
+                  { label: 'Unterschrift', icon: PenLine },
+                  { label: 'Angebot', icon: FileText },
+                  { label: 'Finanzierung', icon: Banknote },
+                  { label: 'Kataloge', icon: BookOpen },
+                  { label: 'Setpreise', icon: Tag },
+                  { label: 'Vermietung', icon: KeyRound },
+                ].map((item) => (
+                  <a
+                    key={item.label}
+                    href="/beratung"
+                    className="text-left rounded-xl border p-4 transition-all hover:border-primary hover:shadow-md bg-card flex items-center gap-3"
+                  >
+                    <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                      <item.icon className="w-4 h-4 text-primary" />
+                    </div>
+                    <div className="font-semibold text-[13.5px]">{item.label}</div>
+                  </a>
+                ))}
+              </div>
+              <div className="mt-3 flex justify-end">
+                <a href="/beratung" className="inline-flex items-center gap-1 text-[12.5px] text-primary hover:underline">
+                  Zur Verkaufsberatung <ArrowRight className="w-3.5 h-3.5" />
+                </a>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {step === 'department' && (
         <div className="space-y-3">
