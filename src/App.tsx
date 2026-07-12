@@ -319,6 +319,7 @@ const RfTemplates = lazy(() => import("./pages/RollenFreigaben/TemplatesOnboardi
 const RfAnalytics = lazy(() => import("./pages/RollenFreigaben/Analytics"));
 const RfBreakGlass = lazy(() => import("./pages/RollenFreigaben/BreakGlass"));
 const RfContext = lazy(() => import("./pages/RollenFreigaben/ContextPolicies"));
+const RfSoD = lazy(() => import("./pages/RollenFreigaben/SoD"));
 
 const SecurityFindings = lazy(() => import("./pages/SecurityCenter/Findings"));
 const SecurityPentest = lazy(() => import("./pages/SecurityCenter/Pentest"));
@@ -1043,6 +1044,7 @@ function AppRoutes() {
             <Route path="analytics" element={<RfAnalytics />} />
             <Route path="break-glass" element={<RfBreakGlass />} />
             <Route path="kontext" element={<RfContext />} />
+            <Route path="sod" element={<RfSoD />} />
             <Route path="protokoll" element={<RfLog />} />
           </Route>
 
