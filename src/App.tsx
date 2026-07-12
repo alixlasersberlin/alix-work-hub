@@ -984,6 +984,7 @@ function AppRoutes() {
             <Route path="permissions" element={<SecurityPermissions />} />
             <Route path="policies" element={<SecurityPolicies />} />
             <Route path="storage" element={<SecurityStorage />} />
+            <Route path="mfa" element={<SecurityMfa />} />
             <Route path="findings" element={<SecurityFindings />} />
             <Route path="simulate" element={<SecuritySimulate />} />
             <Route path="plan" element={<SecurityPlan />} />
