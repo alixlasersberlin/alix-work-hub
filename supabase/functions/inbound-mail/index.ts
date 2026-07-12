@@ -82,6 +82,45 @@ serve(async (req) => {
       }
     }
 
+    // Ticket-Nummer im Betreff / Body erkennen (Format: AW-YYMMDD-XXXX)
+    const searchText = `${subject}\n${description}`;
+    const numMatch = searchText.match(/AW-\d{6}-[A-Z0-9]{3,}/i);
+    if (numMatch) {
+      const detected = numMatch[0].toUpperCase();
+      const { data: existing } = await supabase
+        .from("tickets")
+        .select("id, ticket_number, status")
+        .eq("ticket_number", detected)
+        .maybeSingle();
+
+      if (existing?.id) {
+        // Als Kunden-Antwort an bestehendes Ticket anhängen
+        await supabase.from("ticket_messages").insert({
+          ticket_id: existing.id,
+          sender_type: "customer",
+          sender_name: customerName || fromEmail || null,
+          sender_email: fromEmail || null,
+          message: description,
+          is_internal: false,
+          source_system: "email_inbound",
+        });
+
+        // Ggf. wieder öffnen, wenn geschlossen
+        if (existing.status === "geschlossen" || existing.status === "gelöst") {
+          await supabase.from("tickets").update({
+            status: "offen",
+            customer_visible_status: "Kunde hat geantwortet",
+          }).eq("id", existing.id);
+        }
+
+        console.log("inbound-mail: appended to existing ticket", detected);
+        return new Response(
+          JSON.stringify({ success: true, appended_to: existing.id, ticket_number: detected }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+    }
+
     const externalId =
       String(data?.message_id ?? data?.id ?? data?.headers?.["message-id"] ?? crypto.randomUUID())
         .replace(/[<>]/g, "")
