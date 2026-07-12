@@ -519,6 +519,7 @@ const navItems: NavItem[] = [
           { path: '/rollen', label: 'Rollen', icon: Shield, roles: ['Super Admin', 'Admin'] },
           { path: '/order/zulieferer', label: 'Lieferanten', icon: Users, roles: ['Super Admin'] },
           { path: '/mandanten', label: 'Mandanten', icon: Building2, roles: ['Super Admin'] },
+          { path: '/security-center', label: 'Security Center', icon: Shield, roles: ['Super Admin'] },
         ],
       },
 
