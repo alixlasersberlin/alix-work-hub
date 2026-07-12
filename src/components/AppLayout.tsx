@@ -15,6 +15,7 @@ import NataliaWelcomeOverlay from '@/components/NataliaWelcomeOverlay';
 import SalesLeadAssignmentOverlay from '@/components/SalesLeadAssignmentOverlay';
 import { SidebarInfoBar } from '@/components/SidebarInfoBar';
 import TenantSwitcher from '@/components/TenantSwitcher';
+import { TicketNotificationBell } from '@/components/tickets/TicketNotificationBell';
 import AuroraPrioTicker from '@/components/AuroraPrioTicker';
 import AuroraTopNav from '@/components/AuroraTopNav';
 import CommandPalette from '@/components/CommandPalette';
