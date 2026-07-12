@@ -269,7 +269,7 @@ export default function TicketDetail() {
           dept.includes('finance') ? 'finance@alixwork.de' :
           dept.includes('vertrieb') || dept.includes('sales') ? 'vertrieb@alixwork.de' :
           'service@alixwork.de';
-        const ticketRef = ticket.ticket_number || ticket.external_ticket_id || ticket.id.slice(0, 8);
+        const ticketRef = (ticket as any).ticket_number || ticket.external_ticket_id || ticket.id.slice(0, 8);
         const subject = `Antwort zu Ticket ${ticketRef}: ${ticket.title || ''}`.trim();
         const safeMsg = messageText
           .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
