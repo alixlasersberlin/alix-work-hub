@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Loader2, FilePlus, ShieldCheck, Ban, Clock, AlertTriangle } from 'lucide-react';
+import { Loader2, FilePlus, ShieldCheck, Ban, Clock, AlertTriangle, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -105,10 +105,22 @@ export default function Requests() {
     load();
   };
 
+  const apply = async (id: string) => {
+    const req = requests.find(r => r.id === id);
+    if (!req) return;
+    if (req.requested_by === user?.id) { toast.error('Antragsteller darf eigenen Antrag nicht anwenden.'); return; }
+    const { error } = await (supabase as any).rpc('apply_role_change_request', { _request_id: id });
+    if (error) { toast.error(error.message); return; }
+    toast.success('Antrag angewendet — Rolle wurde vergeben/entzogen.');
+    load();
+  };
+
   if (loading) return <div className="flex items-center gap-2 text-muted-foreground p-8"><Loader2 className="w-4 h-4 animate-spin" /> Lade…</div>;
 
   const open_ = requests.filter(r => r.status === 'open');
-  const done = requests.filter(r => r.status !== 'open');
+  const approved = requests.filter(r => r.status === 'approved');
+  const done = requests.filter(r => !['open', 'approved'].includes(r.status));
+
 
   return (
     <div className="space-y-4">
@@ -161,6 +173,42 @@ export default function Requests() {
           </div>
         </div>
       )}
+
+      {approved.length > 0 && (
+        <div>
+          <h3 className="text-xs uppercase text-muted-foreground mb-2 mt-6">Freigegeben — bereit zur Anwendung ({approved.length})</h3>
+          <div className="space-y-2">
+            {approved.map(r => (
+              <Card key={r.id} className="p-4 border-emerald-500/30 bg-emerald-500/5">
+                <div className="flex items-start justify-between gap-3 flex-wrap">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge variant="outline" className="bg-emerald-500/10 border-emerald-500/40 text-emerald-500">APPROVED · {r.action.toUpperCase()}</Badge>
+                      <span className="font-medium">{r.role_name}</span>
+                      <span className="text-xs text-muted-foreground">für</span>
+                      <span className="font-medium">{userName(r.target_user_id)}</span>
+                    </div>
+                    <div className="text-sm mt-2">{r.reason}</div>
+                    <div className="text-[10px] text-muted-foreground mt-1">
+                      geprüft von {r.reviewed_by ? userName(r.reviewed_by) : '—'} · {r.reviewed_at && new Date(r.reviewed_at).toLocaleString('de-DE')}
+                      {r.valid_until && <> · gültig bis {new Date(r.valid_until).toLocaleString('de-DE')}</>}
+                    </div>
+                  </div>
+                  {r.requested_by === user?.id ? (
+                    <Badge variant="outline" className="bg-muted flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Vier-Augen: nicht durch Antragsteller</Badge>
+                  ) : (
+                    <Button size="sm" onClick={() => apply(r.id)}>
+                      <Zap className="w-3 h-3 mr-1" /> Jetzt anwenden
+                    </Button>
+                  )}
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+
 
       {done.length > 0 && (
         <div>
@@ -249,7 +297,7 @@ export default function Requests() {
             <Card className="p-3 bg-amber-500/5 border-amber-500/30 text-xs">
               <div className="flex items-start gap-2">
                 <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-                <div>Dieser Antrag muss von einem <b>anderen</b> Super Admin geprüft werden. Sie können Ihren eigenen Antrag nicht freigeben. Die Freigabe wendet die Rolle noch nicht automatisch an — der Prüfer entscheidet.</div>
+                <div>Dieser Antrag muss von einem <b>anderen</b> Super Admin geprüft werden. Nach der Freigabe erscheint der Antrag im Bereich „Freigegeben" und kann dort mit einem Klick angewendet werden (Vier-Augen-Prinzip).</div>
               </div>
             </Card>
           </div>

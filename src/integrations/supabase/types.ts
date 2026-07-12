@@ -18737,6 +18737,10 @@ export type Database = {
       }
     }
     Functions: {
+      apply_role_change_request: {
+        Args: { _request_id: string }
+        Returns: Json
+      }
       as_force_close_case: {
         Args: { _case_id: string; _reason?: string }
         Returns: {
@@ -18992,6 +18996,10 @@ export type Database = {
       resolve_frei_bestellung_assignment: {
         Args: { _order_id: string }
         Returns: undefined
+      }
+      revoke_temporary_role_grant: {
+        Args: { _grant_id: string; _reason: string }
+        Returns: Json
       }
       rotate_finance_stakeholder_token: {
         Args: { p_id: string }
