@@ -14265,6 +14265,65 @@ export type Database = {
         }
         Relationships: []
       }
+      role_break_glass_sessions: {
+        Row: {
+          activated_at: string
+          activated_by: string
+          created_at: string
+          expires_at: string
+          granted_role_id: string
+          id: string
+          ip_address: string | null
+          reason: string
+          revoked_at: string | null
+          revoked_by: string | null
+          status: string
+          target_user_id: string
+          ticket_ref: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          activated_at?: string
+          activated_by: string
+          created_at?: string
+          expires_at: string
+          granted_role_id: string
+          id?: string
+          ip_address?: string | null
+          reason: string
+          revoked_at?: string | null
+          revoked_by?: string | null
+          status?: string
+          target_user_id: string
+          ticket_ref?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          activated_at?: string
+          activated_by?: string
+          created_at?: string
+          expires_at?: string
+          granted_role_id?: string
+          id?: string
+          ip_address?: string | null
+          reason?: string
+          revoked_at?: string | null
+          revoked_by?: string | null
+          status?: string
+          target_user_id?: string
+          ticket_ref?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_break_glass_sessions_granted_role_id_fkey"
+            columns: ["granted_role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       role_change_requests: {
         Row: {
           action: string
@@ -18974,6 +19033,16 @@ export type Database = {
       }
     }
     Functions: {
+      activate_break_glass: {
+        Args: {
+          _duration_minutes?: number
+          _reason: string
+          _role_id: string
+          _target_user_id: string
+          _ticket_ref?: string
+        }
+        Returns: string
+      }
       apply_role_change_request: {
         Args: { _request_id: string }
         Returns: Json
@@ -19129,6 +19198,7 @@ export type Database = {
         }[]
       }
       esc_user_department_ids: { Args: { _user_id: string }; Returns: string[] }
+      expire_break_glass_sessions: { Args: never; Returns: number }
       expire_temporary_role_grants: { Args: never; Returns: number }
       finance_deposit_book: {
         Args: {
@@ -19257,6 +19327,7 @@ export type Database = {
         Args: { _order_id: string }
         Returns: undefined
       }
+      revoke_break_glass: { Args: { _session_id: string }; Returns: undefined }
       revoke_temporary_role_grant: {
         Args: { _grant_id: string; _reason: string }
         Returns: Json
