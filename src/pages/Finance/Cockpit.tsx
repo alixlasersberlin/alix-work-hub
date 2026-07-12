@@ -86,6 +86,32 @@ export default function FinanceCockpit() {
         </div>
       )}
 
+      {!loading && (
+        <div className="grid md:grid-cols-2 gap-4">
+          {(['de', 'at'] as const).map(code => {
+            const src = code === 'de' ? 'zoho_eu_1' : 'zoho_eu_2';
+            const label = code === 'de' ? 'Alix Deutschland 🇩🇪' : 'Alix Austria 🇦🇹';
+            const yTx = tx.filter(r => r.customer?.source_system === src && r.transaction_type === 'Rechnung').reduce((s, r) => s + Number(r.amount), 0);
+            const oAcc = accounts.filter(a => a.customers?.source_system === src);
+            const openB = oAcc.reduce((s, a) => s + Number(a.current_balance || 0), 0);
+            const overB = oAcc.reduce((s, a) => s + Number(a.overdue_balance || 0), 0);
+            return (
+              <button key={code} onClick={() => nav(`/finance/cockpit/mandant/${code}`)}
+                className="text-left border border-border rounded-lg p-5 bg-card hover:border-primary/60 hover:shadow-lg transition-all">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="font-semibold text-lg">{label}</div>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div className="grid grid-cols-3 gap-3 text-sm">
+                  <div><div className="text-muted-foreground text-xs">YTD Umsatz</div><div className="font-medium">{fmt(yTx)}</div></div>
+                  <div><div className="text-muted-foreground text-xs">Offen</div><div className="font-medium">{fmt(openB)}</div></div>
+                  <div><div className="text-muted-foreground text-xs">Überfällig</div><div className="font-medium text-destructive">{fmt(overB)}</div></div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       <DataCard title="Monatsumsatz pro Mandant (laufendes Jahr)">
         <div className="h-72">
