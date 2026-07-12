@@ -429,7 +429,7 @@ export default function BookingPortal() {
 
       {step === 'location' && (
         <Card>
-          <CardHeader><CardTitle className="text-[16px]">Standort auswählen</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-[16px]">{t.location.title}</CardTitle></CardHeader>
           <CardContent className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {DEFAULT_LOCATIONS.map((l) => (
               <button
