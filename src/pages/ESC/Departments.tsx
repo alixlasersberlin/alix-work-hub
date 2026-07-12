@@ -52,10 +52,14 @@ function hslOrHexToHex(v: string): string {
 const emptyForm: Omit<EscDepartment, 'id'> = {
   name: '', color: '#3b82f6', icon: 'Circle', description: '', active: true, publicBookable: false,
   defaultDurationMinutes: 60, defaultEmailTemplate: '', responsibleEmployeeIds: [], internalVisible: true, externallyBookable: false,
+  sortOrder: 100,
 };
 
 export default function EscDepartments() {
-  const { departments, createDepartment, updateDepartment, deleteDepartment } = useDepartments();
+  const { departments: rawDepartments, createDepartment, updateDepartment, deleteDepartment } = useDepartments();
+  const departments = [...rawDepartments].sort(
+    (a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999) || a.name.localeCompare(b.name),
+  );
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<EscDepartment | null>(null);
   const [form, setForm] = useState<Omit<EscDepartment, 'id'>>(emptyForm);
@@ -97,6 +101,7 @@ export default function EscDepartments() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-20">Reihenfolge</TableHead>
               <TableHead>Abteilung</TableHead>
               <TableHead>Beschreibung</TableHead>
               <TableHead>Dauer</TableHead>
@@ -108,6 +113,7 @@ export default function EscDepartments() {
           <TableBody>
             {departments.map((d) => (
               <TableRow key={d.id}>
+                <TableCell className="text-[12px] tabular-nums text-muted-foreground">{d.sortOrder ?? '—'}</TableCell>
                 <TableCell><DepartmentBadge dept={d} size="md" /></TableCell>
                 <TableCell className="text-muted-foreground text-[12px]">{d.description}</TableCell>
                 <TableCell className="text-[12px]">{d.defaultDurationMinutes} min</TableCell>
@@ -221,6 +227,20 @@ export default function EscDepartments() {
               <div className="md:col-span-2"><Label>Beschreibung</Label><Textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
               <div><Label>Standarddauer (min)</Label><Input type="number" value={form.defaultDurationMinutes} onChange={(e) => setForm({ ...form, defaultDurationMinutes: Number(e.target.value) })} /></div>
               <div><Label>Standard-E-Mail-Vorlage</Label><Input value={form.defaultEmailTemplate || ''} onChange={(e) => setForm({ ...form, defaultEmailTemplate: e.target.value })} /></div>
+              <div className="md:col-span-2">
+                <Label>Reihenfolge (Nummer)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={form.sortOrder ?? ''}
+                  onChange={(e) => setForm({ ...form, sortOrder: e.target.value === '' ? undefined : Number(e.target.value) })}
+                  placeholder="z. B. 10, 20, 30 …"
+                />
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  Kleinere Zahlen erscheinen zuerst – gilt auch auf der öffentlichen Buchungsseite.
+                </p>
+              </div>
               <div className="md:col-span-2 flex flex-wrap gap-4 pt-1 border-t">
                 <label className="flex items-center gap-2 text-sm"><Checkbox checked={form.active} onCheckedChange={(v) => setForm({ ...form, active: !!v })} />Aktiv</label>
                 <label className="flex items-center gap-2 text-sm"><Checkbox checked={form.publicBookable} onCheckedChange={(v) => setForm({ ...form, publicBookable: !!v })} />Öffentlich buchbar</label>
