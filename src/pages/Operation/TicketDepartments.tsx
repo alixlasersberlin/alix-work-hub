@@ -66,6 +66,8 @@ export default function TicketDepartments() {
       routing_strategy: r.routing_strategy,
       mailbox_email: r.mailbox_email,
       description: r.description,
+      sla_hours: r.sla_hours,
+      reminder_after_days: r.reminder_after_days,
     }).eq("id", r.id);
     setSaving(null);
     if (error) return toast.error(error.message);
