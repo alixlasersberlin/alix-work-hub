@@ -276,9 +276,9 @@ export default function BookingPortal() {
               <Mail className="w-5 h-5 text-primary" />
             </div>
             <div className="flex-1">
-              <div className="font-semibold text-[14px]">Anfragen und Rückruf schnell erledigt</div>
+              <div className="font-semibold text-[14px]">{t.cards.inquiry_title}</div>
               <div className="text-[12px] text-muted-foreground mt-0.5">
-                Wählen Sie eine Leistung – Sie erhalten direkt eine Bestätigung per E-Mail.
+                {t.cards.inquiry_desc}
               </div>
             </div>
             <ChevronDown className={`w-4 h-4 text-muted-foreground mt-1 shrink-0 transition-transform ${deptOpen ? 'rotate-180' : ''}`} />
