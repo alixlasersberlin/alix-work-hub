@@ -221,6 +221,7 @@ export default function EmployeesCards() {
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing?.full_name || editing?.email} bearbeiten</DialogTitle>
+            <DialogDescription>Rollen, Niederlassungen und Aktiv-Status verwalten.</DialogDescription>
           </DialogHeader>
           {editing && (
             <div className="space-y-4">
