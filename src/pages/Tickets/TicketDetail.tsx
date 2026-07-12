@@ -15,6 +15,7 @@ import { sbRepair } from '@/lib/repair/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AiAnalysisPanel } from '@/components/ai-service/AiAnalysisPanel';
 import { CreateAppointmentFromTicket } from '@/components/tickets/CreateAppointmentFromTicket';
+import { TicketHistoryTimeline } from '@/components/tickets/TicketHistoryTimeline';
 
 interface Ticket {
   id: string;
