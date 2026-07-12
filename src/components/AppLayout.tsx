@@ -308,8 +308,30 @@ const navItems: NavItem[] = [
           { path: '/geraetesperren', label: 'Gerätesperren', icon: Lock, roles: null },
         ],
       },
+      {
+        path: '/tourenplanung', label: 'TOURENPLANUNG', icon: MapPin, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'],
+        children: [
+          { path: '/tourenplanung', label: 'Übersicht', icon: MapPin, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
+          { path: '/tourenplanung/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Order', 'SACHBEARBEITUNG'] },
+          { path: '/tourenplanung/kalender', label: 'Kalender', icon: Calendar, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Order', 'Technik', 'SACHBEARBEITUNG'] },
+          { path: '/tourenplanung/karte', label: 'Karte', icon: MapPin, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Order', 'Technik', 'SACHBEARBEITUNG'] },
+          { path: '/tourenplanung/einstellungen', label: 'Einstellungen', icon: Settings, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'SACHBEARBEITUNG'] },
+          { path: '/m', label: 'Mobile Techniker-App', icon: Truck, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Technik', 'Service', 'Reparaturannahme', 'SACHBEARBEITUNG'] },
+          {
+            path: '/papiere', label: 'VERSAND', icon: FileText, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'],
+            children: [
+              { path: '/papiere', label: 'Übersicht', icon: FileText, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
+              { path: '/versand/lieferscheine', label: 'Lieferscheine', icon: Truck, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
+              { path: '/versand/ratenplan', label: 'Ratenplan', icon: Banknote, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
+              { path: '/versand/mietkauf', label: 'Mietkauf', icon: FileSignature, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
+              { path: '/versand/sepa-mandat', label: 'SEPA Mandat', icon: CreditCard, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
+            ],
+          },
+        ],
+      },
     ],
   },
+
 
   {
     path: '/warehouse-logistics', label: 'WAREHOUSE & LOGISTICS', icon: Warehouse,
@@ -350,27 +372,7 @@ const navItems: NavItem[] = [
           { path: '/reparatur/rueckversand', label: 'Rückversand', icon: PackageCheck, roles: ['Admin', 'Super Admin', 'Reparaturannahme', 'Technik', 'Service', 'Österreich', 'SACHBEARBEITUNG'] },
         ],
       },
-      {
-        path: '/tourenplanung', label: 'TOURENPLANUNG', icon: MapPin, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'],
-        children: [
-          { path: '/tourenplanung', label: 'Übersicht', icon: MapPin, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
-          { path: '/tourenplanung/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Order', 'SACHBEARBEITUNG'] },
-          { path: '/tourenplanung/kalender', label: 'Kalender', icon: Calendar, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Order', 'Technik', 'SACHBEARBEITUNG'] },
-          { path: '/tourenplanung/karte', label: 'Karte', icon: MapPin, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Order', 'Technik', 'SACHBEARBEITUNG'] },
-          { path: '/tourenplanung/einstellungen', label: 'Einstellungen', icon: Settings, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'SACHBEARBEITUNG'] },
-          { path: '/m', label: 'Mobile Techniker-App', icon: Truck, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Technik', 'Service', 'Reparaturannahme', 'SACHBEARBEITUNG'] },
-          {
-            path: '/papiere', label: 'VERSAND', icon: FileText, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'],
-            children: [
-              { path: '/papiere', label: 'Übersicht', icon: FileText, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
-              { path: '/versand/lieferscheine', label: 'Lieferscheine', icon: Truck, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
-              { path: '/versand/ratenplan', label: 'Ratenplan', icon: Banknote, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
-              { path: '/versand/mietkauf', label: 'Mietkauf', icon: FileSignature, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
-              { path: '/versand/sepa-mandat', label: 'SEPA Mandat', icon: CreditCard, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
-            ],
-          },
-        ],
-      },
+
     ],
   },
 
