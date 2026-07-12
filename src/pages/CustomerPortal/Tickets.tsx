@@ -255,7 +255,7 @@ export default function CustomerPortalTickets() {
               <label className="inline-flex items-center gap-2 px-3 py-2 border border-border rounded-md cursor-pointer hover:bg-muted/40 text-sm">
                 <Paperclip className="w-4 h-4" />
                 Dateien auswählen
-                <input type="file" multiple className="hidden" onChange={e => addFiles(e.target.files)} />
+                <input type="file" multiple accept={TICKET_ATTACHMENT_ACCEPT} className="hidden" onChange={e => addFiles(e.target.files)} />
               </label>
               {files.map((f, i) => (
                 <span key={i} className="inline-flex items-center gap-2 text-xs bg-muted/50 rounded px-2 py-1">
