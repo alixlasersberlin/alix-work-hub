@@ -33,6 +33,20 @@ interface TicketRow {
   department: string;
   last_synced_at: string | null;
   created_at: string;
+  sla_status: string | null;
+  escalation_count: number | null;
+}
+
+function slaBadge(s: string | null) {
+  if (!s || s === 'ok') return null;
+  const map: Record<string, string> = {
+    warning: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+    warn_response: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+    warn_progress: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+    breach: 'bg-red-500/15 text-red-400 border-red-500/30',
+  };
+  const label = s === 'breach' ? 'SLA ⚠' : 'SLA ⏱';
+  return <span className={`ml-2 text-[10px] px-1.5 py-0.5 rounded border ${map[s] || ''}`}>{label}</span>;
 }
 
 const STATUS_OPTIONS = ['open', 'in-progress', 'wartet_Kunde', 'offen', 'in_bearbeitung', 'wartet_kunde', 'gelöst', 'geschlossen'];
