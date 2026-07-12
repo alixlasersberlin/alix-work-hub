@@ -331,6 +331,7 @@ const CustomerPortalSupport = lazy(() => import("./pages/CustomerPortal/Support"
 const CustomerPortalReviews = lazy(() => import("./pages/CustomerPortal/Reviews"));
 const CustomerPortalTimeline = lazy(() => import("./pages/CustomerPortal/Timeline"));
 const CustomerPortalDevices = lazy(() => import("./pages/CustomerPortal/Devices"));
+const CustomerPortalOrders = lazy(() => import("./pages/CustomerPortal/Orders"));
 const CustomerPortalMaintenance = lazy(() => import("./pages/CustomerPortal/Maintenance"));
 const CustomerPortalWarranty = lazy(() => import("./pages/CustomerPortal/Warranty"));
 const CustomerPortalTickets = lazy(() => import("./pages/CustomerPortal/Tickets"));
