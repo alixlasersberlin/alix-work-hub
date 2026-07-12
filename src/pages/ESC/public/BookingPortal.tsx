@@ -22,7 +22,9 @@ import type { EscAppointmentKind } from '@/lib/esc/appointment-kinds';
 import { useBookingT } from '@/i18n/booking';
 
 type StepId = 'department' | 'service' | 'location' | 'time' | 'contact' | 'summary';
-const STEPS: StepId[] = ['department', 'service', 'location', 'time', 'contact', 'summary'];
+const STEPS_FULL: StepId[] = ['department', 'service', 'location', 'time', 'contact', 'summary'];
+const STEPS_TICKET: StepId[] = ['department', 'service', 'contact', 'summary'];
+const isTicketService = (name: string) => /ticket|anfrage|support|reklamation/i.test(name || '');
 
 
 export default function BookingPortal() {
