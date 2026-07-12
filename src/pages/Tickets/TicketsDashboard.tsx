@@ -89,7 +89,7 @@ export default function TicketsDashboard() {
     });
     setPrioData(Object.entries(prioAgg)
       .sort((a, b) => b[1] - a[1])
-      .map(([name, value]) => ({ name, value, color: PRIO_COLORS[name] ?? "hsl(215 15% 55%)" })));
+      .map(([name, value]) => ({ name, value, color: PRIO_COLORS[name?.toLowerCase()] ?? "hsl(215 15% 55%)" })));
 
     // Department breakdown
     const { data: dept } = await supabase
