@@ -89,6 +89,8 @@ export default function EscBookings() {
           </Table>
         </CardContent>
       </Card>
+
+      <TicketAppointmentsPanel />
     </div>
   );
 }
