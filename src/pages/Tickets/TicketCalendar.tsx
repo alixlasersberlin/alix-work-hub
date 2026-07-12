@@ -73,6 +73,7 @@ type ViewMode = 'month' | 'week';
 export default function TicketCalendar() {
   const [events, setEvents] = useState<TicketEvent[]>([]);
   const [depts, setDepts] = useState<Dept[]>([]);
+  const [users, setUsers] = useState<UserRow[]>([]);
   const [cursor, setCursor] = useState<Date>(new Date());
   const [view, setView] = useState<ViewMode>('month');
   const [loading, setLoading] = useState(false);
@@ -80,8 +81,10 @@ export default function TicketCalendar() {
   const [fDepts, setFDepts] = useState<Set<string>>(new Set());
   const [fKinds, setFKinds] = useState<Set<string>>(new Set());
   const [fStatus, setFStatus] = useState<Set<string>>(new Set());
+  const [dragOverKey, setDragOverKey] = useState<string | null>(null);
 
   const [selected, setSelected] = useState<TicketEvent | null>(null);
+
 
   const range = useMemo(() => {
     const from = view === 'month' ? startOfMonth(cursor) : startOfWeek(cursor, { weekStartsOn: 1 });
