@@ -25,5 +25,9 @@ export function useDepartments() {
 
   const deleteDepartment = useCallback(async (id: string) => { await remove(id); }, [remove]);
 
-  return { departments: items, createDepartment, updateDepartment, deleteDepartment };
+  const sorted = [...items].sort(
+    (a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999) || a.name.localeCompare(b.name),
+  );
+
+  return { departments: sorted, createDepartment, updateDepartment, deleteDepartment };
 }
