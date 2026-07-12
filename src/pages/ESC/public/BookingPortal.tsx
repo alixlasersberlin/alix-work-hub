@@ -513,20 +513,20 @@ export default function BookingPortal() {
 
       {step === 'contact' && (
         <Card>
-          <CardHeader><CardTitle className="text-[16px]">Ihre Kontaktdaten</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-[16px]">{t.contact.title}</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div><Label>Vorname *</Label><Input value={state.firstName} onChange={(e) => setState({ ...state, firstName: e.target.value })} /></div>
-              <div><Label>Nachname *</Label><Input value={state.lastName} onChange={(e) => setState({ ...state, lastName: e.target.value })} /></div>
-              <div><Label>Firma *</Label><Input value={state.company} onChange={(e) => setState({ ...state, company: e.target.value })} /></div>
-              <div><Label>Webseite</Label><Input value={state.website} onChange={(e) => setState({ ...state, website: e.target.value })} placeholder="https://" /></div>
-              <div><Label>E-Mail *</Label><Input type="email" value={state.email} onChange={(e) => setState({ ...state, email: e.target.value })} /></div>
-              <div><Label>Telefon *</Label><Input value={state.phone} onChange={(e) => setState({ ...state, phone: e.target.value })} /></div>
+              <div><Label>{t.contact.first_name} *</Label><Input value={state.firstName} onChange={(e) => setState({ ...state, firstName: e.target.value })} /></div>
+              <div><Label>{t.contact.last_name} *</Label><Input value={state.lastName} onChange={(e) => setState({ ...state, lastName: e.target.value })} /></div>
+              <div><Label>{t.contact.company} *</Label><Input value={state.company} onChange={(e) => setState({ ...state, company: e.target.value })} /></div>
+              <div><Label>{t.contact.website}</Label><Input value={state.website} onChange={(e) => setState({ ...state, website: e.target.value })} placeholder="https://" /></div>
+              <div><Label>{t.contact.email} *</Label><Input type="email" value={state.email} onChange={(e) => setState({ ...state, email: e.target.value })} /></div>
+              <div><Label>{t.contact.phone} *</Label><Input value={state.phone} onChange={(e) => setState({ ...state, phone: e.target.value })} /></div>
               {bookableEmployees.length > 0 && (
                 <div className="md:col-span-2">
-                  <Label>Gewünschter Ansprechpartner (optional)</Label>
+                  <Label>{t.contact.contact_person}</Label>
                   <div className="flex flex-wrap gap-1.5 mt-1">
-                    <button type="button" onClick={() => setState({ ...state, contactPersonId: '' })} className={`text-[12px] rounded-full border px-3 py-1 ${!state.contactPersonId ? 'border-primary bg-primary/10' : ''}`}>Egal</button>
+                    <button type="button" onClick={() => setState({ ...state, contactPersonId: '' })} className={`text-[12px] rounded-full border px-3 py-1 ${!state.contactPersonId ? 'border-primary bg-primary/10' : ''}`}>{t.contact.any}</button>
                     {bookableEmployees.map((e) => (
                       <button key={e.id} type="button" onClick={() => setState({ ...state, contactPersonId: e.id })} className={`text-[12px] rounded-full border px-3 py-1 ${state.contactPersonId === e.id ? 'border-primary bg-primary/10' : ''}`}>{e.name}</button>
                     ))}
@@ -534,26 +534,27 @@ export default function BookingPortal() {
                 </div>
               )}
               <div className="md:col-span-2">
-                <Label>Nachricht</Label>
+                <Label>{t.contact.message}</Label>
                 <Textarea rows={3} value={state.message} onChange={(e) => setState({ ...state, message: e.target.value })} />
               </div>
             </div>
             <div className="space-y-2 pt-2 border-t">
               <label className="flex items-start gap-2 text-[12.5px]">
                 <Checkbox checked={state.consentPrivacy} onCheckedChange={(v) => setState({ ...state, consentPrivacy: !!v })} className="mt-0.5" />
-                <span>Ich habe die <a href="https://alixworks.de/datenschutz" target="_blank" rel="noreferrer" className="text-primary hover:underline">Datenschutzerklärung</a> gelesen und akzeptiere sie. *</span>
+                <span>{t.contact.consent_privacy_pre} <a href="https://alixworks.de/datenschutz" target="_blank" rel="noreferrer" className="text-primary hover:underline">{t.contact.consent_privacy_link}</a> {t.contact.consent_privacy_post} *</span>
               </label>
               <label className="flex items-start gap-2 text-[12.5px]">
                 <Checkbox checked={state.consentEmail} onCheckedChange={(v) => setState({ ...state, consentEmail: !!v })} className="mt-0.5" />
-                <span>Ich willige in den Empfang von E-Mails zu diesem Termin ein. *</span>
+                <span>{t.contact.consent_email} *</span>
               </label>
               <label className="flex items-start gap-2 text-[12.5px]">
                 <Checkbox checked={state.consentMarketing} onCheckedChange={(v) => setState({ ...state, consentMarketing: !!v })} className="mt-0.5" />
-                <span>Optional: Ich möchte weitere Angebote per E-Mail erhalten.</span>
+                <span>{t.contact.consent_marketing}</span>
               </label>
               <div className="flex items-center gap-2 text-[11px] text-muted-foreground pt-1">
-                <ShieldCheck className="w-3.5 h-3.5" /> Geschützt vor Spam · CAPTCHA (Cloudflare Turnstile) wird aktiviert.
+                <ShieldCheck className="w-3.5 h-3.5" /> {t.contact.captcha}
               </div>
+
             </div>
           </CardContent>
         </Card>
