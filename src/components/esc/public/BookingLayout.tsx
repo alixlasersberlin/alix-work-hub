@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import alixLogo from '@/assets/alix-logo-gold.png';
 import { ALIXWORKS_PUBLIC_BASE } from '@/lib/esc/public-url';
+import WizardLanguageSwitcher from '@/components/WizardLanguageSwitcher';
 
 interface Props {
   children: ReactNode;
@@ -21,8 +22,9 @@ export function BookingLayout({ children, step, totalSteps, narrow, hideLegalLin
           <div className="flex-1 min-w-0">
             <div className="text-[13px] font-normal tracking-tight truncate">Alix Smart dein interaktives Lasersystem</div>
           </div>
-          
+          <WizardLanguageSwitcher variant="light" />
         </div>
+
         {step && totalSteps && (
           <div className="max-w-5xl mx-auto px-4 pb-2">
             <div className="h-1.5 rounded-full bg-muted overflow-hidden">
