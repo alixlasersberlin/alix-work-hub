@@ -1,89 +1,124 @@
 
-# Mediapaket-Integration in AlixWork
+## Ziel
 
-Ziel: Das externe Mediapaket (mediapaket.alix-lasers.com) wird als natives, produktionsfähiges Modul in AlixWork übernommen – mit voller Anbindung an Kunde, Auftrag, Gerät, Rollen, RLS, Storage, Audit und Benachrichtigungen. Bestehende Funktionen bleiben unverändert.
-
-Wegen des enormen Umfangs schlage ich eine **phasenweise Umsetzung in 6 Phasen** vor. Jede Phase wird einzeln ausgeliefert und getestet, bevor die nächste startet. Ich möchte dazu vorab ein paar Punkte klären, weil einige Anforderungen Auswirkungen auf Struktur, Rechte und Budget haben.
+Das bestehende Ticketsystem (`public.tickets`) bleibt führend. Der Teamkalender (`esc_events`) zeigt nur ticket-basierte Termine/Fristen und ist bidirektional verknüpft. Umsetzung in zwei Stufen — dieser Plan deckt **Stufe 1** ab (Kern-Routing + Kalender-Bridge + Kundenbestätigung). Stufe 2 (Eskalationsengine, Lastverteilung, Reports) folgt separat.
 
 ---
 
-## Rückfragen vor Umsetzung
+## Stufe 1 — Umfang
 
-1. **Externer Datenimport**  
-   Existiert ein Zugang (Datenbank-Dump, CSV-Export, API) zum bestehenden `mediapaket.alix-lasers.com`? Ohne Export-Quelle kann Phase 6 (Migration Altbestand) nicht sauber umgesetzt werden – ich würde dann eine leere Import-Maske vorbereiten, die später gespeist wird.
+### 1. Abteilungen als eigene Tabelle
+Neue Tabelle `ticket_departments` (getrennt von `departments`, das für Buchhaltung/Konzern genutzt wird):
+- `name`, `slug`, `color` (hex), `is_active`, `sort`, `allow_customer_pick_person` (bool), `routing_strategy` (enum: `manual`, `round_robin`, `region`, `product`, `account_manager`, `least_load`), `mailbox_email`
+- Seed mit: Service, Technik, Lieferung, Schulung, NiSV Schulung Virtuell, NiSV Präsenz, Mediapaket, Sales, Buchhaltung, Reklamation, Sonstige
+- Super-Admin-CRUD unter `/operation/ticket-abteilungen`
 
-2. **Kundenauthentifizierung auf `/book`**  
-   `/book` liegt aktuell im ESC-Public-Bereich (BookingPortal), offenbar ohne Login. Mediapaket setzt aber einen erkannten AlixWork-Kunden voraus. Zwei Optionen:  
-   a) Mediapaket-Kachel nur nach Login (via Customer-Portal `/portal` Flow, das existiert bereits) sichtbar.  
-   b) Zugang über Magic-Link aus AlixWork/E-Mail statt Passwort.  
-   Meine Empfehlung: **(b) Magic-Link pro Auftrag** – der Kunde bekommt aus AlixWork einen personalisierten Link. Passt zur bestehenden Customer-Portal-Struktur.
+### 2. `tickets` erweitern (bestehende Tabelle, keine Neuanlage)
+Neue Spalten:
+- `ticket_department_id` (FK → `ticket_departments`)
+- `category` (text)
+- `due_at` (timestamptz) — Frist
+- `appointment_at` (timestamptz) — vereinbarter Kundentermin
+- `device_id` (uuid, nullable)
+- `order_id` (uuid, nullable)
+- `source` bleibt (Wert `kundenportal` / `booking_portal` / `email_inbound` / `manual`)
+- `follow_up_at` existiert bereits
 
-3. **Neue Rolle „Mediapaket-Mitarbeiter"**  
-   Soll ich eine neue Rolle `Mediapaket` in `user_roles` anlegen, oder reichen bestehende Rollen (`Order`, `Super Admin`, `Admin`)? Nach der Rollen-Memory würde ich `Mediapaket` als eigene, enge Rolle ergänzen (nur Mediapaket-Modul + Auftragsreiter lesend).
+Die vorhandenen Felder `department`, `assigned_to`, `priority`, `status` bleiben unverändert und werden weitergenutzt.
 
-4. **Ausbaustufe für Start**  
-   Der Prompt umfasst ~20 neue Tabellen, Wizard mit 13 Schritten, PDF-Export, Storage, Migration, Admin-Konfigurator, Übersichtsseite, Benachrichtigungen. Realistisch sind das mehrere Arbeitstage. Soll ich:  
-   a) **Alles nach Plan** in 6 Phasen umsetzen (empfohlen, größerer Credits-Verbrauch), oder  
-   b) einen **MVP** (Phasen 1–4 ohne PDF, ohne Admin-Konfigurator, ohne Alt-Import) zuerst, danach Ausbau?
+### 3. Ticket-Historie
+Nutzt bestehende `ticket_messages` + neue Tabelle `ticket_history` (Datum, User, Aktion, alt/neu). Alle Änderungen (Zuweisung, Status, Frist, Termin, Kundenaktion) landen automatisch dort via DB-Trigger.
+
+### 4. Routing-Engine (Edge Function `ticket-router`)
+Wird nach jedem `INSERT` in `tickets` (source ≠ manuell) oder manuell per Button aufgerufen. Reihenfolge:
+1. Fester Kundenbetreuer (`customers.account_manager_id`, falls vorhanden — sonst übersprungen)
+2. Geräte-/Produktzuständigkeit (`technician_skills` bestehend)
+3. Region (aus Kundenadresse) — nur wenn `routing_strategy='region'`
+4. Least-Load: Mitarbeiter der Abteilung mit den wenigsten `status IN ('Neu','Zugewiesen','In Bearbeitung')` Tickets
+5. Fallback: `assigned_to = NULL` → landet im Abteilungs-Postfach
+
+Jede Zuweisung schreibt in `ticket_history`.
+
+### 5. Kunden-Ticketformular (Kundenportal)
+Erweiterung `src/pages/CustomerPortal/Tickets.tsx` und `src/pages/ESC/public/BookingPortal.tsx` (Ticket-Zweig):
+- Felder: Betreff, Beschreibung, Kategorie, Abteilung (Pflicht), Gerät (aus Kundengeräten), Auftrag (aus Kundenaufträgen), Priorität, gewünschte Rückmeldung, gewünschter Termin (optional), Ansprechpartner (nur wenn Abteilung `allow_customer_pick_person=true`), Anhänge
+- Insert via Edge Function `public-book-ticket` (existiert bereits, wird erweitert) → schreibt in `tickets` mit `source='kundenportal'` und ruft `ticket-router` auf
+
+### 6. Kalender-Bridge (`esc_events` ↔ `tickets`)
+- Neue Spalte `esc_events.ticket_id` (FK → `tickets`)
+- Neue Spalte `esc_events.event_kind` (enum: `rueckruf`, `kundentermin`, `vor_ort`, `reparatur`, `lieferung`, `schulung`, `frist`, `eskalation`, `wiedervorlage`)
+- Trigger `sync_ticket_to_calendar`:
+  - Wenn `tickets.appointment_at`, `due_at` oder `follow_up_at` gesetzt/geändert wird → passenden `esc_events`-Eintrag erzeugen/aktualisieren
+  - Wenn `tickets.assigned_to` oder `department` ändert → Kalendereintrag mitziehen
+  - Wenn `tickets.status` auf `Geschlossen`/`Gelöst` → offene Kalendertermine der Zukunft bleiben stehen (User-Sicherheitsabfrage im UI), Fristen/Wiedervorlagen werden `Erledigt`
+- Trigger `sync_calendar_to_ticket`:
+  - Wenn `esc_events.start_at` verschoben → `tickets.appointment_at` / `due_at` aktualisieren + History-Eintrag
+- Ohne einen der drei Zeitfelder entsteht KEIN Kalendereintrag (verhindert Flut)
+
+### 7. Terminstatus getrennt
+Neue Spalte `esc_events.appointment_status` (enum: `geplant`, `bestaetigung_ausstehend`, `bestaetigt`, `in_durchfuehrung`, `erledigt`, `abgesagt`, `verschoben`, `nicht_erschienen`) — unabhängig vom Ticketstatus.
+
+### 8. Kundenbestätigung über alixwork.de
+Nutzt vorhandenes `/book/confirmation` + neue Routen:
+- `/termin/bestaetigen/:token`, `/termin/verschieben/:token`, `/termin/ablehnen/:token`
+- Token wird beim Termin-Insert generiert (`esc_events.confirmation_token`, existiert bereits als `confirmationToken`)
+- Custom Domain: Links werden mit `https://alixwork.de` gebildet (bereits Custom Domain)
+- Edge Function `public-appointment-action` verarbeitet Bestätigung/Verschiebung/Absage → aktualisiert `esc_events.appointment_status` + `tickets.status` + schreibt `ticket_history`, benachrichtigt Mitarbeiter
+- Verschiebung: Kunde wählt neuen Slot aus dem Public-Booking-Layout
+
+### 9. Kalenderansicht anpassen
+`src/pages/ESC/` (Kalenderseite): 
+- Farbe pro Event = `ticket_departments.color` (Fallback bestehende Farbe)
+- Filter-Chips: Abteilung, Mitarbeiter, Ticketstatus, Terminstatus, Priorität, Terminart, Standort, Gerät, Auftrag, „Nur meine Termine"
+- Klick auf Event → Slideover mit Ticket-Vollansicht + Link zu `/tickets/:id`
+
+### 10. In-App-Benachrichtigungen
+Nutzt bestehende `mail_notifications`:
+- Bei neuem Ticket: alle Mitglieder der Abteilung + zugewiesener Mitarbeiter
+- Bei Zuweisungswechsel: alter + neuer Mitarbeiter
+- Bei Kundenbestätigung/-absage: zugewiesener Mitarbeiter
+
+### 11. Dashboard-Kacheln
+Neuer Bereich im bestehenden Dashboard (`src/pages/Dashboard.tsx`):
+- Neue Tickets, Meine offenen, Heute fällig, Überfällig, Termine heute, Warten auf Kunde, Eskaliert
+- Jede Kachel = deeplink zu gefilterter `/tickets`- oder `/esc`-Ansicht
+
+### 12. Berechtigungen (RLS)
+- Kunde (customer_portal_users): nur eigene Tickets/Termine (bestehendes Portal-System)
+- Mitarbeiter: eigene + Abteilungstickets (via Rolle)
+- Abteilungsleiter: neue Rolle `Abteilungsleitung` mit CRUD auf Abteilungstickets, Zuweisung, Frist
+- Super Admin: alles
 
 ---
 
-## Umsetzungsplan (6 Phasen)
+## Bewusste Auslassungen (kommen in Stufe 2)
 
-### Phase 1 – Datenbank & Storage-Fundament
-- Neue Tabellen (alle unter `public`, mit GRANTs + RLS + Audit-Trigger):  
-  `media_packages`, `media_package_services`, `media_package_studio_data`, `media_package_devices`, `media_package_prices`, `media_package_contact_data`, `media_package_opening_hours`, `media_package_treatments`, `media_package_team_members`, `media_package_branding`, `media_package_files`, `media_package_consents`, `media_package_history`, `media_package_comments`.
-- Fremdschlüssel: `customer_id → customers`, `order_id → orders`, `device_id → lager_devices`, `assigned_user_id → user_profiles`.
-- Neuer Enum `media_package_status` (Noch nicht begonnen / In Bearbeitung / Rückfrage / Eingereicht / In Prüfung / In Umsetzung / Korrektur / Freigabe ausstehend / Abgeschlossen).
-- Neue Rolle `Mediapaket` in `app_role` (falls Rückfrage 3 = ja).
-- Storage-Bucket `mediapaket-files` (privat), Struktur `customers/{cid}/orders/{oid}/media-package/{mpid}/{category}/{version}/{filename}`.
-- RLS: Kunde nur eigene (`customer_id` via Portal-Token oder Auth), Mitarbeiter je nach Rolle, Super Admin alles.
-- Trigger für `updated_at`, Audit-Trigger auf allen Tabellen → `media_package_history`.
-
-### Phase 2 – Kundenformular (Wizard)
-- Route `/book/mediapaket` (integriert in bestehendes BookingLayout, gleiches Design).
-- Kachel auf `/book` „Mein Media Paket" mit Live-Statusanzeige (Fortschritt, letzte Bearbeitung, offene Rückfragen).
-- Kundenerkennung via Customer-Portal-Session bzw. Magic-Link-Token → Auftragsauswahl bei mehreren Aufträgen.
-- Wizard mit 13 Schritten (siehe Prompt Kap. 6–18), Auto-Save nach jedem Feld/Blur, Prozent-Fortschritt.
-- Upload-Komponente mit MIME-/Größenprüfung, Vorschau, Versionierung.
-- Zusammenfassung + verbindliches Absenden (setzt Status `Vollständig eingereicht`, erzeugt immutable Snapshot in `media_package_history`).
-- Vollständig responsiv (Mobile-first).
-
-### Phase 3 – Auftragsreiter „Mediapaket"
-- Neuer Tab in bestehender Auftragsdetailseite (parallel zu existierenden Reitern).
-- Kopfbereich, Aktionsleiste (Öffnen, Bearbeiten, Kundenlink kopieren, Rückfrage, Mitarbeiter zuweisen, Status ändern, Download, Historie, Freigabe anfordern, Abschließen).
-- Interne Sub-Bereiche: Übersicht, Webseite, Flyer, Social Media, Studiodaten, Preise, Texte, Dateien, Rückfragen, Aufgaben, Freigaben, Historie.
-- Rückfrage-Panel → schreibt in `media_package_comments`, benachrichtigt Kunde via bestehendes Notification-System.
-
-### Phase 4 – Mediapaket-Übersicht & Rollen
-- Neue Route `/mediapaket` mit Tabelle aller Mediapakete, Filter, Suche, Bulk-Aktionen.
-- Sidebar-Eintrag nur für Rollen `Mediapaket`, `Admin`, `Super Admin`, `Order`.
-- Kanban-optional (Status-Spalten).
-
-### Phase 5 – Admin-Konfigurator & PDF
-- Route `/mediapaket/admin` (Super Admin): Feldkonfiguration, Pflichtfelder, Hilfetexte, Leistungen, Status, Fristen, Einwilligungstexte, E-Mail-Vorlagen, Dateigrößen.
-- PDF-Export via Edge Function `mediapaket-pdf` (React-PDF / pdf-lib) im AlixWork-Design.
-- Einwilligungs-Versionierung.
-
-### Phase 6 – Altdaten-Import
-- Edge Function `mediapaket-import` mit Vorschau, Matching-Reihenfolge (Auftrag → E-Mail → Kundennr → Name → Studio → Telefon → Gerät → manuell), idempotent.
-- Import-UI unter `/mediapaket/admin/import`.
-- Dublettenprüfung, Fehlerprotokoll, Wiederholbarkeit.
+- Automatische Eskalationsengine mit konfigurierbaren Reaktionszeiten pro Abteilung × Priorität
+- Push-Benachrichtigungen (aktuell nur In-App + optionale E-Mail via bestehendem Template-System)
+- Reports/Analytics zu Ticketauslastung, SLA-Erfüllung
+- Round-Robin mit Fairness-Cursor, Region-Routing per Postleitzahl-Range
+- Abteilungs-Postfach als eigene Inbox-UI (Stufe 1: `assigned_to IS NULL` + `department_id` Filter reicht)
+- Bulk-Migration alter `esc_events`-Ticketanfragen in `tickets` (nur Neuanlagen ab jetzt)
 
 ---
 
 ## Technische Details
 
-- **Frontend:** React 18 + Vite, bestehende shadcn/ui-Komponenten, Tailwind-Tokens aus `index.css`. Kein neues Design-System.
-- **State:** React Hook Form + Zod pro Wizard-Schritt, Auto-Save via `useEffect` + debounced Supabase-Upsert.
-- **Storage:** Supabase Storage privat, signierte URLs (1h) für Downloads, MIME-Whitelist serverseitig geprüft.
-- **RLS-Muster:** Security-Definer-Function `public.can_access_media_package(_mp_id uuid)` → verhindert Rekursion; Policies referenzieren nur diese Function.
-- **Audit:** Generischer Trigger `public.log_media_package_change()` schreibt bei UPDATE/INSERT/DELETE in `media_package_history` (field-level diff via `hstore`).
-- **Benachrichtigungen:** Wiederverwendung von `mail_internal_messages` + `customer_communication_log` (bestehend), keine neue Architektur.
-- **Kunden-Login `/book`:** Wiederverwendung von `customer_portal_users` + `customer-portal-lookup` Edge Function, Erweiterung um Magic-Link für Mediapaket.
-- **Fortschrittsberechnung:** Serverseitige Function `public.calc_media_package_progress(_mp_id uuid)` – Gewichtung wie in Prompt Kap. 30, überspringt nicht ausgewählte Leistungen.
-- **Keine Breaking Changes:** Keine Änderungen an `customers`, `orders`, `lager_devices`, `user_roles`-Policies, `esc_*`-Tabellen.
+**Reihenfolge der Umsetzung** (jede Migration einzeln, damit Types regeneriert werden bevor Code sie nutzt):
 
----
+1. Migration A: `ticket_departments` Tabelle + Seed + RLS + GRANTs
+2. Migration B: `tickets` neue Spalten + FK zu `ticket_departments` + `ticket_history` + Trigger
+3. Migration C: `esc_events.ticket_id`, `event_kind`, `appointment_status`, `confirmation_token` + Sync-Trigger
+4. Edge Function `ticket-router` (neu)
+5. Edge Function `public-book-ticket` erweitert (Routing-Aufruf, Kategorie/Gerät/Auftrag)
+6. Edge Function `public-appointment-action` (neu)
+7. Frontend: Kundenportal Ticket-Formular, Kalenderansicht, Slideover, Bestätigungsseiten, Dashboard-Kacheln, Super-Admin CRUD Abteilungen
 
-**Bitte beantworte die 4 Rückfragen oben, dann starte ich mit Phase 1 (Datenbank + Storage) als erste Migration.**
+**Nicht angefasst:**
+- Auth/User-Verwaltung
+- `mailcenter`, WhatsApp, `alixsmart-tickets-webhook` (bleiben unabhängige Quellen — schreiben weiter direkt in `tickets`)
+- Bestehendes `esc_events`-Datenmodell (nur additive Felder)
+
+**Aufwand:** ~3 Migrationen, 3 Edge Functions, ~8 Frontend-Dateien neu/geändert.
+
+Soll ich mit Stufe 1 in dieser Reihenfolge loslegen, oder möchtest du vorher etwas anpassen (z. B. andere Abteilungsliste, Routing-Reihenfolge, oder Terminstatus-Namen)?
