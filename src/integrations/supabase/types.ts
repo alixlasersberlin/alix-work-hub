@@ -18228,6 +18228,48 @@ export type Database = {
         }
         Relationships: []
       }
+      security_scan_functions_no_searchpath: {
+        Row: {
+          args: string | null
+          proname: unknown
+        }
+        Relationships: []
+      }
+      security_scan_open_policies: {
+        Row: {
+          cmd: string | null
+          policyname: unknown
+          qual_text: string | null
+          schemaname: unknown
+          tablename: unknown
+        }
+        Relationships: []
+      }
+      security_scan_public_buckets: {
+        Row: {
+          id: string | null
+          name: string | null
+          public: boolean | null
+        }
+        Insert: {
+          id?: string | null
+          name?: string | null
+          public?: boolean | null
+        }
+        Update: {
+          id?: string | null
+          name?: string | null
+          public?: boolean | null
+        }
+        Relationships: []
+      }
+      security_scan_tables_without_rls: {
+        Row: {
+          schemaname: unknown
+          tablename: unknown
+        }
+        Relationships: []
+      }
       security_table_inventory: {
         Row: {
           anon_access: boolean | null
