@@ -215,7 +215,17 @@ export default function TicketDetail() {
     await patch({ status: isClosed ? 'offen' : 'geschlossen' });
   }
 
-  useEffect(() => { load(); loadOutboundLogs(); loadUsers(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [id]);
+  useEffect(() => { load(); loadOutboundLogs(); loadUsers(); loadMyProfile(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [id]);
+
+  async function loadMyProfile() {
+    if (!user?.id) return;
+    const { data } = await supabase
+      .from('user_profiles')
+      .select('full_name, job_title, avatar_url')
+      .eq('id', user.id)
+      .maybeSingle();
+    if (data) setMyProfile(data as any);
+  }
 
   async function patch(updates: Partial<Ticket>) {
     if (!ticket) return;
