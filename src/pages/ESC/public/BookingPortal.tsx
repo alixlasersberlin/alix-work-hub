@@ -385,9 +385,9 @@ export default function BookingPortal() {
             <Cpu className="w-5 h-5 text-primary" />
           </div>
           <div className="flex-1">
-            <div className="font-semibold text-[14px]">Alix Smart - Anamnese Online - Termine alles auf Ihren Laser</div>
+            <div className="font-semibold text-[14px]">{t.cards.anamnese_title}</div>
             <div className="text-[12px] text-muted-foreground mt-0.5">
-              Alle Daten aus Ihrem Laser, Anamnese Online, Reservierungen, Kundendaten, Termine und viele Tools mehr – Alix Interaktiv.
+              {t.cards.anamnese_desc}
             </div>
           </div>
           <ArrowRight className="w-4 h-4 text-muted-foreground mt-1 shrink-0" />
