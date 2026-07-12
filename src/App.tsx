@@ -1051,6 +1051,11 @@ function AppRoutes() {
             <Route path="break-glass" element={<RfBreakGlass />} />
             <Route path="kontext" element={<RfContext />} />
             <Route path="sod" element={<RfSoD />} />
+            <Route path="sso" element={<RfSSO />} />
+            <Route path="geplant" element={<RfScheduled />} />
+            <Route path="ketten" element={<RfChains />} />
+            <Route path="lifecycle" element={<RfLifecycle />} />
+            <Route path="exporte" element={<RfAuditExport />} />
             <Route path="protokoll" element={<RfLog />} />
           </Route>
 
