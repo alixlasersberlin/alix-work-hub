@@ -15139,6 +15139,47 @@ export type Database = {
           },
         ]
       }
+      scim_tokens: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          last_used_at: string | null
+          name: string
+          provider_id: string
+          token_hash: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          last_used_at?: string | null
+          name: string
+          provider_id: string
+          token_hash: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          last_used_at?: string | null
+          name?: string
+          provider_id?: string
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scim_tokens_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "sso_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       security_audit_findings: {
         Row: {
           approved_at: string | null
@@ -15921,6 +15962,104 @@ export type Database = {
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sso_group_mappings: {
+        Row: {
+          created_at: string
+          external_group: string
+          id: string
+          is_active: boolean
+          provider_id: string
+          role_id: string
+        }
+        Insert: {
+          created_at?: string
+          external_group: string
+          id?: string
+          is_active?: boolean
+          provider_id: string
+          role_id: string
+        }
+        Update: {
+          created_at?: string
+          external_group?: string
+          id?: string
+          is_active?: boolean
+          provider_id?: string
+          role_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sso_group_mappings_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "sso_providers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sso_group_mappings_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sso_providers: {
+        Row: {
+          client_id: string | null
+          client_secret_ref: string | null
+          created_at: string
+          created_by: string | null
+          default_role_id: string | null
+          id: string
+          is_active: boolean
+          issuer_url: string | null
+          jit_provisioning: boolean
+          metadata_url: string | null
+          name: string
+          provider_type: string
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          client_secret_ref?: string | null
+          created_at?: string
+          created_by?: string | null
+          default_role_id?: string | null
+          id?: string
+          is_active?: boolean
+          issuer_url?: string | null
+          jit_provisioning?: boolean
+          metadata_url?: string | null
+          name: string
+          provider_type: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          client_secret_ref?: string | null
+          created_at?: string
+          created_by?: string | null
+          default_role_id?: string | null
+          id?: string
+          is_active?: boolean
+          issuer_url?: string | null
+          jit_provisioning?: boolean
+          metadata_url?: string | null
+          name?: string
+          provider_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sso_providers_default_role_id_fkey"
+            columns: ["default_role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
             referencedColumns: ["id"]
           },
         ]
