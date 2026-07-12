@@ -124,6 +124,8 @@ export default function BookingPortal() {
     return generateSlots(new Date(state.dayIso), duration, appointments, DEFAULT_BOOKING_SETTINGS);
   }, [state.dayIso, duration, appointments]);
 
+  const isTicket = isTicketService(state.service);
+  const STEPS = isTicket ? STEPS_TICKET : STEPS_FULL;
   const stepIndex = STEPS.indexOf(step);
   const goto = (s: StepId) => setStep(s);
   const canGoNext = (() => {
