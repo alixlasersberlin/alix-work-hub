@@ -913,6 +913,17 @@ export default function TicketDetail() {
           <Save className="w-4 h-4 animate-pulse" /> Speichert...
         </div>
       )}
+
+      <TicketHandoverDialog
+        open={handoverOpen}
+        onOpenChange={setHandoverOpen}
+        ticketId={ticket.id}
+        currentDepartment={ticket.department}
+        currentAssignee={ticket.assigned_to}
+        users={users}
+        departments={DEPARTMENT}
+        onDone={() => load()}
+      />
     </div>
   );
 }
