@@ -18,6 +18,7 @@ import { CreateAppointmentFromTicket } from '@/components/tickets/CreateAppointm
 import { TicketHistoryTimeline } from '@/components/tickets/TicketHistoryTimeline';
 import { TicketParticipants } from '@/components/tickets/TicketParticipants';
 import { TicketHandoverDialog } from '@/components/tickets/TicketHandoverDialog';
+import { PhoneNoteDialog } from '@/components/tickets/PhoneNoteDialog';
 import { ArrowRightLeft } from 'lucide-react';
 
 interface Ticket {
