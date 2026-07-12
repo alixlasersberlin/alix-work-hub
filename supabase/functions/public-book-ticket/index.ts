@@ -106,6 +106,16 @@ serve(async (req) => {
       });
     }
 
+    // Router asynchron anstoßen (Fehler nicht blockierend)
+    if (ticket?.id) {
+      try {
+        await supabase.functions.invoke("ticket-router", { body: { ticket_id: ticket.id } });
+      } catch (e) {
+        console.warn("ticket-router invoke failed (non-fatal)", e);
+      }
+    }
+
+
     return new Response(
       JSON.stringify({
         success: true,
