@@ -98,6 +98,31 @@ export default function MobileProfil() {
         )}
       </Card>
 
+      <Card className="p-4 space-y-3">
+        <div className="flex items-center gap-2 font-semibold">
+          <Bell className="w-4 h-4 text-primary" /> Push-Benachrichtigungen
+        </div>
+        {!pushSupported() || pushState === 'unsupported' ? (
+          <p className="text-sm text-muted-foreground">Dein Browser unterstützt keine Push-Benachrichtigungen.</p>
+        ) : pushState === 'denied' ? (
+          <p className="text-sm text-destructive">In den Browser-Einstellungen blockiert. Bitte dort erlauben.</p>
+        ) : (
+          <>
+            <p className="text-sm text-muted-foreground">
+              {pushState === 'granted'
+                ? 'Aktiv – du erhältst Benachrichtigungen zu neuen Tourenaufträgen und Ticket-Zuweisungen.'
+                : 'Aktiviere Push, um über neue Tourenaufträge und Ticket-Zuweisungen informiert zu werden.'}
+            </p>
+            <Button onClick={togglePush} disabled={pushBusy} variant={pushState === 'granted' ? 'outline' : 'default'} className="w-full">
+              {pushBusy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                : pushState === 'granted' ? <BellOff className="w-4 h-4 mr-2" />
+                : <Bell className="w-4 h-4 mr-2" />}
+              {pushState === 'granted' ? 'Deaktivieren' : 'Aktivieren'}
+            </Button>
+          </>
+        )}
+      </Card>
+
       <div className="grid grid-cols-2 gap-2">
         <Button asChild variant="outline">
           <Link to="/"><ExternalLink className="w-4 h-4 mr-1" /> Desktop</Link>
