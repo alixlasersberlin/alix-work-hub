@@ -196,3 +196,6 @@ verify_jwt = false
 
 [functions.ticket-user-notify]
 verify_jwt = false
+
+[functions.ticket-auto-close]
+verify_jwt = false

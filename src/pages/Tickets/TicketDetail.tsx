@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
+import { validateTicketAttachment } from '@/lib/ticketAttachments';
 import { ArrowLeft, Loader2, MessageSquare, Paperclip, Save, Send, Wrench, Truck, Banknote, ClipboardList, RefreshCw, History, CheckCircle2, AlertCircle, Lock, Unlock, Upload, UserPlus, Flag, Activity } from 'lucide-react';
 import { sbRepair } from '@/lib/repair/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -191,6 +192,8 @@ export default function TicketDetail() {
 
   async function uploadAttachment(file: File) {
     if (!ticket || !file) return;
+    const v = validateTicketAttachment(file);
+    if (v.ok === false) { toast.error(v.reason); return; }
     setUploading(true);
     try {
       const safeName = file.name.replace(/[^\w.\-]+/g, '_');

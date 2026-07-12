@@ -17972,6 +17972,7 @@ export type Database = {
         Returns: undefined
       }
       tenant_id_for_source: { Args: { _source: string }; Returns: string }
+      ticket_auto_close_stale: { Args: never; Returns: Json }
       user_has_tenant: { Args: { _tenant_id: string }; Returns: boolean }
       user_mailboxes: { Args: never; Returns: string[] }
     }

@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { MessageSquare, Loader2, Send, Paperclip, X, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { PortalTicketDetail } from '@/components/CustomerPortal/PortalTicketDetail';
+import { validateTicketAttachment, TICKET_ATTACHMENT_ACCEPT } from '@/lib/ticketAttachments';
 
 type Ctx = { customerId: string };
 
@@ -119,8 +120,10 @@ export default function CustomerPortalTickets() {
   const addFiles = (fs: FileList | null) => {
     if (!fs) return;
     const list = Array.from(fs).slice(0, 10 - files.length);
-    const oversized = list.find(f => f.size > 20 * 1024 * 1024);
-    if (oversized) return toast.error(`Datei "${oversized.name}" ist größer als 20 MB.`);
+    for (const f of list) {
+      const v = validateTicketAttachment(f);
+      if (v.ok === false) { toast.error(v.reason); return; }
+    }
     setFiles(prev => [...prev, ...list].slice(0, 10));
   };
   const removeFile = (i: number) => setFiles(prev => prev.filter((_, idx) => idx !== i));
@@ -252,7 +255,7 @@ export default function CustomerPortalTickets() {
               <label className="inline-flex items-center gap-2 px-3 py-2 border border-border rounded-md cursor-pointer hover:bg-muted/40 text-sm">
                 <Paperclip className="w-4 h-4" />
                 Dateien auswählen
-                <input type="file" multiple className="hidden" onChange={e => addFiles(e.target.files)} />
+                <input type="file" multiple accept={TICKET_ATTACHMENT_ACCEPT} className="hidden" onChange={e => addFiles(e.target.files)} />
               </label>
               {files.map((f, i) => (
                 <span key={i} className="inline-flex items-center gap-2 text-xs bg-muted/50 rounded px-2 py-1">
