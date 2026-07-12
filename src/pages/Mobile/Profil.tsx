@@ -20,11 +20,29 @@ export default function MobileProfil() {
     window.addEventListener('beforeinstallprompt', onPrompt);
     window.addEventListener('appinstalled', onInstalled);
     setInstalled(window.matchMedia('(display-mode: standalone)').matches);
+    getPushStatus().then(setPushState);
     return () => {
       window.removeEventListener('beforeinstallprompt', onPrompt);
       window.removeEventListener('appinstalled', onInstalled);
     };
   }, []);
+
+  const togglePush = async () => {
+    setPushBusy(true);
+    try {
+      if (pushState === 'granted') {
+        await unsubscribePush();
+        toast.success('Benachrichtigungen deaktiviert.');
+      } else {
+        const r = await subscribePush();
+        if (r.ok) toast.success('Benachrichtigungen aktiviert.');
+        else toast.error(r.error || 'Aktivierung fehlgeschlagen.');
+      }
+      setPushState(await getPushStatus());
+    } finally {
+      setPushBusy(false);
+    }
+  };
 
   const install = async () => {
     if (!installPrompt) return;
