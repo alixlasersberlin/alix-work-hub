@@ -592,6 +592,12 @@ export default function TicketDetail() {
 
           <CreateAppointmentFromTicket ticketId={ticket.id} ticketNumber={(ticket as any).ticket_number ?? ticket.external_ticket_id} />
 
+          {canEdit && (
+            <Button size="sm" variant="outline" onClick={() => setHandoverOpen(true)}>
+              <ArrowRightLeft className="w-4 h-4 mr-1" /> Ticket übergeben
+            </Button>
+          )}
+
           <Button
             size="sm"
             variant="outline"
