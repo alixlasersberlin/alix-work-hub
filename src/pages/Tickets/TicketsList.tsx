@@ -101,7 +101,7 @@ export default function TicketsList() {
       setLoading(true);
       const { data, error } = await supabase
         .from('tickets')
-        .select('id, external_ticket_id, source_system, customer_name, company_name, order_number, device_name, serial_number, title, status, priority, department, last_synced_at, created_at')
+        .select('id, external_ticket_id, source_system, customer_name, company_name, order_number, device_name, serial_number, title, status, priority, department, last_synced_at, created_at, sla_status, escalation_count')
         .order('created_at', { ascending: false })
         .limit(500);
       if (!cancelled) {
