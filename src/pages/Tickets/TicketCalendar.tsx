@@ -4,7 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 import {
   addMonths, addWeeks, subMonths, subWeeks,
   startOfMonth, endOfMonth, startOfWeek, endOfWeek,
@@ -13,7 +15,7 @@ import {
 import { de } from 'date-fns/locale';
 import {
   ChevronLeft, ChevronRight, CalendarDays, Filter, RefreshCw,
-  ExternalLink, Mail, Phone, User2, Clock, AlertCircle,
+  ExternalLink, Mail, Phone, User2, Clock, AlertCircle, Download, UserCircle2,
 } from 'lucide-react';
 
 type TicketEvent = {
@@ -31,10 +33,13 @@ type TicketEvent = {
   customer_phone: string | null;
   priority: string | null;
   department_id: string | null;
+  assigned_user_id: string | null;
+  location?: string | null;
   tickets?: { ticket_number: string | null; status: string | null; priority: string | null; department: string | null } | null;
 };
 
 type Dept = { id: string; name: string; color: string | null };
+type UserRow = { id: string; full_name: string | null; email: string | null; is_active: boolean | null };
 
 const KIND_LABEL: Record<string, string> = {
   kundentermin: 'Kundentermin',
@@ -68,6 +73,7 @@ type ViewMode = 'month' | 'week';
 export default function TicketCalendar() {
   const [events, setEvents] = useState<TicketEvent[]>([]);
   const [depts, setDepts] = useState<Dept[]>([]);
+  const [users, setUsers] = useState<UserRow[]>([]);
   const [cursor, setCursor] = useState<Date>(new Date());
   const [view, setView] = useState<ViewMode>('month');
   const [loading, setLoading] = useState(false);
@@ -75,8 +81,10 @@ export default function TicketCalendar() {
   const [fDepts, setFDepts] = useState<Set<string>>(new Set());
   const [fKinds, setFKinds] = useState<Set<string>>(new Set());
   const [fStatus, setFStatus] = useState<Set<string>>(new Set());
+  const [dragOverKey, setDragOverKey] = useState<string | null>(null);
 
   const [selected, setSelected] = useState<TicketEvent | null>(null);
+
 
   const range = useMemo(() => {
     const from = view === 'month' ? startOfMonth(cursor) : startOfWeek(cursor, { weekStartsOn: 1 });
@@ -93,20 +101,91 @@ export default function TicketCalendar() {
       ? endOfWeek(range.to, { weekStartsOn: 1 })
       : range.to;
 
-    const [{ data: evData }, { data: dData }] = await Promise.all([
+    const [{ data: evData }, { data: dData }, { data: uData }] = await Promise.all([
       supabase.from('esc_events')
-        .select('id, ticket_id, title, description, start_at, end_at, event_kind, appointment_status, confirmation_status, customer_name, customer_email, customer_phone, priority, department_id, tickets:ticket_id(ticket_number, status, priority, department)')
+        .select('id, ticket_id, title, description, start_at, end_at, event_kind, appointment_status, confirmation_status, customer_name, customer_email, customer_phone, priority, department_id, assigned_user_id, location, tickets:ticket_id(ticket_number, status, priority, department)')
         .eq('source', 'ticket')
         .gte('start_at', gridFrom.toISOString())
         .lte('start_at', gridTo.toISOString())
         .order('start_at', { ascending: true })
         .limit(500),
       supabase.from('esc_departments').select('id, name, color'),
+      supabase.from('user_profiles').select('id, full_name, email, is_active').eq('is_active', true).order('full_name'),
     ]);
     setEvents((evData as any) ?? []);
     setDepts((dData as any) ?? []);
+    setUsers((uData as any) ?? []);
     setLoading(false);
   };
+
+  const userById = useMemo(() => Object.fromEntries(users.map(u => [u.id, u])), [users]);
+
+  // Drag & Drop: Termin auf anderen Tag verschieben (Uhrzeit bleibt gleich)
+  const onDropOnDay = async (targetKey: string, ev: React.DragEvent) => {
+    ev.preventDefault();
+    setDragOverKey(null);
+    const eventId = ev.dataTransfer.getData('text/event-id');
+    if (!eventId) return;
+    const src = events.find(e => e.id === eventId);
+    if (!src) return;
+    const targetDay = new Date(targetKey + 'T00:00:00');
+    const srcStart = new Date(src.start_at);
+    if (isSameDay(targetDay, srcStart)) return;
+    const newStart = new Date(targetDay);
+    newStart.setHours(srcStart.getHours(), srcStart.getMinutes(), 0, 0);
+    let newEndIso: string | null = null;
+    if (src.end_at) {
+      const diff = new Date(src.end_at).getTime() - srcStart.getTime();
+      newEndIso = new Date(newStart.getTime() + diff).toISOString();
+    }
+    // Optimistic
+    setEvents(list => list.map(e => e.id === eventId ? { ...e, start_at: newStart.toISOString(), end_at: newEndIso } : e));
+    const { error } = await supabase.from('esc_events')
+      .update({ start_at: newStart.toISOString(), end_at: newEndIso })
+      .eq('id', eventId);
+    if (error) { toast.error('Verschieben fehlgeschlagen: ' + error.message); load(); }
+    else toast.success(`Verschoben auf ${format(newStart, 'dd.MM. HH:mm', { locale: de })}`);
+  };
+
+  const assignUser = async (eventId: string, userId: string | null) => {
+    setEvents(list => list.map(e => e.id === eventId ? { ...e, assigned_user_id: userId } : e));
+    setSelected(s => s && s.id === eventId ? { ...s, assigned_user_id: userId } : s);
+    const { error } = await supabase.from('esc_events').update({ assigned_user_id: userId }).eq('id', eventId);
+    if (error) { toast.error('Zuweisung fehlgeschlagen'); load(); }
+    else toast.success(userId ? 'Zugewiesen' : 'Zuweisung entfernt');
+  };
+
+  const downloadIcs = (e: TicketEvent) => {
+    const dt = (iso: string) => new Date(iso).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+    const end = e.end_at ?? new Date(new Date(e.start_at).getTime() + 60 * 60_000).toISOString();
+    const esc = (s: string) => s.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\\;');
+    const ics = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//AlixWork//Ticket-Kalender//DE',
+      'METHOD:PUBLISH',
+      'BEGIN:VEVENT',
+      `UID:ticket-${e.id}@alixwork`,
+      `DTSTAMP:${dt(new Date().toISOString())}`,
+      `DTSTART:${dt(e.start_at)}`,
+      `DTEND:${dt(end)}`,
+      `SUMMARY:${esc(e.title || 'Ticket-Termin')}`,
+      e.description ? `DESCRIPTION:${esc(e.description)}` : '',
+      e.location ? `LOCATION:${esc(e.location)}` : '',
+      e.customer_email ? `ATTENDEE;CN=${esc(e.customer_name || '')}:mailto:${e.customer_email}` : '',
+      'END:VEVENT',
+      'END:VCALENDAR',
+    ].filter(Boolean).join('\r\n');
+    const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ticket-${(e.tickets?.ticket_number || e.id.slice(0, 8))}.ics`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [cursor, view]);
 
@@ -221,7 +300,13 @@ export default function TicketCalendar() {
               const dayEvents = eventsByDay.get(key) ?? [];
               const inMonth = view === 'week' || isSameMonth(day, cursor);
               return (
-                <div key={key} className={`border-b border-r p-1 flex flex-col gap-0.5 min-h-[112px] ${inMonth ? '' : 'bg-muted/20 text-muted-foreground'}`}>
+                <div
+                  key={key}
+                  onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setDragOverKey(key); }}
+                  onDragLeave={() => setDragOverKey(k => k === key ? null : k)}
+                  onDrop={(e) => onDropOnDay(key, e)}
+                  className={`border-b border-r p-1 flex flex-col gap-0.5 min-h-[112px] transition-colors ${inMonth ? '' : 'bg-muted/20 text-muted-foreground'} ${dragOverKey === key ? 'bg-primary/10 ring-1 ring-inset ring-primary/40' : ''}`}
+                >
                   <div className={`text-[11px] font-medium flex items-center justify-between ${isToday(day) ? 'text-primary' : ''}`}>
                     <span className={isToday(day) ? 'bg-primary text-primary-foreground rounded-full w-5 h-5 flex items-center justify-center' : ''}>
                       {format(day, 'd')}
@@ -233,16 +318,20 @@ export default function TicketCalendar() {
                       const dept = e.department_id ? deptById[e.department_id] : null;
                       const color = dept?.color ?? 'hsl(var(--primary))';
                       const tone = STATUS_TONE[e.appointment_status ?? ''] ?? STATUS_TONE.geplant;
+                      const assignee = e.assigned_user_id ? userById[e.assigned_user_id] : null;
                       return (
                         <button
                           key={e.id}
+                          draggable
+                          onDragStart={(ev) => { ev.dataTransfer.setData('text/event-id', e.id); ev.dataTransfer.effectAllowed = 'move'; }}
                           onClick={() => setSelected(e)}
-                          className={`w-full text-left text-[10.5px] leading-tight rounded px-1 py-0.5 ring-1 ${tone.bg} ${tone.text} ${tone.ring} hover:opacity-90 truncate`}
+                          className={`w-full text-left text-[10.5px] leading-tight rounded px-1 py-0.5 ring-1 cursor-grab active:cursor-grabbing ${tone.bg} ${tone.text} ${tone.ring} hover:opacity-90 truncate`}
                           style={{ borderLeft: `3px solid ${color}` }}
-                          title={e.title}
+                          title={`${e.title}${assignee ? ` · ${assignee.full_name || assignee.email}` : ''}`}
                         >
                           <span className="font-medium">{format(new Date(e.start_at), 'HH:mm')}</span>{' '}
                           <span className="truncate">{e.tickets?.ticket_number ?? ''} {e.title}</span>
+                          {assignee && <span className="ml-1 opacity-70">· {(assignee.full_name || assignee.email || '').split(' ')[0]}</span>}
                         </button>
                       );
                     })}
@@ -313,13 +402,33 @@ export default function TicketCalendar() {
                   </Row>
                 )}
 
-                {selected.ticket_id && (
-                  <Button asChild className="w-full mt-4">
-                    <Link to={`/tickets/${selected.ticket_id}`}>
-                      Ticket öffnen <ExternalLink className="w-4 h-4 ml-2" />
-                    </Link>
+                <Row icon={UserCircle2} label="Zugewiesen an">
+                  <Select
+                    value={selected.assigned_user_id ?? 'none'}
+                    onValueChange={(v) => assignUser(selected.id, v === 'none' ? null : v)}
+                  >
+                    <SelectTrigger className="h-8 text-[12px]"><SelectValue placeholder="Nicht zugewiesen" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Nicht zugewiesen</SelectItem>
+                      {users.map(u => (
+                        <SelectItem key={u.id} value={u.id}>{u.full_name || u.email}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Row>
+
+                <div className="flex gap-2 mt-4">
+                  <Button variant="outline" className="flex-1" onClick={() => downloadIcs(selected)}>
+                    <Download className="w-4 h-4 mr-2" /> ICS
                   </Button>
-                )}
+                  {selected.ticket_id && (
+                    <Button asChild className="flex-1">
+                      <Link to={`/tickets/${selected.ticket_id}`}>
+                        Ticket öffnen <ExternalLink className="w-4 h-4 ml-2" />
+                      </Link>
+                    </Button>
+                  )}
+                </div>
               </div>
             </>
           )}
