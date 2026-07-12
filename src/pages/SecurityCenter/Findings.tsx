@@ -57,7 +57,11 @@ export default function SecurityFindings() {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-2">
         <CardTitle className="text-base">Auto-Review — {visible.length} / {rows.length}</CardTitle>
-        <div className="flex gap-1">
+        <div className="flex gap-1 items-center">
+          <Button size="sm" variant="secondary" onClick={runScan} disabled={scanning}>
+            {scanning ? 'Scan läuft…' : 'Jetzt scannen'}
+          </Button>
+          <div className="w-2" />
           <Button size="sm" variant={filter === 'all' ? 'default' : 'outline'} onClick={() => setFilter('all')}>Alle ({rows.length})</Button>
           <Button size="sm" variant={filter === 'open' ? 'default' : 'outline'} onClick={() => setFilter('open')}>Offen ({counts.open})</Button>
           <Button size="sm" variant={filter === 'resolved' ? 'default' : 'outline'} onClick={() => setFilter('resolved')}>Behoben ({counts.resolved})</Button>
