@@ -18228,6 +18228,17 @@ export type Database = {
         }
         Relationships: []
       }
+      security_scan_bucket_audit: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          name: string | null
+          policy_count: number | null
+          public: boolean | null
+          status: string | null
+        }
+        Relationships: []
+      }
       security_scan_functions_no_searchpath: {
         Row: {
           args: string | null
