@@ -516,7 +516,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
   }
 
   async function generate() {
-    if (blockIfDuplicate()) return;
+    // Hinweis: PDF-Erstellung ist idempotent und darf auch nach bereits gestellter Rechnung erfolgen (Reprint).
     if (!hasDeposit) {
       toast.error('Keine Anzahlung vereinbart – es wird keine Anzahlungsrechnung erstellt.');
       return;
@@ -525,7 +525,9 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
     try {
       await buildPdf('download');
       await recordNoteAndOrderDeposit();
-      toast.success('Anzahlungsrechnung erstellt und im Auftrag vermerkt.');
+      toast.success(existingInvoice
+        ? `PDF neu erzeugt (${invoiceNumber}). Es wurde keine zweite Rechnung angelegt.`
+        : 'Anzahlungsrechnung erstellt und im Auftrag vermerkt.');
       onReload?.();
     } catch (e: any) {
       toast.error('Fehler: ' + (e?.message || 'Unbekannter Fehler'));
