@@ -316,7 +316,7 @@ export default function BookingPortal() {
             <PackageSearch className="w-5 h-5 text-primary" />
           </div>
           <div className="flex-1">
-            <div className="font-semibold text-[14px]">Bestellstatus abfragen</div>
+            <div className="font-semibold text-[14px]">Mein Bestellstatus abfragen</div>
             <div className="text-[12px] text-muted-foreground mt-0.5">
               Sie haben bereits bestellt? Prüfen Sie den aktuellen Bearbeitungsstand Ihrer Bestellung mit Auftragsnummer, PLZ und E-Mail.
             </div>
@@ -334,7 +334,7 @@ export default function BookingPortal() {
             <PackageSearch className="w-5 h-5 text-primary" />
           </div>
           <div className="flex-1">
-            <div className="font-semibold text-[14px]">Mein Media Paket</div>
+            <div className="font-semibold text-[14px]">Mein Medi Paket beantragen</div>
             <div className="text-[12px] text-muted-foreground mt-0.5">
               Übermitteln Sie uns alle Informationen, Dateien und Wünsche für Ihre Webseite, Flyer und Social-Media-Vorlagen.
             </div>
@@ -354,7 +354,7 @@ export default function BookingPortal() {
             <Cpu className="w-5 h-5 text-primary" />
           </div>
           <div className="flex-1">
-            <div className="font-semibold text-[14px]">Meine Gerätedaten</div>
+            <div className="font-semibold text-[14px]">Anmeldung und Registrierung nach NISV</div>
             <div className="text-[12px] text-muted-foreground mt-0.5">
               Die virtuelle Verwaltung Ihres Alix Gerätes: amtliche Dokumente, Tickets, Anleitungen und Ratgeber.
             </div>
