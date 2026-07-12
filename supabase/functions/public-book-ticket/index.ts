@@ -73,7 +73,7 @@ serve(async (req) => {
         priority: "Normal",
         customer_visible_status: "Ticket eingegangen",
         title,
-        subject: title,
+        
         description: message || null,
         customer_email: email,
         customer_name: `${firstName} ${lastName}`.trim(),
