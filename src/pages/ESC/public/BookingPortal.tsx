@@ -414,7 +414,7 @@ export default function BookingPortal() {
               return list.map((s) => (
                 <button
                   key={s.name}
-                  onClick={() => { setState({ ...state, service: s.name }); goto('location'); }}
+                  onClick={() => { setState({ ...state, service: s.name }); goto(isTicketService(s.name) ? 'contact' : 'location'); }}
                   className={`text-left rounded-xl border p-4 hover:border-primary hover:shadow-md transition ${state.service === s.name ? 'border-primary bg-primary/5' : 'bg-card'}`}
                 >
                   <div className="flex items-center gap-2">
