@@ -11,6 +11,8 @@ export default function MobileProfil() {
   const { profile, roles, signOut } = useAuth();
   const [installPrompt, setInstallPrompt] = useState<any>(null);
   const [installed, setInstalled] = useState(false);
+  const [pushState, setPushState] = useState<Awaited<ReturnType<typeof getPushStatus>>>('default');
+  const [pushBusy, setPushBusy] = useState(false);
 
   useEffect(() => {
     const onPrompt = (e: any) => { e.preventDefault(); setInstallPrompt(e); };
