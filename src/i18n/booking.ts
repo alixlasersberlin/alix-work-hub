@@ -74,7 +74,7 @@ const de: BookingDict = {
   },
   contact: {
     title: 'Ihre Kontaktdaten', first_name: 'Vorname', last_name: 'Nachname', company: 'Firma', website: 'Webseite', email: 'E-Mail', phone: 'Telefon',
-    contact_person: 'Gewünschter Ansprechpartner (optional)', any: 'Egal', message: 'Nachricht',
+    contact_person: 'Gewünschter Ansprechpartner (optional)', any: 'KI Posteingang', message: 'Nachricht',
     consent_privacy_pre: 'Ich habe die', consent_privacy_link: 'Datenschutzerklärung', consent_privacy_post: 'gelesen und akzeptiere sie.',
     consent_email: 'Ich willige in den Empfang von E-Mails zu diesem Termin ein.',
     consent_marketing: 'Optional: Ich möchte weitere Angebote per E-Mail erhalten.',
@@ -118,7 +118,7 @@ const en: BookingDict = {
   },
   contact: {
     title: 'Your contact details', first_name: 'First name', last_name: 'Last name', company: 'Company', website: 'Website', email: 'E-mail', phone: 'Phone',
-    contact_person: 'Preferred contact person (optional)', any: 'Any', message: 'Message',
+    contact_person: 'Preferred contact person (optional)', any: 'AI Inbox', message: 'Message',
     consent_privacy_pre: 'I have read and accept the', consent_privacy_link: 'privacy policy', consent_privacy_post: '.',
     consent_email: 'I consent to receive e-mails about this appointment.',
     consent_marketing: 'Optional: I would like to receive further offers by e-mail.',
@@ -162,7 +162,7 @@ const ru: BookingDict = {
   },
   contact: {
     title: 'Ваши контактные данные', first_name: 'Имя', last_name: 'Фамилия', company: 'Компания', website: 'Сайт', email: 'E-mail', phone: 'Телефон',
-    contact_person: 'Желаемый ответственный (необязательно)', any: 'Не важно', message: 'Сообщение',
+    contact_person: 'Желаемый ответственный (необязательно)', any: 'ИИ входящие', message: 'Сообщение',
     consent_privacy_pre: 'Я прочитал(а) и принимаю', consent_privacy_link: 'политику конфиденциальности', consent_privacy_post: '.',
     consent_email: 'Я согласен(на) получать e-mail по этой записи.',
     consent_marketing: 'Опционально: хочу получать дальнейшие предложения по e-mail.',
@@ -206,7 +206,7 @@ const ar: BookingDict = {
   },
   contact: {
     title: 'بيانات الاتصال الخاصة بك', first_name: 'الاسم الأول', last_name: 'اسم العائلة', company: 'الشركة', website: 'الموقع', email: 'البريد الإلكتروني', phone: 'الهاتف',
-    contact_person: 'الشخص المسؤول المُفضل (اختياري)', any: 'لا يهم', message: 'رسالة',
+    contact_person: 'الشخص المسؤول المُفضل (اختياري)', any: 'صندوق الذكاء الاصطناعي', message: 'رسالة',
     consent_privacy_pre: 'لقد قرأت وأوافق على', consent_privacy_link: 'سياسة الخصوصية', consent_privacy_post: '.',
     consent_email: 'أوافق على استلام رسائل بريد إلكتروني حول هذا الموعد.',
     consent_marketing: 'اختياري: أرغب في استلام عروض إضافية عبر البريد الإلكتروني.',
