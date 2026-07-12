@@ -14325,6 +14325,187 @@ export type Database = {
         }
         Relationships: []
       }
+      role_notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          kind: string
+          read_at: string | null
+          ref_id: string | null
+          ref_type: string | null
+          severity: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          read_at?: string | null
+          ref_id?: string | null
+          ref_type?: string | null
+          severity?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          read_at?: string | null
+          ref_id?: string | null
+          ref_type?: string | null
+          severity?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      role_recert_campaigns: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          name: string
+          period_end: string
+          period_start: string
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          period_end: string
+          period_start?: string
+          status?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          period_end?: string
+          period_start?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      role_recert_items: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          decision: string | null
+          id: string
+          note: string | null
+          role_id: string
+          role_name: string | null
+          user_id: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision?: string | null
+          id?: string
+          note?: string | null
+          role_id: string
+          role_name?: string | null
+          user_id: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision?: string | null
+          id?: string
+          note?: string | null
+          role_id?: string
+          role_name?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_recert_items_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "role_recert_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      role_template_items: {
+        Row: {
+          id: string
+          role_id: string
+          template_id: string
+        }
+        Insert: {
+          id?: string
+          role_id: string
+          template_id: string
+        }
+        Update: {
+          id?: string
+          role_id?: string
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_template_items_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "role_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      role_templates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          department_id: string | null
+          description: string | null
+          id: string
+          name: string
+          position: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          department_id?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          position?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          department_id?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          position?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       role_temporary_grants: {
         Row: {
           auto_revoked_at: string | null
@@ -18735,10 +18916,70 @@ export type Database = {
         }
         Relationships: []
       }
+      v_temp_grants_expiring_soon: {
+        Row: {
+          auto_revoked_at: string | null
+          created_at: string | null
+          granted_by: string | null
+          hours_left: number | null
+          id: string | null
+          reason: string | null
+          request_id: string | null
+          role_id: string | null
+          role_name: string | null
+          status: string | null
+          user_id: string | null
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          auto_revoked_at?: string | null
+          created_at?: string | null
+          granted_by?: string | null
+          hours_left?: never
+          id?: string | null
+          reason?: string | null
+          request_id?: string | null
+          role_id?: string | null
+          role_name?: string | null
+          status?: string | null
+          user_id?: string | null
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          auto_revoked_at?: string | null
+          created_at?: string | null
+          granted_by?: string | null
+          hours_left?: never
+          id?: string | null
+          reason?: string | null
+          request_id?: string | null
+          role_id?: string | null
+          role_name?: string | null
+          status?: string | null
+          user_id?: string | null
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_temporary_grants_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "role_change_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       apply_role_change_request: {
         Args: { _request_id: string }
+        Returns: Json
+      }
+      apply_role_template: {
+        Args: { _template_id: string; _user_id: string }
         Returns: Json
       }
       as_force_close_case: {
@@ -18848,6 +19089,10 @@ export type Database = {
       }
       current_portal_customer_id: { Args: never; Returns: string }
       current_supplier_id: { Args: never; Returns: string }
+      decide_recert_item: {
+        Args: { _decision: string; _item_id: string; _note: string }
+        Returns: Json
+      }
       dl_upsert: {
         Args: {
           _customer_id: string
@@ -18986,6 +19231,21 @@ export type Database = {
         }
         Returns: undefined
       }
+      notify_super_admins: {
+        Args: {
+          _body: string
+          _kind: string
+          _ref_id: string
+          _ref_type: string
+          _severity?: string
+          _title: string
+        }
+        Returns: number
+      }
+      offboard_user: {
+        Args: { _reason: string; _user_id: string }
+        Returns: Json
+      }
       peek_document_number: { Args: { p_code: string }; Returns: string }
       recompute_device_health: { Args: { _serial: string }; Returns: undefined }
       refresh_warranty_and_maintenance_status: {
@@ -19022,6 +19282,10 @@ export type Database = {
       set_order_lawyer: {
         Args: { _order_id: string; _reason: string }
         Returns: undefined
+      }
+      start_recertification_campaign: {
+        Args: { _description: string; _name: string; _period_end: string }
+        Returns: string
       }
       tenant_id_for_source: { Args: { _source: string }; Returns: string }
       ticket_auto_close_stale: { Args: never; Returns: Json }
