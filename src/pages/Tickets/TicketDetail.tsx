@@ -752,6 +752,7 @@ export default function TicketDetail() {
 
         {/* Rechte Spalte: Aktionen */}
         <div className="space-y-6">
+          <TicketParticipants ticketId={ticket.id} users={users} canEdit={canEdit} />
           <div className="rounded-xl border border-border bg-card p-6 space-y-4">
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Bearbeitung</h2>
             <div className="space-y-3">
