@@ -344,6 +344,7 @@ const MailCenterSchulung = lazy(() => import("./pages/MailCenter/Schulungscenter
 const MailCenterValidierung = lazy(() => import("./pages/MailCenter/Systemvalidierung"));
 const TicketsList = lazy(() => import("./pages/Tickets/TicketsList"));
 const TicketsDashboard = lazy(() => import("./pages/Tickets/TicketsDashboard"));
+const TicketCalendar = lazy(() => import("./pages/Tickets/TicketCalendar"));
 const TicketDetail = lazy(() => import("./pages/Tickets/TicketDetail"));
 const TicketByExternal = lazy(() => import("./pages/Tickets/TicketByExternal"));
 const TicketsApiSync = lazy(() => import("./pages/Tickets/ApiSyncSettings"));
@@ -1014,6 +1015,8 @@ function AppRoutes() {
 
           <Route path="/tickets" element={<ProtectedRoute requiredRoles={TICKETS_ROLES}><TicketsList /></ProtectedRoute>} />
           <Route path="/tickets/dashboard" element={<ProtectedRoute requiredRoles={TICKETS_ROLES}><TicketsDashboard /></ProtectedRoute>} />
+          <Route path="/tickets/kalender" element={<ProtectedRoute requiredRoles={TICKETS_ROLES}><TicketCalendar /></ProtectedRoute>} />
+
           <Route path="/tickets/api-sync" element={<ProtectedRoute requiredRoles={['Super Admin']}><TicketsApiSync /></ProtectedRoute>} />
           <Route path="/tickets/sync" element={<ProtectedRoute requiredRoles={['Super Admin', 'Admin']}><TicketsSyncMonitor /></ProtectedRoute>} />
           <Route path="/tickets/by-external/:externalId" element={<ProtectedRoute requiredRoles={TICKETS_ROLES}><TicketByExternal /></ProtectedRoute>} />

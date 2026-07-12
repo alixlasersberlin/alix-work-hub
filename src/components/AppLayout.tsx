@@ -95,6 +95,7 @@ const navItems: NavItem[] = [
     children: [
       { path: '/mailcenter', label: 'Dashboard', icon: LayoutDashboard, roles: null },
       { path: '/tickets', label: 'Ticketliste', icon: Ticket, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
+      { path: '/tickets/kalender', label: 'Ticket-Kalender', icon: CalendarDays, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
       { path: '/mailcenter/schreiben', label: 'E-Mail schreiben', icon: PenSquare, roles: null },
       { path: '/mailcenter/intern', label: 'Interne Nachrichten', icon: MessageSquare, roles: null },
       { path: '/mailcenter/telefonnotizen', label: 'Telefonnotizen', icon: Phone, roles: null },
