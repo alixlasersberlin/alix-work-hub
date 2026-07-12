@@ -15,6 +15,7 @@ import { sbRepair } from '@/lib/repair/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AiAnalysisPanel } from '@/components/ai-service/AiAnalysisPanel';
 import { CreateAppointmentFromTicket } from '@/components/tickets/CreateAppointmentFromTicket';
+import { TicketHistoryTimeline } from '@/components/tickets/TicketHistoryTimeline';
 
 interface Ticket {
   id: string;
@@ -536,6 +537,7 @@ export default function TicketDetail() {
             <TabsList>
               <TabsTrigger value="messages"><MessageSquare className="w-4 h-4 mr-1" /> Nachrichten ({messages.length})</TabsTrigger>
               <TabsTrigger value="attachments"><Paperclip className="w-4 h-4 mr-1" /> Anhänge ({attachments.length})</TabsTrigger>
+              <TabsTrigger value="history"><Activity className="w-4 h-4 mr-1" /> Verlauf</TabsTrigger>
             </TabsList>
             <TabsContent value="messages" className="space-y-3">
               {messages.length === 0 && <div className="text-sm text-muted-foreground p-4">Noch keine Nachrichten.</div>}
@@ -574,6 +576,9 @@ export default function TicketDetail() {
                   <span className="text-xs text-muted-foreground">{a.file_type || ''}</span>
                 </a>
               ))}
+            </TabsContent>
+            <TabsContent value="history" className="pt-3">
+              <TicketHistoryTimeline ticketId={ticket.id} />
             </TabsContent>
           </Tabs>
         </div>
