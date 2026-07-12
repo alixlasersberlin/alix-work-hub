@@ -56,7 +56,10 @@ const emptyForm: Omit<EscDepartment, 'id'> = {
 };
 
 export default function EscDepartments() {
-  const { departments, createDepartment, updateDepartment, deleteDepartment } = useDepartments();
+  const { departments: rawDepartments, createDepartment, updateDepartment, deleteDepartment } = useDepartments();
+  const departments = [...rawDepartments].sort(
+    (a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999) || a.name.localeCompare(b.name),
+  );
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<EscDepartment | null>(null);
   const [form, setForm] = useState<Omit<EscDepartment, 'id'>>(emptyForm);
