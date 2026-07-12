@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
       .select('record_id')
       .eq('action', 'security_alert_sent')
       .gte('created_at', cutoff);
-    const alreadySent = new Set((recentLogs ?? []).map((r: any) => r.entity_id));
+    const alreadySent = new Set((recentLogs ?? []).map((r: any) => r.record_id));
     const fresh = findings.filter((f: any) => !alreadySent.has(f.id));
     if (fresh.length === 0) return json({ ok: true, sent: 0, reason: 'all in cooldown' });
 
