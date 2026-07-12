@@ -533,12 +533,17 @@ export default function TicketDetail() {
               Prio Hoch (Auto)
             </Badge>
           )}
-          {ticket.sla_status && ticket.sla_status !== 'ok' && (
-            <Badge variant="outline" className={ticket.sla_status === 'breach'
+          {ticket.sla_status && ticket.sla_status !== 'ok' && (() => {
+            const s = ticket.sla_status;
+            const label = s === 'breached' || s === 'breach' ? 'SLA verletzt'
+              : s === 'warning' ? 'SLA fast fällig' : `SLA: ${s}`;
+            const cls = (s === 'breached' || s === 'breach')
               ? 'bg-red-500/15 text-red-300 border-red-500/40'
-              : 'bg-amber-500/15 text-amber-300 border-amber-500/40'}>
-              SLA: {ticket.sla_status}
-            </Badge>
+              : 'bg-amber-500/15 text-amber-300 border-amber-500/40';
+            return <Badge variant="outline" className={cls} title={ticket.resolution_due_at ? `Lösung bis ${new Date(ticket.resolution_due_at).toLocaleString('de-DE')}` : undefined}>{label}</Badge>;
+          })()}
+          {ticket.merged_into_ticket_id && (
+            <Badge variant="outline" className="bg-muted text-muted-foreground border-border">Zusammengeführt</Badge>
           )}
           {ticket.comm_status && ticket.comm_status !== 'none' && (() => {
             const map: Record<string, { label: string; cls: string }> = {
