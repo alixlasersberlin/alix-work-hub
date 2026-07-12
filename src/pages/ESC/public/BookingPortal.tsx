@@ -22,7 +22,9 @@ import type { EscAppointmentKind } from '@/lib/esc/appointment-kinds';
 import { useBookingT } from '@/i18n/booking';
 
 type StepId = 'department' | 'service' | 'location' | 'time' | 'contact' | 'summary';
-const STEPS: StepId[] = ['department', 'service', 'location', 'time', 'contact', 'summary'];
+const STEPS_FULL: StepId[] = ['department', 'service', 'location', 'time', 'contact', 'summary'];
+const STEPS_TICKET: StepId[] = ['department', 'service', 'contact', 'summary'];
+const isTicketService = (name: string) => /ticket|anfrage|support|reklamation/i.test(name || '');
 
 
 export default function BookingPortal() {
@@ -122,6 +124,8 @@ export default function BookingPortal() {
     return generateSlots(new Date(state.dayIso), duration, appointments, DEFAULT_BOOKING_SETTINGS);
   }, [state.dayIso, duration, appointments]);
 
+  const isTicket = isTicketService(state.service);
+  const STEPS = isTicket ? STEPS_TICKET : STEPS_FULL;
   const stepIndex = STEPS.indexOf(step);
   const goto = (s: StepId) => setStep(s);
   const canGoNext = (() => {
@@ -134,14 +138,15 @@ export default function BookingPortal() {
   })();
 
   const submit = async () => {
-    if (!dept || !state.slotIso) return;
-    if (customerBookingsToday(state.email, appointments, new Date(state.slotIso)) >= DEFAULT_BOOKING_SETTINGS.maxPerCustomerPerDay) {
+    if (!dept) return;
+    if (!isTicket && !state.slotIso) return;
+    if (!isTicket && customerBookingsToday(state.email, appointments, new Date(state.slotIso)) >= DEFAULT_BOOKING_SETTINGS.maxPerCustomerPerDay) {
       toast.error(t.errors.max_per_day);
       return;
     }
-    const start = new Date(state.slotIso);
+    const start = isTicket ? new Date() : new Date(state.slotIso);
     const end = new Date(start.getTime() + duration * 60_000);
-    const loc = DEFAULT_LOCATIONS.find((l) => l.id === state.locationId);
+    const loc = isTicket ? undefined : DEFAULT_LOCATIONS.find((l) => l.id === state.locationId);
     const bookingNumber = `AW-${format(new Date(), 'yyMMdd')}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
 
     const created = await createAppointment({
@@ -160,7 +165,7 @@ export default function BookingPortal() {
       address: '',
       status: 'angefragt',
       priority: 'normal',
-      externalNote: `Buchungsnummer: ${bookingNumber}${state.website ? '\nWebseite: ' + state.website : ''}${state.consentMarketing ? '\nMarketing-Einwilligung: ja' : ''}`,
+      externalNote: `${isTicket ? 'Ticket-Anfrage\n' : ''}Buchungsnummer: ${bookingNumber}${state.website ? '\nWebseite: ' + state.website : ''}${state.consentMarketing ? '\nMarketing-Einwilligung: ja' : ''}`,
       confirmationRequired: true,
     });
     setSent({ bookingNumber, token: (created as any)?.confirmationToken || bookingNumber });
@@ -410,7 +415,7 @@ export default function BookingPortal() {
               return list.map((s) => (
                 <button
                   key={s.name}
-                  onClick={() => { setState({ ...state, service: s.name }); goto('location'); }}
+                  onClick={() => { setState({ ...state, service: s.name }); goto(isTicketService(s.name) ? 'contact' : 'location'); }}
                   className={`text-left rounded-xl border p-4 hover:border-primary hover:shadow-md transition ${state.service === s.name ? 'border-primary bg-primary/5' : 'bg-card'}`}
                 >
                   <div className="flex items-center gap-2">
