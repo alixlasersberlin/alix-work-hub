@@ -14,6 +14,7 @@ import { ArrowLeft, Loader2, MessageSquare, Paperclip, Save, Send, Wrench, Truck
 import { sbRepair } from '@/lib/repair/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AiAnalysisPanel } from '@/components/ai-service/AiAnalysisPanel';
+import { CreateAppointmentFromTicket } from '@/components/tickets/CreateAppointmentFromTicket';
 
 interface Ticket {
   id: string;
@@ -463,6 +464,8 @@ export default function TicketDetail() {
               </Button>
             );
           })()}
+
+          <CreateAppointmentFromTicket ticketId={ticket.id} ticketNumber={(ticket as any).ticket_number ?? ticket.external_ticket_id} />
 
           <Button
             size="sm"
