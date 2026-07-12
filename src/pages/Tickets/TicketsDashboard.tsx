@@ -19,15 +19,17 @@ import { de } from "date-fns/locale";
 type Counts = {
   neu: number; meine: number; heute: number; ueberfaellig: number;
   termine_heute: number; warten_kunde: number; eskaliert: number; total_offen: number;
+  sla_warning: number; sla_breach: number;
 };
 
-const OPEN_STATUS = ["Neu", "Zugewiesen", "In Bearbeitung", "offen", "in_bearbeitung", "Wiedervorlage fällig"];
+const OPEN_STATUS = ["open", "offen", "in-progress", "in_bearbeitung", "wartet_kunde", "wartet_Kunde", "Neu", "Zugewiesen", "In Bearbeitung"];
+const CLOSED_STATUS = ["geschlossen", "closed", "gelöst", "Geschlossen", "Erledigt"];
 const PRIO_COLORS: Record<string, string> = {
-  Kritisch: "hsl(0 84% 60%)",
-  Dringend: "hsl(14 90% 55%)",
-  Hoch: "hsl(38 92% 55%)",
-  Normal: "hsl(217 91% 60%)",
-  Niedrig: "hsl(215 15% 55%)",
+  kritisch: "hsl(0 84% 60%)",
+  dringend: "hsl(14 90% 55%)",
+  hoch: "hsl(38 92% 55%)",
+  normal: "hsl(217 91% 60%)",
+  niedrig: "hsl(215 15% 55%)",
 };
 const DEPT_PALETTE = [
   "hsl(217 91% 60%)", "hsl(160 84% 45%)", "hsl(280 70% 60%)", "hsl(38 92% 55%)",
