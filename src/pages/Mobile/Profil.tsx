@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { LogOut, ExternalLink, Download, Smartphone } from 'lucide-react';
+import { LogOut, ExternalLink, Download, Smartphone, Bell, BellOff, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
+import { getPushStatus, subscribePush, unsubscribePush, pushSupported } from '@/lib/mobile/push';
 
 export default function MobileProfil() {
   const { profile, roles, signOut } = useAuth();
