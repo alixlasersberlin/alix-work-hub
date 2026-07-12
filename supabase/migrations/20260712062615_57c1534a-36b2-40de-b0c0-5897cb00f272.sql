@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "admins can insert otp challenges" ON public.otp_challenges;
