@@ -40,6 +40,32 @@ export default function SecurityFindings() {
     }
   };
 
+  const sendAlerts = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('security-alert-notify', { body: { lookback_minutes: 1440 } });
+      if (error) throw error;
+      const d: any = data;
+      toast.success(d?.sent ? `Alert an ${d.recipients} Super Admin(s) versandt (${d.sent} Findings)` : `Keine Mail: ${d?.reason ?? 'ok'}`);
+    } catch (e: any) { toast.error(e.message ?? 'Fehler'); }
+  };
+
+  const cleanupSessions = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('security-remediate', { body: { action: 'deactivate_stale_sessions' } });
+      if (error) throw error;
+      toast.success(`${(data as any)?.affected ?? 0} veraltete Sessions deaktiviert`);
+    } catch (e: any) { toast.error(e.message ?? 'Fehler'); }
+  };
+
+  const resolveFinding = async (id: string) => {
+    try {
+      const { error } = await supabase.functions.invoke('security-remediate', { body: { action: 'mark_finding_resolved', finding_id: id } });
+      if (error) throw error;
+      toast.success('Finding geschlossen');
+      await load();
+    } catch (e: any) { toast.error(e.message ?? 'Fehler'); }
+  };
+
   const setStatus = async (id: string, status: string) => {
     const { error } = await (supabase as any).from('security_audit_findings').update({ status }).eq('id', id);
     if (error) return toast.error(error.message);
