@@ -357,8 +357,35 @@ export default function TicketDetail() {
         console.error('send-mail exception', e);
       }
     }
+    // @-Mentions in internen Notizen erkennen → Benachrichtigungen
+    if (msgInternal) {
+      const tokens = Array.from(messageText.matchAll(/@([\wäöüÄÖÜß.\-]{2,})/gi)).map(m => m[1].toLowerCase());
+      if (tokens.length) {
+        const mentioned = users.filter(u => {
+          const first = String(u.label || '').split(/\s+/)[0]?.toLowerCase() || '';
+          const emailLocal = String(u.label || '').split('@')[0]?.toLowerCase() || '';
+          return tokens.some(t => first.startsWith(t) || emailLocal.startsWith(t) || u.label.toLowerCase().includes(t));
+        });
+        const uniqueIds = Array.from(new Set(mentioned.map(m => m.id))).filter(uid => uid !== user?.id);
+        if (uniqueIds.length) {
+          await supabase.from('ticket_notifications').insert(
+            uniqueIds.map(uid => ({
+              user_id: uid,
+              ticket_id: ticket.id,
+              kind: 'mention',
+              title: `${myProfile?.full_name || user?.email || 'Ein Kollege'} hat Sie erwähnt`,
+              message: messageText.slice(0, 200),
+              actor_id: user?.id || null,
+              actor_name: user?.email || null,
+            }))
+          );
+          toast.success(`${uniqueIds.length} Kollege(n) benachrichtigt`);
+        }
+      }
+    }
     load();
   }
+
 
   async function handover(dept: string, statusLabel: string) {
     await patch({ department: dept, customer_visible_status: statusLabel });
