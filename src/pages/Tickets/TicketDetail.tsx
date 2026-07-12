@@ -645,16 +645,53 @@ export default function TicketDetail() {
                   <p className="text-sm whitespace-pre-wrap">{m.message}</p>
                 </div>
               ))}
-              {canEdit && (
-                <div className="rounded-lg border border-border bg-background p-3 space-y-2">
-                  <Textarea id="ticket-new-message" value={newMsg} onChange={e => setNewMsg(e.target.value)} placeholder="Nachricht oder interne Notiz..." rows={3} />
+              {canEdit && ticket && (
+                <div className={`rounded-lg border p-3 space-y-2 ${msgInternal ? 'border-amber-500/40 bg-amber-500/5' : 'border-emerald-500/40 bg-emerald-500/5'}`}>
+                  <div className="flex gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setMsgInternal(false)}
+                      className={`flex-1 px-3 py-1.5 text-xs rounded-md border transition-colors ${!msgInternal ? 'border-emerald-500 bg-emerald-500 text-white font-medium' : 'border-border bg-background text-muted-foreground hover:bg-muted'}`}
+                    >
+                      <Send className="w-3.5 h-3.5 inline mr-1" /> An Kunden senden
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMsgInternal(true)}
+                      className={`flex-1 px-3 py-1.5 text-xs rounded-md border transition-colors ${msgInternal ? 'border-amber-500 bg-amber-500 text-white font-medium' : 'border-border bg-background text-muted-foreground hover:bg-muted'}`}
+                    >
+                      <Lock className="w-3.5 h-3.5 inline mr-1" /> Interne Notiz
+                    </button>
+                  </div>
+                  <Textarea
+                    id="ticket-new-message"
+                    value={newMsg}
+                    onChange={e => setNewMsg(e.target.value)}
+                    placeholder={msgInternal ? 'Interne Notiz – nur für das Team sichtbar…' : 'Antwort an den Kunden – erscheint im Kundenportal & wird per E-Mail versendet…'}
+                    rows={3}
+                  />
                   <div className="flex items-center justify-between gap-2">
-                    <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <input type="checkbox" checked={msgInternal} onChange={e => setMsgInternal(e.target.checked)} />
-                      Als interne Notiz speichern
-                    </label>
-                    <Button size="sm" onClick={addMessage} disabled={!newMsg.trim()}>
-                      <Send className="w-4 h-4 mr-1" /> Senden
+                    <div className="text-xs text-muted-foreground">
+                      {msgInternal ? (
+                        <>🔒 Nicht für Kunde sichtbar</>
+                      ) : (
+                        <>
+                          Absender: <span className="font-medium text-foreground">
+                            {ticket.assigned_to
+                              ? (myProfile?.full_name || user?.email || 'Mitarbeiter')
+                              : departmentDisplayName(ticket.department)}
+                          </span>
+                          {!ticket.assigned_to && <span className="ml-1">(Abteilung, kein persönlicher Ansprechpartner zugewiesen)</span>}
+                        </>
+                      )}
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={addMessage}
+                      disabled={!newMsg.trim()}
+                      className={msgInternal ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-emerald-600 hover:bg-emerald-700 text-white'}
+                    >
+                      <Send className="w-4 h-4 mr-1" /> {msgInternal ? 'Notiz speichern' : 'An Kunden senden'}
                     </Button>
                   </div>
                 </div>
