@@ -147,27 +147,20 @@ export default function MobileEinsatz() {
                 if (!etaMin) return;
                 setBusy(true);
                 try {
-                  const etaAt = new Date(Date.now() + Number(etaMin) * 60_000).toISOString();
-                  const etaLocal = new Date(etaAt).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                  const msg = `Ihr Techniker ist unterwegs und wird gegen ${etaLocal} Uhr eintreffen. – Alix Lasers`;
-                  await supabase.from('route_plans').update({ eta_at: etaAt } as any).eq('id', id);
-                  if (t.customer_id) {
-                    await supabase.from('customer_communication_log').insert({
-                      customer_id: t.customer_id,
-                      channel: 'sms',
-                      direction: 'outbound',
-                      subject: 'ETA-Benachrichtigung Techniker',
-                      body: msg,
-                      status: t.contact_phone ? 'queued' : 'skipped_no_phone',
-                      metadata: { source: 'mobile_eta', route_plan_id: id, eta_at: etaAt, phone: t.contact_phone ?? null },
-                    } as any);
+                  const { data, error } = await supabase.functions.invoke('dispatch-eta-sms', {
+                    body: { route_plan_id: id, eta_minutes: Number(etaMin) },
+                  });
+                  if (error) {
+                    const details = (error as any)?.context ? await (error as any).context.text().catch(() => '') : '';
+                    throw new Error(details || error.message);
                   }
-                  toast.success(`ETA ${etaLocal} Uhr gemeldet.`);
+                  const etaLocal = new Date(data.eta_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                  toast.success(`SMS an ${data.to} verschickt – ETA ${etaLocal} Uhr.`);
                   setEtaOpen(false);
                   setEtaMin('');
                   load();
                 } catch (e: any) {
-                  toast.error(e?.message || 'ETA konnte nicht gesendet werden');
+                  toast.error(e?.message || 'ETA-SMS fehlgeschlagen');
                 } finally { setBusy(false); }
               }}
             >
