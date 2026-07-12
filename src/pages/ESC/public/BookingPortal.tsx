@@ -563,21 +563,21 @@ export default function BookingPortal() {
       {step === 'summary' && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-[16px]">Zusammenfassung</CardTitle>
-            <p className="text-[12.5px] text-muted-foreground">Bitte prüfen Sie Ihre Angaben.</p>
+            <CardTitle className="text-[16px]">{t.summary.title}</CardTitle>
+            <p className="text-[12.5px] text-muted-foreground">{t.summary.subtitle}</p>
           </CardHeader>
           <CardContent className="space-y-3 text-[13px]">
-            <SumRow label="Leistung" value={dept?.name} />
-            <SumRow label="Terminart" value={state.service} />
-            <SumRow label="Standort" value={DEFAULT_LOCATIONS.find((l) => l.id === state.locationId)?.label} />
-            <SumRow label="Datum" value={state.slotIso ? format(new Date(state.slotIso), 'EEEE, dd. MMMM yyyy', { locale: de }) : ''} />
-            <SumRow label="Uhrzeit" value={state.slotIso ? `${format(new Date(state.slotIso), 'HH:mm')} · ca. ${duration} min` : ''} />
-            {state.contactPersonId && <SumRow label="Ansprechpartner" value={bookableEmployees.find((e) => e.id === state.contactPersonId)?.name} />}
+            <SumRow label={t.summary.service_label} value={dept?.name} />
+            <SumRow label={t.summary.kind_label} value={state.service} />
+            <SumRow label={t.summary.location_label} value={DEFAULT_LOCATIONS.find((l) => l.id === state.locationId)?.label} />
+            <SumRow label={t.summary.date_label} value={state.slotIso ? format(new Date(state.slotIso), 'EEEE, dd MMMM yyyy', { locale: de }) : ''} />
+            <SumRow label={t.summary.time_label} value={state.slotIso ? `${format(new Date(state.slotIso), 'HH:mm')} · ~ ${duration} ${t.summary.min_short}` : ''} />
+            {state.contactPersonId && <SumRow label={t.summary.contact_person_label} value={bookableEmployees.find((e) => e.id === state.contactPersonId)?.name} />}
             <div className="border-t pt-2 space-y-1">
-              <SumRow label="Kontakt" value={`${state.firstName} ${state.lastName}`} />
-              <SumRow label="Firma" value={state.company} />
-              <SumRow label="E-Mail" value={state.email} />
-              <SumRow label="Telefon" value={state.phone} />
+              <SumRow label={t.summary.contact_label} value={`${state.firstName} ${state.lastName}`} />
+              <SumRow label={t.summary.company_label} value={state.company} />
+              <SumRow label={t.summary.email_label} value={state.email} />
+              <SumRow label={t.summary.phone_label} value={state.phone} />
             </div>
             {state.message && <div className="text-[12px] text-muted-foreground italic">„{state.message}"</div>}
           </CardContent>
@@ -586,21 +586,21 @@ export default function BookingPortal() {
 
       <div className="flex items-center justify-between">
         <Button variant="outline" onClick={() => (stepIndex > 0 ? goto(STEPS[stepIndex - 1]) : null)} disabled={stepIndex === 0}>
-          <ArrowLeft className="w-4 h-4 mr-1" /> Zurück
+          <ArrowLeft className="w-4 h-4 mr-1" /> {t.nav.back}
         </Button>
         {step === 'summary' ? (
           <Button size="lg" onClick={submit} disabled={!canGoNext}>
-            <CalendarCheck className="w-4 h-4 mr-1" /> Buchung absenden
+            <CalendarCheck className="w-4 h-4 mr-1" /> {t.nav.submit}
           </Button>
         ) : (
           <Button onClick={() => goto(STEPS[stepIndex + 1])} disabled={!canGoNext}>
-            Weiter <ArrowRight className="w-4 h-4 ml-1" />
+            {t.nav.next} <ArrowRight className="w-4 h-4 ml-1" />
           </Button>
         )}
       </div>
 
       <div className="text-center pt-2">
-        <Badge variant="outline" className="text-[10.5px]">alixworks.de · Sichere Verbindung</Badge>
+        <Badge variant="outline" className="text-[10.5px]">{t.footer_badge}</Badge>
       </div>
     </BookingLayout>
   );
