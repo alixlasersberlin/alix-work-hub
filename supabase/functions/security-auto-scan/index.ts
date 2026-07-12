@@ -84,6 +84,32 @@ Deno.serve(async (req) => {
     }
   });
 
+  // 6) Privileged users without MFA
+  const { data: noMfa } = await (supabase as any).from('security_scan_privileged_no_mfa').select('*');
+  (noMfa ?? []).forEach((u: any) => {
+    findings.push({
+      category: 'mfa', target: `user:${u.user_id}`, severity: 'high',
+      title: `MFA fehlt: ${u.role}`,
+      detail: `${u.email ?? u.user_id} hat die privilegierte Rolle "${u.role}" ohne aktivierte Zwei-Faktor-Authentifizierung.`,
+      recommendation: 'MFA-Enrollment im Benutzerprofil erzwingen.',
+      status: 'open',
+    });
+  });
+
+  // 7) Stale sessions (>30 days still active)
+  const { data: staleSes } = await (supabase as any).from('security_scan_stale_sessions').select('user_id');
+  if ((staleSes ?? []).length > 0) {
+    findings.push({
+      category: 'session', target: 'login_sessions', severity: 'medium',
+      title: `${staleSes.length} veraltete Sessions aktiv`,
+      detail: `Es gibt ${staleSes.length} Login-Sessions älter als 30 Tage, die noch als aktiv markiert sind.`,
+      recommendation: 'Sessions älter als X Tage automatisch invalidieren (Cron auf login_sessions).',
+      status: 'open',
+    });
+  }
+
+
+
 
   // Upsert-style: mark previous auto-scan findings as resolved if not seen anymore
   await (supabase as any).from('security_audit_findings')
