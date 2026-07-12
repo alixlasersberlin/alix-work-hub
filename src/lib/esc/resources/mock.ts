@@ -7,11 +7,11 @@ import type {
 } from './types';
 
 export const RM_LOCATIONS: RmLocation[] = [
-  { id: 'berlin', name: 'Berlin',  timezone: 'Europe/Berlin', country: 'DE' },
-  { id: 'wien',   name: 'Wien',    timezone: 'Europe/Vienna', country: 'AT' },
-  { id: 'dubai',  name: 'Dubai',   timezone: 'Asia/Dubai',    country: 'AE' },
-  { id: 'miami',  name: 'Miami',   timezone: 'America/New_York', country: 'US' },
-  { id: 'riga',   name: 'Riga',    timezone: 'Europe/Riga',   country: 'LV' },
+  { id: 'berlin', name: 'Deutschland (Berlin)',           timezone: 'Europe/Berlin',       country: 'DE' },
+  { id: 'graz',   name: 'Österreich (Graz)',              timezone: 'Europe/Vienna',       country: 'AT' },
+  { id: 'dubai',  name: 'Vereinigte Emirate (Dubai)',     timezone: 'Asia/Dubai',          country: 'AE' },
+  { id: 'hanoi',  name: 'Vietnam (Hanoi)',                timezone: 'Asia/Ho_Chi_Minh',    country: 'VN' },
+  { id: 'miami',  name: 'USA (Miami)',                    timezone: 'America/New_York',    country: 'US' },
 ];
 
 export const RM_QUALIFICATIONS: RmQualification[] = [
