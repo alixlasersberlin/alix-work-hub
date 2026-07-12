@@ -7576,6 +7576,7 @@ export type Database = {
           last_checked_at: string | null
           order_id: string
           payment_status: string | null
+          tenant_id: string | null
           updated_at: string
           updated_by: string | null
         }
@@ -7592,6 +7593,7 @@ export type Database = {
           last_checked_at?: string | null
           order_id: string
           payment_status?: string | null
+          tenant_id?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -7608,6 +7610,7 @@ export type Database = {
           last_checked_at?: string | null
           order_id?: string
           payment_status?: string | null
+          tenant_id?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -7624,6 +7627,13 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_records_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
           {
@@ -16569,6 +16579,7 @@ export type Database = {
           source_system: string
           status: string | null
           synced_at: string
+          tenant_id: string | null
           total: number | null
           updated_at: string
           zoho_invoice_id: string
@@ -16592,6 +16603,7 @@ export type Database = {
           source_system: string
           status?: string | null
           synced_at?: string
+          tenant_id?: string | null
           total?: number | null
           updated_at?: string
           zoho_invoice_id: string
@@ -16615,11 +16627,20 @@ export type Database = {
           source_system?: string
           status?: string | null
           synced_at?: string
+          tenant_id?: string | null
           total?: number | null
           updated_at?: string
           zoho_invoice_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "zoho_invoices_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       zoho_items: {
         Row: {
@@ -16779,6 +16800,7 @@ export type Database = {
           source_system: string
           status: string | null
           synced_at: string
+          tenant_id: string | null
           total: number | null
           updated_at: string
           zoho_invoice_id: string
@@ -16804,6 +16826,7 @@ export type Database = {
           source_system: string
           status?: string | null
           synced_at?: string
+          tenant_id?: string | null
           total?: number | null
           updated_at?: string
           zoho_invoice_id: string
@@ -16829,12 +16852,21 @@ export type Database = {
           source_system?: string
           status?: string | null
           synced_at?: string
+          tenant_id?: string | null
           total?: number | null
           updated_at?: string
           zoho_invoice_id?: string
           zoho_recurring_invoice_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "zoho_recurring_invoices_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       zoho_recurring_profiles: {
         Row: {
@@ -16861,6 +16893,7 @@ export type Database = {
           status: string | null
           sub_total: number | null
           synced_at: string
+          tenant_id: string | null
           total: number | null
           updated_at: string
           zoho_recurring_invoice_id: string
@@ -16889,6 +16922,7 @@ export type Database = {
           status?: string | null
           sub_total?: number | null
           synced_at?: string
+          tenant_id?: string | null
           total?: number | null
           updated_at?: string
           zoho_recurring_invoice_id: string
@@ -16917,11 +16951,20 @@ export type Database = {
           status?: string | null
           sub_total?: number | null
           synced_at?: string
+          tenant_id?: string | null
           total?: number | null
           updated_at?: string
           zoho_recurring_invoice_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "zoho_recurring_profiles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       zoho_unpaid_invoices: {
         Row: {
@@ -16936,6 +16979,7 @@ export type Database = {
           raw: Json | null
           status: string | null
           synced_at: string | null
+          tenant_id: string | null
           total: number | null
         }
         Insert: {
@@ -16950,6 +16994,7 @@ export type Database = {
           raw?: Json | null
           status?: string | null
           synced_at?: string | null
+          tenant_id?: string | null
           total?: number | null
         }
         Update: {
@@ -16964,9 +17009,18 @@ export type Database = {
           raw?: Json | null
           status?: string | null
           synced_at?: string | null
+          tenant_id?: string | null
           total?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "zoho_unpaid_invoices_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
