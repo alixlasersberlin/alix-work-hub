@@ -5,8 +5,8 @@ import { cn } from '@/lib/utils';
 
 interface Props {
   className?: string;
-  /** "dark" = glassmorph dunkles Overlay (für /beratung). "light" = neutrales Light-Pill. */
-  variant?: 'dark' | 'light';
+  /** "dark" = glassmorph dunkles Overlay. "light" = neutrales Light-Pill. "transparent" = transparenter Hintergrund, adaptiv zur Umgebung. */
+  variant?: 'dark' | 'light' | 'transparent';
 }
 
 export default function WizardLanguageSwitcher({ className, variant = 'dark' }: Props) {
@@ -31,9 +31,9 @@ export default function WizardLanguageSwitcher({ className, variant = 'dark' }: 
         onClick={() => setOpen(o => !o)}
         className={cn(
           'flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition',
-          variant === 'dark'
-            ? 'border-white/15 bg-white/5 text-white backdrop-blur-md hover:bg-white/10'
-            : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50',
+          variant === 'dark' && 'border-white/15 bg-white/5 text-white backdrop-blur-md hover:bg-white/10',
+          variant === 'light' && 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50',
+          variant === 'transparent' && 'border-foreground/15 bg-transparent text-foreground hover:bg-foreground/5 backdrop-blur-sm',
         )}
         aria-label="Sprache wählen / Choose language"
       >
@@ -45,9 +45,9 @@ export default function WizardLanguageSwitcher({ className, variant = 'dark' }: 
       {open && (
         <div className={cn(
           'absolute right-0 mt-2 w-48 rounded-xl border p-1 shadow-2xl z-50',
-          variant === 'dark'
-            ? 'border-white/15 bg-[#0b1228]/95 text-white backdrop-blur-xl'
-            : 'border-slate-200 bg-white text-slate-800',
+          variant === 'dark' && 'border-white/15 bg-[#0b1228]/95 text-white backdrop-blur-xl',
+          variant === 'light' && 'border-slate-200 bg-white text-slate-800',
+          variant === 'transparent' && 'border-foreground/15 bg-popover/90 text-popover-foreground backdrop-blur-xl',
         )}>
           {LANGS.map(l => (
             <button
@@ -56,8 +56,8 @@ export default function WizardLanguageSwitcher({ className, variant = 'dark' }: 
               onClick={() => { setLang(l.code as Lang); setOpen(false); }}
               className={cn(
                 'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition',
-                variant === 'dark' ? 'hover:bg-white/10' : 'hover:bg-slate-100',
-                lang === l.code && (variant === 'dark' ? 'bg-cyan-400/10 text-cyan-200' : 'bg-cyan-50 text-cyan-700'),
+                variant === 'dark' ? 'hover:bg-white/10' : variant === 'light' ? 'hover:bg-slate-100' : 'hover:bg-foreground/5',
+                lang === l.code && (variant === 'dark' ? 'bg-cyan-400/10 text-cyan-200' : variant === 'light' ? 'bg-cyan-50 text-cyan-700' : 'bg-primary/10 text-primary'),
               )}
             >
               <span className="text-lg leading-none">{l.flag}</span>
