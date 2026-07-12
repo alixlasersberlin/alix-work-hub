@@ -312,6 +312,8 @@ export default function TicketsDashboard() {
           </ul>
         </CardContent>
       </Card>
+
+      <CsatWidget />
     </div>
   );
 }
