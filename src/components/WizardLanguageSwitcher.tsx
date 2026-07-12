@@ -15,11 +15,13 @@ export default function WizardLanguageSwitcher({ className, variant = 'dark' }: 
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
-      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      if (!ref.current?.contains(target) && !menuRef.current?.contains(target)) setOpen(false);
     };
     document.addEventListener('mousedown', onClick);
     return () => document.removeEventListener('mousedown', onClick);
@@ -74,6 +76,8 @@ export default function WizardLanguageSwitcher({ className, variant = 'dark' }: 
           variant === 'light' && 'border-slate-200 bg-white text-slate-800',
           variant === 'transparent' && 'border-foreground/15 bg-popover/90 text-popover-foreground backdrop-blur-xl',
         )}
+          ref={menuRef}
+          onMouseDown={(e) => e.stopPropagation()}
           style={{ top: menuPosition.top, left: menuPosition.left }}
         >
           {LANGS.map(l => (
