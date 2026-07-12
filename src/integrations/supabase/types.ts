@@ -15741,6 +15741,8 @@ export type Database = {
           device_id: string | null
           device_name: string | null
           due_at: string | null
+          escalated_at: string | null
+          escalation_count: number
           external_ticket_id: string | null
           follow_up_at: string | null
           id: string
@@ -15787,6 +15789,8 @@ export type Database = {
           device_id?: string | null
           device_name?: string | null
           due_at?: string | null
+          escalated_at?: string | null
+          escalation_count?: number
           external_ticket_id?: string | null
           follow_up_at?: string | null
           id?: string
@@ -15833,6 +15837,8 @@ export type Database = {
           device_id?: string | null
           device_name?: string | null
           due_at?: string | null
+          escalated_at?: string | null
+          escalation_count?: number
           external_ticket_id?: string | null
           follow_up_at?: string | null
           id?: string
